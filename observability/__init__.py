@@ -42,6 +42,7 @@ from .finops import (  # noqa: F401
     ResourceUsageSample,
 )
 from .health import HealthServer  # noqa: F401
+from .incidents import IncidentManager, IncidentRecord  # noqa: F401
 from .logging import StructuredLogFormatter, configure_logging  # noqa: F401
 from .notifications import (  # noqa: F401
     EmailSender,
@@ -66,6 +67,8 @@ __all__ = [
     "CacheWarmupSpec",
     "CacheWarmupStatus",
     "HealthServer",
+    "IncidentManager",
+    "IncidentRecord",
     "ResourceUsageSample",
     "Budget",
     "BudgetStatus",

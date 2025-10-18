@@ -46,7 +46,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    from scripts.commands import dev, fpma, lint, live, proto, secrets, supply_chain
+    from scripts.commands import (
+        dev,
+        fpma,
+        lint,
+        live,
+        nightly,
+        proto,
+        secrets,
+        supply_chain,
+    )
     from scripts.commands import test as test_cmd
 
     dev.build_parser(subparsers)
@@ -55,6 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
     test_cmd.build_parser(subparsers)
     fpma.build_parser(subparsers)
     live.build_parser(subparsers)
+    nightly.build_parser(subparsers)
     secrets.build_parser(subparsers)
     supply_chain.build_parser(subparsers)
 
