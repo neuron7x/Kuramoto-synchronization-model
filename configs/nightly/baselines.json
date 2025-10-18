@@ -1,0 +1,107 @@
+{
+  "backtests": {
+    "moving_average": {
+      "baseline": {
+        "pnl": 2.087260485540358,
+        "max_drawdown": -3.205423810883881,
+        "sharpe_ratio": 1.3869462008716844,
+        "trades": 16
+      },
+      "thresholds": {
+        "pnl": {
+          "higher_is_better": true,
+          "max_relative_change": 0.15,
+          "max_absolute_change": 0.75,
+          "min_value": -5.0
+        },
+        "max_drawdown": {
+          "higher_is_better": false,
+          "max_relative_change": 0.25,
+          "max_absolute_change": 1.25
+        },
+        "sharpe_ratio": {
+          "higher_is_better": true,
+          "max_relative_change": 0.35,
+          "max_absolute_change": 0.75,
+          "min_value": 0.5
+        },
+        "trades": {
+          "higher_is_better": true,
+          "max_relative_change": 0.5,
+          "max_absolute_change": 10.0,
+          "min_value": 4.0
+        }
+      }
+    },
+    "volatility_breakout": {
+      "baseline": {
+        "pnl": 200.42525637052807,
+        "max_drawdown": -0.6002211804798776,
+        "sharpe_ratio": 1.075945944600162,
+        "trades": 188
+      },
+      "thresholds": {
+        "pnl": {
+          "higher_is_better": true,
+          "max_relative_change": 0.12,
+          "max_absolute_change": 35.0,
+          "min_value": -50.0
+        },
+        "max_drawdown": {
+          "higher_is_better": false,
+          "max_relative_change": 0.4,
+          "max_absolute_change": 0.6,
+          "max_value": -0.1
+        },
+        "sharpe_ratio": {
+          "higher_is_better": true,
+          "max_relative_change": 0.3,
+          "max_absolute_change": 0.4,
+          "min_value": 0.4
+        },
+        "trades": {
+          "higher_is_better": true,
+          "max_relative_change": 0.25,
+          "max_absolute_change": 60.0,
+          "min_value": 80.0
+        }
+      }
+    }
+  },
+  "e2e": {
+    "smoke_pipeline": {
+      "baseline": {
+        "pnl": 49.71839586482463,
+        "max_drawdown": 0.0,
+        "trades": 1,
+        "ingested_ticks": 500
+      },
+      "thresholds": {
+        "pnl": {
+          "higher_is_better": true,
+          "max_relative_change": 0.2,
+          "max_absolute_change": 12.0,
+          "min_value": -10.0
+        },
+        "max_drawdown": {
+          "higher_is_better": false,
+          "max_relative_change": 0.0,
+          "max_absolute_change": 5.0,
+          "max_value": 5.0
+        },
+        "trades": {
+          "higher_is_better": true,
+          "max_relative_change": 1.0,
+          "max_absolute_change": 5.0,
+          "min_value": 1.0
+        },
+        "ingested_ticks": {
+          "higher_is_better": true,
+          "max_relative_change": 0.05,
+          "max_absolute_change": 25.0,
+          "min_value": 400.0
+        }
+      }
+    }
+  }
+}
