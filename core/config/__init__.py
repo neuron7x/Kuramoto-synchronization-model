@@ -49,6 +49,17 @@ from .postgres import (
     get_postgres_sslmode,
     is_postgres_uri,
 )
+from .registry import (
+    ConfigApprovalError,
+    ConfigCompatibilityError,
+    ConfigPublicationError,
+    ConfigRegistry,
+    ConfigRegistryError,
+    ConfigValidationError,
+    ConfigVersionError,
+    Environment,
+    InMemoryConfigStorage,
+)
 from .template_manager import ConfigTemplateManager
 
 __all__ = [
@@ -97,4 +108,16 @@ __all__ += [
     "ensure_secure_postgres_uri",
     "get_postgres_sslmode",
     "is_postgres_uri",
+]
+
+__all__ += [
+    "ConfigApprovalError",
+    "ConfigCompatibilityError",
+    "ConfigPublicationError",
+    "ConfigRegistry",
+    "ConfigRegistryError",
+    "ConfigValidationError",
+    "ConfigVersionError",
+    "Environment",
+    "InMemoryConfigStorage",
 ]
