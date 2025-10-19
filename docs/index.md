@@ -115,7 +115,10 @@ focused document so contributors can quickly find the details they need.
 - Align with the [Documentation Governance and Quality Framework](documentation_governance.md)
   when planning, reviewing, or auditing knowledge base changes to keep content
   accurate and discoverable.
+- Adopt the [Documentation Standardisation Playbook](documentation_standardisation_playbook.md)
+  to ensure ADRs, READMEs, diagrams, runbooks, and policies use the approved
+  templates and verification workflows.
 
 ---
 
-**Last updated:** 2025-10-19
+**Last updated:** 2025-10-20
