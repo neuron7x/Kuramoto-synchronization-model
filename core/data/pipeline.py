@@ -289,7 +289,9 @@ class DataPipeline:
         augmented, synthetic = self._augment_with_synthetic(balanced)
         splits = self._build_stratified_splits(augmented)
         drift_summaries = self._evaluate_drift(dataset, augmented, context)
-        backfill_result = self._execute_backfill(dataset, augmented, context)
+        # Execute backfill against the pre-synthetic frame to avoid duplicate
+        # timestamps introduced by augmentation.
+        backfill_result = self._execute_backfill(dataset, balanced, context)
 
         self._persist(dataset, augmented, context)
 
