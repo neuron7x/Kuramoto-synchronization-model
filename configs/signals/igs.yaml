@@ -19,6 +19,9 @@ igs:
   prometheus_enabled: false
   prometheus_async: true
   max_update_ms: 0.0
+  # pi_method examples:
+  #   "empirical"  – normalise observed row counts (default).
+  #   "stationary" – solve pi = pi @ P for the stationary distribution.
   pi_method: "empirical"
   regime_weights: [1.0, 1.0, 1.0]
   signal_epr_q: 0.7

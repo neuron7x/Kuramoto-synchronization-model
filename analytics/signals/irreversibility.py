@@ -65,6 +65,13 @@ class IGSConfig:
     signal_epr_q: float = 0.7
     signal_flux_min: float = 0.0
 
+    def __post_init__(self) -> None:
+        valid_pi_methods = {"empirical", "stationary"}
+        if self.pi_method not in valid_pi_methods:
+            raise ValueError(
+                f"pi_method must be one of {sorted(valid_pi_methods)}, got {self.pi_method!r}"
+            )
+
 
 @dataclass
 class IGSMetrics:
@@ -263,17 +270,38 @@ def _quantize_returns_rank(r: pd.Series, n_states: int) -> np.ndarray:
     return q.to_numpy()
 
 
-def _transition_matrix(states: np.ndarray, n_states: int, eps: float):
+def _stationary_distribution(P: np.ndarray, eps: float) -> np.ndarray:
+    K = P.shape[0]
+    A = np.vstack([P.T - np.eye(K), np.ones((1, K))])
+    b = np.concatenate([np.zeros(K), np.array([1.0])])
+    reg = max(eps, 1e-8)
+    try:
+        AtA = A.T @ A
+        Atb = A.T @ b
+        pi = np.linalg.solve(AtA + reg * np.eye(K), Atb)
+    except np.linalg.LinAlgError:
+        pi, *_ = np.linalg.lstsq(A, b, rcond=None)
+    pi = np.maximum(pi, 0.0)
+    s = float(pi.sum())
+    if not np.isfinite(s) or s < eps:
+        return np.full(K, 1.0 / K, dtype=float)
+    return pi / s
+
+
+def _transition_matrix(states: np.ndarray, n_states: int, eps: float, pi_method: str = "empirical"):
     T = np.zeros((n_states, n_states), dtype=float)
     for a, b in zip(states[:-1], states[1:]):
         T[a, b] += 1.0
     counts_out = T.sum(axis=1, keepdims=True)
     P = (T + eps) / (counts_out + n_states * eps)
-    pi = T.sum(axis=1)
-    if pi.sum() < eps:
-        pi = np.full(n_states, 1.0 / n_states, dtype=float)
+    if pi_method == "stationary":
+        pi = _stationary_distribution(P, eps)
     else:
-        pi = pi / (pi.sum() + eps)
+        pi = T.sum(axis=1)
+        if pi.sum() < eps:
+            pi = np.full(n_states, 1.0 / n_states, dtype=float)
+        else:
+            pi = pi / (pi.sum() + eps)
     return P, pi
 
 
@@ -355,7 +383,7 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
         states = window_states[valid].astype(int)
         if states.size < 2:
             continue
-        P, pi = _transition_matrix(states, cfg.n_states, cfg.eps)
+        P, pi = _transition_matrix(states, cfg.n_states, cfg.eps, cfg.pi_method)
         epr, J = _entropy_production(P, pi, cfg.eps)
         flux_idx = _net_flux_index(J, cfg.normalize_flux)
         tra = _time_reversal_asymmetry_arr(rw)
@@ -548,9 +576,12 @@ class StreamingIGS:
         for i in range(self.K):
             denom = self.row_sums[i] + self.K * self.cfg.eps
             P[i, :] = (self.T[i, :] + self.cfg.eps) / denom if denom > 0 else (1.0 / self.K)
-        pi = self.row_sums.copy()
-        s = float(pi.sum())
-        pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
+        if self.cfg.pi_method == "stationary":
+            pi = _stationary_distribution(P, self.cfg.eps)
+        else:
+            pi = self.row_sums.copy()
+            s = float(pi.sum())
+            pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
         epr, J = _entropy_production(P, pi, self.cfg.eps)
         flux_index = _net_flux_index(J, self.cfg.normalize_flux)
         pe_val = self.pe_roll.update(ret)

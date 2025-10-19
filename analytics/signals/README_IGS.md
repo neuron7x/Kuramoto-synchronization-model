@@ -8,6 +8,10 @@ asymmetry, and permutation entropy. The resulting metrics can be used as standal
 - **Permutation entropy** – Bandt–Pompe entropy maintained incrementally after the warmup window.
 - **Regime score** – mean of `log1p(EPR)`, `|flux|`, and `(1 - PE)`.
 
+### Choosing `pi_method`
+- `empirical` keeps the historical behaviour by normalising row counts of the transition matrix. This is a good default when the sampling window is long enough and you want EPR to react to recent occupancy shifts.
+- `stationary` solves the constrained system `pi = pi @ P` (with Tikhonov regularisation in the least-squares step) to obtain the stationary distribution implied by the current transition probabilities. This is numerically robust for sparse counts and suppresses transient sampling bias in EPR/flux calculations.
+
 ## Python API
 ```python
 from analytics.signals.irreversibility import (
