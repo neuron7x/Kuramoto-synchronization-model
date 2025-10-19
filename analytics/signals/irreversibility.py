@@ -21,7 +21,8 @@ Dependencies: numpy, pandas. Optional: prometheus_client.
 from __future__ import annotations
 from dataclasses import dataclass
 from collections import deque
-from typing import Optional, Tuple, Deque, Dict, Any, Callable, List
+from typing import Optional, Tuple, Deque, Dict, Any, Callable, List, Protocol, runtime_checkable
+from bisect import bisect_left, bisect_right, insort
 import math
 import logging
 import threading
@@ -129,6 +130,17 @@ class RollingMeanStd:
         return mean, std
 
 
+@runtime_checkable
+class Quantizer(Protocol):
+    K: int
+
+    def update_and_state(self, x: float) -> int:
+        ...
+
+    def state_for_value(self, x: float) -> int:
+        ...
+
+
 class ZScoreQuantizer:
     def __init__(self, window: int, n_states: int):
         self.W = window
@@ -148,6 +160,57 @@ class ZScoreQuantizer:
         z = (x - mean) / (std if std > 1e-12 else 1.0)
         s = int(np.searchsorted(self.boundaries, z, side="right"))
         return int(np.clip(s, 0, self.K - 1))
+
+
+class SlidingRankQuantizer:
+    def __init__(self, window: int, n_states: int):
+        if window <= 0:
+            raise ValueError("window must be > 0")
+        if n_states <= 0:
+            raise ValueError("n_states must be > 0")
+        self.W = window
+        self.K = n_states
+        self.values: Deque[float] = deque()
+        self.sorted: List[float] = []
+
+    def _pop_oldest(self):
+        if len(self.values) < self.W:
+            return
+        old = self.values.popleft()
+        idx = bisect_left(self.sorted, old)
+        if idx < len(self.sorted) and self.sorted[idx] == old:
+            self.sorted.pop(idx)
+
+    def _state_from_rank(self, pct: float) -> int:
+        pct = max(0.0, min(1.0, pct))
+        state = int(pct * self.K)
+        if state >= self.K:
+            state = self.K - 1
+        return state
+
+    def _state_for_value(self, x: float) -> int:
+        if not self.sorted:
+            return 0
+        lower = bisect_left(self.sorted, x)
+        upper = bisect_right(self.sorted, x)
+        if upper > lower:
+            avg_rank = (lower + 1 + upper) / 2.0
+        else:
+            avg_rank = lower + 1.0
+        pct = avg_rank / len(self.sorted)
+        return self._state_from_rank(pct)
+
+    def update_and_state(self, x: float) -> int:
+        if len(self.values) == self.W:
+            self._pop_oldest()
+        insort(self.sorted, x)
+        self.values.append(x)
+        return self._state_for_value(x)
+
+    def state_for_value(self, x: float) -> int:
+        if len(self.values) == 0:
+            return 0
+        return self._state_for_value(x)
 
 
 class RollingTRA:
@@ -257,10 +320,13 @@ def _returns_from_prices(price: pd.Series) -> pd.Series:
     return np.log(price).diff()
 
 
-def _quantize_returns_rank(r: pd.Series, n_states: int) -> np.ndarray:
-    ranks = r.rank(method="average", pct=True)
-    q = np.clip((ranks * n_states).astype(int), 0, n_states - 1)
-    return q.to_numpy()
+def _make_quantizer(mode: str, window: int, n_states: int) -> Quantizer:
+    mode_norm = mode.lower()
+    if mode_norm == "zscore":
+        return ZScoreQuantizer(window, n_states)
+    if mode_norm in {"rank", "sliding_rank"}:
+        return SlidingRankQuantizer(window, n_states)
+    raise ValueError(f"Unsupported quantize_mode '{mode}'")
 
 
 def _transition_matrix(states: np.ndarray, n_states: int, eps: float):
@@ -329,27 +395,30 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
     n = len(r)
     out = {k: np.full(n, np.nan) for k in ["epr", "flux_index", "tra", "pe", "regime_score"]}
     r_values = r.to_numpy()
+    if n > 0 and not np.isfinite(r_values[0]):
+        r_values[0] = 0.0
 
-    if cfg.quantize_mode == "zscore":
-        quant_states = np.full(n, -1, dtype=int)
-        quant = ZScoreQuantizer(cfg.window, cfg.n_states)
-        for idx, value in enumerate(r_values):
-            if not np.isfinite(value):
-                continue
-            quant_states[idx] = quant.update_and_state(float(value))
-    else:
-        quant_states = np.full(n, -1, dtype=int)
-        mask = np.isfinite(r_values)
-        if np.any(mask):
-            ranked = pd.Series(r_values[mask]).rank(method="average", pct=True).to_numpy()
-            quant_states[mask] = np.clip((ranked * cfg.n_states).astype(int), 0, cfg.n_states - 1)
+    quant_states = np.full(n, -1, dtype=int)
+    quantizer = _make_quantizer(cfg.quantize_mode, cfg.window, cfg.n_states)
+    for idx, value in enumerate(r_values):
+        if not np.isfinite(value):
+            continue
+        quant_states[idx] = quantizer.update_and_state(float(value))
 
-    for t in range(cfg.window, n):
-        start = t - cfg.window
-        window_returns = r_values[start:t]
-        window_states = quant_states[start:t]
+    pe_roll = RollingPermutationEntropy(cfg.window, cfg.perm_emb_dim, cfg.perm_tau)
+    pe_values = np.full(n, np.nan)
+    for idx, value in enumerate(r_values):
+        if not np.isfinite(value) or idx == 0:
+            continue
+        pe_values[idx] = pe_roll.update(float(value))
+
+    for t in range(n):
+        start = max(0, t - cfg.window + 1)
+        window_returns = r_values[start: t + 1]
+        window_states = quant_states[start: t + 1]
         valid = np.isfinite(window_returns) & (window_states >= 0)
-        if np.count_nonzero(valid) < cfg.min_counts:
+        valid_count = int(np.count_nonzero(valid))
+        if valid_count - 1 < cfg.min_counts:
             continue
         rw = window_returns[valid]
         states = window_states[valid].astype(int)
@@ -359,11 +428,11 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
         epr, J = _entropy_production(P, pi, cfg.eps)
         flux_idx = _net_flux_index(J, cfg.normalize_flux)
         tra = _time_reversal_asymmetry_arr(rw)
-        pe = _permutation_entropy_arr(rw, cfg.perm_emb_dim, cfg.perm_tau, cfg.eps)
+        pe = pe_values[t]
         epr_c = math.log1p(epr)
         flux_mag = abs(flux_idx)
-        pe_inv = 1.0 - pe if not np.isnan(pe) else np.nan
-        regime = float(np.nanmean([epr_c, flux_mag, pe_inv]))
+        pe_inv = 1.0 - pe if not np.isnan(pe) else 0.0
+        regime = float(np.mean([epr_c, flux_mag, pe_inv]))
         regime = float(np.clip(regime, 0.0, 1.0))
         out["epr"][t] = epr
         out["flux_index"][t] = flux_idx
@@ -497,24 +566,34 @@ class StreamingIGS:
         self.last_price: Optional[float] = None
         self.tra_roll = RollingTRA(self.cfg.window)
         self.pe_roll = RollingPermutationEntropy(self.cfg.window, self.cfg.perm_emb_dim, self.cfg.perm_tau)
-        self.quant = ZScoreQuantizer(self.cfg.window, self.K)
+        self.quant = self._build_quantizer(self.K)
         self.k_adapt = _KAdaptController(self.cfg, external_measure=external_adaptation_measure)
         label = self.cfg.instrument_label or "unknown"
         self.metrics_async = _AsyncMetrics(self.cfg.prometheus_enabled and self.cfg.prometheus_async, label)
 
+    def _build_quantizer(self, n_states: int) -> Quantizer:
+        return _make_quantizer(self.cfg.quantize_mode, self.cfg.window, n_states)
+
     def _rebuild_counters_after_K_change(self):
-        K = self.K
         arr = list(self.returns)
+        self.quant = self._build_quantizer(self.K)
+        self.states = deque(maxlen=self.cfg.window)
+        self.T = np.zeros((self.K, self.K), dtype=float)
+        self.row_sums = np.zeros(self.K, dtype=float)
+        self.prev_state = None
         if not arr:
             return
-        new_states = [self.quant.state_for_value(x) for x in arr]
+        new_states: List[int] = []
+        prev_state: Optional[int] = None
+        for value in arr:
+            state = self.quant.update_and_state(value)
+            new_states.append(state)
+            if prev_state is not None:
+                self.T[prev_state, state] += 1.0
+                self.row_sums[prev_state] += 1.0
+            prev_state = state
         self.states = deque(new_states, maxlen=self.cfg.window)
-        self.T = np.zeros((K, K), dtype=float)
-        self.row_sums = np.zeros(K, dtype=float)
-        for a, b in zip(new_states[:-1], new_states[1:]):
-            self.T[a, b] += 1.0
-            self.row_sums[a] += 1.0
-        self.prev_state = self.states[-1] if len(self.states) else None
+        self.prev_state = prev_state
 
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
         if price is None or not (price > 0):
@@ -542,6 +621,7 @@ class StreamingIGS:
             self.row_sums[self.prev_state] += 1.0
         self.states.append(new_state)
         self.prev_state = new_state
+        pe_val = self.pe_roll.update(ret)
         if int(np.sum(self.row_sums)) < self.cfg.min_counts:
             return None
         P = np.zeros_like(self.T)
@@ -553,7 +633,6 @@ class StreamingIGS:
         pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
         epr, J = _entropy_production(P, pi, self.cfg.eps)
         flux_index = _net_flux_index(J, self.cfg.normalize_flux)
-        pe_val = self.pe_roll.update(ret)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         degrade = (self.cfg.max_update_ms > 0.0) and (elapsed_ms > self.cfg.max_update_ms)
         pe = float("nan") if degrade else pe_val
@@ -565,12 +644,9 @@ class StreamingIGS:
         regime_name = _classify_regime_simple(epr, flux_index, pe)
         self.metrics_async.emit(epr, flux_index, regime_score, self.K)
         if not degrade:
-            K_before = self.K
-            self.K = self.k_adapt.maybe_update(self.K, P)
-            if self.K != K_before:
-                self.quant = ZScoreQuantizer(self.cfg.window, self.K)
-                for x in list(self.returns):
-                    self.quant.roll.add(x)
+            new_K = self.k_adapt.maybe_update(self.K, P)
+            if new_K != self.K:
+                self.K = new_K
                 self._rebuild_counters_after_K_change()
         return IGSMetrics(timestamp=timestamp, epr=epr, flux_index=flux_index, tra=tra, pe=pe, regime_score=regime_score, regime=regime_name, n_states_used=self.K)
 
@@ -597,4 +673,6 @@ __all__ = [
     "RollingTRA",
     "RollingPermutationEntropy",
     "ZScoreQuantizer",
+    "SlidingRankQuantizer",
+    "Quantizer",
 ]
