@@ -998,13 +998,20 @@ class OnlineSignalForecaster:
         # dominant fast/slow EMA divergence, the crossover term highlights whether
         # MACD is leading or lagging the signal line, and the histogram term scales
         # the magnitude of the divergence to reward strong momentum while
-        # suppressing noise. RSI, short-term returns, and order-book imbalance are
-        # complementary momentum and flow signals, while realised volatility acts
-        # as a risk haircut.
+        # suppressing noise. The balance term gently penalises scenarios where
+        # divergence momentum and convergence cadence disagree, preventing the
+        # composite score from running too hot on one side of the MACD structure.
+        # RSI, short-term returns, and order-book imbalance are complementary
+        # momentum and flow signals, while realised volatility acts as a risk
+        # haircut.
+        macd_components = self._compute_macd_components(
+            macd=macd,
+            macd_signal_line=macd_signal_line,
+            macd_histogram=macd_histogram,
+        )
+
         contributions: dict[str, float] = {
-            "macd_trend": np.tanh(macd) * 0.28,
-            "macd_crossover": np.tanh(macd - macd_signal_line) * 0.24,
-            "macd_histogram": np.tanh(macd_histogram * 2.0) * 0.18,
+            **macd_components,
             "rsi_bias": ((rsi - 50.0) / 50.0) * 0.12,
             "return_momentum": np.tanh(ret_1 * 120.0) * 0.1,
             "order_flow": np.tanh(queue_imbalance) * 0.06,
@@ -1037,10 +1044,42 @@ class OnlineSignalForecaster:
                     "macd_trend": "Measures overall EMA divergence; positive values indicate bullish acceleration.",
                     "macd_crossover": "Rewards MACD leading the signal line; negative values highlight bearish crossovers.",
                     "macd_histogram": "Scales the magnitude of MACD vs signal separation to favour decisive momentum.",
+                    "macd_balance": "Penalises divergence and convergence disagreement so MACD structure remains balanced.",
                 },
             },
         )
         return signal, score
+
+    def _compute_macd_components(
+        self,
+        *,
+        macd: float,
+        macd_signal_line: float,
+        macd_histogram: float,
+    ) -> dict[str, float]:
+        """Return the MACD contribution breakdown with a balance correction.
+
+        The balance term discourages the composite signal from overweighting
+        either the divergence (trend + histogram) or convergence (crossover)
+        components when they materially disagree.
+        """
+
+        macd_trend_component = np.tanh(macd)
+        macd_crossover_component = np.tanh(macd - macd_signal_line)
+        macd_histogram_component = np.tanh(macd_histogram * 2.0)
+
+        divergence_strength = 0.5 * (
+            macd_trend_component + macd_histogram_component
+        )
+        imbalance = divergence_strength - macd_crossover_component
+        balance_correction = -np.tanh(imbalance * 1.5)
+
+        return {
+            "macd_trend": macd_trend_component * 0.26,
+            "macd_crossover": macd_crossover_component * 0.22,
+            "macd_histogram": macd_histogram_component * 0.18,
+            "macd_balance": balance_correction * 0.14,
+        }
 
 
 def _filter_feature_frame(
