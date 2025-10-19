@@ -29,8 +29,3 @@ igs:
   # signal_epr_q must be strictly between 0 and 1; signal_flux_min >= 0
   signal_epr_q: 0.7
   signal_flux_min: 0.0
-
-signal:
-  epr_q: 0.7
-  flux_q: 0.0
-  regime_threshold: 0.45
