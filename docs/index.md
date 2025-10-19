@@ -72,6 +72,10 @@ focused document so contributors can quickly find the details they need.
 - Align governance and compliance using the
   [Governance and Data Controls](governance.md) playbook covering RBAC, data
   contracts, privacy, and catalog management.
+- Launch responsible AI safeguards via the
+  [Responsible AI Program](responsible_ai_program.md), що деталізує повний
+  цикл управління ризиками, справедливістю, прозорістю та юридичною
+  відповідністю моделей TradePulse.
 - Align on safeguards using the [Risk, Signals, and Observability Control
   Blueprint](risk_ml_observability.md) when planning high-impact releases.
 
