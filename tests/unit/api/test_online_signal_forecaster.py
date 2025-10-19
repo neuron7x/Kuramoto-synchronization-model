@@ -215,6 +215,7 @@ class TestDeriveSignal:
         assert signal.action is SignalAction.BUY
         assert "component_contributions" in signal.metadata
         assert signal.metadata["component_contributions"]["macd_crossover"] > 0
+        assert signal.metadata["component_contributions"]["macd_balance"] >= 0
 
     def test_bearish_macd_convergence_scores_negative(
         self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
@@ -237,6 +238,57 @@ class TestDeriveSignal:
         assert score < -0.12
         assert signal.action is SignalAction.SELL
         assert signal.metadata["component_contributions"]["macd_crossover"] < 0
+        assert signal.metadata["component_contributions"]["macd_balance"] <= 0
+
+    def test_macd_balance_penalises_large_divergence(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        series = pd.Series(
+            {
+                "macd": 1.2,
+                "macd_signal": 1.05,
+                "macd_histogram": 0.6,
+                "rsi": 48.0,
+                "return_1": 0.0,
+                "queue_imbalance": 0.0,
+                "volatility_20": 0.01,
+            }
+        )
+        forecaster = make_forecaster(pd.DataFrame([series]))
+
+        signal, _ = forecaster.derive_signal("BTC-USD", series, 600)
+
+        contributions = signal.metadata["component_contributions"]
+        divergence_sum = contributions["macd_trend"] + contributions["macd_histogram"]
+
+        # When divergence materially outweighs convergence the balance term should
+        # act as a counterweight (negative contribution) to temper the score.
+        assert contributions["macd_balance"] < 0
+        assert divergence_sum > 0
+
+    def test_macd_balance_rewards_convergence_alignment(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        series = pd.Series(
+            {
+                "macd": -0.15,
+                "macd_signal": -0.45,
+                "macd_histogram": -0.3,
+                "rsi": 55.0,
+                "return_1": 0.0,
+                "queue_imbalance": 0.0,
+                "volatility_20": 0.012,
+            }
+        )
+        forecaster = make_forecaster(pd.DataFrame([series]))
+
+        signal, _ = forecaster.derive_signal("ETH-USD", series, 600)
+
+        contributions = signal.metadata["component_contributions"]
+
+        # Strong alignment between MACD convergence and divergence should yield a
+        # supportive balance term.
+        assert contributions["macd_balance"] > 0
 
     def test_signal_to_dto_in_prediction_response(
         self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
