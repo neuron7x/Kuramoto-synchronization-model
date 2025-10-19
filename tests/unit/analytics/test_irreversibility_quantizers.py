@@ -7,6 +7,7 @@ import pytest
 
 from analytics.signals.irreversibility import (
     IGSConfig,
+    RollingRankQuantizer,
     StreamingIGS,
     compute_igs_features,
 )
@@ -70,3 +71,33 @@ def test_batch_streaming_parity_quantization(quant_mode: str):
             atol=1e-6,
             err_msg=f"Mismatch in {column}",
         )
+
+
+def test_rolling_rank_quantizer_initial_states_centered():
+    quantizer = RollingRankQuantizer(window=8, n_states=5)
+    mid_bucket = quantizer.K // 2
+    states = [quantizer.update_and_state(0.0) for _ in range(3)]
+    assert all(state == mid_bucket for state in states)
+
+
+def test_streaming_rank_quantizer_gap_resets_to_neutral_bucket():
+    cfg = IGSConfig(
+        window=20,
+        n_states=5,
+        quantize_mode="rank",
+        min_counts=5,
+        adapt_method="off",
+        prometheus_enabled=False,
+    )
+    streamer = StreamingIGS(cfg)
+    t0 = pd.Timestamp("2024-01-01 00:00:00")
+    mid_bucket = cfg.n_states // 2
+
+    streamer.update(t0, 100.0)
+    assert list(streamer.states) == [mid_bucket]
+
+    streamer.update(t0 + pd.Timedelta(minutes=1), float("nan"))
+    assert list(streamer.states) == []
+
+    streamer.update(t0 + pd.Timedelta(minutes=2), 105.0)
+    assert list(streamer.states) == [mid_bucket]

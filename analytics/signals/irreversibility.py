@@ -284,11 +284,18 @@ class RollingRankQuantizer:
         lo = bisect_left(self.sorted, (x, -math.inf))
         hi = bisect_right(self.sorted, (x, math.inf))
         avg_rank = ((lo + 1) + hi) / 2.0
-        pct = avg_rank / n
-        pct = min(max(pct, 0.0), 1.0)
+        centered_rank = avg_rank - 0.5
+        pct = centered_rank / n
+        if n > 0:
+            upper_bound = 1.0 - (0.5 / n)
+        else:
+            upper_bound = 0.0
+        pct = min(max(pct, 0.0), upper_bound)
         state = int(pct * self.K)
         if state >= self.K:
             state = self.K - 1
+        if state < 0:
+            state = 0
         return state
 
     def update_and_state(self, x: float) -> int:
