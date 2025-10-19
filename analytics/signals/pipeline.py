@@ -150,7 +150,11 @@ class SignalFeaturePipeline:
             rolling_std = volume.rolling(
                 window=cfg.volatility_window, min_periods=cfg.volatility_window
             ).std()
-            features["volume_z"] = (volume - rolling_mean) / rolling_std
+            rolling_std_safe = rolling_std.mask(rolling_std == 0.0, np.nan)
+            volume_z = (volume - rolling_mean) / rolling_std_safe
+            zero_std_mask = rolling_std == 0.0
+            volume_z = volume_z.mask(zero_std_mask, 0.0)
+            features["volume_z"] = volume_z
 
         if bid_volume is not None and ask_volume is not None:
             bid = bid_volume.astype(float)
