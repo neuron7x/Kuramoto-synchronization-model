@@ -218,9 +218,34 @@ def to_utc(ts: datetime) -> datetime:
 
 
 def normalize_timestamp(
-    value: datetime | float | int, *, market: str | None = None
+    value: datetime | float | int | str, *, market: str | None = None
 ) -> datetime:
-    """Normalise raw timestamp inputs to a timezone-aware UTC datetime."""
+    """Normalise raw timestamp inputs to a timezone-aware UTC datetime.
+
+    The function accepts ``datetime`` instances, UNIX epoch timestamps expressed as
+    integers or floats, as well as ISO-8601 compatible strings.  String inputs may
+    also contain plain numeric values which are interpreted as seconds since the
+    UNIX epoch.
+    """
+
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            raise ValueError("timestamp string must not be empty")
+        try:
+            numeric_value = float(candidate)
+        except ValueError:
+            try:
+                parsed = pd.Timestamp(candidate)
+            except (TypeError, ValueError) as exc:  # pragma: no cover - defensive guard
+                raise ValueError(
+                    f"Unsupported timestamp string: {value!r}"
+                ) from exc
+            if pd.isna(parsed):
+                raise ValueError(f"Unsupported timestamp string: {value!r}")
+            value = parsed.to_pydatetime()
+        else:
+            value = float(numeric_value)
 
     if isinstance(value, (int, float)):
         dt = datetime.fromtimestamp(float(value), tz=timezone.utc)

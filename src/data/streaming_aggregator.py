@@ -78,8 +78,8 @@ class TickStreamAggregator:
         instrument_type: InstrumentType = InstrumentType.SPOT,
         historical: TickPayload = None,
         live: TickPayload = None,
-        start: datetime | pd.Timestamp | float | int | None = None,
-        end: datetime | pd.Timestamp | float | int | None = None,
+        start: datetime | pd.Timestamp | float | int | str | None = None,
+        end: datetime | pd.Timestamp | float | int | str | None = None,
         market: str | None = None,
         gap_fetcher: GapFetcher | None = None,
     ) -> AggregationResult:
@@ -98,7 +98,8 @@ class TickStreamAggregator:
         start, end:
             Desired coverage window used to compute backfill plans.  When not
             provided the aggregator falls back to the boundaries of the merged
-            dataset currently stored in the cache.
+            dataset currently stored in the cache.  Values may be provided as
+            ``datetime`` objects, UNIX timestamps, or ISO-8601 formatted strings.
         market:
             Explicit market calendar identifier.  Defaults to the value passed
             at construction time.
@@ -397,7 +398,7 @@ class TickStreamAggregator:
 
     def _coerce_timestamp(
         self,
-        value: datetime | pd.Timestamp | float | int | None,
+        value: datetime | pd.Timestamp | float | int | str | None,
         market: str | None,
     ) -> datetime | None:
         if value is None:

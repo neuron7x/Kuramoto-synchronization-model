@@ -69,6 +69,42 @@ def test_tick_stream_aggregator_merges_sources_and_detects_gaps() -> None:
     assert gap.end == pd.Timestamp(BASE_TS + timedelta(minutes=4))
 
 
+def test_tick_stream_aggregator_accepts_string_window_bounds() -> None:
+    cache_service = DataIngestionCacheService()
+    aggregator = TickStreamAggregator(cache_service=cache_service, timeframe="1min")
+
+    historical = [_make_tick(0, "30000"), _make_tick(1, "30010")]
+
+    result = aggregator.synchronise(
+        symbol="BTC/USDT",
+        venue="BINANCE",
+        instrument_type=InstrumentType.SPOT,
+        historical=historical,
+        start="2024-01-01T00:00:00Z",
+        end="2024-01-01T00:02:00Z",
+    )
+
+    assert list(result.frame.index) == [
+        pd.Timestamp(BASE_TS),
+        pd.Timestamp(BASE_TS + timedelta(minutes=1)),
+    ]
+    assert len(result.backfill_plan.gaps) == 1
+
+
+def test_tick_stream_aggregator_rejects_invalid_string_window_bounds() -> None:
+    cache_service = DataIngestionCacheService()
+    aggregator = TickStreamAggregator(cache_service=cache_service, timeframe="1min")
+
+    with pytest.raises(ValueError):
+        aggregator.synchronise(
+            symbol="BTC/USDT",
+            venue="BINANCE",
+            instrument_type=InstrumentType.SPOT,
+            start="invalid",  # type: ignore[arg-type]
+            end="2024-01-01T00:02:00Z",
+        )
+
+
 def test_tick_stream_aggregator_backfills_gaps_via_callback() -> None:
     cache_service = DataIngestionCacheService()
     aggregator = TickStreamAggregator(cache_service=cache_service, timeframe="1min")
