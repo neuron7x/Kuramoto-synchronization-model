@@ -662,7 +662,11 @@ class ModelObservabilityOrchestrator:
         reason: str,
         now: float,
     ) -> DegradationSignal | None:
-        key = f"{metric}:{reason}"
+        # The cooldown needs to be applied per-metric rather than per-reason. Some
+        # reasons include live metric values (for example, quality mean deviations),
+        # and embedding those in the key would make each emission unique and bypass
+        # the cooldown entirely.
+        key = metric
         last = self._last_degradation_by_metric.get(key)
         if last is not None:
             cooldown = self._config.degradation_cooldown_seconds
