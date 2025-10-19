@@ -91,6 +91,7 @@ nav:
       - Production Security Architecture: security/architecture.md
       - Identity and Access Management: security/iam.md
       - Data Loss Prevention & Retention: security/dlp_and_retention.md
+      - Security Hardening Program: security/hardening.md
       - Rate Limits & Host Protection: rate-limits-and-host-protection.md
   - Governance Records:
       - Architecture Decision Records: adr/index.md
