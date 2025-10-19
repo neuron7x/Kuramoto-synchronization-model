@@ -94,6 +94,11 @@ class IGSConfig:
             raise ValueError("perm_emb_dim must be >= 3")
         if self.perm_tau < 1:
             raise ValueError("perm_tau must be >= 1")
+        min_window_for_pe = (self.perm_emb_dim - 1) * self.perm_tau + 1
+        if self.window < min_window_for_pe:
+            raise ValueError(
+                "window must be >= (perm_emb_dim - 1) * perm_tau + 1 to compute permutation entropy"
+            )
         if self.k_min < 2:
             raise ValueError("k_min must be >= 2")
         if self.k_min > self.k_max:

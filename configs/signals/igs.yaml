@@ -1,5 +1,5 @@
 igs:
-  # window must be >= 3 and min_counts <= window
+  # window must be >= 3, satisfy (perm_emb_dim - 1) * perm_tau + 1, and min_counts <= window
   window: 600
   n_states: 7
   min_counts: 50

@@ -40,6 +40,7 @@ signal = igs_directional_signal(features, cfg=cfg)
 `IGSConfig` validates inputs to avoid degenerate parameterisations:
 
 - `window >= 3` and `min_counts <= window` ensure rolling statistics warm up.
+- `window >= (perm_emb_dim - 1) * perm_tau + 1` guarantees that permutation patterns are well-defined within the rolling window.
 - `n_states >= 2`, `k_min >= 2`, and `k_min <= k_max` maintain valid Markov chains.
 - `perm_emb_dim >= 3` and `perm_tau >= 1` keep the permutation entropy well-defined.
 - `adapt_method` ∈ `{"off", "entropy", "external"}`, `quantize_mode` ∈ `{"zscore", "rank", "sliding_rank"}`, and `pi_method` ∈ `{"empirical", "stationary"}`.
