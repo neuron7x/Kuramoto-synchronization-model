@@ -108,6 +108,67 @@ def test_secret_round_trip_and_access_control(store_components):
         )
 
 
+def test_namespace_access_hydrated_on_restart(tmp_path: Path):
+    clock = _ControlledClock()
+    storage_path = tmp_path / "vault.json"
+    master_key = SecretVault.generate_key()
+    audit_sink = _RecordingSink()
+    audit_logger = AuditLogger(secret="audit-secret-value", sink=audit_sink)
+    template_dir = tmp_path / "templates"
+    template_dir.mkdir()
+    (template_dir / "config.yaml.j2").write_text("value={{ value }}\n", encoding="utf-8")
+
+    namespace = NamespaceDefinition(
+        name="prod",
+        readers=frozenset({"deploy", "security"}),
+        writers=frozenset({"platform"}),
+        allow_ci=True,
+    )
+
+    initial_vault = SecretVault(
+        storage_path=storage_path,
+        master_key=master_key,
+        audit_logger=audit_logger,
+        clock=clock.now,
+    )
+    initial_store = CentralConfigurationStore(
+        vault=initial_vault,
+        template_manager=ConfigTemplateManager(template_dir),
+        audit_logger=audit_logger,
+        clock=clock.now,
+    )
+    initial_store.register_namespace(namespace)
+    initial_store.write_secret(
+        "prod",
+        "api_key",
+        "super-secret",
+        actor="platform",
+        ip_address="198.51.100.10",
+    )
+
+    reloaded_vault = SecretVault(
+        storage_path=storage_path,
+        master_key=master_key,
+        audit_logger=audit_logger,
+        clock=clock.now,
+    )
+    restarted_store = CentralConfigurationStore(
+        vault=reloaded_vault,
+        template_manager=ConfigTemplateManager(template_dir),
+        audit_logger=audit_logger,
+        clock=clock.now,
+    )
+    restarted_store.register_namespace(namespace)
+
+    value = restarted_store.read_secret(
+        "prod",
+        "api_key",
+        actor="deploy",
+        ip_address="198.51.100.11",
+    )
+    assert value == "super-secret"
+
+
 def test_configuration_round_trip(store_components):
     store, _, _ = store_components
     store.write_configuration(

@@ -96,8 +96,8 @@ class CentralConfigurationStore:
                 f"Conflicting namespace definition for '{definition.name}'"
             )
         self._namespaces[key] = definition
-        self._namespace_secrets.setdefault(key, set())
-        for secret in list(self._namespace_secrets[key]):
+        hydrated_secrets = self._hydrate_namespace_secrets(definition)
+        for secret in hydrated_secrets:
             self._grant_access(definition, secret)
         self._audit(
             event_type="config_namespace_registered",
@@ -431,6 +431,28 @@ class CentralConfigurationStore:
             raise ConfigurationStoreError(
                 f"Actor '{actor}' is not permitted to read namespace '{definition.name}'"
             )
+
+    def _hydrate_namespace_secrets(self, definition: NamespaceDefinition) -> set[str]:
+        """Load persisted secrets for *definition* and cache their names."""
+
+        key = definition.name.strip().lower()
+        secrets = self._namespace_secrets.setdefault(key, set())
+        namespace_key = definition.name.strip().lower()
+        try:
+            metadata_records = self._vault.list_metadata()
+        except SecretVaultError as exc:  # pragma: no cover - defensive, list_metadata doesn't raise
+            raise ConfigurationStoreError(str(exc)) from exc
+        for metadata in metadata_records:
+            namespace_part, separator, secret_part = metadata.name.partition("/")
+            if not separator:
+                continue
+            if namespace_part.strip().lower() != namespace_key:
+                continue
+            secret_name = secret_part.strip()
+            if not secret_name:
+                continue
+            secrets.add(secret_name)
+        return set(secrets)
 
     def _grant_access(self, definition: NamespaceDefinition, secret: str) -> None:
         qualified = self._qualified_secret_name(definition.name, secret)
