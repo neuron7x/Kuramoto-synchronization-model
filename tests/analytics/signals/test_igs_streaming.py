@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+import pytest
+
+import sys
+import types
 
 from analytics.signals.irreversibility import IGSConfig, StreamingIGS
 
@@ -40,3 +44,53 @@ def test_streaming_igs_resets_on_timezone_mismatch():
     assert engine.last_price is None
     assert not engine.returns
     assert not engine.states
+
+
+def test_streaming_igs_updates_prometheus_gauges_inline(monkeypatch):
+    from analytics.signals import irreversibility as irr
+
+    recorded: dict[str, dict[str, float | str]] = {}
+
+    class FakeGauge:
+        def __init__(self, name: str, _doc: str, _labels: list[str]):
+            self.name = name
+
+        def labels(self, label: str):
+            entry = recorded.setdefault(self.name, {})
+            entry["label"] = label
+            return self
+
+        def set(self, value: float) -> None:
+            recorded.setdefault(self.name, {})["value"] = value
+
+    try:
+        import prometheus_client as prom_mod  # type: ignore
+    except ImportError:
+        prom_mod = types.ModuleType("prometheus_client")
+        monkeypatch.setitem(sys.modules, "prometheus_client", prom_mod)
+
+    monkeypatch.setattr(prom_mod, "Gauge", FakeGauge)
+    monkeypatch.setattr(irr, "prometheus_client", prom_mod, raising=False)
+
+    cfg = irr.IGSConfig(
+        window=5,
+        min_counts=2,
+        prometheus_enabled=True,
+        prometheus_async=False,
+        instrument_label="btcusd",
+    )
+    engine = irr.StreamingIGS(cfg)
+
+    assert engine.metrics.enabled is True
+    assert engine.metrics.async_enabled is False
+
+    engine.metrics.emit(1.23, -0.45, 0.67, 9)
+
+    expected = {
+        "igs_epr": {"label": "btcusd", "value": pytest.approx(1.23)},
+        "igs_flux_index": {"label": "btcusd", "value": pytest.approx(-0.45)},
+        "igs_regime_score": {"label": "btcusd", "value": pytest.approx(0.67)},
+        "igs_states_k": {"label": "btcusd", "value": pytest.approx(9.0)},
+    }
+
+    assert recorded == expected

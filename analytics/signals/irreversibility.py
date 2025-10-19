@@ -45,9 +45,9 @@ import numpy as np
 import pandas as pd
 
 try:
-    from prometheus_client import Gauge  # type: ignore
+    import prometheus_client  # type: ignore
 except Exception:
-    Gauge = None
+    prometheus_client = None
 
 logger = logging.getLogger(__name__)
 
@@ -724,46 +724,74 @@ class _KAdaptController:
         return K
 
 
-class _AsyncMetrics:
-    def __init__(self, enabled: bool, label: str):
-        self.enabled = enabled and (Gauge is not None)
+class _MetricsEmitter:
+    def __init__(self, prometheus_enabled: bool, prometheus_async: bool, label: str):
+        gauge_factory = getattr(prometheus_client, "Gauge", None) if prometheus_client is not None else None
+        self.enabled = bool(prometheus_enabled and gauge_factory is not None)
+        self.async_enabled = bool(prometheus_async and self.enabled)
+        self.label = label
         if not self.enabled:
             self.g_epr = self.g_flux = self.g_regime = self.g_k = None
             self.q = None
             return
-        self.g_epr = Gauge("igs_epr", "IGS EPR", ["instrument"])
-        self.g_flux = Gauge("igs_flux_index", "IGS Flux Index", ["instrument"])
-        self.g_regime = Gauge("igs_regime_score", "IGS Regime Score", ["instrument"])
-        self.g_k = Gauge("igs_states_k", "IGS number of states K", ["instrument"])
-        self.q: "queue.Queue[Tuple[str, float]]" = queue.Queue(maxsize=10000)
-        self.label = label
-        t = threading.Thread(target=self._worker, daemon=True)
-        t.start()
-        self.q.put(("k", float("nan")))
 
-    def _worker(self):
+        self.g_epr = gauge_factory("igs_epr", "IGS EPR", ["instrument"])
+        self.g_flux = gauge_factory("igs_flux_index", "IGS Flux Index", ["instrument"])
+        self.g_regime = gauge_factory("igs_regime_score", "IGS Regime Score", ["instrument"])
+        self.g_k = gauge_factory("igs_states_k", "IGS number of states K", ["instrument"])
+        self.q: Optional["queue.Queue[Tuple[str, float]]"] = None
+
+        if self.async_enabled:
+            self.q = queue.Queue(maxsize=10000)
+            t = threading.Thread(target=self._worker, daemon=True)
+            t.start()
+            self.q.put(("k", float("nan")))
+        else:
+            self._set_gauge("k", float("nan"))
+
+    def _set_gauge(self, name: str, value: float) -> None:
+        try:
+            if name == "epr":
+                self.g_epr.labels(self.label).set(value)
+            elif name == "flux":
+                self.g_flux.labels(self.label).set(value)
+            elif name == "regime":
+                self.g_regime.labels(self.label).set(value)
+            elif name == "k":
+                self.g_k.labels(self.label).set(value)
+        except Exception:
+            pass
+
+    def _worker(self) -> None:
         while True:
+            if self.q is None:
+                break
             try:
                 name, value = self.q.get()
-                if name == "epr":
-                    self.g_epr.labels(self.label).set(value)
-                elif name == "flux":
-                    self.g_flux.labels(self.label).set(value)
-                elif name == "regime":
-                    self.g_regime.labels(self.label).set(value)
-                elif name == "k":
-                    self.g_k.labels(self.label).set(value)
+                self._set_gauge(name, value)
             except Exception:
                 pass
 
-    def emit(self, epr: float, flux: float, regime: float, K: int):
+    def emit(self, epr: float, flux: float, regime: float, K: int) -> None:
         if not self.enabled:
             return
-        for item in [("epr", float(epr)), ("flux", float(flux)), ("regime", float(regime)), ("k", float(K))]:
-            try:
-                self.q.put_nowait(item)
-            except queue.Full:
-                break
+
+        items = [
+            ("epr", float(epr)),
+            ("flux", float(flux)),
+            ("regime", float(regime)),
+            ("k", float(K)),
+        ]
+
+        if self.async_enabled and self.q is not None:
+            for item in items:
+                try:
+                    self.q.put_nowait(item)
+                except queue.Full:
+                    break
+        else:
+            for name, value in items:
+                self._set_gauge(name, value)
 
 
 class StreamingIGS:
@@ -786,7 +814,7 @@ class StreamingIGS:
         self.quant = self._build_quantizer(self.K)
         self.k_adapt = _KAdaptController(self.cfg, external_measure=external_adaptation_measure)
         label = self.cfg.instrument_label or "unknown"
-        self.metrics_async = _AsyncMetrics(self.cfg.prometheus_enabled and self.cfg.prometheus_async, label)
+        self.metrics = _MetricsEmitter(self.cfg.prometheus_enabled, self.cfg.prometheus_async, label)
 
     def _build_quantizer(self, n_states: int) -> Quantizer:
         return _make_quantizer(self.cfg.quantize_mode, self.cfg.window, n_states)
@@ -900,7 +928,7 @@ class StreamingIGS:
         regime_score = _weighted_regime_score((epr_c, flux_mag, pe_inv), self.cfg.regime_weights)
         regime_score = float(np.clip(regime_score, 0.0, 1.0)) if np.isfinite(regime_score) else float("nan")
         regime_name = _classify_regime_simple(epr, flux_index, pe)
-        self.metrics_async.emit(epr, flux_index, regime_score, self.K)
+        self.metrics.emit(epr, flux_index, regime_score, self.K)
         if not degrade:
             new_K = self.k_adapt.maybe_update(self.K, P)
             if new_K != self.K:
