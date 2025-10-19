@@ -168,6 +168,10 @@ See the [Docker Quick Start Guide](docs/docker-quickstart.md) for detailed instr
 - **Type Generation**: Build-time generation of Python (`core/events/models.py`) and TypeScript (`ui/dashboard/src/types/events.ts`) types from canonical schemas.
 - **Event Bus**: Kafka/NATS abstractions with per-symbol partitioning, at-least-once delivery, idempotent processing, retry queues, and dead-letter routing.
 
+## 🧼 Data Quality
+
+Market data is validated aggressively across the stack to prevent cascading failures. Batch feature extraction (`analytics/signals/irreversibility.compute_igs_features`) and the streaming engine (`StreamingIGS`) both treat non-finite or non-positive ticks as gaps. Those observations trigger state resets instead of contributing to transition counts, ensuring that entropy, flux, and regime metrics never inherit `NaN`/`inf` anchors from upstream feeds.
+
 ### Performance Optimization
 - **Float32 Precision**: 50% memory reduction with minimal accuracy loss.
 - **Chunked Processing**: Efficiently handle unlimited dataset sizes.

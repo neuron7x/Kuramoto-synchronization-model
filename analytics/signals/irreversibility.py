@@ -824,19 +824,23 @@ class StreamingIGS:
         self.k_adapt.reset()
 
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
-        if price is None or not (price > 0):
+        if price is None:
+            self._handle_price_gap()
+            return None
+        price_f = float(price)
+        if not np.isfinite(price_f) or price_f <= 0.0:
             self._handle_price_gap()
             return None
         t0 = time.perf_counter()
         if self.last_price is None:
-            self.last_price = float(price)
+            self.last_price = price_f
             self.returns.append(0.0)
             s0 = self.quant.update_and_state(0.0)
             self.states.append(s0)
             self.prev_state = s0
             return None
-        ret = math.log(float(price)) - math.log(self.last_price)
-        self.last_price = float(price)
+        ret = math.log(price_f) - math.log(self.last_price)
+        self.last_price = price_f
         if len(self.returns) == self.returns.maxlen and len(self.states) >= 2:
             old_prev = self.states[0]
             old_state = self.states[1]
