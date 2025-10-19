@@ -129,6 +129,8 @@ include = [
     "execution.*",
     "interfaces",
     "interfaces.*",
+    "src",
+    "src.*",
     "markets",
     "markets.*",
     "nfpro",
@@ -145,6 +147,7 @@ paths_to_mutate = [
     "core",
     "backtest",
     "execution",
+    "src",
 ]
 tests_dir = "tests"
 runner = "python -m pytest tests/unit tests/integration tests/property -q"
@@ -153,7 +156,7 @@ use_coverage = true
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["core", "backtest", "execution", "analytics"]
+source = ["core", "backtest", "execution", "analytics", "src"]
 
 [tool.coverage.report]
 fail_under = 90
