@@ -52,15 +52,24 @@ class InMemoryEventIdempotencyStore(EventIdempotencyStore):
     def mark_processed(self, event_id: str) -> None:
         now = time.time()
         with self._lock:
-            self._records[event_id] = IdempotencyRecord(
-                event_id=event_id, timestamp=now
-            )
-            self._order.append(IdempotencyRecord(event_id=event_id, timestamp=now))
+            record = self._records.get(event_id)
+            if record is None:
+                record = IdempotencyRecord(event_id=event_id, timestamp=now)
+                self._records[event_id] = record
+            else:
+                try:
+                    self._order.remove(record)
+                except ValueError:
+                    # Record might already have been evicted from the deque.
+                    pass
+                record.timestamp = now
+            self._order.append(record)
             self._evict_locked(now)
 
     def purge(self, ttl_seconds: int | None = None) -> None:
         with self._lock:
-            expiry = time.time() - (ttl_seconds or self._ttl_seconds)
+            effective_ttl = self._ttl_seconds if ttl_seconds is None else ttl_seconds
+            expiry = time.time() - effective_ttl if effective_ttl is not None else None
             self._evict_locked(expiry_reference=expiry)
 
     def _evict_locked(
@@ -81,7 +90,11 @@ class InMemoryEventIdempotencyStore(EventIdempotencyStore):
             if not expired:
                 break
             self._order.popleft()
-            self._records.pop(record.event_id, None)
+            current = self._records.get(record.event_id)
+            if current is record or (
+                current is not None and current.timestamp == record.timestamp
+            ):
+                self._records.pop(record.event_id, None)
 
     def _delete_locked(self, event_id: str) -> None:
         self._records.pop(event_id, None)
