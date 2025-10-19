@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Callable, Iterable, Sequence
 
+import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import BaseOffset
 
@@ -334,25 +335,27 @@ class TickStreamAggregator:
             return pd.DatetimeIndex([], tz=UTC, name="timestamp")
 
         stride = max(int(self._frequency / minute), 1)
-        session_boundaries = [0]
-        for idx in range(1, len(trading_minutes)):
-            if trading_minutes[idx] - trading_minutes[idx - 1] > minute:
-                session_boundaries.append(idx)
-        session_boundaries.append(len(trading_minutes))
+        if stride == 1:
+            resampled = trading_minutes
+        else:
+            minute_values = trading_minutes.asi8
+            if minute_values.size == 0:
+                return pd.DatetimeIndex([], tz=UTC, name="timestamp")
 
-        selected: list[pd.Timestamp] = []
-        for start_idx, end_idx in zip(
-            session_boundaries[:-1], session_boundaries[1:]
-        ):
-            session_minutes = trading_minutes[start_idx:end_idx]
-            if session_minutes.empty:
-                continue
-            selected.extend(session_minutes[::stride])
-
-        if not selected:
-            return pd.DatetimeIndex([], tz=UTC, name="timestamp")
-
-        resampled = pd.DatetimeIndex(selected)
+            gaps = np.flatnonzero(np.diff(minute_values) > minute.value) + 1
+            segments = (
+                np.split(trading_minutes, gaps) if gaps.size else [trading_minutes]
+            )
+            selected_segments = [
+                segment[::stride] for segment in segments if not segment.empty
+            ]
+            if not selected_segments:
+                return pd.DatetimeIndex([], tz=UTC, name="timestamp")
+            resampled = (
+                selected_segments[0].append(selected_segments[1:])
+                if len(selected_segments) > 1
+                else selected_segments[0]
+            )
         resampled = resampled.sort_values()
         mask = (resampled >= start_ts) & (resampled <= end_ts)
         aligned = resampled[mask]
