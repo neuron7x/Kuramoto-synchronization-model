@@ -6,7 +6,7 @@ igs:
   eps: 1e-12
   normalize_flux: true
   detrend: false
-  # quantize_mode must be either "zscore" or "rank"
+  # quantize_mode must be either "zscore" or "rank" ("sliding_rank" is accepted as an alias)
   quantize_mode: "zscore"
   perm_emb_dim: 5
   perm_tau: 1
@@ -22,9 +22,11 @@ igs:
   prometheus_enabled: false
   prometheus_async: true
   max_update_ms: 0.0
-  # pi_method currently supports only "empirical"
+  # pi_method examples:
+  #   "empirical"  – normalise observed row counts (default).
+  #   "stationary" – solve pi = pi @ P for the stationary distribution.
   pi_method: "empirical"
-  # regime_weights must be length 3, non-negative, and not all zeros
+  # regime_weights correspond to [log1p(EPR), |flux|, 1 - PE]; zero weight drops a component
   regime_weights: [1.0, 1.0, 1.0]
   # signal_epr_q must be strictly between 0 and 1; signal_flux_min >= 0
   signal_epr_q: 0.7

@@ -6,7 +6,20 @@ asymmetry, and permutation entropy. The resulting metrics can be used as standal
 - **Flux index** – signed collapse of antisymmetric probability fluxes.
 - **TRA** – third-order statistic capturing time-reversal asymmetry with an exact rolling update.
 - **Permutation entropy** – Bandt–Pompe entropy maintained incrementally after the warmup window.
-- **Regime score** – mean of `log1p(EPR)`, `|flux|`, and `(1 - PE)`.
+- **Regime score** – weighted mean of `log1p(EPR)`, `|flux|`, and `(1 - PE)`.
+
+### Choosing `pi_method`
+- `empirical` keeps the historical behaviour by normalising row counts of the transition matrix. This is a good default when the sampling window is long enough and you want EPR to react to recent occupancy shifts.
+- `stationary` solves the constrained system `pi = pi @ P` (with Tikhonov regularisation in the least-squares step) to obtain the stationary distribution implied by the current transition probabilities. This is numerically robust for sparse counts and suppresses transient sampling bias in EPR/flux calculations.
+
+### Quantisation modes
+- `quantize_mode="zscore"` (default) keeps an `O(1)` rolling mean/std and maps values to states via Gaussian quantiles.
+- `quantize_mode="rank"` maintains a sliding window of historical returns backed by a deque and sorted array. Each update performs `O(log W)` search and `O(W)` data movement to keep the order statistics consistent, ensuring that the state at time `t` depends only on the past `W` returns.
+
+### Regime score weighting
+- `regime_weights` controls the contribution of `[log1p(EPR), |flux|, 1 - PE]` in both batch and streaming pipelines.
+- Weights are normalised after discarding NaN components; zero weights effectively drop a metric (e.g. ignore flux during calibration).
+- When a component is degraded (e.g. permutation entropy under latency pressure), it is excluded from the weighted mean automatically.
 
 ## Python API
 ```python
@@ -29,7 +42,7 @@ signal = igs_directional_signal(features, cfg=cfg)
 - `window >= 3` and `min_counts <= window` ensure rolling statistics warm up.
 - `n_states >= 2`, `k_min >= 2`, and `k_min <= k_max` maintain valid Markov chains.
 - `perm_emb_dim >= 3` and `perm_tau >= 1` keep the permutation entropy well-defined.
-- `adapt_method` ∈ `{"off", "entropy", "external"}`, `quantize_mode` ∈ `{"zscore", "rank"}`, and `pi_method = "empirical"`.
+- `adapt_method` ∈ `{"off", "entropy", "external"}`, `quantize_mode` ∈ `{"zscore", "rank", "sliding_rank"}`, and `pi_method` ∈ `{"empirical", "stationary"}`.
 - `regime_weights` must have three non-negative entries with at least one positive weight.
 - `max_update_ms >= 0`, `0 < signal_epr_q < 1`, and `signal_flux_min >= 0` prevent ill-posed signal gating.
 
@@ -65,3 +78,4 @@ features = provider.compute_from_df(dataframe)
 ## Limitations
 - The incremental permutation entropy rebuilds the multiset when the window changes size; this is still `O(window)` but amortised by the warmup period.
 - Adaptation currently supports entropy and external measures; additional strategies can be hooked into `_KAdaptController`.
+- The sliding rank quantiser trades latency for leak-free discretisation. Insert/delete operations shift elements inside the sorted buffer (`O(window)`), which is acceptable for typical windows (≤ 1e3) but should be benchmarked for significantly larger sizes.

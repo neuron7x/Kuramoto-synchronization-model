@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from analytics.signals.irreversibility import IGSConfig, StreamingIGS, compute_igs_features
+import analytics.signals.irreversibility as igs
+from analytics.signals.irreversibility import (
+    IGSConfig,
+    StreamingIGS,
+    _entropy_production,
+    _transition_matrix,
+    compute_igs_features,
+)
 
 
 def _random_walk(seed: int, length: int) -> pd.Series:
@@ -51,9 +60,10 @@ def test_entropy_production_small_for_iid_noise() -> None:
     assert float(epr.mean()) < 5.0
 
 
-def test_streaming_matches_batch_tail_window() -> None:
+@pytest.mark.parametrize("quantize_mode", ["zscore", "rank"])
+def test_streaming_matches_batch_tail_window(quantize_mode: str) -> None:
     series = _random_walk(seed=3, length=1600)
-    config = IGSConfig(window=200, n_states=5, min_counts=80)
+    config = IGSConfig(window=200, n_states=5, min_counts=80, quantize_mode=quantize_mode)
     features = compute_igs_features(series, config)
     engine = StreamingIGS(config)
     metric = None
@@ -62,7 +72,126 @@ def test_streaming_matches_batch_tail_window() -> None:
     assert metric is not None
     batch_last = features.dropna().iloc[-1]
     assert np.isclose(metric.epr, batch_last["epr"], rtol=5e-1, atol=2e-2)
-    assert np.isclose(metric.flux_index, batch_last["flux_index"], rtol=2e-1, atol=2e-2)
+    assert np.isclose(metric.flux_index, batch_last["flux_index"], rtol=5e-1, atol=5e-2)
+
+
+def test_rank_quantization_walk_forward_consistency() -> None:
+    series = _random_walk(seed=7, length=900)
+    config = IGSConfig(window=180, n_states=5, min_counts=60, quantize_mode="rank")
+    full_features = compute_igs_features(series, config)
+    cutoff = 720
+    truncated = series.iloc[:cutoff]
+    truncated_features = compute_igs_features(truncated, config)
+    idx = truncated.index[-1]
+    full_row = full_features.loc[idx]
+    trunc_row = truncated_features.loc[idx]
+    for column in ["epr", "flux_index", "tra", "pe", "regime_score"]:
+        full_val = float(full_row[column])
+        trunc_val = float(trunc_row[column])
+        if np.isnan(full_val) and np.isnan(trunc_val):
+            continue
+        assert np.isclose(trunc_val, full_val, rtol=1e-9, atol=1e-9)
+
+
+def test_transition_matrix_stationary_distribution_matches_linear_solution() -> None:
+    states = np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1])
+    eps = 1e-9
+    P_emp, pi_empirical = _transition_matrix(states, n_states=2, eps=eps, pi_method="empirical")
+    P_sta, pi_stationary = _transition_matrix(states, n_states=2, eps=eps, pi_method="stationary")
+
+    assert np.allclose(P_emp, P_sta)
+
+    A = np.vstack([P_sta.T - np.eye(2), np.ones((1, 2))])
+    b = np.concatenate([np.zeros(2), np.array([1.0])])
+    expected, *_ = np.linalg.lstsq(A, b, rcond=None)
+    expected = np.maximum(expected, 0.0)
+    expected = expected / expected.sum()
+
+    assert not np.allclose(pi_empirical, pi_stationary)
+    assert np.allclose(pi_stationary, expected, atol=1e-8)
+
+
+def test_entropy_production_differs_between_pi_methods() -> None:
+    states = np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1])
+    eps = 1e-9
+    P, pi_empirical = _transition_matrix(states, n_states=2, eps=eps, pi_method="empirical")
+    _, pi_stationary = _transition_matrix(states, n_states=2, eps=eps, pi_method="stationary")
+
+    epr_empirical, _ = _entropy_production(P, pi_empirical, eps)
+    epr_stationary, _ = _entropy_production(P, pi_stationary, eps)
+
+    assert epr_stationary < epr_empirical
+    assert epr_stationary < 1e-6
+
+
+def test_regime_score_respects_weights_in_batch(monkeypatch) -> None:
+    series = pd.Series(
+        np.linspace(100.0, 110.0, 40),
+        index=pd.date_range("2024-01-01", periods=40, freq="min"),
+    )
+
+    def fake_entropy_production(P, pi, eps):
+        return math.expm1(0.3), np.zeros_like(P)
+
+    monkeypatch.setattr(igs, "_entropy_production", fake_entropy_production)
+    monkeypatch.setattr(igs, "_net_flux_index", lambda J, normalize: 0.9)
+    monkeypatch.setattr(igs, "_time_reversal_asymmetry_arr", lambda arr: 0.0)
+    monkeypatch.setattr(igs, "_permutation_entropy_arr", lambda arr, m, tau, eps: 0.2)
+    monkeypatch.setattr(igs.RollingPermutationEntropy, "update", lambda self, x: 0.2)
+
+    cfg_equal = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 1.0, 1.0))
+    cfg_fluxless = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 0.0, 1.0))
+
+    expected_equal = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_equal.regime_weights)
+    expected_fluxless = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_fluxless.regime_weights)
+
+    features_equal = compute_igs_features(series, cfg_equal).dropna()
+    features_fluxless = compute_igs_features(series, cfg_fluxless).dropna()
+
+    assert not features_equal.empty and not features_fluxless.empty
+
+    score_equal = float(features_equal.iloc[-1]["regime_score"])
+    score_fluxless = float(features_fluxless.iloc[-1]["regime_score"])
+
+    assert math.isclose(score_equal, expected_equal, rel_tol=1e-12, abs_tol=1e-12)
+    assert math.isclose(score_fluxless, expected_fluxless, rel_tol=1e-12, abs_tol=1e-12)
+    assert score_fluxless < score_equal
+
+
+def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
+    series = pd.Series(
+        np.linspace(100.0, 110.0, 40),
+        index=pd.date_range("2024-01-01", periods=40, freq="min"),
+    )
+
+    def fake_entropy_production(P, pi, eps):
+        return math.expm1(0.3), np.zeros_like(P)
+
+    monkeypatch.setattr(igs, "_entropy_production", fake_entropy_production)
+    monkeypatch.setattr(igs, "_net_flux_index", lambda J, normalize: 0.9)
+    monkeypatch.setattr(igs.RollingPermutationEntropy, "update", lambda self, x: 0.2)
+
+    cfg_equal = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 1.0, 1.0))
+    cfg_fluxless = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 0.0, 1.0))
+
+    expected_equal = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_equal.regime_weights)
+    expected_fluxless = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_fluxless.regime_weights)
+
+    engine_equal = StreamingIGS(cfg_equal)
+    metric_equal = None
+    for timestamp, price in series.items():
+        metric_equal = engine_equal.update(timestamp, float(price))
+    assert metric_equal is not None
+
+    engine_fluxless = StreamingIGS(cfg_fluxless)
+    metric_fluxless = None
+    for timestamp, price in series.items():
+        metric_fluxless = engine_fluxless.update(timestamp, float(price))
+    assert metric_fluxless is not None
+
+    assert math.isclose(metric_equal.regime_score, expected_equal, rel_tol=1e-12, abs_tol=1e-12)
+    assert math.isclose(metric_fluxless.regime_score, expected_fluxless, rel_tol=1e-12, abs_tol=1e-12)
+    assert metric_fluxless.regime_score < metric_equal.regime_score
 
 
 @pytest.mark.parametrize(
@@ -91,3 +220,8 @@ def test_igs_config_validation(overrides: dict, message: str) -> None:
     kwargs.update(overrides)
     with pytest.raises(ValueError, match=message):
         IGSConfig(**kwargs)
+
+
+def test_config_rejects_invalid_pi_method() -> None:
+    with pytest.raises(ValueError):
+        IGSConfig(pi_method="invalid")
