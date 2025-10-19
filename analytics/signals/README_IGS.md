@@ -19,7 +19,7 @@ from analytics.signals.irreversibility import (
 
 cfg = IGSConfig(window=600, n_states=7)
 features = compute_igs_features(price_series, cfg)
-signal = igs_directional_signal(features, epr_q=0.7, flux_min=0.0)
+signal = igs_directional_signal(features, cfg=cfg)
 ```
 
 For streaming scenarios the quantiser, permutation entropy, and TRA updates are all `O(1)` after warmup:

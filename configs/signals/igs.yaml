@@ -23,8 +23,3 @@ igs:
   regime_weights: [1.0, 1.0, 1.0]
   signal_epr_q: 0.7
   signal_flux_min: 0.0
-
-signal:
-  epr_q: 0.7
-  flux_q: 0.0
-  regime_threshold: 0.45

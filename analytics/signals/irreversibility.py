@@ -373,14 +373,42 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
     return pd.DataFrame(out, index=r.index)
 
 
-def igs_directional_signal(features: pd.DataFrame, epr_q: float = 0.7, flux_min: float = 0.0) -> pd.Series:
+def igs_directional_signal(
+    features: pd.DataFrame,
+    cfg: Optional[IGSConfig] = None,
+    *,
+    epr_q: Optional[float] = None,
+    flux_min: Optional[float] = None,
+) -> pd.Series:
+    """Build a directional long/short signal from pre-computed IGS features.
+
+    Parameters
+    ----------
+    features:
+        DataFrame returned by :func:`compute_igs_features` containing at least
+        ``epr`` and ``flux_index`` columns.
+    cfg:
+        Configuration whose :class:`IGSConfig.signal_epr_q` and
+        :class:`IGSConfig.signal_flux_min` provide the default thresholds.
+        When ``None`` the defaults from :class:`IGSConfig` are used.
+    epr_q:
+        Optional override for the quantile applied to the entropy production
+        rate.  If omitted the value from ``cfg`` is used.
+    flux_min:
+        Optional override for the minimum absolute flux required to emit a
+        signal.  If omitted the value from ``cfg`` is used.
+    """
+
+    cfg = cfg or IGSConfig()
     f = features
     s = pd.Series(0, index=f.index, dtype=int)
     valid = f["epr"].notna() & f["flux_index"].notna()
     if valid.any():
-        thr = f.loc[valid, "epr"].quantile(epr_q)
-        pos = valid & (f["epr"] >= thr) & (f["flux_index"] > +flux_min)
-        neg = valid & (f["epr"] >= thr) & (f["flux_index"] < -flux_min)
+        epr_quantile = cfg.signal_epr_q if epr_q is None else epr_q
+        flux_threshold = cfg.signal_flux_min if flux_min is None else flux_min
+        thr = f.loc[valid, "epr"].quantile(epr_quantile)
+        pos = valid & (f["epr"] >= thr) & (f["flux_index"] > +flux_threshold)
+        neg = valid & (f["epr"] >= thr) & (f["flux_index"] < -flux_threshold)
         s[pos] = 1
         s[neg] = -1
     return s
