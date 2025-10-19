@@ -515,6 +515,13 @@ timestamp,open,high,low,close,volume
 2024-01-01 00:01:00,50050,50200,50000,50150,150.2
 ```
 
+### How does the feature pipeline handle constant volume windows?
+
+`SignalFeaturePipeline` masks zero rolling variance in the `volume_z` normaliser and
+returns a z-score of `0.0` for constant-volume windows once the warmup period
+finishes. This keeps the feature finite so downstream models can continue to use
+the observations without additional guards.
+
 ### Can I use 1-minute, hourly, or daily data?
 
 Yes! TradePulse is timeframe-agnostic. Specify your timeframe in analysis:
