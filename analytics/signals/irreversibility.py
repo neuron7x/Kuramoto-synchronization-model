@@ -505,16 +505,28 @@ class StreamingIGS:
     def _rebuild_counters_after_K_change(self):
         K = self.K
         arr = list(self.returns)
+        self.quant = ZScoreQuantizer(self.cfg.window, K)
         if not arr:
+            self.states = deque(maxlen=self.cfg.window)
+            self.T = np.zeros((K, K), dtype=float)
+            self.row_sums = np.zeros(K, dtype=float)
+            self.prev_state = None
             return
-        new_states = [self.quant.state_for_value(x) for x in arr]
-        self.states = deque(new_states, maxlen=self.cfg.window)
-        self.T = np.zeros((K, K), dtype=float)
-        self.row_sums = np.zeros(K, dtype=float)
-        for a, b in zip(new_states[:-1], new_states[1:]):
-            self.T[a, b] += 1.0
-            self.row_sums[a] += 1.0
-        self.prev_state = self.states[-1] if len(self.states) else None
+        T = np.zeros((K, K), dtype=float)
+        row_sums = np.zeros(K, dtype=float)
+        states: Deque[int] = deque(maxlen=self.cfg.window)
+        prev_state: Optional[int] = None
+        for value in arr:
+            state = self.quant.update_and_state(float(value))
+            states.append(state)
+            if prev_state is not None:
+                T[prev_state, state] += 1.0
+                row_sums[prev_state] += 1.0
+            prev_state = state
+        self.states = states
+        self.T = T
+        self.row_sums = row_sums
+        self.prev_state = prev_state
 
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
         if price is None or not (price > 0):
@@ -568,9 +580,6 @@ class StreamingIGS:
             K_before = self.K
             self.K = self.k_adapt.maybe_update(self.K, P)
             if self.K != K_before:
-                self.quant = ZScoreQuantizer(self.cfg.window, self.K)
-                for x in list(self.returns):
-                    self.quant.roll.add(x)
                 self._rebuild_counters_after_K_change()
         return IGSMetrics(timestamp=timestamp, epr=epr, flux_index=flux_index, tra=tra, pe=pe, regime_score=regime_score, regime=regime_name, n_states_used=self.K)
 
