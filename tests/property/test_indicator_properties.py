@@ -74,7 +74,7 @@ def test_temporal_ricci_resilient_to_non_finite(
     window: int, raw_prices: list[float]
 ) -> None:
     length = len(raw_prices)
-    index = pd.date_range("2023-01-01", periods=length, freq="T")
+    index = pd.date_range("2023-01-01", periods=length, freq="min")
     prices = np.asarray(raw_prices, dtype=float)
     volumes = np.linspace(1.0, 2.0, length)
     df = pd.DataFrame({"close": prices, "volume": volumes}, index=index)

@@ -1,39 +1,36 @@
-"""Demonstration script for Irreversibility-Gated Signal features."""
-from __future__ import annotations
-
-from pathlib import Path
+"""
+IGS batch and streaming demonstration. Saves CSV outputs.
+"""
 
 import numpy as np
 import pandas as pd
+from pathlib import Path
+from analytics.signals.irreversibility import IGSConfig, compute_igs_features, igs_directional_signal, StreamingIGS
 
-from analytics.signals.irreversibility import IGSConfig, compute_igs_features, igs_directional_signal
+np.random.seed(0)
+n = 3000
+parts = [
+    np.cumsum(0.05 + 0.6*np.random.randn(600)),
+    np.cumsum(0.00 + 1.0*np.random.randn(600)),
+    np.cumsum(-0.03 + 0.5*np.random.randn(600)),
+    np.cumsum(0.02 + 0.7*np.random.randn(n-1800)),
+]
+trend = np.concatenate(parts)
+price = 100.0 * np.exp(trend / 100.0)
+idx = pd.date_range("2024-01-01", periods=n, freq="min")
+price_series = pd.Series(price, index=idx, name="close")
 
-OUTPUT_FILE = Path("igs_demo_features_signal.csv")
+cfg = IGSConfig(window=400, n_states=7)
+features = compute_igs_features(price_series, cfg)
+signal = igs_directional_signal(features, epr_q=0.7, flux_min=0.0)
+out = pd.concat([price_series.rename("close"), features, signal.rename("igs_signal")], axis=1)
+Path("igs_demo_features_signal.csv").write_text(out.to_csv())
 
-
-def _build_synthetic_series(length: int) -> pd.Series:
-    rng = np.random.default_rng(0)
-    segments = [
-        np.cumsum(0.05 + 0.6 * rng.standard_normal(600)),
-        np.cumsum(0.0 + 1.0 * rng.standard_normal(600)),
-        np.cumsum(-0.03 + 0.5 * rng.standard_normal(600)),
-        np.cumsum(0.02 + 0.7 * rng.standard_normal(length - 1800)),
-    ]
-    log_price = np.concatenate(segments)
-    price = 100.0 * np.exp(log_price / 100.0)
-    index = pd.date_range("2024-01-01", periods=length, freq="min")
-    return pd.Series(price, index=index, name="close")
-
-
-def main() -> None:
-    series = _build_synthetic_series(3000)
-    config = IGSConfig(window=400, n_states=7, perm_emb_dim=5, perm_tau=1)
-    features = compute_igs_features(series, config)
-    signal = igs_directional_signal(features, epr_q=0.7, flux_q=0.6)
-    output = pd.concat([series.rename("close"), features, signal.rename("igs_signal")], axis=1)
-    output.to_csv(OUTPUT_FILE)
-    print(f"Saved {OUTPUT_FILE}")
-
-
-if __name__ == "__main__":
-    main()
+eng = StreamingIGS(cfg)
+rows = []
+for t, p in price_series.items():
+    m = eng.update(t, float(p))
+    if m:
+        rows.append([t, m.epr, m.flux_index, m.tra, m.pe, m.regime_score, m.regime, m.n_states_used])
+stream_df = pd.DataFrame(rows, columns=["ts", "epr", "flux", "tra", "pe", "regime_score", "regime", "K"]).set_index("ts")
+Path("igs_demo_stream.csv").write_text(stream_df.to_csv())

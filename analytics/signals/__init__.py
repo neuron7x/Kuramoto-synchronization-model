@@ -13,7 +13,10 @@ from .pipeline import (
 from .irreversibility import (
     IGSConfig,
     IGSMetrics,
+    RollingPermutationEntropy,
+    RollingTRA,
     StreamingIGS,
+    ZScoreQuantizer,
     compute_igs_features,
     igs_directional_signal,
 )
@@ -30,7 +33,10 @@ __all__ = [
     "make_default_candidates",
     "IGSConfig",
     "IGSMetrics",
+    "RollingPermutationEntropy",
+    "RollingTRA",
     "StreamingIGS",
+    "ZScoreQuantizer",
     "compute_igs_features",
     "igs_directional_signal",
     "IGSFeatureProvider",

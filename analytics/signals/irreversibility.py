@@ -1,29 +1,597 @@
-"""Irreversibility-Gated Signal (IGS).
-
-This module implements batch and streaming utilities for computing metrics that
-capture time-irreversibility in financial time series. The public surface is
-kept deliberately small to ease integration inside TradePulse pipelines while
-allowing offline research workflows and real-time execution to share the same
-logic.
-
-Exports
--------
-- :class:`IGSConfig`
-- :class:`IGSMetrics`
-- :func:`compute_igs_features`
-- :func:`igs_directional_signal`
-- :class:`StreamingIGS`
 """
+Irreversibility-Gated Signal (IGS) — Hybrid Core
+================================================
+Features:
+- Entropy Production Rate (EPR) on K-state Markov discretization of log-returns
+- Probability flux tensor J and scalar FluxIndex in [-1, 1]
+- Time-Reversal Asymmetry (TRA, third order) with exact O(1) rolling update
+- Permutation Entropy (PE) with incremental multiset maintenance after warmup
+- Composite regime_score = mean(log1p(EPR), |FluxIndex|, 1 - PE)
+
+Streaming:
+- O(1) updates for transition counts
+- O(1) quantization via ZScoreQuantizer with rolling mean/std and normal quantiles
+- Hysteretic K-adaptation with cooldown; O(W) rebuild only on change
+- Asynchronous Prometheus emission (optional)
+- Overload guard via max_update_ms for latency-aware degradation
+
+Dependencies: numpy, pandas. Optional: prometheus_client.
+"""
+
 from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import Deque, Literal, Optional, Sequence, Tuple
-
-import math
 from collections import deque
-
+from typing import Optional, Tuple, Deque, Dict, Any, Callable, List
+import math
+import logging
+import threading
+import queue
+import time
 import numpy as np
 import pandas as pd
+
+try:
+    from prometheus_client import Gauge  # type: ignore
+except Exception:
+    Gauge = None
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class IGSConfig:
+    window: int = 600
+    n_states: int = 7
+    min_counts: int = 50
+    eps: float = 1e-12
+    normalize_flux: bool = True
+    detrend: bool = False
+    quantize_mode: str = "zscore"
+    perm_emb_dim: int = 5
+    perm_tau: int = 1
+    adapt_method: str = "off"
+    k_min: int = 5
+    k_max: int = 15
+    adapt_threshold: float = 0.10
+    adapt_persist: int = 3
+    adapt_cooldown: int = 50
+    adapt_step: int = 1
+    instrument_label: Optional[str] = None
+    prometheus_enabled: bool = False
+    prometheus_async: bool = True
+    max_update_ms: float = 0.0
+    pi_method: str = "empirical"
+    regime_weights: Tuple[float, float, float] = (1.0, 1.0, 1.0)
+    signal_epr_q: float = 0.7
+    signal_flux_min: float = 0.0
+
+
+@dataclass
+class IGSMetrics:
+    timestamp: pd.Timestamp
+    epr: float
+    flux_index: float
+    tra: float
+    pe: float
+    regime_score: float
+    regime: str
+    n_states_used: int
+
+
+def _safe_log(x: np.ndarray, eps: float) -> np.ndarray:
+    return np.log(np.maximum(x, eps))
+
+
+def _ndtri(p: float) -> float:
+    a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00]
+    b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01]
+    c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00]
+    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00]
+    plow = 0.02425
+    phigh = 1 - plow
+    if p <= 0 or p >= 1:
+        return float("nan")
+    if p < plow:
+        q = math.sqrt(-2 * math.log(p))
+        return (((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) / ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1)
+    if p > phigh:
+        q = math.sqrt(-2 * math.log(1 - p))
+        return -(((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) / ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1)
+    q = p - 0.5
+    r = q * q
+    return (((((a[0]*r + a[1])*r + a[2])*r + a[3])*r + a[4])*r + a[5]) * q / (((((b[0]*r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1)
+
+
+class RollingMeanStd:
+    def __init__(self, window: int):
+        self.W = window
+        self.buf: Deque[float] = deque(maxlen=window)
+        self.sum = 0.0
+        self.sumsq = 0.0
+
+    def add(self, x: float):
+        if len(self.buf) == self.W:
+            x_old = self.buf[0]
+            self.sum -= x_old
+            self.sumsq -= x_old * x_old
+            self.buf.popleft()
+        self.buf.append(x)
+        self.sum += x
+        self.sumsq += x * x
+
+    def stats(self) -> Tuple[float, float]:
+        n = len(self.buf)
+        if n == 0:
+            return 0.0, 1.0
+        mean = self.sum / n
+        var = max(self.sumsq / n - mean * mean, 1e-12)
+        std = math.sqrt(var)
+        return mean, std
+
+
+class ZScoreQuantizer:
+    def __init__(self, window: int, n_states: int):
+        self.W = window
+        self.K = n_states
+        self.roll = RollingMeanStd(window)
+        self.boundaries = np.array([_ndtri(i / n_states) for i in range(1, n_states)], dtype=float)
+
+    def update_and_state(self, x: float) -> int:
+        self.roll.add(x)
+        mean, std = self.roll.stats()
+        z = (x - mean) / (std if std > 1e-12 else 1.0)
+        s = int(np.searchsorted(self.boundaries, z, side="right"))
+        return int(np.clip(s, 0, self.K - 1))
+
+    def state_for_value(self, x: float) -> int:
+        mean, std = self.roll.stats()
+        z = (x - mean) / (std if std > 1e-12 else 1.0)
+        s = int(np.searchsorted(self.boundaries, z, side="right"))
+        return int(np.clip(s, 0, self.K - 1))
+
+
+class RollingTRA:
+    def __init__(self, window: int):
+        if window < 3:
+            raise ValueError("TRA window must be >= 3")
+        self.W = window
+        self.buf: Deque[float] = deque(maxlen=window)
+        self.sum_xy = 0.0
+        self.sum_yx = 0.0
+        self.n_pairs = 0
+
+    def update(self, r_t: float) -> float:
+        if len(self.buf) == self.W and len(self.buf) >= 2:
+            old_prev = self.buf[0]
+            old_cur = self.buf[1]
+            self.sum_xy -= (old_cur ** 2) * old_prev
+            self.sum_yx -= (old_prev ** 2) * old_cur
+            self.n_pairs = max(0, self.n_pairs - 1)
+            self.buf.popleft()
+        if len(self.buf) >= 1:
+            r_prev = self.buf[-1]
+            self.sum_xy += (r_t ** 2) * r_prev
+            self.sum_yx += (r_prev ** 2) * r_t
+            self.n_pairs += 1
+        self.buf.append(r_t)
+        if self.n_pairs == 0:
+            return float("nan")
+        return (self.sum_xy / self.n_pairs) - (self.sum_yx / self.n_pairs)
+
+
+class RollingPermutationEntropy:
+    def __init__(self, window: int, m: int = 5, tau: int = 1):
+        if m < 3:
+            raise ValueError("m >= 3 required")
+        if tau < 1:
+            raise ValueError("tau >= 1 required")
+        self.W = window
+        self.m = m
+        self.tau = tau
+        self.buf: Deque[float] = deque(maxlen=window)
+        self.counts: Dict[Tuple[int, ...], int] = {}
+        self.total = 0
+        self.initialized = False
+
+    def _pattern_at(self, arr: List[float], start: int) -> Tuple[int, ...]:
+        seq = arr[start: start + self.m * self.tau: self.tau]
+        order = tuple(np.argsort(seq, kind="mergesort"))
+        return order
+
+    def _rebuild(self, arr: List[float]):
+        self.counts.clear()
+        P = len(arr) - (self.m - 1) * self.tau
+        if P <= 0:
+            self.total = 0
+            self.initialized = False
+            return
+        for s in range(P):
+            pat = self._pattern_at(arr, s)
+            self.counts[pat] = self.counts.get(pat, 0) + 1
+        self.total = P
+        self.initialized = True
+
+    def _entropy(self) -> float:
+        if self.total <= 0:
+            return float("nan")
+        c = np.array(list(self.counts.values()), dtype=float)
+        p = c / c.sum()
+        H = -np.sum(p * np.log(p + 1e-12))
+        Hmax = math.log(math.factorial(self.m))
+        return float(H / Hmax)
+
+    def update(self, x: float) -> float:
+        if len(self.buf) == self.W:
+            if not self.initialized:
+                self._rebuild(list(self.buf))
+            P = self.W - (self.m - 1) * self.tau
+            if P > 0:
+                arr_old = list(self.buf)
+                pat_old = self._pattern_at(arr_old, 0)
+                cnt = self.counts.get(pat_old, 0)
+                if cnt > 1:
+                    self.counts[pat_old] = cnt - 1
+                elif cnt == 1:
+                    del self.counts[pat_old]
+                self.total -= 1
+            self.buf.popleft()
+        self.buf.append(x)
+        if len(self.buf) < self.W:
+            self._rebuild(list(self.buf))
+            return self._entropy()
+        arr_new = list(self.buf)
+        P = self.W - (self.m - 1) * self.tau
+        if P <= 0:
+            self.initialized = False
+            return float("nan")
+        pat_new = self._pattern_at(arr_new, P - 1)
+        self.counts[pat_new] = self.counts.get(pat_new, 0) + 1
+        self.total += 1
+        return self._entropy()
+
+
+def _returns_from_prices(price: pd.Series) -> pd.Series:
+    if not isinstance(price, pd.Series):
+        raise TypeError("price must be a pandas Series")
+    price = price.where(price > 0, np.nan)
+    return np.log(price).diff()
+
+
+def _quantize_returns_rank(r: pd.Series, n_states: int) -> np.ndarray:
+    ranks = r.rank(method="average", pct=True)
+    q = np.clip((ranks * n_states).astype(int), 0, n_states - 1)
+    return q.to_numpy()
+
+
+def _transition_matrix(states: np.ndarray, n_states: int, eps: float):
+    T = np.zeros((n_states, n_states), dtype=float)
+    for a, b in zip(states[:-1], states[1:]):
+        T[a, b] += 1.0
+    counts_out = T.sum(axis=1, keepdims=True)
+    P = (T + eps) / (counts_out + n_states * eps)
+    pi = T.sum(axis=1)
+    if pi.sum() < eps:
+        pi = np.full(n_states, 1.0 / n_states, dtype=float)
+    else:
+        pi = pi / (pi.sum() + eps)
+    return P, pi
+
+
+def _entropy_production(P: np.ndarray, pi: np.ndarray, eps: float):
+    pij = np.maximum(pi[:, None] * P, eps)
+    pji = np.maximum(pi[None, :] * P.T, eps)
+    epr_matrix = pij * (_safe_log(pij, eps) - _safe_log(pji, eps))
+    epr = float(np.nansum(epr_matrix))
+    J = pij - pji
+    return epr, J
+
+
+def _net_flux_index(J: np.ndarray, normalize: bool = True):
+    n = J.shape[0]
+    idxs = np.arange(n)
+    weight = (idxs[None, :] - idxs[:, None])
+    upper = np.triu_indices(n, k=1)
+    num = float(np.sum(J[upper] * weight[upper]))
+    den = float(np.sum(np.abs(J[upper] * weight[upper])) + 1e-12)
+    x = num / den
+    return float(np.clip(x, -1.0, 1.0)) if normalize else num
+
+
+def _time_reversal_asymmetry_arr(r: np.ndarray) -> float:
+    if len(r) < 3:
+        return float("nan")
+    a = float(np.mean(r[1:]**2 * r[:-1]))
+    b = float(np.mean(r[:-1]**2 * r[1:]))
+    return a - b
+
+
+def _permutation_entropy_arr(x: np.ndarray, dim: int, tau: int, eps: float) -> float:
+    n = len(x) - (dim - 1) * tau
+    if dim < 3 or n <= 1:
+        return float("nan")
+    counts: Dict[Tuple[int, ...], int] = {}
+    for i in range(n):
+        window = x[i: i + dim * tau: tau]
+        order = tuple(np.argsort(window, kind="mergesort"))
+        counts[order] = counts.get(order, 0) + 1
+    c = np.array(list(counts.values()), dtype=float)
+    p = c / c.sum()
+    H = -np.sum(p * np.log(p + eps))
+    Hmax = math.log(math.factorial(dim))
+    return float(H / Hmax)
+
+
+def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> pd.DataFrame:
+    cfg = cfg or IGSConfig()
+    r = _returns_from_prices(price)
+    if cfg.detrend:
+        r = r - r.rolling(max(5, cfg.window // 10), min_periods=1).mean()
+    n = len(r)
+    out = {k: np.full(n, np.nan) for k in ["epr", "flux_index", "tra", "pe", "regime_score"]}
+    r_values = r.to_numpy()
+
+    if cfg.quantize_mode == "zscore":
+        quant_states = np.full(n, -1, dtype=int)
+        quant = ZScoreQuantizer(cfg.window, cfg.n_states)
+        for idx, value in enumerate(r_values):
+            if not np.isfinite(value):
+                continue
+            quant_states[idx] = quant.update_and_state(float(value))
+    else:
+        quant_states = np.full(n, -1, dtype=int)
+        mask = np.isfinite(r_values)
+        if np.any(mask):
+            ranked = pd.Series(r_values[mask]).rank(method="average", pct=True).to_numpy()
+            quant_states[mask] = np.clip((ranked * cfg.n_states).astype(int), 0, cfg.n_states - 1)
+
+    for t in range(cfg.window, n):
+        start = t - cfg.window
+        window_returns = r_values[start:t]
+        window_states = quant_states[start:t]
+        valid = np.isfinite(window_returns) & (window_states >= 0)
+        if np.count_nonzero(valid) < cfg.min_counts:
+            continue
+        rw = window_returns[valid]
+        states = window_states[valid].astype(int)
+        if states.size < 2:
+            continue
+        P, pi = _transition_matrix(states, cfg.n_states, cfg.eps)
+        epr, J = _entropy_production(P, pi, cfg.eps)
+        flux_idx = _net_flux_index(J, cfg.normalize_flux)
+        tra = _time_reversal_asymmetry_arr(rw)
+        pe = _permutation_entropy_arr(rw, cfg.perm_emb_dim, cfg.perm_tau, cfg.eps)
+        epr_c = math.log1p(epr)
+        flux_mag = abs(flux_idx)
+        pe_inv = 1.0 - pe if not np.isnan(pe) else np.nan
+        regime = float(np.nanmean([epr_c, flux_mag, pe_inv]))
+        regime = float(np.clip(regime, 0.0, 1.0))
+        out["epr"][t] = epr
+        out["flux_index"][t] = flux_idx
+        out["tra"][t] = tra
+        out["pe"][t] = pe
+        out["regime_score"][t] = regime
+    return pd.DataFrame(out, index=r.index)
+
+
+def igs_directional_signal(features: pd.DataFrame, epr_q: float = 0.7, flux_min: float = 0.0) -> pd.Series:
+    f = features
+    s = pd.Series(0, index=f.index, dtype=int)
+    valid = f["epr"].notna() & f["flux_index"].notna()
+    if valid.any():
+        thr = f.loc[valid, "epr"].quantile(epr_q)
+        pos = valid & (f["epr"] >= thr) & (f["flux_index"] > +flux_min)
+        neg = valid & (f["epr"] >= thr) & (f["flux_index"] < -flux_min)
+        s[pos] = 1
+        s[neg] = -1
+    return s
+
+
+def _entropy_signature(P: np.ndarray) -> float:
+    K = P.shape[0]
+    row_entropy = -np.sum(P * np.log(P + 1e-12), axis=1)
+    return float(np.mean(row_entropy) / (math.log(K) + 1e-12))
+
+
+class _KAdaptController:
+    def __init__(self, cfg: IGSConfig, external_measure: Optional[Callable[[np.ndarray], float]] = None):
+        self.cfg = cfg
+        self.external_measure = external_measure
+        self.prev_sig: Optional[float] = None
+        self.persist_up = 0
+        self.persist_dn = 0
+        self.cooldown = 0
+
+    def maybe_update(self, K: int, P: np.ndarray) -> int:
+        if self.cfg.adapt_method == "off":
+            return K
+        if self.cooldown > 0:
+            self.cooldown -= 1
+            return K
+        if self.cfg.adapt_method == "entropy":
+            sig = _entropy_signature(P)
+        elif self.cfg.adapt_method == "external" and self.external_measure is not None:
+            sig = float(self.external_measure(P))
+        else:
+            return K
+        if self.prev_sig is None:
+            self.prev_sig = sig
+            return K
+        delta = sig - self.prev_sig
+        self.prev_sig = sig
+        if delta > self.cfg.adapt_threshold:
+            self.persist_up += 1
+            self.persist_dn = 0
+        elif delta < -self.cfg.adapt_threshold:
+            self.persist_dn += 1
+            self.persist_up = 0
+        else:
+            self.persist_up = max(0, self.persist_up - 1)
+            self.persist_dn = max(0, self.persist_dn - 1)
+            return K
+        if self.persist_up >= self.cfg.adapt_persist and K < self.cfg.k_max:
+            self.persist_up = 0
+            self.cooldown = self.cfg.adapt_cooldown
+            return min(self.cfg.k_max, K + self.cfg.adapt_step)
+        if self.persist_dn >= self.cfg.adapt_persist and K > self.cfg.k_min:
+            self.persist_dn = 0
+            self.cooldown = self.cfg.adapt_cooldown
+            return max(self.cfg.k_min, K - self.cfg.adapt_step)
+        return K
+
+
+class _AsyncMetrics:
+    def __init__(self, enabled: bool, label: str):
+        self.enabled = enabled and (Gauge is not None)
+        if not self.enabled:
+            self.g_epr = self.g_flux = self.g_regime = self.g_k = None
+            self.q = None
+            return
+        self.g_epr = Gauge("igs_epr", "IGS EPR", ["instrument"])
+        self.g_flux = Gauge("igs_flux_index", "IGS Flux Index", ["instrument"])
+        self.g_regime = Gauge("igs_regime_score", "IGS Regime Score", ["instrument"])
+        self.g_k = Gauge("igs_states_k", "IGS number of states K", ["instrument"])
+        self.q: "queue.Queue[Tuple[str, float]]" = queue.Queue(maxsize=10000)
+        self.label = label
+        t = threading.Thread(target=self._worker, daemon=True)
+        t.start()
+        self.q.put(("k", float("nan")))
+
+    def _worker(self):
+        while True:
+            try:
+                name, value = self.q.get()
+                if name == "epr":
+                    self.g_epr.labels(self.label).set(value)
+                elif name == "flux":
+                    self.g_flux.labels(self.label).set(value)
+                elif name == "regime":
+                    self.g_regime.labels(self.label).set(value)
+                elif name == "k":
+                    self.g_k.labels(self.label).set(value)
+            except Exception:
+                pass
+
+    def emit(self, epr: float, flux: float, regime: float, K: int):
+        if not self.enabled:
+            return
+        for item in [("epr", float(epr)), ("flux", float(flux)), ("regime", float(regime)), ("k", float(K))]:
+            try:
+                self.q.put_nowait(item)
+            except queue.Full:
+                break
+
+
+class StreamingIGS:
+    """
+    Streaming IGS engine.
+    update(timestamp, price) -> IGSMetrics | None
+    """
+    def __init__(self, cfg: Optional[IGSConfig] = None, external_adaptation_measure: Optional[Callable[[np.ndarray], float]] = None):
+        self.cfg = cfg or IGSConfig()
+        self.K = int(self.cfg.n_states)
+        self.returns: Deque[float] = deque(maxlen=self.cfg.window)
+        self.states: Deque[int] = deque(maxlen=self.cfg.window)
+        self.T = np.zeros((self.K, self.K), dtype=float)
+        self.row_sums = np.zeros(self.K, dtype=float)
+        self.state_counts = np.zeros(self.K, dtype=float)
+        self.prev_state: Optional[int] = None
+        self.last_price: Optional[float] = None
+        self.tra_roll = RollingTRA(self.cfg.window)
+        self.pe_roll = RollingPermutationEntropy(self.cfg.window, self.cfg.perm_emb_dim, self.cfg.perm_tau)
+        self.quant = ZScoreQuantizer(self.cfg.window, self.K)
+        self.k_adapt = _KAdaptController(self.cfg, external_measure=external_adaptation_measure)
+        label = self.cfg.instrument_label or "unknown"
+        self.metrics_async = _AsyncMetrics(self.cfg.prometheus_enabled and self.cfg.prometheus_async, label)
+
+    def _rebuild_counters_after_K_change(self):
+        K = self.K
+        arr = list(self.returns)
+        if not arr:
+            return
+        new_states = [self.quant.state_for_value(x) for x in arr]
+        self.states = deque(new_states, maxlen=self.cfg.window)
+        self.T = np.zeros((K, K), dtype=float)
+        self.row_sums = np.zeros(K, dtype=float)
+        self.state_counts = np.zeros(K, dtype=float)
+        for a, b in zip(new_states[:-1], new_states[1:]):
+            self.T[a, b] += 1.0
+            self.row_sums[a] += 1.0
+            self.state_counts[b] += 1.0
+        self.prev_state = self.states[-1] if len(self.states) else None
+
+    def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
+        if price is None or not (price > 0):
+            return None
+        t0 = time.perf_counter()
+        if self.last_price is None:
+            self.last_price = float(price)
+            self.returns.append(0.0)
+            s0 = self.quant.update_and_state(0.0)
+            self.states.append(s0)
+            self.prev_state = s0
+            return None
+        ret = math.log(float(price)) - math.log(self.last_price)
+        self.last_price = float(price)
+        if len(self.returns) == self.returns.maxlen and len(self.states) >= 2:
+            old_prev = self.states[0]
+            old_state = self.states[1]
+            self.T[old_prev, old_state] = max(0.0, self.T[old_prev, old_state] - 1.0)
+            self.row_sums[old_prev] = max(0.0, self.row_sums[old_prev] - 1.0)
+            self.state_counts[old_state] = max(0.0, self.state_counts[old_state] - 1.0)
+        tra = self.tra_roll.update(ret)
+        self.returns.append(ret)
+        new_state = self.quant.update_and_state(ret)
+        if self.prev_state is not None:
+            self.T[self.prev_state, new_state] += 1.0
+            self.row_sums[self.prev_state] += 1.0
+            self.state_counts[new_state] += 1.0
+        self.states.append(new_state)
+        self.prev_state = new_state
+        if int(np.sum(self.row_sums)) < self.cfg.min_counts:
+            return None
+        P = np.zeros_like(self.T)
+        for i in range(self.K):
+            denom = self.row_sums[i] + self.K * self.cfg.eps
+            P[i, :] = (self.T[i, :] + self.cfg.eps) / denom if denom > 0 else (1.0 / self.K)
+        pi = self.state_counts.copy()
+        s = float(pi.sum())
+        pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
+        epr, J = _entropy_production(P, pi, self.cfg.eps)
+        flux_index = _net_flux_index(J, self.cfg.normalize_flux)
+        pe_val = self.pe_roll.update(ret)
+        elapsed_ms = (time.perf_counter() - t0) * 1000.0
+        degrade = (self.cfg.max_update_ms > 0.0) and (elapsed_ms > self.cfg.max_update_ms)
+        pe = float("nan") if degrade else pe_val
+        epr_c = math.log1p(epr)
+        flux_mag = abs(flux_index)
+        pe_inv = 1.0 - pe if not np.isnan(pe) else 0.0
+        regime_score = float(np.mean([epr_c, flux_mag, pe_inv]))
+        regime_score = float(np.clip(regime_score, 0.0, 1.0))
+        regime_name = _classify_regime_simple(epr, flux_index, pe)
+        self.metrics_async.emit(epr, flux_index, regime_score, self.K)
+        if not degrade:
+            K_before = self.K
+            self.K = self.k_adapt.maybe_update(self.K, P)
+            if self.K != K_before:
+                self.quant = ZScoreQuantizer(self.cfg.window, self.K)
+                for x in list(self.returns):
+                    self.quant.roll.add(x)
+                self._rebuild_counters_after_K_change()
+        return IGSMetrics(timestamp=timestamp, epr=epr, flux_index=flux_index, tra=tra, pe=pe, regime_score=regime_score, regime=regime_name, n_states_used=self.K)
+
+
+def _classify_regime_simple(epr: float, flux: float, pe: float) -> str:
+    try:
+        if epr < 1e-3 and (not np.isnan(pe) and pe > 0.7):
+            return "reversible"
+        if abs(flux) > 0.3 and epr > 1e-2:
+            return "directional"
+        if epr > 0.1:
+            return "turbulent"
+    except Exception:
+        pass
+    return "mixed"
+
 
 __all__ = [
     "IGSConfig",
@@ -31,444 +599,7 @@ __all__ = [
     "compute_igs_features",
     "igs_directional_signal",
     "StreamingIGS",
+    "RollingTRA",
+    "RollingPermutationEntropy",
+    "ZScoreQuantizer",
 ]
-
-
-@dataclass(slots=True)
-class IGSConfig:
-    """Configuration for Irreversibility-Gated Signal computations."""
-
-    window: int = 600
-    n_states: int = 7
-    min_counts: int = 50
-    eps: float = 1e-12
-    normalize_flux: bool = True
-    detrend: bool = False
-    perm_emb_dim: int = 5
-    perm_tau: int = 1
-    pi_method: Literal["empirical", "eigen"] = "empirical"
-    regime_weights: Tuple[float, float, float] = (1.0, 1.0, 1.0)
-    rolling_normalize: bool = False
-    tra_buffer_size: int = 1000
-
-    def __post_init__(self) -> None:
-        if self.window <= 2:
-            raise ValueError("window must be greater than 2")
-        if self.n_states < 3:
-            raise ValueError("n_states must be at least 3")
-        if self.min_counts < 0:
-            raise ValueError("min_counts must be non-negative")
-        if self.perm_emb_dim < 3:
-            raise ValueError("perm_emb_dim must be at least 3 for permutation entropy")
-        if self.perm_tau < 1:
-            raise ValueError("perm_tau must be positive")
-        if len(self.regime_weights) != 3:
-            raise ValueError("regime_weights must contain three values")
-
-
-@dataclass(slots=True)
-class IGSMetrics:
-    """Container emitted by :class:`StreamingIGS` for the latest observation."""
-
-    timestamp: pd.Timestamp
-    epr: float
-    flux_index: float
-    tra: float
-    pe: float
-    regime_score: float
-    regime: str = "unknown"
-
-
-# ---------------------------------------------------------------------------
-# Helper utilities
-# ---------------------------------------------------------------------------
-
-def _ensure_positive_prices(price: pd.Series) -> None:
-    if (price <= 0.0).any():
-        raise ValueError("IGS requires strictly positive prices for log returns")
-
-
-def _log_returns(price: pd.Series) -> pd.Series:
-    returns = np.log(price).diff()
-    returns.name = "log_return"
-    return returns
-
-
-def _quantize_returns(values: Sequence[float], n_states: int) -> np.ndarray:
-    arr = np.asarray(values, dtype=float)
-    if arr.size == 0:
-        return np.empty(0, dtype=int)
-    ranks = pd.Series(arr).rank(method="average", pct=True).to_numpy()
-    states = np.floor(ranks * n_states).astype(int)
-    np.clip(states, 0, n_states - 1, out=states)
-    return states
-
-
-def _transition_matrix(states: np.ndarray, n_states: int, eps: float) -> Tuple[np.ndarray, np.ndarray]:
-    counts = np.zeros((n_states, n_states), dtype=float)
-    for src, dst in zip(states[:-1], states[1:]):
-        counts[src, dst] += 1.0
-    outgoing = counts.sum(axis=1, keepdims=True)
-    denominator = outgoing + n_states * eps
-    P = (counts + eps) / denominator
-    occupancy = counts.sum(axis=1)
-    total = occupancy.sum()
-    if total <= eps:
-        pi = np.full(n_states, 1.0 / n_states, dtype=float)
-    else:
-        pi = occupancy / (total + eps)
-    return P, pi
-
-
-def _entropy_production_rate(P: np.ndarray, pi: np.ndarray, eps: float) -> Tuple[float, np.ndarray]:
-    pij = np.maximum(pi[:, None] * P, eps)
-    pji = np.maximum(pi[None, :] * P.T, eps)
-    matrix = pij * (np.log(pij) - np.log(pji))
-    epr = float(np.nansum(matrix))
-    flux = pij - pji
-    return epr, flux
-
-
-def _flux_index(flux: np.ndarray, normalize: bool) -> float:
-    n = flux.shape[0]
-    idxs = np.arange(n)
-    weights = idxs[None, :] - idxs[:, None]
-    upper = np.triu_indices(n, k=1)
-    numerator = float(np.sum(flux[upper] * weights[upper]))
-    denominator = float(np.sum(np.abs(flux[upper] * weights[upper])) + 1e-12)
-    value = numerator / denominator
-    if normalize:
-        return float(np.clip(value, -1.0, 1.0))
-    return value
-
-
-def _time_reversal_asymmetry(arr: np.ndarray) -> float:
-    if arr.size < 3:
-        return float("nan")
-    forward = np.mean(arr[1:] ** 2 * arr[:-1])
-    backward = np.mean(arr[:-1] ** 2 * arr[1:])
-    return float(forward - backward)
-
-
-def _permutation_entropy(arr: np.ndarray, dim: int, tau: int, eps: float) -> float:
-    n = arr.size - (dim - 1) * tau
-    if dim < 3 or n <= 1:
-        return float("nan")
-    patterns: dict[tuple[int, ...], int] = {}
-    for start in range(n):
-        window = arr[start : start + dim * tau : tau]
-        order = tuple(np.argsort(window, kind="mergesort"))
-        patterns[order] = patterns.get(order, 0) + 1
-    counts = np.fromiter(patterns.values(), dtype=float)
-    probabilities = counts / counts.sum()
-    entropy = -np.sum(probabilities * (np.log(probabilities + eps)))
-    entropy_max = math.log(math.factorial(dim))
-    return float(entropy / entropy_max)
-
-
-def _weighted_regime_score(components: Sequence[float], weights: Sequence[float]) -> float:
-    comp = np.asarray(components, dtype=float)
-    mask = np.isfinite(comp)
-    if not np.any(mask):
-        return float("nan")
-    comp = comp[mask]
-    w = np.asarray(weights, dtype=float)[mask]
-    if np.allclose(w, 0.0):
-        w = np.ones_like(comp)
-    score = np.average(comp, weights=w)
-    return float(np.clip(score, 0.0, 1.0))
-
-
-def _classify_regime(epr: float, flux_index: float, pe: float) -> str:
-    if not math.isfinite(epr):
-        return "unknown"
-    if epr < 1e-3 and (math.isfinite(pe) and pe > 0.75):
-        return "reversible"
-    if epr > 0.1 and abs(flux_index) > 0.3:
-        return "directional"
-    if epr > 0.2:
-        return "turbulent"
-    return "mixed"
-
-
-# ---------------------------------------------------------------------------
-# Batch computation
-# ---------------------------------------------------------------------------
-
-def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> pd.DataFrame:
-    """Compute IGS metrics on a price series.
-
-    Parameters
-    ----------
-    price:
-        Series indexed by timestamp containing strictly positive prices.
-    cfg:
-        Optional :class:`IGSConfig` overriding defaults.
-
-    Returns
-    -------
-    pandas.DataFrame
-        DataFrame aligned with ``price.index`` containing columns
-        ``["epr", "flux_index", "tra", "pe", "regime_score"]``.
-    """
-
-    if price.empty:
-        return pd.DataFrame(
-            {
-                "epr": pd.Series(dtype=float),
-                "flux_index": pd.Series(dtype=float),
-                "tra": pd.Series(dtype=float),
-                "pe": pd.Series(dtype=float),
-                "regime_score": pd.Series(dtype=float),
-            },
-            index=price.index,
-        )
-
-    configuration = cfg or IGSConfig()
-    _ensure_positive_prices(price)
-
-    returns = _log_returns(price)
-    if configuration.detrend:
-        window = max(5, configuration.window // 10)
-        returns = returns - returns.rolling(window=window, min_periods=1).mean()
-
-    result = pd.DataFrame(index=returns.index, columns=["epr", "flux_index", "tra", "pe", "regime_score"], dtype=float)
-    values = returns.to_numpy()
-
-    # Mirror the streaming quantization so that offline and online pipelines remain aligned.
-    state_history = np.full(values.shape, -1, dtype=int)
-    quant_buffer: Deque[float] = deque(maxlen=configuration.window)
-    for idx, value in enumerate(values):
-        if not np.isfinite(value):
-            continue
-        if len(quant_buffer) == quant_buffer.maxlen:
-            quant_buffer.popleft()
-        quant_buffer.append(float(value))
-        arr = np.fromiter(quant_buffer, dtype=float)
-        rank = np.sum(arr <= value) / arr.size
-        state = int(math.floor(rank * configuration.n_states))
-        state_history[idx] = int(np.clip(state, 0, configuration.n_states - 1))
-
-    weights = configuration.regime_weights
-
-    for end in range(configuration.window - 1, len(values)):
-        start = end - configuration.window + 1
-        window_slice = values[start : end + 1]
-        window_states = state_history[start : end + 1]
-        valid = np.isfinite(window_slice) & (window_states >= 0)
-        if np.count_nonzero(valid) < configuration.min_counts or np.count_nonzero(valid) < 2:
-            continue
-        clean_returns = window_slice[valid]
-        states = window_states[valid].astype(int)
-        if states.size < 2:
-            continue
-        transition, _ = _transition_matrix(states, configuration.n_states, configuration.eps)
-        state_counts = np.bincount(states, minlength=configuration.n_states).astype(float)
-        total = state_counts.sum()
-        if total <= configuration.eps:
-            pi = np.full(configuration.n_states, 1.0 / configuration.n_states, dtype=float)
-        else:
-            pi = state_counts / (total + configuration.eps)
-        epr, flux = _entropy_production_rate(transition, pi, configuration.eps)
-        flux_index = _flux_index(flux, configuration.normalize_flux)
-        tra = _time_reversal_asymmetry(clean_returns)
-        pe = _permutation_entropy(clean_returns, configuration.perm_emb_dim, configuration.perm_tau, configuration.eps)
-
-        components = (
-            math.log1p(epr),
-            abs(flux_index),
-            1.0 - pe if math.isfinite(pe) else float("nan"),
-        )
-        regime_score = _weighted_regime_score(components, weights)
-
-        timestamp = returns.index[end]
-        result.loc[timestamp, "epr"] = epr
-        result.loc[timestamp, "flux_index"] = flux_index
-        result.loc[timestamp, "tra"] = tra
-        result.loc[timestamp, "pe"] = pe
-        result.loc[timestamp, "regime_score"] = regime_score
-
-    return result
-
-
-# ---------------------------------------------------------------------------
-# Directional signal helper
-# ---------------------------------------------------------------------------
-
-def igs_directional_signal(
-    features: pd.DataFrame,
-    *,
-    epr_q: float = 0.7,
-    flux_q: float = 0.6,
-    regime_threshold: Optional[float] = None,
-) -> pd.Series:
-    """Generate a discrete directional signal from computed features."""
-
-    required_columns = {"epr", "flux_index", "regime_score"}
-    missing = required_columns.difference(features.columns)
-    if missing:
-        raise KeyError(f"features DataFrame is missing required columns: {sorted(missing)}")
-
-    signal = pd.Series(0, index=features.index, dtype=int)
-    mask = features["epr"].notna() & features["flux_index"].notna()
-    if not mask.any():
-        return signal
-
-    quantile_threshold = features.loc[mask, "epr"].quantile(epr_q)
-    flux_threshold = features.loc[mask, "flux_index"].abs().quantile(flux_q)
-    gated = mask & (features["epr"] >= quantile_threshold) & (features["flux_index"].abs() >= flux_threshold)
-    if regime_threshold is not None:
-        gated &= features["regime_score"] >= regime_threshold
-
-    signal[gated & (features["flux_index"] > 0.0)] = 1
-    signal[gated & (features["flux_index"] < 0.0)] = -1
-    return signal
-
-
-# ---------------------------------------------------------------------------
-# Streaming implementation
-# ---------------------------------------------------------------------------
-
-
-class IncrementalTRA:
-    """Naïve incremental computation of time-reversal asymmetry."""
-
-    def __init__(self, window: int) -> None:
-        self.window = max(3, window)
-        self._buffer: Deque[float] = deque(maxlen=self.window)
-
-    def update(self, value: float) -> float:
-        self._buffer.append(float(value))
-        if len(self._buffer) < 3:
-            return float("nan")
-        arr = np.fromiter(self._buffer, dtype=float)
-        return _time_reversal_asymmetry(arr)
-
-
-class IncrementalPE:
-    """Sliding permutation entropy estimator."""
-
-    def __init__(self, dimension: int, tau: int, window: int, eps: float) -> None:
-        self.dimension = dimension
-        self.tau = tau
-        self.window = max(window, dimension * tau + 1)
-        self.eps = eps
-        self._buffer: Deque[float] = deque(maxlen=self.window)
-
-    def update(self, value: float) -> float:
-        self._buffer.append(float(value))
-        arr = np.fromiter(self._buffer, dtype=float)
-        return _permutation_entropy(arr, self.dimension, self.tau, self.eps)
-
-
-class StreamingIGS:
-    """Incremental engine for IGS metrics."""
-
-    def __init__(self, cfg: Optional[IGSConfig] = None) -> None:
-        self.cfg = cfg or IGSConfig()
-        self._returns: Deque[float] = deque(maxlen=self.cfg.window)
-        self._states: Deque[int] = deque(maxlen=self.cfg.window)
-        self._transition = np.zeros((self.cfg.n_states, self.cfg.n_states), dtype=float)
-        self._state_counts = np.zeros(self.cfg.n_states, dtype=float)
-        self._row_sums = np.zeros(self.cfg.n_states, dtype=float)
-        self._last_price: Optional[float] = None
-        self._tra = IncrementalTRA(min(self.cfg.window, self.cfg.tra_buffer_size))
-        self._pe = IncrementalPE(self.cfg.perm_emb_dim, self.cfg.perm_tau, self.cfg.window, self.cfg.eps)
-
-    def _remove_oldest_state(self) -> None:
-        if not self._states:
-            return
-        oldest = self._states[0]
-        successor = self._states[1] if len(self._states) > 1 else None
-        self._states.popleft()
-        self._state_counts[oldest] = max(0.0, self._state_counts[oldest] - 1.0)
-        if successor is not None:
-            self._transition[oldest, successor] = max(0.0, self._transition[oldest, successor] - 1.0)
-            self._row_sums[oldest] = max(0.0, self._row_sums[oldest] - 1.0)
-
-    def _quantize_latest(self, latest: float) -> int:
-        if not self._returns:
-            return self.cfg.n_states // 2
-        arr = np.fromiter(self._returns, dtype=float)
-        rank = np.sum(arr <= latest) / arr.size
-        state = int(math.floor(rank * self.cfg.n_states))
-        return int(np.clip(state, 0, self.cfg.n_states - 1))
-
-    def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
-        price_value = float(price)
-        if price_value <= 0.0:
-            raise ValueError("StreamingIGS requires strictly positive prices")
-        if self._last_price is None:
-            self._last_price = price_value
-            return None
-
-        ret = math.log(price_value) - math.log(self._last_price)
-        self._last_price = price_value
-
-        if len(self._returns) == self._returns.maxlen:
-            self._returns.popleft()
-        self._returns.append(ret)
-
-        if len(self._states) == self._states.maxlen:
-            self._remove_oldest_state()
-
-        state = self._quantize_latest(ret)
-        previous = self._states[-1] if self._states else None
-        self._states.append(state)
-        self._state_counts[state] += 1.0
-
-        if previous is not None:
-            self._transition[previous, state] += 1.0
-            self._row_sums[previous] += 1.0
-
-        tra = self._tra.update(ret)
-        pe = self._pe.update(ret)
-
-        transitions = float(np.sum(self._row_sums))
-        if transitions < self.cfg.min_counts:
-            return None
-
-        transition_matrix = np.zeros_like(self._transition)
-        for idx in range(self.cfg.n_states):
-            denominator = self._row_sums[idx] + self.cfg.n_states * self.cfg.eps
-            if denominator <= 0.0:
-                transition_matrix[idx, :] = 1.0 / self.cfg.n_states
-            else:
-                transition_matrix[idx, :] = (self._transition[idx, :] + self.cfg.eps) / denominator
-
-        if self.cfg.pi_method == "empirical":
-            pi = self._state_counts.copy()
-            total = pi.sum()
-            if total <= self.cfg.eps:
-                pi = np.full(self.cfg.n_states, 1.0 / self.cfg.n_states)
-            else:
-                pi = pi / (total + self.cfg.eps)
-        else:
-            # fall back to empirical; eigen option can be added later if needed
-            pi = self._state_counts.copy()
-            total = pi.sum()
-            if total <= self.cfg.eps:
-                pi = np.full(self.cfg.n_states, 1.0 / self.cfg.n_states)
-            else:
-                pi = pi / (total + self.cfg.eps)
-
-        epr, flux = _entropy_production_rate(transition_matrix, pi, self.cfg.eps)
-        flux_index = _flux_index(flux, self.cfg.normalize_flux)
-
-        components = (
-            math.log1p(epr),
-            abs(flux_index),
-            1.0 - pe if math.isfinite(pe) else float("nan"),
-        )
-        regime_score = _weighted_regime_score(components, self.cfg.regime_weights)
-        regime = _classify_regime(epr, flux_index, pe)
-
-        return IGSMetrics(
-            timestamp=timestamp,
-            epr=epr,
-            flux_index=flux_index,
-            tra=tra,
-            pe=pe,
-            regime_score=regime_score,
-            regime=regime,
-        )
