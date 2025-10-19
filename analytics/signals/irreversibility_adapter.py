@@ -17,9 +17,29 @@ class IGSFeatureProvider:
         return compute_igs_features(price_series, self.cfg)
 
     def compute_from_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Compute features from a DataFrame containing a ``close`` column.
+
+        Parameters
+        ----------
+        df:
+            Price history where the ``close`` column contains the prices used
+            for the irreversibility metrics.
+
+        Returns
+        -------
+        pd.DataFrame
+            The computed IGS features aligned to the input index.
+        """
+
         if "close" not in df.columns:
             raise ValueError("DataFrame must contain 'close' column")
         return self.compute_batch(df["close"])
+
+    # Backwards compatibility shim – the original API exposed
+    # ``compute_from_frame``.  Keep delegating to ``compute_from_df`` so both
+    # spellings remain supported.
+    def compute_from_frame(self, frame: pd.DataFrame) -> pd.DataFrame:
+        return self.compute_from_df(frame)
 
     def streaming_update(self, instrument: str, timestamp, price: float):
         if instrument not in self._streaming:

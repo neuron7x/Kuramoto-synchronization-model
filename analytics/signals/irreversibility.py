@@ -493,7 +493,6 @@ class StreamingIGS:
         self.states: Deque[int] = deque(maxlen=self.cfg.window)
         self.T = np.zeros((self.K, self.K), dtype=float)
         self.row_sums = np.zeros(self.K, dtype=float)
-        self.state_counts = np.zeros(self.K, dtype=float)
         self.prev_state: Optional[int] = None
         self.last_price: Optional[float] = None
         self.tra_roll = RollingTRA(self.cfg.window)
@@ -512,11 +511,9 @@ class StreamingIGS:
         self.states = deque(new_states, maxlen=self.cfg.window)
         self.T = np.zeros((K, K), dtype=float)
         self.row_sums = np.zeros(K, dtype=float)
-        self.state_counts = np.zeros(K, dtype=float)
         for a, b in zip(new_states[:-1], new_states[1:]):
             self.T[a, b] += 1.0
             self.row_sums[a] += 1.0
-            self.state_counts[b] += 1.0
         self.prev_state = self.states[-1] if len(self.states) else None
 
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
@@ -537,14 +534,12 @@ class StreamingIGS:
             old_state = self.states[1]
             self.T[old_prev, old_state] = max(0.0, self.T[old_prev, old_state] - 1.0)
             self.row_sums[old_prev] = max(0.0, self.row_sums[old_prev] - 1.0)
-            self.state_counts[old_state] = max(0.0, self.state_counts[old_state] - 1.0)
         tra = self.tra_roll.update(ret)
         self.returns.append(ret)
         new_state = self.quant.update_and_state(ret)
         if self.prev_state is not None:
             self.T[self.prev_state, new_state] += 1.0
             self.row_sums[self.prev_state] += 1.0
-            self.state_counts[new_state] += 1.0
         self.states.append(new_state)
         self.prev_state = new_state
         if int(np.sum(self.row_sums)) < self.cfg.min_counts:
@@ -553,7 +548,7 @@ class StreamingIGS:
         for i in range(self.K):
             denom = self.row_sums[i] + self.K * self.cfg.eps
             P[i, :] = (self.T[i, :] + self.cfg.eps) / denom if denom > 0 else (1.0 / self.K)
-        pi = self.state_counts.copy()
+        pi = self.row_sums.copy()
         s = float(pi.sum())
         pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
         epr, J = _entropy_production(P, pi, self.cfg.eps)
