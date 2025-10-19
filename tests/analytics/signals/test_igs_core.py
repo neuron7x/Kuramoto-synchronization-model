@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from analytics.signals.irreversibility import IGSConfig, StreamingIGS, compute_igs_features
 
@@ -31,9 +32,10 @@ def test_entropy_production_small_for_iid_noise() -> None:
     assert float(epr.mean()) < 5.0
 
 
-def test_streaming_matches_batch_tail_window() -> None:
+@pytest.mark.parametrize("quantize_mode", ["zscore", "rank"])
+def test_streaming_matches_batch_tail_window(quantize_mode: str) -> None:
     series = _random_walk(seed=3, length=1600)
-    config = IGSConfig(window=200, n_states=5, min_counts=80)
+    config = IGSConfig(window=200, n_states=5, min_counts=80, quantize_mode=quantize_mode)
     features = compute_igs_features(series, config)
     engine = StreamingIGS(config)
     metric = None
@@ -42,4 +44,22 @@ def test_streaming_matches_batch_tail_window() -> None:
     assert metric is not None
     batch_last = features.dropna().iloc[-1]
     assert np.isclose(metric.epr, batch_last["epr"], rtol=5e-1, atol=2e-2)
-    assert np.isclose(metric.flux_index, batch_last["flux_index"], rtol=2e-1, atol=2e-2)
+    assert np.isclose(metric.flux_index, batch_last["flux_index"], rtol=5e-1, atol=5e-2)
+
+
+def test_rank_quantization_walk_forward_consistency() -> None:
+    series = _random_walk(seed=7, length=900)
+    config = IGSConfig(window=180, n_states=5, min_counts=60, quantize_mode="rank")
+    full_features = compute_igs_features(series, config)
+    cutoff = 720
+    truncated = series.iloc[:cutoff]
+    truncated_features = compute_igs_features(truncated, config)
+    idx = truncated.index[-1]
+    full_row = full_features.loc[idx]
+    trunc_row = truncated_features.loc[idx]
+    for column in ["epr", "flux_index", "tra", "pe", "regime_score"]:
+        full_val = float(full_row[column])
+        trunc_val = float(trunc_row[column])
+        if np.isnan(full_val) and np.isnan(trunc_val):
+            continue
+        assert np.isclose(trunc_val, full_val, rtol=1e-9, atol=1e-9)

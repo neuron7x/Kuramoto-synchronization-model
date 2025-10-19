@@ -30,6 +30,12 @@ if metrics is not None:
     process(metrics)
 ```
 
+### Quantisation Modes
+- `quantize_mode="zscore"` (default) keeps an `O(1)` rolling mean/std and maps values to states via Gaussian quantiles.
+- `quantize_mode="rank"` maintains a sliding window of historical returns backed by a deque and sorted array. Each update performs
+  `O(log W)` search and `O(W)` data movement to keep the order statistics consistent, ensuring that the state at time `t` depends
+  only on the past `W` returns.
+
 ## Pipeline Integration
 Use the adapter for TradePulse pipelines:
 ```python
@@ -53,3 +59,5 @@ features = provider.compute_from_df(dataframe)
 ## Limitations
 - The incremental permutation entropy rebuilds the multiset when the window changes size; this is still `O(window)` but amortised by the warmup period.
 - Adaptation currently supports entropy and external measures; additional strategies can be hooked into `_KAdaptController`.
+- The sliding rank quantiser trades latency for leak-free discretisation. Insert/delete operations shift elements inside the sorted
+  buffer (`O(window)`), which is acceptable for typical windows (≤ 1e3) but should be benchmarked for significantly larger sizes.
