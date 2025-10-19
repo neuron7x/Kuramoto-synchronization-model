@@ -235,18 +235,40 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
     result = pd.DataFrame(index=returns.index, columns=["epr", "flux_index", "tra", "pe", "regime_score"], dtype=float)
     values = returns.to_numpy()
 
+    # Mirror the streaming quantization so that offline and online pipelines remain aligned.
+    state_history = np.full(values.shape, -1, dtype=int)
+    quant_buffer: Deque[float] = deque(maxlen=configuration.window)
+    for idx, value in enumerate(values):
+        if not np.isfinite(value):
+            continue
+        if len(quant_buffer) == quant_buffer.maxlen:
+            quant_buffer.popleft()
+        quant_buffer.append(float(value))
+        arr = np.fromiter(quant_buffer, dtype=float)
+        rank = np.sum(arr <= value) / arr.size
+        state = int(math.floor(rank * configuration.n_states))
+        state_history[idx] = int(np.clip(state, 0, configuration.n_states - 1))
+
     weights = configuration.regime_weights
 
-    for end in range(configuration.window, len(values)):
-        window_slice = values[end - configuration.window : end]
-        valid = np.isfinite(window_slice)
+    for end in range(configuration.window - 1, len(values)):
+        start = end - configuration.window + 1
+        window_slice = values[start : end + 1]
+        window_states = state_history[start : end + 1]
+        valid = np.isfinite(window_slice) & (window_states >= 0)
         if np.count_nonzero(valid) < configuration.min_counts or np.count_nonzero(valid) < 2:
             continue
         clean_returns = window_slice[valid]
-        states = _quantize_returns(clean_returns, configuration.n_states)
+        states = window_states[valid].astype(int)
         if states.size < 2:
             continue
-        transition, pi = _transition_matrix(states, configuration.n_states, configuration.eps)
+        transition, _ = _transition_matrix(states, configuration.n_states, configuration.eps)
+        state_counts = np.bincount(states, minlength=configuration.n_states).astype(float)
+        total = state_counts.sum()
+        if total <= configuration.eps:
+            pi = np.full(configuration.n_states, 1.0 / configuration.n_states, dtype=float)
+        else:
+            pi = state_counts / (total + configuration.eps)
         epr, flux = _entropy_production_rate(transition, pi, configuration.eps)
         flux_index = _flux_index(flux, configuration.normalize_flux)
         tra = _time_reversal_asymmetry(clean_returns)
