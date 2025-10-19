@@ -44,6 +44,17 @@ from .finops import (  # noqa: F401
 from .health import HealthServer  # noqa: F401
 from .incidents import IncidentManager, IncidentRecord  # noqa: F401
 from .logging import StructuredLogFormatter, configure_logging  # noqa: F401
+from .model_monitoring import (  # noqa: F401
+    DegradationSignal,
+    EventLabel,
+    InferenceContext,
+    ModelObservabilityConfig,
+    ModelObservabilityOrchestrator,
+    PostmortemTemplate,
+    QualityBaseline,
+    QualityConfidenceInterval,
+    ResourceSnapshot,
+)
 from .notifications import (  # noqa: F401
     EmailSender,
     NotificationDispatcher,
@@ -112,4 +123,13 @@ __all__ = [
     "get_tracer",
     "inject_trace_context",
     "pipeline_span",
+    "ModelObservabilityOrchestrator",
+    "ModelObservabilityConfig",
+    "ResourceSnapshot",
+    "QualityConfidenceInterval",
+    "QualityBaseline",
+    "InferenceContext",
+    "DegradationSignal",
+    "EventLabel",
+    "PostmortemTemplate",
 ]

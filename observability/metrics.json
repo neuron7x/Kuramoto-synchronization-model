@@ -156,6 +156,146 @@
       "subsystem": "signals"
     },
     {
+      "name": "tradepulse_model_inference_latency_seconds",
+      "type": "histogram",
+      "description": "Latency observed for model inference requests.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "P50/P95/P99 latency quantiles for model inference requests.",
+      "labels": ["model_name", "deployment", "quantile"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_total",
+      "type": "counter",
+      "description": "Total number of model inference requests grouped by outcome.",
+      "labels": ["model_name", "deployment", "status"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_throughput_per_second",
+      "type": "gauge",
+      "description": "Rolling throughput of model inference requests (requests/second).",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_error_ratio",
+      "type": "gauge",
+      "description": "Observed error ratio for model inference requests.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_saturation",
+      "type": "gauge",
+      "description": "Saturation level of the model serving infrastructure (0-1).",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cpu_percent",
+      "type": "gauge",
+      "description": "Process CPU utilisation percent for model serving components.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_gpu_percent",
+      "type": "gauge",
+      "description": "GPU utilisation percent attributed to model serving workloads.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_memory_bytes",
+      "type": "gauge",
+      "description": "Resident memory footprint of the model serving process (bytes).",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_memory_percent",
+      "type": "gauge",
+      "description": "Process memory utilisation percent for model serving workloads.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cache_hit_ratio",
+      "type": "gauge",
+      "description": "Hit ratio observed for model-specific caches.",
+      "labels": ["model_name", "deployment", "cache_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cache_entries",
+      "type": "gauge",
+      "description": "Number of entries currently stored in model caches.",
+      "labels": ["model_name", "deployment", "cache_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cache_evictions_total",
+      "type": "counter",
+      "description": "Total cache eviction events observed for model caches.",
+      "labels": ["model_name", "deployment", "cache_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_lower",
+      "type": "gauge",
+      "description": "Lower bound of the quality metric confidence interval.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_upper",
+      "type": "gauge",
+      "description": "Upper bound of the quality metric confidence interval.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_mean",
+      "type": "gauge",
+      "description": "Mean value used to derive the quality metric confidence interval.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_width",
+      "type": "gauge",
+      "description": "Width of the confidence interval for the model quality metric.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_degradation_events_total",
+      "type": "counter",
+      "description": "Total number of model quality degradation events emitted.",
+      "labels": ["model_name", "deployment", "metric", "reason"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_triage_total",
+      "type": "counter",
+      "description": "Automated triage workflows launched for model degradations.",
+      "labels": ["model_name", "deployment", "metric", "reason"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_metric_correlation",
+      "type": "gauge",
+      "description": "Correlation coefficient between pairs of model metrics.",
+      "labels": ["model_name", "deployment", "metric_a", "metric_b"],
+      "subsystem": "observability"
+    },
+    {
       "name": "tradepulse_health_check_latency_seconds",
       "type": "histogram",
       "description": "Latency of periodic system health probes.",
