@@ -28,6 +28,9 @@ focused document so contributors can quickly find the details they need.
 - **Керування чергами та backpressure** – політики контролю навантаження,
   sizing черг і runbook'и описані у
   [`docs/queue_and_backpressure.md`](queue_and_backpressure.md).
+- **Serving resilience blueprint** – systematic plan covering critical paths, queueing, caching,
+  failover, and reliability primitives for the inference API in
+  [`docs/architecture/serving_resilience.md`](architecture/serving_resilience.md).
 - **Reliability & SRE** – SLA commitments, SLOs, error budgets, and escalation
   policy are outlined in [`docs/reliability.md`](reliability.md).
 
@@ -115,4 +118,4 @@ focused document so contributors can quickly find the details they need.
 
 ---
 
-**Last updated:** 2025-02-14
+**Last updated:** 2025-10-19
