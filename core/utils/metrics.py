@@ -164,6 +164,147 @@ class MetricsCollector:
             registry=registry,
         )
 
+        # Model observability metrics
+        self.model_inference_latency = Histogram(
+            "tradepulse_model_inference_latency_seconds",
+            "Latency observed for model inference requests",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_inference_latency_quantiles = Gauge(
+            "tradepulse_model_inference_latency_quantiles_seconds",
+            "Latency quantiles for model inference requests",
+            ["model_name", "deployment", "quantile"],
+            registry=registry,
+        )
+
+        self.model_inference_total = Counter(
+            "tradepulse_model_inference_total",
+            "Total number of model inference requests grouped by outcome",
+            ["model_name", "deployment", "status"],
+            registry=registry,
+        )
+
+        self.model_inference_throughput = Gauge(
+            "tradepulse_model_inference_throughput_per_second",
+            "Rolling throughput of model inference requests",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_inference_error_ratio = Gauge(
+            "tradepulse_model_inference_error_ratio",
+            "Observed error ratio for model inference requests",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_saturation = Gauge(
+            "tradepulse_model_saturation",
+            "Saturation level of model serving infrastructure",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_cpu_percent = Gauge(
+            "tradepulse_model_cpu_percent",
+            "Process CPU utilisation percent for model serving",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_gpu_percent = Gauge(
+            "tradepulse_model_gpu_percent",
+            "GPU utilisation percent for model serving workloads",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_memory_bytes = Gauge(
+            "tradepulse_model_memory_bytes",
+            "Resident memory footprint of the model serving process",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_memory_percent = Gauge(
+            "tradepulse_model_memory_percent",
+            "Memory utilisation percent for the model serving process",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.model_cache_hit_ratio = Gauge(
+            "tradepulse_model_cache_hit_ratio",
+            "Hit ratio observed for model-specific caches",
+            ["model_name", "deployment", "cache_name"],
+            registry=registry,
+        )
+
+        self.model_cache_entries = Gauge(
+            "tradepulse_model_cache_entries",
+            "Number of live entries stored in model caches",
+            ["model_name", "deployment", "cache_name"],
+            registry=registry,
+        )
+
+        self.model_cache_evictions = Counter(
+            "tradepulse_model_cache_evictions_total",
+            "Total number of cache evictions triggered for model caches",
+            ["model_name", "deployment", "cache_name"],
+            registry=registry,
+        )
+
+        self.model_quality_interval_lower = Gauge(
+            "tradepulse_model_quality_interval_lower",
+            "Lower bound of quality metric confidence interval",
+            ["model_name", "deployment", "metric", "confidence"],
+            registry=registry,
+        )
+
+        self.model_quality_interval_upper = Gauge(
+            "tradepulse_model_quality_interval_upper",
+            "Upper bound of quality metric confidence interval",
+            ["model_name", "deployment", "metric", "confidence"],
+            registry=registry,
+        )
+
+        self.model_quality_interval_mean = Gauge(
+            "tradepulse_model_quality_interval_mean",
+            "Mean value for quality metric confidence interval",
+            ["model_name", "deployment", "metric", "confidence"],
+            registry=registry,
+        )
+
+        self.model_quality_interval_width = Gauge(
+            "tradepulse_model_quality_interval_width",
+            "Width of the quality metric confidence interval",
+            ["model_name", "deployment", "metric", "confidence"],
+            registry=registry,
+        )
+
+        self.model_quality_degradation_events = Counter(
+            "tradepulse_model_quality_degradation_events_total",
+            "Number of quality degradation signals emitted for a model",
+            ["model_name", "deployment", "metric", "reason"],
+            registry=registry,
+        )
+
+        self.model_triage_total = Counter(
+            "tradepulse_model_triage_total",
+            "Number of automated triage workflows launched for model incidents",
+            ["model_name", "deployment", "metric", "reason"],
+            registry=registry,
+        )
+
+        self.model_metric_correlation = Gauge(
+            "tradepulse_model_metric_correlation",
+            "Pearson correlation coefficient between pairs of model metrics",
+            ["model_name", "deployment", "metric_a", "metric_b"],
+            registry=registry,
+        )
+
         # Data ingestion metrics
         self.data_ingestion_duration = Histogram(
             "tradepulse_data_ingestion_duration_seconds",
@@ -406,6 +547,9 @@ class MetricsCollector:
             registry=registry,
         )
 
+        self._model_latency_samples: Dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(maxlen=512)
+        )
         self._ingestion_latency_samples: Dict[tuple[str, str], deque[float]] = (
             defaultdict(lambda: deque(maxlen=256))
         )
@@ -590,6 +734,234 @@ class MetricsCollector:
             if value is None:
                 continue
             gauge.labels(**labels, quantile=name).set(value)
+
+    # ------------------------------------------------------------------
+    # Model observability helpers
+
+    def observe_model_inference_latency(
+        self, model_name: str, deployment: str, duration: float
+    ) -> None:
+        """Observe latency for a model inference request."""
+
+        if not self._enabled:
+            return
+
+        bounded_duration = max(0.0, float(duration))
+        self.model_inference_latency.labels(
+            model_name=model_name, deployment=deployment
+        ).observe(bounded_duration)
+
+        samples = self._model_latency_samples[(model_name, deployment)]
+        samples.append(bounded_duration)
+        self._update_latency_quantiles(
+            self.model_inference_latency_quantiles,
+            {"model_name": model_name, "deployment": deployment},
+            samples,
+        )
+
+    def increment_model_inference_total(
+        self, model_name: str, deployment: str, status: str
+    ) -> None:
+        """Increment inference counters for the supplied status."""
+
+        if not self._enabled:
+            return
+        final_status = status.strip().lower() or "unknown"
+        self.model_inference_total.labels(
+            model_name=model_name, deployment=deployment, status=final_status
+        ).inc()
+
+    def set_model_inference_throughput(
+        self, model_name: str, deployment: str, throughput: float
+    ) -> None:
+        """Set the rolling throughput gauge for inference."""
+
+        if not self._enabled:
+            return
+        self.model_inference_throughput.labels(
+            model_name=model_name, deployment=deployment
+        ).set(max(0.0, float(throughput)))
+
+    def set_model_inference_error_ratio(
+        self, model_name: str, deployment: str, error_ratio: float
+    ) -> None:
+        """Update the error ratio gauge for model inference."""
+
+        if not self._enabled:
+            return
+        bounded = max(0.0, min(1.0, float(error_ratio)))
+        self.model_inference_error_ratio.labels(
+            model_name=model_name, deployment=deployment
+        ).set(bounded)
+
+    def set_model_saturation(
+        self, model_name: str, deployment: str, saturation: float
+    ) -> None:
+        """Record the saturation level of the serving infrastructure."""
+
+        if not self._enabled:
+            return
+        bounded = max(0.0, min(1.0, float(saturation)))
+        self.model_saturation.labels(
+            model_name=model_name, deployment=deployment
+        ).set(bounded)
+
+    def set_model_resource_usage(
+        self,
+        model_name: str,
+        deployment: str,
+        *,
+        cpu_percent: float | None = None,
+        gpu_percent: float | None = None,
+        memory_bytes: float | None = None,
+        memory_percent: float | None = None,
+    ) -> None:
+        """Update resource utilisation gauges for the serving process."""
+
+        if not self._enabled:
+            return
+
+        if cpu_percent is not None:
+            self.model_cpu_percent.labels(
+                model_name=model_name, deployment=deployment
+            ).set(max(0.0, float(cpu_percent)))
+        if gpu_percent is not None:
+            self.model_gpu_percent.labels(
+                model_name=model_name, deployment=deployment
+            ).set(max(0.0, float(gpu_percent)))
+        if memory_bytes is not None:
+            self.model_memory_bytes.labels(
+                model_name=model_name, deployment=deployment
+            ).set(max(0.0, float(memory_bytes)))
+        if memory_percent is not None:
+            bounded = max(0.0, min(100.0, float(memory_percent)))
+            self.model_memory_percent.labels(
+                model_name=model_name, deployment=deployment
+            ).set(bounded)
+
+    def set_model_cache_metrics(
+        self,
+        model_name: str,
+        deployment: str,
+        cache_name: str,
+        *,
+        hit_ratio: float | None = None,
+        entries: float | None = None,
+    ) -> None:
+        """Update cache-related gauges for model serving caches."""
+
+        if not self._enabled:
+            return
+
+        if hit_ratio is not None:
+            bounded = max(0.0, min(1.0, float(hit_ratio)))
+            self.model_cache_hit_ratio.labels(
+                model_name=model_name,
+                deployment=deployment,
+                cache_name=cache_name,
+            ).set(bounded)
+        if entries is not None:
+            self.model_cache_entries.labels(
+                model_name=model_name,
+                deployment=deployment,
+                cache_name=cache_name,
+            ).set(max(0.0, float(entries)))
+
+    def increment_model_cache_evictions(
+        self, model_name: str, deployment: str, cache_name: str, count: int = 1
+    ) -> None:
+        """Increment eviction counters for model caches."""
+
+        if not self._enabled:
+            return
+        self.model_cache_evictions.labels(
+            model_name=model_name,
+            deployment=deployment,
+            cache_name=cache_name,
+        ).inc(max(0, int(count)))
+
+    def set_model_quality_interval(
+        self,
+        model_name: str,
+        deployment: str,
+        metric: str,
+        confidence: float,
+        *,
+        mean: float,
+        lower: float,
+        upper: float,
+    ) -> None:
+        """Record statistics describing a quality confidence interval."""
+
+        if not self._enabled:
+            return
+
+        label_kwargs = {
+            "model_name": model_name,
+            "deployment": deployment,
+            "metric": metric,
+            "confidence": f"{confidence:.2f}",
+        }
+        self.model_quality_interval_mean.labels(**label_kwargs).set(float(mean))
+        self.model_quality_interval_lower.labels(**label_kwargs).set(float(lower))
+        self.model_quality_interval_upper.labels(**label_kwargs).set(float(upper))
+        width = max(0.0, float(upper) - float(lower))
+        self.model_quality_interval_width.labels(**label_kwargs).set(width)
+
+    def record_model_degradation(
+        self,
+        model_name: str,
+        deployment: str,
+        metric: str,
+        reason: str,
+    ) -> None:
+        """Increment the counter tracking emitted degradation events."""
+
+        if not self._enabled:
+            return
+        self.model_quality_degradation_events.labels(
+            model_name=model_name,
+            deployment=deployment,
+            metric=metric,
+            reason=reason,
+        ).inc()
+
+    def record_model_triage(
+        self,
+        model_name: str,
+        deployment: str,
+        metric: str,
+        reason: str,
+    ) -> None:
+        """Record that an automated triage workflow was launched."""
+
+        if not self._enabled:
+            return
+        self.model_triage_total.labels(
+            model_name=model_name,
+            deployment=deployment,
+            metric=metric,
+            reason=reason,
+        ).inc()
+
+    def set_model_metric_correlation(
+        self,
+        model_name: str,
+        deployment: str,
+        metric_a: str,
+        metric_b: str,
+        coefficient: float,
+    ) -> None:
+        """Publish correlation coefficients between metric pairs."""
+
+        if not self._enabled:
+            return
+        self.model_metric_correlation.labels(
+            model_name=model_name,
+            deployment=deployment,
+            metric_a=metric_a,
+            metric_b=metric_b,
+        ).set(float(coefficient))
 
     @contextmanager
     def measure_signal_generation(self, strategy: str) -> Iterator[Dict[str, Any]]:
