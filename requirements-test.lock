@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Minimal test dependencies required for running the builder stage test suite.
+# The versions mirror the pytest stack pinned in requirements-dev.txt without
+# pulling in tooling that requires native build toolchains during image builds.
+pytest==8.4.2
+pytest-asyncio==1.2.0
