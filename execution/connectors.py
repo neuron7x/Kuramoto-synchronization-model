@@ -63,22 +63,21 @@ class ExecutionConnector:
         """Disconnect from the venue."""
 
     def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:
-        if idempotency_key is not None:
-            with self._lock:
+        with self._lock:
+            if idempotency_key is not None:
                 cached = self._idempotency_cache.get(idempotency_key)
                 if cached is not None:
                     return cached
 
-        submitted = self._clone(order)
-        if not submitted.order_id:
-            submitted.mark_submitted(self._generate_order_id())
-        else:
-            # If the caller provided an identifier we still ensure the order
-            # transitions into an active state to mirror live venue behaviour.
-            if submitted.status is OrderStatus.PENDING:
-                submitted.status = OrderStatus.OPEN
+            submitted = self._clone(order)
+            if not submitted.order_id:
+                submitted.mark_submitted(self._generate_order_id())
+            else:
+                # If the caller provided an identifier we still ensure the order
+                # transitions into an active state to mirror live venue behaviour.
+                if submitted.status is OrderStatus.PENDING:
+                    submitted.status = OrderStatus.OPEN
 
-        with self._lock:
             if not submitted.order_id:
                 # ``mark_submitted`` guarantees an identifier, but guard for
                 # defensive programming should ``order_id`` be cleared
@@ -87,7 +86,7 @@ class ExecutionConnector:
             self._orders[submitted.order_id] = submitted
             if idempotency_key is not None:
                 self._idempotency_cache[idempotency_key] = submitted
-        return submitted
+            return submitted
 
     def cancel_order(self, order_id: str) -> bool:
         with self._lock:
