@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
@@ -25,6 +26,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from core.config.cli_models import PostgresTLSConfig
 from core.config.postgres import ensure_secure_postgres_uri
+
+
+def _default_config_vault_key() -> SecretStr:
+    from application.secrets.vault import SecretVault
+
+    return SecretStr(SecretVault.generate_key().decode("utf-8"))
 
 
 class KillSwitchPostgresSettings(BaseModel):
@@ -79,6 +86,39 @@ class KillSwitchPostgresSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ConfigNamespaceSettings(BaseModel):
+    """Describe how configuration namespaces are exposed to operators."""
+
+    name: str = Field(..., min_length=1, description="Namespace identifier.")
+    readers: tuple[str, ...] = Field(
+        default=("system",), description="Actors allowed to read from the namespace."
+    )
+    writers: tuple[str, ...] = Field(
+        default=("system",), description="Actors allowed to write to the namespace."
+    )
+    allow_ci: bool = Field(
+        default=False,
+        description="Whether secrets from this namespace can be injected into CI environments.",
+    )
+    description: str | None = Field(
+        default=None, description="Optional human readable context for operators."
+    )
+
+    @model_validator(mode="after")
+    def _normalise(self) -> "ConfigNamespaceSettings":
+        readers = tuple(actor.strip() for actor in self.readers if actor.strip())
+        writers = tuple(actor.strip() for actor in self.writers if actor.strip())
+        if not readers and not writers:
+            raise ValueError(
+                "At least one reader or writer must be configured for a namespace"
+            )
+        if not self.name.strip():
+            raise ValueError("Namespace name must not be blank")
+        return self.model_copy(update={"readers": readers, "writers": writers})
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class AdminApiSettings(BaseSettings):
     """Configuration governing administrative controls and audit logging."""
 
@@ -115,6 +155,27 @@ class AdminApiSettings(BaseSettings):
     audit_webhook_url: HttpUrl | None = Field(
         default=None,
         description="Optional HTTP endpoint that receives signed audit records for external storage.",
+    )
+    config_vault_path: Path = Field(
+        Path("state/config_vault.json"),
+        description="Filesystem path for the centralised configuration vault.",
+    )
+    config_vault_master_key: SecretStr = Field(
+        default_factory=_default_config_vault_key,
+        min_length=44,
+        description="Base64 encoded 32-byte master key securing the configuration vault.",
+    )
+    config_vault_master_key_path: Path | None = Field(
+        default=None,
+        description="Optional path to read the configuration vault master key from.",
+    )
+    config_template_directory: Path = Field(
+        Path("configs/templates"),
+        description="Directory containing templated environment configuration files.",
+    )
+    config_namespaces: tuple[ConfigNamespaceSettings, ...] = Field(
+        default_factory=lambda: (ConfigNamespaceSettings(name="system"),),
+        description="Isolated namespaces used for configuration and secret segregation.",
     )
     kill_switch_store_path: Path = Field(
         Path("state/kill_switch_state.sqlite"),
@@ -212,6 +273,80 @@ class AdminApiSettings(BaseSettings):
             )
 
         return SecretManager(secrets, audit_logger_factory=audit_logger_factory)
+
+    def build_configuration_store(
+        self,
+        *,
+        audit_logger: "AuditLogger" | None = None,
+        template_manager: "ConfigTemplateManager" | None = None,
+        secret_detector: "SecretDetector" | None = None,
+        rotator: "SecretRotator" | None = None,
+        clock: Callable[[], datetime] | None = None,
+    ) -> "CentralConfigurationStore":
+        """Instantiate the secure configuration store with namespace policies."""
+
+        from application.configuration import (
+            CentralConfigurationStore,
+            NamespaceDefinition,
+        )
+        from application.secrets.rotation import SecretRotator
+        from application.secrets.vault import SecretVault
+        from core.config.template_manager import ConfigTemplateManager
+        from core.utils.security import SecretDetector
+
+        key_bytes = self._resolve_config_vault_key()
+        clock_fn = clock or (lambda: datetime.now(timezone.utc))
+        vault = SecretVault(
+            storage_path=self.config_vault_path,
+            master_key=key_bytes,
+            audit_logger=audit_logger,
+            clock=clock_fn,
+        )
+        template_mgr = template_manager or ConfigTemplateManager(
+            self.config_template_directory
+        )
+        detector = secret_detector or SecretDetector()
+        rotator_instance = rotator or SecretRotator(vault=vault, clock=clock_fn)
+        store = CentralConfigurationStore(
+            vault=vault,
+            template_manager=template_mgr,
+            audit_logger=audit_logger,
+            secret_detector=detector,
+            rotator=rotator_instance,
+            clock=clock_fn,
+        )
+        for namespace in self.config_namespaces:
+            store.register_namespace(
+                NamespaceDefinition(
+                    name=namespace.name,
+                    readers=frozenset(namespace.readers),
+                    writers=frozenset(namespace.writers),
+                    allow_ci=namespace.allow_ci,
+                    description=namespace.description,
+                )
+            )
+        return store
+
+    def _resolve_config_vault_key(self) -> bytes:
+        if self.config_vault_master_key_path is not None:
+            key_text = (
+                self.config_vault_master_key_path.read_text(encoding="utf-8").strip()
+            )
+            if not key_text:
+                raise ValueError("Configuration vault master key file is empty")
+            if len(key_text) < 44:
+                raise ValueError(
+                    "Configuration vault master key must be a base64-encoded 32 byte value"
+                )
+            return key_text.encode("utf-8")
+        key_value = self.config_vault_master_key.get_secret_value()
+        if not key_value:
+            raise ValueError("config_vault_master_key must be provided")
+        if len(key_value) < 44:
+            raise ValueError(
+                "config_vault_master_key must be a base64-encoded 32 byte value"
+            )
+        return key_value.encode("utf-8")
 
     model_config = SettingsConfigDict(
         env_prefix="TRADEPULSE_",

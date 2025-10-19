@@ -4,8 +4,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from application.configuration import ConfigurationStoreError
 from application.secrets.manager import secret_caller_context
-from application.settings import AdminApiSettings
+from application.settings import AdminApiSettings, ConfigNamespaceSettings
+from application.secrets.vault import SecretVault
 from src.audit.audit_logger import AuditLogger
 
 
@@ -202,3 +204,67 @@ def test_secret_manager_audits_force_refresh(tmp_path):
             },
         },
     )
+
+
+def test_build_configuration_store_provisions_namespaces(tmp_path):
+    master_key = SecretVault.generate_key().decode("utf-8")
+    template_dir = tmp_path / "templates"
+    template_dir.mkdir()
+    (template_dir / "config.yaml.j2").write_text(
+        "endpoint={{ endpoint }}\n", encoding="utf-8"
+    )
+
+    settings = AdminApiSettings(
+        audit_secret="audit-secret-value",
+        config_vault_path=tmp_path / "vault.json",
+        config_vault_master_key=master_key,
+        config_template_directory=template_dir,
+        config_namespaces=(
+            ConfigNamespaceSettings(
+                name="prod", readers=("deploy",), writers=("ops",), allow_ci=True
+            ),
+        ),
+    )
+    audit_logger = AuditLogger(secret="audit-secret-value")
+    store = settings.build_configuration_store(audit_logger=audit_logger)
+
+    store.write_configuration(
+        "prod",
+        "service",
+        {"endpoint": "https://api.tradepulse.invalid"},
+        actor="ops",
+        ip_address="198.51.100.10",
+    )
+    config = store.read_configuration(
+        "prod",
+        "service",
+        actor="deploy",
+        ip_address="198.51.100.11",
+    )
+    assert config["endpoint"] == "https://api.tradepulse.invalid"
+
+    store.write_secret(
+        "prod",
+        "api_key",
+        "prod-secret",
+        actor="ops",
+        ip_address="198.51.100.10",
+    )
+    env: dict[str, str] = {}
+    metadata = store.inject_into_ci(
+        "prod",
+        {"API_KEY": "api_key"},
+        actor="deploy",
+        ip_address="198.51.100.11",
+        environment=env,
+    )
+    assert env["API_KEY"] == "prod-secret"
+    assert metadata["API_KEY"]["secret"] == "api_key"
+
+    with pytest.raises(ConfigurationStoreError):
+        store.read_secret(
+            "prod",
+            "api_key",
+            actor="intruder",
+            ip_address="198.51.100.200",
+        )
