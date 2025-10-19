@@ -134,9 +134,19 @@ class ExperimentTracker:
         if not self._tracking.auto_log_config:
             return
 
-        redacted_yaml = safe_yaml or redacted_config_yaml(cfg)
-        redacted_path = self._artifacts_dir / "config.redacted.yaml"
-        redacted_path.write_text(redacted_yaml, encoding="utf-8")
+        redacted_yaml = safe_yaml
+        if redacted_yaml is None:
+            try:
+                redacted_yaml = redacted_config_yaml(cfg)
+            except Exception as exc:  # pragma: no cover - defensive path
+                self._logger.warning(
+                    "Skipping configuration redaction because sanitization failed: %s",
+                    exc,
+                )
+
+        if redacted_yaml is not None:
+            redacted_path = self._artifacts_dir / "config.redacted.yaml"
+            redacted_path.write_text(redacted_yaml, encoding="utf-8")
 
         try:
             resolved = OmegaConf.to_container(cfg.experiment, resolve=True)
