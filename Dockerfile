@@ -6,11 +6,12 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONUNBUFFERED=1
 WORKDIR /build
 
-COPY requirements.lock ./
+COPY requirements.lock requirements-dev.lock ./
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
-    && /opt/venv/bin/pip install --requirement requirements.lock
+    && /opt/venv/bin/pip install --requirement requirements.lock \
+    && /opt/venv/bin/pip install --requirement requirements-dev.lock
 
 COPY . .
 
