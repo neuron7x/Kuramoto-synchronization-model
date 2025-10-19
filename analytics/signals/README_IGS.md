@@ -15,6 +15,7 @@ asymmetry, and permutation entropy. The resulting metrics can be used as standal
 ### Quantisation modes
 - `quantize_mode="zscore"` (default) keeps an `O(1)` rolling mean/std and maps values to states via Gaussian quantiles.
 - `quantize_mode="rank"` maintains a sliding window of historical returns backed by a deque and sorted array. Each update performs `O(log W)` search and `O(W)` data movement to keep the order statistics consistent, ensuring that the state at time `t` depends only on the past `W` returns.
+  The rank quantiser centres empirical percentiles so that freshly initialised buffers (or post-gap rebuilds) start from the neutral bucket instead of saturating at the extremes, keeping batch and streaming pipelines aligned.
 
 ### Regime score weighting
 - `regime_weights` controls the contribution of `[log1p(EPR), |flux|, 1 - PE]` in both batch and streaming pipelines.
