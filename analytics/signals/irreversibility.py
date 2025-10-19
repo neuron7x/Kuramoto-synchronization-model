@@ -21,7 +21,7 @@ Dependencies: numpy, pandas. Optional: prometheus_client.
 from __future__ import annotations
 from dataclasses import dataclass
 from collections import deque
-from typing import Optional, Tuple, Deque, Dict, Any, Callable, List
+from typing import Optional, Tuple, Deque, Dict, Any, Callable, List, ClassVar, Set
 import math
 import logging
 import threading
@@ -64,6 +64,48 @@ class IGSConfig:
     regime_weights: Tuple[float, float, float] = (1.0, 1.0, 1.0)
     signal_epr_q: float = 0.7
     signal_flux_min: float = 0.0
+
+    _ALLOWED_ADAPT_METHODS: ClassVar[Set[str]] = {"off", "entropy", "external"}
+    _ALLOWED_QUANTIZE_MODES: ClassVar[Set[str]] = {"zscore", "rank"}
+    _ALLOWED_PI_METHODS: ClassVar[Set[str]] = {"empirical"}
+
+    def __post_init__(self) -> None:
+        if self.window < 3:
+            raise ValueError("window must be >= 3")
+        if self.n_states < 2:
+            raise ValueError("n_states must be >= 2")
+        if self.min_counts > self.window:
+            raise ValueError("min_counts must be <= window")
+        if self.perm_emb_dim < 3:
+            raise ValueError("perm_emb_dim must be >= 3")
+        if self.perm_tau < 1:
+            raise ValueError("perm_tau must be >= 1")
+        if self.k_min < 2:
+            raise ValueError("k_min must be >= 2")
+        if self.k_min > self.k_max:
+            raise ValueError("k_min must be <= k_max")
+        if self.adapt_method not in self._ALLOWED_ADAPT_METHODS:
+            raise ValueError(f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}")
+        if self.quantize_mode not in self._ALLOWED_QUANTIZE_MODES:
+            raise ValueError(f"quantize_mode must be one of {sorted(self._ALLOWED_QUANTIZE_MODES)}")
+        if self.pi_method not in self._ALLOWED_PI_METHODS:
+            raise ValueError(f"pi_method must be one of {sorted(self._ALLOWED_PI_METHODS)}")
+
+        weights = tuple(self.regime_weights)
+        if len(weights) != 3:
+            raise ValueError("regime_weights must contain exactly three elements")
+        if any(w < 0 for w in weights):
+            raise ValueError("regime_weights must be non-negative")
+        if not any(w > 0 for w in weights):
+            raise ValueError("regime_weights cannot be all zeros")
+        self.regime_weights = weights
+
+        if self.max_update_ms < 0:
+            raise ValueError("max_update_ms must be >= 0")
+        if not (0.0 < self.signal_epr_q < 1.0):
+            raise ValueError("signal_epr_q must be in (0, 1)")
+        if self.signal_flux_min < 0:
+            raise ValueError("signal_flux_min must be >= 0")
 
 
 @dataclass

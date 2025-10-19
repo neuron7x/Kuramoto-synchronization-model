@@ -1,13 +1,16 @@
 igs:
+  # window must be >= 3 and min_counts <= window
   window: 600
   n_states: 7
   min_counts: 50
   eps: 1e-12
   normalize_flux: true
   detrend: false
+  # quantize_mode must be either "zscore" or "rank"
   quantize_mode: "zscore"
   perm_emb_dim: 5
   perm_tau: 1
+  # adapt_method must be one of: off, entropy, external
   adapt_method: "off"
   k_min: 5
   k_max: 15
@@ -19,8 +22,11 @@ igs:
   prometheus_enabled: false
   prometheus_async: true
   max_update_ms: 0.0
+  # pi_method currently supports only "empirical"
   pi_method: "empirical"
+  # regime_weights must be length 3, non-negative, and not all zeros
   regime_weights: [1.0, 1.0, 1.0]
+  # signal_epr_q must be strictly between 0 and 1; signal_flux_min >= 0
   signal_epr_q: 0.7
   signal_flux_min: 0.0
 
