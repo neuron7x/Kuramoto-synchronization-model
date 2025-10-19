@@ -649,8 +649,8 @@ class ModelObservabilityOrchestrator:
             return
 
         reason = (
-            f"quality mean {interval.mean:.4f} outside target {baseline.target:.4f}"
-            f" ± {baseline.tolerance:.4f}"
+            "quality mean outside target band "
+            f"{baseline.target:.4f} ± {baseline.tolerance:.4f}"
         )
         self._emit_degradation(metric, interval.mean, baseline.target, reason, now)
 
