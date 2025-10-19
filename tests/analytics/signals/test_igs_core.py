@@ -30,6 +30,7 @@ def _valid_config_kwargs() -> dict:
         "window": 120,
         "n_states": 5,
         "min_counts": 60,
+        "eps": 1e-9,
         "perm_emb_dim": 5,
         "perm_tau": 1,
         "k_min": 5,
@@ -259,6 +260,7 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
     [
         ({"window": 2, "min_counts": 2}, "window must be >= 3"),
         ({"n_states": 1}, "n_states must be >= 2"),
+        ({"min_counts": 0}, "min_counts must be >= 1"),
         ({"min_counts": 200}, "min_counts must be <= window"),
         ({"perm_emb_dim": 2}, "perm_emb_dim must be >= 3"),
         ({"perm_tau": 0}, "perm_tau must be >= 1"),
@@ -273,12 +275,29 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
         ({"max_update_ms": -1.0}, "max_update_ms must be >= 0"),
         ({"signal_epr_q": 1.0}, r"signal_epr_q must be in \(0, 1\)"),
         ({"signal_flux_min": -0.1}, "signal_flux_min must be >= 0"),
+        ({"eps": 0.0}, "eps must be > 0"),
     ],
 )
 def test_igs_config_validation(overrides: dict, message: str) -> None:
     kwargs = _valid_config_kwargs()
     kwargs.update(overrides)
     with pytest.raises(ValueError, match=message):
+        IGSConfig(**kwargs)
+
+
+@pytest.mark.parametrize("eps", [0.0, -1e-12])
+def test_config_rejects_non_positive_eps(eps: float) -> None:
+    kwargs = _valid_config_kwargs()
+    kwargs["eps"] = eps
+    with pytest.raises(ValueError, match="eps must be > 0"):
+        IGSConfig(**kwargs)
+
+
+@pytest.mark.parametrize("min_counts", [-1, -10])
+def test_config_rejects_negative_min_counts(min_counts: int) -> None:
+    kwargs = _valid_config_kwargs()
+    kwargs["min_counts"] = min_counts
+    with pytest.raises(ValueError, match="min_counts must be >= 1"):
         IGSConfig(**kwargs)
 
 
