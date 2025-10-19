@@ -24,3 +24,19 @@ def test_streaming_igs_resets_on_non_monotonic_timestamp():
     assert not engine.states
     assert np.all(engine.T == 0.0)
     assert np.all(engine.row_sums == 0.0)
+
+
+def test_streaming_igs_resets_on_timezone_mismatch():
+    cfg = IGSConfig(window=10, min_counts=3)
+    engine = StreamingIGS(cfg)
+
+    aware_ts = pd.Timestamp("2024-01-01T00:00:00Z")
+    naive_ts = pd.Timestamp("2024-01-01T00:01:00")
+
+    assert engine.update(aware_ts, 100.0) is None
+    assert engine.update(naive_ts, 101.0) is None
+
+    assert engine.last_timestamp is None
+    assert engine.last_price is None
+    assert not engine.returns
+    assert not engine.states

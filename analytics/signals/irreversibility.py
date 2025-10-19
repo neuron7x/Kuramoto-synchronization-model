@@ -826,14 +826,25 @@ class StreamingIGS:
         self.k_adapt.reset()
 
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
-        if self.last_timestamp is not None and timestamp <= self.last_timestamp:
-            logger.warning(
-                "StreamingIGS received non-monotonic timestamp %s <= %s; resetting state",
-                timestamp,
-                self.last_timestamp,
-            )
-            self._handle_price_gap()
-            return None
+        if self.last_timestamp is not None:
+            try:
+                is_non_monotonic = timestamp <= self.last_timestamp
+            except TypeError:
+                logger.warning(
+                    "StreamingIGS received timezone-mismatched timestamps %s and %s; resetting state",
+                    timestamp,
+                    self.last_timestamp,
+                )
+                self._handle_price_gap()
+                return None
+            if is_non_monotonic:
+                logger.warning(
+                    "StreamingIGS received non-monotonic timestamp %s <= %s; resetting state",
+                    timestamp,
+                    self.last_timestamp,
+                )
+                self._handle_price_gap()
+                return None
         if price is None or not (price > 0):
             self._handle_price_gap()
             return None
