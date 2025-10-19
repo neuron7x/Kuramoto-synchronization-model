@@ -62,6 +62,7 @@ if metrics is not None:
 - The streaming reset clears cached returns, Markov states, and transition counts so that the next valid observation starts with a fresh window.
 - Rolling statistics (TRA, permutation entropy) and the active quantiser are reinitialised alongside the K-adaptation controller, preventing "stitched" transitions across the gap.
 - Metrics are therefore suppressed until the window accumulates the configured `min_counts` of post-gap transitions, keeping batch and streaming outputs aligned.
+- Streaming updates expect strictly increasing timestamps. If a new tick arrives with a timestamp that is not greater than the previous one, the engine logs a warning, clears all buffers, and waits for the next monotonic sample. Downstream feeds should pre-sort data or drop out-of-order ticks before calling `StreamingIGS.update`.
 
 ## Pipeline Integration
 Use the adapter for TradePulse pipelines:

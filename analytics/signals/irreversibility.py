@@ -778,6 +778,7 @@ class StreamingIGS:
         self.row_sums = np.zeros(self.K, dtype=float)
         self.prev_state: Optional[int] = None
         self.last_price: Optional[float] = None
+        self.last_timestamp: Optional[pd.Timestamp] = None
         self.tra_roll = RollingTRA(self.cfg.window)
         self.pe_roll = RollingPermutationEntropy(self.cfg.window, self.cfg.perm_emb_dim, self.cfg.perm_tau)
         self.quant = self._build_quantizer(self.K)
@@ -813,6 +814,7 @@ class StreamingIGS:
 
     def _handle_price_gap(self) -> None:
         self.last_price = None
+        self.last_timestamp = None
         self.prev_state = None
         self.returns.clear()
         self.states.clear()
@@ -824,12 +826,21 @@ class StreamingIGS:
         self.k_adapt.reset()
 
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
+        if self.last_timestamp is not None and timestamp <= self.last_timestamp:
+            logger.warning(
+                "StreamingIGS received non-monotonic timestamp %s <= %s; resetting state",
+                timestamp,
+                self.last_timestamp,
+            )
+            self._handle_price_gap()
+            return None
         if price is None or not (price > 0):
             self._handle_price_gap()
             return None
         t0 = time.perf_counter()
         if self.last_price is None:
             self.last_price = float(price)
+            self.last_timestamp = timestamp
             self.returns.append(0.0)
             s0 = self.quant.update_and_state(0.0)
             self.states.append(s0)
@@ -837,6 +848,7 @@ class StreamingIGS:
             return None
         ret = math.log(float(price)) - math.log(self.last_price)
         self.last_price = float(price)
+        self.last_timestamp = timestamp
         if len(self.returns) == self.returns.maxlen and len(self.states) >= 2:
             old_prev = self.states[0]
             old_state = self.states[1]
