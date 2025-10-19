@@ -462,7 +462,8 @@ jobs:
           kustomize edit set image ghcr.io/neuron7x/tradepulse=${IMAGE_REF}
           popd >/dev/null
           kustomize build "$temp_dir/overlay" > "$temp_dir/manifest.yaml"
-          python <<'PY' "$temp_dir/manifest.yaml"
+          python -m pip install --quiet pyyaml
+          python <<'PY' "$temp_dir/manifest.yaml" "${IMAGE_REF}"
 import copy
 import sys
 from pathlib import Path
