@@ -20,6 +20,7 @@ igs:
   prometheus_async: true
   max_update_ms: 0.0
   pi_method: "empirical"
+  # Weights correspond to [log1p(EPR), |flux|, 1 - PE]; zero weight drops the component.
   regime_weights: [1.0, 1.0, 1.0]
   signal_epr_q: 0.7
   signal_flux_min: 0.0

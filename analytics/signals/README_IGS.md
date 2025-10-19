@@ -6,7 +6,7 @@ asymmetry, and permutation entropy. The resulting metrics can be used as standal
 - **Flux index** – signed collapse of antisymmetric probability fluxes.
 - **TRA** – third-order statistic capturing time-reversal asymmetry with an exact rolling update.
 - **Permutation entropy** – Bandt–Pompe entropy maintained incrementally after the warmup window.
-- **Regime score** – mean of `log1p(EPR)`, `|flux|`, and `(1 - PE)`.
+- **Regime score** – weighted mean of `log1p(EPR)`, `|flux|`, and `(1 - PE)` with configurable component weights (default equal).
 
 ## Python API
 ```python
@@ -39,6 +39,11 @@ provider = IGSFeatureProvider({"window": 600, "n_states": 7})
 features = provider.compute_from_df(dataframe)
 ```
 `IGSFeatureProvider.streaming_update` exposes incremental metrics suitable for low-latency ingestion or feature store updates.
+
+### Regime score weighting
+- `regime_weights` controls the contribution of `[log1p(EPR), |flux|, 1 - PE]` in both batch and streaming pipelines.
+- Weights are normalised after discarding NaN components; zero weights effectively drop a metric (e.g. ignore flux during calibration).
+- When a component is degraded (e.g. permutation entropy under latency pressure), it is excluded from the weighted mean automatically.
 
 ## Adaptation & Monitoring
 - `adapt_method="entropy"` enables hysteretic K adaptation with cooldown and optional external signals.

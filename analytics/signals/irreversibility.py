@@ -21,7 +21,7 @@ Dependencies: numpy, pandas. Optional: prometheus_client.
 from __future__ import annotations
 from dataclasses import dataclass
 from collections import deque
-from typing import Optional, Tuple, Deque, Dict, Any, Callable, List
+from typing import Optional, Tuple, Deque, Dict, Any, Callable, List, Sequence
 import math
 import logging
 import threading
@@ -80,6 +80,21 @@ class IGSMetrics:
 
 def _safe_log(x: np.ndarray, eps: float) -> np.ndarray:
     return np.log(np.maximum(x, eps))
+
+
+def _weighted_regime_score(components: Sequence[float], weights: Sequence[float]) -> float:
+    """Compute a weighted mean of regime components while ignoring NaNs and zero weights."""
+
+    values = np.asarray(list(components), dtype=float)
+    w = np.asarray(list(weights), dtype=float)
+    if values.shape != w.shape:
+        raise ValueError("components and weights must have the same length")
+    valid = np.isfinite(values) & np.isfinite(w) & (w > 0.0)
+    if not np.any(valid):
+        return float("nan")
+    w_norm = w[valid]
+    w_norm = w_norm / w_norm.sum()
+    return float(np.dot(values[valid], w_norm))
 
 
 def _ndtri(p: float) -> float:
@@ -362,9 +377,9 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
         pe = _permutation_entropy_arr(rw, cfg.perm_emb_dim, cfg.perm_tau, cfg.eps)
         epr_c = math.log1p(epr)
         flux_mag = abs(flux_idx)
-        pe_inv = 1.0 - pe if not np.isnan(pe) else np.nan
-        regime = float(np.nanmean([epr_c, flux_mag, pe_inv]))
-        regime = float(np.clip(regime, 0.0, 1.0))
+        pe_inv = 1.0 - pe
+        regime = _weighted_regime_score((epr_c, flux_mag, pe_inv), cfg.regime_weights)
+        regime = float(np.clip(regime, 0.0, 1.0)) if np.isfinite(regime) else float("nan")
         out["epr"][t] = epr
         out["flux_index"][t] = flux_idx
         out["tra"][t] = tra
@@ -559,9 +574,9 @@ class StreamingIGS:
         pe = float("nan") if degrade else pe_val
         epr_c = math.log1p(epr)
         flux_mag = abs(flux_index)
-        pe_inv = 1.0 - pe if not np.isnan(pe) else 0.0
-        regime_score = float(np.mean([epr_c, flux_mag, pe_inv]))
-        regime_score = float(np.clip(regime_score, 0.0, 1.0))
+        pe_inv = 1.0 - pe
+        regime_score = _weighted_regime_score((epr_c, flux_mag, pe_inv), self.cfg.regime_weights)
+        regime_score = float(np.clip(regime_score, 0.0, 1.0)) if np.isfinite(regime_score) else float("nan")
         regime_name = _classify_regime_simple(epr, flux_index, pe)
         self.metrics_async.emit(epr, flux_index, regime_score, self.K)
         if not degrade:
