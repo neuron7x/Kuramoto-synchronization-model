@@ -21,3 +21,29 @@ analytics:
 tracking:
   enabled: true
   base_dir: ${hydra.run.dir}
+  artifacts_dirname: artifacts
+  reports_dirname: reports
+  hyperparameters_filename: hyperparameters.json
+  data_versioning: true
+  auto_log_config: true
+  auto_log_metadata: true
+  ci_integration: false
+  reports:
+    auto_generate: true
+    markdown_filename: experiment_report.md
+    dashboard_filename: experiment_dashboard.html
+  archive:
+    enabled: true
+    format: zip
+    directory: null
+    keep_original: true
+  alerts:
+    enabled: true
+    strategy: relative
+    tolerance: 0.05
+    fail_on_deviation: true
+  baseline: null
+  versioning:
+    backend: none
+    repo_path: null
+    message: null

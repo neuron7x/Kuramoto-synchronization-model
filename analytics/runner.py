@@ -7,7 +7,6 @@ import logging
 import os
 import platform
 import random
-import re
 import subprocess
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -20,6 +19,12 @@ import pandas as pd
 from hydra.utils import get_original_cwd, to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 
+from analytics._config_sanitizer import redacted_config_yaml
+from analytics.tracking import (
+    ExperimentDeviationError,
+    ExperimentTracker,
+    NullExperimentTracker,
+)
 from core.config.hydra_profiles import (
     ExperimentProfileError,
     ExperimentProfileRegistry,
@@ -28,67 +33,6 @@ from core.config.hydra_profiles import (
 from core.indicators.entropy import delta_entropy, entropy
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 from core.indicators.ricci import build_price_graph, mean_ricci
-
-REDACTED_PLACEHOLDER = "***REDACTED***"
-SENSITIVE_TOKENS = (
-    "password",
-    "secret",
-    "token",
-    "apikey",
-    "api_key",
-    "credential",
-    "auth",
-    "key",
-)
-
-
-_CAMELCASE_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
-
-
-def _iter_key_tokens(key: str) -> list[str]:
-    """Return normalized tokens extracted from a configuration key."""
-
-    normalized = _CAMELCASE_BOUNDARY.sub(r"\1_\2", key)
-    normalized = normalized.lower()
-    return [token for token in re.split(r"[^0-9a-z]+", normalized) if token]
-
-
-def _is_sensitive_key(key: str) -> bool:
-    """Return ``True`` when the provided configuration key is sensitive."""
-
-    return any(token in SENSITIVE_TOKENS for token in _iter_key_tokens(key))
-
-
-def _redact_sensitive_data(data: Any) -> Any:
-    """Return a copy of ``data`` with sensitive keys masked."""
-
-    if isinstance(data, dict):
-        return {
-            key: (
-                REDACTED_PLACEHOLDER
-                if _is_sensitive_key(str(key))
-                else _redact_sensitive_data(value)
-            )
-            for key, value in data.items()
-        }
-    if isinstance(data, list):
-        return [_redact_sensitive_data(item) for item in data]
-    if isinstance(data, tuple):
-        return tuple(_redact_sensitive_data(item) for item in data)
-    return data
-
-
-def _redacted_config_yaml(cfg: DictConfig) -> str:
-    """Serialize ``cfg`` to YAML with sensitive values redacted."""
-
-    container = OmegaConf.to_container(
-        cfg,
-        resolve=False,
-        throw_on_missing=False,
-    )
-    redacted_container = _redact_sensitive_data(container)
-    redacted_conf = OmegaConf.create(redacted_container)
-    return OmegaConf.to_yaml(redacted_conf, resolve=False)
 
 
 @dataclass(slots=True)
@@ -182,23 +126,33 @@ def _write_metadata(metadata: RunMetadata) -> None:
     metadata_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def run_pipeline(cfg: DictConfig) -> dict[str, Any]:
+def run_pipeline(
+    cfg: DictConfig, tracker: ExperimentTracker | None = None
+) -> dict[str, Any]:
     """Execute the analytics pipeline using configuration parameters."""
 
     logger = logging.getLogger("tradepulse.experiment")
+    tracker = tracker or NullExperimentTracker()
     data_cfg = cfg.experiment.data
     analytics_cfg = cfg.experiment.analytics
 
     data_path = Path(to_absolute_path(str(data_cfg.price_csv)))
+    tracker.log_data_version(data_path)
     if not data_path.exists():
         logger.warning(
             "Data file %s does not exist; analytics step skipped.", data_path
         )
+        tracker.record_status("missing-data", {"path": str(data_path)})
         return {"status": "missing-data", "path": str(data_path)}
 
     df = pd.read_csv(data_path)
+    tracker.record_status("data-loaded", {"rows": len(df), "columns": list(df.columns)})
     price_column = str(data_cfg.price_column)
     if price_column not in df.columns:
+        tracker.record_status(
+            "invalid-data",
+            {"price_column": price_column, "available_columns": list(df.columns)},
+        )
         raise ValueError(
             f"Price column '{price_column}' not found in dataset columns {list(df.columns)}"
         )
@@ -209,6 +163,10 @@ def run_pipeline(cfg: DictConfig) -> dict[str, Any]:
     delta = float(analytics_cfg.delta)
 
     if len(prices) < window:
+        tracker.record_status(
+            "insufficient-data",
+            {"observations": len(prices), "window": window},
+        )
         raise ValueError(
             f"Not enough price observations ({len(prices)}) for window size {window}."
         )
@@ -229,10 +187,13 @@ def run_pipeline(cfg: DictConfig) -> dict[str, Any]:
         "bins": bins,
         "delta": delta,
     }
+    tracker.log_metrics(summary)
+    tracker.record_status("analytics-completed", summary)
     logger.info("Analytics summary computed: %s", summary)
 
     results_path = Path.cwd() / "results.json"
     results_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    tracker.log_artifact(results_path)
     return {"status": "ok", "summary": summary, "results_path": str(results_path)}
 
 
@@ -266,21 +227,36 @@ def main(cfg: DictConfig) -> None:
         experiment.name,
         ", ".join(registry.names()),
     )
+    tracker = ExperimentTracker.from_experiment(experiment, metadata)
+    safe_yaml: str | None
     try:
-        safe_yaml = _redacted_config_yaml(cfg)
+        safe_yaml = redacted_config_yaml(cfg)
     except Exception:
         logger.warning(
             "Unable to serialize configuration for safe logging; output suppressed.",
             exc_info=True,
         )
-    else:
+        safe_yaml = None
+    if safe_yaml is not None:
         logger.info("Running with configuration:\n%s", safe_yaml)
+    tracker.log_configuration(cfg, safe_yaml)
 
-    results = run_pipeline(cfg)
     _write_metadata(metadata)
+    tracker.log_metadata(metadata)
 
-    results_path = run_dir / "pipeline_results.json"
-    results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
+    try:
+        results = run_pipeline(cfg, tracker=tracker)
+    except ExperimentDeviationError as exc:
+        tracker.finalize(results=None, error=exc)
+        raise SystemExit(str(exc)) from exc
+    except Exception as exc:
+        tracker.finalize(results=None, error=exc)
+        raise
+    else:
+        results_path = run_dir / "pipeline_results.json"
+        results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
+        tracker.log_artifact(results_path)
+        tracker.finalize(results=results, error=None)
 
 
 if __name__ == "__main__":

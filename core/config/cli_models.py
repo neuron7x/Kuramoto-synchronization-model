@@ -16,6 +16,10 @@ __all__ = [
     "ExperimentAnalyticsConfig",
     "ExperimentConfig",
     "ExperimentDataConfig",
+    "ExperimentArchiveConfig",
+    "ExperimentBaselineConfig",
+    "ExperimentDeviationAlertConfig",
+    "ExperimentReportConfig",
     "ExperimentTrackingConfig",
     "ExecutionConfig",
     "FeatureFrameSourceConfig",
@@ -93,11 +97,57 @@ class ExperimentAnalyticsConfig(BaseModel):
         return value
 
 
+class ExperimentReportConfig(BaseModel):
+    """Control automatic report and dashboard generation."""
+
+    auto_generate: bool = True
+    markdown_filename: str = "experiment_report.md"
+    dashboard_filename: str = "experiment_dashboard.html"
+
+
+class ExperimentArchiveConfig(BaseModel):
+    """Configuration for automatic archival of experiment artifacts."""
+
+    enabled: bool = True
+    format: Literal["zip", "gztar", "tar", "bztar", "xztar"] = "zip"
+    directory: Path | None = None
+    keep_original: bool = True
+
+
+class ExperimentDeviationAlertConfig(BaseModel):
+    """Alerting strategy for baseline deviations."""
+
+    enabled: bool = True
+    strategy: Literal["relative", "absolute"] = "relative"
+    tolerance: float = 0.05
+    fail_on_deviation: bool = True
+
+
+class ExperimentBaselineConfig(BaseModel):
+    """Baseline reference metrics used to detect regressions."""
+
+    name: str = "baseline"
+    metrics_path: Path
+    metric_tolerances: Dict[str, float] = Field(default_factory=dict)
+
+
 class ExperimentTrackingConfig(BaseModel):
     """Where to persist experiment tracking artifacts."""
 
     enabled: bool = True
     base_dir: Path
+    artifacts_dirname: str = "artifacts"
+    reports_dirname: str = "reports"
+    hyperparameters_filename: str = "hyperparameters.json"
+    reports: ExperimentReportConfig = Field(default_factory=ExperimentReportConfig)
+    archive: ExperimentArchiveConfig = Field(default_factory=ExperimentArchiveConfig)
+    alerts: ExperimentDeviationAlertConfig = Field(default_factory=ExperimentDeviationAlertConfig)
+    baseline: ExperimentBaselineConfig | None = None
+    data_versioning: bool = True
+    auto_log_config: bool = True
+    auto_log_metadata: bool = True
+    ci_integration: bool = False
+    versioning: VersioningConfig = Field(default_factory=VersioningConfig)
 
 
 class ExperimentConfig(BaseModel):
