@@ -434,6 +434,8 @@ def igs_directional_signal(
 ) -> pd.Series:
     f = features
     s = pd.Series(0, index=f.index, dtype=int)
+    pos = pd.Series(False, index=f.index, dtype=bool)
+    neg = pd.Series(False, index=f.index, dtype=bool)
     required_cols = ["epr", "flux_index"]
     if "balance_gap" in f.columns:
         required_cols.append("balance_gap")
