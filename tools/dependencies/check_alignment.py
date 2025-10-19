@@ -13,10 +13,13 @@ from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
 
-def _normalize_requirement(requirement: Requirement) -> tuple[str, tuple[str, ...]]:
-    """Return a comparable key for a requirement (name + sorted extras)."""
+def _normalize_requirement(
+    requirement: Requirement,
+) -> tuple[str, tuple[str, ...], str | None]:
+    """Return a comparable key for a requirement (name + extras + marker)."""
 
-    return canonicalize_name(requirement.name), tuple(sorted(requirement.extras))
+    marker = str(requirement.marker) if requirement.marker is not None else None
+    return canonicalize_name(requirement.name), tuple(sorted(requirement.extras)), marker
 
 
 def _load_requirement_lines(path: Path) -> Iterable[str]:
@@ -32,22 +35,26 @@ def _load_requirement_lines(path: Path) -> Iterable[str]:
         yield line
 
 
-def _load_requirements(path: Path) -> Mapping[tuple[str, tuple[str, ...]], Requirement]:
-    requirements: dict[tuple[str, tuple[str, ...]], Requirement] = {}
+def _load_requirements(
+    path: Path,
+) -> Mapping[tuple[str, tuple[str, ...], str | None], Requirement]:
+    requirements: dict[tuple[str, tuple[str, ...], str | None], Requirement] = {}
     for line in _load_requirement_lines(path):
         req = Requirement(line)
         requirements[_normalize_requirement(req)] = req
     return requirements
 
 
-def _load_pyproject_dependencies(path: Path) -> Mapping[tuple[str, tuple[str, ...]], Requirement]:
+def _load_pyproject_dependencies(
+    path: Path,
+) -> Mapping[tuple[str, tuple[str, ...], str | None], Requirement]:
     document = tomllib.loads(path.read_text(encoding="utf-8"))
     try:
         dependency_entries = document["project"]["dependencies"]
     except KeyError as exc:  # pragma: no cover - config error path
         raise KeyError("pyproject.toml is missing [project].dependencies") from exc
 
-    requirements: dict[tuple[str, tuple[str, ...]], Requirement] = {}
+    requirements: dict[tuple[str, tuple[str, ...], str | None], Requirement] = {}
     for entry in dependency_entries:
         req = Requirement(entry)
         requirements[_normalize_requirement(req)] = req
@@ -57,12 +64,13 @@ def _load_pyproject_dependencies(path: Path) -> Mapping[tuple[str, tuple[str, ..
 def _format_requirement(requirement: Requirement) -> str:
     extras = f"[{','.join(sorted(requirement.extras))}]" if requirement.extras else ""
     spec = str(requirement.specifier) if requirement.specifier else ""
-    return f"{requirement.name}{extras}{spec}"
+    marker = f"; {requirement.marker}" if requirement.marker else ""
+    return f"{requirement.name}{extras}{spec}{marker}"
 
 
 def _compare(
-    base: Mapping[tuple[str, tuple[str, ...]], Requirement],
-    reference: Mapping[tuple[str, tuple[str, ...]], Requirement],
+    base: Mapping[tuple[str, tuple[str, ...], str | None], Requirement],
+    reference: Mapping[tuple[str, tuple[str, ...], str | None], Requirement],
 ) -> tuple[list[str], list[str]]:
     missing: list[str] = []
     divergent: list[str] = []
@@ -82,8 +90,8 @@ def _compare(
 
 
 def _find_unexpected(
-    base: Mapping[tuple[str, tuple[str, ...]], Requirement],
-    reference: Mapping[tuple[str, tuple[str, ...]], Requirement],
+    base: Mapping[tuple[str, tuple[str, ...], str | None], Requirement],
+    reference: Mapping[tuple[str, tuple[str, ...], str | None], Requirement],
 ) -> list[str]:
     unexpected: list[str] = []
     for key, requirement in sorted(reference.items(), key=lambda item: item[0]):
