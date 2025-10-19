@@ -35,9 +35,31 @@ def test_normalize_timestamp_from_datetime() -> None:
     assert result == source
 
 
-def test_normalize_timestamp_rejects_invalid_type() -> None:
+def test_normalize_timestamp_from_iso_string() -> None:
+    iso_value = "2024-01-01T12:34:56+00:00"
+    result = normalize_timestamp(iso_value)
+    assert result == datetime(2024, 1, 1, 12, 34, 56, tzinfo=timezone.utc)
+
+
+def test_normalize_timestamp_from_numeric_string() -> None:
+    result = normalize_timestamp("1700000000")
+    assert result.tzinfo == timezone.utc
+    assert result.timestamp() == pytest.approx(1_700_000_000.0)
+
+
+def test_normalize_timestamp_rejects_empty_string() -> None:
+    with pytest.raises(ValueError):
+        normalize_timestamp("   ")
+
+
+def test_normalize_timestamp_rejects_unparseable_string() -> None:
+    with pytest.raises(ValueError):
+        normalize_timestamp("not-a-timestamp")
+
+
+def test_normalize_timestamp_rejects_unsupported_type() -> None:
     with pytest.raises(TypeError):
-        normalize_timestamp("2024-01-01")
+        normalize_timestamp(object())
 
 
 def test_normalize_timestamp_handles_market_dst_offsets() -> None:
