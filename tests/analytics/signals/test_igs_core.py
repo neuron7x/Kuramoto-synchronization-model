@@ -293,6 +293,10 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
         ({"min_counts": 200}, "min_counts must be <= window"),
         ({"perm_emb_dim": 2}, "perm_emb_dim must be >= 3"),
         ({"perm_tau": 0}, "perm_tau must be >= 1"),
+        (
+            {"window": 4, "min_counts": 4, "perm_emb_dim": 5, "perm_tau": 1},
+            r"window must be >= \(perm_emb_dim - 1\) \* perm_tau \+ 1 to compute permutation entropy",
+        ),
         ({"k_min": 1}, "k_min must be >= 2"),
         ({"k_min": 10, "k_max": 5}, "k_min must be <= k_max"),
         ({"adapt_method": "unknown"}, "adapt_method must be one of"),
@@ -333,3 +337,14 @@ def test_config_rejects_negative_min_counts(min_counts: int) -> None:
 def test_config_rejects_invalid_pi_method() -> None:
     with pytest.raises(ValueError):
         IGSConfig(pi_method="invalid")
+
+
+def test_igs_config_accepts_min_window_for_permutation_entropy() -> None:
+    kwargs = _valid_config_kwargs()
+    kwargs.update({"perm_emb_dim": 6, "perm_tau": 2})
+    kwargs["window"] = (kwargs["perm_emb_dim"] - 1) * kwargs["perm_tau"] + 1
+    kwargs["min_counts"] = min(kwargs["min_counts"], kwargs["window"])
+
+    cfg = IGSConfig(**kwargs)
+
+    assert cfg.window == (cfg.perm_emb_dim - 1) * cfg.perm_tau + 1
