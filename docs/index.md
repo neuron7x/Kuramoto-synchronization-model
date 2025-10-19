@@ -19,6 +19,9 @@ focused document so contributors can quickly find the details they need.
 - **Chaos & cost governance** – container stress campaigns, FinOps controls,
   and research workload guardrails are captured in
   [`docs/chaos_cost_controls.md`](chaos_cost_controls.md).
+- **Metric governance & experimentation discipline** – end-to-end framework for
+  goal trees, indicators, SLOs, and experimentation guardrails is documented in
+  [`docs/metrics_discipline.md`](metrics_discipline.md).
 - **Risk, signals, and observability controls** – consolidated guardrails for
   portfolio risk, model governance, and Prometheus coverage are in
   [`docs/risk_ml_observability.md`](risk_ml_observability.md).
