@@ -515,34 +515,80 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
         return pd.DataFrame(out, index=r.index)
 
     r_values = r.to_numpy(dtype=float, copy=True)
-    if not np.isfinite(r_values[0]):
-        r_values[0] = 0.0
+    if n > 0 and (not np.isfinite(r_values[0])):
+        first_price = price.iloc[0]
+        if pd.notna(first_price) and first_price > 0:
+            r_values[0] = 0.0
 
     quant_states = np.full(n, -1, dtype=int)
-    quantizer = _make_quantizer(cfg.quantize_mode, cfg.window, cfg.n_states)
-    for idx, value in enumerate(r_values):
-        if not np.isfinite(value):
-            continue
-        quant_states[idx] = quantizer.update_and_state(float(value))
-
-    pe_roll = RollingPermutationEntropy(cfg.window, cfg.perm_emb_dim, cfg.perm_tau)
     pe_values = np.full(n, np.nan)
+    last_invalid_positions = np.full(n, -1, dtype=int)
+    seed_states = np.full(n, -1, dtype=int)
+
+    def _fresh_quantizer() -> Quantizer:
+        return _make_quantizer(cfg.quantize_mode, cfg.window, cfg.n_states)
+
+    quantizer = _fresh_quantizer()
+    pe_roll = RollingPermutationEntropy(cfg.window, cfg.perm_emb_dim, cfg.perm_tau)
+    last_invalid_idx = -1
+    seed_state_current: Optional[int] = None
+    need_seed = False
+
     for idx, value in enumerate(r_values):
-        if idx == 0 or not np.isfinite(value):
+        price_curr = price.iloc[idx]
+        price_prev = price.iloc[idx - 1] if idx > 0 else np.nan
+        price_curr_pos = pd.notna(price_curr) and price_curr > 0
+        price_prev_pos = pd.notna(price_prev) and price_prev > 0
+
+        if not np.isfinite(value):
+            if price_curr_pos and not price_prev_pos:
+                seed_state_current = quantizer.update_and_state(0.0)
+                seed_states[idx] = seed_state_current if seed_state_current is not None else -1
+                last_invalid_positions[idx] = last_invalid_idx
+                need_seed = False
+                continue
+            quantizer = _fresh_quantizer()
+            pe_roll.reset()
+            last_invalid_idx = idx
+            last_invalid_positions[idx] = last_invalid_idx
+            seed_states[idx] = -1
+            seed_state_current = None
+            need_seed = True
+            continue
+
+        if need_seed:
+            seed_state_current = quantizer.update_and_state(0.0)
+            need_seed = False
+        state = quantizer.update_and_state(float(value))
+        quant_states[idx] = state
+        seed_states[idx] = seed_state_current if seed_state_current is not None else -1
+        last_invalid_positions[idx] = last_invalid_idx
+        if idx == 0 and last_invalid_idx == -1:
             continue
         pe_values[idx] = pe_roll.update(float(value))
 
     for t in range(n):
         start = max(0, t - cfg.window + 1)
+        last_invalid = last_invalid_positions[t]
+        if last_invalid >= 0:
+            start = max(start, last_invalid + 1)
+        if start > t:
+            continue
         window_returns = r_values[start : t + 1]
         window_states = quant_states[start : t + 1]
         valid = np.isfinite(window_returns) & (window_states >= 0)
         valid_count = int(np.count_nonzero(valid))
-        if valid_count < 2 or (valid_count - 1) < cfg.min_counts:
+        if valid_count == 0:
             continue
         rw = window_returns[valid]
         states = window_states[valid].astype(int)
+        seed_state = seed_states[t]
+        if seed_state >= 0 and last_invalid >= 0 and start == last_invalid + 1 and states.size >= 1:
+            states = np.concatenate(([seed_state], states))
         if states.size < 2:
+            continue
+        transitions_count = states.size - 1
+        if transitions_count < cfg.min_counts:
             continue
         P, pi = _transition_matrix(states, cfg.n_states, cfg.eps, cfg.pi_method)
         epr, J = _entropy_production(P, pi, cfg.eps)
