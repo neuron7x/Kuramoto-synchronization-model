@@ -334,17 +334,27 @@ class _MaterialisedDataset:
         self._cache_enabled = cache
         self._cache_limit = cache_limit
         self._cache: list[TrainingSample] | None = None
+        self._cache_complete: bool | None = None
         self._lock = threading.Lock()
 
     def __iter__(self) -> Iterator[TrainingSample]:
         with self._lock:
             cache = self._cache
+            cache_complete = self._cache_complete
         if cache is not None:
             for sample in cache:
                 yield _clone_sample(sample)
+            # Stream any remaining samples beyond the cached prefix.
+            if self._cache_enabled and not cache_complete:
+                skip = len(cache)
+                for index, item in enumerate(self._dataset):
+                    if index < skip:
+                        continue
+                    yield _normalise_sample(item)
             return
 
         produced: list[TrainingSample] = [] if self._cache_enabled else []
+        cache_complete = True
         count = 0
         for item in self._dataset:
             sample = _normalise_sample(item)
@@ -353,12 +363,15 @@ class _MaterialisedDataset:
             ):
                 produced.append(_clone_sample(sample))
                 count += 1
+            elif self._cache_enabled:
+                cache_complete = False
             yield sample
 
         if self._cache_enabled:
             with self._lock:
                 if self._cache is None:
                     self._cache = produced
+                    self._cache_complete = cache_complete
 
 
 class AsyncDataLoader:
@@ -688,6 +701,10 @@ class TrainingEngine:
                         metrics=result.metrics,
                     )
                     checkpoints.append(checkpoint)
+
+            if batch_in_epoch % grad_accum != 0:
+                self._component.optimizer_step()
+                self._component.zero_grad()
 
         summary = TrainingSummary(
             epochs_completed=config.epochs,
