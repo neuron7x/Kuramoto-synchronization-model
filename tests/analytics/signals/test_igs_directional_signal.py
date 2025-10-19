@@ -33,3 +33,22 @@ def test_directional_signal_respects_flux_threshold_from_config():
     signal = igs_directional_signal(features, cfg=cfg)
 
     assert signal.tolist() == [0, 0, 0, 0, 1]
+
+
+def test_directional_signal_accepts_positional_thresholds():
+    features = _make_features()
+
+    positional_signal = igs_directional_signal(features, 0.2, 0.05)
+    keyword_signal = igs_directional_signal(features, epr_q=0.2, flux_min=0.05)
+
+    assert positional_signal.equals(keyword_signal)
+
+
+def test_directional_signal_accepts_positional_config():
+    features = _make_features()
+    cfg = IGSConfig(signal_epr_q=0.2, signal_flux_min=0.3)
+
+    positional_signal = igs_directional_signal(features, cfg)
+    keyword_signal = igs_directional_signal(features, cfg=cfg)
+
+    assert positional_signal.equals(keyword_signal)

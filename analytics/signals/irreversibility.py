@@ -375,10 +375,9 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
 
 def igs_directional_signal(
     features: pd.DataFrame,
-    cfg: Optional[IGSConfig] = None,
-    *,
     epr_q: Optional[float] = None,
     flux_min: Optional[float] = None,
+    cfg: Optional[IGSConfig] = None,
 ) -> pd.Series:
     """Build a directional long/short signal from pre-computed IGS features.
 
@@ -387,17 +386,27 @@ def igs_directional_signal(
     features:
         DataFrame returned by :func:`compute_igs_features` containing at least
         ``epr`` and ``flux_index`` columns.
+    epr_q:
+        Optional override for the quantile applied to the entropy production
+        rate.  May be passed positionally for backwards compatibility.
+        If omitted the value from ``cfg`` is used.
+    flux_min:
+        Optional override for the minimum absolute flux required to emit a
+        signal.  May be passed positionally for backwards compatibility.
+        If omitted the value from ``cfg`` is used.
     cfg:
         Configuration whose :class:`IGSConfig.signal_epr_q` and
         :class:`IGSConfig.signal_flux_min` provide the default thresholds.
         When ``None`` the defaults from :class:`IGSConfig` are used.
-    epr_q:
-        Optional override for the quantile applied to the entropy production
-        rate.  If omitted the value from ``cfg`` is used.
-    flux_min:
-        Optional override for the minimum absolute flux required to emit a
-        signal.  If omitted the value from ``cfg`` is used.
     """
+
+    if isinstance(epr_q, IGSConfig) and cfg is None and flux_min is None:
+        cfg = epr_q
+        epr_q = None
+
+    if isinstance(flux_min, IGSConfig) and cfg is None:
+        cfg = flux_min
+        flux_min = None
 
     cfg = cfg or IGSConfig()
     f = features
