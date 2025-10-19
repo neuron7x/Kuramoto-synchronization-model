@@ -84,6 +84,11 @@ class BaseBlock(ABC):
     def register(self, feature: BaseFeature) -> None:
         self._features.append(feature)
 
+    def add_feature(self, feature: BaseFeature) -> None:
+        """Alias for :meth:`register` to match the higher-level API docs."""
+
+        self.register(feature)
+
     def extend(self, features: Iterable[BaseFeature]) -> None:
         self._features.extend(features)
 
@@ -98,12 +103,66 @@ class BaseBlock(ABC):
 class FeatureBlock(BaseBlock):
     """Minimal block that executes its child features sequentially."""
 
-    def run(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
-        outputs: dict[str, Any] = {}
+    def __init__(
+        self,
+        features: Sequence[BaseFeature] | str | None = None,
+        *,
+        name: str | None = None,
+    ) -> None:
+        block_name = name
+        feature_sequence: Sequence[BaseFeature] | None
+
+        if isinstance(features, str):
+            if block_name is not None:
+                raise TypeError(
+                    "features must be an iterable of BaseFeature instances or None"
+                )
+            block_name = features
+            feature_sequence = None
+        elif features is None:
+            feature_sequence = None
+        else:
+            if not isinstance(features, Iterable):
+                raise TypeError(
+                    "features must be an iterable of BaseFeature instances or None"
+                )
+            feature_sequence = tuple(features)
+
+        if feature_sequence is not None and any(
+            not isinstance(item, BaseFeature) for item in feature_sequence
+        ):
+            raise TypeError("features must contain BaseFeature instances")
+
+        super().__init__(features=feature_sequence, name=block_name)
+
+    def _iter_results(
+        self, data: FeatureInput, kwargs: Mapping[str, Any]
+    ) -> Iterable[FeatureResult]:
         for feature in self.features:
-            result = feature.transform(data, **kwargs)
-            outputs[result.name] = result.value
-        return outputs
+            yield feature.transform(data, **kwargs)
+
+    def evaluate(
+        self, data: FeatureInput, **kwargs: Any
+    ) -> Mapping[str, FeatureResult]:
+        """Run all features and return their full :class:`FeatureResult`s."""
+
+        return {
+            result.name: result
+            for result in self._iter_results(data, kwargs)
+        }
+
+    def transform_all(
+        self, data: FeatureInput, **kwargs: Any
+    ) -> Mapping[str, FeatureResult]:
+        """Alias for :meth:`evaluate` to align with the public documentation."""
+
+        return self.evaluate(data, **kwargs)
+
+    def run(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
+        return {
+            name: result.value
+            for name, result in self.evaluate(data, **kwargs).items()
+        }
 
 
 class ParallelFeatureBlock(BaseBlock):
@@ -197,6 +256,34 @@ def _process_transform(
     return feature.transform(data, **dict(kwargs))
 
 
+class BlockFeature(BaseFeature):
+    """Adapter that exposes a :class:`BaseBlock` as a feature."""
+
+    def __init__(
+        self,
+        block: BaseBlock,
+        *,
+        name: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> None:
+        super().__init__(name=name or block.name)
+        self._block = block
+        self._metadata = dict(metadata or {})
+
+    @property
+    def block(self) -> BaseBlock:
+        return self._block
+
+    def transform(self, data: FeatureInput, **kwargs: Any) -> FeatureResult:
+        values = self._block.run(data, **kwargs)
+        metadata = {
+            "block": self._block.name,
+            "feature_count": len(self._block.features),
+        }
+        metadata.update(self._metadata)
+        return FeatureResult(name=self.name, value=values, metadata=metadata)
+
+
 class FunctionalFeature(BaseFeature):
     """Adapter that wraps a plain function into the feature interface."""
 
@@ -219,6 +306,7 @@ class FunctionalFeature(BaseFeature):
 __all__ = [
     "BaseFeature",
     "BaseBlock",
+    "BlockFeature",
     "FeatureBlock",
     "ParallelFeatureBlock",
     "FunctionalFeature",
