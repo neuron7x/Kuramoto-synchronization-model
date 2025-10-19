@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -73,6 +74,65 @@ def test_streaming_matches_batch_tail_window(quantize_mode: str) -> None:
     batch_last = features.dropna().iloc[-1]
     assert np.isclose(metric.epr, batch_last["epr"], rtol=5e-1, atol=2e-2)
     assert np.isclose(metric.flux_index, batch_last["flux_index"], rtol=5e-1, atol=5e-2)
+
+
+def test_streaming_resets_on_invalid_prices() -> None:
+    series = _random_walk(seed=17, length=800)
+    gap_idx = 320
+    series.iloc[gap_idx] = np.nan
+    series.iloc[gap_idx + 1] = 0.0
+    gap_ts = series.index[gap_idx]
+    zero_ts = series.index[gap_idx + 1]
+    recovery_candidates = series.iloc[gap_idx + 1 :][series.iloc[gap_idx + 1 :] > 0]
+    assert not recovery_candidates.empty
+    recovery_ts = recovery_candidates.index[0]
+    recovery_start = series.index.get_loc(recovery_ts)
+    config = IGSConfig(window=120, n_states=5, min_counts=60, quantize_mode="rank")
+    features = compute_igs_features(series.iloc[recovery_start:], config).reindex(series.index)
+    engine = StreamingIGS(config)
+    metrics_by_ts: Dict[pd.Timestamp, Optional[igs.IGSMetrics]] = {}
+    first_after_gap: Optional[pd.Timestamp] = None
+
+    for timestamp, price in series.items():
+        price_value = float(price) if pd.notna(price) else float("nan")
+        metric = engine.update(timestamp, price_value)
+        metrics_by_ts[timestamp] = metric
+        if timestamp in {gap_ts, zero_ts}:
+            assert metric is None
+            assert engine.last_price is None
+            assert engine.prev_state is None
+            assert len(engine.returns) == 0
+            assert len(engine.states) == 0
+            assert float(engine.row_sums.sum()) == 0.0
+            assert engine.tra_roll.n_pairs == 0
+            assert engine.pe_roll.total == 0
+        if metric is not None and first_after_gap is None and timestamp > zero_ts:
+            first_after_gap = timestamp
+
+    batch_valid = features.dropna()
+    assert not batch_valid.empty
+    post_gap_valid = batch_valid.loc[batch_valid.index > zero_ts]
+    assert not post_gap_valid.empty
+    assert first_after_gap is not None
+    assert first_after_gap >= post_gap_valid.index[0]
+    earlier_valid = post_gap_valid.loc[post_gap_valid.index < first_after_gap]
+    for ts in earlier_valid.index:
+        assert metrics_by_ts[ts] is None
+
+    for timestamp, metric in metrics_by_ts.items():
+        if timestamp < recovery_ts:
+            continue
+        if timestamp not in batch_valid.index:
+            assert metric is None
+            continue
+        if metric is None:
+            assert timestamp < first_after_gap
+            continue
+        row = batch_valid.loc[timestamp]
+        assert np.isclose(metric.epr, row["epr"], rtol=5e-1, atol=2e-2)
+        assert np.isclose(metric.flux_index, row["flux_index"], rtol=5e-1, atol=5e-2)
+        assert np.isclose(metric.tra, row["tra"], rtol=5e-1, atol=5e-2, equal_nan=True)
+        assert np.isclose(metric.pe, row["pe"], rtol=5e-1, atol=5e-2, equal_nan=True)
 
 
 def test_rank_quantization_walk_forward_consistency() -> None:

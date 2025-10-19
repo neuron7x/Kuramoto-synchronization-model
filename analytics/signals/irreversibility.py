@@ -330,6 +330,12 @@ class RollingTRA:
             return float("nan")
         return (self.sum_xy / self.n_pairs) - (self.sum_yx / self.n_pairs)
 
+    def reset(self) -> None:
+        self.buf.clear()
+        self.sum_xy = 0.0
+        self.sum_yx = 0.0
+        self.n_pairs = 0
+
 
 class RollingPermutationEntropy:
     def __init__(self, window: int, m: int = 5, tau: int = 1):
@@ -400,6 +406,12 @@ class RollingPermutationEntropy:
         self.counts[pat_new] = self.counts.get(pat_new, 0) + 1
         self.total += 1
         return self._entropy()
+
+    def reset(self) -> None:
+        self.buf.clear()
+        self.counts.clear()
+        self.total = 0
+        self.initialized = False
 
 
 def _returns_from_prices(price: pd.Series) -> pd.Series:
@@ -611,6 +623,12 @@ class _KAdaptController:
         self.persist_dn = 0
         self.cooldown = 0
 
+    def reset(self) -> None:
+        self.prev_sig = None
+        self.persist_up = 0
+        self.persist_dn = 0
+        self.cooldown = 0
+
     def maybe_update(self, K: int, P: np.ndarray) -> int:
         if self.cfg.adapt_method == "off":
             return K
@@ -738,8 +756,21 @@ class StreamingIGS:
             prev_state = state
         self.prev_state = prev_state if (prev_state is not None and prev_state >= 0) else None
 
+    def _handle_price_gap(self) -> None:
+        self.last_price = None
+        self.prev_state = None
+        self.returns.clear()
+        self.states.clear()
+        self.T.fill(0.0)
+        self.row_sums.fill(0.0)
+        self.tra_roll.reset()
+        self.pe_roll.reset()
+        self.quant = self._build_quantizer(self.K)
+        self.k_adapt.reset()
+
     def update(self, timestamp: pd.Timestamp, price: float) -> Optional[IGSMetrics]:
         if price is None or not (price > 0):
+            self._handle_price_gap()
             return None
         t0 = time.perf_counter()
         if self.last_price is None:
