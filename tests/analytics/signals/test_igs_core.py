@@ -136,6 +136,35 @@ def test_streaming_resets_on_invalid_prices() -> None:
         assert np.isclose(metric.pe, row["pe"], rtol=5e-1, atol=5e-2, equal_nan=True)
 
 
+def test_batch_features_suppressed_across_gaps() -> None:
+    series = _random_walk(seed=19, length=900)
+    gap_idx = 400
+    series.iloc[gap_idx] = np.nan
+    series.iloc[gap_idx + 1] = 0.0
+    zero_ts = series.index[gap_idx + 1]
+    config = IGSConfig(window=150, n_states=5, min_counts=70, quantize_mode="zscore")
+
+    features_full = compute_igs_features(series, config)
+    engine = StreamingIGS(config)
+    first_stream_ts: Optional[pd.Timestamp] = None
+
+    for timestamp, price in series.items():
+        price_value = float(price) if pd.notna(price) else float("nan")
+        metric = engine.update(timestamp, price_value)
+        if metric is not None and timestamp > zero_ts and first_stream_ts is None:
+            first_stream_ts = timestamp
+
+    assert first_stream_ts is not None
+
+    post_gap_batch = features_full.loc[features_full.index > zero_ts]
+    suppressed = post_gap_batch.loc[post_gap_batch.index < first_stream_ts]
+    assert not suppressed.empty
+    assert suppressed.isna().all().all()
+
+    first_row = features_full.loc[first_stream_ts]
+    assert not np.isnan(first_row["epr"])
+
+
 def test_rank_quantization_walk_forward_consistency() -> None:
     series = _random_walk(seed=7, length=900)
     config = IGSConfig(window=180, n_states=5, min_counts=60, quantize_mode="rank")
