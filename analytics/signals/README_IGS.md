@@ -79,7 +79,8 @@ features = provider.compute_from_df(dataframe)
 ## Adaptation & Monitoring
 - `adapt_method="entropy"` enables hysteretic K adaptation with cooldown and optional external signals.
 - When K changes the streaming engine performs a one-off `O(window)` rebuild to realign the quantiser and transition counts.
-- Optional Prometheus gauges (`igs_epr`, `igs_flux_index`, `igs_regime_score`, `igs_states_k`) are emitted asynchronously when enabled.
+- Optional Prometheus gauges (`igs_epr`, `igs_flux_index`, `igs_regime_score`, `igs_states_k`) can be emitted inline or via a background worker.
+- Set `prometheus_enabled=True` to instantiate the gauges. With `prometheus_async=False` the gauges are updated on the streaming thread, which keeps deployment simple for low-volume feeds. Switch on `prometheus_async=True` to offload emission to a background queue when you need to cap update latency.
 - `max_update_ms` guards latency-sensitive deployments by degrading permutation entropy first.
 
 ## Validation Strategy
