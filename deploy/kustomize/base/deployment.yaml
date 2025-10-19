@@ -20,11 +20,34 @@ spec:
       labels:
         app.kubernetes.io/name: tradepulse-api
     spec:
+      serviceAccountName: tradepulse-api
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: tradepulse-api
       containers:
         - name: tradepulse-api
           image: ghcr.io/neuron7x/tradepulse:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               cpu: 250m
@@ -90,7 +113,20 @@ spec:
             - name: tls-client-ca
               mountPath: /etc/tradepulse/tls
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: tradepulse-api
+                topologyKey: kubernetes.io/hostname
       volumes:
         - name: tls-client-ca
           secret:
             secretName: tradepulse-mtls-client
+        - name: tmp
+          emptyDir: {}
