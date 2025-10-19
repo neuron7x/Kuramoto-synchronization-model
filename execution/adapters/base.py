@@ -8,6 +8,7 @@ import json
 import logging
 import threading
 import time
+from abc import ABC, abstractmethod
 from collections import deque
 from typing import (
     Any,
@@ -118,7 +119,7 @@ class SlidingWindowRateLimiter:
             time.sleep(min(backoff, 0.5) if backoff else 0.01)
 
 
-class RESTWebSocketConnector(ExecutionConnector):
+class RESTWebSocketConnector(ExecutionConnector, ABC):
     """Base class combining REST interactions with WebSocket streaming."""
 
     def __init__(
@@ -153,11 +154,13 @@ class RESTWebSocketConnector(ExecutionConnector):
 
     # ------------------------------------------------------------------
     # Abstract hooks for subclasses
+    @abstractmethod
     def _resolve_credentials(
         self, credentials: Mapping[str, str] | None
     ) -> Mapping[str, str]:
-        raise NotImplementedError
+        """Normalise credentials supplied either programmatically or via env."""
 
+    @abstractmethod
     def _sign_request(
         self,
         method: str,
@@ -167,41 +170,50 @@ class RESTWebSocketConnector(ExecutionConnector):
         json_payload: Dict[str, Any] | None,
         headers: Dict[str, str],
     ) -> tuple[Dict[str, Any], Dict[str, Any] | None, Dict[str, str], Any | None]:
-        raise NotImplementedError
+        """Return request components with venue-specific authentication applied."""
 
+    @abstractmethod
     def _order_endpoint(self) -> str:
-        raise NotImplementedError
+        """Endpoint used for order submission requests."""
 
+    @abstractmethod
     def _build_place_payload(
         self, order: Order, idempotency_key: str | None
     ) -> Dict[str, Any]:
-        raise NotImplementedError
+        """Serialise an :class:`Order` into the venue's REST payload format."""
 
+    @abstractmethod
     def _parse_order(
         self, payload: Mapping[str, Any], *, original: Order | None = None
     ) -> Order:
-        raise NotImplementedError
+        """Convert REST/WS payloads back into :class:`Order` objects."""
 
+    @abstractmethod
     def _cancel_endpoint(self, order_id: str) -> tuple[str, Dict[str, Any]]:
-        raise NotImplementedError
+        """Return endpoint and params for cancelling ``order_id``."""
 
+    @abstractmethod
     def _fetch_endpoint(self, order_id: str) -> tuple[str, Dict[str, Any]]:
-        raise NotImplementedError
+        """Return endpoint and params for fetching ``order_id``."""
 
+    @abstractmethod
     def _open_orders_endpoint(self) -> tuple[str, Dict[str, Any]]:
-        raise NotImplementedError
+        """Return endpoint and params for listing open orders."""
 
+    @abstractmethod
     def _positions_endpoint(self) -> tuple[str, Dict[str, Any]]:
-        raise NotImplementedError
+        """Return endpoint and params for retrieving positions."""
 
-    def _parse_positions(self, payload: Mapping[str, Any]) -> list[dict]:
-        raise NotImplementedError
+    @abstractmethod
+    def _parse_positions(self, payload: Mapping[str, Any] | list[Any]) -> list[dict]:
+        """Normalise venue-specific position payloads into dictionaries."""
 
     def _stream_url(self) -> str | None:
         return None
 
+    @abstractmethod
     def _handle_stream_message(self, payload: Mapping[str, Any]) -> None:
-        raise NotImplementedError
+        """Process a WebSocket payload emitted by the venue."""
 
     def _default_headers(self) -> Dict[str, str]:
         return {}

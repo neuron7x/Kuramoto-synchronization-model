@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Iterable, List, Sequence
@@ -18,11 +19,12 @@ class ChildOrder:
     scheduled_time: datetime
 
 
-class ExecutionAlgorithm:
+class ExecutionAlgorithm(ABC):
     """Base class for execution algorithms."""
 
+    @abstractmethod
     def schedule(self, parent: Order) -> List[ChildOrder]:
-        raise NotImplementedError
+        """Return the child order schedule for ``parent``."""
 
 
 class TWAPAlgorithm(ExecutionAlgorithm):
