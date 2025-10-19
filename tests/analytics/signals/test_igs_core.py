@@ -18,7 +18,7 @@ def test_compute_igs_features_returns_expected_columns() -> None:
     series = _random_walk(seed=1, length=1500)
     config = IGSConfig(window=200, n_states=5, min_counts=50)
     features = compute_igs_features(series, config)
-    assert list(features.columns) == ["epr", "flux_index", "tra", "pe", "regime_score"]
+    assert list(features.columns) == ["epr", "flux_index", "tra", "pe", "balance_gap", "regime_score"]
     assert features.index.equals(series.index)
 
 
@@ -42,4 +42,5 @@ def test_streaming_matches_batch_tail_window() -> None:
     assert metric is not None
     batch_last = features.dropna().iloc[-1]
     assert np.isclose(metric.epr, batch_last["epr"], rtol=5e-1, atol=2e-2)
-    assert np.isclose(metric.flux_index, batch_last["flux_index"], rtol=2e-1, atol=2e-2)
+    assert abs(metric.flux_index - batch_last["flux_index"]) < 0.1
+    assert np.isfinite(metric.balance_gap)

@@ -21,6 +21,10 @@ class IGSFeatureProvider:
             raise ValueError("DataFrame must contain 'close' column")
         return self.compute_batch(df["close"])
 
+    # Backward compatible alias
+    def compute_from_frame(self, df: pd.DataFrame) -> pd.DataFrame:
+        return self.compute_from_df(df)
+
     def streaming_update(self, instrument: str, timestamp, price: float):
         if instrument not in self._streaming:
             self._streaming[instrument] = StreamingIGS(self.cfg, external_adaptation_measure=self._external_adapt_measure)

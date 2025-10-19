@@ -3,10 +3,11 @@ Irreversibility-Gated Signal (IGS) — Hybrid Core
 ================================================
 Features:
 - Entropy Production Rate (EPR) on K-state Markov discretization of log-returns
-- Probability flux tensor J and scalar FluxIndex in [-1, 1]
+- Probability flux tensor J, scalar FluxIndex in [-1, 1], and detailed-balance gap
 - Time-Reversal Asymmetry (TRA, third order) with exact O(1) rolling update
 - Permutation Entropy (PE) with incremental multiset maintenance after warmup
-- Composite regime_score = mean(log1p(EPR), |FluxIndex|, 1 - PE)
+- Configurable stationary distribution estimation (empirical or Markov stationary)
+- Composite regime_score with configurable weights across EPR, flux, entropy deficit, balance gap
 
 Streaming:
 - O(1) updates for transition counts
@@ -45,6 +46,7 @@ class IGSConfig:
     min_counts: int = 50
     eps: float = 1e-12
     normalize_flux: bool = True
+    normalize_balance_gap: bool = True
     detrend: bool = False
     quantize_mode: str = "zscore"
     perm_emb_dim: int = 5
@@ -61,9 +63,10 @@ class IGSConfig:
     prometheus_async: bool = True
     max_update_ms: float = 0.0
     pi_method: str = "empirical"
-    regime_weights: Tuple[float, float, float] = (1.0, 1.0, 1.0)
+    regime_weights: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0)
     signal_epr_q: float = 0.7
     signal_flux_min: float = 0.0
+    signal_balance_min: float = 0.0
 
 
 @dataclass
@@ -73,6 +76,7 @@ class IGSMetrics:
     flux_index: float
     tra: float
     pe: float
+    balance_gap: float
     regime_score: float
     regime: str
     n_states_used: int
@@ -263,27 +267,56 @@ def _quantize_returns_rank(r: pd.Series, n_states: int) -> np.ndarray:
     return q.to_numpy()
 
 
-def _transition_matrix(states: np.ndarray, n_states: int, eps: float):
-    T = np.zeros((n_states, n_states), dtype=float)
-    for a, b in zip(states[:-1], states[1:]):
-        T[a, b] += 1.0
-    counts_out = T.sum(axis=1, keepdims=True)
-    P = (T + eps) / (counts_out + n_states * eps)
-    pi = T.sum(axis=1)
-    if pi.sum() < eps:
-        pi = np.full(n_states, 1.0 / n_states, dtype=float)
+def _transition_matrix(states: np.ndarray, n_states: int, eps: float) -> Tuple[np.ndarray, np.ndarray]:
+    if states.size < 2:
+        T = np.zeros((n_states, n_states), dtype=float)
     else:
-        pi = pi / (pi.sum() + eps)
-    return P, pi
+        idx = states[:-1] * n_states + states[1:]
+        counts = np.bincount(idx, minlength=n_states * n_states)
+        T = counts.reshape(n_states, n_states).astype(float)
+    counts_out = T.sum(axis=1, keepdims=True)
+    denom = counts_out + n_states * eps
+    with np.errstate(divide="ignore", invalid="ignore"):
+        P = (T + eps) / denom
+    np.nan_to_num(P, copy=False, nan=1.0 / n_states)
+    pi_emp = T.sum(axis=1)
+    total = float(pi_emp.sum())
+    if total < eps:
+        pi_emp = np.full(n_states, 1.0 / n_states, dtype=float)
+    else:
+        pi_emp = pi_emp / (total + eps)
+    return P, pi_emp
 
 
-def _entropy_production(P: np.ndarray, pi: np.ndarray, eps: float):
+def _stationary_distribution(P: np.ndarray, eps: float) -> np.ndarray:
+    try:
+        eigvals, eigvecs = np.linalg.eig(P.T)
+        idx = int(np.argmin(np.abs(eigvals - 1.0)))
+        vec = np.real(eigvecs[:, idx])
+        vec = np.maximum(vec, 0.0)
+        if vec.sum() <= eps:
+            raise ValueError("degenerate stationary vector")
+        return vec / (vec.sum() + eps)
+    except Exception:
+        n = P.shape[0]
+        return np.full(n, 1.0 / n, dtype=float)
+
+
+def _entropy_production(P: np.ndarray, pi: np.ndarray, eps: float) -> Tuple[float, np.ndarray, np.ndarray]:
     pij = np.maximum(pi[:, None] * P, eps)
     pji = np.maximum(pi[None, :] * P.T, eps)
     epr_matrix = pij * (_safe_log(pij, eps) - _safe_log(pji, eps))
     epr = float(np.nansum(epr_matrix))
     J = pij - pji
-    return epr, J
+    return epr, J, pij
+
+
+def _detailed_balance_gap(J: np.ndarray, pij: np.ndarray, normalize: bool, eps: float) -> float:
+    gap = 0.5 * float(np.sum(np.abs(J)))
+    if not normalize:
+        return gap
+    scale = float(np.sum(pij))
+    return float(gap / (scale + eps)) if scale > eps else 0.0
 
 
 def _net_flux_index(J: np.ndarray, normalize: bool = True):
@@ -321,13 +354,22 @@ def _permutation_entropy_arr(x: np.ndarray, dim: int, tau: int, eps: float) -> f
     return float(H / Hmax)
 
 
+def _resolve_regime_weights(weights: Tuple[float, ...]) -> np.ndarray:
+    arr = np.array(weights, dtype=float)
+    if arr.size == 3:
+        arr = np.append(arr, 1.0)
+    if arr.size != 4:
+        raise ValueError("regime_weights must have length 4 or be legacy length 3")
+    return arr
+
+
 def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> pd.DataFrame:
     cfg = cfg or IGSConfig()
     r = _returns_from_prices(price)
     if cfg.detrend:
         r = r - r.rolling(max(5, cfg.window // 10), min_periods=1).mean()
     n = len(r)
-    out = {k: np.full(n, np.nan) for k in ["epr", "flux_index", "tra", "pe", "regime_score"]}
+    out = {k: np.full(n, np.nan) for k in ["epr", "flux_index", "tra", "pe", "balance_gap", "regime_score"]}
     r_values = r.to_numpy()
 
     if cfg.quantize_mode == "zscore":
@@ -355,34 +397,57 @@ def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> p
         states = window_states[valid].astype(int)
         if states.size < 2:
             continue
-        P, pi = _transition_matrix(states, cfg.n_states, cfg.eps)
-        epr, J = _entropy_production(P, pi, cfg.eps)
+        P, pi_emp = _transition_matrix(states, cfg.n_states, cfg.eps)
+        if cfg.pi_method == "stationary":
+            pi = _stationary_distribution(P, cfg.eps)
+        else:
+            pi = pi_emp
+        epr, J, pij = _entropy_production(P, pi, cfg.eps)
         flux_idx = _net_flux_index(J, cfg.normalize_flux)
         tra = _time_reversal_asymmetry_arr(rw)
         pe = _permutation_entropy_arr(rw, cfg.perm_emb_dim, cfg.perm_tau, cfg.eps)
+        balance_gap = _detailed_balance_gap(J, pij, cfg.normalize_balance_gap, cfg.eps)
         epr_c = math.log1p(epr)
         flux_mag = abs(flux_idx)
         pe_inv = 1.0 - pe if not np.isnan(pe) else np.nan
-        regime = float(np.nanmean([epr_c, flux_mag, pe_inv]))
-        regime = float(np.clip(regime, 0.0, 1.0))
+        components = np.array([epr_c, flux_mag, pe_inv, balance_gap], dtype=float)
+        weights = _resolve_regime_weights(cfg.regime_weights)
+        valid_mask = np.isfinite(components) & (weights > 0)
+        if not np.any(valid_mask):
+            regime = float("nan")
+        else:
+            regime = float(np.clip(np.average(components[valid_mask], weights=weights[valid_mask]), 0.0, 1.0))
         out["epr"][t] = epr
         out["flux_index"][t] = flux_idx
         out["tra"][t] = tra
         out["pe"][t] = pe
+        out["balance_gap"][t] = balance_gap
         out["regime_score"][t] = regime
     return pd.DataFrame(out, index=r.index)
 
 
-def igs_directional_signal(features: pd.DataFrame, epr_q: float = 0.7, flux_min: float = 0.0) -> pd.Series:
+def igs_directional_signal(
+    features: pd.DataFrame,
+    epr_q: float = 0.7,
+    flux_min: float = 0.0,
+    balance_min: float = 0.0,
+) -> pd.Series:
     f = features
     s = pd.Series(0, index=f.index, dtype=int)
-    valid = f["epr"].notna() & f["flux_index"].notna()
+    required_cols = ["epr", "flux_index"]
+    if "balance_gap" in f.columns:
+        required_cols.append("balance_gap")
+    valid = f[required_cols].notna().all(axis=1)
     if valid.any():
         thr = f.loc[valid, "epr"].quantile(epr_q)
+        balance_ok = f["balance_gap"] >= balance_min if "balance_gap" in f.columns else True
         pos = valid & (f["epr"] >= thr) & (f["flux_index"] > +flux_min)
         neg = valid & (f["epr"] >= thr) & (f["flux_index"] < -flux_min)
-        s[pos] = 1
-        s[neg] = -1
+        if isinstance(balance_ok, pd.Series):
+            pos &= balance_ok
+            neg &= balance_ok
+    s[pos] = 1
+    s[neg] = -1
     return s
 
 
@@ -553,20 +618,33 @@ class StreamingIGS:
         for i in range(self.K):
             denom = self.row_sums[i] + self.K * self.cfg.eps
             P[i, :] = (self.T[i, :] + self.cfg.eps) / denom if denom > 0 else (1.0 / self.K)
-        pi = self.state_counts.copy()
-        s = float(pi.sum())
-        pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
-        epr, J = _entropy_production(P, pi, self.cfg.eps)
+        pi_emp = self.state_counts.copy()
+        s = float(pi_emp.sum())
+        if s >= self.cfg.eps:
+            pi_emp = pi_emp / (s + self.cfg.eps)
+        else:
+            pi_emp = np.full(self.K, 1.0 / self.K)
+        if self.cfg.pi_method == "stationary":
+            pi = _stationary_distribution(P, self.cfg.eps)
+        else:
+            pi = pi_emp
+        epr, J, pij = _entropy_production(P, pi, self.cfg.eps)
         flux_index = _net_flux_index(J, self.cfg.normalize_flux)
         pe_val = self.pe_roll.update(ret)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         degrade = (self.cfg.max_update_ms > 0.0) and (elapsed_ms > self.cfg.max_update_ms)
         pe = float("nan") if degrade else pe_val
+        balance_gap = _detailed_balance_gap(J, pij, self.cfg.normalize_balance_gap, self.cfg.eps)
         epr_c = math.log1p(epr)
         flux_mag = abs(flux_index)
-        pe_inv = 1.0 - pe if not np.isnan(pe) else 0.0
-        regime_score = float(np.mean([epr_c, flux_mag, pe_inv]))
-        regime_score = float(np.clip(regime_score, 0.0, 1.0))
+        pe_inv = 1.0 - pe if not np.isnan(pe) else np.nan
+        components = np.array([epr_c, flux_mag, pe_inv, balance_gap], dtype=float)
+        weights = _resolve_regime_weights(self.cfg.regime_weights)
+        valid_mask = np.isfinite(components) & (weights > 0)
+        if not np.any(valid_mask):
+            regime_score = float("nan")
+        else:
+            regime_score = float(np.clip(np.average(components[valid_mask], weights=weights[valid_mask]), 0.0, 1.0))
         regime_name = _classify_regime_simple(epr, flux_index, pe)
         self.metrics_async.emit(epr, flux_index, regime_score, self.K)
         if not degrade:
@@ -577,7 +655,17 @@ class StreamingIGS:
                 for x in list(self.returns):
                     self.quant.roll.add(x)
                 self._rebuild_counters_after_K_change()
-        return IGSMetrics(timestamp=timestamp, epr=epr, flux_index=flux_index, tra=tra, pe=pe, regime_score=regime_score, regime=regime_name, n_states_used=self.K)
+        return IGSMetrics(
+            timestamp=timestamp,
+            epr=epr,
+            flux_index=flux_index,
+            tra=tra,
+            pe=pe,
+            balance_gap=balance_gap,
+            regime_score=regime_score,
+            regime=regime_name,
+            n_states_used=self.K,
+        )
 
 
 def _classify_regime_simple(epr: float, flux: float, pe: float) -> str:
