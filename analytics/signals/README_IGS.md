@@ -39,12 +39,12 @@ signal = igs_directional_signal(features, cfg=cfg)
 
 `IGSConfig` validates inputs to avoid degenerate parameterisations:
 
-- `window >= 3` and `min_counts <= window` ensure rolling statistics warm up.
+- `window >= 3` and `1 <= min_counts <= window` ensure rolling statistics warm up without degeneracy.
 - `n_states >= 2`, `k_min >= 2`, and `k_min <= k_max` maintain valid Markov chains.
 - `perm_emb_dim >= 3` and `perm_tau >= 1` keep the permutation entropy well-defined.
 - `adapt_method` ∈ `{"off", "entropy", "external"}`, `quantize_mode` ∈ `{"zscore", "rank", "sliding_rank"}`, and `pi_method` ∈ `{"empirical", "stationary"}`.
 - `regime_weights` must have three non-negative entries with at least one positive weight.
-- `max_update_ms >= 0`, `0 < signal_epr_q < 1`, and `signal_flux_min >= 0` prevent ill-posed signal gating.
+- `eps > 0`, `max_update_ms >= 0`, `0 < signal_epr_q < 1`, and `signal_flux_min >= 0` prevent ill-posed signal gating.
 
 For streaming scenarios the quantiser, permutation entropy, and TRA updates are all `O(1)` after warmup:
 ```python

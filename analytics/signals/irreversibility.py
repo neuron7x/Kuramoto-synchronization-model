@@ -88,8 +88,12 @@ class IGSConfig:
             raise ValueError("window must be >= 3")
         if self.n_states < 2:
             raise ValueError("n_states must be >= 2")
+        if self.min_counts < 1:
+            raise ValueError("min_counts must be >= 1")
         if self.min_counts > self.window:
             raise ValueError("min_counts must be <= window")
+        if self.eps <= 0.0:
+            raise ValueError("eps must be > 0")
         if self.perm_emb_dim < 3:
             raise ValueError("perm_emb_dim must be >= 3")
         if self.perm_tau < 1:
