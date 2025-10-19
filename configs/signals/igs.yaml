@@ -1,6 +1,7 @@
 igs:
   # window must be >= 3, satisfy (perm_emb_dim - 1) * perm_tau + 1, and 1 <= min_counts <= window
   window: 600
+  # n_states must remain within the adaptation corridor defined by [k_min, k_max]
   n_states: 7
   min_counts: 50
   # eps must be strictly positive to guard log/entropy calculations

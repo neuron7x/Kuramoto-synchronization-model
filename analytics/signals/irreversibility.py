@@ -107,6 +107,8 @@ class IGSConfig:
             raise ValueError("k_min must be >= 2")
         if self.k_min > self.k_max:
             raise ValueError("k_min must be <= k_max")
+        if not (self.k_min <= self.n_states <= self.k_max):
+            raise ValueError("n_states must satisfy k_min <= n_states <= k_max")
         if self.adapt_method not in self._ALLOWED_ADAPT_METHODS:
             raise ValueError(f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}")
         quantize_mode_normalized = self.quantize_mode.lower()

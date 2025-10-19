@@ -41,7 +41,8 @@ signal = igs_directional_signal(features, cfg=cfg)
 
 - `window >= 3` and `1 <= min_counts <= window` ensure rolling statistics warm up without degeneracy.
 - `window >= (perm_emb_dim - 1) * perm_tau + 1` guarantees that permutation patterns are well-defined within each rolling window.
-- `n_states >= 2`, `k_min >= 2`, and `k_min <= k_max` maintain valid Markov chains.
+- `n_states >= 2`, `k_min >= 2`, and `k_min <= k_max` maintain valid Markov chains, and the initial `n_states` must satisfy
+  `k_min <= n_states <= k_max` so that the Markov discretisation starts inside the adaptation corridor.
 - `perm_emb_dim >= 3` and `perm_tau >= 1` keep the permutation entropy well-defined.
 - `adapt_method` ∈ `{"off", "entropy", "external"}`, `quantize_mode` ∈ `{"zscore", "rank", "sliding_rank"}`, and `pi_method` ∈ `{"empirical", "stationary"}`.
 - `regime_weights` must have three non-negative entries with at least one positive weight.

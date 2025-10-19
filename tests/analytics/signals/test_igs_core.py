@@ -42,7 +42,31 @@ def _valid_config_kwargs() -> dict:
         "max_update_ms": 0.0,
         "signal_epr_q": 0.7,
         "signal_flux_min": 0.0,
-    }
+}
+
+
+@pytest.mark.parametrize(
+    "n_states,k_min,k_max,expect_error",
+    [
+        (4, 5, 15, True),
+        (12, 5, 9, True),
+        (7, 5, 9, False),
+    ],
+)
+def test_igs_config_enforces_n_state_bounds(
+    n_states: int, k_min: int, k_max: int, expect_error: bool
+) -> None:
+    kwargs = _valid_config_kwargs()
+    kwargs.update({"n_states": n_states, "k_min": k_min, "k_max": k_max})
+
+    if expect_error:
+        with pytest.raises(ValueError, match="n_states must satisfy k_min <= n_states <= k_max"):
+            IGSConfig(**kwargs)
+    else:
+        cfg = IGSConfig(**kwargs)
+        assert cfg.n_states == n_states
+        assert cfg.k_min == k_min
+        assert cfg.k_max == k_max
 
 
 def test_compute_igs_features_returns_expected_columns() -> None:
