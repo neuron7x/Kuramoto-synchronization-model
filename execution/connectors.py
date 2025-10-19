@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import threading
 from collections import deque
 from dataclasses import replace
 from typing import Deque, Dict, Iterable, List, Mapping
+from uuid import uuid4
 
-from domain import Order
+from domain import Order, OrderSide, OrderStatus
 
 from .normalization import NormalizationError, SymbolNormalizer, SymbolSpecification
 
@@ -38,6 +40,21 @@ class ExecutionConnector:
 
     def __init__(self, *, sandbox: bool = True) -> None:
         self.sandbox = sandbox
+        self._orders: Dict[str, Order] = {}
+        self._idempotency_cache: Dict[str, Order] = {}
+        self._lock = threading.RLock()
+
+    # ------------------------------------------------------------------
+    # Helpers shared by default implementations
+    def _generate_order_id(self) -> str:
+        """Return a unique identifier suitable for offline connectors."""
+
+        return uuid4().hex
+
+    def _clone(self, order: Order) -> Order:
+        """Create a shallow copy of ``order`` preserving dataclass invariants."""
+
+        return replace(order)
 
     def connect(self, credentials: Mapping[str, str] | None = None) -> None:
         """Connect to the venue. Sandbox connectors are no-ops."""
@@ -46,19 +63,97 @@ class ExecutionConnector:
         """Disconnect from the venue."""
 
     def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:
-        raise NotImplementedError
+        if idempotency_key is not None:
+            with self._lock:
+                cached = self._idempotency_cache.get(idempotency_key)
+                if cached is not None:
+                    return cached
+
+        submitted = self._clone(order)
+        if not submitted.order_id:
+            submitted.mark_submitted(self._generate_order_id())
+        else:
+            # If the caller provided an identifier we still ensure the order
+            # transitions into an active state to mirror live venue behaviour.
+            if submitted.status is OrderStatus.PENDING:
+                submitted.status = OrderStatus.OPEN
+
+        with self._lock:
+            if not submitted.order_id:
+                # ``mark_submitted`` guarantees an identifier, but guard for
+                # defensive programming should ``order_id`` be cleared
+                # elsewhere.
+                submitted.mark_submitted(self._generate_order_id())
+            self._orders[submitted.order_id] = submitted
+            if idempotency_key is not None:
+                self._idempotency_cache[idempotency_key] = submitted
+        return submitted
 
     def cancel_order(self, order_id: str) -> bool:
-        raise NotImplementedError
+        with self._lock:
+            order = self._orders.get(order_id)
+            if order is None:
+                return False
+            order.cancel()
+        return True
 
     def fetch_order(self, order_id: str) -> Order:
-        raise NotImplementedError
+        with self._lock:
+            order = self._orders.get(order_id)
+            if order is None:
+                raise OrderError(f"Unknown order_id: {order_id}")
+            return order
 
     def open_orders(self) -> Iterable[Order]:
-        raise NotImplementedError
+        with self._lock:
+            return [order for order in self._orders.values() if order.is_active]
 
     def get_positions(self) -> List[dict]:
-        raise NotImplementedError
+        aggregates: Dict[str, Dict[str, float]] = {}
+        with self._lock:
+            orders = list(self._orders.values())
+        for order in orders:
+            if order.filled_quantity <= 0:
+                continue
+            data = aggregates.setdefault(
+                order.symbol,
+                {
+                    "long_qty": 0.0,
+                    "long_cost": 0.0,
+                    "short_qty": 0.0,
+                    "short_cost": 0.0,
+                },
+            )
+            effective_price = (
+                order.average_price if order.average_price is not None else order.price
+            )
+            if order.side is OrderSide.BUY:
+                data["long_qty"] += order.filled_quantity
+                if effective_price is not None:
+                    data["long_cost"] += effective_price * order.filled_quantity
+            else:
+                data["short_qty"] += order.filled_quantity
+                if effective_price is not None:
+                    data["short_cost"] += effective_price * order.filled_quantity
+
+        positions: List[dict] = []
+        for symbol, data in aggregates.items():
+            if data["long_qty"] <= 0 and data["short_qty"] <= 0:
+                continue
+            position = {
+                "symbol": symbol,
+                "net_quantity": data["long_qty"] - data["short_qty"],
+            }
+            if data["long_qty"] > 0:
+                position["long_quantity"] = data["long_qty"]
+                if data["long_cost"] > 0:
+                    position["long_average_price"] = data["long_cost"] / data["long_qty"]
+            if data["short_qty"] > 0:
+                position["short_quantity"] = data["short_qty"]
+                if data["short_cost"] > 0:
+                    position["short_average_price"] = data["short_cost"] / data["short_qty"]
+            positions.append(position)
+        return positions
 
     def cancel_replace_order(
         self,
@@ -67,15 +162,11 @@ class ExecutionConnector:
         *,
         idempotency_key: str | None = None,
     ) -> Order:
-        """Atomically cancel an existing order while submitting a replacement.
+        """Sequential cancel/replace fallback suitable for sandbox usage."""
 
-        Concrete connectors backed by venues offering transactional cancel/replace
-        endpoints should override this method. Implementations that cannot
-        guarantee atomic semantics should raise :class:`NotImplementedError` or
-        fallback to sequential cancel/place with appropriate safeguards.
-        """
-
-        raise NotImplementedError
+        if not self.cancel_order(order_id):
+            raise OrderError(f"Unknown order_id: {order_id}")
+        return self.place_order(new_order, idempotency_key=idempotency_key)
 
 
 class SimulatedExchangeConnector(ExecutionConnector):
