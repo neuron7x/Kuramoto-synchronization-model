@@ -206,6 +206,15 @@ This document summarizes the comprehensive documentation, security, and monitori
 - Establishes lifecycle checkpoints, automation gates, and review cadences
 - Details metrics, templates, and tooling integration for continuous improvement
 
+**docs/documentation_standardisation_playbook.md - End-to-End Template System**
+- Codifies the phased rollout for ADRs, READMEs, diagrams, metrics tables, and
+  runbooks with explicit exit criteria per phase
+- Introduces reviewer matrix and verification expectations for each artefact
+- Aligns release, incident, onboarding, and compatibility policies with
+  canonical templates stored under `docs/templates/`
+- Establishes adoption metrics (coverage, freshness, verification health) and a
+  continuous improvement loop tied to quarterly retrospectives
+
 **core/indicators/hurst.py - Complete Documentation**
 - Module-level documentation on Hurst exponent theory
 - References to academic papers (Hurst 1951, Peters 1994)

@@ -103,6 +103,7 @@ nav:
       - DoR & DoD Checklist: quality-dor-dod.md
       - Quality Gates: quality_gates.md
       - Documentation Governance: documentation_governance.md
+      - Documentation Standardisation Playbook: documentation_standardisation_playbook.md
 
 markdown_extensions:
   - admonition
