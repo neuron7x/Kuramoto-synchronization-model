@@ -54,6 +54,13 @@ if metrics is not None:
     process(metrics)
 ```
 
+### Handling data gaps
+
+- Prices that are missing, NaN, or non-positive trigger a hard reset in the streaming engine.
+- The reset clears cached returns, Markov states, and transition counts so that the next valid observation starts with a fresh window.
+- Rolling statistics (TRA, permutation entropy) and the active quantiser are reinitialised alongside the K-adaptation controller, preventing "stitched" transitions across the gap.
+- Metrics are therefore suppressed until the window accumulates the configured `min_counts` of post-gap transitions, keeping batch and streaming outputs aligned.
+
 ## Pipeline Integration
 Use the adapter for TradePulse pipelines:
 ```python
