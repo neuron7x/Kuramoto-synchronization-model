@@ -177,7 +177,7 @@ class EnhancedTemporalLSTM(nn.Module):
 
 
 class AdaptiveFundamentalTransformer(nn.Module):
-    def __init__(self, feature_size: int = 5, d_model: int = 64, nhead: int = 8):
+    def __init__(self, feature_size: int = 20, d_model: int = 64, nhead: int = 8):
         super().__init__()
         self.input_proj = nn.Linear(feature_size, d_model)
         layer = nn.TransformerEncoderLayer(
