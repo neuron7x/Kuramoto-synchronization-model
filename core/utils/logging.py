@@ -16,11 +16,11 @@ from typing import Any, Dict, Iterator, Optional
 
 try:  # pragma: no cover - tracing is optional
     from opentelemetry.trace import get_current_span
-
-    _TRACE_LOG_CORRELATION = True
 except Exception:  # pragma: no cover - optional dependency not installed
     get_current_span = None  # type: ignore[assignment]
-_TRACE_LOG_CORRELATION = False
+    _TRACE_LOG_CORRELATION = False
+else:
+    _TRACE_LOG_CORRELATION = True
 from uuid import uuid4
 
 
