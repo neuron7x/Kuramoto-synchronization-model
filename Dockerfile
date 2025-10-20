@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: MIT
-FROM python:3.13-slim
+# NOTE: requirements.lock is generated with Python 3.12.
+# Use the matching runtime to avoid resolving wheels that are
+# unavailable for newer interpreters during CI image builds.
+FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.lock .
 RUN pip install --no-cache-dir -r requirements.lock
