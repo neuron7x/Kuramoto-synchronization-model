@@ -6,6 +6,7 @@ import pytest
 
 from observability.finops import (
     Budget,
+    CostOptimisationPlan,
     FinOpsAlert,
     FinOpsController,
     ResourceUsageSample,
@@ -169,4 +170,195 @@ def test_analyse_costs_and_recommendations() -> None:
     assert any(
         rec for rec in recommendations if "spikes" in rec.message
     ), "Expected spike investigation recommendation"
+
+
+def test_generate_cost_optimisation_plan_systemic_actions() -> None:
+    controller = FinOpsController()
+    budget = Budget(
+        name="research",
+        limit=250.0,
+        period=timedelta(hours=24),
+        scope={"env": "research"},
+        alert_thresholds=(0.5, 0.75, 1.0),
+    )
+    controller.add_budget(budget)
+
+    for idx, cost in enumerate((120.0, 118.0, 119.5)):
+        controller.record_usage(
+            ResourceUsageSample(
+                resource_id="trainer-a",
+                timestamp=_ts(idx),
+                cost=cost,
+                usage={"gpu_utilisation": 0.42},
+                metadata={
+                    "env": "research",
+                    "cloud": "aws",
+                    "instance_type": "p4d.24xlarge",
+                    "purchase_option": "on-demand",
+                    "resource_kind": "gpu",
+                    "model_size_gb": "45",
+                    "throughput_rps": "0.25",
+                    "workload_id": "alpha-llm",
+                    "scaling_policy": "manual",
+                    "gpu_count": "8",
+                },
+            )
+        )
+
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="trainer-b",
+            timestamp=_ts(3),
+            cost=95.0,
+            usage={"gpu_utilisation": 0.38},
+            metadata={
+                "env": "research",
+                "cloud": "aws",
+                "instance_type": "p4d.24xlarge",
+                "purchase_option": "on-demand",
+                "resource_kind": "gpu",
+                "model_size_gb": "40",
+                "throughput_rps": "0.22",
+                "workload_id": "alpha-llm",
+                "scaling_policy": "manual",
+                "gpu_count": "8",
+            },
+        )
+    )
+
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="api-service",
+            timestamp=_ts(4),
+            cost=45.0,
+            usage={"cpu_utilisation": 0.2},
+            metadata={
+                "env": "research",
+                "cloud": "aws",
+                "instance_type": "c6i.large",
+                "purchase_option": "on-demand",
+                "scaling_policy": "manual",
+                "workload_type": "api",
+            },
+        )
+    )
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="api-service",
+            timestamp=_ts(5),
+            cost=45.0,
+            usage={"cpu_utilisation": 0.9},
+            metadata={
+                "env": "research",
+                "cloud": "aws",
+                "instance_type": "c6i.large",
+                "purchase_option": "on-demand",
+                "scaling_policy": "manual",
+                "workload_type": "api",
+            },
+        )
+    )
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="api-service",
+            timestamp=_ts(6),
+            cost=45.0,
+            usage={"cpu_utilisation": 0.25},
+            metadata={
+                "env": "research",
+                "cloud": "aws",
+                "instance_type": "c6i.large",
+                "purchase_option": "on-demand",
+                "scaling_policy": "manual",
+                "workload_type": "api",
+            },
+        )
+    )
+
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="batch-inference",
+            timestamp=_ts(7),
+            cost=55.0,
+            usage={"cpu_utilisation": 0.3},
+            metadata={
+                "env": "research",
+                "cloud": "gcp",
+                "instance_type": "n2-standard-16",
+                "purchase_option": "on-demand",
+                "spot_eligible": "true",
+                "workload_type": "batch",
+            },
+        )
+    )
+
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="research-idle",
+            timestamp=_ts(8),
+            cost=25.0,
+            usage={"cpu_utilisation": 0.0},
+            metadata={
+                "env": "research",
+                "cloud": "aws",
+                "instance_type": "t3.small",
+                "purchase_option": "on-demand",
+            },
+        )
+    )
+
+    controller.record_usage(
+        ResourceUsageSample(
+            resource_id="staging-node",
+            timestamp=_ts(8),
+            cost=15.0,
+            usage={"cpu_utilisation": 0.0},
+            metadata={
+                "env": "staging",
+                "cloud": "aws",
+                "instance_type": "t3.medium",
+                "purchase_option": "on-demand",
+            },
+        )
+    )
+
+    plan = controller.generate_cost_optimisation_plan(
+        timedelta(hours=12), metadata_filter={"env": "research"}, as_of=_ts(9)
+    )
+
+    assert isinstance(plan, CostOptimisationPlan)
+    assert plan.window_start == _ts(9) - timedelta(hours=12)
+    assert plan.cloud_costs["aws"] > 0.0
+    assert plan.cloud_costs["gcp"] > 0.0
+    assert any(key.startswith("aws:") for key in plan.instance_costs)
+
+    profile_lookup = {profile.resource_id: profile for profile in plan.resource_profiles}
+    assert profile_lookup["trainer-a"].cloud == "aws"
+    assert profile_lookup["trainer-a"].purchase_option == "on-demand"
+
+    categories = {rec.category for rec in plan.recommendations}
+    expected_categories = {
+        "reserved_instances",
+        "gpu_sharing",
+        "model_optimisation",
+        "deduplication",
+        "autoscaling",
+        "spot",
+        "budget",
+        "overspend_alert",
+        "cloud_profile",
+        "governance",
+    }
+    assert expected_categories.issubset(categories)
+
+    idle_recs = [rec for rec in plan.recommendations if rec.category == "idle_shutdown"]
+    assert idle_recs, "Expected idle shutdown recommendation"
+
+    governance_recs = [rec for rec in plan.recommendations if rec.category == "governance"]
+    assert governance_recs[0].metadata["next_review"].startswith(str(plan.review_schedule[0].date()))
+
+    overspend = [rec for rec in plan.recommendations if rec.category == "overspend_alert"]
+    assert overspend[0].resource_id == "research"
+
+    assert len(plan.review_schedule) == 4
 

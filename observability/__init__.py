@@ -35,10 +35,12 @@ from .finops import (  # noqa: F401
     Budget,
     BudgetStatus,
     CostReport,
+    CostOptimisationPlan,
     FinOpsAlert,
     FinOpsController,
     NotificationAlertSink,
     OptimizationRecommendation,
+    ResourceProfile,
     ResourceUsageSample,
 )
 from .health import HealthServer  # noqa: F401
@@ -85,6 +87,8 @@ __all__ = [
     "BudgetStatus",
     "CostReport",
     "OptimizationRecommendation",
+    "ResourceProfile",
+    "CostOptimisationPlan",
     "FinOpsAlert",
     "AlertSink",
     "NotificationAlertSink",

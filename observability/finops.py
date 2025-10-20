@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 from bisect import bisect_left
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import math
@@ -33,6 +33,8 @@ __all__ = [
     "BudgetStatus",
     "CostReport",
     "OptimizationRecommendation",
+    "ResourceProfile",
+    "CostOptimisationPlan",
     "FinOpsAlert",
     "AlertSink",
     "NotificationAlertSink",
@@ -129,7 +131,37 @@ class OptimizationRecommendation:
     resource_id: str
     message: str
     severity: str
-    metadata: Mapping[str, float | str]
+    metadata: Mapping[str, float | str] = field(default_factory=dict)
+    category: str = "general"
+
+
+@dataclass(slots=True, frozen=True)
+class ResourceProfile:
+    """Normalised resource level profile for plan generation."""
+
+    resource_id: str
+    cloud: str | None
+    instance_type: str | None
+    purchase_option: str | None
+    total_cost: float
+    average_utilisation: float | None
+    max_sample_cost: float
+    metadata: Mapping[str, str]
+
+
+@dataclass(slots=True, frozen=True)
+class CostOptimisationPlan:
+    """Structured plan covering FinOps optimisation levers."""
+
+    generated_at: datetime
+    window_start: datetime
+    window_end: datetime
+    cloud_costs: Mapping[str, float]
+    instance_costs: Mapping[str, float]
+    resource_profiles: tuple[ResourceProfile, ...]
+    recommendations: tuple[OptimizationRecommendation, ...]
+    budget_statuses: tuple[BudgetStatus, ...]
+    review_schedule: tuple[datetime, ...]
 
 
 @dataclass(slots=True, frozen=True)
@@ -368,6 +400,7 @@ class FinOpsController:
                                 "average_utilisation": round(avg_utilisation, 4),
                                 "total_cost": round(total_cost, 2),
                             },
+                            category="rightsizing",
                         )
                     )
 
@@ -386,10 +419,123 @@ class FinOpsController:
                                 "median_cost": round(median_cost, 2),
                                 "spike_multiplier": spike_multiplier,
                             },
+                            category="anomaly_detection",
                         )
                     )
 
         return tuple(recommendations)
+
+    def generate_cost_optimisation_plan(
+        self,
+        window: timedelta,
+        *,
+        metadata_filter: Mapping[str, str] | None = None,
+        as_of: datetime | None = None,
+    ) -> CostOptimisationPlan:
+        """Synthesize a holistic FinOps action plan for the supplied window."""
+
+        _ensure_positive_duration(window)
+        as_of = as_of or self._clock()
+        window_start = as_of - window
+
+        base_recommendations = list(
+            self.recommend_optimisations(
+                window,
+                metadata_filter=metadata_filter,
+                as_of=as_of,
+            )
+        )
+
+        resource_profiles: list[ResourceProfile] = []
+        additional_recommendations: list[OptimizationRecommendation] = []
+        cloud_costs: MutableMapping[str, float] = defaultdict(float)
+        instance_costs: MutableMapping[str, float] = defaultdict(float)
+        dedupe_index: dict[tuple[str, ...], ResourceProfile] = {}
+
+        for resource_id, samples in self._usage_by_resource.items():
+            relevant = self._slice_samples(samples, window_start, as_of, metadata_filter)
+            if not relevant:
+                continue
+
+            profile = self._build_resource_profile(resource_id, relevant)
+            resource_profiles.append(profile)
+
+            cloud_key = profile.cloud or "unknown"
+            instance_key = profile.instance_type or "unknown"
+            cloud_costs[cloud_key] += profile.total_cost
+            instance_costs[f"{cloud_key}:{instance_key}"] += profile.total_cost
+
+            additional_recommendations.extend(
+                self._derive_resource_recommendations(profile, relevant)
+            )
+
+            dedupe_key = self._build_deduplication_key(profile)
+            if dedupe_key:
+                existing = dedupe_index.get(dedupe_key)
+                if existing is not None and existing.resource_id != profile.resource_id:
+                    additional_recommendations.append(
+                        OptimizationRecommendation(
+                            resource_id=profile.resource_id,
+                            message=(
+                                "Duplicate workload detected across resources; consolidate deployments to eliminate redundant spend."
+                            ),
+                            severity="medium",
+                            metadata={
+                                "duplicate_of": existing.resource_id,
+                                "workload_key": "|".join(dedupe_key),
+                            },
+                            category="deduplication",
+                        )
+                    )
+                else:
+                    dedupe_index[dedupe_key] = profile
+
+        cloud_costs_map = dict(sorted(cloud_costs.items(), key=lambda item: item[0]))
+        instance_costs_map = dict(sorted(instance_costs.items(), key=lambda item: item[0]))
+
+        cloud_highlights = self._build_cloud_profile_recommendations(cloud_costs_map)
+        additional_recommendations.extend(cloud_highlights)
+
+        budget_statuses = self._collect_budget_statuses(as_of, metadata_filter)
+        additional_recommendations.extend(
+            self._derive_budget_recommendations(budget_statuses)
+        )
+
+        review_schedule = self._build_weekly_review_schedule(as_of)
+        if review_schedule:
+            additional_recommendations.append(
+                OptimizationRecommendation(
+                    resource_id="finops-governance",
+                    message=(
+                        "Institute weekly savings reviews to track realised optimisations and recalibrate forecasts."
+                    ),
+                    severity="low",
+                    metadata={"next_review": review_schedule[0].isoformat()},
+                    category="governance",
+                )
+            )
+
+        combined_recommendations = self._deduplicate_recommendations(
+            base_recommendations + additional_recommendations
+        )
+
+        resource_profiles_sorted = tuple(
+            sorted(resource_profiles, key=lambda profile: profile.resource_id)
+        )
+
+        return CostOptimisationPlan(
+            generated_at=as_of,
+            window_start=window_start,
+            window_end=as_of,
+            cloud_costs={key: round(value, 2) for key, value in cloud_costs_map.items()},
+            instance_costs={
+                key: round(value, 2) for key, value in instance_costs_map.items()
+            },
+            resource_profiles=resource_profiles_sorted,
+            recommendations=tuple(combined_recommendations),
+            budget_statuses=budget_statuses,
+            review_schedule=review_schedule,
+        )
 
     # ------------------------------------------------------------------
     # Budget status queries
@@ -436,6 +582,408 @@ class FinOpsController:
         timestamps = [entry.timestamp for entry in entries]
         index = bisect_left(timestamps, sample.timestamp)
         entries.insert(index, sample)
+
+    def _build_resource_profile(
+        self, resource_id: str, samples: Sequence[ResourceUsageSample]
+    ) -> ResourceProfile:
+        total_cost = sum(sample.cost for sample in samples)
+        max_sample_cost = max((sample.cost for sample in samples), default=0.0)
+
+        utilisation_values: list[float] = []
+        for sample in samples:
+            for value in sample.usage.values():
+                if 0.0 <= value <= 1.0 and math.isfinite(value):
+                    utilisation_values.append(value)
+
+        average_utilisation = (
+            statistics.fmean(utilisation_values) if utilisation_values else None
+        )
+
+        metadata_snapshot: dict[str, str] = {}
+        for sample in samples:
+            metadata_snapshot.update(sample.metadata)
+
+        cloud = self._most_common_metadata(samples, ("cloud", "cloud_provider", "provider"))
+        instance_type = self._most_common_metadata(
+            samples,
+            ("instance_type", "machine_type", "instance_class", "flavor"),
+        )
+        purchase_option = self._most_common_metadata(
+            samples, ("purchase_option", "pricing", "billing_mode")
+        )
+
+        return ResourceProfile(
+            resource_id=resource_id,
+            cloud=cloud,
+            instance_type=instance_type,
+            purchase_option=purchase_option,
+            total_cost=total_cost,
+            average_utilisation=average_utilisation,
+            max_sample_cost=max_sample_cost,
+            metadata=dict(sorted(metadata_snapshot.items())),
+        )
+
+    def _derive_resource_recommendations(
+        self,
+        profile: ResourceProfile,
+        samples: Sequence[ResourceUsageSample],
+    ) -> list[OptimizationRecommendation]:
+        recommendations: list[OptimizationRecommendation] = []
+        metadata = profile.metadata
+
+        costs = [sample.cost for sample in samples]
+        mean_cost = statistics.fmean(costs) if costs else 0.0
+        cost_variation = 0.0
+        if len(costs) >= 2 and mean_cost > 0.0:
+            cost_variation = statistics.pstdev(costs) / mean_cost
+
+        utilisation_values: list[float] = []
+        for sample in samples:
+            for value in sample.usage.values():
+                if 0.0 <= value <= 1.0 and math.isfinite(value):
+                    utilisation_values.append(value)
+
+        min_utilisation = min(utilisation_values) if utilisation_values else None
+        max_utilisation = max(utilisation_values) if utilisation_values else None
+
+        # Autoscaling guidance based on utilisation volatility
+        scaling_policy = (metadata.get("scaling_policy") or "").lower()
+        utilisation_span = (
+            max_utilisation - min_utilisation
+            if min_utilisation is not None and max_utilisation is not None
+            else 0.0
+        )
+        if utilisation_span >= 0.35 and "auto" not in scaling_policy:
+            severity = "high" if utilisation_span >= 0.6 else "medium"
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id=profile.resource_id,
+                    message=(
+                        "Large utilisation swings observed; deploy autoscaling policies to match demand curves."
+                    ),
+                    severity=severity,
+                    metadata={
+                        "min_utilisation": round(min_utilisation or 0.0, 4),
+                        "max_utilisation": round(max_utilisation or 0.0, 4),
+                    },
+                    category="autoscaling",
+                )
+            )
+
+        # Reserved instances / commitments for stable high spend
+        purchase = (profile.purchase_option or "").lower()
+        if (
+            purchase not in {"reserved", "savings_plan", "commitment"}
+            and profile.total_cost >= 50.0
+            and cost_variation <= 0.15
+        ):
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id=profile.resource_id,
+                    message=(
+                        "Spend pattern is steady; evaluate reserved instances or savings plans to lock in lower rates."
+                    ),
+                    severity="high",
+                    metadata={
+                        "cost_variation": round(cost_variation, 4),
+                        "average_cost": round(mean_cost, 2),
+                    },
+                    category="reserved_instances",
+                )
+            )
+
+        # Spot/pre-emptible opportunities for tolerant workloads
+        spot_eligible = self._is_truthy_metadata(
+            metadata, ("spot_eligible", "use_spot", "preemptible", "fault_tolerant")
+        )
+        workload_type = (metadata.get("workload_type") or metadata.get("service_type") or "").lower()
+        if (
+            purchase not in {"spot", "preemptible"}
+            and profile.total_cost >= 20.0
+            and (spot_eligible or workload_type in {"batch", "training", "analytics"})
+        ):
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id=profile.resource_id,
+                    message=(
+                        "Workload tolerates interruption; migrate a portion to spot/preemptible capacity for cost relief."
+                    ),
+                    severity="medium",
+                    metadata={
+                        "workload_type": workload_type or "unspecified",
+                        "purchase_option": purchase or "unspecified",
+                    },
+                    category="spot",
+                )
+            )
+
+        # GPU sharing and scheduling guidance
+        resource_kind = (metadata.get("resource_kind") or "").lower()
+        accelerator = (metadata.get("accelerator_type") or "").lower()
+        gpu_count = self._parse_float_metadata(metadata, "gpu_count")
+        average_utilisation = profile.average_utilisation
+        if (
+            average_utilisation is not None
+            and average_utilisation < 0.65
+            and (
+                "gpu" in resource_kind
+                or "gpu" in accelerator
+                or (gpu_count is not None and gpu_count > 0.0)
+            )
+        ):
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id=profile.resource_id,
+                    message=(
+                        "GPU capacity is underutilised; introduce time-slicing or shared job queues to increase occupancy."
+                    ),
+                    severity="medium",
+                    metadata={
+                        "average_utilisation": round(average_utilisation, 4),
+                        "gpu_count": gpu_count or 0.0,
+                    },
+                    category="gpu_sharing",
+                )
+            )
+
+        # Model footprint optimisation (compression / quantisation / distillation)
+        model_size = self._parse_float_metadata(metadata, "model_size_gb")
+        parameter_count = self._parse_float_metadata(metadata, "parameter_count_billion")
+        throughput = self._parse_float_metadata(metadata, "throughput_rps")
+        heavy_model = False
+        if model_size is not None and model_size >= 20.0:
+            heavy_model = True
+        if parameter_count is not None and parameter_count >= 10.0:
+            heavy_model = True
+        low_throughput = throughput is None or throughput < 0.5
+        if heavy_model and low_throughput:
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id=profile.resource_id,
+                    message=(
+                        "Model footprint is heavy relative to throughput; pursue weight compression, quantisation, or distillation."
+                    ),
+                    severity="medium",
+                    metadata={
+                        "model_size_gb": round(model_size or 0.0, 2),
+                        "parameter_count_billion": round(parameter_count or 0.0, 2),
+                        "throughput_rps": round(throughput or 0.0, 3) if throughput else 0.0,
+                    },
+                    category="model_optimisation",
+                )
+            )
+
+        # Idle shutdown recommendation
+        if average_utilisation is not None and average_utilisation < 0.05 and profile.total_cost > 0.0:
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id=profile.resource_id,
+                    message=(
+                        "Resource spends most of the window idle; enforce shutdown or scale-to-zero policies."
+                    ),
+                    severity="high",
+                    metadata={
+                        "average_utilisation": round(average_utilisation, 4),
+                        "total_cost": round(profile.total_cost, 2),
+                    },
+                    category="idle_shutdown",
+                )
+            )
+
+        return recommendations
+
+    def _build_deduplication_key(self, profile: ResourceProfile) -> tuple[str, ...] | None:
+        metadata = profile.metadata
+        key_parts: list[str] = []
+        for field in ("workload_id", "model_id", "dataset_id"):
+            value = metadata.get(field)
+            if value:
+                key_parts.append(f"{field}:{value}")
+        env = metadata.get("env")
+        if env:
+            key_parts.append(f"env:{env}")
+        if len(key_parts) >= 2:
+            return tuple(sorted(key_parts))
+        return None
+
+    def _build_cloud_profile_recommendations(
+        self, cloud_costs: Mapping[str, float]
+    ) -> list[OptimizationRecommendation]:
+        if not cloud_costs:
+            return []
+        sorted_clouds = sorted(cloud_costs.items(), key=lambda item: item[1], reverse=True)
+        top_cloud, top_cost = sorted_clouds[0]
+        recommendations = [
+            OptimizationRecommendation(
+                resource_id=f"cloud:{top_cloud}",
+                message=(
+                    "Cloud spend profile updated; validate placement and leverage provider-native cost optimisation programmes."
+                ),
+                severity="medium",
+                metadata={"cloud": top_cloud, "total_cost": round(top_cost, 2)},
+                category="cloud_profile",
+            )
+        ]
+        if len(sorted_clouds) > 1:
+            tail_cost = sum(cost for _, cost in sorted_clouds[1:])
+            recommendations.append(
+                OptimizationRecommendation(
+                    resource_id="cloud:long_tail",
+                    message=(
+                        "Fragmented tail spend detected across secondary clouds; review consolidation or shared services."
+                    ),
+                    severity="low",
+                    metadata={"tail_cost": round(tail_cost, 2)},
+                    category="cloud_profile",
+                )
+            )
+        return recommendations
+
+    def _collect_budget_statuses(
+        self, as_of: datetime, metadata_filter: Mapping[str, str] | None
+    ) -> tuple[BudgetStatus, ...]:
+        statuses = []
+        for status in self.iter_budget_statuses(as_of=as_of):
+            if metadata_filter and not self._scope_matches_filter(status.budget.scope, metadata_filter):
+                continue
+            statuses.append(status)
+        return tuple(sorted(statuses, key=lambda status: status.budget.name))
+
+    def _derive_budget_recommendations(
+        self, statuses: Sequence[BudgetStatus]
+    ) -> list[OptimizationRecommendation]:
+        recommendations: list[OptimizationRecommendation] = []
+        for status in statuses:
+            metadata = {
+                "utilisation": round(status.utilisation, 4),
+                "remaining": round(status.remaining, 2),
+                "limit": round(status.budget.limit, 2),
+                "currency": status.budget.currency,
+            }
+            if status.utilisation >= 0.8 or status.breached:
+                severity = "critical" if status.breached else "high"
+                recommendations.append(
+                    OptimizationRecommendation(
+                        resource_id=status.budget.name,
+                        message=(
+                            "Budget utilisation nearing limit; enforce guardrails, reprioritise workloads, or rebalance reservations."
+                        ),
+                        severity=severity,
+                        metadata=metadata,
+                        category="budget",
+                    )
+                )
+            else:
+                recommendations.append(
+                    OptimizationRecommendation(
+                        resource_id=status.budget.name,
+                        message=(
+                            "Budget usage within thresholds; keep monitoring with automated guardrails enabled."
+                        ),
+                        severity="low",
+                        metadata=metadata,
+                        category="budget",
+                    )
+                )
+
+            if status.breached:
+                recommendations.append(
+                    OptimizationRecommendation(
+                        resource_id=status.budget.name,
+                        message=(
+                            "Budget breached; trigger overspend playbook and notify accountable owners immediately."
+                        ),
+                        severity="critical",
+                        metadata=metadata,
+                        category="overspend_alert",
+                    )
+                )
+
+        return recommendations
+
+    def _build_weekly_review_schedule(
+        self, reference: datetime, *, count: int = 4, weekday: int = 0, hour: int = 15
+    ) -> tuple[datetime, ...]:
+        tz = reference.tzinfo or timezone.utc
+        baseline = reference.astimezone(tz)
+        baseline = baseline.replace(hour=hour, minute=0, second=0, microsecond=0)
+        days_ahead = (weekday - baseline.weekday()) % 7
+        if days_ahead == 0 and baseline <= reference:
+            days_ahead = 7
+        first_review = baseline + timedelta(days=days_ahead)
+        schedule = [first_review + timedelta(days=7 * idx) for idx in range(count)]
+        return tuple(schedule)
+
+    def _deduplicate_recommendations(
+        self, recommendations: Sequence[OptimizationRecommendation]
+    ) -> list[OptimizationRecommendation]:
+        seen: set[tuple[str, str, str]] = set()
+        unique: list[OptimizationRecommendation] = []
+        for recommendation in recommendations:
+            key = (
+                recommendation.resource_id,
+                recommendation.message,
+                recommendation.category,
+            )
+            if key not in seen:
+                unique.append(recommendation)
+                seen.add(key)
+        return unique
+
+    @staticmethod
+    def _most_common_metadata(
+        samples: Sequence[ResourceUsageSample], keys: Sequence[str]
+    ) -> str | None:
+        candidates: Counter[str] = Counter()
+        for sample in samples:
+            for key in keys:
+                value = sample.metadata.get(key)
+                if value:
+                    candidates[value] += 1
+        if not candidates:
+            return None
+        return candidates.most_common(1)[0][0]
+
+    @staticmethod
+    def _parse_float_metadata(metadata: Mapping[str, str], key: str) -> float | None:
+        value = metadata.get(key)
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _is_truthy_metadata(
+        metadata: Mapping[str, str], keys: Sequence[str]
+    ) -> bool:
+        truthy_values = {"1", "true", "yes", "y", "on", "enabled"}
+        for key in keys:
+            value = metadata.get(key)
+            if value is None:
+                continue
+            if isinstance(value, str):
+                if value.lower() in truthy_values:
+                    return True
+            elif value:
+                return True
+        return False
+
+    @staticmethod
+    def _scope_matches_filter(
+        scope: Mapping[str, str] | None, metadata_filter: Mapping[str, str] | None
+    ) -> bool:
+        if not metadata_filter:
+            return True
+        if not scope:
+            return True
+        for key, value in scope.items():
+            if metadata_filter.get(key) != value:
+                return False
+        return True
 
     def _sample_matches_scope(
         self, sample: ResourceUsageSample, scope: Mapping[str, str] | None
