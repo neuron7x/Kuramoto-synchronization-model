@@ -179,6 +179,21 @@ class RegulatoryComplianceValidator:
             )
         )
 
+        if gdpr_flag is False:
+            issues.append(
+                ComplianceIssue(
+                    "error",
+                    "GDPR compliance explicitly flagged as non-compliant",
+                )
+            )
+        if ccpa_flag is False:
+            issues.append(
+                ComplianceIssue(
+                    "error",
+                    "CCPA compliance explicitly flagged as non-compliant",
+                )
+            )
+
         for regime in self._required_privacy:
             if regime not in privacy_values:
                 if regime == "gdpr" and gdpr_flag is True:
