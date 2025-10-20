@@ -32,6 +32,22 @@ regions with zero tolerance for uncontrolled data loss.
 | Iceberg/Delta analytical lake | ≤ 15 minutes | ≤ 45 minutes | Incremental metadata snapshots + S3/Blob storage replication. |
 | CI/CD & secrets | ≤ 5 minutes | ≤ 15 minutes | Git mirror + HashiCorp Vault DR secondaries with auto-unseal. |
 
+### RPO/RTO Governance
+
+- **Measurement** – Real-time replication lag dashboards expose `rpo_lag_seconds` and `rto_simulated_minutes` Prometheus metrics. Alert at 50% of the SLA to allow proactive mitigation. Each restore or failover captures achieved RPO/RTO in the resilience evidence log curated by the SRE team.
+- **Drift Detection** – Alertmanager rules in `observability/alerts.json` raise SEV-1 pages when replication lag or failover simulations exceed thresholds for two consecutive evaluation periods.
+- **Change Management** – Any schema or topology change requires updating the RPO/RTO table through a pull request reviewed by SRE + Data Platform. Releases referencing stale objectives are blocked during change-advisory review.
+
+### Scenario Catalogue
+
+| Scenario | Trigger | Expected RPO/RTO | Response Summary |
+| --- | --- | --- | --- |
+| Region-wide outage | Loss of primary cloud region, network partition | RPO ≤ 60 s, RTO ≤ 15 min | Execute full failover workflow, promote secondary databases, shift mesh routing, activate client comms template A. |
+| Logical data corruption | Bad deploy or operator error mutates ledger | RPO ≤ 60 s, RTO ≤ 30 min | Freeze writes, perform point-in-time recovery (PITR) from immutable backups, replay Kafka offsets post-restore. |
+| Security event | Compromised credentials, forced rotation | RPO ≤ 5 min, RTO ≤ 20 min | Rotate Vault primaries, re-issue service identities, audit access logs, coordinate with security comms template C. |
+| Upstream dependency loss | Market data vendor outage | RPO ≤ 5 min, RTO ≤ 5 min | Switch to secondary providers, enable synthetic heartbeat generator, ensure replay once vendor recovers. |
+| Storage durability alert | Object store replication lag > SLA | RPO ≤ 15 min, RTO ≤ 30 min | Pause non-essential writes, trigger accelerated replication job, validate checksum parity before unfreezing. |
+
 Breaching an objective requires immediate SEV-1 declaration, regulator-ready
 communication, and postmortem with remediation in the next release window.
 
@@ -68,6 +84,13 @@ communication, and postmortem with remediation in the next release window.
 Backups are encrypted using AES-256-GCM envelopes with keys in HSM-backed KMS.
 Signature verification (Sigstore/Rekor) is enforced before restores.
 
+### Backup Compliance Checklist
+
+1. Backup jobs emit structured logs with UUIDs that map to the retention catalogue maintained in the resilience evidence log.
+2. Daily automation validates bucket immutability and rotation of encryption keys; results flow into the observability dashboards under the `Backup Health` panel.
+3. Quarterly manual audit confirms restoration of randomly sampled backups into isolated sandboxes, comparing row counts and SHA-256 dataset hashes against production snapshots.
+4. Any failed validation auto-opens a `BCP-BLOCKER` Jira issue with assigned owner and due date within 5 business days.
+
 ## Recovery Testing Program
 
 1. **Quarterly game-day** – Simulate total region loss; execute full failover and
@@ -79,6 +102,13 @@ Signature verification (Sigstore/Rekor) is enforced before restores.
 4. **Automated drift detection** – CI runs `terraform plan` against each region
    using the modules in `infra/terraform/`. Any unexpected diff blocks releases
    until remediated and signed off by SRE.
+
+### Automated Recovery Tests
+
+- **Disaster Replay CI** – The nightly `disaster-replay` GitHub Actions workflow provisions ephemeral clusters, restores the latest backups, replays last-hour Kafka topics, and runs deterministic health assertions. Failures block merges tagged `release/*`.
+- **RTO Smoke Jobs** – Synthetic workloads (`python scripts/smoke_e2e.py --dr-mode`) execute every 4 hours in the warm standby region to ensure cold paths stay hot. Results push to the Prometheus `dr_smoke_success` gauge exposed via the observability exporters.
+- **Chaos Sequencing** – Integrated with the chaos testing program (`docs/resilience.md`), at least one scenario each month must cover cross-region failover to validate replication, DNS cutovers, and automation scripts.
+- **Audit Evidence** – Test artifacts (logs, Grafana snapshots, restore manifests) are archived alongside the run results in the resilience evidence repository for regulator-ready evidence.
 
 Evidence for each exercise is archived in `reports/disaster-recovery/` with
 Grafana exports, audit logs, and sign-off from domain leads.
@@ -136,6 +166,47 @@ Grafana exports, audit logs, and sign-off from domain leads.
   `risk_events` to encrypted CSV for regulator-ready evidence. Archive to the
   immutable bucket with retention lock and log the checksum in
   `reports/disaster-recovery/`.
+
+## Roles & Responsibilities Matrix
+
+| Function | Primary Owner | Backup Owner | Responsibilities |
+| --- | --- | --- | --- |
+| Incident Commander | Staff SRE on-call | Head of Platform | Declare severity, coordinate recovery steps, maintain timeline and decision log. |
+| Database Lead | Database Reliability Engineer | Data Platform Manager | Execute database failover, validate replication health, coordinate PITR restores. |
+| Messaging Lead | Streaming Platform Engineer | Staff SRE | Manage Kafka/MirrorMaker state, verify ISR, ensure consumer offsets replay successfully. |
+| Application Lead | Execution Platform TL | API Engineering TL | Redeploy workloads, validate order routing, coordinate feature flag toggles. |
+| Observability Lead | Observability Engineer | SRE Analyst | Monitor dashboards, confirm alert fidelity, capture evidence for postmortem. |
+| Communications Lead | Customer Success Director | Compliance Officer | Manage client/regulator comms, status page updates, internal briefings. |
+| Security Liaison | Security On-Call | CISO Delegate | Validate credential posture, monitor for adversarial activity, approve Vault operations. |
+
+## Communication & Escalation Plan
+
+1. **Alerting Stack** – PagerDuty services `tradepulse-sre` and `tradepulse-security` auto-page SEV-1 rotations. Slack channel `#inc-dr` mirrors incident updates and houses the bot-run timeline.
+2. **Stakeholder Updates** – Communications lead issues updates every 15 minutes to executives using the approved template in `docs/templates/incident_playbook.md` and refreshes the status page through the communications runbook in `docs/incident_playbooks.md`.
+3. **Client Outreach** – Customer success maintains pre-approved messaging for key tiers (HFT, institutional, retail). Primary contact list is stored in the encrypted CRM export referenced in `docs/scenarios/client_contact_roster.csv`.
+4. **Regulatory Notifications** – Compliance officer files regulatory notices (e.g., SEC Reg SCI) within mandated windows following the procedures captured in `docs/incident_playbooks.md`. Evidence and timestamps are appended to the incident ticket.
+5. **Post-Recovery Briefing** – Within 2 hours of stabilization, deliver summary to leadership covering outage cause, duration, RPO/RTO achieved, and next steps.
+
+## Training & Preparedness Drills
+
+- **Onboarding Curriculum** – New SREs must complete the DR foundations module in the internal learning portal, pass the hands-on lab restoring PostgreSQL from PITR, and shadow one live failover simulation.
+- **Biannual Certification** – Critical responders renew credentials by completing the DR practical exam scenario hosted in the staging control plane with success criteria of <20 minutes RTO in the lab environment.
+- **Surprise Alerts** – Quarterly, issue unannounced drill pages during business hours to validate escalation chains and login readiness (Vault, cloud consoles, runbook access).
+- **Knowledge Base Refresh** – Every sprint, service owners review linked runbooks for accuracy. Stale steps trigger doc updates tracked in the quality backlog.
+
+## Critical Dependency Inventory
+
+| Dependency | Classification | Redundancy Strategy | DR Verification |
+| --- | --- | --- | --- |
+| Cloud provider regions (Primary + Secondary) | Infrastructure | Multi-region deployment with Terraform parity modules; cross-region private networking | Monthly Terraform drift report + latency benchmarking |
+| Market data vendors (Primary/Secondary) | External Service | Hot-standby feeds with adaptive load balancing via feature flags | Weekly heartbeat monitors + failover injection in chaos program |
+| Brokerage/exchange connectivity | External API | Dual leased lines + VPN over internet backup; automatic route selection | Quarterly circuit failover test with mock orders |
+| CI/CD control plane | Internal Platform | Git mirrors + ArgoCD warm standby | Nightly sync check + signature verification |
+| Secrets management (Vault) | Security | Performance + DR clusters with replication | Monthly `vault operator dr failover` dry run |
+| Observability stack | Monitoring | Multi-region Prometheus federation + replicated Loki/Tempo | Daily scrape parity job + on-call dashboards |
+| Authentication/SSO | Identity | IdP redundant tenants with conditional access policies | Semi-annual failover exercise with security team |
+
+Maintain this inventory in the Operational Handbook appendix and update any time a new dependency is introduced or retired.
 
 ## Return to Primary Region
 
