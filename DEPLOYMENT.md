@@ -9,6 +9,36 @@ Before deploying, install the following tools:
 - Docker Engine 20.10+ and Docker Compose v2 for container orchestration.
 - Access to a container registry where you can push the TradePulse image, if you plan to deploy to Kubernetes.
 - `kubectl` configured to talk to your cluster and Helm 3.12+ for chart management.
+- Python 3.11+ with `pip` so you can install dependencies using the pinned security constraints described below.
+
+### Dependency security guardrails
+
+- The repository now ships with `constraints/security.txt`, which locks the vetted versions of the HTTP client stack (`requests`,
+  `urllib3`, `idna`, `certifi`, and `charset-normalizer`). Always install dependencies with the constraint file to guarantee the
+  hardened versions are applied:
+
+  ```bash
+  pip install -c constraints/security.txt -r requirements.txt
+  pip install -c constraints/security.txt -r requirements-dev.txt
+  ```
+
+- When `pip-audit` or Dependabot reports a vulnerability in one of these packages, update the constraint by editing
+  `constraints/security.txt` and re-locking the dependency sets:
+
+  ```bash
+  pip install --upgrade pip-tools
+  make lock  # regenerates *.lock using the security constraint
+  ```
+
+- Validate the new versions locally (lint, unit tests, smoke flows) and run `pip-audit` with the constraints to verify that the
+  vulnerability is resolved:
+
+  ```bash
+  pip-audit -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
+  ```
+
+- Commit the updated constraint and regenerated lock files. Dependabot is configured to watch `/constraints/security.txt`, so
+  CVE-driven updates will surface as automated pull requests that follow the same workflow.
 
 ## Configuration Management
 

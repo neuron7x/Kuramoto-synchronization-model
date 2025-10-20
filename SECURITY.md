@@ -224,7 +224,7 @@ make supply-chain-verify
 
 ```bash
 # Direct invocation if you prefer to call pip-audit yourself
-pip-audit -r requirements.txt --no-deps
+pip-audit -c constraints/security.txt -r requirements.txt --no-deps
 
 # Or use safety as a secondary check
 safety check

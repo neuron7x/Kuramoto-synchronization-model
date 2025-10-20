@@ -11,7 +11,7 @@ remains deterministic end-to-end.
    ```bash
    git clone https://github.com/neuron7x/TradePulse.git
    cd TradePulse
-   pip install -r requirements.txt
+   pip install -c constraints/security.txt -r requirements.txt
    ```
 2. **Materialise starter seeds** using the provided fixtures:
    ```bash

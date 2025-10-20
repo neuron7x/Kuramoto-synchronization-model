@@ -198,7 +198,7 @@ jobs:
           python-version: '3.11'
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -c constraints/security.txt -r requirements.txt
       
       - name: Run smoke E2E
         run: |
@@ -248,7 +248,7 @@ python -m pstats profiles/smoke-e2e.pstats
 
 ```bash
 # Install required packages
-pip install -r requirements.txt
+pip install -c constraints/security.txt -r requirements.txt
 
 # Verify installation
 python -c "import pandas, numpy, scipy; print('OK')"

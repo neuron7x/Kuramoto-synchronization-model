@@ -21,6 +21,14 @@ updates:
           - "scipy"
           - "pandas"
           - "networkx"
+  - package-ecosystem: "pip"
+    directory: "/constraints"
+    schedule:
+      interval: "weekly"
+    labels:
+      - dependencies
+      - python
+    open-pull-requests-limit: 5
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:

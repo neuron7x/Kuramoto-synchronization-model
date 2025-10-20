@@ -39,8 +39,8 @@ jobs:
         run: uv venv
       - name: Install Python dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
           uv pip install pre-commit detect-secrets
       - name: Install shellcheck
         run: |
@@ -83,8 +83,8 @@ jobs:
         run: uv venv
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
       - name: Prepare test report directories
         run: |
           mkdir -p reports
@@ -277,8 +277,8 @@ jobs:
         run: uv venv
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
       - name: Run performance benchmarks
         id: run_benchmarks
         run: |
@@ -420,8 +420,8 @@ jobs:
         run: uv venv
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
       - name: Run pytest in parallel with profiling
         run: |
           .venv/bin/python -m pytest tests/ -n auto --durations=20 --profile
@@ -495,8 +495,8 @@ jobs:
         run: uv venv
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
       - name: Prepare test report directories
         run: |
           mkdir -p reports
