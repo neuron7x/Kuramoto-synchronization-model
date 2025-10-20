@@ -6,7 +6,13 @@ from typing import List
 
 import pytest
 
-from core.utils.slo import AutoRollbackGuard, RequestSample, SLOConfig, _percentile
+from core.utils.slo import (
+    AutoRollbackGuard,
+    RequestSample,
+    SLOBurnRateRule,
+    SLOConfig,
+    _percentile,
+)
 
 
 @pytest.fixture()
@@ -110,5 +116,81 @@ def test_prune_discards_old_samples(base_time: datetime) -> None:
     guard.record_outcome(120.0, True, timestamp=base_time)
     assert all(
         sample.timestamp >= base_time - timedelta(seconds=30)
+        for sample in guard._events
+    )
+
+
+def test_burn_rate_rules_trigger_before_slo_breach(base_time: datetime) -> None:
+    triggered: list[tuple[str, dict[str, float]]] = []
+
+    config = SLOConfig(
+        error_rate_threshold=0.02,
+        latency_threshold_ms=500.0,
+        evaluation_period=timedelta(minutes=10),
+        min_requests=50,
+        cooldown=timedelta(seconds=0),
+        burn_rate_rules=(
+            SLOBurnRateRule(
+                window=timedelta(minutes=1),
+                max_burn_rate=4.0,
+                min_requests=10,
+                name="1m",
+            ),
+        ),
+    )
+    guard = AutoRollbackGuard(
+        config=config,
+        rollback_callback=lambda reason, summary: triggered.append((reason, summary)),
+    )
+
+    # Baseline healthy traffic within the evaluation period.
+    for idx in range(200):
+        guard.record_outcome(
+            120.0,
+            True,
+            timestamp=base_time + timedelta(seconds=idx * 2),
+        )
+
+    # Recent spike of errors contained in the short burn-rate window.
+    burn_window_start = base_time + timedelta(seconds=540)
+    recent_outcomes = [False, False, False, False] + [True] * 6
+    for offset, success in enumerate(recent_outcomes):
+        guard.record_outcome(
+            130.0,
+            success,
+            timestamp=burn_window_start + timedelta(seconds=offset * 5),
+        )
+
+    assert triggered, "Expected burn-rate policy to trigger a rollback"
+    reason, summary = triggered[-1]
+    assert reason == "burn_rate[1m]"
+    assert summary["reason"] == "burn_rate[1m]"
+    assert summary["error_rate"] < config.error_rate_threshold
+    assert summary["burn_rate[1m]"] == pytest.approx(20.0)
+    assert summary["requests[1m]"] == pytest.approx(10.0)
+    assert summary["burn_rate_window_seconds"] == pytest.approx(60.0)
+    assert summary["burn_rate_threshold"] == pytest.approx(4.0)
+    assert summary["total_requests"] == pytest.approx(210.0)
+    assert summary["error_budget"] == pytest.approx(config.error_rate_threshold)
+
+
+def test_retention_expands_for_burn_rate_windows(base_time: datetime) -> None:
+    config = SLOConfig(
+        min_requests=1,
+        evaluation_period=timedelta(seconds=30),
+        burn_rate_rules=(
+            SLOBurnRateRule(window=timedelta(minutes=2), max_burn_rate=2.0),
+        ),
+    )
+    guard = AutoRollbackGuard(config=config)
+
+    retained_event = RequestSample(base_time - timedelta(seconds=110), 100.0, True)
+    guard._events.append(retained_event)
+    guard.record_outcome(90.0, True, timestamp=base_time)
+    assert any(sample.timestamp == retained_event.timestamp for sample in guard._events)
+
+    guard.record_outcome(95.0, True, timestamp=base_time + timedelta(seconds=121))
+    assert all(
+        sample.timestamp >= base_time + timedelta(seconds=1)
         for sample in guard._events
     )

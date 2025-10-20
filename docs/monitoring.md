@@ -615,7 +615,7 @@ that performs the rollback:
 from dataclasses import dataclass
 from datetime import timedelta
 
-from core.utils import AutoRollbackGuard, SLOConfig
+from core.utils import AutoRollbackGuard, SLOBurnRateRule, SLOConfig
 
 @dataclass
 class RequestMetrics:
@@ -632,6 +632,17 @@ guard = AutoRollbackGuard(
         evaluation_period=timedelta(minutes=5),
         min_requests=200,
         cooldown=timedelta(minutes=10),
+        burn_rate_rules=(
+            SLOBurnRateRule(
+                window=timedelta(minutes=1),
+                max_burn_rate=6.0,
+                min_requests=50,
+            ),
+            SLOBurnRateRule(
+                window=timedelta(minutes=5),
+                max_burn_rate=3.0,
+            ),
+        ),
     ),
     rollback_callback=initiate_canary_rollback,
 )
@@ -654,7 +665,11 @@ guard.evaluate_snapshot(
 
 The guard enforces a cooldown window between rollbacks to avoid flapping and
 exposes the last evaluation summary for audit dashboards. Instrument the
-callback with deployer specific logging to trace mitigation steps.
+callback with deployer specific logging to trace mitigation steps. Burn-rate
+policies mirror Google's multi-window multi-burn alerts: the guard retains the
+largest window duration, annotates summaries with per-window burn rates, and
+triggers early rollbacks when fast or slow windows exceed their configured
+error-budget consumption.
 
 ---
 
