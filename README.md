@@ -340,6 +340,9 @@ pytest tests/property/
 # Run only integration tests
 pytest tests/integration/
 
+# Run the replayable live-sim end-to-end pipeline test
+pytest tests/integration/test_e2e_replay_live_sim.py -m integration -q
+
 # Run quarantined flaky tests with automatic reruns
 pytest tests/ -m flaky --reruns=2 --reruns-delay=2 \
   --flaky-report=reports/flaky-tests.json
