@@ -75,8 +75,8 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             ws_factory=ws_factory,
         )
         self._stream_base = stream_base.rstrip("/")
-        self._api_key = ""
-        self._api_secret = ""
+        self._api_key: str | None = None
+        self._api_secret: str | None = None
         self._listen_key: str | None = None
         self._time_offset = 0.0
         self._last_time_sync = 0.0
@@ -158,6 +158,8 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         json_payload: Dict[str, Any] | None,
         headers: Dict[str, str],
     ) -> tuple[Dict[str, Any], Dict[str, Any] | None, Dict[str, str], Any | None]:
+        if self._api_secret is None:
+            raise RuntimeError("Binance connector signing requested without credentials")
         params = dict(params)
         self._ensure_time_sync()
         params.setdefault("timestamp", str(self._timestamp_ms()))

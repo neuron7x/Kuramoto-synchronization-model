@@ -81,9 +81,9 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
             self._stream_base = (
                 "wss://advanced-trade-ws-public.sandbox.exchange.coinbase.com"
             )
-        self._api_key = ""
-        self._api_secret = ""
-        self._passphrase = ""
+        self._api_key: str | None = None
+        self._api_secret: str | None = None
+        self._passphrase: str | None = None
         self._time_offset = 0.0
         self._last_time_sync = 0.0
         self._time_sync_interval = 120.0
@@ -127,6 +127,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         headers = super()._default_headers()
         if self._api_key:
             headers["CB-ACCESS-KEY"] = self._api_key
+        if self._passphrase:
             headers["CB-ACCESS-PASSPHRASE"] = self._passphrase
         headers.setdefault("Content-Type", "application/json")
         return headers
@@ -144,6 +145,10 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         json_payload: Dict[str, Any] | None,
         headers: Dict[str, str],
     ) -> tuple[Dict[str, Any], Dict[str, Any] | None, Dict[str, str], Any | None]:
+        if self._api_secret is None:
+            raise RuntimeError(
+                "Coinbase connector signing requested without credentials"
+            )
         self._ensure_time_sync()
         timestamp = str(self._timestamp())
         body = json.dumps(json_payload or {}) if json_payload is not None else ""

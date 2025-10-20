@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Dict, Mapping, Protocol, runtime_checkable
 
 from .models import CapitalTransferPlan, TransferResult
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class CapitalMovementError(RuntimeError):
@@ -117,5 +121,13 @@ class AtomicCapitalMover:
                 await asyncio.wait_for(
                     gateway.release(leg.reservation_token), timeout=self._timeout
                 )
-            except Exception:  # pragma: no cover - best-effort rollback
-                continue
+            except Exception as exc:  # pragma: no cover - best-effort rollback
+                _LOGGER.warning(
+                    "Failed to release capital reservation during rollback",
+                    extra={
+                        "exchange_id": leg.exchange_id,
+                        "asset": leg.asset,
+                        "transfer_id": leg.reservation_token,
+                        "error": str(exc),
+                    },
+                )
