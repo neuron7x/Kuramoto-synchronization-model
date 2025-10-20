@@ -103,18 +103,23 @@ class IGSConfig:
             raise ValueError(
                 "window must be >= (perm_emb_dim - 1) * perm_tau + 1 to compute permutation entropy"
             )
-        if self.k_min is None:
-            # When no explicit lower bound is supplied we pin the adaptation
-            # range to the configured ``n_states``.  This keeps the legacy
-            # behaviour—hand tuned state counts work without having to
-            # manually provide auxiliary bounds—while still allowing callers to
-            # tighten the search space by specifying ``k_min``/``k_max``.
-            self.k_min = max(2, self.n_states)
-        if self.k_max is None:
-            # Mirror the lower-bound initialisation so that the adaptation
-            # guard rails always contain ``n_states`` even in the absence of
-            # explicit overrides.
-            self.k_max = max(self.k_min, self.n_states)
+        if self.k_min is None or self.k_max is None:
+            # Preserve the legacy adaptation corridor of roughly ``[5, 15]``
+            # by shifting it to stay centred around the configured
+            # ``n_states``.  This keeps automatic state adaptation functional
+            # when callers omit explicit bounds, while still honouring any
+            # provided override for either side of the corridor.
+            default_min = 5
+            default_max = 15
+            baseline_states = 7
+            offset = self.n_states - baseline_states
+            inferred_min = max(2, default_min + offset)
+            inferred_max = max(inferred_min + 1, default_max + offset)
+
+            if self.k_min is None:
+                self.k_min = inferred_min
+            if self.k_max is None:
+                self.k_max = max(self.k_min, inferred_max)
 
         if self.k_min < 2:
             raise ValueError("k_min must be >= 2")
