@@ -137,6 +137,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
+    - name: Pre-pull buildkit image with retries
+      run: |
+        IMAGE="moby/buildkit:buildx-stable-1"
+        for i in 1 2 3 4 5; do
+          echo "Attempt $i to pull $IMAGE"
+          if docker pull "$IMAGE"; then
+            echo "Pulled $IMAGE"
+            break
+          fi
+          sleep $((i * 5))
+        done || true
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -160,8 +172,17 @@ jobs:
         exit-code: '1'
         output: trivy-results.sarif
 
+    - name: Check Trivy SARIF file
+      id: trivy-check
+      run: |
+        if [ -f trivy-results.sarif ]; then
+          echo "found=true" >> $GITHUB_OUTPUT
+        else
+          echo "found=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Upload Trivy SARIF results
-      if: always()
+      if: steps.trivy-check.outputs.found == 'true'
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: trivy-results.sarif
@@ -177,11 +198,20 @@ jobs:
         output-format: sarif
         output-file: grype-results.sarif
 
+    - name: Check Grype SARIF file
+      id: grype-check
+      run: |
+        if [ -f grype-results.sarif ]; then
+          echo "found=true" >> $GITHUB_OUTPUT
+        else
+          echo "found=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Upload Grype SARIF results
-      if: always()
+      if: steps.grype-check.outputs.found == 'true'
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+        sarif_file: grype-results.sarif
 
     - name: Fail workflow on critical vulnerabilities
       if: always()
