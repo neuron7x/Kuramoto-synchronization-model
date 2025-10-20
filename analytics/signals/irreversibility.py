@@ -64,8 +64,8 @@ class IGSConfig:
     perm_emb_dim: int = 5
     perm_tau: int = 1
     adapt_method: str = "off"
-    k_min: int = 5
-    k_max: int = 15
+    k_min: Optional[int] = None
+    k_max: Optional[int] = None
     adapt_threshold: float = 0.10
     adapt_persist: int = 3
     adapt_cooldown: int = 50
@@ -103,6 +103,19 @@ class IGSConfig:
             raise ValueError(
                 "window must be >= (perm_emb_dim - 1) * perm_tau + 1 to compute permutation entropy"
             )
+        if self.k_min is None:
+            # When no explicit lower bound is supplied we pin the adaptation
+            # range to the configured ``n_states``.  This keeps the legacy
+            # behaviour—hand tuned state counts work without having to
+            # manually provide auxiliary bounds—while still allowing callers to
+            # tighten the search space by specifying ``k_min``/``k_max``.
+            self.k_min = max(2, self.n_states)
+        if self.k_max is None:
+            # Mirror the lower-bound initialisation so that the adaptation
+            # guard rails always contain ``n_states`` even in the absence of
+            # explicit overrides.
+            self.k_max = max(self.k_min, self.n_states)
+
         if self.k_min < 2:
             raise ValueError("k_min must be >= 2")
         if self.k_min > self.k_max:
