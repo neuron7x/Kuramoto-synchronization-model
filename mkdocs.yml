@@ -49,6 +49,7 @@ nav:
           - Platform Overview: ARCHITECTURE.md
           - System Diagrams: architecture/system_overview.md
           - Feature Store: architecture/feature_store.md
+          - Architecture Review Program: architecture/architecture_review_program.md
       - Indicators:
           - Overview: indicators.md
           - Adaptive Market Mind: indicators/amm.md
@@ -84,6 +85,8 @@ nav:
       - Data Incident Runbook: runbook_data_incident.md
       - Release Validation Runbook: runbook_release_validation.md
       - Governance and Data Controls: governance.md
+      - Dataset Catalog: dataset_catalog.md
+      - Feature Catalog: feature_catalog.md
       - Deployment: deployment.md
       - Canary Release Guardrails: canary_release_guardrails.md
   - Security:
