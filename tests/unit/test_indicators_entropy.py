@@ -15,6 +15,7 @@ Tests verify:
 """
 from __future__ import annotations
 
+import asyncio
 import numpy as np
 import pytest
 
@@ -334,3 +335,61 @@ def test_entropy_resolve_backend_handles_low_gpu_memory(
     )
 
     assert backend == "cpu"
+
+
+def test_entropy_async_parallel_matches_serial() -> None:
+    """Async chunk execution should produce the same entropy as serial mode."""
+    rng = np.random.default_rng(2025)
+    series = rng.normal(loc=0.0, scale=1.0, size=4096)
+
+    baseline = entropy(series, bins=48, chunk_size=256)
+    async_result = entropy(
+        series,
+        bins=48,
+        chunk_size=256,
+        parallel="async",
+        max_workers=4,
+    )
+
+    assert async_result == pytest.approx(baseline, rel=1e-9, abs=1e-12)
+
+
+def test_entropy_async_respects_running_event_loop() -> None:
+    """The async executor should tolerate being invoked from a running loop."""
+
+    async def _runner() -> float:
+        series = np.linspace(-1.0, 1.0, 1024)
+        return entropy(
+            series,
+            bins=32,
+            chunk_size=128,
+            parallel="async",
+        )
+
+    expected = entropy(np.linspace(-1.0, 1.0, 1024), bins=32, chunk_size=128)
+    result = asyncio.run(_runner())
+
+    assert result == pytest.approx(expected, rel=1e-9, abs=1e-12)
+
+
+def test_entropy_rejects_unknown_backend() -> None:
+    """Invalid backend names should raise an explicit error."""
+
+    with pytest.raises(ValueError, match="Unsupported backend"):
+        entropy(np.arange(8, dtype=float), backend="quantum")
+
+
+def test_entropy_feature_backend_metadata_on_fallback(
+    uniform_series: np.ndarray,
+) -> None:
+    """When GPU is requested but unavailable, metadata should note the fallback."""
+
+    feature = EntropyFeature(bins=18, backend="gpu")
+    outcome = feature.transform(uniform_series)
+
+    assert outcome.metadata["bins"] == 18
+    assert outcome.metadata["backend"] == "cpu"
+    assert outcome.metadata["backend_requested"] == "gpu"
+    assert outcome.value == pytest.approx(
+        entropy(uniform_series, bins=18, backend="gpu"), rel=1e-9, abs=1e-12
+    )

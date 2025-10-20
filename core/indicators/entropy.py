@@ -405,18 +405,17 @@ def _run_entropy_async(
             if executor is not None:
                 executor.shutdown(wait=True)
 
+    coro = _runner()
     try:
-        return asyncio.run(_runner())
+        return asyncio.run(coro)
     except RuntimeError as exc:
-        if "event loop is running" not in str(exc):
+        message = str(exc)
+        if "event loop is running" not in message and "running event loop" not in message:
+            coro.close()
             raise
-        new_loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(new_loop)
-            return new_loop.run_until_complete(_runner())
-        finally:
-            asyncio.set_event_loop(None)
-            new_loop.close()
+        coro.close()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            return list(executor.map(_entropy_chunk_worker, tasks))
 
 
 def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) -> float:
