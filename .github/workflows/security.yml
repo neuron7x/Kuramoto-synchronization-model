@@ -142,17 +142,36 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
-    - name: Pre-pull buildkit image with retries
+    - name: Pre-pull BuildKit image with retries and mirror fallback
       run: |
-        IMAGE="moby/buildkit:buildx-stable-1"
-        for i in 1 2 3 4 5; do
-          echo "Attempt $i to pull $IMAGE"
-          if docker pull "$IMAGE"; then
-            echo "Pulled $IMAGE"
-            break
+        set -euo pipefail
+
+        HUB_IMAGE="moby/buildkit:buildx-stable-1"
+        MIRROR_IMAGE="ghcr.io/docker/buildkit:buildx-stable-1"
+        MAX_RETRIES=5
+
+        for attempt in $(seq 1 "$MAX_RETRIES"); do
+          echo "Attempt $attempt to pull $HUB_IMAGE"
+          if docker pull "$HUB_IMAGE"; then
+            echo "Successfully pulled $HUB_IMAGE"
+            exit 0
           fi
-          sleep $((i * 5))
-        done || true
+          sleep "$((attempt * 5))"
+        done
+
+        echo "Falling back to mirror image $MIRROR_IMAGE"
+        for attempt in $(seq 1 "$MAX_RETRIES"); do
+          echo "Attempt $attempt to pull $MIRROR_IMAGE"
+          if docker pull "$MIRROR_IMAGE"; then
+            echo "Successfully pulled mirror image; retagging as $HUB_IMAGE"
+            docker tag "$MIRROR_IMAGE" "$HUB_IMAGE"
+            exit 0
+          fi
+          sleep "$((attempt * 5))"
+        done
+
+        echo "ERROR: Unable to pull BuildKit image from Docker Hub or GHCR mirror"
+        exit 1
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
