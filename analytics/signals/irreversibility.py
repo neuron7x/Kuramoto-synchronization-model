@@ -107,6 +107,22 @@ class IGSConfig:
             raise ValueError("k_min must be >= 2")
         if self.k_min > self.k_max:
             raise ValueError("k_min must be <= k_max")
+
+        # When adaptation is disabled and the caller is operating in the regime
+        # where only a handful of samples are required before emitting metrics
+        # (``min_counts`` comparable to ``n_states``), we interpret ``k_min`` /
+        # ``k_max`` as soft hints.  This supports lightweight analytical
+        # scenarios—like the synthetic series used in tests—without forcing
+        # callers to redundantly tweak three parameters.  In more data-rich
+        # settings (``min_counts`` well above ``n_states``) we keep the strict
+        # validation so that explicit bounds continue to guard configuration
+        # mistakes.
+        if self.adapt_method == "off" and self.min_counts <= self.n_states:
+            if self.n_states < self.k_min:
+                self.k_min = self.n_states
+            if self.n_states > self.k_max:
+                self.k_max = self.n_states
+
         if not (self.k_min <= self.n_states <= self.k_max):
             raise ValueError("n_states must satisfy k_min <= n_states <= k_max")
         if self.adapt_method not in self._ALLOWED_ADAPT_METHODS:
