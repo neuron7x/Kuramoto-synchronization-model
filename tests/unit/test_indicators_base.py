@@ -7,6 +7,7 @@ import numpy as np
 
 from core.indicators.base import (
     BaseFeature,
+    BlockFeature,
     FeatureBlock,
     FeatureResult,
     FunctionalFeature,
@@ -61,3 +62,31 @@ def test_feature_block_extend() -> None:
     block.extend([DoubleFeature(name="double"), IncrementFeature(increment=0.5)])
     outputs = block(4)
     assert outputs == {"double": 8.0, "increment": 4.5}
+
+
+def test_feature_block_supports_positional_name_and_alias_methods() -> None:
+    block = FeatureBlock("regime")
+    block.add_feature(DoubleFeature(name="double"))
+    assert block.name == "regime"
+    outputs = block.run(3)
+    assert outputs == {"double": 6.0}
+
+
+def test_feature_block_transform_all_returns_feature_results() -> None:
+    block = FeatureBlock([DoubleFeature(name="double")])
+    results = block.transform_all(2)
+    assert set(results.keys()) == {"double"}
+    result = results["double"]
+    assert isinstance(result, FeatureResult)
+    assert result.value == 4.0
+
+
+def test_block_feature_wraps_block_and_preserves_metadata() -> None:
+    inner = FeatureBlock([DoubleFeature(name="double")], name="inner")
+    nested = BlockFeature(inner, name="outer", metadata={"level": "inner"})
+    result = nested.transform(5)
+    assert result.name == "outer"
+    assert result.value == {"double": 10.0}
+    assert result.metadata["block"] == "inner"
+    assert result.metadata["feature_count"] == 1
+    assert result.metadata["level"] == "inner"
