@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import ipaddress
 from collections import deque
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Deque, Dict
@@ -11,6 +10,7 @@ from typing import Awaitable, Callable, Deque, Dict
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from src.admin.ip_utils import normalize_ip_header, resolve_request_ip
 from src.audit.audit_logger import AuditLogger
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
 
@@ -177,53 +177,13 @@ class AdminRateLimiter:
 def _resolve_ip(request: Request) -> str:
     """Return the originating IP address for the request."""
 
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        for part in forwarded_for.split(","):
-            candidate = _normalize_ip(part)
-            if candidate is not None:
-                return candidate
-
-    real_ip = _normalize_ip(request.headers.get("X-Real-IP"))
-    if real_ip is not None:
-        return real_ip
-
-    if request.client is not None and request.client.host:
-        return request.client.host
-    return "unknown"
+    return resolve_request_ip(request)
 
 
 def _normalize_ip(raw: str | None) -> str | None:
     """Return a validated IP address extracted from header data."""
 
-    if raw is None:
-        return None
-
-    candidate = raw.strip()
-    if not candidate:
-        return None
-
-    # Mitigate header injection attempts such as "1.1.1.1   malicious".
-    candidate = candidate.split()[0]
-
-    # Remove square brackets that may wrap IPv6 addresses (e.g. "[::1]").
-    candidate = candidate.strip("[]")
-
-    # Drop a zone identifier (e.g. "fe80::1%eth0") as ipaddress cannot parse it.
-    if "%" in candidate:
-        candidate = candidate.split("%", 1)[0]
-
-    # Handle IPv4 addresses that include a port component.
-    if "." in candidate and candidate.count(":") == 1:
-        host, _, port = candidate.rpartition(":")
-        if port.isdigit():
-            candidate = host
-
-    try:
-        ipaddress.ip_address(candidate)
-    except ValueError:
-        return None
-    return candidate
+    return normalize_ip_header(raw)
 
 
 def create_remote_control_router(

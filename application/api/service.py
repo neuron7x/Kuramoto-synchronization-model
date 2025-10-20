@@ -65,6 +65,7 @@ from execution.risk import (
     SQLiteKillSwitchStateStore,
 )
 from observability.health import HealthServer
+from src.admin.ip_utils import resolve_request_ip
 from src.admin.remote_control import (
     AdminIdentity,
     AdminRateLimiter,
@@ -1261,20 +1262,7 @@ class PayloadGuardMiddleware(BaseHTTPMiddleware):
 
 
 def _resolve_ip(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        for part in forwarded_for.split(","):
-            candidate = part.strip().split()[0]
-            if candidate:
-                return candidate
-
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip.strip()
-
-    if request.client and request.client.host:
-        return request.client.host
-    return "unknown"
+    return resolve_request_ip(request)
 
 
 def configure_openapi(app: FastAPI) -> None:

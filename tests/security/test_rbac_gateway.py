@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from fastapi import HTTPException
+from starlette.requests import Request as StarletteRequest
 
 from application.security.rbac import AuthorizationGateway, load_rbac_configuration
 from src.admin.remote_control import AdminIdentity
@@ -131,6 +132,33 @@ def test_attribute_mismatch_is_denied(rbac_policy_path: Path) -> None:
     detail = exc_info.value.detail
     assert detail["failure_reason"] == "attribute_mismatch"
     assert detail["required_roles"] == ["system:trade"]
+
+
+def test_authorization_logs_sanitized_ip(rbac_policy_path: Path) -> None:
+    gateway, audit_logger = _build_gateway(rbac_policy_path)
+    identity = AdminIdentity(subject="erin", roles=("system:trade",))
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/admin/orders",
+        "headers": [
+            (b"x-forwarded-for", b"203.0.113.10   injected"),
+        ],
+        "client": ("198.51.100.10", 443),
+    }
+    request = StarletteRequest(scope)
+
+    gateway.enforce(
+        identity=identity,
+        resource="orders",
+        action="submit",
+        attributes={"desk": "execution"},
+        request=request,
+    )
+
+    _, kwargs = audit_logger.log_event.call_args  # type: ignore[attr-defined]
+    assert kwargs["ip_address"] == "203.0.113.10"
 
 
 def test_temporary_grant_respects_expiry(rbac_policy_path: Path) -> None:

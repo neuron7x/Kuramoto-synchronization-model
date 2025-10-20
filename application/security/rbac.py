@@ -12,6 +12,7 @@ from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 import yaml
 from fastapi import HTTPException, Request, status
 
+from src.admin.ip_utils import resolve_request_ip as _shared_resolve_request_ip
 from src.admin.remote_control import AdminIdentity
 from src.audit.audit_logger import AuditLogger
 
@@ -69,18 +70,7 @@ def _parse_iso8601(timestamp: str) -> datetime:
 def _resolve_request_ip(request: Request | None) -> str:
     if request is None:
         return "unknown"
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        for part in forwarded_for.split(","):
-            candidate = part.strip()
-            if candidate:
-                return candidate
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip.strip() or "unknown"
-    if request.client is not None and request.client.host:
-        return request.client.host
-    return "unknown"
+    return _shared_resolve_request_ip(request)
 
 
 def _normalise_attribute_value(value: Any) -> set[str]:
