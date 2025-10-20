@@ -163,12 +163,17 @@ class AutoRollbackGuard:
         latency_p95_ms: float,
         timestamp: Optional[datetime] = None,
         total_requests: Optional[int] = None,
+        burn_window_totals: Optional[Dict[timedelta, tuple[int, int]]] = None,
     ) -> bool:
         """Evaluate the SLO guard using pre-aggregated metrics.
 
         This helper is useful when metrics are sourced from an external system
         such as Prometheus or Datadog and the agent receives aggregated error
-        rate and latency data instead of individual request samples.
+        rate and latency data instead of individual request samples. When
+        ``burn_window_totals`` are provided, the guard will enforce
+        ``burn_rate_rules`` using the supplied ``(total_requests, error_count)``
+        tuples for each configured window. Windows omitted from the mapping fall
+        back to the internally retained request samples.
         """
 
         if latency_p95_ms < 0:
@@ -192,8 +197,15 @@ class AutoRollbackGuard:
 
         reason = self._breach_reason(summary)
         if reason is None:
-            self._last_summary = summary
-            return False
+            burn_reason = self._burn_rate_breach(
+                now,
+                summary,
+                precomputed_windows=burn_window_totals,
+            )
+            if burn_reason is None:
+                self._last_summary = summary
+                return False
+            reason = burn_reason
 
         return self._trigger(reason, summary, now)
 
@@ -292,7 +304,11 @@ class AutoRollbackGuard:
         return total, errors, latencies
 
     def _burn_rate_breach(
-        self, now: datetime, summary: Dict[str, float]
+        self,
+        now: datetime,
+        summary: Dict[str, float],
+        *,
+        precomputed_windows: Optional[Dict[timedelta, tuple[int, int]]] = None,
     ) -> Optional[str]:
         if not self.config.burn_rate_rules:
             return None
@@ -301,7 +317,14 @@ class AutoRollbackGuard:
             return None
 
         for rule in self.config.burn_rate_rules:
-            total, errors, _ = self._aggregate_window(now, rule.window)
+            if precomputed_windows and rule.window in precomputed_windows:
+                total_raw, errors_raw = precomputed_windows[rule.window]
+                total = max(int(total_raw), 0)
+                errors = max(int(errors_raw), 0)
+                if errors > total:
+                    errors = total
+            else:
+                total, errors, _ = self._aggregate_window(now, rule.window)
             label = rule.identifier
             minimum = rule.min_requests if rule.min_requests is not None else self.config.min_requests
             summary[f"requests[{label}]"] = float(total)
