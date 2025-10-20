@@ -493,19 +493,27 @@ class QuantumNeuralStrategy:
         )
 
     def load(self, path: str) -> None:
-        ckpt = torch.load(path, map_location=self.device)
+        caller_device = torch.device(self.device)
+        ckpt = torch.load(path, map_location=caller_device)
+        target_device = caller_device
         cfg_payload = ckpt.get("cfg")
         if cfg_payload is not None:
             self.cfg = TrainConfig(**cfg_payload)
-            self.device = torch.device(self.cfg.device)
-            self.model.to(self.device)
-            self._use_amp = self.device.type == "cuda" and self.cfg.amp
-            self._scaler = torch.cuda.amp.GradScaler(enabled=self._use_amp)
-            self._amp_ctx = (
-                lambda: torch.autocast(device_type=self.device.type, dtype=torch.float16)
-                if self._use_amp
-                else nullcontext
-            )
+            if target_device.type == "cuda" and not torch.cuda.is_available():
+                target_device = torch.device("cpu")
+            self.cfg.device = target_device.type
+        if target_device.type == "cuda" and not torch.cuda.is_available():
+            target_device = torch.device("cpu")
+            self.cfg.device = target_device.type
+        self.device = target_device
+        self.model.to(self.device)
+        self._use_amp = self.device.type == "cuda" and self.cfg.amp
+        self._scaler = torch.cuda.amp.GradScaler(enabled=self._use_amp)
+        self._amp_ctx = (
+            lambda: torch.autocast(device_type=self.device.type, dtype=torch.float16)
+            if self._use_amp
+            else nullcontext
+        )
         self.model.load_state_dict(ckpt["model"])
         self.history = ckpt.get("history", [])
 
