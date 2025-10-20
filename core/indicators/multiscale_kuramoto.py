@@ -60,6 +60,7 @@ class MultiScaleResult:
     timeframe_results: Mapping[TimeFrame, KuramotoResult]
     skipped_timeframes: Sequence[TimeFrame]
     timeframe_endpoints: Mapping[TimeFrame, pd.Timestamp] = field(default_factory=dict)
+    timeframe_series: Mapping[TimeFrame, pd.Series] = field(default_factory=dict)
     energy_profile: Mapping[str, float] = field(default_factory=dict)
 
 
@@ -319,7 +320,12 @@ class MultiScaleKuramoto:
         for timeframe in ordered:
             if timeframe in analysis_records:
                 continue
-            record: dict[str, Any] = {"result": None, "endpoint": None, "samples": 0}
+            record: dict[str, Any] = {
+                "result": None,
+                "endpoint": None,
+                "samples": 0,
+                "series": None,
+            }
             try:
                 sampled = resampler.resample(timeframe)
             except ValueError:
@@ -347,12 +353,14 @@ class MultiScaleKuramoto:
                     ),
                     "endpoint": sampled.index[-1],
                     "samples": int(sampled.size),
+                    "series": sampled,
                     "skipped": False,
                 }
             )
             analysis_records[timeframe] = record
 
         accounted_for_samples: set[TimeFrame] = set()
+        timeframe_series: dict[TimeFrame, pd.Series] = {}
         for timeframe in self.timeframes:
             record = analysis_records.get(timeframe)
             if not record or record.get("skipped", False):
@@ -370,6 +378,9 @@ class MultiScaleKuramoto:
             if timeframe not in accounted_for_samples:
                 samples_processed += int(record.get("samples", 0))
                 accounted_for_samples.add(timeframe)
+            series = record.get("series")
+            if isinstance(series, pd.Series):
+                timeframe_series[timeframe] = series
 
         if timeframe_results:
             R_values = np.array(
@@ -409,6 +420,7 @@ class MultiScaleKuramoto:
             timeframe_results=dict(timeframe_results),
             skipped_timeframes=tuple(skipped),
             timeframe_endpoints=dict(endpoints),
+            timeframe_series=dict(timeframe_series),
             energy_profile=energy_profile,
         )
 
@@ -484,7 +496,9 @@ class MultiScaleKuramotoFeature(BaseFeature):
 
         price_series = df[price_col]
         for timeframe, tf_result in result.timeframe_results.items():
-            sampled = self.analyzer._resample_prices(price_series, timeframe)
+            sampled = result.timeframe_series.get(timeframe)
+            if sampled is None:
+                sampled = self.analyzer._resample_prices(price_series, timeframe)
             if sampled.empty:
                 continue
             timeframe_hash = hash_input_data(sampled.to_frame(name=price_col))
