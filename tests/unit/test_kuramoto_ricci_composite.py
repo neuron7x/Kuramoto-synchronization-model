@@ -18,12 +18,19 @@ from core.indicators import (
     KuramotoRicciComposite,
     MarketPhase,
     MultiScaleKuramoto,
+    MultiScaleResult,
     TemporalRicciAnalyzer,
     TimeFrame,
     TradePulseCompositeEngine,
     WaveletWindowSelector,
 )
-from core.indicators.temporal_ricci import OllivierRicciCurvature
+from core.indicators.kuramoto_ricci_composite import CompositeSignal
+from core.indicators.temporal_ricci import (
+    GraphSnapshot,
+    LightGraph,
+    OllivierRicciCurvature,
+    TemporalRicciResult,
+)
 
 
 class TestMultiScaleKuramoto:
@@ -158,6 +165,36 @@ class TestCompositeIndicator:
         )
         assert phase is MarketPhase.TRANSITION
 
+    def test_phase_detection_proto_emergent_branch(self) -> None:
+        composite = KuramotoRicciComposite(R_proto_emergent=0.4, R_strong_emergent=0.8)
+        phase = composite._determine_phase(
+            R=0.55,
+            temporal_ricci=-0.05,
+            transition_score=0.2,
+            static_ricci=-0.1,
+        )
+        assert phase is MarketPhase.PROTO_EMERGENT
+
+    def test_phase_detection_post_emergent_branch(self) -> None:
+        composite = KuramotoRicciComposite(R_proto_emergent=0.4)
+        phase = composite._determine_phase(
+            R=0.65,
+            temporal_ricci=0.15,
+            transition_score=0.3,
+            static_ricci=0.1,
+        )
+        assert phase is MarketPhase.POST_EMERGENT
+
+    def test_phase_detection_defaults_to_chaotic(self) -> None:
+        composite = KuramotoRicciComposite(R_proto_emergent=0.4, R_strong_emergent=0.8)
+        phase = composite._determine_phase(
+            R=0.2,
+            temporal_ricci=0.0,
+            transition_score=0.1,
+            static_ricci=-0.05,
+        )
+        assert phase is MarketPhase.CHAOTIC
+
     def test_confidence_range(self) -> None:
         composite = KuramotoRicciComposite()
         confidence = composite._compute_confidence(
@@ -167,6 +204,16 @@ class TestCompositeIndicator:
             R=0.9,
         )
         assert 0.0 <= confidence <= 1.0
+
+    def test_confidence_penalised_near_threshold(self) -> None:
+        composite = KuramotoRicciComposite(R_proto_emergent=0.4, R_strong_emergent=0.8)
+        confidence = composite._compute_confidence(
+            phase=MarketPhase.STRONG_EMERGENT,
+            coherence=0.65,
+            transition_score=0.1,
+            R=0.82,
+        )
+        assert confidence == pytest.approx(0.9464, rel=1e-6)
 
     def test_entry_signal_range(self) -> None:
         composite = KuramotoRicciComposite()
@@ -178,6 +225,17 @@ class TestCompositeIndicator:
             confidence=0.8,
         )
         assert -1.0 <= signal <= 1.0
+
+    def test_post_emergent_entry_signal_biases_short(self) -> None:
+        composite = KuramotoRicciComposite()
+        signal = composite._generate_entry_signal(
+            phase=MarketPhase.POST_EMERGENT,
+            R=0.7,
+            temporal_ricci=0.2,
+            transition_score=0.3,
+            confidence=0.9,
+        )
+        assert signal < 0
 
     def test_exit_signal_range(self) -> None:
         composite = KuramotoRicciComposite()
@@ -207,6 +265,62 @@ class TestCompositeIndicator:
             confidence=0.3,
         )
         assert abs(signal) < 0.1
+
+    def test_analyze_serialises_skipped_timeframes(self) -> None:
+        composite = KuramotoRicciComposite(
+            R_strong_emergent=0.8,
+            R_proto_emergent=0.4,
+            coherence_threshold=0.6,
+            ricci_negative_threshold=-0.2,
+            temporal_ricci_threshold=-0.1,
+            transition_threshold=0.7,
+        )
+
+        multi_result = MultiScaleResult(
+            consensus_R=0.85,
+            cross_scale_coherence=0.9,
+            dominant_scale=TimeFrame.M15,
+            adaptive_window=128,
+            timeframe_results={},
+            skipped_timeframes=[TimeFrame.M1, TimeFrame.M5],
+            timeframe_endpoints={},
+            timeframe_series={},
+            energy_profile={},
+        )
+
+        graph = LightGraph(3)
+        graph.add_edge(0, 1, weight=1.0)
+        snapshot = GraphSnapshot(
+            graph=graph,
+            timestamp=pd.Timestamp("2024-01-01T12:00:00Z"),
+            price_levels=np.array([99.5, 100.0, 100.5]),
+            ricci_curvatures={(0, 1): -0.1},
+            avg_curvature=-0.1,
+        )
+
+        temporal_result = TemporalRicciResult(
+            temporal_curvature=-0.2,
+            topological_transition_score=0.4,
+            graph_snapshots=[snapshot],
+            structural_stability=0.8,
+            edge_persistence=0.7,
+        )
+
+        signal = composite.analyze(
+            kres=multi_result,
+            rres=temporal_result,
+            static_ricci=-0.1,
+            ts=pd.Timestamp("2024-01-01T12:00:00Z"),
+        )
+
+        assert signal.dominant_timeframe_sec == TimeFrame.M15.seconds
+        assert signal.skipped_timeframes == ["M1", "M5"]
+        assert signal.phase in MarketPhase
+
+        serialised = composite.to_dict(signal)
+        assert serialised["phase"] == signal.phase.value
+        assert serialised["dominant_timeframe_sec"] == TimeFrame.M15.seconds
+        assert serialised["skipped_timeframes"] == ["M1", "M5"]
 
 
 class TestCompositeEngine:
@@ -272,6 +386,55 @@ class TestCompositeEngine:
         assert engine.signal_history[-1].timestamp == df_extended.index[-1]
         df_signals = engine.get_signal_dataframe()
         assert len(df_signals) == 2
+
+    def test_get_signal_dataframe_empty_history(self) -> None:
+        engine = TradePulseCompositeEngine()
+        df = engine.get_signal_dataframe()
+        assert df.empty
+        assert list(df.columns) == []
+
+    def test_record_signal_overwrites_same_timestamp(self) -> None:
+        engine = TradePulseCompositeEngine()
+        ts = pd.Timestamp("2024-01-01T00:00:00Z")
+        first = CompositeSignal(
+            phase=MarketPhase.CHAOTIC,
+            confidence=0.3,
+            kuramoto_R=0.2,
+            consensus_R=0.2,
+            cross_scale_coherence=0.4,
+            static_ricci=0.05,
+            temporal_ricci=0.1,
+            topological_transition=0.2,
+            entry_signal=-0.1,
+            exit_signal=0.5,
+            risk_multiplier=0.4,
+            dominant_timeframe_sec=None,
+            timestamp=ts,
+        )
+        engine._record_signal(first)
+
+        updated = CompositeSignal(
+            phase=MarketPhase.STRONG_EMERGENT,
+            confidence=0.9,
+            kuramoto_R=0.95,
+            consensus_R=0.95,
+            cross_scale_coherence=0.92,
+            static_ricci=-0.3,
+            temporal_ricci=-0.4,
+            topological_transition=0.1,
+            entry_signal=0.8,
+            exit_signal=0.2,
+            risk_multiplier=1.5,
+            dominant_timeframe_sec=TimeFrame.M5.seconds,
+            timestamp=ts,
+        )
+        engine._record_signal(updated)
+
+        assert len(engine.signal_history) == 1
+        stored = engine.signal_history[0]
+        assert stored.phase is MarketPhase.STRONG_EMERGENT
+        assert stored.entry_signal == pytest.approx(0.8)
+        assert stored.risk_multiplier == pytest.approx(1.5)
 
 
 if HYPOTHESIS_AVAILABLE:
