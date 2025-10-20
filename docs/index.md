@@ -69,6 +69,9 @@ focused document so contributors can quickly find the details they need.
   quarterly priorities.
 - Cross-reference the [Improvement Plan](improvement_plan.md) for detailed
   success criteria and implementation guidance.
+- Strengthen team capabilities using the
+  [Engineering Enablement Program](training_enablement_program.md), covering
+  role tracks, mentorship, growth plans, and continuous improvement rituals.
 - Align governance and compliance using the
   [Governance and Data Controls](governance.md) playbook covering RBAC, data
   contracts, privacy, and catalog management.
@@ -78,6 +81,16 @@ focused document so contributors can quickly find the details they need.
   відповідністю моделей TradePulse.
 - Align on safeguards using the [Risk, Signals, and Observability Control
   Blueprint](risk_ml_observability.md) when planning high-impact releases.
+
+---
+
+## Platform Initiatives
+
+- Execute progressive delivery safely by following the
+  [Feature Flag and Dynamic Configuration Roadmap](feature_flag_platform_roadmap.md),
+  detailing architecture, governance, and phased rollout plans.
+- Consult the [Configuration Playbook](configuration.md) for operational
+  procedures that complement the feature flag platform.
 
 ---
 
@@ -125,4 +138,4 @@ focused document so contributors can quickly find the details they need.
 
 ---
 
-**Last updated:** 2025-10-20
+**Last updated:** 2025-11-24
