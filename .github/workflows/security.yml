@@ -142,13 +142,27 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
-    - name: Pre-pull BuildKit image with retries and mirror fallback
+    - name: Pre-pull BuildKit image with retries and authenticated mirror fallback
       run: |
         set -euo pipefail
 
         HUB_IMAGE="moby/buildkit:buildx-stable-1"
         MIRROR_IMAGE="ghcr.io/docker/buildkit:buildx-stable-1"
         MAX_RETRIES=5
+
+        login_ghcr() {
+          if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${GITHUB_ACTOR:-}" ]; then
+            return 1
+          fi
+
+          if docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<<"$GITHUB_TOKEN"; then
+            echo "Authenticated to ghcr.io as $GITHUB_ACTOR"
+            return 0
+          fi
+
+          echo "WARNING: Failed to authenticate to ghcr.io"
+          return 1
+        }
 
         for attempt in $(seq 1 "$MAX_RETRIES"); do
           echo "Attempt $attempt to pull $HUB_IMAGE"
@@ -160,6 +174,7 @@ jobs:
         done
 
         echo "Falling back to mirror image $MIRROR_IMAGE"
+        login_ghcr || true
         for attempt in $(seq 1 "$MAX_RETRIES"); do
           echo "Attempt $attempt to pull $MIRROR_IMAGE"
           if docker pull "$MIRROR_IMAGE"; then
@@ -203,7 +218,24 @@ jobs:
           exit 0
         fi
 
+        login_ghcr() {
+          if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${GITHUB_ACTOR:-}" ]; then
+            return 1
+          fi
+
+          if docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<<"$GITHUB_TOKEN"; then
+            echo "Authenticated to ghcr.io as $GITHUB_ACTOR"
+            return 0
+          fi
+
+          echo "WARNING: Failed to authenticate to ghcr.io"
+          return 1
+        }
+
         for mirror in "$GHCR_MIRROR" "$AWS_MIRROR"; do
+          if [[ "$mirror" == ghcr.io/* ]]; then
+            login_ghcr || true
+          fi
           if pull_with_retries "$mirror"; then
             echo "Successfully pulled $mirror; retagging as $BASE_IMAGE"
             docker tag "$mirror" "$BASE_IMAGE"
