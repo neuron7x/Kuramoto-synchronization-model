@@ -78,8 +78,8 @@ jobs:
 
       - name: Install quality tooling
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
           uv pip install pre-commit detect-secrets bandit
 
       - name: Run ruff
@@ -126,8 +126,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
 
       - name: Run fast unit tests
         run: |
@@ -173,8 +173,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
 
       - name: Run integration tests
         run: |

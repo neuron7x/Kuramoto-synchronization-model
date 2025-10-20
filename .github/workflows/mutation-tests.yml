@@ -27,8 +27,8 @@ jobs:
         run: uv venv
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.lock
-          uv pip install -r requirements-dev.lock
+          uv pip install -c constraints/security.txt -r requirements.lock
+          uv pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Prepare mutation report directory
         run: mkdir -p reports/mutmut
       - name: Run mutation tests

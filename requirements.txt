@@ -42,10 +42,7 @@ setuptools>=80.9.0
 streamlit>=1.31.0
 streamlit-authenticator>=0.3.1
 
-# Security: Pin secure versions of common transitive dependencies
+# Security: security-critical transitive dependencies are pinned via constraints/security.txt
 PyJWT[crypto]>=2.9.0
 cryptography>=46.0.0
 requests>=2.32.5
-urllib3>=2.5.0
-idna>=3.11
-certifi>=2025.10.5

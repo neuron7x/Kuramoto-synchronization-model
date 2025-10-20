@@ -294,7 +294,7 @@ python -c "import bcrypt; print(bcrypt.hashpw('your_secure_password'.encode(), b
 
 ```bash
 # Install Streamlit dependencies (if not already installed)
-pip install -r requirements.txt
+pip install -c constraints/security.txt -r requirements.txt
 
 # Run the dashboard
 streamlit run interfaces/dashboard_streamlit.py
