@@ -248,7 +248,10 @@ def build_tradepulse_platform(
             )
         cache_service = pipeline_cache
     else:
-        cache_service = cache_service or DataIngestionCacheService()
+        if cache_service is None:
+            cache_service = DataIngestionCacheService(
+                data_ingestor=system.data_ingestor,
+            )
 
     if streaming_pipeline is None and streaming_settings is not None:
         streaming_pipeline = StreamingIngestionPipeline(
