@@ -1,12 +1,24 @@
 # SPDX-License-Identifier: MIT
 """Walk-forward backtesting engine with execution realism controls.
 
-The engine models signal latency, slippage, spreads, and financing to produce a
-traceable equity curve, aligning with the methodology described in
+This module provides governance-aligned performance accounting for TradePulse
+strategies. The engine models signal latency, slippage, spreads, and financing
+to produce a traceable equity curve, aligning with the methodology described in
 ``docs/performance.md`` and the operational checklist in
 ``docs/runbook_live_trading.md``. It serves as the reference implementation for
-portfolio walk-forward evaluation across TradePulse components and feeds
+portfolio walk-forward evaluation across TradePulse components and feeds the
 observability metrics expected by ``docs/quality_gates.md``.
+
+**Key responsibilities**
+
+* Execute deterministic walk-forward simulations that respect execution
+  latencies, portfolio constraints, and configurable transaction-cost models.
+* Produce structured :class:`PerformanceReport` artefacts consumed by notebooks
+  and operational dashboards documented in ``docs/monitoring.md``.
+* Emit telemetry through ``core.utils.metrics`` so governance scorecards can
+  audit data quality, latency, and capital allocation decisions.
+
+**Integration points**
 
 Upstream consumers pass in price series and strategy callbacks from research or
 signal layers, while downstream clients include CLI backtests, notebooks, and

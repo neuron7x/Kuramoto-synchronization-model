@@ -8,9 +8,29 @@ position/notional limits, order-rate throttles, and a kill-switch escalation
 mechanism aligned with the governance expectations formalised in
 ``docs/documentation_governance.md`` and ``docs/monitoring.md``.
 
+TradePulse routes all order flow through this module to ensure regulatory and
+internal guardrails are enforced before interacting with external venues. The
+implementation codifies the governance controls described in
+``docs/execution.md`` and the observability guarantees tracked in
+``docs/quality_gates.md``.
+
+**Scope of responsibilities**
+
+* Enforce static and dynamic risk limits (:class:`RiskLimits`) across notional,
+  position, and order-rate dimensions with deterministic violation handling.
+* Persist kill-switch decisions and rate-limit breaches so runbooks in
+  ``docs/runbook_kill_switch_failover.md`` can be executed with full context.
+* Normalise instrument identifiers via ``core.data.catalog`` to maintain data
+  lineage across research, execution, and reporting pipelines.
+
+**Operational integrations**
+
 The implementation depends on catalog normalisation utilities, execution audit
 logging, and metrics collectors to ensure every decision is observable and
-attributable—an explicit requirement in ``docs/quality_gates.md``.
+attributable—an explicit requirement in ``docs/quality_gates.md``. Database
+connectivity honours the configuration schemas in ``core.config.cli_models`` and
+``libs.db`` so deployments can select SQLite, Postgres, or in-memory stores
+without modifying risk logic.
 """
 
 from __future__ import annotations
