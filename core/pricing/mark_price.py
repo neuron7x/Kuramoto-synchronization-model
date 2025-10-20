@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from math import fsum, isfinite
 from statistics import median
 from threading import RLock
@@ -255,9 +255,14 @@ class MarkPriceCalibrator:
         """Add a batch of samples to the calibrator."""
 
         with self._lock:
+            latest_timestamp: datetime | None = None
             for sample in samples:
                 self._samples.append(sample)
-            self._prune_locked(now=None)
+                if latest_timestamp is None or sample.timestamp > latest_timestamp:
+                    latest_timestamp = sample.timestamp
+            if latest_timestamp is None:
+                return
+            self._prune_locked(now=latest_timestamp)
 
     def add_sample(self, sample: MarkPriceSample) -> None:
         """Add a single sample to the calibrator."""
@@ -267,12 +272,13 @@ class MarkPriceCalibrator:
     def compute(self, *, now: datetime | None = None) -> MarkPriceResult:
         """Compute the current mark price using buffered samples."""
 
+        reference_time = now if now is not None else datetime.now(timezone.utc)
         with self._lock:
-            self._prune_locked(now=now)
+            self._prune_locked(now=reference_time)
             snapshot = tuple(self._samples)
         return compute_mark_price(
             snapshot,
-            now=now,
+            now=reference_time,
             max_staleness=self._max_staleness,
             max_deviation_bps=self._max_deviation_bps,
             min_samples=self._min_samples,
@@ -290,7 +296,7 @@ class MarkPriceCalibrator:
         if not self._samples:
             return
         if now is None:
-            now = max(sample.timestamp for sample in self._samples)
+            now = datetime.now(timezone.utc)
         if self._max_staleness is not None:
             cutoff = now - self._max_staleness
             while self._samples and self._samples[0].timestamp < cutoff:
