@@ -9,6 +9,7 @@ import pytest
 
 import core.indicators.multiscale_kuramoto as kuramoto_mod
 from core.indicators.multiscale_kuramoto import (
+    FractalResampler,
     KuramotoResult,
     MultiScaleKuramoto,
     MultiScaleKuramotoFeature,
@@ -78,6 +79,14 @@ def test_wavelet_selector_rejects_excessive_resource_requests() -> None:
         selector.select_window([1.0, 2.0, 3.0])
 
 
+def test_wavelet_selector_limits_sample_count_for_energy_efficiency() -> None:
+    selector = WaveletWindowSelector(min_window=16, max_window=64, max_samples=128)
+    prices = np.linspace(0.0, 1.0, 1024)
+    window = selector.select_window(prices)
+    assert selector.max_samples == 128
+    assert selector.min_window <= window <= selector.max_window
+
+
 def test_multiscale_analyzer_requires_price_column() -> None:
     df = _synth_dataframe().rename(columns={"close": "price"})
     analyzer = MultiScaleKuramoto(use_adaptive_window=False)
@@ -90,6 +99,21 @@ def test_multiscale_analyzer_requires_datetime_index() -> None:
     analyzer = MultiScaleKuramoto(use_adaptive_window=False)
     with pytest.raises(TypeError):
         analyzer.analyze(df)
+
+
+def test_fractal_resampler_reuses_parent_timeframes() -> None:
+    df = _synth_dataframe()
+    resampler = FractalResampler(df["close"])
+    m1 = resampler.resample(TimeFrame.M1)
+    assert not m1.empty
+    m5 = resampler.resample(TimeFrame.M5)
+    stats = resampler.stats()
+    expected_m5 = df["close"].sort_index().resample(TimeFrame.M5.pandas_freq).last()
+    expected_m5 = expected_m5.ffill().dropna()
+    pd.testing.assert_series_equal(m5, expected_m5)
+    assert stats["resample_requests"] == pytest.approx(2.0)
+    assert stats["fractal_cache_hits"] == pytest.approx(1.0)
+    assert 0.0 <= stats["fractal_reuse_ratio"] <= 1.0
 
 
 def test_multiscale_analyzer_marks_skipped_timeframes_when_insufficient_samples() -> (
@@ -129,6 +153,8 @@ def test_multiscale_analyzer_uses_selector_for_adaptive_window() -> None:
     result = analyzer.analyze(df)
     assert selector.calls  # ensure selector was invoked
     assert result.adaptive_window == 200
+    assert "resample_requests" in result.energy_profile
+    assert result.energy_profile["resample_requests"] >= 1.0
 
 
 def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
@@ -173,3 +199,21 @@ def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
         0.42, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
     )
     assert outcome.metadata["window_M5"] == 144
+    assert outcome.metadata["energy_profile"] == {}
+
+
+def test_multiscale_analyzer_reports_energy_profile() -> None:
+    df = _synth_dataframe(periods=1024)
+    analyzer = MultiScaleKuramoto(
+        timeframes=(TimeFrame.M1, TimeFrame.M5, TimeFrame.M15),
+        use_adaptive_window=False,
+        base_window=64,
+    )
+    result = analyzer.analyze(df)
+    energy = result.energy_profile
+    assert energy["resample_requests"] >= 3.0
+    assert energy["fractal_cache_hits"] >= 2.0
+    assert 0.0 <= energy["fractal_reuse_ratio"] <= 1.0
+    assert energy["samples_processed"] >= sum(
+        res.window for res in result.timeframe_results.values()
+    )

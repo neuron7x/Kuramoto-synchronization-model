@@ -60,6 +60,73 @@ class MultiScaleResult:
     timeframe_results: Mapping[TimeFrame, KuramotoResult]
     skipped_timeframes: Sequence[TimeFrame]
     timeframe_endpoints: Mapping[TimeFrame, pd.Timestamp] = field(default_factory=dict)
+    energy_profile: Mapping[str, float] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class FractalResampler:
+    """Energy-aware hierarchical resampling cache.
+
+    The resampler memoizes intermediate timeframes and reuses them when a coarser
+    horizon is an integer multiple of a previously computed one.  This mirrors
+    the "fractal" refinement of horizons used throughout TradePulse and reduces
+    redundant :meth:`pandas.Series.resample` calls—cutting CPU time and energy
+    consumption in large backtests.
+    """
+
+    series: pd.Series
+    _cache: MutableMapping[TimeFrame, pd.Series] = field(default_factory=dict, init=False)
+    _cache_hits: int = field(default=0, init=False)
+    _direct_resamples: int = field(default=0, init=False)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.series.index, pd.DatetimeIndex):
+            raise TypeError("FractalResampler requires a DatetimeIndex")
+        # Normalise ordering once; downstream resampling works on monotonic data.
+        self.series = self.series.sort_index()
+
+    def resample(self, timeframe: TimeFrame) -> pd.Series:
+        cached = self._cache.get(timeframe)
+        if cached is not None:
+            return cached
+
+        parent = self._select_parent(timeframe)
+        if parent is not None:
+            base = self._cache[parent]
+            self._cache_hits += 1
+        else:
+            base = self.series
+            self._direct_resamples += 1
+
+        resampled = base.resample(timeframe.pandas_freq).last()
+        resampled = resampled.ffill().dropna()
+        self._cache[timeframe] = resampled
+        return resampled
+
+    def stats(self) -> Mapping[str, float]:
+        """Expose cache utilisation metrics for energy profiling."""
+
+        requests = self._cache_hits + self._direct_resamples
+        reuse_ratio = (self._cache_hits / requests) if requests else 0.0
+        return {
+            "resample_requests": float(requests),
+            "fractal_cache_hits": float(self._cache_hits),
+            "direct_resamples": float(self._direct_resamples),
+            "fractal_reuse_ratio": float(reuse_ratio),
+        }
+
+    def _select_parent(self, timeframe: TimeFrame) -> Optional[TimeFrame]:
+        """Return the finest cached timeframe that evenly divides ``timeframe``."""
+
+        best: Optional[TimeFrame] = None
+        for candidate in self._cache:
+            if timeframe.seconds % candidate.seconds != 0:
+                continue
+            if candidate.seconds >= timeframe.seconds:
+                continue
+            if best is None or candidate.seconds > best.seconds:
+                best = candidate
+        return best
 
 
 def _hilbert_phase(series: np.ndarray) -> np.ndarray:
@@ -122,6 +189,7 @@ class WaveletWindowSelector:
         *,
         wavelet: str = "ricker",
         levels: int = 16,
+        max_samples: int | None = 16_384,
     ) -> None:
         if min_window <= 0 or max_window <= 0:
             raise ValueError("window bounds must be positive")
@@ -135,10 +203,14 @@ class WaveletWindowSelector:
         if levels <= 0:
             raise ValueError("levels must be positive")
 
+        if max_samples is not None and max_samples <= 0:
+            raise ValueError("max_samples must be positive when provided")
+
         self.min_window = min_window
         self.max_window = max_window
         self.wavelet = wavelet
         self.levels = max(2, levels)
+        self.max_samples = int(max_samples) if max_samples is not None else None
 
     def select_window(self, prices: Sequence[float]) -> int:
         if self.max_window > 1_048_576:
@@ -152,6 +224,8 @@ class WaveletWindowSelector:
         values = np.asarray(prices, dtype=float)
         if values.size == 0:
             raise ValueError("cannot select window from empty price series")
+        if self.max_samples is not None and values.size > self.max_samples:
+            values = values[-self.max_samples :]
         if _signal is None:
             # geometric mean ensures deterministic, scale-sensitive fallback
             return int(np.sqrt(self.min_window * self.max_window))
@@ -233,33 +307,69 @@ class MultiScaleKuramoto:
             raise TypeError("MultiScaleKuramoto requires a DatetimeIndex")
         series = series.sort_index().astype(float)
 
+        resampler = FractalResampler(series)
         timeframe_results: MutableMapping[TimeFrame, KuramotoResult] = {}
         skipped: list[TimeFrame] = []
         windows: list[int] = []
         endpoints: MutableMapping[TimeFrame, pd.Timestamp] = {}
+        samples_processed = 0
 
-        for timeframe in self.timeframes:
-            try:
-                sampled = self._resample_prices(series, timeframe)
-            except ValueError:
-                skipped.append(timeframe)
+        analysis_records: dict[TimeFrame, dict[str, Any]] = {}
+        ordered = sorted(self.timeframes, key=lambda tf: tf.seconds)
+        for timeframe in ordered:
+            if timeframe in analysis_records:
                 continue
+            record: dict[str, Any] = {"result": None, "endpoint": None, "samples": 0}
+            try:
+                sampled = resampler.resample(timeframe)
+            except ValueError:
+                record["skipped"] = True
+                analysis_records[timeframe] = record
+                continue
+
             if sampled.empty:
-                skipped.append(timeframe)
+                record["skipped"] = True
+                analysis_records[timeframe] = record
                 continue
 
             phases = _hilbert_phase(sampled.values)
             window = min(self._window_for_series(sampled.values), phases.size)
             if window < self.min_samples_per_scale:
-                skipped.append(timeframe)
+                record["skipped"] = True
+                analysis_records[timeframe] = record
                 continue
 
             R, psi = self._kuramoto_order_parameter(phases[-window:])
-            timeframe_results[timeframe] = KuramotoResult(
-                order_parameter=R, mean_phase=psi, window=window
+            record.update(
+                {
+                    "result": KuramotoResult(
+                        order_parameter=R, mean_phase=psi, window=window
+                    ),
+                    "endpoint": sampled.index[-1],
+                    "samples": int(sampled.size),
+                    "skipped": False,
+                }
             )
-            windows.append(window)
-            endpoints[timeframe] = sampled.index[-1]
+            analysis_records[timeframe] = record
+
+        accounted_for_samples: set[TimeFrame] = set()
+        for timeframe in self.timeframes:
+            record = analysis_records.get(timeframe)
+            if not record or record.get("skipped", False):
+                skipped.append(timeframe)
+                continue
+            result = record["result"]
+            if result is None:
+                skipped.append(timeframe)
+                continue
+            timeframe_results[timeframe] = result
+            windows.append(result.window)
+            endpoint = record["endpoint"]
+            if endpoint is not None:
+                endpoints[timeframe] = endpoint
+            if timeframe not in accounted_for_samples:
+                samples_processed += int(record.get("samples", 0))
+                accounted_for_samples.add(timeframe)
 
         if timeframe_results:
             R_values = np.array(
@@ -286,6 +396,11 @@ class MultiScaleKuramoto:
             else self.base_window
         )
 
+        energy_profile = {
+            **resampler.stats(),
+            "samples_processed": float(samples_processed),
+        }
+
         return MultiScaleResult(
             consensus_R=consensus_R,
             cross_scale_coherence=cross_scale_coherence,
@@ -294,6 +409,7 @@ class MultiScaleKuramoto:
             timeframe_results=dict(timeframe_results),
             skipped_timeframes=tuple(skipped),
             timeframe_endpoints=dict(endpoints),
+            energy_profile=energy_profile,
         )
 
 
@@ -353,6 +469,7 @@ class MultiScaleKuramotoFeature(BaseFeature):
         if result.dominant_scale is not None:
             metadata["dominant_timeframe"] = result.dominant_scale.name
         metadata["cross_scale_coherence"] = result.cross_scale_coherence
+        metadata["energy_profile"] = dict(result.energy_profile)
         return metadata
 
     def _store_timeframe_cache(
@@ -467,6 +584,7 @@ __all__ = [
     "KuramotoResult",
     "TimeFrame",
     "WaveletWindowSelector",
+    "FractalResampler",
 ]
 
 
