@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import csv
 from datetime import datetime, timezone
 from decimal import InvalidOperation
@@ -35,6 +36,9 @@ __all__ = ["AsyncDataIngestor", "AsyncWebSocketStream", "Ticker", "merge_streams
 
 logger = get_logger(__name__)
 metrics = get_metrics_collector()
+
+
+STREAM_METRIC_IDLE_FLUSH_INTERVAL = 5.0
 
 
 class _TickMetricBatcher:
@@ -265,19 +269,36 @@ class AsyncDataIngestor(AsyncDataIngestionService):
             with logger.operation(
                 "async_stream_ticks", source=source, symbol=symbol, mode="connector"
             ), _TickMetricBatcher(metrics, source, symbol) as metric_batcher:
-                async for event in connector.stream_ticks(
-                    symbol=symbol, instrument_type=instrument_type
-                ):
-                    tick = _tick_event_to_price_tick(
-                        event,
-                        venue=source.upper(),
-                        instrument_type=instrument_type,
-                    )
-                    yield tick
-                    metric_batcher.add()
-                    count += 1
-                    if max_ticks is not None and count >= max_ticks:
-                        return
+
+                async def _flush_on_idle() -> None:
+                    try:
+                        while True:
+                            await asyncio.sleep(STREAM_METRIC_IDLE_FLUSH_INTERVAL)
+                            metric_batcher.flush()
+                    except asyncio.CancelledError:
+                        metric_batcher.flush()
+                        raise
+
+                flush_task = asyncio.create_task(_flush_on_idle())
+
+                try:
+                    async for event in connector.stream_ticks(
+                        symbol=symbol, instrument_type=instrument_type
+                    ):
+                        tick = _tick_event_to_price_tick(
+                            event,
+                            venue=source.upper(),
+                            instrument_type=instrument_type,
+                        )
+                        yield tick
+                        metric_batcher.add()
+                        count += 1
+                        if max_ticks is not None and count >= max_ticks:
+                            return
+                finally:
+                    flush_task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await flush_task
         finally:
             if should_close:
                 await connector.aclose()
@@ -385,21 +406,37 @@ class AsyncDataIngestor(AsyncDataIngestionService):
         ), _TickMetricBatcher(metrics, source, symbol) as metric_batcher:
             count = 0
 
-            while max_ticks is None or count < max_ticks:
-                await asyncio.sleep(interval_ms / 1000.0)
+            async def _flush_on_idle() -> None:
+                try:
+                    while True:
+                        await asyncio.sleep(STREAM_METRIC_IDLE_FLUSH_INTERVAL)
+                        metric_batcher.flush()
+                except asyncio.CancelledError:
+                    metric_batcher.flush()
+                    raise
 
-                tick = Ticker.create(
-                    symbol=symbol,
-                    venue=source.upper(),
-                    price=100.0 + (count % 10),
-                    timestamp=normalize_timestamp(datetime.now(timezone.utc)),
-                    volume=1000.0,
-                    instrument_type=instrument_type,
-                )
+            flush_task = asyncio.create_task(_flush_on_idle())
 
-                yield tick
-                metric_batcher.add()
-                count += 1
+            try:
+                while max_ticks is None or count < max_ticks:
+                    await asyncio.sleep(interval_ms / 1000.0)
+
+                    tick = Ticker.create(
+                        symbol=symbol,
+                        venue=source.upper(),
+                        price=100.0 + (count % 10),
+                        timestamp=normalize_timestamp(datetime.now(timezone.utc)),
+                        volume=1000.0,
+                        instrument_type=instrument_type,
+                    )
+
+                    yield tick
+                    metric_batcher.add()
+                    count += 1
+            finally:
+                flush_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await flush_task
 
 
 class AsyncWebSocketStream:
