@@ -64,8 +64,8 @@ class IGSConfig:
     perm_emb_dim: int = 5
     perm_tau: int = 1
     adapt_method: str = "off"
-    k_min: int = 5
-    k_max: int = 15
+    k_min: int | None = None
+    k_max: int | None = None
     adapt_threshold: float = 0.10
     adapt_persist: int = 3
     adapt_cooldown: int = 50
@@ -82,6 +82,8 @@ class IGSConfig:
     _ALLOWED_ADAPT_METHODS: ClassVar[Set[str]] = {"off", "entropy", "external"}
     _ALLOWED_QUANTIZE_MODES: ClassVar[Set[str]] = {"zscore", "rank", "sliding_rank"}
     _ALLOWED_PI_METHODS: ClassVar[Set[str]] = {"empirical", "stationary"}
+    _DEFAULT_K_MIN: ClassVar[int] = 5
+    _DEFAULT_K_MAX: ClassVar[int] = 15
 
     def __post_init__(self) -> None:
         if self.window < 3:
@@ -103,14 +105,43 @@ class IGSConfig:
             raise ValueError(
                 "window must be >= (perm_emb_dim - 1) * perm_tau + 1 to compute permutation entropy"
             )
-        if self.k_min < 2:
+        adapt_method_normalized = self.adapt_method.lower()
+        if adapt_method_normalized not in self._ALLOWED_ADAPT_METHODS:
+            raise ValueError(
+                f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}"
+            )
+        self.adapt_method = adapt_method_normalized
+
+        provided_k_min = self.k_min
+        provided_k_max = self.k_max
+        if (
+            provided_k_min is None
+            and provided_k_max is None
+            and self.adapt_method == "off"
+        ):
+            k_min = self.n_states
+            k_max = self.n_states
+        else:
+            k_min = (
+                provided_k_min
+                if provided_k_min is not None
+                else self._DEFAULT_K_MIN
+            )
+            k_max = (
+                provided_k_max
+                if provided_k_max is not None
+                else self._DEFAULT_K_MAX
+            )
+
+        if k_min < 2:
             raise ValueError("k_min must be >= 2")
-        if self.k_min > self.k_max:
+        if k_min > k_max:
             raise ValueError("k_min must be <= k_max")
-        if not (self.k_min <= self.n_states <= self.k_max):
+        if not (k_min <= self.n_states <= k_max):
             raise ValueError("n_states must satisfy k_min <= n_states <= k_max")
-        if self.adapt_method not in self._ALLOWED_ADAPT_METHODS:
-            raise ValueError(f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}")
+
+        self.k_min = k_min
+        self.k_max = k_max
         quantize_mode_normalized = self.quantize_mode.lower()
         if quantize_mode_normalized not in self._ALLOWED_QUANTIZE_MODES:
             raise ValueError(f"quantize_mode must be one of {sorted(self._ALLOWED_QUANTIZE_MODES)}")
