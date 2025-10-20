@@ -204,8 +204,10 @@ class HotSymbolCache:
                     )
                 )
         expired_keys: list[tuple[str, str, InstrumentType]] = []
-        for key, entry in self._entries.items():
-            if now - entry.last_seen >= self._ttl_seconds and entry.ticks:
+        for key, entry in list(self._entries.items()):
+            if now - entry.last_seen < self._ttl_seconds:
+                continue
+            if entry.ticks:
                 flushed.append(
                     HotSymbolSnapshot(
                         symbol=key[0],
@@ -218,9 +220,9 @@ class HotSymbolCache:
                     )
                 )
                 entry.ticks = []
-                expired_keys.append(key)
+            expired_keys.append(key)
         for key in expired_keys:
-            self._entries.move_to_end(key)
+            self._entries.pop(key, None)
         return flushed
 
     def snapshot(
