@@ -1,5 +1,16 @@
 """Experiment and model registry utilities for TradePulse."""
 
+from .abn import (
+    ABNExperiment,
+    ExperimentArm,
+    ExperimentResult,
+    ExperimentSegmenter,
+    Guardrail,
+    MetricComparison,
+    MetricDefinition,
+    RandomisationEngine,
+    StoppingPolicy,
+)
 from .optuna_search import (
     HyperparameterSearchResult,
     OptunaSearchConfig,
@@ -15,13 +26,22 @@ from .registry import (
 )
 
 __all__ = [
+    "ABNExperiment",
     "ArtifactSpec",
     "AuditChange",
     "AuditDelta",
     "AuditTrail",
-    "HyperparameterSearchResult",
+    "ExperimentArm",
+    "ExperimentResult",
+    "ExperimentSegmenter",
     "ExperimentRun",
+    "Guardrail",
+    "HyperparameterSearchResult",
+    "MetricComparison",
+    "MetricDefinition",
     "ModelRegistry",
     "OptunaSearchConfig",
+    "RandomisationEngine",
     "StrategyHyperparameterSearch",
+    "StoppingPolicy",
 ]
