@@ -13,6 +13,7 @@ import argparse
 import json
 import math
 import os
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -270,6 +271,23 @@ class TrainConfig:
     wd: float = 1e-4
     cls_weight: float = 0.4
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    amp: bool = True
+
+
+@dataclass(slots=True)
+class EpochMetrics:
+    """Container for epoch level metrics."""
+
+    loss: float
+    price_mae: float
+    action_acc: float
+
+    def as_dict(self) -> Dict[str, float]:
+        return {
+            "loss": self.loss,
+            "price_mae": self.price_mae,
+            "action_acc": self.action_acc,
+        }
 
 
 class QuantumNeuralStrategy:
@@ -277,7 +295,8 @@ class QuantumNeuralStrategy:
 
     def __init__(self, cfg: TrainConfig = TrainConfig()) -> None:
         self.cfg = cfg
-        self.model = QuantumNeuralModel().to(cfg.device)
+        self.device = torch.device(cfg.device)
+        self.model = QuantumNeuralModel().to(self.device)
         params = [
             {"params": self.model.temporal.parameters(), "lr": cfg.lr_temporal},
             {
@@ -292,6 +311,14 @@ class QuantumNeuralStrategy:
         self.reg_loss = nn.HuberLoss()
         self.cls_loss = nn.CrossEntropyLoss()
         self.scalers: Optional[Dict[str, RobustScaler]] = None
+        self._use_amp = self.device.type == "cuda" and cfg.amp
+        self._scaler = torch.cuda.amp.GradScaler(enabled=self._use_amp)
+        self._amp_ctx = (
+            lambda: torch.autocast(device_type=self.device.type, dtype=torch.float16)
+            if self._use_amp
+            else nullcontext
+        )
+        self.history: List[Dict[str, float]] = []
 
     def fit(self, df: pd.DataFrame) -> None:
         df = _check_df(df)
@@ -311,13 +338,38 @@ class QuantumNeuralStrategy:
         patience = 8
         bad_epochs = 0
         for epoch in range(self.cfg.epochs):
-            train_loss = self._train_epoch(train_dl)
-            val_loss = self._validate(val_dl)
-            self.sched.step(val_loss)
-            if epoch % 1 == 0:
-                print(f"[Epoch {epoch:02d}] train={train_loss:.6f}  val={val_loss:.6f}")
-            if val_loss < best_val:
-                best_val = val_loss
+            train_metrics = self._train_epoch(train_dl)
+            val_metrics = self._validate(val_dl)
+            self.sched.step(val_metrics.loss)
+            self.history.append(
+                {
+                    "epoch": float(epoch),
+                    "train_loss": train_metrics.loss,
+                    "train_mae": train_metrics.price_mae,
+                    "train_acc": train_metrics.action_acc,
+                    "val_loss": val_metrics.loss,
+                    "val_mae": val_metrics.price_mae,
+                    "val_acc": val_metrics.action_acc,
+                }
+            )
+            print(
+                (
+                    "[Epoch {epoch:02d}] "
+                    "train_loss={train_loss:.6f} val_loss={val_loss:.6f} "
+                    "train_mae={train_mae:.6f} val_mae={val_mae:.6f} "
+                    "train_acc={train_acc:.4f} val_acc={val_acc:.4f}"
+                ).format(
+                    epoch=epoch,
+                    train_loss=train_metrics.loss,
+                    val_loss=val_metrics.loss,
+                    train_mae=train_metrics.price_mae,
+                    val_mae=val_metrics.price_mae,
+                    train_acc=train_metrics.action_acc,
+                    val_acc=val_metrics.action_acc,
+                )
+            )
+            if val_metrics.loss < best_val:
+                best_val = val_metrics.loss
                 bad_epochs = 0
                 self._save("artifacts/quantum_neural/best_model.pt")
             else:
@@ -326,41 +378,83 @@ class QuantumNeuralStrategy:
                     print("Early stopping")
                     break
 
-    def _train_epoch(self, dl: DataLoader) -> float:
+    def _train_epoch(self, dl: DataLoader) -> EpochMetrics:
         self.model.train()
-        total = 0.0
+        total_loss = 0.0
+        total_mae = 0.0
+        total_correct = 0.0
+        total_samples = 0
         for features, target_price, target_action in dl:
-            features = features.to(self.cfg.device)
-            target_price = target_price.to(self.cfg.device)
-            target_action = target_action.to(self.cfg.device)
+            features = features.to(self.device)
+            target_price = target_price.to(self.device)
+            target_action = target_action.to(self.device)
 
             self.opt.zero_grad(set_to_none=True)
-            pred_price, logits = self.model(features)
-            loss = self.reg_loss(pred_price, target_price) + self.cfg.cls_weight * self.cls_loss(
-                logits, target_action
-            )
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
-            self.opt.step()
-            total += float(loss.detach().cpu())
-        return total / max(1, len(dl))
+            with self._amp_ctx():
+                pred_price, logits = self.model(features)
+                loss = self.reg_loss(pred_price, target_price) + self.cfg.cls_weight * self.cls_loss(
+                    logits, target_action
+                )
+
+            if self._use_amp:
+                self._scaler.scale(loss).backward()
+                self._scaler.unscale_(self.opt)
+                nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                self._scaler.step(self.opt)
+                self._scaler.update()
+            else:
+                loss.backward()
+                nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                self.opt.step()
+
+            batch_size = features.size(0)
+            total_loss += float(loss.detach().cpu()) * batch_size
+            mae = torch.mean(torch.abs(pred_price - target_price)).detach().cpu().item()
+            total_mae += mae * batch_size
+            preds = torch.argmax(logits, dim=-1)
+            correct = (preds == target_action).sum().detach().cpu().item()
+            total_correct += correct
+            total_samples += batch_size
+
+        denom = max(1, total_samples)
+        return EpochMetrics(
+            loss=total_loss / denom,
+            price_mae=total_mae / denom,
+            action_acc=total_correct / denom,
+        )
 
     @torch.no_grad()
-    def _validate(self, dl: DataLoader) -> float:
+    def _validate(self, dl: DataLoader) -> EpochMetrics:
         self.model.eval()
-        total = 0.0
+        total_loss = 0.0
+        total_mae = 0.0
+        total_correct = 0.0
+        total_samples = 0
         for features, target_price, target_action in dl:
-            features = features.to(self.cfg.device)
-            target_price = target_price.to(self.cfg.device)
-            target_action = target_action.to(self.cfg.device)
+            features = features.to(self.device)
+            target_price = target_price.to(self.device)
+            target_action = target_action.to(self.device)
             pred_price, logits = self.model(features)
             loss = self.reg_loss(pred_price, target_price) + self.cfg.cls_weight * self.cls_loss(
                 logits, target_action
             )
-            total += float(loss.detach().cpu())
-        return total / max(1, len(dl))
+            batch_size = features.size(0)
+            total_loss += float(loss.detach().cpu()) * batch_size
+            mae = torch.mean(torch.abs(pred_price - target_price)).detach().cpu().item()
+            total_mae += mae * batch_size
+            preds = torch.argmax(logits, dim=-1)
+            correct = (preds == target_action).sum().detach().cpu().item()
+            total_correct += correct
+            total_samples += batch_size
 
-    @torch.no_grad()
+        denom = max(1, total_samples)
+        return EpochMetrics(
+            loss=total_loss / denom,
+            price_mae=total_mae / denom,
+            action_acc=total_correct / denom,
+        )
+
+    @torch.inference_mode()
     def predict_window(self, df_window: pd.DataFrame) -> Dict[str, np.ndarray]:
         if self.scalers is None:
             raise RuntimeError("Call fit() before predict_window().")
@@ -378,8 +472,13 @@ class QuantumNeuralStrategy:
         for idx, name in enumerate(cols):
             xs.append(self.scalers[name].transform(feats[:, [idx]]))
         X = np.hstack(xs).astype(np.float32)
-        tensor = torch.tensor(X[-self.cfg.seq_len :], dtype=torch.float32).unsqueeze(0).to(self.cfg.device)
+        tensor = (
+            torch.tensor(X[-self.cfg.seq_len :], dtype=torch.float32)
+            .unsqueeze(0)
+            .to(self.device)
+        )
 
+        self.model.eval()
         price, logits = self.model(tensor)
         probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
         confidence = float(probs.max())
@@ -388,11 +487,40 @@ class QuantumNeuralStrategy:
 
     def _save(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        torch.save({"model": self.model.state_dict(), "cfg": self.cfg.__dict__}, path)
+        torch.save(
+            {"model": self.model.state_dict(), "cfg": self.cfg.__dict__, "history": self.history},
+            path,
+        )
 
     def load(self, path: str) -> None:
-        ckpt = torch.load(path, map_location=self.cfg.device)
+        caller_device = torch.device(self.device)
+        ckpt = torch.load(path, map_location=caller_device)
+        target_device = caller_device
+        cfg_payload = ckpt.get("cfg")
+        if cfg_payload is not None:
+            self.cfg = TrainConfig(**cfg_payload)
+            if target_device.type == "cuda" and not torch.cuda.is_available():
+                target_device = torch.device("cpu")
+            self.cfg.device = target_device.type
+        if target_device.type == "cuda" and not torch.cuda.is_available():
+            target_device = torch.device("cpu")
+            self.cfg.device = target_device.type
+        self.device = target_device
+        self.model.to(self.device)
+        self._use_amp = self.device.type == "cuda" and self.cfg.amp
+        self._scaler = torch.cuda.amp.GradScaler(enabled=self._use_amp)
+        self._amp_ctx = (
+            lambda: torch.autocast(device_type=self.device.type, dtype=torch.float16)
+            if self._use_amp
+            else nullcontext
+        )
         self.model.load_state_dict(ckpt["model"])
+        self.history = ckpt.get("history", [])
+
+    def export_history(self) -> List[Dict[str, float]]:
+        """Return a copy of the collected training history."""
+
+        return list(self.history)
 
 
 # ============================
