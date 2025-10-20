@@ -24,7 +24,8 @@ def test_configure_logging_uses_utc_timestamp(monkeypatch, capsys) -> None:
 
 def test_configure_deterministic_runtime_sets_seed(monkeypatch) -> None:
     monkeypatch.setenv("SCRIPTS_RANDOM_SEED", "999")
-    runtime.configure_deterministic_runtime()
+    monkeypatch.setenv("SCRIPTS_LOCALE", "de-DE")
+    rules = runtime.configure_deterministic_runtime()
 
     assert os.environ["PYTHONHASHSEED"] == "999"
 
@@ -33,6 +34,9 @@ def test_configure_deterministic_runtime_sets_seed(monkeypatch) -> None:
     assert random.randint(0, 1000) == 800
     for key, value in THREAD_BOUND_ENV_VARS.items():
         assert os.environ[key] == value
+    assert rules.locale == "de-DE"
+    assert os.environ["LC_ALL"]
+    assert os.environ["TZ"] == rules.timezone
 
 
 def test_parse_env_file(tmp_path: Path) -> None:

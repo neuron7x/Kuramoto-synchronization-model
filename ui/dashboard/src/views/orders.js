@@ -76,7 +76,13 @@ function buildOrderRows(orders = [], fills = []) {
   });
 }
 
-export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page = 1 } = {}) {
+export function renderOrdersView({
+  orders = [],
+  fills = [],
+  pageSize = 12,
+  page = 1,
+  localization,
+} = {}) {
   const rows = buildOrderRows(orders, fills);
   const table = createLiveTable({
     columns: [
@@ -98,7 +104,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'quantity',
         label: 'Quantity',
         accessor: (row) => row.quantity,
-        formatter: (value) => escapeHtml(formatNumber(value, { maximumFractionDigits: 4 })),
+        formatter: (value) => escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }, localization)),
         sortValue: (row) => row.quantity,
         align: 'right',
       },
@@ -106,7 +112,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'filledQuantity',
         label: 'Filled',
         accessor: (row) => row.filledQuantity,
-        formatter: (value) => escapeHtml(formatNumber(value, { maximumFractionDigits: 4 })),
+        formatter: (value) => escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }, localization)),
         sortValue: (row) => row.filledQuantity,
         align: 'right',
       },
@@ -114,7 +120,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'remaining',
         label: 'Remaining',
         accessor: (row) => row.remaining,
-        formatter: (value) => escapeHtml(formatNumber(Math.max(value, 0), { maximumFractionDigits: 4 })),
+        formatter: (value) =>
+          escapeHtml(formatNumber(Math.max(value, 0), { maximumFractionDigits: 4 }, localization)),
         sortValue: (row) => row.remaining,
         align: 'right',
       },
@@ -122,7 +129,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'progress',
         label: 'Progress',
         accessor: (row) => row.progress,
-        formatter: (value) => `<div class="tp-progress"><span class="tp-progress__bar" style="width:${Math.round(value * 100)}%"></span><span class="tp-progress__label">${escapeHtml(formatPercent(value))}</span></div>`,
+        formatter: (value) =>
+          `<div class="tp-progress"><span class="tp-progress__bar" style="width:${Math.round(value * 100)}%"></span><span class="tp-progress__label">${escapeHtml(formatPercent(value, localization))}</span></div>`,
         sortValue: (row) => row.progress,
         align: 'right',
       },
@@ -130,7 +138,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'limitPrice',
         label: 'Limit Price',
         accessor: (row) => row.limitPrice,
-        formatter: (value) => (value === null ? '—' : escapeHtml(formatCurrency(value))),
+        formatter: (value) => (value === null ? '—' : escapeHtml(formatCurrency(value, localization))),
         sortValue: (row) => row.limitPrice ?? 0,
         align: 'right',
       },
@@ -138,7 +146,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'avgFillPrice',
         label: 'Avg Fill',
         accessor: (row) => row.avgFillPrice,
-        formatter: (value) => (value === null ? '—' : escapeHtml(formatCurrency(value))),
+        formatter: (value) => (value === null ? '—' : escapeHtml(formatCurrency(value, localization))),
         sortValue: (row) => row.avgFillPrice ?? 0,
         align: 'right',
       },
@@ -152,7 +160,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'lastFill',
         label: 'Last Fill',
         accessor: (row) => row.lastFill,
-        formatter: (value) => (value ? `<time>${escapeHtml(formatTimestamp(value))}</time>` : '—'),
+        formatter: (value) =>
+          value ? `<time>${escapeHtml(formatTimestamp(value, localization))}</time>` : '—',
         sortValue: (row) => row.lastFill,
       },
     ],

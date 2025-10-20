@@ -1,5 +1,65 @@
+import {
+  getCurrencyFormatter,
+  getDateTimeFormatter,
+  getLocalizationContext,
+  getNumberFormatter,
+  getPercentFormatter,
+} from '../i18n/number_format.js';
+
 const RISKY_LEADING_CHAR_PATTERN = /^[=+\-@]/;
 const MARKDOWN_META_CHAR_PATTERN = /([\\`*_{}\[\]()#+!|>])/g;
+
+function isLocalizationCandidate(value) {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return false;
+  }
+  return (
+    'locale' in value ||
+    'preferredLocales' in value ||
+    'currencyOverride' in value ||
+    'timezone' in value ||
+    'assetCurrencyMap' in value ||
+    ('formats' in value && 'currency' in value)
+  );
+}
+
+function splitOptionsAndLocalization(optionsOrLocalization, localization) {
+  let options = {};
+  let resolvedLocalization = localization;
+  if (resolvedLocalization === undefined && isLocalizationCandidate(optionsOrLocalization)) {
+    resolvedLocalization = optionsOrLocalization;
+  } else if (
+    optionsOrLocalization &&
+    typeof optionsOrLocalization === 'object' &&
+    !Array.isArray(optionsOrLocalization)
+  ) {
+    options = optionsOrLocalization;
+  }
+  return { options, localization: resolvedLocalization };
+}
+
+function splitCurrencyArguments(arg, localization) {
+  let currency = undefined;
+  let options = {};
+  let resolvedLocalization = localization;
+
+  if (typeof arg === 'string') {
+    currency = arg;
+  } else if (isLocalizationCandidate(arg)) {
+    resolvedLocalization = arg;
+  } else if (arg && typeof arg === 'object' && !Array.isArray(arg)) {
+    if (typeof arg.currency === 'string') {
+      currency = arg.currency;
+    }
+    options = { ...arg };
+    delete options.currency;
+  }
+
+  return { currency, options, localization: resolvedLocalization };
+}
 
 export function sanitizeReportValue(value) {
   if (value === null || value === undefined) {
@@ -41,39 +101,64 @@ export function escapeHtml(value) {
   });
 }
 
-export function formatCurrency(value, currency = 'USD') {
+export function formatCurrency(value, currencyOrOptions, localization) {
   if (!Number.isFinite(value)) {
     return '—';
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: Math.abs(value) >= 1000 ? 0 : 2,
-  }).format(value);
+  const { currency, options, localization: descriptor } = splitCurrencyArguments(
+    currencyOrOptions,
+    localization,
+  );
+  const context = getLocalizationContext(descriptor);
+  const digits = { ...(options || {}) };
+  const absValue = Math.abs(value);
+  if (absValue >= 1000) {
+    if (typeof digits.maximumFractionDigits === 'undefined') {
+      digits.maximumFractionDigits = 0;
+    }
+    if (typeof digits.minimumFractionDigits === 'undefined') {
+      digits.minimumFractionDigits = 0;
+    }
+  }
+  const formatter = getCurrencyFormatter(context, currency, digits);
+  return formatter.format(value);
 }
 
-export function formatPercent(value) {
+export function formatPercent(value, optionsOrLocalization, localization) {
   if (!Number.isFinite(value)) {
     return '—';
   }
-  return `${(value * 100).toFixed(Math.abs(value) < 0.1 ? 2 : 1)}%`;
+  const { options, localization: descriptor } = splitOptionsAndLocalization(
+    optionsOrLocalization,
+    localization,
+  );
+  const context = getLocalizationContext(descriptor);
+  const formatter = getPercentFormatter(context, options);
+  return formatter.format(value);
 }
 
-export function formatNumber(value, options = {}) {
-  const { minimumFractionDigits = 0, maximumFractionDigits = 2 } = options;
+export function formatNumber(value, optionsOrLocalization, localization) {
   if (!Number.isFinite(value)) {
     return '—';
   }
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits,
-    maximumFractionDigits,
-  }).format(value);
+  const { options, localization: descriptor } = splitOptionsAndLocalization(
+    optionsOrLocalization,
+    localization,
+  );
+  const context = getLocalizationContext(descriptor);
+  const formatter = getNumberFormatter(context, options);
+  return formatter.format(value);
 }
 
-export function formatTimestamp(timestamp) {
+export function formatTimestamp(timestamp, optionsOrLocalization, localization) {
   if (!Number.isFinite(timestamp)) {
     return '—';
   }
-  const date = new Date(timestamp);
-  return date.toISOString().replace('T', ' ').replace('Z', ' UTC');
+  const { options, localization: descriptor } = splitOptionsAndLocalization(
+    optionsOrLocalization,
+    localization,
+  );
+  const context = getLocalizationContext(descriptor);
+  const formatter = getDateTimeFormatter(context, options);
+  return formatter.format(new Date(timestamp));
 }

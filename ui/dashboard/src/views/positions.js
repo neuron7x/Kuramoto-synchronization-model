@@ -99,7 +99,14 @@ function aggregatePositions(fills = [], orders = [], ticks = []) {
   });
 }
 
-export function renderPositionsView({ fills = [], orders = [], ticks = [], pageSize = 10, page = 1 } = {}) {
+export function renderPositionsView({
+  fills = [],
+  orders = [],
+  ticks = [],
+  pageSize = 10,
+  page = 1,
+  localization,
+} = {}) {
   const rows = aggregatePositions(fills, orders, ticks);
   const table = createLiveTable({
     columns: [
@@ -108,7 +115,8 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         id: 'netQuantity',
         label: 'Net Quantity',
         accessor: (row) => row.netQuantity,
-        formatter: (value) => `<span>${escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }))}</span>`,
+        formatter: (value) =>
+          `<span>${escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }, localization))}</span>`,
         sortValue: (row) => row.netQuantity,
         align: 'right',
       },
@@ -116,7 +124,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         id: 'avgPrice',
         label: 'Avg Fill Price',
         accessor: (row) => row.avgPrice,
-        formatter: (value) => escapeHtml(formatCurrency(value)),
+        formatter: (value) => escapeHtml(formatCurrency(value, localization)),
         sortValue: (row) => row.avgPrice,
         align: 'right',
       },
@@ -124,7 +132,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         id: 'marketPrice',
         label: 'Market Price',
         accessor: (row) => row.marketPrice,
-        formatter: (value) => escapeHtml(formatCurrency(value)),
+        formatter: (value) => escapeHtml(formatCurrency(value, localization)),
         sortValue: (row) => row.marketPrice,
         align: 'right',
       },
@@ -132,7 +140,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         id: 'exposure',
         label: 'Exposure',
         accessor: (row) => row.exposure,
-        formatter: (value) => escapeHtml(formatCurrency(value)),
+        formatter: (value) => escapeHtml(formatCurrency(value, localization)),
         sortValue: (row) => row.exposure,
         align: 'right',
       },
@@ -142,8 +150,16 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         accessor: (row) => row.pnl,
         formatter: (value, row) => {
           const direction = value >= 0 ? 'positive' : 'negative';
-          const badge = value === 0 ? '' : `<span class="tp-pill tp-pill--${direction}">${escapeHtml(formatPercent(row.marketPrice && row.avgPrice ? (row.marketPrice - row.avgPrice) / (row.avgPrice || 1) : 0))}</span>`;
-          return `<span>${escapeHtml(formatCurrency(value))}</span>${badge}`;
+          const badge =
+            value === 0
+              ? ''
+              : `<span class="tp-pill tp-pill--${direction}">${escapeHtml(
+                  formatPercent(
+                    row.marketPrice && row.avgPrice ? (row.marketPrice - row.avgPrice) / (row.avgPrice || 1) : 0,
+                    localization,
+                  ),
+                )}</span>`;
+          return `<span>${escapeHtml(formatCurrency(value, localization))}</span>${badge}`;
         },
         sortValue: (row) => row.pnl,
         align: 'right',
@@ -152,7 +168,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         id: 'lastFill',
         label: 'Last Fill',
         accessor: (row) => row.lastFill,
-        formatter: (value) => `<time>${escapeHtml(formatTimestamp(value))}</time>`,
+        formatter: (value) => `<time>${escapeHtml(formatTimestamp(value, localization))}</time>`,
         sortValue: (row) => row.lastFill,
       },
     ],

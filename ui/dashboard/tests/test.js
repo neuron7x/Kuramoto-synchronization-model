@@ -1,4 +1,7 @@
 import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   createStrategyConfigurator,
   compareBacktests,
@@ -15,13 +18,32 @@ import {
   createTraceparent,
   ensureTraceHeaders,
   extractTraceparent,
+  subscribeTelemetry,
 } from '../src/core/telemetry.js';
 import { renderPositionsView } from '../src/views/positions.js';
 import { renderOrdersView } from '../src/views/orders.js';
 import { renderPnlQuotesView } from '../src/views/pnl_quotes.js';
 import { renderAreaChart } from '../src/components/area_chart.js';
 import { createLiveTable, LiveTable } from '../src/components/live_table.js';
-import { escapeHtml, formatNumber, formatTimestamp } from '../src/core/formatters.js';
+import {
+  escapeHtml,
+  formatNumber,
+  formatTimestamp,
+  formatCurrency as formatCurrencyLocalized,
+  formatPercent as formatPercentLocalized,
+} from '../src/core/formatters.js';
+import {
+  getLocalizationContext,
+  registerLocaleCatalog,
+  resetLocalizationForTests,
+} from '../src/i18n/number_format.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CATALOG_PATH = path.resolve(__dirname, '../../..', 'configs', 'localization', 'locales.yaml');
+
+resetLocalizationForTests();
+registerLocaleCatalog(JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf-8')));
 
 // --- Core strategy + reporting utilities ------------------------------------------------------
 
@@ -99,8 +121,33 @@ const exportedMarkdown = state.export('markdown');
 assert.ok(exportedMarkdown.includes('volatility'));
 
 assert.strictEqual(escapeHtml('<script>'), '&lt;script&gt;');
-assert.strictEqual(formatNumber(1250.567, { maximumFractionDigits: 1 }), '1,250.6');
-assert.strictEqual(formatTimestamp(0), '1970-01-01 00:00:00.000 UTC');
+const defaultLocalization = getLocalizationContext();
+assert.strictEqual(formatNumber(1250.567, { maximumFractionDigits: 1 }, defaultLocalization), '1,250.6');
+assert.strictEqual(formatTimestamp(0, defaultLocalization), '12/31/1969, 19:00:00 EST');
+
+const germanLocalization = getLocalizationContext({ locale: 'de-DE' });
+assert.strictEqual(
+  formatNumber(1234567.89, { maximumFractionDigits: 2 }, germanLocalization),
+  '1.234.567,89',
+);
+assert.strictEqual(formatPercentLocalized(0.1234, germanLocalization), '12,34 %');
+
+const ukrainianLocalization = getLocalizationContext({ locale: 'uk-UA' });
+assert.strictEqual(
+  formatNumber(1234.56, { maximumFractionDigits: 2 }, ukrainianLocalization),
+  '1 234,56',
+);
+assert.strictEqual(formatPercentLocalized(0.075, ukrainianLocalization), '7,50%');
+
+const japaneseLocalization = getLocalizationContext({ locale: 'ja-JP' });
+assert.strictEqual(formatCurrencyLocalized(1234.56, undefined, japaneseLocalization), '￥1,235');
+assert.strictEqual(formatTimestamp(0, japaneseLocalization), '1970/01/01 09:00:00 JST');
+
+const telemetryEvents = [];
+const unsubscribeTelemetry = subscribeTelemetry((entry) => telemetryEvents.push(entry));
+getLocalizationContext({ preferredLocales: ['zz-ZZ'] });
+unsubscribeTelemetry();
+assert.ok(telemetryEvents.some((event) => event.event === 'localization.fallback'));
 
 console.log('core reporting tests passed');
 
@@ -343,7 +390,7 @@ assert.throws(() => router.navigate('missing'), /Unknown route/);
 assert.strictEqual(router.navigate(null).name, 'orders', 'null navigation should fallback to default route');
 
 assert.strictEqual(formatCurrency(10500), '$10,500');
-assert.strictEqual(formatPercent(0.256), '25.6%');
+assert.strictEqual(formatPercent(0.256), '25.60%');
 assert.strictEqual(formatPercent(0.025), '2.50%');
 console.log('dashboard ui rendering tests passed');
 

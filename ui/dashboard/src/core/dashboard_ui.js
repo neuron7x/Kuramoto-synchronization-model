@@ -3,6 +3,7 @@ import { renderOrdersView } from '../views/orders.js';
 import { renderPnlQuotesView } from '../views/pnl_quotes.js';
 import { renderPositionsView } from '../views/positions.js';
 import { escapeHtml } from './formatters.js';
+import { getLocalizationContext } from '../i18n/number_format.js';
 import { BASE_STYLES } from '../styles/base.css.js';
 import { TABLE_STYLES } from '../styles/table.css.js';
 import { CHART_STYLES } from '../styles/chart.css.js';
@@ -62,13 +63,13 @@ function renderNavigation(router, currentRoute) {
   `;
 }
 
-function createDashboardRouter({ positions, orders, pnl }) {
+function createDashboardRouter({ positions, orders, pnl, localization }) {
   return createRouter({
     defaultRoute: 'pnl',
     routes: {
-      positions: () => renderPositionsView(positions),
-      orders: () => renderOrdersView(orders),
-      pnl: () => renderPnlQuotesView(pnl),
+      positions: () => renderPositionsView({ ...positions, localization }),
+      orders: () => renderOrdersView({ ...orders, localization }),
+      pnl: () => renderPnlQuotesView({ ...pnl, localization }),
     },
   });
 }
@@ -80,9 +81,11 @@ export function renderDashboard(options = {}) {
     orders = {},
     pnl = {},
     header = {},
+    i18n = undefined,
   } = options;
 
-  const router = createDashboardRouter({ positions, orders, pnl });
+  const localization = getLocalizationContext(i18n);
+  const router = createDashboardRouter({ positions, orders, pnl, localization });
   const { name: currentRoute, view } = router.navigate(route);
   const navigation = renderNavigation(router, currentRoute);
   const headerHtml = renderHeader(header);

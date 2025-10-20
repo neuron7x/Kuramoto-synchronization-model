@@ -1,0 +1,103 @@
+{
+  "defaults": {
+    "locale_priority": ["en-US", "de-DE", "uk-UA", "ja-JP"],
+    "currency": "USD",
+    "timezone": "UTC",
+    "datetime": {
+      "year": "numeric",
+      "month": "2-digit",
+      "day": "2-digit",
+      "hour": "2-digit",
+      "minute": "2-digit",
+      "second": "2-digit",
+      "hourCycle": "h23",
+      "timeZoneName": "short"
+    }
+  },
+  "locales": {
+    "en-US": {
+      "currency": "USD",
+      "timezone": "America/New_York",
+      "symbols": { "decimal": ".", "group": "," },
+      "formats": {
+        "number": { "minimumFractionDigits": 0, "maximumFractionDigits": 2, "useGrouping": true },
+        "currency": { "minimumFractionDigits": 2, "maximumFractionDigits": 2 },
+        "percent": { "minimumFractionDigits": 2, "maximumFractionDigits": 2 },
+        "datetime": {
+          "year": "numeric",
+          "month": "2-digit",
+          "day": "2-digit",
+          "hour": "2-digit",
+          "minute": "2-digit",
+          "second": "2-digit",
+          "hourCycle": "h23",
+          "timeZoneName": "short"
+        }
+      }
+    },
+    "de-DE": {
+      "currency": "EUR",
+      "timezone": "Europe/Berlin",
+      "symbols": { "decimal": ",", "group": "." },
+      "formats": {
+        "number": { "minimumFractionDigits": 0, "maximumFractionDigits": 2, "useGrouping": true },
+        "currency": { "minimumFractionDigits": 2, "maximumFractionDigits": 2 },
+        "percent": { "minimumFractionDigits": 2, "maximumFractionDigits": 2 },
+        "datetime": {
+          "year": "numeric",
+          "month": "2-digit",
+          "day": "2-digit",
+          "hour": "2-digit",
+          "minute": "2-digit",
+          "second": "2-digit",
+          "hourCycle": "h23",
+          "timeZoneName": "short"
+        }
+      }
+    },
+    "uk-UA": {
+      "currency": "UAH",
+      "timezone": "Europe/Kyiv",
+      "symbols": { "decimal": ",", "group": "\u00a0" },
+      "formats": {
+        "number": { "minimumFractionDigits": 0, "maximumFractionDigits": 2, "useGrouping": true },
+        "currency": { "minimumFractionDigits": 2, "maximumFractionDigits": 2 },
+        "percent": { "minimumFractionDigits": 2, "maximumFractionDigits": 2 },
+        "datetime": {
+          "year": "numeric",
+          "month": "2-digit",
+          "day": "2-digit",
+          "hour": "2-digit",
+          "minute": "2-digit",
+          "second": "2-digit",
+          "hourCycle": "h23",
+          "timeZoneName": "short"
+        }
+      }
+    },
+    "ja-JP": {
+      "currency": "JPY",
+      "timezone": "Asia/Tokyo",
+      "symbols": { "decimal": ".", "group": "," },
+      "formats": {
+        "number": { "minimumFractionDigits": 0, "maximumFractionDigits": 2, "useGrouping": true },
+        "currency": { "minimumFractionDigits": 0, "maximumFractionDigits": 0 },
+        "percent": { "minimumFractionDigits": 1, "maximumFractionDigits": 1 },
+        "datetime": {
+          "year": "numeric",
+          "month": "2-digit",
+          "day": "2-digit",
+          "hour": "2-digit",
+          "minute": "2-digit",
+          "second": "2-digit",
+          "hourCycle": "h23",
+          "timeZoneName": "short"
+        }
+      }
+    }
+  },
+  "currency_overrides": {
+    "XBT": "USD",
+    "ETH": "USD"
+  }
+}

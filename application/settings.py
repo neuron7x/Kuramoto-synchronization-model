@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable, Sequence
 
 if TYPE_CHECKING:
     from application.secrets.manager import SecretManager
@@ -26,6 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from core.config.cli_models import PostgresTLSConfig
 from core.config.postgres import ensure_secure_postgres_uri
+from core.localization import LocaleFormatRules, negotiate_locale
 
 
 def _default_config_vault_key() -> SecretStr:
@@ -562,4 +563,52 @@ __all__ = [
     "ApiRateLimitSettings",
     "EmailNotificationSettings",
     "NotificationSettings",
+    "LocalizationSettings",
+    "get_localization_settings",
 ]
+
+class LocalizationSettings(BaseModel):
+    """Expose negotiated localisation rules to application services."""
+
+    locale: str = Field(..., description="Resolved BCP-47 locale tag.")
+    currency: str = Field(..., description="Default ISO-4217 currency code for formatting.")
+    timezone: str = Field(..., description="IANA timezone applied to trading session timestamps.")
+    number: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Options passed to Intl.NumberFormat when formatting bare numbers.",
+    )
+    currency_format: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Intl.NumberFormat options dedicated to currency values.",
+    )
+    percent: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Intl.NumberFormat options used when formatting percentages.",
+    )
+    datetime: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Intl.DateTimeFormat options used for timestamps.",
+    )
+    symbols: dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved decimal and grouping symbols for telemetry and analytics.",
+    )
+    currency_overrides: dict[str, str] = Field(
+        default_factory=dict,
+        description="Asset specific currency overrides applied ahead of the default currency.",
+    )
+
+    @classmethod
+    def from_rules(cls, rules: LocaleFormatRules) -> "LocalizationSettings":
+        return cls(**rules.as_dict())
+
+
+def get_localization_settings(
+    preferred_locales: Sequence[str] | None = None,
+    *,
+    currency_override: str | None = None,
+) -> LocalizationSettings:
+    """Negotiate localisation rules for downstream services."""
+
+    rules = negotiate_locale(preferred_locales, currency_override=currency_override)
+    return LocalizationSettings.from_rules(rules)
