@@ -176,6 +176,46 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Pre-pull Python base image with mirror fallback
+      run: |
+        set -euo pipefail
+
+        BASE_IMAGE="python:3.13-slim"
+        GHCR_MIRROR="ghcr.io/library/${BASE_IMAGE}"
+        AWS_MIRROR="public.ecr.aws/docker/library/${BASE_IMAGE}"
+        MAX_RETRIES=5
+
+        pull_with_retries() {
+          local image="$1"
+          for attempt in $(seq 1 "$MAX_RETRIES"); do
+            echo "Attempt $attempt to pull $image"
+            if docker pull "$image"; then
+              return 0
+            fi
+            echo "Pull attempt $attempt for $image failed; retrying after backoff"
+            sleep "$((attempt * 5))"
+          done
+          return 1
+        }
+
+        if pull_with_retries "$BASE_IMAGE"; then
+          echo "Successfully pulled $BASE_IMAGE from Docker Hub"
+          exit 0
+        fi
+
+        for mirror in "$GHCR_MIRROR" "$AWS_MIRROR"; do
+          if pull_with_retries "$mirror"; then
+            echo "Successfully pulled $mirror; retagging as $BASE_IMAGE"
+            docker tag "$mirror" "$BASE_IMAGE"
+            exit 0
+          else
+            echo "Failed to pull $mirror after $MAX_RETRIES attempts"
+          fi
+        done
+
+        echo "ERROR: Unable to pull Python base image from Docker Hub or known mirrors"
+        exit 1
+
     - name: Build container image for scanning
       uses: docker/build-push-action@v5
       with:
