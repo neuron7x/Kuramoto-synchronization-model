@@ -9,6 +9,8 @@ import {
   formatCurrency,
   formatPercent,
   createRouter,
+  renderSaasPage,
+  SAAS_PAGE_STYLES,
 } from '../src/core/index.js';
 import {
   TRACEPARENT_HEADER,
@@ -306,6 +308,8 @@ assert.ok(dashboardView.html.includes('Open Positions'), 'positions component sh
 assert.ok(dashboardView.styles.includes('.tp-live-table'), 'styles should include live table classes');
 assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose shared stylesheet reference');
 assert.strictEqual(dashboardView.route, 'positions');
+assert.deepStrictEqual(Object.keys(dashboardView.routes).sort(), ['orders', 'pnl', 'positions']);
+assert.ok(dashboardView.html.includes('data-tp-view'), 'dashboard shell should expose view mount attribute');
 
 const navigationLinks = (dashboardView.html.match(/<a class=\"tp-nav__link/g) || []).length;
 assert.strictEqual(navigationLinks, 3, 'dashboard should render all navigation links');
@@ -373,3 +377,38 @@ const pnlStats = renderPnlQuotesView({ pnlPoints: [], quotes: [] });
 assert.ok(pnlStats.html.includes('Chart data is not available'), 'empty series should surface chart placeholder');
 
 console.log('view sanitisation tests passed');
+
+const saasPage = renderSaasPage({
+  route: 'orders',
+  data: {
+    positions: { fills: fillEvents, orders: orderEvents, ticks },
+    orders: { orders: orderEvents, fills: fillEvents },
+    pnl: { pnlPoints, quotes },
+  },
+  tenant: { name: 'Alpha Capital', slug: 'alpha-capital' },
+  product: {
+    plan: 'Scale',
+    modules: [
+      { label: 'Execution Monitoring', badge: 'Live' },
+      { label: 'Risk Oversight', badge: 'Realtime' },
+    ],
+    contactEmail: 'ops@alpha.example',
+    contactName: 'Alpha Ops',
+  },
+  meta: { title: 'Alpha Capital • TradePulse', description: 'Unified SaaS control tower.' },
+  analytics: { endpoint: 'https://telemetry.tradepulse.test/ingest', traceparent: generatedTraceparent, release: '2025.04.01' },
+});
+
+assert.ok(saasPage.html.startsWith('<!DOCTYPE html>'), 'SaaS page should render complete HTML document');
+assert.ok(saasPage.html.includes('Alpha Capital'), 'tenant name should be rendered');
+assert.ok(saasPage.html.includes('tp-saas__layout'), 'SaaS layout class should be present');
+assert.ok(saasPage.html.includes('data-tp-dashboard'), 'SaaS shell should include dashboard mount');
+assert.ok(saasPage.html.includes('data-tp-view'), 'SaaS shell should expose view container');
+assert.ok(saasPage.styles.includes('.tp-saas__'), 'SaaS styles should include custom classes');
+assert.strictEqual(saasPage.dashboard.route, 'orders', 'route should propagate to SaaS wrapper');
+assert.ok(saasPage.html.includes('\\u003C'), 'inline script payload should escape angle brackets');
+assert.ok(saasPage.script.includes('dashboard_loaded'), 'boot script should include analytics dispatch');
+assert.strictEqual(saasPage.styles, SAAS_PAGE_STYLES, 'SaaS wrapper should expose combined stylesheet');
+assert.ok(Object.keys(saasPage.dashboard.routes).includes('pnl'));
+
+console.log('saas wrapper tests passed');

@@ -84,6 +84,14 @@ export function renderDashboard(options = {}) {
 
   const router = createDashboardRouter({ positions, orders, pnl });
   const { name: currentRoute, view } = router.navigate(route);
+  const cachedViews = new Map([[currentRoute, view]]);
+  router.list().forEach((name) => {
+    if (!cachedViews.has(name)) {
+      const resolved = router.resolve(name);
+      cachedViews.set(name, resolved.view);
+    }
+  });
+  router.currentRoute = currentRoute;
   const navigation = renderNavigation(router, currentRoute);
   const headerHtml = renderHeader(header);
 
@@ -92,7 +100,7 @@ export function renderDashboard(options = {}) {
       ${navigation}
       <main class="tp-shell">
         ${headerHtml}
-        ${view.html}
+        <div data-tp-view>${view.html}</div>
       </main>
     </div>
   `;
@@ -102,5 +110,15 @@ export function renderDashboard(options = {}) {
     styles: DASHBOARD_STYLES,
     route: currentRoute,
     view,
+    routes: Object.fromEntries(
+      Array.from(cachedViews.entries()).map(([name, entry]) => [
+        name,
+        {
+          html: entry.html,
+          title: entry.title,
+          route: entry.route || name,
+        },
+      ]),
+    ),
   };
 }

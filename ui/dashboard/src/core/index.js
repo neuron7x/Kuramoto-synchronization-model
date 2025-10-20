@@ -134,6 +134,7 @@ export function exportReport(summary, options = {}) {
 export { renderDashboard, DASHBOARD_STYLES } from './dashboard_ui.js';
 export { sanitizeReportValue, formatCurrency, formatPercent } from './formatters.js';
 export { createRouter, Router } from '../router/index.js';
+export { renderSaasPage, SAAS_PAGE_STYLES } from './saas_shell.js';
 
 export class DashboardState {
   constructor({ strategies = [], backtests = [] } = {}) {
