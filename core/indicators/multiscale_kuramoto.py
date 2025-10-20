@@ -156,7 +156,6 @@ class FractalResampler:
 
         resampler = base.resample(timeframe.pandas_freq)
         resampled = self._aggregate(resampler)
-        resampled = self._fill(resampled)
 
         if resampled.empty:
             self._cache[timeframe] = resampled
@@ -165,6 +164,8 @@ class FractalResampler:
         coverage = float(resampled.notna().sum()) / float(resampled.size)
         if coverage < self.config.min_fraction:
             raise ValueError("resampled coverage below configured min_fraction")
+
+        resampled = self._fill(resampled)
 
         self._cache[timeframe] = resampled
         return resampled
