@@ -22,6 +22,13 @@ from src.data.kafka_ingestion import (
     LagRecord,
     LagReport,
 )
+from src.data.pipeline import (
+    CacheRoute,
+    CacheWriterTickHandler,
+    StaticTickRoutingStrategy,
+    StreamingIngestionPipeline,
+    TickRoutingStrategy,
+)
 from src.data.streaming_aggregator import AggregationResult, TickStreamAggregator
 from src.data.knowledge import (
     AnswerCache,
@@ -79,8 +86,12 @@ __all__ = [
     "AggregationResult",
     "BacklogEvent",
     "CacheEntrySnapshot",
+    "CacheRoute",
+    "CacheWriterTickHandler",
     "DelaySample",
     "DataIngestionCacheService",
+    "StaticTickRoutingStrategy",
+    "StreamingIngestionPipeline",
     "ExperimentRegistry",
     "ExperimentRunRecord",
     "HyperparameterAuditEntry",
@@ -92,6 +103,7 @@ __all__ = [
     "LagReport",
     "LagSummary",
     "TickStreamAggregator",
+    "TickRoutingStrategy",
     "WatermarkBacklog",
     "WatermarkProgress",
 ]
