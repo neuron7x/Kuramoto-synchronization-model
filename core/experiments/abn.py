@@ -603,7 +603,11 @@ class ABNExperiment:
 
                 guardrail_passed = True
                 guardrail_reason = None
-                if metric.guardrail:
+                if (
+                    metric.guardrail
+                    and control.sample_size > 0
+                    and variant.sample_size > 0
+                ):
                     guardrail_passed, guardrail_reason = metric.guardrail.check(
                         control_mean=control.mean,
                         variant_mean=variant.mean,
