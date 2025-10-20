@@ -22,7 +22,7 @@ h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
 hydra-core==1.3.2
-idna==3.10
+idna==3.11
 importlib-metadata==8.7.0
 jinja2==3.1.6
 korean-lunar-calendar==0.3.1
