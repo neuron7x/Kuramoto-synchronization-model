@@ -360,3 +360,49 @@ jobs:
       uses: github/codeql-action/analyze@v4
       with:
         category: "/language:python"
+
+  security-tests:
+    name: Security Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Cache uv packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: uv-${{ runner.os }}-py311-${{ hashFiles('requirements*.txt', 'requirements*.lock') }}
+
+    - name: Create virtual environment
+      run: uv venv
+
+    - name: Install dependencies
+      run: |
+        uv pip install -r requirements.txt
+        uv pip install -r requirements-dev.txt
+
+    - name: Prepare report directories
+      run: mkdir -p reports
+
+    - name: Run security-focused tests
+      run: |
+        .venv/bin/python -m pytest tests/security \
+          --junitxml=reports/security-tests.xml \
+          --html=reports/security-tests.html --self-contained-html
+
+    - name: Upload security test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-test-reports
+        path: reports/
