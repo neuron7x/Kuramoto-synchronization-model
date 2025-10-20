@@ -151,16 +151,22 @@ jobs:
         MAX_RETRIES=5
 
         login_ghcr() {
+          if [ "${GHCR_LOGGED_IN:-0}" = "1" ]; then
+            return 0
+          fi
+
           if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${GITHUB_ACTOR:-}" ]; then
+            echo "ERROR: Missing GITHUB_TOKEN or GITHUB_ACTOR; cannot authenticate to ghcr.io"
             return 1
           fi
 
           if docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<<"$GITHUB_TOKEN"; then
             echo "Authenticated to ghcr.io as $GITHUB_ACTOR"
+            GHCR_LOGGED_IN=1
             return 0
           fi
 
-          echo "WARNING: Failed to authenticate to ghcr.io"
+          echo "ERROR: Failed to authenticate to ghcr.io"
           return 1
         }
 
@@ -174,7 +180,10 @@ jobs:
         done
 
         echo "Falling back to mirror image $MIRROR_IMAGE"
-        login_ghcr || true
+        if ! login_ghcr; then
+          echo "ERROR: Unable to authenticate to ghcr.io for BuildKit mirror"
+          exit 1
+        fi
         for attempt in $(seq 1 "$MAX_RETRIES"); do
           echo "Attempt $attempt to pull $MIRROR_IMAGE"
           if docker pull "$MIRROR_IMAGE"; then
@@ -219,22 +228,31 @@ jobs:
         fi
 
         login_ghcr() {
+          if [ "${GHCR_LOGGED_IN:-0}" = "1" ]; then
+            return 0
+          fi
+
           if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${GITHUB_ACTOR:-}" ]; then
+            echo "ERROR: Missing GITHUB_TOKEN or GITHUB_ACTOR; cannot authenticate to ghcr.io"
             return 1
           fi
 
           if docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<<"$GITHUB_TOKEN"; then
             echo "Authenticated to ghcr.io as $GITHUB_ACTOR"
+            GHCR_LOGGED_IN=1
             return 0
           fi
 
-          echo "WARNING: Failed to authenticate to ghcr.io"
+          echo "ERROR: Failed to authenticate to ghcr.io"
           return 1
         }
 
         for mirror in "$GHCR_MIRROR" "$AWS_MIRROR"; do
           if [[ "$mirror" == ghcr.io/* ]]; then
-            login_ghcr || true
+            if ! login_ghcr; then
+              echo "ERROR: Unable to authenticate to ghcr.io for Python base mirror"
+              exit 1
+            fi
           fi
           if pull_with_retries "$mirror"; then
             echo "Successfully pulled $mirror; retagging as $BASE_IMAGE"
