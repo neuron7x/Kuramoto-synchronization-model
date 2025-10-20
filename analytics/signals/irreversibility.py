@@ -64,7 +64,7 @@ class IGSConfig:
     perm_emb_dim: int = 5
     perm_tau: int = 1
     adapt_method: str = "off"
-    k_min: int = 5
+    k_min: int = 2
     k_max: int = 15
     adapt_threshold: float = 0.10
     adapt_persist: int = 3
@@ -107,10 +107,12 @@ class IGSConfig:
             raise ValueError("k_min must be >= 2")
         if self.k_min > self.k_max:
             raise ValueError("k_min must be <= k_max")
+        adapt_method_normalized = self.adapt_method.lower()
+        if adapt_method_normalized not in self._ALLOWED_ADAPT_METHODS:
+            raise ValueError(f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}")
+        self.adapt_method = adapt_method_normalized
         if not (self.k_min <= self.n_states <= self.k_max):
             raise ValueError("n_states must satisfy k_min <= n_states <= k_max")
-        if self.adapt_method not in self._ALLOWED_ADAPT_METHODS:
-            raise ValueError(f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}")
         quantize_mode_normalized = self.quantize_mode.lower()
         if quantize_mode_normalized not in self._ALLOWED_QUANTIZE_MODES:
             raise ValueError(f"quantize_mode must be one of {sorted(self._ALLOWED_QUANTIZE_MODES)}")
