@@ -13,22 +13,22 @@ jobs:
   secret-scan:
     name: Scan for Secrets
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v5
       with:
         fetch-depth: 0  # Full history for better scanning
-    
+
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
         python-version: '3.11'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install bandit safety
-    
+
     - name: Run custom secret scanner
       run: |
         python -c "
@@ -37,7 +37,7 @@ jobs:
         if check_for_hardcoded_secrets('.'):
             sys.exit(1)
         "
-    
+
     - name: Run Bandit security linter
       run: |
         bandit -r core/ backtest/ execution/ -f json -o bandit-report.json || true
@@ -45,7 +45,7 @@ jobs:
     - name: Run Bandit on test utilities
       run: |
         bandit -r tests/utils tests/scripts -ll
-    
+
     - name: Upload Bandit report
       if: always()
       uses: actions/upload-artifact@v4
@@ -59,63 +59,68 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-    
+
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
         python-version: '3.11'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt -r requirements-dev.txt
         pip install safety pip-audit
-    
+
     - name: Check for known vulnerabilities with Safety
       run: |
         safety check --json --output safety-report.json || true
         safety check
-    
+
     - name: Audit dependencies with pip-audit
       run: |
         # Run pip-audit and save the report
         pip-audit --desc -o pip-audit-report.json --format json || true
-        
+
         # Display the full report for visibility
         pip-audit --desc || true
-        
+
         # TEMPORARY WORKAROUND: Ignore known pip vulnerability GHSA-4xh5-x5gv-qwph (CVE-2025-8869)
         # This vulnerability is in pip itself and will be fixed in pip 25.3
         # We filter it out to avoid failing the build, but fail for any OTHER vulnerabilities
         # Reference: https://github.com/pypa/pip/security/advisories/GHSA-4xh5-x5gv-qwph
-        
+
         # Use jq to check if there are any vulnerabilities OTHER than the known pip issue
-        OTHER_VULNS=$(jq -r '
-          [.dependencies[] | 
-           select(.vulns != null and (.vulns | length) > 0) |
-           .vulns[] |
-           select(.id != "GHSA-4xh5-x5gv-qwph")
-          ] | length
-        ' pip-audit-report.json)
-        
-        echo "Found $OTHER_VULNS vulnerabilities (excluding GHSA-4xh5-x5gv-qwph)"
-        
-        if [ "$OTHER_VULNS" -gt 0 ]; then
-          echo "ERROR: Found vulnerabilities other than the known pip issue GHSA-4xh5-x5gv-qwph"
-          echo "Please review and fix these vulnerabilities:"
-          jq -r '
-            .dependencies[] | 
-            select(.vulns != null and (.vulns | length) > 0) |
-            .vulns[] |
-            select(.id != "GHSA-4xh5-x5gv-qwph") |
-            "  - \(.id): \(.description[:100])..."
-          ' pip-audit-report.json
-          exit 1
+        if [ -f pip-audit-report.json ]; then
+          OTHER_VULNS=$(jq -r '
+            [.dependencies[] // empty |
+             select(.vulns != null and (.vulns | length) > 0) |
+             .vulns[] |
+             select(.id != "GHSA-4xh5-x5gv-qwph")
+            ] | length
+          ' pip-audit-report.json)
+
+          echo "Found $OTHER_VULNS vulnerabilities (excluding GHSA-4xh5-x5gv-qwph)"
+
+          if [ "$OTHER_VULNS" -gt 0 ]; then
+            echo "ERROR: Found vulnerabilities other than the known pip issue GHSA-4xh5-x5gv-qwph"
+            echo "Please review and fix these vulnerabilities:"
+            jq -r '
+              .dependencies[] // empty |
+              select(.vulns != null and (.vulns | length) > 0) |
+              .vulns[] |
+              select(.id != "GHSA-4xh5-x5gv-qwph") |
+              "  - \(.id): \(.description[:100])..."
+            ' pip-audit-report.json
+            exit 1
+          else
+            echo "SUCCESS: Only the known pip vulnerability GHSA-4xh5-x5gv-qwph is present"
+            echo "This will be fixed when pip 25.3 is released"
+          fi
         else
-          echo "SUCCESS: Only the known pip vulnerability GHSA-4xh5-x5gv-qwph is present"
-          echo "This will be fixed when pip 25.3 is released"
+          echo "WARNING: pip-audit report not found; treating as failure to avoid false negatives"
+          exit 1
         fi
-    
+
     - name: Upload security reports
       if: always()
       uses: actions/upload-artifact@v4
@@ -137,8 +142,129 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
+    - name: Pre-pull BuildKit image with retries and authenticated mirror fallback
+      run: |
+        set -euo pipefail
+
+        HUB_IMAGE="moby/buildkit:buildx-stable-1"
+        MIRROR_IMAGE="ghcr.io/docker/buildkit:buildx-stable-1"
+        MAX_RETRIES=5
+
+        login_ghcr() {
+          if [ "${GHCR_LOGGED_IN:-0}" = "1" ]; then
+            return 0
+          fi
+
+          if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${GITHUB_ACTOR:-}" ]; then
+            echo "ERROR: Missing GITHUB_TOKEN or GITHUB_ACTOR; cannot authenticate to ghcr.io"
+            return 1
+          fi
+
+          if docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<<"$GITHUB_TOKEN"; then
+            echo "Authenticated to ghcr.io as $GITHUB_ACTOR"
+            GHCR_LOGGED_IN=1
+            return 0
+          fi
+
+          echo "ERROR: Failed to authenticate to ghcr.io"
+          return 1
+        }
+
+        for attempt in $(seq 1 "$MAX_RETRIES"); do
+          echo "Attempt $attempt to pull $HUB_IMAGE"
+          if docker pull "$HUB_IMAGE"; then
+            echo "Successfully pulled $HUB_IMAGE"
+            exit 0
+          fi
+          sleep "$((attempt * 5))"
+        done
+
+        echo "Falling back to mirror image $MIRROR_IMAGE"
+        if ! login_ghcr; then
+          echo "ERROR: Unable to authenticate to ghcr.io for BuildKit mirror"
+          exit 1
+        fi
+        for attempt in $(seq 1 "$MAX_RETRIES"); do
+          echo "Attempt $attempt to pull $MIRROR_IMAGE"
+          if docker pull "$MIRROR_IMAGE"; then
+            echo "Successfully pulled mirror image; retagging as $HUB_IMAGE"
+            docker tag "$MIRROR_IMAGE" "$HUB_IMAGE"
+            exit 0
+          fi
+          sleep "$((attempt * 5))"
+        done
+
+        echo "ERROR: Unable to pull BuildKit image from Docker Hub or GHCR mirror"
+        exit 1
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+
+    - name: Pre-pull Python base image with mirror fallback
+      run: |
+        set -euo pipefail
+
+        BASE_IMAGE="python:3.13-slim"
+        GHCR_MIRROR="ghcr.io/library/${BASE_IMAGE}"
+        AWS_MIRROR="public.ecr.aws/docker/library/${BASE_IMAGE}"
+        MAX_RETRIES=5
+
+        pull_with_retries() {
+          local image="$1"
+          for attempt in $(seq 1 "$MAX_RETRIES"); do
+            echo "Attempt $attempt to pull $image"
+            if docker pull "$image"; then
+              return 0
+            fi
+            echo "Pull attempt $attempt for $image failed; retrying after backoff"
+            sleep "$((attempt * 5))"
+          done
+          return 1
+        }
+
+        if pull_with_retries "$BASE_IMAGE"; then
+          echo "Successfully pulled $BASE_IMAGE from Docker Hub"
+          exit 0
+        fi
+
+        login_ghcr() {
+          if [ "${GHCR_LOGGED_IN:-0}" = "1" ]; then
+            return 0
+          fi
+
+          if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${GITHUB_ACTOR:-}" ]; then
+            echo "ERROR: Missing GITHUB_TOKEN or GITHUB_ACTOR; cannot authenticate to ghcr.io"
+            return 1
+          fi
+
+          if docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<<"$GITHUB_TOKEN"; then
+            echo "Authenticated to ghcr.io as $GITHUB_ACTOR"
+            GHCR_LOGGED_IN=1
+            return 0
+          fi
+
+          echo "ERROR: Failed to authenticate to ghcr.io"
+          return 1
+        }
+
+        for mirror in "$GHCR_MIRROR" "$AWS_MIRROR"; do
+          if [[ "$mirror" == ghcr.io/* ]]; then
+            if ! login_ghcr; then
+              echo "ERROR: Unable to authenticate to ghcr.io for Python base mirror"
+              exit 1
+            fi
+          fi
+          if pull_with_retries "$mirror"; then
+            echo "Successfully pulled $mirror; retagging as $BASE_IMAGE"
+            docker tag "$mirror" "$BASE_IMAGE"
+            exit 0
+          else
+            echo "Failed to pull $mirror after $MAX_RETRIES attempts"
+          fi
+        done
+
+        echo "ERROR: Unable to pull Python base image from Docker Hub or known mirrors"
+        exit 1
 
     - name: Build container image for scanning
       uses: docker/build-push-action@v5
@@ -160,8 +286,17 @@ jobs:
         exit-code: '1'
         output: trivy-results.sarif
 
+    - name: Check Trivy SARIF file
+      id: trivy-check
+      run: |
+        if [ -f trivy-results.sarif ]; then
+          echo "found=true" >> $GITHUB_OUTPUT
+        else
+          echo "found=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Upload Trivy SARIF results
-      if: always()
+      if: steps.trivy-check.outputs.found == 'true'
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: trivy-results.sarif
@@ -177,11 +312,20 @@ jobs:
         output-format: sarif
         output-file: grype-results.sarif
 
+    - name: Check Grype SARIF file
+      id: grype-check
+      run: |
+        if [ -f grype-results.sarif ]; then
+          echo "found=true" >> $GITHUB_OUTPUT
+        else
+          echo "found=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Upload Grype SARIF results
-      if: always()
+      if: steps.grype-check.outputs.found == 'true'
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+        sarif_file: grype-results.sarif
 
     - name: Fail workflow on critical vulnerabilities
       if: always()
@@ -201,17 +345,17 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
-    
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
         languages: python
         queries: security-extended
-    
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       with:
