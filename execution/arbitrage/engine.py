@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -13,6 +14,9 @@ from .capital import AtomicCapitalMover, CapitalTransferPlan
 from .liquidity import LiquidityLedger
 from .metrics import LatencyTracker
 from .models import ExchangePriceState, Quote
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(slots=True, frozen=True)
@@ -189,7 +193,16 @@ class CrossExchangeArbitrageEngine:
             return None
         bid_quote = best_bid_state.last_quote
         ask_quote = best_ask_state.last_quote
-        assert bid_quote is not None and ask_quote is not None
+        if bid_quote is None or ask_quote is None:
+            _LOGGER.error(
+                "Exchange state missing quote despite selection",
+                extra={
+                    "symbol": symbol,
+                    "bid_exchange": best_bid_state.exchange_id,
+                    "ask_exchange": best_ask_state.exchange_id,
+                },
+            )
+            return None
         if bid_quote.bid <= ask_quote.ask:
             return None
         if abs(bid_quote.timestamp - ask_quote.timestamp) > self._max_clock_skew:

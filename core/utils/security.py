@@ -6,9 +6,12 @@ data in code and configuration files.
 """
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 from typing import Dict, List, Pattern, Tuple
+
+_LOGGER = logging.getLogger(__name__)
 
 # Common secret patterns
 SECRET_PATTERNS: Dict[str, Pattern[str]] = {
@@ -84,9 +87,8 @@ class SecretDetector:
                             # Mask the secret in output
                             masked_line = self._mask_line(line)
                             findings.append((secret_type, line_num, masked_line))
-        except Exception:
-            # Skip files that can't be read
-            pass
+        except OSError as exc:
+            _LOGGER.debug("Skipping unreadable file during secret scan", exc_info=exc)
 
         return findings
 
