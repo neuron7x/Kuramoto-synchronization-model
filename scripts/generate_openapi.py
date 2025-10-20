@@ -9,7 +9,6 @@ import os
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -19,7 +18,7 @@ os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://openapi.tradepulse.lo
 os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
 os.environ.setdefault("TRADEPULSE_OAUTH2_JWKS_URI", "https://openapi.tradepulse.local/jwks")
 
-from application.api.service import create_app
+from application.api.service import create_app  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:

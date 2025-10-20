@@ -15,9 +15,8 @@ from application.system import (
 )
 from domain import Order
 from execution.connectors import SimulatedExchangeConnector
-from src.audit.audit_logger import AuditLogger
 from src.admin.remote_control import AdminIdentity
-
+from src.audit.audit_logger import AuditLogger
 
 TRADE_HEADERS = {"X-Trade-Environment": "production", "X-Trade-Desk": "execution"}
 

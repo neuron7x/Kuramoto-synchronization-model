@@ -4,10 +4,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from core.data.models import InstrumentType, PriceTick
 import src.data.kafka_ingestion as kafka_ingestion
+from core.data.models import InstrumentType, PriceTick
 from src.data.kafka_ingestion import HotSymbolCache
-
 
 BASE_TS = datetime(2024, 1, 1, tzinfo=UTC)
 

@@ -2,9 +2,9 @@
 
 from .keys import IdempotencyKey, IdempotencyKeyFactory
 from .operations import (
+    IdempotencyConflictError,
     IdempotencyCoordinator,
     IdempotencyError,
-    IdempotencyConflictError,
     IdempotencyInputError,
     OperationOutcome,
     OperationStatus,

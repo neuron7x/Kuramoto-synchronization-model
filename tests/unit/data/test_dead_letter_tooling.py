@@ -44,6 +44,8 @@ def test_queue_push_enriches_item() -> None:
         context="snapshot",
         metadata={"origin": "unit"},
     )
+    assert isinstance(item, DeadLetterItem)
+    assert item.metadata == {"origin": "unit"}
     peeked = queue.peek()
     assert len(peeked) == 1
     assert isinstance(peeked[0], DeadLetterItem)

@@ -8,9 +8,9 @@ import math
 import os
 import re
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, List, Sequence
+from typing import Iterable, Iterator, Sequence
 
 _COMMON_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (

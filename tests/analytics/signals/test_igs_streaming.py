@@ -1,9 +1,9 @@
+import sys
+import types
+
 import numpy as np
 import pandas as pd
 import pytest
-
-import sys
-import types
 
 from analytics.signals.irreversibility import IGSConfig, StreamingIGS
 

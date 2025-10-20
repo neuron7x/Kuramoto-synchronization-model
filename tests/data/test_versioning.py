@@ -71,6 +71,7 @@ def test_register_and_activate_multiple_versions() -> None:
     }
     assert v1.operational_tags == {tag}
     assert v1.tags == {"baseline"}
+    assert v2.tags == {"canary"}
 
 
 def test_access_gates_enforced() -> None:

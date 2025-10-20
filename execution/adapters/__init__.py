@@ -1,19 +1,24 @@
 # SPDX-License-Identifier: MIT
 """Live-trading exchange connector implementations."""
-
 from __future__ import annotations
 
 import logging
 from typing import Mapping
 
 from .base import RESTWebSocketConnector, SlidingWindowRateLimiter
+from .binance import PLUGIN as BINANCE_PLUGIN
+from .binance import BinanceRESTConnector
+from .coinbase import PLUGIN as COINBASE_PLUGIN
+from .coinbase import CoinbaseRESTConnector
+from .kraken import PLUGIN as KRAKEN_PLUGIN
+from .kraken import KrakenRESTConnector
 from .plugin import (
     AdapterCheckResult,
     AdapterContract,
     AdapterDiagnostic,
+    AdapterFactory,
     AdapterPlugin,
     AdapterRegistry,
-    AdapterFactory,
 )
 
 logger = logging.getLogger("execution.adapters")
@@ -22,10 +27,6 @@ logger = logging.getLogger("execution.adapters")
 # Global registry initialised with built-in adapters. Additional adapters can be
 # discovered dynamically via entry points or by calling ``registry.register``.
 registry = AdapterRegistry()
-
-from .binance import BinanceRESTConnector, PLUGIN as BINANCE_PLUGIN  # noqa: E402  (import side effects)
-from .coinbase import CoinbaseRESTConnector, PLUGIN as COINBASE_PLUGIN  # noqa: E402
-from .kraken import KrakenRESTConnector, PLUGIN as KRAKEN_PLUGIN  # noqa: E402
 
 for plugin in (BINANCE_PLUGIN, COINBASE_PLUGIN, KRAKEN_PLUGIN):
     try:

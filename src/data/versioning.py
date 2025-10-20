@@ -14,11 +14,11 @@ plain dataclasses with rich validation.
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-import re
 from types import MappingProxyType
 from typing import Any, Callable, Iterable, Mapping, MutableMapping
 

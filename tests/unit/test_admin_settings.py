@@ -6,8 +6,8 @@ import pytest
 
 from application.configuration import ConfigurationStoreError
 from application.secrets.manager import secret_caller_context
-from application.settings import AdminApiSettings, ConfigNamespaceSettings
 from application.secrets.vault import SecretVault
+from application.settings import AdminApiSettings, ConfigNamespaceSettings
 from src.audit.audit_logger import AuditLogger
 
 

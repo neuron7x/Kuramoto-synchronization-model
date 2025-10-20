@@ -6,11 +6,11 @@ import json
 from pathlib import Path
 
 import pytest
+from omegaconf import OmegaConf
 
 from analytics.runner import RunMetadata
 from analytics.tracking import ExperimentDeviationError, ExperimentTracker
 from core.config.cli_models import ExperimentConfig
-from omegaconf import OmegaConf
 
 
 @pytest.fixture(name="experiment_cfg")
@@ -75,6 +75,7 @@ def test_tracker_generates_reports_archives(tmp_path: Path, experiment_cfg: Expe
     hydra_cfg = _hydra_cfg(experiment_cfg)
     tracker = ExperimentTracker.from_experiment(experiment_cfg, run_metadata)
     assert isinstance(tracker, ExperimentTracker)
+    assert hydra_cfg["experiment"]["name"] == experiment_cfg.name
 
     tracker.log_configuration(hydra_cfg, safe_yaml=None)
     data_path = tmp_path / "prices.csv"
@@ -107,6 +108,7 @@ def test_tracker_detects_baseline_deviation(
 ) -> None:
     hydra_cfg = _hydra_cfg(experiment_cfg)
     tracker = ExperimentTracker.from_experiment(experiment_cfg, run_metadata)
+    assert hydra_cfg["experiment"]["random_seed"] == experiment_cfg.random_seed
     data_path = tmp_path / "prices.csv"
     data_path.write_text("price\n1\n2\n3\n4\n", encoding="utf-8")
     tracker.log_data_version(data_path)

@@ -15,7 +15,6 @@ from typing import Callable, Mapping, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-
 NDArrayF64 = NDArray[np.float64]
 
 

@@ -466,7 +466,6 @@ def _lint_avro_schema(
             f"{event_type}@{version}: root schema must be an Avro record"
         )
     record_name = schema.get("name", "<unknown>")
-    namespace = schema.get("namespace", "")
     if not schema.get("doc"):
         raise SchemaLintError(
             f"{event_type}@{version}: record '{record_name}' missing documentation"

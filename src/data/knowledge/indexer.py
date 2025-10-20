@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-import math
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
 
 import numpy as np

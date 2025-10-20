@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping as MappingABC, Sequence as SequenceABC
+from collections.abc import Mapping as MappingABC
+from collections.abc import Sequence as SequenceABC
 from enum import Enum
 from types import NoneType, UnionType
 from typing import Any, Tuple, Type, Union, get_args, get_origin

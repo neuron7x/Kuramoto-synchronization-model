@@ -17,7 +17,6 @@ from domain import Order, OrderSide, OrderType
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import LimitViolation, RiskLimits, RiskManager
 from interfaces.cli import signal_from_indicators
-
 from tests.fixtures.fake_exchange import FakeExchangeAdapter
 
 pytestmark = pytest.mark.integration
@@ -159,6 +158,10 @@ def run_live_runner_with_fake_exchange(
     signals = np.asarray(payload["signals"], dtype=float)
     timestamps = np.asarray(payload["timestamps"], dtype=float)
     symbol = str(payload.get("meta", {}).get("symbol", "SAMPLE-USD"))
+
+    if timestamps.size > 1:
+        deltas = np.diff(timestamps)
+        assert np.all(deltas >= 0), "timestamps must be monotonic"
 
     artifacts: dict[str, Any] = {}
     with tempfile.TemporaryDirectory(prefix="live-sim-") as tmpdir:

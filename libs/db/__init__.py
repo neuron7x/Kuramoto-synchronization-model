@@ -25,12 +25,12 @@ from .timeseries import (
     RollupAggregation,
     RollupMaterialization,
     SLAMetric,
-    TimeSeriesSchema,
     TimescaleBackupPlanner,
     TimescaleIngestionConnector,
     TimescaleQueryBuilder,
     TimescaleSchemaManager,
     TimescaleSLAManager,
+    TimeSeriesSchema,
 )
 
 __all__ = [

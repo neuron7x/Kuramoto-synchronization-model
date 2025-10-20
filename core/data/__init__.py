@@ -16,19 +16,21 @@ from .feature_store import (
     IntegrityReport,
     OnlineFeatureStore,
 )
-from .parity import (
-    FeatureParityCoordinator,
-    FeatureParityError,
-    FeatureParityReport,
-    FeatureParitySpec,
-    FeatureTimeSkewError,
-    FeatureUpdateBlocked,
-)
 from .materialization import (
     Checkpoint,
     CheckpointStore,
     InMemoryCheckpointStore,
     StreamMaterializer,
+)
+from .models import (
+    AggregateMetric,
+    DataKind,
+    InstrumentType,
+    MarketDataPoint,
+    MarketMetadata,
+    OHLCVBar,
+    PriceTick,
+    Ticker,
 )
 from .normalization_pipeline import (
     FillMethod,
@@ -37,6 +39,14 @@ from .normalization_pipeline import (
     MarketNormalizationResult,
     NormalisationKind,
     normalize_market_data,
+)
+from .parity import (
+    FeatureParityCoordinator,
+    FeatureParityError,
+    FeatureParityReport,
+    FeatureParitySpec,
+    FeatureTimeSkewError,
+    FeatureUpdateBlocked,
 )
 from .pipeline import (
     AnonymizationRule,
@@ -55,16 +65,6 @@ from .pipeline import (
     SyntheticAugmentationConfig,
     ToxicityFilterConfig,
     build_online_writer,
-)
-from .models import (
-    AggregateMetric,
-    DataKind,
-    InstrumentType,
-    MarketDataPoint,
-    MarketMetadata,
-    OHLCVBar,
-    PriceTick,
-    Ticker,
 )
 from .validation import (
     TimeSeriesValidationConfig,

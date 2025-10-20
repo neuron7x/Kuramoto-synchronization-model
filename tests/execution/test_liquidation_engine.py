@@ -1,7 +1,6 @@
 import pytest
 
 from domain.order import OrderSide
-
 from execution.liquidation import (
     LiquidationEngine,
     LiquidationEngineConfig,

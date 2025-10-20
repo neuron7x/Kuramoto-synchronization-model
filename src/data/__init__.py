@@ -22,14 +22,6 @@ from src.data.kafka_ingestion import (
     LagRecord,
     LagReport,
 )
-from src.data.pipeline import (
-    CacheRoute,
-    CacheWriterTickHandler,
-    StaticTickRoutingStrategy,
-    StreamingIngestionPipeline,
-    TickRoutingStrategy,
-)
-from src.data.streaming_aggregator import AggregationResult, TickStreamAggregator
 from src.data.knowledge import (
     AnswerCache,
     AnswerCacheEntry,
@@ -56,6 +48,14 @@ from src.data.knowledge import (
     ShardManager,
     SourcePrioritizer,
 )
+from src.data.pipeline import (
+    CacheRoute,
+    CacheWriterTickHandler,
+    StaticTickRoutingStrategy,
+    StreamingIngestionPipeline,
+    TickRoutingStrategy,
+)
+from src.data.streaming_aggregator import AggregationResult, TickStreamAggregator
 
 __all__ = [
     "AnswerCache",

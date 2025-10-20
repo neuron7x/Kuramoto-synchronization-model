@@ -17,6 +17,7 @@ from application.api.authorization import (
     require_permission,
 )
 from application.api.security import verify_request_identity
+from application.security.rbac import AuthorizationGateway
 from application.settings import NotificationSettings
 from application.system import TradePulseSystem
 from application.trading import order_to_dto
@@ -27,7 +28,6 @@ from observability.notifications import (
     NotificationDispatcher,
     SlackNotifier,
 )
-from application.security.rbac import AuthorizationGateway
 from src.admin.remote_control import AdminIdentity
 
 

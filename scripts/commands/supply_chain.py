@@ -17,19 +17,19 @@ from scripts.commands.base import (
 from scripts.supply_chain import (
     DependencyError,
     Severity,
-    build_cyclonedx_sbom,
+    append_compliance_archive,
     build_compliance_report,
+    build_cyclonedx_sbom,
     evaluate_license_compliance,
     load_allowlist,
     load_denylist,
     load_dependencies,
     load_license_policy,
     load_vulnerability_report,
-    write_compliance_report,
     verify_dependencies,
+    write_compliance_report,
     write_sbom,
     write_verification_report,
-    append_compliance_archive,
 )
 
 LOGGER = logging.getLogger(__name__)

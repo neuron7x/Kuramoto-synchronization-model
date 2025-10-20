@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from datetime import date, datetime, time as dtime, timezone
+from datetime import date, datetime, timezone
+from datetime import time as dtime
 from decimal import Decimal
 from hashlib import blake2b
-import json
 from typing import Any, Iterable, Mapping
-from uuid import UUID, NAMESPACE_URL, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 _CANONICAL_NAMESPACE = uuid5(NAMESPACE_URL, "https://tradepulse/idempotency")
 
