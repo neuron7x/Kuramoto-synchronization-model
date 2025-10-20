@@ -37,6 +37,58 @@ logger = get_logger(__name__)
 metrics = get_metrics_collector()
 
 
+class _TickMetricBatcher:
+    """Accumulate tick metrics and flush in batches to reduce contention."""
+
+    __slots__ = ("_collector", "_source", "_symbol", "_flush_threshold", "_pending")
+
+    def __init__(
+        self,
+        collector: Any,
+        source: str,
+        symbol: str,
+        *,
+        flush_threshold: int = 256,
+    ) -> None:
+        self._collector = collector
+        self._source = source
+        self._symbol = symbol
+        self._flush_threshold = max(1, int(flush_threshold))
+        self._pending = 0
+
+    def __enter__(self) -> "_TickMetricBatcher":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        self.flush()
+        return False
+
+    def add(self, count: int = 1) -> None:
+        """Record ``count`` processed ticks, flushing when the threshold is hit."""
+
+        if count <= 0:
+            return
+        self._pending += count
+        if self._pending >= self._flush_threshold:
+            self._flush_pending()
+
+    def flush(self) -> None:
+        """Flush any buffered increments to the metrics collector."""
+
+        self._flush_pending()
+
+    def _flush_pending(self) -> None:
+        pending = self._pending
+        if pending <= 0:
+            return
+        record = getattr(self._collector, "record_tick_processed", None)
+        if record is None:
+            self._pending = 0
+            return
+        record(self._source, self._symbol, pending)
+        self._pending = 0
+
+
 ConnectorFactory = Callable[[], BaseMarketDataConnector]
 ConnectorEntry = BaseMarketDataConnector | ConnectorFactory
 
@@ -105,7 +157,12 @@ class AsyncDataIngestor(AsyncDataIngestionService):
 
         with logger.operation("async_csv_read", path=str(resolved_path), symbol=symbol):
             try:
-                with resolved_path.open("r", encoding="utf-8") as f:
+                with resolved_path.open("r", encoding="utf-8") as f, _TickMetricBatcher(
+                    metrics,
+                    "csv",
+                    symbol,
+                    flush_threshold=max(1, chunk_size),
+                ) as metric_batcher:
                     reader = csv.DictReader(f)
 
                     if reader.fieldnames is None:
@@ -134,9 +191,14 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                             chunk.append(tick)
 
                             if len(chunk) >= chunk_size:
-                                for tick in chunk:
-                                    yield tick
-                                    metrics.record_tick_processed("csv", symbol)
+                                consumed = 0
+                                try:
+                                    for tick in chunk:
+                                        yield tick
+                                        consumed += 1
+                                finally:
+                                    if consumed:
+                                        metric_batcher.add(consumed)
                                 chunk = []
 
                                 if delay_ms > 0:
@@ -151,9 +213,15 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                             continue
 
                     # Yield remaining ticks
-                    for tick in chunk:
-                        yield tick
-                        metrics.record_tick_processed("csv", symbol)
+                    if chunk:
+                        consumed = 0
+                        try:
+                            for tick in chunk:
+                                yield tick
+                                consumed += 1
+                        finally:
+                            if consumed:
+                                metric_batcher.add(consumed)
 
             except Exception as exc:
                 logger.error("CSV ingestion failed", path=path, error=str(exc))
@@ -196,7 +264,7 @@ class AsyncDataIngestor(AsyncDataIngestionService):
         try:
             with logger.operation(
                 "async_stream_ticks", source=source, symbol=symbol, mode="connector"
-            ):
+            ), _TickMetricBatcher(metrics, source, symbol) as metric_batcher:
                 async for event in connector.stream_ticks(
                     symbol=symbol, instrument_type=instrument_type
                 ):
@@ -206,7 +274,7 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                         instrument_type=instrument_type,
                     )
                     yield tick
-                    metrics.record_tick_processed(source, symbol)
+                    metric_batcher.add()
                     count += 1
                     if max_ticks is not None and count >= max_ticks:
                         return
@@ -275,6 +343,7 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                 await connector.aclose()
 
         ticks: list[Ticker] = []
+        processed = 0
         for event in events:
             tick = _tick_event_to_price_tick(
                 event,
@@ -282,7 +351,9 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                 instrument_type=instrument_type,
             )
             ticks.append(tick)
-            metrics.record_tick_processed(source, symbol)
+            processed += 1
+        if processed:
+            metrics.record_tick_processed(source, symbol, processed)
         return ticks
 
     def _resolve_market_connector(
@@ -311,7 +382,7 @@ class AsyncDataIngestor(AsyncDataIngestionService):
     ) -> AsyncIterator[Ticker]:
         with logger.operation(
             "async_stream_ticks", source=source, symbol=symbol, mode="synthetic"
-        ):
+        ), _TickMetricBatcher(metrics, source, symbol) as metric_batcher:
             count = 0
 
             while max_ticks is None or count < max_ticks:
@@ -327,7 +398,7 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                 )
 
                 yield tick
-                metrics.record_tick_processed(source, symbol)
+                metric_batcher.add()
                 count += 1
 
 
