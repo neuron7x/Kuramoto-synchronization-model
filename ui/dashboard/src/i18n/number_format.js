@@ -260,6 +260,38 @@ function getLocalizationContext(descriptor) {
     if (descriptor.formats && descriptor.locale) {
       return descriptor;
     }
+    const hasBackendFormats =
+      'number' in descriptor ||
+      'currency_format' in descriptor ||
+      'percent' in descriptor ||
+      'datetime' in descriptor;
+    if (hasBackendFormats) {
+      const base = resolveLocalization(descriptor.locale ? [descriptor.locale] : undefined);
+      const numberOptions = descriptor.number || {};
+      const currencyOptions = descriptor.currency_format || {};
+      const percentOptions = descriptor.percent || {};
+      const datetimeOptions = descriptor.datetime || {};
+      const backendCurrencyOverrides =
+        descriptor.currency_overrides || descriptor.currencyOverrides || {};
+      const assetCurrencyMap = descriptor.assetCurrencyMap || {};
+      return {
+        ...base,
+        locale: descriptor.locale || base.locale,
+        currency: descriptor.currency || base.currency,
+        timezone: descriptor.timezone || base.timezone,
+        formats: {
+          number: { ...(base.formats?.number || {}), ...numberOptions },
+          currency: { ...(base.formats?.currency || {}), ...currencyOptions },
+          percent: { ...(base.formats?.percent || {}), ...percentOptions },
+          datetime: { ...(base.formats?.datetime || {}), ...datetimeOptions },
+        },
+        symbols: { ...(base.symbols || {}), ...(descriptor.symbols || {}) },
+        currencyOverrides: mergeCurrencyOverrides(
+          mergeCurrencyOverrides(base.currencyOverrides || {}, backendCurrencyOverrides),
+          assetCurrencyMap,
+        ),
+      };
+    }
     if (descriptor.preferredLocales || descriptor.currencyOverride || descriptor.assetCurrencyMap) {
       return resolveLocalization(descriptor.preferredLocales, {
         currencyOverride: descriptor.currencyOverride,
