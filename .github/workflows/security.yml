@@ -139,6 +139,8 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker
 
     - name: Build container image for scanning
       uses: docker/build-push-action@v5
@@ -160,11 +162,23 @@ jobs:
         exit-code: '1'
         output: trivy-results.sarif
 
-    - name: Upload Trivy SARIF results
+    - name: Locate Trivy SARIF
       if: always()
+      id: trivy-sarif
+      env:
+        TRIVY_SARIF: trivy-results.sarif
+      run: |
+        if [ -f "$TRIVY_SARIF" ]; then
+          echo "sarif_path=$TRIVY_SARIF" >> "$GITHUB_OUTPUT"
+        else
+          echo "Trivy SARIF file not found; skipping upload."
+        fi
+
+    - name: Upload Trivy SARIF results
+      if: ${{ always() && steps.trivy-sarif.outputs.sarif_path != '' }}
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: trivy-results.sarif
+        sarif_file: ${{ steps.trivy-sarif.outputs.sarif_path }}
 
     - name: Run Grype scan (fail on critical CVEs)
       id: grype-scan
@@ -177,11 +191,23 @@ jobs:
         output-format: sarif
         output-file: grype-results.sarif
 
-    - name: Upload Grype SARIF results
+    - name: Locate Grype SARIF
       if: always()
+      id: grype-sarif
+      env:
+        GRYPE_SARIF: ${{ steps.grype-scan.outputs.sarif }}
+      run: |
+        if [ -n "$GRYPE_SARIF" ] && [ -f "$GRYPE_SARIF" ]; then
+          echo "sarif_path=$GRYPE_SARIF" >> "$GITHUB_OUTPUT"
+        else
+          echo "Grype SARIF file not found; skipping upload."
+        fi
+
+    - name: Upload Grype SARIF results
+      if: ${{ always() && steps.grype-sarif.outputs.sarif_path != '' }}
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+        sarif_file: ${{ steps.grype-sarif.outputs.sarif_path }}
 
     - name: Fail workflow on critical vulnerabilities
       if: always()
