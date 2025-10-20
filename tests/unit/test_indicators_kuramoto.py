@@ -237,6 +237,7 @@ def test_multiscale_kuramoto_analyzer_reports_consensus_metrics() -> None:
         TimeFrame.M15,
     }
     assert 0.0 <= result.cross_scale_coherence <= 1.0
+    assert "resample_requests" in result.energy_profile
 
 
 def test_multiscale_feature_metadata_contains_timeframe_scores() -> None:
@@ -255,6 +256,7 @@ def test_multiscale_feature_metadata_contains_timeframe_scores() -> None:
     assert outcome.metadata["adaptive_window"] == 96
     assert outcome.metadata["timeframes"] == ["M1", "M5"]
     assert "R_M1" in outcome.metadata and "R_M5" in outcome.metadata
+    assert "energy_profile" in outcome.metadata
 
 
 def test_wavelet_selector_falls_back_without_scipy(
