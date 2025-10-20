@@ -64,6 +64,7 @@ nav:
           - Overview: scenarios.md
           - Scenario Template: scenario_template.md
       - Technical Debt Playbook: technical-debt.md
+      - Dependency Pinning Risks (UA): dependency_pinning.md
       - Testing Guide: ../TESTING.md
       - Contributing: ../CONTRIBUTING.md
       - CLI Reference: cli.md
