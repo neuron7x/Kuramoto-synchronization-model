@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Command-line interface orchestrating TradePulse analytics workflows.
+"""Command-line interface orchestrating research and operations workflows.
 
 The CLI glues together ingestion, indicator computation, backtesting, and live
 trading bootstrap flows. It is the operational entry point referenced in
@@ -7,6 +7,23 @@ trading bootstrap flows. It is the operational entry point referenced in
 metadata according to ``docs/monitoring.md``. Each command surfaces the
 governance requirements outlined in ``docs/documentation_governance.md`` by
 exposing structured outputs and traceparent propagation.
+
+**What the CLI provides**
+
+* Deterministic signal generation utilities mirroring the educational notebooks
+  described in ``docs/examples/README.md``.
+* Backtesting entry points that wrap :func:`backtest.engine.walk_forward` and
+  export reports compatible with the runbooks in ``docs/runbook_release_validation.md``.
+* Bootstrap helpers for live execution that enforce trace-context propagation
+  so distributed systems monitoring can correlate CLI actions with downstream
+  services.
+
+**Usage expectations**
+
+Operators should treat the CLI as the canonical automation surface: configuration
+is pulled from YAML files described in ``docs/scenarios.md``, secrets are loaded
+through the governance policies in ``SECURITY.md``, and tracing integrates with
+``observability.tracing`` to maintain production-grade audit trails.
 """
 
 from __future__ import annotations

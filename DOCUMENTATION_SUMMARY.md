@@ -267,9 +267,9 @@ While the core requirements are met, these enhancements could be added:
 - [x] Add product-level README with operator playbooks
 - [ ] Add docstrings to core/indicators/kuramoto.py
 - [ ] Add docstrings to core/indicators/ricci.py
-- [ ] Add docstrings to backtest/engine.py
-- [ ] Add docstrings to execution/risk.py and execution/order.py
-- [ ] Add docstrings to interfaces/cli.py
+- [x] Add docstrings to backtest/engine.py
+- [x] Add docstrings to execution/risk.py and execution/order.py
+- [x] Add docstrings to interfaces/cli.py
 
 ### Phase 5 - Final Polish
 - [ ] Create architecture diagram assets (optional, would enhance README)
