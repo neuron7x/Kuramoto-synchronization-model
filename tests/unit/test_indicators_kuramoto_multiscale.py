@@ -217,3 +217,65 @@ def test_multiscale_analyzer_reports_energy_profile() -> None:
     assert energy["samples_processed"] >= sum(
         res.window for res in result.timeframe_results.values()
     )
+
+
+def test_multiscale_analyzer_exposes_resampled_series() -> None:
+    df = _synth_dataframe(periods=512)
+    analyzer = MultiScaleKuramoto(
+        timeframes=(TimeFrame.M1, TimeFrame.M5),
+        use_adaptive_window=False,
+        base_window=64,
+    )
+    result = analyzer.analyze(df)
+
+    assert TimeFrame.M1 in result.timeframe_series
+    assert TimeFrame.M5 in result.timeframe_series
+
+    expected = (
+        df["close"]
+        .sort_index()
+        .resample(TimeFrame.M5.pandas_freq)
+        .last()
+        .ffill()
+        .dropna()
+    )
+    pd.testing.assert_series_equal(result.timeframe_series[TimeFrame.M5], expected)
+
+
+def test_timeframe_cache_reuses_resampled_series(monkeypatch: pytest.MonkeyPatch) -> None:
+    df = _synth_dataframe(periods=512)
+    analyzer = MultiScaleKuramoto(
+        timeframes=(TimeFrame.M1, TimeFrame.M5),
+        use_adaptive_window=False,
+        base_window=64,
+    )
+    result = analyzer.analyze(df)
+
+    class RecordingCache:
+        def __init__(self) -> None:
+            self.store_calls: list[dict[str, object]] = []
+            self.backfill_calls: list[dict[str, object]] = []
+
+        def load(self, **_: object) -> None:
+            return None
+
+        def store(self, **kwargs: object) -> str:
+            self.store_calls.append(dict(kwargs))
+            return "fingerprint"
+
+        def update_backfill_state(self, *args: object, **kwargs: object) -> None:
+            self.backfill_calls.append({"args": args, "kwargs": dict(kwargs)})
+
+    cache = RecordingCache()
+    feature = MultiScaleKuramotoFeature(analyzer=analyzer, cache=cache)
+
+    def fail_resample(*_: object, **__: object) -> pd.Series:
+        raise AssertionError("_resample_prices should not be used when timeframe_series is populated")
+
+    monkeypatch.setattr(feature.analyzer, "_resample_prices", fail_resample)
+
+    params = feature._cache_params("close")
+    feature._store_timeframe_cache(df, "close", params, result)
+
+    assert cache.store_calls
+    assert cache.backfill_calls
