@@ -432,7 +432,7 @@ class MultiScaleKuramotoFeature(BaseFeature):
         if selector is None:
             return {}
         params: dict[str, Any] = {"class": selector.__class__.__name__}
-        for attr in ("min_window", "max_window", "wavelet", "levels"):
+        for attr in ("min_window", "max_window", "wavelet", "levels", "max_samples"):
             if hasattr(selector, attr):
                 params[attr] = getattr(selector, attr)
         return params
