@@ -127,6 +127,12 @@ class LayerCache:
             return None
         return pd.Interval(entry.start, entry.end, closed="both")
 
+    def delete(self, key: CacheKey) -> bool:
+        """Remove ``key`` from the cache if present."""
+
+        with self._lock:
+            return self._entries.pop(key, None) is not None
+
 
 @dataclass(frozen=True)
 class Gap:

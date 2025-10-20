@@ -211,6 +211,23 @@ class DataIngestionCacheService:
         key = self._build_key(layer, symbol, venue, timeframe, instrument_type)
         return self._metadata.get(key)
 
+    def delete_cached_frame(
+        self,
+        *,
+        layer: str,
+        symbol: str,
+        venue: str,
+        timeframe: str,
+        instrument_type: InstrumentType = InstrumentType.SPOT,
+    ) -> bool:
+        """Remove cached data and metadata for the provided cache key."""
+
+        key = self._build_key(layer, symbol, venue, timeframe, instrument_type)
+        cache = self._registry.cache_for(layer)
+        removed_from_cache = cache.delete(key)
+        metadata_removed = self._metadata.pop(key, None) is not None
+        return removed_from_cache or metadata_removed
+
     def cache_snapshot(self) -> list[CacheEntrySnapshot]:
         """Return metadata for all cached datasets ordered deterministically."""
 

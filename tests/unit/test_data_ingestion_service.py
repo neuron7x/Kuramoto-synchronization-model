@@ -366,6 +366,58 @@ def test_cache_snapshot_returns_sorted_entries() -> None:
     assert times_by_layer["raw"] < times_by_layer["features"]
 
 
+def test_delete_cached_frame_evicts_dataset_and_metadata() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [_tick(base.replace(minute=i), 100.0 + i) for i in range(3)]
+    service = DataIngestionCacheService()
+    service.cache_ticks(
+        ticks, layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+
+    removed = service.delete_cached_frame(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+
+    assert removed is True
+    assert service.metadata_for(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    ) is None
+    assert service.get_cached_frame(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    ).empty
+
+
+def test_delete_cached_frame_handles_missing_entries() -> None:
+    service = DataIngestionCacheService()
+
+    removed = service.delete_cached_frame(
+        layer="raw", symbol="MISSING", venue="BINANCE", timeframe="1min"
+    )
+
+    assert removed is False
+
+
+def test_delete_cached_frame_removes_metadata_only_entry() -> None:
+    frame = pd.DataFrame(columns=["price", "volume"], index=pd.DatetimeIndex([], tz="UTC"))
+    service = DataIngestionCacheService()
+    service.cache_frame(
+        frame,
+        layer="raw",
+        symbol="BTCUSD",
+        venue="BINANCE",
+        timeframe="1min",
+    )
+
+    removed = service.delete_cached_frame(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+
+    assert removed is True
+    assert service.metadata_for(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    ) is None
+
+
 def test_metadata_for_unknown_key_returns_none() -> None:
     service = DataIngestionCacheService()
     assert (
