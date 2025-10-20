@@ -64,8 +64,8 @@ class IGSConfig:
     perm_emb_dim: int = 5
     perm_tau: int = 1
     adapt_method: str = "off"
-    k_min: int = 5
-    k_max: int = 15
+    k_min: Optional[int] = None
+    k_max: Optional[int] = None
     adapt_threshold: float = 0.10
     adapt_persist: int = 3
     adapt_cooldown: int = 50
@@ -103,6 +103,17 @@ class IGSConfig:
             raise ValueError(
                 "window must be >= (perm_emb_dim - 1) * perm_tau + 1 to compute permutation entropy"
             )
+        default_k_min = 5
+        default_k_max = 15
+
+        if self.k_min is None:
+            inferred_k_min = min(default_k_min, self.n_states)
+            self.k_min = max(2, inferred_k_min)
+
+        if self.k_max is None:
+            inferred_k_max = max(default_k_max, self.n_states)
+            self.k_max = inferred_k_max
+
         if self.k_min < 2:
             raise ValueError("k_min must be >= 2")
         if self.k_min > self.k_max:
