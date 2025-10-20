@@ -6,27 +6,35 @@ import { escapeHtml } from './formatters.js';
 import { BASE_STYLES } from '../styles/base.css.js';
 import { TABLE_STYLES } from '../styles/table.css.js';
 import { CHART_STYLES } from '../styles/chart.css.js';
-
-const DEFAULT_TITLE = 'TradePulse Monitoring Hub';
-const DEFAULT_SUBTITLE = 'Unified control over execution, risk, and telemetry.';
+import { getMessage, t } from '../i18n/index.js';
 
 export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES].join('\n');
 
-function renderHeader({ title = DEFAULT_TITLE, subtitle = DEFAULT_SUBTITLE, tags = ['multi-asset', 'real-time'] } = {}) {
-  const tagMarkup = Array.isArray(tags)
-    ? tags
+function resolveHeaderDefaults({ title, subtitle, tags }) {
+  const defaultTags = getMessage('header.tags') || [];
+  return {
+    title: title ?? t('header.title'),
+    subtitle: subtitle ?? t('header.subtitle'),
+    tags: Array.isArray(tags) ? tags : Array.from(defaultTags),
+  };
+}
+
+function renderHeader({ title, subtitle, tags } = {}) {
+  const resolved = resolveHeaderDefaults({ title, subtitle, tags });
+  const tagMarkup = Array.isArray(resolved.tags)
+    ? resolved.tags
         .filter((tag) => tag)
-        .map((tag) => `<span class="tp-pill">${escapeHtml(tag)}</span>`)
+        .map((tag) => `<span class="tp-pill">${escapeHtml(String(tag))}</span>`)
         .join('')
     : '';
-  const subtitleBlock = subtitle
-    ? `<p class="tp-view__subtitle">${escapeHtml(subtitle)}</p>`
+  const subtitleBlock = resolved.subtitle
+    ? `<p class="tp-view__subtitle">${escapeHtml(String(resolved.subtitle))}</p>`
     : '';
 
   return `
     <header class="tp-view">
       <div class="tp-view__header">
-        <h1 class="tp-view__title">${escapeHtml(title)}</h1>
+        <h1 class="tp-view__title">${escapeHtml(String(resolved.title))}</h1>
         ${subtitleBlock}
       </div>
       <div class="tp-card__meta">${tagMarkup}</div>
@@ -35,20 +43,16 @@ function renderHeader({ title = DEFAULT_TITLE, subtitle = DEFAULT_SUBTITLE, tags
 }
 
 function renderNavigation(router, currentRoute) {
-  const labels = {
-    positions: 'Positions',
-    orders: 'Orders',
-    pnl: 'PnL & Quotes',
-  };
-
+  const sections = getMessage('nav.sections') || {};
+  const liveBadge = t('nav.badges.live');
   const links = router.list().map((route) => {
-    const label = labels[route] || route;
+    const label = sections[route] || route;
     const activeClass = route === currentRoute ? ' tp-nav__link--active' : '';
     return `
       <li>
         <a class="tp-nav__link${activeClass}" href="#${escapeHtml(route)}" data-route="${escapeHtml(route)}">
-          <span>${escapeHtml(label)}</span>
-          <span class="tp-nav__badge">Live</span>
+          <span>${escapeHtml(String(label))}</span>
+          <span class="tp-nav__badge">${escapeHtml(String(liveBadge))}</span>
         </a>
       </li>
     `;
@@ -56,7 +60,7 @@ function renderNavigation(router, currentRoute) {
 
   return `
     <nav class="tp-nav" aria-label="Primary">
-      <h2 class="tp-nav__title">TradePulse</h2>
+      <h2 class="tp-nav__title">${escapeHtml(String(t('nav.title')))}</h2>
       <ul class="tp-nav__links">${links.join('')}</ul>
     </nav>
   `;

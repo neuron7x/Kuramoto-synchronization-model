@@ -6,6 +6,7 @@ import {
   formatPercent,
   formatTimestamp,
 } from '../core/formatters.js';
+import { t } from '../i18n/index.js';
 
 /**
  * @typedef {import('../types/events').BarEvent} BarEvent
@@ -37,7 +38,7 @@ function normaliseQuoteSeries(quotes = []) {
 
 function summarisePnl(points = [], currency = 'USD') {
   if (!points.length) {
-    return { total: 0, change: 0, runRate: 0 };
+    return { total: 0, change: 0, runRate: 0, formatted: {} };
   }
   const sorted = points.slice().sort((a, b) => a.timestamp - b.timestamp);
   const first = sorted[0];
@@ -45,22 +46,27 @@ function summarisePnl(points = [], currency = 'USD') {
   const elapsed = last.timestamp - first.timestamp || 1;
   const change = last.value - first.value;
   const runRate = change / (elapsed / (60 * 60 * 1000));
+  const totalDisplay = formatCurrency(last.value, currency);
+  const changeDisplay = formatCurrency(change, currency);
+  const runRateDisplay = formatCurrency(runRate, currency);
+  const changePercent = first.value !== 0 ? formatPercent(change / Math.abs(first.value)) : formatPercent(0);
   return {
     total: last.value,
     change,
     runRate,
     formatted: {
-      total: formatCurrency(last.value, currency),
-      change: formatCurrency(change, currency),
-      runRate: `${formatCurrency(runRate, currency)}/h`,
-      changePercent: first.value !== 0 ? formatPercent(change / Math.abs(first.value)) : formatPercent(0),
+      total: totalDisplay,
+      change: changeDisplay,
+      changePercent,
+      runRate: `${runRateDisplay}/h`,
+      runRateValue: runRateDisplay,
     },
   };
 }
 
 function summariseQuotes(quotes = []) {
   if (!quotes.length) {
-    return { last: 0, change: 0 };
+    return { last: 0, change: 0, changePercent: 0 };
   }
   const sorted = quotes.slice().sort((a, b) => a.timestamp - b.timestamp);
   const first = sorted[0].value;
@@ -81,33 +87,53 @@ export function renderPnlQuotesView({ pnlPoints = [], quotes = [], currency = 'U
   const pnlSummary = summarisePnl(pnlSeries, currency);
   const quoteSummary = summariseQuotes(quoteSeries);
 
+  const pnlTotal = escapeHtml(pnlSummary.formatted?.total || formatCurrency(0, currency));
+  const pnlDelta = escapeHtml(
+    t('views.pnl.cards.pnl.delta', {
+      value: pnlSummary.formatted?.change || formatCurrency(0, currency),
+      percent: pnlSummary.formatted?.changePercent || formatPercent(0),
+    })
+  );
+  const pnlRunRate = escapeHtml(
+    t('views.pnl.cards.pnl.runRate', {
+      value: pnlSummary.formatted?.runRateValue || formatCurrency(0, currency),
+    })
+  );
+  const quoteLast = escapeHtml(formatNumber(quoteSummary.last, { maximumFractionDigits: 4 }));
+  const quoteDelta = escapeHtml(
+    t('views.pnl.cards.quotes.delta', {
+      value: formatNumber(quoteSummary.change, { maximumFractionDigits: 4 }),
+      percent: formatPercent(quoteSummary.changePercent),
+    })
+  );
+
   return {
     route: 'pnl',
-    title: 'PnL & Quotes',
+    title: t('views.pnl.title'),
     html: `
       <section class="tp-view">
         <header class="tp-view__header">
-          <h2 class="tp-view__title">PnL & Quotes Intelligence</h2>
-          <p class="tp-view__subtitle">Cross-reference live profitability against streaming market data.</p>
+          <h2 class="tp-view__title">${escapeHtml(t('views.pnl.heading'))}</h2>
+          <p class="tp-view__subtitle">${escapeHtml(t('views.pnl.subtitle'))}</p>
         </header>
         <section class="tp-grid tp-grid--two">
           <article class="tp-card">
             <header class="tp-card__header">
-              <h3 class="tp-card__title">Net PnL</h3>
+              <h3 class="tp-card__title">${escapeHtml(t('views.pnl.cards.pnl.title'))}</h3>
               <div class="tp-card__meta">
-                <span class="tp-stat">${escapeHtml(pnlSummary.formatted?.total || formatCurrency(0, currency))}</span>
-                <span class="tp-stat tp-stat--muted">Δ ${escapeHtml(pnlSummary.formatted?.change || formatCurrency(0, currency))} (${escapeHtml(pnlSummary.formatted?.changePercent || formatPercent(0))})</span>
-                <span class="tp-stat tp-stat--muted">Run-rate ${escapeHtml(pnlSummary.formatted?.runRate || `${formatCurrency(0, currency)}/h`)}</span>
+                <span class="tp-stat">${pnlTotal}</span>
+                <span class="tp-stat tp-stat--muted">${pnlDelta}</span>
+                <span class="tp-stat tp-stat--muted">${pnlRunRate}</span>
               </div>
             </header>
             ${pnlChart.html}
           </article>
           <article class="tp-card">
             <header class="tp-card__header">
-              <h3 class="tp-card__title">Quotes</h3>
+              <h3 class="tp-card__title">${escapeHtml(t('views.pnl.cards.quotes.title'))}</h3>
               <div class="tp-card__meta">
-                <span class="tp-stat">${escapeHtml(formatNumber(quoteSummary.last, { maximumFractionDigits: 4 }))}</span>
-                <span class="tp-stat tp-stat--muted">Δ ${escapeHtml(formatNumber(quoteSummary.change, { maximumFractionDigits: 4 }))} (${escapeHtml(formatPercent(quoteSummary.changePercent))})</span>
+                <span class="tp-stat">${quoteLast}</span>
+                <span class="tp-stat tp-stat--muted">${quoteDelta}</span>
               </div>
             </header>
             ${quoteChart.html}

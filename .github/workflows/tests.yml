@@ -42,6 +42,8 @@ jobs:
           uv pip install -c constraints/security.txt -r requirements.txt
           uv pip install -c constraints/security.txt -r requirements-dev.txt
           uv pip install pre-commit detect-secrets
+      - name: Validate localization bundles
+        run: .venv/bin/python scripts/localization/sync_translations.py --check
       - name: Install shellcheck
         run: |
           sudo apt-get update
@@ -88,6 +90,55 @@ jobs:
       - name: Prepare test report directories
         run: |
           mkdir -p reports
+      - name: Sync localization resources
+        run: |
+          .venv/bin/python scripts/localization/sync_translations.py
+
+      - name: Summarize localization coverage
+        id: localization_summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+
+          report_path = pathlib.Path('reports/localization/coverage.json')
+          if not report_path.exists():
+              raise SystemExit('Localization coverage report not generated')
+
+          data = json.loads(report_path.read_text(encoding='utf-8'))
+          lines = [
+              "### Localization coverage",
+              "",
+              "| Locale | Coverage | Missing keys | Extra keys |",
+              "| --- | --- | --- | --- |",
+          ]
+          for locale in sorted(data.get('locales', {})):
+              payload = data['locales'][locale]
+              missing = '<br>'.join(payload.get('missing', [])) or '—'
+              extra = '<br>'.join(payload.get('extra', [])) or '—'
+              coverage = float(payload.get('coverageRatio', 0.0)) * 100.0
+              lines.append(f"| {locale} | {coverage:.2f}% | {missing} | {extra} |")
+          lines.append("")
+          summary = "\n".join(lines) + "\n"
+
+          step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if step_summary:
+              with open(step_summary, 'a', encoding='utf-8') as handle:
+                  handle.write(summary)
+
+          github_output = os.environ.get('GITHUB_OUTPUT')
+          if github_output:
+              with open(github_output, 'a', encoding='utf-8') as handle:
+                  handle.write("coverage_summary<<'EOF'\n")
+                  handle.write(summary)
+                  handle.write('EOF\n')
+          PY
+      - name: Upload localization coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: localization-coverage
+          path: reports/localization/coverage.json
       - name: Run unit and integration tests with coverage
         run: |
           .venv/bin/python -m pytest \
@@ -500,6 +551,61 @@ jobs:
       - name: Prepare test report directories
         run: |
           mkdir -p reports
+      - name: Sync localization resources
+        run: |
+          .venv/bin/python scripts/localization/sync_translations.py
+
+      - name: Summarize localization coverage
+        id: localization_summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+
+          report_path = pathlib.Path('reports/localization/coverage.json')
+          if not report_path.exists():
+              raise SystemExit('Localization coverage report not generated')
+
+          data = json.loads(report_path.read_text(encoding='utf-8'))
+          lines = [
+              '### Localization coverage',
+              '',
+              '| Locale | Coverage | Missing keys | Extra keys |',
+              '| --- | --- | --- | --- |',
+          ]
+          for locale in sorted(data.get('locales', {})):
+              payload = data['locales'][locale]
+              missing = '<br>'.join(payload.get('missing', [])) or '—'
+              extra = '<br>'.join(payload.get('extra', [])) or '—'
+              coverage = float(payload.get('coverageRatio', 0.0)) * 100.0
+              lines.append(f"| {locale} | {coverage:.2f}% | {missing} | {extra} |")
+          lines.append('')
+          summary = '
+'.join(lines)
+
+          step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if step_summary:
+              with open(step_summary, 'a', encoding='utf-8') as handle:
+                  handle.write(summary + '
+')
+
+          github_output = os.environ.get('GITHUB_OUTPUT')
+          if github_output:
+              with open(github_output, 'a', encoding='utf-8') as handle:
+                  handle.write("coverage_summary<<'EOF'
+")
+                  handle.write(summary + '
+')
+                  handle.write('EOF
+')
+          PY
+
+      - name: Upload localization coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: localization-coverage
+          path: reports/localization/coverage.json
       - name: Run quarantined flaky tests
         run: |
           set -o pipefail

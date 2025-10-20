@@ -1,0 +1,109 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "ja-JP",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "トーン要注意：落ち着いた信頼感を維持してください。",
+      "views.orders.subtitle": "トーン要注意：即時性と透明性を丁寧語で伝えてください。",
+      "views.pnl.subtitle": "トーン要注意：定量的な裏付けを示しつつ過度な強調を避ける。",
+      "views.positions.subtitle": "トーン要注意：リスク管理の安心感を過不足なく伝える。"
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "ライブ"
+    },
+    "sections": {
+      "positions": "ポジション",
+      "orders": "注文",
+      "pnl": "PnLと気配値"
+    }
+  },
+  "header": {
+    "title": "TradePulseモニタリングハブ",
+    "subtitle": "執行・リスク・テレメトリを一元管理。",
+    "tags": [
+      "マルチアセット",
+      "リアルタイム"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "注文",
+      "heading": "注文ボード",
+      "subtitle": "約定進捗と実行テレメトリを備えたライブ注文フロー。",
+      "table": {
+        "columns": {
+          "order_id": "注文ID",
+          "symbol": "銘柄",
+          "side": "売買",
+          "order_type": "タイプ",
+          "quantity": "数量",
+          "filledQuantity": "約定数量",
+          "remaining": "残数量",
+          "progress": "進捗",
+          "limitPrice": "指値",
+          "avgFillPrice": "平均約定",
+          "status": "ステータス",
+          "lastFill": "最新約定"
+        },
+        "badges": {
+          "side": {
+            "buy": "買い",
+            "sell": "売り"
+          },
+          "status": {
+            "FILLED": "完了",
+            "WORKING": "受付中"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnLと気配値",
+      "heading": "PnL・気配値インサイト",
+      "subtitle": "最新の損益をストリーミング市場データと照合。",
+      "cards": {
+        "pnl": {
+          "title": "純PnL",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "ランレート {value}/時"
+        },
+        "quotes": {
+          "title": "気配値",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "ポジション",
+      "heading": "保有ポジション",
+      "subtitle": "最新約定にもとづくエクスポージャー集計。",
+      "table": {
+        "columns": {
+          "symbol": "銘柄",
+          "netQuantity": "純数量",
+          "avgPrice": "平均約定",
+          "marketPrice": "市場価格",
+          "exposure": "エクスポージャー",
+          "pnl": "含み損益",
+          "lastFill": "最新約定"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "利益 {percent}",
+            "negative": "損失 {percent}"
+          }
+        }
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "最新約定"
+    }
+  }
+}

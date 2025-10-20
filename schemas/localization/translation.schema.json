@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradepulse.example.com/schemas/localization/translation.schema.json",
+  "type": "object",
+  "required": ["locale", "nav", "header", "views"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "locale": { "type": "string", "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$" },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "reviewerNotes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "nav": {
+      "type": "object",
+      "required": ["brand", "title", "sections"],
+      "properties": {
+        "brand": { "type": "string" },
+        "title": { "type": "string" },
+        "badges": {
+          "type": "object",
+          "properties": {
+            "live": { "type": "string" }
+          },
+          "additionalProperties": { "type": "string" }
+        },
+        "sections": {
+          "type": "object",
+          "required": ["positions", "orders", "pnl"],
+          "properties": {
+            "positions": { "type": "string" },
+            "orders": { "type": "string" },
+            "pnl": { "type": "string" }
+          },
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "header": {
+      "type": "object",
+      "required": ["title", "subtitle"],
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "views": {
+      "type": "object",
+      "required": ["orders", "pnl", "positions"],
+      "properties": {
+        "orders": { "$ref": "#/definitions/view" },
+        "pnl": { "$ref": "#/definitions/view" },
+        "positions": { "$ref": "#/definitions/view" }
+      },
+      "additionalProperties": true
+    },
+    "common": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "view": {
+      "type": "object",
+      "required": ["title", "heading", "subtitle"],
+      "properties": {
+        "title": { "type": "string" },
+        "heading": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "table": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "badges": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": { "type": ["string", "object"] }
+              }
+            },
+            "empty": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "cards": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "delta": { "type": "string" },
+              "runRate": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

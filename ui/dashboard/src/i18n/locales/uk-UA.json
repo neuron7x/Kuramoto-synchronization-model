@@ -1,0 +1,109 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "uk-UA",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Тон-критично: зберігайте стриману впевненість і прозорість.",
+      "views.orders.subtitle": "Тон-критично: наголос на контролі виконання без маркетингового пафосу.",
+      "views.pnl.subtitle": "Тон-критично: підкресліть аналітичну точність без надмірного оптимізму.",
+      "views.positions.subtitle": "Тон-критично: демонструйте впевнене управління ризиком."
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "У реальному часі"
+    },
+    "sections": {
+      "positions": "Позиції",
+      "orders": "Заявки",
+      "pnl": "PnL та котирування"
+    }
+  },
+  "header": {
+    "title": "Центр моніторингу TradePulse",
+    "subtitle": "Єдина точка контролю виконання, ризиків та телеметрії.",
+    "tags": [
+      "мультиактиви",
+      "реальний час"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "Заявки",
+      "heading": "Журнал заявок",
+      "subtitle": "Онлайн-потік заявок із деталізацією заповнення та телеметрією виконання.",
+      "table": {
+        "columns": {
+          "order_id": "ID заявки",
+          "symbol": "Тікер",
+          "side": "Сторона",
+          "order_type": "Тип",
+          "quantity": "Кількість",
+          "filledQuantity": "Виконано",
+          "remaining": "Залишок",
+          "progress": "Прогрес",
+          "limitPrice": "Лімітна ціна",
+          "avgFillPrice": "Середня ціна",
+          "status": "Статус",
+          "lastFill": "Останнє заповнення"
+        },
+        "badges": {
+          "side": {
+            "buy": "Купівля",
+            "sell": "Продаж"
+          },
+          "status": {
+            "FILLED": "Виконано",
+            "WORKING": "Активна"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL та котирування",
+      "heading": "Аналітика PnL та котирувань",
+      "subtitle": "Порівнюйте актуальну прибутковість із потоковими ринковими даними.",
+      "cards": {
+        "pnl": {
+          "title": "Чистий PnL",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Темп {value}/год"
+        },
+        "quotes": {
+          "title": "Котирування",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Позиції",
+      "heading": "Відкриті позиції",
+      "subtitle": "Агреговані експозиції на основі актуальних угод.",
+      "table": {
+        "columns": {
+          "symbol": "Тікер",
+          "netQuantity": "Чиста кількість",
+          "avgPrice": "Середня ціна",
+          "marketPrice": "Ринкова ціна",
+          "exposure": "Експозиція",
+          "pnl": "Нереалізований PnL",
+          "lastFill": "Останнє заповнення"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Прибуток {percent}",
+            "negative": "Збиток {percent}"
+          }
+        }
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Останнє заповнення"
+    }
+  }
+}

@@ -6,6 +6,7 @@ import {
   formatPercent,
   formatTimestamp,
 } from '../core/formatters.js';
+import { getMessage, t } from '../i18n/index.js';
 
 /**
  * @typedef {import('../types/events').OrderEvent} OrderEvent
@@ -76,27 +77,54 @@ function buildOrderRows(orders = [], fills = []) {
   });
 }
 
+function getOrdersTableTranslations() {
+  const table = getMessage('views.orders.table') || {};
+  return {
+    columns: table.columns || {},
+    badges: table.badges || {},
+    empty: table.empty ?? '—',
+  };
+}
+
 export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page = 1 } = {}) {
   const rows = buildOrderRows(orders, fills);
+  const { columns, badges, empty } = getOrdersTableTranslations();
+  const sideLabels = (badges.side || {});
+  const statusLabels = (badges.status || {});
   const table = createLiveTable({
     columns: [
-      { id: 'order_id', label: 'Order ID', accessor: (row) => row.order_id, formatter: (value) => `<code>${escapeHtml(value)}</code>` },
-      { id: 'symbol', label: 'Symbol', accessor: (row) => row.symbol, formatter: (value) => `<strong>${escapeHtml(value)}</strong>` },
+      {
+        id: 'order_id',
+        label: columns.order_id || 'Order ID',
+        accessor: (row) => row.order_id,
+        formatter: (value) => `<code>${escapeHtml(value)}</code>`,
+      },
+      {
+        id: 'symbol',
+        label: columns.symbol || 'Symbol',
+        accessor: (row) => row.symbol,
+        formatter: (value) => `<strong>${escapeHtml(value)}</strong>`,
+      },
       {
         id: 'side',
-        label: 'Side',
+        label: columns.side || 'Side',
         accessor: (row) => row.side,
-        formatter: (value) => `<span class="tp-pill tp-pill--${String(value).toLowerCase() === 'sell' ? 'negative' : 'positive'}">${escapeHtml(value)}</span>`,
+        formatter: (value) => {
+          const key = String(value || '').toLowerCase();
+          const label = sideLabels[key] || value;
+          const tone = key === 'sell' ? 'negative' : 'positive';
+          return `<span class="tp-pill tp-pill--${tone}">${escapeHtml(String(label || value || ''))}</span>`;
+        },
       },
       {
         id: 'order_type',
-        label: 'Type',
+        label: columns.order_type || 'Type',
         accessor: (row) => row.order_type,
         formatter: (value) => escapeHtml(value),
       },
       {
         id: 'quantity',
-        label: 'Quantity',
+        label: columns.quantity || 'Quantity',
         accessor: (row) => row.quantity,
         formatter: (value) => escapeHtml(formatNumber(value, { maximumFractionDigits: 4 })),
         sortValue: (row) => row.quantity,
@@ -104,7 +132,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
       },
       {
         id: 'filledQuantity',
-        label: 'Filled',
+        label: columns.filledQuantity || 'Filled',
         accessor: (row) => row.filledQuantity,
         formatter: (value) => escapeHtml(formatNumber(value, { maximumFractionDigits: 4 })),
         sortValue: (row) => row.filledQuantity,
@@ -112,7 +140,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
       },
       {
         id: 'remaining',
-        label: 'Remaining',
+        label: columns.remaining || 'Remaining',
         accessor: (row) => row.remaining,
         formatter: (value) => escapeHtml(formatNumber(Math.max(value, 0), { maximumFractionDigits: 4 })),
         sortValue: (row) => row.remaining,
@@ -120,39 +148,43 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
       },
       {
         id: 'progress',
-        label: 'Progress',
+        label: columns.progress || 'Progress',
         accessor: (row) => row.progress,
-        formatter: (value) => `<div class="tp-progress"><span class="tp-progress__bar" style="width:${Math.round(value * 100)}%"></span><span class="tp-progress__label">${escapeHtml(formatPercent(value))}</span></div>`,
+        formatter: (value) =>
+          `<div class="tp-progress"><span class="tp-progress__bar" style="width:${Math.round(value * 100)}%"></span><span class="tp-progress__label">${escapeHtml(formatPercent(value))}</span></div>`,
         sortValue: (row) => row.progress,
         align: 'right',
       },
       {
         id: 'limitPrice',
-        label: 'Limit Price',
+        label: columns.limitPrice || 'Limit Price',
         accessor: (row) => row.limitPrice,
-        formatter: (value) => (value === null ? '—' : escapeHtml(formatCurrency(value))),
+        formatter: (value) => (value === null ? escapeHtml(String(empty)) : escapeHtml(formatCurrency(value))),
         sortValue: (row) => row.limitPrice ?? 0,
         align: 'right',
       },
       {
         id: 'avgFillPrice',
-        label: 'Avg Fill',
+        label: columns.avgFillPrice || 'Avg Fill',
         accessor: (row) => row.avgFillPrice,
-        formatter: (value) => (value === null ? '—' : escapeHtml(formatCurrency(value))),
+        formatter: (value) => (value === null ? escapeHtml(String(empty)) : escapeHtml(formatCurrency(value))),
         sortValue: (row) => row.avgFillPrice ?? 0,
         align: 'right',
       },
       {
         id: 'status',
-        label: 'Status',
+        label: columns.status || 'Status',
         accessor: (row) => row.status,
-        formatter: (value) => `<span class="tp-status tp-status--${normaliseStatusModifier(value)}">${escapeHtml(value)}</span>`,
+        formatter: (value) => {
+          const label = statusLabels[value] || value;
+          return `<span class="tp-status tp-status--${normaliseStatusModifier(value)}">${escapeHtml(String(label || value || ''))}</span>`;
+        },
       },
       {
         id: 'lastFill',
-        label: 'Last Fill',
+        label: columns.lastFill || 'Last Fill',
         accessor: (row) => row.lastFill,
-        formatter: (value) => (value ? `<time>${escapeHtml(formatTimestamp(value))}</time>` : '—'),
+        formatter: (value) => (value ? `<time>${escapeHtml(formatTimestamp(value))}</time>` : escapeHtml(String(empty))),
         sortValue: (row) => row.lastFill,
       },
     ],
@@ -166,12 +198,12 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
 
   return {
     route: 'orders',
-    title: 'Orders',
+    title: t('views.orders.title'),
     html: `
       <section class="tp-view">
         <header class="tp-view__header">
-          <h2 class="tp-view__title">Order Blotter</h2>
-          <p class="tp-view__subtitle">Live order flow enriched with fill progress and execution telemetry.</p>
+          <h2 class="tp-view__title">${escapeHtml(t('views.orders.heading'))}</h2>
+          <p class="tp-view__subtitle">${escapeHtml(t('views.orders.subtitle'))}</p>
         </header>
         ${html}
       </section>

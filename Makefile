@@ -13,12 +13,12 @@ fpma-check:
 lock:
 	python -m pip install --upgrade pip
 	python -m pip install pip-tools
-        pip-compile --resolver=backtracking --strip-extras --no-annotate \
-            --constraint constraints/security.txt \
-            --output-file=requirements.lock requirements.txt
-        pip-compile --resolver=backtracking --strip-extras --no-annotate \
-            --constraint constraints/security.txt \
-            --output-file=requirements-dev.lock requirements-dev.txt
+	pip-compile --resolver=backtracking --strip-extras --no-annotate \
+	    --constraint constraints/security.txt \
+	    --output-file=requirements.lock requirements.txt
+	pip-compile --resolver=backtracking --strip-extras --no-annotate \
+	    --constraint constraints/security.txt \
+	    --output-file=requirements-dev.lock requirements-dev.txt
 
 .PHONY: build-package
 build-package: clean-dist
@@ -60,6 +60,10 @@ scripts-dev-up:
 scripts-dev-down:
 	python -m scripts dev-down
 
+
+.PHONY: i18n-validate
+i18n-validate:
+	python scripts/localization/sync_translations.py
 .PHONY: mutation-test
 mutation-test:
 	mutmut run --use-coverage
