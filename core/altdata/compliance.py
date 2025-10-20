@@ -2,26 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Iterable, Mapping
 
-
-@dataclass(frozen=True)
-class ComplianceIssue:
-    """Represents a single compliance violation or warning."""
-
-    severity: str
-    message: str
-
-
-@dataclass(frozen=True)
-class ComplianceReport:
-    """Summarises the compliance posture of a data source."""
-
-    compliant: bool
-    issues: tuple[ComplianceIssue, ...]
-    metadata: Mapping[str, str]
+from core.compliance import ComplianceIssue, ComplianceReport
 
 
 class AltDataComplianceChecker:
