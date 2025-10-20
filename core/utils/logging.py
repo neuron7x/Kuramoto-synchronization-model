@@ -11,6 +11,7 @@ import logging
 import sys
 import time
 from contextlib import contextmanager
+from contextvars import ContextVar, Token
 from typing import Any, Dict, Iterator, Optional
 
 try:  # pragma: no cover - tracing is optional
@@ -19,8 +20,54 @@ try:  # pragma: no cover - tracing is optional
     _TRACE_LOG_CORRELATION = True
 except Exception:  # pragma: no cover - optional dependency not installed
     get_current_span = None  # type: ignore[assignment]
-    _TRACE_LOG_CORRELATION = False
+_TRACE_LOG_CORRELATION = False
 from uuid import uuid4
+
+
+_CORRELATION_ID_VAR: ContextVar[Optional[str]] = ContextVar(
+    "tradepulse_correlation_id", default=None
+)
+
+
+def get_correlation_id(default: Optional[str] = None) -> Optional[str]:
+    """Return the correlation identifier for the current execution context.
+
+    Args:
+        default: Value to return when no correlation ID has been bound.
+
+    Returns:
+        The currently bound correlation identifier or the provided ``default``.
+    """
+
+    correlation_id = _CORRELATION_ID_VAR.get()
+    if correlation_id is None:
+        return default
+    return correlation_id
+
+
+def set_correlation_id(correlation_id: Optional[str]) -> None:
+    """Bind a correlation identifier to the current context."""
+
+    _CORRELATION_ID_VAR.set(correlation_id)
+
+
+def clear_correlation_id() -> None:
+    """Clear any correlation identifier bound to the current context."""
+
+    _CORRELATION_ID_VAR.set(None)
+
+
+@contextmanager
+def correlation_id_context(
+    correlation_id: Optional[str],
+) -> Iterator[Optional[str]]:
+    """Temporarily bind a correlation identifier within the enclosed context."""
+
+    token: Token[Optional[str]] = _CORRELATION_ID_VAR.set(correlation_id)
+    try:
+        yield correlation_id
+    finally:
+        _CORRELATION_ID_VAR.reset(token)
 
 
 class JSONFormatter(logging.Formatter):
@@ -79,11 +126,24 @@ class StructuredLogger:
 
     def __init__(self, name: str, correlation_id: Optional[str] = None):
         self.logger = logging.getLogger(name)
-        self.correlation_id = correlation_id or str(uuid4())
+        self._explicit_correlation_id = correlation_id
+
+    def _resolve_correlation_id(self) -> str:
+        """Determine the correlation identifier for the current log record."""
+
+        context_id = get_correlation_id()
+        if context_id:
+            return context_id
+
+        if self._explicit_correlation_id:
+            return self._explicit_correlation_id
+
+        self._explicit_correlation_id = str(uuid4())
+        return self._explicit_correlation_id
 
     def _log(self, level: int, msg: str, **kwargs: Any) -> None:
         """Internal logging method with structured fields."""
-        extra_data: Dict[str, Any] = {"correlation_id": self.correlation_id}
+        extra_data: Dict[str, Any] = {"correlation_id": self._resolve_correlation_id()}
         if kwargs:
             extra_data["extra_fields"] = kwargs
         self.logger.log(level, msg, extra=extra_data)
@@ -201,6 +261,10 @@ def get_logger(name: str, correlation_id: Optional[str] = None) -> StructuredLog
 __all__ = [
     "JSONFormatter",
     "StructuredLogger",
+    "clear_correlation_id",
     "configure_logging",
+    "correlation_id_context",
+    "get_correlation_id",
     "get_logger",
+    "set_correlation_id",
 ]

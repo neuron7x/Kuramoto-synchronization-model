@@ -8,7 +8,15 @@ import logging
 
 import pytest
 
-from core.utils.logging import JSONFormatter, StructuredLogger, configure_logging
+from core.utils.logging import (
+    JSONFormatter,
+    StructuredLogger,
+    clear_correlation_id,
+    configure_logging,
+    correlation_id_context,
+    get_correlation_id,
+    set_correlation_id,
+)
 
 
 def _make_record(**extra: object) -> logging.LogRecord:
@@ -112,3 +120,36 @@ def test_configure_logging_emits_json_payload() -> None:
     assert payload["logger"] == "tradepulse.tests"
     assert payload["message"] == "hello world"
     assert "timestamp" in payload
+
+
+def test_structured_logger_prefers_context_correlation_id(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO)
+
+    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-explicit")
+
+    with correlation_id_context("cid-context"):
+        logger.info("emit from context", message_id="cid-context")
+
+    record = caplog.records[-1]
+
+    assert record.correlation_id == "cid-context"
+    assert record.extra_fields["message_id"] == "cid-context"
+
+
+def test_correlation_id_context_restores_previous_binding() -> None:
+    clear_correlation_id()
+
+    assert get_correlation_id() is None
+
+    set_correlation_id("cid-root")
+    assert get_correlation_id() == "cid-root"
+
+    with correlation_id_context("cid-inner"):
+        assert get_correlation_id() == "cid-inner"
+
+    assert get_correlation_id() == "cid-root"
+
+    clear_correlation_id()
+    assert get_correlation_id() is None
