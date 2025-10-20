@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from core.utils.slo import AutoRollbackGuard, SLOConfig
+from core.utils.slo import AutoRollbackGuard, SLOBurnRateRule, SLOConfig
 
 
 def _ts(offset_seconds: float) -> datetime:
@@ -105,6 +105,45 @@ def test_evaluate_snapshot_allows_external_metrics() -> None:
     )
     assert should_trigger is True
     assert triggered[-1] == "latency"
+
+
+def test_evaluate_snapshot_enforces_burn_rate_rules() -> None:
+    triggered: list[tuple[str, dict[str, float]]] = []
+    config = SLOConfig(
+        error_rate_threshold=0.02,
+        latency_threshold_ms=400.0,
+        burn_rate_rules=(
+            SLOBurnRateRule(
+                window=timedelta(minutes=1),
+                max_burn_rate=3.0,
+                min_requests=50,
+                name="1m",
+            ),
+        ),
+    )
+    guard = AutoRollbackGuard(
+        config,
+        rollback_callback=lambda reason, summary: triggered.append((reason, summary)),
+    )
+
+    now = _ts(0)
+    should_trigger = guard.evaluate_snapshot(
+        error_rate=0.01,
+        latency_p95_ms=150.0,
+        timestamp=now,
+        total_requests=500,
+        burn_window_totals={timedelta(minutes=1): (120, 15)},
+    )
+
+    assert should_trigger is True
+    assert triggered, "Expected burn-rate rule to trigger"
+    reason, summary = triggered[-1]
+    assert reason == "burn_rate[1m]"
+    assert summary["reason"] == "burn_rate[1m]"
+    assert summary["requests[1m]"] == pytest.approx(120.0)
+    assert summary["burn_rate[1m]"] == pytest.approx(6.25)
+    assert summary["burn_rate_window_seconds"] == pytest.approx(60.0)
+    assert summary["burn_rate_threshold"] == pytest.approx(3.0)
 
 
 def test_input_validation() -> None:
