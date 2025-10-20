@@ -382,7 +382,7 @@ class InMemoryCacheLayer(CacheLayer):
         self._lock = RLock()
 
     def _ensure_capacity(self) -> None:
-        over_capacity = max(len(self._store) - self.max_entries + 1, 0)
+        over_capacity = max(len(self._store) - self.max_entries, 0)
         if over_capacity <= 0:
             return
         victims = self.eviction_policy.choose_eviction_candidates(over_capacity)
@@ -426,9 +426,13 @@ class InMemoryCacheLayer(CacheLayer):
             )
             expires_at = monotonic() + ttl if ttl is not None else None
             entry = CacheEntry(value=value, expires_at=expires_at, metadata=dict(context_metadata))
-            self._ensure_capacity()
             self._store[normalized_key] = entry
-            self.eviction_policy.on_insert(normalized_key)
+            if existing_entry is None:
+                self.eviction_policy.on_insert(normalized_key)
+            else:
+                self.eviction_policy.on_access(normalized_key)
+            if len(self._store) > self.max_entries:
+                self._ensure_capacity()
 
     def invalidate(self, key: Any) -> None:
         normalized_key = CacheKeyNormalizer.normalize(key)
