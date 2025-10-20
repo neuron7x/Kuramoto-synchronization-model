@@ -90,30 +90,35 @@ jobs:
         # Reference: https://github.com/pypa/pip/security/advisories/GHSA-4xh5-x5gv-qwph
 
         # Use jq to check if there are any vulnerabilities OTHER than the known pip issue
-        OTHER_VULNS=$(jq -r '
-          [.dependencies[] |
-           select(.vulns != null and (.vulns | length) > 0) |
-           .vulns[] |
-           select(.id != "GHSA-4xh5-x5gv-qwph")
-          ] | length
-        ' pip-audit-report.json)
+        if [ -f pip-audit-report.json ]; then
+          OTHER_VULNS=$(jq -r '
+            [.dependencies[] // empty |
+             select(.vulns != null and (.vulns | length) > 0) |
+             .vulns[] |
+             select(.id != "GHSA-4xh5-x5gv-qwph")
+            ] | length
+          ' pip-audit-report.json)
 
-        echo "Found $OTHER_VULNS vulnerabilities (excluding GHSA-4xh5-x5gv-qwph)"
+          echo "Found $OTHER_VULNS vulnerabilities (excluding GHSA-4xh5-x5gv-qwph)"
 
-        if [ "$OTHER_VULNS" -gt 0 ]; then
-          echo "ERROR: Found vulnerabilities other than the known pip issue GHSA-4xh5-x5gv-qwph"
-          echo "Please review and fix these vulnerabilities:"
-          jq -r '
-            .dependencies[] |
-            select(.vulns != null and (.vulns | length) > 0) |
-            .vulns[] |
-            select(.id != "GHSA-4xh5-x5gv-qwph") |
-            "  - \(.id): \(.description[:100])..."
-          ' pip-audit-report.json
-          exit 1
+          if [ "$OTHER_VULNS" -gt 0 ]; then
+            echo "ERROR: Found vulnerabilities other than the known pip issue GHSA-4xh5-x5gv-qwph"
+            echo "Please review and fix these vulnerabilities:"
+            jq -r '
+              .dependencies[] // empty |
+              select(.vulns != null and (.vulns | length) > 0) |
+              .vulns[] |
+              select(.id != "GHSA-4xh5-x5gv-qwph") |
+              "  - \(.id): \(.description[:100])..."
+            ' pip-audit-report.json
+            exit 1
+          else
+            echo "SUCCESS: Only the known pip vulnerability GHSA-4xh5-x5gv-qwph is present"
+            echo "This will be fixed when pip 25.3 is released"
+          fi
         else
-          echo "SUCCESS: Only the known pip vulnerability GHSA-4xh5-x5gv-qwph is present"
-          echo "This will be fixed when pip 25.3 is released"
+          echo "WARNING: pip-audit report not found; treating as failure to avoid false negatives"
+          exit 1
         fi
 
     - name: Upload security reports
