@@ -9,7 +9,9 @@ from domain import Order, OrderType
 from execution.audit import ExecutionAuditLogger
 from execution.order import position_sizing
 from execution.risk import (
+    DataQualityError,
     IdempotentRetryExecutor,
+    JsonRiskStateStore,
     LimitViolation,
     OrderRateExceeded,
     RiskError,
@@ -176,6 +178,41 @@ def test_risk_manager_normalises_symbol_aliases() -> None:
     manager.register_fill("BTCUSDT", "buy", qty=1.0, price=20.0)
     assert manager.current_position("btc/usdt") == pytest.approx(1.0)
     assert manager.current_notional("BTC_USDT") == pytest.approx(20.0)
+
+
+def test_risk_manager_persists_state_across_restarts(tmp_path) -> None:
+    clock = _TimeStub()
+    limits = RiskLimits(
+        max_notional=10_000.0,
+        max_position=50.0,
+        max_orders_per_interval=3,
+        interval_seconds=30.0,
+    )
+    store = JsonRiskStateStore(tmp_path / "risk_state.json")
+    manager = RiskManager(limits, time_source=clock, state_store=store)
+
+    manager.validate_order("ETH-USD", "buy", qty=5.0, price=100.0)
+    manager.register_fill("ETH-USD", "buy", qty=5.0, price=100.0)
+    clock.advance(1.0)
+    manager.validate_order("ETH-USD", "buy", qty=1.0, price=100.0)
+    manager.register_fill("ETH-USD", "buy", qty=1.0, price=100.0)
+    with pytest.raises(LimitViolation):
+        manager.validate_order("ETH-USD", "buy", qty=60.0, price=100.0)
+
+    restart = RiskManager(limits, time_source=clock, state_store=store)
+    assert restart.current_position("eth_usd") == pytest.approx(6.0)
+    assert restart.current_notional("ETHUSD") == pytest.approx(600.0)
+    assert list(restart._submissions) == list(manager._submissions)
+    assert restart._limit_violation_streak == manager._limit_violation_streak
+
+
+def test_risk_state_store_rejects_invalid_payload(tmp_path) -> None:
+    path = tmp_path / "risk_state.json"
+    path.write_text("{\"positions\": {\"BTC\": \"nan\"}}", encoding="utf-8")
+    store = JsonRiskStateStore(path)
+    limits = RiskLimits(max_notional=1_000.0, max_position=10.0)
+    with pytest.raises(DataQualityError):
+        RiskManager(limits, state_store=store)
 
 
 def test_idempotent_retry_executor_retries_and_caches() -> None:

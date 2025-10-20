@@ -41,6 +41,8 @@ from .risk import (
     OrderRateExceeded,
     RiskLimits,
     RiskManager,
+    RiskStateStore,
+    JsonRiskStateStore,
     SQLiteKillSwitchStateStore,
 )
 from .rollout import (
@@ -88,6 +90,8 @@ __all__ = [
     "RiskManager",
     "KillSwitch",
     "KillSwitchStateStore",
+    "RiskStateStore",
+    "JsonRiskStateStore",
     "SQLiteKillSwitchStateStore",
     "LimitViolation",
     "OrderRateExceeded",

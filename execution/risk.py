@@ -15,6 +15,8 @@ attributable—an explicit requirement in ``docs/quality_gates.md``.
 
 from __future__ import annotations
 
+import json
+import math
 import sqlite3
 import threading
 import time
@@ -165,6 +167,135 @@ class KillSwitchStateRecord(BaseModel):
         if any(ord(ch) < 32 and ch not in {"\t", "\n"} for ch in self.reason):
             raise ValueError("reason contains control characters")
         return self
+
+
+class RiskStateStore(Protocol):
+    """Persistence backend for :class:`RiskManager` runtime state."""
+
+    def load(self) -> "RiskStateRecord | None":
+        """Return the validated persisted state if available."""
+
+    def save(self, state: "RiskStateRecord") -> None:
+        """Persist the supplied state atomically."""
+
+
+class RiskStateRecord(BaseModel):
+    """Validated representation of the risk manager runtime state."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    positions: Dict[str, float] = Field(default_factory=dict)
+    last_notional: Dict[str, float] = Field(default_factory=dict)
+    submissions: list[float] = Field(default_factory=list)
+    limit_violation_streak: int = 0
+    throttle_violation_streak: int = 0
+    updated_at: datetime
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_payload(cls, data: object) -> Mapping[str, object]:
+        if isinstance(data, BaseModel):
+            payload = data.model_dump()
+        elif isinstance(data, Mapping):
+            payload = dict(data)
+        else:
+            raise TypeError("Risk state payload must be a mapping")
+
+        now = datetime.now(timezone.utc)
+        payload.setdefault("positions", {})
+        payload.setdefault("last_notional", {})
+        payload.setdefault("submissions", [])
+        payload.setdefault("limit_violation_streak", 0)
+        payload.setdefault("throttle_violation_streak", 0)
+        payload.setdefault("updated_at", now.isoformat())
+        return payload
+
+    @model_validator(mode="after")
+    def _normalise(self) -> "RiskStateRecord":
+        cleaned_positions: Dict[str, float] = {}
+        for symbol, value in self.positions.items():
+            if value is None:
+                continue
+            numeric = float(value)
+            if not math.isfinite(numeric):
+                raise ValueError(f"Position for {symbol} is not finite: {numeric}")
+            cleaned_positions[normalize_symbol(symbol)] = numeric
+        self.positions = cleaned_positions
+
+        cleaned_notional: Dict[str, float] = {}
+        for symbol, value in self.last_notional.items():
+            if value is None:
+                continue
+            numeric = float(value)
+            if numeric < 0 or not math.isfinite(numeric):
+                raise ValueError(
+                    f"Notional exposure for {symbol} must be finite and >= 0"
+                )
+            cleaned_notional[normalize_symbol(symbol)] = numeric
+        self.last_notional = cleaned_notional
+
+        cleaned_submissions: list[float] = []
+        for ts in self.submissions:
+            numeric = float(ts)
+            if not math.isfinite(numeric):
+                raise ValueError("Submission timestamp must be finite")
+            cleaned_submissions.append(numeric)
+        cleaned_submissions.sort()
+        self.submissions = cleaned_submissions
+
+        if self.limit_violation_streak < 0:
+            raise ValueError("limit_violation_streak must be >= 0")
+        if self.throttle_violation_streak < 0:
+            raise ValueError("throttle_violation_streak must be >= 0")
+
+        if isinstance(self.updated_at, str):
+            try:
+                parsed = datetime.fromisoformat(self.updated_at.replace(" ", "T"))
+            except ValueError as exc:
+                raise ValueError("updated_at is not ISO 8601 compliant") from exc
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            self.updated_at = parsed.astimezone(timezone.utc)
+        else:
+            if self.updated_at.tzinfo is None:
+                self.updated_at = self.updated_at.replace(tzinfo=timezone.utc)
+            else:
+                self.updated_at = self.updated_at.astimezone(timezone.utc)
+        return self
+
+
+class JsonRiskStateStore(RiskStateStore):
+    """JSON-backed persistence store for :class:`RiskManager` state."""
+
+    def __init__(self, path: Path) -> None:
+        self._path = Path(path)
+        self._lock = threading.Lock()
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+
+    def load(self) -> RiskStateRecord | None:
+        with self._lock:
+            if not self._path.exists():
+                return None
+            try:
+                payload = json.loads(self._path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise DataQualityError(
+                    f"Risk state payload is not valid JSON: {exc}"
+                ) from exc
+        try:
+            return RiskStateRecord.model_validate(payload)
+        except ValidationError as exc:
+            raise DataQualityError("Persisted risk state failed validation") from exc
+
+    def save(self, state: RiskStateRecord) -> None:
+        payload = state.model_dump()
+        payload["updated_at"] = state.updated_at.astimezone(timezone.utc).isoformat()
+        blob = json.dumps(payload, indent=2, sort_keys=True)
+        tmp_path = self._path.with_suffix(".tmp")
+        with self._lock:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path.write_text(blob, encoding="utf-8")
+            tmp_path.replace(self._path)
 
 
 class BaseKillSwitchStateStore(KillSwitchStateStore, ABC):
@@ -683,6 +814,7 @@ class RiskManager(RiskController):
         time_source: Callable[[], float] | None = None,
         audit_logger: ExecutionAuditLogger | None = None,
         kill_switch_store: KillSwitchStateStore | None = None,
+        state_store: RiskStateStore | None = None,
     ) -> None:
         self.limits = limits
         self._kill_switch = KillSwitch(store=kill_switch_store)
@@ -695,9 +827,73 @@ class RiskManager(RiskController):
         self._audit = audit_logger or get_execution_audit_logger()
         self._limit_violation_streak = 0
         self._throttle_violation_streak = 0
+        self._state_store = state_store
+        if self._state_store is not None:
+            self._restore_state()
 
     def _canonical_symbol(self, symbol: str) -> str:
         return normalize_symbol(symbol)
+
+    def _snapshot_state(self) -> RiskStateRecord:
+        return RiskStateRecord(
+            positions=dict(self._positions),
+            last_notional=dict(self._last_notional),
+            submissions=list(self._submissions),
+            limit_violation_streak=self._limit_violation_streak,
+            throttle_violation_streak=self._throttle_violation_streak,
+            updated_at=datetime.now(timezone.utc),
+        )
+
+    def _persist_state(self) -> None:
+        if self._state_store is None:
+            return
+        try:
+            snapshot = self._snapshot_state()
+            self._state_store.save(snapshot)
+        except DataQualityError as exc:
+            self._logger.error(
+                "Risk state persistence rejected",
+                extra={"event": "risk.state_invalid", "error": str(exc)},
+            )
+            raise
+        except Exception as exc:
+            self._logger.exception(
+                "Failed to persist risk state",
+                extra={"event": "risk.state_persist_error", "error": str(exc)},
+            )
+            raise
+
+    def _restore_state(self) -> None:
+        if self._state_store is None:
+            return
+        try:
+            record = self._state_store.load()
+        except DataQualityError as exc:
+            self._logger.error(
+                "Risk state quarantine triggered",
+                extra={"event": "risk.state_quarantine", "error": str(exc)},
+            )
+            raise
+        if record is None:
+            return
+        self._positions = dict(record.positions)
+        self._last_notional = dict(record.last_notional)
+        self._submissions = deque(record.submissions)
+        self._limit_violation_streak = int(record.limit_violation_streak)
+        self._throttle_violation_streak = int(record.throttle_violation_streak)
+        self._logger.info(
+            "Risk state restored",
+            extra={
+                "event": "risk.state_restored",
+                "positions": len(self._positions),
+                "submissions": len(self._submissions),
+            },
+        )
+
+    def reload_state(self) -> None:
+        """Reload persisted risk state in place."""
+
+        self._restore_state()
 
     def _check_rate_limit(self, symbol: str, now: float) -> None:
         if self.limits.max_orders_per_interval <= 0:
@@ -717,6 +913,7 @@ class RiskManager(RiskController):
                     symbol=symbol,
                     violation_type="rate_limit",
                 )
+            self._persist_state()
             raise OrderRateExceeded(reason)
         self._throttle_violation_streak = 0
 
@@ -781,6 +978,7 @@ class RiskManager(RiskController):
                 "consecutive_rate_limit_violations": self._throttle_violation_streak,
             }
         )
+        self._persist_state()
 
     def validate_order(self, symbol: str, side: str, qty: float, price: float) -> None:
         """Apply risk checks before admitting an order to the execution stack.
@@ -882,6 +1080,7 @@ class RiskManager(RiskController):
                 reason=reason,
                 violation_type="position_limit",
             )
+            self._persist_state()
             raise LimitViolation(reason)
 
         projected_notional = abs(new_position * price)
@@ -913,6 +1112,7 @@ class RiskManager(RiskController):
                 reason=reason,
                 violation_type="notional_limit",
             )
+            self._persist_state()
             raise LimitViolation(reason)
 
         if self.limits.max_orders_per_interval > 0:
@@ -930,6 +1130,7 @@ class RiskManager(RiskController):
             reason=None,
             violation_type=None,
         )
+        self._persist_state()
 
     @property
     def kill_switch(self) -> KillSwitch:
@@ -958,6 +1159,7 @@ class RiskManager(RiskController):
         position = float(self._positions.get(canonical_symbol, 0.0)) + side_sign * qty
         self._positions[canonical_symbol] = position
         self._last_notional[canonical_symbol] = abs(position * price)
+        self._persist_state()
 
     def current_position(self, symbol: str) -> float:
         """Return the signed position for ``symbol``."""

@@ -28,7 +28,7 @@ from core.utils.metrics import get_metrics_collector
 from domain import Order, OrderSide, OrderType, Signal, SignalAction
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.risk import RiskLimits, RiskManager
+from execution.risk import JsonRiskStateStore, RiskLimits, RiskManager
 
 __all__ = [
     "ExchangeAdapterConfig",
@@ -83,6 +83,9 @@ class TradePulseSystemConfig:
         default_factory=FeaturePipelineConfig
     )
     risk_limits: RiskLimits = field(default_factory=RiskLimits)
+    risk_state_path: Path = field(
+        default_factory=lambda: Path(".tradepulse/state/risk_state.json")
+    )
     live_settings: LiveLoopSettings = field(default_factory=LiveLoopSettings)
     allowed_data_roots: Iterable[str | Path] | None = None
     max_csv_bytes: int | None = None
@@ -117,7 +120,12 @@ class TradePulseSystem:
             market_connectors=config.market_data_connectors,
         )
         self._pipeline = SignalFeaturePipeline(config.feature_pipeline)
-        self._risk_manager = risk_manager or RiskManager(config.risk_limits)
+        self._risk_manager = risk_manager
+        if self._risk_manager is None:
+            state_store = JsonRiskStateStore(config.risk_state_path)
+            self._risk_manager = RiskManager(
+                config.risk_limits, state_store=state_store
+            )
         self._metrics = get_metrics_collector()
         self._clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
 

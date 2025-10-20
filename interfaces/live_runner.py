@@ -23,7 +23,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for older interpreter
 from core.utils.metrics import PROMETHEUS_AVAILABLE, start_metrics_server
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.risk import RiskLimits, RiskManager
+from execution.risk import JsonRiskStateStore, RiskLimits, RiskManager
 from interfaces.execution.common import CredentialError, CredentialProvider
 from interfaces.secrets.manager import SecretManager, SecretManagerError, VaultResolver
 
@@ -441,7 +441,16 @@ class LiveTradingRunner:
             return
         risk_kwargs = _dataclass_kwargs(RiskLimits, self._raw_risk)
         limits = RiskLimits(**risk_kwargs)
-        self._risk_manager = RiskManager(limits)
+        loop_values = dict(self._raw_loop)
+        state_dir_value = self._state_dir_override or loop_values.get("state_dir")
+        if state_dir_value is None:
+            state_dir = Path("var/live_state")
+        else:
+            state_dir = Path(state_dir_value)
+        if not state_dir.is_absolute():
+            state_dir = (self._config_dir / state_dir).resolve()
+        state_store = JsonRiskStateStore(state_dir / "risk_state.json")
+        self._risk_manager = RiskManager(limits, state_store=state_store)
 
     def _build_loop_config(self) -> None:
         if self._loop_config is not None:

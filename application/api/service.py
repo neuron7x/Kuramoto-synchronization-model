@@ -59,6 +59,7 @@ from application.trading import signal_to_dto
 from core.utils.metrics import MetricsCollector, get_metrics_collector
 from domain import Signal, SignalAction
 from execution.risk import (
+    JsonRiskStateStore,
     PostgresKillSwitchStateStore,
     RiskLimits,
     RiskManager,
@@ -1473,8 +1474,13 @@ def create_app(
         kill_switch_store = SQLiteKillSwitchStateStore(
             resolved_settings.kill_switch_store_path
         )
+    risk_state_store = JsonRiskStateStore(resolved_settings.risk_state_store_path)
     risk_manager_facade = RiskManagerFacade(
-        RiskManager(RiskLimits(), kill_switch_store=kill_switch_store)
+        RiskManager(
+            RiskLimits(),
+            kill_switch_store=kill_switch_store,
+            state_store=risk_state_store,
+        )
     )
     admin_rate_limiter = AdminRateLimiter(
         max_attempts=int(rate_limit_max_attempts),

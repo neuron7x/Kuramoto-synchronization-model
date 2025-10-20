@@ -177,6 +177,10 @@ class AdminApiSettings(BaseSettings):
         default_factory=lambda: (ConfigNamespaceSettings(name="system"),),
         description="Isolated namespaces used for configuration and secret segregation.",
     )
+    risk_state_store_path: Path = Field(
+        Path("state/risk_state.json"),
+        description="Filesystem path used to persist risk exposure state for restart recovery.",
+    )
     kill_switch_store_path: Path = Field(
         Path("state/kill_switch_state.sqlite"),
         description="Filesystem path used to persist the risk kill-switch state.",
