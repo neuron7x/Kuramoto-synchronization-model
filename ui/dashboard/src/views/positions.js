@@ -6,6 +6,7 @@ import {
   formatPercent,
   formatTimestamp,
 } from '../core/formatters.js';
+import { getMessage, t } from '../i18n/index.js';
 
 /**
  * @typedef {import('../types/events').OrderEvent} OrderEvent
@@ -99,14 +100,29 @@ function aggregatePositions(fills = [], orders = [], ticks = []) {
   });
 }
 
+function getPositionsTableTranslations() {
+  const table = getMessage('views.positions.table') || {};
+  return {
+    columns: table.columns || {},
+    badges: table.badges || {},
+  };
+}
+
 export function renderPositionsView({ fills = [], orders = [], ticks = [], pageSize = 10, page = 1 } = {}) {
   const rows = aggregatePositions(fills, orders, ticks);
+  const { columns, badges } = getPositionsTableTranslations();
+  const pnlBadges = badges.pnl || {};
   const table = createLiveTable({
     columns: [
-      { id: 'symbol', label: 'Symbol', accessor: (row) => row.symbol, formatter: (value) => `<strong>${escapeHtml(value)}</strong>` },
+      {
+        id: 'symbol',
+        label: columns.symbol || 'Symbol',
+        accessor: (row) => row.symbol,
+        formatter: (value) => `<strong>${escapeHtml(value)}</strong>`,
+      },
       {
         id: 'netQuantity',
-        label: 'Net Quantity',
+        label: columns.netQuantity || 'Net Quantity',
         accessor: (row) => row.netQuantity,
         formatter: (value) => `<span>${escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }))}</span>`,
         sortValue: (row) => row.netQuantity,
@@ -114,7 +130,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
       },
       {
         id: 'avgPrice',
-        label: 'Avg Fill Price',
+        label: columns.avgPrice || 'Avg Fill Price',
         accessor: (row) => row.avgPrice,
         formatter: (value) => escapeHtml(formatCurrency(value)),
         sortValue: (row) => row.avgPrice,
@@ -122,7 +138,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
       },
       {
         id: 'marketPrice',
-        label: 'Market Price',
+        label: columns.marketPrice || 'Market Price',
         accessor: (row) => row.marketPrice,
         formatter: (value) => escapeHtml(formatCurrency(value)),
         sortValue: (row) => row.marketPrice,
@@ -130,7 +146,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
       },
       {
         id: 'exposure',
-        label: 'Exposure',
+        label: columns.exposure || 'Exposure',
         accessor: (row) => row.exposure,
         formatter: (value) => escapeHtml(formatCurrency(value)),
         sortValue: (row) => row.exposure,
@@ -138,11 +154,16 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
       },
       {
         id: 'pnl',
-        label: 'Unrealised PnL',
+        label: columns.pnl || 'Unrealised PnL',
         accessor: (row) => row.pnl,
         formatter: (value, row) => {
           const direction = value >= 0 ? 'positive' : 'negative';
-          const badge = value === 0 ? '' : `<span class="tp-pill tp-pill--${direction}">${escapeHtml(formatPercent(row.marketPrice && row.avgPrice ? (row.marketPrice - row.avgPrice) / (row.avgPrice || 1) : 0))}</span>`;
+          const badgeLabel = pnlBadges[direction];
+          const percentValue = row.marketPrice && row.avgPrice ? (row.marketPrice - row.avgPrice) / (row.avgPrice || 1) : 0;
+          const percentText = formatPercent(percentValue);
+          const template = badgeLabel || '{percent}';
+          const badgeText = template.includes('{percent}') ? template.replace('{percent}', percentText) : template;
+          const badge = value === 0 ? '' : `<span class="tp-pill tp-pill--${direction}">${escapeHtml(badgeText)}</span>`;
           return `<span>${escapeHtml(formatCurrency(value))}</span>${badge}`;
         },
         sortValue: (row) => row.pnl,
@@ -150,7 +171,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
       },
       {
         id: 'lastFill',
-        label: 'Last Fill',
+        label: columns.lastFill || 'Last Fill',
         accessor: (row) => row.lastFill,
         formatter: (value) => `<time>${escapeHtml(formatTimestamp(value))}</time>`,
         sortValue: (row) => row.lastFill,
@@ -166,12 +187,12 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
 
   return {
     route: 'positions',
-    title: 'Positions',
+    title: t('views.positions.title'),
     html: `
       <section class="tp-view">
         <header class="tp-view__header">
-          <h2 class="tp-view__title">Open Positions</h2>
-          <p class="tp-view__subtitle">Aggregated exposures derived from live fill events.</p>
+          <h2 class="tp-view__title">${escapeHtml(t('views.positions.heading'))}</h2>
+          <p class="tp-view__subtitle">${escapeHtml(t('views.positions.subtitle'))}</p>
         </header>
         ${html}
       </section>

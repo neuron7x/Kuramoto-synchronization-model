@@ -1,0 +1,117 @@
+{
+  "defaultLocale": "en-US",
+  "fallbackLocale": "en-US",
+  "locales": {
+    "en-US": {
+      "priority": "tier-0",
+      "defaultCurrency": "USD",
+      "formats": {
+        "date": "MMMM d, yyyy",
+        "time": "HH:mm z",
+        "number": "#,##0.###",
+        "currency": "¤#,##0.00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "CCPA"
+      ],
+      "tone": {
+        "voice": "Confident, data-led, and reassuring without hyperbole.",
+        "guidelines": {
+          "do": [
+            "Lead with clarity on risk, control, and transparency.",
+            "Prefer concise, action-oriented verbs."
+          ],
+          "dont": [
+            "Avoid jargon that is specific to regional regulation.",
+            "Never use colloquialisms that might reduce perceived rigor."
+          ]
+        }
+      },
+      "reviewCadence": "Quarterly with New York trading-ops linguists."
+    },
+    "uk-UA": {
+      "priority": "tier-1",
+      "defaultCurrency": "UAH",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "# ##0,###",
+        "currency": "¤ # ##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "Закон України «Про захист персональних даних»"
+      ],
+      "tone": {
+        "voice": "Діловий, підтримувальний, стримано оптимістичний.",
+        "guidelines": {
+          "do": [
+            "Підкреслюйте прозорість аналітики та контроль ризиків.",
+            "Використовуйте терміни, усталені в українській фінансовій лексиці."
+          ],
+          "dont": [
+            "Не використовуйте кальки з російської термінології.",
+            "Уникайте зменшувальних форм або надмірної фамільярності."
+          ]
+        }
+      },
+      "reviewCadence": "Щомісячно разом із київською командою з локалізації."
+    },
+    "de-DE": {
+      "priority": "tier-1",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "dd. MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "BDSG"
+      ],
+      "tone": {
+        "voice": "Sachlich, vertrauenswürdig und präzise.",
+        "guidelines": {
+          "do": [
+            "Betonen Sie regulatorische Konformität und Nachvollziehbarkeit.",
+            "Nutzen Sie klare, aktive Formulierungen ohne Marketing-Superlative."
+          ],
+          "dont": [
+            "Vermeiden Sie Anglizismen, wenn es etablierte deutsche Begriffe gibt.",
+            "Keine Versprechen, die als Garantien verstanden werden könnten."
+          ]
+        }
+      },
+      "reviewCadence": "Quartalsweise mit Frankfurter Handels-Compliance-Linguisten."
+    },
+    "ja-JP": {
+      "priority": "tier-1",
+      "defaultCurrency": "JPY",
+      "formats": {
+        "date": "yyyy年M月d日",
+        "time": "HH:mm",
+        "number": "#,##0.###",
+        "currency": "¤#,##0"
+      },
+      "privacyRegimes": [
+        "APPI"
+      ],
+      "tone": {
+        "voice": "専門的で落ち着いた口調。信頼感と正確性を重視。",
+        "guidelines": {
+          "do": [
+            "金融監督庁の表現方針に沿った丁寧語を選ぶ。",
+            "定量的な裏付けを強調する言い回しを用いる。"
+          ],
+          "dont": [
+            "カジュアルなスラングや過度な感嘆を避ける。",
+            "不確実な情報を断定的に言い切らない。"
+          ]
+        }
+      },
+      "reviewCadence": "隔月で東京のネイティブ監修チームとレビュー。"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "de-DE",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Tone-entscheidend: Präzise und vertrauensbildend formulieren.",
+      "views.orders.subtitle": "Tone-entscheidend: Transparenz betonen, ohne Übertreibungen.",
+      "views.pnl.subtitle": "Tone-entscheidend: Analytische Klarheit ohne spekulative Sprache.",
+      "views.positions.subtitle": "Tone-entscheidend: Souveräne Risikoaufsicht hervorheben."
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "Live"
+    },
+    "sections": {
+      "positions": "Positionen",
+      "orders": "Aufträge",
+      "pnl": "PnL & Kurse"
+    }
+  },
+  "header": {
+    "title": "TradePulse Monitoring Hub",
+    "subtitle": "Zentrale Steuerung von Ausführung, Risiko und Telemetrie.",
+    "tags": [
+      "Multi-Asset",
+      "Echtzeit"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "Aufträge",
+      "heading": "Order-Übersicht",
+      "subtitle": "Live-Orderfluss mit Ausführungsfortschritt und Telemetriedaten.",
+      "table": {
+        "columns": {
+          "order_id": "Order-ID",
+          "symbol": "Symbol",
+          "side": "Seite",
+          "order_type": "Typ",
+          "quantity": "Menge",
+          "filledQuantity": "Ausgeführt",
+          "remaining": "Rest",
+          "progress": "Fortschritt",
+          "limitPrice": "Limitpreis",
+          "avgFillPrice": "Durchschnittspreis",
+          "status": "Status",
+          "lastFill": "Letzte Ausführung"
+        },
+        "badges": {
+          "side": {
+            "buy": "Kauf",
+            "sell": "Verkauf"
+          },
+          "status": {
+            "FILLED": "Ausgeführt",
+            "WORKING": "Aktiv"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL & Kurse",
+      "heading": "PnL- & Kursanalyse",
+      "subtitle": "Aktuelle Profitabilität mit laufenden Marktdaten abgleichen.",
+      "cards": {
+        "pnl": {
+          "title": "Netto-PnL",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Run-Rate {value}/h"
+        },
+        "quotes": {
+          "title": "Kurse",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Positionen",
+      "heading": "Offene Positionen",
+      "subtitle": "Aggregierte Exponierungen aus aktuellen Fills.",
+      "table": {
+        "columns": {
+          "symbol": "Symbol",
+          "netQuantity": "Netto-Menge",
+          "avgPrice": "Durchschnittspreis",
+          "marketPrice": "Marktpreis",
+          "exposure": "Exponierung",
+          "pnl": "Unrealisierter PnL",
+          "lastFill": "Letzte Ausführung"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Gewinn {percent}",
+            "negative": "Verlust {percent}"
+          }
+        }
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Letzte Ausführung"
+    }
+  }
+}

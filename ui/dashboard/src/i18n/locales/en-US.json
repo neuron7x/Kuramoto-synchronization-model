@@ -1,0 +1,109 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "en-US",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Tone-critical: Maintain confident yet calm positioning statement.",
+      "views.orders.subtitle": "Tone-critical: Reinforce live execution transparency without hype.",
+      "views.pnl.subtitle": "Tone-critical: Highlight analytical insight with controlled optimism.",
+      "views.positions.subtitle": "Tone-critical: Convey composure regarding exposure oversight."
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "Live"
+    },
+    "sections": {
+      "positions": "Positions",
+      "orders": "Orders",
+      "pnl": "PnL & Quotes"
+    }
+  },
+  "header": {
+    "title": "TradePulse Monitoring Hub",
+    "subtitle": "Unified control over execution, risk, and telemetry.",
+    "tags": [
+      "multi-asset",
+      "real-time"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "Orders",
+      "heading": "Order Blotter",
+      "subtitle": "Live order flow enriched with fill progress and execution telemetry.",
+      "table": {
+        "columns": {
+          "order_id": "Order ID",
+          "symbol": "Symbol",
+          "side": "Side",
+          "order_type": "Type",
+          "quantity": "Quantity",
+          "filledQuantity": "Filled",
+          "remaining": "Remaining",
+          "progress": "Progress",
+          "limitPrice": "Limit Price",
+          "avgFillPrice": "Avg Fill",
+          "status": "Status",
+          "lastFill": "Last Fill"
+        },
+        "badges": {
+          "side": {
+            "buy": "Buy",
+            "sell": "Sell"
+          },
+          "status": {
+            "FILLED": "Filled",
+            "WORKING": "Working"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL & Quotes",
+      "heading": "PnL & Quotes Intelligence",
+      "subtitle": "Cross-reference live profitability against streaming market data.",
+      "cards": {
+        "pnl": {
+          "title": "Net PnL",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Run-rate {value}/h"
+        },
+        "quotes": {
+          "title": "Quotes",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Positions",
+      "heading": "Open Positions",
+      "subtitle": "Aggregated exposures derived from live fill events.",
+      "table": {
+        "columns": {
+          "symbol": "Symbol",
+          "netQuantity": "Net Quantity",
+          "avgPrice": "Avg Fill Price",
+          "marketPrice": "Market Price",
+          "exposure": "Exposure",
+          "pnl": "Unrealised PnL",
+          "lastFill": "Last Fill"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Gain {percent}",
+            "negative": "Loss {percent}"
+          }
+        }
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Last Fill"
+    }
+  }
+}
