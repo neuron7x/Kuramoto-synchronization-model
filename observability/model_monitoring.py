@@ -673,9 +673,7 @@ class ModelObservabilityOrchestrator:
             if now - last < cooldown:
                 return None
 
-        severity = 0.0
-        if expected and expected != 0:
-            severity = abs(observed - expected) / abs(expected)
+        severity = self._compute_degradation_severity(metric, observed, expected)
 
         event = DegradationSignal(
             metric=metric,
@@ -733,6 +731,26 @@ class ModelObservabilityOrchestrator:
             event.metric,
             event.reason,
         )
+
+    def _compute_degradation_severity(
+        self, metric: str, observed: float, expected: float | None
+    ) -> float:
+        """Calibrate the severity of a degradation using metric context."""
+
+        baseline = self._quality_baselines.get(metric)
+        if baseline is not None:
+            tolerance = max(float(baseline.tolerance), 1e-9)
+            deviation = abs(float(observed) - float(baseline.target))
+            overshoot = max(0.0, deviation - float(baseline.tolerance))
+            return overshoot / tolerance
+
+        if expected is None:
+            return 0.0
+
+        expected_value = abs(float(expected))
+        if expected_value < 1e-6:
+            expected_value = max(abs(float(observed)), 1.0)
+        return max(0.0, abs(float(observed) - float(expected)) / expected_value)
 
     def _compute_confidence_interval(
         self, metric: str, samples: Sequence[float]
