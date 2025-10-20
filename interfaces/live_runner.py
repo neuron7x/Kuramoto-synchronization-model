@@ -11,7 +11,8 @@ import threading
 from dataclasses import dataclass, fields
 from pathlib import Path
 from types import FrameType
-from typing import Any, Callable, Dict, Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any, Callable, Dict, Iterable
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -146,6 +147,63 @@ def _dataclass_kwargs(schema, values: Mapping[str, Any]) -> Dict[str, Any]:
     return {key: values[key] for key in allowed & values.keys()}
 
 
+def _normalise_backend_resolver(
+    name: str,
+    resolver: VaultResolver | Mapping[str, Any] | Sequence[tuple[str, Any]],
+) -> VaultResolver:
+    """Convert inline backend specifications into callables returning credentials.
+
+    ``secret_backends`` entries may be passed either as callables or as
+    declarative mappings.  This helper turns supported mapping forms into a
+    :class:`VaultResolver` while keeping backwards compatibility with existing
+    resolver callables.
+    """
+
+    if callable(resolver):
+        return resolver  # type: ignore[return-value]
+
+    mapping: Mapping[str, Any] | None = None
+    if isinstance(resolver, Mapping):
+        mapping = resolver
+    elif isinstance(resolver, Sequence):
+        try:
+            mapping = dict(resolver)
+        except ValueError as exc:  # pragma: no cover - defensive guard
+            raise TypeError(
+                f"Secret backend '{name}' sequence cannot be converted to mapping"
+            ) from exc
+
+    if mapping is None:
+        raise TypeError(
+            "secret_backends entries must be callables or mappings of secrets"
+        )
+
+    # Support nested mapping keyed by vault path -> credentials mapping.
+    if mapping and all(isinstance(value, Mapping) for value in mapping.values()):
+        path_map = {
+            str(path): {str(k): str(v) for k, v in value.items()}  # type: ignore[arg-type]
+            for path, value in mapping.items()
+        }
+
+        def _resolver(path: str) -> Mapping[str, str]:
+            try:
+                payload = path_map[path]
+            except KeyError as exc:
+                raise RuntimeError(
+                    f"Inline secret backend '{name}' does not define path '{path}'"
+                ) from exc
+            return dict(payload)
+
+        return _resolver
+
+    static_payload = {str(k): str(v) for k, v in mapping.items()}
+
+    def _resolver(_: str) -> Mapping[str, str]:
+        return dict(static_payload)
+
+    return _resolver
+
+
 class LiveTradingRunner:
     """High level runner coordinating :class:`LiveExecutionLoop`."""
 
@@ -217,10 +275,12 @@ class LiveTradingRunner:
         self._connectors: Dict[str, ExecutionConnector] = {}
         self._credentials: Dict[str, Mapping[str, str]] = {}
         self._secret_manager = secret_manager
-        self._inline_secret_backends: Dict[str, VaultResolver] = {
-            str(name).lower(): resolver
-            for name, resolver in (secret_backends or {}).items()
-        }
+        self._inline_secret_backends: Dict[str, VaultResolver] = {}
+        for name, resolver in (secret_backends or {}).items():
+            adapter = str(name).lower()
+            self._inline_secret_backends[adapter] = _normalise_backend_resolver(
+                adapter, resolver
+            )
         if self._secret_manager is not None:
             for adapter, resolver in self._inline_secret_backends.items():
                 self._secret_manager.register(adapter, resolver)

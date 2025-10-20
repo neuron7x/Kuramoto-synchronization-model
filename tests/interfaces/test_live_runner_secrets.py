@@ -5,6 +5,7 @@ from typing import Mapping
 from unittest.mock import MagicMock
 
 import httpx
+import pytest
 
 from interfaces.execution.common import AuthenticatedRESTExecutionConnector, HMACSigner
 from interfaces.live_runner import LiveTradingRunner
@@ -95,3 +96,77 @@ def test_authenticated_connector_refreshes_credentials_via_vault_resolver() -> N
 
     assert connector.credentials["API_KEY"] == "rotated"
     assert isinstance(connector._signer, HMACSigner)
+
+
+def test_live_runner_inline_secret_backend_mapping(tmp_path: Path) -> None:
+    config_path = tmp_path / "live.toml"
+    config_path.write_text(
+        """
+[loop]
+state_dir = "state"
+
+[[venues]]
+name = "dummy"
+class = "tests.interfaces.dummies.DummyConnector"
+sandbox = true
+
+  [venues.credentials]
+  env_prefix = "DUMMY"
+  required = ["API_KEY", "API_SECRET"]
+
+    [venues.credentials.secret_backend]
+    adapter = "vault"
+    path = "secret/data/dummy"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    runner = LiveTradingRunner(
+        config_path=config_path,
+        secret_backends={
+            "vault": {
+                "secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}
+            }
+        },
+    )
+
+    credentials = runner._credentials["dummy"]  # noqa: SLF001 - inspection helper
+    assert credentials["API_KEY"] == "vault-key"
+    assert credentials["API_SECRET"] == "vault-secret"
+
+
+def test_live_runner_inline_secret_backend_missing_path(tmp_path: Path) -> None:
+    config_path = tmp_path / "live.toml"
+    config_path.write_text(
+        """
+[loop]
+state_dir = "state"
+
+[[venues]]
+name = "dummy"
+class = "tests.interfaces.dummies.DummyConnector"
+sandbox = true
+
+  [venues.credentials]
+  env_prefix = "DUMMY"
+  required = ["API_KEY", "API_SECRET"]
+
+    [venues.credentials.secret_backend]
+    adapter = "vault"
+    path = "secret/data/dummy"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="Inline secret backend 'vault'"):
+        LiveTradingRunner(
+            config_path=config_path,
+            secret_backends={
+                "vault": {
+                    "secret/data/other": {
+                        "api_key": "vault-key",
+                        "api_secret": "vault-secret",
+                    }
+                }
+            },
+        )
