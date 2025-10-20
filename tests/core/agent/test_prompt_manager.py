@@ -13,6 +13,7 @@ from core.agent.prompting import (
     PromptInjectionDetected,
     PromptManager,
     PromptOutcome,
+    PromptTemplateNotFoundError,
     PromptSanitizer,
     PromptTemplate,
     PromptTemplateLibrary,
@@ -141,4 +142,21 @@ def test_reproducible_record_ids(prompt_library: PromptTemplateLibrary) -> None:
     second = manager.render("trade_summary", parameters=params)
     assert first.record.record_id == second.record.record_id
     assert first.prompt == second.prompt
+
+
+def test_record_outcome_cannot_be_recorded_twice(
+    prompt_library: PromptTemplateLibrary,
+) -> None:
+    manager = PromptManager(library=prompt_library, sanitizer=PromptSanitizer())
+    result = manager.render(
+        "trade_summary",
+        parameters={"instruction": "Follow", "name": "Eve"},
+    )
+    outcome = PromptOutcome(success=True, effect=0.1)
+
+    rollback_triggered = manager.record_outcome(result.record.record_id, outcome)
+    assert rollback_triggered is False
+
+    with pytest.raises(PromptTemplateNotFoundError):
+        manager.record_outcome(result.record.record_id, outcome)
 

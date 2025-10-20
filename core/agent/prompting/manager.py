@@ -191,20 +191,23 @@ class PromptManager:
             raise PromptTemplateNotFoundError(
                 f"Unknown record identifier '{record_id}'"
             ) from exc
-        rollback = self._library.record_outcome(family, variant, outcome)
-        self._notify_outcome(record_id, outcome)
-        self._logger.info(
-            "prompt.outcome",
-            extra={
-                "record_id": record_id,
-                "template_family": family,
-                "template_variant": variant,
-                "success": outcome.success,
-                "effect": outcome.effect,
-                "rollback": rollback,
-            },
-        )
-        return rollback
+        try:
+            rollback = self._library.record_outcome(family, variant, outcome)
+            self._notify_outcome(record_id, outcome)
+            self._logger.info(
+                "prompt.outcome",
+                extra={
+                    "record_id": record_id,
+                    "template_family": family,
+                    "template_variant": variant,
+                    "success": outcome.success,
+                    "effect": outcome.effect,
+                    "rollback": rollback,
+                },
+            )
+            return rollback
+        finally:
+            self._records.pop(record_id, None)
 
     # ------------------------------------------------------------------
     # Internal helpers
