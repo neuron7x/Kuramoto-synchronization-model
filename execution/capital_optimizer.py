@@ -8,7 +8,6 @@ from typing import Mapping
 
 import numpy as np
 
-
 logger = logging.getLogger(__name__)
 
 

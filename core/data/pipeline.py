@@ -32,11 +32,11 @@ complex configuration out of imperative code.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import UTC
-from time import perf_counter
-import math
 from hashlib import blake2b
+from time import perf_counter
 from typing import Any, Callable, Mapping, MutableMapping, Protocol
 
 import numpy as np
@@ -48,7 +48,6 @@ from core.data.feature_store import OnlineFeatureStore
 from core.data.quality_control import QualityGateConfig, QualityGateError, validate_and_quarantine
 from core.data.validation import TimeSeriesValidationConfig, validate_timeseries_frame
 from observability.drift import DriftDetector, FeatureDriftSummary, FeatureSnapshot
-
 
 # ---------------------------------------------------------------------------
 # Configuration dataclasses

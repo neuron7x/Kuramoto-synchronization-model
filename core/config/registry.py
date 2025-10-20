@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from threading import RLock
 from typing import Any, Iterable, Mapping, MutableMapping, Protocol
-
-import copy
-import hashlib
-import json
 
 from packaging.version import InvalidVersion, Version
 

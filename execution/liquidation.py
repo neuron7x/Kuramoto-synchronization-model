@@ -14,9 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterable, Sequence
 
-from domain.order import OrderSide
-
 from core.utils.logging import StructuredLogger, get_logger
+from domain.order import OrderSide
 
 __all__ = [
     "LiquidationAction",

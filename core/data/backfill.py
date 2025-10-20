@@ -17,16 +17,16 @@ from the upstream provider.
 
 from __future__ import annotations
 
+import hashlib
+import logging
+import threading
+import time
+import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC
-import hashlib
-import logging
 from queue import Empty, PriorityQueue
-import threading
-import time
-import uuid
 from typing import List, MutableMapping, Optional
 
 import pandas as pd

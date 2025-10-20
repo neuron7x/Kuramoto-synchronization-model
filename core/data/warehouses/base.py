@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Protocol, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Protocol, Sequence
 
 if TYPE_CHECKING:  # pragma: no cover - import guard for typing only
     from core.data.models import PriceTick

@@ -36,8 +36,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-ResponseModelT = TypeVar("ResponseModelT", bound=BaseModel)
-
 from analytics.signals.pipeline import FeaturePipelineConfig, SignalFeaturePipeline
 from application.api.idempotency import (
     IdempotencyCache,
@@ -73,6 +71,8 @@ from src.admin.remote_control import (
 )
 from src.audit.audit_logger import AuditLogger, HttpAuditSink
 from src.risk.risk_manager import RiskManagerFacade
+
+ResponseModelT = TypeVar("ResponseModelT", bound=BaseModel)
 
 
 @dataclass(slots=True)

@@ -19,28 +19,29 @@ Dependencies: numpy, pandas. Optional: prometheus_client.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from collections import deque
-from typing import (
-    Optional,
-    Tuple,
-    Deque,
-    Dict,
-    Any,
-    Callable,
-    List,
-    ClassVar,
-    Set,
-    Sequence,
-    Protocol,
-    runtime_checkable,
-)
-import math
+
 import logging
-import threading
+import math
 import queue
+import threading
 import time
 from bisect import bisect_left, bisect_right
+from collections import deque
+from dataclasses import dataclass
+from typing import (
+    Callable,
+    ClassVar,
+    Deque,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Sequence,
+    Set,
+    Tuple,
+    runtime_checkable,
+)
+
 import numpy as np
 import pandas as pd
 

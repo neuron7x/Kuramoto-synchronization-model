@@ -1,5 +1,6 @@
 """Messaging primitives for TradePulse event streaming."""
 
+from .contracts import SchemaContractError, SchemaContractValidator
 from .event_bus import (
     EventBusConfig,
     EventEnvelope,
@@ -8,7 +9,6 @@ from .event_bus import (
     NATSEventBus,
 )
 from .idempotency import EventIdempotencyStore, InMemoryEventIdempotencyStore
-from .contracts import SchemaContractError, SchemaContractValidator
 from .schema_registry import (
     EventSchemaRegistry,
     SchemaCompatibilityError,

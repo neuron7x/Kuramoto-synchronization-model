@@ -12,7 +12,6 @@ from observability.model_monitoring import (
     ResourceSnapshot,
 )
 
-
 UTC = timezone.utc
 
 

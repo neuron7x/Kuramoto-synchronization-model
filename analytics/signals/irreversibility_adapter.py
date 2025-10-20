@@ -3,9 +3,13 @@ IGS Feature Provider adapter for pipelines and backtests.
 """
 
 from __future__ import annotations
-from typing import Dict, Any, Optional, Callable
+
+from typing import Any, Callable, Dict, Optional
+
 import pandas as pd
+
 from analytics.signals.irreversibility import IGSConfig, StreamingIGS, compute_igs_features
+
 
 class IGSFeatureProvider:
     def __init__(self, cfg: Dict[str, Any] | IGSConfig, external_adapt_measure: Optional[Callable] = None):

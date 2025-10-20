@@ -9,7 +9,6 @@ import pytest
 
 from core.data.catalog import normalize_symbol
 from core.data.models import InstrumentType, PriceTick
-
 from src.data.ingestion_service import DataIngestionCacheService
 from src.data.kafka_ingestion import KafkaIngestionConfig
 from src.data.pipeline import (

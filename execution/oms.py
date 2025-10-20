@@ -20,7 +20,6 @@ from .compliance import ComplianceMonitor, ComplianceReport, ComplianceViolation
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .order_ledger import OrderLedger
 
-
 DEFAULT_LEDGER_PATH = Path("observability/audit/order-ledger.jsonl")
 
 

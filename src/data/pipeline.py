@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Mapping, Protocol, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Protocol, Sequence
 
 import pandas as pd
 from pandas.tseries.offsets import BaseOffset
@@ -13,6 +13,9 @@ from core.data.models import InstrumentType, PriceTick
 
 from .ingestion_service import DataIngestionCacheService
 from .kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagHandler
+
+if TYPE_CHECKING:
+    from .streaming_aggregator import TickStreamAggregator
 
 
 class TickRoutingStrategy(Protocol):
@@ -165,7 +168,7 @@ class StreamingIngestionPipeline:
         route: CacheRoute,
         *,
         frequency: str | pd.Timedelta | BaseOffset | None = None,
-    ) -> "TickStreamAggregator":
+    ) -> TickStreamAggregator:
         from .streaming_aggregator import TickStreamAggregator
 
         return TickStreamAggregator(

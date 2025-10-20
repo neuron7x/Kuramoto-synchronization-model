@@ -2,10 +2,17 @@
 IGS batch and streaming demonstration. Saves CSV outputs.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from analytics.signals.irreversibility import IGSConfig, compute_igs_features, igs_directional_signal, StreamingIGS
+
+from analytics.signals.irreversibility import (
+    IGSConfig,
+    StreamingIGS,
+    compute_igs_features,
+    igs_directional_signal,
+)
 
 np.random.seed(0)
 n = 3000
