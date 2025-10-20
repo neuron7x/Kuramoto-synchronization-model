@@ -7,7 +7,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
+    from application.configuration import CentralConfigurationStore
     from application.secrets.manager import SecretManager
+    from application.secrets.rotation import SecretRotator
+    from core.config.template_manager import ConfigTemplateManager
+    from core.utils.security import SecretDetector
     from src.audit.audit_logger import AuditLogger
 
 from pydantic import (

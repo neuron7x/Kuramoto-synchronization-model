@@ -18,13 +18,12 @@ import json
 import logging
 import math
 import statistics
+import tempfile
 import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, MutableMapping, Protocol
-
-import tempfile
 
 import numpy as np
 import optuna

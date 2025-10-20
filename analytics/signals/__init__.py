@@ -1,15 +1,5 @@
 """Signal research utilities for feature engineering and model evaluation."""
 
-from .pipeline import (
-    FeaturePipelineConfig,
-    LeakageGate,
-    ModelCandidate,
-    SignalFeaturePipeline,
-    SignalModelEvaluation,
-    SignalModelSelector,
-    build_supervised_learning_frame,
-    make_default_candidates,
-)
 from .irreversibility import (
     IGSConfig,
     IGSMetrics,
@@ -21,6 +11,16 @@ from .irreversibility import (
     igs_directional_signal,
 )
 from .irreversibility_adapter import IGSFeatureProvider
+from .pipeline import (
+    FeaturePipelineConfig,
+    LeakageGate,
+    ModelCandidate,
+    SignalFeaturePipeline,
+    SignalModelEvaluation,
+    SignalModelSelector,
+    build_supervised_learning_frame,
+    make_default_candidates,
+)
 
 __all__ = [
     "FeaturePipelineConfig",

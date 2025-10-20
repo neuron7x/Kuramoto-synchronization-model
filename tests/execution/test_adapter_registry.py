@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from typing import Mapping
 
 import pytest
-
-from importlib import import_module
 
 from execution.adapters import (
     AdapterCheckResult,
@@ -21,8 +20,9 @@ from execution.adapters import (
     get_adapter_class,
     load_adapter,
 )
-adapter_plugin_module = import_module("execution.adapters.plugin")
 from execution.connectors import ExecutionConnector
+
+adapter_plugin_module = import_module("execution.adapters.plugin")
 
 
 class _DummyConnector(ExecutionConnector):

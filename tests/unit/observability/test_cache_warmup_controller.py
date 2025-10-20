@@ -9,12 +9,12 @@ from observability.cache_warmup import (
     CacheWarmupSpec,
 )
 
-
 UTC = timezone.utc
 
 
 def test_warmup_success_marks_cache_ready() -> None:
-    clock = lambda: datetime(2024, 1, 1, tzinfo=UTC)
+    def clock() -> datetime:
+        return datetime(2024, 1, 1, tzinfo=UTC)
 
     spec = CacheWarmupSpec(
         name="feature-cache",
@@ -38,7 +38,8 @@ def test_warmup_success_marks_cache_ready() -> None:
 
 
 def test_warmup_failure_tracks_degradation() -> None:
-    clock = lambda: datetime(2024, 1, 1, tzinfo=UTC)
+    def clock() -> datetime:
+        return datetime(2024, 1, 1, tzinfo=UTC)
 
     def _boom() -> None:
         raise RuntimeError("failed to hydrate cache")

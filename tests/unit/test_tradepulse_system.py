@@ -15,9 +15,9 @@ from application.system import (
     TradePulseSystem,
     TradePulseSystemConfig,
 )
+from core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
 from execution.connectors import BinanceConnector
-from core.data.models import InstrumentType, PriceTick
 
 
 class FakeAsyncIngestor:

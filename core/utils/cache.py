@@ -24,12 +24,11 @@ from collections import Counter, OrderedDict, defaultdict
 from dataclasses import dataclass, field
 from threading import RLock
 from time import monotonic
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Mapping, MutableMapping
+from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping
 
 import numpy as np
 
 from .logging import StructuredLogger
-
 
 logger = StructuredLogger(__name__)
 

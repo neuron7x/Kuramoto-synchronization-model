@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-from domain import Order, OrderSide, OrderType, OrderStatus
+from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import SimulatedExchangeConnector
 from execution.normalization import SymbolSpecification
 from execution.paper_trading import (

@@ -6,7 +6,6 @@ from .performance import (
     compute_performance_metrics,
     export_performance_report,
 )
-
 from .synthetic import (
     ControlledExperiment,
     LiquidityShock,

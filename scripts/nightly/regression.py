@@ -23,10 +23,12 @@ from scripts.runtime import ArtifactManager
 from scripts.smoke_e2e import (
     build_signal_function,
     ingest_prices,
-    run_backtest as run_smoke_backtest,
     run_cli_analyze,
     seed_everything,
     summarise_result,
+)
+from scripts.smoke_e2e import (
+    run_backtest as run_smoke_backtest,
 )
 
 LOGGER = logging.getLogger(__name__)

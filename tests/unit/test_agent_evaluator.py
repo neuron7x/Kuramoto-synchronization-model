@@ -14,8 +14,8 @@ from core.agent.evaluator import (
     StrategyEvaluationError,
     evaluate_strategies,
 )
-from core.agent.strategy import Strategy
 from core.agent.sandbox import SandboxResult
+from core.agent.strategy import Strategy
 
 
 class _SleepyStrategy(Strategy):

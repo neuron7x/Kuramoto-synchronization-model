@@ -11,12 +11,12 @@ and the controller keeps rolling aggregates aligned with configured budgets.
 from __future__ import annotations
 
 import asyncio
+import math
+import statistics
 from bisect import bisect_left
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-import math
-import statistics
 from typing import (
     Mapping,
     MutableMapping,
@@ -795,10 +795,10 @@ class FinOpsController:
     def _build_deduplication_key(self, profile: ResourceProfile) -> tuple[str, ...] | None:
         metadata = profile.metadata
         key_parts: list[str] = []
-        for field in ("workload_id", "model_id", "dataset_id"):
-            value = metadata.get(field)
+        for key_name in ("workload_id", "model_id", "dataset_id"):
+            value = metadata.get(key_name)
             if value:
-                key_parts.append(f"{field}:{value}")
+                key_parts.append(f"{key_name}:{value}")
         env = metadata.get("env")
         if env:
             key_parts.append(f"env:{env}")
