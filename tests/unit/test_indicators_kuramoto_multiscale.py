@@ -10,6 +10,7 @@ import pytest
 import core.indicators.multiscale_kuramoto as kuramoto_mod
 from core.indicators.multiscale_kuramoto import (
     FractalResampler,
+    FractalResamplerConfig,
     KuramotoResult,
     MultiScaleKuramoto,
     MultiScaleKuramotoFeature,
@@ -116,6 +117,31 @@ def test_fractal_resampler_reuses_parent_timeframes() -> None:
     assert 0.0 <= stats["fractal_reuse_ratio"] <= 1.0
 
 
+def test_fractal_resampler_supports_custom_aggregation_and_prefill() -> None:
+    df = _synth_dataframe()
+    config = FractalResamplerConfig(aggregator="mean", fill_method=None)
+    resampler = FractalResampler(df["close"], config=config)
+    resampler.prefill([TimeFrame.M1, TimeFrame.M5])
+    m5 = resampler.resample(TimeFrame.M5)
+    expected = (
+        df["close"].sort_index().resample(TimeFrame.M5.pandas_freq).mean().dropna()
+    )
+    pd.testing.assert_series_equal(m5, expected)
+    stats = resampler.stats()
+    assert stats["resample_requests"] == pytest.approx(2.0)
+    assert stats["fractal_cache_hits"] == pytest.approx(1.0)
+    assert stats["cache_size"] == pytest.approx(2.0)
+
+
+def test_fractal_resampler_config_validates_bounds() -> None:
+    with pytest.raises(ValueError):
+        FractalResamplerConfig(min_fraction=1.2)
+    with pytest.raises(ValueError):
+        FractalResamplerConfig(fill_limit=0)
+    with pytest.raises(ValueError):
+        FractalResamplerConfig(aggregator="")
+
+
 def test_multiscale_analyzer_marks_skipped_timeframes_when_insufficient_samples() -> (
     None
 ):
@@ -155,6 +181,26 @@ def test_multiscale_analyzer_uses_selector_for_adaptive_window() -> None:
     assert result.adaptive_window == 200
     assert "resample_requests" in result.energy_profile
     assert result.energy_profile["resample_requests"] >= 1.0
+    assert "cache_size" in result.energy_profile
+    assert result.energy_profile["cache_size"] >= 1.0
+
+
+def test_multiscale_analyzer_prefills_cache_and_uses_config() -> None:
+    df = _synth_dataframe()
+    config = FractalResamplerConfig(aggregator="mean", fill_method="ffill", min_fraction=0.1)
+    analyzer = MultiScaleKuramoto(
+        timeframes=(TimeFrame.M1, TimeFrame.M5, TimeFrame.M15),
+        use_adaptive_window=False,
+        base_window=128,
+        min_samples_per_scale=64,
+        resampler_config=config,
+        prefill_timeframes="auto",
+    )
+    result = analyzer.analyze(df)
+    energy = result.energy_profile
+    assert energy["direct_resamples"] == pytest.approx(1.0)
+    assert energy["fractal_cache_hits"] >= 2.0
+    assert energy["cache_size"] >= 3.0
 
 
 def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
@@ -198,6 +244,9 @@ def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
     assert outcome.metadata["R_M1"] == pytest.approx(
         0.42, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
     )
+    params = feature._cache_params("custom_price")
+    assert "resampler" in params
+    assert params["resampler"]["aggregator"] == "last"
     assert outcome.metadata["window_M5"] == 144
     assert outcome.metadata["energy_profile"] == {}
 

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence
+from typing import Any, Callable, Dict, Mapping, MutableMapping, Optional, Sequence
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -64,17 +65,65 @@ class MultiScaleResult:
 
 
 @dataclass(slots=True)
-class FractalResampler:
-    """Energy-aware hierarchical resampling cache.
+class FractalResamplerConfig:
+    """Configuration knobs for :class:`FractalResampler`.
 
-    The resampler memoizes intermediate timeframes and reuses them when a coarser
-    horizon is an integer multiple of a previously computed one.  This mirrors
-    the "fractal" refinement of horizons used throughout TradePulse and reduces
-    redundant :meth:`pandas.Series.resample` calls—cutting CPU time and energy
-    consumption in large backtests.
+    Attributes:
+        aggregator: Aggregation strategy passed to :meth:`pandas.Series.resample`.
+            Accepts the name of a built-in reducer (``"last"`` by default) or a
+            callable.  The callable must return a scalar for every bucket so the
+            resulting object remains a :class:`pandas.Series`.
+        fill_method: Forward/backward fill policy applied after aggregation.
+            ``None`` disables filling and mirrors the raw resampled output.  A
+            callable can be supplied for bespoke filling logic.
+        fill_limit: Optional limit passed to :meth:`pandas.Series.fillna` when a
+            string ``fill_method`` is used.
+        min_fraction: When greater than zero, enforces a minimum coverage ratio
+            (non-null samples / total samples).  Falling below the threshold
+            raises :class:`ValueError` so upstream analyzers can mark the
+            timeframe as skipped.
     """
 
+    aggregator: str | Callable[[pd.Series], float] = "last"
+    fill_method: Literal["ffill", "bfill"] | None | Callable[[pd.Series], pd.Series] = "ffill"
+    fill_limit: int | None = None
+    min_fraction: float = 0.0
+
+    def __post_init__(self) -> None:
+        if isinstance(self.aggregator, str) and not self.aggregator:
+            raise ValueError("aggregator must be a non-empty string")
+        if self.fill_limit is not None and self.fill_limit <= 0:
+            raise ValueError("fill_limit must be positive when provided")
+        if not 0.0 <= float(self.min_fraction) <= 1.0:
+            raise ValueError("min_fraction must be between 0 and 1 inclusive")
+
+    def describe(self) -> Mapping[str, Any]:
+        """Return a JSON-serialisable snapshot for cache key derivation."""
+
+        if isinstance(self.aggregator, str):
+            aggregator = self.aggregator
+        else:
+            aggregator = getattr(self.aggregator, "__name__", repr(self.aggregator))
+
+        if isinstance(self.fill_method, str) or self.fill_method is None:
+            fill_method: str | None = self.fill_method
+        else:
+            fill_method = getattr(self.fill_method, "__name__", repr(self.fill_method))
+
+        return {
+            "aggregator": aggregator,
+            "fill_method": fill_method,
+            "fill_limit": self.fill_limit,
+            "min_fraction": float(self.min_fraction),
+        }
+
+
+@dataclass(slots=True)
+class FractalResampler:
+    """Energy-aware hierarchical resampling cache with configurable behaviour."""
+
     series: pd.Series
+    config: FractalResamplerConfig = field(default_factory=FractalResamplerConfig)
     _cache: MutableMapping[TimeFrame, pd.Series] = field(default_factory=dict, init=False)
     _cache_hits: int = field(default=0, init=False)
     _direct_resamples: int = field(default=0, init=False)
@@ -84,6 +133,13 @@ class FractalResampler:
             raise TypeError("FractalResampler requires a DatetimeIndex")
         # Normalise ordering once; downstream resampling works on monotonic data.
         self.series = self.series.sort_index()
+
+    def prefill(self, timeframes: Sequence[TimeFrame]) -> None:
+        """Warm the cache by resampling a collection of horizons."""
+
+        ordered = sorted(set(timeframes), key=lambda tf: tf.seconds)
+        for timeframe in ordered:
+            self.resample(timeframe)
 
     def resample(self, timeframe: TimeFrame) -> pd.Series:
         cached = self._cache.get(timeframe)
@@ -98,8 +154,18 @@ class FractalResampler:
             base = self.series
             self._direct_resamples += 1
 
-        resampled = base.resample(timeframe.pandas_freq).last()
-        resampled = resampled.ffill().dropna()
+        resampler = base.resample(timeframe.pandas_freq)
+        resampled = self._aggregate(resampler)
+        resampled = self._fill(resampled)
+
+        if resampled.empty:
+            self._cache[timeframe] = resampled
+            return resampled
+
+        coverage = float(resampled.notna().sum()) / float(resampled.size)
+        if coverage < self.config.min_fraction:
+            raise ValueError("resampled coverage below configured min_fraction")
+
         self._cache[timeframe] = resampled
         return resampled
 
@@ -113,7 +179,50 @@ class FractalResampler:
             "fractal_cache_hits": float(self._cache_hits),
             "direct_resamples": float(self._direct_resamples),
             "fractal_reuse_ratio": float(reuse_ratio),
+            "cache_size": float(len(self._cache)),
         }
+
+    def _aggregate(self, resampler: pd.core.resample.Resampler) -> pd.Series:
+        aggregator = self.config.aggregator
+        if isinstance(aggregator, str):
+            try:
+                if hasattr(resampler, aggregator):
+                    method = getattr(resampler, aggregator)
+                    result = method()
+                else:
+                    result = resampler.aggregate(aggregator)
+            except Exception as exc:  # pragma: no cover - pandas dispatch edge cases
+                raise ValueError(f"failed to aggregate using '{aggregator}'") from exc
+        else:
+            result = resampler.apply(aggregator)
+
+        if isinstance(result, pd.DataFrame):
+            if result.shape[1] == 1:
+                result = result.iloc[:, 0]
+            else:
+                raise TypeError(
+                    "aggregator returned a DataFrame; provide a reducer that yields a Series"
+                )
+        if not isinstance(result, pd.Series):
+            raise TypeError("aggregator must produce a pandas Series output")
+        return result
+
+    def _fill(self, series: pd.Series) -> pd.Series:
+        fill_method = self.config.fill_method
+        if fill_method is None:
+            return series.dropna()
+        if isinstance(fill_method, str):
+            if fill_method == "ffill":
+                filled = series.ffill(limit=self.config.fill_limit)
+            elif fill_method == "bfill":
+                filled = series.bfill(limit=self.config.fill_limit)
+            else:  # pragma: no cover - defensive guard for future literals
+                raise ValueError(f"unsupported fill method: {fill_method}")
+        else:
+            filled = fill_method(series.copy())
+            if not isinstance(filled, pd.Series):
+                raise TypeError("fill callable must return a pandas Series")
+        return filled.dropna()
 
     def _select_parent(self, timeframe: TimeFrame) -> Optional[TimeFrame]:
         """Return the finest cached timeframe that evenly divides ``timeframe``."""
@@ -259,6 +368,9 @@ class MultiScaleKuramoto:
         use_adaptive_window: bool = True,
         min_samples_per_scale: int = 64,
         selector: WaveletWindowSelector | None = None,
+        resampler_config: FractalResamplerConfig | None = None,
+        prefill_timeframes: Sequence[TimeFrame] | Literal["auto"] | None = None,
+        resampler_cls: type[FractalResampler] = FractalResampler,
     ) -> None:
         if base_window <= 0:
             raise ValueError("base_window must be positive")
@@ -281,15 +393,29 @@ class MultiScaleKuramoto:
             min_window=max(32, self.base_window // 2),
             max_window=self.base_window * 2,
         )
+        self.resampler_config = (
+            resampler_config if resampler_config is not None else FractalResamplerConfig()
+        )
+        self._prefill_spec = prefill_timeframes
+        self.resampler_cls = resampler_cls
 
     # -- exposed for unit tests -------------------------------------------------
     def _kuramoto_order_parameter(self, phases: np.ndarray) -> tuple[float, float]:
         return _kuramoto(np.asarray(phases, dtype=float))
 
     # ---------------------------------------------------------------------------
+    def _prefill_targets(self) -> tuple[TimeFrame, ...]:
+        spec = self._prefill_spec
+        if spec is None:
+            return ()
+        if spec == "auto":
+            return tuple(sorted(self.timeframes, key=lambda tf: tf.seconds))
+        unique: dict[TimeFrame, None] = {tf: None for tf in spec}
+        return tuple(unique.keys())
+
     def _resample_prices(self, series: pd.Series, timeframe: TimeFrame) -> pd.Series:
-        resampled = series.resample(timeframe.pandas_freq).last()
-        return resampled.ffill().dropna()
+        helper = self.resampler_cls(series, config=self.resampler_config)
+        return helper.resample(timeframe)
 
     def _window_for_series(self, values: np.ndarray) -> int:
         if self.use_adaptive_window:
@@ -307,7 +433,10 @@ class MultiScaleKuramoto:
             raise TypeError("MultiScaleKuramoto requires a DatetimeIndex")
         series = series.sort_index().astype(float)
 
-        resampler = FractalResampler(series)
+        resampler = self.resampler_cls(series, config=self.resampler_config)
+        prefill_targets = self._prefill_targets()
+        if prefill_targets:
+            resampler.prefill(prefill_targets)
         timeframe_results: MutableMapping[TimeFrame, KuramotoResult] = {}
         skipped: list[TimeFrame] = []
         windows: list[int] = []
@@ -442,6 +571,7 @@ class MultiScaleKuramotoFeature(BaseFeature):
         base_window = getattr(self.analyzer, "base_window", None)
         use_adaptive = getattr(self.analyzer, "use_adaptive_window", None)
         min_samples = getattr(self.analyzer, "min_samples_per_scale", None)
+        resampler_config = getattr(self.analyzer, "resampler_config", None)
         params: dict[str, Any] = {
             "timeframes": [tf.name for tf in timeframes] if timeframes else [],
             "price_col": price_col,
@@ -453,6 +583,12 @@ class MultiScaleKuramotoFeature(BaseFeature):
             params["use_adaptive_window"] = use_adaptive
         if min_samples is not None:
             params["min_samples_per_scale"] = min_samples
+        config_description = (
+            resampler_config.describe()
+            if resampler_config is not None
+            else FractalResamplerConfig().describe()
+        )
+        params["resampler"] = dict(config_description)
         return params
 
     @staticmethod
@@ -484,7 +620,10 @@ class MultiScaleKuramotoFeature(BaseFeature):
 
         price_series = df[price_col]
         for timeframe, tf_result in result.timeframe_results.items():
-            sampled = self.analyzer._resample_prices(price_series, timeframe)
+            try:
+                sampled = self.analyzer._resample_prices(price_series, timeframe)
+            except ValueError:
+                continue
             if sampled.empty:
                 continue
             timeframe_hash = hash_input_data(sampled.to_frame(name=price_col))
@@ -585,6 +724,7 @@ __all__ = [
     "TimeFrame",
     "WaveletWindowSelector",
     "FractalResampler",
+    "FractalResamplerConfig",
 ]
 
 
