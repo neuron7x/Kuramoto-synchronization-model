@@ -57,13 +57,15 @@ TradePulse exposes optional extras to keep the base installation lean. Install o
 
 ```bash
 # Broker and market data connectors
-pip install ".[connectors]"
+pip install tradepulse[connectors]
 
 # GPU acceleration backends (requires CUDA toolkit and compatible drivers)
 pip install ".[gpu]"
 ```
 
-You can combine extras: `pip install ".[connectors,gpu]"`.
+When working from a local clone, `pip install ".[connectors]"` installs the same extra. Teams that prefer requirement files can also use `pip install -r requirements-connectors.txt`.
+
+You can combine extras: `pip install tradepulse[connectors,gpu]`.
 
 ## Troubleshooting
 

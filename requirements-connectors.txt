@@ -1,0 +1,3 @@
+# Install the optional market & broker integrations.
+# Equivalent to `pip install tradepulse[connectors]`.
+.[connectors]

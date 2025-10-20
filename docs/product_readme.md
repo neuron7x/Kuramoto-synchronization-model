@@ -17,8 +17,9 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.lock
 
 # 3. Install optional extras as needed
-pip install .[connectors]   # Broker & market adapters
-pip install .[feature_store]  # Arrow/Polars feature registry
+pip install tradepulse[connectors]      # Broker & market adapters from PyPI
+pip install .[connectors]               # Same connectors extra when developing locally
+pip install .[feature_store]            # Arrow/Polars feature registry
 ```
 
 ### High-performance setup with `uv`

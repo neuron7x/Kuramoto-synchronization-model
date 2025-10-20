@@ -20,6 +20,8 @@ git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
 ```
 
+Prefer `pip install -r requirements-connectors.txt` if you need every venue integration listed in the `connectors` extra when deploying from infrastructure automation.
+
 ---
 
 ## Step 2: Create Virtual Environment
@@ -48,9 +50,10 @@ pip install -r requirements.lock
 pip install -r requirements-dev.lock
 
 # Extras: install only what you need
-# pip install ".[connectors]"  # market & broker integrations
-# pip install ".[gpu]"         # GPU acceleration backends
-# pip install ".[docs]"        # documentation toolchain
+# pip install tradepulse[connectors]  # market & broker integrations from PyPI
+# pip install ".[connectors]"        # same extra when working from a clone
+# pip install ".[gpu]"               # GPU acceleration backends
+# pip install ".[docs]"              # documentation toolchain
 ```
 
 ---

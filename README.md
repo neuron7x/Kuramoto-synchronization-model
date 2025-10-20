@@ -91,6 +91,8 @@ TradePulse relies on [Release Drafter v6](https://github.com/release-drafter/rel
 - @qa-team
 ```
 
+To install every connector dependency from a requirements file, use `pip install -r requirements-connectors.txt`, which simply wraps `pip install tradepulse[connectors]` for convenience during deployments.
+
 The generated release notes are subsequently copied into the curated [`CHANGELOG.md`](CHANGELOG.md) after validation.
 
 Additional badges above surface Python support, static analysis (ruff, mypy), and observability integrations (Prometheus). For deeper insight into release readiness, review [`reports/`](reports/) for CI health, security posture, and technical debt snapshots.
@@ -117,9 +119,10 @@ pip install -r requirements.lock
 pip install -r requirements-dev.lock
 
 # Optional extras (install only what you need)
-# pip install ".[connectors]"  # market & broker integrations
-# pip install ".[gpu]"         # GPU acceleration backends
-# pip install ".[docs]"        # documentation toolchain
+# pip install tradepulse[connectors]  # market & broker integrations from PyPI
+# pip install ".[connectors]"        # same extra when developing from source
+# pip install ".[gpu]"               # GPU acceleration backends
+# pip install ".[docs]"              # documentation toolchain
 ```
 
 ### Installation with Docker
