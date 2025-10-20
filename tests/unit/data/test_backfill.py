@@ -55,6 +55,18 @@ def test_layer_cache_ignores_empty_payload() -> None:
     assert cache.get(key).empty
 
 
+def test_layer_cache_delete_removes_entries() -> None:
+    cache = LayerCache()
+    key = CacheKey(layer="raw", symbol="BTC", venue="XNYS", timeframe="1min")
+    frame = _sample_frame()
+
+    cache.put(key, frame)
+    assert cache.delete(key) is True
+    assert cache.get(key).empty
+    assert cache.coverage(key) is None
+    assert cache.delete(key) is False
+
+
 def test_gap_validation_and_detection() -> None:
     start = pd.Timestamp("2024-01-01 00:00:00", tz=UTC)
     with pytest.raises(ValueError):
