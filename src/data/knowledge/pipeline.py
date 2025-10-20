@@ -68,10 +68,12 @@ class KnowledgeUpdatePipeline:
         all_segments: list[DocumentSegment] = []
         invalid_links: list[str] = []
         references = references or {}
+        processed_documents: set[str] = set()
 
         for document in documents:
             self._graph.upsert_document(document.metadata)
             segments = self._segmenter.segment(document)
+            processed_documents.add(document.metadata.document_id)
             for segment in segments:
                 context.segments[segment.segment_id] = segment
             all_segments.extend(segments)
@@ -88,5 +90,7 @@ class KnowledgeUpdatePipeline:
                 self._graph.add_reference(source_id, target_id)
         self._graph.prune_orphans()
 
-        report = self._index.maintenance(context.indexed_segments.values())
+        report = self._index.maintenance(
+            context.indexed_segments.values(), processed_documents
+        )
         return PipelineResult(context=context, index_report=report, invalid_links=tuple(invalid_links))

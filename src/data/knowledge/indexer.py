@@ -166,20 +166,30 @@ class HybridIndex:
         if vector_index:
             vector_index.remove(segment.segment_id)
 
-    def maintenance(self, segments: Iterable[IndexedSegment]) -> IndexMaintenanceReport:
+    def maintenance(
+        self,
+        segments: Iterable[IndexedSegment],
+        documents_replaced: Iterable[str] | None = None,
+    ) -> IndexMaintenanceReport:
         updated = 0
         shards_touched: set[str] = set()
         known_ids = set()
+        replaced_documents = set(documents_replaced or [])
         for segment in segments:
             self.upsert(segment)
             updated += 1
             known_ids.add(segment.segment_id)
             shards_touched.add(segment.shard_key)
+            replaced_documents.add(segment.document_id)
         removed = 0
-        for segment_id in list(self._segments.keys()):
-            if segment_id not in known_ids:
-                self.remove(segment_id)
-                removed += 1
+        if replaced_documents:
+            for segment_id, segment in list(self._segments.items()):
+                if (
+                    segment.document_id in replaced_documents
+                    and segment_id not in known_ids
+                ):
+                    self.remove(segment_id)
+                    removed += 1
         return IndexMaintenanceReport(
             updated_segments=updated,
             removed_segments=removed,

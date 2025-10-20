@@ -81,7 +81,11 @@ class KnowledgeSearchSubsystem:
     ) -> PipelineResult:
         """Run the update pipeline for the provided documents."""
 
-        return self._pipeline.run(documents=documents, references=references)
+        result = self._pipeline.run(documents=documents, references=references)
+        report = result.index_report
+        if report.updated_segments or report.removed_segments:
+            self._cache.clear()
+        return result
 
     def search(self, query: SearchQuery) -> tuple[Sequence[SearchResult], CompletenessReport]:
         """Execute a hybrid search with cache, citations, and completeness control."""
