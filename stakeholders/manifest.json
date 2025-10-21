@@ -1,0 +1,22 @@
+{
+  "artifacts": [
+    {
+      "path": "stakeholders/matrix.csv",
+      "sha256": "6ac5acccf4da94bdb64d466dd4c8f703f2ab7f7575bbc608c862078a03962b98"
+    },
+    {
+      "path": "stakeholders/raci.csv",
+      "sha256": "0c75275bc83468755620d262f427fbfa98827bb4861cc1f41d60331c129602e1"
+    },
+    {
+      "path": "stakeholders/communication_plan.csv",
+      "sha256": "69b5a0d756690b6c08318b03783a3dc8e1260f56e2e1a8d936efa779da6df681"
+    },
+    {
+      "path": "docs/responsible_ai_program.md",
+      "sha256": "2b0e3039c1fa04699c63c6121690eba9379c331771bb504a194156c0a4c51a46"
+    }
+  ],
+  "git_rev": "c73836ebee6d5e182335d39b841c939b4a0d954e",
+  "source_sha256": "2b0e3039c1fa04699c63c6121690eba9379c331771bb504a194156c0a4c51a46"
+}
