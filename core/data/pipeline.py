@@ -471,32 +471,67 @@ class DataPipeline:
         cfg = self._config.stratified_split
         if cfg is None or frame.empty or cfg.column not in frame.columns:
             return {"full": frame.reset_index(drop=True)}
-        splits = cfg.normalised_splits()
-        remaining = frame.copy()
-        results: MutableMapping[str, pd.DataFrame] = {}
-        for name, fraction in splits.items():
-            if fraction <= 0:
-                results[name] = remaining.iloc[0:0].copy()
+
+        splits = tuple(cfg.normalised_splits().items())
+        empty_template = frame.iloc[0:0].copy()
+
+        collected: dict[str, list[pd.DataFrame]] = {
+            name: [] for name, _ in splits
+        }
+        remainder_indices: list[int] = []
+
+        column = frame[cfg.column]
+        null_mask = column.isna()
+        if null_mask.any():
+            remainder_indices.extend(frame.loc[null_mask].index.to_numpy())
+
+        grouped = frame.loc[~null_mask] if null_mask.any() else frame
+
+        for _, group in grouped.groupby(cfg.column, sort=False):
+            if group.empty:
                 continue
-            collected_indices: list[int] = []
-            for _, group in remaining.groupby(cfg.column):
-                size = len(group)
-                if size == 0:
+
+            indices = group.index.to_numpy()
+            if cfg.shuffle:
+                indices = self._rng.permutation(indices)
+
+            total = len(indices)
+            offset = 0
+            for name, fraction in splits:
+                if fraction <= 0 or offset >= total:
                     continue
-                sample_size = max(1, int(math.floor(size * fraction)))
-                sample_size = min(sample_size, size)
-                if sample_size == 0:
+
+                remaining = total - offset
+                take = int(math.floor(remaining * fraction))
+                if fraction > 0 and take <= 0:
+                    take = min(1, remaining)
+                else:
+                    take = min(take, remaining)
+
+                if take <= 0:
                     continue
-                sample = group.sample(
-                    n=sample_size,
-                    replace=False,
-                    random_state=self._rng.integers(0, np.iinfo(np.int32).max),
-                )
-                collected_indices.extend(sample.index.tolist())
-            subset = remaining.loc[collected_indices].reset_index(drop=True)
-            results[name] = subset
-            remaining = remaining.drop(index=collected_indices)
-        results["remainder"] = remaining.reset_index(drop=True)
+
+                selected = indices[offset : offset + take]
+                collected[name].append(frame.loc[selected])
+                offset += take
+
+            if offset < total:
+                remainder_indices.extend(indices[offset:])
+
+        results: MutableMapping[str, pd.DataFrame] = {}
+        for name, _ in splits:
+            parts = collected[name]
+            if parts:
+                results[name] = pd.concat(parts, ignore_index=True)
+            else:
+                results[name] = empty_template.copy()
+
+        if remainder_indices:
+            remainder_frame = frame.loc[remainder_indices]
+            results["remainder"] = remainder_frame.reset_index(drop=True)
+        else:
+            results["remainder"] = empty_template.copy()
+
         return results
 
     def _augment_with_synthetic(
