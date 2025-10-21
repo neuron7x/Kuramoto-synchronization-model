@@ -411,6 +411,7 @@ class AutoTriageOrchestrator:
         for index, command in enumerate(self._config.reproduction_commands, start=1):
             timestamp = self._now().isoformat()
             log_path = reproduction_dir / f"command_{index:02d}.json"
+            serialized_command = [str(argument) for argument in command]
             try:
                 completed = subprocess.run(
                     command,
@@ -421,7 +422,7 @@ class AutoTriageOrchestrator:
                 )
             except FileNotFoundError as exc:  # pragma: no cover - depends on environment
                 payload = {
-                    "command": list(command),
+                    "command": serialized_command,
                     "error": str(exc),
                     "timestamp": timestamp,
                     "context": dict(context),
@@ -438,7 +439,7 @@ class AutoTriageOrchestrator:
                 continue
 
             payload = {
-                "command": list(command),
+                "command": serialized_command,
                 "returncode": completed.returncode,
                 "stdout": completed.stdout,
                 "stderr": completed.stderr,
