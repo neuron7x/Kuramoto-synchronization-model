@@ -1,4 +1,5 @@
 import assert from 'assert';
+import './accessibility.test.js';
 import {
   createStrategyConfigurator,
   compareBacktests,

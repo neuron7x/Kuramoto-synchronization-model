@@ -18,6 +18,15 @@ function clampPage(page, pageCount) {
   return page;
 }
 
+function buildSummaryId(columns) {
+  const base = columns
+    .map((column) => column.id)
+    .filter((id) => typeof id === 'string' && id.trim().length > 0)
+    .join('-');
+  const safeBase = base || 'table';
+  return `tp-live-table-summary-${safeBase.replace(/[^a-z0-9_-]/gi, '-').toLowerCase()}`;
+}
+
 export class LiveTable {
   constructor({ columns = [], rows = [], sortBy, sortDirection = 'desc', pageSize = DEFAULT_PAGE_SIZE } = {}) {
     if (!Array.isArray(columns) || columns.length === 0) {
@@ -121,9 +130,14 @@ export class LiveTable {
       })
       .join('');
 
+    const summaryId = buildSummaryId(this.columns);
+    const activeColumn = this.columns.find((column) => column.id === this.sortBy) || this.columns[0];
+    const directionLabel = this.sortDirection === 'asc' ? 'ascending' : 'descending';
+    const summaryText = `Sorted by ${escapeHtml(activeColumn.label)} (${directionLabel}). Total rows ${sortedRows.length}. Page ${currentPage} of ${pageCount}.`;
+
     const html = `
-      <div class="tp-live-table">
-        <table class="tp-live-table__table">
+      <div class="tp-live-table" role="region" aria-live="polite">
+        <table class="tp-live-table__table" role="table" aria-describedby="${summaryId}">
           <thead class="tp-live-table__head">
             <tr class="tp-live-table__row">${header}</tr>
           </thead>
@@ -132,6 +146,7 @@ export class LiveTable {
         <footer class="tp-live-table__footer">
           <span class="tp-live-table__footer-item">Page ${currentPage} of ${pageCount}</span>
           <span class="tp-live-table__footer-item">Rows ${sortedRows.length}</span>
+          <p id="${summaryId}" class="tp-live-table__summary" aria-live="polite">${summaryText}</p>
         </footer>
       </div>
     `;

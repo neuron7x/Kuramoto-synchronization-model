@@ -18,6 +18,7 @@ from .advanced import (
     TradeResult,
 )
 from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from .shocks import ShockScenario, ShockScenarioGenerator
 from .training import (
     AsyncDataLoader,
     CheckpointManager,
@@ -64,4 +65,6 @@ __all__ = [
     "NeuroRiskManager",
     "NeuroStateMonitor",
     "NeuroplasticReinforcementEngine",
+    "ShockScenario",
+    "ShockScenarioGenerator",
 ]
