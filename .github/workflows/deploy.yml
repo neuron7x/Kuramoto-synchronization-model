@@ -1,0 +1,83 @@
+name: Deployment & Infrastructure Validation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-validation:
+    name: Validate deployment assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      PYTHON_VERSION: "3.11"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Install dependencies for Terratest
+        run: |
+          go mod download
+
+      - name: Run Terratest validation
+        env:
+          TF_IN_AUTOMATION: "true"
+        run: |
+          go test ./infra/terraform/tests/...
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: "5.4.1"
+
+      - name: Install kubeval
+        run: |
+          set -euo pipefail
+          curl -sSL https://github.com/instrumenta/kubeval/releases/download/v0.16.1/kubeval-linux-amd64.tar.gz \
+            | tar -xz -C /usr/local/bin kubeval
+          chmod +x /usr/local/bin/kubeval
+
+      - name: Validate Kubernetes manifests
+        run: |
+          set -euo pipefail
+          mkdir -p build/manifests
+          kustomize build deploy/kustomize/overlays/staging > build/manifests/staging.yaml
+          kustomize build deploy/kustomize/overlays/production > build/manifests/production.yaml
+          kubeval --ignore-missing-schemas --strict build/manifests/staging.yaml
+          kubeval --ignore-missing-schemas --strict build/manifests/production.yaml
+          kubeval --ignore-missing-schemas --strict deploy/tradepulse-deployment.yaml
+          kubeval --ignore-missing-schemas --strict deploy/tradepulse-service.yaml
+
+      - name: Run docker-compose smoke test
+        run: |
+          python scripts/deploy/docker_compose_smoke.py --artifact-dir artifacts/deploy-smoke
+
+      - name: Upload smoke test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-smoke-artifacts
+          path: artifacts/deploy-smoke
+
