@@ -1,0 +1,53 @@
+name: Database migrations
+
+on:
+  pull_request:
+    paths:
+      - 'alembic.ini'
+      - 'migrations/**'
+      - 'tools/migrations/**'
+      - 'configs/migrations/**'
+      - '.github/workflows/migration-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-migrations-${{ hashFiles('requirements*.txt', 'pyproject.toml') }}
+      - name: Create virtual environment
+        run: uv venv
+      - name: Install dependencies
+        run: |
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -e .
+      - name: Run migration guardrail workflow
+        env:
+          TRADEPULSE_MIGRATION_ALERT_CHANNEL: '#migrations'
+        run: |
+          .venv/bin/tradepulse-migrate ci \
+            --config configs/migrations/default.yaml \
+            --dry-run \
+            --validation configs/migrations/sample_validations.yaml
+      - name: Upload migration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-artifacts
+          path: reports/migrations
+          if-no-files-found: warn

@@ -1,3 +1,3 @@
 """Utility scripts packaged with TradePulse."""
 
-__all__ = []
+__all__ = ['migrations']

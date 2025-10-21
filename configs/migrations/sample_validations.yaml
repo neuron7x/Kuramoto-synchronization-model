@@ -1,0 +1,7 @@
+rules:
+  - name: connection_healthcheck
+    query: "SELECT 1 AS ok"
+    checks:
+      - kind: scalar_equals
+        equals: 1
+        column: ok

@@ -1,0 +1,15 @@
+alembic_ini: alembic.ini
+artifacts:
+  directory: reports/migrations
+lock_timeout_seconds: 5
+statement_timeout_seconds: 60
+default_timebox_seconds: 300
+backup:
+  enabled: false
+  directory: backups/migrations
+  retain_last: 5
+schema:
+  tables: {}
+validations:
+  files:
+    - configs/migrations/sample_validations.yaml
