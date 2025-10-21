@@ -408,11 +408,12 @@ class LiveExecutionLoop:
         hydrator = getattr(self._risk_manager, "hydrate_positions", None)
         if not callable(hydrator):
             return
-        snapshot, sources = self._build_risk_snapshot()
+        snapshot, sources, expected = self._build_risk_snapshot()
         if sources == 0:
             return
         try:
-            hydrator(snapshot, replace=True)
+            replace = expected > 0 and sources == expected
+            hydrator(snapshot, replace=replace)
         except Exception as exc:  # pragma: no cover - defensive logging path
             self._logger.warning(
                 "Failed to hydrate risk state from connectors",
@@ -422,12 +423,20 @@ class LiveExecutionLoop:
                 },
             )
 
-    def _build_risk_snapshot(self) -> tuple[dict[str, tuple[float, float]], int]:
+    def _build_risk_snapshot(
+        self,
+    ) -> tuple[dict[str, tuple[float, float]], int, int]:
         snapshot: dict[str, tuple[float, float]] = {}
         sources = 0
+        expected = 0
         for context in self._contexts.values():
+            connector = context.connector
+            get_positions = getattr(connector, "get_positions", None)
+            if not callable(get_positions):
+                continue
+            expected += 1
             try:
-                positions = context.connector.get_positions()
+                positions = get_positions()
             except Exception as exc:
                 self._logger.warning(
                     "Failed to fetch positions for risk hydration",
@@ -472,7 +481,7 @@ class LiveExecutionLoop:
                     snapshot.pop(symbol, None)
                 else:
                     snapshot[symbol] = (combined_qty, combined_notional)
-        return snapshot, sources
+        return snapshot, sources, expected
 
     @staticmethod
     def _parse_position_payload(
