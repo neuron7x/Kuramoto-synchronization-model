@@ -803,7 +803,7 @@ class PredictionSnapshot(BaseModel):
                 "timestamp": "2025-01-01T00:00:30Z",
                 "score": 0.42,
                 "signal": {
-                    "action": "BUY",
+                    "action": "buy",
                     "confidence": 0.78,
                 },
             }
@@ -838,7 +838,7 @@ class PredictionResponse(BaseModel):
                     "horizon_seconds": 900,
                     "score": 0.42,
                     "signal": {
-                        "action": "BUY",
+                        "action": "buy",
                         "confidence": 0.78,
                         "rationale": "Composite heuristic weighting MACD trend...",
                     },
@@ -847,7 +847,7 @@ class PredictionResponse(BaseModel):
                             "timestamp": "2025-01-01T00:00:30Z",
                             "score": 0.42,
                             "signal": {
-                                "action": "BUY",
+                                "action": "buy",
                                 "confidence": 0.78,
                             },
                         }
@@ -861,7 +861,7 @@ class PredictionResponse(BaseModel):
                     "filters": {
                         "start_at": None,
                         "end_at": None,
-                        "actions": ["BUY"],
+                        "actions": ["buy"],
                         "min_confidence": 0.6,
                     },
                 }
