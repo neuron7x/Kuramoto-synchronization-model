@@ -62,8 +62,26 @@ jobs:
         run: .venv/bin/pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
       - name: Run shellcheck
         run: .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
-      - name: Run detect-secrets
-        run: .venv/bin/pre-commit run --hook-stage manual --all-files detect-secrets --show-diff-on-failure
+      - name: Run detect-secrets scan
+        run: |
+          set -euo pipefail
+          scan_output="$(mktemp)"
+          .venv/bin/detect-secrets scan core backtest execution src application >"$scan_output"
+          python - <<'PY' "$scan_output"
+          import json
+          import sys
+
+          path = sys.argv[1]
+          data = json.loads(open(path, encoding="utf-8").read())
+          results = data.get("results", {})
+          violations = sum(len(entries) for entries in results.values())
+          if violations:
+              message = [
+                  "Potential secrets detected in privileged modules:",
+                  json.dumps(results, indent=2, sort_keys=True),
+              ]
+              raise SystemExit("\n".join(message))
+          PY
   tests:
     runs-on: ubuntu-latest
     strategy:

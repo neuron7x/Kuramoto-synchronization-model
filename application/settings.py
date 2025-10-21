@@ -283,7 +283,7 @@ class AdminApiSettings(BaseSettings):
         *,
         audit_logger: "AuditLogger" | None = None,
         template_manager: "ConfigTemplateManager" | None = None,
-        secret_detector: "SecretDetector" | None = None,
+        secret_detector: "SecretDetector" | None = None,  # pragma: allowlist secret
         rotator: "SecretRotator" | None = None,
         clock: Callable[[], datetime] | None = None,
     ) -> "CentralConfigurationStore":

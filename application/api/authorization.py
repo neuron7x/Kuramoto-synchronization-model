@@ -19,7 +19,7 @@ __all__ = ["require_roles", "require_permission", "get_authorization_gateway"]
 
 
 _POLICY_PATH_ENV = "TRADEPULSE_RBAC_POLICY_PATH"
-_AUDIT_SECRET_ENV = "TRADEPULSE_RBAC_AUDIT_SECRET"
+_AUDIT_SECRET_ENV = "TRADEPULSE_RBAC_AUDIT_SECRET"  # pragma: allowlist secret
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_POLICY_PATH = _PROJECT_ROOT / "configs" / "rbac" / "policy.yaml"
 _REPO_ROOT = _PROJECT_ROOT

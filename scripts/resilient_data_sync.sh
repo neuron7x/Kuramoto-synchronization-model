@@ -37,9 +37,12 @@ require_command() {
 }
 
 log_json() {
-  local level="$1"; shift
-  local message="$1"; shift
-  local stream="${1:-stdout}"; shift
+  local level="$1"
+  shift
+  local message="$1"
+  shift
+  local stream="${1:-stdout}"
+  shift
   local ts
   ts="$(date -u +"%Y-%m-%dT%H:%M:%S.%6NZ")"
   python3 - "$level" "$message" "$stream" "$ts" "$SCRIPT_NAME" "$RUN_ID" "$SCRIPT_VERSION" "$@" <<'PY'
@@ -86,24 +89,38 @@ LOCK_DIR="$DEFAULT_LOCK_DIR"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --source-url)
-      SOURCE_URL="$2"; shift 2 ;;
+      SOURCE_URL="$2"
+      shift 2
+      ;;
     --destination)
-      DESTINATION="$2"; shift 2 ;;
+      DESTINATION="$2"
+      shift 2
+      ;;
     --lock-dir)
-      LOCK_DIR="$2"; shift 2 ;;
+      LOCK_DIR="$2"
+      shift 2
+      ;;
     --max-retries)
-      MAX_RETRIES="$2"; shift 2 ;;
+      MAX_RETRIES="$2"
+      shift 2
+      ;;
     --timeout)
-      REQUEST_TIMEOUT="$2"; shift 2 ;;
+      REQUEST_TIMEOUT="$2"
+      shift 2
+      ;;
     --circuit-ttl)
-      CIRCUIT_BREAKER_TTL="$2"; shift 2 ;;
-    --help|-h)
+      CIRCUIT_BREAKER_TTL="$2"
+      shift 2
+      ;;
+    --help | -h)
       usage
-      exit 0 ;;
+      exit 0
+      ;;
     *)
       log_json "error" "unknown argument" "stderr" "argument=$1"
       usage
-      exit 64 ;;
+      exit 64
+      ;;
   esac
 done
 
@@ -159,7 +176,7 @@ trap cleanup EXIT INT TERM
 now=$(date +%s)
 if [[ -f "$circuit_file" ]]; then
   circuit_open=$(stat -c %Y "$circuit_file" 2>/dev/null || echo 0)
-  if (( now - circuit_open < CIRCUIT_BREAKER_TTL )); then
+  if ((now - circuit_open < CIRCUIT_BREAKER_TTL)); then
     log_json "error" "circuit breaker open" "stderr" \
       "circuit_file=$circuit_file" \
       "seconds_until_retry=$((CIRCUIT_BREAKER_TTL - (now - circuit_open)))"
@@ -188,7 +205,7 @@ download_file() {
   local destination="$1"
   local attempt=1
   local backoff=$INITIAL_BACKOFF
-  while (( attempt <= MAX_RETRIES )); do
+  while ((attempt <= MAX_RETRIES)); do
     log_json "info" "attempting download" "stderr" \
       "attempt=$attempt" \
       "source_url=$SOURCE_URL"
@@ -200,7 +217,7 @@ download_file() {
     log_json "warning" "download failed" "stderr" \
       "attempt=$attempt" \
       "status=$status"
-    if (( attempt == MAX_RETRIES )); then
+    if ((attempt == MAX_RETRIES)); then
       log_json "error" "exhausted retries" "stderr" \
         "max_retries=$MAX_RETRIES"
       return 1
@@ -208,18 +225,19 @@ download_file() {
     local jitter
     jitter="$(python3 -c 'import random; print(f"{random.uniform(0.1,0.5):.3f}")' 2>/dev/null || echo "0.2")"
     local sleep_for
-    sleep_for=$(python3 - "$backoff" "$jitter" <<'PY'
+    sleep_for=$(
+      python3 - "$backoff" "$jitter" <<'PY'
 import sys
 backoff = float(sys.argv[1])
 jitter = float(sys.argv[2])
 print(f"{min(backoff + jitter, 60.0):.3f}")
 PY
-)
+    )
     log_json "info" "sleeping before retry" "stderr" \
       "seconds=$sleep_for"
     sleep "$sleep_for"
-    backoff=$(( backoff * 2 ))
-    if (( backoff > MAX_BACKOFF )); then
+    backoff=$((backoff * 2))
+    if ((backoff > MAX_BACKOFF)); then
       backoff=$MAX_BACKOFF
     fi
     ((attempt++))
@@ -242,7 +260,7 @@ if [[ -f "$DESTINATION" ]]; then
   if [[ "$existing_hash" == "$new_hash" ]]; then
     log_json "info" "download matches existing destination" "stdout" \
       "destination=$DESTINATION"
-    printf 'hash=%s\nsource=%s\nsynced_at=%s\n' "$new_hash" "$SOURCE_URL" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "$marker_file"
+    printf 'hash=%s\nsource=%s\nsynced_at=%s\n' "$new_hash" "$SOURCE_URL" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >"$marker_file"
     exit 0
   fi
 fi
@@ -255,7 +273,7 @@ mv "$tmp_dest" "$DESTINATION"
 log_json "info" "updated destination" "stdout" \
   "destination=$DESTINATION"
 
-printf 'hash=%s\nsource=%s\nsynced_at=%s\n' "$new_hash" "$SOURCE_URL" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "$marker_file"
+printf 'hash=%s\nsource=%s\nsynced_at=%s\n' "$new_hash" "$SOURCE_URL" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >"$marker_file"
 rm -f "$circuit_file"
 log_json "info" "synchronization complete" "stdout" \
   "destination=$DESTINATION" \
