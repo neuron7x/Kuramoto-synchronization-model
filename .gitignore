@@ -38,5 +38,9 @@ apps/web/.next/
 apps/web/playwright-report/
 apps/web/test-results/
 apps/web/playwright/.cache/
+ui/dashboard/playwright-report/
+ui/dashboard/test-results/
+ui/dashboard/playwright/.cache/
+ui/dashboard/node_modules/
 rust/target/
 rust/**/target/

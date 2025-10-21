@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>TradePulse Dashboard Signals Fixture</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      a {
+        color: #38bdf8;
+      }
+    </style>
+    <script type="module">
+      import { renderSignalsView } from '../../src/views/signals.js';
+
+      const renderFixture = () => {
+        const root = document.getElementById('app');
+        if (!root) {
+          const message = 'Unable to find #app container for dashboard fixture.';
+          console.error(message);
+          window.__renderMetrics = {
+            renderDuration: Number.POSITIVE_INFINITY,
+            summary: { activeCount: 0, counts: {}, averageStrength: 0, maxStrength: 0 },
+            totalSignals: 0,
+            error: message,
+          };
+          return;
+        }
+
+        const sampleSignals = [
+        {
+          id: 'sig-1',
+          symbol: 'AAPL',
+          direction: 'BUY',
+          strength: 0.86,
+          timestamp: Date.now() - 45_000,
+          ttl_seconds: 300,
+          confidence: 0.94,
+          metadata: {
+            strategy: 'momentum',
+            horizon: '1h',
+          },
+        },
+        {
+          id: 'sig-2',
+          symbol: 'MSFT',
+          direction: 'SELL',
+          strength: 0.42,
+          timestamp: Date.now() - 120_000,
+          ttl_seconds: 180,
+          confidence: 0.61,
+          metadata: {
+            strategy: 'mean_reversion',
+            horizon: '30m',
+          },
+        },
+        {
+          id: 'sig-3',
+          symbol: 'NVDA',
+          direction: 'BUY',
+          strength: 0.73,
+          timestamp: Date.now() - 12_000,
+          ttl_seconds: 90,
+          confidence: 0.88,
+          metadata: {
+            strategy: 'volatility_breakout',
+            horizon: '15m',
+          },
+        },
+      ];
+
+        try {
+          const renderStart = performance.now();
+          const view = renderSignalsView({ signals: sampleSignals, pageSize: 5 });
+          root.innerHTML = view.html;
+          window.__renderMetrics = {
+            renderDuration: performance.now() - renderStart,
+            summary: view.summary,
+            totalSignals: view.rows.length,
+          };
+        } catch (error) {
+          console.error('Failed to render dashboard fixture', error);
+          window.__renderMetrics = {
+            renderDuration: Number.POSITIVE_INFINITY,
+            summary: { activeCount: 0, counts: {}, averageStrength: 0, maxStrength: 0 },
+            totalSignals: 0,
+          };
+          window.__renderMetrics.error = String(error?.stack || error?.message || error);
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', renderFixture, { once: true });
+      } else {
+        renderFixture();
+      }
+    </script>
+  </head>
+  <body>
+    <main id="app" aria-label="Signals dashboard"></main>
+  </body>
+</html>
