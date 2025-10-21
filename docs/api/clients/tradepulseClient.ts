@@ -27,7 +27,7 @@ export class TradePulseClient {
         });
     }
 
-    async get_market_signal(options: RequestOptions = {}, symbol: string): Promise<Response> {
+    async get_market_signal(symbol: string, options: RequestOptions = {}): Promise<Response> {
         const headers = { ...this.defaultHeaders, ...(options.headers || {}) };
         const requestUrl = `${this.baseUrl}/v1/signals/${symbol}`;
         const response = await fetch(requestUrl, {
