@@ -1,6 +1,23 @@
 """Neuroscience-inspired modules for TradePulse."""
 
 from .amm import AdaptiveMarketMind, AMMConfig
+from .advanced import (
+    AgencyControlNetwork,
+    CandidateGenerator,
+    DopaminePredictionNetwork,
+    ECANeuroTradingAdapter,
+    EnhancedFractalNeuroeconomicCore,
+    IntegratedNeuroTradingSystem,
+    MarketContext,
+    NeuroAdvancedConfig,
+    NeuroDecisionIntegrator,
+    NeuroRiskManager,
+    NeuroStateMonitor,
+    NeuroplasticReinforcementEngine,
+    TradeOutcome,
+    TradeResult,
+)
+from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
 from .training import (
     AsyncDataLoader,
     CheckpointManager,
@@ -19,9 +36,17 @@ from .training import (
 __all__ = [
     "AMMConfig",
     "AdaptiveMarketMind",
+    "AgencyControlNetwork",
     "AsyncDataLoader",
     "CheckpointManager",
+    "CandidateGenerator",
+    "DopaminePredictionNetwork",
+    "ECANeuroTradingAdapter",
+    "EnhancedFractalNeuroeconomicCore",
+    "IntegratedNeuroTradingSystem",
+    "MarketContext",
     "MixedPrecisionContext",
+    "MarketPulse",
     "ProfileSnapshot",
     "TrainingBatch",
     "TrainingComponent",
@@ -31,4 +56,12 @@ __all__ = [
     "TrainingSample",
     "TrainingStepResult",
     "TrainingSummary",
+    "TradeOutcome",
+    "TradePulseNeuroAdapter",
+    "TradeResult",
+    "NeuroAdvancedConfig",
+    "NeuroDecisionIntegrator",
+    "NeuroRiskManager",
+    "NeuroStateMonitor",
+    "NeuroplasticReinforcementEngine",
 ]
