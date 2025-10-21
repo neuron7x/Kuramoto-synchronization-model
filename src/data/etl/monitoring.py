@@ -10,6 +10,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
+from pandas.api.types import is_numeric_dtype
 
 from .stores import AuditEntry
 
@@ -34,16 +35,19 @@ class DistributionProfiler:
         summaries: list[ProfileSummary] = []
         for column in frame.columns:
             series = frame[column]
-            numeric_series = series.dropna()
-            numeric_values = numeric_series.astype(float) if not numeric_series.empty else numeric_series
+            non_null_values = series.dropna()
+            if is_numeric_dtype(series):
+                numeric_values = non_null_values.astype(float) if not non_null_values.empty else non_null_values
+            else:
+                numeric_values = pd.Series(dtype=float)
             summary = ProfileSummary(
                 column=column,
                 count=int(series.shape[0]),
                 nulls=int(series.isna().sum()),
-                mean=float(numeric_values.mean()) if not numeric_series.empty else None,
-                std=float(numeric_values.std()) if numeric_series.shape[0] > 1 else None,
-                min=float(numeric_values.min()) if not numeric_series.empty else None,
-                max=float(numeric_values.max()) if not numeric_series.empty else None,
+                mean=float(numeric_values.mean()) if not numeric_values.empty else None,
+                std=float(numeric_values.std()) if numeric_values.shape[0] > 1 else None,
+                min=float(numeric_values.min()) if not numeric_values.empty else None,
+                max=float(numeric_values.max()) if not numeric_values.empty else None,
             )
             summaries.append(summary)
         return summaries
