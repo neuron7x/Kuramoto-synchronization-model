@@ -467,12 +467,26 @@ class VectorRecord:
 
 
 class VectorIndexLayer:
-    """Lightweight semantic index for prompts or responses."""
+    """Lightweight semantic index for prompts or responses.
 
-    def __init__(self, *, region: str, metrics: CacheMetrics, similarity: str = "cosine") -> None:
+    The layer keeps only the ``max_records`` most recent entries to prevent
+    unbounded growth when upstream systems continually ingest new artefacts.
+    """
+
+    def __init__(
+        self,
+        *,
+        region: str,
+        metrics: CacheMetrics,
+        similarity: str = "cosine",
+        max_records: int | None = 1024,
+    ) -> None:
         self.region = region
         self.metrics = metrics
         self.similarity = similarity
+        if max_records is not None and max_records <= 0:
+            raise ValueError("max_records must be positive when provided")
+        self._max_records = max_records
         self._records: list[VectorRecord] = []
         self._lock = RLock()
 
@@ -486,6 +500,7 @@ class VectorIndexLayer:
         )
         with self._lock:
             self._records.append(record)
+            self._enforce_capacity()
 
     def query(
         self,
@@ -520,11 +535,19 @@ class VectorIndexLayer:
                 self.metrics.record_miss("vector_index", self.region)
             return results
 
+    def _enforce_capacity(self, override: int | None = None) -> None:
+        limit = override if override is not None else self._max_records
+        if limit is None:
+            return
+        if limit <= 0:
+            raise ValueError("Vector index capacity must stay positive")
+        if len(self._records) <= limit:
+            return
+        self._records = self._records[-limit:]
+
     def compact(self, *, max_records: int | None = None) -> None:
         with self._lock:
-            if max_records is None or len(self._records) <= max_records:
-                return
-            self._records = self._records[-max_records:]
+            self._enforce_capacity(max_records)
 
     def warmup(self, records: Iterable[tuple[Any, np.ndarray, Any, Mapping[str, Any] | None]]) -> None:
         for key, vector, value, metadata in records:

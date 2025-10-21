@@ -11,6 +11,7 @@ from core.utils.cache import (
     InMemoryCacheLayer,
     LRUEvictionPolicy,
     MultiTierCache,
+    VectorIndexLayer,
     build_default_cache_system,
 )
 
@@ -94,6 +95,26 @@ def test_vector_index_returns_ranked_matches() -> None:
     assert value["prompt"] == "alpha"
     assert score > 0.5
     assert metadata == {}
+
+
+def test_vector_index_enforces_max_records() -> None:
+    metrics = CacheMetrics()
+    layer = VectorIndexLayer(region="semantic", metrics=metrics, max_records=2)
+
+    layer.add("one", np.array([1.0, 0.0], dtype=np.float32), {"id": "one"})
+    layer.add("two", np.array([0.0, 1.0], dtype=np.float32), {"id": "two"})
+    layer.add("three", np.array([0.7, 0.7], dtype=np.float32), {"id": "three"})
+
+    assert [record.key for record in layer._records] == [  # type: ignore[attr-defined]
+        CacheKeyNormalizer.normalize("two"),
+        CacheKeyNormalizer.normalize("three"),
+    ]
+
+    layer.compact(max_records=1)
+
+    assert [record.key for record in layer._records] == [  # type: ignore[attr-defined]
+        CacheKeyNormalizer.normalize("three"),
+    ]
 
 
 def test_control_cold_regions_flags_low_hit_rate() -> None:
