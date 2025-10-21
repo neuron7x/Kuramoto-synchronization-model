@@ -1,54 +1,44 @@
-# SPDX-License-Identifier: MIT
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.5
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
     hooks:
-      - id: ruff
-        args: ["--fix"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
   - repo: https://github.com/psf/black
-    rev: 24.10.0
+    rev: 24.4.2
     hooks:
       - id: black
-        language_version: python3
-  - repo: https://github.com/PyCQA/isort
+        args: [--config=pyproject.toml]
+  - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        args: ["--profile=black"]
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+        args: [--settings-path=pyproject.toml]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
     hooks:
-      - id: flake8
-  - repo: https://github.com/mvdan/sh
-    rev: v3.7.0
+      - id: ruff
+        args: [--config=pyproject.toml]
+      - id: ruff
+        name: ruff (strict)
+        args: [--config=pyproject.toml, --fix]
+        stages: [pre-push]
+      - id: ruff-format
+        args: [--config=pyproject.toml]
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
     hooks:
-      - id: shfmt
-        args: ["-w"]
-  - repo: https://github.com/koalaman/shellcheck
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-requests]
+      - id: pyupgrade
+        args: [--py311-plus]
   - repo: local
     hooks:
-      - id: slotscheck
-        name: slotscheck (core packages)
-        entry: python -m slotscheck --module core --module backtest --module execution
-        language: python
-        additional_dependencies:
-          - slotscheck==0.19.1
-        pass_filenames: false
-      - id: eslint
-        name: eslint (dashboard UI)
-        entry: npm run lint --prefix ui/dashboard
+      - id: tradepulse-style
+        name: TradePulse style enforcement
+        entry: python -m scripts.cli style --check
         language: system
         pass_filenames: false
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
+        stages: [pre-commit, pre-push]
