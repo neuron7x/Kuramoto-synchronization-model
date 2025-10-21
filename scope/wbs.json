@@ -1,0 +1,275 @@
+{
+  "id": "WBS-1",
+  "name": "RLHF/RLAIF Alignment Implementation",
+  "owner": "Program Steering Committee",
+  "description": "Program delivery structured around RLHF/RLAIF rollout per docs/rlhf_rlaif_strategy.md",
+  "duration_weeks": 19,
+  "deliverables": [],
+  "dependencies": [],
+  "children": [
+    {
+      "id": "WBS-1.1",
+      "name": "Stage 0 – Team Mobilization & Audit",
+      "owner": "Chief AI Officer",
+      "description": "Mobilize core leadership and audit current processes as per implementation plan stage 0.",
+      "duration_weeks": 2,
+      "deliverables": ["DEL-001"],
+      "dependencies": [],
+      "children": [
+        {
+          "id": "WBS-1.1.1",
+          "name": "Assemble cross-functional RLHF/RLAIF task force",
+          "owner": "Chief AI Officer",
+          "description": "Identify and confirm cross-functional leaders aligned to Stage 0 objectives.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-001"],
+          "dependencies": [],
+          "source": "14:138",
+          "test_refs": ["tests/organization/governance.md"]
+        },
+        {
+          "id": "WBS-1.1.2",
+          "name": "Audit existing alignment and compliance workflows",
+          "owner": "Head of Compliance",
+          "description": "Review current processes to baseline RLHF/RLAIF governance gaps.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-001"],
+          "dependencies": ["WBS-1.1.1"],
+          "source": "14:138",
+          "test_refs": ["tests/compliance/audit_checklist.md"]
+        }
+      ]
+    },
+    {
+      "id": "WBS-1.2",
+      "name": "Stage 1 – Annotation Foundations",
+      "owner": "Annotation Lead",
+      "description": "Build instructional assets, templates, and QA controls for annotation operations.",
+      "duration_weeks": 4,
+      "deliverables": ["DEL-002", "DEL-003", "DEL-004"],
+      "dependencies": ["WBS-1.1"],
+      "children": [
+        {
+          "id": "WBS-1.2.1",
+          "name": "Author RLHF Annotation Guide v1",
+          "owner": "Annotation Lead",
+          "description": "Draft the core guide covering goals, inputs, categories, and policies.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-002"],
+          "dependencies": ["WBS-1.1.2"],
+          "source": "2.1:12",
+          "test_refs": ["tests/docs/annotation_guide_spellcheck.py"]
+        },
+        {
+          "id": "WBS-1.2.2",
+          "name": "Localize and security-review bilingual instructions",
+          "owner": "Security Review Board",
+          "description": "Apply Ukrainian/English localization and compliance reviews to the guide.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-002"],
+          "dependencies": ["WBS-1.2.1"],
+          "source": "2.1:19",
+          "test_refs": ["tests/docs/bilingual_consistency.py"]
+        },
+        {
+          "id": "WBS-1.2.3",
+          "name": "Implement annotation templates and schema validation",
+          "owner": "Annotation Platform Engineer",
+          "description": "Deliver Jinja2 templates and YAML schema validation for annotation records.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-003"],
+          "dependencies": ["WBS-1.2.2"],
+          "source": "2.2:41",
+          "test_refs": ["tests/annotation/schema_validation_test.py"]
+        },
+        {
+          "id": "WBS-1.2.4",
+          "name": "Launch annotation quality measurement controls",
+          "owner": "Quality Analytics Lead",
+          "description": "Operationalize weekly agreement metrics and sampling audits for annotations.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-004"],
+          "dependencies": ["WBS-1.2.3"],
+          "source": "2.3:45",
+          "test_refs": ["tests/annotation/quality_metrics_pipeline.py"]
+        }
+      ]
+    },
+    {
+      "id": "WBS-1.3",
+      "name": "Stage 2 – Reward Systems & Data Engines",
+      "owner": "ML Lead",
+      "description": "Stand up evaluators, active learning, self-critique, reward, safety, and simulators.",
+      "duration_weeks": 6,
+      "deliverables": ["DEL-005", "DEL-006", "DEL-007", "DEL-008", "DEL-009", "DEL-010"],
+      "dependencies": ["WBS-1.2"],
+      "children": [
+        {
+          "id": "WBS-1.3.1",
+          "name": "Deploy multi-tier evaluator stack",
+          "owner": "Evaluation Engineering Lead",
+          "description": "Implement automated, junior, senior, committee, and RLAIF evaluator layers.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-005"],
+          "dependencies": ["WBS-1.2.4"],
+          "source": "3:50-54",
+          "test_refs": ["tests/evaluators/multi_level_pipeline.py"]
+        },
+        {
+          "id": "WBS-1.3.2",
+          "name": "Build active data selection workflows",
+          "owner": "Data Curation Lead",
+          "description": "Integrate uncertainty, diversity, and business-prior sampling loops.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-006"],
+          "dependencies": ["WBS-1.3.1"],
+          "source": "4:57-63",
+          "test_refs": ["tests/data/active_sampling_test.py"]
+        },
+        {
+          "id": "WBS-1.3.3",
+          "name": "Operationalize model self-reflection logging",
+          "owner": "Knowledge Graph Engineer",
+          "description": "Enable self-critique stage and capture outputs in knowledge graph for analysis.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-007"],
+          "dependencies": ["WBS-1.3.2"],
+          "source": "5:66-68",
+          "test_refs": ["tests/self_reflection/log_consistency_test.py"]
+        },
+        {
+          "id": "WBS-1.3.4",
+          "name": "Design reward function and penalty governance",
+          "owner": "Reward Scientist",
+          "description": "Implement weighted reward function with penalty components and adaptive weights.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-008"],
+          "dependencies": ["WBS-1.3.3"],
+          "source": "6:71-79",
+          "test_refs": ["tests/reward/reward_function_regression.py"]
+        },
+        {
+          "id": "WBS-1.3.5",
+          "name": "Enforce constrained safety policies",
+          "owner": "Safety Engineering Lead",
+          "description": "Codify machine-readable policies and integrate constrained RL methods with pre-train analysis.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-009"],
+          "dependencies": ["WBS-1.3.4"],
+          "source": "7:82-87",
+          "test_refs": ["tests/safety/policy_constraints_test.py"]
+        },
+        {
+          "id": "WBS-1.3.6",
+          "name": "Develop user simulators portfolio",
+          "owner": "Simulation Lead",
+          "description": "Deliver behavioral models, rare-event scripts, and parameterized market simulators.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-010"],
+          "dependencies": ["WBS-1.3.5"],
+          "source": "8:89-95",
+          "test_refs": ["tests/simulators/user_simulator_consistency.py"]
+        }
+      ]
+    },
+    {
+      "id": "WBS-1.4",
+      "name": "Stage 3 – Learning Operations & Safety Gates",
+      "owner": "MLOps Lead",
+      "description": "Integrate pipelines, scorecards, alerts, and deployment safety workflows.",
+      "duration_weeks": 4,
+      "deliverables": ["DEL-011", "DEL-012", "DEL-013", "DEL-014"],
+      "dependencies": ["WBS-1.3"],
+      "children": [
+        {
+          "id": "WBS-1.4.1",
+          "name": "Orchestrate RLHF pipeline stages",
+          "owner": "MLOps Lead",
+          "description": "Automate data curation, SFT, reward training, RL optimization, evaluation, and deployment gate.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-012"],
+          "dependencies": ["WBS-1.3.6"],
+          "source": "10.1:105-110",
+          "test_refs": ["tests/pipelines/rlhf_pipeline_integration.py"]
+        },
+        {
+          "id": "WBS-1.4.2",
+          "name": "Calibrate and explain RLAIF evaluators",
+          "owner": "AI Alignment Scientist",
+          "description": "Integrate AI evaluators with calibration, disagreement sampling, and explainability reports.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-013"],
+          "dependencies": ["WBS-1.4.1"],
+          "source": "10.2:113-115",
+          "test_refs": ["tests/evaluators/rlaif_calibration_test.py"]
+        },
+        {
+          "id": "WBS-1.4.3",
+          "name": "Publish scorecards and automated alerts",
+          "owner": "Analytics Platform Lead",
+          "description": "Deploy human, alignment, and safety scorecards with alerting integrations.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-011"],
+          "dependencies": ["WBS-1.4.2"],
+          "source": "9:98-101",
+          "test_refs": ["tests/analytics/scorecard_dashboard_snapshot.py"]
+        },
+        {
+          "id": "WBS-1.4.4",
+          "name": "Implement pre-deployment assurance gates",
+          "owner": "QA Lead",
+          "description": "Run checklist, red teaming, shadow deployment, and rollback readiness gates.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-014"],
+          "dependencies": ["WBS-1.4.3"],
+          "source": "11:118-121",
+          "test_refs": ["tests/deployment/preflight_checklist.py"]
+        }
+      ]
+    },
+    {
+      "id": "WBS-1.5",
+      "name": "Stage 4 – Continuous Assurance & Governance",
+      "owner": "QA Lead",
+      "description": "Maintain regression safeguards, MLOps governance, audits, and changelog discipline.",
+      "duration_weeks": 3,
+      "deliverables": ["DEL-015", "DEL-016", "DEL-017", "DEL-018", "DEL-019"],
+      "dependencies": ["WBS-1.4"],
+      "children": [
+        {
+          "id": "WBS-1.5.1",
+          "name": "Execute regression safeguard suites",
+          "owner": "QA Lead",
+          "description": "Maintain data, reward, policy, and simulator regression testing cadence.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-015"],
+          "dependencies": ["WBS-1.4.4"],
+          "source": "12:124-127",
+          "test_refs": ["tests/regression/README.md"]
+        },
+        {
+          "id": "WBS-1.5.2",
+          "name": "Operate MLOps governance and audits",
+          "owner": "Compliance Lead",
+          "description": "Run MLOps pipeline, DVC/MLflow versioning, and quarterly independent audits.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-016", "DEL-017", "DEL-018"],
+          "dependencies": ["WBS-1.5.1"],
+          "source": "13:130-132",
+          "test_refs": ["tests/governance/mlops_pipeline_audit.py"]
+        },
+        {
+          "id": "WBS-1.5.3",
+          "name": "Maintain alignment changelog and release governance",
+          "owner": "Documentation Lead",
+          "description": "Publish updates to alignment changelog with release tags and approvals.",
+          "duration_weeks": 1,
+          "deliverables": ["DEL-019"],
+          "dependencies": ["WBS-1.5.2"],
+          "source": "13:133",
+          "test_refs": ["tests/docs/changelog_consistency.py"]
+        }
+      ]
+    }
+  ]
+}
