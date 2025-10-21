@@ -61,6 +61,7 @@ nav:
       - Extending TradePulse: extending.md
       - Integration API: integration-api.md
       - Configuration: configuration.md
+      - Developer Productivity Program: developer_productivity_program.md
       - Developer Scenarios:
           - Overview: scenarios.md
           - Scenario Template: scenario_template.md
