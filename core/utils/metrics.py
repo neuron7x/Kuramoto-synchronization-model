@@ -200,6 +200,56 @@ class MetricsCollector:
             registry=registry,
         )
 
+        # Response quality metrics
+        self.response_quality_run_total = Counter(
+            "tradepulse_response_quality_run_total",
+            "Total number of response quality verification runs",
+            ["model_name", "deployment", "dataset", "mode", "status"],
+            registry=registry,
+        )
+
+        self.response_quality_run_duration = Histogram(
+            "tradepulse_response_quality_run_duration_seconds",
+            "Duration of response quality verification runs",
+            ["model_name", "deployment", "dataset", "mode"],
+            registry=registry,
+        )
+
+        self.response_quality_contract_violations = Counter(
+            "tradepulse_response_quality_contract_violations_total",
+            "Number of response quality contract violations observed",
+            ["model_name", "deployment", "dataset", "contract"],
+            registry=registry,
+        )
+
+        self.response_quality_degradation_events = Counter(
+            "tradepulse_response_quality_degradation_events_total",
+            "Number of response quality degradations emitted",
+            ["model_name", "deployment", "dataset", "reason"],
+            registry=registry,
+        )
+
+        self.response_quality_pending_reviews = Gauge(
+            "tradepulse_response_quality_pending_reviews",
+            "Number of pending human reviews for response quality",
+            ["model_name", "deployment"],
+            registry=registry,
+        )
+
+        self.response_quality_complaints = Counter(
+            "tradepulse_response_quality_complaints_total",
+            "Number of complaints routed for response quality",
+            ["model_name", "deployment", "category", "route"],
+            registry=registry,
+        )
+
+        self.response_quality_reason_total = Counter(
+            "tradepulse_response_quality_reason_total",
+            "Count of reasons identified during response quality assurance",
+            ["model_name", "deployment", "reason"],
+            registry=registry,
+        )
+
         self.model_saturation = Gauge(
             "tradepulse_model_saturation",
             "Saturation level of model serving infrastructure",
@@ -962,6 +1012,115 @@ class MetricsCollector:
             metric_a=metric_a,
             metric_b=metric_b,
         ).set(float(coefficient))
+
+    def record_response_quality_run(
+        self,
+        model_name: str,
+        deployment: str,
+        dataset: str,
+        mode: str,
+        status: str,
+        duration_seconds: float,
+    ) -> None:
+        """Record metadata about a response quality verification run."""
+
+        if not self._enabled:
+            return
+        final_mode = mode.strip().lower() or "full"
+        final_status = status.strip().lower() or "unknown"
+        bounded_duration = max(0.0, float(duration_seconds))
+        self.response_quality_run_total.labels(
+            model_name=model_name,
+            deployment=deployment,
+            dataset=dataset,
+            mode=final_mode,
+            status=final_status,
+        ).inc()
+        self.response_quality_run_duration.labels(
+            model_name=model_name,
+            deployment=deployment,
+            dataset=dataset,
+            mode=final_mode,
+        ).observe(bounded_duration)
+
+    def record_response_quality_contract_violation(
+        self,
+        model_name: str,
+        deployment: str,
+        dataset: str,
+        contract: str,
+    ) -> None:
+        """Increment counters for response quality contract violations."""
+
+        if not self._enabled:
+            return
+        self.response_quality_contract_violations.labels(
+            model_name=model_name,
+            deployment=deployment,
+            dataset=dataset,
+            contract=contract,
+        ).inc()
+
+    def record_response_quality_degradation(
+        self,
+        model_name: str,
+        deployment: str,
+        dataset: str,
+        reason: str,
+    ) -> None:
+        """Increment counters for response quality degradations."""
+
+        if not self._enabled:
+            return
+        self.response_quality_degradation_events.labels(
+            model_name=model_name,
+            deployment=deployment,
+            dataset=dataset,
+            reason=reason,
+        ).inc()
+
+    def set_response_quality_pending_reviews(
+        self, model_name: str, deployment: str, count: int
+    ) -> None:
+        """Set the gauge tracking pending human reviews."""
+
+        if not self._enabled:
+            return
+        self.response_quality_pending_reviews.labels(
+            model_name=model_name,
+            deployment=deployment,
+        ).set(max(0, int(count)))
+
+    def record_response_quality_complaint(
+        self,
+        model_name: str,
+        deployment: str,
+        category: str,
+        route: str,
+    ) -> None:
+        """Record routed complaints for response quality."""
+
+        if not self._enabled:
+            return
+        self.response_quality_complaints.labels(
+            model_name=model_name,
+            deployment=deployment,
+            category=category,
+            route=route,
+        ).inc()
+
+    def record_response_quality_reason(
+        self, model_name: str, deployment: str, reason: str
+    ) -> None:
+        """Track reason map statistics for response quality operations."""
+
+        if not self._enabled:
+            return
+        self.response_quality_reason_total.labels(
+            model_name=model_name,
+            deployment=deployment,
+            reason=reason,
+        ).inc()
 
     @contextmanager
     def measure_signal_generation(self, strategy: str) -> Iterator[Dict[str, Any]]:
