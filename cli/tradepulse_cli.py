@@ -17,6 +17,7 @@ import click
 import numpy as np
 import pandas as pd
 
+from analytics.regime.src.core import tradepulse_v21 as v21
 from core.config.cli_models import (
     BacktestConfig,
     ExecConfig,
@@ -295,6 +296,39 @@ def _write_json(destination: Path, payload: Dict[str, Any], *, command: str) -> 
 def _write_text(destination: Path, text: str, *, command: str) -> str:
     digest, _ = _write_bytes(destination, text.encode("utf-8"), command=command)
     return digest
+
+
+def _load_returns_frame(path: Path) -> pd.DataFrame:
+    frame = pd.read_csv(path)
+    ts_col = None
+    for candidate in ("date", "ts", "timestamp"):
+        if candidate in frame.columns:
+            ts_col = candidate
+            break
+    if ts_col is not None:
+        frame[ts_col] = pd.to_datetime(frame[ts_col])
+        frame = frame.set_index(ts_col).sort_index()
+    return frame
+
+
+def _load_feature_dataset(path: Path) -> v21.StrictCausalFeatures:
+    frame = pd.read_csv(path)
+    ts_col = None
+    for candidate in ("date", "ts", "timestamp"):
+        if candidate in frame.columns:
+            ts_col = candidate
+            break
+    if ts_col is not None:
+        frame[ts_col] = pd.to_datetime(frame[ts_col])
+        frame = frame.set_index(ts_col).sort_index()
+    if "y" not in frame.columns:
+        raise ComputeError("Features CSV must contain a 'y' label column.")
+    feature_cols = [c for c in ("dr", "ricci_mean", "topo_intensity", "causal_strength") if c in frame.columns]
+    if len(feature_cols) != 4:
+        raise ComputeError("Features CSV must include dr, ricci_mean, topo_intensity and causal_strength columns.")
+    features = frame[feature_cols]
+    labels = frame["y"].astype(int).to_numpy()
+    return v21.StrictCausalFeatures(features=features, labels=labels)
 
 
 @click.group()
@@ -1057,6 +1091,76 @@ def fete_backtest(
         out_path.parent.mkdir(parents=True, exist_ok=True)
         curve.to_csv(out_path, index=False)
         click.echo(f"[{command}] • wrote {out_path}")
+
+
+@cli.command("causal-pipeline")
+@click.option(
+    "--returns-csv",
+    type=click.Path(exists=True, path_type=Path),
+    help="CSV file with log returns; must include ticker columns and optionally a timestamp column.",
+)
+@click.option(
+    "--features-csv",
+    type=click.Path(exists=True, path_type=Path),
+    help="CSV file with precomputed features and labels.",
+)
+@click.option("--window", default=252, show_default=True, help="Rolling window length for feature generation.")
+@click.option("--horizon", default=5, show_default=True, help="Forward horizon (in periods) for labels.")
+@click.option("--lambda-base", default=0.6, show_default=True, help="Ensemble weight for the base calibrated probability.")
+@click.option("--hmm-states", type=click.Choice(["2", "3"]), default="2", show_default=True)
+@click.option(
+    "--output",
+    type=click.Path(path_type=Path),
+    help="Optional destination for the JSON output. Printed to stdout regardless.",
+)
+def causal_pipeline(
+    returns_csv: Path | None,
+    features_csv: Path | None,
+    window: int,
+    horizon: int,
+    lambda_base: float,
+    hmm_states: str,
+    output: Path | None,
+) -> None:
+    """Execute the causal early-warning pipeline with optional backtest."""
+
+    command = "causal-pipeline"
+    if bool(returns_csv) == bool(features_csv):
+        raise click.UsageError("Provide exactly one of --returns-csv or --features-csv.")
+
+    feature_builder = v21.StrictCausalFeatureBuilder(
+        v21.FeatureBuilderConfig(window=window, horizon=horizon)
+    )
+    trainer = v21.LogisticIsotonicTrainer(v21.ModelTrainingConfig())
+    hmm = v21.RegimeHMMAdapter(v21.RegimeHMMConfig(states=int(hmm_states)))
+    backtester = v21.ProbabilityBacktester(v21.BacktestConfig())
+    pipeline = v21.TradePulseV21Pipeline(
+        feature_builder,
+        trainer,
+        hmm,
+        backtester,
+        v21.EnsembleConfig(lambda_base=lambda_base),
+    )
+
+    if returns_csv is not None:
+        with step_logger(command, "load returns"):
+            returns = _load_returns_frame(returns_csv)
+        with step_logger(command, "build features"):
+            features = feature_builder.build(returns)
+        with step_logger(command, "run pipeline"):
+            result = pipeline.run(features, returns)
+    else:
+        with step_logger(command, "load features"):
+            features = _load_feature_dataset(features_csv)  # type: ignore[arg-type]
+        with step_logger(command, "run pipeline"):
+            result = pipeline.run(features, returns=None, evaluate_backtest=False)
+
+    payload = v21.result_to_json(result)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(payload, encoding="utf-8")
+        click.echo(f"[{command}] • wrote {output}")
+    click.echo(payload)
 
 
 # ---------------------------------------------------------------------------
