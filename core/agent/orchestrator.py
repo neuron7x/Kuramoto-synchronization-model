@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 import threading
-from concurrent.futures import Future
+from concurrent.futures import FIRST_COMPLETED, Future, wait
 from dataclasses import dataclass
 from itertools import count
 from queue import Empty, Full, PriorityQueue
@@ -70,7 +70,13 @@ class StrategyOrchestrationError(RuntimeError):
     ) -> None:
         self.errors: Dict[str, BaseException] = dict(errors)
         self.results: Dict[str, Sequence[EvaluationResult]] = dict(results)
-        message = ", ".join(f"{name}: {error}" for name, error in self.errors.items())
+        def _format_error(name: str, error: BaseException) -> str:
+            detail = str(error)
+            if not detail:
+                detail = error.__class__.__name__
+            return f"{name}: {detail}"
+
+        message = ", ".join(_format_error(name, error) for name, error in self.errors.items())
         super().__init__(
             f"Strategy orchestration failed for {len(self.errors)} flow(s): {message}"
         )
@@ -207,13 +213,33 @@ class StrategyOrchestrator:
             flow.name: self.submit_flow(flow) for flow in flows
         }
 
+        future_to_name: Dict[Future[list[EvaluationResult]], str] = {
+            future: name for name, future in futures.items()
+        }
+        pending: set[Future[list[EvaluationResult]]] = set(future_to_name.keys())
+
         results: Dict[str, list[EvaluationResult]] = {}
         errors: Dict[str, BaseException] = {}
-        for name, future in futures.items():
-            try:
-                results[name] = future.result()
-            except BaseException as exc:  # pragma: no cover - defensive
-                errors[name] = exc
+        cancel_pending = False
+
+        while pending:
+            done, pending = wait(pending, return_when=FIRST_COMPLETED)
+
+            for future in done:
+                name = future_to_name.pop(future, None)
+                if name is None:
+                    continue
+
+                try:
+                    results[name] = future.result()
+                except BaseException as exc:  # pragma: no cover - defensive
+                    errors[name] = exc
+                    cancel_pending = True
+
+            if cancel_pending and pending:
+                for future in list(pending):
+                    future.cancel()
+                cancel_pending = False
 
         if errors:
             raise StrategyOrchestrationError(errors, results)
