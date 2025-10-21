@@ -331,6 +331,7 @@ jobs:
         with:
           files: ./coverage.xml
           flags: py${{ matrix.python-version }}
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage to Codecov (OIDC)
         if: ${{ secrets.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
