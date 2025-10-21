@@ -375,7 +375,7 @@ class FETE:
         position = self.position_sizer.size(
             prob_up=probability,
             volatility=vol_estimate,
-            scale=self._regime_scale(regime) * dd_penalty,
+            scale=self._regime_scale(regime) * dd_penalty * self.sigma.tau,
         )
         if realized_return is not None:
             outcome = 1 if realized_return > 0 else 0
