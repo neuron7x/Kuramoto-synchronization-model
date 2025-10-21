@@ -104,6 +104,54 @@ class FractalResampler:
         self._cache[timeframe] = resampled
         return resampled
 
+    def resample_many(
+        self,
+        timeframes: Sequence[TimeFrame],
+        *,
+        strict: bool = False,
+    ) -> Mapping[TimeFrame, pd.Series]:
+        """Resample multiple ``timeframes`` while maximising fractal reuse.
+
+        The method sorts the requested timeframes from the finest to the
+        coarsest horizon to guarantee that any potential parent timeframe is
+        available in the cache before its multiples are computed.  The output
+        preserves the original ordering of the unique requests so downstream
+        consumers receive deterministic mappings.
+
+        Args:
+            timeframes: Collection of horizons to resample.
+            strict: Propagate ``ValueError`` from :meth:`resample` when ``True``;
+                otherwise failed horizons are silently skipped so callers can
+                handle them as "insufficient data" events.
+
+        Returns:
+            Mapping of each successfully resampled timeframe to its
+            corresponding :class:`pandas.Series`.
+        """
+
+        if not timeframes:
+            return {}
+
+        unique_order: list[TimeFrame] = []
+        seen: set[TimeFrame] = set()
+        for timeframe in timeframes:
+            if timeframe not in seen:
+                unique_order.append(timeframe)
+                seen.add(timeframe)
+
+        ordered = sorted(unique_order, key=lambda tf: tf.seconds)
+        results: dict[TimeFrame, pd.Series] = {}
+
+        for timeframe in ordered:
+            try:
+                results[timeframe] = self.resample(timeframe)
+            except ValueError:
+                if strict:
+                    raise
+                continue
+
+        return {timeframe: results[timeframe] for timeframe in unique_order if timeframe in results}
+
     def stats(self) -> Mapping[str, float]:
         """Expose cache utilisation metrics for energy profiling."""
 
@@ -114,6 +162,7 @@ class FractalResampler:
             "fractal_cache_hits": float(self._cache_hits),
             "direct_resamples": float(self._direct_resamples),
             "fractal_reuse_ratio": float(reuse_ratio),
+            "cached_timeframes": float(len(self._cache)),
         }
 
     def _select_parent(self, timeframe: TimeFrame) -> Optional[TimeFrame]:
@@ -317,18 +366,16 @@ class MultiScaleKuramoto:
 
         analysis_records: dict[TimeFrame, dict[str, Any]] = {}
         ordered = sorted(self.timeframes, key=lambda tf: tf.seconds)
+        prefetched = resampler.resample_many(ordered)
         for timeframe in ordered:
-            if timeframe in analysis_records:
-                continue
             record: dict[str, Any] = {
                 "result": None,
                 "endpoint": None,
                 "samples": 0,
                 "series": None,
             }
-            try:
-                sampled = resampler.resample(timeframe)
-            except ValueError:
+            sampled = prefetched.get(timeframe)
+            if sampled is None:
                 record["skipped"] = True
                 analysis_records[timeframe] = record
                 continue
