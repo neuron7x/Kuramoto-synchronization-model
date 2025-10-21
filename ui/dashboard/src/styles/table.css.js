@@ -18,13 +18,15 @@ export const TABLE_STYLES = `
   }
 
   .tp-live-table__row:hover {
-    background: rgba(56, 189, 248, 0.08);
+    background: rgba(56, 189, 248, 0.12);
+    transform: translateY(-2px);
   }
 
   .tp-live-table__cell {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     font-size: 0.95rem;
+    transition: color 0.3s ease;
   }
 
   .tp-live-table__cell--right {
@@ -55,9 +57,16 @@ export const TABLE_STYLES = `
     font-size: 0.85rem;
     color: rgba(148, 163, 184, 0.7);
     padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(16px);
   }
 
   .tp-live-table__sort {
     margin-left: 0.25rem;
+  }
+
+  .tp-live-table__row {
+    transition: transform 0.35s ease, background 0.35s ease;
   }
 `;

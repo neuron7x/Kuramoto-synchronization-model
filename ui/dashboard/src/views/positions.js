@@ -5,6 +5,7 @@ import {
   formatNumber,
   formatPercent,
   formatTimestamp,
+  serializeForScript,
 } from '../core/formatters.js';
 import { getMessage, t } from '../i18n/index.js';
 
@@ -184,6 +185,29 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
   });
 
   const { html } = table.render(page);
+  const totals = rows.reduce(
+    (acc, row) => {
+      const exposure = Number.isFinite(row.exposure) ? row.exposure : 0;
+      const pnl = Number.isFinite(row.pnl) ? row.pnl : 0;
+      acc.netExposure += exposure;
+      acc.netPnl += pnl;
+      return acc;
+    },
+    { count: rows.length, netExposure: 0, netPnl: 0 },
+  );
+  const highlights = rows
+    .slice(0, 3)
+    .map((row) => ({
+      symbol: row.symbol,
+      netQuantity: Number.isFinite(row.netQuantity) ? row.netQuantity : 0,
+      exposure: Number.isFinite(row.exposure) ? row.exposure : 0,
+      pnl: Number.isFinite(row.pnl) ? row.pnl : 0,
+    }));
+  const metadata = serializeForScript({
+    route: 'positions',
+    totals,
+    highlights,
+  });
 
   return {
     route: 'positions',
@@ -195,6 +219,7 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
           <p class="tp-view__subtitle">${escapeHtml(t('views.positions.subtitle'))}</p>
         </header>
         ${html}
+        <script type="application/json" class="tp-view__meta" data-role="view-meta">${metadata}</script>
       </section>
     `,
     table,
