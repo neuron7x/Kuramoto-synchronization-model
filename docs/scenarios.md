@@ -600,7 +600,14 @@ mkdocs serve
 ### 3. Run Full Test Suite
 
 ```bash
-pytest tests/ --cov=core --cov=backtest --cov=execution --cov=analytics --cov-fail-under=98
+pytest tests/ \
+  --cov=core --cov=backtest --cov=execution \
+  --cov-config=configs/quality/critical_surface.coveragerc \
+  --cov-report=term-missing --cov-report=xml
+
+python -m tools.coverage.guardrail \
+  --config configs/quality/critical_surface.toml \
+  --coverage coverage.xml
 ```
 
 ### 4. Create Release

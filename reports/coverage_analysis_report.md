@@ -55,7 +55,10 @@ _Source_: `pytest tests/unit/indicators/test_kuramoto_fallbacks.py tests/unit/ut
 1. **Extend coverage uplift to surrounding modules** – replicate the targeted strategy for `core.indicators.temporal_ricci`,
    `core/data/ingestion`, and execution strategy orchestration to bring the end-to-end stack closer to the 98 % goal highlighted in
    the release readiness report.【F:reports/release_readiness.md†L19-L44】
-2. **Automate coverage guardrails** – gate CI on the 90 % threshold for the critical surface and publish coverage deltas alongside
-   the production readiness checklist.【F:reports/prod_cutover_readiness_checklist.md†L1-L39】
+2. **Automate coverage guardrails** – ✅ Achieved. The CI workflow now runs
+   `python -m tools.coverage.guardrail` with
+   `configs/quality/critical_surface.toml` to ensure the Kuramoto indicator,
+   SLO guard, and secret detector stay above their agreed thresholds before
+   code can merge.【F:.github/workflows/ci.yml†L33-L54】
 3. **Document measurement scope** – update developer docs to clarify which modules fall under the reliability-critical coverage
    objective versus experimental areas awaiting tests.

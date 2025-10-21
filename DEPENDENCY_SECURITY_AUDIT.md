@@ -158,9 +158,13 @@ pip-audit --desc
 ### Test Suite
 ```bash
 pytest tests/unit/ tests/integration/ tests/property/ tests/fuzz/ \
-  --cov=core --cov=backtest --cov=execution --cov=analytics \
-  --cov-fail-under=90
-# ✅ 139 passed, 91.02% coverage
+  --cov=core --cov=backtest --cov=execution \
+  --cov-config=configs/quality/critical_surface.coveragerc \
+  --cov-report=term-missing --cov-report=xml
+
+python -m tools.coverage.guardrail \
+  --config configs/quality/critical_surface.toml \
+  --coverage coverage.xml
 ```
 
 ---

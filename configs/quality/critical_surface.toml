@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT
+[[targets]]
+path = "core/indicators/kuramoto.py"
+min_line_rate = 80.0
+
+[[targets]]
+path = "core/utils/security.py"
+min_line_rate = 92.0
+
+[[targets]]
+path = "core/utils/slo.py"
+min_line_rate = 88.0
