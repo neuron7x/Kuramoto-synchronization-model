@@ -2,7 +2,9 @@ name: CI - Test Coverage
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      # Run coverage checks for every PR regardless of target branch.
+      - '**'
   push:
     branches: [main]
 

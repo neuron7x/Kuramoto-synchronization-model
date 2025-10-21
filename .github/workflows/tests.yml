@@ -8,7 +8,9 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      # Ensure linting, typing, and tests run for every PR.
+      - '**'
 
 jobs:
   lint:
