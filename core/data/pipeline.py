@@ -385,9 +385,10 @@ class DataPipeline:
     ) -> "DataPipeline._QualityOutcome":
         gate = self._config.resolve_quality_gate(dataset)
         if gate is None:
-            return DataPipeline._QualityOutcome(frame.copy(), pd.DataFrame(columns=frame.columns))
+            empty_quarantine = frame.iloc[0:0].copy()
+            return DataPipeline._QualityOutcome(frame, empty_quarantine)
 
-        report = validate_and_quarantine(frame.copy(), gate)
+        report = validate_and_quarantine(frame, gate)
         try:
             report.raise_if_blocked()
         except QualityGateError as exc:
@@ -417,7 +418,8 @@ class DataPipeline:
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         cfg = self._config.toxicity_filter
         if cfg is None or cfg.column not in frame.columns:
-            return frame.copy(), pd.DataFrame(columns=frame.columns)
+            empty = frame.iloc[0:0].copy()
+            return frame, empty
         toxicity = frame[cfg.column].fillna(0.0)
         mask = toxicity > cfg.threshold
         toxic_rows = frame.loc[mask].reset_index(drop=True)
@@ -443,28 +445,28 @@ class DataPipeline:
         cfg = self._config.balance
         if cfg is None or cfg.column not in frame.columns or frame.empty:
             return frame
-        groups = [group for _, group in frame.groupby(cfg.column)]
-        counts = [len(group) for group in groups]
-        if not counts:
+
+        grouped = frame.groupby(cfg.column, group_keys=False, sort=False)
+        counts = grouped.size()
+        if counts.empty:
             return frame
-        target = min(counts)
-        if target == 0:
+
+        target = int(counts.min())
+        if target <= 0:
             return frame
-        balanced_parts: list[pd.DataFrame] = []
-        for group in groups:
-            if len(group) == target:
-                balanced_parts.append(group)
-                continue
-            sample = group.sample(
+
+        sampled = (
+            grouped.sample(
                 n=target,
                 replace=False,
-                random_state=self._rng.integers(0, np.iinfo(np.int32).max),
+                random_state=int(self._rng.integers(0, np.iinfo(np.int32).max)),
             )
-            balanced_parts.append(sample)
-        balanced = pd.concat(balanced_parts).reset_index(drop=True)
-        return balanced.sample(
+            .reset_index(drop=True)
+        )
+
+        return sampled.sample(
             frac=1.0,
-            random_state=self._rng.integers(0, np.iinfo(np.int32).max),
+            random_state=int(self._rng.integers(0, np.iinfo(np.int32).max)),
         ).reset_index(drop=True)
 
     def _build_stratified_splits(self, frame: pd.DataFrame) -> Mapping[str, pd.DataFrame]:
@@ -475,15 +477,15 @@ class DataPipeline:
         splits = tuple(cfg.normalised_splits().items())
         empty_template = frame.iloc[0:0].copy()
 
-        collected: dict[str, list[pd.DataFrame]] = {
+        collected_indices: dict[str, list[np.ndarray]] = {
             name: [] for name, _ in splits
         }
-        remainder_indices: list[int] = []
+        remainder_indices: list[np.ndarray] = []
 
         column = frame[cfg.column]
         null_mask = column.isna()
         if null_mask.any():
-            remainder_indices.extend(frame.loc[null_mask].index.to_numpy())
+            remainder_indices.append(frame.loc[null_mask].index.to_numpy())
 
         grouped = frame.loc[~null_mask] if null_mask.any() else frame
 
@@ -493,7 +495,7 @@ class DataPipeline:
 
             indices = group.index.to_numpy()
             if cfg.shuffle:
-                indices = self._rng.permutation(indices)
+                self._rng.shuffle(indices)
 
             total = len(indices)
             offset = 0
@@ -512,23 +514,24 @@ class DataPipeline:
                     continue
 
                 selected = indices[offset : offset + take]
-                collected[name].append(frame.loc[selected])
+                collected_indices[name].append(selected)
                 offset += take
 
             if offset < total:
-                remainder_indices.extend(indices[offset:])
+                remainder_indices.append(indices[offset:])
 
         results: MutableMapping[str, pd.DataFrame] = {}
         for name, _ in splits:
-            parts = collected[name]
+            parts = collected_indices[name]
             if parts:
-                results[name] = pd.concat(parts, ignore_index=True)
+                combined = np.concatenate(parts)
+                results[name] = frame.loc[combined].reset_index(drop=True)
             else:
                 results[name] = empty_template.copy()
 
         if remainder_indices:
-            remainder_frame = frame.loc[remainder_indices]
-            results["remainder"] = remainder_frame.reset_index(drop=True)
+            combined_remainder = np.concatenate(remainder_indices)
+            results["remainder"] = frame.loc[combined_remainder].reset_index(drop=True)
         else:
             results["remainder"] = empty_template.copy()
 
