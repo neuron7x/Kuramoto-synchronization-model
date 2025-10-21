@@ -1,0 +1,38 @@
+[
+  {
+    "body": null,
+    "description": "Fetch BTC-USD signal and validate structure.",
+    "expected_status": 200,
+    "headers": {
+      "X-TradePulse-Signature": "test-signature"
+    },
+    "method": "GET",
+    "name": "signal-btc-ok",
+    "path": "/v1/signals/BTC-USD",
+    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/market_signal_response.schema.json",
+    "route": "get-market-signal"
+  },
+  {
+    "body": {
+      "features": {
+        "ema_fast": 2490.12,
+        "ema_slow": 2420.44,
+        "price": 2485.23
+      },
+      "horizon_minutes": 15,
+      "symbol": "ETH-USD"
+    },
+    "description": "Submit canonical inference payload.",
+    "expected_status": 202,
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": "demo-key-1",
+      "X-TradePulse-Signature": "test-signature"
+    },
+    "method": "POST",
+    "name": "prediction-accepted",
+    "path": "/v1/predictions",
+    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/prediction_create_response.schema.json",
+    "route": "create-prediction"
+  }
+]

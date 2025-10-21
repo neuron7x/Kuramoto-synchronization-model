@@ -1,0 +1,10 @@
+digraph TradePulseAPI {
+    rankdir=LR;
+    node [shape=box, style=rounded, fontname=Helvetica];
+    "get-market-signal" [label="GET\n/v1/signals/{symbol}"];
+    "create-prediction" [label="POST\n/v1/predictions"];
+    "signal.published" [shape=ellipse, style=filled, fillcolor=lightgrey];
+    "prediction.completed" [shape=ellipse, style=filled, fillcolor=lightgrey];
+    "get-market-signal" -> "signal.published";
+    "create-prediction" -> "prediction.completed";
+}

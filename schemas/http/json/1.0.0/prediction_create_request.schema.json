@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tradepulse.http.prediction_create_request.v1",
+  "title": "PredictionCreateRequest",
+  "description": "Request payload for submitting features to the prediction service.",
+  "type": "object",
+  "required": [
+    "symbol",
+    "features"
+  ],
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "description": "Instrument symbol for which the prediction is requested."
+    },
+    "horizon_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440,
+      "description": "Prediction horizon in minutes."
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature vector used for inference.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Optional correlation identifier for downstream reconciliation."
+    },
+    "delivery": {
+      "type": "object",
+      "description": "Optional delivery configuration overrides.",
+      "additionalProperties": false,
+      "properties": {
+        "webhook": {
+          "type": "string",
+          "format": "uri",
+          "description": "Override webhook destination for completion events."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "description": "Explicit idempotency key when not using the default header."
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "symbol": "ETH-USD",
+      "horizon_minutes": 15,
+      "features": {
+        "price": 2485.23,
+        "ema_fast": 2490.12,
+        "ema_slow": 2420.44
+      },
+      "correlation_id": "demo-key-1"
+    }
+  ]
+}

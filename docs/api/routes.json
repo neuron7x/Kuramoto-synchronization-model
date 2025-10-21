@@ -1,0 +1,74 @@
+[
+  {
+    "cache": {
+      "max_age": 15,
+      "stale_while_revalidate": 30,
+      "strategy": "public"
+    },
+    "idempotency": {
+      "header": "X-Idempotency-Key",
+      "required": false,
+      "ttl_seconds": null
+    },
+    "method": "GET",
+    "name": "get-market-signal",
+    "path": "/v1/signals/{symbol}",
+    "rate_limit": {
+      "per_day": 40000,
+      "per_hour": 5000,
+      "per_minute": 180
+    },
+    "request_schema": null,
+    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/market_signal_response.schema.json",
+    "scope": "signals:read",
+    "signatures": {
+      "algorithm": "ed25519",
+      "header": "X-TradePulse-Signature",
+      "required": true,
+      "version": "v1"
+    },
+    "throttle": {
+      "burst": 12,
+      "period_seconds": 60
+    },
+    "webhooks": [
+      "signal.published"
+    ]
+  },
+  {
+    "cache": {
+      "max_age": 0,
+      "stale_while_revalidate": 0,
+      "strategy": "no-store"
+    },
+    "idempotency": {
+      "header": "X-Idempotency-Key",
+      "required": true,
+      "ttl_seconds": 86400
+    },
+    "method": "POST",
+    "name": "create-prediction",
+    "path": "/v1/predictions",
+    "rate_limit": {
+      "per_day": 3000,
+      "per_hour": 500,
+      "per_minute": 30
+    },
+    "request_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/prediction_create_request.schema.json",
+    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/prediction_create_response.schema.json",
+    "scope": "predictions:write",
+    "signatures": {
+      "algorithm": "ed25519",
+      "header": "X-TradePulse-Signature",
+      "required": true,
+      "version": "v1"
+    },
+    "throttle": {
+      "burst": 5,
+      "period_seconds": 60
+    },
+    "webhooks": [
+      "prediction.completed"
+    ]
+  }
+]
