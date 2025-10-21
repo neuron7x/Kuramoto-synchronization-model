@@ -450,30 +450,64 @@ def _run_ricci_async(
             new_loop.close()
 
 
-def _w1_fallback(a, b):
-    """Approximate the Wasserstein-1 distance without SciPy dependencies.
+def _w1_fallback(a: np.ndarray, b: np.ndarray) -> float:
+    """Approximate the Wasserstein-1 distance when SciPy is unavailable.
+
+    The implementation follows the discrete formulation of the
+    Kantorovich-Rubinstein dual on an equally spaced support. This matches
+    SciPy's ``wasserstein_distance`` for one-dimensional histograms whose bins
+    share a uniform spacing of ``1``. The inputs are treated as probability
+    masses and therefore undergo sanitisation (non-finite values are converted
+    to ``0`` and negative entries are clipped) before normalisation. The
+    cumulative difference of the distributions is then integrated in ``L1``
+    space, which is a numerically stable operation for medium-sized arrays
+    (cf. ``docs/indicators.md``).
 
     Args:
-        a: First probability mass function.
-        b: Second probability mass function.
+        a: First discrete probability mass function.
+        b: Second discrete probability mass function.
 
     Returns:
-        float: Approximation of the 1-Wasserstein distance.
+        float: The 1-Wasserstein distance between the two discrete
+        distributions.
 
-    Notes:
-        The method uses cumulative sums on normalised arrays and mirrors the
-        fallback described in ``docs/indicators.md`` for low-dependency builds.
+    Raises:
+        ValueError: Raised when the input shapes differ.
     """
 
-    import numpy as _np
+    a_arr = np.array(a, dtype=float, copy=True).reshape(-1)
+    b_arr = np.array(b, dtype=float, copy=True).reshape(-1)
 
-    a = _np.asarray(a, dtype=float)
-    b = _np.asarray(b, dtype=float)
-    a = a / (a.sum() + 1e-12)
-    b = b / (b.sum() + 1e-12)
-    cdfa = _np.cumsum(a)
-    cdfb = _np.cumsum(b)
-    return float(_np.abs(cdfa - cdfb).sum()) / len(a)
+    if a_arr.shape != b_arr.shape:
+        raise ValueError("Distributions must share the same shape")
+
+    if a_arr.size == 0:
+        return 0.0
+
+    a_arr = np.nan_to_num(a_arr, nan=0.0, posinf=0.0, neginf=0.0)
+    b_arr = np.nan_to_num(b_arr, nan=0.0, posinf=0.0, neginf=0.0)
+
+    np.clip(a_arr, 0.0, None, out=a_arr)
+    np.clip(b_arr, 0.0, None, out=b_arr)
+
+    total_a = float(a_arr.sum())
+    total_b = float(b_arr.sum())
+
+    if not np.isfinite(total_a) or not np.isfinite(total_b):
+        raise ValueError("Distributions must have finite total mass")
+
+    if total_a > 0.0:
+        a_arr /= total_a
+    else:
+        a_arr.fill(0.0)
+
+    if total_b > 0.0:
+        b_arr /= total_b
+    else:
+        b_arr.fill(0.0)
+
+    cdf_difference = np.add.accumulate(a_arr - b_arr)
+    return float(np.sum(np.abs(cdf_difference)))
 
 
 class MeanRicciFeature(BaseFeature):
