@@ -1,0 +1,65 @@
+{
+  "slos": [
+    {
+      "name": "tradepulse-api-latency",
+      "description": "HTTP API availability and latency objective for live trading clients.",
+      "error_rate_threshold": 0.015,
+      "latency_threshold_ms": 350.0,
+      "min_requests": 200,
+      "evaluation_period": "5m",
+      "burn_rates": [
+        {
+          "name": "rapid-burn",
+          "window": "5m",
+          "max_burn_rate": 14.4,
+          "min_requests": 100
+        },
+        {
+          "name": "slow-burn",
+          "window": "1h",
+          "max_burn_rate": 6.0,
+          "min_requests": 400
+        }
+      ]
+    },
+    {
+      "name": "tradepulse-ingestion-availability",
+      "description": "Ingestion jobs must succeed reliably to refresh market data.",
+      "error_rate_threshold": 0.01,
+      "latency_threshold_ms": 500.0,
+      "min_requests": 120,
+      "evaluation_period": "10m",
+      "burn_rates": [
+        {
+          "window": "10m",
+          "max_burn_rate": 12.0
+        },
+        {
+          "window": "2h",
+          "max_burn_rate": 4.0,
+          "min_requests": 600
+        }
+      ]
+    },
+    {
+      "name": "tradepulse-signal-latency",
+      "description": "Signal pipeline latency must keep p95 under 250 ms to honour SLAs.",
+      "error_rate_threshold": 0.02,
+      "latency_threshold_ms": 250.0,
+      "min_requests": 150,
+      "evaluation_period": "15m",
+      "burn_rates": [
+        {
+          "window": "15m",
+          "max_burn_rate": 8.0,
+          "min_requests": 150
+        },
+        {
+          "window": "6h",
+          "max_burn_rate": 3.0,
+          "min_requests": 1000
+        }
+      ]
+    }
+  ]
+}
