@@ -69,11 +69,13 @@ Interpretation:
 ### Ricci Curvature
 
 - `build_price_graph` quantises price levels into nodes and connects consecutive
-  moves to form an interaction graph. 【F:core/indicators/ricci.py†L47-L76】
+  moves to form an interaction graph. 【F:core/indicators/ricci.py†L268-L318】
+- `compute_node_distributions` pre-computes geometry-aware neighbour
+  distributions so curvature can be reused across many edges. 【F:core/indicators/ricci.py†L252-L265】
 - `ricci_curvature_edge` estimates Ollivier–Ricci curvature using Wasserstein
-  distance (SciPy or fallback). 【F:core/indicators/ricci.py†L78-L128】
+  distance (SciPy or the in-repo fallback). 【F:core/indicators/ricci.py†L344-L382】
 - `mean_ricci` averages curvature across all edges; `MeanRicciFeature` exposes
-  it as a feature. 【F:core/indicators/ricci.py†L130-L161】
+  it as a feature. 【F:core/indicators/ricci.py†L423-L503】
 
 ### Composite Patterns
 
