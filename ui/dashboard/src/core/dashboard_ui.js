@@ -2,7 +2,7 @@ import { createRouter } from '../router/index.js';
 import { renderOrdersView } from '../views/orders.js';
 import { renderPnlQuotesView } from '../views/pnl_quotes.js';
 import { renderPositionsView } from '../views/positions.js';
-import { escapeHtml } from './formatters.js';
+import { escapeHtml, serializeForScript } from './formatters.js';
 import { BASE_STYLES } from '../styles/base.css.js';
 import { TABLE_STYLES } from '../styles/table.css.js';
 import { CHART_STYLES } from '../styles/chart.css.js';
@@ -30,6 +30,11 @@ function renderHeader({ title, subtitle, tags } = {}) {
   const subtitleBlock = resolved.subtitle
     ? `<p class="tp-view__subtitle">${escapeHtml(String(resolved.subtitle))}</p>`
     : '';
+  const metadataJson = serializeForScript({
+    title: resolved.title ?? '',
+    subtitle: resolved.subtitle ?? '',
+    tags: Array.isArray(resolved.tags) ? resolved.tags.filter(Boolean) : [],
+  });
 
   return `
     <header class="tp-view">
@@ -38,6 +43,7 @@ function renderHeader({ title, subtitle, tags } = {}) {
         ${subtitleBlock}
       </div>
       <div class="tp-card__meta">${tagMarkup}</div>
+      <script type="application/json" class="tp-view__meta" data-role="view-meta">${metadataJson}</script>
     </header>
   `;
 }
@@ -48,9 +54,12 @@ function renderNavigation(router, currentRoute) {
   const links = router.list().map((route) => {
     const label = sections[route] || route;
     const activeClass = route === currentRoute ? ' tp-nav__link--active' : '';
+    const isActive = route === currentRoute;
+    const ariaCurrent = isActive ? ' aria-current="page"' : '';
+    const dataState = isActive ? ' data-state="active"' : '';
     return `
       <li>
-        <a class="tp-nav__link${activeClass}" href="#${escapeHtml(route)}" data-route="${escapeHtml(route)}">
+        <a class="tp-nav__link${activeClass}" href="#${escapeHtml(route)}" data-route="${escapeHtml(route)}"${dataState}${ariaCurrent}>
           <span>${escapeHtml(String(label))}</span>
           <span class="tp-nav__badge">${escapeHtml(String(liveBadge))}</span>
         </a>

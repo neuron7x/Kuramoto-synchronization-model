@@ -77,3 +77,12 @@ export function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
   return date.toISOString().replace('T', ' ').replace('Z', ' UTC');
 }
+
+export function serializeForScript(value) {
+  const json = JSON.stringify(value ?? {});
+  return json
+    .replace(/</g, '\\u003C')
+    .replace(/>/g, '\\u003E')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}

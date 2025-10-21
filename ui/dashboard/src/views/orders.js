@@ -5,6 +5,7 @@ import {
   formatNumber,
   formatPercent,
   formatTimestamp,
+  serializeForScript,
 } from '../core/formatters.js';
 import { getMessage, t } from '../i18n/index.js';
 
@@ -195,6 +196,33 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
   });
 
   const { html } = table.render(page);
+  const totals = rows.reduce(
+    (acc, row) => {
+      const quantity = Number.isFinite(row.quantity) ? row.quantity : 0;
+      const filled = Number.isFinite(row.filledQuantity) ? row.filledQuantity : 0;
+      const progress = Number.isFinite(row.progress) ? row.progress : 0;
+      acc.grossQuantity += quantity;
+      acc.filledQuantity += filled;
+      acc.progressTotal += progress;
+      return acc;
+    },
+    { count: rows.length, grossQuantity: 0, filledQuantity: 0, progressTotal: 0 },
+  );
+  const statusSummary = rows.reduce((acc, row) => {
+    const status = row.status || 'UNKNOWN';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+  const metadata = serializeForScript({
+    route: 'orders',
+    totals: {
+      count: totals.count,
+      grossQuantity: totals.grossQuantity,
+      filledQuantity: totals.filledQuantity,
+      averageProgress: totals.count ? totals.progressTotal / totals.count : 0,
+    },
+    statuses: statusSummary,
+  });
 
   return {
     route: 'orders',
@@ -206,6 +234,7 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
           <p class="tp-view__subtitle">${escapeHtml(t('views.orders.subtitle'))}</p>
         </header>
         ${html}
+        <script type="application/json" class="tp-view__meta" data-role="view-meta">${metadata}</script>
       </section>
     `,
     table,

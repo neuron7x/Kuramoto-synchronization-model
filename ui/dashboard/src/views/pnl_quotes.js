@@ -5,6 +5,7 @@ import {
   formatNumber,
   formatPercent,
   formatTimestamp,
+  serializeForScript,
 } from '../core/formatters.js';
 import { t } from '../i18n/index.js';
 
@@ -106,6 +107,18 @@ export function renderPnlQuotesView({ pnlPoints = [], quotes = [], currency = 'U
       percent: formatPercent(quoteSummary.changePercent),
     })
   );
+  const metadata = serializeForScript({
+    route: 'pnl',
+    heading: t('views.pnl.heading'),
+    summary: {
+      pnl: {
+        total: pnlSummary.total,
+        change: pnlSummary.change,
+        runRate: pnlSummary.runRate,
+      },
+      quotes: quoteSummary,
+    },
+  });
 
   return {
     route: 'pnl',
@@ -139,6 +152,7 @@ export function renderPnlQuotesView({ pnlPoints = [], quotes = [], currency = 'U
             ${quoteChart.html}
           </article>
         </section>
+        <script type="application/json" class="tp-view__meta" data-role="view-meta">${metadata}</script>
       </section>
     `,
     charts: {
