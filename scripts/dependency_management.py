@@ -557,7 +557,7 @@ def prune_lockfile(lockfile: Lockfile, used_packages: Iterable[str]) -> Lockfile
 
 def generate_restore_plan(lockfile: Lockfile, python_executable: str = "python") -> tuple[str, ...]:
     commands = [
-        f"{python_executable} -m pip install {package.requirement_line()}"
+        f"{python_executable} -m pip install --no-deps {package.requirement_line()}"
         for package in lockfile.packages
     ]
     return tuple(commands)

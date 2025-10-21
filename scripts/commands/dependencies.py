@@ -197,7 +197,7 @@ def handle(args: argparse.Namespace) -> int:
             print(
                 f"⚠️  {finding.name}=={finding.version}: {advisory.identifier} ({advisory.severity}) → fix: {fixes}"
             )
-        return 0
+        return 1
 
     if action == "licenses":
         repository = _load_repository(args)
