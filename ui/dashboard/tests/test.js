@@ -19,6 +19,7 @@ import {
 import { renderPositionsView } from '../src/views/positions.js';
 import { renderOrdersView } from '../src/views/orders.js';
 import { renderPnlQuotesView } from '../src/views/pnl_quotes.js';
+import { renderSignalsView } from '../src/views/signals.js';
 import { renderAreaChart } from '../src/components/area_chart.js';
 import { createLiveTable, LiveTable } from '../src/components/live_table.js';
 import { escapeHtml, formatNumber, formatTimestamp } from '../src/core/formatters.js';
@@ -225,6 +226,42 @@ const quotes = ticks.map((tick) => ({
   last_price: tick.last_price,
 }));
 
+const signalEvents = [
+  {
+    event_id: 'signal-1',
+    schema_version: '1',
+    symbol: 'AAPL',
+    timestamp: now - 15000,
+    signal_type: 'momentum_breakout',
+    strength: 0.85,
+    direction: 'BUY',
+    ttl_seconds: 600,
+    metadata: { timeframe: '5m', regime: 'trend' },
+  },
+  {
+    event_id: 'signal-2',
+    schema_version: '1',
+    symbol: 'MSFT',
+    timestamp: now - 90000,
+    signal_type: 'mean_reversion',
+    strength: 0.35,
+    direction: 'SELL',
+    ttl_seconds: 30,
+    metadata: { zscore: '1.2' },
+  },
+  {
+    event_id: 'signal-3',
+    schema_version: '1',
+    symbol: 'GOOG',
+    timestamp: now - 45000,
+    signal_type: 'volatility_collapse',
+    strength: 1.2,
+    direction: 'FLAT',
+    ttl_seconds: null,
+    metadata: {},
+  },
+];
+
 // --- Live table component -------------------------------------------------------------------
 
 const table = createLiveTable({
@@ -299,6 +336,7 @@ const dashboardView = renderDashboard({
   positions: { fills: fillEvents, orders: orderEvents, ticks },
   orders: { orders: orderEvents, fills: fillEvents },
   pnl: { pnlPoints, quotes },
+  signals: { signals: signalEvents },
 });
 
 assert.ok(dashboardView.html.includes('PnL &amp; Quotes'), 'navigation should expose pnl route');
@@ -308,7 +346,8 @@ assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose
 assert.strictEqual(dashboardView.route, 'positions');
 
 const navigationLinks = (dashboardView.html.match(/<a class=\"tp-nav__link/g) || []).length;
-assert.strictEqual(navigationLinks, 3, 'dashboard should render all navigation links');
+assert.strictEqual(navigationLinks, 4, 'dashboard should render all navigation links');
+assert.ok(dashboardView.html.includes('Signals'), 'navigation should expose signals route');
 
 const applePosition = dashboardView.view.rows.find((row) => row.symbol === 'AAPL');
 assert.ok(applePosition, 'positions view should aggregate AAPL position');
@@ -325,6 +364,15 @@ const pnlView = renderPnlQuotesView({ pnlPoints, quotes });
 assert.ok(pnlView.html.includes('Net PnL'));
 assert.ok(pnlView.charts.pnl.points.length > 0);
 assert.ok(pnlView.charts.quotes.points.every((point, index, arr) => index === 0 || arr[index - 1].timestamp <= point.timestamp));
+
+const signalsView = renderSignalsView({ signals: signalEvents });
+assert.ok(signalsView.html.includes('Signal Intelligence'), 'signals view should include heading');
+const signalRows = signalsView.table.getSortedRows();
+assert.ok(signalRows.length >= 3, 'signals table should surface all rows');
+assert.ok(signalRows.some((row) => row.isActive), 'signals should mark active entries');
+assert.ok(signalRows.some((row) => !row.isActive), 'signals should mark expired entries when ttl elapsed');
+assert.ok(signalsView.summary.activeCount >= 1, 'summary should count active signals');
+assert.ok(signalsView.html.includes('tp-meta-list'), 'signals view should render metadata chips');
 
 const router = createRouter({
   defaultRoute: 'orders',

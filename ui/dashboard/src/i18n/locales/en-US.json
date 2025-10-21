@@ -18,7 +18,8 @@
     "sections": {
       "positions": "Positions",
       "orders": "Orders",
-      "pnl": "PnL & Quotes"
+      "pnl": "PnL & Quotes",
+      "signals": "Signals"
     }
   },
   "header": {
@@ -98,6 +99,54 @@
             "negative": "Loss {percent}"
           }
         }
+      }
+    },
+    "signals": {
+      "title": "Signals",
+      "heading": "Signal Intelligence",
+      "subtitle": "Surface live strategy directives with conviction and expiry context.",
+      "cards": {
+        "active": {
+          "title": "Active Signals",
+          "total": "{count} active",
+          "updated": "Latest {time}",
+          "none": "No signals yet"
+        },
+        "bias": {
+          "title": "Directional Bias",
+          "ratio": "Buy {buy} / Sell {sell} / Flat {flat}",
+          "netLong": "Net long {value}",
+          "netShort": "Net short {value}"
+        },
+        "conviction": {
+          "title": "Conviction",
+          "average": "Avg {value}",
+          "peak": "Peak {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Timestamp",
+          "symbol": "Symbol",
+          "direction": "Direction",
+          "strength": "Strength",
+          "signal_type": "Type",
+          "ttl": "TTL",
+          "status": "Status",
+          "metadata": "Context"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Buy",
+            "sell": "Sell",
+            "flat": "Flat"
+          },
+          "status": {
+            "active": "Active",
+            "expired": "Expired"
+          }
+        },
+        "empty": "No signals available."
       }
     }
   },

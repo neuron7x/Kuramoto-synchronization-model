@@ -18,7 +18,8 @@
     "sections": {
       "positions": "Positionen",
       "orders": "Aufträge",
-      "pnl": "PnL & Kurse"
+      "pnl": "PnL & Kurse",
+      "signals": "Signale"
     }
   },
   "header": {
@@ -98,6 +99,54 @@
             "negative": "Verlust {percent}"
           }
         }
+      }
+    },
+    "signals": {
+      "title": "Signale",
+      "heading": "Signal-Intelligenz",
+      "subtitle": "Aktive Handelsimpulse mit Überzeugung und Laufzeit im Blick behalten.",
+      "cards": {
+        "active": {
+          "title": "Aktive Signale",
+          "total": "{count} aktiv",
+          "updated": "Zuletzt {time}",
+          "none": "Noch keine Signale"
+        },
+        "bias": {
+          "title": "Richtungsbias",
+          "ratio": "Kauf {buy} / Verkauf {sell} / Neutral {flat}",
+          "netLong": "Long-Überhang {value}",
+          "netShort": "Short-Überhang {value}"
+        },
+        "conviction": {
+          "title": "Überzeugung",
+          "average": "Durchschnitt {value}",
+          "peak": "Maximum {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Zeitstempel",
+          "symbol": "Symbol",
+          "direction": "Richtung",
+          "strength": "Stärke",
+          "signal_type": "Typ",
+          "ttl": "Laufzeit",
+          "status": "Status",
+          "metadata": "Kontext"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Kauf",
+            "sell": "Verkauf",
+            "flat": "Neutral"
+          },
+          "status": {
+            "active": "Aktiv",
+            "expired": "Abgelaufen"
+          }
+        },
+        "empty": "Keine Signale verfügbar."
       }
     }
   },

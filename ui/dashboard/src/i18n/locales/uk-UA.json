@@ -18,7 +18,8 @@
     "sections": {
       "positions": "Позиції",
       "orders": "Заявки",
-      "pnl": "PnL та котирування"
+      "pnl": "PnL та котирування",
+      "signals": "Сигнали"
     }
   },
   "header": {
@@ -98,6 +99,54 @@
             "negative": "Збиток {percent}"
           }
         }
+      }
+    },
+    "signals": {
+      "title": "Сигнали",
+      "heading": "Аналітика сигналів",
+      "subtitle": "Відстежуйте активні торгові сигнали з впевненістю та строком дії.",
+      "cards": {
+        "active": {
+          "title": "Активні сигнали",
+          "total": "{count} активних",
+          "updated": "Оновлено {time}",
+          "none": "Поки що немає сигналів"
+        },
+        "bias": {
+          "title": "Напрямний баланс",
+          "ratio": "Купівля {buy} / Продаж {sell} / Нейтрально {flat}",
+          "netLong": "Перевага в лонг {value}",
+          "netShort": "Перевага в шорт {value}"
+        },
+        "conviction": {
+          "title": "Впевненість",
+          "average": "Середня {value}",
+          "peak": "Максимальна {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Час",
+          "symbol": "Тікер",
+          "direction": "Напрям",
+          "strength": "Сила",
+          "signal_type": "Тип",
+          "ttl": "Строк дії",
+          "status": "Статус",
+          "metadata": "Контекст"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Купівля",
+            "sell": "Продаж",
+            "flat": "Нейтрально"
+          },
+          "status": {
+            "active": "Активний",
+            "expired": "Неактивний"
+          }
+        },
+        "empty": "Немає сигналів."
       }
     }
   },
