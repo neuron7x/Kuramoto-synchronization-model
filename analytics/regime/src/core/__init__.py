@@ -11,6 +11,26 @@ from .fk_detector import (
 )
 from .ricci_flow import RicciFlowConfig, RicciFlowRebalancer, RicciFlowResult
 from .topo_sentinel import TopoSentinel, TopoSentinelConfig, TopoSentinelResult
+from .tradepulse_v21 import (
+    BacktestConfig,
+    BacktestSummary,
+    EnsembleConfig,
+    FeatureBuilderConfig,
+    LogisticIsotonicTrainer,
+    LogisticModelArtifacts,
+    ModelPerformance,
+    ModelTrainingConfig,
+    PipelineResult,
+    ProbabilityBacktester,
+    ProbabilityOutputs,
+    RegimeHMMAdapter,
+    RegimeHMMConfig,
+    StrictCausalFeatureBuilder,
+    StrictCausalFeatures,
+    StressTestSummary,
+    TradePulseV21Pipeline,
+    result_to_json,
+)
 
 __all__ = [
     "CausalGuard",
@@ -31,4 +51,22 @@ __all__ = [
     "TopoSentinelConfig",
     "TopoSentinelResult",
     "estimate_hurst_rs",
+    "BacktestConfig",
+    "BacktestSummary",
+    "EnsembleConfig",
+    "FeatureBuilderConfig",
+    "LogisticIsotonicTrainer",
+    "LogisticModelArtifacts",
+    "ModelPerformance",
+    "ModelTrainingConfig",
+    "PipelineResult",
+    "ProbabilityBacktester",
+    "ProbabilityOutputs",
+    "RegimeHMMAdapter",
+    "RegimeHMMConfig",
+    "StrictCausalFeatureBuilder",
+    "StrictCausalFeatures",
+    "StressTestSummary",
+    "TradePulseV21Pipeline",
+    "result_to_json",
 ]
