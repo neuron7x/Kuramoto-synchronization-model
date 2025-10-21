@@ -253,6 +253,16 @@ def get_api_security_settings() -> ApiSecuritySettings:
     """Return cached security settings for dependency injection."""
 
     loader = _default_settings_loader
+    manual_override = getattr(get_api_security_settings, "_manual_override", False)
+
+    if manual_override:
+        if hasattr(get_api_security_settings, "_instance"):
+            return getattr(get_api_security_settings, "_instance")
+        if hasattr(get_api_security_settings, "_manual_override"):
+            delattr(get_api_security_settings, "_manual_override")
+        if hasattr(get_api_security_settings, "_loader"):
+            delattr(get_api_security_settings, "_loader")
+
     cached_loader = getattr(get_api_security_settings, "_loader", None)
 
     if cached_loader is None and hasattr(get_api_security_settings, "_instance"):
@@ -264,12 +274,16 @@ def get_api_security_settings() -> ApiSecuritySettings:
         settings = loader()
         setattr(get_api_security_settings, "_instance", settings)
         setattr(get_api_security_settings, "_loader", loader)
+        if hasattr(get_api_security_settings, "_manual_override"):
+            delattr(get_api_security_settings, "_manual_override")
         return settings
 
     if not hasattr(get_api_security_settings, "_instance"):
         settings = loader()
         setattr(get_api_security_settings, "_instance", settings)
         setattr(get_api_security_settings, "_loader", loader)
+        if hasattr(get_api_security_settings, "_manual_override"):
+            delattr(get_api_security_settings, "_manual_override")
         return settings
 
     return getattr(get_api_security_settings, "_instance")

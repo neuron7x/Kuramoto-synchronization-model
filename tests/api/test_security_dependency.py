@@ -629,3 +629,41 @@ async def test_unsupported_signing_key_type_is_rejected(
         exc.value.detail
         == "Signing key type is incompatible with bearer token algorithm."
     )
+
+
+def test_manual_override_survives_loader_replacement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for attribute in ("_instance", "_loader", "_manual_override"):
+        if hasattr(get_api_security_settings, attribute):
+            delattr(get_api_security_settings, attribute)
+
+    manual_settings = ApiSecuritySettings(
+        oauth2_issuer="https://override.tradepulse.test",
+        oauth2_audience="override-api",
+        oauth2_jwks_uri="https://override.tradepulse.test/jwks",
+    )
+
+    setattr(get_api_security_settings, "_instance", manual_settings)
+    setattr(get_api_security_settings, "_manual_override", True)
+
+    assert get_api_security_settings() is manual_settings
+
+    def replacement_loader() -> ApiSecuritySettings:
+        return ApiSecuritySettings(
+            oauth2_issuer="https://replacement.tradepulse.test",
+            oauth2_audience="replacement-api",
+            oauth2_jwks_uri="https://replacement.tradepulse.test/jwks",
+        )
+
+    monkeypatch.setattr(
+        "application.api.security._default_settings_loader",
+        replacement_loader,
+    )
+
+    try:
+        assert get_api_security_settings() is manual_settings
+    finally:
+        for attribute in ("_instance", "_loader", "_manual_override"):
+            if hasattr(get_api_security_settings, attribute):
+                delattr(get_api_security_settings, attribute)

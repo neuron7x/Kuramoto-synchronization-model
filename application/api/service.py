@@ -1429,6 +1429,11 @@ def create_app(
         ) from exc
     if security_settings is not None:
         setattr(get_api_security_settings, "_instance", resolved_security_settings)
+        setattr(get_api_security_settings, "_manual_override", True)
+        if hasattr(get_api_security_settings, "_loader"):
+            delattr(get_api_security_settings, "_loader")
+    elif hasattr(get_api_security_settings, "_manual_override"):
+        delattr(get_api_security_settings, "_manual_override")
     audit_sink = None
     if resolved_settings.audit_webhook_url is not None:
         audit_sink = HttpAuditSink(str(resolved_settings.audit_webhook_url))
