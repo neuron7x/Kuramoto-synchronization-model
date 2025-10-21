@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence
+from typing import Any, Callable, Dict, Mapping, MutableMapping, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -64,6 +64,9 @@ class MultiScaleResult:
     energy_profile: Mapping[str, float] = field(default_factory=dict)
 
 
+Aggregation = str | Callable[[pd.Series], Any]
+
+
 @dataclass(slots=True)
 class FractalResampler:
     """Energy-aware hierarchical resampling cache.
@@ -72,10 +75,13 @@ class FractalResampler:
     horizon is an integer multiple of a previously computed one.  This mirrors
     the "fractal" refinement of horizons used throughout TradePulse and reduces
     redundant :meth:`pandas.Series.resample` calls—cutting CPU time and energy
-    consumption in large backtests.
+    consumption in large backtests.  The aggregation applied to each resample is
+    configurable so workflows can request mean/median snapshots without
+    re-implementing caching logic.
     """
 
     series: pd.Series
+    aggregation: Aggregation = "last"
     _cache: MutableMapping[TimeFrame, pd.Series] = field(default_factory=dict, init=False)
     _cache_hits: int = field(default=0, init=False)
     _direct_resamples: int = field(default=0, init=False)
@@ -99,7 +105,18 @@ class FractalResampler:
             base = self.series
             self._direct_resamples += 1
 
-        resampled = base.resample(timeframe.pandas_freq).last()
+        resampler = base.resample(timeframe.pandas_freq)
+        try:
+            resampled = resampler.aggregate(self.aggregation)
+        except Exception as exc:  # pragma: no cover - pandas validation paths
+            raise ValueError(
+                "Failed to aggregate resampled series with the provided aggregation"
+            ) from exc
+        if not isinstance(resampled, pd.Series):
+            raise TypeError(
+                "FractalResampler aggregation must yield a pandas Series; "
+                f"received {type(resampled).__name__}"
+            )
         resampled = resampled.ffill().dropna()
         self._cache[timeframe] = resampled
         return resampled

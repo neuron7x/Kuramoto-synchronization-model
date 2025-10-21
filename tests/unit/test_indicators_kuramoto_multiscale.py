@@ -116,6 +116,22 @@ def test_fractal_resampler_reuses_parent_timeframes() -> None:
     assert 0.0 <= stats["fractal_reuse_ratio"] <= 1.0
 
 
+def test_fractal_resampler_supports_custom_aggregation() -> None:
+    df = _synth_dataframe()
+    resampler = FractalResampler(df["close"], aggregation="mean")
+    m5 = resampler.resample(TimeFrame.M5)
+    expected = df["close"].sort_index().resample(TimeFrame.M5.pandas_freq).mean()
+    expected = expected.ffill().dropna()
+    pd.testing.assert_series_equal(m5, expected)
+
+
+def test_fractal_resampler_rejects_non_series_aggregation() -> None:
+    df = _synth_dataframe()
+    resampler = FractalResampler(df["close"], aggregation="ohlc")
+    with pytest.raises(TypeError):
+        resampler.resample(TimeFrame.M5)
+
+
 def test_multiscale_analyzer_marks_skipped_timeframes_when_insufficient_samples() -> (
     None
 ):
