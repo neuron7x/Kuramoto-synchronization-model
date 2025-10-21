@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+import unicodedata
+from dataclasses import dataclass
 from hashlib import sha256
 from string import Template
 from typing import Any, Iterable, Mapping, MutableMapping, Sequence
@@ -31,43 +34,124 @@ __all__ = [
 ]
 
 
+@dataclass(frozen=True)
+class _SecurityRule:
+    pattern: re.Pattern[str]
+    message: str
+
+
 class PromptSanitizer:
     """Detect suspicious content and normalise inputs."""
 
-    _DEFAULT_PATTERNS: tuple[str, ...] = (
-        r"(?i)ignore\s+all\s+previous\s+instructions",
-        r"(?i)ignore\s+previous\s+directions",
-        r"(?i)forget\s+(the\s+)?rules",
-        r"(?i)system\s+prompt\s*:",
-        r"(?i)<\s*script",
-        r"(?i){[{%]",
+    _RuleInput = str | tuple[str, str]
+
+    _DEFAULT_RULES: tuple[_RuleInput, ...] = (
+        (
+            r"(?i)ignore\s+all\s+previous\s+instructions",
+            "prompt injection directive detected",
+        ),
+        (
+            r"(?i)ignore\s+previous\s+directions",
+            "prompt injection directive detected",
+        ),
+        (r"(?i)forget\s+(the\s+)?rules", "prompt injection directive detected"),
+        (r"(?i)system\s+prompt\s*:", "prompt injection directive detected"),
+        (
+            r"(?i)<\s*script",
+            "possible cross-site scripting content detected",
+        ),
+        (
+            r"(?i){[{%]",
+            "potential prompt-injection content detected",
+        ),
+    )
+
+    _SECURITY_RULES: tuple[_RuleInput, ...] = (
+        (
+            r"(?i)(?:;\s*(?:drop|delete|truncate)\s+\w+|union\s+select|or\s+1=1|"
+            r"or\s+'1'='1|--\s|/\*|\bxp_cmdshell\b)",
+            "input appears to contain a SQL injection payload",
+        ),
+        (
+            r"(?i)<\s*(?:script|img|svg|iframe|object|embed)[^>]*"
+            r"(?:on\w+\s*=|src\s*=\s*['\"]?javascript:|href\s*=\s*['\"]?javascript:)",
+            "possible cross-site scripting content detected",
+        ),
+        (
+            r"(?i)<\s*form[^>]+action\s*=\s*['\"]?https?://",
+            "input resembles a cross-site request forgery payload",
+        ),
+        (
+            r"(?i)(?:pickle\.loads\(|yaml\.load\(|jsonpickle\.decode\(|"
+            r"__import__\(|marshal\.loads\(|eval\(|exec\()",
+            "unsafe dynamic deserialization directive detected",
+        ),
+        (
+            r"(?is)<!DOCTYPE\s+[^>]*\[\s*<!ENTITY\s+[^>]*SYSTEM",
+            "input includes XML entity declarations that can trigger entity expansion",
+        ),
+        (
+            r"(?i)(?:\.\./|\.\.\\|%2e%2e%2f|%2e%2e\\)",
+            "path traversal sequence detected in input",
+        ),
+        (
+            r"(?i)(?:\blc_(?:all|ctype|collate|numeric|time|monetary)\s*=|"
+            r"\blang(?:uage)?\s*=|locale\.setlocale\()",
+            "locale override directives are not permitted",
+        ),
     )
 
     def __init__(
         self,
-        blocked_patterns: Iterable[str] | None = None,
+        blocked_patterns: Iterable[_RuleInput] | None = None,
         *,
         max_length: int = 8000,
     ) -> None:
-        import re
-
-        patterns = tuple(blocked_patterns or self._DEFAULT_PATTERNS)
-        self._compiled = tuple(re.compile(pattern) for pattern in patterns)
+        rules = tuple(blocked_patterns or self._DEFAULT_RULES)
+        self._custom_rules = tuple(self._compile_rule(entry) for entry in rules)
+        self._security_rules = tuple(
+            self._compile_rule(entry) for entry in self._SECURITY_RULES
+        )
         self._max_length = max_length
 
+    @staticmethod
+    def _compile_rule(entry: _RuleInput) -> _SecurityRule:
+        if isinstance(entry, tuple):
+            pattern, message = entry
+        else:
+            pattern = entry
+            message = "potential prompt-injection content detected"
+        return _SecurityRule(re.compile(pattern), message)
+
+    @staticmethod
+    def _coerce_to_text(value: Any) -> str:
+        if isinstance(value, (bytes, bytearray, memoryview)):
+            raise PromptInjectionDetected("binary payloads are not permitted")
+        return str(value)
+
+    @staticmethod
+    def _ensure_utf8(text: str) -> None:
+        try:
+            text.encode("utf-8", "strict")
+        except UnicodeEncodeError as exc:  # pragma: no cover - defensive guard
+            raise PromptInjectionDetected("input must be valid UTF-8 text") from exc
+
     def sanitize_text(self, value: Any, *, strip: bool = False) -> str:
-        text = str(value)
+        text = self._coerce_to_text(value)
         if strip:
             text = text.strip()
+        try:
+            text = unicodedata.normalize("NFC", text)
+        except ValueError as exc:
+            raise PromptInjectionDetected("input must be valid UTF-8 text") from exc
+        self._ensure_utf8(text)
         if len(text) > self._max_length:
             raise PromptInjectionDetected("input exceeds maximum supported length")
         if any(ord(char) < 32 and char not in (9, 10, 13) for char in text):
             raise PromptInjectionDetected("control characters are not permitted")
-        for pattern in self._compiled:
-            if pattern.search(text):
-                raise PromptInjectionDetected(
-                    "potential prompt-injection content detected"
-                )
+        for rule in (*self._security_rules, *self._custom_rules):
+            if rule.pattern.search(text):
+                raise PromptInjectionDetected(rule.message)
         return text
 
     def sanitize_mapping(self, mapping: Mapping[str, Any]) -> dict[str, str]:
