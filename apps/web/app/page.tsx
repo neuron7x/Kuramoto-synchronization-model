@@ -519,9 +519,9 @@ export default function Home() {
   const templateHelperId = 'template-description'
 
   return (
-    <main className="scenario-main">
-      <section className="scenario-container">
-        <header className="scenario-hero">
+    <main className="scenario-main" data-testid="scenario-main">
+      <section className="scenario-container" data-testid="scenario-container">
+        <header className="scenario-hero" data-testid="onboarding-hero">
           <h1>Scenario Studio</h1>
           <p>
             Sanity-check strategy inputs before pushing them into execution. Select a template, adjust the levers, and review
@@ -530,13 +530,18 @@ export default function Home() {
         </header>
 
         <div className="scenario-grid">
-          <section className="panel panel-form" aria-labelledby="scenario-form-heading">
-            <div className="template-select">
+          <section
+            className="panel panel-form"
+            aria-labelledby="scenario-form-heading"
+            data-testid="scenario-template-panel"
+          >
+            <div className="template-select" data-testid="template-selector">
               <label htmlFor="template" id="scenario-form-heading">
                 Scenario template
               </label>
               <select
                 id="template"
+                data-testid="template-select"
                 value={templateId}
                 onChange={(event) => {
                   const value = event.target.value
@@ -556,17 +561,17 @@ export default function Home() {
                   </option>
                 ))}
               </select>
-              <p id={templateHelperId} className="template-description">
+              <p id={templateHelperId} className="template-description" data-testid="template-description">
                 {selectedTemplate.description}
               </p>
-              <ul className="template-notes">
+              <ul className="template-notes" data-testid="template-notes">
                 {selectedTemplate.notes.map((note) => (
                   <li key={note}>{note}</li>
                 ))}
               </ul>
             </div>
 
-            <form className="field-grid" noValidate>
+            <form className="field-grid" data-testid="scenario-form" noValidate>
               {(Object.keys(FIELD_META) as ScenarioField[]).map((field) => {
                 const meta = FIELD_META[field]
                 const inputId = `field-${field}`
@@ -575,7 +580,7 @@ export default function Home() {
                 const hasError = Boolean(errors[field])
                 const describedBy = hasError ? `${helperId} ${errorId}` : helperId
                 return (
-                  <div key={field} className="field">
+                  <div key={field} className="field" data-testid={`field-${field}`}>
                     <label htmlFor={inputId}>{meta.label}</label>
                     <input
                       id={inputId}
@@ -586,6 +591,7 @@ export default function Home() {
                       inputMode={meta.inputMode}
                       type={meta.type}
                       className="tp-input"
+                      data-testid={`input-${field}`}
                       aria-invalid={hasError}
                       aria-describedby={describedBy}
                       autoComplete="off"
@@ -595,7 +601,7 @@ export default function Home() {
                       {meta.helper}
                     </p>
                     {hasError ? (
-                      <p id={errorId} className="tp-error">
+                      <p id={errorId} className="tp-error" data-testid={`error-${field}`}>
                         {errors[field]}
                       </p>
                     ) : null}
@@ -603,8 +609,13 @@ export default function Home() {
                 )
               })}
 
-              <div className="button-row">
-                <button type="button" onClick={resetTemplate} className="tp-button tp-button--ghost">
+              <div className="button-row" data-testid="action-buttons">
+                <button
+                  type="button"
+                  onClick={resetTemplate}
+                  className="tp-button tp-button--ghost"
+                  data-testid="action-reset"
+                >
                   Reset to template defaults
                 </button>
                 <button
@@ -612,6 +623,7 @@ export default function Home() {
                   onClick={handleCopy}
                   disabled={hasErrors}
                   className="tp-button tp-button--primary"
+                  data-testid="action-copy"
                 >
                   Copy to clipboard
                 </button>
@@ -620,6 +632,7 @@ export default function Home() {
                   onClick={handleDownload}
                   disabled={hasErrors}
                   className="tp-button tp-button--secondary"
+                  data-testid="action-download"
                 >
                   Download JSON
                 </button>
@@ -628,7 +641,10 @@ export default function Home() {
                 <p
                   role="status"
                   aria-live="polite"
-                  className={`tp-status ${actionMessage.kind === 'success' ? 'tp-status--success' : 'tp-status--error'}`}
+                  className={`tp-status ${
+                    actionMessage.kind === 'success' ? 'tp-status--success' : 'tp-status--error'
+                  }`}
+                  data-testid="action-feedback"
                 >
                   {actionMessage.text}
                 </p>
@@ -636,8 +652,8 @@ export default function Home() {
             </form>
           </section>
 
-          <div className="side-panels">
-            <article className="panel health-panel">
+          <div className="side-panels" data-testid="insights-panels">
+            <article className="panel health-panel" data-testid="scenario-health">
               <h2>Scenario health</h2>
               <div
                 className={`health-status ${
@@ -649,10 +665,13 @@ export default function Home() {
                     ? 'health-status--blocked'
                     : 'health-status--risk'
                 }`}
+                data-testid="health-status"
               >
                 <span>{scenarioHealth.status}</span>
               </div>
-              <p className="health-score">Score: {scenarioHealth.score} / 100</p>
+              <p className="health-score" data-testid="health-score">
+                Score: {scenarioHealth.score} / 100
+              </p>
               <div
                 className="health-meter"
                 role="meter"
@@ -660,12 +679,15 @@ export default function Home() {
                 aria-valuemax={100}
                 aria-valuenow={scenarioHealth.score}
                 aria-valuetext={`${scenarioHealth.score} out of 100`}
+                data-testid="health-meter"
               >
                 <span className="health-meter__fill" style={{ width: `${scenarioHealth.score}%` }} />
               </div>
-              <p className="health-summary">{scenarioHealth.summary}</p>
+              <p className="health-summary" data-testid="health-summary">
+                {scenarioHealth.summary}
+              </p>
               {scenarioHealth.checklist.length > 0 ? (
-                <ul className="health-checklist">
+                <ul className="health-checklist" data-testid="health-checklist">
                   {scenarioHealth.checklist.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -673,50 +695,50 @@ export default function Home() {
               ) : null}
             </article>
 
-            <article className="panel">
+            <article className="panel" data-testid="risk-snapshot">
               <h2>Risk snapshot</h2>
-              <div className="metric-grid">
+              <div className="metric-grid" data-testid="metric-grid">
                 <div className="metric-tiles">
-                  <div className="metric-tile">
+                  <div className="metric-tile" data-testid="metric-risk-per-trade">
                     <span>Risk per trade</span>
                     <p>{riskDollars === null ? '—' : `$${riskDollars.toFixed(2)}`}</p>
                     {riskPercentOfEquity !== null ? (
                       <span>{riskPercentOfEquity.toFixed(2)}% of equity</span>
                     ) : null}
                   </div>
-                  <div className="metric-tile">
+                  <div className="metric-tile" data-testid="metric-portfolio-risk">
                     <span>Max portfolio risk</span>
                     <p>{aggregateRisk === null ? '—' : `$${aggregateRisk.toFixed(2)}`}</p>
                     {portfolioRiskPercent !== null ? (
                       <span>{portfolioRiskPercent.toFixed(2)}% of equity</span>
                     ) : null}
                   </div>
-                  <div className="metric-tile">
+                  <div className="metric-tile" data-testid="metric-timeframe">
                     <span>Timeframe</span>
                     <p>{parsedConfig.timeframe || '—'}</p>
                   </div>
                 </div>
 
                 {warnings.length > 0 ? (
-                  <ul className="warning-list">
+                  <ul className="warning-list" data-testid="warning-list">
                     {warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="warning-placeholder">
+                  <p className="warning-placeholder" data-testid="warning-placeholder">
                     Risk controls look balanced for the selected template. Stress test transaction costs before live execution.
                   </p>
                 )}
 
                 {hasErrors ? (
-                  <p className="tp-error tp-error-inline">
+                  <p className="tp-error tp-error-inline" data-testid="error-export-blocker">
                     Resolve the highlighted fields above to unlock export-ready scenario JSON.
                   </p>
                 ) : null}
 
                 {timeframeInsights.length > 0 ? (
-                  <div className="timeframe-insights">
+                  <div className="timeframe-insights" data-testid="timeframe-insights">
                     <h3>Timeframe insights</h3>
                     <ul>
                       {timeframeInsights.map((insight) => (
@@ -728,12 +750,16 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="panel">
+            <article className="panel" data-testid="scenario-preview">
               <h2>Scenario JSON template</h2>
               <p className="tp-helper tp-helper-spaced">
                 Drop this snippet into <code>docs/scenarios.md</code> or configuration files as a starting point for backtests.
               </p>
-              <pre className="code-preview" aria-label="Scenario JSON preview">
+              <pre
+                className="code-preview"
+                aria-label="Scenario JSON preview"
+                data-testid="scenario-json-preview"
+              >
                 {preview}
               </pre>
             </article>
