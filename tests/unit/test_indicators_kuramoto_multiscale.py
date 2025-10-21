@@ -116,6 +116,22 @@ def test_fractal_resampler_reuses_parent_timeframes() -> None:
     assert 0.0 <= stats["fractal_reuse_ratio"] <= 1.0
 
 
+def test_fractal_resampler_resample_many_honours_fractal_ordering() -> None:
+    df = _synth_dataframe()
+    resampler = FractalResampler(df["close"])
+    requested = (TimeFrame.M15, TimeFrame.M1, TimeFrame.M5, TimeFrame.M5)
+    results = resampler.resample_many(requested)
+
+    assert list(results.keys()) == [TimeFrame.M15, TimeFrame.M1, TimeFrame.M5]
+    assert all(isinstance(series, pd.Series) for series in results.values())
+
+    stats = resampler.stats()
+    assert stats["resample_requests"] == pytest.approx(3.0)
+    assert stats["fractal_cache_hits"] >= 2.0
+    assert stats["direct_resamples"] == pytest.approx(1.0)
+    assert stats["cached_timeframes"] == pytest.approx(3.0)
+
+
 def test_multiscale_analyzer_marks_skipped_timeframes_when_insufficient_samples() -> (
     None
 ):
