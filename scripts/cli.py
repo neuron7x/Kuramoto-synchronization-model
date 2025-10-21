@@ -54,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
         nightly,
         proto,
         secrets,
+        style,
         supply_chain,
     )
     from scripts.commands import test as test_cmd
@@ -61,6 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
     dev.build_parser(subparsers)
     lint.build_parser(subparsers)
     proto.build_parser(subparsers)
+    style.build_parser(subparsers)
     test_cmd.build_parser(subparsers)
     fpma.build_parser(subparsers)
     live.build_parser(subparsers)

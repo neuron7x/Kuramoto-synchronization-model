@@ -3,7 +3,29 @@
 from __future__ import annotations
 
 # SPDX-License-Identifier: MIT
-from . import dev, fpma, lint, live, proto, secrets, supply_chain, test  # noqa: F401
+from . import (  # noqa: F401
+    dev,
+    fpma,
+    lint,
+    live,
+    proto,
+    secrets,
+    style,
+    supply_chain,
+    test,
+)
 from .base import CommandError, register
 
-__all__ = ["CommandError", "register"]
+__all__ = [
+    "CommandError",
+    "register",
+    "dev",
+    "fpma",
+    "lint",
+    "live",
+    "proto",
+    "secrets",
+    "style",
+    "supply_chain",
+    "test",
+]
