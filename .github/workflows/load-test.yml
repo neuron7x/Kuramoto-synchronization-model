@@ -1,0 +1,102 @@
+name: Performance Load Tests
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/**'
+      - 'loadtests/**'
+      - '.github/workflows/load-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  load-test:
+    name: Locust (HTTP + gRPC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-load-${{ hashFiles('requirements*.txt', 'requirements*.lock') }}
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: |
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
+          uv pip install locust==2.23.1
+
+      - name: Start FastAPI service
+        run: |
+          .venv/bin/uvicorn loadtests.service_app:app --host 127.0.0.1 --port 8000 --log-level warning &
+          echo $! > fastapi.pid
+
+      - name: Start gRPC service
+        run: |
+          .venv/bin/python loadtests/run_grpc_service.py &
+          echo $! > grpc.pid
+
+      - name: Wait for services
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8000/health >/dev/null; then
+              if .venv/bin/python - <<'PY'
+import grpc
+from loadtests.proto import trading_pb2, trading_pb2_grpc
+
+channel = grpc.insecure_channel("127.0.0.1:50051")
+try:
+    stub = trading_pb2_grpc.TradingServiceStub(channel)
+    stub.GetPositions(trading_pb2.Empty(), timeout=1.0)
+finally:
+    channel.close()
+PY
+              then
+                exit 0
+              fi
+            fi
+            sleep 1
+          done
+          echo "Services failed to become ready" >&2
+          exit 1
+
+      - name: Run load tests
+        env:
+          LOADTEST_GRPC_ADDRESS: 127.0.0.1:50051
+        run: |
+          mkdir -p reports/loadtest
+          .venv/bin/locust -f loadtests/locustfile.py --headless --host http://127.0.0.1:8000 \
+            --users 240 --spawn-rate 120 --run-time 2m --stop-timeout 15 \
+            --csv=reports/loadtest/locust --loglevel INFO
+
+      - name: Validate load test thresholds
+        run: .venv/bin/python loadtests/validate_results.py reports/loadtest/locust_stats.csv
+
+      - name: Upload load-test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loadtest-results
+          path: reports/loadtest
+
+      - name: Stop services
+        if: always()
+        run: |
+          if [ -f fastapi.pid ]; then kill $(cat fastapi.pid) || true; fi
+          if [ -f grpc.pid ]; then kill $(cat grpc.pid) || true; fi
