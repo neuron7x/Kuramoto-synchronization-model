@@ -1,0 +1,27 @@
+image:
+  tag: dev
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 750m
+    memory: 1.5Gi
+
+hpa:
+  enabled: false
+
+cacheWarmup:
+  enabled: false
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/tradepulse-dev
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8001"
+  prometheus.io/path: /metrics

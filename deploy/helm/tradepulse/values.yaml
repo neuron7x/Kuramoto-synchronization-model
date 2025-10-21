@@ -1,0 +1,233 @@
+nameOverride: ""
+fullnameOverride: ""
+commonLabels: {}
+
+image:
+  repository: ghcr.io/tradepulse/platform
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+controller:
+  kind: deployment  # options: deployment, rollout
+
+replicaCount: 3
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  labels: {}
+
+automountServiceAccountToken: false
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10101
+  runAsGroup: 10101
+
+service:
+  type: ClusterIP
+  port: 8000
+  annotations: {}
+  labels: {}
+
+metricsService:
+  enabled: true
+  port: 8001
+  annotations: {}
+  labels: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: tradepulse.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 1500m
+    memory: 3Gi
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 30
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 15
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 12
+
+affinity: {}
+nodeSelector: {}
+tolerations: []
+topologySpreadConstraints: []
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+  progressDeadlineSeconds: 300
+  revisionHistoryLimit: 10
+  minReadySeconds: 5
+
+rollout:
+  enabled: false
+  trafficRouting:
+    smi:
+      enabled: false
+      rootService: ""
+  canary:
+    steps:
+      - setWeight: 20
+      - pause: {duration: 60}
+      - setWeight: 50
+      - pause: {duration: 120}
+    analysis:
+      interval: 60s
+      maxWeight: 50
+      metrics:
+        - name: request-success-rate
+          threshold: 99
+        - name: latency-p99
+          threshold: 250
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 0
+    autoPause: true
+  blueGreen:
+    activeService: ""
+    previewService: ""
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 0
+    scaleDownDelaySeconds: 60
+
+canary:
+  enabled: false
+  nameSuffix: canary
+  weight: 20
+  service:
+    enabled: true
+    port: 80
+    annotations: {}
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 750m
+      memory: 1Gi
+
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+command: []
+args: []
+
+configMap:
+  enabled: true
+  name: ""
+  data: {}
+
+secretRefs: []
+
+cacheWarmup:
+  enabled: true
+  hook: post-install,post-upgrade
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 300
+  command:
+    - python
+    - -m
+    - scripts.runtime.cache_warmup
+  args: []
+
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  labels: {}
+
+imagePullSecrets: []
+
+initContainers: []
+sidecars: []
+
+priorityClassName: ""
+
+updateStrategy:
+  autoRollback:
+    enabled: true
+    failureThreshold: 3
+    evaluationPeriods: 3
+
+observability:
+  logLevel: info
+  metrics:
+    enabled: true
+
+extraManifests: []

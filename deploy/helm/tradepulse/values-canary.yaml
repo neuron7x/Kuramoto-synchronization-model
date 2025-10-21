@@ -1,0 +1,33 @@
+image:
+  tag: canary
+
+controller:
+  kind: rollout
+
+rollout:
+  enabled: true
+  canary:
+    steps:
+      - setWeight: 5
+      - pause: {duration: 120}
+      - setWeight: 15
+      - pause: {duration: 180}
+    analysis:
+      interval: 60s
+      maxWeight: 30
+      metrics:
+        - name: error-rate
+          threshold: 1
+        - name: latency-p99
+          threshold: 300
+
+canary:
+  enabled: true
+  weight: 10
+  service:
+    enabled: true
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6

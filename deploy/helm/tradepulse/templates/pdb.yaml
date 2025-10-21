@@ -1,0 +1,13 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "tradepulse.fullname" . }}
+  labels:
+    {{- include "tradepulse.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "tradepulse.selectorLabels" . | nindent 6 }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+{{- end }}

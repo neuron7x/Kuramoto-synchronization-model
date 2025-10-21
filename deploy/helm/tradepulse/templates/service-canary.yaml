@@ -1,0 +1,22 @@
+{{- if .Values.canary.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tradepulse.fullname" . }}-{{ .Values.canary.nameSuffix }}
+  labels:
+    {{- include "tradepulse.labels" . | nindent 4 }}
+    rollouts.argoproj.io/managed-by: "true"
+  {{- with .Values.canary.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "tradepulse.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.canary.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

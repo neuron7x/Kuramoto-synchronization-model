@@ -1,0 +1,90 @@
+image:
+  tag: prod
+  pullPolicy: Always
+
+replicaCount: 6
+
+resources:
+  requests:
+    cpu: 750m
+    memory: 2Gi
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+
+hpa:
+  enabled: true
+  minReplicas: 6
+  maxReplicas: 24
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: http_request_latency_p99
+        target:
+          type: AverageValue
+          averageValue: 250m
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+
+controller:
+  kind: rollout
+
+rollout:
+  enabled: true
+  trafficRouting:
+    smi:
+      enabled: true
+      rootService: tradepulse-root
+  canary:
+    steps:
+      - setWeight: 10
+      - pause: {duration: 60}
+      - setWeight: 30
+      - pause: {duration: 120}
+      - setWeight: 60
+      - pause: {duration: 180}
+    analysis:
+      interval: 60s
+      maxWeight: 60
+      metrics:
+        - name: request-success-rate
+          threshold: 99.5
+        - name: latency-p95
+          threshold: 200
+    autoPromotionEnabled: false
+    autoPause: true
+  blueGreen:
+    activeService: tradepulse
+    previewService: tradepulse-preview
+    autoPromotionEnabled: false
+
+canary:
+  enabled: true
+  weight: 15
+  service:
+    enabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/service.serversscheme: https
+
+cacheWarmup:
+  enabled: true
+  args:
+    - --endpoints
+    - https://tradepulse.internal/metrics,https://tradepulse.internal/readyz
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 4
+
+priorityClassName: tradepulse-critical
+
+updateStrategy:
+  autoRollback:
+    enabled: true
+    failureThreshold: 2
+    evaluationPeriods: 5

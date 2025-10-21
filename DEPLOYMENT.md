@@ -103,6 +103,42 @@ services:
 
 Prometheus is preconfigured to scrape the TradePulse metrics endpoint on port 8001, so a failing health check will surface quickly in dashboards.【F:deploy/prometheus.yml†L2-L7】
 
+## Container Image Pipeline
+
+TradePulse now offers a consolidated container workflow under `docker/build_and_verify.sh`. The helper wraps Docker BuildKit, Trivy image scans, Cosign signing, and policy-as-code checks in a single entry point.
+
+```bash
+# build, scan, and validate the runtime image
+IMAGE_NAME=ghcr.io/tradepulse/platform ./docker/build_and_verify.sh all
+
+# sign the artifact with a key stored in your key management service
+COSIGN_KEY=azurekms://tenant/key ./docker/build_and_verify.sh sign
+```
+
+Enable BuildKit in CI to take advantage of layer caching. The script accepts overrides for the registry, platform, and Helm values file so release pipelines can drive production and staging images with the same invocation. Makefile shortcuts (`make docker-build`, `make docker-scan`, `make docker-all`) forward to the script for local parity.【F:Makefile†L92-L121】【F:docker/build_and_verify.sh†L1-L150】
+
+The multi-stage Dockerfile installs dependencies into an isolated virtual environment, copies only the runtime modules into the final slim layer, and enforces non-root execution together with an application-level health check.【F:Dockerfile†L1-L88】 A new `.dockerignore` keeps test fixtures and developer assets out of the build context for reproducible digests.【F:.dockerignore†L1-L43】
+
+## Helm Progressive Delivery
+
+While Kustomize overlays remain available, the repository now ships with a first-class Helm chart under `deploy/helm/tradepulse`. It exposes:
+
+- Switchable controllers (standard Deployment or Argo Rollout) for blue/green and canary rollouts.
+- Environment-specific values (`values-dev.yaml`, `values-prod.yaml`, `values-canary.yaml`) to tune resources, auto-scaling, cache warm-up hooks, and canary weights.【F:deploy/helm/tradepulse/values.yaml†L1-L220】【F:deploy/helm/tradepulse/values-prod.yaml†L1-L63】
+- Cache pre-warming via a Helm hook backed by the new `scripts.runtime.cache_warmup` helper so feature stores and HTTP caches are warm before traffic shifts.【F:deploy/helm/tradepulse/templates/cache-warmup-job.yaml†L1-L26】【F:scripts/runtime/cache_warmup.py†L1-L96】
+- Optional ServiceMonitor manifests, PodDisruptionBudgets, and HorizontalPodAutoscalers tuned for both Deployment and Rollout targets.【F:deploy/helm/tradepulse/templates/hpa.yaml†L1-L14】【F:deploy/helm/tradepulse/templates/pdb.yaml†L1-L11】
+
+Package and deploy with:
+
+```bash
+helm dependency update ./deploy/helm/tradepulse
+helm upgrade --install tradepulse ./deploy/helm/tradepulse \
+  --namespace tradepulse-production \
+  --values ./deploy/helm/tradepulse/values-prod.yaml
+```
+
+Policy-as-code guardrails live in `deploy/policies/opa` and are wired into the container helper (`make docker-policy`). They verify that Deployments and Rollouts declare resource limits, non-root security contexts, probes, and essential annotations before manifests reach the cluster.【F:deploy/policies/README.md†L1-L28】【F:deploy/policies/opa/deployment.rego†L1-L36】
+
 ## Kubernetes Infrastructure with Terraform and Kustomize
 
 TradePulse now ships with first-class infrastructure code for Amazon EKS alongside Kustomize overlays for staging and production workloads. Use Terraform to provision the cluster(s) and managed node groups, then deploy the application manifests with the provided overlays.

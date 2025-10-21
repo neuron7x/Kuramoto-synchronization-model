@@ -1,0 +1,17 @@
+{{- if .Values.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "tradepulse.fullname" . }}
+  labels:
+    {{- include "tradepulse.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ if eq .Values.controller.kind "rollout" }}argoproj.io/v1alpha1{{ else }}apps/v1{{ end }}
+    kind: {{ if eq .Values.controller.kind "rollout" }}Rollout{{ else }}Deployment{{ end }}
+    name: {{ include "tradepulse.fullname" . }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.hpa.metrics | nindent 4 }}
+{{- end }}

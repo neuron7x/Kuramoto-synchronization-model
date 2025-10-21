@@ -81,11 +81,44 @@ dependencies-check:
 
 .PHONY: security-audit
 security-audit:
-	python scripts/dependency_audit.py --requirement requirements.txt --requirement requirements-dev.txt
+        python scripts/dependency_audit.py --requirement requirements.txt --requirement requirements-dev.txt
+
+.PHONY: docker-build docker-scan docker-sign docker-policy docker-all
+docker-build:
+	./docker/build_and_verify.sh build
+
+docker-scan:
+	./docker/build_and_verify.sh scan
+
+docker-sign:
+	./docker/build_and_verify.sh sign
+
+docker-policy:
+	./docker/build_and_verify.sh policy
+
+docker-all:
+	./docker/build_and_verify.sh all
+
+.PHONY: helm-template helm-package helm-test helm-diff
+helm-template:
+	helm template tradepulse ./deploy/helm/tradepulse --values ./deploy/helm/tradepulse/values.yaml
+
+helm-package:
+	helm package ./deploy/helm/tradepulse --destination dist
+
+helm-test:
+	helm test tradepulse
+
+helm-diff:
+	helm diff upgrade tradepulse ./deploy/helm/tradepulse --values ./deploy/helm/tradepulse/values.yaml || true
+
+.PHONY: policy-test
+policy-test:
+	./docker/build_and_verify.sh policy
 
 .PHONY: test\:fast
 test\:fast:
-	pytest tests/ -m "not slow and not heavy_math and not nightly"
+        pytest tests/ -m "not slow and not heavy_math and not nightly"
 
 .PHONY: test\:all
 test\:all:

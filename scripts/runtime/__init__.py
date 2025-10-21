@@ -14,6 +14,7 @@ from .progress import ProgressBar
 from .retry import create_resilient_session
 from .task_queue import TaskQueue, task_queue
 from .transfer import TransferError, transfer_with_resume
+from .cache_warmup import WarmupResult, main as warm_cache, warm_endpoints
 
 __all__ = [
     "ArtifactManager",
@@ -22,6 +23,7 @@ __all__ = [
     "ProgressBar",
     "TaskQueue",
     "TransferError",
+    "WarmupResult",
     "apply_environment",
     "configure_deterministic_runtime",
     "configure_logging",
@@ -33,4 +35,6 @@ __all__ = [
     "task_queue",
     "transfer_with_resume",
     "verify_checksum",
+    "warm_cache",
+    "warm_endpoints",
 ]

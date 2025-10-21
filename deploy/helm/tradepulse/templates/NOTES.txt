@@ -1,0 +1,15 @@
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+  kubectl get ingress {{ include "tradepulse.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+{{- else if contains "NodePort" .Values.service.type }}
+  kubectl get svc {{ include "tradepulse.fullname" . }} -o jsonpath='{.spec.ports[0].nodePort}'
+{{- else }}
+  kubectl get svc {{ include "tradepulse.fullname" . }} -o jsonpath='{.spec.clusterIP}'
+{{- end }}
+
+2. Verify rollout health:
+  kubectl get {{ if eq .Values.controller.kind "rollout" }}rollout{{ else }}deployment{{ end }} {{ include "tradepulse.fullname" . }}
+  kubectl get events --field-selector involvedObject.name={{ include "tradepulse.fullname" . }}
+
+3. Trigger cache warm-up job manually if required:
+  kubectl create job --from=job/{{ include "tradepulse.fullname" . }}-cache-warmup {{ include "tradepulse.fullname" . }}-cache-warmup-manual

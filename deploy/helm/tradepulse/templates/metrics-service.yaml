@@ -1,0 +1,21 @@
+{{- if .Values.metricsService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tradepulse.fullname" . }}-metrics
+  labels:
+    {{- include "tradepulse.labels" . | nindent 4 }}
+  {{- with .Values.metricsService.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "tradepulse.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: metrics
+      port: {{ .Values.metricsService.port }}
+      targetPort: metrics
+      protocol: TCP
+{{- end }}

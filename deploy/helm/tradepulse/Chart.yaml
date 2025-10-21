@@ -1,0 +1,18 @@
+apiVersion: v2
+name: tradepulse
+description: Helm chart for deploying the TradePulse research and execution platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - trading
+  - quant
+  - python
+home: https://github.com/example/TradePulse
+sources:
+  - https://github.com/example/TradePulse
+maintainers:
+  - name: TradePulse Platform Team
+    email: platform@tradepulse.example.com
+annotations:
+  artifacthub.io/category: analytics
