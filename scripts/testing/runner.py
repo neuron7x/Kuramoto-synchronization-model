@@ -21,11 +21,7 @@ from scripts.commands.base import CommandError, run_subprocess
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_PYTEST_ROOTS = (
-    Path("tests/unit"),
-    Path("tests/integration"),
-    Path("tests/property"),
-)
+DEFAULT_PYTEST_ROOTS = (Path("tests"),)
 DEFAULT_COVERAGE_SOURCES = ("core", "backtest", "execution", "analytics", "src")
 DEFAULT_ARTIFACT_DIR = Path("reports/tests/latest")
 DEFAULT_CACHE_DIR = Path(".cache/test-runner")

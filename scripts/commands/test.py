@@ -6,17 +6,20 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+from shutil import which
 from argparse import Namespace, _SubParsersAction
 from pathlib import Path
 from typing import Sequence
 
-from scripts.commands.base import register
+from scripts.commands.base import register, run_subprocess
 from scripts.testing import (
     DEFAULT_ARTIFACT_DIR,
     DEFAULT_CACHE_DIR,
     TestRunner,
     TestRunnerConfig,
 )
+
+DASHBOARD_TEST_ENTRYPOINT = Path("domains/ui/dashboard/tests/test.js")
 
 LOGGER = logging.getLogger(__name__)
 
@@ -184,4 +187,23 @@ def handle(args: Namespace) -> int:
     if result.flaky_reruns:
         LOGGER.info("Recovered flaky tests after %s rerun(s).", result.flaky_reruns)
 
+    _run_node_dashboard_tests()
+
     return result.pytest_return_code
+
+
+def _run_node_dashboard_tests() -> None:
+    if which("node") is None:
+        LOGGER.info("Node.js not available – skipping front-end tests.")
+        return
+
+    if not DASHBOARD_TEST_ENTRYPOINT.exists():
+        LOGGER.info(
+            "No Node.js test suite found at %s – skipping.", DASHBOARD_TEST_ENTRYPOINT
+        )
+        return
+
+    LOGGER.info("Running Node.js dashboard tests…")
+    run_subprocess(["node", str(DASHBOARD_TEST_ENTRYPOINT)])
+
+
