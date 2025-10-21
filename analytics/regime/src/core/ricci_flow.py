@@ -132,15 +132,28 @@ def _forman_ricci(correlation: np.ndarray, *, beta: float) -> np.ndarray:
 
 
 def _project_simplex(vector: Iterable[float], *, lower_bound: float = 0.0) -> np.ndarray:
-    x = np.maximum(np.asarray(vector, dtype=float), lower_bound)
-    if x.sum() == 0:
-        x[:] = 1.0 / x.size
-        return x
-    u = np.sort(x)[::-1]
+    x = np.asarray(vector, dtype=float)
+    if lower_bound < 0:
+        raise ValueError("lower_bound must be non-negative")
+
+    n = x.size
+    shift = float(lower_bound)
+    target = 1.0 - n * shift
+
+    if target < 0:
+        raise ValueError("lower_bound is infeasible for the simplex")
+    if target == 0:
+        return np.full(n, shift, dtype=float)
+
+    shifted = np.maximum(x - shift, 0.0)
+
+    u = np.sort(shifted)[::-1]
     cssv = np.cumsum(u)
-    rho = np.nonzero(u * np.arange(1, x.size + 1) > (cssv - 1))[0][-1]
-    theta = (cssv[rho] - 1) / (rho + 1)
-    projected = np.maximum(x - theta, lower_bound)
+    rho = np.nonzero(u * np.arange(1, n + 1) > (cssv - target))[0][-1]
+    theta = (cssv[rho] - target) / (rho + 1)
+    projected = np.maximum(shifted - theta, 0.0)
+    projected += shift
+    # numerical guard in case of small floating-point drift
     projected /= projected.sum()
     return projected
 
