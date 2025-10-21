@@ -18,7 +18,7 @@ This document converts the proposed enhancements into concrete, actionable steps
 
 3. **Implement API Versioning**
    - Introduce explicit version headers (e.g., `X-TradePulse-Version`) and namespaced routes (`/api/v1/`).
-   - Maintain OpenAPI specs per version under `interfaces/http/openapi/`.
+   - Maintain OpenAPI specs per version under `schemas/openapi/`.
    - _Success metric_: Backward compatibility guarantees and deprecation policy documented.
 
 ## Developer Experience & Environment
