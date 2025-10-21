@@ -26,6 +26,7 @@ import core.indicators.ricci as ricci_module
 from core.indicators.ricci import (
     MeanRicciFeature,
     build_price_graph,
+    compute_node_distributions,
     local_distribution,
     mean_ricci,
     ricci_curvature_edge,
@@ -56,6 +57,29 @@ def test_ricci_curvature_bounded_between_minus_one_and_one() -> None:
     for u, v in edges:
         kappa = ricci_curvature_edge(graph, u, v)
         assert -1.0 <= kappa <= 1.0, f"Curvature {kappa} outside bounds"
+
+
+def test_compute_node_distributions_matches_local_distribution() -> None:
+    prices = np.array([101.0, 101.4, 101.8, 102.2, 102.4], dtype=float)
+    graph = build_price_graph(prices, delta=0.01)
+    distributions = compute_node_distributions(graph)
+
+    for node, dist in distributions.items():
+        local = local_distribution(graph, node)
+        assert np.allclose(dist.probabilities, local)
+        assert np.isfinite(dist.positions).all()
+
+
+def test_ricci_curvature_edge_with_precomputed_distributions() -> None:
+    prices = np.linspace(100.0, 102.0, 25)
+    graph = build_price_graph(prices, delta=0.01)
+    distributions = compute_node_distributions(graph)
+
+    for u, v in graph.edges():
+        direct = ricci_curvature_edge(graph, u, v)
+        cached = ricci_curvature_edge(graph, u, v, distributions=distributions)
+        assert np.isfinite(direct)
+        assert cached == pytest.approx(direct, rel=1e-9, abs=1e-9)
 
 
 def test_mean_ricci_feature_matches_function() -> None:
@@ -210,14 +234,18 @@ def test_ricci_curvature_edge_warns_without_scipy(
     assert edges, "Expected at least one non-loop edge in price graph"
     x, y = edges[0]
 
-    mu_x = local_distribution(graph, x)
-    mu_y = local_distribution(graph, y)
-    size = max(len(mu_x), len(mu_y))
-    a = np.pad(mu_x, (0, size - len(mu_x)))
-    b = np.pad(mu_y, (0, size - len(mu_y)))
+    distributions = compute_node_distributions(graph)
+    dist_x = distributions[int(x)]
+    dist_y = distributions[int(y)]
     d_xy = ricci_module._shortest_path_length_safe(graph, x, y)
     assert d_xy > 0
-    expected_fallback = float(1.0 - ricci_module._w1_fallback(a, b) / d_xy)
+    expected_transport = ricci_module._w1_fallback(
+        dist_x.positions,
+        dist_x.probabilities,
+        dist_y.positions,
+        dist_y.probabilities,
+    )
+    expected_fallback = float(1.0 - expected_transport / d_xy)
 
     monkeypatch.setattr(ricci_module, "W1", None, raising=False)
 
@@ -228,26 +256,28 @@ def test_ricci_curvature_edge_warns_without_scipy(
 
 
 def test_w1_fallback_matches_known_transport_cost() -> None:
+    positions = np.array([0.0, 1.0, 2.0])
     a = np.array([0.5, 0.5, 0.0])
     b = np.array([0.0, 0.5, 0.5])
 
-    distance = ricci_module._w1_fallback(a, b)
+    distance = ricci_module._w1_fallback(positions, a, positions, b)
 
     assert distance == pytest.approx(1.0)
 
 
 def test_w1_fallback_sanitises_non_finite_mass() -> None:
+    positions = np.array([0.0, 1.0, 2.0])
     a = np.array([np.nan, 1.0, -0.5])
     b = np.array([np.inf, 0.0, 0.5])
 
-    distance = ricci_module._w1_fallback(a, b)
+    distance = ricci_module._w1_fallback(positions, a, positions, b)
 
     assert distance == pytest.approx(1.0)
 
 
 def test_w1_fallback_rejects_shape_mismatch() -> None:
     with pytest.raises(ValueError):
-        ricci_module._w1_fallback(np.ones(2), np.ones(3))
+        ricci_module._w1_fallback(np.ones(2), np.ones(3), np.ones(2), np.ones(2))
 
 
 def test_shortest_path_length_safe_falls_back_to_unweighted() -> None:

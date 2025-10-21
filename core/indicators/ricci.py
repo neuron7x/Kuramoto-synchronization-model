@@ -24,7 +24,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import warnings
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from functools import partial
 from threading import Lock
 from typing import Any, Iterable, Literal
 
@@ -61,6 +64,7 @@ except Exception:  # pragma: no cover - fallback for lightweight environments
     class _SimpleGraph:
         def __init__(self) -> None:
             self._adj: dict[int, dict[int, float]] = {}
+            self.graph: dict[str, Any] = {}
 
         def add_node(self, node: int) -> None:
             self._adj.setdefault(int(node), {})
@@ -172,6 +176,95 @@ _W1_WARNING_LOCK = Lock()
 _W1_WARNING_EMITTED = False
 
 
+@dataclass(slots=True, frozen=True)
+class NodeDistribution:
+    """Normalized neighbour distribution anchored to graph geometry."""
+
+    support: np.ndarray
+    probabilities: np.ndarray
+    positions: np.ndarray
+
+    def __post_init__(self) -> None:
+        if self.support.ndim != 1 or self.probabilities.ndim != 1 or self.positions.ndim != 1:
+            raise ValueError("NodeDistribution arrays must be one-dimensional")
+        if self.support.shape != self.probabilities.shape or self.support.shape != self.positions.shape:
+            raise ValueError("NodeDistribution arrays must share the same shape")
+        total = float(self.probabilities.sum())
+        if not np.isfinite(total) or total <= 0.0:
+            raise ValueError("NodeDistribution probabilities must sum to a positive finite value")
+
+
+def _graph_geometry(G: nx.Graph) -> tuple[float, float]:
+    """Return graph-level offset and scale metadata for Ricci calculations."""
+
+    attrs = getattr(G, "graph", None)
+    if not isinstance(attrs, Mapping):
+        return 0.0, 1.0
+    offset = float(attrs.get("ricci_level_offset", 0.0))
+    scale = float(attrs.get("ricci_level_scale", 1.0))
+    if not np.isfinite(offset):
+        offset = 0.0
+    if not np.isfinite(scale) or scale == 0.0:
+        scale = 1.0
+    return offset, scale
+
+
+def _normalized_neighbor_weights(G: nx.Graph, node: int) -> tuple[np.ndarray, np.ndarray]:
+    """Return neighbour identifiers and normalized transition weights."""
+
+    neighbors = [int(n) for n in G.neighbors(node)]
+    if not neighbors:
+        node_id = int(node)
+        return np.array([node_id], dtype=int), np.array([1.0], dtype=float)
+
+    weights = []
+    for nbr in neighbors:
+        data = G.get_edge_data(node, nbr, default={"weight": 1.0})
+        weight: float
+        if isinstance(data, Mapping):
+            weight = float(data.get("weight", 1.0))
+        else:
+            weight = float(data)
+        if not np.isfinite(weight) or weight < 0.0:
+            weight = 0.0
+        weights.append(weight)
+
+    w_arr = np.asarray(weights, dtype=float)
+    if w_arr.size == 0:
+        return np.array([int(node)], dtype=int), np.array([1.0], dtype=float)
+
+    w_arr = np.nan_to_num(w_arr, nan=0.0, posinf=0.0, neginf=0.0)
+    total = float(w_arr.sum())
+    if not np.isfinite(total) or total <= 0.0:
+        w_arr = np.full_like(w_arr, 1.0 / len(w_arr))
+    else:
+        w_arr /= total
+    return np.asarray(neighbors, dtype=int), w_arr
+
+
+def _build_node_distribution(G: nx.Graph, node: int, offset: float, scale: float) -> NodeDistribution:
+    support, weights = _normalized_neighbor_weights(G, node)
+    support_arr = np.array(support, dtype=float, copy=True)
+    weight_arr = np.array(weights, dtype=float, copy=True)
+    positions = offset + support_arr * scale
+    return NodeDistribution(
+        support=support_arr,
+        probabilities=weight_arr,
+        positions=np.array(positions, dtype=float, copy=False),
+    )
+
+
+def compute_node_distributions(G: nx.Graph) -> dict[int, NodeDistribution]:
+    """Pre-compute neighbour distributions for all nodes in ``G``."""
+
+    offset, scale = _graph_geometry(G)
+    distributions: dict[int, NodeDistribution] = {}
+    for node in G.nodes():
+        node_id = int(node)
+        distributions[node_id] = _build_node_distribution(G, node_id, offset, scale)
+    return distributions
+
+
 def build_price_graph(prices: np.ndarray, delta: float = 0.005) -> nx.Graph:
     """Quantise a price path into a level graph.
 
@@ -184,7 +277,9 @@ def build_price_graph(prices: np.ndarray, delta: float = 0.005) -> nx.Graph:
     Returns:
         nx.Graph: Undirected graph whose nodes correspond to discretised price
         levels and whose edges capture successive transitions weighted by price
-        deltas.
+        deltas. The resulting graph exposes ``ricci_level_offset`` and
+        ``ricci_level_scale`` attributes that describe the embedding from
+        discrete levels back to price space.
 
     Examples:
         >>> prices = np.array([100.0, 100.5, 101.0])
@@ -214,6 +309,12 @@ def build_price_graph(prices: np.ndarray, delta: float = 0.005) -> nx.Graph:
         if i > 0:
             weight = float(abs(p[i] - p[i - 1])) + 1.0
             G.add_edge(int(levels[i - 1]), int(lv), weight=weight)
+    try:
+        G.graph["ricci_level_offset"] = float(base)
+        G.graph["ricci_level_scale"] = float(scale * delta)
+        G.graph["ricci_level_delta"] = float(delta)
+    except Exception:  # pragma: no cover - fallback graphs may not support attr writes
+        pass
     return G
 
 
@@ -235,24 +336,18 @@ def local_distribution(G: nx.Graph, node: int, radius: int = 1) -> np.ndarray:
         downstream NaNs. Edge weights are sanitised to remain finite, matching
         the governance requirements of ``docs/quality_gates.md``.
     """
-    neigh = [n for n in G.neighbors(node)]
-    if not neigh:  # pragma: no cover - defensive guard for isolated nodes
-        return np.array([1.0])
-    weights = []
-    for n in neigh:
-        data = G.get_edge_data(node, n, default={"weight": 1.0})
-        weight = float(data.get("weight", 1.0))
-        if not np.isfinite(weight):
-            weight = 1.0
-        weights.append(weight)
-    w_arr = np.asarray(weights, dtype=float)
-    total = w_arr.sum()
-    if total == 0:  # pragma: no cover - degenerate weights
-        return np.full(len(neigh), 1.0 / len(neigh))
-    return w_arr / total
+    _ = radius  # reserved for future use
+    _, weights = _normalized_neighbor_weights(G, int(node))
+    return weights.copy()
 
 
-def ricci_curvature_edge(G: nx.Graph, x: int, y: int) -> float:
+def ricci_curvature_edge(
+    G: nx.Graph,
+    x: int,
+    y: int,
+    *,
+    distributions: Mapping[int, NodeDistribution] | None = None,
+) -> float:
     """Evaluate the Ollivier–Ricci curvature for a specific edge.
 
     Args:
@@ -273,31 +368,17 @@ def ricci_curvature_edge(G: nx.Graph, x: int, y: int) -> float:
     """
     if not G.has_edge(x, y):  # pragma: no cover - caller ensures edge exists
         return 0.0
-    mu_x = local_distribution(G, x)
-    mu_y = local_distribution(G, y)
-    # for simple comparison, map distributions to common support by padding
-    m = max(len(mu_x), len(mu_y))
-    a = np.pad(mu_x, (0, m - len(mu_x)))
-    b = np.pad(mu_y, (0, m - len(mu_y)))
+    offset, scale = _graph_geometry(G)
+    dist_x = distributions.get(int(x)) if distributions is not None else None
+    if dist_x is None:
+        dist_x = _build_node_distribution(G, int(x), offset, scale)
+    dist_y = distributions.get(int(y)) if distributions is not None else None
+    if dist_y is None:
+        dist_y = _build_node_distribution(G, int(y), offset, scale)
     d_xy = _shortest_path_length_safe(G, x, y)
     if not np.isfinite(d_xy) or d_xy <= 0:
         return 0.0
-    if W1 is None:
-        global _W1_WARNING_EMITTED
-        force_warning = _is_runtime_warning_forced()
-        if force_warning or not _W1_WARNING_EMITTED:
-            with _W1_WARNING_LOCK:
-                # Re-evaluate after acquiring the lock to honour concurrent updates.
-                force_warning = force_warning or _is_runtime_warning_forced()
-                if force_warning or not _W1_WARNING_EMITTED:
-                    warnings.warn(
-                        "SciPy unavailable; using discrete Wasserstein approximation for Ricci curvature",
-                        RuntimeWarning,
-                        stacklevel=2,
-                    )
-                    if not force_warning:
-                        _W1_WARNING_EMITTED = True
-    dist = W1(a, b) if W1 is not None else _w1_fallback(a, b)
+    dist = _wasserstein_distance(dist_x, dist_y)
     return float(1.0 - dist / d_xy)
 
 
@@ -386,6 +467,7 @@ def mean_ricci(
             return 0.0
 
         edges = list(G.edges())
+        distributions = compute_node_distributions(G)
 
         # Chunked processing for large graphs
         if chunk_size is not None and len(edges) > chunk_size:
@@ -394,16 +476,22 @@ def mean_ricci(
 
             for i in range(0, len(edges), chunk_size):
                 chunk_edges = edges[i : i + chunk_size]
-                chunk_curv = [ricci_curvature_edge(G, u, v) for u, v in chunk_edges]
+                chunk_curv = [
+                    ricci_curvature_edge(G, u, v, distributions=distributions)
+                    for u, v in chunk_edges
+                ]
                 curvatures.extend(chunk_curv)
 
             return float(np.mean(np.array(curvatures, dtype=dtype)))
 
         # Standard processing
         if parallel == "async":
-            curv = _run_ricci_async(G, edges, max_workers)
+            curv = _run_ricci_async(G, edges, max_workers, distributions)
         else:
-            curv = [ricci_curvature_edge(G, u, v) for u, v in edges]
+            curv = [
+                ricci_curvature_edge(G, u, v, distributions=distributions)
+                for u, v in edges
+            ]
         dtype = np.float32 if use_float32 else float
         if not curv:  # pragma: no cover - empty graph handled above
             return 0.0
@@ -418,6 +506,7 @@ def _run_ricci_async(
     G: nx.Graph,
     edges: list[tuple[int, int]],
     max_workers: int | None,
+    distributions: Mapping[int, NodeDistribution] | None,
 ) -> list[float]:
     """Evaluate curvature across edges concurrently using asyncio threads."""
 
@@ -428,7 +517,16 @@ def _run_ricci_async(
             if max_workers is not None:
                 executor = ThreadPoolExecutor(max_workers=max_workers)
             futures = [
-                loop.run_in_executor(executor, ricci_curvature_edge, G, int(u), int(v))
+                loop.run_in_executor(
+                    executor,
+                    partial(
+                        ricci_curvature_edge,
+                        G,
+                        int(u),
+                        int(v),
+                        distributions=distributions,
+                    ),
+                )
                 for u, v in edges
             ]
             return await asyncio.gather(*futures)
@@ -450,64 +548,114 @@ def _run_ricci_async(
             new_loop.close()
 
 
-def _w1_fallback(a: np.ndarray, b: np.ndarray) -> float:
+def _maybe_warn_w1() -> None:
+    global _W1_WARNING_EMITTED
+    force_warning = _is_runtime_warning_forced()
+    if not force_warning and _W1_WARNING_EMITTED:
+        return
+    with _W1_WARNING_LOCK:
+        force_warning = force_warning or _is_runtime_warning_forced()
+        if force_warning or not _W1_WARNING_EMITTED:
+            warnings.warn(
+                "SciPy unavailable; using discrete Wasserstein approximation for Ricci curvature",
+                RuntimeWarning,
+                stacklevel=3,
+            )
+            if not force_warning:
+                _W1_WARNING_EMITTED = True
+
+
+def _wasserstein_distance(dist_x: NodeDistribution, dist_y: NodeDistribution) -> float:
+    if W1 is not None:
+        return float(
+            W1(
+                dist_x.positions,
+                dist_y.positions,
+                u_weights=dist_x.probabilities,
+                v_weights=dist_y.probabilities,
+            )
+        )
+    _maybe_warn_w1()
+    return _w1_fallback(
+        dist_x.positions,
+        dist_x.probabilities,
+        dist_y.positions,
+        dist_y.probabilities,
+    )
+
+
+def _w1_fallback(
+    pos_a: np.ndarray,
+    weights_a: np.ndarray,
+    pos_b: np.ndarray,
+    weights_b: np.ndarray,
+) -> float:
     """Approximate the Wasserstein-1 distance when SciPy is unavailable.
 
-    The implementation follows the discrete formulation of the
-    Kantorovich-Rubinstein dual on an equally spaced support. This matches
-    SciPy's ``wasserstein_distance`` for one-dimensional histograms whose bins
-    share a uniform spacing of ``1``. The inputs are treated as probability
-    masses and therefore undergo sanitisation (non-finite values are converted
-    to ``0`` and negative entries are clipped) before normalisation. The
-    cumulative difference of the distributions is then integrated in ``L1``
-    space, which is a numerically stable operation for medium-sized arrays
-    (cf. ``docs/indicators.md``).
-
     Args:
-        a: First discrete probability mass function.
-        b: Second discrete probability mass function.
+        pos_a: Support locations for the first probability mass function.
+        weights_a: Non-negative weights associated with ``pos_a``.
+        pos_b: Support locations for the second probability mass function.
+        weights_b: Non-negative weights associated with ``pos_b``.
 
     Returns:
-        float: The 1-Wasserstein distance between the two discrete
-        distributions.
-
-    Raises:
-        ValueError: Raised when the input shapes differ.
+        float: The 1-Wasserstein distance computed on the shared 1-D support.
     """
 
-    a_arr = np.array(a, dtype=float, copy=True).reshape(-1)
-    b_arr = np.array(b, dtype=float, copy=True).reshape(-1)
+    pos_a = np.array(pos_a, dtype=float, copy=True).reshape(-1)
+    pos_b = np.array(pos_b, dtype=float, copy=True).reshape(-1)
+    weights_a = np.array(weights_a, dtype=float, copy=True).reshape(-1)
+    weights_b = np.array(weights_b, dtype=float, copy=True).reshape(-1)
 
-    if a_arr.shape != b_arr.shape:
-        raise ValueError("Distributions must share the same shape")
+    if pos_a.size != weights_a.size or pos_b.size != weights_b.size:
+        raise ValueError("Positions and weights must align in shape")
 
-    if a_arr.size == 0:
+    if pos_a.size == 0 and pos_b.size == 0:
         return 0.0
 
-    a_arr = np.nan_to_num(a_arr, nan=0.0, posinf=0.0, neginf=0.0)
-    b_arr = np.nan_to_num(b_arr, nan=0.0, posinf=0.0, neginf=0.0)
+    weights_a = np.nan_to_num(weights_a, nan=0.0, posinf=0.0, neginf=0.0)
+    weights_b = np.nan_to_num(weights_b, nan=0.0, posinf=0.0, neginf=0.0)
 
-    np.clip(a_arr, 0.0, None, out=a_arr)
-    np.clip(b_arr, 0.0, None, out=b_arr)
+    np.clip(weights_a, 0.0, None, out=weights_a)
+    np.clip(weights_b, 0.0, None, out=weights_b)
 
-    total_a = float(a_arr.sum())
-    total_b = float(b_arr.sum())
+    total_a = float(weights_a.sum())
+    total_b = float(weights_b.sum())
 
-    if not np.isfinite(total_a) or not np.isfinite(total_b):
-        raise ValueError("Distributions must have finite total mass")
+    if total_a <= 0.0 and total_b <= 0.0:
+        return 0.0
 
     if total_a > 0.0:
-        a_arr /= total_a
+        weights_a /= total_a
     else:
-        a_arr.fill(0.0)
+        weights_a.fill(0.0)
 
     if total_b > 0.0:
-        b_arr /= total_b
+        weights_b /= total_b
     else:
-        b_arr.fill(0.0)
+        weights_b.fill(0.0)
 
-    cdf_difference = np.add.accumulate(a_arr - b_arr)
-    return float(np.sum(np.abs(cdf_difference)))
+    positions = np.union1d(pos_a, pos_b)
+    if positions.size <= 1:
+        return 0.0
+
+    mass_a = np.zeros_like(positions, dtype=float)
+    mass_b = np.zeros_like(positions, dtype=float)
+
+    if pos_a.size:
+        idx_a = np.searchsorted(positions, pos_a)
+        np.add.at(mass_a, idx_a, weights_a)
+    if pos_b.size:
+        idx_b = np.searchsorted(positions, pos_b)
+        np.add.at(mass_b, idx_b, weights_b)
+
+    cdf_a = np.cumsum(mass_a)
+    cdf_b = np.cumsum(mass_b)
+    cdf_diff = np.abs(cdf_a - cdf_b)
+    deltas = np.diff(positions)
+    if deltas.size == 0:
+        return 0.0
+    return float(np.sum(cdf_diff[:-1] * deltas))
 
 
 class MeanRicciFeature(BaseFeature):
@@ -591,6 +739,8 @@ class MeanRicciFeature(BaseFeature):
 __all__ = [
     "build_price_graph",
     "local_distribution",
+    "compute_node_distributions",
+    "NodeDistribution",
     "ricci_curvature_edge",
     "mean_ricci",
     "MeanRicciFeature",
