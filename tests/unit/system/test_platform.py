@@ -13,6 +13,7 @@ from application.system_orchestrator import MarketDataSource
 from core.data.models import InstrumentType, PriceTick
 from execution.connectors import SimulatedExchangeConnector
 
+from src.audit.audit_logger import AuditLogger
 from src.data.ingestion_service import DataIngestionCacheService
 from src.data.pipeline import CacheRoute
 from src.system import TradePulsePlatform, build_tradepulse_platform
@@ -75,6 +76,15 @@ def _build_platform(
 def test_build_tradepulse_platform_requires_audit_credentials() -> None:
     with pytest.raises(ValueError):
         build_tradepulse_platform(venues=_venues())
+
+
+def test_build_tradepulse_platform_rejects_conflicting_audit_dependencies() -> None:
+    with pytest.raises(ValueError):
+        build_tradepulse_platform(
+            venues=_venues(),
+            audit_logger=AuditLogger(secret="explicit"),
+            audit_secret="redundant",
+        )
 
 
 def test_platform_wires_components_and_audit_logging() -> None:
