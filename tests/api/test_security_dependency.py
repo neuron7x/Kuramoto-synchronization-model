@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
+import base64
+
 import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -201,6 +203,194 @@ async def test_certificate_required_but_missing_is_rejected(
 
 
 @pytest.mark.anyio
+async def test_disallowed_algorithm_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    if hasattr(get_api_security_settings, "_instance"):
+        delattr(get_api_security_settings, "_instance")
+
+    settings = ApiSecuritySettings(
+        oauth2_issuer="https://issuer.tradepulse.test",
+        oauth2_audience="tradepulse-api",
+        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+    )
+
+    kid = "oct-key"
+    secret = b"shared-secret-value"
+    jwk_dict = {
+        "kty": "oct",
+        "kid": kid,
+        "alg": "HS256",
+        "use": "sig",
+        "k": base64.urlsafe_b64encode(secret).rstrip(b"=").decode("ascii"),
+    }
+
+    async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
+        assert uri == str(settings.oauth2_jwks_uri)
+        if request_kid == kid:
+            return jwk_dict
+        return None
+
+    monkeypatch.setattr("application.api.security._jwks_resolver.get_key", fake_get_key)
+
+    now = datetime.now(timezone.utc)
+    payload = {
+        "iss": str(settings.oauth2_issuer),
+        "aud": settings.oauth2_audience,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(minutes=5)).timestamp()),
+        "sub": "oct-user",
+    }
+
+    token = jwt.encode(payload, secret, algorithm="HS256", headers={"kid": kid})
+    request = _make_request()
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    dependency = verify_request_identity()
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, credentials, settings)
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Unsupported bearer token signing algorithm."
+
+
+@pytest.mark.anyio
+async def test_oct_key_succeeds_when_algorithm_allowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if hasattr(get_api_security_settings, "_instance"):
+        delattr(get_api_security_settings, "_instance")
+
+    settings = ApiSecuritySettings(
+        oauth2_algorithms=("HS256",),
+        oauth2_issuer="https://issuer.tradepulse.test",
+        oauth2_audience="tradepulse-api",
+        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+    )
+
+    kid = "oct-key"
+    secret = b"another-shared-secret"
+    jwk_dict = {
+        "kty": "oct",
+        "kid": kid,
+        "alg": "HS256",
+        "use": "sig",
+        "k": base64.urlsafe_b64encode(secret).rstrip(b"=").decode("ascii"),
+    }
+
+    async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
+        assert uri == str(settings.oauth2_jwks_uri)
+        if request_kid == kid:
+            return jwk_dict
+        return None
+
+    monkeypatch.setattr("application.api.security._jwks_resolver.get_key", fake_get_key)
+
+    now = datetime.now(timezone.utc)
+    payload = {
+        "iss": str(settings.oauth2_issuer),
+        "aud": settings.oauth2_audience,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(minutes=5)).timestamp()),
+        "sub": "oct-enabled-user",
+    }
+
+    token = jwt.encode(payload, secret, algorithm="HS256", headers={"kid": kid})
+    request = _make_request()
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    dependency = verify_request_identity()
+
+    identity = await dependency(request, credentials, settings)
+
+    assert identity.subject == "oct-enabled-user"
+    assert request.state.token_claims["sub"] == "oct-enabled-user"
+
+
+@pytest.mark.anyio
+async def test_jwk_algorithm_mismatch_is_rejected(
+    oauth2_context: OAuthContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dependency = verify_request_identity()
+    token = oauth2_context.mint_token()
+    request = _make_request()
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    mismatched = dict(oauth2_context.jwk_dict)
+    mismatched["alg"] = "RS512"
+
+    async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
+        assert uri == str(oauth2_context.settings.oauth2_jwks_uri)
+        if request_kid == oauth2_context.kid:
+            return mismatched
+        return None
+
+    monkeypatch.setattr("application.api.security._jwks_resolver.get_key", fake_get_key)
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, credentials, oauth2_context.settings)
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Signing key metadata does not match token algorithm."
+
+
+@pytest.mark.anyio
+async def test_non_signature_key_use_is_rejected(
+    oauth2_context: OAuthContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dependency = verify_request_identity()
+    token = oauth2_context.mint_token()
+    request = _make_request()
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    non_sig = dict(oauth2_context.jwk_dict)
+    non_sig["use"] = "enc"
+
+    async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
+        assert uri == str(oauth2_context.settings.oauth2_jwks_uri)
+        if request_kid == oauth2_context.kid:
+            return non_sig
+        return None
+
+    monkeypatch.setattr("application.api.security._jwks_resolver.get_key", fake_get_key)
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, credentials, oauth2_context.settings)
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Signing key is not authorised for signature validation."
+
+
+@pytest.mark.anyio
+async def test_key_type_mismatch_is_rejected(
+    oauth2_context: OAuthContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dependency = verify_request_identity()
+    token = oauth2_context.mint_token()
+    request = _make_request()
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    wrong_type = dict(oauth2_context.jwk_dict)
+    wrong_type["kty"] = "oct"
+
+    async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
+        assert uri == str(oauth2_context.settings.oauth2_jwks_uri)
+        if request_kid == oauth2_context.kid:
+            return wrong_type
+        return None
+
+    monkeypatch.setattr("application.api.security._jwks_resolver.get_key", fake_get_key)
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, credentials, oauth2_context.settings)
+
+    assert exc.value.status_code == 401
+    assert (
+        exc.value.detail
+        == "Signing key type is incompatible with bearer token algorithm."
+    )
+
+
+@pytest.mark.anyio
 async def test_certificate_from_header_is_accepted(
     oauth2_context: OAuthContext,
 ) -> None:
@@ -386,4 +576,7 @@ async def test_unsupported_signing_key_type_is_rejected(
         await dependency(request, credentials, oauth2_context.settings)
 
     assert exc.value.status_code == 401
-    assert exc.value.detail == "Unsupported signing key type for bearer token."
+    assert (
+        exc.value.detail
+        == "Signing key type is incompatible with bearer token algorithm."
+    )

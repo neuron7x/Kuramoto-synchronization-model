@@ -108,16 +108,44 @@ class _JWKSResolver:
 _jwks_resolver = _JWKSResolver()
 
 
+_RSA_ALGORITHMS = {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512"}
+_EC_ALGORITHMS = {"ES256", "ES256K", "ES384", "ES512", "ES521"}
+_HMAC_ALGORITHMS = {"HS256", "HS384", "HS512"}
+
+
 def _jwk_to_key(jwk_data: dict[str, Any], *, algorithm: str) -> Any:
     """Materialise the appropriate public key from a JWK entry."""
 
+    normalised_algorithm = algorithm.upper()
     kty = jwk_data.get("kty")
     jwk_json = json.dumps(jwk_data)
-    if kty == "RSA":
+    if normalised_algorithm in _RSA_ALGORITHMS:
+        if kty != "RSA":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Signing key type is incompatible with bearer token algorithm.",
+            )
         return jwt.algorithms.RSAAlgorithm.from_jwk(jwk_json)
-    if kty == "EC":
+    if normalised_algorithm in _EC_ALGORITHMS:
+        if kty != "EC":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Signing key type is incompatible with bearer token algorithm.",
+            )
         return jwt.algorithms.ECAlgorithm.from_jwk(jwk_json)
-    if kty == "oct":
+    if normalised_algorithm == "EDDSA":
+        if kty != "OKP":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Signing key type is incompatible with bearer token algorithm.",
+            )
+        return jwt.algorithms.OKPAlgorithm.from_jwk(jwk_json)
+    if normalised_algorithm in _HMAC_ALGORITHMS:
+        if kty != "oct":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Signing key type is incompatible with bearer token algorithm.",
+            )
         key_value = jwk_data.get("k")
         if not isinstance(key_value, str):
             raise HTTPException(
@@ -134,7 +162,7 @@ def _jwk_to_key(jwk_data: dict[str, Any], *, algorithm: str) -> Any:
             ) from exc
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Unsupported signing key type for bearer token.",
+        detail="Unsupported bearer token signing algorithm.",
     )
 
 
@@ -265,6 +293,14 @@ def verify_request_identity(*, require_client_certificate: bool = False) -> Call
                 detail="Invalid bearer token.",
             )
 
+        normalised_algorithm = algorithm.strip().upper()
+        allowed_algorithms = settings.oauth2_algorithms
+        if normalised_algorithm not in allowed_algorithms:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Unsupported bearer token signing algorithm.",
+            )
+
         jwk_entry = await _jwks_resolver.get_key(str(settings.oauth2_jwks_uri), kid)
         if jwk_entry is None:
             raise HTTPException(
@@ -272,13 +308,29 @@ def verify_request_identity(*, require_client_certificate: bool = False) -> Call
                 detail="Bearer token signed by unknown key.",
             )
 
-        public_key = _jwk_to_key(jwk_entry, algorithm=algorithm)
+        jwk_algorithm = jwk_entry.get("alg")
+        if isinstance(jwk_algorithm, str) and jwk_algorithm.strip():
+            if jwk_algorithm.strip().upper() != normalised_algorithm:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Signing key metadata does not match token algorithm.",
+                )
+
+        jwk_use = jwk_entry.get("use")
+        if isinstance(jwk_use, str) and jwk_use.strip():
+            if jwk_use.strip().lower() != "sig":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Signing key is not authorised for signature validation.",
+                )
+
+        public_key = _jwk_to_key(jwk_entry, algorithm=normalised_algorithm)
 
         try:
             claims = jwt.decode(
                 token,
                 key=public_key,
-                algorithms=[algorithm],
+                algorithms=list(allowed_algorithms),
                 audience=settings.oauth2_audience,
                 issuer=str(settings.oauth2_issuer),
                 options={"require": ["exp", "iat", "sub"]},
