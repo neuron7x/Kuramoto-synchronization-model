@@ -27,6 +27,20 @@ def test_secret_detector_masks_findings() -> None:
         assert "********" in masked
 
 
+def test_secret_detector_masks_unquoted_findings() -> None:
+    workspace = Path(tempfile.mkdtemp(prefix="secunquoted"))
+    target = workspace / "config.py"
+    target.write_text("password = supersecretvalue\n", encoding="utf-8")
+
+    detector = SecretDetector()
+    findings = detector.scan_file(target)
+
+    assert findings
+    masked_line = findings[0][2]
+    assert "supersecretvalue" not in masked_line
+    assert "********" in masked_line
+
+
 def test_secret_detector_ignores_documentation(tmp_path: Path) -> None:
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()

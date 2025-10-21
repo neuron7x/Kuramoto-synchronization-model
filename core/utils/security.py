@@ -16,12 +16,14 @@ _LOGGER = logging.getLogger(__name__)
 # Common secret patterns
 SECRET_PATTERNS: Dict[str, Pattern[str]] = {
     "api_key": re.compile(
-        r"(?i)(api[_-]?key|apikey)\s*[=:]\s*['\"]([a-zA-Z0-9_\-]+)['\"]"
+        r"(?i)(api[_-]?key|apikey)\s*[=:]\s*['\"]?[a-zA-Z0-9_\-]+['\"]?"
     ),
     "api_secret": re.compile(
-        r"(?i)(api[_-]?secret|apisecret)\s*[=:]\s*['\"]([a-zA-Z0-9_\-]+)['\"]"
+        r"(?i)(api[_-]?secret|apisecret)\s*[=:]\s*['\"]?[a-zA-Z0-9_\-]+['\"]?"
     ),
-    "password": re.compile(r"(?i)(password|passwd|pwd)\s*[=:]\s*['\"]([^'\"]+)['\"]"),
+    "password": re.compile(
+        r"(?i)(password|passwd|pwd)\s*[=:]\s*['\"]?[^'\"\s#]+['\"]?"
+    ),
     "private_key": re.compile(r"-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----"),
     "aws_key": re.compile(
         r"(?:A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}"
@@ -30,7 +32,9 @@ SECRET_PATTERNS: Dict[str, Pattern[str]] = {
     "jwt_token": re.compile(r"eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*"),
     "slack_token": re.compile(r"xox[baprs]-[0-9]{10,13}-[a-zA-Z0-9-]{24,}"),
     "stripe_key": re.compile(r"(?:r|s)k_(?:test|live)_[0-9a-zA-Z]{24,}"),
-    "generic_secret": re.compile(r"(?i)secret\s*[=:]\s*['\"]([^'\"]{8,})['\"]"),
+    "generic_secret": re.compile(
+        r"(?i)secret\s*[=:]\s*['\"]?[^'\"\s#]{8,}['\"]?"
+    ),
 }
 
 # Files and patterns to always ignore
@@ -150,8 +154,21 @@ class SecretDetector:
 
     def _mask_line(self, line: str) -> str:
         """Mask secrets in a line for safe display."""
-        # Replace any quoted strings longer than 8 chars with asterisks
-        masked = re.sub(r'["\'][^"\']{8,}["\']', '"********"', line)
+
+        def _mask_quoted(match: re.Match[str]) -> str:
+            quote = match.group(1)
+            return f"{quote}********{quote}"
+
+        masked = re.sub(r"(['\"])([^'\"]{8,})(['\"])", _mask_quoted, line)
+        def _mask_unquoted(match: re.Match[str]) -> str:
+            prefix = match.group(1)
+            return f"{prefix}********"
+
+        masked = re.sub(
+            r"([:=]\s*)([^\"':\s#]{8,})",
+            _mask_unquoted,
+            masked,
+        )
         return masked.strip()
 
 
