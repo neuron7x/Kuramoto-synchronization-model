@@ -385,6 +385,27 @@ class ApiSecuritySettings(BaseSettings):
             " Defaults are non-routable placeholders suitable for tests."
         ),
     )
+    oauth2_algorithms: tuple[str, ...] = Field(
+        (
+            "RS256",
+            "RS384",
+            "RS512",
+            "PS256",
+            "PS384",
+            "PS512",
+            "ES256",
+            "ES256K",
+            "ES384",
+            "ES512",
+            "ES521",
+            "EDDSA",
+        ),
+        min_length=1,
+        description=(
+            "Allow-list of JWT signing algorithms accepted for OAuth2 bearer tokens."
+            " Algorithms outside of this set are rejected before signature verification."
+        ),
+    )
     mtls_trusted_ca_path: Path | None = Field(
         default=None,
         description=(
@@ -448,6 +469,25 @@ class ApiSecuritySettings(BaseSettings):
             "(allow, challenged, mitigated) to be recorded alongside local security logs."
         ),
     )
+
+    @model_validator(mode="after")
+    def _normalise_algorithms(self) -> "ApiSecuritySettings":
+        canonical: list[str] = []
+        for algorithm in self.oauth2_algorithms:
+            if not algorithm or not algorithm.strip():
+                continue
+            cleaned = algorithm.strip()
+            upper = cleaned.upper()
+            if upper == "EDDSA":
+                value = "EdDSA"
+            else:
+                value = upper
+            if value not in canonical:
+                canonical.append(value)
+        algorithms = tuple(canonical)
+        if not algorithms:
+            raise ValueError("oauth2_algorithms must define at least one signing algorithm")
+        return self.model_copy(update={"oauth2_algorithms": algorithms})
 
     model_config = SettingsConfigDict(env_prefix="TRADEPULSE_", extra="ignore")
 
