@@ -1,5 +1,13 @@
 """Observability helpers for TradePulse."""
 
+from .auto_triage import (  # noqa: F401
+    AutoTriageConfig,
+    AutoTriageOrchestrator,
+    AutoTriageReport,
+    DetectionResult as AutoTriageDetectionResult,
+    MetricThreshold,
+    TriageStepReport,
+)
 from .bootstrap import (  # noqa: F401
     AlertNoiseGuard,
     EndpointCheck,
@@ -112,6 +120,10 @@ from .tracing import (  # noqa: F401
 )
 
 __all__ = [
+    "AutoTriageConfig",
+    "AutoTriageDetectionResult",
+    "AutoTriageOrchestrator",
+    "AutoTriageReport",
     "CacheUsageStats",
     "CacheWarmupController",
     "CacheWarmupResult",
@@ -153,6 +165,8 @@ __all__ = [
     "EmailSender",
     "SlackNotifier",
     "NotificationDispatcher",
+    "MetricThreshold",
+    "TriageStepReport",
     "ReleaseGateEvaluator",
     "ReleaseGateResult",
     "DriftDetector",
