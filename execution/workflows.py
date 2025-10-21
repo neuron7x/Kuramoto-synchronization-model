@@ -61,7 +61,24 @@ class RiskComplianceWorkflow:
         accepted: list[OrderAssessment] = []
         rejected: list[OrderAssessment] = []
         for order in orders:
-            report = self._compliance.check(order.symbol, order.quantity, order.price)
+            try:
+                report = self._compliance.check(
+                    order.symbol, order.quantity, order.price
+                )
+            except ComplianceViolation as exc:
+                report = exc.report
+                if report is None:
+                    report = ComplianceReport(
+                        symbol=order.symbol,
+                        requested_quantity=order.quantity,
+                        requested_price=order.price,
+                        normalized_quantity=order.quantity,
+                        normalized_price=order.price,
+                        violations=(str(exc),),
+                        blocked=True,
+                    )
+                rejected.append(OrderAssessment(order, report))
+                continue
             assessment = OrderAssessment(request=order, compliance_report=report)
             if report.blocked:
                 rejected.append(assessment)
