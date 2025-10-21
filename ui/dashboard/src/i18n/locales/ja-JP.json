@@ -18,7 +18,8 @@
     "sections": {
       "positions": "ポジション",
       "orders": "注文",
-      "pnl": "PnLと気配値"
+      "pnl": "PnLと気配値",
+      "signals": "シグナル"
     }
   },
   "header": {
@@ -98,6 +99,54 @@
             "negative": "損失 {percent}"
           }
         }
+      }
+    },
+    "signals": {
+      "title": "シグナル",
+      "heading": "シグナルインテリジェンス",
+      "subtitle": "戦略シグナルの有効性と期限をリアルタイムで把握。",
+      "cards": {
+        "active": {
+          "title": "稼働中のシグナル",
+          "total": "{count} 件稼働中",
+          "updated": "最終更新 {time}",
+          "none": "シグナルはまだありません"
+        },
+        "bias": {
+          "title": "方向バランス",
+          "ratio": "買い {buy} / 売り {sell} / 中立 {flat}",
+          "netLong": "ロング優勢 {value}",
+          "netShort": "ショート優勢 {value}"
+        },
+        "conviction": {
+          "title": "コンフィデンス",
+          "average": "平均 {value}",
+          "peak": "最大 {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "タイムスタンプ",
+          "symbol": "銘柄",
+          "direction": "方向",
+          "strength": "強度",
+          "signal_type": "タイプ",
+          "ttl": "有効期限",
+          "status": "ステータス",
+          "metadata": "コンテキスト"
+        },
+        "badges": {
+          "direction": {
+            "buy": "買い",
+            "sell": "売り",
+            "flat": "中立"
+          },
+          "status": {
+            "active": "稼働中",
+            "expired": "期限切れ"
+          }
+        },
+        "empty": "表示できるシグナルがありません。"
       }
     }
   },
