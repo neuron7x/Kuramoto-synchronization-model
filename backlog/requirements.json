@@ -1,1 +1,186 @@
-[]
+[
+  {
+    "id": "REQ-001",
+    "description": "Платформа повинна підтримувати фрактальну композицію індикаторів, щоб дослідники могли повторно використовувати блоки на різних горизонтах без переписування коду.",
+    "category": "functional",
+    "source": {
+      "section": "Архітектурні принципи",
+      "line": 5,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "SEC-001",
+    "description": "Система має зберігати первинні ринкові потоки у сховищі з версіонуванням, щоб відстежувати походження сигналів та уникати ризику втрати даних.",
+    "category": "security",
+    "source": {
+      "section": "Керування даними",
+      "line": 9,
+      "page": 1
+    },
+    "priority": "Should",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "REQ-002",
+    "description": "Репозиторій повинен забезпечувати автоматичний контроль якості, що призводить до блокування імпорту при виявленні розривів у часових рядах.",
+    "category": "functional",
+    "source": {
+      "section": "Керування даними",
+      "line": 9,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "REQ-003",
+    "description": "Дослідницькі конвеєри мають пропонувати курсову синхронізацію та фрактальну ресемплізацію, щоб команди могли оцінювати гіпотези на узгоджених часових сітках.",
+    "category": "functional",
+    "source": {
+      "section": "Аналітика та дослідження",
+      "line": 13,
+      "page": 1
+    },
+    "priority": "Should",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "SEC-002",
+    "description": "Ядро бектестера повинно гарантувати детерміноване відтворення результатів і має підтримувати сценарії з різними витратами на виконання.",
+    "category": "security",
+    "source": {
+      "section": "Бектестинг",
+      "line": 17,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "REQ-004",
+    "description": "Якщо стратегія змінює конфігурацію комісій, тоді рушій повторно проганяє лише необхідні фрагменти часових діапазонів.",
+    "category": "functional",
+    "source": {
+      "section": "Бектестинг",
+      "line": 17,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [
+      "Якщо стратегія змінює конфігурацію комісій, тоді рушій повторно проганяє лише необхідні фрагменти часових діапазонів."
+    ],
+    "flags": []
+  },
+  {
+    "id": "SEC-003",
+    "description": "Торговий рушій має проводити передторгові перевірки, що попереджають про ризик перевищення лімітів позицій та автоматично блокують заявки з некоректними параметрами.",
+    "category": "security",
+    "source": {
+      "section": "Операційне виконання",
+      "line": 21,
+      "page": 1
+    },
+    "priority": "Should",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "REQ-005",
+    "description": "Платформа повинна відновлюватися після збоїв каналу зв'язку та повторно надсилати накази без дублювання.",
+    "category": "functional",
+    "source": {
+      "section": "Операційне виконання",
+      "line": 21,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "NFR-001",
+    "description": "Сервіси мають забезпечити повне логування подій і продуктивне збори метрик, щоб операційні команди могли відстежувати стабільність процесів.",
+    "category": "non-functional",
+    "source": {
+      "section": "Спостережуваність",
+      "line": 25,
+      "page": 1
+    },
+    "priority": "Should",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "SEC-004",
+    "description": "Платформа повинна шифрувати секрети в транзиті та на збереженні, щоб мінімізувати ризик компрометації ключів.",
+    "category": "security",
+    "source": {
+      "section": "Захист та комплаєнс",
+      "line": 29,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "SEC-005",
+    "description": "Усі процеси мають відповідати регуляторним політикам MiFID II, а механізми авторизації повинні журналювати кожен доступ до критичних операцій.",
+    "category": "security",
+    "source": {
+      "section": "Захист та комплаєнс",
+      "line": 29,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "NFR-002",
+    "description": "Інтерфейси мають підтримувати латентність не більше 50 мс для критичних запитів, щоб забезпечити стабільну продуктивність.",
+    "category": "non-functional",
+    "source": {
+      "section": "Нефункціональні вимоги",
+      "line": 33,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  },
+  {
+    "id": "NFR-003",
+    "description": "Рішення повинно масштабуватися горизонтально, а спільна інфраструктура має проходити регулярні операційні перевірки на доступність при пікових навантаженнях.",
+    "category": "legal",
+    "source": {
+      "section": "Нефункціональні вимоги",
+      "line": 33,
+      "page": 1
+    },
+    "priority": "Must",
+    "dependencies": [],
+    "acceptance_criteria": [],
+    "flags": []
+  }
+]
