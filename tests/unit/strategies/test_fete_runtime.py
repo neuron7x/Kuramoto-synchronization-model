@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from core.strategies import (
     FETE,
@@ -88,6 +89,22 @@ def test_risk_guard_stop_loss_and_circuit_breaker() -> None:
     triggered = guard.stop_loss_triggered(position, 94.0, timestamp=now)
     assert triggered
     assert guard.events[-1].code == "stop_loss"
+
+
+def test_risk_guard_tracks_peak_drawdown() -> None:
+    now = datetime.now()
+    guard = RiskGuard(max_position_fraction=0.5, max_daily_loss=1.0, max_drawdown=1.0, stop_loss_pct=0.05)
+    guard.reset(10_000.0, timestamp=now)
+
+    deep_dip_time = now + timedelta(minutes=1)
+    guard.check_equity(8_000.0, timestamp=deep_dip_time)
+    assert guard.current_drawdown == pytest.approx(0.2)
+    assert guard.max_observed_drawdown == pytest.approx(0.2)
+
+    recovery_time = deep_dip_time + timedelta(minutes=1)
+    guard.check_equity(9_500.0, timestamp=recovery_time)
+    assert guard.current_drawdown == pytest.approx(0.05)
+    assert guard.max_observed_drawdown == pytest.approx(0.2)
 
 
 def test_backtest_engine_generates_report() -> None:

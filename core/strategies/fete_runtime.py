@@ -370,6 +370,7 @@ class RiskGuard:
     start_equity: float = field(init=False, default=1.0)
     peak_equity: float = field(init=False, default=1.0)
     current_drawdown: float = field(init=False, default=0.0)
+    max_observed_drawdown: float = field(init=False, default=0.0)
     circuit_breaker_active: bool = field(init=False, default=False)
     circuit_reason: str | None = field(init=False, default=None)
     events: MutableSequence[RiskEvent] = field(init=False, default_factory=list)
@@ -380,6 +381,7 @@ class RiskGuard:
         self.start_equity = float(equity)
         self.peak_equity = float(equity)
         self.current_drawdown = 0.0
+        self.max_observed_drawdown = 0.0
         self.circuit_breaker_active = False
         self.circuit_reason = None
         self.events.clear()
@@ -405,6 +407,7 @@ class RiskGuard:
 
         drawdown = 0.0 if self.peak_equity <= 0 else (self.peak_equity - equity) / self.peak_equity
         self.current_drawdown = float(max(drawdown, 0.0))
+        self.max_observed_drawdown = max(self.max_observed_drawdown, self.current_drawdown)
 
         daily_loss = (self.start_equity - equity) / self.start_equity
         if daily_loss > self.max_daily_loss:
@@ -652,7 +655,7 @@ class FETEBacktestEngine:
             annual_return=float(annual_return),
             volatility=volatility,
             sharpe=float(sharpe),
-            max_drawdown=float(self._risk.current_drawdown),
+            max_drawdown=float(self._risk.max_observed_drawdown),
             num_trades=num_trades,
             win_trades=win_trades,
             win_rate=float(win_rate),
