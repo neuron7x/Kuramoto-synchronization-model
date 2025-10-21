@@ -23,7 +23,11 @@ jobs:
   update:
     name: Update release draft
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Release Drafter may need additional time to traverse the commit graph of
+    # larger histories (especially after force-refresh runs). Five minutes was
+    # occasionally insufficient and caused GitHub to cancel the job mid-flight,
+    # so we grant a roomier budget here.
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
