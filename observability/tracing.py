@@ -17,6 +17,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, Iterator, Mapping, MutableMapping, Sequence
 
+LOGGER = logging.getLogger(__name__)
+
 try:  # pragma: no cover - optional dependency import guarded at runtime
     from opentelemetry import context as otel_context
     from opentelemetry import trace
@@ -36,7 +38,11 @@ try:  # pragma: no cover - optional dependency import guarded at runtime
     )
 
     _TRACE_AVAILABLE = True
-except Exception:  # pragma: no cover - the dependencies are optional
+except Exception as exc:  # pragma: no cover - the dependencies are optional
+    LOGGER.debug(
+        "OpenTelemetry instrumentation unavailable; tracing disabled",
+        exc_info=exc,
+    )
     otel_context = None  # type: ignore[assignment]
     trace = None  # type: ignore[assignment]
     Resource = TracerProvider = BatchSpanProcessor = OTLPSpanExporter = None  # type: ignore[assignment]
@@ -46,8 +52,6 @@ except Exception:  # pragma: no cover - the dependencies are optional
     TraceContextTextMapPropagator = None  # type: ignore[assignment]
     get_global_textmap = set_global_textmap = None  # type: ignore[assignment]
     _TRACE_AVAILABLE = False
-
-LOGGER = logging.getLogger(__name__)
 
 _DEFAULT_TRACER_NAME = "tradepulse.pipeline"
 _TRACEPARENT_HEADER = "traceparent"
