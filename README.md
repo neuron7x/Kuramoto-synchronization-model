@@ -174,12 +174,13 @@ The CLI is the operational entry point described in [`docs/quickstart.md`](docs/
 
 ```bash
 # Analyze the bundled sample.csv dataset
-python -m interfaces.cli analyze --csv sample.csv --window 200
+python -m interfaces.cli analyze --csv sample.csv --window 200 --price-col close
 
 # Run a walk-forward backtest with indicator-derived signals
 python -m interfaces.cli backtest \
     --csv sample.csv \
     --window 200 \
+    --price-col close \
     --fee 0.0005
 
 # Bootstrap a live trading harness with configuration overrides
@@ -301,9 +302,9 @@ TradePulse is released under the [MIT License](LICENSE).
 
 ## 🇺🇦 Швидка довідка українською
 
-- **Початок роботи:** пройдіть [швидкий старт](docs/quickstart.md), встановіть залежності з `requirements.lock` та виконайте `python -m interfaces.cli analyze --csv sample.csv` для першої перевірки.
+- **Початок роботи:** пройдіть [швидкий старт](docs/quickstart.md), встановіть залежності з `requirements.lock` та виконайте `python -m interfaces.cli analyze --csv sample.csv --price-col close` для першої перевірки.
 - **Дослідження та індикатори:** дивіться [`core/indicators`](core/indicators) та методичні матеріали в [`docs/indicators.md`](docs/indicators.md).
-- **Бектести:** запускайте `python -m interfaces.cli backtest --csv sample.csv --window 200 --fee 0.0005` або використовуйте конфігурації з [`configs/default.yaml`](configs/default.yaml).
+- **Бектести:** запускайте `python -m interfaces.cli backtest --csv sample.csv --window 200 --price-col close --fee 0.0005` або використовуйте конфігурації з [`configs/default.yaml`](configs/default.yaml).
 - **Інфраструктура та запуск:** шаблони Kubernetes у [`deploy/`](deploy), Terraform — у [`infra/terraform`](infra/terraform), Docker-композиції — в [`docker-compose.yml`](docker-compose.yml).
 - **Спостереження та операційні процедури:** основні інструкції в [`docs/monitoring.md`](docs/monitoring.md) та [`docs/operational_handbook.md`](docs/operational_handbook.md).
 - **Команда та контакти:** структура відповідальностей у [`stakeholders/`](stakeholders) та вимоги до документації в [`docs/documentation_governance.md`](docs/documentation_governance.md).
