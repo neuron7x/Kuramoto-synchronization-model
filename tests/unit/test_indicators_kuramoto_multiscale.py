@@ -125,6 +125,19 @@ def test_fractal_resampler_supports_custom_aggregation() -> None:
     pd.testing.assert_series_equal(m5, expected)
 
 
+def test_fractal_resampler_mean_bypasses_parent_cache() -> None:
+    df = _synth_dataframe()
+    resampler = FractalResampler(df["close"], aggregation="mean")
+    _ = resampler.resample(TimeFrame.M1)
+    m5 = resampler.resample(TimeFrame.M5)
+    expected = df["close"].sort_index().resample(TimeFrame.M5.pandas_freq).mean()
+    expected = expected.ffill().dropna()
+    pd.testing.assert_series_equal(m5, expected)
+    stats = resampler.stats()
+    assert stats["fractal_cache_hits"] == pytest.approx(0.0)
+    assert stats["direct_resamples"] == pytest.approx(2.0)
+
+
 def test_fractal_resampler_rejects_non_series_aggregation() -> None:
     df = _synth_dataframe()
     resampler = FractalResampler(df["close"], aggregation="ohlc")

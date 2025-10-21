@@ -98,7 +98,7 @@ class FractalResampler:
             return cached
 
         parent = self._select_parent(timeframe)
-        if parent is not None:
+        if parent is not None and self._supports_reaggregation():
             base = self._cache[parent]
             self._cache_hits += 1
         else:
@@ -145,6 +145,14 @@ class FractalResampler:
             if best is None or candidate.seconds > best.seconds:
                 best = candidate
         return best
+
+    def _supports_reaggregation(self) -> bool:
+        """Return whether cached parent buckets can be safely re-aggregated."""
+
+        if isinstance(self.aggregation, str):
+            safe_labels = {"last", "first", "max", "min", "sum", "prod", "count", "size"}
+            return self.aggregation.lower() in safe_labels
+        return False
 
 
 def _hilbert_phase(series: np.ndarray) -> np.ndarray:
