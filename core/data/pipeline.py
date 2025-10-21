@@ -480,7 +480,14 @@ class DataPipeline:
         }
         remainder_indices: list[int] = []
 
-        for _, group in frame.groupby(cfg.column, sort=False):
+        column = frame[cfg.column]
+        null_mask = column.isna()
+        if null_mask.any():
+            remainder_indices.extend(frame.loc[null_mask].index.to_numpy())
+
+        grouped = frame.loc[~null_mask] if null_mask.any() else frame
+
+        for _, group in grouped.groupby(cfg.column, sort=False):
             if group.empty:
                 continue
 
