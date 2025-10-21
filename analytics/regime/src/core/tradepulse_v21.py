@@ -448,8 +448,24 @@ class RegimeHMMAdapter:
         cfg = self._config
         eps = 1e-8
         logits = np.log(np.clip(probabilities, eps, 1 - eps)) - np.log(np.clip(1 - probabilities, eps, 1 - eps))
-        slopes = np.array(cfg.slope[: cfg.states], dtype=float)
-        biases = np.array(cfg.bias[: cfg.states], dtype=float)
+        slopes = np.array(cfg.slope, dtype=float)
+        biases = np.array(cfg.bias, dtype=float)
+
+        if slopes.size < cfg.states:
+            if slopes.size == 0:
+                slopes = np.ones(cfg.states, dtype=float)
+            else:
+                slopes = np.pad(slopes, (0, cfg.states - slopes.size), mode="edge")
+        else:
+            slopes = slopes[: cfg.states]
+
+        if biases.size < cfg.states:
+            if biases.size == 0:
+                biases = np.zeros(cfg.states, dtype=float)
+            else:
+                biases = np.pad(biases, (0, cfg.states - biases.size), mode="edge")
+        else:
+            biases = biases[: cfg.states]
         transition = np.full((cfg.states, cfg.states), (1.0 - cfg.stay_probability) / max(cfg.states - 1, 1))
         np.fill_diagonal(transition, cfg.stay_probability)
         log_transition = np.log(transition)

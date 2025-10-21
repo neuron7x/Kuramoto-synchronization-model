@@ -69,3 +69,12 @@ def test_pipeline_without_backtest() -> None:
 
     assert result.backtest is None
     assert result.stress is None
+
+
+def test_regime_hmm_adapter_pads_coefficients() -> None:
+    probabilities = np.linspace(0.1, 0.9, num=5)
+    adapter = RegimeHMMAdapter(RegimeHMMConfig(states=3))
+
+    adjusted, _ = adapter.adjust(probabilities)
+
+    assert adjusted.shape == probabilities.shape
