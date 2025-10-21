@@ -42,11 +42,22 @@ from typing import Any, Dict, Iterable, Mapping, Optional, Tuple
 import numpy as np
 import pandas as pd
 import networkx as nx
-from sklearn.linear_model import LogisticRegression
-from sklearn.isotonic import IsotonicRegression
-from sklearn.metrics import average_precision_score, roc_auc_score
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.utils import check_random_state
+
+try:  # pragma: no cover - optional dependency
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.isotonic import IsotonicRegression
+    from sklearn.metrics import average_precision_score, roc_auc_score
+    from sklearn.model_selection import TimeSeriesSplit
+    from sklearn.utils import check_random_state
+except ModuleNotFoundError:  # pragma: no cover - fallback exercised in tests
+    from ._sklearn_compat import (
+        LogisticRegression,
+        IsotonicRegression,
+        TimeSeriesSplit,
+        average_precision_score,
+        check_random_state,
+        roc_auc_score,
+    )
 
 try:  # pragma: no cover - optional dependency, exercised in integration tests
     import statsmodels.api as sm
