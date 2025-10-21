@@ -227,6 +227,29 @@ def test_ricci_curvature_edge_warns_without_scipy(
     assert curvature == pytest.approx(expected_fallback)
 
 
+def test_w1_fallback_matches_known_transport_cost() -> None:
+    a = np.array([0.5, 0.5, 0.0])
+    b = np.array([0.0, 0.5, 0.5])
+
+    distance = ricci_module._w1_fallback(a, b)
+
+    assert distance == pytest.approx(1.0)
+
+
+def test_w1_fallback_sanitises_non_finite_mass() -> None:
+    a = np.array([np.nan, 1.0, -0.5])
+    b = np.array([np.inf, 0.0, 0.5])
+
+    distance = ricci_module._w1_fallback(a, b)
+
+    assert distance == pytest.approx(1.0)
+
+
+def test_w1_fallback_rejects_shape_mismatch() -> None:
+    with pytest.raises(ValueError):
+        ricci_module._w1_fallback(np.ones(2), np.ones(3))
+
+
 def test_shortest_path_length_safe_falls_back_to_unweighted() -> None:
     class WeightedRaisesGraph:
         def __init__(self) -> None:
