@@ -43,6 +43,7 @@ from core.reporting import (
     render_markdown_to_html,
     render_markdown_to_pdf,
 )
+from core.strategies import FETE, FETEConfig
 from core.utils.dataframe_io import (
     MissingParquetDependencyError,
     dataframe_to_parquet_bytes,
@@ -208,6 +209,29 @@ def _load_feature_frame(source: FeatureFrameSourceConfig) -> pd.DataFrame:
     else:  # pragma: no cover - guarded by Pydantic literal
         raise ConfigError(f"Unsupported feature source format '{fmt}'")
     return frame
+
+
+def _load_fete_inputs(
+    csv_path: Path, price_col: str, prob_col: str | None
+) -> tuple[np.ndarray, np.ndarray]:
+    if not csv_path.exists():
+        raise ArtifactError(f"Data source {csv_path} does not exist")
+    frame = pd.read_csv(csv_path)
+    if price_col not in frame.columns:
+        raise ConfigError(f"Price column '{price_col}' not found in CSV")
+    prices = frame[price_col].to_numpy(dtype=float, copy=False)
+    if prices.size < 3:
+        raise ConfigError("CSV must contain at least three price observations")
+    if prob_col:
+        if prob_col not in frame.columns:
+            raise ConfigError(f"Probability column '{prob_col}' not found in CSV")
+        probs = frame[prob_col].to_numpy(dtype=float, copy=False)
+    else:
+        rng = np.random.default_rng(42)
+        time_index = np.arange(prices.size)
+        probs = 0.5 + 0.15 * np.sin(time_index / 50.0) + rng.normal(0.0, 0.08, size=prices.size)
+    probs = np.clip(probs, 0.0, 1.0)
+    return prices, probs
 
 
 def _build_parity_spec(spec_cfg: FeatureParitySpecConfig) -> FeatureParitySpec:
@@ -957,6 +981,61 @@ def parity(
             raise ParityError(str(exc)) from exc
 
     _emit_parity_summary(report, command=command)
+
+
+@cli.command("fete-backtest")
+@click.option(
+    "--csv",
+    "csv_path",
+    type=click.Path(exists=True, path_type=Path),
+    required=True,
+    help="Input CSV path containing price history.",
+)
+@click.option(
+    "--price-col",
+    default="price",
+    show_default=True,
+    help="CSV column containing price levels.",
+)
+@click.option(
+    "--prob-col",
+    default=None,
+    help="Optional CSV column with model probabilities (0..1).",
+)
+@click.option(
+    "--out",
+    "out_path",
+    type=click.Path(path_type=Path),
+    help="Optional destination for the equity curve CSV.",
+)
+def fete_backtest(
+    csv_path: Path, price_col: str, prob_col: str | None, out_path: Path | None
+) -> None:
+    """Run the FETE engine on a CSV dataset and display risk metrics."""
+
+    command = "fete-backtest"
+    prices, probs = _load_fete_inputs(csv_path, price_col, prob_col)
+    engine = FETE(FETEConfig())
+    result = engine.backtest(prices, probs)
+
+    click.echo("=== FETE Backtest ===")
+    click.echo(f"Final Return: {result['final_return']:.2f}%")
+    click.echo(f"Sharpe      : {result['sharpe']:.3f}")
+    click.echo(f"Max DD      : {result['max_dd']:.3f}")
+    audit = result["audit"]
+    click.echo("Audit:")
+    click.echo(
+        "  Brier: {brier:.4f}  ECE: {ece:.4f}  Entropy: {entropy:.3f}  τ: {tau:.3f}".format(
+            brier=audit["brier"], ece=audit["ece"], entropy=audit["entropy"], tau=audit["tau"]
+        )
+    )
+
+    if out_path is not None:
+        equity = np.asarray(result["equity"], dtype=float)
+        frame = pd.DataFrame({"t": np.arange(equity.size), "equity": equity})
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(out_path, index=False)
+        click.echo(f"[{command}] • wrote {out_path}")
 
 
 # ---------------------------------------------------------------------------
