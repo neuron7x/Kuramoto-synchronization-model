@@ -1,0 +1,7 @@
+ID,Title,Description,Source,Status,Owner,Priority,Deadline
+MS-001,Governance Foundation,"Завершено формування ради, затверджено мандат та реєстр активів створено.","docs/responsible_ai_program.md:L131-L133",Planned,"Responsible AI Council",High,"Week 2"
+MS-002,Risk Controls Baseline,"Карти небезпек і доменні обмеження затверджені з переліком контрольних точок.","docs/responsible_ai_program.md:L134",Planned,"Risk Management Lead",High,"Week 4"
+MS-003,Control Framework Activation,"Тести упередженості, приватності та explainability запущені, шаблони пояснень доступні.","docs/responsible_ai_program.md:L135",Planned,"Data Science Fairness Lead",High,"Week 6"
+MS-004,Operational Safeguards Live,"Апеляції, red team сценарії та юридичні рев’ю функціонують за процесом.","docs/responsible_ai_program.md:L136",Planned,"Operations Lead",High,"Week 8"
+MS-005,Compliance Readiness,"Матриця відповідності та прозорі звіти готові, KPI програми визначені.","docs/responsible_ai_program.md:L137",Planned,"Compliance Lead",High,"Week 10"
+MS-006,Continuous Improvement Loop,"Проведено ретроспективу та затверджено roadmap безперервного вдосконалення.","docs/responsible_ai_program.md:L138",Planned,"Responsible AI Council",Medium,"Week 12"
