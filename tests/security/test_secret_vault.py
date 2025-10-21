@@ -77,6 +77,44 @@ def test_secret_vault_enforces_access_policy(tmp_path: Path) -> None:
         vault.access_secret(secret_name, actor="intruder", ip_address="10.0.0.3")
 
 
+def test_secret_vault_revocation_persists_and_blocks_access(tmp_path: Path) -> None:
+    key = SecretVault.generate_key()
+    secret_name = "service/api-token"
+    audit_logger = _InMemoryAuditLogger()
+    vault = SecretVault(
+        storage_path=tmp_path / "vault.json",
+        master_key=key,
+        access_policy=_build_policy(secret_name),
+        audit_logger=audit_logger,
+    )
+    vault.put_secret(
+        secret_name,
+        "top-secret-token-1234567890",
+        actor="alice",
+        ip_address="10.0.0.1",
+    )
+    metadata = vault.revoke_secret(
+        secret_name,
+        actor="alice",
+        ip_address="10.0.0.1",
+        reason="compromise",
+    )
+    assert metadata.labels["status"] == "revoked"
+    assert metadata.labels["revocation_reason"] == "compromise"
+    with pytest.raises(SecretVaultError):
+        vault.access_secret(secret_name, actor="alice", ip_address="10.0.0.2")
+    assert any(event.event_type == "secret_revoked" for event in audit_logger.events)
+
+    # Reload the vault from disk to ensure revocation metadata persists.
+    reloaded = SecretVault(
+        storage_path=tmp_path / "vault.json",
+        master_key=key,
+        access_policy=_build_policy(secret_name),
+    )
+    with pytest.raises(SecretVaultError):
+        reloaded.access_secret(secret_name, actor="alice", ip_address="10.0.0.3")
+
+
 def test_secret_rotator_performs_rotation(tmp_path: Path) -> None:
     key = SecretVault.generate_key()
     start = datetime(2025, 1, 1, tzinfo=timezone.utc)

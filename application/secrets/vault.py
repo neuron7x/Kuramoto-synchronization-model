@@ -208,6 +208,9 @@ class SecretVault:
             )
             if labels is not None:
                 label_data.update(labels)
+            # Clear any previous revocation markers when a new value is written.
+            label_data.pop("status", None)
+            label_data.pop("revocation_reason", None)
             metadata = SecretMetadata(
                 name=name,
                 version=version,
@@ -223,6 +226,9 @@ class SecretVault:
             ciphertext = self._fernet.encrypt(value.encode("utf-8")).decode("utf-8")
             self._records[name_key] = {
                 "ciphertext": ciphertext,
+                "revoked": False,
+                "revoked_at": None,
+                "revocation_reason": None,
             }
             self._metadata[name_key] = metadata
             self._persist_locked()
@@ -262,6 +268,8 @@ class SecretVault:
                 metadata = self._metadata[name_key]
             except KeyError as exc:
                 raise SecretVaultError(f"Unknown secret '{name}'") from exc
+            if record.get("revoked"):
+                raise SecretVaultError(f"Secret '{name}' has been revoked")
             try:
                 value = self._fernet.decrypt(record["ciphertext"].encode("utf-8")).decode(
                     "utf-8"
@@ -359,6 +367,50 @@ class SecretVault:
             )
             return metadata
 
+    def revoke_secret(
+        self,
+        name: str,
+        *,
+        actor: str,
+        ip_address: str,
+        reason: str | None = None,
+    ) -> SecretMetadata:
+        """Mark *name* as revoked and prevent further access."""
+
+        if not name:
+            raise ValueError("name must be provided")
+        name_key = name.lower()
+        with self._lock:
+            self._policy.require(actor, "write", name_key)
+            record = self._records.get(name_key)
+            metadata = self._metadata.get(name_key)
+            if record is None or metadata is None:
+                raise SecretVaultError(f"Unknown secret '{name}'")
+            if record.get("revoked"):
+                raise SecretVaultError(f"Secret '{name}' is already revoked")
+            now = _ensure_utc(self._clock())
+            record["revoked"] = True
+            record["revoked_at"] = now.isoformat()
+            revocation_reason = reason or "unspecified"
+            record["revocation_reason"] = revocation_reason
+            metadata.updated_at = now
+            metadata.labels = dict(metadata.labels)
+            metadata.labels["status"] = "revoked"
+            metadata.labels["revocation_reason"] = revocation_reason
+            self._records[name_key] = record
+            self._metadata[name_key] = metadata
+            self._persist_locked()
+            self._audit(
+                event_type="secret_revoked",
+                actor=actor,
+                ip_address=ip_address,
+                details={
+                    "secret": metadata.model_dump(),
+                    "reason": revocation_reason,
+                },
+            )
+            return replace(metadata)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -387,6 +439,13 @@ class SecretVault:
             created_at = record.get("created_at")
             updated_at = record.get("updated_at")
             rotation_seconds = record.get("rotation_interval_seconds")
+            labels = dict(record.get("labels") or {})
+            revoked = bool(record.get("revoked", False))
+            revocation_reason = record.get("revocation_reason")
+            if revoked:
+                labels.setdefault("status", "revoked")
+                if revocation_reason:
+                    labels.setdefault("revocation_reason", str(revocation_reason))
             metadata = SecretMetadata(
                 name=name,
                 version=int(record.get("version", 1)),
@@ -399,10 +458,15 @@ class SecretVault:
                 rotation_interval=timedelta(seconds=rotation_seconds)
                 if rotation_seconds
                 else None,
-                labels=dict(record.get("labels") or {}),
+                labels=labels,
             )
             self._metadata[name.lower()] = metadata
-            self._records[name.lower()] = {"ciphertext": ciphertext}
+            self._records[name.lower()] = {
+                "ciphertext": ciphertext,
+                "revoked": revoked,
+                "revoked_at": record.get("revoked_at"),
+                "revocation_reason": revocation_reason,
+            }
 
     def _persist_locked(self) -> None:
         secrets: dict[str, MutableMapping[str, Any]] = {}
@@ -412,6 +476,9 @@ class SecretVault:
                 continue
             secrets[metadata.name] = {
                 "ciphertext": record["ciphertext"],
+                "revoked": bool(record.get("revoked", False)),
+                "revoked_at": record.get("revoked_at"),
+                "revocation_reason": record.get("revocation_reason"),
                 "version": metadata.version,
                 "created_at": _ensure_utc(metadata.created_at).isoformat(),
                 "updated_at": _ensure_utc(metadata.updated_at).isoformat(),
