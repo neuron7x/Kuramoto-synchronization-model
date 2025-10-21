@@ -147,6 +147,42 @@ def test_orchestrator_surfaces_flow_errors_with_context() -> None:
     assert isinstance(error.results["good"][0], EvaluationResult)
 
 
+def test_orchestrator_cancels_pending_flows_after_failure() -> None:
+    calls: list[tuple[tuple[str, ...], Any, bool]] = []
+    orchestrator = StrategyOrchestrator(
+        max_parallel=1,
+        max_queue_size=5,
+        evaluator_factory=lambda: RecordingEvaluator(
+            calls, delay=0.2, fail_on={"fail"}
+        ),
+    )
+
+    flows = [
+        StrategyFlow(name="fail", strategies=[_make_strategy("f")], dataset="fail"),
+        StrategyFlow(
+            name="queued-1",
+            strategies=[_make_strategy("q1")],
+            dataset="queued-1",
+        ),
+        StrategyFlow(
+            name="queued-2",
+            strategies=[_make_strategy("q2")],
+            dataset="queued-2",
+        ),
+    ]
+
+    with pytest.raises(StrategyOrchestrationError) as excinfo:
+        orchestrator.run_flows(flows)
+
+    orchestrator.shutdown()
+
+    error = excinfo.value
+    assert isinstance(error.errors.get("fail"), RuntimeError)
+    assert isinstance(error.errors.get("queued-2"), CancelledError)
+    assert "queued-1" in error.results
+    assert [names[0] for names, *_ in calls] == ["f", "q1"]
+
+
 def test_orchestrator_prioritizes_queues() -> None:
     calls: list[tuple[tuple[str, ...], Any, bool]] = []
     orchestrator = StrategyOrchestrator(
