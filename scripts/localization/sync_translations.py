@@ -6,11 +6,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Set
+from typing import Any, Dict, Iterable, Mapping, Set
 
 import yaml
 from jsonschema import Draft202012Validator

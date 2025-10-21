@@ -25,6 +25,7 @@ import asyncio
 import logging
 import warnings
 from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 from typing import Any, Iterable, Literal
 
 import numpy as np
@@ -41,6 +42,16 @@ def _log_debug_enabled() -> bool:
     base_logger = getattr(_logger, "logger", None)
     check = getattr(base_logger, "isEnabledFor", None)
     return bool(check and check(logging.DEBUG))
+
+
+def _is_runtime_warning_forced() -> bool:
+    """Return True when global filters force RuntimeWarning emission."""
+
+    for filt in warnings.filters:
+        action, _msg, category, _module, _lineno, *_rest = filt
+        if action == "always" and issubclass(RuntimeWarning, category):
+            return True
+    return False
 
 
 try:
@@ -157,6 +168,10 @@ except Exception:  # pragma: no cover
     W1 = None
 
 
+_W1_WARNING_LOCK = Lock()
+_W1_WARNING_EMITTED = False
+
+
 def build_price_graph(prices: np.ndarray, delta: float = 0.005) -> nx.Graph:
     """Quantise a price path into a level graph.
 
@@ -268,11 +283,20 @@ def ricci_curvature_edge(G: nx.Graph, x: int, y: int) -> float:
     if not np.isfinite(d_xy) or d_xy <= 0:
         return 0.0
     if W1 is None:
-        warnings.warn(
-            "SciPy unavailable; using discrete Wasserstein approximation for Ricci curvature",
-            RuntimeWarning,
-            stacklevel=2,
-        )
+        global _W1_WARNING_EMITTED
+        force_warning = _is_runtime_warning_forced()
+        if force_warning or not _W1_WARNING_EMITTED:
+            with _W1_WARNING_LOCK:
+                # Re-evaluate after acquiring the lock to honour concurrent updates.
+                force_warning = force_warning or _is_runtime_warning_forced()
+                if force_warning or not _W1_WARNING_EMITTED:
+                    warnings.warn(
+                        "SciPy unavailable; using discrete Wasserstein approximation for Ricci curvature",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
+                    if not force_warning:
+                        _W1_WARNING_EMITTED = True
     dist = W1(a, b) if W1 is not None else _w1_fallback(a, b)
     return float(1.0 - dist / d_xy)
 
