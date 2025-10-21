@@ -1,0 +1,66 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: tradepulse-chaos-suite
+  namespace: chaos-testing
+  labels:
+    app.kubernetes.io/name: tradepulse
+    app.kubernetes.io/part-of: chaos-validation
+spec:
+  entry: orchestrate-chaos
+  templates:
+    - name: orchestrate-chaos
+      templateType: Serial
+      children:
+        - inject-latency
+        - disrupt-matching-nodes
+        - verify-observability
+    - name: inject-latency
+      templateType: Task
+      task:
+        container:
+          name: latency
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - network
+            - delay
+          args:
+            - '--namespace=execution'
+            - '--selector=app=execution-gateway'
+            - '--latency=250ms'
+            - '--duration=5m'
+    - name: disrupt-matching-nodes
+      templateType: Task
+      task:
+        container:
+          name: disruption
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - pod
+            - kill
+          args:
+            - '--namespace=backtest'
+            - '--selector=component=matching-engine'
+            - '--percent=30'
+            - '--grace-period=10s'
+            - '--duration=10m'
+    - name: verify-observability
+      templateType: Task
+      task:
+        container:
+          name: observability
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - metrics
+            - assert
+          args:
+            - '--namespace=observability'
+            - '--selector=component=otel-collector'
+            - '--metric=drawdown_pct'
+            - '--lte=0.02'
+            - '--window=15m'
+            - '--labels=experiment=tradepulse-chaos'
+  historyLimit: 5

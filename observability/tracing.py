@@ -323,6 +323,17 @@ def pipeline_span(stage: str, **attributes: Any) -> Iterator[Any]:
             raise
 
 
+@contextmanager
+def chaos_span(experiment: str, **attributes: Any) -> Iterator[Any]:
+    """Instrument chaos engineering experiments with consistent metadata."""
+
+    payload: dict[str, Any] = {"chaos.experiment": experiment}
+    payload.update(attributes)
+    stage_name = f"chaos.{experiment}"
+    with pipeline_span(stage_name, **payload) as span:
+        yield span
+
+
 class _NoOpSpan:
     """Minimal span used when OpenTelemetry is not installed."""
 
