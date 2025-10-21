@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package loadtests.trading.v1;
+
+message Empty {}
+
+message Order {
+  string symbol = 1;
+  string side = 2;
+  string order_type = 3;
+  double quantity = 4;
+  double price = 5;
+}
+
+message OrderID {
+  string order_id = 1;
+}
+
+message OrderResponse {
+  string order_id = 1;
+  string status = 2;
+  double filled_quantity = 3;
+  double average_price = 4;
+}
+
+message CancelResponse {
+  bool success = 1;
+}
+
+message Position {
+  string symbol = 1;
+  double quantity = 2;
+  double notional = 3;
+  double var95 = 4;
+}
+
+message PositionList {
+  repeated Position positions = 1;
+}
+
+message SymbolList {
+  repeated string symbols = 1;
+}
+
+message Ticker {
+  string symbol = 1;
+  double price = 2;
+  double volume = 3;
+  int64 timestamp = 4;
+}
+
+service TradingService {
+  rpc PlaceOrder(Order) returns (OrderResponse);
+  rpc CancelOrder(OrderID) returns (CancelResponse);
+  rpc GetPositions(Empty) returns (PositionList);
+  rpc StreamTickers(SymbolList) returns (stream Ticker);
+}
