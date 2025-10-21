@@ -99,6 +99,9 @@ focused document so contributors can quickly find the details they need.
 - Consult the [Operational Excellence Handbook](operational_handbook.md) for a
   single index of runbooks, performance budgets, data lake procedures, and
   governance guardrails.
+- Organise load, stress, spike, and soak validation with the
+  [Performance Testing Program](performance_testing_program.md), covering test
+  scenarios, SLO guardrails, observability, and post-run governance.
 - Execute cross-region recovery using the
   [Disaster Recovery & Multi-Region Failover Runbook](runbook_disaster_recovery.md)
   to uphold RPO/RTO commitments when a site becomes unavailable.
