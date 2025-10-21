@@ -5,7 +5,7 @@ from __future__ import annotations
 # SPDX-License-Identifier: MIT
 import os
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -50,6 +50,21 @@ def _prepare_destination(destination: Path, *, expected_size: int | None) -> int
             return 0
         return existing_size
     return 0
+
+
+def _parse_content_range(header: str) -> Tuple[int, int, int | None]:
+    try:
+        unit, _, range_spec = header.partition(" ")
+        if unit.lower() != "bytes":
+            raise ValueError("Unsupported unit")
+        range_part, _, total_part = range_spec.partition("/")
+        start_str, _, end_str = range_part.partition("-")
+        start = int(start_str)
+        end = int(end_str)
+        total = int(total_part) if total_part and total_part != "*" else None
+    except Exception as exc:  # pragma: no cover - defensive parsing
+        raise TransferError(f"Malformed Content-Range header: {header}") from exc
+    return start, end, total
 
 
 def transfer_with_resume(
@@ -105,19 +120,59 @@ def transfer_with_resume(
     total_size = int(head.headers.get("Content-Length", "0")) or None
     start_offset = _prepare_destination(destination_path, expected_size=total_size)
 
+    if total_size is not None and start_offset >= total_size:
+        if expected_checksum:
+            verify_checksum(
+                destination_path, expected_checksum, algorithm=checksum_algorithm
+            )
+        if progress:
+            progress.total = total_size
+            progress.update(total_size)
+        return destination_path
+
     headers = {}
     if start_offset and total_size and start_offset < total_size:
         headers["Range"] = f"bytes={start_offset}-"
-    mode = "ab" if start_offset else "wb"
     response = session.get(str(source), stream=True, headers=headers, timeout=60)
-    if response.status_code in {206, 200}:
-        pass
-    elif response.status_code in {429, 500, 502, 503, 504}:
+    status_code = response.status_code
+    if status_code in {429, 500, 502, 503, 504}:
         raise TransferError(
             f"Remote server returned retryable status {response.status_code}"
         )
-    elif response.status_code >= 400:
+    if status_code >= 400:
         raise TransferError(f"Download failed with status {response.status_code}")
+    if status_code not in {200, 206}:
+        raise TransferError(
+            f"Unexpected response status {response.status_code} during download"
+        )
+
+    if status_code == 206:
+        content_range = response.headers.get("Content-Range")
+        if not content_range:
+            raise TransferError("Partial response missing Content-Range header")
+        range_start, range_end, range_total = _parse_content_range(content_range)
+        if range_start != start_offset:
+            raise TransferError(
+                "Server resumed from incorrect offset: "
+                f"expected {start_offset}, received {range_start}"
+            )
+        if range_total is not None:
+            total_size = range_total
+        elif total_size is None:
+            total_size = range_end + 1
+    elif status_code == 200 and start_offset:
+        if destination_path.exists():
+            destination_path.unlink()
+        start_offset = 0
+        content_length = response.headers.get("Content-Length")
+        if content_length and content_length.isdigit():
+            total_size = int(content_length)
+    elif status_code == 200 and total_size is None:
+        content_length = response.headers.get("Content-Length")
+        if content_length and content_length.isdigit():
+            total_size = int(content_length)
+
+    mode = "ab" if start_offset else "wb"
 
     if progress:
         progress.total = total_size

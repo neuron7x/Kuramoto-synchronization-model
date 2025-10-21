@@ -12,6 +12,7 @@ import pytest
 from scripts.runtime import (
     ChecksumMismatchError,
     ProgressBar,
+    TransferError,
     compute_checksum,
     create_artifact_manager,
     transfer_with_resume,
@@ -52,6 +53,80 @@ def test_transfer_with_resume_local_file(tmp_path: Path) -> None:
     transfer_with_resume(source, destination, progress=progress)
 
     assert destination.read_bytes() == payload
+
+
+def test_transfer_with_resume_restarts_when_server_ignores_range(tmp_path: Path) -> None:
+    url = "https://example.test/data.bin"
+    payload = os.urandom(32 * 1024)
+    destination = tmp_path / "dest.bin"
+    destination.write_bytes(payload[: len(payload) // 2])
+
+    class _StubResponse:
+        def __init__(self, status_code: int, headers: dict[str, str], data: bytes = b"") -> None:
+            self.status_code = status_code
+            self.headers = headers
+            self._data = data
+
+        def iter_content(self, chunk_size: int):  # type: ignore[override]
+            for index in range(0, len(self._data), chunk_size):
+                yield self._data[index : index + chunk_size]
+
+        def close(self) -> None:
+            return None
+
+    class _StubSession:
+        def head(self, _url: str, **_kwargs: object) -> _StubResponse:
+            return _StubResponse(200, {"Content-Length": str(len(payload))})
+
+        def get(
+            self, _url: str, *, stream: bool, headers: dict[str, str], timeout: int
+        ) -> _StubResponse:
+            assert stream and timeout
+            # Simulate a server that ignores the Range request and restarts from 0
+            assert headers.get("Range") == f"bytes={len(payload) // 2}-"
+            return _StubResponse(200, {"Content-Length": str(len(payload))}, payload)
+
+    session = _StubSession()
+    transfer_with_resume(url, destination, session=session)
+
+    assert destination.read_bytes() == payload
+
+
+def test_transfer_with_resume_rejects_incorrect_resume_offset(tmp_path: Path) -> None:
+    url = "https://example.test/data.bin"
+    payload = os.urandom(16 * 1024)
+    destination = tmp_path / "dest.bin"
+    destination.write_bytes(payload[: len(payload) // 2])
+
+    class _StubResponse:
+        def __init__(self, status_code: int, headers: dict[str, str], data: bytes = b"") -> None:
+            self.status_code = status_code
+            self.headers = headers
+            self._data = data
+
+        def iter_content(self, chunk_size: int):  # type: ignore[override]
+            for index in range(0, len(self._data), chunk_size):
+                yield self._data[index : index + chunk_size]
+
+        def close(self) -> None:
+            return None
+
+    class _StubSession:
+        def head(self, _url: str, **_kwargs: object) -> _StubResponse:
+            return _StubResponse(200, {"Content-Length": str(len(payload))})
+
+        def get(
+            self, _url: str, *, stream: bool, headers: dict[str, str], timeout: int
+        ) -> _StubResponse:
+            assert headers.get("Range") == f"bytes={len(payload) // 2}-"
+            return _StubResponse(
+                206,
+                {"Content-Range": "bytes 1-15/16", "Content-Length": str(len(payload) - 1)},
+                payload[1:],
+            )
+
+    with pytest.raises(TransferError):
+        transfer_with_resume(url, destination, session=_StubSession())
 
 
 def test_task_queue_limits_parallelism(tmp_path: Path) -> None:

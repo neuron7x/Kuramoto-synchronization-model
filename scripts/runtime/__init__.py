@@ -7,7 +7,7 @@ from .._runtime_core import (
     parse_env_file,
 )
 from .artifacts import ArtifactManager, create_artifact_manager
-from .checksum import ChecksumMismatchError, compute_checksum
+from .checksum import ChecksumMismatchError, compute_checksum, verify_checksum
 from .exit_codes import EXIT_CODES
 from .pathfinder import find_resources
 from .progress import ProgressBar
@@ -32,4 +32,5 @@ __all__ = [
     "parse_env_file",
     "task_queue",
     "transfer_with_resume",
+    "verify_checksum",
 ]
