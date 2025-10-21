@@ -58,3 +58,18 @@ def test_openapi_defines_expected_routes(fastapi_app) -> None:
         "pagination",
         "filters",
     } <= set(prediction_response["properties"].keys())
+
+
+def test_openapi_declares_idempotency_headers(fastapi_app) -> None:
+    schema = fastapi_app.openapi()
+    components = schema.get("components", {})
+    headers = components.get("headers", {})
+    assert "Idempotency-Key" in headers
+    assert "X-Idempotent-Replay" in headers
+
+
+def test_openapi_version_matches_contract_file(fastapi_app) -> None:
+    schema = fastapi_app.openapi()
+    info = schema.get("info", {})
+    assert info.get("version") == BASELINE.stem
+    assert "x-backwards-compatibility" in info

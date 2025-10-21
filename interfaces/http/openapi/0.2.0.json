@@ -710,7 +710,7 @@
           {
             "filters": {
               "actions": [
-                "BUY"
+                "buy"
               ],
               "min_confidence": 0.6
             },
@@ -720,7 +720,7 @@
               {
                 "score": 0.42,
                 "signal": {
-                  "action": "BUY",
+                  "action": "buy",
                   "confidence": 0.78
                 },
                 "timestamp": "2025-01-01T00:00:30Z"
@@ -733,7 +733,7 @@
             },
             "score": 0.42,
             "signal": {
-              "action": "BUY",
+              "action": "buy",
               "confidence": 0.78,
               "rationale": "Composite heuristic weighting MACD trend..."
             },
@@ -805,7 +805,7 @@
         "example": {
           "score": 0.42,
           "signal": {
-            "action": "BUY",
+            "action": "buy",
             "confidence": 0.78
           },
           "timestamp": "2025-01-01T00:00:30Z"

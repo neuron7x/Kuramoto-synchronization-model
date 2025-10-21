@@ -113,10 +113,10 @@
       "description": "Snapshot of a derived signal at a point in time.",
       "example": {
         "score": 0.42,
-        "signal": {
-          "action": "BUY",
-          "confidence": 0.78
-        },
+          "signal": {
+            "action": "buy",
+            "confidence": 0.78
+          },
         "timestamp": "2025-01-01T00:00:30Z"
       },
       "properties": {
@@ -160,7 +160,7 @@
     {
       "filters": {
         "actions": [
-          "BUY"
+          "buy"
         ],
         "end_at": null,
         "min_confidence": 0.6,
@@ -172,7 +172,7 @@
         {
           "score": 0.42,
           "signal": {
-            "action": "BUY",
+            "action": "buy",
             "confidence": 0.78
           },
           "timestamp": "2025-01-01T00:00:30Z"
@@ -186,7 +186,7 @@
       },
       "score": 0.42,
       "signal": {
-        "action": "BUY",
+        "action": "buy",
         "confidence": 0.78,
         "rationale": "Composite heuristic weighting MACD trend..."
       },
