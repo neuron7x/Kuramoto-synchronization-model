@@ -1,0 +1,22 @@
+"""Auto-generated Alembic migration."""
+
+from __future__ import annotations
+
+from alembic import op
+import sqlalchemy as sa
+
+# revision identifiers, used by Alembic.
+revision = "{{ metadata.revision_id }}"
+down_revision = {{ 'None' if metadata.down_revision is none else metadata.down_revision | tojson }}
+branch_labels = {{ 'None' if metadata.branch_labels is none else metadata.branch_labels | tojson }}
+depends_on = {{ 'None' if metadata.depends_on is none else metadata.depends_on | tojson }}
+
+
+def upgrade() -> None:
+    """Apply the migration."""
+    pass
+
+
+def downgrade() -> None:
+    """Rollback the migration."""
+    pass

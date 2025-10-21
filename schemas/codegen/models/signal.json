@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SignalDto",
+  "type": "object",
+  "required": ["id", "symbol", "score"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Signal identifier"
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Ticker symbol"
+    },
+    "score": {
+      "type": "number",
+      "description": "Scoring value",
+      "minimum": -1.0,
+      "maximum": 1.0
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata"
+    }
+  }
+}

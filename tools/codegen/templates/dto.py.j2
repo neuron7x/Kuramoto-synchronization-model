@@ -1,0 +1,17 @@
+"""Auto-generated DTO models."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class {{ model_name }}(BaseModel):
+{% for field in fields %}    {{ field.name }}: {{ field.type }}{% if not field.required %} | None{% endif %} = Field({% if field.required %}...{% else %}default={{ field.default_repr }}{% endif %}, description="{{ field.description }}")
+{% endfor %}
+
+    model_config = {"populate_by_name": True, "arbitrary_types_allowed": True}
+
+
+__all__ = ["{{ model_name }}"]

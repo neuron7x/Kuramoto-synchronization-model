@@ -1,0 +1,17 @@
+"""Auto-generated Pandera schema."""
+
+from __future__ import annotations
+
+import pandera as pa
+
+
+class {{ schema_name }}(pa.DataFrameModel):
+{% for field in fields %}    {{ field.name }}: {{ field.dtype }} = pa.Field(
+        nullable={{ 'True' if field.nullable else 'False' }},
+        checks=[{% for check in field.checks %}{{ check }}{% if not loop.last %}, {% endif %}{% endfor %}],
+        description="{{ field.description }}",
+    )
+{% endfor %}
+
+
+__all__ = ["{{ schema_name }}"]

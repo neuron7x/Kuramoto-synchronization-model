@@ -1,0 +1,44 @@
+"""Auto-generated HTTPX client for {{ metadata.get('service_name', client_name) }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import httpx
+
+
+class {{ client_name }}:
+    """Client generated from schemas. Do not edit manually."""
+
+    def __init__(self, base_url: str = "{{ base_url }}", client: httpx.Client | None = None) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._client = client or httpx.Client(base_url=self._base_url)
+
+    def close(self) -> None:
+        self._client.close()
+
+{% for op in operations %}
+    def {{ op.name }}(
+        self,
+{% if op.params or op.request_body %}        *,
+{% endif %}{% for param in op.params %}        {{ param.name }}: {{ param.python_type }}{% if not param.required %} | None{% endif %},
+{% endfor %}{% if op.request_body %}        payload: dict[str, Any],
+{% endif %}        **request_kwargs: Any,
+    ) -> httpx.Response:
+        """{{ op.summary }}"""
+
+        url = f"{self._base_url}{{ op.path }}"
+        response = self._client.request(
+            "{{ op.method }}",
+            url,
+            params={
+{% for param in op.params if param.in == 'query' %}                "{{ param.name }}": {{ param.name }},
+{% endfor %}            },
+            json={{ 'payload' if op.request_body else 'None' }},
+            **request_kwargs,
+        )
+        response.raise_for_status()
+        return response
+
+{% endfor %}
+__all__ = ["{{ client_name }}"]

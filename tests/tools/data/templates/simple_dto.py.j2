@@ -1,0 +1,7 @@
+from pydantic import BaseModel
+
+
+class {{ model_name }}(BaseModel):
+{% for field in fields %}
+    {{ field.name }}: {{ field.type }}{% if not field.required %} | None = None{% else %}{% endif %}
+{% endfor %}

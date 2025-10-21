@@ -1,0 +1,9 @@
+{
+  "title": "SimpleDto",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {"type": "string", "description": "Name"},
+    "age": {"type": "integer", "description": "Age"}
+  }
+}

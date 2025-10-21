@@ -1,0 +1,77 @@
+runtime:
+  cache_dir: .codegen/cache
+  artifacts_dir: artifacts/codegen
+  version_file: VERSION
+
+tasks:
+  - name: public-api-client
+    generator: api-client
+    sources:
+      - schemas/codegen/api/tradepulse_public.yaml
+    template: tools/codegen/templates/api_client.py.j2
+    output: interfaces/clients/generated/public_api_client.py
+    metadata:
+      service_name: TradePulse Public API
+    smoke_tests:
+      - name: has-health-endpoint
+        type: contains
+        options:
+          needle: "def get_health"
+
+  - name: signal-dto
+    generator: dto
+    sources:
+      - schemas/codegen/models/signal.json
+    template: tools/codegen/templates/dto.py.j2
+    output: interfaces/dto/generated/signal_dto.py
+    metadata:
+      default_model_name: SignalDto
+    smoke_tests:
+      - name: dto-class-name
+        type: contains
+        options:
+          needle: "class SignalDto"
+
+  - name: signal-validator
+    generator: validator
+    sources:
+      - schemas/codegen/models/signal.json
+    template: tools/codegen/templates/validator.py.j2
+    output: interfaces/validators/generated/signal_schema.py
+    metadata:
+      schema_name: SignalFrameSchema
+    smoke_tests:
+      - name: validator-class-name
+        type: contains
+        options:
+          needle: "class SignalFrameSchema"
+
+  - name: sdk
+    generator: sdk
+    sources:
+      - schemas/codegen/sdk/components.json
+    template: tools/codegen/templates/sdk.py.j2
+    output: interfaces/sdk/generated/tradepulse_sdk.py
+    metadata:
+      sdk_name: TradePulseSDK
+    smoke_tests:
+      - name: sdk-entrypoint
+        type: contains
+        options:
+          needle: "class TradePulseSDK"
+
+  - name: alembic-migration-template
+    generator: migration
+    sources:
+      - schemas/codegen/models/signal.json
+    template: tools/codegen/templates/migration.py.j2
+    output: migrations/generated/autogen_template.py
+    metadata:
+      branch_labels: "codegen"
+      depends_on: null
+      down_revision: null
+    smoke_tests:
+      - name: migration-has-upgrade
+        type: contains
+        options:
+          needle: "def upgrade"

@@ -1,0 +1,21 @@
+"""High-level SDK entrypoint."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass(slots=True)
+class {{ sdk_name }}:
+    components: dict[str, Any]
+
+    @classmethod
+    def from_components(cls, **components: Any) -> "{{ sdk_name }}":
+        return cls(components=components)
+
+    def get(self, name: str) -> Any:
+        return self.components[name]
+
+
+__all__ = ["{{ sdk_name }}"]

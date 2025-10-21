@@ -1,0 +1,14 @@
+{
+  "api_client": {
+    "module": "interfaces.clients.generated.public_api_client",
+    "class": "TradePulsePublicAPI"
+  },
+  "dto": {
+    "module": "interfaces.dto.generated.signal_dto",
+    "class": "SignalDto"
+  },
+  "validator": {
+    "module": "interfaces.validators.generated.signal_schema",
+    "class": "SignalFrameSchema"
+  }
+}
