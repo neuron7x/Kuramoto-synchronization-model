@@ -123,7 +123,10 @@ class LogisticRegression:
 
             # Augment matrix with intercept term.
             x_aug = np.column_stack([x_weighted, sqrt_w])
-            ridge = np.sqrt(reg_strength) * np.eye(n_features + 1)
+            # Match scikit-learn by excluding the intercept term from regularisation.
+            ridge = np.sqrt(reg_strength) * np.diag(
+                np.concatenate([np.ones(n_features), np.zeros(1)])
+            )
             lhs = x_aug.T @ x_aug + ridge.T @ ridge
             rhs = x_aug.T @ z_weighted
 
