@@ -252,11 +252,27 @@ def _default_settings_loader() -> ApiSecuritySettings:
 def get_api_security_settings() -> ApiSecuritySettings:
     """Return cached security settings for dependency injection."""
 
-    # Lazily instantiate the settings singleton. FastAPI caches dependencies so a simple
-    # module-level cache is sufficient without introducing threading complexities.
+    loader = _default_settings_loader
+    cached_loader = getattr(get_api_security_settings, "_loader", None)
+
+    if cached_loader is None and hasattr(get_api_security_settings, "_instance"):
+        settings = getattr(get_api_security_settings, "_instance")
+        setattr(get_api_security_settings, "_loader", loader)
+        return settings
+
+    if cached_loader is not loader:
+        settings = loader()
+        setattr(get_api_security_settings, "_instance", settings)
+        setattr(get_api_security_settings, "_loader", loader)
+        return settings
+
     if not hasattr(get_api_security_settings, "_instance"):
-        get_api_security_settings._instance = _default_settings_loader()  # type: ignore[attr-defined]
-    return get_api_security_settings._instance  # type: ignore[attr-defined]
+        settings = loader()
+        setattr(get_api_security_settings, "_instance", settings)
+        setattr(get_api_security_settings, "_loader", loader)
+        return settings
+
+    return getattr(get_api_security_settings, "_instance")
 
 
 def verify_request_identity(*, require_client_certificate: bool = False) -> Callable[
