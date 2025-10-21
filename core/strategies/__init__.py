@@ -28,6 +28,17 @@ from .fete import (
     SpectralAnalyzer,
     binary_entropy,
 )
+from .fete_runtime import (
+    BacktestReport,
+    BinanceRESTFetcher,
+    ExecutedTrade,
+    FETEBacktestEngine,
+    HistoricalCandle,
+    PaperTradingAccount,
+    RiskEvent,
+    RiskGuard,
+    YahooFinanceDataFetcher,
+)
 from .trading import (
     HurstVPINStrategy,
     KuramotoStrategy,
@@ -56,6 +67,15 @@ __all__ = [
     "MultiScaleRiskMonitor",
     "binary_entropy",
     "FractalEMA",
+    "HistoricalCandle",
+    "YahooFinanceDataFetcher",
+    "BinanceRESTFetcher",
+    "ExecutedTrade",
+    "PaperTradingAccount",
+    "RiskEvent",
+    "RiskGuard",
+    "BacktestReport",
+    "FETEBacktestEngine",
     "StrategyPipelineDefinition",
     "StrategyPipeline",
     "StrategyDSLLoader",

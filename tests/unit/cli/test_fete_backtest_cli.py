@@ -41,7 +41,9 @@ def test_fete_backtest_cli_produces_equity_curve(tmp_path: Path) -> None:
 
     assert result.exit_code == 0, result.output
     assert "FETE Backtest" in result.output
+    assert "Final Equity" in result.output
+    assert "Trades" in result.output
     assert out_path.exists()
     equity = pd.read_csv(out_path)
-    assert list(equity.columns) == ["t", "equity"]
-    assert len(equity) == 4
+    assert list(equity.columns) == ["timestamp", "equity"]
+    assert len(equity) == 5

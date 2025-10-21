@@ -43,7 +43,13 @@ from core.reporting import (
     render_markdown_to_html,
     render_markdown_to_pdf,
 )
-from core.strategies import FETE, FETEConfig
+from core.strategies import (
+    FETE,
+    FETEBacktestEngine,
+    FETEConfig,
+    PaperTradingAccount,
+    RiskGuard,
+)
 from core.utils.dataframe_io import (
     MissingParquetDependencyError,
     dataframe_to_parquet_bytes,
@@ -1015,26 +1021,41 @@ def fete_backtest(
 
     command = "fete-backtest"
     prices, probs = _load_fete_inputs(csv_path, price_col, prob_col)
-    engine = FETE(FETEConfig())
-    result = engine.backtest(prices, probs)
+    fete_engine = FETE(FETEConfig())
+    account = PaperTradingAccount()
+    risk_guard = RiskGuard()
+    backtester = FETEBacktestEngine(fete_engine, account, risk_guard)
+    report = backtester.run(prices, probs, symbol=csv_path.stem or "asset")
 
     click.echo("=== FETE Backtest ===")
-    click.echo(f"Final Return: {result['final_return']:.2f}%")
-    click.echo(f"Sharpe      : {result['sharpe']:.3f}")
-    click.echo(f"Max DD      : {result['max_dd']:.3f}")
-    audit = result["audit"]
-    click.echo("Audit:")
+    click.echo(f"Final Equity : {report.final_equity:,.2f}")
+    click.echo(f"Total Return : {report.total_return: .2%}")
+    click.echo(f"Sharpe       : {report.sharpe: .3f}")
+    click.echo(f"Volatility   : {report.volatility: .3%}")
+    click.echo(f"Max Drawdown : {report.max_drawdown: .3%}")
+    click.echo(f"Trades       : {report.num_trades} (win rate {report.win_rate: .1%})")
+    audit = report.audit
     click.echo(
-        "  Brier: {brier:.4f}  ECE: {ece:.4f}  Entropy: {entropy:.3f}  τ: {tau:.3f}".format(
+        "Audit  → Brier: {brier:.4f}  ECE: {ece:.4f}  Entropy: {entropy:.3f}  τ: {tau:.3f}".format(
             brier=audit["brier"], ece=audit["ece"], entropy=audit["entropy"], tau=audit["tau"]
         )
     )
+    if risk_guard.circuit_breaker_active:
+        click.echo(f"Circuit breaker engaged: {risk_guard.circuit_reason}")
+    if report.risk_events:
+        click.echo("Risk events:")
+        for event in report.risk_events[-5:]:
+            click.echo(f"  {event.timestamp.isoformat()} • {event.code} • {event.message}")
 
     if out_path is not None:
-        equity = np.asarray(result["equity"], dtype=float)
-        frame = pd.DataFrame({"t": np.arange(equity.size), "equity": equity})
+        curve = pd.DataFrame(
+            {
+                "timestamp": [ts.isoformat() for ts, _ in report.equity_curve],
+                "equity": [value for _, value in report.equity_curve],
+            }
+        )
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        frame.to_csv(out_path, index=False)
+        curve.to_csv(out_path, index=False)
         click.echo(f"[{command}] • wrote {out_path}")
 
 
