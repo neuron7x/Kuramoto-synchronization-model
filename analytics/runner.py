@@ -19,6 +19,7 @@ import pandas as pd
 from hydra.utils import get_original_cwd, to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 
+from analytics import _config_sanitizer as _config_sanitizer
 from analytics._config_sanitizer import redacted_config_yaml
 from analytics.tracking import (
     ExperimentDeviationError,
@@ -33,6 +34,21 @@ from core.config.hydra_profiles import (
 from core.indicators.entropy import delta_entropy, entropy
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 from core.indicators.ricci import build_price_graph, mean_ricci
+
+
+REDACTED_PLACEHOLDER: str = _config_sanitizer._REDACTED_PLACEHOLDER
+
+
+def _redact_sensitive_data(data: Any) -> Any:
+    """Return a copy of ``data`` with sensitive tokens masked."""
+
+    return _config_sanitizer._redact_sensitive_data(data)
+
+
+def _redacted_config_yaml(cfg: DictConfig) -> str:
+    """Serialize ``cfg`` to YAML with sensitive values redacted."""
+
+    return redacted_config_yaml(cfg)
 
 
 @dataclass(slots=True)
