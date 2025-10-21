@@ -213,32 +213,93 @@ def build_tradepulse_platform(
 ) -> TradePulsePlatform:
     """Instantiate a :class:`TradePulsePlatform` with sensible defaults."""
 
+    _validate_audit_arguments(
+        audit_logger=audit_logger,
+        audit_secret=audit_secret,
+        audit_secret_resolver=audit_secret_resolver,
+    )
+
+    resolved_system = _resolve_system(
+        system=system,
+        system_config=system_config,
+        venues=venues,
+        feature_pipeline=feature_pipeline,
+        risk_limits=risk_limits,
+        live_settings=live_settings,
+        allowed_data_roots=allowed_data_roots,
+        max_csv_bytes=max_csv_bytes,
+    )
+    orchestrator = TradePulseOrchestrator(resolved_system)
+
+    resolved_cache_service, resolved_streaming_pipeline = _resolve_streaming_components(
+        system=resolved_system,
+        cache_service=cache_service,
+        streaming_pipeline=streaming_pipeline,
+        streaming_settings=streaming_settings,
+    )
+
+    risk_facade = RiskManagerFacade(resolved_system.risk_manager)
+    resolved_audit_logger = _resolve_audit_logger(
+        audit_logger=audit_logger,
+        audit_secret=audit_secret,
+        audit_secret_resolver=audit_secret_resolver,
+    )
+
+    return TradePulsePlatform(
+        system=resolved_system,
+        orchestrator=orchestrator,
+        cache_service=resolved_cache_service,
+        risk_manager=risk_facade,
+        audit_logger=resolved_audit_logger,
+        streaming_pipeline=resolved_streaming_pipeline,
+    )
+
+
+def _resolve_system(
+    *,
+    system: TradePulseSystem | None,
+    system_config: TradePulseSystemConfig | None,
+    venues: Sequence[ExchangeAdapterConfig] | None,
+    feature_pipeline: FeaturePipelineConfig | None,
+    risk_limits: RiskLimits | None,
+    live_settings: LiveLoopSettings | None,
+    allowed_data_roots: Iterable[str | Path] | None,
+    max_csv_bytes: int | None,
+) -> TradePulseSystem:
+    """Return a ready-to-use :class:`TradePulseSystem` instance."""
+
     if system is not None and system_config is not None:
         raise ValueError("Provide either system or system_config, not both")
+
+    if system is not None:
+        return system
+
+    if system_config is not None:
+        return TradePulseSystem(system_config)
+
+    return build_tradepulse_system(
+        venues=venues,
+        feature_pipeline=feature_pipeline,
+        risk_limits=risk_limits,
+        live_settings=live_settings,
+        allowed_data_roots=allowed_data_roots,
+        max_csv_bytes=max_csv_bytes,
+    )
+
+
+def _resolve_streaming_components(
+    *,
+    system: TradePulseSystem,
+    cache_service: DataIngestionCacheService | None,
+    streaming_pipeline: StreamingIngestionPipeline | None,
+    streaming_settings: StreamingPipelineSettings | None,
+) -> tuple[DataIngestionCacheService, StreamingIngestionPipeline | None]:
+    """Determine the cache service and streaming pipeline to wire into the platform."""
+
     if streaming_pipeline is not None and streaming_settings is not None:
         raise ValueError(
             "Provide either streaming_pipeline or streaming_settings, not both"
         )
-    if audit_logger is None and (audit_secret is None and audit_secret_resolver is None):
-        raise ValueError(
-            "Provide an audit_logger or audit credentials via audit_secret or audit_secret_resolver"
-        )
-    if audit_secret is not None and audit_secret_resolver is not None:
-        raise ValueError("audit_secret and audit_secret_resolver are mutually exclusive")
-
-    if system is None:
-        if system_config is not None:
-            system = TradePulseSystem(system_config)
-        else:
-            system = build_tradepulse_system(
-                venues=venues,
-                feature_pipeline=feature_pipeline,
-                risk_limits=risk_limits,
-                live_settings=live_settings,
-                allowed_data_roots=allowed_data_roots,
-                max_csv_bytes=max_csv_bytes,
-            )
-    orchestrator = TradePulseOrchestrator(system)
 
     if streaming_pipeline is not None:
         pipeline_cache = streaming_pipeline.cache_service
@@ -246,40 +307,62 @@ def build_tradepulse_platform(
             raise ValueError(
                 "cache_service must match the streaming pipeline cache_service"
             )
-        cache_service = pipeline_cache
-    else:
-        if cache_service is None:
-            cache_service = DataIngestionCacheService(
-                data_ingestor=system.data_ingestor,
-            )
+        return pipeline_cache, streaming_pipeline
 
-    if streaming_pipeline is None and streaming_settings is not None:
-        streaming_pipeline = StreamingIngestionPipeline(
-            kafka_config=streaming_settings.kafka_config,
-            cache_service=cache_service,
-            routing_strategy=streaming_settings.routing_strategy,
-            lag_handler=streaming_settings.lag_handler,
-            kafka_service_factory=streaming_settings.kafka_service_factory,
-            kafka_kwargs=streaming_settings.kafka_kwargs,
+    resolved_cache_service = cache_service or DataIngestionCacheService(
+        data_ingestor=system.data_ingestor,
+    )
+
+    if streaming_settings is None:
+        return resolved_cache_service, None
+
+    pipeline = StreamingIngestionPipeline(
+        kafka_config=streaming_settings.kafka_config,
+        cache_service=resolved_cache_service,
+        routing_strategy=streaming_settings.routing_strategy,
+        lag_handler=streaming_settings.lag_handler,
+        kafka_service_factory=streaming_settings.kafka_service_factory,
+        kafka_kwargs=streaming_settings.kafka_kwargs,
+    )
+
+    return resolved_cache_service, pipeline
+
+
+def _validate_audit_arguments(
+    *,
+    audit_logger: AuditLogger | None,
+    audit_secret: str | None,
+    audit_secret_resolver: Callable[[], str] | None,
+) -> None:
+    """Ensure mutually exclusive audit configuration parameters."""
+
+    if audit_logger is None and audit_secret is None and audit_secret_resolver is None:
+        raise ValueError(
+            "Provide an audit_logger or audit credentials via audit_secret or audit_secret_resolver"
         )
 
-    risk_facade = RiskManagerFacade(system.risk_manager)
+    if audit_secret is not None and audit_secret_resolver is not None:
+        raise ValueError("audit_secret and audit_secret_resolver are mutually exclusive")
 
-    if audit_logger is None:
-        if audit_secret is not None:
-            audit_logger = AuditLogger(secret=audit_secret)
-        else:
-            assert audit_secret_resolver is not None
-            audit_logger = AuditLogger(secret_resolver=audit_secret_resolver)
 
-    return TradePulsePlatform(
-        system=system,
-        orchestrator=orchestrator,
-        cache_service=cache_service,
-        risk_manager=risk_facade,
-        audit_logger=audit_logger,
-        streaming_pipeline=streaming_pipeline,
-    )
+def _resolve_audit_logger(
+    *,
+    audit_logger: AuditLogger | None,
+    audit_secret: str | None,
+    audit_secret_resolver: Callable[[], str] | None,
+) -> AuditLogger:
+    """Return a fully configured :class:`AuditLogger`."""
+
+    if audit_logger is not None:
+        return audit_logger
+
+    if audit_secret is not None:
+        return AuditLogger(secret=audit_secret)
+
+    if audit_secret_resolver is None:
+        raise ValueError("audit_secret_resolver must be provided when audit_logger is None")
+
+    return AuditLogger(secret_resolver=audit_secret_resolver)
 
 
 __all__ = [
