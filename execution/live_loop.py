@@ -168,6 +168,8 @@ class LiveExecutionLoop:
             if not cold_start:
                 self._reconcile_state(context)
 
+        self._refresh_risk_state_from_connectors()
+
         self._watchdog = Watchdog(
             name="execution-live-loop",
             heartbeat_interval=self._config.heartbeat_interval,
@@ -361,6 +363,8 @@ class LiveExecutionLoop:
         missing_on_venue = set(managed_orders) - set(venue_orders)
         orphan_on_oms = set(venue_orders) - set(managed_orders)
 
+        state_changed = False
+
         for order_id in missing_on_venue:
             try:
                 correlation = context.oms.requeue_order(order_id)
@@ -374,6 +378,7 @@ class LiveExecutionLoop:
                     },
                 )
                 self._activity.set()
+                state_changed = True
             except LookupError:
                 continue
 
@@ -394,6 +399,138 @@ class LiveExecutionLoop:
                     "correlation_id": correlation,
                 },
             )
+            state_changed = True
+
+        if state_changed:
+            self._refresh_risk_state_from_connectors()
+
+    def _refresh_risk_state_from_connectors(self) -> None:
+        hydrator = getattr(self._risk_manager, "hydrate_positions", None)
+        if not callable(hydrator):
+            return
+        snapshot, sources = self._build_risk_snapshot()
+        if sources == 0:
+            return
+        try:
+            hydrator(snapshot, replace=True)
+        except Exception as exc:  # pragma: no cover - defensive logging path
+            self._logger.warning(
+                "Failed to hydrate risk state from connectors",
+                extra={
+                    "event": "live_loop.risk_hydration_failed",
+                    "error": str(exc),
+                },
+            )
+
+    def _build_risk_snapshot(self) -> tuple[dict[str, tuple[float, float]], int]:
+        snapshot: dict[str, tuple[float, float]] = {}
+        sources = 0
+        for context in self._contexts.values():
+            try:
+                positions = context.connector.get_positions()
+            except Exception as exc:
+                self._logger.warning(
+                    "Failed to fetch positions for risk hydration",
+                    extra={
+                        "event": "live_loop.positions_failed",
+                        "venue": context.name,
+                        "error": str(exc),
+                    },
+                )
+                continue
+            sources += 1
+            for payload in positions:
+                parsed = self._parse_position_payload(payload)
+                if parsed is None:
+                    continue
+                symbol, quantity, notional = parsed
+                existing = snapshot.get(symbol)
+                if existing is None:
+                    if abs(quantity) <= 1e-12 and notional <= 0.0:
+                        continue
+                    snapshot[symbol] = (quantity, notional)
+                    continue
+                combined_qty = existing[0] + quantity
+                combined_notional = max(existing[1], notional)
+                existing_price = (
+                    existing[1] / abs(existing[0])
+                    if abs(existing[0]) > 1e-12 and existing[1] > 0.0
+                    else None
+                )
+                new_price = (
+                    notional / abs(quantity)
+                    if abs(quantity) > 1e-12 and notional > 0.0
+                    else None
+                )
+                price_candidates = [p for p in (existing_price, new_price) if p is not None]
+                if price_candidates:
+                    combined_notional = max(
+                        combined_notional,
+                        abs(combined_qty) * price_candidates[-1],
+                    )
+                if abs(combined_qty) <= 1e-12:
+                    snapshot.pop(symbol, None)
+                else:
+                    snapshot[symbol] = (combined_qty, combined_notional)
+        return snapshot, sources
+
+    @staticmethod
+    def _parse_position_payload(
+        payload: Mapping[str, object] | object,
+    ) -> tuple[str, float, float] | None:
+        if not isinstance(payload, Mapping):
+            return None
+        symbol = str(payload.get("symbol") or payload.get("instrument") or "").strip()
+        if not symbol:
+            return None
+
+        def _first(keys: Iterable[str]) -> float | None:
+            for key in keys:
+                if key not in payload:
+                    continue
+                try:
+                    return float(payload[key])
+                except (TypeError, ValueError):
+                    continue
+            return None
+
+        net_qty = _first(["net_quantity", "net_qty", "net_position", "quantity", "qty"])
+        if net_qty is None:
+            long_qty = _first(["long_quantity", "long_qty"])
+            short_qty = _first(["short_quantity", "short_qty"])
+            if long_qty is None and short_qty is None:
+                return None
+            net_qty = (long_qty or 0.0) - (short_qty or 0.0)
+
+        avg_price = _first(["mark_price", "average_price", "avg_price", "price"])
+        if avg_price is None:
+            if net_qty > 0:
+                avg_price = _first(["long_average_price", "long_avg_price"])
+            elif net_qty < 0:
+                avg_price = _first(["short_average_price", "short_avg_price"])
+
+        long_qty = _first(["long_quantity", "long_qty"])
+        long_avg = _first(["long_average_price", "long_avg_price"])
+        short_qty = _first(["short_quantity", "short_qty"])
+        short_avg = _first(["short_average_price", "short_avg_price"])
+
+        if avg_price is None:
+            candidates = []
+            if long_qty and long_avg:
+                candidates.append(abs(long_qty * long_avg))
+            if short_qty and short_avg:
+                candidates.append(abs(short_qty * short_avg))
+            notional = max(candidates) if candidates else 0.0
+        else:
+            notional = abs(net_qty) * abs(avg_price)
+            if notional <= 0 and long_qty and long_avg:
+                notional = abs(long_qty * long_avg)
+            if notional <= 0 and short_qty and short_avg:
+                notional = max(notional, abs(short_qty * short_avg))
+
+        if abs(net_qty) <= 1e-12 and notional <= 0.0:
+            return None
+        return symbol, float(net_qty), float(notional)
 
     def _order_submission_loop(self) -> None:
         while not self._stop.is_set():

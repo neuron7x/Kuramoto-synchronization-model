@@ -11,7 +11,7 @@ import pytest
 from domain import Order, OrderSide, OrderType
 from execution.connectors import BinanceConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.risk import RiskLimits, RiskManager
+from execution.risk import JsonRiskStateStore, LimitViolation, RiskLimits, RiskManager
 
 
 class RecoveryConnector(BinanceConnector):
@@ -37,7 +37,7 @@ class RecoveryConnector(BinanceConnector):
 class FlakyConnector(BinanceConnector):
     def __init__(self) -> None:
         super().__init__()
-        self._failures_remaining = 1
+        self._failures_remaining = 2
         self.reconnects = 0
 
     def connect(self, credentials=None) -> None:  # type: ignore[override]
@@ -48,6 +48,31 @@ class FlakyConnector(BinanceConnector):
             self._failures_remaining -= 1
             raise ConnectionError("simulated heartbeat disconnect")
         return super().get_positions()
+
+
+class WarmStartConnector(BinanceConnector):
+    def __init__(self) -> None:
+        super().__init__()
+        self._seeded: list[dict[str, float]] = []
+
+    def seed_position(self, symbol: str, quantity: float, price: float) -> None:
+        entry: dict[str, float] = {
+            "symbol": symbol,
+            "net_quantity": quantity,
+            "average_price": price,
+            "price": price,
+        }
+        if quantity > 0:
+            entry["long_quantity"] = quantity
+            entry["long_average_price"] = price
+        elif quantity < 0:
+            entry["short_quantity"] = abs(quantity)
+            entry["short_average_price"] = price
+        self._seeded = [entry]
+
+    def get_positions(self):  # type: ignore[override]
+        base = list(super().get_positions())
+        return base + list(self._seeded)
 
 
 @pytest.fixture()
@@ -123,6 +148,38 @@ def test_live_loop_recovers_and_requeues_orders(
     assert stray.order_id in adopted_ids
 
     loop_restart.shutdown()
+
+
+def test_live_loop_warm_start_enforces_limits(live_loop_config: LiveLoopConfig) -> None:
+    connector = WarmStartConnector()
+    state_path = live_loop_config.state_dir / "risk_state.json"
+    store = JsonRiskStateStore(state_path)
+    limits = RiskLimits(max_notional=1_000_000, max_position=1.0)
+    risk_manager = RiskManager(limits, risk_state_store=store)
+
+    loop = LiveExecutionLoop({"binance": connector}, risk_manager, config=live_loop_config)
+    loop.start(cold_start=True)
+    try:
+        risk_manager.register_fill("BTCUSDT", "buy", 0.8, 20_000)
+        connector.seed_position("BTCUSDT", 0.8, 20_000)
+    finally:
+        loop.shutdown()
+
+    restart_risk = RiskManager(limits, risk_state_store=store)
+    loop_restart = LiveExecutionLoop({"binance": connector}, restart_risk, config=live_loop_config)
+    loop_restart.start(cold_start=False)
+    try:
+        aggressive = Order(
+            symbol="BTCUSDT",
+            side=OrderSide.BUY,
+            quantity=0.4,
+            price=19_900,
+            order_type=OrderType.LIMIT,
+        )
+        with pytest.raises(LimitViolation):
+            loop_restart.submit_order("binance", aggressive, correlation_id="warm-1")
+    finally:
+        loop_restart.shutdown()
 
 
 def test_live_loop_emits_reconnect_on_heartbeat_failure(
