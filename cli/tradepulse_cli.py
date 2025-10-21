@@ -171,7 +171,21 @@ def _load_prices(cfg: IngestConfig | BacktestConfig | ExecConfig) -> pd.DataFram
         raise ConfigError("Timestamp column missing from data source")
     if data_cfg.value_field not in frame.columns:
         raise ConfigError("Value column missing from data source")
-    frame = frame.sort_values(data_cfg.timestamp_field).reset_index(drop=True)
+    timestamp_field = data_cfg.timestamp_field
+    series = frame[timestamp_field]
+    if not series.is_monotonic_increasing:
+        # ``sort_values`` performs an ``argsort`` even when the data is already
+        # ordered. Large backtests typically ingest pre-sorted market data, so
+        # we avoid the expensive rearrangement when the monotonicity invariant
+        # already holds.
+        frame = frame.sort_values(timestamp_field)
+    index = frame.index
+    if not (
+        isinstance(index, pd.RangeIndex)
+        and index.start == 0
+        and index.step == 1
+    ):
+        frame = frame.reset_index(drop=True)
     return frame
 
 
