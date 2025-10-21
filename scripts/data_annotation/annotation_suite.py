@@ -7,7 +7,7 @@ that can be reused inside notebooks, pipelines, or thin orchestration layers.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple
@@ -83,7 +83,7 @@ class AnnotationProject:
             "project_id": self.project_id,
             "name": self.name,
             "instruction_id": self.instruction.template_id,
-            "records": [record.__dict__ for record in self.records],
+            "records": [asdict(record) for record in self.records],
         }
 
 
@@ -437,10 +437,13 @@ class MetricReporter:
     def build_report(self, records: Sequence[AnnotationRecord]) -> Dict[str, Any]:
         quality = self.quality_checker.evaluate(records)
         pairwise = self.agreement_calculator.cohen_kappa()
+        pairwise_serializable = {
+            f"{left}::{right}": value for (left, right), value in pairwise.items()
+        }
         fleiss = self.agreement_calculator.fleiss_kappa()
         return {
             "quality": quality,
-            "pairwise_kappa": pairwise,
+            "pairwise_kappa": pairwise_serializable,
             "fleiss_kappa": fleiss,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
