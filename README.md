@@ -25,6 +25,7 @@ TradePulse is a professional algorithmic trading platform that combines advanced
 - [Continuous Integration & Quality](#-continuous-integration--quality)
 - [Release Automation](#-release-automation)
 - [Quick Start](#-quick-start)
+- [Local Development](#-local-development)
 - [Feature Highlights](#-feature-highlights)
 - [Documentation](#-documentation)
 - [Usage Examples](#-usage-examples)
@@ -136,6 +137,55 @@ docker compose down
 ```
 
 See the [Docker Quick Start Guide](docs/docker-quickstart.md) for detailed instructions, including GPU setup and troubleshooting tips.
+
+---
+
+## 🧑‍💻 Local Development
+
+TradePulse ships with a batteries-included developer experience so you can jump from clone to contribution quickly.
+
+### Prerequisites
+
+- **Python 3.11+** – matches the runtime and CI baseline.
+- **pip & virtualenv** – manage isolated environments per project.
+- **Node.js ≥ 18.18** *(optional)* – required for the TypeScript dashboard under `ui/dashboard`.
+- **Docker** *(optional)* – mirrors the production topology locally (see [`docs/docker-quickstart.md`](docs/docker-quickstart.md)).
+
+### Bootstrap the toolchain
+
+```bash
+# 1. Create an isolated Python environment and install development tooling
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.lock
+
+# 2. Install Git hooks so linting and type checks run before every commit
+pre-commit install
+
+# 3. (Optional) Install UI dependencies for the dashboard bundle
+npm install --prefix ui/dashboard
+
+# 4. Validate that the environment is healthy
+pre-commit run --all-files
+make test:fast
+```
+
+Refer to the [development environment scenario guide](docs/scenarios.md#development-environment-setup) for an end-to-end walkthrough that covers editor integration, dotenv management, and data fixture creation.
+
+### Common project automation
+
+| Command | Purpose |
+| --- | --- |
+| `make test:fast` | Execute the focused pytest suite (excludes `slow`, `heavy_math`, and `nightly` markers). |
+| `make test:all` | Run the full coverage-enabled pytest battery for release candidates. |
+| `make scripts-lint` | Trigger the consolidated lint runner (`ruff`, `black`, `isort`, `flake8`, shell linters). |
+| `make scripts-test` | Execute script-level smoke tests defined under `scripts/`. |
+| `make schema-validate` | Verify backward- and forward-compatible schema evolution for event contracts. |
+| `make sbom` | Regenerate the CycloneDX software bill of materials under `sbom/`. |
+| `make scripts-dev-up` | Provision the local services used in end-to-end experiments (message bus, monitoring, etc.). |
+| `make scripts-dev-down` | Tear down the local services stack and reclaim resources. |
+
+These targets map directly to the [`Makefile`](Makefile) and mirror the CI pipelines, ensuring local changes conform to production expectations before you open a pull request.
 
 ---
 
