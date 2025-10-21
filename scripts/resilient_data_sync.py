@@ -27,6 +27,15 @@ from scripts.runtime.transfer import TransferError
 
 
 @dataclass(slots=True)
+class ResolvedSource:
+    """Normalized representation of an input target for synchronization."""
+
+    source: str
+    destination_key: str
+    checksum_keys: tuple[str, ...]
+
+
+@dataclass(slots=True)
 class SyncResult:
     source: str
     destination: Path
@@ -89,21 +98,57 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _resolve_sources(raw_sources: list[str], pattern: str) -> list[str]:
-    resolved: list[str] = []
+def _resolve_sources(raw_sources: list[str], pattern: str) -> list[ResolvedSource]:
+    resolved: list[ResolvedSource] = []
     for raw in raw_sources:
         parsed = urlparse(raw)
         if parsed.scheme in {"http", "https", "file"}:
-            resolved.append(raw)
+            name = _destination_name(raw)
+            resolved.append(
+                ResolvedSource(source=raw, destination_key=name, checksum_keys=(raw,))
+            )
             continue
         path = Path(raw)
         if path.is_file():
-            resolved.append(str(path))
+            name = path.name or _destination_name(raw)
+            resolved.append(
+                ResolvedSource(
+                    source=str(path),
+                    destination_key=name,
+                    checksum_keys=(str(path), str(path.resolve())),
+                )
+            )
         elif path.is_dir():
+            root = path.resolve()
             for candidate in find_resources(pattern, [path]):
-                resolved.append(str(candidate))
+                try:
+                    relative = candidate.relative_to(root)
+                except ValueError:
+                    relative_key = candidate.name
+                    checksum_keys = (str(candidate), relative_key)
+                else:
+                    relative_key = relative.as_posix()
+                    checksum_keys = (
+                        str(candidate),
+                        relative_key,
+                        str(relative),
+                    )
+                resolved.append(
+                    ResolvedSource(
+                        source=str(candidate),
+                        destination_key=relative_key,
+                        checksum_keys=checksum_keys,
+                    )
+                )
         else:
-            resolved.append(str(path))
+            fallback = _destination_name(raw)
+            resolved.append(
+                ResolvedSource(
+                    source=str(path),
+                    destination_key=fallback,
+                    checksum_keys=(str(path),),
+                )
+            )
     return resolved
 
 
@@ -191,25 +236,30 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     results: list[SyncResult] = []
 
-    destinations: dict[str, Path] = {
-        source: manager.path_for(_destination_name(source))
-        for source in resolved_sources
-    }
+    destinations: dict[str, Path] = {}
+    for spec in resolved_sources:
+        destinations[spec.source] = manager.path_for(spec.destination_key)
 
     with task_queue(max_workers=max(1, args.max_workers)) as queue:
-        futures: list[tuple[str, Future[SyncResult]]] = []
-        for source, destination in destinations.items():
+        futures: list[tuple[ResolvedSource, str | None, Future[SyncResult]]] = []
+        for spec in resolved_sources:
+            destination = destinations[spec.source]
+            checksum_value: str | None = None
+            for key in spec.checksum_keys:
+                checksum_value = checksums.get(key)
+                if checksum_value is not None:
+                    break
             future = queue.submit(
                 _transfer_one,
-                source,
+                spec.source,
                 destination,
-                checksum=checksums.get(source),
+                checksum=checksum_value,
                 checksum_algorithm=args.checksum_algorithm,
                 retries=max(1, args.retries),
             )
-            futures.append((source, future))
+            futures.append((spec, checksum_value, future))
 
-        for source, future in futures:
+        for spec, checksum_value, future in futures:
             try:
                 result = future.result()
             except (
@@ -217,9 +267,9 @@ def main(argv: Iterable[str] | None = None) -> int:
             ) as exc:  # pragma: no cover - defensive catch for unexpected failures
                 results.append(
                     SyncResult(
-                        source=source,
-                        destination=destinations[source],
-                        checksum=checksums.get(source),
+                        source=spec.source,
+                        destination=destinations[spec.source],
+                        checksum=checksum_value,
                         status=f"internal_error:{exc}",
                     )
                 )
