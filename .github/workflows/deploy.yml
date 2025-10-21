@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   deploy-validation:
@@ -56,8 +57,8 @@ jobs:
         run: |
           set -euo pipefail
           curl -sSL https://github.com/instrumenta/kubeval/releases/download/v0.16.1/kubeval-linux-amd64.tar.gz \
-            | tar -xz -C /usr/local/bin kubeval
-          chmod +x /usr/local/bin/kubeval
+            | sudo tar -xz -C /usr/local/bin kubeval
+          sudo chmod +x /usr/local/bin/kubeval
 
       - name: Validate Kubernetes manifests
         run: |
