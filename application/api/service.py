@@ -1387,8 +1387,8 @@ def create_app(
         resolved_settings = settings or AdminApiSettings()
     except ValidationError as exc:  # pragma: no cover - defensive branch
         alias_map = {
-            "audit_secret": "TRADEPULSE_AUDIT_SECRET",
-            "AUDIT_SECRET": "TRADEPULSE_AUDIT_SECRET",
+            "audit_secret": "TRADEPULSE_AUDIT_SECRET",  # pragma: allowlist secret
+            "AUDIT_SECRET": "TRADEPULSE_AUDIT_SECRET",  # pragma: allowlist secret
             "admin_subject": "TRADEPULSE_ADMIN_SUBJECT",
             "ADMIN_SUBJECT": "TRADEPULSE_ADMIN_SUBJECT",
             "admin_rate_limit_max_attempts": "TRADEPULSE_ADMIN_RATE_LIMIT_MAX_ATTEMPTS",
