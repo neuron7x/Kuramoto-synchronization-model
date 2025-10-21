@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 
 from core.neuro.amm import AMMConfig
-from core.neuro.calibration import CalibConfig, calibrate_random
+from core.neuro.calibration import CalibConfig, CalibResult, calibrate_random
 
 
 def test_calibrate_random_respects_bounds() -> None:
@@ -47,3 +47,26 @@ def test_calibrate_random_returns_default_when_no_trials() -> None:
     best = calibrate_random(x, R, kappa, cfg)
     assert isinstance(best, AMMConfig)
     assert best == AMMConfig()
+
+
+def test_calibrate_random_can_return_details() -> None:
+    cfg = CalibConfig(iters=5, seed=4)
+    rng = np.random.default_rng(1)
+    x = rng.normal(0.0, 0.01, 32).astype(np.float32)
+    R = rng.uniform(0.2, 0.8, 32).astype(np.float32)
+    kappa = rng.normal(0.0, 0.2, 32).astype(np.float32)
+
+    result = calibrate_random(x, R, kappa, cfg, return_details=True)
+
+    assert isinstance(result, CalibResult)
+    assert isinstance(result.config, AMMConfig)
+    assert isinstance(result.score, float)
+    assert result.metrics
+    assert "corr" in result.metrics
+    assert "mean_precision" in result.metrics
+    if np.isfinite(result.score):
+        assert np.isclose(
+            result.score,
+            result.metrics["corr"] * result.metrics["mean_precision"],
+            rtol=1e-6,
+        )
