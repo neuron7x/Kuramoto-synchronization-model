@@ -30,7 +30,6 @@ ci
 cicd
 contrib
 docs
-domain
 examples
 infra
 migrations
@@ -38,7 +37,6 @@ newsfragments
 reports
 scripts/tests
 stakeholders
-strategies
 support
 terraform
 tradepulse.env.sample

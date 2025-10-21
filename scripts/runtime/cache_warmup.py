@@ -8,9 +8,11 @@ Helm hook defined in ``deploy/helm/tradepulse/templates/cache-warmup-job.yaml``.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import os
+import sys
 from dataclasses import dataclass
 from typing import Sequence
 
@@ -58,20 +60,31 @@ def _parse_endpoints(raw: str | None) -> Sequence[str]:
     return DEFAULT_ENDPOINTS
 
 
+def _determine_endpoints(args: Sequence[str]) -> Sequence[str]:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("endpoints", nargs="*")
+    parsed, _ = parser.parse_known_args(args)
+
+    if parsed.endpoints:
+        return [item for item in parsed.endpoints if item]
+
+    return _parse_endpoints(os.getenv("TRADEPULSE_CACHE_ENDPOINTS"))
+
+
 def _configure_logging() -> None:
     level = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(level=level, format="[cache-warmup] %(levelname)s %(message)s")
 
 
 def main(args: Sequence[str] | None = None) -> int:
-    """Run the cache warm-up routine.
-
-    ``args`` are ignored so the entry point is compatible with the Helm hook
-    which only sets environment variables.
-    """
+    """Run the cache warm-up routine."""
 
     _configure_logging()
-    endpoints = _parse_endpoints(os.getenv("TRADEPULSE_CACHE_ENDPOINTS"))
+
+    if args is None:
+        args = sys.argv[1:]
+
+    endpoints = _determine_endpoints(list(args))
     if not endpoints:
         logging.warning("No endpoints configured; skipping cache warm-up")
         return 0
