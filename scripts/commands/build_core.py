@@ -241,7 +241,8 @@ def _build_distributions(pipeline: BuildPipeline) -> None:
             "--sdist",
             "--outdir",
             str(temp_dir),
-        ]
+        ],
+        cwd=context.core_path,
     )
 
     pipeline.state.dist_files = sorted(temp_dir.glob("*"))
