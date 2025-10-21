@@ -10,10 +10,10 @@ import base64
 import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from jwt.algorithms import RSAAlgorithm
+from jwt.algorithms import OKPAlgorithm, RSAAlgorithm
 from starlette.requests import Request
 
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
@@ -304,6 +304,55 @@ async def test_oct_key_succeeds_when_algorithm_allowed(
 
     assert identity.subject == "oct-enabled-user"
     assert request.state.token_claims["sub"] == "oct-enabled-user"
+
+
+@pytest.mark.anyio
+async def test_eddsa_algorithm_preserves_canonical_casing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if hasattr(get_api_security_settings, "_instance"):
+        delattr(get_api_security_settings, "_instance")
+
+    private_key = ed25519.Ed25519PrivateKey.generate()
+    public_key = private_key.public_key()
+    jwk_dict = OKPAlgorithm.to_jwk(public_key, as_dict=True)
+    kid = "eddsa-key"
+    jwk_dict.update({"kid": kid, "alg": "EdDSA", "use": "sig"})
+
+    settings = ApiSecuritySettings(
+        oauth2_algorithms=("EdDSA",),
+        oauth2_issuer="https://issuer.tradepulse.test",
+        oauth2_audience="tradepulse-api",
+        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+    )
+
+    async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
+        assert uri == str(settings.oauth2_jwks_uri)
+        if request_kid == kid:
+            return jwk_dict
+        return None
+
+    monkeypatch.setattr("application.api.security._jwks_resolver.get_key", fake_get_key)
+
+    now = datetime.now(timezone.utc)
+    payload = {
+        "iss": str(settings.oauth2_issuer),
+        "aud": settings.oauth2_audience,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(minutes=5)).timestamp()),
+        "sub": "eddsa-user",
+    }
+
+    token = jwt.encode(payload, private_key, algorithm="EdDSA", headers={"kid": kid})
+    request = _make_request()
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    dependency = verify_request_identity()
+
+    identity = await dependency(request, credentials, settings)
+
+    assert identity.subject == "eddsa-user"
+    assert request.state.token_claims["sub"] == "eddsa-user"
 
 
 @pytest.mark.anyio

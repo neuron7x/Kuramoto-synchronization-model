@@ -472,13 +472,19 @@ class ApiSecuritySettings(BaseSettings):
 
     @model_validator(mode="after")
     def _normalise_algorithms(self) -> "ApiSecuritySettings":
-        algorithms = tuple(
-            dict.fromkeys(
-                algorithm.strip().upper()
-                for algorithm in self.oauth2_algorithms
-                if algorithm and algorithm.strip()
-            )
-        )
+        canonical: list[str] = []
+        for algorithm in self.oauth2_algorithms:
+            if not algorithm or not algorithm.strip():
+                continue
+            cleaned = algorithm.strip()
+            upper = cleaned.upper()
+            if upper == "EDDSA":
+                value = "EdDSA"
+            else:
+                value = upper
+            if value not in canonical:
+                canonical.append(value)
+        algorithms = tuple(canonical)
         if not algorithms:
             raise ValueError("oauth2_algorithms must define at least one signing algorithm")
         return self.model_copy(update={"oauth2_algorithms": algorithms})

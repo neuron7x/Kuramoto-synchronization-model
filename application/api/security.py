@@ -295,7 +295,9 @@ def verify_request_identity(*, require_client_certificate: bool = False) -> Call
 
         normalised_algorithm = algorithm.strip().upper()
         allowed_algorithms = settings.oauth2_algorithms
-        if normalised_algorithm not in allowed_algorithms:
+        algorithm_lookup = {value.upper(): value for value in allowed_algorithms}
+        canonical_algorithm = algorithm_lookup.get(normalised_algorithm)
+        if canonical_algorithm is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Unsupported bearer token signing algorithm.",
@@ -324,13 +326,13 @@ def verify_request_identity(*, require_client_certificate: bool = False) -> Call
                     detail="Signing key is not authorised for signature validation.",
                 )
 
-        public_key = _jwk_to_key(jwk_entry, algorithm=normalised_algorithm)
+        public_key = _jwk_to_key(jwk_entry, algorithm=canonical_algorithm)
 
         try:
             claims = jwt.decode(
                 token,
                 key=public_key,
-                algorithms=list(allowed_algorithms),
+                algorithms=list(algorithm_lookup.values()),
                 audience=settings.oauth2_audience,
                 issuer=str(settings.oauth2_issuer),
                 options={"require": ["exp", "iat", "sub"]},
