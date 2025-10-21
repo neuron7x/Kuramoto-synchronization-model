@@ -56,6 +56,38 @@ except Exception as exc:  # pragma: no cover - the dependencies are optional
 _DEFAULT_TRACER_NAME = "tradepulse.pipeline"
 _TRACEPARENT_HEADER = "traceparent"
 
+_FAILOVER_ATTRIBUTE_KEYS = (
+    "pipeline.failover",
+    "routing.failover",
+    "routing.failover_active",
+    "resilience.failover",
+    "failover.active",
+)
+_TRUTHY_STRINGS = {
+    "1",
+    "true",
+    "yes",
+    "y",
+    "on",
+    "active",
+    "failover",
+}
+
+
+def _is_truthy_signal(value: Any) -> bool:
+    """Return ``True`` when ``value`` represents an enabled flag."""
+
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if not lowered:
+            return False
+        return lowered in _TRUTHY_STRINGS
+    return bool(value)
+
 
 if _TRACE_AVAILABLE:
 
@@ -344,12 +376,22 @@ if _TRACE_AVAILABLE:
             self._hot_sampler = TraceIdRatioBased(hot_ratio)
 
         def _is_hot(self, name: str, attributes: Mapping[str, Any] | None) -> bool:
-            if attributes and self._attribute_flag in attributes:
-                value = attributes[self._attribute_flag]
-                if isinstance(value, bool) and value:
+            lowered_name = name.lower()
+            if "failover" in lowered_name:
+                return True
+
+            if attributes:
+                if self._attribute_flag in attributes and _is_truthy_signal(
+                    attributes[self._attribute_flag]
+                ):
                     return True
-                if isinstance(value, str) and value.lower() in {"1", "true", "yes"}:
-                    return True
+
+                for alias in _FAILOVER_ATTRIBUTE_KEYS:
+                    if alias == self._attribute_flag:
+                        continue
+                    if alias in attributes and _is_truthy_signal(attributes[alias]):
+                        return True
+
             for pattern in self._patterns:
                 if fnmatch.fnmatch(name, pattern):
                     return True
