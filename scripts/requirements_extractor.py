@@ -144,7 +144,9 @@ class Requirement:
             lines.append("Позначки:")
             for flag in self.flags:
                 lines.append(f"- {flag}")
-        return "\n".join(lines)
+        # Jira CSV import does not tolerate literal newlines inside fields. Convert them
+        # to escaped sequences so that each requirement stays on a single row.
+        return "\\n".join(lines)
 
 
 @dataclass
