@@ -57,6 +57,10 @@ from .model_monitoring import (  # noqa: F401
     QualityConfidenceInterval,
     ResourceSnapshot,
 )
+from .release_gates import (  # noqa: F401
+    ReleaseGateEvaluator,
+    ReleaseGateResult,
+)
 from .response_quality import (  # noqa: F401
     ActiveSample,
     ComplaintRecord,
@@ -113,6 +117,8 @@ __all__ = [
     "EmailSender",
     "SlackNotifier",
     "NotificationDispatcher",
+    "ReleaseGateEvaluator",
+    "ReleaseGateResult",
     "DriftDetector",
     "FeatureSnapshot",
     "FeatureDriftMetric",

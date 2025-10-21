@@ -1,0 +1,40 @@
+{
+  "checklist_version": "2024-05-01",
+  "items": [
+    {
+      "key": "recorded_exchange_replay",
+      "description": "Replay recorded Coinbase BTC-USD depth snapshots through the integration harness.",
+      "status": "complete",
+      "evidence": [
+        "tests/integration/test_recorded_exchange_replay.py::test_recorded_exchange_replay_validates_release_gates"
+      ]
+    },
+    {
+      "key": "latency_benchmark",
+      "description": "Compute latency percentiles from recorded exchange logs and enforce release thresholds.",
+      "status": "complete",
+      "evidence": [
+        "observability/release_gates.py",
+        "tests/observability/test_release_gates.py::test_latency_gate_passes_for_recorded_samples"
+      ]
+    },
+    {
+      "key": "risk_compliance_workflow",
+      "description": "Run the combined risk/compliance workflow across replayed orders with automated gating.",
+      "status": "complete",
+      "evidence": [
+        "execution/workflows.py",
+        "tests/unit/execution/test_risk_compliance_workflow.py::test_workflow_accepts_in_policy_orders"
+      ]
+    },
+    {
+      "key": "health_release_gates",
+      "description": "Surface release gating results via the health server for CI automation.",
+      "status": "complete",
+      "evidence": [
+        "observability/release_gates.py",
+        "tests/observability/test_release_gates.py::test_gate_results_raise_on_failure"
+      ]
+    }
+  ]
+}
