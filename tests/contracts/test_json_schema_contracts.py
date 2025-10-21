@@ -154,6 +154,10 @@ def test_json_schema_backward_and_forward_compatibility() -> None:
                     f"Required fields were removed from {name}: "
                     f"{sorted(previous_required - current_required)}"
                 )
+                assert current_required <= previous_required, (
+                    f"Required fields were added to {name} without major bump: "
+                    f"{sorted(current_required - previous_required)}"
+                )
 
                 previous_properties = set(previous_schema.get("properties", {}).keys())
                 current_properties = set(current_schema.get("properties", {}).keys())
