@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tradepulse.http.prediction_create_response.v1",
+  "title": "PredictionCreateResponse",
+  "description": "Acknowledgement payload for asynchronous prediction requests.",
+  "type": "object",
+  "required": [
+    "request_id",
+    "status",
+    "submitted_at",
+    "estimated_completion_at",
+    "links"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "Server generated tracking identifier."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "queued",
+        "rejected"
+      ],
+      "description": "Processing state of the prediction request."
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the request was accepted."
+    },
+    "estimated_completion_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "Estimated completion time when available."
+    },
+    "links": {
+      "type": "object",
+      "description": "Hypermedia controls for polling or webhook consumption.",
+      "required": [
+        "status",
+        "webhook"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "format": "uri"
+        },
+        "webhook": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional warnings communicated to the client.",
+      "default": []
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "request_id": "pred-20250201-001",
+      "status": "accepted",
+      "submitted_at": "2025-02-01T12:31:00Z",
+      "estimated_completion_at": "2025-02-01T12:32:30Z",
+      "links": {
+        "status": "https://api.tradepulse.example/v1/predictions/pred-20250201-001",
+        "webhook": "https://webhooks.tradepulse.example/predictions/pred-20250201-001"
+      },
+      "warnings": []
+    }
+  ]
+}

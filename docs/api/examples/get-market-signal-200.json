@@ -1,0 +1,12 @@
+{
+  "as_of": "2025-02-01T12:30:00Z",
+  "confidence": 0.82,
+  "horizon_minutes": 30,
+  "metadata": {
+    "market": "crypto",
+    "venue": "BINANCE"
+  },
+  "signal": "BUY",
+  "symbol": "BTC-USD",
+  "ttl_seconds": 90
+}
