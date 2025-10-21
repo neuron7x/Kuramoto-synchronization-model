@@ -5,6 +5,7 @@ from __future__ import annotations
 # SPDX-License-Identifier: MIT
 
 import ast
+import os
 import logging
 import re
 from dataclasses import dataclass, field
@@ -207,6 +208,12 @@ def _run_python_linters(context: StyleContext, targets: Sequence[str]) -> None:
 
 
 def _ensure_pre_commit(context: StyleContext) -> None:
+    if os.getenv("PRE_COMMIT"):
+        LOGGER.debug(
+            "Detected PRE_COMMIT environment variable; skipping nested pre-commit invocation."
+        )
+        return
+
     config = REPO_ROOT / ".pre-commit-config.yaml"
     if not config.exists():
         context.add_issue("pre-commit", "Missing .pre-commit-config.yaml")
