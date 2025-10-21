@@ -171,7 +171,10 @@ class ShockScenarioGenerator:
         correlation = torch.abs(F.cosine_similarity(state, scenario, dim=1))
 
         weights = torch.ones_like(scenario) * 0.1
-        weights[:, :3] = torch.tensor([0.5, 0.3, 0.2], device=self._device)
+        priority = min(scenario.size(1), 3)
+        if priority:
+            base_weights = torch.tensor([0.5, 0.3, 0.2], device=self._device, dtype=scenario.dtype)
+            weights[:, :priority] = base_weights[:priority]
         drawdown = torch.relu((scenario.abs() * weights).sum(dim=1))
         penalty = torch.relu(drawdown - self._risk_tolerance) * 25.0
 
