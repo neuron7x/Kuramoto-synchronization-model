@@ -163,13 +163,33 @@ class StrictCausalFeatureBuilder:
         self._config = config or FeatureBuilderConfig()
 
     @staticmethod
-    def _compute_delta_r(past_returns: np.ndarray, alpha: float) -> float:
-        z_scores = _robust_zscore(past_returns)
+    def _coherence(snapshot: np.ndarray) -> float:
+        z_scores = _robust_zscore(snapshot)
         spectrum = np.fft.rfft(z_scores, axis=0)
-        # take first harmonic as a cheap phase proxy
+        if spectrum.shape[0] <= 1:
+            return 0.0
         principal_angle = np.angle(spectrum[1, :])
-        coherence = np.abs(np.mean(np.exp(1j * principal_angle)))
-        smoothed = _ema(np.full(len(past_returns), coherence), alpha=alpha)
+        return float(np.abs(np.mean(np.exp(1j * principal_angle))))
+
+    @classmethod
+    def _compute_delta_r(cls, past_returns: np.ndarray, alpha: float) -> float:
+        segment = max(5, int(len(past_returns) // 6))
+        if len(past_returns) <= segment:
+            return 0.0
+
+        step = max(1, segment // 2)
+        coherence_series: list[float] = []
+        for start in range(0, len(past_returns) - segment + 1, step):
+            coherence_series.append(cls._coherence(past_returns[start : start + segment]))
+
+        if len(coherence_series) < 2:
+            return 0.0
+
+        coherence_array = np.asarray(coherence_series, dtype=float)
+        if coherence_array.ndim != 1:
+            coherence_array = coherence_array.reshape(-1)
+        coherence_array = np.nan_to_num(coherence_array, nan=0.0, posinf=1.0, neginf=0.0)
+        smoothed = _ema(coherence_array, alpha=alpha)
         if len(smoothed) < 2:
             return 0.0
         return float(smoothed[-1] - smoothed[-2])
