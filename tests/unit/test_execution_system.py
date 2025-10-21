@@ -24,13 +24,33 @@ from execution.normalization import (
     SymbolSpecification,
 )
 from execution.oms import OMSConfig, OrderManagementSystem
-from execution.risk import RiskLimits, RiskManager
+from execution.risk import (
+    JsonRiskStateStore,
+    LimitViolation,
+    RiskLimits,
+    RiskManager,
+)
 
 
 @pytest.fixture()
 def risk_manager() -> RiskManager:
     limits = RiskLimits(max_notional=1_000_000, max_position=100)
     return RiskManager(limits)
+
+
+def test_risk_state_persists_across_restarts(tmp_path) -> None:
+    store = JsonRiskStateStore(tmp_path / "risk_state.json")
+    limits = RiskLimits(max_notional=100_000, max_position=3.0)
+    risk = RiskManager(limits, risk_state_store=store)
+
+    risk.register_fill("BTCUSDT", "buy", 2.0, 20_000)
+    assert risk.current_position("BTCUSDT") == pytest.approx(2.0)
+
+    restarted = RiskManager(limits, risk_state_store=store)
+    assert restarted.current_position("BTCUSDT") == pytest.approx(2.0)
+
+    with pytest.raises(LimitViolation):
+        restarted.validate_order("BTCUSDT", "buy", 2.0, 20_000)
 
 
 def test_oms_idempotent_submission_and_recovery(

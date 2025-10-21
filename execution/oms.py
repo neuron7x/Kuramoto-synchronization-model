@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Deque, Dict, Iterable, Mapping, MutableMapping
 
 from core.utils.metrics import get_metrics_collector
-from domain import Order, OrderStatus
+from domain import Order, OrderSide, OrderStatus
 from interfaces.execution import RiskController
 
 from .audit import ExecutionAuditLogger, get_execution_audit_logger
@@ -552,6 +552,13 @@ class OrderManagementSystem:
         self._processed[correlation] = order.order_id
         self._correlations[order.order_id] = correlation
         self._persist_state()
+        hydrator = getattr(self.risk, "hydrate_positions", None)
+        if callable(hydrator):
+            side_sign = 1.0 if order.side is OrderSide.BUY else -1.0
+            qty = float(order.filled_quantity)
+            price = order.average_price or order.price or 0.0
+            notional = abs(qty * price)
+            hydrator({order.symbol: (side_sign * qty, notional)})
 
     def requeue_order(self, order_id: str, *, correlation_id: str | None = None) -> str:
         """Re-enqueue an order whose venue state was lost or invalidated."""

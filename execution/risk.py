@@ -35,6 +35,7 @@ without modifying risk logic.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import threading
 import time
@@ -44,7 +45,15 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Mapping, MutableMapping, Protocol, TypeVar
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Protocol,
+    TypeVar,
+)
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -130,6 +139,20 @@ class KillSwitchStateStore(Protocol):
         """Persist the supplied state atomically."""
 
 
+class RiskStateStore(Protocol):
+    """Persistence backend for :class:`RiskManager` exposures."""
+
+    def load(self) -> tuple[Mapping[str, float], Mapping[str, float]] | None:
+        """Return persisted positions and notionals, if available."""
+
+    def save(
+        self,
+        positions: Mapping[str, float],
+        notionals: Mapping[str, float],
+    ) -> None:
+        """Persist the supplied exposure snapshot atomically."""
+
+
 T = TypeVar("T")
 
 
@@ -184,6 +207,56 @@ class KillSwitchStateRecord(BaseModel):
             raise ValueError("reason must be provided when kill-switch is engaged")
         if any(ord(ch) < 32 and ch not in {"\t", "\n"} for ch in self.reason):
             raise ValueError("reason contains control characters")
+        return self
+
+
+class RiskStateRecord(BaseModel):
+    """Validated exposure snapshot used for persistence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    positions: Mapping[str, float] = Field(default_factory=dict)
+    last_notional: Mapping[str, float] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_payload(cls, data: object) -> dict[str, Mapping[str, float]]:
+        if data is None:
+            return {"positions": {}, "last_notional": {}}
+        if isinstance(data, RiskStateRecord):
+            return data.model_dump()
+        if isinstance(data, Mapping):
+            payload: dict[str, Mapping[str, float]] = {}
+            for key in ("positions", "last_notional"):
+                raw = data.get(key, {})
+                if raw is None:
+                    payload[key] = {}
+                    continue
+                if not isinstance(raw, Mapping):
+                    raise TypeError(f"{key} section must be a mapping")
+                payload[key] = dict(raw)
+            return payload
+        raise TypeError("risk state payload must be a mapping")
+
+    @model_validator(mode="after")
+    def _normalise(self) -> "RiskStateRecord":
+        def _sanitise(source: Mapping[str, float]) -> dict[str, float]:
+            normalised: dict[str, float] = {}
+            for raw_symbol, raw_value in source.items():
+                if raw_symbol is None:
+                    continue
+                symbol = str(raw_symbol).strip()
+                if not symbol:
+                    continue
+                try:
+                    numeric = float(raw_value)
+                except (TypeError, ValueError):
+                    continue
+                normalised[symbol] = numeric
+            return normalised
+
+        object.__setattr__(self, "positions", _sanitise(self.positions))
+        object.__setattr__(self, "last_notional", _sanitise(self.last_notional))
         return self
 
 
@@ -609,6 +682,44 @@ class PostgresKillSwitchStateStore(BaseKillSwitchStateStore):
                 return operation()
         raise RuntimeError("Database retry loop exited unexpectedly")
 
+
+class JsonRiskStateStore(RiskStateStore):
+    """Persist :class:`RiskManager` exposure snapshots to JSON."""
+
+    def __init__(self, path: Path | str) -> None:
+        self._path = Path(path)
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+
+    def load(self) -> tuple[Mapping[str, float], Mapping[str, float]] | None:
+        if not self._path.exists():
+            return None
+        try:
+            payload = json.loads(self._path.read_text())
+        except json.JSONDecodeError as exc:  # pragma: no cover - defensive parsing
+            raise DataQualityError("Persisted risk state is not valid JSON") from exc
+        record = RiskStateRecord.model_validate(payload)
+        return record.positions, record.last_notional
+
+    def save(
+        self,
+        positions: Mapping[str, float],
+        notionals: Mapping[str, float],
+    ) -> None:
+        record = RiskStateRecord(positions=dict(positions), last_notional=dict(notionals))
+        tmp_path = self._path.with_suffix(".tmp")
+        tmp_path.write_text(
+            json.dumps(
+                {
+                    "positions": record.positions,
+                    "last_notional": record.last_notional,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        tmp_path.replace(self._path)
+
+
 class KillSwitch:
     """Global kill-switch toggled on critical failures with optional persistence.
 
@@ -703,21 +814,113 @@ class RiskManager(RiskController):
         time_source: Callable[[], float] | None = None,
         audit_logger: ExecutionAuditLogger | None = None,
         kill_switch_store: KillSwitchStateStore | None = None,
+        risk_state_store: RiskStateStore | None = None,
     ) -> None:
         self.limits = limits
         self._kill_switch = KillSwitch(store=kill_switch_store)
         self._time = time_source or time.time
         self._positions: MutableMapping[str, float] = {}
         self._last_notional: MutableMapping[str, float] = {}
+        self._risk_state_store = risk_state_store
         self._submissions: deque[float] = deque()
         self._logger = get_logger(__name__)
         self._metrics = get_metrics_collector()
         self._audit = audit_logger or get_execution_audit_logger()
         self._limit_violation_streak = 0
         self._throttle_violation_streak = 0
+        self._restore_risk_state()
 
     def _canonical_symbol(self, symbol: str) -> str:
         return normalize_symbol(symbol)
+
+    def _restore_risk_state(self) -> None:
+        if self._risk_state_store is None:
+            return
+        try:
+            snapshot = self._risk_state_store.load()
+        except DataQualityError:
+            self._logger.exception("Persisted risk state failed validation")
+            raise
+        if not snapshot:
+            return
+        positions, notionals = snapshot
+        for symbol, position in positions.items():
+            try:
+                canonical = self._canonical_symbol(symbol)
+                self._positions[canonical] = float(position)
+            except Exception:  # pragma: no cover - defensive normalisation path
+                self._logger.warning(
+                    "Failed to restore position entry",  # noqa: TRY400 - structured logging
+                    extra={
+                        "event": "risk.restore_position_failed",
+                        "symbol": symbol,
+                    },
+                )
+        for symbol, notional in notionals.items():
+            try:
+                canonical = self._canonical_symbol(symbol)
+                self._last_notional[canonical] = abs(float(notional))
+            except Exception:  # pragma: no cover - defensive normalisation path
+                self._logger.warning(
+                    "Failed to restore notional entry",  # noqa: TRY400
+                    extra={
+                        "event": "risk.restore_notional_failed",
+                        "symbol": symbol,
+                    },
+                )
+
+    def _persist_risk_state(self) -> None:
+        if self._risk_state_store is None:
+            return
+        try:
+            self._risk_state_store.save(self._positions, self._last_notional)
+        except Exception as exc:  # pragma: no cover - persistence failures rare
+            self._logger.warning(
+                "Failed to persist risk exposure snapshot",  # noqa: TRY400
+                extra={"event": "risk.persist_failed", "error": str(exc)},
+            )
+
+    def hydrate_positions(
+        self,
+        mapping: Mapping[str, tuple[float, float]],
+        *,
+        replace: bool = False,
+    ) -> None:
+        """Hydrate internal exposure tracking from external sources."""
+
+        if replace:
+            self._positions.clear()
+            self._last_notional.clear()
+
+        for symbol, payload in mapping.items():
+            try:
+                position, notional = payload
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "hydrate_positions expects mapping values to be 2-tuples"
+                ) from exc
+
+            canonical = self._canonical_symbol(symbol)
+            try:
+                position_value = float(position)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Invalid position value for {symbol!r}") from exc
+            try:
+                notional_value = abs(float(notional))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Invalid notional value for {symbol!r}") from exc
+
+            if abs(position_value) <= 1e-12:
+                self._positions.pop(canonical, None)
+            else:
+                self._positions[canonical] = position_value
+
+            if notional_value <= 1e-12:
+                self._last_notional.pop(canonical, None)
+            else:
+                self._last_notional[canonical] = notional_value
+
+        self._persist_risk_state()
 
     def _check_rate_limit(self, symbol: str, now: float) -> None:
         if self.limits.max_orders_per_interval <= 0:
@@ -978,6 +1181,7 @@ class RiskManager(RiskController):
         position = float(self._positions.get(canonical_symbol, 0.0)) + side_sign * qty
         self._positions[canonical_symbol] = position
         self._last_notional[canonical_symbol] = abs(position * price)
+        self._persist_risk_state()
 
     def current_position(self, symbol: str) -> float:
         """Return the signed position for ``symbol``."""
@@ -1099,7 +1303,9 @@ __all__ = [
     "OrderRateExceeded",
     "RiskLimits",
     "KillSwitchStateStore",
+    "RiskStateStore",
     "SQLiteKillSwitchStateStore",
+    "JsonRiskStateStore",
     "KillSwitch",
     "RiskManager",
     "DefaultPortfolioRiskAnalyzer",
