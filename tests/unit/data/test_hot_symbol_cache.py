@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 import pytest
+
+hypothesis = pytest.importorskip("hypothesis")
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 import src.data.kafka_ingestion as kafka_ingestion
 from core.data.models import InstrumentType, PriceTick
@@ -194,3 +199,125 @@ def test_hot_symbol_cache_drain_flushes_all_entries(
 
     assert cache.snapshot("BTC/USDT", "BINANCE") is None
     assert cache.snapshot("ETH/USDT", "BINANCE") is None
+
+
+class _PredictableClock:
+    """Deterministic monotonic clock returning evenly spaced timestamps."""
+
+    def __init__(self, *, step: float = 0.03125) -> None:
+        self._value = 0.0
+        self._step = step
+
+    def __call__(self) -> float:
+        self._value += self._step
+        return self._value
+
+
+def _summarise_snapshot(snapshot: kafka_ingestion.HotSymbolSnapshot) -> tuple:
+    return (
+        snapshot.symbol,
+        snapshot.venue,
+        snapshot.instrument_type,
+        tuple(
+            (
+                tick.timestamp,
+                tick.price,
+                tick.volume,
+                tick.instrument_type,
+            )
+            for tick in snapshot.ticks
+        ),
+        snapshot.last_seen,
+    )
+
+
+@st.composite
+def _tick_strategy(draw) -> PriceTick:
+    symbol = draw(
+        st.sampled_from(
+            (
+                "BTC/USDT",
+                "ETH/USDT",
+                "SOL/USDT",
+                "ADA/USDT",
+            )
+        )
+    )
+    venue = draw(st.sampled_from(("BINANCE", "COINBASE", "KRAKEN")))
+    instrument_type = draw(st.sampled_from(tuple(InstrumentType)))
+    price = draw(
+        st.decimals(
+            min_value=Decimal("0.01"),
+            max_value=Decimal("100000"),
+            places=5,
+            allow_nan=False,
+            allow_infinity=False,
+        )
+    )
+    volume = draw(
+        st.decimals(
+            min_value=Decimal("0"),
+            max_value=Decimal("1000"),
+            places=4,
+            allow_nan=False,
+            allow_infinity=False,
+        )
+    )
+    timestamp = BASE_TS + timedelta(seconds=draw(st.integers(min_value=0, max_value=86_400)))
+    return PriceTick.create(
+        symbol=symbol,
+        venue=venue,
+        price=price,
+        timestamp=timestamp,
+        volume=volume,
+        instrument_type=instrument_type,
+    )
+
+
+def _run_cache_sequence(ticks: list[PriceTick]) -> tuple[tuple[tuple, ...], tuple[tuple, ...]]:
+    clock = _PredictableClock()
+    cache = HotSymbolCache(
+        max_entries=5,
+        ttl_seconds=3600,
+        max_ticks=7,
+        flush_size=4,
+        clock=clock,
+    )
+
+    flushes: list[tuple[tuple, ...]] = []
+    seen_keys: set[tuple[str, str, InstrumentType]] = set()
+    for tick in ticks:
+        seen_keys.add((tick.symbol, tick.venue, tick.instrument_type))
+        snapshots = cache.update(tick)
+        for snapshot in snapshots:
+            assert snapshot.ticks, "flushed snapshots must contain ticks"
+            assert len(snapshot.ticks) <= 7
+            assert all(t.symbol == snapshot.symbol for t in snapshot.ticks)
+            assert all(t.venue == snapshot.venue for t in snapshot.ticks)
+            assert all(t.instrument_type == snapshot.instrument_type for t in snapshot.ticks)
+        flushes.append(tuple(_summarise_snapshot(snapshot) for snapshot in snapshots))
+        for symbol, venue, instrument_type in seen_keys:
+            snapshot = cache.snapshot(symbol, venue, instrument_type)
+            if snapshot is None:
+                continue
+            assert len(snapshot.ticks) <= 7
+            assert all(t.symbol == symbol for t in snapshot.ticks)
+            assert all(t.venue == venue for t in snapshot.ticks)
+            assert all(t.instrument_type == instrument_type for t in snapshot.ticks)
+
+    drained_snapshots = []
+    for snapshot in cache.drain():
+        assert snapshot.ticks, "drained snapshots must contain ticks"
+        assert len(snapshot.ticks) <= 7
+        drained_snapshots.append(_summarise_snapshot(snapshot))
+    return tuple(flushes), tuple(drained_snapshots)
+
+
+@given(st.lists(_tick_strategy(), min_size=1, max_size=25))
+@settings(max_examples=200, deadline=None)
+def test_hot_symbol_cache_property_invariants_and_determinism(
+    ticks: list[PriceTick],
+) -> None:
+    first = _run_cache_sequence(ticks)
+    second = _run_cache_sequence(ticks)
+    assert first == second
