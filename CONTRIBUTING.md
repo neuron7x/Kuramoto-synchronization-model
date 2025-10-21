@@ -147,7 +147,14 @@ tests/fuzz/
 pytest tests/
 
 # Run with coverage
-pytest tests/ --cov=core --cov=backtest --cov=execution --cov=analytics
+pytest tests/ \
+  --cov=core --cov=backtest --cov=execution \
+  --cov-config=configs/quality/critical_surface.coveragerc \
+  --cov-report=term-missing --cov-report=xml
+
+python -m tools.coverage.guardrail \
+  --config configs/quality/critical_surface.toml \
+  --coverage coverage.xml
 ```
 
 See [TESTING.md](TESTING.md) for detailed testing guidelines.

@@ -234,7 +234,14 @@ This mirrors the cookbook pipeline (ingest → indicators → backtest) document
 - Core commands:
   ```bash
   # Full suite with coverage
-  pytest tests/ --cov=core --cov=backtest --cov=execution --cov=analytics --cov-branch --cov-report=term-missing
+  pytest tests/ \
+    --cov=core --cov=backtest --cov=execution \
+    --cov-config=configs/quality/critical_surface.coveragerc \
+    --cov-report=term-missing --cov-report=xml
+
+  python -m tools.coverage.guardrail \
+    --config configs/quality/critical_surface.toml \
+    --coverage coverage.xml
 
   # Fast feedback loop
   make test:fast

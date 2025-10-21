@@ -37,13 +37,18 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest \
-            --cov=src \
             --cov=core \
             --cov=backtest \
             --cov=execution \
+            --cov-config=configs/quality/critical_surface.coveragerc \
             --cov-report=xml \
-            --cov-report=term-missing \
-            --cov-fail-under=90
+            --cov-report=term-missing
+
+      - name: Enforce reliability coverage guardrail
+        run: |
+          python -m tools.coverage.guardrail \
+            --config configs/quality/critical_surface.toml \
+            --coverage coverage.xml
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

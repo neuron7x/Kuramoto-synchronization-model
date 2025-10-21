@@ -323,7 +323,14 @@ Yes! Open a [feature request](https://github.com/neuron7x/TradePulse/issues/new)
 pytest tests/
 
 # With coverage
-pytest tests/ --cov=core --cov=backtest --cov=execution --cov=analytics
+pytest tests/ \
+  --cov=core --cov=backtest --cov=execution \
+  --cov-config=configs/quality/critical_surface.coveragerc \
+  --cov-report=term-missing --cov-report=xml
+
+python -m tools.coverage.guardrail \
+  --config configs/quality/critical_surface.toml \
+  --coverage coverage.xml
 
 # Specific test category
 pytest tests/unit/
@@ -368,7 +375,10 @@ Target: **98% code coverage**
 
 Current coverage is visible in CI and can be generated locally:
 ```bash
-pytest tests/ --cov=core --cov=backtest --cov=execution --cov=analytics --cov-report=html
+pytest tests/ \
+  --cov=core --cov=backtest --cov=execution \
+  --cov-config=configs/quality/critical_surface.coveragerc \
+  --cov-report=html
 open htmlcov/index.html
 ```
 

@@ -295,7 +295,14 @@ Now that you're up and running, explore:
 2. Set up your IDE
 3. Run the full test suite:
    ```bash
-   pytest tests/ --cov=core --cov=backtest --cov=execution --cov=analytics
+   pytest tests/ \
+     --cov=core --cov=backtest --cov=execution \
+     --cov-config=configs/quality/critical_surface.coveragerc \
+     --cov-report=term-missing --cov-report=xml
+
+   python -m tools.coverage.guardrail \
+     --config configs/quality/critical_surface.toml \
+     --coverage coverage.xml
    ```
 4. Explore the codebase
 
