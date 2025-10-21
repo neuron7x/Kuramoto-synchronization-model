@@ -27,7 +27,13 @@ class {{ client_name }}:
     ) -> httpx.Response:
         """{{ op.summary }}"""
 
-        url = f"{self._base_url}{{ op.path }}"
+        path = "{{ op.path }}"
+{% set path_params = op.params | selectattr('in', 'equalto', 'path') | list %}{% if path_params %}
+        path = path.format(
+{% for param in path_params %}            {{ param.name }}={{ param.name }},
+{% endfor %}        )
+{% endif %}
+        url = f"{self._base_url}{path}"
         response = self._client.request(
             "{{ op.method }}",
             url,
