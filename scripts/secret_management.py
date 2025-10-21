@@ -158,6 +158,16 @@ class SecretManagementSuite:
 
         policies: list[SecretRotationPolicy] = []
         for metadata in self._vault.list_metadata():
+            labels = metadata.labels or {}
+            status = (labels.get("status") or "").lower()
+            if status == "revoked":
+                continue
+            revoked_flag = labels.get("revoked")
+            if isinstance(revoked_flag, str):
+                if revoked_flag.lower() in {"true", "1", "yes"}:
+                    continue
+            elif revoked_flag:
+                continue
             interval = metadata.rotation_interval
             if interval is None:
                 continue

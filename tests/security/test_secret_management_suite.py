@@ -113,3 +113,24 @@ def test_management_suite_end_to_end(management_suite: SecretManagementSuite, tm
     assert recovery["secret_count"] >= 2
     assert recovery["audit_log_verified"]
 
+
+def test_rotation_policies_skip_revoked_secret(
+    management_suite: SecretManagementSuite,
+) -> None:
+    suite = management_suite
+    metadata = suite.store_secret(
+        "services/revoked",
+        "value-123",
+        environment="production",
+        rotation_interval=timedelta(seconds=1),
+    )
+    suite.revoke_secret("services/revoked", reason="compromised")
+
+    secret_key = metadata.name.lower()
+    vault_metadata = suite.vault._metadata[secret_key]
+    vault_metadata.updated_at = vault_metadata.updated_at - timedelta(days=2)
+    suite.vault._metadata[secret_key] = vault_metadata
+
+    assert suite.enforce_rotation_policies() == []
+    assert suite.vault._metadata[secret_key].labels.get("status") == "revoked"
+
