@@ -166,6 +166,19 @@ def test_cache_ticks_rejects_blank_timeframe() -> None:
         )
 
 
+def test_cache_ticks_rejects_empty_sequence() -> None:
+    service = DataIngestionCacheService()
+
+    with pytest.raises(ValueError, match="ticks must not be empty"):
+        service.cache_ticks(
+            [],
+            layer="raw",
+            symbol="BTCUSD",
+            venue="BINANCE",
+            timeframe="1min",
+        )
+
+
 def test_cache_frame_normalises_timezone_naive_index() -> None:
     index = pd.DatetimeIndex(
         [
@@ -194,6 +207,23 @@ def test_cache_frame_normalises_timezone_naive_index() -> None:
         layer="raw", symbol="ETHUSD", venue="BINANCE", timeframe="1min"
     )
     assert metadata is not None and metadata.rows == 3
+
+
+def test_cache_frame_requires_datetime_index() -> None:
+    frame = pd.DataFrame(
+        {"price": [100.0, 101.0], "volume": [1.0, 2.0]},
+        index=pd.Index([0, 1], name="timestamp"),
+    )
+    service = DataIngestionCacheService()
+
+    with pytest.raises(TypeError, match="DatetimeIndex"):
+        service.cache_frame(
+            frame,
+            layer="raw",
+            symbol="BTCUSD",
+            venue="BINANCE",
+            timeframe="1min",
+        )
 
 
 def test_cache_frame_rejects_non_numeric_values() -> None:
@@ -422,5 +452,29 @@ def test_metadata_for_unknown_key_returns_none() -> None:
     service = DataIngestionCacheService()
     assert (
         service.metadata_for(layer="raw", symbol="AAA", venue="BBB", timeframe="1min")
+        is None
+    )
+
+
+def test_clear_resets_registry_and_metadata() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [_tick(base.replace(minute=i), 100.0 + i) for i in range(3)]
+    service = DataIngestionCacheService()
+    original_registry = service.cache_registry
+
+    service.cache_ticks(
+        ticks, layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+
+    assert service.cache_snapshot()
+
+    service.clear()
+
+    assert not service.cache_snapshot()
+    assert service.cache_registry is not original_registry
+    assert (
+        service.metadata_for(
+            layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+        )
         is None
     )

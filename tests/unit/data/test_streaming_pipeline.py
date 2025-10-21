@@ -155,6 +155,50 @@ async def test_cache_writer_ignores_unrouted_ticks() -> None:
 
 
 @pytest.mark.asyncio
+async def test_cache_writer_no_ticks_avoids_cache_calls() -> None:
+    cache = _RecordingCacheService()
+    handler = CacheWriterTickHandler(
+        cache_service=cache,
+        routing_strategy=StaticTickRoutingStrategy(
+            route_template=CacheRoute(layer="raw", timeframe="1s")
+        ),
+    )
+
+    await handler([])
+
+    assert cache.calls == []
+
+
+@pytest.mark.asyncio
+async def test_cache_writer_large_batch_is_deterministic() -> None:
+    cache = _RecordingCacheService()
+    handler = CacheWriterTickHandler(
+        cache_service=cache,
+        routing_strategy=StaticTickRoutingStrategy(
+            route_template=CacheRoute(layer="raw", timeframe="1s", market="crypto")
+        ),
+    )
+    now = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [
+        _tick("BTCUSD", price=100.0 + idx, when=now + timedelta(milliseconds=idx))
+        for idx in range(500)
+    ] + [
+        _tick("ETHUSD", price=50.0 + idx, when=now + timedelta(milliseconds=idx))
+        for idx in range(750)
+    ]
+
+    await handler(ticks)
+    await handler(ticks)
+
+    assert len(cache.calls) == 4
+    first_pass = cache.calls[:2]
+    second_pass = cache.calls[2:]
+    assert [call.tick_count for call in first_pass] == [500, 750]
+    assert [call.tick_count for call in second_pass] == [500, 750]
+    assert first_pass[0].market == "crypto" and second_pass[0].market == "crypto"
+
+
+@pytest.mark.asyncio
 async def test_pipeline_exposes_composed_services() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
@@ -217,3 +261,65 @@ async def test_pipeline_aggregator_operates_on_shared_cache() -> None:
 
     assert result.frame.shape[0] == 3
     assert result.key.timeframe == "1s"
+
+
+def test_pipeline_rejects_tick_handler_in_kafka_kwargs() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+
+    with pytest.raises(ValueError, match="must not be provided"):
+        StreamingIngestionPipeline(
+            kafka_config=config,
+            kafka_kwargs={"tick_handler": object()},
+        )
+
+
+def test_pipeline_rejects_lag_handler_in_kafka_kwargs() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+
+    with pytest.raises(ValueError, match="must not be provided"):
+        StreamingIngestionPipeline(
+            kafka_config=config,
+            kafka_kwargs={"lag_handler": object()},
+        )
+
+
+def test_pipeline_respects_explicit_lag_handler() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    lag_handler = object()
+    created: list[_StubKafkaService] = []
+
+    def factory(
+        cfg: KafkaIngestionConfig,
+        *,
+        tick_handler: CacheWriterTickHandler,
+        lag_handler: object | None,
+        **kwargs: Any,
+    ) -> _StubKafkaService:
+        service = _StubKafkaService(
+            cfg,
+            tick_handler=tick_handler,
+            lag_handler=lag_handler,
+            **kwargs,
+        )
+        created.append(service)
+        return service
+
+    pipeline = StreamingIngestionPipeline(
+        kafka_config=config,
+        lag_handler=lag_handler,
+        kafka_service_factory=factory,
+    )
+
+    assert created and created[0].lag_handler is lag_handler
