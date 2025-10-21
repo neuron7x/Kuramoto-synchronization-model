@@ -80,6 +80,7 @@ nav:
       - Scaling: scaling.md
       - Chaos Testing (GameDay): resilience.md
       - Reliability Targets: reliability.md
+      - Communication Strategy System: communication_strategy.md
       - Zero-Downtime Schema Migrations: zero_downtime_schema_migrations.md
       - Incident Playbooks: incident_playbooks.md
       - Live Trading Runbook: runbook_live_trading.md
