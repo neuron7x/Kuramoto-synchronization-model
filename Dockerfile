@@ -61,12 +61,4 @@ USER tradepulse
 
 EXPOSE 8001
 
-CMD [
-    "uvicorn",
-    "application.api.service:create_app",
-    "--factory",
-    "--host",
-    "0.0.0.0",
-    "--port",
-    "8001"
-]
+CMD ["uvicorn", "application.api.service:create_app", "--factory", "--host", "0.0.0.0", "--port", "8001"]
