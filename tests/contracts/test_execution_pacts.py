@@ -5,8 +5,15 @@ import time
 from typing import Any, Mapping
 
 import pytest
-from pactman.mock import mock_server
-from pactman import Consumer, Provider
+
+pactman = pytest.importorskip("pactman", reason="pactman is required for contract tests")
+mock_module = pytest.importorskip(
+    "pactman.mock", reason="pactman.mock is required for contract tests"
+)
+
+Consumer = pactman.Consumer
+Provider = pactman.Provider
+mock_server = mock_module.mock_server
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.adapters.base import RESTWebSocketConnector
