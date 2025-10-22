@@ -67,6 +67,7 @@ i18n-validate:
 .PHONY: mutation-test
 mutation-test:
 	mutmut run --use-coverage
+	python -m tools.mutation.kill_rate_guard --threshold 0.8
 	mutmut results
 
 .PHONY: sbom supply-chain-verify dependencies-check
