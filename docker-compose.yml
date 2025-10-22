@@ -6,6 +6,11 @@ services:
     ports:
       - "8001:8001"
     restart: unless-stopped
+    environment:
+      TRADEPULSE_AUDIT_SECRET: "local-dev-audit-secret-change-me"
+      TRADEPULSE_OAUTH2_ISSUER: "https://auth.tradepulse.local"
+      TRADEPULSE_OAUTH2_AUDIENCE: "tradepulse-api"
+      TRADEPULSE_OAUTH2_JWKS_URI: "https://auth.tradepulse.local/jwks"
     healthcheck:
       test:
         - "CMD"

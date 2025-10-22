@@ -81,6 +81,88 @@ def _write_artifact(path: Path, payload: str) -> None:
     path.write_text(payload)
 
 
+def _collect_compose_diagnostics(
+    *,
+    compose_file: Path,
+    project: str,
+    service: str,
+    artifact_dir: Path,
+) -> None:
+    errors: list[str] = []
+
+    logs_path = artifact_dir / "docker-compose-logs.txt"
+    try:
+        with logs_path.open("w", encoding="utf-8") as handle:
+            subprocess.run(
+                _compose_cmd(compose_file, project, "logs"),
+                check=False,
+                text=True,
+                stdout=handle,
+                stderr=subprocess.STDOUT,
+            )
+    except Exception as exc:  # pragma: no cover - diagnostic helper
+        errors.append(f"failed to capture docker compose logs: {exc}")
+
+    try:
+        ps_process = subprocess.run(
+            _compose_cmd(compose_file, project, "ps"),
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except Exception as exc:  # pragma: no cover - diagnostic helper
+        errors.append(f"failed to capture docker compose ps output: {exc}")
+    else:
+        if ps_process.stdout:
+            _write_artifact(
+                artifact_dir / "docker-compose-ps.txt", ps_process.stdout
+            )
+        if ps_process.stderr:
+            errors.append(
+                "docker compose ps emitted stderr output:\n" + ps_process.stderr
+            )
+
+    try:
+        container_id = (
+            subprocess.run(
+                _compose_cmd(compose_file, project, "ps", "-q", service),
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+            .stdout.strip()
+        )
+    except Exception as exc:  # pragma: no cover - diagnostic helper
+        errors.append(f"failed to resolve container id for {service}: {exc}")
+        container_id = ""
+
+    if container_id:
+        try:
+            inspect_process = subprocess.run(
+                ["docker", "inspect", container_id],
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+        except Exception as exc:  # pragma: no cover - diagnostic helper
+            errors.append(f"failed to inspect container {container_id}: {exc}")
+        else:
+            if inspect_process.stdout:
+                _write_artifact(
+                    artifact_dir / "docker-inspect.json", inspect_process.stdout
+                )
+            if inspect_process.stderr:
+                errors.append(
+                    "docker inspect emitted stderr output:\n"
+                    + inspect_process.stderr
+                )
+
+    if errors:
+        _write_artifact(
+            artifact_dir / "diagnostic-errors.log", "\n".join(errors)
+        )
+
+
 def run_smoke_test(args: argparse.Namespace) -> None:
     compose_file = Path(args.compose_file).resolve()
     project = args.project_name
@@ -91,6 +173,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
 
     up_command = _compose_cmd(compose_file, project, "up", "-d", "--build")
+    diagnostics_captured = False
     try:
         subprocess.run(up_command, check=True, text=True, env=env)
 
@@ -124,22 +207,24 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         metrics_text = _fetch_text(args.metrics_url, timeout=args.http_timeout)
         _write_artifact(artifact_dir / "api-metrics.txt", metrics_text)
 
-        logs_path = artifact_dir / "docker-compose-logs.txt"
-        with logs_path.open("w", encoding="utf-8") as handle:
-            subprocess.run(
-                _compose_cmd(compose_file, project, "logs"),
-                check=True,
-                text=True,
-                stdout=handle,
-                stderr=subprocess.STDOUT,
-            )
-
-        ps_output = _run(
-            _compose_cmd(compose_file, project, "ps"),
-            capture_output=True,
-        ).stdout
-        _write_artifact(artifact_dir / "docker-compose-ps.txt", ps_output)
+        _collect_compose_diagnostics(
+            compose_file=compose_file,
+            project=project,
+            service=args.service_name,
+            artifact_dir=artifact_dir,
+        )
+        diagnostics_captured = True
     finally:
+        if not diagnostics_captured:
+            try:
+                _collect_compose_diagnostics(
+                    compose_file=compose_file,
+                    project=project,
+                    service=args.service_name,
+                    artifact_dir=artifact_dir,
+                )
+            except Exception:  # pragma: no cover - best-effort diagnostics
+                pass
         subprocess.run(
             _compose_cmd(compose_file, project, "down", "-v"),
             check=False,
