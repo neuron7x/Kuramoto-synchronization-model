@@ -59,6 +59,11 @@ class QuadraticComponent(TrainingComponent):
     def state_dict(self):
         return {"weights": self.weights.copy()}
 
+    def load_state_dict(self, state):
+        if "weights" in state:
+            self.weights = np.asarray(state["weights"], dtype=np.float32).copy()
+            self._grad = np.zeros_like(self.weights, dtype=np.float32)
+
     def _ensure_dim(self, dim: int) -> None:
         if self.weights.shape[0] == dim:
             return

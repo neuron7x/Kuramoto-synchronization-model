@@ -548,6 +548,7 @@ class CheckpointManager:
         *,
         step: int,
         epoch: int,
+        step_in_epoch: int | None,
         state_dict: Mapping[str, Any],
         metrics: Mapping[str, float],
     ) -> Path:
@@ -557,6 +558,7 @@ class CheckpointManager:
         payload = {
             "step": step,
             "epoch": epoch,
+            "step_in_epoch": step_in_epoch,
             "timestamp": timestamp,
             "state": state_dict,
             "metrics": dict(metrics),
@@ -579,6 +581,83 @@ class CheckpointManager:
 
         return checkpoint_path
 
+    def list_checkpoints(self) -> list[Path]:
+        """Return checkpoint paths ordered from oldest to newest."""
+
+        with self._lock:
+            entries = self._load_index()
+        paths: list[Path] = []
+        for entry in entries:
+            path = self._directory / entry
+            if path.exists():
+                paths.append(path)
+        return paths
+
+    def latest_checkpoint(self) -> Path | None:
+        """Return the most recent checkpoint path if available."""
+
+        checkpoints = self.list_checkpoints()
+        if not checkpoints:
+            return None
+        return checkpoints[-1]
+
+    def load(self, checkpoint: Path | str) -> Mapping[str, Any]:
+        """Load the payload stored in ``checkpoint``."""
+
+        path = Path(checkpoint)
+        if not path.exists():
+            raise FileNotFoundError(f"Checkpoint '{path}' does not exist")
+        with path.open("rb") as handle:
+            payload: Mapping[str, Any] = pickle.load(handle)
+        return payload
+
+    def load_latest(self) -> Mapping[str, Any] | None:
+        """Return the latest checkpoint payload or ``None`` when empty."""
+
+        latest = self.latest_checkpoint()
+        if latest is None:
+            return None
+        return self.load(latest)
+
+    def resume_state(
+        self, checkpoint: Path | str | None = None
+    ) -> Mapping[str, Any] | None:
+        """Build a resume manifest for ``TrainingEngine`` from a checkpoint."""
+
+        target_payload: Mapping[str, Any] | None
+        checkpoint_path: Path | None
+        if checkpoint is None:
+            payload = self.load_latest()
+            if payload is None:
+                return None
+            latest_path = self.latest_checkpoint()
+            checkpoint_path = latest_path
+            target_payload = payload
+        else:
+            checkpoint_path = Path(checkpoint)
+            target_payload = self.load(checkpoint_path)
+
+        if checkpoint_path is None:
+            return None
+
+        epoch = int(target_payload.get("epoch", 0))
+        step = int(target_payload.get("step", 0))
+        step_in_epoch = target_payload.get("step_in_epoch")
+        if step_in_epoch is None:
+            step_in_epoch = 0
+        else:
+            step_in_epoch = int(step_in_epoch)
+
+        return {
+            "checkpoint_path": checkpoint_path,
+            "epoch": epoch,
+            "global_step": step,
+            "step_in_epoch": step_in_epoch,
+            "timestamp": float(target_payload.get("timestamp", 0.0)),
+            "state_dict": target_payload.get("state", {}),
+            "metrics": target_payload.get("metrics", {}),
+        }
+
 
 # ---------------------------------------------------------------------------
 # Training engine
@@ -595,6 +674,9 @@ class TrainingSummary:
     metrics_history: list[Mapping[str, float]]
     profiling: Mapping[str, Any]
     checkpoints: list[Path]
+    resumed_from: Path | None = None
+    start_epoch: int = 0
+    start_step: int = 0
 
 
 class TrainingComponent:
@@ -614,6 +696,9 @@ class TrainingComponent:
         raise NotImplementedError
 
     def state_dict(self) -> Mapping[str, Any]:  # pragma: no cover - interface
+        raise NotImplementedError
+
+    def load_state_dict(self, state: Mapping[str, Any]) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
 
@@ -657,7 +742,12 @@ class TrainingEngine:
             cache_limit=self._config.cache_limit,
         )
 
-    def fit(self, dataset: Iterable[Any]) -> TrainingSummary:
+    def fit(
+        self,
+        dataset: Iterable[Any],
+        *,
+        resume_state: Mapping[str, Any] | None = None,
+    ) -> TrainingSummary:
         config = self._config
         loader = self._build_loader(dataset)
         grad_accum = int(config.gradient_accumulation_steps)
@@ -665,15 +755,31 @@ class TrainingEngine:
         metrics_history: list[Mapping[str, float]] = []
         checkpoints: list[Path] = []
 
-        global_step = 0
-        for epoch in range(config.epochs):
-            self._component.zero_grad()
+        resume_epoch = int(resume_state.get("epoch", 0)) if resume_state else 0
+        resume_step_in_epoch = (
+            int(resume_state.get("step_in_epoch", 0)) if resume_state else 0
+        )
+        global_step = int(resume_state.get("global_step", 0)) if resume_state else 0
+        resume_checkpoint = (
+            Path(resume_state["checkpoint_path"])
+            if resume_state and "checkpoint_path" in resume_state
+            else None
+        )
+
+        for epoch in range(resume_epoch, config.epochs):
+            resume_within_epoch = resume_state is not None and epoch == resume_epoch
+            if not (resume_within_epoch and resume_step_in_epoch > 0):
+                self._component.zero_grad()
             batch_in_epoch = 0
+            skipped = 0
             for batch in loader:
                 if config.limit_batches is not None and batch_in_epoch >= config.limit_batches:
                     break
-                global_step += 1
                 batch_in_epoch += 1
+                if resume_within_epoch and skipped < resume_step_in_epoch:
+                    skipped += 1
+                    continue
+                global_step += 1
                 cast_batch = batch.cast(self._precision.target_dtype)
                 with self._profiler.measure_step(
                     global_step,
@@ -697,6 +803,7 @@ class TrainingEngine:
                     checkpoint = self._checkpoint_manager.save(
                         step=global_step,
                         epoch=epoch,
+                        step_in_epoch=batch_in_epoch,
                         state_dict=self._component.state_dict(),
                         metrics=result.metrics,
                     )
@@ -713,6 +820,9 @@ class TrainingEngine:
             metrics_history=metrics_history,
             profiling=self._profiler.report(),
             checkpoints=checkpoints,
+            resumed_from=resume_checkpoint,
+            start_epoch=resume_epoch,
+            start_step=resume_step_in_epoch,
         )
         return summary
 
