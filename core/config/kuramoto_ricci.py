@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pydantic
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import (
     BaseModel,
     ConfigDict,
