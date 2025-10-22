@@ -16,6 +16,7 @@
       "live": "ライブ"
     },
     "sections": {
+      "overview": "概要",
       "positions": "ポジション",
       "orders": "注文",
       "pnl": "PnLと気配値",
@@ -147,6 +148,57 @@
           }
         },
         "empty": "表示できるシグナルがありません。"
+      }
+    },
+    "overview": {
+      "title": "概要",
+      "heading": "プロダクトパルス",
+      "subtitle": "Go-to-Marketとエンジニアリングの整合を支えるGitHubインサイト。",
+      "hero": {
+        "eyebrow": "GitHubインテリジェンス",
+        "title": "実行レベルの透明性",
+        "subtitle": "GitHubから直接、採用状況とリリース・カデンスをトラッキング。",
+        "cta": "GitHubリポジトリを開く"
+      },
+      "badges": {
+        "title": "コミュニティの牽引力",
+        "subtitle": "マネジメントレビュー向けに抽出した主要シグナル。",
+        "stars": {
+          "label": "スター",
+          "hint": "30日モメンタム {delta}"
+        },
+        "forks": {
+          "label": "フォーク",
+          "hint": "アクティブフォーク {count}件"
+        },
+        "watchers": {
+          "label": "ウォッチャー",
+          "hint": "成長率 {percent}"
+        },
+        "contributors": {
+          "label": "コントリビューター",
+          "hint": "30日で{new}名追加"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "リリース頻度",
+          "subtitle": "最新タグとマージ速度を可視化。",
+          "published": "公開",
+          "metrics": {
+            "commits": "コミット (30日)",
+            "merged": "マージ済みPR (30日)",
+            "open": "未処理PR"
+          }
+        },
+        "languages": {
+          "title": "言語構成",
+          "subtitle": "リポジトリ全体の配分。"
+        },
+        "workflows": {
+          "title": "CIヘルス",
+          "subtitle": "最新のGitHub Actionsバッジ。"
+        }
       }
     }
   },

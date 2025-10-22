@@ -57,6 +57,35 @@ export const BASE_STYLES = `
     }
   }
 
+  @keyframes tpHeroFloat {
+    0%,
+    100% {
+      transform: translate3d(-4%, -2%, 0) scale(1.02);
+    }
+    50% {
+      transform: translate3d(6%, 4%, 0) scale(1.08);
+    }
+  }
+
+  @keyframes tpHeroPulse {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 0.65;
+    }
+  }
+
+  @keyframes tpHeroGrid {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 120% 120%;
+    }
+  }
+
   .tp-app {
     position: relative;
     display: grid;
@@ -200,6 +229,355 @@ export const BASE_STYLES = `
   .tp-view:hover::after {
     transform: translateY(12%);
     opacity: 0.85;
+  }
+
+  .tp-view--overview {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .tp-hero {
+    position: relative;
+    display: grid;
+    gap: 1.75rem;
+    padding: clamp(1.75rem, 3vw, 2.5rem);
+    border-radius: 24px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.15));
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 28px 60px -32px rgba(37, 99, 235, 0.45);
+  }
+
+  .tp-hero::after {
+    content: '';
+    position: absolute;
+    inset: 12% 10% -30% 10%;
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.45), transparent 60%);
+    filter: blur(42px);
+    opacity: 0.6;
+    pointer-events: none;
+    animation: tpHeroPulse 12s ease-in-out infinite alternate;
+  }
+
+  .tp-hero__content {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    gap: 1.1rem;
+    max-width: 28rem;
+  }
+
+  .tp-hero__eyebrow {
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.75);
+  }
+
+  .tp-hero__title {
+    margin: 0;
+    font-size: clamp(2.05rem, 4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .tp-hero__subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(226, 232, 240, 0.8);
+    max-width: 26ch;
+  }
+
+  .tp-hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .tp-hero__repo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .tp-hero__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(56, 189, 248, 0.95), rgba(37, 99, 235, 0.85));
+    color: #0f172a;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 14px 28px -18px rgba(56, 189, 248, 0.8);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .tp-hero__action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 36px -18px rgba(56, 189, 248, 0.9);
+  }
+
+  .tp-hero__action:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.85);
+    outline-offset: 2px;
+  }
+
+  .tp-hero__action-icon {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .tp-hero__visual {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .tp-hero__orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(12px);
+    opacity: 0.6;
+    animation: tpHeroFloat 16s ease-in-out infinite;
+  }
+
+  .tp-hero__orb--primary {
+    width: 40%;
+    height: 60%;
+    top: -10%;
+    right: -12%;
+    background: radial-gradient(circle at center, rgba(56, 189, 248, 0.65), rgba(37, 99, 235, 0));
+  }
+
+  .tp-hero__orb--secondary {
+    width: 55%;
+    height: 55%;
+    bottom: -18%;
+    left: -14%;
+    background: radial-gradient(circle at center, rgba(56, 189, 248, 0.45), rgba(14, 116, 144, 0));
+    animation-delay: -6s;
+  }
+
+  .tp-hero__grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        rgba(148, 163, 184, 0.12) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        rgba(148, 163, 184, 0.12) 1px,
+        transparent 1px
+      );
+    background-size: 48px 48px;
+    opacity: 0.35;
+    animation: tpHeroGrid 22s linear infinite;
+  }
+
+  .tp-overview-grid {
+    align-items: stretch;
+  }
+
+  .tp-github-panel {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .tp-github-panel--stretch {
+    grid-row: span 2;
+  }
+
+  .tp-github-badges {
+    display: grid;
+    gap: 1.15rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin: 0;
+  }
+
+  .tp-github-badge {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+    overflow: hidden;
+  }
+
+  .tp-github-badge::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(56, 189, 248, 0.2), transparent 60%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .tp-github-badge:hover::after {
+    opacity: 1;
+  }
+
+  .tp-github-badge__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 18px;
+    background: rgba(56, 189, 248, 0.16);
+    color: rgba(56, 189, 248, 0.95);
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.35);
+  }
+
+  .tp-github-badge__icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .tp-github-badge__content {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .tp-github-badge__label {
+    margin: 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(148, 163, 184, 0.8);
+  }
+
+  .tp-github-badge__value {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  .tp-github-badge__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(148, 163, 184, 0.75);
+  }
+
+  .tp-github-release {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .tp-github-release__tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .tp-github-release__tag .tp-pill {
+    background: rgba(56, 189, 248, 0.16);
+    color: #f0f9ff;
+  }
+
+  .tp-github-release__tag strong {
+    font-size: 1.05rem;
+  }
+
+  .tp-github-release__metrics {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .tp-github-release__metrics dt {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(148, 163, 184, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .tp-github-release__metrics dd {
+    margin: 0.35rem 0 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+
+  .tp-github-languages {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tp-github-language {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .tp-github-language__label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+  }
+
+  .tp-github-language__swatch {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 999px;
+    background: var(--tp-language-color, #38bdf8);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.6);
+  }
+
+  .tp-progress--slim {
+    height: 0.45rem;
+  }
+
+  .tp-github-language__value {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .tp-github-workflows {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .tp-github-workflow {
+    display: inline-flex;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.6);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .tp-github-workflow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px -20px rgba(56, 189, 248, 0.6);
+  }
+
+  .tp-github-workflow img {
+    display: block;
+    height: 28px;
   }
 
   .tp-view__header {
@@ -397,7 +775,10 @@ export const BASE_STYLES = `
     .tp-nav__badge,
     .tp-card,
     .tp-view,
-    .tp-card::before {
+    .tp-card::before,
+    .tp-hero::after,
+    .tp-hero__orb,
+    .tp-hero__grid {
       animation: none !important;
       transition-duration: 0.01ms !important;
     }

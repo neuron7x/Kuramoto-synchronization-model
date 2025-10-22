@@ -16,6 +16,7 @@
       "live": "Live"
     },
     "sections": {
+      "overview": "Übersicht",
       "positions": "Positionen",
       "orders": "Aufträge",
       "pnl": "PnL & Kurse",
@@ -147,6 +148,57 @@
           }
         },
         "empty": "Keine Signale verfügbar."
+      }
+    },
+    "overview": {
+      "title": "Übersicht",
+      "heading": "Produktpuls",
+      "subtitle": "Präzise GitHub-Insights für die Abstimmung zwischen Go-to-Market und Engineering.",
+      "hero": {
+        "eyebrow": "GitHub-Intelligenz",
+        "title": "Transparenz auf Ausführungsniveau",
+        "subtitle": "Behalten Sie Adoption, Release-Kadenz und Produktionsreife direkt an der Quelle im Blick.",
+        "cta": "GitHub-Repository öffnen"
+      },
+      "badges": {
+        "title": "Community-Traction",
+        "subtitle": "Wesentliche Gesundheitssignale aus GitHub für schnelle Management-Reviews.",
+        "stars": {
+          "label": "Stars",
+          "hint": "30-Tage-Momentum {delta}"
+        },
+        "forks": {
+          "label": "Forks",
+          "hint": "{count} aktive Forks"
+        },
+        "watchers": {
+          "label": "Watcher",
+          "hint": "Wachstum {percent}"
+        },
+        "contributors": {
+          "label": "Contributor",
+          "hint": "{new} neue in 30 Tagen"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "Release-Kadenz",
+          "subtitle": "Letztes Tagging und Merge-Geschwindigkeit.",
+          "published": "Veröffentlicht",
+          "metrics": {
+            "commits": "Commits (30 Tage)",
+            "merged": "Gemergte PRs (30 Tage)",
+            "open": "Offene PRs"
+          }
+        },
+        "languages": {
+          "title": "Sprachenmix",
+          "subtitle": "Verteilung im Repository."
+        },
+        "workflows": {
+          "title": "CI-Gesundheit",
+          "subtitle": "Aktuelle GitHub-Actions-Badges."
+        }
       }
     }
   },

@@ -135,6 +135,7 @@ export { renderDashboard, DASHBOARD_STYLES } from './dashboard_ui.js';
 export { sanitizeReportValue, formatCurrency, formatPercent } from './formatters.js';
 export { createRouter, Router } from '../router/index.js';
 export { renderSignalsView } from '../views/signals.js';
+export { renderOverviewView } from '../views/overview.js';
 
 export class DashboardState {
   constructor({ strategies = [], backtests = [] } = {}) {

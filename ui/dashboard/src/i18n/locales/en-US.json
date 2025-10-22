@@ -16,6 +16,7 @@
       "live": "Live"
     },
     "sections": {
+      "overview": "Overview",
       "positions": "Positions",
       "orders": "Orders",
       "pnl": "PnL & Quotes",
@@ -147,6 +148,57 @@
           }
         },
         "empty": "No signals available."
+      }
+    },
+    "overview": {
+      "title": "Overview",
+      "heading": "Product Pulse",
+      "subtitle": "High-fidelity GitHub insights for go-to-market and engineering alignment.",
+      "hero": {
+        "eyebrow": "GitHub intelligence",
+        "title": "Execution-grade transparency",
+        "subtitle": "Monitor adoption, cadence, and release readiness directly from the source.",
+        "cta": "Open GitHub repository"
+      },
+      "badges": {
+        "title": "Community traction",
+        "subtitle": "Key health signals harvested from GitHub for quick readouts.",
+        "stars": {
+          "label": "Stars",
+          "hint": "30d momentum {delta}"
+        },
+        "forks": {
+          "label": "Forks",
+          "hint": "{count} active forks"
+        },
+        "watchers": {
+          "label": "Watchers",
+          "hint": "Growth {percent}"
+        },
+        "contributors": {
+          "label": "Contributors",
+          "hint": "{new} new contributors (30d)"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "Release cadence",
+          "subtitle": "Latest tagged milestone and merge velocity.",
+          "published": "Published",
+          "metrics": {
+            "commits": "Commits (30d)",
+            "merged": "Merged PRs (30d)",
+            "open": "Open PRs"
+          }
+        },
+        "languages": {
+          "title": "Language mix",
+          "subtitle": "Distribution across the repository."
+        },
+        "workflows": {
+          "title": "CI health",
+          "subtitle": "Latest GitHub Actions badges."
+        }
       }
     }
   },
