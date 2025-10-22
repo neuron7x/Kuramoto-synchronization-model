@@ -61,11 +61,11 @@ class RiskManagerFacade:
         kill_switch = self._risk_manager.kill_switch
         was_engaged = kill_switch.is_triggered()
         previous_reason = kill_switch.reason
-        if was_engaged:
+        if was_engaged or bool(previous_reason):
             kill_switch.reset()
         return KillSwitchState(
             engaged=kill_switch.is_triggered(),
-            reason=previous_reason if was_engaged else kill_switch.reason,
+            reason=previous_reason if was_engaged else "",
             already_engaged=was_engaged,
         )
 
