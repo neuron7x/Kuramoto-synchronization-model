@@ -6,16 +6,28 @@ services:
     ports:
       - "8001:8001"
     restart: unless-stopped
+    environment:
+      TRADEPULSE_AUDIT_SECRET: "local-dev-audit-secret-change-me"
+      TRADEPULSE_OAUTH2_ISSUER: "https://auth.tradepulse.local"
+      TRADEPULSE_OAUTH2_AUDIENCE: "tradepulse-api"
+      TRADEPULSE_OAUTH2_JWKS_URI: "https://auth.tradepulse.local/jwks"
     healthcheck:
       test:
         - "CMD"
         - "python"
         - "-c"
-        - "import urllib.request, sys; urllib.request.urlopen('http://localhost:8001/health', timeout=5.0)"
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+        - >-
+          import sys, urllib.error, urllib.request;
+          URL = 'http://localhost:8001/health';
+          try:
+              with urllib.request.urlopen(URL, timeout=10.0) as response:
+                  sys.exit(0 if 200 <= response.status < 400 else 1)
+          except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
+              sys.exit(1)
+      interval: 20s
+      timeout: 15s
+      retries: 10
+      start_period: 60s
     labels:
       - "co.elastic.logs/enabled=true"
       - "co.elastic.logs/module=tradepulse"

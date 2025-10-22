@@ -29,9 +29,12 @@ def _compose_cmd(compose_file: Path, project: str, *args: str) -> list[str]:
     return command
 
 
-def _wait_for_service(project: str, compose_file: Path, service: str, timeout: float) -> None:
+def _wait_for_service(
+    project: str, compose_file: Path, service: str, timeout: float
+) -> str:
     deadline = time.monotonic() + timeout
     last_status = "unknown"
+    container_id = ""
     while time.monotonic() < deadline:
         container_id = (
             _run(
@@ -41,6 +44,10 @@ def _wait_for_service(project: str, compose_file: Path, service: str, timeout: f
             .stdout.strip()
         )
         if not container_id:
+            print(
+                f"[docker-compose-smoke] waiting for container id for service '{service}'",
+                flush=True,
+            )
             time.sleep(2.0)
             continue
 
@@ -55,12 +62,22 @@ def _wait_for_service(project: str, compose_file: Path, service: str, timeout: f
             capture_output=True,
         )
         status = inspect.stdout.strip().lower()
+        print(
+            f"[docker-compose-smoke] {service} status: {status}",
+            flush=True,
+        )
         if status in {"healthy", "running"}:
-            return
+            return container_id
+        if status in {"exited", "dead"}:
+            raise RuntimeError(
+                f"service '{service}' exited before becoming healthy (status: {status})"
+            )
         last_status = status
         time.sleep(3.0)
 
-    raise TimeoutError(f"service '{service}' did not become healthy (last status: {last_status})")
+    raise TimeoutError(
+        f"service '{service}' did not become healthy (last status: {last_status})"
+    )
 
 
 def _fetch_json(url: str, timeout: float) -> dict[str, object]:
@@ -81,6 +98,144 @@ def _write_artifact(path: Path, payload: str) -> None:
     path.write_text(payload)
 
 
+def _collect_compose_diagnostics(
+    *,
+    compose_file: Path,
+    project: str,
+    service: str,
+    artifact_dir: Path,
+    container_id: str | None = None,
+) -> None:
+    errors: list[str] = []
+
+    logs_path = artifact_dir / f"{service}-logs.txt"
+    try:
+        with logs_path.open("w", encoding="utf-8") as handle:
+            subprocess.run(
+                _compose_cmd(
+                    compose_file, project, "logs", "--no-color", service
+                ),
+                check=False,
+                text=True,
+                stdout=handle,
+                stderr=subprocess.STDOUT,
+            )
+    except Exception as exc:  # pragma: no cover - diagnostic helper
+        errors.append(f"failed to capture docker compose logs: {exc}")
+
+    try:
+        ps_process = subprocess.run(
+            _compose_cmd(compose_file, project, "ps", "-a"),
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except Exception as exc:  # pragma: no cover - diagnostic helper
+        errors.append(f"failed to capture docker compose ps output: {exc}")
+    else:
+        if ps_process.stdout:
+            _write_artifact(artifact_dir / "compose-ps.txt", ps_process.stdout)
+        if ps_process.stderr:
+            errors.append(
+                "docker compose ps emitted stderr output:\n" + ps_process.stderr
+            )
+
+    if not container_id:
+        try:
+            container_id = (
+                subprocess.run(
+                    _compose_cmd(compose_file, project, "ps", "-q", service),
+                    check=False,
+                    text=True,
+                    capture_output=True,
+                )
+                .stdout.strip()
+            )
+        except Exception as exc:  # pragma: no cover - diagnostic helper
+            errors.append(f"failed to resolve container id for {service}: {exc}")
+            container_id = ""
+
+    if container_id:
+        try:
+            inspect_process = subprocess.run(
+                [
+                    "docker",
+                    "inspect",
+                    "--format",
+                    "{{json .State}}",
+                    container_id,
+                ],
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+        except Exception as exc:  # pragma: no cover - diagnostic helper
+            errors.append(f"failed to inspect container {container_id}: {exc}")
+        else:
+            if inspect_process.stdout:
+                _write_artifact(
+                    artifact_dir / "inspect-state.json", inspect_process.stdout
+                )
+            if inspect_process.stderr:
+                errors.append(
+                    "docker inspect emitted stderr output:\n"
+                    + inspect_process.stderr
+                )
+
+        try:
+            logs_process = subprocess.run(
+                [
+                    "docker",
+                    "logs",
+                    container_id,
+                    "--tail",
+                    "500",
+                ],
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+        except Exception as exc:  # pragma: no cover - diagnostic helper
+            errors.append(f"failed to capture docker logs for {container_id}: {exc}")
+        else:
+            if logs_process.stdout:
+                _write_artifact(
+                    artifact_dir / "container-last-logs.txt",
+                    logs_process.stdout,
+                )
+            if logs_process.stderr:
+                errors.append(
+                    "docker logs emitted stderr output:\n" + logs_process.stderr
+                )
+
+    try:
+        images_process = subprocess.run(
+            [
+                "docker",
+                "images",
+                "--format",
+                "{{.Repository}}:{{.Tag}} {{.ID}}",
+            ],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except Exception as exc:  # pragma: no cover - diagnostic helper
+        errors.append(f"failed to capture docker images: {exc}")
+    else:
+        if images_process.stdout:
+            _write_artifact(artifact_dir / "images.txt", images_process.stdout)
+        if images_process.stderr:
+            errors.append(
+                "docker images emitted stderr output:\n" + images_process.stderr
+            )
+
+    if errors:
+        _write_artifact(
+            artifact_dir / "diagnostic-errors.log", "\n".join(errors)
+        )
+
+
 def run_smoke_test(args: argparse.Namespace) -> None:
     compose_file = Path(args.compose_file).resolve()
     project = args.project_name
@@ -91,10 +246,14 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
 
     up_command = _compose_cmd(compose_file, project, "up", "-d", "--build")
+    diagnostics_captured = False
+    container_id = ""
     try:
         subprocess.run(up_command, check=True, text=True, env=env)
 
-        _wait_for_service(project, compose_file, args.service_name, args.timeout)
+        container_id = _wait_for_service(
+            project, compose_file, args.service_name, args.timeout
+        )
 
         try:
             health_payload = _fetch_json(args.health_url, timeout=args.http_timeout)
@@ -124,22 +283,26 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         metrics_text = _fetch_text(args.metrics_url, timeout=args.http_timeout)
         _write_artifact(artifact_dir / "api-metrics.txt", metrics_text)
 
-        logs_path = artifact_dir / "docker-compose-logs.txt"
-        with logs_path.open("w", encoding="utf-8") as handle:
-            subprocess.run(
-                _compose_cmd(compose_file, project, "logs"),
-                check=True,
-                text=True,
-                stdout=handle,
-                stderr=subprocess.STDOUT,
-            )
-
-        ps_output = _run(
-            _compose_cmd(compose_file, project, "ps"),
-            capture_output=True,
-        ).stdout
-        _write_artifact(artifact_dir / "docker-compose-ps.txt", ps_output)
+        _collect_compose_diagnostics(
+            compose_file=compose_file,
+            project=project,
+            service=args.service_name,
+            artifact_dir=artifact_dir,
+            container_id=container_id,
+        )
+        diagnostics_captured = True
     finally:
+        if not diagnostics_captured:
+            try:
+                _collect_compose_diagnostics(
+                    compose_file=compose_file,
+                    project=project,
+                    service=args.service_name,
+                    artifact_dir=artifact_dir,
+                    container_id=container_id,
+                )
+            except Exception:  # pragma: no cover - best-effort diagnostics
+                pass
         subprocess.run(
             _compose_cmd(compose_file, project, "down", "-v"),
             check=False,
