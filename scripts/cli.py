@@ -55,6 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
         live,
         nightly,
         proto,
+        sanity,
         secrets,
         supply_chain,
     )
@@ -69,6 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
     fpma.build_parser(subparsers)
     live.build_parser(subparsers)
     nightly.build_parser(subparsers)
+    sanity.build_parser(subparsers)
     secrets.build_parser(subparsers)
     supply_chain.build_parser(subparsers)
 

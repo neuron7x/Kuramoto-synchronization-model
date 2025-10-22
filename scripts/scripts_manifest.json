@@ -1,0 +1,638 @@
+[
+  {
+    "path": "scripts/__init__.py",
+    "size_bytes": 137,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utility scripts bundled with the TradePulse repository."
+  },
+  {
+    "path": "scripts/__main__.py",
+    "size_bytes": 246,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Entry point to allow ``python -m scripts`` execution."
+  },
+  {
+    "path": "scripts/_runtime_core.py",
+    "size_bytes": 3456,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Core runtime helpers shared across the ``scripts`` package."
+  },
+  {
+    "path": "scripts/api_management/__init__.py",
+    "size_bytes": 424,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "High-level utilities for governing TradePulse API contracts."
+  },
+  {
+    "path": "scripts/api_management/config.py",
+    "size_bytes": 14427,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Configuration models for API governance workflows."
+  },
+  {
+    "path": "scripts/api_management/generator.py",
+    "size_bytes": 25341,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Artifact generation helpers for API governance."
+  },
+  {
+    "path": "scripts/api_management/runner.py",
+    "size_bytes": 2345,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "High-level orchestration for API governance workflows."
+  },
+  {
+    "path": "scripts/api_management/validation.py",
+    "size_bytes": 9386,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Validation helpers for API governance artifacts."
+  },
+  {
+    "path": "scripts/cli.py",
+    "size_bytes": 3174,
+    "executable": false,
+    "modified": "2025-10-21T22:42:24",
+    "docstring": "Unified entry point for repository maintenance scripts."
+  },
+  {
+    "path": "scripts/commands/__init__.py",
+    "size_bytes": 311,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Command implementations for the consolidated scripts CLI."
+  },
+  {
+    "path": "scripts/commands/api.py",
+    "size_bytes": 4324,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "scripts/commands/base.py",
+    "size_bytes": 2529,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Common helper utilities shared between CLI commands."
+  },
+  {
+    "path": "scripts/commands/build_core.py",
+    "size_bytes": 19075,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Core module build and release orchestration pipeline."
+  },
+  {
+    "path": "scripts/commands/dev.py",
+    "size_bytes": 1541,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Manage local development infrastructure."
+  },
+  {
+    "path": "scripts/commands/fpma.py",
+    "size_bytes": 1570,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Thin wrappers around the existing FPM-A integration tooling."
+  },
+  {
+    "path": "scripts/commands/lint.py",
+    "size_bytes": 5045,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Linting subcommand implementation."
+  },
+  {
+    "path": "scripts/commands/live.py",
+    "size_bytes": 2371,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Run the production live execution loop using TOML configuration."
+  },
+  {
+    "path": "scripts/commands/nightly.py",
+    "size_bytes": 5879,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Execute the nightly regression battery including backtests and E2E flows."
+  },
+  {
+    "path": "scripts/commands/proto.py",
+    "size_bytes": 1031,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Regenerate protobuf artefacts consistently across platforms."
+  },
+  {
+    "path": "scripts/commands/sanity.py",
+    "size_bytes": 1178,
+    "executable": false,
+    "modified": "2025-10-21T22:42:17",
+    "docstring": "Commands for running repository sanity cleanup tasks."
+  },
+  {
+    "path": "scripts/commands/secrets.py",
+    "size_bytes": 6503,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Secrets automation commands backed by HashiCorp Vault."
+  },
+  {
+    "path": "scripts/commands/supply_chain.py",
+    "size_bytes": 21627,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Supply chain security automation commands."
+  },
+  {
+    "path": "scripts/commands/test.py",
+    "size_bytes": 2035,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Execute the project's automated test suites."
+  },
+  {
+    "path": "scripts/data_annotation/__init__.py",
+    "size_bytes": 904,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utilities for building data annotation workflows."
+  },
+  {
+    "path": "scripts/data_annotation/annotation_suite.py",
+    "size_bytes": 18094,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Comprehensive data annotation workflow utilities."
+  },
+  {
+    "path": "scripts/data_annotation_cli.py",
+    "size_bytes": 5365,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Command line helpers for the data annotation toolkit."
+  },
+  {
+    "path": "scripts/data_sanity.py",
+    "size_bytes": 8645,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Quick data quality sanity checks for CSV files."
+  },
+  {
+    "path": "scripts/dependency_audit.py",
+    "size_bytes": 8635,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utility to run pip-audit with consistent settings and provide actionable summaries."
+  },
+  {
+    "path": "scripts/deploy/docker_compose_smoke.py",
+    "size_bytes": 7231,
+    "executable": false,
+    "modified": "2025-10-21T22:38:10",
+    "docstring": "Run a docker-compose smoke test for TradePulse deployments."
+  },
+  {
+    "path": "scripts/export_tradepulse_schema.py",
+    "size_bytes": 1118,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utility for exporting the TradePulse configuration JSON schema."
+  },
+  {
+    "path": "scripts/gen_synth_amm_data.py",
+    "size_bytes": 4615,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Generate synthetic AMM (Automated Market Maker) data for testing and development."
+  },
+  {
+    "path": "scripts/generate_openapi.py",
+    "size_bytes": 1374,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Generate the TradePulse OpenAPI specification on disk."
+  },
+  {
+    "path": "scripts/generate_stakeholder_assets.py",
+    "size_bytes": 33811,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "scripts/integrate_kuramoto_ricci.py",
+    "size_bytes": 6614,
+    "executable": true,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "CLI utility for running the Kuramoto–Ricci composite integration pipeline."
+  },
+  {
+    "path": "scripts/localization/__init__.py",
+    "size_bytes": 43,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Localization tooling for TradePulse."
+  },
+  {
+    "path": "scripts/localization/sync_translations.py",
+    "size_bytes": 9060,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Synchronise TradePulse dashboard localization assets."
+  },
+  {
+    "path": "scripts/nightly/__init__.py",
+    "size_bytes": 695,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Nightly regression orchestration utilities."
+  },
+  {
+    "path": "scripts/nightly/config.py",
+    "size_bytes": 7193,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Baseline loading utilities for nightly regression runs."
+  },
+  {
+    "path": "scripts/nightly/regression.py",
+    "size_bytes": 21496,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Implementation of the nightly regression automation."
+  },
+  {
+    "path": "scripts/requirements_extractor.py",
+    "size_bytes": 16970,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Requirement extraction utility for TradePulse."
+  },
+  {
+    "path": "scripts/resilient_data_sync.py",
+    "size_bytes": 9999,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Cross-platform data synchronisation helper with resilience features."
+  },
+  {
+    "path": "scripts/resilient_data_sync.sh",
+    "size_bytes": 8017,
+    "executable": true,
+    "modified": "2025-10-21T22:11:21",
+    "shebang": "#!/usr/bin/env bash"
+  },
+  {
+    "path": "scripts/runtime.py",
+    "size_bytes": 559,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Public runtime helpers for repository maintenance scripts."
+  },
+  {
+    "path": "scripts/runtime/__init__.py",
+    "size_bytes": 1020,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Public exports for the runtime helpers package."
+  },
+  {
+    "path": "scripts/runtime/artifacts.py",
+    "size_bytes": 1846,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Helpers for managing script output directories and artefacts."
+  },
+  {
+    "path": "scripts/runtime/checksum.py",
+    "size_bytes": 1153,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Checksum helpers for verifying downloaded artefacts."
+  },
+  {
+    "path": "scripts/runtime/exit_codes.py",
+    "size_bytes": 411,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Shared exit codes for script automation."
+  },
+  {
+    "path": "scripts/runtime/pathfinder.py",
+    "size_bytes": 1007,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utilities for locating input resources across different environments."
+  },
+  {
+    "path": "scripts/runtime/progress.py",
+    "size_bytes": 2505,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Lightweight progress reporting utilities."
+  },
+  {
+    "path": "scripts/runtime/retry.py",
+    "size_bytes": 1370,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "HTTP retry helpers for scripts dealing with rate limits and transient failures."
+  },
+  {
+    "path": "scripts/runtime/task_queue.py",
+    "size_bytes": 2696,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Concurrency helpers for script orchestration."
+  },
+  {
+    "path": "scripts/runtime/transfer.py",
+    "size_bytes": 6982,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Reliable transfer helpers supporting resume and checksum verification."
+  },
+  {
+    "path": "scripts/sanity_cleanup/__init__.py",
+    "size_bytes": 256,
+    "executable": false,
+    "modified": "2025-10-21T22:43:16",
+    "docstring": "Sanity cleanup utilities for maintaining repository hygiene."
+  },
+  {
+    "path": "scripts/sanity_cleanup/models.py",
+    "size_bytes": 1073,
+    "executable": false,
+    "modified": "2025-10-21T22:42:57",
+    "docstring": "Typed data structures shared across sanity cleanup modules."
+  },
+  {
+    "path": "scripts/sanity_cleanup/runner.py",
+    "size_bytes": 3770,
+    "executable": false,
+    "modified": "2025-10-21T22:43:40",
+    "docstring": "Orchestrates the sanity cleanup workflow."
+  },
+  {
+    "path": "scripts/sanity_cleanup/tasks.py",
+    "size_bytes": 20660,
+    "executable": false,
+    "modified": "2025-10-21T22:45:37",
+    "docstring": "Individual tasks that make up the sanity cleanup workflow."
+  },
+  {
+    "path": "scripts/sanity_cleanup/utils.py",
+    "size_bytes": 967,
+    "executable": false,
+    "modified": "2025-10-21T22:41:55",
+    "docstring": "Shared helper utilities for sanity cleanup tasks."
+  },
+  {
+    "path": "scripts/smoke_e2e.py",
+    "size_bytes": 5645,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Nightly smoke end-to-end pipeline for TradePulse."
+  },
+  {
+    "path": "scripts/supply_chain.py",
+    "size_bytes": 30980,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utilities that keep TradePulse's software supply chain trustworthy."
+  },
+  {
+    "path": "scripts/tests/__init__.py",
+    "size_bytes": 84,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Tests for the repository maintenance scripts."
+  },
+  {
+    "path": "scripts/tests/test_api_management.py",
+    "size_bytes": 2084,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "scripts/tests/test_export_tradepulse_schema.py",
+    "size_bytes": 2681,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Tests for export_tradepulse_schema.py script."
+  },
+  {
+    "path": "scripts/tests/test_gen_synth_amm_data.py",
+    "size_bytes": 4061,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Tests for gen_synth_amm_data.py script."
+  },
+  {
+    "path": "scripts/tests/test_nightly_regression.py",
+    "size_bytes": 5332,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Unit tests for nightly regression orchestration."
+  },
+  {
+    "path": "scripts/tests/test_resilient_data_sync.py",
+    "size_bytes": 1132,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "scripts/tests/test_runtime.py",
+    "size_bytes": 5486,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "scripts/tests/test_supply_chain.py",
+    "size_bytes": 3386,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/__init__.py",
+    "size_bytes": 62,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utility scripts packaged with TradePulse."
+  },
+  {
+    "path": "tools/compliance/generate_license_report.py",
+    "size_bytes": 4297,
+    "executable": true,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Generate third-party license report from CycloneDX SBOM."
+  },
+  {
+    "path": "tools/compliance/secret_scanner.py",
+    "size_bytes": 7763,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Repository secret scanner for continuous compliance workflows."
+  },
+  {
+    "path": "tools/coverage/__init__.py",
+    "size_bytes": 76,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Coverage guardrail utilities for TradePulse."
+  },
+  {
+    "path": "tools/coverage/guardrail.py",
+    "size_bytes": 5766,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Enforce coverage guardrails for reliability-critical modules."
+  },
+  {
+    "path": "tools/dependencies/__init__.py",
+    "size_bytes": 80,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Utilities for managing and validating dependency manifests."
+  },
+  {
+    "path": "tools/dependencies/check_alignment.py",
+    "size_bytes": 5760,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Validate that dependency declarations stay aligned across manifests."
+  },
+  {
+    "path": "tools/docs/generate_tradepulse_cli_docs.py",
+    "size_bytes": 3870,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Generate Markdown documentation for the TradePulse CLI commands."
+  },
+  {
+    "path": "tools/fpma_runner.py",
+    "size_bytes": 1067,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/generate_calibrator_tests.py",
+    "size_bytes": 7402,
+    "executable": false,
+    "modified": "2025-10-21T22:38:10",
+    "docstring": "Utility for auto-generating calibrator unit tests with explanations."
+  },
+  {
+    "path": "tools/observability/__init__.py",
+    "size_bytes": 546,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Observability-as-code helpers for TradePulse."
+  },
+  {
+    "path": "tools/observability/builder.py",
+    "size_bytes": 12440,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Build artifacts for the observability-as-code workflow."
+  },
+  {
+    "path": "tools/release/conventional_changelog.py",
+    "size_bytes": 5761,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Generate Conventional Commit release notes for TradePulse."
+  },
+  {
+    "path": "tools/schema/generate_event_types.py",
+    "size_bytes": 16969,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Generate strongly-typed models and JSON Schema documents from Avro schemas."
+  },
+  {
+    "path": "tools/schema/render_catalog.py",
+    "size_bytes": 2457,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Render a markdown catalogue of all registered event schemas."
+  },
+  {
+    "path": "tools/schema/validate_compatibility.py",
+    "size_bytes": 577,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21",
+    "docstring": "Validate schema compatibility across all registered event schemas."
+  },
+  {
+    "path": "tools/testing/__init__.py",
+    "size_bytes": 359,
+    "executable": false,
+    "modified": "2025-10-21T22:38:10",
+    "docstring": "Utilities for generating automated tests across the TradePulse codebase."
+  },
+  {
+    "path": "tools/testing/test_generator.py",
+    "size_bytes": 13989,
+    "executable": false,
+    "modified": "2025-10-21T22:38:10",
+    "docstring": "Helpers for automatically generating pytest suites with component explanations."
+  },
+  {
+    "path": "tools/vendor/fpma/__init__.py",
+    "size_bytes": 71,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/__main__.py",
+    "size_bytes": 114,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/algos/complexity.py",
+    "size_bytes": 1803,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/algos/graph.py",
+    "size_bytes": 2668,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/algos/invariants.py",
+    "size_bytes": 1444,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/cli.py",
+    "size_bytes": 5274,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/generators/add_fu.py",
+    "size_bytes": 3197,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  },
+  {
+    "path": "tools/vendor/fpma/generators/init_repo.py",
+    "size_bytes": 9224,
+    "executable": false,
+    "modified": "2025-10-21T22:11:21"
+  }
+]

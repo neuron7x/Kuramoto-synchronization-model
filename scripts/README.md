@@ -16,6 +16,7 @@ python -m scripts gen-proto
 python -m scripts dev-up
 python -m scripts dev-down
 python -m scripts fpma graph
+python -m scripts sanity --dry-run
 make test:fast   # Skip slow/nightly/heavy suites
 make test:all    # Full coverage-enabled suite
 make test:heavy  # Only heavy/slow/nightly suites
@@ -45,6 +46,17 @@ simplifies debugging and makes regression tests easier to reproduce.
 Each top-level command is implemented in a dedicated module under
 [`scripts/commands`](./commands).  The modules provide reusable functions that
 can be imported from unit tests or other automation code.
+
+### Sanity cleanup automation
+
+The `sanity` command orchestrates repository hygiene tasks such as removing
+temporary build artefacts, regenerating managed sections of `.gitignore`,
+producing inventories for scripts and configuration files, synchronising
+Makefile targets into a generated `Justfile`, and collecting metadata about
+packages, licences, templates, and directory layouts.  By default it performs
+destructive actions such as deleting cache directories; use `--dry-run` to
+preview changes and `--archive-legacy` to create tarball archives for legacy or
+deprecated directories that are discovered during the run.
 
 ## Standalone Scripts
 
