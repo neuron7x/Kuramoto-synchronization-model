@@ -5,6 +5,8 @@ services:
     build: .
     ports:
       - "8001:8001"
+    environment:
+      TRADEPULSE_AUDIT_SECRET: "local-smoke-test-secret"
     restart: unless-stopped
     healthcheck:
       test:
