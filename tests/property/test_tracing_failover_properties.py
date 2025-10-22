@@ -6,9 +6,16 @@ import importlib
 from contextlib import contextmanager
 from typing import Any, Mapping
 
+import pytest
 from pytest import MonkeyPatch
-from hypothesis import HealthCheck, given, settings
-from hypothesis import strategies as st
+
+hypothesis = pytest.importorskip(
+    "hypothesis", reason="hypothesis is required for property-based tracing tests"
+)
+st = hypothesis.strategies
+HealthCheck = hypothesis.HealthCheck
+given = hypothesis.given
+settings = hypothesis.settings
 
 from tests.unit.observability.test_tracing import _install_stub_opentelemetry
 

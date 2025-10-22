@@ -41,20 +41,31 @@ class ShockScenario:
         return payload
 
 
-class _ShockPolicy(nn.Module):  # type: ignore[misc]
-    def __init__(self, feature_dim: int) -> None:
-        super().__init__()
-        self._backbone = nn.Sequential(  # type: ignore[operator]
-            nn.Linear(feature_dim, feature_dim * 2),  # type: ignore[operator]
-            nn.ReLU(),  # type: ignore[operator]
-            nn.Linear(feature_dim * 2, feature_dim),  # type: ignore[operator]
-        )
-        self._log_std = nn.Parameter(torch.zeros(feature_dim))  # type: ignore[operator]
+if nn is not None and torch is not None and Normal is not None and F is not None:
 
-    def forward(self, state: torch.Tensor) -> Normal:  # type: ignore[override]
-        mean = self._backbone(state)
-        std = torch.clamp(F.softplus(self._log_std), min=1e-3)  # type: ignore[operator]
-        return Normal(mean, std)
+    class _ShockPolicy(nn.Module):  # type: ignore[misc]
+        def __init__(self, feature_dim: int) -> None:
+            super().__init__()
+            self._backbone = nn.Sequential(  # type: ignore[operator]
+                nn.Linear(feature_dim, feature_dim * 2),  # type: ignore[operator]
+                nn.ReLU(),  # type: ignore[operator]
+                nn.Linear(feature_dim * 2, feature_dim),  # type: ignore[operator]
+            )
+            self._log_std = nn.Parameter(torch.zeros(feature_dim))  # type: ignore[operator]
+
+        def forward(self, state: torch.Tensor) -> Normal:  # type: ignore[override]
+            mean = self._backbone(state)
+            std = torch.clamp(F.softplus(self._log_std), min=1e-3)  # type: ignore[operator]
+            return Normal(mean, std)
+
+
+else:
+
+    class _ShockPolicy:  # type: ignore[too-many-ancestors]
+        def __init__(self, feature_dim: int) -> None:  # noqa: D401 - simple guard
+            raise ModuleNotFoundError(
+                "PyTorch is required for ShockScenarioGenerator",
+            ) from _IMPORT_ERROR
 
 
 class ShockScenarioGenerator:
