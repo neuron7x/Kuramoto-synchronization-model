@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
-from scipy import stats
+
+
+_logger = logging.getLogger(__name__)
+
+try:
+    from scipy import stats as _SCIPY_STATS  # type: ignore
+except Exception as exc:  # pragma: no cover - handled via fallback logic
+    _logger.warning(
+        "SciPy stats module unavailable for drift monitoring; using NumPy fallback",
+        exc_info=_logger.isEnabledFor(logging.DEBUG),
+    )
+    _SCIPY_STATS = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -60,7 +72,21 @@ class DistributionDriftMonitor:
         )
 
     def _ks(self, reference: pd.Series, current: pd.Series) -> DriftAssessment:
-        statistic, pvalue = stats.ks_2samp(reference, current)
+        ref_values = reference.to_numpy(dtype=float, copy=False)
+        cur_values = current.to_numpy(dtype=float, copy=False)
+
+        if _SCIPY_STATS is not None:
+            try:
+                statistic, pvalue = _SCIPY_STATS.ks_2samp(ref_values, cur_values)
+            except Exception as exc:  # pragma: no cover - exercised in tests
+                _logger.warning(
+                    "SciPy ks_2samp failed; falling back to NumPy implementation",
+                    exc_info=_logger.isEnabledFor(logging.DEBUG),
+                )
+                statistic, pvalue = _ks_2samp_fallback(ref_values, cur_values)
+        else:
+            statistic, pvalue = _ks_2samp_fallback(ref_values, cur_values)
+
         drifted = pvalue < (1 - self._threshold)
         return DriftAssessment(
             "ks", float(statistic), self._threshold, drifted, {"pvalue": float(pvalue)}
@@ -79,3 +105,41 @@ class DistributionDriftMonitor:
 
 
 __all__ = ["DistributionDriftMonitor", "DriftAssessment"]
+
+
+def _ks_2samp_fallback(
+    reference: np.ndarray, current: np.ndarray
+) -> tuple[float, float]:
+    """Compute a two-sample KS test using only NumPy primitives.
+
+    The implementation mirrors the asymptotic formulation used by SciPy and is
+    employed whenever SciPy is unavailable or misconfigured in lightweight
+    environments. It returns the KS statistic and an approximate p-value based on
+    the Kolmogorov distribution.
+    """
+
+    reference = np.sort(np.asarray(reference, dtype=float))
+    current = np.sort(np.asarray(current, dtype=float))
+
+    n_ref = reference.size
+    n_cur = current.size
+    if n_ref == 0 or n_cur == 0:
+        raise ValueError("KS test requires both samples to contain observations")
+
+    combined = np.concatenate((reference, current))
+    cdf_ref = np.searchsorted(reference, combined, side="right") / n_ref
+    cdf_cur = np.searchsorted(current, combined, side="right") / n_cur
+    statistic = float(np.max(np.abs(cdf_ref - cdf_cur)))
+
+    effective_n = np.sqrt((n_ref * n_cur) / (n_ref + n_cur))
+    adjusted = (effective_n + 0.12 + 0.11 / max(effective_n, 1e-12)) * statistic
+
+    if adjusted == 0.0:
+        return statistic, 1.0
+
+    indices = np.arange(1, 101, dtype=float)
+    signs = np.where(indices.astype(int) % 2 == 1, 1.0, -1.0)
+    terms = np.exp(-2.0 * (indices**2) * (adjusted**2))
+    pvalue = float(np.clip(2.0 * np.sum(signs * terms), 0.0, 1.0))
+
+    return statistic, pvalue
