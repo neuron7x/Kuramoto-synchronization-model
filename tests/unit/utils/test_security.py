@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import builtins
+import re
 import tempfile
 from pathlib import Path
 
@@ -37,6 +39,42 @@ def test_secret_detector_ignores_documentation(tmp_path: Path) -> None:
     assert detector.scan_file(ignored) == []
 
 
+def test_secret_detector_accepts_custom_patterns(tmp_path: Path) -> None:
+    token_pattern = re.compile(r"custom_token\s*=\s*'([0-9a-f]{8})'")
+    detector = SecretDetector(custom_patterns={"custom": token_pattern})
+
+    workspace = Path(tempfile.mkdtemp(prefix="custompattern"))
+    target = workspace / "custom.txt"
+    target.write_text("custom_token='deadbeef'", encoding="utf-8")
+
+    findings = detector.scan_file(target)
+    assert any(secret_type == "custom" for secret_type, *_ in findings)
+
+
+def test_scan_file_handles_unreadable_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    workspace = Path(tempfile.mkdtemp(prefix="unreadable"))
+    target = workspace / "secrets.env"
+    target.write_text("API_SECRET='hidden'", encoding="utf-8")
+
+    original_open = builtins.open
+
+    def raising_open(*args, **kwargs):
+        if Path(args[0]) == target:
+            raise OSError("permission denied")
+        return original_open(*args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", raising_open)
+
+    detector = SecretDetector()
+    with caplog.at_level("DEBUG"):
+        findings = detector.scan_file(target)
+
+    assert findings == []
+    assert any("Skipping unreadable file" in message for message in caplog.text.splitlines())
+
+
 def test_scan_directory_respects_extension_filter() -> None:
     repo = Path(tempfile.mkdtemp(prefix="secdir"))
     (repo / "config.yaml").write_text(
@@ -48,6 +86,20 @@ def test_scan_directory_respects_extension_filter() -> None:
     results = detector.scan_directory(repo, extensions=[".yaml", ".json"])
     assert "config.yaml" in results
     assert "image.png" not in results
+
+
+def test_scan_directory_skips_non_files_and_empty_extension_list(tmp_path: Path) -> None:
+    repo = Path(tempfile.mkdtemp(prefix="secrepo"))
+    nested = repo / "configs"
+    nested.mkdir()
+    (nested / "secret.env").write_text("API_KEY='abcdef123456'", encoding="utf-8")
+    (nested / "notes.txt").write_text("no sensitive data", encoding="utf-8")
+
+    detector = SecretDetector()
+    results = detector.scan_directory(repo, extensions=[])
+
+    assert "configs/secret.env" in results
+    assert "configs/notes.txt" not in results
 
 
 def test_check_for_hardcoded_secrets_reports_findings(
