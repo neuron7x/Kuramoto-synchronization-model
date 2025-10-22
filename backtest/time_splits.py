@@ -9,12 +9,79 @@ training folds.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Iterator, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 
+
+_CANONICAL_FREQUENCY_UNITS = {
+    "H": "h",
+    "HR": "h",
+    "HRS": "h",
+    "HOUR": "h",
+    "HOURS": "h",
+    "T": "min",
+    "MIN": "min",
+    "MINS": "min",
+    "MINUTE": "min",
+    "MINUTES": "min",
+    "S": "s",
+    "SEC": "s",
+    "SECS": "s",
+    "SECOND": "s",
+    "SECONDS": "s",
+    "L": "ms",
+    "MS": "ms",
+    "MILLISECOND": "ms",
+    "MILLISECONDS": "ms",
+    "U": "us",
+    "US": "us",
+    "USEC": "us",
+    "MICROSECOND": "us",
+    "MICROSECONDS": "us",
+    "N": "ns",
+    "NS": "ns",
+    "NSEC": "ns",
+    "NANOSECOND": "ns",
+    "NANOSECONDS": "ns",
+}
+
+_AMBIGUOUS_FREQUENCY_UNITS = {"M", "Y"}
+
+_STRING_UNIT_PATTERN = re.compile(r"(?<=\d)([A-Za-zµμ]+)")
+
+
+def _normalise_frequency_unit(freq: str) -> str:
+    """Return a canonical unit string accepted by :func:`pandas.to_timedelta`."""
+
+    cleaned = freq.strip()
+    if not cleaned:
+        raise ValueError("Frequency unit must be a non-empty string.")
+    ascii_unit = cleaned.replace("μ", "u").replace("µ", "u")
+    upper = ascii_unit.upper()
+    if upper in _AMBIGUOUS_FREQUENCY_UNITS:
+        raise ValueError(
+            "Ambiguous frequency unit '{unit}' is not supported; specify an explicit "
+            "duration such as 'min' or 'hour'.".format(unit=cleaned)
+        )
+    if upper in _CANONICAL_FREQUENCY_UNITS:
+        return _CANONICAL_FREQUENCY_UNITS[upper]
+    if ascii_unit.isupper():
+        return ascii_unit.lower()
+    return ascii_unit
+
+
+def _normalise_timedelta_string(value: str) -> str:
+    """Normalise deprecated unit aliases embedded within timedelta strings."""
+
+    def _replace(match: re.Match[str]) -> str:
+        unit = match.group(0)
+        return _normalise_frequency_unit(unit)
+
+    return _STRING_UNIT_PATTERN.sub(_replace, value.replace("μ", "u").replace("µ", "u"))
 
 def _to_timedelta(
     value: Optional[pd.Timedelta | str | int | float], *, freq: Optional[str] = None
@@ -37,13 +104,15 @@ def _to_timedelta(
     if isinstance(value, pd.Timedelta):
         return value
     if isinstance(value, str):
-        return pd.to_timedelta(value)
+        normalised = _normalise_timedelta_string(value)
+        return pd.to_timedelta(normalised)
     if isinstance(value, (int, float)):
         if freq is None:
             raise ValueError(
                 "A frequency must be provided when using a numeric window size."
             )
-        return pd.to_timedelta(value, unit=freq)
+        unit = _normalise_frequency_unit(freq) if isinstance(freq, str) else freq
+        return pd.to_timedelta(value, unit=unit)
     raise TypeError(f"Unsupported timedelta specification: {value!r}")
 
 

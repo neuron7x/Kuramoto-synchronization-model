@@ -1,8 +1,14 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from backtest.time_splits import PurgedKFoldTimeSeriesSplit, WalkForwardSplitter
+from backtest.time_splits import (
+    PurgedKFoldTimeSeriesSplit,
+    WalkForwardSplitter,
+    _to_timedelta,
+)
 
 
 def _sample_frame():
@@ -150,3 +156,52 @@ def test_walk_forward_with_overlapping_tests_has_no_leakage():
         assert (
             train_last < test_start
         ), "Training window must strictly precede the test window"
+
+
+@pytest.mark.parametrize(
+    ("unit", "expected"),
+    [
+        ("H", "h"),
+        ("h", "h"),
+        ("HR", "h"),
+        ("T", "min"),
+        ("t", "min"),
+        ("MIN", "min"),
+        ("S", "s"),
+        ("L", "ms"),
+        ("l", "ms"),
+        ("U", "us"),
+        ("u", "us"),
+        ("µs", "us"),
+        ("N", "ns"),
+        ("n", "ns"),
+    ],
+)
+def test_to_timedelta_normalises_frequency_aliases(unit, expected):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        delta = _to_timedelta(5, freq=unit)
+    assert delta == pd.to_timedelta(5, unit=expected)
+
+
+def test_to_timedelta_rejects_ambiguous_month_alias():
+    with pytest.raises(ValueError):
+        _to_timedelta(1, freq="M")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "12H",
+        "1H30T",
+        "15min",
+        "2h",
+        "5µs",
+        "10U",
+    ],
+)
+def test_string_timedelta_inputs_do_not_emit_future_warnings(value):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        result = _to_timedelta(value)
+    assert isinstance(result, pd.Timedelta)
