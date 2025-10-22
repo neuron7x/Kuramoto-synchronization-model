@@ -66,9 +66,9 @@ i18n-validate:
 	python scripts/localization/sync_translations.py
 .PHONY: mutation-test
 mutation-test:
-        mutmut run --use-coverage
-        python -m tools.mutation.kill_rate_guard --threshold 0.8
-        mutmut results
+	mutmut run --use-coverage
+	python -m tools.mutation.kill_rate_guard --threshold 0.8
+	mutmut results
 
 .PHONY: sbom supply-chain-verify dependencies-check
 sbom:
