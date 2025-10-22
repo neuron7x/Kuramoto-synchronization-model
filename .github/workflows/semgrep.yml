@@ -33,13 +33,12 @@ jobs:
           pip install semgrep
 
       - name: Run Semgrep security ruleset
-        env:
-          SEMGREP_RULES: >-
-            p/ci
-            p/security-audit
-            p/secrets
         run: |
-          semgrep ci --config "$SEMGREP_RULES" --sarif --output semgrep.sarif --error
+          semgrep ci \
+            --config p/ci \
+            --config p/security-audit \
+            --config p/secrets \
+            --sarif --output semgrep.sarif --error
 
       - name: Upload Semgrep SARIF
         if: always()
