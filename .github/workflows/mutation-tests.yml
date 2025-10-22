@@ -31,10 +31,15 @@ jobs:
           uv pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Prepare mutation report directory
         run: mkdir -p reports/mutmut
-      - name: Run mutation tests
+      - name: Run mutation suite
+        run: .venv/bin/mutmut run --use-coverage
+      - name: Enforce kill rate threshold
         run: |
-          .venv/bin/mutmut run --use-coverage
-          .venv/bin/mutmut results | tee reports/mutmut/results.txt
+          .venv/bin/python -m tools.mutation.kill_rate_guard \
+            --threshold 0.8 \
+            --summary reports/mutmut/summary.json
+      - name: Summarize mutation results
+        run: .venv/bin/mutmut results | tee reports/mutmut/results.txt
       - name: Upload mutation artifacts
         if: always()
         uses: actions/upload-artifact@v4

@@ -349,16 +349,19 @@ behaviour over time.
 
 ### Mutation Testing
 
-Mutation analysis is enforced for the core trading engine modules using [`mutmut`](https://mutmut.readthedocs.io/). The default configuration lives in `pyproject.toml` and targets `core/`, `backtest/`, and `execution/` with the unit, integration, and property suites as the runner.
+Mutation analysis is enforced for the core trading engine modules using [`mutmut`](https://mutmut.readthedocs.io/). The default configuration lives in `pyproject.toml` and targets `core/`, `backtest/`, and `execution/` with the unit, integration, and property suites as the runner. CI now applies a hard **kill-rate guardrail** of 80% via `tools.mutation.kill_rate_guard`, preventing regressions that silently allow mutants to survive.
 
 Run the mutation suite locally (requires the `dev` extras or `requirements-dev.txt`):
 
 ```bash
 mutmut run --use-coverage
+python -m tools.mutation.kill_rate_guard --threshold 0.8 --summary reports/mutmut/summary.json
 mutmut results
 ```
 
-The command caches results under `.mutmut-cache/` and reuses coverage data to accelerate re-runs. Use `mutmut show <mutation-id>` to inspect surviving mutants in detail.
+The guard emits a human-readable summary (and optional JSON artifact) of killed, surviving, and skipped mutants so you can drill down before pushing. Use `mutmut show <mutation-id>` to inspect survivors.
+
+> **AI-guided mutants.** We are experimenting with tree-sitter + LLM assisted mutant generation to stress trading invariants (e.g. ensuring `Order` objects never carry negative quantities). When enabled, these domain-specific mutants will land beside the existing mutation corpus and surface through the same guardrail.
 
 ## Writing Tests
 
