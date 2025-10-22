@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Iterable, Mapping, Sequence
@@ -104,7 +104,13 @@ class TradePulsePlatform:
             yield self
             return
 
-        await self.start_streaming()
+        try:
+            await self.start_streaming()
+        except Exception:
+            with suppress(Exception):
+                await self.stop_streaming()
+            raise
+
         try:
             yield self
         finally:
