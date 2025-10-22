@@ -131,15 +131,62 @@ def _ks_2samp_fallback(
     cdf_cur = np.searchsorted(current, combined, side="right") / n_cur
     statistic = float(np.max(np.abs(cdf_ref - cdf_cur)))
 
+    if n_ref * n_cur <= 10_000:
+        pvalue = _ks_pvalue_exact(statistic, n_ref, n_cur)
+    else:
+        pvalue = _ks_pvalue_asymptotic(statistic, n_ref, n_cur)
+
+    return statistic, pvalue
+
+
+def _ks_pvalue_asymptotic(statistic: float, n_ref: int, n_cur: int) -> float:
+    """Return the Kolmogorov p-value using the asymptotic formulation."""
+
     effective_n = np.sqrt((n_ref * n_cur) / (n_ref + n_cur))
     adjusted = (effective_n + 0.12 + 0.11 / max(effective_n, 1e-12)) * statistic
-
-    if adjusted == 0.0:
-        return statistic, 1.0
+    if adjusted <= 0.0:
+        return 1.0
 
     indices = np.arange(1, 101, dtype=float)
     signs = np.where(indices.astype(int) % 2 == 1, 1.0, -1.0)
     terms = np.exp(-2.0 * (indices**2) * (adjusted**2))
-    pvalue = float(np.clip(2.0 * np.sum(signs * terms), 0.0, 1.0))
+    return float(np.clip(2.0 * np.sum(signs * terms), 0.0, 1.0))
 
-    return statistic, pvalue
+
+def _ks_pvalue_exact(statistic: float, n_ref: int, n_cur: int) -> float:
+    """Return the exact two-sample KS p-value via dynamic programming."""
+
+    if statistic <= 0.0:
+        return 1.0
+
+    prob = np.zeros((n_ref + 1, n_cur + 1), dtype=float)
+    prob[0, 0] = 1.0
+
+    inv_ref = 1.0 / float(n_ref)
+    inv_cur = 1.0 / float(n_cur)
+    tolerance = 1e-12
+    limit = max(statistic - tolerance, 0.0)
+
+    for i in range(n_ref + 1):
+        for j in range(n_cur + 1):
+            current_prob = prob[i, j]
+            if current_prob <= 0.0:
+                continue
+            remaining_ref = n_ref - i
+            remaining_cur = n_cur - j
+            remaining_total = remaining_ref + remaining_cur
+            if remaining_total == 0:
+                continue
+
+            if remaining_ref:
+                new_diff = abs((i + 1) * inv_ref - j * inv_cur)
+                if new_diff <= limit:
+                    prob[i + 1, j] += current_prob * (remaining_ref / remaining_total)
+
+            if remaining_cur:
+                new_diff = abs(i * inv_ref - (j + 1) * inv_cur)
+                if new_diff <= limit:
+                    prob[i, j + 1] += current_prob * (remaining_cur / remaining_total)
+
+    probability_within = float(np.clip(prob[n_ref, n_cur], 0.0, 1.0))
+    return 1.0 - probability_within

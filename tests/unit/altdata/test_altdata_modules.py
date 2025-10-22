@@ -139,6 +139,24 @@ def test_distribution_drift_monitor_ks_runtime_fallback(
     assert 0.0 <= assessment.details["pvalue"] <= 1.0
 
 
+def test_ks_fallback_small_sample_matches_scipy() -> None:
+    reference = np.array([0.1257, -0.1321, 0.6404, 0.1049, -0.5357])
+    current = np.array([0.5339, 1.6648, 1.2365, -0.7445, -1.4185])
+
+    from core.altdata.drift import _ks_2samp_fallback
+
+    statistic, fallback_pvalue = _ks_2samp_fallback(reference, current)
+
+    try:
+        from scipy import stats as scipy_stats  # type: ignore
+    except Exception:  # pragma: no cover - SciPy optional
+        pytest.skip("SciPy not available to validate fallback p-values")
+
+    expected_statistic, scipy_pvalue = scipy_stats.ks_2samp(reference, current)
+    assert statistic == pytest.approx(float(expected_statistic))
+    assert fallback_pvalue == pytest.approx(float(scipy_pvalue), rel=1e-2, abs=1e-3)
+
+
 def test_altdata_compliance_checker_flags_issues():
     checker = AltDataComplianceChecker(restricted_regions=["EU"])
     metadata = {
