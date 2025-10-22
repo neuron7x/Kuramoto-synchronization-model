@@ -6,7 +6,9 @@ services:
     ports:
       - "8001:8001"
     environment:
-      TRADEPULSE_AUDIT_SECRET: "local-smoke-test-secret"
+      # Optionally override the runtime-generated audit secret.
+      TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET-}
+      TRADEPULSE_AUDIT_SECRET_PATH: ${TRADEPULSE_AUDIT_SECRET_PATH-}
     restart: unless-stopped
     healthcheck:
       test:
