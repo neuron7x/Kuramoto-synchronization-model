@@ -14,6 +14,7 @@ RUN python -m venv "$VIRTUAL_ENV"
 
 # Install system headers required for Python packages that ship C extensions.
 RUN apt-get update \
+    && apt-get upgrade --yes \
     && apt-get install --yes --no-install-recommends \
         build-essential \
         libffi-dev \
@@ -35,6 +36,7 @@ ENV VIRTUAL_ENV=/opt/venv \
 
 # Runtime shared libraries for optional database drivers, TLS, and native extensions.
 RUN apt-get update \
+    && apt-get upgrade --yes \
     && apt-get install --yes --no-install-recommends \
         ca-certificates \
         curl \
