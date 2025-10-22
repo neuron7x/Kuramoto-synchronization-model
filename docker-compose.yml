@@ -4,18 +4,14 @@ services:
   tradepulse:
     build: .
     ports:
-      - "8001:8001"
+      - "8000:8000"
     restart: unless-stopped
     healthcheck:
-      test:
-        - "CMD"
-        - "python"
-        - "-c"
-        - "import urllib.request, sys; urllib.request.urlopen('http://localhost:8001/health', timeout=5.0)"
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5.0)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     labels:
       - "co.elastic.logs/enabled=true"
       - "co.elastic.logs/module=tradepulse"
