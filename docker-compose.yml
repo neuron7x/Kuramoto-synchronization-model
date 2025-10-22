@@ -7,14 +7,13 @@ services:
       - "8001:8001"
     restart: unless-stopped
     environment:
-      # Deterministic smoke-only secrets; production overrides are injected via platform secret stores.
-      TRADEPULSE_AUDIT_SECRET: "local-dev-audit-secret-change-me"
-      TRADEPULSE_OAUTH2_ISSUER: "https://auth.tradepulse.local"
-      TRADEPULSE_OAUTH2_AUDIENCE: "tradepulse-api"
-      TRADEPULSE_OAUTH2_JWKS_URI: "https://auth.tradepulse.local/jwks"
-      TRADEPULSE_ADMIN_SUBJECT: "smoke-admin"
-      TRADEPULSE_CONFIG_VAULT_MASTER_KEY: "XkmMX/F5QouyHNe/DaOlN+55A2OiUTtyPUG3tRDNasM="
-      TRADEPULSE_TRUSTED_HOSTS: '["testserver","localhost","127.0.0.1","tradepulse","prometheus"]'
+      TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET:?service secret missing}
+      TRADEPULSE_OAUTH2_ISSUER: ${TRADEPULSE_OAUTH2_ISSUER:?issuer missing}
+      TRADEPULSE_OAUTH2_AUDIENCE: ${TRADEPULSE_OAUTH2_AUDIENCE:?audience missing}
+      TRADEPULSE_OAUTH2_JWKS_URI: ${TRADEPULSE_OAUTH2_JWKS_URI:?jwks uri missing}
+      TRADEPULSE_ADMIN_SUBJECT: ${TRADEPULSE_ADMIN_SUBJECT:?admin subject missing}
+      TRADEPULSE_CONFIG_VAULT_MASTER_KEY: ${TRADEPULSE_CONFIG_VAULT_MASTER_KEY:?vault key missing}
+      TRADEPULSE_TRUSTED_HOSTS: ${TRADEPULSE_TRUSTED_HOSTS:?trusted hosts missing}
     healthcheck:
       test:
         - "CMD"

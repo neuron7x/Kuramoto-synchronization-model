@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
+import secrets
 import subprocess
 import sys
 import time
@@ -12,6 +14,38 @@ from pathlib import Path
 from typing import Iterable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+
+SERVICE_TRUSTED_HOSTS = [
+    "testserver",
+    "localhost",
+    "127.0.0.1",
+    "tradepulse",
+    "prometheus",
+]
+
+
+def _ensure_service_environment(env: dict[str, str]) -> None:
+    if "TRADEPULSE_AUDIT_SECRET" not in env:
+        env["TRADEPULSE_AUDIT_SECRET"] = secrets.token_urlsafe(40)
+
+    env.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://auth.tradepulse.local")
+    env.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
+    env.setdefault(
+        "TRADEPULSE_OAUTH2_JWKS_URI",
+        "https://auth.tradepulse.local/jwks",
+    )
+    env.setdefault("TRADEPULSE_ADMIN_SUBJECT", "smoke-admin")
+
+    if "TRADEPULSE_CONFIG_VAULT_MASTER_KEY" not in env:
+        env["TRADEPULSE_CONFIG_VAULT_MASTER_KEY"] = base64.urlsafe_b64encode(
+            secrets.token_bytes(32)
+        ).decode("ascii")
+
+    env.setdefault(
+        "TRADEPULSE_TRUSTED_HOSTS",
+        json.dumps(SERVICE_TRUSTED_HOSTS),
+    )
 
 
 def _run(command: Iterable[str], *, check: bool = True, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
@@ -244,6 +278,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 
     env = os.environ.copy()
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
+    _ensure_service_environment(env)
 
     up_command = _compose_cmd(compose_file, project, "up", "-d", "--build")
     diagnostics_captured = False
@@ -381,3 +416,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
