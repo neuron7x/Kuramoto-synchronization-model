@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 # ---- Build stage ---------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 ENV VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:${PATH}" \
@@ -16,27 +16,32 @@ RUN python -m venv "$VIRTUAL_ENV"
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
         build-essential \
+        libffi-dev \
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.lock ./
 
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install --requirement requirements.lock
+    && pip install --no-cache-dir --requirement requirements.lock
 
 # ---- Runtime stage -------------------------------------------------------
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Runtime shared libraries for optional database drivers and SSL.
+# Runtime shared libraries for optional database drivers, TLS, and native extensions.
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
+        ca-certificates \
         curl \
+        libffi8 \
+        libgomp1 \
         libpq5 \
+        libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv
