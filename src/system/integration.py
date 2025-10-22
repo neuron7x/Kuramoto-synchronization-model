@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Sequence
+from typing import Any, AsyncIterator, Callable, Iterable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -68,19 +69,68 @@ class TradePulsePlatform:
     audit_logger: AuditLogger
     streaming_pipeline: StreamingIngestionPipeline | None = None
 
+    @property
+    def has_streaming(self) -> bool:
+        """Return ``True`` when a streaming pipeline has been configured."""
+
+        return self.streaming_pipeline is not None
+
     async def start_streaming(self) -> None:
         """Start the configured streaming ingestion pipeline if present."""
 
-        if self.streaming_pipeline is None:
+        if not self.has_streaming:
             return
         await self.streaming_pipeline.start()
 
     async def stop_streaming(self) -> None:
         """Stop the configured streaming ingestion pipeline if present."""
 
-        if self.streaming_pipeline is None:
+        if not self.has_streaming:
             return
         await self.streaming_pipeline.stop()
+
+    @asynccontextmanager
+    async def streaming_session(self) -> AsyncIterator["TradePulsePlatform"]:
+        """Manage the streaming lifecycle within an async context manager.
+
+        When a streaming pipeline is configured, the context manager starts it
+        on entry and stops it on exit, mirroring :meth:`start_streaming` and
+        :meth:`stop_streaming`. The platform instance itself is yielded so that
+        callers can access orchestrator functionality while streaming is
+        active.
+        """
+
+        if not self.has_streaming:
+            yield self
+            return
+
+        try:
+            await self.start_streaming()
+        except Exception:
+            with suppress(Exception):
+                await self.stop_streaming()
+            raise
+
+        try:
+            yield self
+        finally:
+            await self.stop_streaming()
+
+    async def __aenter__(self) -> "TradePulsePlatform":
+        """Enable ``async with`` usage that automatically starts streaming."""
+
+        await self.start_streaming()
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: Any,
+    ) -> None:
+        """Stop streaming when exiting an ``async with`` block."""
+
+        await self.stop_streaming()
 
     def create_aggregator(
         self,
