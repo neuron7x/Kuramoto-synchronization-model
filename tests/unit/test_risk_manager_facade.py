@@ -43,6 +43,23 @@ def test_facade_reset_returns_previous_reason() -> None:
     assert manager.kill_switch.is_triggered() is False
 
 
+def test_facade_reset_clears_stale_reason_when_disengaged() -> None:
+    manager = RiskManager(RiskLimits())
+    facade = RiskManagerFacade(manager)
+
+    # Simulate a persistence layer returning a stale reason despite the switch
+    # being reported as disengaged.
+    manager.kill_switch._triggered = False  # type: ignore[attr-defined]
+    manager.kill_switch._reason = "stale"  # type: ignore[attr-defined]
+
+    reset_state = facade.reset_kill_switch()
+
+    assert reset_state.engaged is False
+    assert reset_state.reason == ""
+    assert reset_state.already_engaged is False
+    assert manager.kill_switch.reason == ""
+
+
 def test_facade_state_reflects_kill_switch() -> None:
     manager = RiskManager(RiskLimits())
     facade = RiskManagerFacade(manager)
