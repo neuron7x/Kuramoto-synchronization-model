@@ -232,6 +232,51 @@ async def test_platform_start_stop_streaming_delegates() -> None:
     assert pipeline.stopped == 1
 
 
+@pytest.mark.asyncio
+async def test_platform_streaming_session_manages_lifecycle() -> None:
+    cache_service = DataIngestionCacheService()
+    pipeline = _StubStreamingPipeline(cache_service)
+    platform = _build_platform(
+        cache_service=cache_service,
+        streaming_pipeline=pipeline,
+    )
+
+    async with platform.streaming_session() as session:
+        assert session is platform
+        assert pipeline.started == 1
+        assert pipeline.stopped == 0
+
+    assert pipeline.started == 1
+    assert pipeline.stopped == 1
+
+
+@pytest.mark.asyncio
+async def test_platform_streaming_session_without_pipeline_is_noop() -> None:
+    platform = _build_platform()
+
+    async with platform.streaming_session() as session:
+        assert session is platform
+        assert platform.streaming_pipeline is None
+
+
+@pytest.mark.asyncio
+async def test_platform_async_context_manager_alias() -> None:
+    cache_service = DataIngestionCacheService()
+    pipeline = _StubStreamingPipeline(cache_service)
+    platform = _build_platform(
+        cache_service=cache_service,
+        streaming_pipeline=pipeline,
+    )
+
+    async with platform as session:
+        assert session is platform
+        assert pipeline.started == 1
+        assert pipeline.stopped == 0
+
+    assert pipeline.started == 1
+    assert pipeline.stopped == 1
+
+
 def test_platform_kill_switch_round_trip() -> None:
     platform = _build_platform()
 
