@@ -17,6 +17,8 @@ spec:
       app.kubernetes.io/name: tradepulse-api
   template:
     metadata:
+      annotations:
+        seccomp.security.alpha.kubernetes.io/pod: runtime/default
       labels:
         app.kubernetes.io/name: tradepulse-api
     spec:
@@ -29,8 +31,6 @@ spec:
         runAsGroup: 10001
         fsGroup: 10001
         fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
