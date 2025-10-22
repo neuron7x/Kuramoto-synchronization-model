@@ -44,3 +44,24 @@ ui/dashboard/playwright/.cache/
 ui/dashboard/node_modules/
 rust/target/
 rust/**/target/
+
+# >>> SANITY CLEANUP
+# Managed by scripts.sanity_cleanup. Do not edit manually.
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+*.log
+*.tmp
+*.cache
+.pytest_cache/
+.ruff_cache/
+.nox/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+# <<< SANITY CLEANUP
+
