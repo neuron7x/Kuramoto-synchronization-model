@@ -99,3 +99,54 @@ def test_purged_kfold_applies_embargo():
 def test_purged_kfold_requires_at_least_two_splits(n_splits):
     with pytest.raises(ValueError):
         PurgedKFoldTimeSeriesSplit(n_splits=n_splits)
+
+
+def test_purged_kfold_with_label_overlap_purges_training_frame():
+    frame = _sample_frame()
+    # Ensure every label spans into the future to trigger purging logic.
+    frame["label_end"] = frame["timestamp"] + pd.Timedelta(days=20)
+    # Create an extended label that would otherwise leak into the next fold.
+    frame.loc[4, "label_end"] = frame.loc[7, "timestamp"] + pd.Timedelta(days=5)
+
+    splitter = PurgedKFoldTimeSeriesSplit(
+        n_splits=3,
+        time_col="timestamp",
+        label_end_col="label_end",
+        embargo_pct=0.0,
+    )
+
+    for train_idx, test_idx in splitter.split(frame):
+        assert len(train_idx) > 0
+        assert len(test_idx) > 0
+        test_start = frame.loc[test_idx, "timestamp"].min()
+        test_end = frame.loc[test_idx, "label_end"].max()
+        # Purging should remove any training observation whose label extends into the
+        # beginning of the test fold, preventing look-ahead leakage.
+        overlaps = (
+            (frame.loc[train_idx, "label_end"] >= test_start)
+            & (frame.loc[train_idx, "timestamp"] <= test_end)
+        )
+        assert not overlaps.any(), "Purging failed to remove overlapping labels"
+
+
+def test_walk_forward_with_overlapping_tests_has_no_leakage():
+    frame = _sample_frame()
+    splitter = WalkForwardSplitter(
+        train_window="180D",
+        test_window="90D",
+        step="30D",  # intentionally overlap successive test windows
+        time_col="timestamp",
+        label_end_col="label_end",
+    )
+
+    splits = list(splitter.split(frame))
+    assert splits, "Expected walk-forward splits to be produced"
+
+    for train_idx, test_idx in splits:
+        assert len(train_idx) > 0
+        assert len(test_idx) > 0
+        train_last = frame.loc[train_idx, "timestamp"].max()
+        test_start = frame.loc[test_idx, "timestamp"].min()
+        assert (
+            train_last < test_start
+        ), "Training window must strictly precede the test window"

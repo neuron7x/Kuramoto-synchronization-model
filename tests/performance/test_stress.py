@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from backtest.engine import walk_forward
+from backtest.time_splits import PurgedKFoldTimeSeriesSplit, WalkForwardSplitter
 from core.agent.strategy import Strategy
 from core.data.preprocess import normalize_df, scale_series
 from core.indicators.entropy import entropy
@@ -167,3 +168,76 @@ class TestEdgeCasePerformance:
 
         assert np.isfinite(score)
         assert duration < 15.0
+
+
+class TestCrossValidationStress:
+    """Stress tests focused on the cross-validation utilities."""
+
+    def test_walk_forward_split_large_dataset(self) -> None:
+        """Walk-forward splitter scales to large frames without timing out."""
+        periods = 120_000
+        frame = pd.DataFrame(
+            {
+                "timestamp": pd.date_range(
+                    "2023-01-01", periods=periods, freq="min", tz="UTC"
+                ),
+                "label_end": pd.date_range(
+                    "2023-01-01 00:05", periods=periods, freq="min", tz="UTC"
+                ),
+                "value": np.random.randn(periods),
+            }
+        )
+
+        splitter = WalkForwardSplitter(
+            train_window="30D",
+            test_window="1D",
+            step="12H",
+            time_col="timestamp",
+            label_end_col="label_end",
+            embargo_pct=0.01,
+        )
+
+        start = time.time()
+        split_count = 0
+        for train_idx, test_idx in splitter.split(frame):
+            assert train_idx.size > 0
+            assert test_idx.size > 0
+            split_count += 1
+        duration = time.time() - start
+
+        assert split_count > 0
+        assert duration < 6.0
+
+    def test_purged_kfold_split_large_dataset(self) -> None:
+        """Purged K-fold splitter executes efficiently on large inputs."""
+        n_rows = 60_000
+        frame = pd.DataFrame(
+            {
+                "timestamp": pd.date_range(
+                    "2023-01-01", periods=n_rows, freq="min", tz="UTC"
+                ),
+                "label_end": pd.date_range(
+                    "2023-01-01 00:30", periods=n_rows, freq="min", tz="UTC"
+                ),
+                "value": np.random.randn(n_rows),
+            }
+        )
+
+        splitter = PurgedKFoldTimeSeriesSplit(
+            n_splits=8,
+            time_col="timestamp",
+            label_end_col="label_end",
+            embargo_pct=0.02,
+        )
+
+        start = time.time()
+        seen_splits = 0
+        for train_idx, test_idx in splitter.split(frame):
+            assert train_idx.size > 0
+            assert test_idx.size > 0
+            assert np.intersect1d(train_idx, test_idx).size == 0
+            seen_splits += 1
+        duration = time.time() - start
+
+        assert seen_splits == splitter.n_splits
+        assert duration < 4.0
