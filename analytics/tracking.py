@@ -18,7 +18,7 @@ from analytics._config_sanitizer import redacted_config_yaml
 from core.config.cli_models import ExperimentConfig, ExperimentTrackingConfig
 
 try:  # pragma: no cover - optional rich formatting
-    import markdown
+    import markdown  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover - markdown is optional
     markdown = None
 
