@@ -8,15 +8,24 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from application.system import ExchangeAdapterConfig
+from application.system import (
+    ExchangeAdapterConfig,
+    TradePulseSystem,
+    TradePulseSystemConfig,
+)
 from application.system_orchestrator import MarketDataSource
 from core.data.models import InstrumentType, PriceTick
 from execution.connectors import SimulatedExchangeConnector
 
 from src.audit.audit_logger import AuditLogger
 from src.data.ingestion_service import DataIngestionCacheService
+from src.data.kafka_ingestion import KafkaIngestionConfig
 from src.data.pipeline import CacheRoute
-from src.system import TradePulsePlatform, build_tradepulse_platform
+from src.system import (
+    StreamingPipelineSettings,
+    TradePulsePlatform,
+    build_tradepulse_platform,
+)
 
 
 class _StubStreamingPipeline:
@@ -45,6 +54,29 @@ class _StubStreamingPipeline:
             market=route.market,
             frequency=frequency or route.timeframe,
         )
+
+
+class _StubKafkaService:
+    def __init__(
+        self,
+        config: KafkaIngestionConfig,
+        *,
+        tick_handler,
+        lag_handler=None,
+        **kwargs,
+    ) -> None:
+        self.config = config
+        self.tick_handler = tick_handler
+        self.lag_handler = lag_handler
+        self.kwargs = kwargs
+        self.started = 0
+        self.stopped = 0
+
+    async def start(self) -> None:
+        self.started += 1
+
+    async def stop(self) -> None:
+        self.stopped += 1
 
 
 def _venues() -> tuple[ExchangeAdapterConfig, ...]:
@@ -85,6 +117,28 @@ def test_build_tradepulse_platform_rejects_conflicting_audit_dependencies() -> N
             audit_logger=AuditLogger(secret="explicit"),
             audit_secret="redundant",
         )
+
+
+def test_build_tradepulse_platform_allows_audit_secret_resolver() -> None:
+    secret_calls: list[str] = []
+
+    def resolver() -> str:
+        secret_calls.append("resolver")
+        return "resolved-secret"
+
+    platform = build_tradepulse_platform(
+        venues=_venues(),
+        audit_secret_resolver=resolver,
+    )
+
+    record = platform.log_audit_event(
+        event_type="integration.test",
+        actor="resolver",  # reuse actor field to avoid duplicates
+        ip_address="198.51.100.11",
+    )
+
+    assert secret_calls == ["resolver"]
+    assert platform.audit_logger.verify(record) is True
 
 
 def test_platform_wires_components_and_audit_logging() -> None:
@@ -289,3 +343,135 @@ def test_platform_kill_switch_round_trip() -> None:
 
     current = platform.kill_switch_state()
     assert isinstance(current.reason, str)
+
+
+def test_build_tradepulse_platform_rejects_system_and_config() -> None:
+    config = TradePulseSystemConfig(venues=_venues())
+    system = TradePulseSystem(config)
+
+    with pytest.raises(ValueError):
+        build_tradepulse_platform(
+            system=system,
+            system_config=config,
+            audit_secret="integration-platform-secret",
+        )
+
+
+def test_build_tradepulse_platform_accepts_existing_system() -> None:
+    config = TradePulseSystemConfig(venues=_venues())
+    system = TradePulseSystem(config)
+
+    platform = build_tradepulse_platform(
+        system=system,
+        audit_secret="integration-platform-secret",
+    )
+
+    assert platform.system is system
+
+
+def test_build_tradepulse_platform_uses_explicit_system_config(tmp_path: Path) -> None:
+    allowed_root = tmp_path
+    config = TradePulseSystemConfig(
+        venues=_venues(),
+        allowed_data_roots=[allowed_root],
+        max_csv_bytes=1234,
+    )
+
+    platform = build_tradepulse_platform(
+        system_config=config,
+        audit_secret="integration-platform-secret",
+    )
+
+    assert platform.system.connector_names == ("sim",)
+    path_guard = platform.system.data_ingestor._path_guard  # noqa: SLF001 - test introspection
+    assert path_guard.allowed_roots == (allowed_root.resolve(),)
+    assert path_guard.max_bytes == 1234
+
+
+def test_build_tradepulse_platform_rejects_conflicting_streaming_dependencies() -> None:
+    cache_service = DataIngestionCacheService()
+    pipeline = _StubStreamingPipeline(cache_service)
+    settings = StreamingPipelineSettings(
+        kafka_config=KafkaIngestionConfig(
+            topic="ticks",
+            bootstrap_servers="localhost:9092",
+            group_id="test",
+        )
+    )
+
+    with pytest.raises(ValueError):
+        build_tradepulse_platform(
+            venues=_venues(),
+            audit_secret="integration-platform-secret",
+            cache_service=cache_service,
+            streaming_pipeline=pipeline,
+            streaming_settings=settings,
+        )
+
+
+def test_build_tradepulse_platform_rejects_mismatched_streaming_cache() -> None:
+    cache_service = DataIngestionCacheService()
+    pipeline = _StubStreamingPipeline(DataIngestionCacheService())
+
+    with pytest.raises(ValueError):
+        build_tradepulse_platform(
+            venues=_venues(),
+            audit_secret="integration-platform-secret",
+            cache_service=cache_service,
+            streaming_pipeline=pipeline,
+        )
+
+
+@pytest.mark.asyncio
+async def test_build_tradepulse_platform_streaming_settings_create_pipeline() -> None:
+    cache_service = DataIngestionCacheService()
+    factory_calls: list[_StubKafkaService] = []
+
+    def factory(
+        config: KafkaIngestionConfig,
+        *,
+        tick_handler,
+        lag_handler=None,
+        **kwargs,
+    ) -> _StubKafkaService:
+        service = _StubKafkaService(
+            config,
+            tick_handler=tick_handler,
+            lag_handler=lag_handler,
+            **kwargs,
+        )
+        factory_calls.append(service)
+        return service
+
+    settings = StreamingPipelineSettings(
+        kafka_config=KafkaIngestionConfig(
+            topic="ticks",
+            bootstrap_servers="localhost:9092",
+            group_id="test",
+        ),
+        kafka_service_factory=factory,
+        kafka_kwargs={"retries": 3},
+    )
+
+    platform = build_tradepulse_platform(
+        venues=_venues(),
+        audit_secret="integration-platform-secret",
+        cache_service=cache_service,
+        streaming_settings=settings,
+    )
+
+    assert platform.streaming_pipeline is not None
+    assert factory_calls
+    service = factory_calls[0]
+    assert platform.streaming_pipeline.kafka_service is service
+    assert service.tick_handler is platform.streaming_pipeline.tick_handler
+    assert service.kwargs == {"retries": 3}
+
+    aggregator = platform.create_aggregator(CacheRoute(layer="raw", timeframe="1s"))
+    assert aggregator._cache_service is cache_service  # noqa: SLF001 - test introspection
+
+    await platform.start_streaming()
+    await platform.stop_streaming()
+
+    assert service.started == 1
+    assert service.stopped == 1
