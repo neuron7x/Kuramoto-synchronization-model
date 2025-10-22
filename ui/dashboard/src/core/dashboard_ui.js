@@ -1,5 +1,6 @@
 import { createRouter } from '../router/index.js';
 import { renderOrdersView } from '../views/orders.js';
+import { renderOverviewView } from '../views/overview.js';
 import { renderPnlQuotesView } from '../views/pnl_quotes.js';
 import { renderPositionsView } from '../views/positions.js';
 import { renderSignalsView } from '../views/signals.js';
@@ -76,10 +77,11 @@ function renderNavigation(router, currentRoute) {
   `;
 }
 
-function createDashboardRouter({ positions, orders, pnl, signals }) {
+function createDashboardRouter({ overview, positions, orders, pnl, signals }) {
   return createRouter({
-    defaultRoute: 'pnl',
+    defaultRoute: 'overview',
     routes: {
+      overview: () => renderOverviewView(overview),
       pnl: () => renderPnlQuotesView(pnl),
       positions: () => renderPositionsView(positions),
       orders: () => renderOrdersView(orders),
@@ -90,7 +92,8 @@ function createDashboardRouter({ positions, orders, pnl, signals }) {
 
 export function renderDashboard(options = {}) {
   const {
-    route = 'pnl',
+    route = 'overview',
+    overview = {},
     positions = {},
     orders = {},
     pnl = {},
@@ -98,7 +101,7 @@ export function renderDashboard(options = {}) {
     header = {},
   } = options;
 
-  const router = createDashboardRouter({ positions, orders, pnl, signals });
+  const router = createDashboardRouter({ overview, positions, orders, pnl, signals });
   const { name: currentRoute, view } = router.navigate(route);
   const navigation = renderNavigation(router, currentRoute);
   const headerHtml = renderHeader(header);

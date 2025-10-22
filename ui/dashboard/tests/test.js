@@ -10,6 +10,7 @@ import {
   formatCurrency,
   formatPercent,
   createRouter,
+  renderOverviewView,
 } from '../src/core/index.js';
 import {
   TRACEPARENT_HEADER,
@@ -209,6 +210,42 @@ const ticks = [
   },
 ];
 
+const githubOverview = {
+  organization: 'TradePulse',
+  repository: 'TradePulse',
+  url: 'https://github.com/tradepulse-ai/tradepulse',
+  stars: 4820,
+  stars_delta: 0.16,
+  forks: 318,
+  active_forks: 27,
+  watchers: 950,
+  watchers_growth: 0.08,
+  contributors: 86,
+  new_contributors_30d: 5,
+  commits_30d: 182,
+  prs: { merged_30d: 64, open: 7 },
+  last_release: { tag: 'v2.4.0', published_at: '2024-11-18T12:00:00Z' },
+  languages: [
+    { name: 'Python', share: 0.46, color: '#3572A5' },
+    { name: 'TypeScript', share: 0.32, color: '#3178c6' },
+    { name: 'Rust', share: 0.12, color: '#dea584' },
+  ],
+  workflows: [
+    {
+      name: 'CI',
+      badge:
+        'https://img.shields.io/github/actions/workflow/status/tradepulse-ai/tradepulse/ci.yml?label=CI&logo=github',
+      url: 'https://github.com/tradepulse-ai/tradepulse/actions/workflows/ci.yml',
+    },
+    {
+      name: 'Quality gate',
+      badge:
+        'https://img.shields.io/github/actions/workflow/status/tradepulse-ai/tradepulse/quality.yml?label=Quality&logo=github',
+      url: 'https://github.com/tradepulse-ai/tradepulse/actions/workflows/quality.yml',
+    },
+  ],
+};
+
 const pnlPoints = [
   { timestamp: now - 3600000, value: 12500 },
   { timestamp: now - 1800000, value: 16850 },
@@ -334,6 +371,7 @@ const dashboardView = renderDashboard({
     subtitle: 'Live oversight across strategies.',
     tags: ['derivatives', 'equities'],
   },
+  overview: { github: githubOverview },
   positions: { fills: fillEvents, orders: orderEvents, ticks },
   orders: { orders: orderEvents, fills: fillEvents },
   pnl: { pnlPoints, quotes },
@@ -347,8 +385,9 @@ assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose
 assert.strictEqual(dashboardView.route, 'positions');
 
 const navigationLinks = (dashboardView.html.match(/<a class=\"tp-nav__link/g) || []).length;
-assert.strictEqual(navigationLinks, 4, 'dashboard should render all navigation links');
+assert.strictEqual(navigationLinks, 5, 'dashboard should render all navigation links');
 assert.ok(dashboardView.html.includes('Signals'), 'navigation should expose signals route');
+assert.ok(dashboardView.html.includes('Overview'), 'navigation should surface overview route');
 
 const applePosition = dashboardView.view.rows.find((row) => row.symbol === 'AAPL');
 assert.ok(applePosition, 'positions view should aggregate AAPL position');
@@ -374,6 +413,24 @@ assert.ok(signalRows.some((row) => row.isActive), 'signals should mark active en
 assert.ok(signalRows.some((row) => !row.isActive), 'signals should mark expired entries when ttl elapsed');
 assert.ok(signalsView.summary.activeCount >= 1, 'summary should count active signals');
 assert.ok(signalsView.html.includes('tp-meta-list'), 'signals view should render metadata chips');
+
+const overviewView = renderOverviewView({ github: githubOverview });
+assert.ok(overviewView.html.includes('Product Pulse'), 'overview view should include primary heading');
+assert.ok(overviewView.html.includes('4,820'), 'overview view should format star totals');
+assert.ok(overviewView.html.includes('tp-github-workflow'), 'overview view should surface GitHub badges');
+assert.ok(overviewView.html.includes('Python'), 'overview view should list dominant languages');
+assert.ok(!overviewView.html.includes('javascript:'), 'overview view should sanitize external links');
+assert.strictEqual(overviewView.github, githubOverview);
+
+const overviewDashboard = renderDashboard({
+  overview: { github: githubOverview },
+  positions: { fills: fillEvents, orders: orderEvents, ticks },
+  orders: { orders: orderEvents, fills: fillEvents },
+  pnl: { pnlPoints, quotes },
+  signals: { signals: signalEvents },
+});
+assert.strictEqual(overviewDashboard.route, 'overview', 'dashboard default route should highlight overview view');
+assert.ok(overviewDashboard.html.includes('tp-hero'), 'overview dashboard render should include hero section');
 
 const router = createRouter({
   defaultRoute: 'orders',
