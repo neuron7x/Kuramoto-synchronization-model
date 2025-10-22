@@ -1,0 +1,55 @@
+name: "Semgrep Security Scan"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches:
+      - '**'
+  schedule:
+    - cron: '0 4 * * 2'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  semgrep:
+    name: Run Semgrep SAST
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep
+
+      - name: Run Semgrep security ruleset
+        env:
+          SEMGREP_RULES: >-
+            p/ci
+            p/security-audit
+            p/secrets
+        run: |
+          semgrep ci --config "$SEMGREP_RULES" --sarif --output semgrep.sarif --error
+
+      - name: Upload Semgrep SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: Upload raw Semgrep report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep.sarif
