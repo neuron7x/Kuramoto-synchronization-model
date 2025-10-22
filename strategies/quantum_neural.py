@@ -101,7 +101,10 @@ class AdvancedTradingDataset(Dataset):
         buy_thr: float = 0.005,
         sell_thr: float = -0.005,
     ) -> None:
-        self.seq_len = sequence_length
+        if sequence_length <= 0:
+            raise ValueError("sequence_length must be positive")
+
+        self.seq_len = int(sequence_length)
 
         feats = df[["open", "high", "low", "close", "volume"]].values.astype(np.float32)
         self.scalers: Dict[str, RobustScaler] = {}
@@ -126,18 +129,39 @@ class AdvancedTradingDataset(Dataset):
         self.augment = augment
 
         cut = len(self.X) - 1
+        if cut <= 0:
+            raise ValueError("dataset must contain at least two rows")
+
         self.X = self.X[:cut]
         self.y_price = self.y_price[:cut]
         self.y_action = self.y_action[:cut]
         self.dates = self.dates[:cut]
 
+        self._length = int(cut - self.seq_len + 1)
+        if self._length <= 0:
+            raise ValueError(
+                "sequence_length requires at least one future observation. "
+                f"Got sequence_length={self.seq_len} with only {len(df)} rows."
+            )
+
     def __len__(self) -> int:
-        return len(self.X) - self.seq_len
+        return self._length
 
     def __getitem__(self, idx: int):
+        if isinstance(idx, np.integer):
+            idx = int(idx)
+        elif not isinstance(idx, int):
+            raise TypeError("index must be an integer")
+
+        if idx < 0:
+            idx += self._length
+        if idx < 0 or idx >= self._length:
+            raise IndexError(f"index {idx} out of range for dataset of length {self._length}")
+
         seq = self.X[idx : idx + self.seq_len].copy()
-        y_price = self.y_price[idx + self.seq_len]
-        y_action = self.y_action[idx + self.seq_len]
+        target_idx = idx + self.seq_len - 1
+        y_price = self.y_price[target_idx]
+        y_action = self.y_action[target_idx]
 
         if self.augment and np.random.rand() > 0.7:
             noise = np.random.normal(0, 0.01, seq.shape).astype(np.float32)
