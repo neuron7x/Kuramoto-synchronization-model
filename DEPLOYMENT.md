@@ -87,21 +87,28 @@ The repository ships with a lightweight Compose stack that builds the TradePulse
 
 ### Compose Health Check
 
-Expose an HTTP health endpoint from the TradePulse service (e.g., `/metrics` or `/healthz` on port 8001) and add the following to the `tradepulse` service to integrate with Compose status reporting:
+The TradePulse service exposes an HTTP health endpoint at `/health` on port 8000 by default. The docker-compose.yml includes a healthcheck that integrates with Docker's health status reporting:
 
 ```yaml
 services:
   tradepulse:
     # ...existing settings...
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/metrics"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
       timeout: 5s
-      retries: 3
-      start_period: 15s
+      retries: 5
+      start_period: 20s
 ```
 
-Prometheus is preconfigured to scrape the TradePulse metrics endpoint on port 8001, so a failing health check will surface quickly in dashboards.【F:deploy/prometheus.yml†L2-L7】
+The default port can be customized using the `TRADEPULSE_HTTP_PORT` environment variable. For example, to use port 8001:
+
+```bash
+export TRADEPULSE_HTTP_PORT=8001
+docker compose up -d
+```
+
+The smoke test script (`scripts/deploy/docker_compose_smoke.py`) automatically respects this environment variable, so health checks will target the correct port during CI validation. You can also override the health and metrics URLs explicitly using `--health-url` and `--metrics-url` command-line arguments.
 
 ## Kubernetes Infrastructure with Terraform and Kustomize
 

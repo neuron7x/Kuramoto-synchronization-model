@@ -165,15 +165,21 @@ def build_argument_parser() -> argparse.ArgumentParser:
         default="tradepulse",
         help="Primary service to wait for before executing health checks.",
     )
+
+    # Use TRADEPULSE_HTTP_PORT environment variable with fallback to 8000
+    http_port = os.environ.get("TRADEPULSE_HTTP_PORT", "8000")
+    default_health = f"http://localhost:{http_port}/health"
+    default_metrics = f"http://localhost:{http_port}/metrics"
+
     parser.add_argument(
         "--health-url",
-        default="http://localhost:8001/health",
-        help="HTTP URL used to validate API health.",
+        default=default_health,
+        help="HTTP URL used to validate API health. Can be overridden by TRADEPULSE_HTTP_PORT env var or --health-url.",
     )
     parser.add_argument(
         "--metrics-url",
-        default="http://localhost:8001/metrics",
-        help="HTTP URL used to download API metrics for diagnostics.",
+        default=default_metrics,
+        help="HTTP URL used to download API metrics for diagnostics. Can be overridden by TRADEPULSE_HTTP_PORT env var or --metrics-url.",
     )
     parser.add_argument(
         "--prometheus-runtime-url",
