@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence
@@ -261,6 +262,28 @@ class WaveletWindowSelector:
         self.wavelet = wavelet
         self.levels = max(2, levels)
         self.max_samples = int(max_samples) if max_samples is not None else None
+        self._fallback_window = self._compute_fallback_window()
+        self._widths_cache: np.ndarray | None = None
+
+    def _compute_fallback_window(self) -> int:
+        geometric = math.sqrt(float(self.min_window) * float(self.max_window))
+        fallback = int(geometric)
+        if fallback < self.min_window:
+            return self.min_window
+        if fallback > self.max_window:
+            return self.max_window
+        return fallback
+
+    def _candidate_widths(self) -> np.ndarray:
+        if self._widths_cache is None:
+            widths = np.linspace(self.min_window, self.max_window, self.levels)
+            widths = np.clip(widths, self.min_window, self.max_window)
+            widths = np.unique(widths.astype(int))
+            widths = widths[widths > 0]
+            if widths.size == 0:
+                widths = np.array([self.min_window], dtype=int)
+            self._widths_cache = widths
+        return self._widths_cache
 
     def select_window(self, prices: Sequence[float]) -> int:
         if self.max_window > 1_048_576:
@@ -277,25 +300,25 @@ class WaveletWindowSelector:
         if self.max_samples is not None and values.size > self.max_samples:
             values = values[-self.max_samples :]
         if _signal is None:
-            # geometric mean ensures deterministic, scale-sensitive fallback
-            return int(np.sqrt(self.min_window * self.max_window))
+            return self._fallback_window
 
-        widths = np.linspace(self.min_window, self.max_window, self.levels)
-        widths = np.clip(widths, self.min_window, self.max_window)
-        widths = np.unique(widths.astype(int))
-        widths = widths[widths > 0]
+        widths = self._candidate_widths()
         if widths.size == 0:
             return self.min_window
 
         try:
             transform = _signal.cwt(values, _signal.ricker, widths)
         except Exception:  # pragma: no cover - SciPy edge cases
-            return int(np.sqrt(self.min_window * self.max_window))
+            return self._fallback_window
 
         energy = np.sum(transform**2, axis=1)
         best_idx = int(np.argmax(energy))
-        best_width = widths[best_idx]
-        return int(np.clip(best_width, self.min_window, self.max_window))
+        best_width = int(widths[best_idx])
+        if best_width < self.min_window:
+            return self.min_window
+        if best_width > self.max_window:
+            return self.max_window
+        return best_width
 
 
 class MultiScaleKuramoto:
@@ -343,8 +366,7 @@ class MultiScaleKuramoto:
 
     def _window_for_series(self, values: np.ndarray) -> int:
         if self.use_adaptive_window:
-            values_list = values.tolist()
-            return int(self.selector.select_window(values_list))
+            return int(self.selector.select_window(values))
         return self.base_window
 
     def analyze(
@@ -385,8 +407,9 @@ class MultiScaleKuramoto:
                 analysis_records[timeframe] = record
                 continue
 
-            phases = _hilbert_phase(sampled.values)
-            window = min(self._window_for_series(sampled.values), phases.size)
+            sampled_values = sampled.to_numpy(copy=False)
+            phases = _hilbert_phase(sampled_values)
+            window = min(self._window_for_series(sampled_values), phases.size)
             if window < self.min_samples_per_scale:
                 record["skipped"] = True
                 analysis_records[timeframe] = record
