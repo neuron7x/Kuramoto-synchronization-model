@@ -1,23 +1,51 @@
 # SPDX-License-Identifier: MIT
 version: '3.9'
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tradepulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradepulse_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-tradepulse}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tradepulse} -d ${POSTGRES_DB:-tradepulse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
   tradepulse:
     build: .
     ports:
-      - "8000:8000"
+      - "${TRADEPULSE_HTTP_PORT:-8000}:${TRADEPULSE_HTTP_PORT:-8000}"
     restart: unless-stopped
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-tradepulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradepulse_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-tradepulse}
+      TRADEPULSE_ENV: ${TRADEPULSE_ENV:-development}
+      TRADEPULSE_HTTP_PORT: ${TRADEPULSE_HTTP_PORT:-8000}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5.0)"]
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; port = os.environ.get('TRADEPULSE_HTTP_PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/health', timeout=5.0)\""]
       interval: 15s
       timeout: 5s
-      retries: 5
-      start_period: 20s
+      retries: 8
+      start_period: 40s
     labels:
       - "co.elastic.logs/enabled=true"
       - "co.elastic.logs/module=tradepulse"
     depends_on:
-      - prometheus
-      - logstash
+      db:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      logstash:
+        condition: service_started
   prometheus:
     image: prom/prometheus
     volumes:
@@ -64,3 +92,4 @@ services:
 
 volumes:
   elasticsearch-data:
+  postgres-data:

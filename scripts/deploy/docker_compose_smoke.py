@@ -81,6 +81,31 @@ def _write_artifact(path: Path, payload: str) -> None:
     path.write_text(payload)
 
 
+def _create_smoke_env_file(env_path: Path) -> None:
+    """Create a minimal .env.smoke file with required environment variables for CI."""
+    postgres_user = os.environ.get("POSTGRES_USER", "tradepulse")
+    postgres_password = os.environ.get("POSTGRES_PASSWORD", "tradepulse_dev")
+    postgres_db = os.environ.get("POSTGRES_DB", "tradepulse")
+    tradepulse_env = os.environ.get("TRADEPULSE_ENV", "ci")
+    tradepulse_http_port = os.environ.get("TRADEPULSE_HTTP_PORT", "8000")
+    
+    env_content = f"""# Auto-generated minimal environment for docker-compose smoke test
+POSTGRES_USER={postgres_user}
+POSTGRES_PASSWORD={postgres_password}
+POSTGRES_DB={postgres_db}
+TRADEPULSE_ENV={tradepulse_env}
+TRADEPULSE_HTTP_PORT={tradepulse_http_port}
+"""
+    env_path.write_text(env_content)
+
+
+def _cleanup_env_file(env_path: Path) -> None:
+    """Remove the temporary .env.smoke file."""
+    if env_path.exists():
+        env_path.unlink()
+
+
+
 def run_smoke_test(args: argparse.Namespace) -> None:
     compose_file = Path(args.compose_file).resolve()
     project = args.project_name
@@ -90,15 +115,67 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     env = os.environ.copy()
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
 
-    up_command = _compose_cmd(compose_file, project, "up", "-d", "--build")
+    # Create temporary .env.smoke file with minimal required environment variables
+    env_file = compose_file.parent / ".env.smoke"
+    _create_smoke_env_file(env_file)
+
+    up_command = _compose_cmd(compose_file, project, "up", "-d", "--build", "--env-file", str(env_file))
     try:
         subprocess.run(up_command, check=True, text=True, env=env)
 
-        _wait_for_service(project, compose_file, args.service_name, args.timeout)
+        try:
+            _wait_for_service(project, compose_file, args.service_name, args.timeout)
+        except TimeoutError as exc:
+            # Capture diagnostics when service health check fails
+            print(f"[docker-compose-smoke] Service health check failed: {exc}", file=sys.stderr)
+            
+            # Capture docker-compose logs
+            logs_path = artifact_dir / "docker-compose-logs-failure.txt"
+            with logs_path.open("w", encoding="utf-8") as handle:
+                subprocess.run(
+                    _compose_cmd(compose_file, project, "logs"),
+                    check=False,
+                    text=True,
+                    stdout=handle,
+                    stderr=subprocess.STDOUT,
+                )
+            
+            # Capture docker-compose ps output
+            ps_output = _run(
+                _compose_cmd(compose_file, project, "ps"),
+                capture_output=True,
+                check=False,
+            ).stdout
+            _write_artifact(artifact_dir / "docker-compose-ps-failure.txt", ps_output)
+            
+            # Re-raise the original exception
+            raise
 
         try:
             health_payload = _fetch_json(args.health_url, timeout=args.http_timeout)
         except (HTTPError, URLError, TimeoutError) as exc:
+            # Capture diagnostics when health endpoint fetch fails
+            print(f"[docker-compose-smoke] Health endpoint fetch failed: {exc}", file=sys.stderr)
+            
+            # Capture docker-compose logs
+            logs_path = artifact_dir / "docker-compose-logs-health-failure.txt"
+            with logs_path.open("w", encoding="utf-8") as handle:
+                subprocess.run(
+                    _compose_cmd(compose_file, project, "logs"),
+                    check=False,
+                    text=True,
+                    stdout=handle,
+                    stderr=subprocess.STDOUT,
+                )
+            
+            # Capture docker-compose ps output
+            ps_output = _run(
+                _compose_cmd(compose_file, project, "ps"),
+                capture_output=True,
+                check=False,
+            ).stdout
+            _write_artifact(artifact_dir / "docker-compose-ps-health-failure.txt", ps_output)
+            
             raise RuntimeError(f"Failed to fetch service health from {args.health_url}: {exc}") from exc
 
         _write_artifact(
@@ -146,6 +223,8 @@ def run_smoke_test(args: argparse.Namespace) -> None:
             text=True,
             env=env,
         )
+        # Clean up temporary .env.smoke file
+        _cleanup_env_file(env_file)
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
