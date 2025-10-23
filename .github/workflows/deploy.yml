@@ -32,7 +32,7 @@ jobs:
       - name: Setup Go toolchain
         uses: actions/setup-go@v5
         with:
-          go-version: stable
+          go-version: '1.22.x'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
