@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -12,6 +14,12 @@ from pathlib import Path
 from typing import Iterable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+DEFAULT_SERVICE_TIMEOUT = 480.0
+DEFAULT_HTTP_TIMEOUT = 30.0
+DEFAULT_PROMETHEUS_PORT = 9090
+PROMETHEUS_RUNTIME_TEMPLATE = "http://localhost:{port}/api/v1/status/runtimeinfo"
+PROMETHEUS_UP_TEMPLATE = "http://localhost:{port}/api/v1/query?query=up"
 
 
 def _run(command: Iterable[str], *, check: bool = True, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
@@ -63,6 +71,51 @@ def _wait_for_service(project: str, compose_file: Path, service: str, timeout: f
     raise TimeoutError(f"service '{service}' did not become healthy (last status: {last_status})")
 
 
+def _port_is_available(port: int) -> bool:
+    with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind(("127.0.0.1", port))
+        except OSError:
+            return False
+    return True
+
+
+def _parse_port(value: str, *, source: str) -> int:
+    try:
+        port = int(value)
+    except ValueError as exc:  # pragma: no cover - defensive guard
+        raise ValueError(f"{source} must be an integer port (got {value!r})") from exc
+    if not (1 <= port <= 65535):  # pragma: no cover - defensive guard
+        raise ValueError(f"{source} must be between 1 and 65535 (got {port})")
+    return port
+
+
+def _find_available_port(preferred: int) -> int:
+    if _port_is_available(preferred):
+        return preferred
+    with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        sock.bind(("127.0.0.1", 0))
+        sock.listen(1)
+        return sock.getsockname()[1]
+
+
+def _resolve_prometheus_port(env: dict[str, str]) -> int:
+    for key in ("TRADEPULSE_PROMETHEUS_PORT", "PROMETHEUS_PORT"):
+        if key in env and env[key]:
+            port = _parse_port(env[key], source=key)
+            if not _port_is_available(port):
+                raise RuntimeError(f"Requested Prometheus port {port} from {key} is already in use")
+            env.setdefault("TRADEPULSE_PROMETHEUS_PORT", str(port))
+            env.setdefault("PROMETHEUS_PORT", str(port))
+            return port
+
+    port = _find_available_port(DEFAULT_PROMETHEUS_PORT)
+    env["TRADEPULSE_PROMETHEUS_PORT"] = str(port)
+    env["PROMETHEUS_PORT"] = str(port)
+    return port
+
+
 def _fetch_json(url: str, timeout: float) -> dict[str, object]:
     request = Request(url, headers={"Accept": "application/json"})
     with urlopen(request, timeout=timeout) as response:  # noqa: S310 (controlled URL)
@@ -89,6 +142,15 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 
     env = os.environ.copy()
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
+
+    prometheus_port = _resolve_prometheus_port(env)
+
+    default_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
+    default_up_url = PROMETHEUS_UP_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
+    if args.prometheus_runtime_url == default_runtime_url:
+        args.prometheus_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=prometheus_port)
+    if args.prometheus_up_url == default_up_url:
+        args.prometheus_up_url = PROMETHEUS_UP_TEMPLATE.format(port=prometheus_port)
 
     up_command = _compose_cmd(compose_file, project, "up", "-d", "--build")
     try:
@@ -183,12 +245,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--prometheus-runtime-url",
-        default="http://localhost:9090/api/v1/status/runtimeinfo",
+        default=PROMETHEUS_RUNTIME_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT),
         help="Prometheus runtime endpoint for environment diagnostics.",
     )
     parser.add_argument(
         "--prometheus-up-url",
-        default="http://localhost:9090/api/v1/query?query=up",
+        default=PROMETHEUS_UP_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT),
         help="Prometheus query endpoint to verify scraped targets.",
     )
     parser.add_argument(
@@ -199,13 +261,13 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--timeout",
         type=float,
-        default=300.0,
+        default=DEFAULT_SERVICE_TIMEOUT,
         help="Maximum number of seconds to wait for the service health check to succeed.",
     )
     parser.add_argument(
         "--http-timeout",
         type=float,
-        default=15.0,
+        default=DEFAULT_HTTP_TIMEOUT,
         help="Timeout in seconds for individual HTTP calls.",
     )
     return parser

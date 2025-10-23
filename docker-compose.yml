@@ -4,7 +4,7 @@ services:
   tradepulse:
     build: .
     ports:
-      - "8000:8000"
+      - "${TRADEPULSE_HTTP_PORT:-8000}:8000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5.0)"]
@@ -22,7 +22,8 @@ services:
     image: prom/prometheus
     volumes:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports: ["9090:9090"]
+    ports:
+      - "${TRADEPULSE_PROMETHEUS_PORT:-9090}:9090"
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
     environment:
