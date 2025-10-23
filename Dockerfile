@@ -14,8 +14,4 @@ COPY . ./
 
 EXPOSE 8000
 
-CMD [
-    "sh",
-    "-c",
-    "python -m uvicorn application.api.service:app --host 0.0.0.0 --port ${TRADEPULSE_HTTP_PORT}"
-]
+CMD ["/bin/sh", "-c", "python -m uvicorn application.api.service:app --host 0.0.0.0 --port ${TRADEPULSE_HTTP_PORT}"]
