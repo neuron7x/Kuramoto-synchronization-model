@@ -33,23 +33,18 @@ from .paper_trading import (
     PnLAnalysis,
     TelemetryEvent,
 )
+from .position_sizer import calculate_position_size
 from .risk import (
     IdempotentRetryExecutor,
+    JsonRiskStateStore,
     KillSwitch,
     KillSwitchStateStore,
     LimitViolation,
     OrderRateExceeded,
-    RiskStateStore,
     RiskLimits,
     RiskManager,
+    RiskStateStore,
     SQLiteKillSwitchStateStore,
-    JsonRiskStateStore,
-)
-from .workflows import (
-    OrderAssessment,
-    OrderRequest,
-    RiskComplianceWorkflow,
-    WorkflowAssessment,
 )
 from .rollout import (
     BlueGreenRolloutOrchestrator,
@@ -58,6 +53,12 @@ from .rollout import (
     TrafficRouter,
 )
 from .watchdog import Watchdog
+from .workflows import (
+    OrderAssessment,
+    OrderRequest,
+    RiskComplianceWorkflow,
+    WorkflowAssessment,
+)
 
 __all__ = [
     "CanaryConfig",
@@ -111,6 +112,7 @@ __all__ = [
     "PaperTradingEngine",
     "PaperOrderReport",
     "PnLAnalysis",
+    "calculate_position_size",
     "BlueGreenRolloutOrchestrator",
     "RolloutStep",
     "TrafficRouter",
