@@ -88,7 +88,7 @@ def _create_smoke_env_file(env_path: Path) -> None:
     postgres_db = os.environ.get("POSTGRES_DB", "tradepulse")
     tradepulse_env = os.environ.get("TRADEPULSE_ENV", "ci")
     tradepulse_http_port = os.environ.get("TRADEPULSE_HTTP_PORT", "8000")
-    
+
     env_content = f"""# Auto-generated minimal environment for docker-compose smoke test
 POSTGRES_USER={postgres_user}
 POSTGRES_PASSWORD={postgres_password}
