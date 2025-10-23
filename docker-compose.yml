@@ -6,8 +6,18 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    environment:
+      TRADEPULSE_AUDIT_SECRET: dev-local-audit-secret
+      TRADEPULSE_RBAC_AUDIT_SECRET: dev-local-rbac-secret
+      TRADEPULSE_HTTP_PORT: "8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5.0)"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os, urllib.request; port=os.environ.get('TRADEPULSE_HTTP_PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/health', timeout=5.0)",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
