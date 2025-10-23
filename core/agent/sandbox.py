@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import dataclasses
+import importlib
 import math
 import os
 import sys
@@ -18,6 +19,10 @@ except ModuleNotFoundError:  # pragma: no cover - handled gracefully in runtime
 
 from multiprocessing import get_all_start_methods, get_context
 from multiprocessing.context import BaseContext
+import tracemalloc
+
+_PSUTIL_SPEC = importlib.util.find_spec("psutil")
+psutil = importlib.import_module("psutil") if _PSUTIL_SPEC else None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -156,14 +161,19 @@ def _sandbox_worker(
     limits: SandboxLimits,
     priority: int,
 ) -> None:
+    guard = _MemoryUsageGuard(limits.memory_bytes)
     try:
         _apply_limits(limits, priority)
+        guard.start()
         score = float(strategy.simulate_performance(data))
+        guard.verify()
+
         result = SandboxResult(strategy=strategy, score=score)
         conn.send({"status": "ok", "result": result})
     except BaseException as exc:  # pragma: no cover - defensive guard
         conn.send({"status": "error", "error": exc, "message": str(exc)})
     finally:
+        guard.stop()
         conn.close()
 
 
@@ -207,10 +217,23 @@ def _resolve_context(start_method: str | None) -> BaseContext:
 
 
 def _running_without_main_file() -> bool:
+    """Return ``True`` when the active ``__main__`` module lacks a real file."""
+
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return True
+
     main_module = sys.modules.get("__main__")
     if main_module is None:
         return False
-    return getattr(main_module, "__file__", None) is None
+
+    main_file = getattr(main_module, "__file__", None)
+    if not main_file:
+        return True
+
+    if isinstance(main_file, str) and main_file.startswith("<") and main_file.endswith(">"):
+        return True
+
+    return not os.path.exists(main_file)
 
 
 def _apply_limits(limits: SandboxLimits, priority: int) -> None:
@@ -227,7 +250,7 @@ def _apply_limits(limits: SandboxLimits, priority: int) -> None:
 
     if limits.memory_bytes is not None:
         memory = max(1, int(limits.memory_bytes))
-        for limit_name in ("RLIMIT_AS", "RLIMIT_DATA"):
+        for limit_name in ("RLIMIT_AS", "RLIMIT_DATA", "RLIMIT_RSS"):
             if not hasattr(resource, limit_name):
                 continue
             try:
@@ -244,6 +267,119 @@ def _set_priority(limits: SandboxLimits, priority: int) -> None:
             os.nice(increment)
     except (AttributeError, OSError):  # pragma: no cover - unsupported platform
         pass
+
+
+class _MemoryUsageGuard:
+    """Best-effort enforcement of memory limits when rlimits are unavailable."""
+
+    __slots__ = (
+        "_limit",
+        "_tracer_started",
+        "_psutil_process",
+        "_has_rusage",
+        "_baseline_ru_maxrss",
+        "_baseline_rss",
+    )
+
+    def __init__(self, limit: int | None) -> None:
+        self._limit = int(limit) if limit is not None else None
+        self._tracer_started = False
+        self._psutil_process = None
+        self._has_rusage = resource is not None and hasattr(resource, "getrusage")
+        self._baseline_ru_maxrss: int | None = None
+        self._baseline_rss: int | None = None
+
+    def start(self) -> None:
+        if self._limit is None:
+            return
+
+        if self._has_rusage:
+            try:
+                usage = resource.getrusage(resource.RUSAGE_SELF)
+            except (OSError, ValueError):  # pragma: no cover - unlikely platform issues
+                self._has_rusage = False
+            else:
+                self._baseline_ru_maxrss = _ru_maxrss_to_bytes(
+                    getattr(usage, "ru_maxrss", 0)
+                )
+
+        if psutil is not None:
+            try:
+                process = psutil.Process(os.getpid())
+                info = process.memory_info()
+            except Exception:  # pragma: no cover - psutil failed unexpectedly
+                self._psutil_process = None
+            else:
+                self._psutil_process = process
+                self._baseline_rss = info.rss
+
+        if not tracemalloc.is_tracing():
+            tracemalloc.start()
+            self._tracer_started = True
+
+    def verify(self) -> None:
+        if self._limit is None:
+            return
+
+        limit = max(1, self._limit)
+        observed = 0
+
+        if self._tracer_started:
+            try:
+                _, peak = tracemalloc.get_traced_memory()
+            finally:
+                tracemalloc.stop()
+                self._tracer_started = False
+            observed = max(observed, peak)
+
+        if self._has_rusage:
+            try:
+                usage = resource.getrusage(resource.RUSAGE_SELF)
+            except (OSError, ValueError):  # pragma: no cover - transient failure
+                self._has_rusage = False
+            else:
+                ru_maxrss = getattr(usage, "ru_maxrss", 0)
+                peak_bytes = _ru_maxrss_to_bytes(ru_maxrss)
+                baseline = self._baseline_ru_maxrss or 0
+                if baseline < limit:
+                    if peak_bytes > limit:
+                        observed = max(observed, peak_bytes)
+                elif peak_bytes - baseline > limit:
+                    observed = max(observed, peak_bytes)
+
+        process = self._psutil_process
+        if process is not None:
+            try:
+                rss = process.memory_info().rss
+            except Exception:  # pragma: no cover - psutil read failure
+                self._psutil_process = None
+            else:
+                baseline_rss = self._baseline_rss or 0
+                if baseline_rss < limit:
+                    if rss > limit:
+                        observed = max(observed, rss)
+                elif rss - baseline_rss > limit:
+                    observed = max(observed, rss)
+
+        if observed > limit:
+            raise MemoryError(
+                f"Sandbox memory usage {observed} bytes exceeded limit {limit}"
+            )
+
+    def stop(self) -> None:
+        if self._tracer_started:
+            try:
+                tracemalloc.stop()
+            finally:
+                self._tracer_started = False
+
+
+def _ru_maxrss_to_bytes(value: int) -> int:
+    if value <= 0:
+        return 0
+    if sys.platform.startswith("darwin") or sys.platform.startswith("ios"):
+        return value
+    return value * 1024
 
 
 __all__ = [
