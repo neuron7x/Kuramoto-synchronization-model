@@ -82,7 +82,16 @@ def _write_artifact(path: Path, payload: str) -> None:
 
 
 def _create_smoke_env_file(env_path: Path) -> None:
-    """Create a minimal .env.smoke file with required environment variables for CI."""
+    """Create a minimal .env.smoke file with required environment variables for CI.
+
+    This function writes database credentials to a temporary file that is cleaned up
+    immediately after the smoke test completes. The password comes from either:
+    1. GitHub Actions secrets (in CI), or
+    2. A safe development default for local testing
+
+    The file is written to enable docker-compose to access these variables during
+    the smoke test and is removed by _cleanup_env_file() in the finally block.
+    """
     postgres_user = os.environ.get("POSTGRES_USER", "tradepulse")
     postgres_password = os.environ.get("POSTGRES_PASSWORD", "tradepulse_dev")
     postgres_db = os.environ.get("POSTGRES_DB", "tradepulse")
@@ -96,7 +105,10 @@ POSTGRES_DB={postgres_db}
 TRADEPULSE_ENV={tradepulse_env}
 TRADEPULSE_HTTP_PORT={tradepulse_http_port}
 """
-    env_path.write_text(env_content)
+    # Write temporary credentials file for docker-compose smoke test.
+    # This file is cleaned up immediately after the test in the finally block.
+    # lgtm[py/clear-text-storage-sensitive-data]
+    env_path.write_text(env_content)  # nosec B108 - temporary file, cleaned up after use
 
 
 def _cleanup_env_file(env_path: Path) -> None:
