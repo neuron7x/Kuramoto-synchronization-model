@@ -73,9 +73,19 @@ jobs:
           kubeval --kubernetes-version "$KUBERNETES_VERSION" --ignore-missing-schemas --strict deploy/tradepulse-deployment.yaml
           kubeval --kubernetes-version "$KUBERNETES_VERSION" --ignore-missing-schemas --strict deploy/tradepulse-service.yaml
 
-      - name: Run docker-compose smoke test
+      - name: Prepare env for docker-compose smoke
         run: |
-          python scripts/deploy/docker_compose_smoke.py --artifact-dir artifacts/deploy-smoke
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          fi
+          : "${TRADEPULSE_HTTP_PORT:=8000}"
+          echo "TRADEPULSE_HTTP_PORT=${TRADEPULSE_HTTP_PORT}" > .env
+
+      - name: Run docker-compose smoke test
+        env:
+          TRADEPULSE_HTTP_PORT: 8000
+        run: |
+          python scripts/deploy/docker_compose_smoke.py --artifact-dir artifacts/deploy-smoke --timeout 600 --http-timeout 15
 
       - name: Upload smoke test artifacts
         if: always()
