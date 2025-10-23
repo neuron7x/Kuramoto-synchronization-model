@@ -156,12 +156,36 @@ def _sandbox_worker(
     limits: SandboxLimits,
     priority: int,
 ) -> None:
+    tracer = None
     try:
         _apply_limits(limits, priority)
+        if limits.memory_bytes is not None:
+            try:
+                import tracemalloc
+            except Exception:  # pragma: no cover - tracemalloc unavailable
+                tracer = None
+            else:
+                tracemalloc.start()
+                tracer = tracemalloc
+
         score = float(strategy.simulate_performance(data))
+
+        if tracer is not None:
+            _, peak = tracer.get_traced_memory()
+            tracer.stop()
+            if peak > int(limits.memory_bytes or 0):
+                raise MemoryError(
+                    f"Sandbox memory usage {peak} bytes exceeded limit {limits.memory_bytes}"
+                )
+
         result = SandboxResult(strategy=strategy, score=score)
         conn.send({"status": "ok", "result": result})
     except BaseException as exc:  # pragma: no cover - defensive guard
+        if tracer is not None:
+            try:
+                tracer.stop()
+            except Exception:
+                pass
         conn.send({"status": "error", "error": exc, "message": str(exc)})
     finally:
         conn.close()
@@ -207,10 +231,23 @@ def _resolve_context(start_method: str | None) -> BaseContext:
 
 
 def _running_without_main_file() -> bool:
+    """Return ``True`` when the active ``__main__`` module lacks a real file."""
+
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return True
+
     main_module = sys.modules.get("__main__")
     if main_module is None:
         return False
-    return getattr(main_module, "__file__", None) is None
+
+    main_file = getattr(main_module, "__file__", None)
+    if not main_file:
+        return True
+
+    if isinstance(main_file, str) and main_file.startswith("<") and main_file.endswith(">"):
+        return True
+
+    return not os.path.exists(main_file)
 
 
 def _apply_limits(limits: SandboxLimits, priority: int) -> None:
