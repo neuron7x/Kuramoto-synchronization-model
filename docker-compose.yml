@@ -10,8 +10,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - >-
-          python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5.0)"
+        - python scripts/docker_healthcheck.py
       interval: 20s
       timeout: 8s
       retries: 10
