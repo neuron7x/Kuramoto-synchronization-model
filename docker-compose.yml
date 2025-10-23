@@ -31,7 +31,7 @@ services:
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
-      - "9200:9200"
+      - "${TRADEPULSE_ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
   logstash:
@@ -41,7 +41,7 @@ services:
     volumes:
       - ./observability/logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
-      - "5044:5044"
+      - "${TRADEPULSE_LOGSTASH_PORT:-5044}:5044"
     depends_on:
       - elasticsearch
   kibana:
@@ -49,7 +49,7 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
-      - "5601:5601"
+      - "${TRADEPULSE_KIBANA_PORT:-5601}:5601"
     depends_on:
       - elasticsearch
   filebeat:
