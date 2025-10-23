@@ -18,6 +18,7 @@ jobs:
 
     env:
       PYTHON_VERSION: "3.11"
+      TRADEPULSE_HTTP_PORT: "8000"
 
     steps:
       - name: Checkout repository
@@ -79,13 +80,46 @@ jobs:
             cp .env.example .env
           fi
           : "${TRADEPULSE_HTTP_PORT:=8000}"
-          echo "TRADEPULSE_HTTP_PORT=${TRADEPULSE_HTTP_PORT}" > .env
+          echo "TRADEPULSE_HTTP_PORT=${TRADEPULSE_HTTP_PORT}" >> .env
 
-      - name: Run docker-compose smoke test
+      - name: Start compose stack (CI-prep)
         env:
-          TRADEPULSE_HTTP_PORT: 8000
+          COMPOSE_PROJECT_NAME: tradepulse-smoke
         run: |
-          python scripts/deploy/docker_compose_smoke.py --artifact-dir artifacts/deploy-smoke --timeout 600 --http-timeout 15
+          # ensure images are built/pulled and dependent services start before smoke
+          compose_cmd=(docker compose --env-file .env -f docker-compose.yml -p "$COMPOSE_PROJECT_NAME")
+          "${compose_cmd[@]}" up -d --build
+          # wait for postgres and elasticsearch to report healthy (timeout after 10m)
+          deadline=$((SECONDS + 600))
+          services_ok=false
+          while [ $SECONDS -lt $deadline ]; do
+            pg_id=$("${compose_cmd[@]}" ps -q db || true)
+            es_id=$("${compose_cmd[@]}" ps -q elasticsearch || true)
+            ok=true
+            if [ -n "$pg_id" ]; then
+              status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$pg_id" 2>/dev/null || echo "")
+              if [ "$status" != "healthy" ] && [ "$status" != "running" ]; then ok=false; fi
+            fi
+            if [ -n "$es_id" ]; then
+              status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$es_id" 2>/dev/null || echo "")
+              if [ "$status" != "healthy" ] && [ "$status" != "running" ]; then ok=false; fi
+            fi
+            if $ok; then services_ok=true; break; fi
+            sleep 5
+          done
+          if ! $services_ok; then
+            echo "Dependent services did not become healthy within timeout" >&2
+            "${compose_cmd[@]}" ps
+            "${compose_cmd[@]}" logs --tail=200
+            exit 1
+          fi
+
+      - name: Run docker-compose smoke
+        env:
+          TRADEPULSE_HTTP_PORT: ${{ env.TRADEPULSE_HTTP_PORT }}
+        run: |
+          # run smoke test with longer timeout and reasonable http timeout
+          python scripts/deploy/docker_compose_smoke.py --compose-file docker-compose.yml --project-name tradepulse-smoke --artifact-dir artifacts/deploy-smoke --timeout 900 --http-timeout 15
 
       - name: Upload smoke test artifacts
         if: always()
