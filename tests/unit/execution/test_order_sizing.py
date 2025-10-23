@@ -12,6 +12,46 @@ from execution.order import (
     RiskAwarePositionSizer,
     position_sizing,
 )
+from execution.position_sizer import calculate_position_size
+
+
+@pytest.mark.parametrize(
+    "balance,risk,price,max_leverage",
+    [
+        (10_000.0, 0.02, 25_000.0, 5.0),
+        (5_000.0, 0.5, 1_250.0, 3.0),
+    ],
+)
+def test_calculate_position_size_matches_risk_aware(
+    balance: float, risk: float, price: float, max_leverage: float
+) -> None:
+    sizer = RiskAwarePositionSizer()
+
+    helper_qty = calculate_position_size(
+        balance,
+        risk,
+        price,
+        max_leverage=max_leverage,
+    )
+    class_qty = sizer.size(
+        balance=balance,
+        risk=risk,
+        price=price,
+        max_leverage=max_leverage,
+    )
+
+    assert helper_qty == pytest.approx(class_qty)
+
+
+def test_calculate_position_size_guards_invalid_inputs() -> None:
+    with pytest.raises(ValueError):
+        calculate_position_size(balance=1_000.0, risk=0.1, price=0.0)
+
+    assert calculate_position_size(balance=0.0, risk=0.1, price=100.0) == 0.0
+    assert calculate_position_size(balance=1_000.0, risk=-1.0, price=100.0) == 0.0
+    assert calculate_position_size(balance=1_000.0, risk=10.0, price=100.0) == pytest.approx(
+        10.0
+    )
 
 
 def test_size_rejects_non_positive_price() -> None:
