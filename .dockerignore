@@ -1,0 +1,46 @@
+# Ignore version control and CI metadata
+.git
+.github
+.gitlab
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+*.egg-info/
+build/
+dist/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local tooling
+.venv/
+venv/
+.env
+.env.*
+.DS_Store
+
+# Node and frontend build artifacts
+node_modules/
+ui/node_modules/
+apps/web/node_modules/
+
+# Documentation, tests, and local-only assets
+backlog/
+bench/
+docs/
+newsfragments/
+reports/
+tests/
+artifacts/
+
+# Editor and IDE settings
+.idea/
+.vscode/
+.ruff_cache/
