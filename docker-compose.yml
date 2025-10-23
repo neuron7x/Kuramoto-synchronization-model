@@ -20,8 +20,12 @@ services:
       - "co.elastic.logs/enabled=true"
       - "co.elastic.logs/module=tradepulse"
     depends_on:
-      - prometheus
-      - logstash
+      elasticsearch:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      logstash:
+        condition: service_started
   prometheus:
     image: prom/prometheus
     volumes:
@@ -37,6 +41,12 @@ services:
       - "9200:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.3
     environment:
