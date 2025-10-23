@@ -110,6 +110,8 @@ docker compose up -d
 
 The smoke test script (`scripts/deploy/docker_compose_smoke.py`) automatically respects this environment variable, so health checks will target the correct port during CI validation. You can also override the health and metrics URLs explicitly using `--health-url` and `--metrics-url` command-line arguments.
 
+Prometheus runs on port 9090 by default. Set `TRADEPULSE_PROMETHEUS_PORT` before invoking `docker compose` to bind it to an alternate host port, or let the smoke test script choose a free port automatically when 9090 is already in use. The script propagates the selected port to its Prometheus probes so that runtime diagnostics keep working even on shared CI runners.
+
 ## Kubernetes Infrastructure with Terraform and Kustomize
 
 TradePulse now ships with first-class infrastructure code for Amazon EKS alongside Kustomize overlays for staging and production workloads. Use Terraform to provision the cluster(s) and managed node groups, then deploy the application manifests with the provided overlays.
