@@ -1,0 +1,39 @@
+# Ignore version control and CI metadata
+.git
+.github
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+*.egg-info/
+build/
+dist/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+
+# Node and frontend build artifacts
+node_modules/
+ui/node_modules/
+apps/web/node_modules/
+
+# Documentation, tests, and local tooling not required for the runtime image
+docs/
+tests/
+bench/
+backlog/
+reports/
+newsfragments/
+
+# Local environment files
+.env
+.env.*
+.DS_Store
+
+# Editor and IDE settings
+.vscode/
+.idea/
