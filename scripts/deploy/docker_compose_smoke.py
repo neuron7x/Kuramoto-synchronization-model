@@ -17,7 +17,11 @@ from urllib.request import Request, urlopen
 
 DEFAULT_SERVICE_TIMEOUT = 480.0
 DEFAULT_HTTP_TIMEOUT = 30.0
+DEFAULT_HTTP_PORT = 8000
 DEFAULT_PROMETHEUS_PORT = 9090
+DEFAULT_ELASTICSEARCH_PORT = 9200
+DEFAULT_LOGSTASH_PORT = 5044
+DEFAULT_KIBANA_PORT = 5601
 PROMETHEUS_RUNTIME_TEMPLATE = "http://localhost:{port}/api/v1/status/runtimeinfo"
 PROMETHEUS_UP_TEMPLATE = "http://localhost:{port}/api/v1/query?query=up"
 
@@ -100,19 +104,28 @@ def _find_available_port(preferred: int) -> int:
         return sock.getsockname()[1]
 
 
-def _resolve_prometheus_port(env: dict[str, str]) -> int:
-    for key in ("TRADEPULSE_PROMETHEUS_PORT", "PROMETHEUS_PORT"):
-        if key in env and env[key]:
-            port = _parse_port(env[key], source=key)
-            if not _port_is_available(port):
-                raise RuntimeError(f"Requested Prometheus port {port} from {key} is already in use")
-            env.setdefault("TRADEPULSE_PROMETHEUS_PORT", str(port))
-            env.setdefault("PROMETHEUS_PORT", str(port))
-            return port
+def _resolve_port(
+    env: dict[str, str],
+    primary_key: str,
+    *,
+    aliases: Iterable[str] = (),
+    default: int,
+) -> int:
+    keys = (primary_key, *aliases)
+    for key in keys:
+        value = env.get(key)
+        if not value:
+            continue
+        port = _parse_port(value, source=key)
+        if not _port_is_available(port):
+            raise RuntimeError(f"Requested port {port} from {key} is already in use")
+        for alias in keys:
+            env[alias] = str(port)
+        return port
 
-    port = _find_available_port(DEFAULT_PROMETHEUS_PORT)
-    env["TRADEPULSE_PROMETHEUS_PORT"] = str(port)
-    env["PROMETHEUS_PORT"] = str(port)
+    port = _find_available_port(default)
+    for key in keys:
+        env[key] = str(port)
     return port
 
 
@@ -143,7 +156,49 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     env = os.environ.copy()
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
 
-    prometheus_port = _resolve_prometheus_port(env)
+    default_http_port_env = (
+        os.environ.get("TRADEPULSE_HTTP_PORT")
+        or os.environ.get("HTTP_PORT")
+        or str(DEFAULT_HTTP_PORT)
+    )
+    default_health_url = f"http://localhost:{default_http_port_env}/health"
+    default_metrics_url = f"http://localhost:{default_http_port_env}/metrics"
+
+    http_port = _resolve_port(
+        env,
+        "TRADEPULSE_HTTP_PORT",
+        aliases=["HTTP_PORT"],
+        default=DEFAULT_HTTP_PORT,
+    )
+    prometheus_port = _resolve_port(
+        env,
+        "TRADEPULSE_PROMETHEUS_PORT",
+        aliases=["PROMETHEUS_PORT"],
+        default=DEFAULT_PROMETHEUS_PORT,
+    )
+    _resolve_port(
+        env,
+        "TRADEPULSE_ELASTICSEARCH_PORT",
+        aliases=["ELASTICSEARCH_PORT"],
+        default=DEFAULT_ELASTICSEARCH_PORT,
+    )
+    _resolve_port(
+        env,
+        "TRADEPULSE_LOGSTASH_PORT",
+        aliases=["LOGSTASH_PORT"],
+        default=DEFAULT_LOGSTASH_PORT,
+    )
+    _resolve_port(
+        env,
+        "TRADEPULSE_KIBANA_PORT",
+        aliases=["KIBANA_PORT"],
+        default=DEFAULT_KIBANA_PORT,
+    )
+
+    if args.health_url == default_health_url:
+        args.health_url = f"http://localhost:{http_port}/health"
+    if args.metrics_url == default_metrics_url:
+        args.metrics_url = f"http://localhost:{http_port}/metrics"
 
     default_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
     default_up_url = PROMETHEUS_UP_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
@@ -228,8 +283,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Primary service to wait for before executing health checks.",
     )
 
-    # Use TRADEPULSE_HTTP_PORT environment variable with fallback to 8000
-    http_port = os.environ.get("TRADEPULSE_HTTP_PORT", "8000")
+    # Use TRADEPULSE_HTTP_PORT/HTTP_PORT environment variables with fallback to DEFAULT_HTTP_PORT
+    http_port = (
+        os.environ.get("TRADEPULSE_HTTP_PORT")
+        or os.environ.get("HTTP_PORT")
+        or str(DEFAULT_HTTP_PORT)
+    )
     default_health = f"http://localhost:{http_port}/health"
     default_metrics = f"http://localhost:{http_port}/metrics"
 
