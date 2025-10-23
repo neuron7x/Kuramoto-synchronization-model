@@ -6,12 +6,19 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    environment:
+      TRADEPULSE_AUDIT_SECRET: "local-development-audit-secret"
+      TRADEPULSE_HTTP_PORT: "8000"
+      TRADEPULSE_CONFIG_VAULT_PATH: "/tmp/tradepulse/config_vault.json"
+      TRADEPULSE_KILL_SWITCH_STORE_PATH: "/tmp/tradepulse/kill_switch_state.sqlite"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5.0)"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 20s
+    volumes:
+      - tradepulse-state:/tmp/tradepulse
     labels:
       - "co.elastic.logs/enabled=true"
       - "co.elastic.logs/module=tradepulse"
@@ -64,3 +71,4 @@ services:
 
 volumes:
   elasticsearch-data:
+  tradepulse-state:
