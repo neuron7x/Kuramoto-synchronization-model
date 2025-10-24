@@ -82,7 +82,9 @@ jobs:
           : "${TRADEPULSE_HTTP_PORT:=8000}"
           echo "TRADEPULSE_HTTP_PORT=${TRADEPULSE_HTTP_PORT}" >> .env
           echo "TRADEPULSE_AUDIT_SECRET=${TRADEPULSE_AUDIT_SECRET:-ci-audit-secret-placeholder}" >> .env
+          echo "TRADEPULSE_RBAC_AUDIT_SECRET=${TRADEPULSE_RBAC_AUDIT_SECRET:-ci-rbac-audit-secret-placeholder}" >> .env
           echo "TRADEPULSE_AUDIT_SECRET=${TRADEPULSE_AUDIT_SECRET:-ci-audit-secret-placeholder}" >> "$GITHUB_ENV"
+          echo "TRADEPULSE_RBAC_AUDIT_SECRET=${TRADEPULSE_RBAC_AUDIT_SECRET:-ci-rbac-audit-secret-placeholder}" >> "$GITHUB_ENV"
 
       - name: Start compose stack (CI-prep)
         run: |
