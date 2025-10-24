@@ -1,0 +1,399 @@
+name: Deploy TradePulse Environments
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-environments.yml'
+      - 'deploy/**'
+      - 'infra/terraform/eks/**'
+      - 'core/**'
+      - 'application/**'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy (staging|production)"
+        required: false
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-infrastructure:
+    name: Validate infrastructure definitions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform init (backend disabled)
+        run: |
+          cd infra/terraform/eks
+          terraform init -backend=false -input=false
+
+      - name: Terraform fmt
+        run: terraform -chdir=infra/terraform/eks fmt -check -recursive
+
+      - name: Terraform validate
+        run: terraform -chdir=infra/terraform/eks validate -no-color
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.4.3'
+
+      - name: Verify kustomize installation
+        run: kustomize version
+
+      - name: Validate staging manifest build
+        run: kustomize build deploy/kustomize/overlays/staging >/tmp/staging.yaml
+
+      - name: Validate production manifest build
+        run: kustomize build deploy/kustomize/overlays/production >/tmp/production.yaml
+
+  deploy-staging:
+    if: github.repository == 'neuron7x/TradePulse' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'production')))
+    name: Deploy staging
+    runs-on: ubuntu-latest
+    needs:
+      - validate-infrastructure
+    environment:
+      name: staging
+    outputs:
+      deploy_enabled: ${{ steps.configure_kube.outputs.deploy_enabled }}
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_STAGING_ROLE_ARN: ${{ secrets.AWS_STAGING_ROLE_ARN }}
+      AWS_STAGING_CLUSTER_NAME: ${{ secrets.AWS_STAGING_CLUSTER_NAME }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        id: configure_aws
+        if: env.AWS_STAGING_ROLE_ARN != ''
+        continue-on-error: true
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_STAGING_ROLE_ARN }}
+          role-session-name: GitHubActions-Deploy-Staging-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubeconfig
+        id: configure_kube
+        run: |
+          set -euo pipefail
+          if [ -z "${AWS_REGION:-}" ] || [ -z "${AWS_STAGING_ROLE_ARN:-}" ] || [ -z "${AWS_STAGING_CLUSTER_NAME:-}" ]; then
+            echo "AWS OIDC credentials for staging are not configured; skipping deployment" >&2
+            echo "deploy_enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ '${{ steps.configure_aws.outcome }}' != 'success' ]; then
+            echo "Unable to obtain AWS credentials for staging; skipping deployment" >&2
+            echo "deploy_enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p "$HOME/.kube"
+          aws eks update-kubeconfig \
+            --name "$AWS_STAGING_CLUSTER_NAME" \
+            --region "$AWS_REGION" \
+            --alias tradepulse-staging
+          echo "deploy_enabled=true" >>"$GITHUB_OUTPUT"
+
+      - name: Install kubectl
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.2
+
+      - name: Install kustomize
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.4.1'
+
+      - name: Install PyYAML for manifest templating
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: pip install --user --upgrade pyyaml
+
+      - name: Build rendered manifests
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        id: build_manifests
+        run: |
+          set -euo pipefail
+          manifest="$(mktemp)"
+          kustomize build deploy/kustomize/overlays/staging >"$manifest"
+          echo "path=$manifest" >>"$GITHUB_OUTPUT"
+
+      - name: Diff manifest against cluster
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: |
+          set -euo pipefail
+          if kubectl diff -k deploy/kustomize/overlays/staging; then
+            exit 0
+          fi
+          status=$?
+          if [ "$status" -gt 1 ]; then
+            exit "$status"
+          fi
+
+      - name: Deploy canary workload
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        env:
+          MANIFEST_PATH: ${{ steps.build_manifests.outputs.path }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MANIFEST_PATH:-}" ]; then
+            echo "Rendered manifest path is unavailable" >&2
+            exit 1
+          fi
+          canary_manifest="$(mktemp)"
+          python <<'PY' "$MANIFEST_PATH" "$canary_manifest"
+import copy
+import sys
+from pathlib import Path
+
+import yaml
+
+source_path = Path(sys.argv[1])
+dest_path = Path(sys.argv[2])
+
+documents = list(yaml.safe_load_all(source_path.read_text()))
+output_docs = []
+
+for doc in documents:
+    if not isinstance(doc, dict):
+        continue
+    if doc.get("kind") != "Deployment" or doc.get("metadata", {}).get("name") != "tradepulse-api":
+        continue
+    canary = copy.deepcopy(doc)
+    metadata = canary.setdefault("metadata", {})
+    metadata["name"] = f"{metadata.get('name')}-canary"
+    metadata.setdefault("labels", {})
+    metadata["labels"]["app.kubernetes.io/instance"] = "canary"
+    metadata.setdefault("annotations", {})
+    metadata["annotations"]["tradepulse.io/canary"] = "true"
+
+    spec = canary.setdefault("spec", {})
+    spec["replicas"] = 1
+    selector = spec.setdefault("selector", {}).setdefault("matchLabels", {})
+    selector["app.kubernetes.io/instance"] = "canary"
+    selector["app.kubernetes.io/track"] = "canary"
+
+    template = spec.setdefault("template", {})
+    template_metadata = template.setdefault("metadata", {})
+    template_labels = template_metadata.setdefault("labels", {})
+    template_labels["app.kubernetes.io/instance"] = "canary"
+    template_labels["app.kubernetes.io/track"] = "canary"
+
+    output_docs.append(canary)
+
+if not output_docs:
+    raise SystemExit("Failed to generate canary deployment from manifest")
+
+dest_path.write_text("\n---\n".join(yaml.safe_dump(doc) for doc in output_docs))
+PY
+          kubectl apply -n tradepulse-staging -f "$canary_manifest" --server-side --force-conflicts
+
+      - name: Wait for canary rollout
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: kubectl rollout status deployment/tradepulse-api-canary -n tradepulse-staging --timeout=5m
+
+      - name: Validate canary health and metrics
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: |
+          set -euo pipefail
+          if ! kubectl run tradepulse-api-canary-check \
+            -n tradepulse-staging \
+            --image=curlimages/curl:8.10.1 \
+            --restart=Never \
+            --attach \
+            --rm \
+            --command -- /bin/sh -c "set -euo pipefail; curl -fsS http://tradepulse-api.tradepulse-staging.svc.cluster.local/health > /tmp/health; curl -fsS http://tradepulse-api.tradepulse-staging.svc.cluster.local:8001/metrics > /tmp/metrics; [ -s /tmp/health ] && [ -s /tmp/metrics ]"; then
+            kubectl logs deployment/tradepulse-api-canary -n tradepulse-staging || true
+            kubectl delete deployment/tradepulse-api-canary -n tradepulse-staging --wait=true --ignore-not-found
+            exit 1
+          fi
+
+      - name: Apply manifests
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: kubectl apply -k deploy/kustomize/overlays/staging --server-side --force-conflicts
+
+      - name: Wait for rollout
+        if: steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: kubectl rollout status deployment/tradepulse-api -n tradepulse-staging --timeout=5m
+
+      - name: Remove canary deployment
+        if: always() && steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-staging --ignore-not-found
+
+  deploy-production:
+    if: github.repository == 'neuron7x/TradePulse' && needs.deploy-staging.outputs.deploy_enabled == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
+    name: Deploy production
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-staging
+    environment:
+      name: production
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_PRODUCTION_ROLE_ARN: ${{ secrets.AWS_PRODUCTION_ROLE_ARN }}
+      AWS_PRODUCTION_CLUSTER_NAME: ${{ secrets.AWS_PRODUCTION_CLUSTER_NAME }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_PRODUCTION_ROLE_ARN }}
+          role-session-name: GitHubActions-Deploy-Production-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.2
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.4.1'
+
+      - name: Install PyYAML for manifest templating
+        run: pip install --user --upgrade pyyaml
+
+      - name: Build rendered manifests
+        id: build_manifests
+        run: |
+          set -euo pipefail
+          manifest="$(mktemp)"
+          kustomize build deploy/kustomize/overlays/production >"$manifest"
+          echo "path=$manifest" >>"$GITHUB_OUTPUT"
+
+      - name: Configure kubeconfig
+        id: configure_kube
+        run: |
+          set -euo pipefail
+          if [ -z "${AWS_REGION:-}" ] || [ -z "${AWS_PRODUCTION_ROLE_ARN:-}" ] || [ -z "${AWS_PRODUCTION_CLUSTER_NAME:-}" ]; then
+            echo "AWS OIDC credentials for production are not fully configured" >&2
+            exit 1
+          fi
+          mkdir -p "$HOME/.kube"
+          aws eks update-kubeconfig \
+            --name "$AWS_PRODUCTION_CLUSTER_NAME" \
+            --region "$AWS_REGION" \
+            --alias tradepulse-production
+
+      - name: Diff manifest against cluster
+        run: |
+          set -euo pipefail
+          if kubectl diff -k deploy/kustomize/overlays/production; then
+            exit 0
+          fi
+          status=$?
+          if [ "$status" -gt 1 ]; then
+            exit "$status"
+          fi
+
+      - name: Deploy canary workload
+        env:
+          MANIFEST_PATH: ${{ steps.build_manifests.outputs.path }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MANIFEST_PATH:-}" ]; then
+            echo "Rendered manifest path is unavailable" >&2
+            exit 1
+          fi
+          canary_manifest="$(mktemp)"
+          python <<'PY' "$MANIFEST_PATH" "$canary_manifest"
+import copy
+import sys
+from pathlib import Path
+
+import yaml
+
+source_path = Path(sys.argv[1])
+dest_path = Path(sys.argv[2])
+
+documents = list(yaml.safe_load_all(source_path.read_text()))
+output_docs = []
+
+for doc in documents:
+    if not isinstance(doc, dict):
+        continue
+    if doc.get("kind") != "Deployment" or doc.get("metadata", {}).get("name") != "tradepulse-api":
+        continue
+    canary = copy.deepcopy(doc)
+    metadata = canary.setdefault("metadata", {})
+    metadata["name"] = f"{metadata.get('name')}-canary"
+    metadata.setdefault("labels", {})
+    metadata["labels"]["app.kubernetes.io/instance"] = "canary"
+    metadata.setdefault("annotations", {})
+    metadata["annotations"]["tradepulse.io/canary"] = "true"
+
+    spec = canary.setdefault("spec", {})
+    spec["replicas"] = 1
+    selector = spec.setdefault("selector", {}).setdefault("matchLabels", {})
+    selector["app.kubernetes.io/instance"] = "canary"
+    selector["app.kubernetes.io/track"] = "canary"
+
+    template = spec.setdefault("template", {})
+    template_metadata = template.setdefault("metadata", {})
+    template_labels = template_metadata.setdefault("labels", {})
+    template_labels["app.kubernetes.io/instance"] = "canary"
+    template_labels["app.kubernetes.io/track"] = "canary"
+
+    output_docs.append(canary)
+
+if not output_docs:
+    raise SystemExit("Failed to generate canary deployment from manifest")
+
+dest_path.write_text("\n---\n".join(yaml.safe_dump(doc) for doc in output_docs))
+PY
+          kubectl apply -n tradepulse-production -f "$canary_manifest" --server-side --force-conflicts
+
+      - name: Wait for canary rollout
+        run: kubectl rollout status deployment/tradepulse-api-canary -n tradepulse-production --timeout=10m
+
+      - name: Validate canary health and metrics
+        run: |
+          set -euo pipefail
+          if ! kubectl run tradepulse-api-canary-check \
+            -n tradepulse-production \
+            --image=curlimages/curl:8.10.1 \
+            --restart=Never \
+            --attach \
+            --rm \
+            --command -- /bin/sh -c "set -euo pipefail; curl -fsS http://tradepulse-api.tradepulse-production.svc.cluster.local/health > /tmp/health; curl -fsS http://tradepulse-api.tradepulse-production.svc.cluster.local:8001/metrics > /tmp/metrics; [ -s /tmp/health ] && [ -s /tmp/metrics ]"; then
+            kubectl logs deployment/tradepulse-api-canary -n tradepulse-production || true
+            kubectl delete deployment/tradepulse-api-canary -n tradepulse-production --wait=true --ignore-not-found
+            exit 1
+          fi
+
+      - name: Apply manifests
+        run: kubectl apply -k deploy/kustomize/overlays/production --server-side --force-conflicts
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment/tradepulse-api -n tradepulse-production --timeout=10m
+
+      - name: Remove canary deployment
+        if: always()
+        run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-production --ignore-not-found
