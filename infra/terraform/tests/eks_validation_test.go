@@ -64,6 +64,9 @@ func TestEKSModuleTerraformValidate(t *testing.T) {
 			"TF_IN_AUTOMATION": "true",
 			"TF_CLI_ARGS_init": "-backend=false",
 		},
+		VarFiles: []string{
+			filepath.Join(terraformDir, "environments", "staging.tfvars"),
+		},
 		NoColor:     true,
 		Reconfigure: true,
 	}
