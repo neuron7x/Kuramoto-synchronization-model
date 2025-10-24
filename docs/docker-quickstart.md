@@ -64,6 +64,12 @@ docker compose logs -f
 
 > ℹ️ Docker Compose automatically reads a `.env` file from the project root. Passing `--env-file .env` makes it explicit that the generated secrets should be loaded before the containers start.
 
+The `tradepulse` service defined in `docker-compose.yml` consumes the `.env` file, so `TRADEPULSE_AUDIT_SECRET` and `TRADEPULSE_RBAC_AUDIT_SECRET` are injected into the container environment. You can verify they are present with:
+
+```bash
+docker compose exec tradepulse env | grep TRADEPULSE_.*AUDIT_SECRET
+```
+
 Services started:
 - **TradePulse**: Main application
 - **Prometheus**: Metrics collection (port 9090)
