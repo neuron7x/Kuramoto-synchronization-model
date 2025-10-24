@@ -117,6 +117,8 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /tmp
+            - name: state-data
+              mountPath: /app/state
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -131,6 +133,8 @@ spec:
           secret:
             secretName: tradepulse-mtls-client
         - name: tmp
+          emptyDir: {}
+        - name: state-data
           emptyDir: {}
 ---
 # Secrets that provide OAuth credentials and mTLS trust bundles must be

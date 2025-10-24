@@ -115,6 +115,8 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /tmp
+            - name: state-data
+              mountPath: /app/state
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -129,4 +131,6 @@ spec:
           secret:
             secretName: tradepulse-mtls-client
         - name: tmp
+          emptyDir: {}
+        - name: state-data
           emptyDir: {}
