@@ -81,6 +81,9 @@ jobs:
           fi
           : "${TRADEPULSE_HTTP_PORT:=8000}"
           echo "TRADEPULSE_HTTP_PORT=${TRADEPULSE_HTTP_PORT}" >> .env
+          : "${TRADEPULSE_RBAC_AUDIT_SECRET:=rbac_audit_secret_local_dev_E4f8N2p7Q1x9V5z3T6m0L2c8S4h1B7w}"
+          echo "TRADEPULSE_RBAC_AUDIT_SECRET=${TRADEPULSE_RBAC_AUDIT_SECRET}" >> .env
+          echo "TRADEPULSE_RBAC_AUDIT_SECRET=${TRADEPULSE_RBAC_AUDIT_SECRET}" >> "$GITHUB_ENV"
 
       - name: Start compose stack (CI-prep)
         run: |
