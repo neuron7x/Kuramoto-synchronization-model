@@ -1,0 +1,2 @@
+{"id": "req-1", "method": "GET", "path": "/rates", "query": {"symbol": "EURUSD"}}
+{"id": "req-2", "method": "GET", "path": "/rates", "query": {"symbol": "GBPUSD"}}

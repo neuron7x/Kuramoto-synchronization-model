@@ -1,0 +1,21 @@
+{
+  "req-1": {
+    "status_code": 200,
+    "body": {
+      "price": 1.11,
+      "metadata": {
+        "source": "baseline"
+      }
+    }
+  },
+  "req-2": {
+    "status_code": 200,
+    "body": {
+      "price": 1.4,
+      "metadata": {
+        "source": "candidate",
+        "trace": "abc"
+      }
+    }
+  }
+}

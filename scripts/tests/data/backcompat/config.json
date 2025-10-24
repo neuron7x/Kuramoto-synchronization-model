@@ -1,0 +1,31 @@
+{
+  "report_dir": "reports",
+  "blocking_threshold": 0.0,
+  "alerts": {
+    "channels": ["stdout", "file"],
+    "recipients": ["qa@tradepulse.test"],
+    "escalation_after_failures": 1,
+    "label": "backcompat-regression"
+  },
+  "datasets": [
+    {
+      "name": "rates",
+      "traffic": "traffic.jsonl",
+      "baseline": "baseline.json",
+      "actual": "candidate.json",
+      "tolerance": {
+        "absolute": 0.02,
+        "relative": 0.005,
+        "overrides": {
+          "$.body.price": {"absolute": 0.05}
+        }
+      },
+      "whitelist": ["$.body.metadata.*"],
+      "counterexamples": "reports/counterexamples.jsonl",
+      "contract_snapshot": "reports/contracts/rates.json"
+    }
+  ],
+  "stability_history": "reports/stability.json",
+  "auto_update_baseline": false,
+  "auto_update_release_channels": ["stable", "prod"]
+}

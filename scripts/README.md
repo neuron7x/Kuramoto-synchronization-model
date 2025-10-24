@@ -73,6 +73,7 @@ deprecated directories that are discovered during the run.
 
 ### Analysis & Testing
 
+- **[backcompatibility.py](README_backcompatibility.md)** - Replay historical API traffic, compare against baselines, and generate regression artefacts
 - **[integrate_kuramoto_ricci.py](README_integrate_kuramoto_ricci.md)** - Run Kuramoto-Ricci composite integration pipeline
 - **[smoke_e2e.py](README_smoke_e2e.md)** - Nightly smoke end-to-end pipeline for integration testing
 - **[dependency_audit.py](README_dependency_audit.md)** - Audit Python dependencies for security vulnerabilities
