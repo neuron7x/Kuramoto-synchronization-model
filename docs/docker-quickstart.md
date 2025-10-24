@@ -37,14 +37,37 @@ git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
 ```
 
-### 2. Start Services
+### 2. Prepare Environment Variables
+
+TradePulse requires audit secrets for signing audit logs and RBAC audit events. Generate strong secrets (64 hexadecimal characters or longer) and store them in a `.env` file before starting Docker Compose:
+
+```bash
+# Generate cryptographically secure secrets
+python - <<'PY'
+import secrets
+print('TRADEPULSE_AUDIT_SECRET=' + secrets.token_hex(32))
+print('TRADEPULSE_RBAC_AUDIT_SECRET=' + secrets.token_hex(32))
+PY
+
+# Save the output in .env together with any other settings you need
+```
+
+### 3. Start Services
 
 ```bash
 # Start all services
-docker compose up -d
+docker compose --env-file .env up -d
 
 # View logs
 docker compose logs -f
+```
+
+> ℹ️ Docker Compose automatically reads a `.env` file from the project root. Passing `--env-file .env` makes it explicit that the generated secrets should be loaded before the containers start.
+
+The `tradepulse` service defined in `docker-compose.yml` consumes the `.env` file, so `TRADEPULSE_AUDIT_SECRET` and `TRADEPULSE_RBAC_AUDIT_SECRET` are injected into the container environment. You can verify they are present with:
+
+```bash
+docker compose exec tradepulse env | grep TRADEPULSE_.*AUDIT_SECRET
 ```
 
 Services started:
@@ -53,7 +76,7 @@ Services started:
 - **Grafana**: Dashboards (port 3000)
 - **PostgreSQL**: Database (port 5432)
 
-### 3. Verify Services
+### 4. Verify Services
 
 ```bash
 # Check running containers
@@ -66,7 +89,7 @@ docker compose ps
 # tradepulse-db        running
 ```
 
-### 4. Access Services
+### 5. Access Services
 
 **Grafana Dashboard:**
 - URL: http://localhost:3000
@@ -171,7 +194,7 @@ docker compose run --rm tradepulse /bin/bash
 
 ### Environment Variables
 
-Create `.env` file in project root:
+Create `.env` file in project root. Be sure to include the audit secrets you generated earlier so the application can start successfully:
 
 ```bash
 # .env
@@ -186,6 +209,8 @@ BINANCE_API_SECRET=your_api_secret
 # TradePulse settings
 TRADEPULSE_ENV=production
 TRADEPULSE_LOG_LEVEL=INFO
+TRADEPULSE_AUDIT_SECRET=replace_with_output_from_secrets_generator
+TRADEPULSE_RBAC_AUDIT_SECRET=replace_with_output_from_secrets_generator
 ```
 
 Load environment variables:

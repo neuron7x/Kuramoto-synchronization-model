@@ -3,6 +3,11 @@ version: '3.9'
 services:
   tradepulse:
     build: .
+    env_file:
+      - .env
+    environment:
+      TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET?tradepulse audit secret must be set}
+      TRADEPULSE_RBAC_AUDIT_SECRET: ${TRADEPULSE_RBAC_AUDIT_SECRET?tradepulse RBAC audit secret must be set}
     ports:
       - "${TRADEPULSE_HTTP_PORT:-8000}:8000"
     restart: unless-stopped
