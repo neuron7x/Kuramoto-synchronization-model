@@ -118,7 +118,7 @@ def _resolve_port(
             continue
         port = _parse_port(value, source=key)
         if not _port_is_available(port):
-            raise RuntimeError(f"Requested port {port} from {key} is already in use")
+            port = _find_available_port(port)
         for alias in keys:
             env[alias] = str(port)
         return port
