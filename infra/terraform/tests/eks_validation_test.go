@@ -14,24 +14,40 @@ func isTerraformRegistryConnectivityError(err error) bool {
 	if err == nil {
 		return false
 	}
-	message := err.Error()
+
+	message := strings.ToLower(err.Error())
 	if message == "" {
 		return false
 	}
 
-	substrings := []string{
-		"Failed to query available provider packages",
-		"could not connect to registry.terraform.io",
-		"Forbidden",
+	if !strings.Contains(message, "failed to query available provider packages") {
+		return false
 	}
-	matches := 0
-	for _, part := range substrings {
-		if strings.Contains(message, part) {
-			matches++
+
+	networkIndicators := []string{
+		"could not connect to registry.terraform.io",
+		"registry.terraform.io/.well-known/terraform.json",
+		"lookup registry.terraform.io",
+		"dial tcp",
+		"timeout",
+		"context deadline exceeded",
+		"connection reset",
+		"connection refused",
+		"no such host",
+		"tls",
+		"x509:",
+		"forbidden",
+		"too many requests",
+		"service unavailable",
+	}
+
+	for _, indicator := range networkIndicators {
+		if strings.Contains(message, indicator) {
+			return true
 		}
 	}
 
-	return matches >= 2
+	return false
 }
 
 func TestEKSModuleTerraformValidate(t *testing.T) {
