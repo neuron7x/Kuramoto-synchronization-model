@@ -83,7 +83,7 @@ spec:
             - name: TRADEPULSE_MTLS_REVOCATION_LIST_PATH
               value: /etc/tradepulse/tls/client.crl
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
               name: http
             - containerPort: 8001
               name: metrics
