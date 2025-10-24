@@ -365,10 +365,20 @@ jobs:
           fi
           echo "environment=$env_name" >>"$GITHUB_OUTPUT"
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
-          terraform_version: 1.6.6
+          go-version: '1.22'
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.5.7'
+
+      - name: Verify versions
+        run: |
+          go version
+          terraform version
 
       - name: Terraform init (backend disabled)
         run: terraform -chdir=infra/terraform/eks init -backend=false
