@@ -29,15 +29,20 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Setup Go toolchain
-        uses: actions/setup-go@v5
+      - name: Set up Go 1.22
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.22.x'
+          go-version: '1.22'
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Set up Terraform 1.5.7
+        uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.6.6
+          terraform_version: '1.5.7'
+
+      - name: Verify versions
+        run: |
+          go version
+          terraform version
 
       - name: Install dependencies for Terratest
         run: |
