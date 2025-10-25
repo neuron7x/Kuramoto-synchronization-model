@@ -22,6 +22,19 @@ except Exception:  # pragma: no cover - optional dependency not installed
     _TRACE_LOG_CORRELATION = False
 from uuid import uuid4
 
+try:  # pragma: no cover - optional dependency
+    from core.tracing.distributed import (
+        current_correlation_id,
+        generate_correlation_id,
+    )
+except Exception:  # pragma: no cover - tracing helpers optional
+
+    def current_correlation_id(_: Optional[str] = None) -> Optional[str]:
+        return None
+
+    def generate_correlation_id() -> str:
+        return str(uuid4())
+
 
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
@@ -79,7 +92,8 @@ class StructuredLogger:
 
     def __init__(self, name: str, correlation_id: Optional[str] = None):
         self.logger = logging.getLogger(name)
-        self.correlation_id = correlation_id or str(uuid4())
+        resolved = correlation_id or current_correlation_id()
+        self.correlation_id = resolved or generate_correlation_id()
 
     def _log(self, level: int, msg: str, **kwargs: Any) -> None:
         """Internal logging method with structured fields."""
