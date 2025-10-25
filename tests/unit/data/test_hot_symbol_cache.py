@@ -143,6 +143,41 @@ def test_hot_symbol_cache_expires_stale_entries(deterministic_clock: _Determinis
     assert btc_snapshot.ticks == ()
 
 
+def test_hot_symbol_cache_retains_new_symbol_after_expiring_stale_entry(
+    deterministic_clock: _DeterministicClock,
+) -> None:
+    cache = HotSymbolCache(
+        max_entries=1,
+        ttl_seconds=5,
+        max_ticks=10,
+        flush_size=10,
+        clock=deterministic_clock.monotonic,
+    )
+
+    deterministic_clock.advance(0.1)
+    first_seen = deterministic_clock.monotonic()
+    first_tick = _make_tick(symbol="BTC/USDT", minutes=0)
+    cache.update(first_tick)
+
+    deterministic_clock.advance(6.0)
+    second_seen = deterministic_clock.monotonic()
+    second_tick = _make_tick(symbol="ETH/USDT", minutes=1)
+    flushed = cache.update(second_tick)
+
+    assert len(flushed) == 1
+    stale_snapshot = flushed[0]
+    assert stale_snapshot.symbol == "BTC/USDT"
+    expected_first_seen = datetime.fromtimestamp(first_seen, tz=UTC)
+    assert stale_snapshot.last_seen == expected_first_seen
+
+    assert cache.snapshot("BTC/USDT", "BINANCE") is None
+    eth_snapshot = cache.snapshot("ETH/USDT", "BINANCE")
+    assert eth_snapshot is not None
+    assert eth_snapshot.ticks == (second_tick,)
+    expected_second_seen = datetime.fromtimestamp(second_seen, tz=UTC)
+    assert eth_snapshot.last_seen == expected_second_seen
+
+
 def test_hot_symbol_cache_evicts_least_recent_entries(
     deterministic_clock: _DeterministicClock,
 ) -> None:
