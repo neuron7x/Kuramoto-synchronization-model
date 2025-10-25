@@ -7,7 +7,6 @@ import os
 
 import numpy as np
 import torch
-from sklearn.preprocessing import StandardScaler
 
 
 def setup_logging(log_dir: str, log_file: str) -> None:
@@ -83,8 +82,8 @@ class AnomalyDetector:
 
 
 def preprocess_window(raw_window: np.ndarray) -> torch.Tensor:
-    T, S, F = raw_window.shape
-    X = raw_window.reshape(T * S, F)
-    X = StandardScaler().fit_transform(X)
-    X = X.reshape(1, T, S, F)
-    return torch.tensor(X, dtype=torch.float32)
+    window = np.asarray(raw_window, dtype=np.float32)
+    if window.ndim != 3:
+        raise ValueError("Expected raw_window with shape (T, S, F)")
+    window = np.ascontiguousarray(window)
+    return torch.from_numpy(window).unsqueeze(0)

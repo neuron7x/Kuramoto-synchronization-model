@@ -18,7 +18,7 @@ from torch import nn
 from hydrobrain_v2.data import generate_yangtze_npz, load_npz_dataset
 from hydrobrain_v2.model import HydroBrainV2
 from hydrobrain_v2.monitor import RealTimeMonitor
-from hydrobrain_v2.utils import save_checkpoint, setup_logging
+from hydrobrain_v2.utils import load_checkpoint, save_checkpoint, setup_logging
 from hydrobrain_v2.validator import GBStandardValidator
 
 
@@ -221,7 +221,14 @@ def pipeline(cfg_path: str) -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     A = build_A(cfg)
-    model = build_model(cfg, device, A).eval()
+    model = build_model(cfg, device, A)
+    weights_path = os.path.join(cfg["training"]["save_dir"], cfg["training"]["save_name"])
+    if os.path.exists(weights_path):
+        load_checkpoint(weights_path, model=model)
+        logging.info("Loaded trained checkpoint for validation: %s", weights_path)
+    else:
+        logging.warning("Trained weights not found at %s; using current model parameters", weights_path)
+    model = model.eval()
     (Xva, yfv, yhv, yqv), _ = load_npz_dataset(cfg["data"]["val_npz"], cfg, synth_ok=False)
     Xva = Xva.to(device)
     with torch.no_grad():
