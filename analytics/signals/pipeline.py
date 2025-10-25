@@ -188,14 +188,21 @@ class SignalFeaturePipeline:
             return frame.copy()
 
         working = frame.copy()
-        working = working[~working.index.duplicated(keep="last")]
         working = working.sort_index()
 
         price = pd.to_numeric(working[cfg.price_col], errors="coerce")
         price = price.replace([np.inf, -np.inf], np.nan)
         valid_price = price.notna() & np.isfinite(price) & (price > 0)
-        working = working.loc[valid_price]
-        working.loc[:, cfg.price_col] = price.loc[valid_price].astype(float)
+        working = working.loc[valid_price].copy()
+        price = price.loc[valid_price]
+
+        if not working.empty:
+            dedupe_mask = ~working.index.duplicated(keep="last")
+            if not dedupe_mask.all():
+                working = working.loc[dedupe_mask].copy()
+                price = price.loc[dedupe_mask]
+
+        working.loc[:, cfg.price_col] = price.astype(float)
 
         optional_numeric = {
             cfg.high_col,
