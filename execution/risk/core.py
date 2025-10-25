@@ -72,7 +72,7 @@ from libs.db import (
     create_engine_from_config,
 )
 
-from .audit import ExecutionAuditLogger, get_execution_audit_logger
+from ..audit import ExecutionAuditLogger, get_execution_audit_logger
 
 
 class RiskError(RuntimeError):
