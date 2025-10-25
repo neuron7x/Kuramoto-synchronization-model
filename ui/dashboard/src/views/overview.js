@@ -42,6 +42,76 @@ function getTranslations() {
   };
 }
 
+function buildHeroStats(heroTranslations = {}, github = {}) {
+  const statsT = heroTranslations.stats || {};
+  const commits = coerceNumber(github.commits_30d, 0);
+  const merges = coerceNumber(github.prs?.merged_30d, github.merged_prs_30d);
+  const contributors = coerceNumber(github.contributors, 0);
+  const newContributors = coerceNumber(github.new_contributors_30d, 0);
+  const starsDelta = Number.isFinite(github.stars_delta) ? github.stars_delta : null;
+
+  const stats = [
+    {
+      key: 'stars',
+      label: statsT.stars?.label || 'Stargazers',
+      value: formatNumber(coerceNumber(github.stars, 0)),
+      unit: statsT.stars?.unit || '',
+      trend:
+        Number.isFinite(starsDelta) && starsDelta !== 0
+          ? statsT.stars?.trend || formatDelta(starsDelta)
+          : null,
+      tone: Number.isFinite(starsDelta) ? (starsDelta < 0 ? 'negative' : 'positive') : null,
+    },
+    {
+      key: 'velocity',
+      label: statsT.velocity?.label || 'Velocity (30d)',
+      value: formatNumber(commits),
+      unit: statsT.velocity?.unit || 'commits',
+      trend:
+        merges > 0
+          ? (statsT.velocity?.trend || `${formatNumber(merges)} merges`)
+          : null,
+      tone: 'neutral',
+    },
+    {
+      key: 'contributors',
+      label: statsT.contributors?.label || 'Contributor health',
+      value: formatNumber(contributors),
+      unit: statsT.contributors?.unit || 'contributors',
+      trend:
+        newContributors !== 0
+          ? (statsT.contributors?.trend || `${newContributors > 0 ? '+' : ''}${formatNumber(newContributors)} new`)
+          : null,
+      tone: newContributors === 0 ? null : newContributors > 0 ? 'positive' : 'negative',
+    },
+  ];
+
+  return stats.filter((stat) => stat.value !== null && stat.value !== undefined);
+}
+
+function renderHeroStat(stat) {
+  if (!stat) {
+    return '';
+  }
+
+  const unit = stat.unit ? `<span class="tp-hero__stat-unit">${escapeHtml(String(stat.unit))}</span>` : '';
+  const tone = stat.tone ? ` tp-hero__stat-trend--${stat.tone}` : '';
+  const trend = stat.trend
+    ? `<p class="tp-hero__stat-trend${tone}">${escapeHtml(String(stat.trend))}</p>`
+    : '';
+
+  return `
+    <div class="tp-hero__stat">
+      <dt class="tp-hero__stat-label">${escapeHtml(String(stat.label))}</dt>
+      <dd class="tp-hero__stat-value">
+        <span class="tp-hero__stat-number">${escapeHtml(String(stat.value))}</span>
+        ${unit}
+      </dd>
+      ${trend}
+    </div>
+  `;
+}
+
 function renderHero(heroTranslations = {}, github = {}) {
   const eyebrow = heroTranslations.eyebrow || t('views.overview.hero.eyebrow');
   const title = heroTranslations.title || t('views.overview.hero.title');
@@ -67,6 +137,16 @@ function renderHero(heroTranslations = {}, github = {}) {
         </a>
       `;
 
+  const stats = buildHeroStats(heroTranslations, github);
+  const statsMarkup =
+    stats.length > 0
+      ? `
+          <dl class="tp-hero__stats">
+            ${stats.map((stat) => renderHeroStat(stat)).join('')}
+          </dl>
+        `
+      : '';
+
   return `
     <section class="tp-hero" data-role="overview-hero">
       <div class="tp-hero__content">
@@ -77,12 +157,123 @@ function renderHero(heroTranslations = {}, github = {}) {
           <span class="tp-hero__repo">${escapeHtml(repoLabel)}</span>
           ${action}
         </div>
+        ${statsMarkup}
       </div>
       <div class="tp-hero__visual" aria-hidden="true">
         <div class="tp-hero__orb tp-hero__orb--primary"></div>
         <div class="tp-hero__orb tp-hero__orb--secondary"></div>
         <div class="tp-hero__grid"></div>
       </div>
+    </section>
+  `;
+}
+
+function renderMomentumMetric(metric) {
+  if (!metric) {
+    return '';
+  }
+
+  const tone = metric.tone ? ` tp-momentum__trend--${metric.tone}` : '';
+  const progress = Number.isFinite(metric.progress) ? clamp01(metric.progress) : 0;
+  const progressStyle = `style="transform: scaleX(${progress});"`;
+
+  return `
+    <li class="tp-momentum__item">
+      <div class="tp-momentum__item-header">
+        <span class="tp-momentum__label">${escapeHtml(String(metric.label))}</span>
+        ${metric.trend ? `<span class="tp-momentum__trend${tone}">${escapeHtml(String(metric.trend))}</span>` : ''}
+      </div>
+      <div class="tp-momentum__value">${escapeHtml(String(metric.value))}</div>
+      ${metric.hint ? `<p class="tp-momentum__hint">${escapeHtml(String(metric.hint))}</p>` : ''}
+      <div class="tp-progress tp-progress--glow" role="presentation">
+        <div class="tp-progress__bar" ${progressStyle}></div>
+      </div>
+    </li>
+  `;
+}
+
+function renderMomentumPanel(github = {}, translations = {}) {
+  const panelsT = translations || {};
+  const momentumT = panelsT.momentum || {};
+  const title = momentumT.title || 'Momentum signals';
+  const subtitle = momentumT.subtitle || 'Track repository health targets at a glance.';
+
+  const commits = coerceNumber(github.commits_30d, 0);
+  const mergedPrs = coerceNumber(github.prs?.merged_30d, github.merged_prs_30d);
+  const stars = coerceNumber(github.stars, 0);
+  const starsDelta = Number.isFinite(github.stars_delta) ? github.stars_delta : 0;
+  const watchersGrowth = Number.isFinite(github.watchers_growth) ? github.watchers_growth : 0;
+  const contributors = coerceNumber(github.contributors, 0);
+  const newContributors = coerceNumber(github.new_contributors_30d, 0);
+
+  const velocityTarget = coerceNumber(momentumT.velocity?.target, 200) || 200;
+  const engagementTarget = coerceNumber(momentumT.engagement?.target, 0.2) || 0.2;
+  const contributorTarget = coerceNumber(momentumT.contributors?.target, 120) || 120;
+
+  const mergeRatio = commits > 0 ? mergedPrs / commits : 0;
+  const contributorMomentum = contributors > 0 ? newContributors / contributors : 0;
+
+  const metrics = [
+    {
+      key: 'velocity',
+      label: momentumT.velocity?.label || 'Delivery velocity',
+      value: `${formatNumber(commits)} commits`,
+      hint:
+        mergedPrs > 0
+          ? (momentumT.velocity?.hint || `${formatNumber(mergedPrs)} merges shipped this month`)
+          : null,
+      trend:
+        mergeRatio
+          ? (momentumT.velocity?.trend || `${formatPercent(Math.min(mergeRatio, 2))} merge/commit ratio`)
+          : null,
+      tone: mergeRatio >= 0.5 ? 'positive' : 'neutral',
+      progress: velocityTarget > 0 ? commits / velocityTarget : 0,
+    },
+    {
+      key: 'engagement',
+      label: momentumT.engagement?.label || 'Community engagement',
+      value: `${formatNumber(stars)} stars`,
+      hint:
+        Number.isFinite(starsDelta) && starsDelta !== 0
+          ? (momentumT.engagement?.hint || `${formatDelta(starsDelta)} month-over-month star growth`)
+          : null,
+      trend:
+        watchersGrowth
+          ? (momentumT.engagement?.trend || formatDelta(watchersGrowth))
+          : null,
+      tone: watchersGrowth > 0 ? 'positive' : watchersGrowth < 0 ? 'negative' : 'neutral',
+      progress: engagementTarget > 0 ? Math.max(0, watchersGrowth) / engagementTarget : 0,
+    },
+    {
+      key: 'contributors',
+      label: momentumT.contributors?.label || 'Contributor energy',
+      value: `${formatNumber(contributors)} people`,
+      hint:
+        newContributors
+          ? (momentumT.contributors?.hint || `${newContributors > 0 ? '+' : ''}${formatNumber(newContributors)} new engineers this month`)
+          : null,
+      trend:
+        contributorMomentum
+          ? (momentumT.contributors?.trend || formatDelta(contributorMomentum))
+          : null,
+      tone: newContributors > 0 ? 'positive' : newContributors < 0 ? 'negative' : 'neutral',
+      progress: contributorTarget > 0 ? contributors / contributorTarget : 0,
+    },
+  ].filter(Boolean);
+
+  if (metrics.length === 0) {
+    return '';
+  }
+
+  return `
+    <section class="tp-card tp-github-panel tp-momentum">
+      <header class="tp-card__header">
+        <h3 class="tp-card__title">${escapeHtml(String(title))}</h3>
+        <p class="tp-text-subtle">${escapeHtml(String(subtitle))}</p>
+      </header>
+      <ul class="tp-momentum__list">
+        ${metrics.map((metric) => renderMomentumMetric(metric)).join('')}
+      </ul>
     </section>
   `;
 }
@@ -294,6 +485,7 @@ export function renderOverviewView({ github = {} } = {}) {
   const releasePanel = renderReleasePanel(github, translations.panels);
   const languagesPanel = renderLanguagesPanel(github, translations.panels || {});
   const workflowPanel = renderWorkflowBadges(github, translations.panels || {});
+  const momentumPanel = renderMomentumPanel(github, translations.panels || {});
 
   const html = `
     <article class="tp-view tp-view--overview">
@@ -311,6 +503,7 @@ export function renderOverviewView({ github = {} } = {}) {
           ${badgesHtml}
         </section>
         ${releasePanel}
+        ${momentumPanel}
         ${languagesPanel}
         ${workflowPanel}
       </section>
