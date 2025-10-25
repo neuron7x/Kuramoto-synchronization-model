@@ -19,7 +19,7 @@
       "per_minute": 180
     },
     "request_schema": null,
-    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/market_signal_response.schema.json",
+    "response_schema": "schemas/http/json/1.0.0/market_signal_response.schema.json",
     "scope": "signals:read",
     "signatures": {
       "algorithm": "ed25519",
@@ -54,8 +54,8 @@
       "per_hour": 500,
       "per_minute": 30
     },
-    "request_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/prediction_create_request.schema.json",
-    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/prediction_create_response.schema.json",
+    "request_schema": "schemas/http/json/1.0.0/prediction_create_request.schema.json",
+    "response_schema": "schemas/http/json/1.0.0/prediction_create_response.schema.json",
     "scope": "predictions:write",
     "signatures": {
       "algorithm": "ed25519",
