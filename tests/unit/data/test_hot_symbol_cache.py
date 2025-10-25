@@ -138,9 +138,7 @@ def test_hot_symbol_cache_expires_stale_entries(deterministic_clock: _Determinis
     expected_last_seen = datetime.fromtimestamp(first_seen, tz=UTC)
     assert stale_snapshot.last_seen == expected_last_seen
 
-    btc_snapshot = cache.snapshot("BTC/USDT", "BINANCE")
-    assert btc_snapshot is not None
-    assert btc_snapshot.ticks == ()
+    assert cache.snapshot("BTC/USDT", "BINANCE") is None
 
 
 def test_hot_symbol_cache_evicts_least_recent_entries(
@@ -198,7 +196,38 @@ def test_hot_symbol_cache_drain_flushes_all_entries(
     assert [tick.price for tick in snapshot_by_symbol["ETH/USDT"].ticks] == [second_tick.price]
 
     assert cache.snapshot("BTC/USDT", "BINANCE") is None
-    assert cache.snapshot("ETH/USDT", "BINANCE") is None
+
+
+def test_hot_symbol_cache_prefers_expired_entry_eviction(
+    deterministic_clock: _DeterministicClock,
+) -> None:
+    cache = HotSymbolCache(
+        max_entries=2,
+        ttl_seconds=5,
+        max_ticks=10,
+        flush_size=10,
+        clock=deterministic_clock.monotonic,
+    )
+
+    tick_a = _make_tick(symbol="A/USDT", minutes=0)
+    deterministic_clock.advance(0.1)
+    assert cache.update(tick_a) == []
+
+    deterministic_clock.advance(6.0)
+    tick_b = _make_tick(symbol="B/USDT", minutes=1)
+    flushed = cache.update(tick_b)
+
+    assert any(snapshot.symbol == "A/USDT" for snapshot in flushed)
+    assert cache.snapshot("A/USDT", "BINANCE") is None
+
+    deterministic_clock.advance(0.1)
+    tick_c = _make_tick(symbol="C/USDT", minutes=2)
+    flushed = cache.update(tick_c)
+
+    assert all(snapshot.symbol != "B/USDT" for snapshot in flushed)
+    b_snapshot = cache.snapshot("B/USDT", "BINANCE")
+    assert b_snapshot is not None
+    assert [tick.price for tick in b_snapshot.ticks] == [tick_b.price]
 
 
 class _PredictableClock:

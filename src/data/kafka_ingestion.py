@@ -191,6 +191,25 @@ class HotSymbolCache:
 
     def _evict_stale(self, now: float) -> list[HotSymbolSnapshot]:
         flushed: list[HotSymbolSnapshot] = []
+        expired_keys: list[tuple[str, str, InstrumentType]] = []
+        for key, entry in list(self._entries.items()):
+            if now - entry.last_seen >= self._ttl_seconds:
+                if entry.ticks:
+                    flushed.append(
+                        HotSymbolSnapshot(
+                            symbol=key[0],
+                            venue=key[1],
+                            instrument_type=key[2],
+                            ticks=tuple(entry.ticks),
+                            last_seen=datetime.fromtimestamp(
+                                entry.last_seen, tz=timezone.utc
+                            ),
+                        )
+                    )
+                expired_keys.append(key)
+        for key in expired_keys:
+            self._entries.pop(key, None)
+
         while self._entries and (len(self._entries) > self._max_entries):
             key, entry = self._entries.popitem(last=False)
             if entry.ticks:
@@ -203,24 +222,6 @@ class HotSymbolCache:
                         last_seen=datetime.fromtimestamp(now, tz=timezone.utc),
                     )
                 )
-        expired_keys: list[tuple[str, str, InstrumentType]] = []
-        for key, entry in self._entries.items():
-            if now - entry.last_seen >= self._ttl_seconds and entry.ticks:
-                flushed.append(
-                    HotSymbolSnapshot(
-                        symbol=key[0],
-                        venue=key[1],
-                        instrument_type=key[2],
-                        ticks=tuple(entry.ticks),
-                        last_seen=datetime.fromtimestamp(
-                            entry.last_seen, tz=timezone.utc
-                        ),
-                    )
-                )
-                entry.ticks = []
-                expired_keys.append(key)
-        for key in expired_keys:
-            self._entries.move_to_end(key)
         return flushed
 
     def snapshot(
