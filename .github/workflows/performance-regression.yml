@@ -1,0 +1,115 @@
+name: Performance Regression Detection
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  performance-regression:
+    name: Performance regression analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-performance-${{ hashFiles('requirements*.txt', 'requirements*.lock') }}
+
+      - name: Create virtual environment
+        run: uv venv --python 3.11
+
+      - name: Install dependencies
+        run: |
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run PR benchmarks
+        env:
+          TP_BENCHMARK_ARTIFACT_DIR: reports/performance/benchmarks/pr
+        run: |
+          mkdir -p reports/performance
+          .venv/bin/python -m pytest tests/performance/test_indicator_benchmarks.py \
+            --benchmark-json=reports/performance/current_benchmark.json -vv
+
+      - name: Run PR memory regression suite
+        run: .venv/bin/python -m pytest tests/performance/test_memory_regression.py -q
+
+      - name: Collect PR resource metrics
+        run: |
+          .venv/bin/python scripts/performance/run_resource_checks.py \
+            --output reports/performance/current_resources.json
+
+      - name: Checkout baseline (main)
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          path: baseline
+
+      - name: Run baseline benchmarks
+        env:
+          TP_BENCHMARK_ARTIFACT_DIR: ../reports/performance/benchmarks/baseline
+        run: |
+          cd baseline
+          mkdir -p ../reports/performance
+          ../.venv/bin/python -m pytest tests/performance/test_indicator_benchmarks.py \
+            --benchmark-json=../reports/performance/baseline_benchmark.json -vv
+
+      - name: Collect baseline resource metrics
+        run: |
+          if [ ! -f baseline/scripts/performance/run_resource_checks.py ]; then
+            mkdir -p baseline/scripts/performance
+            cp scripts/performance/run_resource_checks.py baseline/scripts/performance/
+          fi
+          cd baseline
+          ../.venv/bin/python scripts/performance/run_resource_checks.py \
+            --output ../reports/performance/baseline_resources.json
+
+      - name: Compare performance against main
+        run: |
+          .venv/bin/python scripts/performance/compare_performance.py \
+            --baseline-benchmark reports/performance/baseline_benchmark.json \
+            --current-benchmark reports/performance/current_benchmark.json \
+            --baseline-resources reports/performance/baseline_resources.json \
+            --current-resources reports/performance/current_resources.json \
+            --threshold 0.20 \
+            --output-json reports/performance/comparison.json \
+            --output-markdown reports/performance/comparison.md
+
+      - name: Publish performance summary
+        if: always()
+        run: |
+          if [ -f reports/performance/comparison.md ]; then
+            {
+              echo '## Performance regression summary'
+              cat reports/performance/comparison.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-regression
+          path: |
+            reports/performance/*.json
+            reports/performance/*.md
+            reports/performance/benchmarks
