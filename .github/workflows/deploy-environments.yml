@@ -38,6 +38,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Enforce Terraform required_version
+        run: |
+          set -euo pipefail
+          version="0.45.0"
+          curl -sSL -o /tmp/conftest.tar.gz "https://github.com/open-policy-agent/conftest/releases/download/v${version}/conftest_${version}_Linux_x86_64.tar.gz"
+          tar -C /tmp -xf /tmp/conftest.tar.gz
+          sudo install /tmp/conftest /usr/local/bin/conftest
+          rm -f /tmp/conftest.tar.gz
+          mapfile -t files < <(find infra/terraform -name "versions.tf" -print)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No Terraform versions.tf files found" >&2
+            exit 1
+          fi
+          conftest test "${files[@]}" -p infra/terraform/policies --parser hcl2
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
