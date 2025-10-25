@@ -32,12 +32,12 @@ jobs:
       matrix:
         python-version: ['3.11']
     name: Lint & Type Check (Python ${{ matrix.python-version }})
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
+      steps:
+        - uses: actions/checkout@v5
+        - name: Set up Python
+          uses: actions/setup-python@v6
+          with:
+            python-version: ${{ matrix.python-version }}
       - name: Set up uv
         uses: astral-sh/setup-uv@v3
       - name: Cache uv packages
@@ -103,6 +103,22 @@ jobs:
     name: Tests (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: infra/terraform/tests/go.mod
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('infra/terraform/tests/go.sum') }}
+          restore-keys: |
+            go-${{ runner.os }}-
+      - name: Run Terraform validation tests
+        working-directory: infra/terraform/tests
+        run: go test ./... -v
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
