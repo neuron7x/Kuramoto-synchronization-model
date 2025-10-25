@@ -63,7 +63,7 @@ variable "iam_role_permissions_boundary_arn" {
 }
 
 variable "iam_role_tags" {
-  description = "A map of additional tags to add the the IAM role"
+  description = "A map of additional tags to add to the IAM role"
   type        = map(any)
   default     = {}
 }
