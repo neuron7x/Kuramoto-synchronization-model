@@ -51,32 +51,52 @@ class FeatureBufferCache:
         return arr
 
 
-def _shannon_entropy(series: np.ndarray, bins: int = 30) -> float:
-    values = series[np.isfinite(series)]
+_ENTROPY_BIN_COUNT = 30
+_ENTROPY_SCALE = np.float32(_ENTROPY_BIN_COUNT / 2.0)
+_ENTROPY_CLIP = np.nextafter(np.float32(_ENTROPY_BIN_COUNT), np.float32(0.0))
+
+
+def _shannon_entropy(series: np.ndarray, bins: int = _ENTROPY_BIN_COUNT) -> float:
+    values = np.asarray(series, dtype=np.float32)
     if values.size == 0:
         return 0.0
 
-    max_abs = float(np.max(np.abs(values)))
-    if max_abs and np.isfinite(max_abs):
-        values = values / max_abs
-
-    counts, _ = np.histogram(values, bins=bins, density=False)
-    total = counts.sum()
-    if total <= 0:
+    mask = np.isfinite(values)
+    if not np.any(mask):
         return 0.0
 
-    probs = counts[counts > 0].astype(np.float32, copy=False)
-    if probs.size == 0:
+    finite = values[mask].astype(np.float32, copy=False)
+    max_abs = float(np.max(np.abs(finite)))
+    if not max_abs or not np.isfinite(max_abs):
         return 0.0
 
-    total = np.float32(total)
-    np.divide(probs, total, out=probs)
+    np.divide(finite, max_abs, out=finite)
+    np.clip(finite, -1.0, 1.0, out=finite)
 
-    log_probs = np.empty_like(probs)
-    np.log(probs, out=log_probs)
-    np.multiply(probs, log_probs, out=log_probs)
-    entropy = np.add.reduce(log_probs, dtype=np.float32)
-    return float(-entropy)
+    scale = _ENTROPY_SCALE if bins == _ENTROPY_BIN_COUNT else np.float32(bins / 2.0)
+    clip = _ENTROPY_CLIP if bins == _ENTROPY_BIN_COUNT else np.nextafter(
+        np.float32(bins), np.float32(0.0)
+    )
+    scaled = (finite + 1.0) * scale
+    np.clip(scaled, 0.0, clip, out=scaled)
+
+    indices = scaled.astype(np.int32, copy=False)
+    counts = np.bincount(indices, minlength=bins).astype(np.float32, copy=False)
+    total = float(np.add.reduce(counts, dtype=np.float32))
+    if total <= 0.0:
+        return 0.0
+
+    np.divide(counts, total, out=counts)
+    positive = counts > 0.0
+    if not np.any(positive):
+        return 0.0
+
+    log_probs = np.empty_like(counts)
+    np.log(counts, out=log_probs, where=positive)
+    log_probs[~positive] = 0.0
+    np.multiply(counts, log_probs, out=log_probs)
+    entropy = -float(np.add.reduce(log_probs, dtype=np.float32))
+    return entropy
 
 
 @dataclass
