@@ -340,18 +340,19 @@ class ExchangeResilienceProfile:
             self._register_rejection("circuit_open")
             return False
 
-        throttle_factor = self.throttler.throttle_factor()
-        token_cost = tokens * throttle_factor
-        if not self.token_bucket.allow(token_cost):
-            self._register_rejection("token_bucket")
-            return False
-
         if not self.leaky_bucket.allow():
             self._register_rejection("leaky_bucket")
             return False
 
         if not self.bulkhead.acquire(timeout=0):
             self._register_rejection("bulkhead")
+            return False
+
+        throttle_factor = self.throttler.throttle_factor()
+        token_cost = tokens * throttle_factor
+        if not self.token_bucket.allow(token_cost):
+            self.bulkhead.release()
+            self._register_rejection("token_bucket")
             return False
 
         return True
