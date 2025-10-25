@@ -126,6 +126,8 @@ class DataIngestionCacheService:
             raise ValueError("timeframe must be a non-empty string")
         resolved_type = instrument_type or ticks[0].instrument_type
         key = self._build_key(layer, symbol, venue, timeframe, resolved_type)
+        if any(tick.instrument_type != resolved_type for tick in ticks):
+            raise ValueError("All ticks must share the same instrument type")
         if any(tick.symbol != key.symbol for tick in ticks):
             raise ValueError("All ticks must match the provided symbol")
         if any(tick.venue != key.venue for tick in ticks):
