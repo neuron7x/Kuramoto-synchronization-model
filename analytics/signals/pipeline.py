@@ -104,16 +104,19 @@ class SignalFeaturePipeline:
 
     def transform(self, frame: pd.DataFrame) -> pd.DataFrame:
         cfg = self.config
-        _require_columns(frame, [cfg.price_col])
-        price = frame[cfg.price_col].astype(float)
-        high = frame.get(cfg.high_col, price)
-        low = frame.get(cfg.low_col, price)
-        volume = frame.get(cfg.volume_col)
-        bid_volume = frame.get(cfg.bid_col)
-        ask_volume = frame.get(cfg.ask_col)
-        signed_volume = frame.get(cfg.signed_volume_col)
+        clean_frame = self._sanitize_frame(frame)
+        if clean_frame.empty:
+            return pd.DataFrame(index=clean_frame.index)
 
-        features = pd.DataFrame(index=frame.index)
+        price = clean_frame[cfg.price_col].astype(float)
+        high = clean_frame.get(cfg.high_col, price)
+        low = clean_frame.get(cfg.low_col, price)
+        volume = clean_frame.get(cfg.volume_col)
+        bid_volume = clean_frame.get(cfg.bid_col)
+        ask_volume = clean_frame.get(cfg.ask_col)
+        signed_volume = clean_frame.get(cfg.signed_volume_col)
+
+        features = pd.DataFrame(index=clean_frame.index)
         returns = price.pct_change()
         features["return_1"] = returns
 
@@ -177,6 +180,45 @@ class SignalFeaturePipeline:
             ).mean()
 
         return features
+
+    def _sanitize_frame(self, frame: pd.DataFrame) -> pd.DataFrame:
+        cfg = self.config
+        _require_columns(frame, [cfg.price_col])
+        if frame.empty:
+            return frame.copy()
+
+        working = frame.copy()
+        working = working.sort_index()
+
+        price = pd.to_numeric(working[cfg.price_col], errors="coerce")
+        price = price.replace([np.inf, -np.inf], np.nan)
+        valid_price = price.notna() & np.isfinite(price) & (price > 0)
+        working = working.loc[valid_price].copy()
+        price = price.loc[valid_price]
+
+        if not working.empty:
+            dedupe_mask = ~working.index.duplicated(keep="last")
+            if not dedupe_mask.all():
+                working = working.loc[dedupe_mask].copy()
+                price = price.loc[dedupe_mask]
+
+        working.loc[:, cfg.price_col] = price.astype(float)
+
+        optional_numeric = {
+            cfg.high_col,
+            cfg.low_col,
+            cfg.volume_col,
+            cfg.bid_col,
+            cfg.ask_col,
+            cfg.signed_volume_col,
+        }
+        for column in optional_numeric:
+            if column in working.columns:
+                numeric = pd.to_numeric(working[column], errors="coerce")
+                numeric = numeric.replace([np.inf, -np.inf], np.nan)
+                working.loc[:, column] = numeric.astype(float)
+
+        return working
 
 
 @dataclass(slots=True)
