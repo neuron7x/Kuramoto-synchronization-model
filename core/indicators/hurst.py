@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import nullcontext
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
@@ -38,6 +38,191 @@ _DEFAULT_DESIGN = np.vstack(
 ).T
 _DEFAULT_PSEUDO = np.linalg.pinv(_DEFAULT_DESIGN)
 
+_NUMBA_AUTO_THRESHOLD = 50_000
+_CUDA_AUTO_THRESHOLD = 200_000
+_LAST_HURST_BACKEND = "numpy"
+_PREFERRED_BACKENDS = {"numba", "cuda", "gpu"}
+
+try:  # pragma: no cover - optional acceleration
+    from numba import cuda, njit, prange
+except Exception:  # pragma: no cover - dependency missing
+    cuda = None  # type: ignore[assignment]
+    njit = None  # type: ignore[assignment]
+    prange = range  # type: ignore[assignment]
+
+
+def _numba_available() -> bool:
+    return njit is not None
+
+
+def _cuda_available() -> bool:
+    if cuda is None:
+        return False
+    try:  # pragma: no cover - hardware dependent
+        return bool(cuda.is_available())
+    except Exception:
+        return False
+
+
+if _numba_available():  # pragma: no cover - compiled at import time
+
+    @njit(parallel=True, fastmath=True)
+    def _compute_tau_numba(x: np.ndarray, lags: np.ndarray, out: np.ndarray) -> None:
+        n = x.size
+        for idx in prange(lags.size):
+            lag = int(lags[idx])
+            count = n - lag
+            if count <= 0:
+                out[idx] = 0.0
+                continue
+            sum_val = 0.0
+            sum_sq = 0.0
+            for j in range(count):
+                diff = float(x[j + lag] - x[j])
+                sum_val += diff
+                sum_sq += diff * diff
+            inv = 1.0 / count
+            mean = sum_val * inv
+            var = sum_sq * inv - mean * mean
+            out[idx] = np.sqrt(var) if var > 0.0 else 0.0
+
+else:  # pragma: no cover - executed when Numba missing
+
+    def _compute_tau_numba(x: np.ndarray, lags: np.ndarray, out: np.ndarray) -> None:
+        raise RuntimeError("Numba is not available")
+
+
+if _cuda_available():  # pragma: no cover - requires GPU runtime
+    @cuda.jit
+    def _compute_tau_cuda_kernel(
+        x: np.ndarray,
+        lags: np.ndarray,
+        counts: np.ndarray,
+        sums: np.ndarray,
+        sums_sq: np.ndarray,
+        total_work: int,
+    ) -> None:
+        idx = cuda.grid(1)
+        if idx >= total_work:
+            return
+
+        lag_idx = 0
+        start = 0
+        for i in range(lags.size):
+            span = counts[i]
+            end = start + span
+            if idx < end:
+                lag_idx = i
+                local_index = idx - start
+                break
+            start = end
+        else:
+            return
+
+        lag = int(lags[lag_idx])
+        diff = float(x[local_index + lag] - x[local_index])
+        cuda.atomic.add(sums, lag_idx, diff)
+        cuda.atomic.add(sums_sq, lag_idx, diff * diff)
+
+else:  # pragma: no cover - executed without CUDA
+
+    def _compute_tau_cuda_kernel(*_: Any) -> None:
+        raise RuntimeError("CUDA is not available")
+
+
+def _resolve_backend(
+    requested: str, data_size: int, lag_count: int
+) -> Literal["numpy", "numba", "cuda"]:
+    normalized = requested.lower()
+    if normalized in {"cpu", "numpy"}:
+        return "numpy"
+    if normalized == "numba":
+        return "numba" if _numba_available() else "numpy"
+    if normalized in {"cuda", "gpu"}:
+        if _cuda_available():
+            return "cuda"
+        return "numba" if _numba_available() else "numpy"
+    if normalized != "auto":
+        raise ValueError(f"Unsupported backend '{requested}'")
+
+    if _cuda_available() and data_size >= _CUDA_AUTO_THRESHOLD:
+        return "cuda"
+    if _numba_available() and data_size >= _NUMBA_AUTO_THRESHOLD and lag_count > 4:
+        return "numba"
+    return "numpy"
+
+
+def _compute_tau_numpy(
+    x: np.ndarray,
+    lags: np.ndarray,
+    scratch: np.ndarray | None,
+    tau_buffer: np.ndarray | None,
+) -> np.ndarray:
+    tau = tau_buffer
+    if tau is None or tau.shape[0] != lags.size:
+        tau = np.empty(lags.size, dtype=float)
+    buffer = scratch
+    if buffer is None or buffer.shape[0] < x.size:
+        buffer = np.empty_like(x, dtype=float)
+    for idx, lag in enumerate(lags):
+        np.subtract(x[lag:], x[:-lag], out=buffer[: x.size - lag])
+        segment = buffer[: x.size - lag]
+        count = float(segment.size)
+        if count == 0:
+            tau[idx] = 0.0
+            continue
+        sum_vals = float(segment.sum(dtype=float))
+        sum_sq = float(np.dot(segment, segment))
+        mean = sum_vals / count
+        var = sum_sq / count - mean * mean
+        tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+    return tau
+
+
+def _compute_tau_cuda(
+    x: np.ndarray, lags: np.ndarray
+) -> np.ndarray:  # pragma: no cover - requires GPU
+    if not _cuda_available():
+        raise RuntimeError("CUDA backend is unavailable")
+    lags_i32 = lags.astype(np.int32, copy=False)
+    counts = (x.size - lags_i32).astype(np.int32)
+    counts[counts < 0] = 0
+    total = int(np.sum(counts, dtype=np.int64))
+    if total <= 0:
+        return np.zeros(lags_i32.size, dtype=float)
+
+    device_x = cuda.to_device(x.astype(np.float32, copy=False))
+    device_lags = cuda.to_device(lags_i32)
+    device_counts = cuda.to_device(counts)
+    sums = cuda.to_device(np.zeros(lags_i32.size, dtype=np.float32))
+    sums_sq = cuda.to_device(np.zeros(lags_i32.size, dtype=np.float32))
+
+    threads = 256
+    blocks = (total + threads - 1) // threads
+    _compute_tau_cuda_kernel[blocks, threads](
+        device_x,
+        device_lags,
+        device_counts,
+        sums,
+        sums_sq,
+        total,
+    )
+    cuda.synchronize()
+
+    host_sums = sums.copy_to_host().astype(float, copy=False)
+    host_sums_sq = sums_sq.copy_to_host().astype(float, copy=False)
+    tau = np.empty(lags_i32.size, dtype=float)
+    for idx in range(lags_i32.size):
+        count = int(counts[idx])
+        if count <= 0:
+            tau[idx] = 0.0
+            continue
+        inv = 1.0 / count
+        mean = host_sums[idx] * inv
+        var = host_sums_sq[idx] * inv - mean * mean
+        tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+    return tau
+
 
 def hurst_exponent(
     ts: np.ndarray,
@@ -47,6 +232,7 @@ def hurst_exponent(
     use_float32: bool = False,
     scratch: np.ndarray | None = None,
     tau_buffer: np.ndarray | None = None,
+    backend: Literal["cpu", "auto", "numpy", "numba", "cuda", "gpu"] = "auto",
 ) -> float:
     """Estimate Hurst exponent using rescaled range (R/S) analysis.
 
@@ -62,6 +248,10 @@ def hurst_exponent(
         min_lag: Minimum lag for R/S analysis (default: 2)
         max_lag: Maximum lag for R/S analysis (default: 50)
         use_float32: Use float32 precision to reduce memory usage (default: False)
+        backend: Execution backend selection (default: ``"auto"``). ``"cpu"``/
+            ``"numpy"`` uses vectorised NumPy, ``"numba"`` enables ahead-of-time
+            compiled loops, ``"cuda"``/``"gpu"`` offloads computations to the GPU
+            when :mod:`numba.cuda` is available.
 
     Returns:
         Hurst exponent H ∈ [0, 1]:
@@ -118,24 +308,35 @@ def hurst_exponent(
             design = np.vstack([np.ones_like(lags, dtype=float), np.log(lags)]).T
             pseudo = np.linalg.pinv(design)
 
-        tau = tau_buffer
-        if tau is None or tau.shape[0] != len(lags):
-            tau = np.empty(len(lags), dtype=float)
-        buffer = scratch
-        if buffer is None or buffer.shape[0] < x.size:
-            buffer = np.empty_like(x, dtype=float)
-        for idx, lag in enumerate(lags):
-            np.subtract(x[lag:], x[:-lag], out=buffer[: x.size - lag])
-            segment = buffer[: x.size - lag]
-            count = float(segment.size)
-            if count == 0:
-                tau[idx] = 0.0
-                continue
-            sum_vals = float(segment.sum(dtype=float))
-            sum_sq = float(np.dot(segment, segment))
-            mean = sum_vals / count
-            var = sum_sq / count - mean * mean
-            tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+        selected_backend = _resolve_backend(backend, x.size, lags.size)
+        global _LAST_HURST_BACKEND
+
+        x_float = np.asarray(x, dtype=float)
+        lags_int = lags.astype(np.int32, copy=False)
+        try:
+            if selected_backend == "cuda":
+                tau = _compute_tau_cuda(np.asarray(x, dtype=np.float32), lags)
+                if tau_buffer is not None and tau_buffer.shape == tau.shape:
+                    np.copyto(tau_buffer, tau)
+                    tau = tau_buffer
+                _LAST_HURST_BACKEND = "cuda"
+            elif selected_backend == "numba":
+                tau = tau_buffer
+                if tau is None or tau.shape[0] != lags.size:
+                    tau = np.empty(lags.size, dtype=float)
+                _compute_tau_numba(x_float, lags_int, tau)
+                _LAST_HURST_BACKEND = "numba"
+            else:
+                tau = _compute_tau_numpy(x_float, lags, scratch, tau_buffer)
+                _LAST_HURST_BACKEND = "numpy"
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            _logger.warning(
+                "Hurst backend '%s' failed (%s); falling back to NumPy.",
+                selected_backend,
+                exc,
+            )
+            tau = _compute_tau_numpy(x_float, lags, scratch, tau_buffer)
+            _LAST_HURST_BACKEND = "numpy"
 
         # Perform log-log linear regression
         y = np.log(tau)
@@ -190,6 +391,7 @@ class HurstFeature(BaseFeature):
         max_lag: int = 50,
         *,
         use_float32: bool = False,
+        backend: Literal["cpu", "auto", "numpy", "numba", "cuda", "gpu"] = "auto",
         name: str | None = None,
     ) -> None:
         """Initialize Hurst exponent feature.
@@ -198,12 +400,14 @@ class HurstFeature(BaseFeature):
             min_lag: Minimum lag for R/S analysis (default: 2)
             max_lag: Maximum lag for R/S analysis (default: 50)
             use_float32: Use float32 precision for memory efficiency (default: False)
+            backend: Execution backend selection passed to :func:`hurst_exponent`.
             name: Optional custom name (default: "hurst_exponent")
         """
         super().__init__(name or "hurst_exponent")
         self.min_lag = min_lag
         self.max_lag = max_lag
         self.use_float32 = use_float32
+        self.backend = backend
 
     def transform(self, data: np.ndarray, **_: Any) -> FeatureResult:
         """Compute Hurst exponent of input data.
@@ -221,6 +425,7 @@ class HurstFeature(BaseFeature):
                 min_lag=self.min_lag,
                 max_lag=self.max_lag,
                 use_float32=self.use_float32,
+                backend=self.backend,
             )
             _metrics.record_feature_value(self.name, value)
             metadata: dict[str, Any] = {
@@ -229,6 +434,11 @@ class HurstFeature(BaseFeature):
             }
             if self.use_float32:
                 metadata["use_float32"] = True
+            actual_backend = _LAST_HURST_BACKEND
+            if actual_backend != "numpy" or self.backend in _PREFERRED_BACKENDS:
+                metadata["backend"] = actual_backend
+                if actual_backend != self.backend:
+                    metadata["backend_requested"] = self.backend
             return FeatureResult(name=self.name, value=value, metadata=metadata)
 
 

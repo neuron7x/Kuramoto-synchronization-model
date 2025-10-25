@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable
+from typing import Iterable, Literal
 
 import numpy as np
 
@@ -113,6 +113,7 @@ class HurstIndicator:
     window: int = 100
     min_lag: int = 2
     max_lag: int | None = None
+    backend: Literal["cpu", "auto", "numpy", "numba", "cuda", "gpu"] = "auto"
     _buffers: _HurstBufferPool = field(
         init=False, repr=False, default_factory=_HurstBufferPool
     )
@@ -124,6 +125,9 @@ class HurstIndicator:
             raise ValueError("min_lag must be positive")
         if self.max_lag is not None and self.max_lag <= self.min_lag:
             raise ValueError("max_lag must exceed min_lag")
+        supported = {"cpu", "auto", "numpy", "numba", "cuda", "gpu"}
+        if self.backend not in supported:
+            raise ValueError(f"Unsupported backend '{self.backend}'")
 
     def compute(self, prices: Iterable[float]) -> np.ndarray:
         series = _as_float_array(prices)
@@ -149,6 +153,7 @@ class HurstIndicator:
                 max_lag=max_lag,
                 scratch=scratch,
                 tau_buffer=tau,
+                backend=self.backend,
             )
             result[idx] = float(np.clip(value, 0.0, 1.0))
         return result
