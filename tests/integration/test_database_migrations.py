@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
@@ -146,6 +147,49 @@ def test_migration_upgrade_is_fast(migration_context: MigrationTestContext) -> N
     elapsed = time.perf_counter() - start
 
     assert elapsed < 1.0, f"upgrade exceeded time budget: {elapsed:.3f}s"
+
+
+def test_migration_revision_graph_is_linear(
+    migration_context: MigrationTestContext,
+) -> None:
+    """Ensure Alembic has exactly one head and a single linear history."""
+
+    script = ScriptDirectory.from_config(migration_context.config)
+    heads = script.get_heads()
+    assert len(heads) == 1, f"expected a single head revision, found: {heads!r}"
+
+    current_head = script.get_current_head()
+    assert current_head == heads[0]
+
+    for revision in script.walk_revisions(head=current_head, base="base"):
+        if isinstance(revision.down_revision, tuple):
+            pytest.fail(
+                f"revision {revision.revision} branches from multiple parents:"
+                f" {revision.down_revision}"
+            )
+
+
+def test_migration_revisions_apply_sequentially(
+    migration_context: MigrationTestContext,
+) -> None:
+    """Each Alembic revision should apply cleanly from the previous one."""
+
+    script = ScriptDirectory.from_config(migration_context.config)
+    revisions = list(script.walk_revisions(base="base", head="heads"))
+    assert revisions, "no Alembic revisions discovered"
+
+    ordered_revisions = list(reversed(revisions))
+
+    migration_context.downgrade("base")
+    for revision in ordered_revisions:
+        migration_context.upgrade(revision.revision)
+
+    migration_context.downgrade("base")
+
+    for revision in ordered_revisions:
+        migration_context.upgrade(revision.revision)
+
+    migration_context.downgrade("base")
 
 
 def test_migration_rolls_back_on_failure(migration_context: MigrationTestContext) -> None:
