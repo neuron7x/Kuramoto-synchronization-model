@@ -1,4 +1,9 @@
-"""Kafka ingestion service with exactly-once semantics and hot symbol caching."""
+"""Kafka ingestion tooling with best-effort exactly-once guarantees and hot symbol caching.
+
+The service coordinates Kafka transactions with an idempotency store to avoid
+duplicate downstream processing. True exactly-once behavior requires wiring an
+external, durable :class:`~core.messaging.idempotency.EventIdempotencyStore`.
+"""
 
 from __future__ import annotations
 
@@ -279,7 +284,15 @@ class _PartitionState:
 
 
 class KafkaIngestionService:
-    """Exactly-once Kafka ingestion with deduplication and lag reconciliation."""
+    """Best-effort exactly-once Kafka ingestion with deduplication and lag reconciliation.
+
+    By default the service provisions an in-memory idempotency store, which is
+    sufficient for local testing but only offers at-least-once guarantees across
+    restarts. For production-grade exactly-once semantics, supply a durable
+    :class:`~core.messaging.idempotency.EventIdempotencyStore` instance via the
+    ``idempotency_store`` argument so that processed event identifiers survive
+    process failures.
+    """
 
     def __init__(
         self,
