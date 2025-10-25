@@ -37,27 +37,24 @@ TradePulse to move from research to live execution with confidence.
 ## 🎯 Why TradePulse?
 
 ```python
-from tradepulse import TradingEngine, Strategy
-from tradepulse.indicators import KuramotoOscillator, RicciFlow
+import numpy as np
+import pandas as pd
 
-# Define your strategy with geometric indicators
-strategy = Strategy(
-    indicators=[
-        KuramotoOscillator(coupling_strength=0.8),
-        RicciFlow(curvature_threshold=0.5),
-    ]
-)
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
 
-# Backtest with full event-driven simulation
-engine = TradingEngine(strategy=strategy)
-results = engine.backtest(
-    symbols=["BTC/USDT", "ETH/USDT"],
-    start_date="2023-01-01",
-    end_date="2024-01-01",
-)
 
-# Deploy to live trading
-engine.deploy(mode="paper")  # Safe paper trading first
+# Build a synthetic intraday data set
+index = pd.date_range("2024-01-01", periods=720, freq="5min")
+price = 100 + np.cumsum(np.random.normal(0, 0.6, index.size))
+volume = np.random.lognormal(mean=9.5, sigma=0.35, size=index.size)
+bars = pd.DataFrame({"close": price, "volume": volume}, index=index)
+
+# Analyze the market regime with the Kuramoto–Ricci composite engine
+engine = TradePulseCompositeEngine()
+snapshot = engine.analyze_market(bars)
+
+print(f"Phase: {snapshot.phase.value}")
+print(f"Confidence: {snapshot.confidence:.3f}, Entry: {snapshot.entry_signal:.3f}")
 ```
 
 ## ✨ Feature Highlights
@@ -138,42 +135,57 @@ pip install -e ".[dev]"
 ### Your First Strategy
 
 ```python
-from tradepulse import Strategy, Backtest
-from tradepulse.indicators import RSI, MACD
+import numpy as np
 
-# Create a simple mean-reversion strategy
-strategy = Strategy(
-    name="MeanReversion",
-    indicators=[RSI(period=14), MACD(fast=12, slow=26, signal=9)],
-    entry_rules=lambda signals: (
-        signals["rsi"] < 30 and signals["macd_histogram"] > 0
-    ),
-    exit_rules=lambda signals: signals["rsi"] > 70,
+from backtest.event_driven import EventDrivenBacktestEngine
+from core.indicators import KuramotoIndicator
+
+
+# Generate a synthetic closing price series
+rng = np.random.default_rng(seed=42)
+prices = 100 + np.cumsum(rng.normal(0, 1, 500))
+indicator = KuramotoIndicator(window=80, coupling=0.9)
+
+
+def kuramoto_signal(series: np.ndarray) -> np.ndarray:
+    order = indicator.compute(series)
+    signal = np.where(order > 0.75, 1.0, np.where(order < 0.25, -1.0, 0.0))
+    warmup = min(indicator.window, signal.size)
+    signal[:warmup] = 0.0
+    return signal
+
+
+engine = EventDrivenBacktestEngine()
+result = engine.run(
+    prices,
+    kuramoto_signal,
+    initial_capital=100_000,
+    strategy_name="kuramoto_demo",
 )
 
-# Run a backtest
-backtest = Backtest(
-    strategy=strategy,
-    data_source="binance",
-    symbols=["BTC/USDT"],
-    timeframe="1h",
-    start_date="2023-01-01",
-    capital=10_000,
-)
-results = backtest.run()
-print(results.summary())
+print(f"PnL: {result.pnl:.2f}")
+print(f"Max drawdown: {result.max_dd:.2f}")
+print(f"Trades executed: {result.trades}")
 ```
 
 ### 📈 View Results
 
 ```python
-# Generate performance reports
-results.plot_equity_curve()
-results.plot_drawdown()
-results.plot_monthly_returns()
+import pandas as pd
 
-# Export metrics
-results.to_dataframe().to_csv("backtest_results.csv")
+
+# Inspect metrics collected by the engine
+if result.performance:
+    stats = result.performance.as_dict()
+    print(f"Sharpe ratio: {stats['sharpe_ratio']:.2f}")
+    print(f"Max drawdown: {stats['max_drawdown']:.2f}")
+
+
+# Persist the equity curve for further analysis
+if result.equity_curve is not None:
+    pd.Series(result.equity_curve, name="equity").to_csv(
+        "backtest_equity_curve.csv", index=False
+    )
 ```
 
 ## 📊 Demo Dashboard
