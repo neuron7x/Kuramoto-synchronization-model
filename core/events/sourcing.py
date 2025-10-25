@@ -93,6 +93,8 @@ class DomainEvent(BaseModel):
 
     event_id: UUID = Field(default_factory=uuid4)
     occurred_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    # ``stream_version`` is injected during hydration and excluded from persistence.
+    stream_version: int | None = Field(default=None, exclude=True)
 
     # ``event_name`` is derived automatically to avoid accidental drift between
     # the class name and the persisted value.  Subclasses may override when a
