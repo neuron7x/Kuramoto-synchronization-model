@@ -175,8 +175,16 @@ class NeuroConsensusAdapter:
     ) -> Dict[str, float]:
         w: Dict[str, float] = dict(base)
         if learned:
-            for k, v in learned.items():
-                w[k] = max(w.get(k, 1.0), float(v))
+            learned_f = {k: max(0.0, float(v)) for k, v in learned.items()}
+            total_learned = sum(learned_f.values())
+            if total_learned > 0:
+                prior_total = sum(float(w.get(k, 1.0)) for k in learned_f) or float(len(learned_f))
+                scale = prior_total / total_learned
+                for k, v in learned_f.items():
+                    w[k] = v * scale
+            else:
+                for k in learned_f:
+                    w[k] = 0.0
         if override:
             for k, v in override.items():
                 w[k] = float(v)
