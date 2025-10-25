@@ -1,0 +1,361 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "zh-CN",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "语气关键：保持专业、自信、可验证。",
+      "views.orders.subtitle": "语气关键：强调执行透明，避免夸张营销。",
+      "views.pnl.subtitle": "语气关键：突出分析严谨性并控制乐观程度。",
+      "views.positions.subtitle": "语气关键：传递稳健的风险掌控力。"
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "实时"
+    },
+    "controls": {
+      "toggle": {
+        "label": "菜单",
+        "open": "打开导航",
+        "close": "关闭导航"
+      }
+    },
+    "sections": {
+      "overview": "概览",
+      "positions": "持仓",
+      "orders": "订单",
+      "pnl": "盈亏与行情",
+      "signals": "信号",
+      "community": "社区"
+    },
+    "locales": {
+      "title": "语言",
+      "helper": "切换仪表盘语言。首选项会存储在浏览器中。",
+      "items": {
+        "en-US": "英语（美国）",
+        "uk-UA": "乌克兰语",
+        "de-DE": "德语",
+        "ja-JP": "日语",
+        "es-ES": "西班牙语（西班牙）",
+        "fr-FR": "法语",
+        "pt-BR": "葡萄牙语（巴西）",
+        "zh-CN": "简体中文",
+        "it-IT": "意大利语",
+        "hi-IN": "印地语",
+        "pl-PL": "波兰语",
+        "ar-SA": "阿拉伯语"
+      }
+    }
+  },
+  "header": {
+    "title": "TradePulse 监控中心",
+    "subtitle": "统一掌控执行、风险与遥测数据。",
+    "tags": [
+      "多资产",
+      "实时"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "订单",
+      "heading": "订单簿",
+      "subtitle": "实时订单流，附带成交进度与执行遥测。",
+      "table": {
+        "columns": {
+          "order_id": "订单ID",
+          "symbol": "标的",
+          "side": "方向",
+          "order_type": "类型",
+          "quantity": "数量",
+          "filledQuantity": "已成交",
+          "remaining": "剩余",
+          "progress": "进度",
+          "limitPrice": "限价",
+          "avgFillPrice": "平均成交价",
+          "status": "状态",
+          "lastFill": "最新成交"
+        },
+        "badges": {
+          "side": {
+            "buy": "买入",
+            "sell": "卖出"
+          },
+          "status": {
+            "FILLED": "已完成",
+            "WORKING": "进行中"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "盈亏与行情",
+      "heading": "盈亏与行情洞察",
+      "subtitle": "实时比对盈利表现与流式行情数据。",
+      "cards": {
+        "pnl": {
+          "title": "净盈亏",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "速率 {value}/小时"
+        },
+        "quotes": {
+          "title": "行情",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "持仓",
+      "heading": "当前持仓",
+      "subtitle": "基于实时成交汇总的风险敞口。",
+      "table": {
+        "columns": {
+          "symbol": "标的",
+          "netQuantity": "净数量",
+          "avgPrice": "平均价格",
+          "marketPrice": "市价",
+          "exposure": "敞口",
+          "pnl": "未实现盈亏",
+          "lastFill": "最新成交"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "盈利 {percent}",
+            "negative": "亏损 {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "信号",
+      "heading": "信号情报",
+      "subtitle": "展现实时策略指令及其置信度和失效时间。",
+      "cards": {
+        "active": {
+          "title": "活跃信号",
+          "total": "{count} 个活跃",
+          "updated": "最新 {time}",
+          "none": "暂无信号"
+        },
+        "bias": {
+          "title": "方向偏好",
+          "ratio": "买入 {buy} / 卖出 {sell} / 中性 {flat}",
+          "netLong": "多头偏度 {value}",
+          "netShort": "空头偏度 {value}"
+        },
+        "conviction": {
+          "title": "置信度",
+          "average": "平均 {value}",
+          "peak": "峰值 {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "时间",
+          "symbol": "标的",
+          "direction": "方向",
+          "strength": "强度",
+          "signal_type": "类型",
+          "ttl": "TTL",
+          "status": "状态",
+          "metadata": "上下文"
+        },
+        "badges": {
+          "direction": {
+            "buy": "买入",
+            "sell": "卖出",
+            "flat": "中性"
+          },
+          "status": {
+            "active": "活跃",
+            "expired": "失效"
+          }
+        },
+        "empty": "暂无信号数据。"
+      }
+    },
+    "overview": {
+      "title": "概览",
+      "heading": "产品脉搏",
+      "subtitle": "高保真 GitHub 洞察，帮助同步 go-to-market 与工程团队。",
+      "hero": {
+        "eyebrow": "GitHub 情报",
+        "title": "执行级别的透明度",
+        "subtitle": "直接从源头跟踪采纳度、节奏与交付准备度。",
+        "cta": "打开 GitHub 仓库"
+      },
+      "badges": {
+        "title": "社区牵引力",
+        "subtitle": "为管理层速览准备的核心健康信号。",
+        "stars": {
+          "label": "Stars",
+          "hint": "30 日动量 {delta}"
+        },
+        "forks": {
+          "label": "Forks",
+          "hint": "{count} 个活跃 fork"
+        },
+        "watchers": {
+          "label": "关注者",
+          "hint": "增长 {percent}"
+        },
+        "contributors": {
+          "label": "贡献者",
+          "hint": "30 日新增 {new} 人"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "发布节奏",
+          "subtitle": "最新标签与合并速度。",
+          "published": "发布时间",
+          "metrics": {
+            "commits": "提交 (30 日)",
+            "merged": "合并 PR (30 日)",
+            "open": "未处理 PR"
+          }
+        },
+        "languages": {
+          "title": "语言构成",
+          "subtitle": "仓库内部的分布情况。"
+        },
+        "workflows": {
+          "title": "CI 健康度",
+          "subtitle": "最新 GitHub Actions 徽章。"
+        },
+        "community": {
+          "title": "开源社区",
+          "subtitle": "实时查看活跃项目与社区参与信号。",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "入门 Issue",
+              "hint": "为新人准备的 {count} 个任务"
+            },
+            "mentorship": {
+              "label": "导师名额",
+              "hint": "可用导师席位 {count} 个"
+            },
+            "response": {
+              "label": "响应中位数",
+              "hint": "维护者响应中位数 {hours} 小时"
+            },
+            "sponsors": {
+              "label": "赞助者",
+              "hint": "{count} 位活跃支持者"
+            }
+          },
+          "programs": {
+            "title": "活跃项目",
+            "fallback": "项目"
+          },
+          "resources": {
+            "title": "贡献者资源",
+            "fallback": "资源"
+          }
+        }
+      }
+    },
+    "community": {
+      "title": "社区",
+      "heading": "社区影响力中心",
+      "subtitle": "依托协同项目与实时指标，放大开源生态的势能。",
+      "hero": {
+        "eyebrow": "社区赋能",
+        "title": "与全球贡献者共建势能",
+        "subtitle": "在 TradePulse 生态中协调导师计划、赞助与知识共享。",
+        "cta": "打开贡献指南",
+        "secondaryCta": "加入社区聊天",
+        "fallbackChannel": "社区频道"
+      },
+      "metrics": {
+        "title": "社区健康指标",
+        "subtitle": "持续衡量我们贡献者生态的关键数据。",
+        "maintainers": {
+          "label": "核心维护者",
+          "hint": "{count} 位维护者负责发布节奏"
+        },
+        "sponsors": {
+          "label": "赞助者",
+          "hint": "{count} 位伙伴每月提供 {monthly} 支持"
+        },
+        "downloads": {
+          "label": "月度下载",
+          "hint": "全渠道 {count} 次安装"
+        },
+        "response": {
+          "label": "响应中位数",
+          "hint": "维护者响应中位数 {hours} 小时"
+        },
+        "goodFirstIssues": {
+          "label": "入门 Issue",
+          "hint": "精选 {count} 个新手任务"
+        },
+        "mentorship": {
+          "label": "导师名额",
+          "hint": "可用导师席位 {count} 个"
+        }
+      },
+      "programs": {
+        "title": "贡献者项目",
+        "subtitle": "激活新老贡献者的重点举措。",
+        "cta": "查看详情",
+        "fallbackTitle": "项目"
+      },
+      "events": {
+        "title": "社区活动",
+        "subtitle": "即将举行的会议、Town Hall 与区域交流。",
+        "cta": "报名参加",
+        "fallbackTitle": "活动"
+      },
+      "resources": {
+        "title": "贡献者资源",
+        "subtitle": "随时掌握我们的标准与最佳实践。",
+        "cta": "打开",
+        "fallbackTitle": "资源",
+        "filters": {
+          "all": "全部",
+          "label": "筛选资源",
+          "helper": "选择关注领域以筛选资源列表。"
+        }
+      },
+      "champions": {
+        "title": "社区领军者",
+        "subtitle": "致敬推动项目向前的核心贡献者。",
+        "cta": "查看资料",
+        "contributions": "合并贡献 {count} 项",
+        "fallbackTitle": "领军者"
+      },
+      "engagement": {
+        "title": "参与度时间线",
+        "subtitle": "按月跟踪贡献活跃度和版本发布。",
+        "fallbackPeriod": "最近周期",
+        "labels": {
+          "contributions": "贡献数",
+          "newcomers": "新贡献者",
+          "releases": "重要发布",
+          "highlights": "亮点"
+        }
+      },
+      "hubs": {
+        "title": "区域枢纽",
+        "subtitle": "提供接力支持与导师辅导的本地工作组。",
+        "fallbackTitle": "枢纽",
+        "cta": "查看枢纽指南",
+        "leads": "{count} 名区域负责人"
+      },
+      "opportunities": {
+        "title": "贡献机会",
+        "subtitle": "当前急需新贡献者的高影响项目。",
+        "fallbackTitle": "机会",
+        "cta": "提交意向"
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "最新成交"
+    }
+  }
+}

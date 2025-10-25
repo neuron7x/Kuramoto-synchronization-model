@@ -7,6 +7,72 @@
       "views.orders.subtitle": "トーン要注意：即時性と透明性を丁寧語で伝えてください。",
       "views.pnl.subtitle": "トーン要注意：定量的な裏付けを示しつつ過度な強調を避ける。",
       "views.positions.subtitle": "トーン要注意：リスク管理の安心感を過不足なく伝える。"
+    },
+    "community": {
+      "title": "コミュニティ",
+      "heading": "コミュニティインパクトセンター",
+      "subtitle": "連携されたプログラムとライブメトリクスでオープンソースの勢いを高める。",
+      "hero": {
+        "eyebrow": "コミュニティエンゲージメント",
+        "title": "世界中のコントリビューターと勢いを築く",
+        "subtitle": "TradePulseエコシステムでメンタリング・スポンサーシップ・知識共有を調整。",
+        "cta": "貢献ガイドを開く",
+        "secondaryCta": "コミュニティチャットに参加",
+        "fallbackChannel": "コミュニティチャンネル"
+      },
+      "metrics": {
+        "title": "コミュニティ健全性メトリクス",
+        "subtitle": "コントリビューターエコシステム全体を継続的に測定。",
+        "maintainers": {
+          "label": "コアメンテナー",
+          "hint": "{count}名のメンテナーがリリースを統括"
+        },
+        "sponsors": {
+          "label": "スポンサー",
+          "hint": "{count}社が毎月{monthly}を支援"
+        },
+        "downloads": {
+          "label": "月次ダウンロード",
+          "hint": "月間{count}件のインストール"
+        },
+        "response": {
+          "label": "中央値の応答時間",
+          "hint": "メンテナー応答中央値 {hours}時間"
+        },
+        "goodFirstIssues": {
+          "label": "初心者向けIssue",
+          "hint": "スタータータスク {count}件"
+        },
+        "mentorship": {
+          "label": "メンター枠",
+          "hint": "オンボーディング席 {count}枠"
+        }
+      },
+      "programs": {
+        "title": "貢献者プログラム",
+        "subtitle": "新規・既存のコントリビューターを活性化するイニシアチブ。",
+        "cta": "詳細を見る",
+        "fallbackTitle": "プログラム"
+      },
+      "events": {
+        "title": "コミュニティイベント",
+        "subtitle": "今後のコール、タウンホール、地域イベント。",
+        "cta": "登録する",
+        "fallbackTitle": "イベント"
+      },
+      "resources": {
+        "title": "貢献者リソース",
+        "subtitle": "標準とベストプラクティスを常に把握。",
+        "cta": "開く",
+        "fallbackTitle": "リソース"
+      },
+      "champions": {
+        "title": "コミュニティチャンピオン",
+        "subtitle": "プロジェクトを推進する主要コントリビューターを称える。",
+        "cta": "プロフィールを見る",
+        "contributions": "{count}件のマージ済み貢献",
+        "fallbackTitle": "チャンピオン"
+      }
     }
   },
   "nav": {
@@ -15,12 +81,38 @@
     "badges": {
       "live": "ライブ"
     },
+    "controls": {
+      "toggle": {
+        "label": "メニュー",
+        "open": "ナビゲーションを開く",
+        "close": "ナビゲーションを閉じる"
+      }
+    },
     "sections": {
       "overview": "概要",
       "positions": "ポジション",
       "orders": "注文",
       "pnl": "PnLと気配値",
-      "signals": "シグナル"
+      "signals": "シグナル",
+      "community": "コミュニティ"
+    },
+    "locales": {
+      "title": "言語",
+      "helper": "ダッシュボードの言語を切り替えます。設定はブラウザーに保存されます。",
+      "items": {
+        "en-US": "英語 (米国)",
+        "uk-UA": "ウクライナ語",
+        "de-DE": "ドイツ語",
+        "ja-JP": "日本語",
+        "es-ES": "スペイン語 (スペイン)",
+        "fr-FR": "フランス語",
+        "pt-BR": "ポルトガル語 (ブラジル)",
+        "zh-CN": "簡体字中国語",
+        "it-IT": "イタリア語",
+        "hi-IN": "ヒンディー語",
+        "pl-PL": "ポーランド語",
+        "ar-SA": "アラビア語"
+      }
     }
   },
   "header": {
@@ -198,6 +290,69 @@
         "workflows": {
           "title": "CIヘルス",
           "subtitle": "最新のGitHub Actionsバッジ。"
+        },
+        "community": {
+          "title": "オープンソースコミュニティ",
+          "subtitle": "貢献プログラムとエンゲージメント指標をリアルタイムで確認。",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "初心者向けIssue",
+              "hint": "オンボーディング用のIssue {count}件"
+            },
+            "mentorship": {
+              "label": "メンタープログラム枠",
+              "hint": "メンタリング枠 {count}席"
+            },
+            "response": {
+              "label": "中央値の応答時間",
+              "hint": "メンテナー応答中央値 {hours}時間"
+            },
+            "sponsors": {
+              "label": "スポンサー",
+              "hint": "{count}件のアクティブ支援者"
+            }
+          },
+          "programs": {
+            "title": "実施中のプログラム",
+            "fallback": "プログラム"
+          },
+          "resources": {
+            "title": "貢献者リソース",
+            "fallback": "リソース"
+          }
+        }
+      }
+    },
+    "community": {
+      "engagement": {
+        "title": "エンゲージメントタイムライン",
+        "subtitle": "貢献状況とリリース活動を月次で追跡します。",
+        "fallbackPeriod": "最新期間",
+        "labels": {
+          "contributions": "貢献数",
+          "newcomers": "新規コントリビューター",
+          "releases": "主要リリース",
+          "highlights": "ハイライト"
+        }
+      },
+      "hubs": {
+        "title": "地域ハブ",
+        "subtitle": "フォロー・ザ・サン体制とメンタリングを提供する地域コミュニティ。",
+        "fallbackTitle": "ハブ",
+        "cta": "ハブガイドを見る",
+        "leads": "{count} 名の地域リード"
+      },
+      "opportunities": {
+        "title": "コントリビューション機会",
+        "subtitle": "新たな参加者を募集中の高優先度イニシアチブ。",
+        "fallbackTitle": "機会",
+        "cta": "参加を申請"
+      },
+      "resources": {
+        "filters": {
+          "all": "すべて",
+          "label": "リソースを絞り込む",
+          "helper": "分野を選択してリソース一覧を絞り込みます。"
         }
       }
     }

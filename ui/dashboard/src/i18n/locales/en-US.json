@@ -15,12 +15,38 @@
     "badges": {
       "live": "Live"
     },
+    "controls": {
+      "toggle": {
+        "label": "Menu",
+        "open": "Open navigation",
+        "close": "Close navigation"
+      }
+    },
     "sections": {
       "overview": "Overview",
       "positions": "Positions",
       "orders": "Orders",
       "pnl": "PnL & Quotes",
-      "signals": "Signals"
+      "signals": "Signals",
+      "community": "Community"
+    },
+    "locales": {
+      "title": "Language",
+      "helper": "Switch the dashboard locale. Stored in your browser preferences.",
+      "items": {
+        "en-US": "English (US)",
+        "uk-UA": "Українська",
+        "de-DE": "Deutsch",
+        "ja-JP": "日本語",
+        "es-ES": "Español (España)",
+        "fr-FR": "Français",
+        "pt-BR": "Português (Brasil)",
+        "zh-CN": "简体中文",
+        "it-IT": "Italiano",
+        "hi-IN": "हिन्दी",
+        "pl-PL": "Polski",
+        "ar-SA": "العربية"
+      }
     }
   },
   "header": {
@@ -198,7 +224,132 @@
         "workflows": {
           "title": "CI health",
           "subtitle": "Latest GitHub Actions badges."
+        },
+        "community": {
+          "title": "Open-source community",
+          "subtitle": "Live contributor programs and enablement signals.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "Good-first issues",
+              "hint": "{count} open tickets curated for onboarding"
+            },
+            "mentorship": {
+              "label": "Mentorship seats",
+              "hint": "{count} guided onboarding placements"
+            },
+            "response": {
+              "label": "Median response",
+              "hint": "{hours}h maintainer response median"
+            },
+            "sponsors": {
+              "label": "Sponsors",
+              "hint": "{count} active financial backers"
+            }
+          },
+          "programs": {
+            "title": "Active programs",
+            "fallback": "Program"
+          },
+          "resources": {
+            "title": "Contributor resources",
+            "fallback": "Resource"
+          }
         }
+      }
+    },
+    "community": {
+      "title": "Community",
+      "heading": "Community Impact Center",
+      "subtitle": "Grow the open-source movement with curated enablement programs and real-time health metrics.",
+      "hero": {
+        "eyebrow": "Community enablement",
+        "title": "Build momentum with contributors worldwide",
+        "subtitle": "Coordinate mentorship, sponsorship, and knowledge sharing across the TradePulse ecosystem.",
+        "cta": "View contribution playbook",
+        "secondaryCta": "Join community chat",
+        "fallbackChannel": "Community channel"
+      },
+      "metrics": {
+        "title": "Community health metrics",
+        "subtitle": "Measured continuously across our contributor ecosystem.",
+        "maintainers": {
+          "label": "Core maintainers",
+          "hint": "{count} maintainers stewarding releases"
+        },
+        "sponsors": {
+          "label": "Sponsors",
+          "hint": "{count} partners funding {monthly} monthly"
+        },
+        "downloads": {
+          "label": "Monthly downloads",
+          "hint": "{count} installs across channels"
+        },
+        "response": {
+          "label": "Median response time",
+          "hint": "{hours}h median maintainer reply"
+        },
+        "goodFirstIssues": {
+          "label": "Good-first issues",
+          "hint": "{count} tickets curated for newcomers"
+        },
+        "mentorship": {
+          "label": "Mentorship seats",
+          "hint": "{count} guided onboarding seats"
+        }
+      },
+      "programs": {
+        "title": "Contributor programs",
+        "subtitle": "Initiatives designed to activate new and existing contributors.",
+        "cta": "View details",
+        "fallbackTitle": "Program"
+      },
+      "events": {
+        "title": "Community events",
+        "subtitle": "Upcoming syncs, town halls, and regional meetups.",
+        "cta": "Register",
+        "fallbackTitle": "Event"
+      },
+      "resources": {
+        "title": "Contributor resources",
+        "subtitle": "Stay aligned with our standards and best practices.",
+        "cta": "Open",
+        "fallbackTitle": "Resource",
+        "filters": {
+          "all": "All",
+          "label": "Filter resources",
+          "helper": "Select a focus area to refine the contributor resources."
+        }
+      },
+      "champions": {
+        "title": "Community champions",
+        "subtitle": "Recognising top contributors driving impact across the project.",
+        "cta": "View profile",
+        "contributions": "{count} merged contributions",
+        "fallbackTitle": "Champion"
+      },
+      "engagement": {
+        "title": "Engagement timeline",
+        "subtitle": "Track contributor momentum and release activity month over month.",
+        "fallbackPeriod": "Recent period",
+        "labels": {
+          "contributions": "Contributions",
+          "newcomers": "New contributors",
+          "releases": "Major releases",
+          "highlights": "Highlights"
+        }
+      },
+      "hubs": {
+        "title": "Regional hubs",
+        "subtitle": "Local workstreams offering follow-the-sun coverage and mentorship.",
+        "fallbackTitle": "Hub",
+        "cta": "View hub guide",
+        "leads": "{count} regional leads"
+      },
+      "opportunities": {
+        "title": "Contribution opportunities",
+        "subtitle": "High-impact efforts currently seeking new contributors.",
+        "fallbackTitle": "Opportunity",
+        "cta": "Express interest"
       }
     }
   },

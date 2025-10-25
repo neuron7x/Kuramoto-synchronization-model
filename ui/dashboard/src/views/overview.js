@@ -30,6 +30,19 @@ function safeExternalUrl(url) {
   return '#';
 }
 
+function formatTemplate(template, params = {}) {
+  if (typeof template !== 'string') {
+    return '';
+  }
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      const value = params[key];
+      return value == null ? '' : String(value);
+    }
+    return '';
+  });
+}
+
 function getTranslations() {
   const view = getMessage('views.overview') || {};
   return {
@@ -478,6 +491,183 @@ function renderWorkflowBadges(github = {}, translations = {}) {
   `;
 }
 
+function renderCommunitySpotlight(community = {}, translations = {}) {
+  if (!community || typeof community !== 'object') {
+    return '';
+  }
+
+  const panelT = translations.community || {};
+  const metricsT = panelT.metrics || {};
+  const metrics = community.metrics || {};
+
+  const goodFirstIssues = coerceNumber(
+    metrics.goodFirstIssues ?? community.good_first_issues ?? community.goodFirstIssues,
+    null,
+  );
+  const mentorshipSeats = coerceNumber(
+    metrics.mentorshipSeats ?? community.mentorship_seats ?? community.mentorshipSeats,
+    null,
+  );
+  const responseHours = coerceNumber(
+    metrics.responseHours ?? community.response_hours ?? community.responseHours,
+    null,
+  );
+  const sponsors = coerceNumber(metrics.sponsors ?? community.sponsors?.total, null);
+
+  const metricItems = [
+    {
+      key: 'goodFirstIssues',
+      label: metricsT.goodFirstIssues?.label || 'Good-first issues',
+      value:
+        goodFirstIssues != null ? formatNumber(goodFirstIssues, { maximumFractionDigits: 0 }) : '—',
+      hint:
+        goodFirstIssues != null
+          ? formatTemplate(metricsT.goodFirstIssues?.hint || '', {
+              count: formatNumber(goodFirstIssues, { maximumFractionDigits: 0 }),
+            })
+          : '',
+    },
+    {
+      key: 'mentorship',
+      label: metricsT.mentorship?.label || 'Mentorship seats',
+      value:
+        mentorshipSeats != null ? formatNumber(mentorshipSeats, { maximumFractionDigits: 0 }) : '—',
+      hint:
+        mentorshipSeats != null
+          ? formatTemplate(metricsT.mentorship?.hint || '', {
+              count: formatNumber(mentorshipSeats, { maximumFractionDigits: 0 }),
+            })
+          : '',
+    },
+    {
+      key: 'response',
+      label: metricsT.response?.label || 'Median response',
+      value:
+        responseHours != null
+          ? `${formatNumber(responseHours, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h`
+          : '—',
+      hint:
+        responseHours != null
+          ? formatTemplate(metricsT.response?.hint || '', {
+              hours: formatNumber(responseHours, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              }),
+            })
+          : '',
+    },
+    {
+      key: 'sponsors',
+      label: metricsT.sponsors?.label || 'Sponsors',
+      value:
+        sponsors != null ? formatNumber(sponsors, { maximumFractionDigits: 0 }) : '—',
+      hint:
+        sponsors != null
+          ? formatTemplate(metricsT.sponsors?.hint || '', {
+              count: formatNumber(sponsors, { maximumFractionDigits: 0 }),
+            })
+          : '',
+    },
+  ].filter(Boolean);
+
+  const programs = Array.isArray(community.programs) ? community.programs.filter(Boolean).slice(0, 2) : [];
+  const resources = Array.isArray(community.resources)
+    ? community.resources.filter(Boolean).slice(0, 2)
+    : [];
+
+  const programItems = programs
+    .map((program) => {
+      const name = program?.name || program?.title;
+      const url = safeExternalUrl(program?.url || program?.href);
+      return `
+        <li>
+          <a class="tp-community-spotlight__program" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+            ${escapeHtml(String(name || panelT.programs?.fallback || 'Program'))}
+          </a>
+        </li>
+      `;
+    })
+    .join('');
+
+  const resourceItems = resources
+    .map((resource) => {
+      const name = resource?.label || resource?.title;
+      const url = safeExternalUrl(resource?.url || resource?.href);
+      return `
+        <li>
+          <a class="tp-community-spotlight__resource" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+            ${escapeHtml(String(name || panelT.resources?.fallback || 'Resource'))}
+          </a>
+        </li>
+      `;
+    })
+    .join('');
+
+  const hasPrograms = Boolean(programItems);
+  const hasResources = Boolean(resourceItems);
+  if (metricItems.length === 0 && !hasPrograms && !hasResources) {
+    return '';
+  }
+
+  return `
+    <section class="tp-card tp-community-spotlight" aria-labelledby="tp-community-spotlight">
+      <header class="tp-card__header">
+        <h3 class="tp-card__title" id="tp-community-spotlight">${escapeHtml(
+          String(panelT.title || 'Open-source community'),
+        )}</h3>
+        ${
+          panelT.subtitle
+            ? `<p class="tp-text-subtle">${escapeHtml(String(panelT.subtitle))}</p>`
+            : ''
+        }
+      </header>
+      ${
+        metricItems.length
+          ? `
+              <dl class="tp-community-spotlight__metrics">
+                ${metricItems
+                  .map(
+                    (item) => `
+                      <div class="tp-community-spotlight__metric">
+                        <dt>${escapeHtml(String(item.label))}</dt>
+                        <dd>${escapeHtml(String(item.value))}</dd>
+                        ${
+                          item.hint
+                            ? `<p class="tp-community-spotlight__metric-hint">${escapeHtml(String(item.hint))}</p>`
+                            : ''
+                        }
+                      </div>
+                    `,
+                  )
+                  .join('')}
+              </dl>
+            `
+          : ''
+      }
+      ${
+        hasPrograms
+          ? `
+              <div class="tp-community-spotlight__section">
+                <h4>${escapeHtml(String(panelT.programs?.title || 'Active programs'))}</h4>
+                <ul class="tp-community-spotlight__list">${programItems}</ul>
+              </div>
+            `
+          : ''
+      }
+      ${
+        hasResources
+          ? `
+              <div class="tp-community-spotlight__section">
+                <h4>${escapeHtml(String(panelT.resources?.title || 'Contributor resources'))}</h4>
+                <ul class="tp-community-spotlight__list">${resourceItems}</ul>
+              </div>
+            `
+          : ''
+      }
+    </section>
+  `;
+}
+
 export function renderOverviewView({ github = {} } = {}) {
   const translations = getTranslations();
   const heroHtml = renderHero(translations.hero, github);
@@ -486,6 +676,7 @@ export function renderOverviewView({ github = {} } = {}) {
   const languagesPanel = renderLanguagesPanel(github, translations.panels || {});
   const workflowPanel = renderWorkflowBadges(github, translations.panels || {});
   const momentumPanel = renderMomentumPanel(github, translations.panels || {});
+  const communityPanel = renderCommunitySpotlight(github.community, translations.panels || {});
 
   const html = `
     <article class="tp-view tp-view--overview">
@@ -506,6 +697,7 @@ export function renderOverviewView({ github = {} } = {}) {
         ${momentumPanel}
         ${languagesPanel}
         ${workflowPanel}
+        ${communityPanel}
       </section>
     </article>
   `;

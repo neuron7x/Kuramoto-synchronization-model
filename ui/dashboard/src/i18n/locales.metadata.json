@@ -28,7 +28,9 @@
           ]
         }
       },
-      "reviewCadence": "Quarterly with New York trading-ops linguists."
+      "reviewCadence": "Quarterly with New York trading-ops linguists.",
+      "displayName": "English (US)",
+      "direction": "ltr"
     },
     "uk-UA": {
       "priority": "tier-1",
@@ -56,7 +58,9 @@
           ]
         }
       },
-      "reviewCadence": "Щомісячно разом із київською командою з локалізації."
+      "reviewCadence": "Щомісячно разом із київською командою з локалізації.",
+      "displayName": "Українська",
+      "direction": "ltr"
     },
     "de-DE": {
       "priority": "tier-1",
@@ -84,7 +88,9 @@
           ]
         }
       },
-      "reviewCadence": "Quartalsweise mit Frankfurter Handels-Compliance-Linguisten."
+      "reviewCadence": "Quartalsweise mit Frankfurter Handels-Compliance-Linguisten.",
+      "displayName": "Deutsch",
+      "direction": "ltr"
     },
     "ja-JP": {
       "priority": "tier-1",
@@ -111,7 +117,243 @@
           ]
         }
       },
-      "reviewCadence": "隔月で東京のネイティブ監修チームとレビュー。"
+      "reviewCadence": "隔月で東京のネイティブ監修チームとレビュー。",
+      "displayName": "日本語",
+      "direction": "ltr"
+    },
+    "es-ES": {
+      "priority": "tier-1",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d 'de' MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "Ley Orgánica 3/2018"
+      ],
+      "tone": {
+        "voice": "Preciso, transparente y cercano sin perder formalidad.",
+        "guidelines": {
+          "do": [
+            "Destacar medidas de control y trazabilidad con verbos claros.",
+            "Utilizar vocabulario financiero ampliamente aceptado en España."
+          ],
+          "dont": [
+            "Evitar localismos excesivos o coloquialismos.",
+            "No prometer resultados garantizados ni absolutistas."
+          ]
+        }
+      },
+      "reviewCadence": "Revisión trimestral con lingüistas financieros en Madrid.",
+      "displayName": "Español (España)",
+      "direction": "ltr"
+    },
+    "fr-FR": {
+      "priority": "tier-1",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "CNIL"
+      ],
+      "tone": {
+        "voice": "Professionnel, factuel et rassurant.",
+        "guidelines": {
+          "do": [
+            "Mettre en avant la conformité réglementaire et la traçabilité.",
+            "Employer des formulations actives et mesurées."
+          ],
+          "dont": [
+            "Éviter les anglicismes non nécessaires.",
+            "Ne pas employer de promesses difficilement vérifiables."
+          ]
+        }
+      },
+      "reviewCadence": "Relecture trimestrielle avec le bureau de Paris.",
+      "displayName": "Français",
+      "direction": "ltr"
+    },
+    "pt-BR": {
+      "priority": "tier-1",
+      "defaultCurrency": "BRL",
+      "formats": {
+        "date": "dd/MM/yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "LGPD"
+      ],
+      "tone": {
+        "voice": "Confiante, acessível e orientado a dados.",
+        "guidelines": {
+          "do": [
+            "Evidenciar governança e rastreabilidade com exemplos práticos.",
+            "Utilizar termos regulatórios reconhecidos no Brasil."
+          ],
+          "dont": [
+            "Evitar jargões excessivamente técnicos sem contexto.",
+            "Não adotar expressões coloquiais informais."
+          ]
+        }
+      },
+      "reviewCadence": "Revisão bimestral com especialistas em São Paulo.",
+      "displayName": "Português (Brasil)",
+      "direction": "ltr"
+    },
+    "zh-CN": {
+      "priority": "tier-1",
+      "defaultCurrency": "CNY",
+      "formats": {
+        "date": "yyyy年M月d日",
+        "time": "HH:mm",
+        "number": "#,##0.###",
+        "currency": "¤#,##0.00"
+      },
+      "privacyRegimes": [
+        "PIPL"
+      ],
+      "tone": {
+        "voice": "专业、可信、注重数据佐证。",
+        "guidelines": {
+          "do": [
+            "突出风险控制、合规流程与可审计性。",
+            "使用正式书面语并提供量化依据。"
+          ],
+          "dont": [
+            "避免夸张修辞或带有情绪化的表达。",
+            "不使用网络俚语或口语化缩写。"
+          ]
+        }
+      },
+      "reviewCadence": "每季度与上海本地语言团队复核。",
+      "displayName": "简体中文",
+      "direction": "ltr"
+    },
+    "it-IT": {
+      "priority": "tier-2",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR"
+      ],
+      "tone": {
+        "voice": "Professionale, trasparente e pragmatico.",
+        "guidelines": {
+          "do": [
+            "Evidenziare governance e controlli di rischio con esempi concreti.",
+            "Utilizzare terminologia regolamentare riconosciuta in Italia."
+          ],
+          "dont": [
+            "Evitare slogan generici privi di basi misurabili.",
+            "Non usare tecnicismi non spiegati."
+          ]
+        }
+      },
+      "reviewCadence": "Trimestrale con revisori fintech a Milano.",
+      "displayName": "Italiano",
+      "direction": "ltr"
+    },
+    "hi-IN": {
+      "priority": "tier-2",
+      "defaultCurrency": "INR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#,##,##0.###",
+        "currency": "¤#,##,##0.00"
+      },
+      "privacyRegimes": [
+        "DPDP Act"
+      ],
+      "tone": {
+        "voice": "डेटा-आधारित, विश्वसनीय और सहयोगी शैली।",
+        "guidelines": {
+          "do": [
+            "जोखिम और अनुपालन संकेतकों को स्पष्ट भाषा में समझाएँ।",
+            "भारतीय वित्तीय विनियमन से जुड़े मानक शब्दों का उपयोग करें।"
+          ],
+          "dont": [
+            "अत्यधिक तकनीकी जार्गन बिना संदर्भ के न प्रयोग करें।",
+            "अत्यधिक भावुक या सनसनीखेज अभिव्यक्तियों से बचें।"
+          ]
+        }
+      },
+      "reviewCadence": "द्वैमासिक समीक्षा बेंगलुरु स्थित लोकलाइजेशन विशेषज्ञों के साथ।",
+      "displayName": "हिन्दी",
+      "direction": "ltr"
+    },
+    "pl-PL": {
+      "priority": "tier-2",
+      "defaultCurrency": "PLN",
+      "formats": {
+        "date": "dd.MM.yyyy",
+        "time": "HH:mm",
+        "number": "#,##0,###",
+        "currency": "¤ #,##0.00"
+      },
+      "privacyRegimes": [
+        "GDPR"
+      ],
+      "tone": {
+        "voice": "Rzeczowy, wiarygodny i oparty na danych.",
+        "guidelines": {
+          "do": [
+            "Podkreślaj zgodność regulacyjną oraz przejrzystość procesów.",
+            "Stosuj terminologię używaną w polskim sektorze finansowym."
+          ],
+          "dont": [
+            "Unikaj kolokwializmów lub przesadnych obietnic.",
+            "Nie używaj anglicyzmów, gdy istnieje polski odpowiednik."
+          ]
+        }
+      },
+      "reviewCadence": "Przegląd kwartalny z warszawskim zespołem ds. językowych.",
+      "displayName": "Polski",
+      "direction": "ltr"
+    },
+    "ar-SA": {
+      "priority": "tier-2",
+      "defaultCurrency": "SAR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#,##0.###",
+        "currency": "¤ #,##0.00"
+      },
+      "privacyRegimes": [
+        "PDPL"
+      ],
+      "tone": {
+        "voice": "أسلوب مهني موثوق يركز على الشفافية.",
+        "guidelines": {
+          "do": [
+            "تأكيد الضوابط التنظيمية وإدارة المخاطر بلغة رسمية واضحة.",
+            "استخدام مصطلحات الامتثال المتداولة في السوق السعودية."
+          ],
+          "dont": [
+            "تجنب المبالغة أو الوعود القطعية.",
+            "لا تستخدم العبارات العامية أو الاختصارات غير الرسمية."
+          ]
+        }
+      },
+      "reviewCadence": "مراجعة فصلية مع خبراء اللغة في الرياض.",
+      "displayName": "العربية",
+      "direction": "rtl"
     }
   }
 }
