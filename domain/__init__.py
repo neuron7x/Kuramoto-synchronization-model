@@ -1,8 +1,12 @@
-"""Domain layer containing core trading entities."""
+"""Domain layer containing core bounded contexts.
 
-from .order import Order, OrderSide, OrderStatus, OrderType
-from .position import Position
-from .signal import Signal, SignalAction
+The package is organised according to domain-driven design (DDD) principles
+with dedicated subpackages for orders, positions, and signals.
+"""
+
+from .orders import Order, OrderSide, OrderStatus, OrderType
+from .positions import Position
+from .signals import Signal, SignalAction
 
 __all__ = [
     "Order",
