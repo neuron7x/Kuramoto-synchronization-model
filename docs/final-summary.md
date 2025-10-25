@@ -7,6 +7,7 @@ This summary captures the high-level outcomes of the workflow and documentation 
 - **Pre-commit validation** keeps the repository compliant with the shared `.pre-commit-config.yaml` configuration by running the hooks on every pull request.
 - **Docker build verification** ensures that the primary `Dockerfile` continues to produce a runnable container image using GitHub-hosted builders.
 - **Requirements validation** verifies that the `requirements.lock` and `requirements-dev.lock` files remain synchronised with their respective source requirement manifests.
+  The workflow now pins `pip-tools` to a version compatible with the latest `pip` releases to avoid resolver regressions.
 
 ## Documentation improvements
 

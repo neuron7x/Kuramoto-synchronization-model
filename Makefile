@@ -11,8 +11,8 @@ fpma-check:
 
 .PHONY: lock
 lock:
-	python -m pip install --upgrade pip
-	python -m pip install pip-tools
+        python -m pip install --upgrade pip
+        python -m pip install "pip-tools>=7.4.1"
 	pip-compile --resolver=backtracking --strip-extras --no-annotate \
 	    --constraint constraints/security.txt \
 	    --output-file=requirements.lock requirements.txt

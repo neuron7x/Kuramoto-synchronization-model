@@ -19,7 +19,7 @@ Consistent testing habits keep TradePulse stable and resilient. Use the checklis
 - Use `act pull_request -W .github/workflows/pre-commit-validation.yml` to emulate the pre-commit workflow.
 - Trigger the requirements verification locally with:
   ```bash
-  pip install pip-tools
+  pip install "pip-tools>=7.4.1"
   pip-compile --no-annotate --resolver=backtracking --output-file=requirements.lock --strip-extras --constraint constraints/security.txt requirements.txt
   pip-compile --no-annotate --resolver=backtracking --output-file=requirements-dev.lock --strip-extras --constraint constraints/security.txt requirements-dev.txt
   git diff --stat requirements.lock requirements-dev.lock
