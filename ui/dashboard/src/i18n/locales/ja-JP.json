@@ -15,6 +15,11 @@
     "badges": {
       "live": "ライブ"
     },
+    "toggle": {
+      "menu": "メニュー",
+      "open": "ナビゲーションを開く",
+      "close": "ナビゲーションを閉じる"
+    },
     "sections": {
       "overview": "概要",
       "positions": "ポジション",
@@ -198,6 +203,126 @@
         "workflows": {
           "title": "CIヘルス",
           "subtitle": "最新のGitHub Actionsバッジ。"
+        }
+      },
+      "mobile": {
+        "title": "モバイルコンパニオン",
+        "subtitle": "リスク例外の承認、シグナルの優先順位付け、インシデントの確認を移動中でも実行します。",
+        "tagline": "生体認証、オフライン継続、120ms未満の通知を備えた堅牢なアプリ。",
+        "features": {
+          "alerts": {
+            "title": "運用レベルのアラート",
+            "description": "確認フローと冗長エッジ配信を備えたプッシュ通知。"
+          },
+          "approvals": {
+            "title": "モバイル承認",
+            "description": "デバイスバインディング、ハードウェアキー、ダブルチェックで例外を承認。"
+          },
+          "insights": {
+            "title": "オフラインインサイト",
+            "description": "24時間までダッシュボードをキャッシュし、接続復旧時に差分同期。"
+          }
+        },
+        "platforms": {
+          "ios": {
+            "label": "iOS",
+            "badge": "TestFlightベータ",
+            "href": "https://github.com/tradepulse/TradePulse/wiki/Mobile-iOS",
+            "description": "MDMコンプライアンスと生体認証を備えた監査付きビルド。"
+          },
+          "android": {
+            "label": "Android",
+            "badge": "Play Console内部",
+            "href": "https://github.com/tradepulse/TradePulse/wiki/Mobile-Android",
+            "description": "SafetyNetとPlay Integrity検証によるゼロトラストオンボーディング。"
+          },
+          "pwa": {
+            "label": "PWA",
+            "badge": "Webアプリをインストール",
+            "href": "https://tradepulse.io/mobile",
+            "description": "タブレットや堅牢端末向けに最適化したデスクトップ体験。"
+          }
+        },
+        "metrics": [
+          {
+            "label": "リリース頻度",
+            "value": "週次ビルド",
+            "hint": "毎週金曜17:00 UTCに署名付き配布"
+          },
+          {
+            "label": "アラートSLA",
+            "value": "<120 ms",
+            "hint": "世界7拠点のPoP経由でエッジ配信"
+          },
+          {
+            "label": "セッション強化",
+            "value": "ゼロトラスト",
+            "hint": "ハードウェアキー・パスキー・MDM証明を必須化"
+          }
+        ]
+      },
+      "localization": {
+        "title": "グローバルローカライゼーション運用",
+        "subtitle": "ネイティブ金融リンギストによる規制対応の翻訳。",
+        "supportedLabel": "{count}のサポート言語",
+        "priorityLabels": {
+          "tier-0": "Tier 0・基幹",
+          "tier-1": "Tier 1・戦略",
+          "tier-2": "Tier 2・成長"
+        },
+        "highlights": [
+          "今期の追加: スペイン語 (es-ES) とフランス語 (fr-FR) がコンプライアンス審査済み。",
+          "各ロケール向けのトーンガイドとレビューメモを提供。"
+        ],
+        "cta": {
+          "label": "新しいロケールをリクエスト",
+          "href": "https://github.com/tradepulse/TradePulse/issues/new?labels=locale-request"
+        },
+        "footnote": "すべてのロケールは法務レビューと発音ガイドを含みます。"
+      },
+      "community": {
+        "title": "オープンコミュニティプログラム",
+        "subtitle": "世界中のコントリビューター向けに構造化されたオンボーディングとメンタリング。",
+        "actions": {
+          "officeHours": {
+            "title": "メンテナーホットライン",
+            "description": "週2回のペアリングを米州・EMEA・APACでローテーション実施。"
+          },
+          "mentorship": {
+            "title": "メンタードイシュー",
+            "description": "詳細なブリーフと受入条件、レビュア割当付きのgood first issue。"
+          },
+          "guild": {
+            "title": "Contributor Guild",
+            "description": "月次のアーキテクチャフォーラムとロードマップAMA。"
+          }
+        },
+        "metrics": [
+          {
+            "label": "ローテーションメンター数",
+            "value": "6",
+            "hint": "UTC±0・北米東部・日本時間をカバー"
+          },
+          {
+            "label": "PRレビュー中央値",
+            "value": "18時間",
+            "hint": "直近30件のコミュニティPR"
+          },
+          {
+            "label": "セキュリティオンボーディング",
+            "value": "48時間未満",
+            "hint": "重要パス向けの身元確認とNDA処理"
+          }
+        ],
+        "highlights": [
+          "四半期ごとのロードマップ投票でコミュニティ枠を確保。",
+          "初回貢献者向けに専任セキュリティレビュアを配置。",
+          "統合やモバイル拡張を紹介するショーケースプログラム。"
+        ],
+        "cta": {
+          "label": "コントリビューションガイドを開く",
+          "href": "https://github.com/tradepulse/TradePulse/blob/main/CONTRIBUTING.md",
+          "description": "毎週水曜16:00 UTCのオンボーディングコールに参加。"
         }
       }
     }

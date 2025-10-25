@@ -3,6 +3,8 @@
   "fallbackLocale": "en-US",
   "locales": {
     "en-US": {
+      "label": "English (United States)",
+      "nativeLabel": "English (United States)",
       "priority": "tier-0",
       "defaultCurrency": "USD",
       "formats": {
@@ -31,6 +33,8 @@
       "reviewCadence": "Quarterly with New York trading-ops linguists."
     },
     "uk-UA": {
+      "label": "Ukrainian",
+      "nativeLabel": "Українська",
       "priority": "tier-1",
       "defaultCurrency": "UAH",
       "formats": {
@@ -59,6 +63,8 @@
       "reviewCadence": "Щомісячно разом із київською командою з локалізації."
     },
     "de-DE": {
+      "label": "German (Germany)",
+      "nativeLabel": "Deutsch (Deutschland)",
       "priority": "tier-1",
       "defaultCurrency": "EUR",
       "formats": {
@@ -87,6 +93,8 @@
       "reviewCadence": "Quartalsweise mit Frankfurter Handels-Compliance-Linguisten."
     },
     "ja-JP": {
+      "label": "Japanese",
+      "nativeLabel": "日本語",
       "priority": "tier-1",
       "defaultCurrency": "JPY",
       "formats": {
@@ -112,6 +120,66 @@
         }
       },
       "reviewCadence": "隔月で東京のネイティブ監修チームとレビュー。"
+    },
+    "es-ES": {
+      "label": "Spanish (Spain)",
+      "nativeLabel": "Español (España)",
+      "priority": "tier-1",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d 'de' MMMM 'de' yyyy",
+        "time": "HH:mm",
+        "number": "# ##0,###",
+        "currency": "¤ # ##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "LOPDGDD"
+      ],
+      "tone": {
+        "voice": "Preciso, profesional y directo con énfasis en control y transparencia.",
+        "guidelines": {
+          "do": [
+            "Subrayar cumplimiento normativo y resiliencia operativa.",
+            "Usar verbos activos y terminología financiera estandarizada."
+          ],
+          "dont": [
+            "Evitar coloquialismos o diminutivos que resten seriedad.",
+            "No prometer rendimientos garantizados ni usar lenguaje ambiguo."
+          ]
+        }
+      },
+      "reviewCadence": "Revisión bimestral junto al equipo regulatorio de Madrid."
+    },
+    "fr-FR": {
+      "label": "French (France)",
+      "nativeLabel": "Français (France)",
+      "priority": "tier-1",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "# ##0,###",
+        "currency": "¤ # ##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "CNIL"
+      ],
+      "tone": {
+        "voice": "Sobre, fiable et centré sur la maîtrise des risques.",
+        "guidelines": {
+          "do": [
+            "Mettre en avant la traçabilité et la conformité réglementaire.",
+            "Employer un vocabulaire financier reconnu sans emphase excessive."
+          ],
+          "dont": [
+            "Éviter les anglicismes inutiles ou les tournures trop commerciales.",
+            "Ne pas formuler de promesses irréalistes ou garanties implicites."
+          ]
+        }
+      },
+      "reviewCadence": "Revue trimestrielle avec le comité linguistique de Paris."
     }
   }
 }

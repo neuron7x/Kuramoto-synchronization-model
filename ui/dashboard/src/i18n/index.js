@@ -6,12 +6,16 @@ import enUS from './locales/en-US.json' assert { type: 'json' };
 import ukUA from './locales/uk-UA.json' assert { type: 'json' };
 import deDE from './locales/de-DE.json' assert { type: 'json' };
 import jaJP from './locales/ja-JP.json' assert { type: 'json' };
+import esES from './locales/es-ES.json' assert { type: 'json' };
+import frFR from './locales/fr-FR.json' assert { type: 'json' };
 
 const catalog = {
   'en-US': enUS,
   'uk-UA': ukUA,
   'de-DE': deDE,
   'ja-JP': jaJP,
+  'es-ES': esES,
+  'fr-FR': frFR,
 };
 
 function flattenKey(key) {

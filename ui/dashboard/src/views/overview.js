@@ -1,5 +1,6 @@
 import { escapeHtml, formatNumber, formatPercent, formatTimestamp } from '../core/formatters.js';
 import { t, getMessage } from '../i18n/index.js';
+import { localeMetadata, supportedLocales } from '../i18n/config.js';
 
 function coerceNumber(value, fallback = 0) {
   if (Number.isFinite(value)) {
@@ -30,6 +31,275 @@ function safeExternalUrl(url) {
   return '#';
 }
 
+function asArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value);
+  }
+  return [];
+}
+
+function normaliseFeatureItems(primary, fallback) {
+  const source = asArray(primary);
+  const items = source
+    .map((entry) => {
+      if (entry && typeof entry === 'object') {
+        const title = entry.title || entry.label || null;
+        if (!title) {
+          return null;
+        }
+        return {
+          title,
+          description: entry.description || entry.body || entry.text || '',
+        };
+      }
+      if (entry == null) {
+        return null;
+      }
+      const title = String(entry);
+      return title ? { title, description: '' } : null;
+    })
+    .filter(Boolean);
+  if (items.length > 0) {
+    return items;
+  }
+  if (fallback && fallback !== primary) {
+    return normaliseFeatureItems(fallback, null);
+  }
+  return [];
+}
+
+function normalisePlatformItems(primary, fallback) {
+  const source = asArray(primary);
+  const items = source
+    .map((entry) => {
+      if (!entry) {
+        return null;
+      }
+      if (typeof entry === 'object') {
+        const label = entry.label || entry.title || entry.name;
+        if (!label) {
+          return null;
+        }
+        return {
+          label,
+          badge: entry.badge || entry.cta || entry.action || label,
+          href: safeExternalUrl(entry.href || entry.url),
+          description: entry.description || entry.note || '',
+        };
+      }
+      const label = String(entry);
+      return label ? { label, badge: label, href: '#', description: '' } : null;
+    })
+    .filter(Boolean);
+  if (items.length > 0) {
+    return items;
+  }
+  if (fallback && fallback !== primary) {
+    return normalisePlatformItems(fallback, null);
+  }
+  return [];
+}
+
+function normaliseMetricItems(primary, fallback) {
+  const source = asArray(primary);
+  const items = source
+    .map((entry) => {
+      if (!entry) {
+        return null;
+      }
+      if (typeof entry === 'object') {
+        const label = entry.label || entry.title || null;
+        const value = entry.value || entry.metric || entry.summary || null;
+        if (!label || !value) {
+          return null;
+        }
+        return {
+          label,
+          value,
+          hint: entry.hint || entry.detail || '',
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+  if (items.length > 0) {
+    return items;
+  }
+  if (fallback && fallback !== primary) {
+    return normaliseMetricItems(fallback, null);
+  }
+  return [];
+}
+
+function normaliseStringList(primary, fallback) {
+  const source = asArray(primary)
+    .map((entry) => {
+      if (entry == null) {
+        return null;
+      }
+      if (typeof entry === 'object') {
+        return entry.text || entry.label || entry.title || null;
+      }
+      return String(entry);
+    })
+    .filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
+  if (source.length > 0) {
+    return source;
+  }
+  if (fallback && fallback !== primary) {
+    return normaliseStringList(fallback, null);
+  }
+  return [];
+}
+
+const DEFAULT_MOBILE_FEATURES = [
+  {
+    title: 'Biometric-grade access',
+    description: 'Face ID, Touch ID, and hardware key support with audited unlock trails.',
+  },
+  {
+    title: 'Incident-grade alerts',
+    description: 'Push notifications with <120 ms SLA and acknowledgement workflows.',
+  },
+  {
+    title: 'Offline continuity',
+    description: 'Cache dashboards for 24 hours to stay operational without connectivity.',
+  },
+];
+
+const DEFAULT_MOBILE_PLATFORMS = [
+  {
+    label: 'iOS',
+    badge: 'TestFlight beta',
+    href: 'https://github.com/tradepulse/TradePulse/wiki/Mobile-iOS',
+  },
+  {
+    label: 'Android',
+    badge: 'Play Store internal',
+    href: 'https://github.com/tradepulse/TradePulse/wiki/Mobile-Android',
+  },
+  {
+    label: 'PWA',
+    badge: 'Install web app',
+    href: 'https://tradepulse.io/mobile',
+  },
+];
+
+const DEFAULT_MOBILE_METRICS = [
+  {
+    label: 'Release cadence',
+    value: 'Weekly builds',
+    hint: 'Signed distributions every Friday 17:00 UTC',
+  },
+  {
+    label: 'Alert SLA',
+    value: '<120 ms',
+    hint: 'Edge fan-out via seven global PoPs',
+  },
+  {
+    label: 'Session hardening',
+    value: 'Zero-trust',
+    hint: 'Device attestation & MDM compliance enforced',
+  },
+];
+
+const PRIORITY_ORDER = {
+  'tier-0': 0,
+  'tier-1': 1,
+  'tier-2': 2,
+};
+
+const DEFAULT_LOCALISATION_PRIORITY_LABELS = {
+  'tier-0': 'Tier 0 · Primary',
+  'tier-1': 'Tier 1 · Strategic',
+  'tier-2': 'Tier 2 · Emerging',
+};
+
+const DEFAULT_LOCALISATION_HIGHLIGHTS = [
+  'Every locale reviewed by native financial linguists.',
+  'Regulatory tone guidance packaged per region.',
+];
+
+const DEFAULT_COMMUNITY_ACTIONS = [
+  {
+    title: 'Maintainer office hours',
+    description: 'Weekly pairing sessions covering code walkthroughs and roadmap context.',
+  },
+  {
+    title: 'Mentored issues',
+    description: 'Curated backlog tagged good-first-issue with async reviewer support.',
+  },
+  {
+    title: 'Contributor guild',
+    description: 'Monthly forums featuring architecture updates and feedback loops.',
+  },
+];
+
+const DEFAULT_COMMUNITY_METRICS = [
+  {
+    label: 'Mentors on rotation',
+    value: '6',
+    hint: 'Dedicated maintainers covering UTC, EST, and JST time zones',
+  },
+  {
+    label: 'Avg. review turnaround',
+    value: '18h',
+    hint: 'Median across last 30 community pull requests',
+  },
+];
+
+const DEFAULT_COMMUNITY_HIGHLIGHTS = [
+  'Open governance with quarterly roadmap votes.',
+  'Security reviews offered for first-time contributors.',
+];
+
+const DEFAULT_COMMUNITY_CTA = {
+  label: 'Open contribution playbook',
+  href: 'https://github.com/tradepulse/TradePulse/blob/main/CONTRIBUTING.md',
+};
+
+function renderMetaList(items = []) {
+  if (!items.length) {
+    return '';
+  }
+  const markup = items
+    .map((item) => {
+      const hint = item.hint ? `<span class="tp-text-subtle">${escapeHtml(String(item.hint))}</span>` : '';
+      return `
+        <span class="tp-meta-list__item">
+          <span class="tp-meta-list__key">${escapeHtml(String(item.label))}</span>
+          <span>${escapeHtml(String(item.value))}</span>
+          ${hint}
+        </span>
+      `;
+    })
+    .join('');
+  return `<div class="tp-meta-list">${markup}</div>`;
+}
+
+function renderFeatureList(items = []) {
+  if (!items.length) {
+    return '';
+  }
+  return `
+    <ul class="tp-feature-list">
+      ${items
+        .map(
+          (item) => `
+            <li class="tp-feature-item">
+              <h4 class="tp-feature-item__title">${escapeHtml(String(item.title))}</h4>
+              ${item.description ? `<p class="tp-feature-item__body">${escapeHtml(String(item.description))}</p>` : ''}
+            </li>
+          `,
+        )
+        .join('')}
+    </ul>
+  `;
+}
+
 function getTranslations() {
   const view = getMessage('views.overview') || {};
   return {
@@ -39,6 +309,9 @@ function getTranslations() {
     hero: view.hero || {},
     badges: view.badges || {},
     panels: view.panels || {},
+    mobile: view.mobile || {},
+    localization: view.localization || {},
+    community: view.community || {},
   };
 }
 
@@ -287,13 +560,222 @@ function renderWorkflowBadges(github = {}, translations = {}) {
   `;
 }
 
-export function renderOverviewView({ github = {} } = {}) {
+function renderMobileShowcase(mobile = {}, translations = {}) {
+  const title = mobile.title || translations.title || 'Mobile companion';
+  const subtitle = mobile.subtitle || translations.subtitle || 'Stay connected to operations on the move.';
+  const tagline = mobile.tagline || translations.tagline || 'Carry the TradePulse cockpit with biometric-grade security.';
+
+  const features = normaliseFeatureItems(mobile.features, translations.features || DEFAULT_MOBILE_FEATURES);
+  const featureItems = features.length ? features : DEFAULT_MOBILE_FEATURES;
+  const platforms = normalisePlatformItems(mobile.platforms, translations.platforms || DEFAULT_MOBILE_PLATFORMS);
+  const platformItems = platforms.length ? platforms : DEFAULT_MOBILE_PLATFORMS;
+  const metrics = normaliseMetricItems(mobile.metrics, translations.metrics || DEFAULT_MOBILE_METRICS);
+  const metricItems = metrics.length ? metrics : DEFAULT_MOBILE_METRICS;
+
+  const platformMarkup = platformItems.length
+    ? `
+        <div class="tp-mobile-platforms">
+          ${platformItems
+            .map((platform) => {
+              const href = platform.href && platform.href !== '#' ? platform.href : '#';
+              const isExternal = href !== '#';
+              const attributes = isExternal
+                ? `href="${escapeHtml(String(href))}" target="_blank" rel="noopener noreferrer"`
+                : 'href="#" aria-disabled="true"';
+              const description = platform.description
+                ? `<span class="tp-text-subtle">${escapeHtml(String(platform.description))}</span>`
+                : '';
+              return `
+                <a class="tp-mobile-platform" ${attributes}>
+                  <span class="tp-mobile-platform__label">${escapeHtml(String(platform.label))}</span>
+                  <span class="tp-text-muted">${escapeHtml(String(platform.badge || platform.label))}</span>
+                  ${description}
+                </a>
+              `;
+            })
+            .join('')}
+        </div>
+      `
+    : '';
+
+  return `
+    <section class="tp-card tp-mobile-card">
+      <header class="tp-card__header">
+        <h3 class="tp-card__title">${escapeHtml(String(title))}</h3>
+        <p class="tp-text-subtle">${escapeHtml(String(subtitle))}</p>
+      </header>
+      ${tagline ? `<p class="tp-mobile-card__tagline">${escapeHtml(String(tagline))}</p>` : ''}
+      ${platformMarkup}
+      ${renderFeatureList(featureItems)}
+      ${renderMetaList(metricItems)}
+    </section>
+  `;
+}
+
+function renderLocalizationPanel(localization = {}, translations = {}) {
+  const title = localization.title || translations.title || 'Global language coverage';
+  const subtitle = localization.subtitle || translations.subtitle || 'Six fully curated locales with compliance tone-of-voice.';
+  const localeOverrides = localization.locales || translations.locales || {};
+  const priorityLabels = { ...DEFAULT_LOCALISATION_PRIORITY_LABELS, ...(translations.priorityLabels || {}) };
+  const supported = supportedLocales
+    .map((code) => {
+      const meta = localeMetadata[code] || {};
+      const override = localeOverrides[code] || {};
+      const translationDetails = (translations.locales && translations.locales[code]) || {};
+      const label = override.label || translationDetails.label || meta.label || code;
+      const nativeLabel = override.nativeLabel || translationDetails.nativeLabel || meta.nativeLabel || label;
+      const reviewCadence = override.reviewCadence || translationDetails.reviewCadence || meta.reviewCadence || '';
+      const priority = override.priority || translationDetails.priority || meta.priority || 'tier-2';
+      return { code, label, nativeLabel, reviewCadence, priority };
+    })
+    .sort((a, b) => {
+      const rankA = PRIORITY_ORDER[a.priority] ?? 99;
+      const rankB = PRIORITY_ORDER[b.priority] ?? 99;
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      return a.label.localeCompare(b.label);
+    });
+
+  const supportedLabelTemplate = translations.supportedLabel || '{count} supported locales';
+  const supportedLabel = supportedLabelTemplate.replace('{count}', supported.length);
+  const highlights = normaliseStringList(localization.highlights, translations.highlights || DEFAULT_LOCALISATION_HIGHLIGHTS);
+
+  const ctaConfig = { ...(translations.cta || {}), ...(localization.cta || {}) };
+  const ctaHref = safeExternalUrl(ctaConfig.href || ctaConfig.url);
+  const showCta = ctaHref !== '#';
+  const ctaLabel = ctaConfig.label || 'Request another locale';
+  const footnote = localization.footnote || translations.footnote || '';
+
+  const localesMarkup = supported
+    .map((locale) => {
+      const priorityLabel = priorityLabels[locale.priority] || locale.priority || 'tier';
+      const native = locale.nativeLabel && locale.nativeLabel !== locale.label
+        ? `<span class="tp-locale__native">${escapeHtml(String(locale.nativeLabel))}</span>`
+        : '';
+      const review = locale.reviewCadence
+        ? `<span>${escapeHtml(String(locale.reviewCadence))}</span>`
+        : '';
+      return `
+        <li class="tp-locale">
+          <div class="tp-locale__header">
+            <span class="tp-locale__name">${escapeHtml(String(locale.label))}</span>
+            ${native}
+          </div>
+          <div class="tp-locale__meta">
+            <span class="tp-pill">${escapeHtml(String(priorityLabel))}</span>
+            ${review}
+          </div>
+        </li>
+      `;
+    })
+    .join('');
+
+  const highlightsMarkup = highlights.length
+    ? `
+        <ul class="tp-bullet-list">
+          ${highlights.map((item) => `<li>${escapeHtml(String(item))}</li>`).join('')}
+        </ul>
+      `
+    : '';
+
+  const ctaMarkup = showCta
+    ? `
+        <a class="tp-community-panel__cta" href="${escapeHtml(ctaHref)}" target="_blank" rel="noopener noreferrer">
+          <span>${escapeHtml(String(ctaLabel))}</span>
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8a.75.75 0 0 1 .75-.75h5.638L7.23 5.09a.75.75 0 1 1 1.04-1.08l3.5 3.25a.75.75 0 0 1 0 1.08l-3.5 3.25a.75.75 0 1 1-1.04-1.08l2.158-2.16H3.75A.75.75 0 0 1 3 8Z" fill="currentColor"/></svg>
+        </a>
+      `
+    : '';
+
+  return `
+    <section class="tp-card">
+      <header class="tp-card__header">
+        <h3 class="tp-card__title">${escapeHtml(String(title))}</h3>
+        <p class="tp-text-subtle">${escapeHtml(String(subtitle))}</p>
+      </header>
+      <p class="tp-text-muted">${escapeHtml(String(supportedLabel))}</p>
+      <ul class="tp-locale-list">${localesMarkup}</ul>
+      ${highlightsMarkup}
+      ${footnote ? `<p class="tp-text-subtle">${escapeHtml(String(footnote))}</p>` : ''}
+      ${ctaMarkup}
+    </section>
+  `;
+}
+
+function renderCommunityPanel(community = {}, translations = {}) {
+  const title = community.title || translations.title || 'Open community engagement';
+  const subtitle = community.subtitle || translations.subtitle || 'Structured pathways for maintainers and contributors.';
+  const actions = normaliseFeatureItems(community.actions, translations.actions || DEFAULT_COMMUNITY_ACTIONS);
+  const actionItems = actions.length ? actions : DEFAULT_COMMUNITY_ACTIONS;
+  const metrics = normaliseMetricItems(community.metrics, translations.metrics || DEFAULT_COMMUNITY_METRICS);
+  const metricItems = metrics.length ? metrics : DEFAULT_COMMUNITY_METRICS;
+  const highlights = normaliseStringList(community.highlights, translations.highlights || DEFAULT_COMMUNITY_HIGHLIGHTS);
+  const ctaDefaults = { ...DEFAULT_COMMUNITY_CTA, ...(translations.cta || {}) };
+  const ctaConfig = { ...ctaDefaults, ...(community.cta || {}) };
+  const ctaHref = safeExternalUrl(ctaConfig.href || ctaConfig.url);
+  const ctaLabel = ctaConfig.label || ctaDefaults.label;
+  const ctaDescription = ctaConfig.description || translations.cta?.description || community.cta?.description || '';
+
+  const actionsMarkup = actionItems.length
+    ? `
+        <div class="tp-community-actions">
+          ${actionItems
+            .map(
+              (action) => `
+                <article class="tp-community-action">
+                  <h4 class="tp-community-action__title">${escapeHtml(String(action.title))}</h4>
+                  ${action.description ? `<p class="tp-community-action__body">${escapeHtml(String(action.description))}</p>` : ''}
+                </article>
+              `,
+            )
+            .join('')}
+        </div>
+      `
+    : '';
+
+  const highlightsMarkup = highlights.length
+    ? `
+        <ul class="tp-bullet-list">
+          ${highlights.map((item) => `<li>${escapeHtml(String(item))}</li>`).join('')}
+        </ul>
+      `
+    : '';
+
+  const ctaMarkup = ctaHref === '#'
+    ? ''
+    : `
+        <a class="tp-community-panel__cta" href="${escapeHtml(ctaHref)}" target="_blank" rel="noopener noreferrer">
+          <span>${escapeHtml(String(ctaLabel))}</span>
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8a.75.75 0 0 1 .75-.75h5.638L7.23 5.09a.75.75 0 1 1 1.04-1.08l3.5 3.25a.75.75 0 0 1 0 1.08l-3.5 3.25a.75.75 0 1 1-1.04-1.08l2.158-2.16H3.75A.75.75 0 0 1 3 8Z" fill="currentColor"/></svg>
+        </a>
+      `;
+
+  return `
+    <section class="tp-card tp-community-panel">
+      <header class="tp-card__header">
+        <h3 class="tp-card__title">${escapeHtml(String(title))}</h3>
+        <p class="tp-text-subtle">${escapeHtml(String(subtitle))}</p>
+      </header>
+      ${renderMetaList(metricItems)}
+      ${actionsMarkup}
+      ${highlightsMarkup}
+      ${ctaDescription ? `<p class="tp-text-subtle">${escapeHtml(String(ctaDescription))}</p>` : ''}
+      ${ctaMarkup}
+    </section>
+  `;
+}
+
+export function renderOverviewView({ github = {}, mobile = {}, localization = {}, community = {} } = {}) {
   const translations = getTranslations();
   const heroHtml = renderHero(translations.hero, github);
   const badgesHtml = renderBadges(github, translations.badges);
   const releasePanel = renderReleasePanel(github, translations.panels);
   const languagesPanel = renderLanguagesPanel(github, translations.panels || {});
   const workflowPanel = renderWorkflowBadges(github, translations.panels || {});
+  const mobilePanel = renderMobileShowcase(mobile || github.mobile || {}, translations.mobile || {});
+  const localizationPanel = renderLocalizationPanel(localization || github.localization || {}, translations.localization || {});
+  const communityPanel = renderCommunityPanel(community || github.community || {}, translations.community || {});
 
   const html = `
     <article class="tp-view tp-view--overview">
@@ -313,6 +795,11 @@ export function renderOverviewView({ github = {} } = {}) {
         ${releasePanel}
         ${languagesPanel}
         ${workflowPanel}
+      </section>
+      <section class="tp-grid tp-grid--two tp-overview-grid tp-overview-grid--experience">
+        ${mobilePanel}
+        ${localizationPanel}
+        ${communityPanel}
       </section>
     </article>
   `;

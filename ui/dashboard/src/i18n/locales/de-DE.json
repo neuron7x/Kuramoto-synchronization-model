@@ -15,6 +15,11 @@
     "badges": {
       "live": "Live"
     },
+    "toggle": {
+      "menu": "Menü",
+      "open": "Navigation öffnen",
+      "close": "Navigation schließen"
+    },
     "sections": {
       "overview": "Übersicht",
       "positions": "Positionen",
@@ -198,6 +203,126 @@
         "workflows": {
           "title": "CI-Gesundheit",
           "subtitle": "Aktuelle GitHub-Actions-Badges."
+        }
+      },
+      "mobile": {
+        "title": "Mobile Begleit-App",
+        "subtitle": "Genehmigen Sie Risikofreigaben, priorisieren Sie Signale und quittieren Sie Vorfälle auch unterwegs.",
+        "tagline": "Biometrische Anmeldung, Offline-Fortführung und Benachrichtigungen unter 120 ms in einer gehärteten App.",
+        "features": {
+          "alerts": {
+            "title": "Warnmeldungen in Einsatzqualität",
+            "description": "Push-Benachrichtigungen mit Quittierungsverfolgung und redundanter Edge-Auslieferung."
+          },
+          "approvals": {
+            "title": "Freigaben unterwegs",
+            "description": "Freigaben mit Gerätebindung, Hardware-Keys und Vier-Augen-Nachweis autorisieren."
+          },
+          "insights": {
+            "title": "Intelligenz im Offline-Modus",
+            "description": "Dashboards für 24 Stunden puffern und Differenzen automatisch synchronisieren, sobald Konnektivität zurückkehrt."
+          }
+        },
+        "platforms": {
+          "ios": {
+            "label": "iOS",
+            "badge": "TestFlight-Beta",
+            "href": "https://github.com/tradepulse/TradePulse/wiki/Mobile-iOS",
+            "description": "Überwachte Builds mit MDM-Compliance und biometrischer Entsperrung."
+          },
+          "android": {
+            "label": "Android",
+            "badge": "Play Console intern",
+            "href": "https://github.com/tradepulse/TradePulse/wiki/Mobile-Android",
+            "description": "Zero-Trust-Onboarding mit SafetyNet- und Play-Integrity-Prüfung."
+          },
+          "pwa": {
+            "label": "PWA",
+            "badge": "Web-App installieren",
+            "href": "https://tradepulse.io/mobile",
+            "description": "Desktop-Erlebnis optimiert für Tablets und robuste Einsatzgeräte."
+          }
+        },
+        "metrics": [
+          {
+            "label": "Release-Frequenz",
+            "value": "Wöchentliche Builds",
+            "hint": "Signierte Auslieferungen jeden Freitag 17:00 UTC"
+          },
+          {
+            "label": "Alert-SLA",
+            "value": "<120 ms",
+            "hint": "Edge-Verteilung über sieben globale PoPs"
+          },
+          {
+            "label": "Sitzungshärtung",
+            "value": "Zero Trust",
+            "hint": "Hardware-Keys, Passkeys und MDM-Attestierung verpflichtend"
+          }
+        ]
+      },
+      "localization": {
+        "title": "Globale Lokalisierungsoperationen",
+        "subtitle": "Regulatorisch abgestimmte Übersetzungen durch native Finanzlinguist:innen.",
+        "supportedLabel": "{count} unterstützte Sprachversionen",
+        "priorityLabels": {
+          "tier-0": "Tier 0 – Primär",
+          "tier-1": "Tier 1 – Strategisch",
+          "tier-2": "Tier 2 – Aufstrebend"
+        },
+        "highlights": [
+          "Neu in diesem Quartal: Spanisch (es-ES) und Französisch (fr-FR) mit Compliance-Abnahme.",
+          "Tonality-Guidelines und Reviewer-Notizen pro Locale im Paket."
+        ],
+        "cta": {
+          "label": "Weitere Sprache anfordern",
+          "href": "https://github.com/tradepulse/TradePulse/issues/new?labels=locale-request"
+        },
+        "footnote": "Alle Sprachversionen beinhalten juristische Prüfung und Ausspracheleitfäden für Go-to-Market-Teams."
+      },
+      "community": {
+        "title": "Open-Source-Community-Programm",
+        "subtitle": "Strukturiertes Onboarding und Mentoring für weltweite Beitragende.",
+        "actions": {
+          "officeHours": {
+            "title": "Maintainer-Sprechstunden",
+            "description": "Zweimal wöchentliches Pairing mit Rotation über Amerika, EMEA und APAC."
+          },
+          "mentorship": {
+            "title": "Mentorierte Issues",
+            "description": "Good-first-Issue-Backlog mit Umfangsbeschreibung, Akzeptanzkriterien und Reviewer-Zuteilung."
+          },
+          "guild": {
+            "title": "Contributor Guild",
+            "description": "Monatliche Architektur-Foren mit Roadmap-Vorschau und AMA."
+          }
+        },
+        "metrics": [
+          {
+            "label": "Mentor:innen im Wechsel",
+            "value": "6",
+            "hint": "Abdeckung über UTC±0, ET und JST"
+          },
+          {
+            "label": "Medianer PR-Review",
+            "value": "18h",
+            "hint": "Letzte 30 Community-Pull-Requests"
+          },
+          {
+            "label": "Security-Onboarding",
+            "value": "<48h",
+            "hint": "Background-Checks und NDA-Prozess für kritische Pfade"
+          }
+        ],
+        "highlights": [
+          "Quartalsweise Roadmap-Abstimmungen mit Community-Sitzen.",
+          "Dedizierte Security-Reviewer für Erstbeiträge.",
+          "Showcase-Programm für Integrationen und mobile Erweiterungen."
+        ],
+        "cta": {
+          "label": "Contribution Playbook öffnen",
+          "href": "https://github.com/tradepulse/TradePulse/blob/main/CONTRIBUTING.md",
+          "description": "Onboarding-Call jeden Mittwoch um 16:00 UTC beitreten."
         }
       }
     }

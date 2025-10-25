@@ -1,0 +1,335 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "es-ES",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Tono crítico: mantener una voz segura, serena y basada en datos.",
+      "views.orders.subtitle": "Tono crítico: resaltar la transparencia de ejecución sin exageraciones.",
+      "views.pnl.subtitle": "Tono crítico: enfatizar el análisis cuantitativo con optimismo controlado.",
+      "views.positions.subtitle": "Tono crítico: proyectar dominio y calma sobre la exposición de riesgo."
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "En vivo"
+    },
+    "toggle": {
+      "menu": "Menú",
+      "open": "Abrir navegación",
+      "close": "Cerrar navegación"
+    },
+    "sections": {
+      "overview": "Resumen",
+      "positions": "Posiciones",
+      "orders": "Órdenes",
+      "pnl": "PnL y cotizaciones",
+      "signals": "Señales"
+    }
+  },
+  "header": {
+    "title": "Centro de monitoreo TradePulse",
+    "subtitle": "Control unificado de ejecución, riesgo y telemetría.",
+    "tags": [
+      "multi-activo",
+      "tiempo real"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "Órdenes",
+      "heading": "Libro de órdenes",
+      "subtitle": "Flujo de órdenes en vivo con seguimiento de llenados y telemetría de ejecución.",
+      "table": {
+        "columns": {
+          "order_id": "ID de orden",
+          "symbol": "Símbolo",
+          "side": "Lado",
+          "order_type": "Tipo",
+          "quantity": "Cantidad",
+          "filledQuantity": "Ejecutado",
+          "remaining": "Restante",
+          "progress": "Progreso",
+          "limitPrice": "Precio límite",
+          "avgFillPrice": "Precio medio",
+          "status": "Estado",
+          "lastFill": "Última ejecución"
+        },
+        "badges": {
+          "side": {
+            "buy": "Compra",
+            "sell": "Venta"
+          },
+          "status": {
+            "FILLED": "Completada",
+            "WORKING": "Activa"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL y cotizaciones",
+      "heading": "Inteligencia de PnL y mercado",
+      "subtitle": "Compare la rentabilidad en vivo con datos de mercado en streaming.",
+      "cards": {
+        "pnl": {
+          "title": "PnL neto",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Ritmo {value}/h"
+        },
+        "quotes": {
+          "title": "Cotizaciones",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Posiciones",
+      "heading": "Posiciones abiertas",
+      "subtitle": "Exposición agregada derivada de eventos de ejecución en vivo.",
+      "table": {
+        "columns": {
+          "symbol": "Símbolo",
+          "netQuantity": "Cantidad neta",
+          "avgPrice": "Precio medio",
+          "marketPrice": "Precio mercado",
+          "exposure": "Exposición",
+          "pnl": "PnL no realizado",
+          "lastFill": "Última ejecución"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Ganancia {percent}",
+            "negative": "Pérdida {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "Señales",
+      "heading": "Inteligencia de señales",
+      "subtitle": "Superficie directrices estratégicas en vivo con contexto de convicción y caducidad.",
+      "cards": {
+        "active": {
+          "title": "Señales activas",
+          "total": "{count} activas",
+          "updated": "Última {time}",
+          "none": "Sin señales registradas"
+        },
+        "bias": {
+          "title": "Sesgo direccional",
+          "ratio": "Compra {buy} / Venta {sell} / Neutral {flat}",
+          "netLong": "Exposición neta larga {value}",
+          "netShort": "Exposición neta corta {value}"
+        },
+        "conviction": {
+          "title": "Convicción",
+          "average": "Media {value}",
+          "peak": "Pico {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Marca de tiempo",
+          "symbol": "Símbolo",
+          "direction": "Dirección",
+          "strength": "Fuerza",
+          "signal_type": "Tipo",
+          "ttl": "TTL",
+          "status": "Estado",
+          "metadata": "Contexto"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Compra",
+            "sell": "Venta",
+            "flat": "Neutral"
+          },
+          "status": {
+            "active": "Activa",
+            "expired": "Expirada"
+          }
+        },
+        "empty": "No hay señales disponibles."
+      }
+    },
+    "overview": {
+      "title": "Resumen",
+      "heading": "Pulso del producto",
+      "subtitle": "Información de GitHub de alta fidelidad para alinear go-to-market y tecnología.",
+      "hero": {
+        "eyebrow": "Inteligencia GitHub",
+        "title": "Transparencia lista para ejecución",
+        "subtitle": "Supervise adopción, cadencia y preparación de releases directamente desde la fuente.",
+        "cta": "Abrir repositorio en GitHub"
+      },
+      "badges": {
+        "title": "Tracción de la comunidad",
+        "subtitle": "Indicadores clave extraídos de GitHub para una lectura rápida.",
+        "stars": {
+          "label": "Stars",
+          "hint": "Momentum 30d {delta}"
+        },
+        "forks": {
+          "label": "Forks",
+          "hint": "{count} forks activos"
+        },
+        "watchers": {
+          "label": "Observadores",
+          "hint": "Crecimiento {percent}"
+        },
+        "contributors": {
+          "label": "Colaboradores",
+          "hint": "{new} colaboradores nuevos (30d)"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "Cadencia de releases",
+          "subtitle": "Último hito etiquetado y velocidad de merge.",
+          "published": "Publicado",
+          "metrics": {
+            "commits": "Commits (30d)",
+            "merged": "PR fusionados (30d)",
+            "open": "PR abiertos"
+          }
+        },
+        "languages": {
+          "title": "Mezcla de lenguajes",
+          "subtitle": "Distribución en el repositorio."
+        },
+        "workflows": {
+          "title": "Salud de CI",
+          "subtitle": "Últimos badges de GitHub Actions."
+        }
+      },
+      "mobile": {
+        "title": "Aplicación móvil compañera",
+        "subtitle": "Apruebe excepciones de riesgo, priorice señales y confirme incidentes sin detenerse.",
+        "tagline": "Autenticación biométrica, continuidad offline y alertas <120 ms en una app reforzada.",
+        "features": {
+          "alerts": {
+            "title": "Alertas de grado operativo",
+            "description": "Notificaciones push con seguimiento de acuses y entrega redundante en el edge."
+          },
+          "approvals": {
+            "title": "Aprobaciones en movimiento",
+            "description": "Autorice excepciones con vinculación de dispositivo, llaves hardware y control dual."
+          },
+          "insights": {
+            "title": "Inteligencia offline",
+            "description": "Cachee paneles hasta 24 h y sincronice diferencias al recuperar conectividad."
+          }
+        },
+        "platforms": {
+          "ios": {
+            "label": "iOS",
+            "badge": "TestFlight beta",
+            "href": "https://github.com/tradepulse/TradePulse/wiki/Mobile-iOS",
+            "description": "Builds auditadas con cumplimiento MDM y desbloqueo biométrico."
+          },
+          "android": {
+            "label": "Android",
+            "badge": "Play Console interno",
+            "href": "https://github.com/tradepulse/TradePulse/wiki/Mobile-Android",
+            "description": "Onboarding zero-trust con verificaciones SafetyNet y Play Integrity."
+          },
+          "pwa": {
+            "label": "PWA",
+            "badge": "Instalar app web",
+            "href": "https://tradepulse.io/mobile",
+            "description": "Experiencia de escritorio optimizada para tabletas y dispositivos robustos."
+          }
+        },
+        "metrics": [
+          {
+            "label": "Frecuencia de releases",
+            "value": "Builds semanales",
+            "hint": "Distribuciones firmadas cada viernes 17:00 UTC"
+          },
+          {
+            "label": "SLA de alertas",
+            "value": "<120 ms",
+            "hint": "Entrega edge mediante siete PoP globales"
+          },
+          {
+            "label": "Endurecimiento de sesiones",
+            "value": "Zero Trust",
+            "hint": "Llaves hardware, passkeys y atestación MDM obligatorias"
+          }
+        ]
+      },
+      "localization": {
+        "title": "Operaciones globales de localización",
+        "subtitle": "Traducciones alineadas con regulación por lingüistas financieros nativos.",
+        "supportedLabel": "{count} idiomas soportados",
+        "priorityLabels": {
+          "tier-0": "Nivel 0 · Principal",
+          "tier-1": "Nivel 1 · Estratégico",
+          "tier-2": "Nivel 2 · Emergente"
+        },
+        "highlights": [
+          "Nuevo este trimestre: español (es-ES) y francés (fr-FR) con QA de compliance.",
+          "Guías de tono y notas de revisión entregadas por idioma."
+        ],
+        "cta": {
+          "label": "Solicitar otro idioma",
+          "href": "https://github.com/tradepulse/TradePulse/issues/new?labels=locale-request"
+        },
+        "footnote": "Todas las traducciones incluyen revisión legal y guía de pronunciación para equipos GTM."
+      },
+      "community": {
+        "title": "Programa de comunidad abierta",
+        "subtitle": "Onboarding y mentoría estructurados para contribuyentes globales.",
+        "actions": {
+          "officeHours": {
+            "title": "Office hours de mantenedores",
+            "description": "Sesiones de pairing dos veces por semana con rotación entre Américas, EMEA y APAC."
+          },
+          "mentorship": {
+            "title": "Issues mentorizadas",
+            "description": "Backlog de good first issue con briefs, criterios de aceptación y revisor asignado."
+          },
+          "guild": {
+            "title": "Contributor Guild",
+            "description": "Foros mensuales de arquitectura con adelantos de roadmap y AMAs."
+          }
+        },
+        "metrics": [
+          {
+            "label": "Mentores en rotación",
+            "value": "6",
+            "hint": "Cobertura de zonas horarias UTC±0, ET y JST"
+          },
+          {
+            "label": "Mediana de revisión de PR",
+            "value": "18 h",
+            "hint": "Últimos 30 pull requests de la comunidad"
+          },
+          {
+            "label": "Onboarding de seguridad",
+            "value": "<48 h",
+            "hint": "Verificación de antecedentes y NDA para rutas críticas"
+          }
+        ],
+        "highlights": [
+          "Votaciones trimestrales de roadmap con asientos comunitarios.",
+          "Revisores de seguridad dedicados para primeras contribuciones.",
+          "Programa showcase para integraciones y extensiones móviles."
+        ],
+        "cta": {
+          "label": "Abrir playbook de contribución",
+          "href": "https://github.com/tradepulse/TradePulse/blob/main/CONTRIBUTING.md",
+          "description": "Únase a la llamada de onboarding cada miércoles a las 16:00 UTC."
+        }
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Última ejecución"
+    }
+  }
+}

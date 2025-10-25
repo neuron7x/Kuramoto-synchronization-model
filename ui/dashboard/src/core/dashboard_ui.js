@@ -53,6 +53,12 @@ function renderHeader({ title, subtitle, tags } = {}) {
 function renderNavigation(router, currentRoute) {
   const sections = getMessage('nav.sections') || {};
   const liveBadge = t('nav.badges.live');
+  const toggleLabels = {
+    menu: t('nav.toggle.menu'),
+    open: t('nav.toggle.open'),
+    close: t('nav.toggle.close'),
+  };
+  const toggleCopy = serializeForScript(toggleLabels);
   const links = router.list().map((route) => {
     const label = sections[route] || route;
     const activeClass = route === currentRoute ? ' tp-nav__link--active' : '';
@@ -70,10 +76,91 @@ function renderNavigation(router, currentRoute) {
   });
 
   return `
-    <nav class="tp-nav" aria-label="Primary">
-      <h2 class="tp-nav__title">${escapeHtml(String(t('nav.title')))}</h2>
-      <ul class="tp-nav__links">${links.join('')}</ul>
+    <nav class="tp-nav" aria-label="Primary" data-role="primary-nav" data-state="closed">
+      <div class="tp-nav__brand">
+        <h2 class="tp-nav__title">${escapeHtml(String(t('nav.title')))}</h2>
+        <button class="tp-nav__toggle" type="button" data-role="nav-toggle" aria-expanded="false" aria-controls="tp-nav-links">
+          <span class="tp-nav__toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span class="tp-nav__toggle-label" data-role="nav-toggle-label">${escapeHtml(String(toggleLabels.menu || t('nav.title')))}</span>
+        </button>
+      </div>
+      <ul class="tp-nav__links" id="tp-nav-links">${links.join('')}</ul>
+      <script type="application/json" data-role="nav-toggle-copy">${toggleCopy}</script>
     </nav>
+    <script>
+      (function attachTradePulseNavToggle() {
+        if (typeof window === 'undefined' || typeof document === 'undefined') {
+          return;
+        }
+        const nav = document.querySelector('[data-role="primary-nav"]');
+        if (!nav) {
+          return;
+        }
+        const toggle = nav.querySelector('[data-role="nav-toggle"]');
+        const labelTarget = toggle ? toggle.querySelector('[data-role="nav-toggle-label"]') : null;
+        const copyNode = nav.querySelector('script[data-role="nav-toggle-copy"]');
+        let copy = { menu: 'Menu', open: 'Open navigation', close: 'Close navigation' };
+        if (copyNode && copyNode.textContent) {
+          try {
+            const parsed = JSON.parse(copyNode.textContent);
+            copy = { ...copy, ...parsed };
+          } catch (error) {
+            if (window?.console?.debug) {
+              window.console.debug('Failed to parse navigation toggle copy', error);
+            }
+          }
+        }
+
+        function applyState(open) {
+          const nextState = open ? 'open' : 'closed';
+          nav.dataset.state = nextState;
+          if (toggle) {
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          }
+          if (labelTarget) {
+            const text = open ? (copy.close || copy.menu || copy.open) : (copy.open || copy.menu || copy.close);
+            labelTarget.textContent = text;
+          }
+        }
+
+        const mediaQuery = window.matchMedia('(min-width: 961px)');
+
+        function syncForViewport(event) {
+          const matches = typeof event?.matches === 'boolean' ? event.matches : mediaQuery.matches;
+          if (matches) {
+            applyState(true);
+            if (labelTarget) {
+              labelTarget.textContent = copy.menu || copy.close || copy.open;
+            }
+          } else if (nav.dataset.state !== 'open') {
+            applyState(false);
+          }
+        }
+
+        syncForViewport();
+        if (typeof mediaQuery.addEventListener === 'function') {
+          mediaQuery.addEventListener('change', syncForViewport);
+        } else if (typeof mediaQuery.addListener === 'function') {
+          mediaQuery.addListener(syncForViewport);
+        }
+
+        if (toggle) {
+          toggle.addEventListener('click', () => {
+            const isOpen = nav.dataset.state === 'open';
+            applyState(!isOpen);
+          });
+        }
+
+        const links = nav.querySelectorAll('a[data-route]');
+        links.forEach((link) => {
+          link.addEventListener('click', () => {
+            if (window.matchMedia('(max-width: 960px)').matches) {
+              applyState(false);
+            }
+          });
+        });
+      })();
+    </script>
   `;
 }
 
