@@ -89,9 +89,18 @@ dependencies-check:
 security-audit:
 	python scripts/dependency_audit.py --requirement requirements.txt --requirement requirements-dev.txt
 
-.PHONY: test\:fast
-test\:fast:
+.PHONY: test\:fast-sanity test\:fast-suite
+test\:fast-sanity:
+	pytest -q markets/orderbook/tests
+	pytest -q analytics/tests/test_runner_safety.py
+	pytest -q markets/vpin/tests/test_core.py
+	pytest -q scripts/tests/test_api_management.py
+
+test\:fast-suite:
 	pytest tests/ -m "not slow and not heavy_math and not nightly"
+
+.PHONY: test\:fast
+test\:fast: test\:fast-sanity
 
 .PHONY: test\:all
 test\:all:
