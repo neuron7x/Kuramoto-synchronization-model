@@ -1,6 +1,14 @@
 {
   "$schema": "../../../../schemas/localization/translation.schema.json",
   "locale": "it-IT",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Nota di tono: mantenere un messaggio sicuro ma composto.",
+      "views.orders.subtitle": "Nota di tono: evidenziare la trasparenza dell'esecuzione live senza enfasi eccessiva.",
+      "views.pnl.subtitle": "Nota di tono: mettere in risalto l'analisi con ottimismo controllato.",
+      "views.positions.subtitle": "Nota di tono: trasmettere serenità nella supervisione delle esposizioni."
+    }
+  },
   "nav": {
     "brand": "TradePulse",
     "title": "TradePulse",
@@ -50,6 +58,205 @@
     ]
   },
   "views": {
+    "overview": {
+      "title": "Panoramica",
+      "heading": "Product Pulse",
+      "subtitle": "Insight mirati da GitHub per allineare go-to-market e ingegneria.",
+      "hero": {
+        "eyebrow": "Intelligence GitHub",
+        "title": "Trasparenza a livello di esecuzione",
+        "subtitle": "Monitora adozione, ritmo di rilascio e prontezza alla produzione direttamente alla fonte.",
+        "cta": "Apri repository GitHub"
+      },
+      "badges": {
+        "title": "Traction della community",
+        "subtitle": "Indicatori chiave da GitHub per revisioni manageriali rapide.",
+        "stars": {
+          "label": "Stelle",
+          "hint": "Momentum 30 giorni {delta}"
+        },
+        "forks": {
+          "label": "Fork",
+          "hint": "{count} fork attivi"
+        },
+        "watchers": {
+          "label": "Watcher",
+          "hint": "Crescita {percent}"
+        },
+        "contributors": {
+          "label": "Contributori",
+          "hint": "{new} nuovi contributori (30 gg)"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "Cadenza di rilascio",
+          "subtitle": "Ultimo tag pubblicato e velocità di merge.",
+          "published": "Pubblicato",
+          "metrics": {
+            "commits": "Commit (30 gg)",
+            "merged": "PR mergiati (30 gg)",
+            "open": "PR aperti"
+          }
+        },
+        "languages": {
+          "title": "Mix linguistico",
+          "subtitle": "Distribuzione nel repository."
+        },
+        "workflows": {
+          "title": "Salute CI",
+          "subtitle": "Badge GitHub Actions più recenti."
+        },
+        "community": {
+          "title": "Community open-source",
+          "subtitle": "Programmi attivi e segnali di abilitazione in tempo reale.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "Issue per iniziare",
+              "hint": "{count} ticket aperti curati per l'onboarding"
+            },
+            "mentorship": {
+              "label": "Posti mentorship",
+              "hint": "{count} percorsi guidati di onboarding"
+            },
+            "response": {
+              "label": "Risposta mediana",
+              "hint": "Risposta maintainer mediana {hours}h"
+            },
+            "sponsors": {
+              "label": "Sponsor",
+              "hint": "{count} sostenitori attivi"
+            }
+          },
+          "programs": {
+            "title": "Programmi attivi",
+            "fallback": "Programma"
+          },
+          "resources": {
+            "title": "Risorse per contributori",
+            "fallback": "Risorsa"
+          }
+        }
+      }
+    },
+    "orders": {
+      "title": "Ordini",
+      "heading": "Registro ordini",
+      "subtitle": "Flusso ordini live arricchito con avanzamento dei fill e telemetria di esecuzione.",
+      "table": {
+        "columns": {
+          "order_id": "ID ordine",
+          "symbol": "Simbolo",
+          "side": "Lato",
+          "order_type": "Tipo",
+          "quantity": "Quantità",
+          "filledQuantity": "Eseguito",
+          "remaining": "Residuo",
+          "progress": "Avanzamento",
+          "limitPrice": "Prezzo limite",
+          "avgFillPrice": "Prezzo medio",
+          "status": "Stato",
+          "lastFill": "Ultimo fill"
+        },
+        "badges": {
+          "side": {
+            "buy": "Acquisto",
+            "sell": "Vendita"
+          },
+          "status": {
+            "FILLED": "Eseguito",
+            "WORKING": "In corso"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL e quotazioni",
+      "heading": "Intelligence su PnL e quotazioni",
+      "subtitle": "Confronta la redditività in tempo reale con i dati di mercato in streaming.",
+      "cards": {
+        "pnl": {
+          "title": "PnL netto",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Run-rate {value}/h"
+        },
+        "quotes": {
+          "title": "Quotazioni",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Posizioni",
+      "heading": "Posizioni aperte",
+      "subtitle": "Esposizioni aggregate derivate dagli eventi di fill in tempo reale.",
+      "table": {
+        "columns": {
+          "symbol": "Simbolo",
+          "netQuantity": "Quantità netta",
+          "avgPrice": "Prezzo medio fill",
+          "marketPrice": "Prezzo di mercato",
+          "exposure": "Esposizione",
+          "pnl": "PnL non realizzato",
+          "lastFill": "Ultimo fill"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Guadagno {percent}",
+            "negative": "Perdita {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "Segnali",
+      "heading": "Signal Intelligence",
+      "subtitle": "Monitora gli impulsi di trading attivi con livello di convinzione e scadenza.",
+      "cards": {
+        "active": {
+          "title": "Segnali attivi",
+          "total": "{count} attivi",
+          "updated": "Aggiornato {time}",
+          "none": "Nessun segnale disponibile"
+        },
+        "bias": {
+          "title": "Bias direzionale",
+          "ratio": "Acquisto {buy} / Vendita {sell} / Neutro {flat}",
+          "netLong": "Net long {value}",
+          "netShort": "Net short {value}"
+        },
+        "conviction": {
+          "title": "Convinzione",
+          "average": "Media {value}",
+          "peak": "Picco {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Timestamp",
+          "symbol": "Simbolo",
+          "direction": "Direzione",
+          "strength": "Forza",
+          "signal_type": "Tipo",
+          "ttl": "Durata",
+          "status": "Stato",
+          "metadata": "Contesto"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Acquisto",
+            "sell": "Vendita",
+            "flat": "Neutro"
+          },
+          "status": {
+            "active": "Attivo",
+            "expired": "Scaduto"
+          }
+        },
+        "empty": "Nessun segnale disponibile."
+      }
+    },
     "community": {
       "title": "Comunità",
       "heading": "Centro impatto comunitario",
@@ -144,6 +351,11 @@
         "fallbackTitle": "Opportunità",
         "cta": "Manifesta interesse"
       }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Ultimo fill"
     }
   }
 }

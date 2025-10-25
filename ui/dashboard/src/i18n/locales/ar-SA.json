@@ -1,6 +1,14 @@
 {
   "$schema": "../../../../schemas/localization/translation.schema.json",
   "locale": "ar-SA",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "ملاحظة لهجة: حافظ على رسالة واثقة وهادئة.",
+      "views.orders.subtitle": "ملاحظة لهجة: أبرز شفافية التنفيذ المباشر من دون مبالغة.",
+      "views.pnl.subtitle": "ملاحظة لهجة: شدّد على الدقة التحليلية مع تفاؤل مضبوط.",
+      "views.positions.subtitle": "ملاحظة لهجة: عبّر عن ثقة راسخة في مراقبة التعرض." 
+    }
+  },
   "nav": {
     "brand": "TradePulse",
     "title": "TradePulse",
@@ -50,6 +58,205 @@
     ]
   },
   "views": {
+    "overview": {
+      "title": "نظرة عامة",
+      "heading": "نبض المنتج",
+      "subtitle": "رؤى GitHub دقيقة لمواءمة فرق التسويق والتنفيذ الهندسي.",
+      "hero": {
+        "eyebrow": "استخبارات GitHub",
+        "title": "شفافية بمستوى التنفيذ",
+        "subtitle": "راقب الاعتماد، وتيرة الإصدارات، وجاهزية الإنتاج مباشرة من المصدر.",
+        "cta": "فتح مستودع GitHub"
+      },
+      "badges": {
+        "title": "تفاعل المجتمع",
+        "subtitle": "مؤشرات الصحة الأساسية من GitHub لمراجعات إدارية سريعة.",
+        "stars": {
+          "label": "النجوم",
+          "hint": "زخم 30 يومًا {delta}"
+        },
+        "forks": {
+          "label": "التفريعات",
+          "hint": "{count} تفريع نشط"
+        },
+        "watchers": {
+          "label": "المتابعون",
+          "hint": "نمو {percent}"
+        },
+        "contributors": {
+          "label": "المساهمون",
+          "hint": "{new} مساهمين جدد خلال 30 يومًا"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "إيقاع الإصدارات",
+          "subtitle": "أحدث علامة إصدار وسرعة الدمج.",
+          "published": "تم النشر",
+          "metrics": {
+            "commits": "الكوميتات (30 يومًا)",
+            "merged": "طلبات الدمج المدمجة (30 يومًا)",
+            "open": "طلبات الدمج المفتوحة"
+          }
+        },
+        "languages": {
+          "title": "مزيج اللغات",
+          "subtitle": "التوزيع داخل المستودع."
+        },
+        "workflows": {
+          "title": "صحة CI",
+          "subtitle": "أحدث شارات GitHub Actions."
+        },
+        "community": {
+          "title": "مجتمع المصدر المفتوح",
+          "subtitle": "برامج تمكين المساهمين والإشارات الحيوية في الوقت الفعلي.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "قضايا للمبتدئين",
+              "hint": "{count} تذاكر مفتوحة مهيأة للانضمام"
+            },
+            "mentorship": {
+              "label": "مقاعد الإرشاد",
+              "hint": "{count} مقاعد إرشاد موجهة"
+            },
+            "response": {
+              "label": "الاستجابة المتوسطة",
+              "hint": "متوسط رد المشرف {hours} ساعة"
+            },
+            "sponsors": {
+              "label": "الرعاة",
+              "hint": "{count} داعمين نشطين"
+            }
+          },
+          "programs": {
+            "title": "البرامج النشطة",
+            "fallback": "برنامج"
+          },
+          "resources": {
+            "title": "موارد المساهمين",
+            "fallback": "مورد"
+          }
+        }
+      }
+    },
+    "orders": {
+      "title": "الطلبات",
+      "heading": "دفتر الطلبات",
+      "subtitle": "تدفق الطلبات المباشر مع تقدم التنفيذ والتليمترية.",
+      "table": {
+        "columns": {
+          "order_id": "معرّف الطلب",
+          "symbol": "الرمز",
+          "side": "الاتجاه",
+          "order_type": "النوع",
+          "quantity": "الكمية",
+          "filledQuantity": "المنفّذ",
+          "remaining": "المتبقي",
+          "progress": "التقدم",
+          "limitPrice": "سعر الحد",
+          "avgFillPrice": "متوسط التنفيذ",
+          "status": "الحالة",
+          "lastFill": "آخر تنفيذ"
+        },
+        "badges": {
+          "side": {
+            "buy": "شراء",
+            "sell": "بيع"
+          },
+          "status": {
+            "FILLED": "مكتمل",
+            "WORKING": "قيد التنفيذ"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "الأرباح والخسائر والأسعار",
+      "heading": "استخبارات الأرباح والخسائر والأسعار",
+      "subtitle": "قارِن الربحية المباشرة ببيانات السوق المتدفقة.",
+      "cards": {
+        "pnl": {
+          "title": "صافي الأرباح والخسائر",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "معدل التشغيل {value}/ساعة"
+        },
+        "quotes": {
+          "title": "الأسعار",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "المراكز",
+      "heading": "المراكز المفتوحة",
+      "subtitle": "التعرّضات المجمّعة المستمدة من أحداث التنفيذ المباشرة.",
+      "table": {
+        "columns": {
+          "symbol": "الرمز",
+          "netQuantity": "الكمية الصافية",
+          "avgPrice": "متوسط سعر التنفيذ",
+          "marketPrice": "سعر السوق",
+          "exposure": "التعرّض",
+          "pnl": "الأرباح والخسائر غير المحققة",
+          "lastFill": "آخر تنفيذ"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "ربح {percent}",
+            "negative": "خسارة {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "الإشارات",
+      "heading": "استخبارات الإشارات",
+      "subtitle": "تابع محفزات التداول النشطة مع الثقة وفترات الصلاحية.",
+      "cards": {
+        "active": {
+          "title": "الإشارات النشطة",
+          "total": "{count} نشط",
+          "updated": "آخر تحديث {time}",
+          "none": "لا توجد إشارات بعد"
+        },
+        "bias": {
+          "title": "انحياز الاتجاه",
+          "ratio": "شراء {buy} / بيع {sell} / محايد {flat}",
+          "netLong": "صافي مركز شراء {value}",
+          "netShort": "صافي مركز بيع {value}"
+        },
+        "conviction": {
+          "title": "مستوى القناعة",
+          "average": "المتوسط {value}",
+          "peak": "الأعلى {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "الطابع الزمني",
+          "symbol": "الرمز",
+          "direction": "الاتجاه",
+          "strength": "القوة",
+          "signal_type": "نوع الإشارة",
+          "ttl": "مدة الصلاحية",
+          "status": "الحالة",
+          "metadata": "السياق"
+        },
+        "badges": {
+          "direction": {
+            "buy": "شراء",
+            "sell": "بيع",
+            "flat": "محايد"
+          },
+          "status": {
+            "active": "نشط",
+            "expired": "منتهي"
+          }
+        },
+        "empty": "لا توجد إشارات متاحة."
+      }
+    },
     "community": {
       "title": "المجتمع",
       "heading": "مركز تأثير المجتمع",
@@ -144,6 +351,11 @@
         "fallbackTitle": "فرصة",
         "cta": "تسجيل الاهتمام"
       }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "آخر تنفيذ"
     }
   }
 }

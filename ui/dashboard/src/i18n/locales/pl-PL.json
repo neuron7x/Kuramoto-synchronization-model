@@ -1,6 +1,14 @@
 {
   "$schema": "../../../../schemas/localization/translation.schema.json",
   "locale": "pl-PL",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Uwaga tonalna: zachowaj pewny, ale wyważony komunikat.",
+      "views.orders.subtitle": "Uwaga tonalna: podkreśl przejrzystość egzekucji na żywo bez przesady.",
+      "views.pnl.subtitle": "Uwaga tonalna: akcentuj analityczny wgląd z kontrolowanym optymizmem.",
+      "views.positions.subtitle": "Uwaga tonalna: komunikuj spokój w nadzorze ekspozycji."
+    }
+  },
   "nav": {
     "brand": "TradePulse",
     "title": "TradePulse",
@@ -50,6 +58,205 @@
     ]
   },
   "views": {
+    "overview": {
+      "title": "Przegląd",
+      "heading": "Puls produktu",
+      "subtitle": "Precyzyjne insighty z GitHub pomagające zestroić zespoły go-to-market i inżynierii.",
+      "hero": {
+        "eyebrow": "Inteligencja GitHub",
+        "title": "Przejrzystość na poziomie egzekucji",
+        "subtitle": "Śledź adopcję, tempo wydań i gotowość produkcyjną bezpośrednio u źródła.",
+        "cta": "Otwórz repozytorium GitHub"
+      },
+      "badges": {
+        "title": "Trakcja społeczności",
+        "subtitle": "Kluczowe sygnały zdrowia z GitHub dla szybkich przeglądów zarządczych.",
+        "stars": {
+          "label": "Gwiazdki",
+          "hint": "Momentum 30 dni {delta}"
+        },
+        "forks": {
+          "label": "Forki",
+          "hint": "{count} aktywnych forków"
+        },
+        "watchers": {
+          "label": "Obserwujący",
+          "hint": "Wzrost {percent}"
+        },
+        "contributors": {
+          "label": "Kontrybutorzy",
+          "hint": "{new} nowych w ciągu 30 dni"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "Rytm wydań",
+          "subtitle": "Ostatni tag i szybkość merge.",
+          "published": "Opublikowano",
+          "metrics": {
+            "commits": "Commity (30 dni)",
+            "merged": "Scalone PR (30 dni)",
+            "open": "Otwarte PR"
+          }
+        },
+        "languages": {
+          "title": "Miks języków",
+          "subtitle": "Rozkład w repozytorium."
+        },
+        "workflows": {
+          "title": "Zdrowie CI",
+          "subtitle": "Najnowsze odznaki GitHub Actions."
+        },
+        "community": {
+          "title": "Społeczność open-source",
+          "subtitle": "Aktywne programy i sygnały wsparcia w czasie rzeczywistym.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "Zadania dla początkujących",
+              "hint": "{count} otwartych zgłoszeń przygotowanych na onboarding"
+            },
+            "mentorship": {
+              "label": "Miejsca mentoringowe",
+              "hint": "{count} prowadzone ścieżki wdrożenia"
+            },
+            "response": {
+              "label": "Średni czas odpowiedzi",
+              "hint": "Mediana odpowiedzi maintainerów {hours}h"
+            },
+            "sponsors": {
+              "label": "Sponsorzy",
+              "hint": "{count} aktywnych wspierających"
+            }
+          },
+          "programs": {
+            "title": "Aktywne programy",
+            "fallback": "Program"
+          },
+          "resources": {
+            "title": "Zasoby dla kontrybutorów",
+            "fallback": "Zasób"
+          }
+        }
+      }
+    },
+    "orders": {
+      "title": "Zlecenia",
+      "heading": "Rejestr zleceń",
+      "subtitle": "Bieżący przepływ zleceń z informacją o postępie realizacji i telemetrii egzekucji.",
+      "table": {
+        "columns": {
+          "order_id": "ID zlecenia",
+          "symbol": "Symbol",
+          "side": "Strona",
+          "order_type": "Typ",
+          "quantity": "Ilość",
+          "filledQuantity": "Zrealizowano",
+          "remaining": "Pozostało",
+          "progress": "Postęp",
+          "limitPrice": "Cena limit",
+          "avgFillPrice": "Średnia cena",
+          "status": "Status",
+          "lastFill": "Ostatnia realizacja"
+        },
+        "badges": {
+          "side": {
+            "buy": "Kupno",
+            "sell": "Sprzedaż"
+          },
+          "status": {
+            "FILLED": "Zrealizowano",
+            "WORKING": "W realizacji"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL i kwotowania",
+      "heading": "Analiza PnL i kwotowań",
+      "subtitle": "Porównaj bieżącą rentowność ze strumieniowanymi danymi rynkowymi.",
+      "cards": {
+        "pnl": {
+          "title": "PnL netto",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Tempo {value}/h"
+        },
+        "quotes": {
+          "title": "Kwotowania",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Pozycje",
+      "heading": "Pozycje otwarte",
+      "subtitle": "Zagregowane ekspozycje wyprowadzone z bieżących realizacji zleceń.",
+      "table": {
+        "columns": {
+          "symbol": "Symbol",
+          "netQuantity": "Ilość netto",
+          "avgPrice": "Średnia cena fill",
+          "marketPrice": "Cena rynkowa",
+          "exposure": "Ekspozycja",
+          "pnl": "Niezrealizowany PnL",
+          "lastFill": "Ostatnia realizacja"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Zysk {percent}",
+            "negative": "Strata {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "Sygnały",
+      "heading": "Inteligencja sygnałów",
+      "subtitle": "Śledź aktywne impulsy handlowe wraz z przekonaniem i czasem wygaśnięcia.",
+      "cards": {
+        "active": {
+          "title": "Aktywne sygnały",
+          "total": "{count} aktywnych",
+          "updated": "Zaktualizowano {time}",
+          "none": "Brak dostępnych sygnałów"
+        },
+        "bias": {
+          "title": "Bias kierunkowy",
+          "ratio": "Kupno {buy} / Sprzedaż {sell} / Neutralne {flat}",
+          "netLong": "Nadwyżka long {value}",
+          "netShort": "Nadwyżka short {value}"
+        },
+        "conviction": {
+          "title": "Pewność",
+          "average": "Średnia {value}",
+          "peak": "Szczyt {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Znacznik czasu",
+          "symbol": "Symbol",
+          "direction": "Kierunek",
+          "strength": "Siła",
+          "signal_type": "Typ sygnału",
+          "ttl": "Ważność",
+          "status": "Status",
+          "metadata": "Kontekst"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Kupno",
+            "sell": "Sprzedaż",
+            "flat": "Neutralne"
+          },
+          "status": {
+            "active": "Aktywny",
+            "expired": "Wygasły"
+          }
+        },
+        "empty": "Brak dostępnych sygnałów."
+      }
+    },
     "community": {
       "title": "Społeczność",
       "heading": "Centrum wpływu społeczności",
@@ -144,6 +351,11 @@
         "fallbackTitle": "Możliwość",
         "cta": "Zgłoś chęć udziału"
       }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Ostatnia realizacja"
     }
   }
 }
