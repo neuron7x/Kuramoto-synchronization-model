@@ -1,4 +1,11 @@
-"""High-level coordination of historical backfills and live tick streams."""
+"""Coordinate historical backfills and live tick streams with metadata checks.
+
+The aggregator validates symbol and venue metadata when ingesting sequences of
+``PriceTick`` instances.  When callers provide pre-aggregated ``pandas``
+``DataFrame`` objects the values are assumed to be correct, and the caller is
+responsible for ensuring their metadata coherence before invoking the
+aggregator.
+"""
 
 from __future__ import annotations
 
