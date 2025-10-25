@@ -35,6 +35,93 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       var localeSelect = document.querySelector('[data-role="locale-select"]');
       var localeConfigNode = document.querySelector('script[data-role="locale-config"]');
       var localeConfig = null;
+      var LOCALE_STORAGE_KEY = 'tp:locale';
+      var LOCALE_COOKIE_NAME = 'tp_locale';
+      var LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
+      function persistLocalePreference(nextLocale) {
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+          }
+        } catch (storageError) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Unable to persist locale preference (storage)', storageError);
+          }
+        }
+        try {
+          if (typeof document !== 'undefined') {
+            document.cookie =
+              LOCALE_COOKIE_NAME +
+              '=' +
+              encodeURIComponent(nextLocale) +
+              ';path=/' +
+              ';max-age=' +
+              String(LOCALE_COOKIE_MAX_AGE) +
+              ';SameSite=Lax';
+          }
+        } catch (cookieError) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Unable to persist locale preference (cookie)', cookieError);
+          }
+        }
+      }
+
+      function navigateWithLocale(nextLocale) {
+        if (typeof window === 'undefined' || typeof window.location === 'undefined') {
+          return false;
+        }
+        try {
+          var url = new URL(window.location.href);
+          if (url.searchParams) {
+            var current = url.searchParams.get('locale');
+            if (current === nextLocale) {
+              window.location.reload();
+              return true;
+            }
+            url.searchParams.set('locale', nextLocale);
+            window.location.assign(url.toString());
+            return true;
+          }
+        } catch (urlError) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Falling back to manual locale navigation', urlError);
+          }
+        }
+        try {
+          var href = window.location.href || '';
+          var hashIndex = href.indexOf('#');
+          var hash = hashIndex >= 0 ? href.slice(hashIndex) : '';
+          var beforeHash = hashIndex >= 0 ? href.slice(0, hashIndex) : href;
+          var queryIndex = beforeHash.indexOf('?');
+          var path = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+          var search = queryIndex >= 0 ? beforeHash.slice(queryIndex + 1) : '';
+          var segments = search ? search.split('&').filter(Boolean) : [];
+          var replaced = false;
+          segments = segments.map(function (segment) {
+            var equalIndex = segment.indexOf('=');
+            var key = equalIndex >= 0 ? decodeURIComponent(segment.slice(0, equalIndex)) : decodeURIComponent(segment);
+            if (key === 'locale') {
+              replaced = true;
+              return 'locale=' + encodeURIComponent(nextLocale);
+            }
+            return segment;
+          });
+          if (!replaced) {
+            segments.push('locale=' + encodeURIComponent(nextLocale));
+          }
+          var nextSearch = segments.length ? '?' + segments.join('&') : '';
+          window.location.href = path + nextSearch + hash;
+          return true;
+        } catch (fallbackError) {
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('Unable to adjust locale query parameter, reloading instead', fallbackError);
+          }
+          window.location.reload();
+        }
+        return false;
+      }
+
       if (localeConfigNode) {
         try {
           localeConfig = JSON.parse(localeConfigNode.textContent || '{}');
@@ -44,15 +131,7 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
           window.tp.localeConfig = localeConfig.locales || {};
           if (typeof window.tp.setLocale !== 'function') {
             window.tp.setLocale = function (nextLocale) {
-              try {
-                if (window.localStorage) {
-                  window.localStorage.setItem('tp:locale', nextLocale);
-                }
-              } catch (storageError) {
-                if (typeof console !== 'undefined' && console.debug) {
-                  console.debug('Unable to persist locale preference (fallback)', storageError);
-                }
-              }
+              persistLocalePreference(nextLocale);
               return nextLocale;
             };
           }
@@ -183,9 +262,7 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
               var resolved = window.tp.setLocale(nextLocale, { source: 'nav-switcher' });
               applyLocaleDirection(resolved || nextLocale);
             } else {
-              if (window.localStorage) {
-                window.localStorage.setItem('tp:locale', nextLocale);
-              }
+              persistLocalePreference(nextLocale);
               applyLocaleDirection(nextLocale);
             }
           } catch (error) {
@@ -202,8 +279,8 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
               console.debug('Unable to broadcast locale change', error);
             }
           }
-          if (window.tp && window.tp.reloadOnLocaleChange !== false && typeof window.location !== 'undefined') {
-            window.location.reload();
+          if (window.tp && window.tp.reloadOnLocaleChange !== false) {
+            navigateWithLocale(nextLocale);
           }
         });
       }
