@@ -80,6 +80,44 @@ def test_feature_pipeline_generates_expected_columns() -> None:
     assert features.isna().sum().max() > 0
 
 
+def test_feature_pipeline_filters_invalid_rows() -> None:
+    idx = pd.Index(
+        [
+            pd.Timestamp("2024-01-01 00:00:00"),
+            pd.Timestamp("2024-01-01 01:00:00"),
+            pd.Timestamp("2024-01-01 02:00:00"),
+            pd.Timestamp("2024-01-01 00:00:00"),
+            pd.Timestamp("2024-01-01 03:00:00"),
+            pd.Timestamp("2024-01-01 04:00:00"),
+        ]
+    )
+    frame = pd.DataFrame(
+        {
+            "close": [100.0, np.nan, 101.0, 102.0, 103.0, -1.0],
+            "high": [100.5, 101.5, 101.5, 102.5, 103.5, 0.0],
+            "low": [99.5, 100.5, 100.5, 101.5, 102.5, -2.0],
+            "volume": [1_000.0, 1_100.0, "bad", 1_200.0, 1_300.0, 1_400.0],
+        },
+        index=idx,
+    )
+
+    pipeline = SignalFeaturePipeline(FeaturePipelineConfig(technical_windows=(2,)))
+    features = pipeline.transform(frame)
+
+    expected_index = pd.DatetimeIndex(
+        [
+            pd.Timestamp("2024-01-01 00:00:00"),
+            pd.Timestamp("2024-01-01 02:00:00"),
+            pd.Timestamp("2024-01-01 03:00:00"),
+        ]
+    )
+
+    assert features.index.equals(expected_index)
+    assert features.index.is_monotonic_increasing
+    assert features.index.is_unique
+    assert pd.isna(features.loc[pd.Timestamp("2024-01-01 02:00:00"), "log_volume"])
+
+
 def test_feature_pipeline_float_precision_consistency() -> None:
     frame_64 = _sample_market_frame(160)
     frame_32 = frame_64.astype(np.float32)
