@@ -384,7 +384,7 @@ assert.ok(dashboardView.styles.includes('.tp-live-table'), 'styles should includ
 assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose shared stylesheet reference');
 assert.strictEqual(dashboardView.route, 'positions');
 
-const navigationLinks = (dashboardView.html.match(/<a class=\"tp-nav__link/g) || []).length;
+const navigationLinks = (dashboardView.html.match(/<a class="tp-nav__link/g) || []).length;
 assert.strictEqual(navigationLinks, 5, 'dashboard should render all navigation links');
 assert.ok(dashboardView.html.includes('Signals'), 'navigation should expose signals route');
 assert.ok(dashboardView.html.includes('Overview'), 'navigation should surface overview route');

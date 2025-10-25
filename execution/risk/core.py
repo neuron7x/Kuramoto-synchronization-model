@@ -1299,12 +1299,15 @@ def portfolio_heat(positions: Iterable[Mapping[str, float]]) -> float:
 
 __all__ = [
     "RiskError",
+    "DataQualityError",
     "LimitViolation",
     "OrderRateExceeded",
     "RiskLimits",
     "KillSwitchStateStore",
     "RiskStateStore",
+    "KillSwitchStateRecord",
     "SQLiteKillSwitchStateStore",
+    "PostgresKillSwitchStateStore",
     "JsonRiskStateStore",
     "KillSwitch",
     "RiskManager",

@@ -1,4 +1,4 @@
-const ROUTE_NAME_PATTERN = /^[a-z0-9\-]+$/i;
+const ROUTE_NAME_PATTERN = /^[a-z0-9-]+$/i;
 
 export class Router {
   constructor({ routes = {}, defaultRoute = 'pnl' } = {}) {

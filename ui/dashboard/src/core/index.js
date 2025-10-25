@@ -1,8 +1,4 @@
-import {
-  sanitizeReportValue,
-  formatCurrency,
-  formatPercent,
-} from './formatters.js';
+import { sanitizeReportValue } from './formatters.js';
 
 const DEFAULT_METRIC = 'sharpe';
 
