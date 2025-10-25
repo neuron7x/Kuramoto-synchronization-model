@@ -1,3 +1,12 @@
+---
+owner: integrations@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-10-25
+links:
+  - docs/api/overview.md
+  - docs/api/webhooks.md
+---
+
 # Integration API Reference
 
 This document provides a comprehensive reference for integrating TradePulse with external systems, exchanges, and data providers.
