@@ -14,6 +14,8 @@ from core.data.models import PriceTick as Ticker
 from src.data.ingestion_service import (
     CacheEntrySnapshot,
     DataIngestionCacheService,
+    DataIngestionCommandService,
+    DataIngestionQueryService,
     DataIntegrityError,
 )
 
@@ -153,6 +155,32 @@ def test_get_cached_frame_supports_ranges() -> None:
     assert subset.shape[0] == 3
     assert subset.index[0] == ticks[2].timestamp
     assert subset.index[-1] == ticks[4].timestamp
+
+
+def test_cqrs_services_share_state() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [_tick(base.replace(minute=i), 100.0 + i) for i in range(3)]
+    service = DataIngestionCacheService()
+
+    command: DataIngestionCommandService = service.commands
+    query: DataIngestionQueryService = service.queries
+
+    cached = command.cache_ticks(
+        ticks, layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+
+    assert not cached.empty
+
+    metadata = query.metadata_for(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+
+    assert metadata is not None
+    assert metadata.rows == 3
+    retrieved = query.get_cached_frame(
+        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+    )
+    assert retrieved.equals(cached)
 
 
 def test_cache_ticks_rejects_blank_timeframe() -> None:

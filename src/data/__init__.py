@@ -13,7 +13,14 @@ from src.data.experiment_registry import (
     ExperimentRunRecord,
     HyperparameterAuditEntry,
 )
-from src.data.ingestion_service import CacheEntrySnapshot, DataIngestionCacheService
+from src.data.ingestion_service import (
+    CacheEntrySnapshot,
+    DataIngestionCacheService,
+    DataIngestionCommandService,
+    DataIngestionQueryService,
+    DataIntegrityError,
+    TickFrameIntegrityValidator,
+)
 from src.data.kafka_ingestion import (
     HotSymbolCache,
     HotSymbolSnapshot,
@@ -86,10 +93,13 @@ __all__ = [
     "AggregationResult",
     "BacklogEvent",
     "CacheEntrySnapshot",
+    "DataIngestionCommandService",
     "CacheRoute",
     "CacheWriterTickHandler",
     "DelaySample",
     "DataIngestionCacheService",
+    "DataIngestionQueryService",
+    "DataIntegrityError",
     "StaticTickRoutingStrategy",
     "StreamingIngestionPipeline",
     "ExperimentRegistry",
@@ -103,6 +113,7 @@ __all__ = [
     "LagReport",
     "LagSummary",
     "TickStreamAggregator",
+    "TickFrameIntegrityValidator",
     "TickRoutingStrategy",
     "WatermarkBacklog",
     "WatermarkProgress",

@@ -114,7 +114,7 @@ class TickStreamAggregator:
         canonical_key = self._build_cache_key(symbol, venue, instrument_type)
         market_hint = market or self._market
 
-        existing = self._cache_service.get_cached_frame(
+        existing = self._cache_service.queries.get_cached_frame(
             layer=self._layer,
             symbol=canonical_key.symbol,
             venue=canonical_key.venue,
@@ -131,7 +131,7 @@ class TickStreamAggregator:
         ]
 
         merged = self._merge_frames(frames)
-        cached = self._cache_service.cache_frame(
+        cached = self._cache_service.commands.cache_frame(
             merged,
             layer=self._layer,
             symbol=canonical_key.symbol,
@@ -175,7 +175,7 @@ class TickStreamAggregator:
 
             if gap_frames:
                 merged = self._merge_frames([cached, *gap_frames])
-                cached = self._cache_service.cache_frame(
+                cached = self._cache_service.commands.cache_frame(
                     merged,
                     layer=self._layer,
                     symbol=canonical_key.symbol,

@@ -183,12 +183,12 @@ class TradePulsePlatform:
         }
         if instrument_type is not None:
             kwargs["instrument_type"] = instrument_type
-        return self.cache_service.ingest_csv(path, **kwargs)
+        return self.cache_service.commands.ingest_csv(path, **kwargs)
 
     def cache_snapshot(self) -> list[CacheEntrySnapshot]:
         """Return metadata about cached datasets."""
 
-        return self.cache_service.cache_snapshot()
+        return self.cache_service.queries.cache_snapshot()
 
     def metadata_for(
         self,
@@ -209,7 +209,7 @@ class TradePulsePlatform:
         }
         if instrument_type is not None:
             kwargs["instrument_type"] = instrument_type
-        return self.cache_service.metadata_for(**kwargs)
+        return self.cache_service.queries.metadata_for(**kwargs)
 
     def engage_kill_switch(self, reason: str) -> KillSwitchState:
         """Engage the kill-switch via the risk facade."""

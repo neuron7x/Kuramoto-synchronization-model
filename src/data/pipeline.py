@@ -75,7 +75,7 @@ class CacheWriterTickHandler:
         for (route, symbol, venue, instrument_type), bucket in buckets.items():
             if not bucket:
                 continue
-            self._cache_service.cache_ticks(
+            self._cache_service.commands.cache_ticks(
                 bucket,
                 layer=route.layer,
                 symbol=symbol,
