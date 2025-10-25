@@ -11,11 +11,20 @@ from pandas.tseries.offsets import BaseOffset
 
 from core.data.models import InstrumentType, PriceTick
 
+from .event_bus import MessageBroker, NullMessageBroker
+from .events import (
+    BrokeredTickEventPublisher,
+    NullTickEventPublisher,
+    TickEventPublisher,
+    build_tick_event,
+    default_tick_header_factory,
+)
 from .ingestion_service import DataIngestionCacheService
 from .kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagHandler
 
 if TYPE_CHECKING:
     from .streaming_aggregator import TickStreamAggregator
+    from .events import HeaderFactory
 
 
 class TickRoutingStrategy(Protocol):
@@ -52,9 +61,11 @@ class CacheWriterTickHandler:
         *,
         cache_service: DataIngestionCacheService,
         routing_strategy: TickRoutingStrategy,
+        event_publisher: TickEventPublisher | None = None,
     ) -> None:
         self._cache_service = cache_service
         self._routing_strategy = routing_strategy
+        self._event_publisher = event_publisher or NullTickEventPublisher()
 
     async def __call__(self, ticks: Sequence[PriceTick]) -> None:
         """Group ticks by cache route and persist them."""
@@ -84,6 +95,18 @@ class CacheWriterTickHandler:
                 market=route.market,
                 instrument_type=instrument_type,
             )
+            event = build_tick_event(
+                route=route,
+                symbol=symbol,
+                venue=venue,
+                instrument_type=instrument_type,
+                ticks=bucket,
+            )
+            await self._event_publisher.publish_batch(event)
+
+    @property
+    def event_publisher(self) -> TickEventPublisher:
+        return self._event_publisher
 
 
 class StreamingIngestionPipeline:
@@ -96,6 +119,10 @@ class StreamingIngestionPipeline:
         cache_service: DataIngestionCacheService | None = None,
         routing_strategy: TickRoutingStrategy | None = None,
         lag_handler: LagHandler | None = None,
+        message_broker: MessageBroker | None = None,
+        tick_event_publisher: TickEventPublisher | None = None,
+        tick_event_topic: str = "tradepulse.data.tick_batch.persisted",
+        tick_header_factory: "HeaderFactory" | None = None,
         kafka_service_factory: Callable[
             [KafkaIngestionConfig], KafkaIngestionService
         ]
@@ -108,9 +135,22 @@ class StreamingIngestionPipeline:
         self._routing_strategy = routing_strategy or StaticTickRoutingStrategy(
             route_template=default_route
         )
+        broker = message_broker or NullMessageBroker()
+        if tick_event_publisher is not None:
+            self._event_publisher = tick_event_publisher
+        elif message_broker is not None:
+            self._event_publisher = BrokeredTickEventPublisher(
+                broker,
+                topic=tick_event_topic,
+                header_factory=tick_header_factory or default_tick_header_factory,
+            )
+        else:
+            self._event_publisher = NullTickEventPublisher()
+        self._message_broker = broker
         self._tick_handler = CacheWriterTickHandler(
             cache_service=self._cache_service,
             routing_strategy=self._routing_strategy,
+            event_publisher=self._event_publisher,
         )
         self._lag_handler = lag_handler
         factory = kafka_service_factory or self._build_kafka_service
@@ -157,11 +197,27 @@ class StreamingIngestionPipeline:
     def tick_handler(self) -> CacheWriterTickHandler:
         return self._tick_handler
 
+    @property
+    def message_broker(self) -> MessageBroker:
+        return self._message_broker
+
+    @property
+    def event_publisher(self) -> TickEventPublisher:
+        return self._event_publisher
+
     async def start(self) -> None:
-        await self._kafka_service.start()
+        await self._message_broker.start()
+        try:
+            await self._kafka_service.start()
+        except Exception:
+            await self._message_broker.stop()
+            raise
 
     async def stop(self) -> None:
-        await self._kafka_service.stop()
+        try:
+            await self._kafka_service.stop()
+        finally:
+            await self._message_broker.stop()
 
     def create_aggregator(
         self,
