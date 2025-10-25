@@ -1,6 +1,14 @@
 {
   "$schema": "../../../../schemas/localization/translation.schema.json",
   "locale": "hi-IN",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "टोन संबंधी नोट: आत्मविश्वासी तथा संयत संदेश बनाए रखें.",
+      "views.orders.subtitle": "टोन संबंधी नोट: बिना अतिशयोक्ति के लाइव निष्पादन पारदर्शिता को रेखांकित करें.",
+      "views.pnl.subtitle": "टोन संबंधी नोट: नियंत्रित आशावाद के साथ विश्लेषणात्मक अंतर्दृष्टि दिखाएँ.",
+      "views.positions.subtitle": "टोन संबंधी नोट: एक्सपोज़र निगरानी पर शांत आश्वासन दें."
+    }
+  },
   "nav": {
     "brand": "TradePulse",
     "title": "TradePulse",
@@ -50,6 +58,205 @@
     ]
   },
   "views": {
+    "overview": {
+      "title": "सारांश",
+      "heading": "प्रोडक्ट पल्स",
+      "subtitle": "GitHub से प्राप्त सूक्ष्म अंतर्दृष्टियाँ जो गो-टू-मार्केट और इंजीनियरिंग संरेखण बनाये रखती हैं.",
+      "hero": {
+        "eyebrow": "GitHub इंटेलिजेंस",
+        "title": "एक्ज़िक्यूशन-स्तर की पारदर्शिता",
+        "subtitle": "स्वीकृति, रिलीज़ ताल और उत्पादन तैयारियों को सीधे स्रोत से मॉनिटर करें.",
+        "cta": "GitHub रिपॉज़िटरी खोलें"
+      },
+      "badges": {
+        "title": "समुदाय ट्रैक्शन",
+        "subtitle": "तेज़ प्रबंधन समीक्षा हेतु GitHub से प्रमुख स्वास्थ्य संकेत.",
+        "stars": {
+          "label": "स्टार",
+          "hint": "30-दिन की गति {delta}"
+        },
+        "forks": {
+          "label": "फ़ोर्क",
+          "hint": "{count} सक्रिय फ़ोर्क"
+        },
+        "watchers": {
+          "label": "वॉचर",
+          "hint": "वृद्धि {percent}"
+        },
+        "contributors": {
+          "label": "योगदानकर्ता",
+          "hint": "{new} नए योगदानकर्ता (30 दिन)"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "रिलीज़ ताल",
+          "subtitle": "हाल की टैग की गई रिलीज़ और मर्ज वेग.",
+          "published": "प्रकाशित",
+          "metrics": {
+            "commits": "कमिट (30 दिन)",
+            "merged": "मर्ज किए गए PR (30 दिन)",
+            "open": "खुले PR"
+          }
+        },
+        "languages": {
+          "title": "भाषा मिश्रण",
+          "subtitle": "रिपॉज़िटरी में वितरण."
+        },
+        "workflows": {
+          "title": "CI स्वास्थ्य",
+          "subtitle": "नवीनतम GitHub Actions बैज."
+        },
+        "community": {
+          "title": "ओपन-सोर्स समुदाय",
+          "subtitle": "रियल-टाइम में सक्रिय योगदान कार्यक्रम और एनेबलमेंट संकेत.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "नए योगदान हेतु इश्यू",
+              "hint": "{count} ओपन टिकट ऑनबोर्डिंग के लिए"
+            },
+            "mentorship": {
+              "label": "मेंटॉरशिप सीटें",
+              "hint": "{count} मार्गदर्शित ऑनबोर्डिंग स्थान"
+            },
+            "response": {
+              "label": "माध्य प्रतिक्रिया",
+              "hint": "मेंटेनर प्रतिक्रिया माध्य {hours}घं"
+            },
+            "sponsors": {
+              "label": "स्पॉन्सर",
+              "hint": "{count} सक्रिय वित्तपोषक"
+            }
+          },
+          "programs": {
+            "title": "सक्रिय कार्यक्रम",
+            "fallback": "कार्यक्रम"
+          },
+          "resources": {
+            "title": "योगदानकर्ता संसाधन",
+            "fallback": "संसाधन"
+          }
+        }
+      }
+    },
+    "orders": {
+      "title": "ऑर्डर",
+      "heading": "ऑर्डर ब्लॉटर",
+      "subtitle": "फिल प्रगति और एक्ज़िक्यूशन टेलीमेट्री सहित लाइव ऑर्डर प्रवाह।",
+      "table": {
+        "columns": {
+          "order_id": "ऑर्डर ID",
+          "symbol": "सिंबल",
+          "side": "दिशा",
+          "order_type": "प्रकार",
+          "quantity": "मात्रा",
+          "filledQuantity": "भरा गया",
+          "remaining": "शेष",
+          "progress": "प्रगति",
+          "limitPrice": "सीमित मूल्य",
+          "avgFillPrice": "औसत फिल मूल्य",
+          "status": "स्थिति",
+          "lastFill": "अंतिम फिल"
+        },
+        "badges": {
+          "side": {
+            "buy": "खरीद",
+            "sell": "बिक्री"
+          },
+          "status": {
+            "FILLED": "पूरा",
+            "WORKING": "प्रगति में"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL एवं कोट्स",
+      "heading": "PnL एवं कोट्स इंटेलिजेंस",
+      "subtitle": "स्ट्रीमिंग बाजार डेटा के साथ लाइव लाभप्रदता की तुलना करें।",
+      "cards": {
+        "pnl": {
+          "title": "नेट PnL",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "रन-रेट {value}/घंटा"
+        },
+        "quotes": {
+          "title": "कोट्स",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "पोज़िशन",
+      "heading": "ओपन पोज़िशन",
+      "subtitle": "लाइव फिल घटनाओं से प्राप्त समेकित एक्सपोज़र।",
+      "table": {
+        "columns": {
+          "symbol": "सिंबल",
+          "netQuantity": "नेट मात्रा",
+          "avgPrice": "औसत फिल मूल्य",
+          "marketPrice": "बाजार मूल्य",
+          "exposure": "एक्सपोज़र",
+          "pnl": "अनरीलाइज़्ड PnL",
+          "lastFill": "अंतिम फिल"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "लाभ {percent}",
+            "negative": "हानि {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "सिग्नल",
+      "heading": "सिग्नल इंटेलिजेंस",
+      "subtitle": "सक्रिय ट्रेड सिग्नलों को आत्मविश्वास और समाप्ति समय के साथ ट्रैक करें.",
+      "cards": {
+        "active": {
+          "title": "सक्रिय सिग्नल",
+          "total": "{count} सक्रिय",
+          "updated": "अंतिम {time}",
+          "none": "अभी कोई सिग्नल नहीं"
+        },
+        "bias": {
+          "title": "दिशात्मक पूर्वाग्रह",
+          "ratio": "खरीद {buy} / बिक्री {sell} / तटस्थ {flat}",
+          "netLong": "नेट लॉन्ग {value}",
+          "netShort": "नेट शॉर्ट {value}"
+        },
+        "conviction": {
+          "title": "विश्वास स्तर",
+          "average": "औसत {value}",
+          "peak": "अधिकतम {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "टाइमस्टैम्प",
+          "symbol": "सिंबल",
+          "direction": "दिशा",
+          "strength": "शक्ति",
+          "signal_type": "सिग्नल प्रकार",
+          "ttl": "मान्य अवधि",
+          "status": "स्थिति",
+          "metadata": "प्रसंग"
+        },
+        "badges": {
+          "direction": {
+            "buy": "खरीद",
+            "sell": "बिक्री",
+            "flat": "तटस्थ"
+          },
+          "status": {
+            "active": "सक्रिय",
+            "expired": "समाप्त"
+          }
+        },
+        "empty": "कोई सिग्नल उपलब्ध नहीं है।"
+      }
+    },
     "community": {
       "title": "समुदाय",
       "heading": "समुदाय प्रभाव केंद्र",
@@ -144,6 +351,11 @@
         "fallbackTitle": "अवसर",
         "cta": "रुचि दर्ज करें"
       }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "अंतिम फिल"
     }
   }
 }
