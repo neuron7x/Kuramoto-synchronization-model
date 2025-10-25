@@ -75,6 +75,29 @@ def test_cache_ticks_validates_symbol_and_venue() -> None:
         )
 
 
+def test_cache_ticks_rejects_mixed_instrument_types() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [
+        _tick(base, 100.0),
+        Ticker.create(
+            symbol="BTCUSD",
+            venue="BINANCE",
+            price=101.0,
+            timestamp=base.replace(minute=1),
+            volume=1.0,
+            instrument_type=InstrumentType.FUTURES,
+        ),
+    ]
+    service = DataIngestionCacheService()
+
+    with pytest.raises(
+        ValueError, match="instrument type"
+    ):
+        service.cache_ticks(
+            ticks, layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+        )
+
+
 def test_cache_frame_rejects_nan_values() -> None:
     index = pd.DatetimeIndex(
         [

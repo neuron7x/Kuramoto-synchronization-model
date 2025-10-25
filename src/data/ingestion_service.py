@@ -118,13 +118,22 @@ class DataIngestionCacheService:
         market: str | None = None,
         instrument_type: InstrumentType | None = None,
     ) -> pd.DataFrame:
-        """Cache a sequence of ticks under the provided cache key."""
+        """Cache a sequence of ticks under the provided cache key.
+
+        All ticks must share the same instrument type, matching the resolved
+        cache key, to prevent accidental mixing of derivatives and spot data in
+        the same buffer.
+        """
 
         if not ticks:
             raise ValueError("ticks must not be empty")
         if not timeframe or not timeframe.strip():
             raise ValueError("timeframe must be a non-empty string")
         resolved_type = instrument_type or ticks[0].instrument_type
+        if any(tick.instrument_type != resolved_type for tick in ticks):
+            raise ValueError(
+                "All ticks must share the same instrument type as the cache key"
+            )
         key = self._build_key(layer, symbol, venue, timeframe, resolved_type)
         if any(tick.symbol != key.symbol for tick in ticks):
             raise ValueError("All ticks must match the provided symbol")
