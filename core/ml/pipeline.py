@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bisect import bisect_right
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -187,14 +188,30 @@ class ModelDriftDetector:
             return 0.0
         expected_sorted = sorted(expected)
         observed_sorted = sorted(observed)
-        bucket_size = max(1, len(expected_sorted) // buckets)
+        if not expected_sorted:
+            return 0.0
+
+        quantile_edges: list[float] = []
+        for i in range(1, buckets):
+            quantile_position = (len(expected_sorted) * i) / buckets
+            index = max(0, min(len(expected_sorted) - 1, math.ceil(quantile_position) - 1))
+            quantile_edges.append(expected_sorted[index])
+        quantile_edges.sort()
+
+        limits = quantile_edges + [math.inf]
+        exp_start = 0
+        obs_start = 0
         psi_value = 0.0
-        for idx in range(0, len(expected_sorted), bucket_size):
-            expected_slice = expected_sorted[idx : idx + bucket_size]
-            observed_slice = observed_sorted[idx : idx + bucket_size]
-            exp_ratio = max(1e-6, len(expected_slice) / len(expected_sorted))
-            obs_ratio = max(1e-6, len(observed_slice) / len(observed_sorted))
+        for limit in limits:
+            exp_end = bisect_right(expected_sorted, limit, exp_start)
+            obs_end = bisect_right(observed_sorted, limit, obs_start)
+            exp_count = exp_end - exp_start
+            obs_count = obs_end - obs_start
+            exp_ratio = max(1e-6, exp_count / len(expected_sorted))
+            obs_ratio = max(1e-6, obs_count / len(observed_sorted))
             psi_value += (exp_ratio - obs_ratio) * math.log(exp_ratio / obs_ratio)
+            exp_start = exp_end
+            obs_start = obs_end
         return psi_value
 
     def is_drifted(self, expected: Sequence[float], observed: Sequence[float]) -> bool:

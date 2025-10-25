@@ -109,22 +109,30 @@ class RiskMetricsCalculator:
         self._confidence = confidence
 
     def _loss_distribution(self, returns: Sequence[float]) -> list[float]:
-        return sorted(-float(r) for r in returns)
+        losses = [
+            -float(r)
+            for r in returns
+            if r < 0
+        ]
+        return sorted(losses)
 
     def value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
         if not returns:
             return 0.0
         losses = self._loss_distribution(returns)
-        alpha = max(0.0, 1 - self._confidence)
-        index = min(len(losses) - 1, max(0, int(math.floor(alpha * len(losses)))))
+        if not losses:
+            return 0.0
+        index = max(0, math.ceil(self._confidence * len(losses)) - 1)
+        index = min(index, len(losses) - 1)
         return losses[index] * math.sqrt(max(1, horizon_days))
 
     def conditional_value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
         if not returns:
             return 0.0
         losses = self._loss_distribution(returns)
-        alpha = max(0.0, 1 - self._confidence)
-        start = max(0, int(math.floor(alpha * len(losses))))
+        if not losses:
+            return 0.0
+        start = max(0, math.ceil(self._confidence * len(losses)) - 1)
         tail = losses[start:] or losses[-1:]
         return fmean(tail) * math.sqrt(max(1, horizon_days))
 
