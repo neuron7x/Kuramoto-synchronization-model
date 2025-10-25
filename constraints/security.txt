@@ -1,7 +1,7 @@
 # Pin vetted versions of security-critical HTTP stack dependencies.
 # Update via pip-audit guidance documented in DEPLOYMENT.md.
 certifi==2025.10.5
-charset-normalizer==3.4.3
+charset-normalizer==3.4.4
 idna==3.11
 requests==2.32.5
 urllib3==2.5.0
