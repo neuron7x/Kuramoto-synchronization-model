@@ -1,6 +1,6 @@
 const RISKY_LEADING_CHAR_PATTERN = /^[=+\-@]/;
 const MARKDOWN_META_CHAR_PATTERN = new RegExp(
-  String.raw`[\\\`*_{}\[\]()#+!|>]`,
+  String.raw`([\\\`*_{}\[\]()#+!|>])`,
   'g',
 );
 
