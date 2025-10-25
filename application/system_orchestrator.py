@@ -2,58 +2,31 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Sequence
+from typing import Iterable, Sequence
 
-import numpy as np
 import pandas as pd
 
 from analytics.signals.pipeline import FeaturePipelineConfig
+from application.microservices.backtesting import BacktestingService
+from application.microservices.contracts import (
+    ExecutionRequest,
+    MarketDataSource,
+    StrategyCallable,
+    StrategyRun,
+)
+from application.microservices.execution import ExecutionService
+from application.microservices.market_data import MarketDataService
+from application.microservices.registry import ServiceRegistry
 from application.system import (
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from core.data.models import InstrumentType
-from domain import Order, Signal
+from domain import Order
 from execution.connectors import BinanceConnector, CoinbaseConnector
 from execution.risk import RiskLimits
-
-
-@dataclass(slots=True)
-class MarketDataSource:
-    """Declarative description of a market data CSV source."""
-
-    path: Path
-    symbol: str
-    venue: str
-    instrument_type: InstrumentType = InstrumentType.SPOT
-    market: str | None = None
-
-
-@dataclass(slots=True)
-class StrategyRun:
-    """Result of executing a strategy over ingested market data."""
-
-    market_frame: pd.DataFrame
-    feature_frame: pd.DataFrame
-    signals: list[Signal]
-    payloads: list[dict[str, object]]
-
-
-@dataclass(slots=True)
-class ExecutionRequest:
-    """Parameters required to hand a signal over to execution."""
-
-    signal: Signal
-    venue: str
-    quantity: float
-    price: float | None = None
-    order_type: str | None = None
-    correlation_id: str | None = None
-
 
 def build_tradepulse_system(
     venues: Sequence[ExchangeAdapterConfig] | None = None,
@@ -95,8 +68,18 @@ def build_tradepulse_system(
 class TradePulseOrchestrator:
     """High-level façade that wires ingestion, analytics, and execution."""
 
-    def __init__(self, system: TradePulseSystem) -> None:
+    def __init__(
+        self,
+        system: TradePulseSystem,
+        *,
+        services: ServiceRegistry | None = None,
+    ) -> None:
         self._system = system
+        self._services = services or ServiceRegistry.from_system(system)
+        self._services.ensure_started()
+        self._market_data = self._services.market_data
+        self._backtesting = self._services.backtesting
+        self._execution = self._services.execution
 
     @property
     def system(self) -> TradePulseSystem:
@@ -104,53 +87,58 @@ class TradePulseOrchestrator:
 
         return self._system
 
+    @property
+    def services(self) -> ServiceRegistry:
+        """Return the service registry coordinating the microservices."""
+
+        return self._services
+
+    @property
+    def market_data_service(self) -> MarketDataService:
+        """Expose the market data microservice."""
+
+        return self._market_data
+
+    @property
+    def backtesting_service(self) -> BacktestingService:
+        """Expose the backtesting microservice."""
+
+        return self._backtesting
+
+    @property
+    def execution_service(self) -> ExecutionService:
+        """Expose the execution microservice."""
+
+        return self._execution
+
     def ingest_market_data(self, source: MarketDataSource) -> pd.DataFrame:
         """Load a CSV data source into a normalised OHLCV frame."""
 
-        return self._system.ingest_csv(
-            source.path,
-            symbol=source.symbol,
-            venue=source.venue,
-            instrument_type=source.instrument_type,
-            market=source.market,
-        )
+        return self._market_data.ingest(source)
 
     def build_features(self, market_frame: pd.DataFrame) -> pd.DataFrame:
         """Return a feature-enriched frame derived from *market_frame*."""
 
-        return self._system.build_feature_frame(market_frame)
+        return self._market_data.build_features(market_frame)
 
     def run_strategy(
         self,
         source: MarketDataSource,
-        strategy: Callable[[np.ndarray], np.ndarray],
+        strategy: StrategyCallable,
     ) -> StrategyRun:
         """Execute the canonical ingestion → features → strategy pipeline."""
 
-        market = self.ingest_market_data(source)
-        features = self.build_features(market)
-        signals = self._system.generate_signals(
-            features, strategy=strategy, symbol=source.symbol
-        )
-        payloads = self._system.signals_to_dtos(signals)
-        return StrategyRun(market, features, signals, payloads)
+        return self._backtesting.run_backtest(source, strategy=strategy)
 
     def submit_signal(self, request: ExecutionRequest) -> Order:
         """Forward a signal to execution and return the resulting order."""
 
-        return self._system.submit_signal(
-            request.signal,
-            venue=request.venue,
-            quantity=request.quantity,
-            price=request.price,
-            order_type=request.order_type,
-            correlation_id=request.correlation_id,
-        )
+        return self._execution.submit(request)
 
     def ensure_live_loop(self) -> None:
         """Ensure the live loop has been instantiated."""
 
-        self._system.ensure_live_loop()
+        self._execution.ensure_live_loop()
 
 
 __all__ = [
