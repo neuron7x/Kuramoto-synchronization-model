@@ -296,6 +296,79 @@ export const BASE_STYLES = `
     align-items: center;
   }
 
+  .tp-hero__stats {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin: 0;
+    padding: 1.1rem 1.25rem;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.22);
+    backdrop-filter: blur(16px);
+  }
+
+  .tp-hero__stat {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .tp-hero__stat-label {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.8);
+  }
+
+  .tp-hero__stat-value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin: 0;
+  }
+
+  .tp-hero__stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .tp-hero__stat-unit {
+    font-size: 0.85rem;
+    color: rgba(226, 232, 240, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .tp-hero__stat-trend {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.85);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .tp-hero__stat-trend::before {
+    content: '●';
+    font-size: 0.55rem;
+    color: currentColor;
+  }
+
+  .tp-hero__stat-trend--positive {
+    color: rgba(74, 222, 128, 0.85);
+  }
+
+  .tp-hero__stat-trend--negative {
+    color: rgba(248, 113, 113, 0.85);
+  }
+
+  .tp-hero__stat-trend--neutral {
+    color: rgba(148, 163, 184, 0.85);
+  }
+
   .tp-hero__repo {
     display: inline-flex;
     align-items: center;
@@ -393,6 +466,95 @@ export const BASE_STYLES = `
   .tp-github-panel {
     display: grid;
     gap: 1.25rem;
+  }
+
+  .tp-momentum {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tp-momentum::after {
+    content: '';
+    position: absolute;
+    inset: -60% -20% auto -20%;
+    height: 220px;
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.25), rgba(15, 23, 42, 0));
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .tp-momentum__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tp-momentum__item {
+    position: relative;
+    display: grid;
+    gap: 0.45rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+  }
+
+  .tp-momentum__item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .tp-momentum__item:hover::before {
+    opacity: 1;
+  }
+
+  .tp-momentum__item-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .tp-momentum__label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .tp-momentum__trend {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.9);
+  }
+
+  .tp-momentum__trend--positive {
+    color: rgba(74, 222, 128, 0.9);
+  }
+
+  .tp-momentum__trend--negative {
+    color: rgba(248, 113, 113, 0.9);
+  }
+
+  .tp-momentum__trend--neutral {
+    color: rgba(148, 163, 184, 0.9);
+  }
+
+  .tp-momentum__value {
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+
+  .tp-momentum__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(148, 163, 184, 0.8);
   }
 
   .tp-github-panel--stretch {
@@ -761,6 +923,10 @@ export const BASE_STYLES = `
     inset: 0;
     background: linear-gradient(90deg, #38bdf8, #2563eb);
     transition: transform 0.3s ease;
+  }
+
+  .tp-progress--glow {
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2), 0 8px 18px -12px rgba(56, 189, 248, 0.7);
   }
 
   .tp-progress__label {
