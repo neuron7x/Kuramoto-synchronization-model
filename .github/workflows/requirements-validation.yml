@@ -28,20 +28,20 @@ jobs:
         run: |
           pip-compile \
             --no-annotate \
+            --resolver=backtracking \
             --output-file=requirements.lock \
             --strip-extras \
             --constraint constraints/security.txt \
-            --python-version 3.12 \
             requirements.txt
 
       - name: Rebuild development requirements lockfile
         run: |
           pip-compile \
             --no-annotate \
+            --resolver=backtracking \
             --output-file=requirements-dev.lock \
             --strip-extras \
             --constraint constraints/security.txt \
-            --python-version 3.12 \
             requirements-dev.txt
 
       - name: Confirm lockfiles are up to date

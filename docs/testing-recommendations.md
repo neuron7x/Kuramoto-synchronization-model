@@ -20,8 +20,8 @@ Consistent testing habits keep TradePulse stable and resilient. Use the checklis
 - Trigger the requirements verification locally with:
   ```bash
   pip install pip-tools
-  pip-compile --no-annotate --output-file=requirements.lock --strip-extras --constraint constraints/security.txt requirements.txt
-  pip-compile --no-annotate --output-file=requirements-dev.lock --strip-extras --constraint constraints/security.txt requirements-dev.txt
+  pip-compile --no-annotate --resolver=backtracking --output-file=requirements.lock --strip-extras --constraint constraints/security.txt requirements.txt
+  pip-compile --no-annotate --resolver=backtracking --output-file=requirements-dev.lock --strip-extras --constraint constraints/security.txt requirements-dev.txt
   git diff --stat requirements.lock requirements-dev.lock
   ```
 - For Docker builds, mirror the CI command: `docker build --file Dockerfile --tag tradepulse:ci .`.
