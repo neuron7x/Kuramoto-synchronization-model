@@ -16,7 +16,7 @@ feed the diagnostics into observability pipelines.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Dict, Iterable, Mapping, MutableMapping, Optional
 
@@ -177,6 +177,121 @@ class RegimeDetector:
             adjustments=adjustments,
             diagnostics=diagnostics,
         )
+
+    def calibrate(
+        self,
+        prices: Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series,
+        *,
+        volumes: Optional[Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series] = None,
+        spreads: Optional[Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series] = None,
+        trending_quantile: float = 0.85,
+        mean_reverting_quantile: float = 0.2,
+        liquidity_high_quantile: float = 0.7,
+        liquidity_low_quantile: float = 0.3,
+        correlation_high_quantile: float = 0.75,
+        correlation_low_quantile: float = 0.25,
+    ) -> DetectorConfig:
+        """Calibrate regime thresholds using historical data.
+
+        The detector analyses rolling windows of the supplied price, volume and
+        spread history to derive quantile-based thresholds.  The resulting
+        :class:`DetectorConfig` is assigned to ``self.config`` and also
+        returned so that it can be persisted by the caller.
+        """
+
+        price_frame = _to_frame(prices, name="price")
+        returns = price_frame.pct_change().dropna(how="all")
+        if returns.empty:
+            raise ValueError("Not enough data to compute returns for calibration.")
+
+        volume_frame = _to_optional_frame(volumes, name="volume")
+        spread_frame = _to_optional_frame(spreads, name="spread")
+
+        max_window = max(
+            self.config.trend_window,
+            self.config.liquidity_window,
+            self.config.correlation_window,
+            4,
+        )
+
+        trend_scores: list[float] = []
+        autocorrs: list[float] = []
+        liquidity_scores: list[float] = []
+        correlation_values: list[float] = []
+
+        for end in range(max_window, len(price_frame) + 1):
+            window_prices = price_frame.iloc[:end]
+            window_returns = window_prices.pct_change().dropna(how="all")
+            if window_returns.empty:
+                continue
+
+            _, trend_metrics = self._detect_trend(window_prices, window_returns)
+            trend_scores.append(trend_metrics["trend_score"])
+            autocorrs.append(trend_metrics["trend_autocorr"])
+
+            sub_volumes = volume_frame.iloc[:end] if volume_frame is not None else None
+            sub_spreads = spread_frame.iloc[:end] if spread_frame is not None else None
+            _, liquidity_metrics = self._detect_liquidity(
+                volumes=sub_volumes,
+                spreads=sub_spreads,
+                fallback_returns=window_returns,
+            )
+            liquidity_scores.append(liquidity_metrics["liquidity_score"])
+
+            _, correlation_metrics = self._detect_correlation(window_returns)
+            correlation_values.append(correlation_metrics["correlation_mean_abs"])
+
+        if not trend_scores or not liquidity_scores or not correlation_values:
+            raise ValueError("Not enough data to calibrate regime thresholds.")
+
+        abs_trend_quantile = _finite_quantile(np.abs(trend_scores), trending_quantile)
+        if abs_trend_quantile is None:
+            trending_zscore = self.config.trending_zscore
+        else:
+            trending_zscore = max(float(abs_trend_quantile), 1e-3)
+
+        mean_reverting_threshold = _finite_quantile(autocorrs, mean_reverting_quantile)
+        if mean_reverting_threshold is None or mean_reverting_threshold >= 0.0:
+            mean_reverting_autocorr = self.config.mean_reverting_autocorr_threshold
+        else:
+            mean_reverting_autocorr = float(mean_reverting_threshold)
+
+        liquidity_high = _finite_quantile(liquidity_scores, liquidity_high_quantile)
+        liquidity_low = _finite_quantile(liquidity_scores, liquidity_low_quantile)
+        if (
+            liquidity_high is None
+            or liquidity_low is None
+            or liquidity_high <= liquidity_low
+        ):
+            liquidity_high = self.config.liquidity_score_high
+            liquidity_low = self.config.liquidity_score_low
+
+        correlation_high = _finite_quantile(correlation_values, correlation_high_quantile)
+        correlation_low = _finite_quantile(correlation_values, correlation_low_quantile)
+        if correlation_high is not None:
+            correlation_high = float(np.clip(correlation_high, 0.0, 1.0))
+        if correlation_low is not None:
+            correlation_low = float(np.clip(correlation_low, 0.0, 1.0))
+        if (
+            correlation_high is None
+            or correlation_low is None
+            or correlation_high < correlation_low
+        ):
+            correlation_high = self.config.correlation_high_threshold
+            correlation_low = self.config.correlation_low_threshold
+
+        calibrated_config = replace(
+            self.config,
+            trending_zscore=float(trending_zscore),
+            mean_reverting_autocorr_threshold=float(mean_reverting_autocorr),
+            liquidity_score_high=float(liquidity_high),
+            liquidity_score_low=float(liquidity_low),
+            correlation_high_threshold=float(correlation_high),
+            correlation_low_threshold=float(correlation_low),
+        )
+
+        self.config = calibrated_config
+        return calibrated_config
 
     # ------------------------------------------------------------------
     # Detection helpers
@@ -467,6 +582,16 @@ def _robust_zscore(value: float, history: pd.Series) -> float:
     if mad == 0.0:
         mad = 1e-8
     return (value - median) / mad
+
+
+def _finite_quantile(values: Iterable[float], quantile: float) -> float | None:
+    """Return the quantile of finite values or ``None`` when unavailable."""
+
+    array = np.asarray([v for v in values if np.isfinite(v)], dtype=float)
+    if array.size == 0:
+        return None
+    quantile = float(np.clip(quantile, 0.0, 1.0))
+    return float(np.quantile(array, quantile))
 
 
 __all__ = [
