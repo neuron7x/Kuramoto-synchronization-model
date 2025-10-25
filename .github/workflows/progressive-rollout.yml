@@ -44,7 +44,54 @@ env:
   ROLLBACK_WINDOW_SECONDS: 60
 
 jobs:
+  preflight:
+    name: Deployment Preflight
+    runs-on: ubuntu-latest
+    outputs:
+      can_deploy: ${{ steps.check.outputs.can_deploy }}
+      missing_secrets: ${{ steps.check.outputs.missing_secrets }}
+    steps:
+      - id: check
+        env:
+          AWS_GITHUB_ROLE_ARN: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+          CONTAINER_REGISTRY: ${{ secrets.CONTAINER_REGISTRY }}
+          PRODUCTION_HEALTH_HOST: ${{ secrets.PRODUCTION_HEALTH_HOST }}
+          LAUNCHDARKLY_TOKEN: ${{ secrets.LAUNCHDARKLY_TOKEN }}
+          LAUNCHDARKLY_PROJECT: ${{ secrets.LAUNCHDARKLY_PROJECT }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PAGERDUTY_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+          PAGERDUTY_ROUTING_KEY: ${{ secrets.PAGERDUTY_ROUTING_KEY }}
+        run: |
+          set -euo pipefail
+          missing=""
+          for name in AWS_GITHUB_ROLE_ARN AWS_REGION EKS_CLUSTER_NAME \
+            CONTAINER_REGISTRY PRODUCTION_HEALTH_HOST LAUNCHDARKLY_TOKEN \
+            LAUNCHDARKLY_PROJECT DATABASE_URL PAGERDUTY_TOKEN PAGERDUTY_ROUTING_KEY
+          do
+            value="${!name:-}"
+            if [ -z "$value" ]; then
+              missing="$missing $name"
+            fi
+          done
+
+          if [ -z "$missing" ]; then
+            echo "can_deploy=true" >>"$GITHUB_OUTPUT"
+            echo "missing_secrets=" >>"$GITHUB_OUTPUT"
+            echo "All required secrets are available." >>"$GITHUB_STEP_SUMMARY"
+          else
+            echo "can_deploy=false" >>"$GITHUB_OUTPUT"
+            trimmed="${missing# }"
+            echo "missing_secrets=$trimmed" >>"$GITHUB_OUTPUT"
+            {
+              echo "### Progressive rollout skipped"
+              echo "Missing required secrets: $trimmed"
+            } >>"$GITHUB_STEP_SUMMARY"
+          fi
+
   quality-gates:
+    needs: preflight
     name: Quality & Release Gates
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -71,7 +118,10 @@ jobs:
 
   blue-green:
     name: Blue/Green Stage
-    needs: quality-gates
+    needs:
+      - quality-gates
+      - preflight
+    if: needs.preflight.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -200,7 +250,10 @@ jobs:
 
   traffic-shadow:
     name: Traffic Shadowing
-    needs: blue-green
+    needs:
+      - blue-green
+      - preflight
+    if: needs.preflight.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -251,7 +304,10 @@ jobs:
 
   canary:
     name: Canary Ramp-Up
-    needs: traffic-shadow
+    needs:
+      - traffic-shadow
+      - preflight
+    if: needs.preflight.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -350,7 +406,10 @@ jobs:
 
   finalize:
     name: Finalize Rollout
-    needs: canary
+    needs:
+      - canary
+      - preflight
+    if: needs.preflight.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -382,8 +441,9 @@ jobs:
 
   rollback:
     name: Automated Rollback
-    if: failure()
+    if: needs.preflight.outputs.can_deploy == 'true' && failure()
     needs:
+      - preflight
       - blue-green
       - traffic-shadow
       - canary
