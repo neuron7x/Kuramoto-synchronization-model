@@ -4,18 +4,27 @@ title: TradePulse Architecture Overview
 
 # TradePulse Architecture Overview
 
-This page outlines the core TradePulse architecture through contextual, interaction, and data flow diagrams to support onboarding and operational planning.
+This page outlines the core TradePulse architecture through contextual, component, interaction, and data flow diagrams to support onboarding and operational planning. The 2025 revision folds in the new governance, observability, and multi-experience delivery initiatives that have been rolled out over the last two quarters.
 
 ## System Context
 
-TradePulse combines ingestion pipelines, a unified data platform, analytics services, and delivery channels for traders, quants, and downstream systems.
+TradePulse combines ingestion pipelines, a unified data platform, model operations, decisioning services, and multi-experience delivery channels for traders, quants, and downstream systems. Oversight capabilities span every layer to enforce policy, telemetry, and auditability.
 
 <figure markdown>
 ![TradePulse system context diagram](assets/system_overview.svg){ width="960" }
-<figcaption>System context showing how external data sources flow through ingestion into the unified platform, where analytics services deliver insights to multiple experience channels.</figcaption>
+<figcaption>System context showing how external and internal sources flow through ingestion into the core platform, where decisioning services deliver governed insights to multiple experience channels with continuous oversight.</figcaption>
 </figure>
 
 The underlying Mermaid source is available at [`assets/system_overview.mmd`](assets/system_overview.mmd) for version-controlled updates.
+
+### 2025 component highlights
+
+- **External & Internal Sources** expand to include internal ERP and risk systems that now seed operational controls alongside market, alternative, news, and brokerage feeds.
+- **Ingestion & Streaming Fabric** introduces a shared event bus and data quality gates to standardise acquisition for both batch and low-latency pipelines.
+- **Core Platform** is split between a **Data & Feature Platform** (analytical lake, operational warehouse, catalog, feature store) and **Model Ops & Governance** (registry, experiment tracker, policy engine, lineage) to clarify ownership boundaries.
+- **Decisioning & Execution Services** now highlight the simulation sandbox that enables pre-production rehearsals for strategies before they reach execution.
+- **Delivery & Experience Channels** add mobile/desktop and real-time webhook endpoints for downstream automation partners.
+- **Observability & Control** centralises monitoring, alerting, audit, and feature guardrails to provide live policy enforcement and telemetry feedback into every stage.
 
 ## Component Interactions
 

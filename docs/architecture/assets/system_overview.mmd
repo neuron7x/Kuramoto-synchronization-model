@@ -1,45 +1,71 @@
-%% TradePulse system overview context diagram
+%% TradePulse system overview context diagram (2025 revision)
 flowchart LR
-    subgraph External[External Data Providers]
+    subgraph External[External & Internal Sources]
         Mkt[Market Data APIs]
-        Alt[Alternative Signals]
-        News[News & Sentiment]
-        Ops[Brokerage Events]
+        Alt[Alternative Data Providers]
+        News[News & Sentiment Feeds]
+        Ops[Brokerage & Order Events]
+        ERP[Internal Risk & ERP Systems]
     end
 
-    subgraph Ingestion[Ingestion & Orchestration]
-        Sched[Scheduler]
+    subgraph Integration[Ingestion & Streaming Fabric]
+        Sched[Event Scheduler]
         Connect[Connector Workers]
         Stream[Streaming ETL]
-        Valid[Schema Validation]
+        Quality[Data Quality Gates]
+        Bus[Event Bus]
     end
 
-    subgraph Platform[Unified Data Platform]
-        Lake[Feature Lake]
-        Catalog[Metadata Catalog]
-        Models[Model Registry]
-        FS[Feature Store]
+    subgraph Core[Core Platform]
+        subgraph DataLayer[Data & Feature Platform]
+            Lake[Analytical Data Lake]
+            Warehouse[Operational Warehouse]
+            Catalog[Metadata Catalog]
+            FS[Feature Store]
+        end
+        subgraph ModelOps[Model Ops & Governance]
+            Models[Model Registry]
+            Experiments[Experiment Tracker]
+            Policy[Policy & Compliance Engine]
+            Lineage[Lineage Service]
+        end
     end
 
-    subgraph Services[Analytics & Execution Services]
+    subgraph Services[Decisioning & Execution Services]
         Risk[Risk Engine]
-        Strat[Strategy Engine]
-        Backtest[Backtesting]
+        Strat[Strategy Optimizer]
+        Backtest[Backtesting Service]
         Exec[Execution Gateway]
-        API[Public API]
+        Sim[Simulation Sandbox]
     end
 
-    subgraph Experience[Experience Channels]
-        UI[Trader UI]
-        CLI[CLI Tooling]
+    subgraph Delivery[Delivery & Experience Channels]
+        UI[Trader Web UI]
+        Mobile[Mobile & Desktop Apps]
+        API[Public & Partner APIs]
         Reports[Automated Reporting]
-        Partners[Partner Integrations]
+        Webhooks[Real-time Webhooks]
     end
 
-    External --> Ingestion
-    Ingestion --> Platform
-    Platform --> Services
-    Services --> Experience
-    Experience -->|Feedback| Services
-    Services -->|Signals| Platform
-    Platform -->|Metadata| Ingestion
+    subgraph Oversight[Observability & Control]
+        Monitor[Unified Monitoring]
+        Alerting[Intelligent Alerting]
+        Audit[Audit Trail Service]
+        FeatureGuard[Feature Guardrails]
+    end
+
+    External --> Integration
+    Integration --> DataLayer
+    Integration --> ModelOps
+    DataLayer --> Services
+    ModelOps --> Services
+    Services --> Delivery
+    Delivery -->|Feedback & Orders| Services
+    Services -->|Performance & Signals| DataLayer
+    ModelOps -->|Lineage & Policies| DataLayer
+    Oversight --> Integration
+    Oversight --> Core
+    Oversight --> Services
+    Oversight --> Delivery
+    Integration -->|Ingestion Metrics| Oversight
+    Services -->|Execution Telemetry| Oversight
