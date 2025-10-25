@@ -170,11 +170,42 @@ class ModuleOrchestrator:
         self,
         *,
         initial_context: Mapping[str, object] | None = None,
+        targets: Iterable[str] | None = None,
     ) -> ModuleRunSummary:
-        """Execute all registered modules according to their dependencies."""
+        """Execute registered modules respecting dependencies and requirements.
+
+        When ``targets`` is provided, only the requested modules and their
+        transitive dependencies are executed. The execution order always follows
+        the resolved dependency graph, ensuring deterministic behaviour.
+        """
 
         context: ModuleState = dict(initial_context or {})
-        order = self._resolve_order()
+        resolved_order = self._resolve_order()
+        required_modules: set[str]
+        if targets is None:
+            required_modules = set(self._definitions)
+        else:
+            requested = list(dict.fromkeys(targets))
+            if not requested:
+                return ModuleRunSummary(order=(), context=dict(context), results={})
+
+            unknown = [name for name in requested if name not in self._definitions]
+            if unknown:
+                missing = ", ".join(sorted(unknown))
+                raise ValueError(f"Unknown module targets requested: {missing}")
+
+            required_modules = set()
+            stack = list(requested)
+            while stack:
+                current = stack.pop()
+                if current in required_modules:
+                    continue
+                required_modules.add(current)
+                stack.extend(self._definitions[current].after)
+
+        order = tuple(
+            name for name in resolved_order if name in required_modules
+        )
         results: dict[str, ModuleRunResult] = {}
 
         for name in order:
