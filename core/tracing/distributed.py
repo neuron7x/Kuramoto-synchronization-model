@@ -22,9 +22,12 @@ LOGGER = logging.getLogger(__name__)
 
 try:  # pragma: no cover - optional dependency import guarded at runtime
     from opentelemetry import context as otel_context
+    from opentelemetry import baggage as otel_baggage
     from opentelemetry import trace
     from opentelemetry.exporter.jaeger.thrift import JaegerExporter
     from opentelemetry.propagate import get_global_textmap, set_global_textmap
+    from opentelemetry.propagators.composite import CompositeTextMapPropagator
+    from opentelemetry.propagators.baggage import BaggagePropagator
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -42,11 +45,14 @@ except Exception as exc:  # pragma: no cover - the dependencies are optional
     )
     otel_context = None  # type: ignore[assignment]
     trace = None  # type: ignore[assignment]
+    otel_baggage = None  # type: ignore[assignment]
     JaegerExporter = None  # type: ignore[assignment]
     Resource = TracerProvider = BatchSpanProcessor = None  # type: ignore[assignment]
     TraceIdRatioBased = None  # type: ignore[assignment]
     Span = SpanKind = None  # type: ignore[assignment]
     TraceContextTextMapPropagator = None  # type: ignore[assignment]
+    CompositeTextMapPropagator = None  # type: ignore[assignment]
+    BaggagePropagator = None  # type: ignore[assignment]
     get_global_textmap = set_global_textmap = None  # type: ignore[assignment]
     _TRACE_AVAILABLE = False
 
@@ -64,7 +70,14 @@ _CORRELATION_ID_FACTORY: Callable[[], str] = _default_correlation_id
 _CORRELATION_HEADER_NAME = "x-correlation-id"
 _CORRELATION_HEADER_LOWER = _CORRELATION_HEADER_NAME.lower()
 _CORRELATION_ATTRIBUTE = "correlation.id"
+_BAGGAGE_HEADER_NAME = "baggage"
+_BAGGAGE_HEADER_LOWER = _BAGGAGE_HEADER_NAME.lower()
 _DEFAULT_TRACER_NAME = "tradepulse.distributed"
+
+
+_LOCAL_BAGGAGE: ContextVar[Mapping[str, str]] = ContextVar(
+    "tradepulse_local_baggage", default={}
+)
 
 
 if _TRACE_AVAILABLE:
@@ -90,9 +103,16 @@ if _TRACE_AVAILABLE:
     _DICT_SETTER = _DictSetter()
     _DICT_GETTER = _DictGetter()
     _W3C_PROPAGATOR = TraceContextTextMapPropagator()
+    _BAGGAGE_PROPAGATOR = BaggagePropagator()
+    _GLOBAL_PROPAGATOR = CompositeTextMapPropagator([
+        _W3C_PROPAGATOR,
+        _BAGGAGE_PROPAGATOR,
+    ])
 else:  # pragma: no cover - tracing stack unavailable
     _DICT_SETTER = _DICT_GETTER = None  # type: ignore[assignment]
     _W3C_PROPAGATOR = None  # type: ignore[assignment]
+    _BAGGAGE_PROPAGATOR = None  # type: ignore[assignment]
+    _GLOBAL_PROPAGATOR = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -118,6 +138,7 @@ class ExtractedContext:
 
     correlation_id: str | None
     trace_context: Any | None
+    baggage: Mapping[str, str] | None
 
 
 def configure_distributed_tracing(
@@ -220,9 +241,9 @@ def _ensure_w3c_propagator() -> None:
     if not (_TRACE_AVAILABLE and get_global_textmap and set_global_textmap):
         return
     current = get_global_textmap()
-    if isinstance(current, TraceContextTextMapPropagator):
+    if current is _GLOBAL_PROPAGATOR:
         return
-    set_global_textmap(_W3C_PROPAGATOR)
+    set_global_textmap(_GLOBAL_PROPAGATOR)
 
 
 def _update_correlation_header(header_name: str) -> None:
@@ -288,8 +309,10 @@ def inject_distributed_context(carrier: MutableMapping[str, str]) -> None:
     if carrier is None:
         raise ValueError("carrier must be provided")
 
-    if _TRACE_AVAILABLE and _W3C_PROPAGATOR and _DICT_SETTER:
-        _W3C_PROPAGATOR.inject(carrier, setter=_DICT_SETTER)
+    if _TRACE_AVAILABLE and _GLOBAL_PROPAGATOR and _DICT_SETTER:
+        _GLOBAL_PROPAGATOR.inject(carrier, setter=_DICT_SETTER)
+    else:
+        _inject_local_baggage(carrier)
 
     correlation_id = current_correlation_id()
     if correlation_id:
@@ -308,6 +331,91 @@ def _first_correlation_value(carrier: Mapping[str, Any]) -> str | None:
     return None
 
 
+def _inject_local_baggage(carrier: MutableMapping[str, str]) -> None:
+    baggage = _LOCAL_BAGGAGE.get()
+    if not baggage:
+        return
+    header_value = ",".join(f"{key}={value}" for key, value in baggage.items())
+    if header_value:
+        carrier[_BAGGAGE_HEADER_NAME] = header_value
+
+
+def _extract_local_baggage(carrier: Mapping[str, Any]) -> Mapping[str, str] | None:
+    baggage_header: str | None = None
+    for key, value in carrier.items():
+        if key.lower() != _BAGGAGE_HEADER_LOWER:
+            continue
+        if isinstance(value, str):
+            baggage_header = value
+        elif isinstance(value, (list, tuple)):
+            if not value:
+                baggage_header = None
+            else:
+                first = value[0]
+                baggage_header = first if isinstance(first, str) else str(first)
+        else:
+            baggage_header = str(value)
+        break
+    if not baggage_header:
+        return None
+    parsed: dict[str, str] = {}
+    for part in baggage_header.split(","):
+        part = part.strip()
+        if not part or "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        parsed[key.strip()] = value.strip()
+    return parsed or None
+
+
+def current_baggage() -> Mapping[str, str]:
+    """Return a shallow copy of baggage items bound to the active context."""
+
+    if _TRACE_AVAILABLE and otel_baggage is not None and otel_context is not None:
+        context = otel_context.get_current()
+        values = otel_baggage.get_all(context=context) or {}
+        return dict(values)
+    return dict(_LOCAL_BAGGAGE.get())
+
+
+def get_baggage_item(key: str, default: str | None = None) -> str | None:
+    """Return a single baggage entry, falling back to ``default`` when missing."""
+
+    return current_baggage().get(key, default)
+
+
+@contextmanager
+def baggage_scope(
+    baggage: Mapping[str, Any] | None = None,
+    **kwargs: Any,
+) -> Iterator[Mapping[str, str]]:
+    """Context manager that temporarily augments the active baggage set."""
+
+    updates = {str(key): str(value) for key, value in (baggage or {}).items()}
+    updates.update({str(key): str(value) for key, value in kwargs.items()})
+    if not updates:
+        yield current_baggage()
+        return
+
+    if _TRACE_AVAILABLE and otel_baggage is not None and otel_context is not None:
+        current = otel_context.get_current()
+        updated_context = current
+        for key, value in updates.items():
+            updated_context = otel_baggage.set_baggage(key, value, context=updated_context)
+        token = otel_context.attach(updated_context)
+        try:
+            yield current_baggage()
+        finally:
+            otel_context.detach(token)
+        return
+
+    token = _LOCAL_BAGGAGE.set({**_LOCAL_BAGGAGE.get(), **updates})
+    try:
+        yield current_baggage()
+    finally:
+        _LOCAL_BAGGAGE.reset(token)
+
+
 def extract_distributed_context(carrier: Mapping[str, Any]) -> ExtractedContext:
     """Extract trace and correlation metadata from ``carrier``."""
 
@@ -315,11 +423,20 @@ def extract_distributed_context(carrier: Mapping[str, Any]) -> ExtractedContext:
         raise ValueError("carrier must be provided")
 
     trace_context = None
-    if _TRACE_AVAILABLE and _W3C_PROPAGATOR and _DICT_GETTER:
-        trace_context = _W3C_PROPAGATOR.extract(carrier, getter=_DICT_GETTER)
+    baggage_values: Mapping[str, str] | None = None
+    if _TRACE_AVAILABLE and _GLOBAL_PROPAGATOR and _DICT_GETTER:
+        trace_context = _GLOBAL_PROPAGATOR.extract(carrier, getter=_DICT_GETTER)
+        if otel_baggage is not None:
+            baggage_values = otel_baggage.get_all(context=trace_context) or None
+    else:
+        baggage_values = _extract_local_baggage(carrier)
 
     correlation_id = _first_correlation_value(carrier)
-    return ExtractedContext(correlation_id=correlation_id, trace_context=trace_context)
+    return ExtractedContext(
+        correlation_id=correlation_id,
+        trace_context=trace_context,
+        baggage=baggage_values,
+    )
 
 
 @contextmanager
@@ -331,12 +448,15 @@ def activate_distributed_context(
     """Activate an extracted distributed context as the current one."""
 
     trace_token = None
+    baggage_token: Token | None = None
     if (
         _TRACE_AVAILABLE
         and otel_context
         and context.trace_context is not None
     ):
         trace_token = otel_context.attach(context.trace_context)
+    if context.baggage and (not _TRACE_AVAILABLE or context.trace_context is None):
+        baggage_token = _LOCAL_BAGGAGE.set(dict(context.baggage))
 
     correlation_token: Token | None = None
     correlation = context.correlation_id
@@ -350,6 +470,8 @@ def activate_distributed_context(
     finally:
         if trace_token is not None and otel_context is not None:
             otel_context.detach(trace_token)
+        if baggage_token is not None:
+            _LOCAL_BAGGAGE.reset(baggage_token)
         if correlation_token is not None:
             _CORRELATION_ID_VAR.reset(correlation_token)
 
@@ -402,10 +524,13 @@ __all__ = [
     "DistributedTracingConfig",
     "ExtractedContext",
     "activate_distributed_context",
+    "baggage_scope",
     "configure_distributed_tracing",
     "correlation_scope",
     "current_correlation_id",
+    "current_baggage",
     "generate_correlation_id",
+    "get_baggage_item",
     "inject_distributed_context",
     "extract_distributed_context",
     "set_correlation_id_generator",
