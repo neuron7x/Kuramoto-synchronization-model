@@ -238,10 +238,13 @@ class RegimeDetector:
             )
             liquidity_scores.append(liquidity_metrics["liquidity_score"])
 
-            _, correlation_metrics = self._detect_correlation(window_returns)
-            correlation_values.append(correlation_metrics["correlation_mean_abs"])
+            if window_returns.shape[1] >= 2:
+                _, correlation_metrics = self._detect_correlation(window_returns)
+                correlation_value = correlation_metrics.get("correlation_mean_abs")
+                if correlation_value is not None and np.isfinite(correlation_value):
+                    correlation_values.append(float(correlation_value))
 
-        if not trend_scores or not liquidity_scores or not correlation_values:
+        if not trend_scores or not liquidity_scores:
             raise ValueError("Not enough data to calibrate regime thresholds.")
 
         abs_trend_quantile = _finite_quantile(np.abs(trend_scores), trending_quantile)
@@ -266,17 +269,25 @@ class RegimeDetector:
             liquidity_high = self.config.liquidity_score_high
             liquidity_low = self.config.liquidity_score_low
 
-        correlation_high = _finite_quantile(correlation_values, correlation_high_quantile)
-        correlation_low = _finite_quantile(correlation_values, correlation_low_quantile)
-        if correlation_high is not None:
-            correlation_high = float(np.clip(correlation_high, 0.0, 1.0))
-        if correlation_low is not None:
-            correlation_low = float(np.clip(correlation_low, 0.0, 1.0))
-        if (
-            correlation_high is None
-            or correlation_low is None
-            or correlation_high < correlation_low
-        ):
+        if correlation_values:
+            correlation_high = _finite_quantile(
+                correlation_values, correlation_high_quantile
+            )
+            correlation_low = _finite_quantile(
+                correlation_values, correlation_low_quantile
+            )
+            if correlation_high is not None:
+                correlation_high = float(np.clip(correlation_high, 0.0, 1.0))
+            if correlation_low is not None:
+                correlation_low = float(np.clip(correlation_low, 0.0, 1.0))
+            if (
+                correlation_high is None
+                or correlation_low is None
+                or correlation_high < correlation_low
+            ):
+                correlation_high = self.config.correlation_high_threshold
+                correlation_low = self.config.correlation_low_threshold
+        else:
             correlation_high = self.config.correlation_high_threshold
             correlation_low = self.config.correlation_low_threshold
 

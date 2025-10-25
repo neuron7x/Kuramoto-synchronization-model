@@ -108,6 +108,17 @@ def test_regime_detector_calibration_requires_history():
         detector.calibrate(prices.iloc[:2])
 
 
+def test_regime_detector_calibration_skips_single_asset_correlation():
+    prices = _synthetic_prices(240, 1)
+    detector = RegimeDetector()
+    original = detector.config
+
+    calibrated = detector.calibrate(prices)
+
+    assert calibrated.correlation_high_threshold == original.correlation_high_threshold
+    assert calibrated.correlation_low_threshold == original.correlation_low_threshold
+
+
 def test_ricci_flow_rebalancer_projected_simplex():
     covariance = pd.DataFrame(
         [[0.04, 0.01, 0.012], [0.01, 0.03, 0.008], [0.012, 0.008, 0.05]],
