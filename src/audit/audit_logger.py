@@ -131,7 +131,19 @@ class AuditLogger:
                 return secret
 
         self._secret_provider: Callable[[], str] = provider
-        self._logger = logger or logging.getLogger("tradepulse.audit")
+        resolved_logger = logger or logging.getLogger("tradepulse.audit")
+        # Ensure audit events are emitted even when the application relies on the
+        # default logging configuration (root logger at WARNING).  Without this
+        # guard the audit logger would inherit the root level and drop ``INFO``
+        # messages, preventing the compliance trail from being captured.  We
+        # only adjust the level when it has not been explicitly configured so
+        # downstream applications can still override it as desired.
+        if (
+            resolved_logger.level == logging.NOTSET
+            and resolved_logger.getEffectiveLevel() > logging.INFO
+        ):
+            resolved_logger.setLevel(logging.INFO)
+        self._logger = resolved_logger
         self._sink = sink
         self._store = store
         self._clock = clock or (lambda: datetime.now(timezone.utc))
