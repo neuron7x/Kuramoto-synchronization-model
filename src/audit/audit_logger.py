@@ -143,6 +143,10 @@ class AuditLogger:
             and resolved_logger.getEffectiveLevel() > logging.INFO
         ):
             resolved_logger.setLevel(logging.INFO)
+        if logger is None and resolved_logger.disabled:
+            resolved_logger.disabled = False
+        if logger is None and not resolved_logger.handlers and not resolved_logger.propagate:
+            resolved_logger.propagate = True
         self._logger = resolved_logger
         self._sink = sink
         self._store = store
