@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT
+alpha: 0.2
+buy_threshold: 0.15
+sell_threshold: -0.15
+state_path: ~/.tradepulse/hncm_state.json
+base_weights:
+  ews: 1.0
+  breakout: 1.0
+  mean_revert: 1.0
+  microstructure: 1.0
