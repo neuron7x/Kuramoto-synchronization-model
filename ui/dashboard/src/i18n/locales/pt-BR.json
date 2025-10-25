@@ -1,0 +1,361 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "pt-BR",
+  "meta": {
+    "reviewerNotes": {
+      "header.subtitle": "Tom crítico: transmitir segurança e clareza sem hipérboles.",
+      "views.orders.subtitle": "Tom crítico: destacar transparência operacional com linguagem direta.",
+      "views.pnl.subtitle": "Tom crítico: enfatizar rigor analítico com otimismo controlado.",
+      "views.positions.subtitle": "Tom crítico: comunicar confiança no controle de risco."
+    }
+  },
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "Ao vivo"
+    },
+    "controls": {
+      "toggle": {
+        "label": "Menu",
+        "open": "Abrir navegação",
+        "close": "Fechar navegação"
+      }
+    },
+    "sections": {
+      "overview": "Visão geral",
+      "positions": "Posições",
+      "orders": "Ordens",
+      "pnl": "PnL e cotações",
+      "signals": "Sinais",
+      "community": "Comunidade"
+    },
+    "locales": {
+      "title": "Idioma",
+      "helper": "Altere o idioma do painel. Preferência é salva no seu navegador.",
+      "items": {
+        "en-US": "Inglês (EUA)",
+        "uk-UA": "Ucraniano",
+        "de-DE": "Alemão",
+        "ja-JP": "Japonês",
+        "es-ES": "Espanhol (Espanha)",
+        "fr-FR": "Francês",
+        "pt-BR": "Português (Brasil)",
+        "zh-CN": "Chinês simplificado",
+        "it-IT": "Italiano",
+        "hi-IN": "Hindi",
+        "pl-PL": "Polonês",
+        "ar-SA": "Árabe"
+      }
+    }
+  },
+  "header": {
+    "title": "Centro de monitoramento TradePulse",
+    "subtitle": "Comando unificado de execução, risco e telemetria.",
+    "tags": [
+      "multiativos",
+      "tempo real"
+    ]
+  },
+  "views": {
+    "orders": {
+      "title": "Ordens",
+      "heading": "Blotter de ordens",
+      "subtitle": "Fluxo em tempo real com progresso de fills e telemetria de execução.",
+      "table": {
+        "columns": {
+          "order_id": "ID da ordem",
+          "symbol": "Símbolo",
+          "side": "Lado",
+          "order_type": "Tipo",
+          "quantity": "Quantidade",
+          "filledQuantity": "Executado",
+          "remaining": "Restante",
+          "progress": "Progresso",
+          "limitPrice": "Preço limite",
+          "avgFillPrice": "Preço médio",
+          "status": "Status",
+          "lastFill": "Último fill"
+        },
+        "badges": {
+          "side": {
+            "buy": "Compra",
+            "sell": "Venda"
+          },
+          "status": {
+            "FILLED": "Executada",
+            "WORKING": "Ativa"
+          }
+        },
+        "empty": "—"
+      }
+    },
+    "pnl": {
+      "title": "PnL e cotações",
+      "heading": "Inteligência de PnL e cotações",
+      "subtitle": "Compare o lucro em tempo real com dados de mercado em streaming.",
+      "cards": {
+        "pnl": {
+          "title": "PnL líquido",
+          "delta": "Δ {value} ({percent})",
+          "runRate": "Ritmo {value}/h"
+        },
+        "quotes": {
+          "title": "Cotações",
+          "delta": "Δ {value} ({percent})"
+        }
+      }
+    },
+    "positions": {
+      "title": "Posições",
+      "heading": "Posições abertas",
+      "subtitle": "Exposições agregadas a partir de fills em tempo real.",
+      "table": {
+        "columns": {
+          "symbol": "Símbolo",
+          "netQuantity": "Quantidade líquida",
+          "avgPrice": "Preço médio",
+          "marketPrice": "Preço de mercado",
+          "exposure": "Exposição",
+          "pnl": "PnL não realizado",
+          "lastFill": "Último fill"
+        },
+        "badges": {
+          "pnl": {
+            "positive": "Ganho {percent}",
+            "negative": "Perda {percent}"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "Sinais",
+      "heading": "Inteligência de sinais",
+      "subtitle": "Supervisione diretivas estratégicas em tempo real com contexto de confiança e expiração.",
+      "cards": {
+        "active": {
+          "title": "Sinais ativos",
+          "total": "{count} ativos",
+          "updated": "Última atualização {time}",
+          "none": "Nenhum sinal disponível"
+        },
+        "bias": {
+          "title": "Viés direcional",
+          "ratio": "Compra {buy} / Venda {sell} / Neutro {flat}",
+          "netLong": "Viés comprador {value}",
+          "netShort": "Viés vendedor {value}"
+        },
+        "conviction": {
+          "title": "Convicção",
+          "average": "Média {value}",
+          "peak": "Máximo {value}"
+        }
+      },
+      "table": {
+        "columns": {
+          "timestamp": "Timestamp",
+          "symbol": "Símbolo",
+          "direction": "Direção",
+          "strength": "Força",
+          "signal_type": "Tipo",
+          "ttl": "TTL",
+          "status": "Status",
+          "metadata": "Contexto"
+        },
+        "badges": {
+          "direction": {
+            "buy": "Compra",
+            "sell": "Venda",
+            "flat": "Neutro"
+          },
+          "status": {
+            "active": "Ativo",
+            "expired": "Expirado"
+          }
+        },
+        "empty": "Nenhum sinal disponível."
+      }
+    },
+    "overview": {
+      "title": "Visão geral",
+      "heading": "Pulso do produto",
+      "subtitle": "Insights de alta fidelidade do GitHub para alinhar go-to-market e engenharia.",
+      "hero": {
+        "eyebrow": "Inteligência GitHub",
+        "title": "Transparência em nível de execução",
+        "subtitle": "Monitore adoção, cadência e prontidão de release diretamente na fonte.",
+        "cta": "Abrir repositório GitHub"
+      },
+      "badges": {
+        "title": "Tração da comunidade",
+        "subtitle": "Sinais essenciais para leituras executivas rápidas.",
+        "stars": {
+          "label": "Stars",
+          "hint": "Momentum 30d {delta}"
+        },
+        "forks": {
+          "label": "Forks",
+          "hint": "{count} forks ativos"
+        },
+        "watchers": {
+          "label": "Observadores",
+          "hint": "Crescimento {percent}"
+        },
+        "contributors": {
+          "label": "Contribuidores",
+          "hint": "{new} novos em 30d"
+        }
+      },
+      "panels": {
+        "release": {
+          "title": "Cadência de releases",
+          "subtitle": "Último tag e velocidade de merges.",
+          "published": "Publicado",
+          "metrics": {
+            "commits": "Commits (30d)",
+            "merged": "PR merged (30d)",
+            "open": "PR abertos"
+          }
+        },
+        "languages": {
+          "title": "Mix de linguagens",
+          "subtitle": "Distribuição dentro do repositório."
+        },
+        "workflows": {
+          "title": "Saúde do CI",
+          "subtitle": "Últimos badges do GitHub Actions."
+        },
+        "community": {
+          "title": "Comunidade open-source",
+          "subtitle": "Programas ativos e sinais de engajamento em tempo real.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "Issues iniciais",
+              "hint": "{count} tarefas abertas para onboarding"
+            },
+            "mentorship": {
+              "label": "Vagas de mentoria",
+              "hint": "{count} vagas guiadas disponíveis"
+            },
+            "response": {
+              "label": "Resposta mediana",
+              "hint": "Mediana {hours}h até resposta do maintainer"
+            },
+            "sponsors": {
+              "label": "Patrocinadores",
+              "hint": "{count} apoiadores ativos"
+            }
+          },
+          "programs": {
+            "title": "Programas ativos",
+            "fallback": "Programa"
+          },
+          "resources": {
+            "title": "Recursos para contribuir",
+            "fallback": "Recurso"
+          }
+        }
+      }
+    },
+    "community": {
+      "title": "Comunidade",
+      "heading": "Hub de impacto comunitário",
+      "subtitle": "Fortaleça o movimento open-source com programas coordenados e métricas em tempo real.",
+      "hero": {
+        "eyebrow": "Impulsionamento comunitário",
+        "title": "Construa impulso com colaboradores ao redor do mundo",
+        "subtitle": "Coordene mentoria, patrocínio e compartilhamento de conhecimento no ecossistema TradePulse.",
+        "cta": "Abrir guia de contribuição",
+        "secondaryCta": "Entrar no chat da comunidade",
+        "fallbackChannel": "Canal da comunidade"
+      },
+      "metrics": {
+        "title": "Indicadores de saúde comunitária",
+        "subtitle": "Medições contínuas do nosso ecossistema de contribuidores.",
+        "maintainers": {
+          "label": "Maintainers principais",
+          "hint": "{count} maintainers lideram os releases"
+        },
+        "sponsors": {
+          "label": "Patrocinadores",
+          "hint": "{count} parceiros financiam {monthly} por mês"
+        },
+        "downloads": {
+          "label": "Downloads mensais",
+          "hint": "{count} instalações em todos os canais"
+        },
+        "response": {
+          "label": "Tempo de resposta mediano",
+          "hint": "Mediana {hours}h de resposta do maintainer"
+        },
+        "goodFirstIssues": {
+          "label": "Issues iniciais",
+          "hint": "{count} tarefas selecionadas para iniciantes"
+        },
+        "mentorship": {
+          "label": "Vagas de mentoria",
+          "hint": "{count} vagas guiadas"
+        }
+      },
+      "programs": {
+        "title": "Programas para contribuidores",
+        "subtitle": "Iniciativas que ativam novos e atuais colaboradores.",
+        "cta": "Ver detalhes",
+        "fallbackTitle": "Programa"
+      },
+      "events": {
+        "title": "Eventos comunitários",
+        "subtitle": "Próximas chamadas, town halls e encontros regionais.",
+        "cta": "Inscrever-se",
+        "fallbackTitle": "Evento"
+      },
+      "resources": {
+        "title": "Recursos para contribuidores",
+        "subtitle": "Mantenha-se alinhado com nossos padrões e melhores práticas.",
+        "cta": "Abrir",
+        "fallbackTitle": "Recurso",
+        "filters": {
+          "all": "Todas",
+          "label": "Filtrar recursos",
+          "helper": "Escolha um foco para refinar a lista de recursos."
+        }
+      },
+      "champions": {
+        "title": "Campeões da comunidade",
+        "subtitle": "Reconhecemos quem gera maior impacto no projeto.",
+        "cta": "Ver perfil",
+        "contributions": "{count} contribuições mergeadas",
+        "fallbackTitle": "Campeão"
+      },
+      "engagement": {
+        "title": "Linha do tempo de engajamento",
+        "subtitle": "Acompanhe contribuições e lançamentos mês a mês.",
+        "fallbackPeriod": "Período recente",
+        "labels": {
+          "contributions": "Contribuições",
+          "newcomers": "Novos contribuidores",
+          "releases": "Lançamentos principais",
+          "highlights": "Destaques"
+        }
+      },
+      "hubs": {
+        "title": "Hubs regionais",
+        "subtitle": "Frentes locais com cobertura follow-the-sun e mentoria.",
+        "fallbackTitle": "Hub",
+        "cta": "Ver guia do hub",
+        "leads": "{count} líderes regionais"
+      },
+      "opportunities": {
+        "title": "Oportunidades de contribuição",
+        "subtitle": "Iniciativas de alto impacto em busca de novos participantes.",
+        "fallbackTitle": "Oportunidade",
+        "cta": "Registrar interesse"
+      }
+    }
+  },
+  "common": {
+    "time": {
+      "last_fill": "Último fill"
+    }
+  }
+}

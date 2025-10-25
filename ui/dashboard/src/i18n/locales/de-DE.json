@@ -7,6 +7,72 @@
       "views.orders.subtitle": "Tone-entscheidend: Transparenz betonen, ohne Übertreibungen.",
       "views.pnl.subtitle": "Tone-entscheidend: Analytische Klarheit ohne spekulative Sprache.",
       "views.positions.subtitle": "Tone-entscheidend: Souveräne Risikoaufsicht hervorheben."
+    },
+    "community": {
+      "title": "Community",
+      "heading": "Community Impact Hub",
+      "subtitle": "Skalieren Sie Open-Source durch koordinierte Programme und aktuelle Community-Kennzahlen.",
+      "hero": {
+        "eyebrow": "Unterstützung der Community",
+        "title": "Gemeinsam Momentum mit Beitragenden weltweit aufbauen",
+        "subtitle": "Koordinieren Sie Mentoring, Sponsoring und Wissensaustausch im TradePulse-Ökosystem.",
+        "cta": "Beitragsleitfaden öffnen",
+        "secondaryCta": "Community-Chat beitreten",
+        "fallbackChannel": "Community-Kanal"
+      },
+      "metrics": {
+        "title": "Kennzahlen zur Community-Gesundheit",
+        "subtitle": "Kontinuierlich gemessen über unser Contributor-Ökosystem.",
+        "maintainers": {
+          "label": "Core-Maintainer",
+          "hint": "{count} Maintainer verantworten Releases"
+        },
+        "sponsors": {
+          "label": "Sponsoren",
+          "hint": "{count} Partner finanzieren {monthly} monatlich"
+        },
+        "downloads": {
+          "label": "Monatliche Downloads",
+          "hint": "{count} Installationen über alle Kanäle"
+        },
+        "response": {
+          "label": "Median der Antwortzeit",
+          "hint": "{hours}h Median-Antwortzeit der Maintainer"
+        },
+        "goodFirstIssues": {
+          "label": "Einstiegs-Issues",
+          "hint": "{count} kuratierte Aufgaben für Neulinge"
+        },
+        "mentorship": {
+          "label": "Mentoring-Plätze",
+          "hint": "{count} verfügbare Mentoring-Slots"
+        }
+      },
+      "programs": {
+        "title": "Programme für Beitragende",
+        "subtitle": "Initiativen, die neue und bestehende Beitragende aktivieren.",
+        "cta": "Details ansehen",
+        "fallbackTitle": "Programm"
+      },
+      "events": {
+        "title": "Community-Events",
+        "subtitle": "Bevorstehende Calls, Townhalls und regionale Treffen.",
+        "cta": "Registrieren",
+        "fallbackTitle": "Event"
+      },
+      "resources": {
+        "title": "Ressourcen für Beitragende",
+        "subtitle": "Bleiben Sie im Einklang mit unseren Standards und Best Practices.",
+        "cta": "Öffnen",
+        "fallbackTitle": "Ressource"
+      },
+      "champions": {
+        "title": "Community-Champions",
+        "subtitle": "Wir würdigen führende Beitragende, die das Projekt voranbringen.",
+        "cta": "Profil ansehen",
+        "contributions": "{count} gemergte Beiträge",
+        "fallbackTitle": "Champion"
+      }
     }
   },
   "nav": {
@@ -15,12 +81,38 @@
     "badges": {
       "live": "Live"
     },
+    "controls": {
+      "toggle": {
+        "label": "Menü",
+        "open": "Navigation öffnen",
+        "close": "Navigation schließen"
+      }
+    },
     "sections": {
       "overview": "Übersicht",
       "positions": "Positionen",
       "orders": "Aufträge",
       "pnl": "PnL & Kurse",
-      "signals": "Signale"
+      "signals": "Signale",
+      "community": "Community"
+    },
+    "locales": {
+      "title": "Sprache",
+      "helper": "Wechseln Sie die Dashboard-Sprache. Einstellung wird im Browser gespeichert.",
+      "items": {
+        "en-US": "Englisch (USA)",
+        "uk-UA": "Ukrainisch",
+        "de-DE": "Deutsch",
+        "ja-JP": "Japanisch",
+        "es-ES": "Spanisch (Spanien)",
+        "fr-FR": "Französisch",
+        "pt-BR": "Portugiesisch (Brasilien)",
+        "zh-CN": "Vereinfachtes Chinesisch",
+        "it-IT": "Italienisch",
+        "hi-IN": "Hindi",
+        "pl-PL": "Polnisch",
+        "ar-SA": "Arabisch"
+      }
     }
   },
   "header": {
@@ -198,6 +290,69 @@
         "workflows": {
           "title": "CI-Gesundheit",
           "subtitle": "Aktuelle GitHub-Actions-Badges."
+        },
+        "community": {
+          "title": "Open-Source-Community",
+          "subtitle": "Aktive Förderprogramme und Engagement-Signale in Echtzeit.",
+          "metrics": {
+            "goodFirstIssues": {
+              "label": "Einstiegs-Issues",
+              "hint": "{count} offene Aufgaben für neue Beitragende"
+            },
+            "mentorship": {
+              "label": "Mentoring-Plätze",
+              "hint": "{count} verfügbare Mentoring-Slots"
+            },
+            "response": {
+              "label": "Median der Antwortzeit",
+              "hint": "Median {hours}h bis Maintainer-Antwort"
+            },
+            "sponsors": {
+              "label": "Sponsoren",
+              "hint": "{count} aktive Unterstützer"
+            }
+          },
+          "programs": {
+            "title": "Aktive Programme",
+            "fallback": "Programm"
+          },
+          "resources": {
+            "title": "Ressourcen für Beitragende",
+            "fallback": "Ressource"
+          }
+        }
+      }
+    },
+    "community": {
+      "engagement": {
+        "title": "Engagement-Zeitverlauf",
+        "subtitle": "Verfolgen Sie Beiträge und Release-Aktivitäten Monat für Monat.",
+        "fallbackPeriod": "Aktueller Zeitraum",
+        "labels": {
+          "contributions": "Beiträge",
+          "newcomers": "Neue Mitwirkende",
+          "releases": "Wichtige Releases",
+          "highlights": "Highlights"
+        }
+      },
+      "hubs": {
+        "title": "Regionale Hubs",
+        "subtitle": "Lokale Arbeitsgruppen mit Follow-the-Sun-Betreuung und Mentoring.",
+        "fallbackTitle": "Hub",
+        "cta": "Hub-Leitfaden anzeigen",
+        "leads": "{count} regionale Leads"
+      },
+      "opportunities": {
+        "title": "Beitragsmöglichkeiten",
+        "subtitle": "Priorisierte Initiativen, die aktiv Verstärkung suchen.",
+        "fallbackTitle": "Initiative",
+        "cta": "Interesse bekunden"
+      },
+      "resources": {
+        "filters": {
+          "all": "Alle",
+          "label": "Ressourcen filtern",
+          "helper": "Wählen Sie einen Schwerpunkt, um die Ressourcenliste einzugrenzen."
         }
       }
     }

@@ -6,12 +6,28 @@ import enUS from './locales/en-US.json' assert { type: 'json' };
 import ukUA from './locales/uk-UA.json' assert { type: 'json' };
 import deDE from './locales/de-DE.json' assert { type: 'json' };
 import jaJP from './locales/ja-JP.json' assert { type: 'json' };
+import esES from './locales/es-ES.json' assert { type: 'json' };
+import frFR from './locales/fr-FR.json' assert { type: 'json' };
+import ptBR from './locales/pt-BR.json' assert { type: 'json' };
+import zhCN from './locales/zh-CN.json' assert { type: 'json' };
+import itIT from './locales/it-IT.json' assert { type: 'json' };
+import hiIN from './locales/hi-IN.json' assert { type: 'json' };
+import plPL from './locales/pl-PL.json' assert { type: 'json' };
+import arSA from './locales/ar-SA.json' assert { type: 'json' };
 
 const catalog = {
   'en-US': enUS,
   'uk-UA': ukUA,
   'de-DE': deDE,
   'ja-JP': jaJP,
+  'es-ES': esES,
+  'fr-FR': frFR,
+  'pt-BR': ptBR,
+  'zh-CN': zhCN,
+  'it-IT': itIT,
+  'hi-IN': hiIN,
+  'pl-PL': plPL,
+  'ar-SA': arSA,
 };
 
 function flattenKey(key) {

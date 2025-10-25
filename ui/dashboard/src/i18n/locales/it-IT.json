@@ -1,0 +1,149 @@
+{
+  "$schema": "../../../../schemas/localization/translation.schema.json",
+  "locale": "it-IT",
+  "nav": {
+    "brand": "TradePulse",
+    "title": "TradePulse",
+    "badges": {
+      "live": "Live"
+    },
+    "controls": {
+      "toggle": {
+        "label": "Menu",
+        "open": "Apri navigazione",
+        "close": "Chiudi navigazione"
+      }
+    },
+    "sections": {
+      "overview": "Panoramica",
+      "positions": "Posizioni",
+      "orders": "Ordini",
+      "pnl": "PnL e Quotazioni",
+      "signals": "Segnali",
+      "community": "Comunità"
+    },
+    "locales": {
+      "title": "Lingua",
+      "helper": "Cambia la lingua del dashboard. La preferenza viene salvata nel browser.",
+      "items": {
+        "en-US": "Inglese (USA)",
+        "uk-UA": "Ucraino",
+        "de-DE": "Tedesco",
+        "ja-JP": "Giapponese",
+        "es-ES": "Spagnolo (Spagna)",
+        "fr-FR": "Francese",
+        "pt-BR": "Portoghese (Brasile)",
+        "zh-CN": "Cinese semplificato",
+        "it-IT": "Italiano",
+        "hi-IN": "Hindi",
+        "pl-PL": "Polacco",
+        "ar-SA": "Arabo"
+      }
+    }
+  },
+  "header": {
+    "title": "Centro di monitoraggio TradePulse",
+    "subtitle": "Controllo unificato su esecuzione, rischio e telemetria.",
+    "tags": [
+      "multi-asset",
+      "tempo reale"
+    ]
+  },
+  "views": {
+    "community": {
+      "title": "Comunità",
+      "heading": "Centro impatto comunitario",
+      "subtitle": "Fai crescere il movimento open source con programmi di abilitazione e metriche in tempo reale.",
+      "hero": {
+        "eyebrow": "Abilitazione community",
+        "title": "Costruisci slancio con contributor globali",
+        "subtitle": "Coordina mentorship, sponsorship e condivisione delle conoscenze nell’ecosistema TradePulse.",
+        "cta": "Apri il playbook di contribuzione",
+        "secondaryCta": "Unisciti alla chat della community",
+        "fallbackChannel": "Canale community"
+      },
+      "metrics": {
+        "title": "Metriche di salute della community",
+        "subtitle": "Monitoraggio continuo dell’ecosistema dei contributor.",
+        "maintainers": {
+          "label": "Maintainer core",
+          "hint": "{count} maintainer che guidano le release"
+        },
+        "sponsors": {
+          "label": "Sponsor",
+          "hint": "{count} partner attivi con {monthly} mensili"
+        },
+        "downloads": {
+          "label": "Download mensili",
+          "hint": "{count} installazioni sui canali"
+        },
+        "response": {
+          "label": "Tempo di risposta medio",
+          "hint": "Mediana {hours}h delle risposte dei maintainer"
+        },
+        "goodFirstIssues": {
+          "label": "Issue per iniziare",
+          "hint": "{count} ticket curati per i nuovi arrivi"
+        },
+        "mentorship": {
+          "label": "Posti mentorship",
+          "hint": "{count} percorsi guidati di onboarding"
+        }
+      },
+      "programs": {
+        "title": "Programmi per contributor",
+        "subtitle": "Iniziative per attivare nuovi e storici contributor.",
+        "cta": "Vedi dettagli",
+        "fallbackTitle": "Programma"
+      },
+      "events": {
+        "title": "Eventi community",
+        "subtitle": "Prossimi sync, town hall e incontri locali.",
+        "cta": "Registrati",
+        "fallbackTitle": "Evento"
+      },
+      "resources": {
+        "title": "Risorse per contributor",
+        "subtitle": "Rimani allineato con standard e best practice.",
+        "cta": "Apri",
+        "fallbackTitle": "Risorsa",
+        "filters": {
+          "all": "Tutti",
+          "label": "Filtra risorse",
+          "helper": "Scegli un ambito per affinare l’elenco delle risorse."
+        }
+      },
+      "champions": {
+        "title": "Campioni della community",
+        "subtitle": "Riconosciamo i contributor che generano impatto nel progetto.",
+        "cta": "Vedi profilo",
+        "contributions": "{count} contributi accettati",
+        "fallbackTitle": "Campione"
+      },
+      "engagement": {
+        "title": "Cronologia di engagement",
+        "subtitle": "Misura contributi e rilasci mese su mese.",
+        "fallbackPeriod": "Periodo recente",
+        "labels": {
+          "contributions": "Contributi",
+          "newcomers": "Nuovi contributor",
+          "releases": "Release principali",
+          "highlights": "In evidenza"
+        }
+      },
+      "hubs": {
+        "title": "HUB regionali",
+        "subtitle": "Gruppi locali con copertura follow-the-sun e mentoring.",
+        "fallbackTitle": "Hub",
+        "cta": "Vedi guida hub",
+        "leads": "{count} referenti regionali"
+      },
+      "opportunities": {
+        "title": "Opportunità di contribuzione",
+        "subtitle": "Iniziative ad alto impatto che cercano nuovi contributor.",
+        "fallbackTitle": "Opportunità",
+        "cta": "Manifesta interesse"
+      }
+    }
+  }
+}

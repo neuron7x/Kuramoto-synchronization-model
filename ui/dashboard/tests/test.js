@@ -11,6 +11,7 @@ import {
   formatPercent,
   createRouter,
   renderOverviewView,
+  renderCommunityView,
 } from '../src/core/index.js';
 import {
   TRACEPARENT_HEADER,
@@ -25,6 +26,7 @@ import { renderSignalsView } from '../src/views/signals.js';
 import { renderAreaChart } from '../src/components/area_chart.js';
 import { createLiveTable, LiveTable } from '../src/components/live_table.js';
 import { escapeHtml, formatNumber, formatTimestamp } from '../src/core/formatters.js';
+import { supportedLocales } from '../src/i18n/config.js';
 
 // --- Core strategy + reporting utilities ------------------------------------------------------
 
@@ -104,6 +106,11 @@ assert.ok(exportedMarkdown.includes('volatility'));
 assert.strictEqual(escapeHtml('<script>'), '&lt;script&gt;');
 assert.strictEqual(formatNumber(1250.567, { maximumFractionDigits: 1 }), '1,250.6');
 assert.strictEqual(formatTimestamp(0), '1970-01-01 00:00:00.000 UTC');
+assert.ok(
+  ['it-IT', 'hi-IN', 'pl-PL', 'ar-SA'].every((code) => supportedLocales.includes(code)),
+  'supported locales should include newly added language packs',
+);
+assert.ok(supportedLocales.length >= 12, 'supported locales should list expanded catalogue');
 
 console.log('core reporting tests passed');
 
@@ -210,6 +217,132 @@ const ticks = [
   },
 ];
 
+const communityProfile = {
+  metrics: {
+    maintainers: 14,
+    sponsors: 22,
+    sponsorshipMonthly: 6400,
+    monthlyDownloads: 185000,
+    responseHours: 5.2,
+    goodFirstIssues: 26,
+    mentorshipSeats: 12,
+  },
+  engagement: [
+    {
+      period: '2025-01',
+      contributions: 320,
+      newcomers: 28,
+      releases: 2,
+      highlights: ['Playbook v2 shortened onboarding to 4 days.'],
+    },
+    {
+      period: '2025-02',
+      contributions: 344,
+      newcomers: 32,
+      releases: 3,
+      highlights: ['Regional hubs launched async review shifts.'],
+    },
+  ],
+  programs: [
+    {
+      name: 'Mentorship sprint',
+      description: 'Six-week track pairing maintainers with first-time contributors.',
+      url: 'https://tradepulse.dev/community/mentorship',
+    },
+    {
+      name: 'Observability guild',
+      description: 'Weekly office hours focused on instrumentation and tracing contributions.',
+      url: 'https://tradepulse.dev/community/observability-guild',
+    },
+  ],
+  events: [
+    {
+      name: 'Community call Q1',
+      date: '2025-02-12T16:00:00Z',
+      type: 'Virtual',
+      location: 'Online',
+      url: 'https://tradepulse.dev/events/community-call',
+    },
+    {
+      name: 'Contributor summit',
+      date: '2025-04-18T09:00:00Z',
+      type: 'Hybrid',
+      location: 'Barcelona / Remote',
+      url: 'https://tradepulse.dev/events/summit',
+    },
+  ],
+  resources: [
+    {
+      label: 'Contribution playbook',
+      description: 'Step-by-step onboarding with tooling, workflows, and review expectations.',
+      url: 'https://tradepulse.dev/docs/contribute',
+      category: 'Guides',
+    },
+    {
+      label: 'Design system',
+      description: 'Reusable tokens, components, and accessibility guidance.',
+      url: 'https://tradepulse.dev/design-system',
+      category: 'Design',
+    },
+    {
+      label: 'Incident response runbook',
+      description: 'Checklist for coordinating responders and status updates.',
+      url: 'https://tradepulse.dev/ops/incident',
+      category: 'Operations',
+    },
+  ],
+  hubs: [
+    {
+      region: 'North America',
+      leads: 6,
+      focus: 'Quant research enablement and governance.',
+      location: 'Remote / NYC',
+      url: 'https://tradepulse.dev/community/hubs/na',
+    },
+    {
+      region: 'EMEA',
+      leads: 4,
+      focus: 'Localization reviews and regulatory readiness.',
+      location: 'Warsaw / Remote',
+      url: 'https://tradepulse.dev/community/hubs/emea',
+    },
+  ],
+  opportunities: [
+    {
+      title: 'Compliance automation squad',
+      scope: 'Risk & controls',
+      description: 'Ship analytics to visualise real-time exposure adjustments.',
+      url: 'https://tradepulse.dev/community/opportunities/compliance',
+    },
+    {
+      title: 'Mobile UX guild',
+      scope: 'Product design',
+      description: 'Adapt dashboards for native mobile workflows.',
+      url: 'https://tradepulse.dev/community/opportunities/mobile',
+    },
+  ],
+  champions: [
+    {
+      name: 'Ana López',
+      contributions: 48,
+      specialty: 'Data infrastructure',
+      url: 'https://github.com/ana-lopez',
+    },
+    {
+      name: 'Kenji Sato',
+      contributions: 36,
+      specialty: 'Execution engine',
+      url: 'https://github.com/kenjisato',
+    },
+  ],
+  channels: [
+    { label: 'Slack', url: 'https://chat.tradepulse.dev' },
+    { label: 'GitHub Discussions', url: 'https://github.com/tradepulse-ai/tradepulse/discussions' },
+  ],
+  primaryCta: { label: 'Contribution playbook', url: 'https://tradepulse.dev/docs/contribute' },
+  secondaryCta: { url: 'https://chat.tradepulse.dev' },
+};
+
 const githubOverview = {
   organization: 'TradePulse',
   repository: 'TradePulse',
@@ -244,6 +377,7 @@ const githubOverview = {
       url: 'https://github.com/tradepulse-ai/tradepulse/actions/workflows/quality.yml',
     },
   ],
+  community: communityProfile,
 };
 
 const pnlPoints = [
@@ -376,6 +510,7 @@ const dashboardView = renderDashboard({
   orders: { orders: orderEvents, fills: fillEvents },
   pnl: { pnlPoints, quotes },
   signals: { signals: signalEvents },
+  community: { community: communityProfile, github: githubOverview },
 });
 
 assert.ok(dashboardView.html.includes('PnL &amp; Quotes'), 'navigation should expose pnl route');
@@ -385,8 +520,9 @@ assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose
 assert.strictEqual(dashboardView.route, 'positions');
 
 const navigationLinks = (dashboardView.html.match(/<a class="tp-nav__link/g) || []).length;
-assert.strictEqual(navigationLinks, 5, 'dashboard should render all navigation links');
+assert.strictEqual(navigationLinks, 6, 'dashboard should render all navigation links');
 assert.ok(dashboardView.html.includes('Signals'), 'navigation should expose signals route');
+assert.ok(dashboardView.html.includes('Community'), 'navigation should expose community route');
 assert.ok(dashboardView.html.includes('Overview'), 'navigation should surface overview route');
 
 const applePosition = dashboardView.view.rows.find((row) => row.symbol === 'AAPL');
@@ -420,6 +556,8 @@ assert.ok(overviewView.html.includes('4,820'), 'overview view should format star
 assert.ok(overviewView.html.includes('tp-github-workflow'), 'overview view should surface GitHub badges');
 assert.ok(overviewView.html.includes('Python'), 'overview view should list dominant languages');
 assert.ok(!overviewView.html.includes('javascript:'), 'overview view should sanitize external links');
+assert.ok(overviewView.html.includes('Open-source community'), 'overview view should include community spotlight panel');
+assert.ok(overviewView.html.includes('Mentorship seats'), 'community spotlight should describe mentorship capacity');
 assert.strictEqual(overviewView.github, githubOverview);
 
 const overviewDashboard = renderDashboard({
@@ -428,9 +566,27 @@ const overviewDashboard = renderDashboard({
   orders: { orders: orderEvents, fills: fillEvents },
   pnl: { pnlPoints, quotes },
   signals: { signals: signalEvents },
+  community: { community: communityProfile, github: githubOverview },
 });
 assert.strictEqual(overviewDashboard.route, 'overview', 'dashboard default route should highlight overview view');
 assert.ok(overviewDashboard.html.includes('tp-hero'), 'overview dashboard render should include hero section');
+assert.ok(overviewDashboard.html.includes('data-role="locale-select"'), 'dashboard should expose locale switcher control');
+assert.ok(overviewDashboard.html.includes('data-role="locale-config"'), 'dashboard should embed locale configuration payload');
+assert.ok(overviewDashboard.html.includes('data-locale="en-US"'), 'dashboard should tag root element with the active locale');
+assert.ok(overviewDashboard.html.includes('dir="ltr"'), 'dashboard should surface locale reading direction');
+
+const communityView = renderCommunityView({ community: communityProfile, github: githubOverview });
+assert.ok(communityView.html.includes('Community Impact Center'), 'community view should include headline');
+assert.ok(communityView.html.includes('185,000'), 'community metrics should format download counts');
+assert.ok(communityView.html.includes('Mentorship sprint'), 'community view should list active programs');
+assert.ok(communityView.html.includes('Ana López'), 'community view should highlight champions');
+assert.ok(communityView.html.includes('Engagement timeline'), 'community view should render engagement timeline section');
+assert.ok(communityView.html.includes('Regional hubs'), 'community view should surface regional hubs section');
+assert.ok(communityView.html.includes('Contribution opportunities'), 'community view should list contribution opportunities');
+assert.ok(communityView.html.includes('data-role="resource-filters"'), 'community view should render resource filters');
+assert.ok(communityView.html.includes('data-filter="guides"'), 'resource filters should include normalised categories');
+assert.ok(!communityView.html.includes('javascript:'), 'community view should sanitise external links');
+assert.strictEqual(communityView.community, communityProfile);
 
 const router = createRouter({
   defaultRoute: 'orders',
