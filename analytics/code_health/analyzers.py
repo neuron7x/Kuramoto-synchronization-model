@@ -62,11 +62,14 @@ class PythonFileAnalyzer:
     def iter_functions(self) -> Iterator[ParsedFunction]:
         tree = self.parse()
         module_name = self.path.stem
-        stack: List[str] = []
 
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                qualname = ".".join([module_name, *stack, node.name]) if stack else f"{module_name}.{node.name}"
+        def traverse(node: ast.AST, stack: List[str]) -> Iterator[ParsedFunction]:
+            # Update stack context before visiting children so nested classes/functions
+            # inherit the appropriate qualified name prefix.
+            if isinstance(node, ast.ClassDef):
+                stack = [*stack, node.name]
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                qualname = ".".join([module_name, *stack, node.name])
                 complexity = self._compute_cyclomatic_complexity(node)
                 start_line = getattr(node, "lineno", 0)
                 end_line = self._infer_end_line(node)
@@ -80,25 +83,12 @@ class PythonFileAnalyzer:
                     cyclomatic_complexity=complexity,
                     calls=calls,
                 )
-            elif isinstance(node, ast.ClassDef):
-                stack.append(node.name)
-                for child in node.body:
-                    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        qualname = ".".join([module_name, *stack, child.name])
-                        complexity = self._compute_cyclomatic_complexity(child)
-                        start_line = getattr(child, "lineno", 0)
-                        end_line = self._infer_end_line(child)
-                        calls = self._collect_calls(child)
-                        yield ParsedFunction(
-                            name=f"{node.name}.{child.name}",
-                            qualname=qualname,
-                            node=child,
-                            start_line=start_line,
-                            end_line=end_line,
-                            cyclomatic_complexity=complexity,
-                            calls=calls,
-                        )
-                stack.pop()
+                stack = [*stack, node.name]
+
+            for child in ast.iter_child_nodes(node):
+                yield from traverse(child, stack)
+
+        yield from traverse(tree, [])
 
     def _compute_cyclomatic_complexity(self, node: ast.AST) -> int:
         complexity = 1
