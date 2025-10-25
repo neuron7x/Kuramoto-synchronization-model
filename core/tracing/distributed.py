@@ -345,7 +345,16 @@ def _extract_local_baggage(carrier: Mapping[str, Any]) -> Mapping[str, str] | No
     for key, value in carrier.items():
         if key.lower() != _BAGGAGE_HEADER_LOWER:
             continue
-        baggage_header = value if isinstance(value, str) else str(value)
+        if isinstance(value, str):
+            baggage_header = value
+        elif isinstance(value, (list, tuple)):
+            if not value:
+                baggage_header = None
+            else:
+                first = value[0]
+                baggage_header = first if isinstance(first, str) else str(first)
+        else:
+            baggage_header = str(value)
         break
     if not baggage_header:
         return None
