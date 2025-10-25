@@ -19,7 +19,12 @@ from src.data.ingestion_service import (
 
 
 def _tick(
-    ts: datetime, price: float, *, symbol: str = "BTCUSD", venue: str = "BINANCE"
+    ts: datetime,
+    price: float,
+    *,
+    symbol: str = "BTCUSD",
+    venue: str = "BINANCE",
+    instrument_type: InstrumentType = InstrumentType.SPOT,
 ) -> Ticker:
     return Ticker.create(
         symbol=symbol,
@@ -27,7 +32,7 @@ def _tick(
         price=price,
         timestamp=ts,
         volume=1.0,
-        instrument_type=InstrumentType.SPOT,
+        instrument_type=instrument_type,
     )
 
 
@@ -72,6 +77,28 @@ def test_cache_ticks_validates_symbol_and_venue() -> None:
     with pytest.raises(ValueError):
         service.cache_ticks(
             ticks, layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+        )
+
+
+def test_cache_ticks_rejects_mixed_instrument_types() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [
+        _tick(base, 100.0, instrument_type=InstrumentType.SPOT),
+        _tick(
+            base.replace(minute=1),
+            101.0,
+            instrument_type=InstrumentType.FUTURES,
+        ),
+    ]
+    service = DataIngestionCacheService()
+
+    with pytest.raises(ValueError, match="instrument type"):
+        service.cache_ticks(
+            ticks,
+            layer="raw",
+            symbol="BTCUSD",
+            venue="BINANCE",
+            timeframe="1min",
         )
 
 
