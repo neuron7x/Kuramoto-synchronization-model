@@ -100,7 +100,7 @@ test\:fast-suite:
 	pytest tests/ -m "not slow and not heavy_math and not nightly"
 
 .PHONY: test\:fast
-test\:fast: test\:fast-sanity
+test\:fast: test\:fast-suite
 
 .PHONY: test\:all
 test\:all:
