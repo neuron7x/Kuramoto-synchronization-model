@@ -243,7 +243,19 @@ class HNCMConsensusAdapter:
         learned_weights: Optional[Mapping[str, float]] = None,
     ) -> ConsensusDecision:
         v = tuple(votes)
-        score, weights = self.aggregate(v, learned_weights=learned_weights, override_weights=override_weights)
+        persisted = self.learned_weights()
+        if learned_weights is None:
+            effective_learned = persisted
+        else:
+            effective_learned = dict(persisted)
+            for agent, weight in learned_weights.items():
+                effective_learned[agent] = float(weight)
+
+        score, weights = self.aggregate(
+            v,
+            learned_weights=effective_learned,
+            override_weights=override_weights,
+        )
         action = self.score_to_action(score)
         conf = self.confidence_from_score(score)
         return ConsensusDecision(action=action, score=score, confidence=conf, weights=weights, votes=v)
