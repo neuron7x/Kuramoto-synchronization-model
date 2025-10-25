@@ -31,6 +31,9 @@ if TYPE_CHECKING:  # pragma: no cover - imported for typing only
 _LOGGER: Final = logging.getLogger(__name__)
 
 
+T = TypeVar("T")
+
+
 class _RedisPayload(TypedDict):
     """Typed payload stored in Redis for quick retrieval."""
 
@@ -183,6 +186,7 @@ class RealTimeFeatureStore:
         *,
         default_ttl: timedelta = timedelta(milliseconds=750),
         stream_maxlen: int = 50_000,
+        write_retry_attempts: int = 3,
     ) -> None:
         self._redis = redis
         self._db_pool = timescale_pool
@@ -192,6 +196,7 @@ class RealTimeFeatureStore:
         self._registry_ready = asyncio.Event()
         self._microcache = _TTLCache()
         self._registered_descriptors: dict[tuple[str, str, str], FeatureDescriptor] = {}
+        self._write_retry_attempts = max(1, write_retry_attempts)
 
     async def initialise(self) -> None:
         """Ensure metadata tables exist in TimescaleDB."""
@@ -278,11 +283,35 @@ class RealTimeFeatureStore:
         redis_payload = record.to_redis_payload()
         ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
 
-        # Write-through strategy ensures online/offline parity.
-        await asyncio.gather(
-            self._write_to_redis(descriptor, entity_id, redis_payload, ttl_ms),
-            self._write_to_timescale(record),
+        timescale_applied = await self._execute_with_retries(
+            lambda: self._write_to_timescale(record),
+            attempts=self._write_retry_attempts,
+            op_name="timescale write",
         )
+        try:
+            await self._execute_with_retries(
+                lambda: self._write_to_redis(descriptor, entity_id, redis_payload, ttl_ms),
+                attempts=self._write_retry_attempts,
+                op_name="redis write",
+            )
+        except Exception:
+            if timescale_applied:
+                try:
+                    await self._delete_from_timescale(record)
+                except Exception as rollback_error:  # pragma: no cover - defensive logging
+                    _LOGGER.error(
+                        "Failed to rollback Timescale write for %s/%s after Redis error: %s",  # noqa: TRY400
+                        descriptor.name,
+                        entity_id,
+                        rollback_error,
+                    )
+                else:
+                    _LOGGER.warning(
+                        "Rolled back Timescale write for %s/%s after Redis error",  # noqa: TRY400
+                        descriptor.name,
+                        entity_id,
+                    )
+            raise
         await self._microcache.set(descriptor.cache_key(entity_id), record, ttl_ms)
         return record
 
@@ -301,10 +330,10 @@ class RealTimeFeatureStore:
             pipe.set(cache_key, payload_json, px=ttl_ms)
             await pipe.execute()
 
-    async def _write_to_timescale(self, record: FeatureRecord) -> None:
+    async def _write_to_timescale(self, record: FeatureRecord) -> bool:
         lineage_json = json.dumps(record.lineage.asdict()) if record.lineage else None
         async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
-            await conn.execute(
+            command_tag = await conn.execute(
                 """
                 INSERT INTO feature_values (feature_name, feature_version, entity_id, event_ts, value, lineage)
                 VALUES ($1, $2, $3, $4, $5, $6)
@@ -317,6 +346,51 @@ class RealTimeFeatureStore:
                 json.dumps(record.value),
                 lineage_json,
             )
+        try:
+            affected = int(command_tag.rsplit(" ", 1)[-1])
+            return affected > 0
+        except (ValueError, IndexError):  # pragma: no cover - defensive guard
+            return command_tag.endswith("1")
+
+    async def _delete_from_timescale(self, record: FeatureRecord) -> None:
+        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+            await conn.execute(
+                """
+                DELETE FROM feature_values
+                WHERE feature_name = $1 AND feature_version = $2 AND entity_id = $3 AND event_ts = $4;
+                """,
+                record.descriptor.name,
+                record.descriptor.version,
+                record.entity_id,
+                record.event_ts,
+            )
+
+    async def _execute_with_retries(
+        self,
+        operation: Callable[[], Awaitable[T]],
+        *,
+        attempts: int,
+        op_name: str,
+    ) -> T:
+        if attempts <= 0:
+            raise ValueError("attempts must be positive")
+        last_error: Exception | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                return await operation()
+            except Exception as exc:
+                last_error = exc
+                _LOGGER.warning(
+                    "%s attempt %s/%s failed: %s",
+                    op_name,
+                    attempt,
+                    attempts,
+                    exc,
+                )
+                if attempt != attempts:
+                    await asyncio.sleep(min(0.1 * attempt, 0.5))
+        assert last_error is not None
+        raise last_error
 
     async def get_feature(self, descriptor: FeatureDescriptor, entity_id: str) -> FeatureRecord | None:
         """Retrieve the most recent feature value for an entity."""
@@ -524,11 +598,6 @@ class RealTimeFeatureStore:
                 records.append(record)
                 _LOGGER.debug("Consumed stream entry %s for %s", entry_id, descriptor.name)
         return records
-
-
-T = TypeVar("T")
-
-
 def _chunked(iterable: Sequence[T], size: int) -> Iterable[Sequence[T]]:
     if size <= 0:
         raise ValueError("chunk size must be positive")
