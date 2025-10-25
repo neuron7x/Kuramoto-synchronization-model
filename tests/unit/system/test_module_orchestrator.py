@@ -56,6 +56,64 @@ def test_orchestrator_executes_modules_in_dependency_order() -> None:
     assert summary.context["summary"] == 12
 
 
+def test_orchestrator_runs_targeted_modules_with_dependencies() -> None:
+    orchestrator = ModuleOrchestrator()
+    execution_trace: deque[str] = deque()
+
+    def load(state: Mapping[str, object]) -> Mapping[str, object]:
+        execution_trace.append("load")
+        return {"raw": [1, 2, 3]}
+
+    def transform(state: Mapping[str, object]) -> Mapping[str, object]:
+        execution_trace.append("transform")
+        values = state["raw"]
+        return {"processed": [value + 1 for value in values]}  # type: ignore[index]
+
+    def export(state: Mapping[str, object]) -> Mapping[str, object] | None:
+        execution_trace.append("export")
+        assert "processed" in state
+        return None
+
+    def audit(state: Mapping[str, object]) -> Mapping[str, object]:
+        execution_trace.append("audit")
+        return {"audited": True}
+
+    orchestrator.register("load", load, provides=["raw"])
+    orchestrator.register(
+        "transform",
+        transform,
+        after=["load"],
+        requires=["raw"],
+        provides=["processed"],
+    )
+    orchestrator.register(
+        "export",
+        export,
+        after=["transform"],
+        requires=["processed"],
+    )
+    orchestrator.register(
+        "audit",
+        audit,
+        after=["load"],
+        requires=["raw"],
+    )
+
+    summary = orchestrator.run(targets=["export"])
+
+    assert summary.order == ("load", "transform", "export")
+    assert tuple(summary.results) == ("load", "transform", "export")
+    assert execution_trace == deque(["load", "transform", "export"])
+
+
+def test_orchestrator_rejects_unknown_targets() -> None:
+    orchestrator = ModuleOrchestrator()
+    orchestrator.register("alpha", lambda state: {})
+
+    with pytest.raises(ValueError, match="Unknown module targets requested: beta"):
+        orchestrator.run(targets=["beta"])
+
+
 def test_orchestrator_detects_cycles() -> None:
     orchestrator = ModuleOrchestrator()
     orchestrator.register("first", lambda state: state, after=["second"])
