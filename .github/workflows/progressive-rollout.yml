@@ -443,6 +443,7 @@ jobs:
     name: Automated Rollback
     if: needs.preflight.outputs.can_deploy == 'true' && failure()
     needs:
+      - preflight
       - blue-green
       - traffic-shadow
       - canary
