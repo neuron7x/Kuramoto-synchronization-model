@@ -118,14 +118,17 @@ class RabbitMQMessageBroker:
 
     async def start(self) -> None:
         self._channel = await self._connection.channel()
-        exchange_type = _resolve_exchange_type()
-        declare_kwargs = {
-            "name": self._exchange_name,
-            "type": exchange_type,
-            "durable": True,
-            "auto_delete": False,
-            "passive": not self._declare_exchange,
-        }
+        declare_kwargs = {"name": self._exchange_name}
+        if self._declare_exchange:
+            declare_kwargs.update(
+                {
+                    "type": _resolve_exchange_type(),
+                    "durable": True,
+                    "auto_delete": False,
+                }
+            )
+        else:
+            declare_kwargs["passive"] = True
         self._exchange = await self._channel.declare_exchange(**declare_kwargs)
 
     async def stop(self) -> None:
