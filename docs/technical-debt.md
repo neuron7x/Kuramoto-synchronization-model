@@ -87,7 +87,7 @@ urgent debt crises from erupting during critical release windows.
 
 | Metric | Why it matters | Target | Source |
 | ------ | -------------- | ------ | ------ |
-| Debt WIP | Ensures WIP limits are respected | `≤ ⌈N / 3⌉` stories | Project board | 
+| Debt WIP | Ensures WIP limits are respected | `≤ ⌈N / 3⌉` stories | Project board |
 | Debt Throughput | Validates steady paydown | ≥ 1 completed story / sprint | Jira/Linear reports |
 | Allocation Burn | Confirms sprint % was utilised | 90–110% of planned capacity | Sprint report |
 | Aged Debt | Flags tickets older than 90 days | < 10% of backlog | Saved filter |

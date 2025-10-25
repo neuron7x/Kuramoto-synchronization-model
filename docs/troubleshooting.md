@@ -246,9 +246,12 @@ return numerator / denominator
 
 3. Use numpy's safe division:
 ```python
-result = np.divide(numerator, denominator, 
-                   out=np.zeros_like(numerator), 
-                   where=denominator!=0)
+result = np.divide(
+    numerator,
+    denominator,
+    out=np.zeros_like(numerator),
+    where=denominator != 0,
+)
 ```
 
 ### Indicator returns NaN or inf

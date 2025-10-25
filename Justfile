@@ -43,6 +43,9 @@ scripts-dev-up:
 scripts-dev-down:
 	@make scripts-dev-down
 
+docs-lint:
+	@make docs-lint
+
 i18n-validate:
 	@make i18n-validate
 
