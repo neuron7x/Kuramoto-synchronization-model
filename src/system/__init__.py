@@ -14,6 +14,14 @@ from .integration import (
     TradePulsePlatform,
     build_tradepulse_platform,
 )
+from .module_orchestrator import (
+    ModuleDefinition,
+    ModuleExecutionError,
+    ModuleHandler,
+    ModuleOrchestrator,
+    ModuleRunResult,
+    ModuleRunSummary,
+)
 
 __all__ = [
     "GatewayRequest",
@@ -23,6 +31,12 @@ __all__ = [
     "IntegrationRouteNotFoundError",
     "IntegrationRouter",
     "RouteDispatchResult",
+    "ModuleDefinition",
+    "ModuleExecutionError",
+    "ModuleHandler",
+    "ModuleOrchestrator",
+    "ModuleRunResult",
+    "ModuleRunSummary",
     "StreamingPipelineSettings",
     "TradePulsePlatform",
     "build_tradepulse_platform",
