@@ -356,8 +356,10 @@ class MeanReversionStrategy(BaseStrategy):
         Returns:
             Trading signal with action and confidence
         """
-        if len(prices) < max(self.parameters["rsi_period"], 
-                            self.parameters["bb_period"]) + 1:
+        if len(prices) < max(
+            self.parameters["rsi_period"],
+            self.parameters["bb_period"],
+        ) + 1:
             return Signal(action="hold", confidence=0.0, metadata={})
         
         # Compute RSI
@@ -379,15 +381,19 @@ class MeanReversionStrategy(BaseStrategy):
         confidence = 0.0
         
         # Oversold condition
-        if (rsi_value < self.parameters["rsi_oversold"] and 
-            current_price < lower_band):
+        if (
+            rsi_value < self.parameters["rsi_oversold"]
+            and current_price < lower_band
+        ):
             action = "buy"
             # Confidence increases as RSI gets lower
             confidence = 1.0 - (rsi_value / self.parameters["rsi_oversold"])
         
         # Overbought condition
-        elif (rsi_value > self.parameters["rsi_overbought"] and 
-              current_price > upper_band):
+        elif (
+            rsi_value > self.parameters["rsi_overbought"]
+            and current_price > upper_band
+        ):
             action = "sell"
             # Confidence increases as RSI gets higher
             confidence = (rsi_value - self.parameters["rsi_overbought"]) / \

@@ -61,6 +61,11 @@ scripts-dev-down:
 	python -m scripts dev-down
 
 
+.PHONY: docs-lint
+docs-lint:
+	python -m tools.docs.lint_docs
+
+
 .PHONY: i18n-validate
 i18n-validate:
 	python scripts/localization/sync_translations.py

@@ -27,7 +27,7 @@ with sufficient safety margin to guarantee the SLA when measured over a rolling
 
 | Capability | SLA Metric | Customer Commitment |
 | ---------- | ---------- | ------------------- |
-| Client API availability | Successful request ratio | ≥ 99.5% | 
+| Client API availability | Successful request ratio | ≥ 99.5% |
 | Strategy order latency | Time from order submit to broker acknowledgement | ≤ 400 ms for 95% of orders |
 | Market data freshness | Delay between exchange event and availability via API | ≤ 3 seconds 99% of the time |
 

@@ -159,6 +159,15 @@ def _run_frontend_linters() -> None:
     run_subprocess(["npm", "run", "lint"], cwd=FRONTEND_PACKAGE)
 
 
+def _run_documentation_lint(skip_docs: bool) -> None:
+    if skip_docs:
+        LOGGER.info("Skipping documentation lint checks as requested.")
+        return
+
+    LOGGER.info("Running documentation lint checks…")
+    run_subprocess(("python", "-m", "tools.docs.lint_docs"))
+
+
 def build_parser(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     parser = subparsers.add_parser("lint", help="Run static analysis tooling")
     parser.set_defaults(command="lint", handler=handle)
@@ -167,15 +176,22 @@ def build_parser(subparsers: _SubParsersAction[ArgumentParser]) -> None:
         action="store_true",
         help="Skip protobuf linting even if buf is available.",
     )
+    parser.add_argument(
+        "--skip-docs",
+        action="store_true",
+        help="Skip documentation linting (normally run via tools/docs/lint_docs.py).",
+    )
 
 
 @register("lint")
 def handle(args: Namespace) -> int:
     skip_buf = getattr(args, "skip_buf", False)
+    skip_docs = getattr(args, "skip_docs", False)
 
     _run_python_linters()
     _run_buf(skip_buf)
     _run_frontend_linters()
+    _run_documentation_lint(skip_docs)
 
     LOGGER.info("Lint checks completed successfully.")
     return 0

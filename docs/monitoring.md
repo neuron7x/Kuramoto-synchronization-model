@@ -719,7 +719,7 @@ scrape_configs:
   # TradePulse Go services
   - job_name: 'tradepulse-go'
     static_configs:
-      - targets: 
+      - targets:
           - 'localhost:8001'  # VPIN service
           - 'localhost:8002'  # Orderbook service
           - 'localhost:8003'  # Regime service
