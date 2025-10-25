@@ -516,7 +516,7 @@ def build_cascading_failure_detection_experiment(
 
     def detection(context: ChaosContext) -> DetectionResult:
         signals = tuple(context.monitoring.detect_cascading_failures())
-        success = len(signals) == 0
+        success = len(signals) > 0
         context.log(
             "Cascading failure detection",
             success=success,
