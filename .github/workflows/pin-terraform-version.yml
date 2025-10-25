@@ -20,9 +20,6 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Download Go modules
-        run: go mod download
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -30,6 +27,9 @@ jobs:
 
       - name: Verify Terraform version
         run: terraform version
+
+      - name: Download Go modules
+        run: go mod download
 
       - name: Run Terraform-related Go tests
         env:
