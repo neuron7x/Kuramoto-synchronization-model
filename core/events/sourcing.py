@@ -39,7 +39,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
-from ...domain import Order, OrderSide, OrderType, Position
+from domain import Order, OrderSide, OrderType, Position
 
 
 # ---------------------------------------------------------------------------
