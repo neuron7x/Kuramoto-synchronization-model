@@ -112,7 +112,7 @@ jobs:
         id: colors
         run: |
           set -euxo pipefail
-          current="${{ github.event.inputs.active_color || secrets.ACTIVE_COLOR || 'blue' }}"
+          current="${{ github.event.inputs.active_color || vars.ACTIVE_COLOR || secrets.ACTIVE_COLOR || 'blue' }}"
           if [ "$current" = "blue" ]; then
             target=green
           else
