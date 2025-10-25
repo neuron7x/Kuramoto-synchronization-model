@@ -75,6 +75,10 @@ jobs:
 
       - name: Collect baseline resource metrics
         run: |
+          if [ ! -f baseline/scripts/performance/run_resource_checks.py ]; then
+            mkdir -p baseline/scripts/performance
+            cp scripts/performance/run_resource_checks.py baseline/scripts/performance/
+          fi
           cd baseline
           ../.venv/bin/python scripts/performance/run_resource_checks.py \
             --output ../reports/performance/baseline_resources.json
