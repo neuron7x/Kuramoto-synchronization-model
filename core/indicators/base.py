@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, MutableSequence, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
-from functools import partial
 from typing import Any, Callable, Literal
 
 from core.utils.metrics import get_metrics_collector
@@ -139,7 +138,10 @@ class FeatureBlock(BaseBlock):
         self, data: FeatureInput, kwargs: Mapping[str, Any]
     ) -> Iterable[FeatureResult]:
         for feature in self.features:
-            yield feature.transform(data, **kwargs)
+            try:
+                yield feature.transform(data, **kwargs)
+            except Exception as exc:  # noqa: BLE001 - we re-raise with context
+                raise FeatureExecutionError(feature=feature, block=self.name, cause=exc) from exc
 
     def evaluate(
         self, data: FeatureInput, **kwargs: Any
@@ -194,14 +196,17 @@ class ParallelFeatureBlock(BaseBlock):
         self.max_workers = max_workers
 
     def run(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
+        if not self.features:
+            return {}
+
         if self.mode == "process":
             return self._run_process(data, **kwargs)
-        return _run_block_thread(self.features, data, kwargs)
+        return _run_block_thread(self.features, data, kwargs, block_name=self.name)
 
     def _run_process(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [
-                executor.submit(_process_transform, feature, data, kwargs)
+                executor.submit(_process_transform, feature, data, kwargs, self.name)
                 for feature in self.features
             ]
             results = [future.result() for future in futures]
@@ -212,14 +217,18 @@ def _run_block_thread(
     features: Sequence[BaseFeature],
     data: FeatureInput,
     kwargs: Mapping[str, Any],
+    block_name: str | None = None,
 ) -> Mapping[str, Any]:
     async def _runner() -> Mapping[str, Any]:
         loop = asyncio.get_running_loop()
         tasks = [
             loop.run_in_executor(
                 None,
-                partial(feature.transform, **dict(kwargs)),
+                _execute_feature,
+                feature,
                 data,
+                dict(kwargs),
+                block_name,
             )
             for feature in features
         ]
@@ -245,7 +254,10 @@ def _run_block_thread(
 
 
 def _process_transform(
-    feature: BaseFeature, data: FeatureInput, kwargs: Mapping[str, Any]
+    feature: BaseFeature,
+    data: FeatureInput,
+    kwargs: Mapping[str, Any],
+    block_name: str | None,
 ) -> FeatureResult:
     """Execute ``feature.transform`` in a child process.
 
@@ -253,7 +265,44 @@ def _process_transform(
     as ``spawn`` start methods.
     """
 
-    return feature.transform(data, **dict(kwargs))
+    return _execute_feature(feature, data, dict(kwargs), block_name)
+
+
+def _execute_feature(
+    feature: BaseFeature,
+    data: FeatureInput,
+    kwargs: Mapping[str, Any],
+    block_name: str | None,
+) -> FeatureResult:
+    try:
+        return feature.transform(data, **kwargs)
+    except Exception as exc:  # noqa: BLE001 - we re-raise with context
+        raise FeatureExecutionError(feature=feature, block=block_name, cause=exc) from exc
+
+
+class FeatureExecutionError(RuntimeError):
+    """Error raised when a feature fails to transform.
+
+    The exception retains the original error for post-mortem inspection while
+    ensuring the caller knows which feature (and optionally which block)
+    triggered the failure.
+    """
+
+    def __init__(
+        self,
+        *,
+        feature: BaseFeature,
+        block: str | None,
+        cause: BaseException,
+    ) -> None:
+        self.feature = feature
+        self.block = block
+        self.cause = cause
+        message = f"Feature '{feature.name}' failed during transform"
+        if block:
+            message += f" in block '{block}'"
+        message += f": {cause!s}"
+        super().__init__(message)
 
 
 class BlockFeature(BaseFeature):
@@ -311,4 +360,5 @@ __all__ = [
     "ParallelFeatureBlock",
     "FunctionalFeature",
     "FeatureResult",
+    "FeatureExecutionError",
 ]
