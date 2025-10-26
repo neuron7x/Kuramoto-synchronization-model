@@ -13,7 +13,10 @@ def _ensure_datetime_index(frame: pd.DataFrame) -> pd.DataFrame:
         raise TypeError("frame must have a DatetimeIndex")
     if frame.index.tz is None:
         frame = frame.tz_localize("UTC")
-    return frame.sort_index()
+    frame = frame.sort_index()
+    if not frame.index.is_unique:
+        frame = frame[~frame.index.duplicated(keep="last")]
+    return frame
 
 
 def resample_ticks_to_l1(
@@ -56,11 +59,20 @@ def align_timeframes(
 
     if reference not in frames:
         raise ValueError("reference timeframe missing")
-    ref_index = _ensure_datetime_index(frames[reference]).index
-    aligned: Dict[str, pd.DataFrame] = {}
+    ref_frame = _ensure_datetime_index(frames[reference])
+    ref_index = ref_frame.index
+    ref_unique = ref_index.drop_duplicates(keep="last")
+
+    aligned: Dict[str, pd.DataFrame] = {reference: ref_frame.copy()}
     for name, frame in frames.items():
+        if name == reference:
+            continue
         frame = _ensure_datetime_index(frame)
-        aligned[name] = frame.reindex(ref_index, method="pad")
+        unique_frame = frame
+        if not frame.index.is_unique:
+            unique_frame = frame[~frame.index.duplicated(keep="last")]
+        aligned_unique = unique_frame.reindex(ref_unique, method="pad")
+        aligned[name] = aligned_unique.reindex(ref_index, method="pad")
     return aligned
 
 

@@ -253,5 +253,8 @@ def test_constrained_sizer_neutral_clipping_emits_order() -> None:
 
     max_position = (state.equity * constraints.max_leverage) / request.price
     assert result.target_position == pytest.approx(max_position)
-    assert result.order_quantity == pytest.approx(max_position - state.position_for("BTC"))
+    assert result.order_quantity == 0.0
+    assert result.notes.get("deferred_rebalance") == pytest.approx(
+        max_position - state.position_for("BTC")
+    )
     assert result.notes.get("leverage_clip") == pytest.approx(max_position)
