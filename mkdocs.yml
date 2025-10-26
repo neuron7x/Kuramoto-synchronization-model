@@ -90,6 +90,7 @@ nav:
       - Dataset Catalog: dataset_catalog.md
       - Feature Catalog: feature_catalog.md
       - Deployment: deployment.md
+      - MLOps Orchestration: devops/mlops-orchestration.md
       - Canary Release Guardrails: canary_release_guardrails.md
   - Security:
       - Program Overview: ../SECURITY.md
