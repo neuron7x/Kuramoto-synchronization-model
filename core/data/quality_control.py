@@ -402,12 +402,29 @@ def summarise_quality(
             semantics_notes.append(
                 f"{payload.shape[0]} rows in '{column}' breached configured bounds"
             )
-    if report.spikes.shape[0] > 0:
+    if spike_rows > 0:
         if semantics_status != "fail":
             semantics_status = "warn"
         semantics_notes.append(
-            f"{report.spikes.shape[0]} anomalous points quarantined by z-score guard"
+            f"{spike_rows} anomalous points quarantined by z-score guard"
         )
+
+    if report.blocked:
+        blocked_note = "Batch blocked by quality gate"
+        if (
+            not report.contract_breaches
+            and not report.range_violations
+            and spike_rows == 0
+            and not report.quarantined.empty
+        ):
+            blocked_note = (
+                "Batch blocked by quality gate after sanitised share exceeded policy"
+                " threshold"
+            )
+        if blocked_note not in semantics_notes:
+            semantics_notes.append(blocked_note)
+        if semantics_status == "pass":
+            semantics_status = "warn"
 
     validator_outcomes.append(
         ValidatorOutcome(

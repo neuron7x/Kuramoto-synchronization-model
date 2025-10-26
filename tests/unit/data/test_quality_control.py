@@ -142,6 +142,30 @@ def test_quality_summary_flags_range_failures():
     assert semantics.status == "fail"
 
 
+def test_quality_summary_warns_when_blocked_by_quarantine_ratio():
+    frame = _frame()
+    config = TimeSeriesValidationConfig(
+        timestamp_column="timestamp",
+        value_columns=[ValueColumnConfig(name="close", dtype="float64")],
+    )
+    gate = QualityGateConfig(
+        schema=config,
+        price_column="close",
+        anomaly_threshold=99.0,
+        anomaly_window=2,
+        max_quarantine_fraction=0.1,
+    )
+    report = validate_and_quarantine(frame, gate)
+    assert report.blocked is True
+    summary = report.summarise(gate)
+
+    semantics = next(
+        outcome for outcome in summary.validator_outcomes if outcome.category == "semantics"
+    )
+    assert semantics.status == "warn"
+    assert "blocked" in semantics.detail.lower()
+
+
 def test_quality_summary_passes_when_dataset_clean():
     index = pd.date_range("2024-01-01", periods=4, freq="1min", tz="UTC")
     frame = pd.DataFrame({"timestamp": index, "close": [100, 101, 102, 103]})
