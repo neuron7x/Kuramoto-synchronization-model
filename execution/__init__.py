@@ -33,7 +33,16 @@ from .paper_trading import (
     PnLAnalysis,
     TelemetryEvent,
 )
+from .portfolio import PortfolioAccounting, PortfolioSnapshot
 from .position_sizer import calculate_position_size
+from .router import (
+    ErrorMapper,
+    ExecutionRoute,
+    NormalizedOrderState,
+    OrderStateNormalizer,
+    ResilientExecutionRouter,
+    SlippageModel,
+)
 from .risk import (
     IdempotentRetryExecutor,
     JsonRiskStateStore,
@@ -113,6 +122,14 @@ __all__ = [
     "PaperOrderReport",
     "PnLAnalysis",
     "calculate_position_size",
+    "PortfolioAccounting",
+    "PortfolioSnapshot",
+    "ExecutionRoute",
+    "NormalizedOrderState",
+    "OrderStateNormalizer",
+    "ResilientExecutionRouter",
+    "SlippageModel",
+    "ErrorMapper",
     "BlueGreenRolloutOrchestrator",
     "RolloutStep",
     "TrafficRouter",
