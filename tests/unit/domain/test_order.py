@@ -38,3 +38,14 @@ def test_order_cancel_and_reject() -> None:
     order.reject("venue rejected")
     assert order.status == OrderStatus.REJECTED
     assert getattr(order, "rejection_reason") == "venue rejected"
+
+
+def test_order_accepts_iceberg_type() -> None:
+    order = Order(
+        symbol="BTCUSD",
+        side=OrderSide.BUY,
+        quantity=1.0,
+        price=100.0,
+        order_type=OrderType.ICEBERG,
+    )
+    assert order.order_type is OrderType.ICEBERG

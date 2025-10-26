@@ -19,6 +19,7 @@ class OrderType(str, Enum):
     LIMIT = "limit"
     STOP = "stop"
     STOP_LIMIT = "stop_limit"
+    ICEBERG = "iceberg"
 
 
 class OrderStatus(str, Enum):

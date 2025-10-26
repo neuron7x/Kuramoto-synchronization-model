@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -83,6 +84,35 @@ def test_oms_idempotent_submission_and_recovery(
     assert processed.order_id in {o.order_id for o in oms_reload.outstanding()}
 
 
+def test_oms_rejects_mismatched_idempotency_payload(
+    tmp_path, risk_manager: RiskManager
+) -> None:
+    state_path = tmp_path / "oms_idempotency.json"
+    config = OMSConfig(state_path=state_path)
+    connector = BinanceConnector()
+    oms = OrderManagementSystem(connector, risk_manager, config)
+
+    first = Order(
+        symbol="BTCUSDT",
+        side=OrderSide.BUY,
+        quantity=1.0,
+        price=20_000,
+        order_type=OrderType.LIMIT,
+    )
+    oms.submit(first, correlation_id="dup-1")
+
+    conflict = Order(
+        symbol="BTCUSDT",
+        side=OrderSide.BUY,
+        quantity=2.0,
+        price=20_000,
+        order_type=OrderType.LIMIT,
+    )
+
+    with pytest.raises(ValueError, match="Correlation ID reused"):
+        oms.submit(conflict, correlation_id="dup-1")
+
+
 def test_oms_outstanding_cache(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "cache_state.json"
     config = OMSConfig(state_path=state_path, auto_persist=False)
@@ -114,6 +144,33 @@ def test_oms_outstanding_cache(tmp_path, risk_manager: RiskManager) -> None:
     assert len(third) == 0
 
 
+def test_oms_broker_lookup(tmp_path, risk_manager: RiskManager) -> None:
+    state_path = tmp_path / "broker_lookup.json"
+    config = OMSConfig(state_path=state_path, auto_persist=False)
+    connector = BinanceConnector()
+    oms = OrderManagementSystem(connector, risk_manager, config)
+
+    order = Order(
+        symbol="BTCUSDT",
+        side=OrderSide.SELL,
+        quantity=1.5,
+        price=19_500,
+        order_type=OrderType.LIMIT,
+    )
+
+    oms.submit(order, correlation_id="broker-1")
+    placed = oms.process_next()
+    assert placed.broker_order_id
+
+    located = oms.order_for_broker(placed.broker_order_id)
+    assert located is placed
+
+    oms.cancel(placed.order_id)
+    located_after_cancel = oms.order_for_broker(placed.broker_order_id)
+    assert located_after_cancel is placed
+    assert located_after_cancel.status is OrderStatus.CANCELLED
+
+
 def test_oms_register_fill_updates_risk(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "fills_state.json"
     config = OMSConfig(state_path=state_path)
@@ -139,6 +196,47 @@ def test_oms_register_fill_updates_risk(tmp_path, risk_manager: RiskManager) -> 
     updated = oms.register_fill(placed.order_id, 1.0, 25_100)
     assert updated.status.name == "FILLED"
     assert risk_manager.current_position("BTCUSDT") == pytest.approx(2.0)
+
+
+def test_oms_retries_on_timeout(tmp_path, risk_manager: RiskManager) -> None:
+    state_path = tmp_path / "timeout_state.json"
+    config = OMSConfig(
+        state_path=state_path,
+        max_retries=2,
+        backoff_seconds=0.0,
+        request_timeout=0.05,
+    )
+
+    class SlowConnector(BinanceConnector):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls = 0
+
+        def place_order(
+            self, order: Order, *, idempotency_key: str | None = None
+        ) -> Order:
+            self.calls += 1
+            if self.calls == 1:
+                time.sleep(0.2)
+            return super().place_order(order, idempotency_key=idempotency_key)
+
+    connector = SlowConnector()
+    oms = OrderManagementSystem(connector, risk_manager, config)
+
+    order = Order(
+        symbol="BTCUSDT",
+        side=OrderSide.BUY,
+        quantity=1.0,
+        price=21_000,
+        order_type=OrderType.LIMIT,
+    )
+
+    oms.submit(order, correlation_id="timeout-1")
+    placed = oms.process_next()
+
+    assert connector.calls == 2
+    assert placed.order_id is not None
+    assert placed.status is OrderStatus.OPEN
 
 
 def test_oms_compliance_blocking_triggers_audit(tmp_path) -> None:

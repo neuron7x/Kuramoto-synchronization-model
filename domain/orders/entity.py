@@ -20,6 +20,7 @@ class Order:
     order_type: OrderType | str = OrderType.MARKET
     stop_price: float | None = None
     order_id: str | None = None
+    broker_order_id: str | None = None
     status: OrderStatus | str = OrderStatus.PENDING
     filled_quantity: float = 0.0
     average_price: float | None = None
@@ -31,6 +32,12 @@ class Order:
         self.side = OrderSide(self.side)
         self.order_type = OrderType(self.order_type)
         self.status = OrderStatus(self.status)
+        if self.broker_order_id is not None and not isinstance(
+            self.broker_order_id, str
+        ):
+            raise TypeError("broker_order_id must be a string when provided")
+        if self.order_id and self.broker_order_id is None:
+            self.broker_order_id = self.order_id
         self.updated_at = self.created_at
         self._validate()
 
@@ -50,12 +57,15 @@ class Order:
         if self.filled_quantity > self.quantity:
             raise ValueError("filled_quantity cannot exceed order quantity")
 
-    def mark_submitted(self, order_id: str) -> None:
+    def mark_submitted(
+        self, order_id: str, *, broker_order_id: str | None = None
+    ) -> None:
         """Assign an identifier after handing the order to an execution venue."""
 
         if not order_id:
             raise ValueError("order_id must be provided")
         self.order_id = order_id
+        self.broker_order_id = broker_order_id or order_id
         self.status = OrderStatus.OPEN
         self.updated_at = datetime.now(timezone.utc)
 
@@ -134,6 +144,7 @@ class Order:
             "order_type": self.order_type.value,
             "stop_price": self.stop_price,
             "order_id": self.order_id,
+            "broker_order_id": self.broker_order_id,
             "status": self.status.value,
             "filled_quantity": self.filled_quantity,
             "average_price": self.average_price,

@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import json
 import time
+import concurrent.futures
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from collections import deque
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Deque, Dict, Iterable, Mapping, MutableMapping
+from typing import Any, Deque, Dict, Iterable, Mapping, MutableMapping
 
 from core.utils.metrics import get_metrics_collector
 from domain import Order, OrderSide, OrderStatus
@@ -42,6 +44,7 @@ class OMSConfig:
     max_retries: int = 3
     backoff_seconds: float = 0.0
     ledger_path: Path | None = DEFAULT_LEDGER_PATH
+    request_timeout: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.state_path, Path):
@@ -50,6 +53,8 @@ class OMSConfig:
             object.__setattr__(self, "max_retries", 1)
         if self.backoff_seconds < 0.0:
             object.__setattr__(self, "backoff_seconds", 0.0)
+        if self.request_timeout is not None and self.request_timeout <= 0:
+            object.__setattr__(self, "request_timeout", None)
         ledger_path = self.ledger_path
         if ledger_path is not None and not isinstance(ledger_path, Path):
             ledger_path = Path(ledger_path)
@@ -87,6 +92,8 @@ class OrderManagementSystem:
         self._active_orders: Dict[str, Order] = {}
         self._active_cache: tuple[Order, ...] = ()
         self._active_cache_dirty = False
+        self._fingerprints: Dict[str, str] = {}
+        self._broker_lookup: Dict[str, str] = {}
         ledger_path = self.config.ledger_path
         self._ledger = OrderLedger(ledger_path) if ledger_path is not None else None
         self._load_state()
@@ -107,6 +114,7 @@ class OrderManagementSystem:
             ],
             "processed": self._processed,
             "correlations": self._correlations,
+            "fingerprints": self._fingerprints,
         }
 
     def _persist_state(self) -> None:
@@ -160,16 +168,51 @@ class OrderManagementSystem:
             str(k): str(v) for k, v in payload.get("correlations", {}).items()
         }
         self._pending = {item.correlation_id: item.order for item in self._queue}
+        raw_fingerprints = payload.get("fingerprints")
+        if isinstance(raw_fingerprints, Mapping):
+            self._fingerprints = {
+                str(key): str(value) for key, value in raw_fingerprints.items()
+            }
+        else:
+            self._fingerprints = {}
+        if not self._fingerprints:
+            for item in self._queue:
+                self._fingerprints[item.correlation_id] = self._fingerprint(item.order)
+            for correlation, order_id in self._processed.items():
+                order = self._orders.get(order_id)
+                if order is not None:
+                    self._fingerprints[correlation] = self._fingerprint(order)
         self._active_orders = {
             order_id: order for order_id, order in self._orders.items() if order.is_active
         }
         self._active_cache = tuple(self._active_orders.values())
         self._active_cache_dirty = False
+        self._broker_lookup = {
+            order.broker_order_id: order_id
+            for order_id, order in self._orders.items()
+            if order.broker_order_id
+        }
         if self._ledger is not None:
             self._record_ledger_event("state_restored", metadata={"source": source})
 
     # ------------------------------------------------------------------
     # Serialization helpers
+    def _fingerprint(self, order: Order) -> str:
+        payload: Dict[str, Any] = {
+            "symbol": order.symbol,
+            "side": order.side.value,
+            "quantity": float(order.quantity),
+            "order_type": order.order_type.value,
+            "price": None if order.price is None else float(order.price),
+            "stop_price": None if order.stop_price is None else float(order.stop_price),
+        }
+        metadata = getattr(order, "metadata", None)
+        if metadata is not None:
+            payload["metadata"] = metadata
+        return json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), default=str
+        )
+
     @staticmethod
     def _serialize_order(order: Order) -> dict:
         data = order.to_dict()
@@ -197,6 +240,11 @@ class OrderManagementSystem:
                 else None
             ),
             order_id=str(data.get("order_id")) if data.get("order_id") else None,
+            broker_order_id=(
+                str(data.get("broker_order_id"))
+                if data.get("broker_order_id")
+                else None
+            ),
             status=str(data.get("status", "pending")),
             filled_quantity=float(data.get("filled_quantity", 0.0)),
             average_price=(
@@ -222,68 +270,84 @@ class OrderManagementSystem:
     def submit(self, order: Order, *, correlation_id: str) -> Order:
         """Submit an order, enforcing idempotency with correlation IDs."""
 
+        fingerprint = self._fingerprint(order)
+        existing_fp = self._fingerprints.get(correlation_id)
+        if existing_fp is not None and existing_fp != fingerprint:
+            raise ValueError(
+                "Correlation ID reused with a different order payload"
+            )
         if correlation_id in self._processed:
             order_id = self._processed[correlation_id]
-            return self._orders[order_id]
+            stored = self._orders[order_id]
+            if existing_fp is None:
+                self._fingerprints[correlation_id] = self._fingerprint(stored)
+            return stored
         if correlation_id in self._pending:
+            if existing_fp is None:
+                self._fingerprints[correlation_id] = fingerprint
             return self._pending[correlation_id]
+        self._fingerprints[correlation_id] = fingerprint
 
-        if self._compliance is not None:
-            report = None
-            try:
-                report = self._compliance.check(
-                    order.symbol, order.quantity, order.price
-                )
-            except ComplianceViolation as exc:
-                report = exc.report
-                self._metrics.record_compliance_check(
-                    order.symbol,
-                    "blocked",
-                    () if report is None else report.violations,
-                )
-                self._emit_compliance_audit(order, correlation_id, report, str(exc))
-                self._record_ledger_event(
-                    "compliance_blocked",
-                    order=order,
-                    correlation_id=correlation_id,
-                    metadata={
-                        "violations": []
-                        if report is None
-                        else report.violations,
-                        "error": str(exc),
-                    },
-                )
-                raise
-            status = "passed" if report is None or report.is_clean() else "warning"
-            if report is not None:
-                self._metrics.record_compliance_check(
-                    order.symbol,
-                    "blocked" if report.blocked else status,
-                    report.violations,
-                )
-                self._emit_compliance_audit(order, correlation_id, report, None)
-                if report.blocked:
+        try:
+            if self._compliance is not None:
+                report = None
+                try:
+                    report = self._compliance.check(
+                        order.symbol, order.quantity, order.price
+                    )
+                except ComplianceViolation as exc:
+                    report = exc.report
+                    self._metrics.record_compliance_check(
+                        order.symbol,
+                        "blocked",
+                        () if report is None else report.violations,
+                    )
+                    self._emit_compliance_audit(order, correlation_id, report, str(exc))
                     self._record_ledger_event(
                         "compliance_blocked",
                         order=order,
                         correlation_id=correlation_id,
                         metadata={
-                            "violations": report.violations,
-                            "blocked": True,
+                            "violations": []
+                            if report is None
+                            else report.violations,
+                            "error": str(exc),
                         },
                     )
-                    raise ComplianceViolation(
-                        "Compliance check blocked order", report=report
+                    raise
+                status = "passed" if report is None or report.is_clean() else "warning"
+                if report is not None:
+                    self._metrics.record_compliance_check(
+                        order.symbol,
+                        "blocked" if report.blocked else status,
+                        report.violations,
                     )
+                    self._emit_compliance_audit(order, correlation_id, report, None)
+                    if report.blocked:
+                        self._record_ledger_event(
+                            "compliance_blocked",
+                            order=order,
+                            correlation_id=correlation_id,
+                            metadata={
+                                "violations": report.violations,
+                                "blocked": True,
+                            },
+                        )
+                        raise ComplianceViolation(
+                            "Compliance check blocked order", report=report
+                        )
 
-        reference_price = (
-            order.price
-            if order.price is not None
-            else max(order.average_price or 0.0, 1.0)
-        )
-        self.risk.validate_order(
-            order.symbol, order.side.value, order.quantity, reference_price
-        )
+            reference_price = (
+                order.price
+                if order.price is not None
+                else max(order.average_price or 0.0, 1.0)
+            )
+            self.risk.validate_order(
+                order.symbol, order.side.value, order.quantity, reference_price
+            )
+        except Exception:
+            self._fingerprints.pop(correlation_id, None)
+            raise
 
         queued_order = QueuedOrder(correlation_id, order)
         self._queue.append(queued_order)
@@ -326,6 +390,26 @@ class OrderManagementSystem:
         payload["status"] = status
         self._audit.emit(payload)
 
+    def _place_order_with_timeout(self, order: Order, correlation_id: str) -> Order:
+        timeout = self.config.request_timeout
+        if not timeout:
+            return self.connector.place_order(
+                order, idempotency_key=correlation_id
+            )
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                self.connector.place_order,
+                order,
+                idempotency_key=correlation_id,
+            )
+            try:
+                return future.result(timeout=timeout)
+            except FuturesTimeoutError as exc:
+                future.cancel()
+                raise TimeoutError(
+                    f"Connector request exceeded {timeout:.3f}s timeout"
+                ) from exc
+
     def process_next(self) -> Order:
         if not self._queue:
             raise LookupError("No orders pending")
@@ -340,8 +424,8 @@ class OrderManagementSystem:
             item.attempts += 1
             try:
                 start = time.perf_counter()
-                submitted = self.connector.place_order(
-                    item.order, idempotency_key=item.correlation_id
+                submitted = self._place_order_with_timeout(
+                    item.order, item.correlation_id
                 )
                 ack_latency = time.perf_counter() - start
             except retryable as exc:
@@ -397,6 +481,12 @@ class OrderManagementSystem:
         self._orders[submitted.order_id] = submitted
         self._processed[item.correlation_id] = submitted.order_id
         self._correlations[submitted.order_id] = item.correlation_id
+        if submitted.broker_order_id:
+            self._broker_lookup[submitted.broker_order_id] = submitted.order_id
+        fingerprint = self._fingerprints.get(item.correlation_id)
+        updated_fingerprint = self._fingerprint(submitted)
+        if fingerprint != updated_fingerprint:
+            self._fingerprints[item.correlation_id] = updated_fingerprint
         self._update_active_order(submitted.order_id, submitted)
         if self._metrics.enabled:
             exchange = getattr(
@@ -502,6 +592,8 @@ class OrderManagementSystem:
         if not stored.is_active:
             self._ack_timestamps.pop(order.order_id, None)
         self._update_active_order(order.order_id, stored)
+        if stored.broker_order_id:
+            self._broker_lookup[stored.broker_order_id] = stored.order_id
 
         self._persist_state()
         self._record_ledger_event(
@@ -523,6 +615,8 @@ class OrderManagementSystem:
         self._active_orders.clear()
         self._active_cache = ()
         self._active_cache_dirty = False
+        self._fingerprints.clear()
+        self._broker_lookup.clear()
         self._load_state()
         self._record_ledger_event("state_reloaded", metadata={"source": "reload"})
 
@@ -556,6 +650,14 @@ class OrderManagementSystem:
 
         return self._correlations.get(order_id)
 
+    def order_for_broker(self, broker_order_id: str) -> Order | None:
+        """Return the internal order correlated with *broker_order_id* if known."""
+
+        order_id = self._broker_lookup.get(broker_order_id)
+        if order_id is None:
+            return None
+        return self._orders.get(order_id)
+
     def adopt_open_order(
         self, order: Order, *, correlation_id: str | None = None
     ) -> None:
@@ -567,6 +669,9 @@ class OrderManagementSystem:
         self._orders[order.order_id] = order
         self._processed[correlation] = order.order_id
         self._correlations[order.order_id] = correlation
+        self._fingerprints[correlation] = self._fingerprint(order)
+        if order.broker_order_id:
+            self._broker_lookup[order.broker_order_id] = order.order_id
         self._update_active_order(order.order_id, order)
         self._persist_state()
         hydrator = getattr(self.risk, "hydrate_positions", None)
@@ -584,6 +689,8 @@ class OrderManagementSystem:
             raise LookupError(f"Unknown order_id: {order_id}")
         original = self._orders.pop(order_id)
         self._update_active_order(order_id, None)
+        if original.broker_order_id:
+            self._broker_lookup.pop(original.broker_order_id, None)
         correlation = correlation_id or self._correlations.pop(order_id, None)
         if correlation is None:
             correlation = f"requeue-{order_id}"
@@ -591,6 +698,7 @@ class OrderManagementSystem:
         resubmittable = replace(
             original,
             order_id=None,
+            broker_order_id=None,
             status=OrderStatus.PENDING,
             filled_quantity=0.0,
             average_price=None,
@@ -599,6 +707,7 @@ class OrderManagementSystem:
         queued = QueuedOrder(correlation, resubmittable)
         self._queue.appendleft(queued)
         self._pending[correlation] = resubmittable
+        self._fingerprints[correlation] = self._fingerprint(resubmittable)
         self._ack_timestamps.pop(order_id, None)
         self._persist_state()
         return correlation
