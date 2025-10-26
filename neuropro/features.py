@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections import deque
+from typing import Deque
+
 import numpy as np
 import pandas as pd
 
@@ -9,10 +12,10 @@ import pandas as pd
 class FeatureStore:
     """Streaming feature accumulator."""
 
-    def __init__(self, fracdiff_d: float = 0.4, ofi_window: int = 20) -> None:
+    def __init__(self, fracdiff_d: float = 0.4, ofi_window: int = 20, buf_maxlen: int = 600) -> None:
         self.d = fracdiff_d
         self.ofi_window = ofi_window
-        self.buf: list[dict[str, float]] = []
+        self.buf: Deque[dict[str, float]] = deque(maxlen=int(buf_maxlen))
 
     def update(self, row: dict[str, float]) -> None:
         """Append the latest microstructure snapshot."""
@@ -35,7 +38,7 @@ class FeatureStore:
     def snapshot(self, lookbacks: list[int]) -> dict[str, float] | None:
         if not self.buf:
             return None
-        df = pd.DataFrame(self.buf)
+        df = pd.DataFrame(list(self.buf))
         mid = float(df["mid"].iloc[-1])
         spread = (df["ask"].iloc[-1] - df["bid"].iloc[-1]) / mid
         depth_imb = (df["bid_size"].iloc[-1] - df["ask_size"].iloc[-1]) / (
