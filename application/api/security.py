@@ -17,7 +17,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from application.settings import ApiSecuritySettings
 from src.admin.remote_control import AdminIdentity
 
-__all__ = ["verify_request_identity", "get_api_security_settings"]
+__all__ = [
+    "verify_request_identity",
+    "verify_optional_request_identity",
+    "get_api_security_settings",
+]
 
 
 _bearer_scheme = HTTPBearer(auto_error=False, scheme_name="OAuth2Bearer")
@@ -384,5 +388,26 @@ def verify_request_identity(*, require_client_certificate: bool = False) -> Call
         subject = _require_subject(claims)
         roles = _extract_roles(claims)
         return AdminIdentity(subject=subject, roles=roles)
+
+    return dependency
+
+
+def verify_optional_request_identity(
+    *, require_client_certificate: bool = False
+) -> Callable[[Request, HTTPAuthorizationCredentials | None, ApiSecuritySettings], Awaitable[AdminIdentity | None]]:
+    """Return a dependency that authenticates requests when credentials are supplied."""
+
+    required_dependency = verify_request_identity(
+        require_client_certificate=require_client_certificate
+    )
+
+    async def dependency(
+        request: Request,
+        credentials: HTTPAuthorizationCredentials | None = Security(_bearer_scheme),
+        settings: ApiSecuritySettings = Depends(get_api_security_settings),
+    ) -> AdminIdentity | None:
+        if credentials is None or not credentials.credentials:
+            return None
+        return await required_dependency(request, credentials, settings)
 
     return dependency
