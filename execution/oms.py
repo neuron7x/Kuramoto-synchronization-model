@@ -900,19 +900,29 @@ class OrderManagementSystem:
         if order.broker_order_id:
             self._broker_lookup[order.broker_order_id] = order.order_id
         self._ensure_lifecycle_sequence(order.order_id)
+        lifecycle = self._lifecycle
+        recorded_events: set[OrderEvent] = set()
+        if lifecycle is not None:
+            try:
+                history = lifecycle.history(order.order_id)
+            except Exception:  # pragma: no cover - defensive guard
+                history = []
+            recorded_events = {transition.event for transition in history}
         lifecycle_metadata = {"source": "adopt_open_order"}
-        self._record_lifecycle_event(
-            order,
-            OrderEvent.SUBMIT,
-            base_correlation=correlation,
-            metadata=lifecycle_metadata,
-        )
-        self._record_lifecycle_event(
-            order,
-            OrderEvent.ACK,
-            base_correlation=correlation,
-            metadata=lifecycle_metadata,
-        )
+        if OrderEvent.SUBMIT not in recorded_events:
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.SUBMIT,
+                base_correlation=correlation,
+                metadata=lifecycle_metadata,
+            )
+        if OrderEvent.ACK not in recorded_events:
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.ACK,
+                base_correlation=correlation,
+                metadata=lifecycle_metadata,
+            )
         if order.status is OrderStatus.PARTIALLY_FILLED:
             sequence = self._next_fill_sequence(order.order_id)
             metadata = {
