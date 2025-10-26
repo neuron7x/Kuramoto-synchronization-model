@@ -170,10 +170,13 @@ class StreamingIngestionPipeline:
                     **kwargs,
                 )
             except TypeError as exc:
-                try:
-                    self._kafka_service = factory(kafka_config, **kwargs)
-                except TypeError:
-                    raise exc
+                if self._is_unexpected_handler_type_error(exc):
+                    try:
+                        self._kafka_service = factory(kafka_config, **kwargs)
+                    except TypeError:
+                        raise exc
+                else:
+                    raise
         else:
             supports_tick_handler, supports_lag_handler = supports
             call_kwargs = dict(kwargs)
@@ -202,6 +205,17 @@ class StreamingIngestionPipeline:
         supports_tick_handler = "tick_handler" in signature.parameters
         supports_lag_handler = "lag_handler" in signature.parameters
         return supports_tick_handler, supports_lag_handler
+
+    @staticmethod
+    def _is_unexpected_handler_type_error(exc: TypeError) -> bool:
+        message = str(exc)
+        unexpected_kw_fragments = (
+            "unexpected keyword argument",
+            "got an unexpected keyword argument",
+        )
+        if not any(fragment in message for fragment in unexpected_kw_fragments):
+            return False
+        return "tick_handler" in message or "lag_handler" in message
 
     @staticmethod
     def _build_kafka_service(
