@@ -7,6 +7,7 @@ from typing import Callable, Sequence
 
 import jwt
 import pytest
+pytest.importorskip("strawberry")
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import FastAPI
@@ -418,6 +419,34 @@ def test_graphql_interface_exposes_latest_data(
     recent_signals = payload["recentSignals"]
     assert len(recent_signals) >= 1
     assert recent_signals[0]["symbol"] == "TEST-USD"
+
+
+def test_graphql_interface_handles_missing_records(
+    configured_app: FastAPI, security_context: Callable[..., str]
+) -> None:
+    client = TestClient(configured_app)
+    token = security_context(subject="graphql-user")
+    headers = _auth_headers(token)
+
+    query = """
+    query($symbol: String!) {
+        latestFeature(symbol: $symbol) { symbol }
+        latestSignal(symbol: $symbol) { symbol }
+        recentFeatures(limit: 5) { symbol }
+    }
+    """
+
+    response = client.post(
+        "/graphql",
+        json={"query": query, "variables": {"symbol": "MISSING"}},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["latestFeature"] is None
+    assert payload["latestSignal"] is None
+    assert payload["recentFeatures"] == []
 
 
 def test_websocket_stream_broadcasts_updates(
