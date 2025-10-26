@@ -43,6 +43,7 @@ from application.api.idempotency import (
     IdempotencyConflictError,
     IdempotencySnapshot,
 )
+from application.api.authorization import require_permission
 from application.api.debug import install_debug_routes
 from application.api.rate_limit import (
     RateLimiterSnapshot,
@@ -1502,6 +1503,22 @@ def create_app(
         interval_seconds=float(rate_limit_interval),
     )
 
+    def _kill_switch_attributes(_: Request, __: AdminIdentity) -> Mapping[str, str]:
+        return {"environment": resolved_settings.admin_environment}
+
+    kill_switch_read_permission = require_permission(
+        "risk.kill_switch",
+        "read",
+        identity_dependency=require_bearer_with_mtls,
+        attributes_provider=_kill_switch_attributes,
+    )
+    kill_switch_execute_permission = require_permission(
+        "risk.kill_switch",
+        "execute",
+        identity_dependency=require_bearer_with_mtls,
+        attributes_provider=_kill_switch_attributes,
+    )
+
     app = FastAPI(
         title="TradePulse Online Inference API",
         description=(
@@ -1554,6 +1571,9 @@ def create_app(
             audit_logger,
             identity_dependency=require_bearer_with_mtls,
             rate_limiter=admin_rate_limiter,
+            read_permission=kill_switch_read_permission,
+            execute_permission=kill_switch_execute_permission,
+            reset_permission=kill_switch_execute_permission,
         )
     )
     app.state.risk_manager = risk_manager_facade.risk_manager

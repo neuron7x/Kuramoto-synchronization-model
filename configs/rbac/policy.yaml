@@ -29,6 +29,10 @@ roles:
       - system:read
     permissions:
       - resource: risk.kill_switch
+        action: read
+        attributes:
+          environment: ["production"]
+      - resource: risk.kill_switch
         action: execute
         attributes:
           environment: ["production"]

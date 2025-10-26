@@ -232,6 +232,9 @@ def create_remote_control_router(
     identity_dependency: Callable[..., AdminIdentity | Awaitable[AdminIdentity]],
     *,
     rate_limiter: AdminRateLimiter | None = None,
+    read_permission: Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None = None,
+    execute_permission: Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None = None,
+    reset_permission: Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None = None,
 ) -> APIRouter:
     """Create a router exposing secure administrative endpoints."""
 
@@ -249,6 +252,10 @@ def create_remote_control_router(
 
     limiter = rate_limiter or AdminRateLimiter()
 
+    read_dependency = read_permission or identity_dependency
+    execute_dependency = execute_permission or identity_dependency
+    reset_dependency = reset_permission or execute_dependency
+
     async def enforce_admin_rate_limit(request: Request) -> None:
         identifier = _resolve_ip(request)
         await limiter.check(identifier)
@@ -264,7 +271,7 @@ def create_remote_control_router(
         payload: KillSwitchRequest,
         request: Request,
         _: None = Depends(enforce_admin_rate_limit),
-        identity: AdminIdentity = Depends(identity_dependency),
+        identity: AdminIdentity = Depends(execute_dependency),
         manager: RiskManagerFacade = Depends(get_risk_manager),
         logger: AuditLogger = Depends(get_audit_logger),
     ) -> KillSwitchResponse:
@@ -297,7 +304,7 @@ def create_remote_control_router(
     async def read_kill_switch_state(
         request: Request,
         _: None = Depends(enforce_admin_rate_limit),
-        identity: AdminIdentity = Depends(identity_dependency),
+        identity: AdminIdentity = Depends(read_dependency),
         manager: RiskManagerFacade = Depends(get_risk_manager),
         logger: AuditLogger = Depends(get_audit_logger),
     ) -> KillSwitchResponse:
@@ -327,7 +334,7 @@ def create_remote_control_router(
     async def reset_kill_switch(
         request: Request,
         _: None = Depends(enforce_admin_rate_limit),
-        identity: AdminIdentity = Depends(identity_dependency),
+        identity: AdminIdentity = Depends(reset_dependency),
         manager: RiskManagerFacade = Depends(get_risk_manager),
         logger: AuditLogger = Depends(get_audit_logger),
     ) -> KillSwitchResponse:

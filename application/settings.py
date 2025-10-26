@@ -150,6 +150,14 @@ class AdminApiSettings(BaseSettings):
         min_length=1,
         description="Default subject recorded for administrative actions when no override is provided.",
     )
+    admin_environment: str = Field(
+        "production",
+        min_length=1,
+        description=(
+            "Environment label attached to administrative RBAC attribute checks. "
+            "Defaults to 'production'."
+        ),
+    )
     admin_rate_limit_max_attempts: PositiveInt = Field(
         5,
         description="Number of administrative requests allowed within the configured interval.",
@@ -234,6 +242,14 @@ class AdminApiSettings(BaseSettings):
                     "siem_endpoint is set"
                 )
         return self
+
+    @field_validator("admin_environment", mode="before")
+    @classmethod
+    def _normalise_admin_environment(cls, value: Any) -> str:
+        candidate = str(value).strip()
+        if not candidate:
+            raise ValueError("admin_environment must be a non-empty string")
+        return candidate.lower()
 
     def build_secret_manager(
         self,
