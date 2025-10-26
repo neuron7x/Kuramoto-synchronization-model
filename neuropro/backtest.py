@@ -78,6 +78,7 @@ class BacktesterCAL:
         loss_streak = 0
         vola_hist: list[float] = []
         rows: list[dict[str, float]] = []
+        covered = 0.0
         rv_ref = max(1e-9, df[vol_col].iloc[: max(10, len(df) // 5)].mean())
 
         for i in range(len(df) - 1):
@@ -103,11 +104,21 @@ class BacktesterCAL:
             rv_t = df[vol_col].iloc[i]
             self.cqr.dynamic_alpha(rv_t, rv_ref)
             Lc, Uc = self.cqr.interval(L, U)
+            try:
+                yt = float(row[y_col])
+                if Lc <= yt <= Uc:
+                    covered += 1.0
+                cov = covered / (i + 1)
+                self.logger.log_metric("coverage", cov, step=i)
+            except Exception:
+                pass
 
             notional_frac = min(1.0, abs(1.0 - pos))
             costs = self.exec.costs(
                 df[spread_col].iloc[i], rv_t, notional_frac=notional_frac
             )
+            self.logger.log_metric("qhat", self.cqr.qhat or 0.0, step=i)
+            self.logger.log_metric("costs", costs, step=i)
 
             proposed = self.policy.decide(Lc, M, Uc, costs)
             checks = self.guard.check(

@@ -55,4 +55,8 @@ class ConformalCQR:
     def interval(self, L_pred: float, U_pred: float) -> tuple[float, float]:
         if self.qhat is None:
             return L_pred, U_pred
-        return L_pred - self.qhat, U_pred + self.qhat
+        # Масштабуємо q̂ на основі поточного рівня α: чим менше α, тим ширший інтервал.
+        a = max(self.alpha, 1e-9)
+        scale = max(1.0, np.sqrt(self.alpha0 / a))
+        q = float(self.qhat * scale)
+        return L_pred - q, U_pred + q

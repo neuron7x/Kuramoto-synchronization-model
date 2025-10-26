@@ -13,7 +13,7 @@ from neuropro.backtest import BacktesterCAL
 from neuropro.conformal import ConformalCQR
 from neuropro.cv import purged_kfold
 from neuropro.data import read_ticks_csv
-from neuropro.evaluation import cvar, max_drawdown, sharpe
+from neuropro.evaluation import cvar, deflated_sharpe, max_drawdown, sharpe
 from neuropro.execution import Execution
 from neuropro.walkforward import walkforward
 
@@ -23,6 +23,7 @@ def summarize(res_df: pd.DataFrame, label: str) -> dict[str, float | int | str]:
         return {
             "model": label,
             "sharpe": 0.0,
+            "deflated_sharpe": 0.0,
             "cvar95": 0.0,
             "max_dd": 0.0,
             "trades": 0,
@@ -32,9 +33,12 @@ def summarize(res_df: pd.DataFrame, label: str) -> dict[str, float | int | str]:
     r = res_df["pnl"].values
     eq = res_df["eq"].values
     trades = int((res_df["pos"].diff() != 0).sum()) if "pos" in res_df else 0
+    sr = float(sharpe(r))
+    dsr = float(deflated_sharpe(sr, max(len(r), 2), trials=50))
     return {
         "model": label,
-        "sharpe": float(sharpe(r)),
+        "sharpe": sr,
+        "deflated_sharpe": dsr,
         "cvar95": float(cvar(r, 0.95)),
         "max_dd": float(max_drawdown(eq)),
         "trades": trades,
@@ -98,6 +102,9 @@ def main() -> None:
         "empirical_coverage": coverage,
         "target_alpha0": cfg["conformal"]["alpha"],
     }
+    assert (
+        coverage >= 1.0 - cfg["conformal"]["alpha"] - 0.03
+    ), "Coverage below expected tolerance"
 
     exec_sim = Execution(
         cfg["execution"]["fee_bps"],

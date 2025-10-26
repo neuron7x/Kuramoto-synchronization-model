@@ -11,7 +11,10 @@ class QuantileModels:
         self.low = GradientBoostingRegressor(
             loss="quantile", alpha=low_q, random_state=seed
         )
-        self.med = GradientBoostingRegressor(loss="huber", random_state=seed)
+        # Використовуємо 0.5-квантиль для медіани задля узгодженості з CQR
+        self.med = GradientBoostingRegressor(
+            loss="quantile", alpha=0.5, random_state=seed
+        )
         self.high = GradientBoostingRegressor(
             loss="quantile", alpha=high_q, random_state=seed
         )
