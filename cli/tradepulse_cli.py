@@ -7,6 +7,7 @@ import importlib
 import itertools
 import json
 import os
+import shutil
 import shlex
 import subprocess
 import sys
@@ -134,6 +135,25 @@ def _resolve_path(base: Path, target: Path | str) -> Path:
     if candidate.is_absolute():
         return candidate
     return (base / candidate).resolve()
+
+
+def _resolve_kubectl_binary(base: Path, target: Path | str) -> Path:
+    candidate = Path(target)
+    if candidate.is_absolute():
+        return candidate
+
+    target_str = str(target)
+    has_dir_component = any(
+        sep and sep in target_str for sep in (os.sep, os.path.altsep)
+    )
+    if has_dir_component:
+        return (base / candidate).resolve()
+
+    resolved = shutil.which(target_str)
+    if resolved is not None:
+        return Path(resolved)
+
+    return candidate
 
 
 def _resolve_overlay_path(config_path: Path, cfg: DeploymentConfig) -> Path:
@@ -1071,7 +1091,7 @@ def deploy(
         if not overlay_path.exists():
             raise ArtifactError(f"Manifests directory {overlay_path} does not exist")
 
-    kubectl_binary = _resolve_path(config.parent, cfg.kubectl.binary)
+    kubectl_binary = _resolve_kubectl_binary(config.parent, cfg.kubectl.binary)
     kubectl_env = os.environ.copy()
     kubectl_env.update(cfg.kubectl.env)
 
