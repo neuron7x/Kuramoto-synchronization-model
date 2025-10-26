@@ -1,0 +1,101 @@
+name: Python Version Canaries
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  python-canaries:
+    name: Python Tests (Canary ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    concurrency:
+      group: python-canaries-${{ matrix.python-version }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum', 'infra/terraform/tests/go.sum') }}
+          restore-keys: |
+            go-${{ runner.os }}-
+
+      - name: Run Go service unit tests
+        run: |
+          mkdir -p reports/go
+          go test ./... -covermode=atomic -coverprofile=reports/go/services.coverage.out
+
+      - name: Upload Go coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-services-coverage-canary-${{ matrix.python-version }}
+          path: reports/go/services.coverage.out
+          if-no-files-found: ignore
+
+      - name: Run Terraform validation tests
+        working-directory: infra/terraform/tests
+        run: go test ./... -v
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Prepare test report directories
+        run: |
+          mkdir -p reports/pytest
+
+      - name: Sync localization resources
+        run: |
+          .venv/bin/python scripts/localization/sync_translations.py
+
+      - name: Run pytest suite
+        env:
+          PYTHONWARNINGS: error::DeprecationWarning
+        run: |
+          .venv/bin/pytest --junitxml=reports/pytest/results.xml --durations=25 --maxfail=1
+
+      - name: Upload pytest results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-${{ matrix.python-version }}
+          path: reports
+          if-no-files-found: ignore
