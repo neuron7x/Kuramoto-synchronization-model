@@ -110,13 +110,17 @@ func runTerraformValidationWithContext(ctx context.Context, t *testing.T, option
 	}()
 
 	select {
-	case <-ctx.Done():
-		return fmt.Errorf("terraform validation canceled or timed out: %w", ctx.Err())
 	case err := <-resultCh:
 		if err != nil {
 			return fmt.Errorf("terraform validation failed: %w", err)
 		}
 		return nil
+	case <-ctx.Done():
+		terraformErr := <-resultCh
+		if terraformErr != nil {
+			return fmt.Errorf("terraform validation failed after context cancellation (context error: %w): %w", ctx.Err(), terraformErr)
+		}
+		return fmt.Errorf("terraform validation canceled or timed out: %w", ctx.Err())
 	}
 }
 
