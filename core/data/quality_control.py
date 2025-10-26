@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
+
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd
@@ -253,6 +256,229 @@ class QualityReport:
         detail = "; ".join(reasons) or "Batch blocked by quality gate"
         raise QualityGateError(detail)
 
+    def summarise(
+        self, gate: "QualityGateConfig" | None = None
+    ) -> "QualitySummary":
+        """Return structured quality metrics for observability and reporting."""
+
+        return summarise_quality(self, gate)
+
+
+@dataclass(frozen=True, slots=True)
+class ValidatorOutcome:
+    """Status of a validator grouped by policy category."""
+
+    name: str
+    category: Literal["syntax", "semantics", "security"]
+    status: Literal["pass", "warn", "fail"]
+    detail: str
+
+
+@dataclass(frozen=True, slots=True)
+class QualitySummary:
+    """Structured quality metrics emitted after running a gate."""
+
+    total_rows: int
+    clean_rows: int
+    quarantined_rows: int
+    duplicate_rows: int
+    spike_rows: int
+    range_violation_rows: Mapping[str, int]
+    contract_breaches: Tuple[str, ...]
+    blocked: bool
+    quarantine_ratio: float
+    duplicate_ratio: float
+    spike_ratio: float
+    sanitised_rows: int
+    sanitised_ratio: float
+    validator_outcomes: Tuple[ValidatorOutcome, ...]
+    range_limits: Mapping[str, Mapping[str, float | bool | None]]
+    anomaly_threshold: float | None
+    anomaly_window: int | None
+
+    def to_dict(self) -> Dict[str, object]:
+        """Convert the summary into JSON-serialisable primitives."""
+
+        return {
+            "total_rows": self.total_rows,
+            "clean_rows": self.clean_rows,
+            "quarantined_rows": self.quarantined_rows,
+            "duplicate_rows": self.duplicate_rows,
+            "spike_rows": self.spike_rows,
+            "range_violation_rows": dict(self.range_violation_rows),
+            "contract_breaches": list(self.contract_breaches),
+            "blocked": self.blocked,
+            "quarantine_ratio": self.quarantine_ratio,
+            "duplicate_ratio": self.duplicate_ratio,
+            "spike_ratio": self.spike_ratio,
+            "sanitised_rows": self.sanitised_rows,
+            "sanitised_ratio": self.sanitised_ratio,
+            "validator_outcomes": [
+                {
+                    "name": outcome.name,
+                    "category": outcome.category,
+                    "status": outcome.status,
+                    "detail": outcome.detail,
+                }
+                for outcome in self.validator_outcomes
+            ],
+            "range_limits": {
+                column: dict(limits)
+                for column, limits in self.range_limits.items()
+            },
+            "anomaly_threshold": self.anomaly_threshold,
+            "anomaly_window": self.anomaly_window,
+        }
+
+
+def summarise_quality(
+    report: QualityReport, gate: "QualityGateConfig" | None = None
+) -> QualitySummary:
+    """Derive aggregate metrics and validator outcomes for a quality report."""
+
+    clean_rows = int(report.clean.shape[0])
+    quarantined_rows = int(report.quarantined.shape[0])
+    clean_counter: Counter[tuple[object, ...]] = Counter(
+        tuple(row) for row in report.clean.itertuples(index=False, name=None)
+    )
+    quarantined_counter: Counter[tuple[object, ...]] = Counter(
+        tuple(row) for row in report.quarantined.itertuples(index=False, name=None)
+    )
+    overlap = sum(
+        min(clean_counter[key], quarantined_counter[key])
+        for key in clean_counter.keys() & quarantined_counter.keys()
+    )
+    total_rows = clean_rows + quarantined_rows - overlap
+    duplicate_rows = int(report.duplicates.shape[0])
+    spike_rows = int(report.spikes.shape[0])
+    denominator = max(total_rows, 1)
+    range_violation_rows = {
+        column: int(payload.shape[0]) for column, payload in report.range_violations.items()
+    }
+
+    range_limits: Dict[str, Dict[str, float | bool | None]] = {}
+    anomaly_threshold: float | None = None
+    anomaly_window: int | None = None
+    validator_outcomes: List[ValidatorOutcome] = []
+
+    if gate is not None:
+        anomaly_threshold = float(gate.anomaly_threshold)
+        anomaly_window = int(gate.anomaly_window)
+        for check in gate.range_checks:
+            range_limits[check.column] = {
+                "min_value": float(check.min_value) if check.min_value is not None else None,
+                "max_value": float(check.max_value) if check.max_value is not None else None,
+                "inclusive_min": bool(check.inclusive_min),
+                "inclusive_max": bool(check.inclusive_max),
+            }
+        syntax_detail = (
+            f"Schema enforced on '{gate.schema.timestamp_column}' with"
+            f" {len(gate.schema.value_columns)} value columns"
+        )
+        validator_outcomes.append(
+            ValidatorOutcome(
+                name="schema", category="syntax", status="pass", detail=syntax_detail
+            )
+        )
+    else:
+        validator_outcomes.append(
+            ValidatorOutcome(
+                name="schema",
+                category="syntax",
+                status="warn",
+                detail="Quality gate disabled; schema guarantees were not evaluated",
+            )
+        )
+
+    semantics_status: Literal["pass", "warn", "fail"] = "pass"
+    semantics_notes: List[str] = []
+
+    if report.contract_breaches:
+        semantics_status = "fail"
+        semantics_notes.extend(report.contract_breaches)
+    if report.range_violations:
+        semantics_status = "fail"
+        for column, payload in report.range_violations.items():
+            semantics_notes.append(
+                f"{payload.shape[0]} rows in '{column}' breached configured bounds"
+            )
+    if spike_rows > 0:
+        if semantics_status != "fail":
+            semantics_status = "warn"
+        semantics_notes.append(
+            f"{spike_rows} anomalous points quarantined by z-score guard"
+        )
+
+    if report.blocked:
+        blocked_note = "Batch blocked by quality gate"
+        if (
+            not report.contract_breaches
+            and not report.range_violations
+            and spike_rows == 0
+            and not report.quarantined.empty
+        ):
+            blocked_note = (
+                "Batch blocked by quality gate after sanitised share exceeded policy"
+                " threshold"
+            )
+        if blocked_note not in semantics_notes:
+            semantics_notes.append(blocked_note)
+        if semantics_status == "pass":
+            semantics_status = "warn"
+
+    validator_outcomes.append(
+        ValidatorOutcome(
+            name="anomaly-and-contract",
+            category="semantics",
+            status=semantics_status,
+            detail="; ".join(semantics_notes) if semantics_notes else "All semantic checks passed",
+        )
+    )
+
+    security_status: Literal["pass", "warn", "fail"] = "pass"
+    security_detail = "No duplicate timestamps detected"
+    if duplicate_rows > 0:
+        security_status = "warn"
+        security_detail = f"{duplicate_rows} duplicate rows quarantined"
+    if clean_rows:
+        timestamp_column = None
+        if gate is not None and gate.schema.timestamp_column in report.clean.columns:
+            timestamp_column = gate.schema.timestamp_column
+        elif report.clean.columns.size > 0 and report.clean.columns[0] in report.clean.columns:
+            timestamp_column = report.clean.columns[0]
+        if timestamp_column is not None and report.clean[timestamp_column].duplicated().any():
+            security_status = "fail"
+            security_detail = "Duplicate timestamps remained in the clean dataset"
+
+    validator_outcomes.append(
+        ValidatorOutcome(
+            name="duplicate-timestamps",
+            category="security",
+            status=security_status,
+            detail=security_detail,
+        )
+    )
+
+    return QualitySummary(
+        total_rows=total_rows,
+        clean_rows=clean_rows,
+        quarantined_rows=quarantined_rows,
+        duplicate_rows=duplicate_rows,
+        spike_rows=spike_rows,
+        range_violation_rows=range_violation_rows,
+        contract_breaches=report.contract_breaches,
+        blocked=report.blocked,
+        quarantine_ratio=quarantined_rows / denominator,
+        duplicate_ratio=duplicate_rows / denominator,
+        spike_ratio=spike_rows / denominator,
+        sanitised_rows=quarantined_rows,
+        sanitised_ratio=quarantined_rows / denominator,
+        validator_outcomes=tuple(validator_outcomes),
+        range_limits=range_limits,
+        anomaly_threshold=anomaly_threshold,
+        anomaly_window=anomaly_window,
+    )
+
 
 def _zscore(series: pd.Series, window: int) -> pd.Series:
     rolling = series.rolling(window=window, min_periods=window)
@@ -468,8 +694,11 @@ __all__ = [
     "QualityGateConfig",
     "QualityGateError",
     "QualityReport",
+    "QualitySummary",
     "RangeCheck",
     "TemporalContract",
+    "ValidatorOutcome",
     "quarantine_anomalies",
+    "summarise_quality",
     "validate_and_quarantine",
 ]

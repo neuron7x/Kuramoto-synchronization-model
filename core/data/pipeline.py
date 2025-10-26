@@ -45,7 +45,13 @@ import pandas as pd
 from core.data.backfill import BackfillPlanner, BackfillResult, CacheKey
 from core.data.dead_letter import DeadLetterQueue, DeadLetterReason
 from core.data.feature_store import OnlineFeatureStore
-from core.data.quality_control import QualityGateConfig, QualityGateError, validate_and_quarantine
+from core.data.quality_control import (
+    QualityGateConfig,
+    QualityGateError,
+    QualityReport,
+    QualitySummary,
+    validate_and_quarantine,
+)
 from core.data.validation import TimeSeriesValidationConfig, validate_timeseries_frame
 from observability.drift import DriftDetector, FeatureDriftSummary, FeatureSnapshot
 
@@ -278,9 +284,10 @@ class DataPipeline:
         frame, source_name = self._load_source(dataset, context)
         schema = self._config.resolve_schema(dataset)
         validated = self._validate(frame, schema)
-        quality_report = self._apply_quality_gates(dataset, validated)
-        clean = quality_report.clean_frame
-        quarantined = quality_report.quarantined_frame
+        quality_outcome = self._apply_quality_gates(dataset, validated)
+        clean = quality_outcome.clean_frame
+        quarantined = quality_outcome.quarantined_frame
+        quality_summary = quality_outcome.summary
 
         toxic_clean, toxic_rows = self._apply_toxicity_filter(clean)
         anonymised = self._apply_anonymisation(toxic_clean)
@@ -318,6 +325,7 @@ class DataPipeline:
             "duration_seconds": duration,
         }
         metadata = {**metadata, **context.metadata}
+        metadata["quality"] = quality_summary.to_dict()
 
         return DataPipelineResult(
             dataset=dataset,
@@ -379,6 +387,7 @@ class DataPipeline:
     class _QualityOutcome:
         clean_frame: pd.DataFrame
         quarantined_frame: pd.DataFrame
+        summary: QualitySummary
 
     def _apply_quality_gates(
         self, dataset: str, frame: pd.DataFrame
@@ -386,7 +395,14 @@ class DataPipeline:
         gate = self._config.resolve_quality_gate(dataset)
         if gate is None:
             empty_quarantine = frame.iloc[0:0].copy()
-            return DataPipeline._QualityOutcome(frame, empty_quarantine)
+            report = QualityReport(
+                clean=frame.copy(),
+                quarantined=empty_quarantine.copy(),
+                duplicates=empty_quarantine.copy(),
+                spikes=empty_quarantine.copy(),
+            )
+            summary = report.summarise(None)
+            return DataPipeline._QualityOutcome(frame, empty_quarantine, summary)
 
         report = validate_and_quarantine(frame, gate)
         try:
@@ -411,7 +427,10 @@ class DataPipeline:
 
         clean = report.clean
         clean = clean.drop_duplicates(subset=gate.schema.timestamp_column, keep="last")
-        return DataPipeline._QualityOutcome(clean.reset_index(drop=True), quarantined)
+        summary = report.summarise(gate)
+        return DataPipeline._QualityOutcome(
+            clean.reset_index(drop=True), quarantined, summary
+        )
 
     def _apply_toxicity_filter(
         self, frame: pd.DataFrame
