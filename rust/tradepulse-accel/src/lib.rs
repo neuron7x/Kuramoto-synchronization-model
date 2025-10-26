@@ -1,3 +1,18 @@
+//! High-performance numeric primitives shared between the Rust and Python
+//! parts of TradePulse.
+//!
+//! The crate exposes low-level `*_core` functions implemented in safe Rust
+//! alongside thin PyO3 bindings that power the Python module.  The public API
+//! is intentionally minimal and focuses on:
+//!
+//! * Sliding window extraction over large contiguous slices.
+//! * Quantile estimation with linear interpolation.
+//! * One-dimensional convolution supporting the common NumPy modes.
+//!
+//! Keeping the algorithms and the bindings in the same crate makes it easy to
+//! share benchmarks and guarantees that the behaviour is identical between the
+//! Rust and Python entry points.
+
 use numpy::ndarray::Array2;
 use numpy::{PyArray1, PyArray2, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
@@ -6,13 +21,22 @@ use pyo3::PyErr;
 use std::cmp::Ordering;
 use std::fmt;
 
+/// Error type returned by numeric primitives when the input configuration is
+/// invalid.
 #[derive(Debug, Clone)]
 pub enum NumericError {
+    /// Raised when a sliding window has size zero.
     InvalidWindow,
+    /// Raised when the requested sliding step has size zero.
     InvalidStep,
+    /// Raised when an input slice is empty but a value is required.
     EmptyInput { name: &'static str },
+    /// Raised when a probability is not finite (`NaN` or infinite).
     ProbabilityNotFinite(f64),
+    /// Raised when a probability falls outside the `[0, 1]` interval.
     ProbabilityOutOfRange(f64),
+    /// Raised when a convolution mode other than `full`, `same` or `valid`
+    /// is requested.
     UnsupportedMode(String),
 }
 
@@ -37,6 +61,7 @@ impl fmt::Display for NumericError {
 
 impl std::error::Error for NumericError {}
 
+/// Subset of the convolution modes supported by NumPy's `convolve`.
 #[derive(Debug, Clone, Copy)]
 pub enum ConvolutionMode {
     Full,
@@ -57,6 +82,7 @@ impl TryFrom<&str> for ConvolutionMode {
     }
 }
 
+/// Guard helper that ensures a slice contains at least one element.
 fn check_non_empty(array: &[f64], name: &'static str) -> Result<(), NumericError> {
     if array.is_empty() {
         return Err(NumericError::EmptyInput { name });
@@ -64,6 +90,11 @@ fn check_non_empty(array: &[f64], name: &'static str) -> Result<(), NumericError
     Ok(())
 }
 
+/// Compute overlapping sliding windows over a one-dimensional slice.
+///
+/// The function returns a tuple consisting of the number of windows and a
+/// flattened vector that contains the window contents row-major.  A zero length
+/// result indicates that the requested window is larger than the input slice.
 pub fn sliding_windows_core(
     data: &[f64],
     window: usize,
@@ -87,6 +118,11 @@ pub fn sliding_windows_core(
     Ok((windows, values))
 }
 
+/// Compute linear-interpolated quantiles for a sorted copy of `data`.
+///
+/// Invalid probabilities are rejected with detailed errors.  Empty inputs
+/// return `NaN` values so that downstream callers can handle the missing data
+/// according to their needs.
 pub fn quantiles_core(data: &[f64], probabilities: &[f64]) -> Result<Vec<f64>, NumericError> {
     if let Some(&value) = probabilities.iter().find(|p| !p.is_finite()) {
         return Err(NumericError::ProbabilityNotFinite(value));
@@ -117,6 +153,10 @@ pub fn quantiles_core(data: &[f64], probabilities: &[f64]) -> Result<Vec<f64>, N
     Ok(results)
 }
 
+/// Perform a direct full convolution between `signal` and `kernel`.
+///
+/// The implementation uses a straightforward time-domain convolution which is
+/// efficient for the relatively small kernels used in TradePulse analytics.
 pub fn full_convolution(signal: &[f64], kernel: &[f64]) -> Vec<f64> {
     let output_len = signal.len() + kernel.len() - 1;
     let mut output = vec![0.0; output_len];
@@ -136,6 +176,11 @@ pub fn full_convolution(signal: &[f64], kernel: &[f64]) -> Vec<f64> {
     output
 }
 
+/// Convolve `signal` with `kernel` respecting the requested convolution mode.
+///
+/// The function mirrors the semantics of `numpy.convolve`, including the
+/// `full`, `same` and `valid` modes.  Empty inputs are rejected to help catch
+/// configuration errors early in the pipeline.
 pub fn convolve_core(
     signal: &[f64],
     kernel: &[f64],
@@ -179,6 +224,9 @@ impl From<NumericError> for PyErr {
 }
 
 #[pyfunction]
+#[pyo3(text_signature = "(data, window, step, /)")]
+/// Return a 2-D NumPy array containing the flattened sliding windows of
+/// `data`.
 fn sliding_windows<'py>(
     py: Python<'py>,
     data: PyReadonlyArray1<'py, f64>,
@@ -193,6 +241,9 @@ fn sliding_windows<'py>(
 }
 
 #[pyfunction]
+#[pyo3(text_signature = "(data, probabilities, /)")]
+/// Return the interpolated quantiles of `data` for the requested
+/// `probabilities`.
 fn quantiles<'py>(
     py: Python<'py>,
     data: PyReadonlyArray1<'py, f64>,
@@ -204,6 +255,8 @@ fn quantiles<'py>(
 }
 
 #[pyfunction]
+#[pyo3(text_signature = "(signal, kernel, mode, /)")]
+/// Convolve `signal` with `kernel` using the NumPy-compatible `mode`.
 fn convolve<'py>(
     py: Python<'py>,
     signal: PyReadonlyArray1<'py, f64>,
@@ -230,4 +283,53 @@ fn tradepulse_accel(py: Python<'_>, module: &Bound<'_, PyModule>) -> PyResult<()
     module.add("PYTHON_IMPLEMENTATION", "rust")?;
     module.add("PYTHON_VERSION", py.version())?;
     Ok(())
+}
+
+#[cfg(all(test, feature = "python-tests"))]
+mod tests {
+    use super::*;
+    use numpy::{PyArray2, PyUntypedArrayMethods, ToPyArray};
+    use pyo3::types::PyModule;
+
+    #[test]
+    fn python_api_roundtrip() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| -> PyResult<()> {
+            let module = PyModule::new_bound(py, "tradepulse_accel")?;
+            tradepulse_accel(py, &module)?;
+
+            let data = vec![1.0, 2.0, 3.0, 4.0];
+            let sliding = module.call_method1(
+                "sliding_windows",
+                (data.clone().to_pyarray_bound(py), 2usize, 1usize),
+            )?;
+            let windows = sliding.downcast::<PyArray2<f64>>()?;
+            assert_eq!(windows.shape(), &[3, 2]);
+
+            let quantiles_vec: Vec<f64> = module
+                .call_method1(
+                    "quantiles",
+                    (data.clone().to_pyarray_bound(py), vec![0.5, 1.0]),
+                )?
+                .extract()?;
+            assert_eq!(quantiles_vec.len(), 2);
+            assert!((quantiles_vec[0] - 2.5).abs() < f64::EPSILON);
+            assert!((quantiles_vec[1] - 4.0).abs() < f64::EPSILON);
+
+            let conv_vec: Vec<f64> = module
+                .call_method1(
+                    "convolve",
+                    (
+                        vec![1.0, 2.0, 3.0].to_pyarray_bound(py),
+                        vec![0.5, 0.5].to_pyarray_bound(py),
+                        "valid",
+                    ),
+                )?
+                .extract()?;
+            assert_eq!(conv_vec, vec![1.5, 2.5]);
+
+            Ok(())
+        })
+        .unwrap();
+    }
 }

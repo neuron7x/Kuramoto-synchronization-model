@@ -626,6 +626,7 @@ dependencies = [
  "criterion",
  "numpy",
  "pyo3",
+ "pyo3-build-config",
 ]
 
 [[package]]
