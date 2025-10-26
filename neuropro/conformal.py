@@ -23,6 +23,7 @@ class ConformalCQR:
         self.decay = decay
         self.window = window
         self.qhat: float | None = None
+        self._qhat_alpha: float = alpha
         self.online_window = int(online_window)
         self._resid: deque[float] = deque(maxlen=self.online_window)
 
@@ -52,9 +53,10 @@ class ConformalCQR:
         s_sorted = s[order]
         w_sorted = w[order]
         cdf = np.cumsum(w_sorted)
-        q = 1.0 - self.alpha
+        q = 1.0 - self.alpha0
         j = min(np.searchsorted(cdf, q, "left"), n - 1)
         self.qhat = float(s_sorted[j])
+        self._qhat_alpha = self.alpha0
         self._resid.clear()
         self._resid.extend(float(val) for val in s[max(0, n - self.online_window) :])
         return self
@@ -82,15 +84,19 @@ class ConformalCQR:
         s_sorted = s_arr[order]
         w_sorted = w[order]
         cdf = np.cumsum(w_sorted)
-        q = 1.0 - self.alpha
+        q = 1.0 - self.alpha0
         j = min(np.searchsorted(cdf, q, "left"), n - 1)
         self.qhat = float(s_sorted[j])
+        self._qhat_alpha = self.alpha0
         return self
 
     def interval(self, L_pred: float, U_pred: float) -> tuple[float, float]:
         if self.qhat is None:
             return L_pred, U_pred
         alpha_eff = max(self.alpha, 1e-9)
-        scale = max(1.0, np.sqrt(self.alpha0 / alpha_eff))
+        alpha_ref = max(self._qhat_alpha, 1e-9)
+        scale = 1.0
+        if alpha_eff < alpha_ref:
+            scale = float(np.sqrt(alpha_ref / alpha_eff))
         q = float(self.qhat * scale)
         return L_pred - q, U_pred + q
