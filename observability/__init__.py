@@ -108,6 +108,11 @@ from .notifications import (  # noqa: F401
     NotificationDispatcher,
     SlackNotifier,
 )
+from .profiling import (  # noqa: F401
+    ProfileCollector,
+    ProfileReport,
+    ProfileSectionResult,
+)
 from .tracing import (  # noqa: F401
     TracingConfig,
     activate_traceparent,
@@ -167,6 +172,9 @@ __all__ = [
     "NotificationDispatcher",
     "MetricThreshold",
     "TriageStepReport",
+    "ProfileCollector",
+    "ProfileReport",
+    "ProfileSectionResult",
     "ReleaseGateEvaluator",
     "ReleaseGateResult",
     "DriftDetector",
