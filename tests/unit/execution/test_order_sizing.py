@@ -230,3 +230,28 @@ def test_constrained_sizer_honours_zero_leverage_limit() -> None:
 
     assert result.order_quantity == 0.0
     assert result.target_position == 0.0
+
+
+def test_constrained_sizer_neutral_clipping_emits_order() -> None:
+    constraints = PositionSizingConstraints(max_leverage=1.0)
+    sizer = ConstrainedPositionSizer(constraints)
+    state = PortfolioState(
+        balance=10_000.0,
+        equity=10_000.0,
+        peak_equity=10_000.0,
+        volatility=0.05,
+        positions={"BTC": 1.0},
+    )
+    request = PositionSizingRequest(
+        symbol="BTC",
+        direction=0,
+        price=25_000.0,
+        risk_fraction=0.0,
+    )
+
+    result = sizer.size_order(request, state)
+
+    max_position = (state.equity * constraints.max_leverage) / request.price
+    assert result.target_position == pytest.approx(max_position)
+    assert result.order_quantity == pytest.approx(max_position - state.position_for("BTC"))
+    assert result.notes.get("leverage_clip") == pytest.approx(max_position)
