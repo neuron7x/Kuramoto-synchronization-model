@@ -7,7 +7,11 @@ from typing import AsyncIterator
 import pandas as pd
 
 from application.microservices.base import Microservice, ServiceState
-from application.microservices.contracts import MarketDataSource
+from application.microservices.contracts import (
+    IntegrationContractRegistry,
+    MarketDataSource,
+    default_contract_registry,
+)
 from application.system import TradePulseSystem
 from core.data.models import InstrumentType, PriceTick
 
@@ -15,10 +19,25 @@ from core.data.models import InstrumentType, PriceTick
 class MarketDataService(Microservice):
     """Encapsulate all market data related operations behind a service boundary."""
 
-    def __init__(self, system: TradePulseSystem) -> None:
+    def __init__(
+        self,
+        system: TradePulseSystem,
+        *,
+        contracts: IntegrationContractRegistry | None = None,
+    ) -> None:
         super().__init__(name="market-data")
         self._system = system
         self._last_source: MarketDataSource | None = None
+        self._contracts = contracts or default_contract_registry()
+        try:
+            self._operation_contracts["ingest"] = self._contracts.get_service(
+                "tradepulse.service.market-data.ingest"
+            )
+            self._operation_contracts["build_features"] = self._contracts.get_service(
+                "tradepulse.service.market-data.features"
+            )
+        except KeyError:  # pragma: no cover - defensive
+            pass
 
     def start(self) -> None:
         super().start()
@@ -27,34 +46,50 @@ class MarketDataService(Microservice):
         """Load data from *source* and return a normalised OHLCV frame."""
 
         self._ensure_active()
-        try:
-            frame = self._system.ingest_csv(
-                source.path,
-                symbol=source.symbol,
-                venue=source.venue,
-                instrument_type=source.instrument_type,
-                market=source.market,
-            )
-        except Exception as exc:
-            self._mark_error(exc)
-            raise
-        else:
-            self._last_source = source
-            self._mark_healthy()
-            return frame
+        contract = self._operation_contract("ingest")
+        attributes = {"symbol": source.symbol, "venue": source.venue}
+        if contract and contract.observability:
+            attributes = contract.observability.attributes(attributes)
+        with self._operation_context("ingest", attributes=attributes):
+            try:
+                frame = self._execute_with_retries(
+                    lambda: self._system.ingest_csv(
+                        source.path,
+                        symbol=source.symbol,
+                        venue=source.venue,
+                        instrument_type=source.instrument_type,
+                        market=source.market,
+                    ),
+                    contract.retry_policy if contract else None,
+                )
+            except Exception as exc:
+                self._mark_error(exc)
+                raise
+            else:
+                self._last_source = source
+                self._mark_healthy()
+                return frame
 
     def build_features(self, market_frame: pd.DataFrame) -> pd.DataFrame:
         """Compute the feature frame associated with *market_frame*."""
 
         self._ensure_active()
-        try:
-            features = self._system.build_feature_frame(market_frame)
-        except Exception as exc:
-            self._mark_error(exc)
-            raise
-        else:
-            self._mark_healthy()
-            return features
+        contract = self._operation_contract("build_features")
+        attributes = {"rows": len(market_frame)}
+        if contract and contract.observability:
+            attributes = contract.observability.attributes(attributes)
+        with self._operation_context("build_features", attributes=attributes):
+            try:
+                features = self._execute_with_retries(
+                    lambda: self._system.build_feature_frame(market_frame),
+                    contract.retry_policy if contract else None,
+                )
+            except Exception as exc:
+                self._mark_error(exc)
+                raise
+            else:
+                self._mark_healthy()
+                return features
 
     def stream(
         self,

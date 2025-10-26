@@ -143,10 +143,21 @@ class AuditLogger:
             and resolved_logger.getEffectiveLevel() > logging.INFO
         ):
             resolved_logger.setLevel(logging.INFO)
-        if logger is None and resolved_logger.disabled:
-            resolved_logger.disabled = False
-        if logger is None and not resolved_logger.handlers and not resolved_logger.propagate:
-            resolved_logger.propagate = True
+        if logger is None:
+            if resolved_logger.disabled:
+                resolved_logger.disabled = False
+            # Some parts of the application attach a ``NullHandler`` and disable
+            # propagation to avoid noisy logs.  When that configuration is in
+            # effect the audit trail would never reach the root logger and the
+            # security tests fail to observe any entries.  Treat a logger with
+            # only ``NullHandler`` instances as effectively "unconfigured" and
+            # re-enable propagation so the audit events can be captured.
+            has_real_handler = any(
+                not isinstance(handler, logging.NullHandler)
+                for handler in resolved_logger.handlers
+            )
+            if not has_real_handler and not resolved_logger.propagate:
+                resolved_logger.propagate = True
         self._logger = resolved_logger
         self._sink = sink
         self._store = store
