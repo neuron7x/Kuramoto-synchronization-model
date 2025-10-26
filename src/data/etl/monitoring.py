@@ -80,7 +80,13 @@ class DistributionProfiler:
             count = int(series.shape[0])
             nulls = int(series.isna().sum())
             null_ratio = float(nulls / count) if count else 0.0
-            unique = int(series.nunique(dropna=True)) if count else None
+            if count:
+                try:
+                    unique = int(series.nunique(dropna=True))
+                except TypeError:
+                    unique = None
+            else:
+                unique = None
             mean_value = float(numeric_values.mean()) if not numeric_values.empty else None
             std_value = float(numeric_values.std()) if numeric_values.shape[0] > 1 else None
             min_value = float(numeric_values.min()) if not numeric_values.empty else None
