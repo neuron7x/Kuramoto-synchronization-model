@@ -3,6 +3,33 @@
 import type { ChangeEvent } from 'react'
 import { useMemo, useState } from 'react'
 
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import CardHeader from '@mui/material/CardHeader'
+import Chip from '@mui/material/Chip'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import LinearProgress from '@mui/material/LinearProgress'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+
+import AssignmentIcon from '@mui/icons-material/Assignment'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import DownloadIcon from '@mui/icons-material/Download'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+
 type ScenarioField = 'initialBalance' | 'riskPerTrade' | 'maxPositions' | 'timeframe'
 
 type ScenarioConfig = {
@@ -38,6 +65,26 @@ type ScenarioHealth = {
   summary: string
   checklist: string[]
 }
+
+const HEALTH_STATUS_CONFIG: Record<ScenarioHealthStatus, { color: 'success' | 'warning' | 'error'; Icon: typeof CheckCircleIcon }> =
+  {
+    'Production-ready': {
+      color: 'success',
+      Icon: CheckCircleIcon,
+    },
+    'Needs review': {
+      color: 'warning',
+      Icon: WarningAmberIcon,
+    },
+    'High risk': {
+      color: 'error',
+      Icon: ErrorOutlineIcon,
+    },
+    'Resolve errors': {
+      color: 'error',
+      Icon: ErrorOutlineIcon,
+    },
+  }
 
 const FIELD_META: Record<ScenarioField, FieldMeta> = {
   initialBalance: {
@@ -454,7 +501,9 @@ export default function Home() {
     return (aggregateRisk / parsedConfig.initialBalance) * 100
   }, [aggregateRisk, parsedConfig])
 
-  const handleChange = (field: ScenarioField) => (event: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (field: ScenarioField) => (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const value = event.target.value
     setActionMessage(null)
     setDraft((current) => ({ ...current, [field]: value }))
@@ -517,256 +566,385 @@ export default function Home() {
   }
 
   const templateHelperId = 'template-description'
+  const statusVisual = HEALTH_STATUS_CONFIG[scenarioHealth.status]
+  const StatusIcon = statusVisual.Icon
+  const statusChipColor = statusVisual.color
 
   return (
-    <main className="scenario-main" data-testid="scenario-main">
-      <section className="scenario-container" data-testid="scenario-container">
-        <header className="scenario-hero" data-testid="onboarding-hero">
-          <h1>Scenario Studio</h1>
-          <p>
-            Sanity-check strategy inputs before pushing them into execution. Select a template, adjust the levers, and review
-            automatic hints about risk concentration and timeframe hygiene.
-          </p>
-        </header>
+    <Box
+      component="main"
+      data-testid="scenario-main"
+      sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}
+    >
+      <Container maxWidth="xl" data-testid="scenario-container">
+        <Stack spacing={{ xs: 5, md: 6 }}>
+          <Stack spacing={1.5} data-testid="onboarding-hero">
+            <Typography variant="h3" component="h1">
+              Scenario Studio
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Sanity-check strategy inputs before pushing them into execution. Select a template, adjust the levers, and review
+              automatic hints about risk concentration and timeframe hygiene.
+            </Typography>
+          </Stack>
 
-        <div className="scenario-grid">
-          <section
-            className="panel panel-form"
-            aria-labelledby="scenario-form-heading"
-            data-testid="scenario-template-panel"
-          >
-            <div className="template-select" data-testid="template-selector">
-              <label htmlFor="template" id="scenario-form-heading">
-                Scenario template
-              </label>
-              <select
-                id="template"
-                data-testid="template-select"
-                value={templateId}
-                onChange={(event) => {
-                  const value = event.target.value
-                  setTemplateId(value)
-                  setActionMessage(null)
-                  const template = SCENARIO_TEMPLATES.find((entry) => entry.id === value)
-                  if (template) {
-                    setDraft(toDraft(template.defaults))
-                  }
-                }}
-                className="tp-select"
-                aria-describedby={templateHelperId}
-              >
-                {SCENARIO_TEMPLATES.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.label}
-                  </option>
-                ))}
-              </select>
-              <p id={templateHelperId} className="template-description" data-testid="template-description">
-                {selectedTemplate.description}
-              </p>
-              <ul className="template-notes" data-testid="template-notes">
-                {selectedTemplate.notes.map((note) => (
-                  <li key={note}>{note}</li>
-                ))}
-              </ul>
-            </div>
+          <Grid container spacing={4}>
+            <Grid item xs={12} lg={7}>
+              <Card component="section" variant="outlined" data-testid="scenario-template-panel">
+                <CardHeader
+                  title="Strategy configuration"
+                  subheader="Choose a template, calibrate risk settings, and export a JSON blueprint when validation passes."
+                />
+                <CardContent>
+                  <Stack spacing={4}>
+                    <Box data-testid="template-selector">
+                      <TextField
+                        select
+                        fullWidth
+                        id="template"
+                        label="Scenario template"
+                        value={templateId}
+                        onChange={(event) => {
+                          const value = event.target.value
+                          setTemplateId(value)
+                          setActionMessage(null)
+                          const template = SCENARIO_TEMPLATES.find((entry) => entry.id === value)
+                          if (template) {
+                            setDraft(toDraft(template.defaults))
+                          }
+                        }}
+                        SelectProps={{ native: true }}
+                        inputProps={{
+                          'data-testid': 'template-select',
+                          'aria-describedby': templateHelperId,
+                        }}
+                      >
+                        {SCENARIO_TEMPLATES.map((template) => (
+                          <option key={template.id} value={template.id}>
+                            {template.label}
+                          </option>
+                        ))}
+                      </TextField>
 
-            <form className="field-grid" data-testid="scenario-form" noValidate>
-              {(Object.keys(FIELD_META) as ScenarioField[]).map((field) => {
-                const meta = FIELD_META[field]
-                const inputId = `field-${field}`
-                const helperId = `${inputId}-helper`
-                const errorId = `${inputId}-error`
-                const hasError = Boolean(errors[field])
-                const describedBy = hasError ? `${helperId} ${errorId}` : helperId
-                return (
-                  <div key={field} className="field" data-testid={`field-${field}`}>
-                    <label htmlFor={inputId}>{meta.label}</label>
-                    <input
-                      id={inputId}
-                      name={field}
-                      value={draft[field]}
-                      onChange={handleChange(field)}
-                      placeholder={meta.placeholder}
-                      inputMode={meta.inputMode}
-                      type={meta.type}
-                      className="tp-input"
-                      data-testid={`input-${field}`}
-                      aria-invalid={hasError}
-                      aria-describedby={describedBy}
-                      autoComplete="off"
-                      step={meta.type === 'number' ? 'any' : undefined}
-                    />
-                    <p id={helperId} className="tp-helper">
-                      {meta.helper}
-                    </p>
-                    {hasError ? (
-                      <p id={errorId} className="tp-error" data-testid={`error-${field}`}>
-                        {errors[field]}
-                      </p>
-                    ) : null}
-                  </div>
-                )
-              })}
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        id={templateHelperId}
+                        data-testid="template-description"
+                        sx={{ mt: 1.5 }}
+                      >
+                        {selectedTemplate.description}
+                      </Typography>
 
-              <div className="button-row" data-testid="action-buttons">
-                <button
-                  type="button"
-                  onClick={resetTemplate}
-                  className="tp-button tp-button--ghost"
-                  data-testid="action-reset"
-                >
-                  Reset to template defaults
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  disabled={hasErrors}
-                  className="tp-button tp-button--primary"
-                  data-testid="action-copy"
-                >
-                  Copy to clipboard
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  disabled={hasErrors}
-                  className="tp-button tp-button--secondary"
-                  data-testid="action-download"
-                >
-                  Download JSON
-                </button>
-              </div>
-              {actionMessage ? (
-                <p
-                  role="status"
-                  aria-live="polite"
-                  className={`tp-status ${
-                    actionMessage.kind === 'success' ? 'tp-status--success' : 'tp-status--error'
-                  }`}
-                  data-testid="action-feedback"
-                >
-                  {actionMessage.text}
-                </p>
-              ) : null}
-            </form>
-          </section>
+                      <List dense disablePadding data-testid="template-notes" sx={{ mt: 2, pl: 0 }}>
+                        {selectedTemplate.notes.map((note) => (
+                          <ListItem key={note} disableGutters sx={{ alignItems: 'flex-start', py: 0.5 }}>
+                            <ListItemIcon sx={{ minWidth: 32, mt: '3px' }}>
+                              <AssignmentIcon color="primary" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={note}
+                              primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
 
-          <div className="side-panels" data-testid="insights-panels">
-            <article className="panel health-panel" data-testid="scenario-health">
-              <h2>Scenario health</h2>
-              <div
-                className={`health-status ${
-                  scenarioHealth.status === 'Production-ready'
-                    ? 'health-status--ready'
-                    : scenarioHealth.status === 'Needs review'
-                    ? 'health-status--review'
-                    : scenarioHealth.status === 'Resolve errors'
-                    ? 'health-status--blocked'
-                    : 'health-status--risk'
-                }`}
-                data-testid="health-status"
-              >
-                <span>{scenarioHealth.status}</span>
-              </div>
-              <p className="health-score" data-testid="health-score">
-                Score: {scenarioHealth.score} / 100
-              </p>
-              <div
-                className="health-meter"
-                role="meter"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={scenarioHealth.score}
-                aria-valuetext={`${scenarioHealth.score} out of 100`}
-                data-testid="health-meter"
-              >
-                <span className="health-meter__fill" style={{ width: `${scenarioHealth.score}%` }} />
-              </div>
-              <p className="health-summary" data-testid="health-summary">
-                {scenarioHealth.summary}
-              </p>
-              {scenarioHealth.checklist.length > 0 ? (
-                <ul className="health-checklist" data-testid="health-checklist">
-                  {scenarioHealth.checklist.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
+                    <Box component="form" noValidate data-testid="scenario-form">
+                      <Grid container spacing={3}>
+                        {(Object.keys(FIELD_META) as ScenarioField[]).map((field) => {
+                          const meta = FIELD_META[field]
+                          const inputId = `field-${field}`
+                          const helperId = `${inputId}-helper`
+                          const errorId = `${inputId}-error`
+                          const hasError = Boolean(errors[field])
+                          const describedBy = hasError ? `${helperId} ${errorId}` : helperId
 
-            <article className="panel" data-testid="risk-snapshot">
-              <h2>Risk snapshot</h2>
-              <div className="metric-grid" data-testid="metric-grid">
-                <div className="metric-tiles">
-                  <div className="metric-tile" data-testid="metric-risk-per-trade">
-                    <span>Risk per trade</span>
-                    <p>{riskDollars === null ? '—' : `$${riskDollars.toFixed(2)}`}</p>
-                    {riskPercentOfEquity !== null ? (
-                      <span>{riskPercentOfEquity.toFixed(2)}% of equity</span>
-                    ) : null}
-                  </div>
-                  <div className="metric-tile" data-testid="metric-portfolio-risk">
-                    <span>Max portfolio risk</span>
-                    <p>{aggregateRisk === null ? '—' : `$${aggregateRisk.toFixed(2)}`}</p>
-                    {portfolioRiskPercent !== null ? (
-                      <span>{portfolioRiskPercent.toFixed(2)}% of equity</span>
-                    ) : null}
-                  </div>
-                  <div className="metric-tile" data-testid="metric-timeframe">
-                    <span>Timeframe</span>
-                    <p>{parsedConfig.timeframe || '—'}</p>
-                  </div>
-                </div>
+                          return (
+                            <Grid item xs={12} sm={6} data-testid={`field-${field}`} key={field}>
+                              <Stack spacing={1}>
+                                <TextField
+                                  fullWidth
+                                  id={inputId}
+                                  name={field}
+                                  label={meta.label}
+                                  value={draft[field]}
+                                  onChange={handleChange(field)}
+                                  placeholder={meta.placeholder}
+                                  type={meta.type}
+                                  error={hasError}
+                                  helperText={meta.helper}
+                                  FormHelperTextProps={{
+                                    id: helperId,
+                                  }}
+                                  inputProps={{
+                                    inputMode: meta.inputMode,
+                                    'data-testid': `input-${field}`,
+                                    'aria-describedby': describedBy,
+                                    step: meta.type === 'number' ? 'any' : undefined,
+                                  }}
+                                  autoComplete="off"
+                                />
+                                {hasError ? (
+                                  <Typography
+                                    variant="body2"
+                                    color="error"
+                                    id={errorId}
+                                    data-testid={`error-${field}`}
+                                  >
+                                    {errors[field]}
+                                  </Typography>
+                                ) : null}
+                              </Stack>
+                            </Grid>
+                          )
+                        })}
+                      </Grid>
 
-                {warnings.length > 0 ? (
-                  <ul className="warning-list" data-testid="warning-list">
-                    {warnings.map((warning) => (
-                      <li key={warning}>{warning}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="warning-placeholder" data-testid="warning-placeholder">
-                    Risk controls look balanced for the selected template. Stress test transaction costs before live execution.
-                  </p>
-                )}
+                      <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        spacing={1.5}
+                        justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
+                        alignItems={{ xs: 'stretch', sm: 'center' }}
+                        sx={{ mt: 4 }}
+                        data-testid="action-buttons"
+                      >
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          color="inherit"
+                          onClick={resetTemplate}
+                          startIcon={<RestartAltIcon />}
+                          data-testid="action-reset"
+                        >
+                          Reset to template defaults
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="contained"
+                          color="primary"
+                          onClick={handleCopy}
+                          disabled={hasErrors}
+                          startIcon={<ContentCopyIcon />}
+                          data-testid="action-copy"
+                        >
+                          Copy to clipboard
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="contained"
+                          color="secondary"
+                          onClick={handleDownload}
+                          disabled={hasErrors}
+                          startIcon={<DownloadIcon />}
+                          data-testid="action-download"
+                        >
+                          Download JSON
+                        </Button>
+                      </Stack>
 
-                {hasErrors ? (
-                  <p className="tp-error tp-error-inline" data-testid="error-export-blocker">
-                    Resolve the highlighted fields above to unlock export-ready scenario JSON.
-                  </p>
-                ) : null}
+                      {actionMessage ? (
+                        <Alert
+                          severity={actionMessage.kind === 'success' ? 'success' : 'error'}
+                          role="status"
+                          aria-live="polite"
+                          data-testid="action-feedback"
+                          sx={{ mt: 3 }}
+                        >
+                          {actionMessage.text}
+                        </Alert>
+                      ) : null}
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
 
-                {timeframeInsights.length > 0 ? (
-                  <div className="timeframe-insights" data-testid="timeframe-insights">
-                    <h3>Timeframe insights</h3>
-                    <ul>
-                      {timeframeInsights.map((insight) => (
-                        <li key={insight}>{insight}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </article>
+            <Grid item xs={12} lg={5}>
+              <Stack spacing={3} data-testid="insights-panels">
+                <Card component="article" variant="outlined" data-testid="scenario-health">
+                  <CardHeader title="Scenario health" />
+                  <CardContent>
+                    <Stack spacing={2}>
+                      <Box data-testid="health-status">
+                        <Chip
+                          icon={<StatusIcon fontSize="small" />}
+                          label={scenarioHealth.status}
+                          color={statusChipColor}
+                          variant="filled"
+                          sx={{ fontSize: '0.95rem', px: 1.5, py: 0.5 }}
+                        />
+                      </Box>
 
-            <article className="panel" data-testid="scenario-preview">
-              <h2>Scenario JSON template</h2>
-              <p className="tp-helper tp-helper-spaced">
-                Drop this snippet into <code>docs/scenarios.md</code> or configuration files as a starting point for backtests.
-              </p>
-              <pre
-                className="code-preview"
-                aria-label="Scenario JSON preview"
-                data-testid="scenario-json-preview"
-              >
-                {preview}
-              </pre>
-            </article>
-          </div>
-        </div>
-      </section>
-    </main>
+                      <Typography variant="body1" fontWeight={600} data-testid="health-score">
+                        Score: {scenarioHealth.score} / 100
+                      </Typography>
+
+                      <Box
+                        role="meter"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={scenarioHealth.score}
+                        aria-valuetext={`${scenarioHealth.score} out of 100`}
+                        data-testid="health-meter"
+                        sx={{ mt: -0.5 }}
+                      >
+                        <LinearProgress
+                          variant="determinate"
+                          value={scenarioHealth.score}
+                          color={statusChipColor}
+                          sx={{ height: 10, borderRadius: 999 }}
+                        />
+                      </Box>
+
+                      <Typography variant="body1" color="text.secondary" data-testid="health-summary">
+                        {scenarioHealth.summary}
+                      </Typography>
+
+                      {scenarioHealth.checklist.length > 0 ? (
+                        <List dense disablePadding data-testid="health-checklist">
+                          {scenarioHealth.checklist.map((item) => (
+                            <ListItem key={item} disableGutters sx={{ alignItems: 'flex-start', py: 0.5 }}>
+                              <ListItemIcon sx={{ minWidth: 32, mt: '3px' }}>
+                                <CheckCircleIcon color="primary" fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={item}
+                                primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      ) : null}
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card component="article" variant="outlined" data-testid="risk-snapshot">
+                  <CardHeader title="Risk snapshot" />
+                  <CardContent>
+                    <Stack spacing={3} data-testid="metric-grid">
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <Paper variant="outlined" data-testid="metric-risk-per-trade" sx={{ p: 2, borderRadius: 3 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Risk per trade
+                            </Typography>
+                            <Typography variant="h6">
+                              {riskDollars === null ? '—' : `$${riskDollars.toFixed(2)}`}
+                            </Typography>
+                            {riskPercentOfEquity !== null ? (
+                              <Typography variant="body2" color="text.secondary">
+                                {riskPercentOfEquity.toFixed(2)}% of equity
+                              </Typography>
+                            ) : null}
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Paper variant="outlined" data-testid="metric-portfolio-risk" sx={{ p: 2, borderRadius: 3 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Max portfolio risk
+                            </Typography>
+                            <Typography variant="h6">
+                              {aggregateRisk === null ? '—' : `$${aggregateRisk.toFixed(2)}`}
+                            </Typography>
+                            {portfolioRiskPercent !== null ? (
+                              <Typography variant="body2" color="text.secondary">
+                                {portfolioRiskPercent.toFixed(2)}% of equity
+                              </Typography>
+                            ) : null}
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Paper variant="outlined" data-testid="metric-timeframe" sx={{ p: 2, borderRadius: 3 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Timeframe
+                            </Typography>
+                            <Typography variant="h6">{parsedConfig.timeframe || '—'}</Typography>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+
+                      {warnings.length > 0 ? (
+                        <Stack spacing={1.5} data-testid="warning-list">
+                          {warnings.map((warning) => (
+                            <Alert
+                              key={warning}
+                              severity="warning"
+                              icon={<WarningAmberIcon />}
+                              sx={{ alignItems: 'flex-start' }}
+                            >
+                              {warning}
+                            </Alert>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Typography color="text.secondary" data-testid="warning-placeholder">
+                          Risk controls look balanced for the selected template. Stress test transaction costs before live execution.
+                        </Typography>
+                      )}
+
+                      {hasErrors ? (
+                        <Alert severity="error" data-testid="error-export-blocker">
+                          Resolve the highlighted fields above to unlock export-ready scenario JSON.
+                        </Alert>
+                      ) : null}
+
+                      {timeframeInsights.length > 0 ? (
+                        <Paper variant="outlined" data-testid="timeframe-insights" sx={{ p: 2.5, borderRadius: 3 }}>
+                          <Typography variant="h6" sx={{ mb: 1 }}>
+                            Timeframe insights
+                          </Typography>
+                          <List dense disablePadding>
+                            {timeframeInsights.map((insight) => (
+                              <ListItem key={insight} disableGutters sx={{ py: 0.5 }}>
+                                <ListItemIcon sx={{ minWidth: 32, mt: '3px' }}>
+                                  <AssignmentIcon color="primary" fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={insight}
+                                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Paper>
+                      ) : null}
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card component="article" variant="outlined" data-testid="scenario-preview">
+                  <CardHeader title="Scenario JSON template" />
+                  <CardContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Drop this snippet into <code>docs/scenarios.md</code> or configuration files as a starting point for backtests.
+                    </Typography>
+                    <Box
+                      component="pre"
+                      data-testid="scenario-json-preview"
+                      aria-label="Scenario JSON preview"
+                      sx={{
+                        bgcolor: '#0f172a',
+                        color: '#e2e8f0',
+                        borderRadius: 3,
+                        p: 2.5,
+                        fontSize: 14,
+                        overflowX: 'auto',
+                        boxShadow: 'inset 0 0 0 1px rgba(148, 163, 184, 0.2)',
+                      }}
+                    >
+                      {preview}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Stack>
+      </Container>
+    </Box>
   )
 }
 

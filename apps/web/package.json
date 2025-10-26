@@ -10,6 +10,11 @@
     "test:playwright": "playwright test --config=playwright.config.ts"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^6.1.2",
+    "@mui/material": "^6.1.2",
+    "@mui/material-nextjs": "^6.1.2",
     "next": "14.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0"
