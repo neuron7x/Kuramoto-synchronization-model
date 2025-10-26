@@ -167,7 +167,7 @@ class ResilientExecutionRouter:
         self,
         route_name: str,
         operation: str,
-        func: Callable[[ExecutionConnector], Order],
+        func: Callable[[ExecutionRoute, ExecutionConnector], Order],
         *,
         idempotency_key: str | None = None,
     ) -> NormalizedOrderState:
@@ -187,6 +187,7 @@ class ResilientExecutionRouter:
                 route.name,
                 operation,
                 func,
+                route,
                 connector,
             )
         except Exception as exc:  # noqa: BLE001
@@ -209,6 +210,7 @@ class ResilientExecutionRouter:
                     backup.name,
                     operation,
                     func,
+                    backup,
                     backup.connector,
                 )
             except Exception as secondary_exc:  # noqa: BLE001
@@ -262,9 +264,8 @@ class ResilientExecutionRouter:
                 return route.normalize(route.connector.fetch_order(order_id))
 
         _, route = self._resolve_route(route_name)
-        adjusted = route.apply_slippage(order)
-
-        def _place(connector: ExecutionConnector) -> Order:
+        def _place(active_route: ExecutionRoute, connector: ExecutionConnector) -> Order:
+            adjusted = active_route.apply_slippage(order)
             return connector.place_order(adjusted, idempotency_key=idempotency_key)
 
         return self._execute(
