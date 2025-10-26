@@ -1351,6 +1351,71 @@ def configure_openapi(app: FastAPI) -> None:
             },
         )
 
+        security_schemes = components.setdefault("securitySchemes", {})
+        security_schemes.setdefault(
+            "MutualTLS",
+            {
+                "type": "mutualTLS",
+                "description": (
+                    "Client certificate required for administrative endpoints. Certificates must be "
+                    "issued by the TradePulse platform CA."
+                ),
+            },
+        )
+
+        admin_security = [{"OAuth2Bearer": [], "MutualTLS": []}]
+        admin_error_responses = {
+            "401": {
+                "description": "Authentication token missing or invalid.",
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+                    }
+                },
+            },
+            "403": {
+                "description": "Authenticated caller lacks sufficient privileges.",
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+                    }
+                },
+            },
+            "429": {
+                "description": "Administrator exceeded configured rate limits.",
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+                    }
+                },
+            },
+            "500": {
+                "description": "Unexpected server-side failure.",
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+                    }
+                },
+            },
+        }
+
+        paths = schema.setdefault("paths", {})
+        admin_path = paths.get("/admin/kill-switch")
+        if isinstance(admin_path, dict):
+            for method in ("get", "post", "delete"):
+                operation = admin_path.get(method)
+                if not isinstance(operation, dict):
+                    continue
+                operation["security"] = admin_security
+                responses = operation.setdefault("responses", {})
+                for status_code, payload in admin_error_responses.items():
+                    existing = responses.get(status_code)
+                    if isinstance(existing, dict):
+                        existing.setdefault("description", payload["description"])
+                        existing.setdefault("content", payload["content"])
+                    else:
+                        responses[status_code] = payload
+
         app.openapi_schema = schema
         return schema
 
