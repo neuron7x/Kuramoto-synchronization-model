@@ -1,7 +1,6 @@
 module github.com/TradePulse/TradePulse/infra/terraform/tests
 
 go 1.22.7
-toolchain go1.22.7
 
 require (
 	github.com/gruntwork-io/terratest v0.46.16
