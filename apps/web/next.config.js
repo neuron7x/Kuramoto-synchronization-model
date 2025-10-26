@@ -45,7 +45,7 @@ const ContentSecurityPolicy = [
   "worker-src 'self';",
   "media-src 'self';",
   "manifest-src 'self';",
-].join('\n')
+].join(' ')
 
 const securityHeaders = [
   {
