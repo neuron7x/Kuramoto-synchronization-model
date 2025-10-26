@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections import deque
+import threading
 from typing import Mapping
 
 import pytest
 
 from src.system import (
     ModuleExecutionError,
+    ModuleHandler,
     ModuleOrchestrator,
     ModuleRunResult,
     ModuleRunSummary,
@@ -179,4 +181,25 @@ def test_orchestrator_validates_provided_keys() -> None:
 
     assert excinfo.value.module == "alpha"
     assert "failed to provide" in str(excinfo.value)
+
+
+def test_orchestrator_runs_independent_modules_concurrently() -> None:
+    orchestrator = ModuleOrchestrator()
+    barrier = threading.Barrier(2)
+
+    def build_handler(name: str) -> ModuleHandler:
+        def handler(state: Mapping[str, object]) -> Mapping[str, object]:
+            barrier.wait(timeout=5)
+            return {name: True}
+
+        return handler
+
+    orchestrator.register("alpha", build_handler("alpha"), provides=["alpha"])
+    orchestrator.register("beta", build_handler("beta"), provides=["beta"])
+
+    summary = orchestrator.run(max_workers=2)
+
+    assert summary.succeeded is True
+    assert summary.context["alpha"] is True
+    assert summary.context["beta"] is True
 

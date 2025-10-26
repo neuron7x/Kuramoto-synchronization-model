@@ -3,14 +3,28 @@
 from __future__ import annotations
 
 from collections import deque
+from concurrent.futures import (
+    FIRST_COMPLETED,
+    Future,
+    ThreadPoolExecutor,
+    wait,
+)
 from dataclasses import dataclass
+import os
+from heapq import heappop, heappush
 from time import perf_counter
-from typing import Callable, Iterable, Mapping, MutableMapping
+from types import MappingProxyType
+from typing import Callable, Iterable, Mapping, TypeAlias
 
 
-ModuleState = MutableMapping[str, object]
+ModuleState = Mapping[str, object]
 ModuleOutput = Mapping[str, object]
 ModuleHandler = Callable[[ModuleState], ModuleOutput | None]
+ModuleExecutionOutcome: TypeAlias = tuple[
+    "ModuleRunResult",
+    dict[str, object] | None,
+    BaseException | None,
+]
 
 
 @dataclass(slots=True, frozen=True)
@@ -171,12 +185,15 @@ class ModuleOrchestrator:
         *,
         initial_context: Mapping[str, object] | None = None,
         targets: Iterable[str] | None = None,
+        max_workers: int | None = None,
     ) -> ModuleRunSummary:
         """Execute registered modules respecting dependencies and requirements.
 
         When ``targets`` is provided, only the requested modules and their
         transitive dependencies are executed. The execution order always follows
-        the resolved dependency graph, ensuring deterministic behaviour.
+        the resolved dependency graph, ensuring deterministic behaviour. The
+        ``max_workers`` argument can be used to tune concurrency; ``None`` uses a
+        sensible default derived from available CPUs.
         """
 
         context: ModuleState = dict(initial_context or {})
@@ -206,65 +223,190 @@ class ModuleOrchestrator:
         order = tuple(
             name for name in resolved_order if name in required_modules
         )
+        if not order:
+            return ModuleRunSummary(order=(), context=dict(context), results={})
+
+        if max_workers is not None and max_workers < 1:
+            raise ValueError("max_workers must be at least 1 when provided")
+
+        order_set = set(order)
+        definitions = {name: self._definitions[name] for name in order}
+        dependencies: dict[str, set[str]] = {
+            name: set(definitions[name].after) & order_set for name in order
+        }
+        dependents: dict[str, set[str]] = {name: set() for name in order}
+        for name, deps in dependencies.items():
+            for dep in deps:
+                dependents[dep].add(name)
+        remaining_dependencies: dict[str, int] = {
+            name: len(dependencies[name]) for name in order
+        }
+
+        order_index = {name: index for index, name in enumerate(order)}
+        ready_heap: list[tuple[int, str]] = []
+        for name, count in remaining_dependencies.items():
+            if count == 0:
+                heappush(ready_heap, (order_index[name], name))
+
+        worker_cap: int
+        if max_workers is None:
+            cpu_workers = (os.cpu_count() or 1) + 4
+            worker_cap = min(32, cpu_workers)
+        else:
+            worker_cap = max_workers
+        worker_cap = max(1, min(worker_cap, len(order)))
+
         results: dict[str, ModuleRunResult] = {}
+        pending_updates: dict[str, dict[str, object] | None] = {}
+        in_flight: dict[Future[ModuleExecutionOutcome], str] = {}
+        order_list = list(order)
+        next_to_finalize = 0
+        failure_details: tuple[str, BaseException] | None = None
 
-        for name in order:
-            definition = self._definitions[name]
-            missing = definition.requires - context.keys()
-            if missing:
-                error = KeyError(
-                    f"Module '{name}' missing required context keys: "
-                    f"{', '.join(sorted(missing))}"
-                )
-                results[name] = ModuleRunResult(
-                    name=name,
-                    success=False,
-                    duration=0.0,
-                    output=None,
-                    error=error,
-                )
-                raise ModuleExecutionError(module=name, cause=error, results=results)
-
-            start = perf_counter()
-            try:
-                output = definition.handler(context)
-                updates: dict[str, object] | None = None
-                if output is not None:
-                    if not isinstance(output, Mapping):
-                        raise TypeError(
-                            f"Module '{name}' handler must return a mapping or None"
+        executor = ThreadPoolExecutor(max_workers=worker_cap)
+        try:
+            while (ready_heap or in_flight) and failure_details is None:
+                while (
+                    ready_heap
+                    and len(in_flight) < worker_cap
+                    and failure_details is None
+                ):
+                    _, name = heappop(ready_heap)
+                    definition = definitions[name]
+                    missing = definition.requires - context.keys()
+                    if missing:
+                        error = KeyError(
+                            f"Module '{name}' missing required context keys: "
+                            f"{', '.join(sorted(missing))}"
                         )
-                    updates = dict(output)
-                    context.update(updates)
+                        results[name] = ModuleRunResult(
+                            name=name,
+                            success=False,
+                            duration=0.0,
+                            output=None,
+                            error=error,
+                        )
+                        failure_details = (name, error)
+                        break
 
-                if definition.provides and not definition.provides <= context.keys():
-                    missing_keys = definition.provides - context.keys()
-                    raise KeyError(
-                        f"Module '{name}' failed to provide context keys: "
-                        f"{', '.join(sorted(missing_keys))}"
+                    context_snapshot = MappingProxyType(dict(context))
+                    future = executor.submit(
+                        self._invoke_handler, definitions[name], context_snapshot
                     )
+                    in_flight[future] = name
 
-            except Exception as exc:
-                duration = perf_counter() - start
-                results[name] = ModuleRunResult(
-                    name=name,
+                if failure_details is not None or not in_flight:
+                    break
+
+                done, _ = wait(set(in_flight), return_when=FIRST_COMPLETED)
+                for future in done:
+                    name = in_flight.pop(future)
+                    result, updates, error = future.result()
+                    results[name] = result
+                    if error is None:
+                        pending_updates[name] = updates
+                    else:
+                        if failure_details is None:
+                            failure_details = (name, error)
+
+                while next_to_finalize < len(order_list):
+                    module_name = order_list[next_to_finalize]
+                    if module_name not in results:
+                        break
+
+                    module_result = results[module_name]
+                    if not module_result.success:
+                        break
+
+                    updates = pending_updates.pop(module_name, None)
+                    if updates:
+                        context.update(updates)
+
+                    definition = definitions[module_name]
+                    if definition.provides and not definition.provides <= context.keys():
+                        missing_keys = definition.provides - context.keys()
+                        error = KeyError(
+                            f"Module '{module_name}' failed to provide context keys: "
+                            f"{', '.join(sorted(missing_keys))}"
+                        )
+                        results[module_name] = ModuleRunResult(
+                            name=module_name,
+                            success=False,
+                            duration=module_result.duration,
+                            output=None,
+                            error=error,
+                        )
+                        failure_details = failure_details or (module_name, error)
+                        break
+
+                    for follower in dependents[module_name]:
+                        remaining_dependencies[follower] -= 1
+                        if remaining_dependencies[follower] == 0:
+                            heappush(ready_heap, (order_index[follower], follower))
+
+                    next_to_finalize += 1
+
+        finally:
+            executor.shutdown(wait=True, cancel_futures=True)
+
+        if failure_details is not None:
+            module, cause = failure_details
+            raise ModuleExecutionError(module=module, cause=cause, results=dict(results))
+
+        while next_to_finalize < len(order_list):
+            module_name = order_list[next_to_finalize]
+            module_result = results[module_name]
+            if not module_result.success:
+                break
+            updates = pending_updates.pop(module_name, None)
+            if updates:
+                context.update(updates)
+            next_to_finalize += 1
+
+        return ModuleRunSummary(order=order, context=dict(context), results=results)
+
+    @staticmethod
+    def _invoke_handler(
+        definition: ModuleDefinition,
+        context: ModuleState,
+    ) -> ModuleExecutionOutcome:
+        """Execute a module handler and normalise its outcome."""
+
+        start = perf_counter()
+        try:
+            output = definition.handler(context)
+            updates: dict[str, object] | None = None
+            if output is not None:
+                if not isinstance(output, Mapping):
+                    raise TypeError(
+                        f"Module '{definition.name}' handler must return a mapping or None"
+                    )
+                updates = dict(output)
+            duration = perf_counter() - start
+            return (
+                ModuleRunResult(
+                    name=definition.name,
+                    success=True,
+                    duration=duration,
+                    output=updates,
+                    error=None,
+                ),
+                updates,
+                None,
+            )
+        except Exception as exc:
+            duration = perf_counter() - start
+            return (
+                ModuleRunResult(
+                    name=definition.name,
                     success=False,
                     duration=duration,
                     output=None,
                     error=exc,
-                )
-                raise ModuleExecutionError(module=name, cause=exc, results=results) from exc
-
-            duration = perf_counter() - start
-            results[name] = ModuleRunResult(
-                name=name,
-                success=True,
-                duration=duration,
-                output=updates,
-                error=None,
+                ),
+                None,
+                exc,
             )
-
-        return ModuleRunSummary(order=order, context=dict(context), results=results)
 
 
 __all__ = [
