@@ -29,7 +29,7 @@ def _experiment_cfg(tmp_path: Path) -> ExperimentConfig:
         encoding="utf-8",
     )
     payload = {
-        "name": "local",
+        "name": "dev",
         "db_uri": "sqlite:///memory",
         "debug": False,
         "log_level": "INFO",
