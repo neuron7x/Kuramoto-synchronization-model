@@ -254,32 +254,15 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
 
         if direction == 0:
             existing_position = state.position_for(request.symbol)
-            target_position = existing_position
-            order_quantity = 0.0
-            notes: dict[str, float] = {"direction": 0.0}
-
-            leverage_cap = constraints.max_leverage
-            if request.leverage_limit is not None:
-                leverage_cap = min(leverage_cap, max(request.leverage_limit, 0.0))
-
-            if leverage_cap >= 0.0:
-                max_notional = capital * leverage_cap
-                max_position = max_notional / request.price
-                if abs(existing_position) > max_position + 1e-12:
-                    target_position = math.copysign(max_position, existing_position)
-                    order_quantity = target_position - existing_position
-                    notes["leverage_clip"] = max_position
-
-            applied_fraction = 0.0
-            if capital > 0.0:
-                applied_fraction = (target_position * request.price) / capital
-            notes["final_fraction"] = applied_fraction
-
-            return PositionSizingResult(
-                order_quantity=order_quantity,
-                target_position=target_position,
-                applied_fraction=applied_fraction,
+            notes: dict[str, float] = {"direction": 0.0, "directionless_hold": 1.0}
+            return self._finalize_result(
+                existing_position=existing_position,
+                target_position=existing_position,
+                capital=capital,
+                request=request,
+                constraints=constraints,
                 notes=notes,
+                force_zero_order=True,
             )
 
         notes: dict[str, float] = {}
@@ -316,11 +299,16 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
         if kelly_fraction is not None:
             kelly_direction = 1 if kelly_fraction >= 0.0 else -1
             if direction != kelly_direction:
-                return PositionSizingResult(
-                    order_quantity=0.0,
-                    target_position=state.position_for(request.symbol),
-                    applied_fraction=0.0,
-                    notes={"kelly_conflict": 1.0},
+                existing_position = state.position_for(request.symbol)
+                notes = {"kelly_conflict": 1.0}
+                return self._finalize_result(
+                    existing_position=existing_position,
+                    target_position=existing_position,
+                    capital=capital,
+                    request=request,
+                    constraints=constraints,
+                    notes=notes,
+                    force_zero_order=True,
                 )
             candidate_fraction = direction * min(
                 min(risk_fraction, abs(kelly_fraction)),
@@ -330,11 +318,16 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
         drawdown = state.drawdown
         notes["drawdown"] = drawdown
         if constraints.max_drawdown > 0.0 and drawdown >= constraints.max_drawdown:
-            return PositionSizingResult(
-                order_quantity=0.0,
-                target_position=state.position_for(request.symbol),
-                applied_fraction=0.0,
-                notes={"drawdown": drawdown},
+            existing_position = state.position_for(request.symbol)
+            notes = {"drawdown": drawdown}
+            return self._finalize_result(
+                existing_position=existing_position,
+                target_position=0.0,
+                capital=capital,
+                request=request,
+                constraints=constraints,
+                notes=notes,
+                force_zero_order=True,
             )
 
         if constraints.max_drawdown > 0.0 and drawdown > 0.0:
@@ -348,11 +341,16 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
         cppi_limit = self._cppi_fraction(state, leverage_cap)
         notes["cppi_limit"] = cppi_limit
         if cppi_limit <= 0.0:
-            return PositionSizingResult(
-                order_quantity=0.0,
-                target_position=state.position_for(request.symbol),
-                applied_fraction=0.0,
-                notes={"cppi_limit": cppi_limit},
+            existing_position = state.position_for(request.symbol)
+            notes = {"cppi_limit": cppi_limit}
+            return self._finalize_result(
+                existing_position=existing_position,
+                target_position=0.0,
+                capital=capital,
+                request=request,
+                constraints=constraints,
+                notes=notes,
+                force_zero_order=True,
             )
 
         candidate_fraction = max(-cppi_limit, min(candidate_fraction, cppi_limit))
@@ -381,32 +379,12 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
 
         target_position = notional / request.price
         existing_position = state.position_for(request.symbol)
-        order_quantity = target_position - existing_position
-
-        min_size = max(constraints.min_order_size, request.min_trade_qty)
-        if abs(order_quantity) < min_size:
-            order_quantity = 0.0
-            target_position = existing_position
-
-        max_size = constraints.max_order_size
-        if request.max_trade_qty is not None:
-            max_size = request.max_trade_qty if max_size is None else min(max_size, request.max_trade_qty)
-
-        if max_size is not None and abs(order_quantity) > max_size:
-            order_quantity = math.copysign(max_size, order_quantity)
-            target_position = existing_position + order_quantity
-            notes["order_clip"] = max_size
-
-        applied_fraction = 0.0
-        if capital > 0.0:
-            applied_fraction = (target_position * request.price) / capital
-
-        notes["final_fraction"] = applied_fraction
-
-        return PositionSizingResult(
-            order_quantity=order_quantity,
+        return self._finalize_result(
+            existing_position=existing_position,
             target_position=target_position,
-            applied_fraction=applied_fraction,
+            capital=capital,
+            request=request,
+            constraints=constraints,
             notes=notes,
         )
 
@@ -419,6 +397,103 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
             return 0.0
         limit = (self._constraints.cppi_multiplier * cushion) / max(state.equity, 1e-12)
         return min(limit, leverage_cap)
+
+    def _resolve_leverage_cap(
+        self,
+        request: PositionSizingRequest,
+        constraints: PositionSizingConstraints,
+    ) -> float:
+        leverage_cap = constraints.max_leverage
+        if request.leverage_limit is not None:
+            leverage_cap = min(leverage_cap, max(request.leverage_limit, 0.0))
+        return max(leverage_cap, 0.0)
+
+    def _clip_target_to_leverage(
+        self,
+        target_position: float,
+        *,
+        capital: float,
+        price: float,
+        leverage_cap: float,
+    ) -> tuple[float, float | None]:
+        if leverage_cap <= 0.0 or capital <= 0.0:
+            return 0.0, (0.0 if abs(target_position) > 0.0 else None)
+
+        max_notional = capital * leverage_cap
+        target_notional = target_position * price
+        if abs(target_notional) <= max_notional + 1e-12:
+            return target_position, None
+
+        clipped = max_notional / price
+        sign = -1.0 if target_position < 0.0 else 1.0
+        return clipped * sign, clipped
+
+    def _finalize_result(
+        self,
+        *,
+        existing_position: float,
+        target_position: float,
+        capital: float,
+        request: PositionSizingRequest,
+        constraints: PositionSizingConstraints,
+        notes: dict[str, float],
+        force_zero_order: bool = False,
+    ) -> PositionSizingResult:
+        leverage_cap = self._resolve_leverage_cap(request, constraints)
+        target_position, clipped_value = self._clip_target_to_leverage(
+            target_position,
+            capital=capital,
+            price=request.price,
+            leverage_cap=leverage_cap,
+        )
+        if clipped_value is not None:
+            notes["leverage_clip"] = clipped_value
+
+        desired_position = target_position
+        order_quantity = desired_position - existing_position
+
+        if force_zero_order:
+            if abs(desired_position - existing_position) > 1e-12:
+                notes["deferred_rebalance"] = desired_position - existing_position
+            order_quantity = 0.0
+        else:
+            min_size = max(constraints.min_order_size, request.min_trade_qty)
+            tolerance = max(min_size - 1e-12, 0.0)
+            if abs(order_quantity) < tolerance:
+                residual = desired_position - existing_position
+                if abs(residual) > 1e-12:
+                    notes["deferred_rebalance"] = residual
+                if min_size > 0.0:
+                    notes["min_fill_block"] = min_size
+                order_quantity = 0.0
+            else:
+                max_size = constraints.max_order_size
+                if request.max_trade_qty is not None:
+                    max_size = (
+                        request.max_trade_qty
+                        if max_size is None
+                        else min(max_size, request.max_trade_qty)
+                    )
+                if max_size is not None and abs(order_quantity) > max_size + 1e-12:
+                    executed_order = math.copysign(max_size, order_quantity)
+                    residual = desired_position - (existing_position + executed_order)
+                    if abs(residual) > 1e-12:
+                        notes["deferred_rebalance"] = residual
+                    order_quantity = executed_order
+                    notes["order_clip"] = max_size
+
+        applied_fraction = 0.0
+        if capital > 0.0:
+            applied_fraction = (desired_position * request.price) / capital
+
+        notes["final_fraction"] = applied_fraction
+
+        return PositionSizingResult(
+            order_quantity=order_quantity,
+            target_position=desired_position,
+            applied_fraction=applied_fraction,
+            notes=notes,
+        )
 
 def position_sizing(
     balance: float,
