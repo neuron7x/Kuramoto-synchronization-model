@@ -700,8 +700,7 @@ class EventDrivenBacktestEngine(BacktestEngine[Result]):
             ctx["financing_cost"] = float(total_financing)
 
             if metrics.enabled:
-                for step, value in enumerate(equity_curve):
-                    metrics.record_equity_point(strategy_name, step, float(value))
+                metrics.record_equity_curve(strategy_name, equity_curve)
 
             pnl_series = (
                 equity_curve

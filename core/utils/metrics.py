@@ -10,13 +10,16 @@ import math
 import multiprocessing
 import time
 from collections import defaultdict, deque
+import os
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, Optional, Sequence
 
 try:  # pragma: no cover - exercised indirectly in environments without numpy
     import numpy as np
+    from numpy.typing import NDArray
 except ModuleNotFoundError:  # pragma: no cover - handled in fallback logic
     np = None  # type: ignore[assignment]
+    NDArray = Any  # type: ignore[assignment]
     _NUMPY_AVAILABLE = False
     _accelerated_quantiles = None
 else:  # pragma: no cover - covered via normal test environment
@@ -90,6 +93,9 @@ class MetricsCollector:
 
         self._enabled = True
         self.registry = registry
+        self._equity_curve_max_points = int(
+            os.getenv("TRADEPULSE_METRICS_MAX_EQUITY_POINTS", "1024")
+        )
 
         # Feature/Indicator metrics
         self.feature_transform_duration = Histogram(
@@ -148,6 +154,7 @@ class MetricsCollector:
             ["strategy"],
             registry=registry,
         )
+        self._equity_curve_cache: dict[str, list[str]] = defaultdict(list)
 
         # Environment parity metrics
         self.environment_parity_checks = Counter(
@@ -1383,7 +1390,68 @@ class MetricsCollector:
 
         if not self._enabled:
             return
-        self.backtest_equity_curve.labels(strategy=strategy, step=str(step)).set(value)
+        step_label = str(step)
+        self.backtest_equity_curve.labels(strategy=strategy, step=step_label).set(value)
+        recorded = self._equity_curve_cache[strategy]
+        if step_label not in recorded:
+            recorded.append(step_label)
+
+    def record_equity_curve(
+        self,
+        strategy: str,
+        series: Sequence[float] | NDArray[np.float64],
+        *,
+        max_points: int | None = None,
+    ) -> None:
+        """Record an equity curve using bounded cardinality sampling."""
+
+        if not self._enabled:
+            return
+
+        limit = int(max_points or self._equity_curve_max_points)
+        if limit <= 0:
+            limit = 1
+
+        values_list: list[float] | None = None
+        if _NUMPY_AVAILABLE:
+            values = np.asarray(series, dtype=float)
+            total_points = int(values.size)
+        else:
+            values_list = [float(v) for v in series]
+            total_points = len(values_list)
+
+        if total_points == 0:
+            self._clear_equity_curve(strategy)
+            return
+
+        stride = max(1, int(math.ceil(total_points / limit)))
+        indices = list(range(0, total_points, stride))
+        if indices[-1] != total_points - 1:
+            indices.append(total_points - 1)
+
+        sampled_steps = [str(index) for index in indices]
+        if _NUMPY_AVAILABLE:
+            sampled_values = values[indices]
+        else:
+            assert values_list is not None
+            sampled_values = [values_list[index] for index in indices]
+
+        self._clear_equity_curve(strategy)
+
+        for step_label, value in zip(sampled_steps, sampled_values, strict=True):
+            self.backtest_equity_curve.labels(strategy=strategy, step=step_label).set(
+                float(value)
+            )
+
+        self._equity_curve_cache[strategy] = sampled_steps
+
+    def _clear_equity_curve(self, strategy: str) -> None:
+        steps = self._equity_curve_cache.pop(strategy, [])
+        for step_label in steps:
+            try:
+                self.backtest_equity_curve.remove(strategy, step_label)
+            except KeyError:
+                continue
 
     def record_environment_parity(
         self,

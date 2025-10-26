@@ -84,6 +84,9 @@ class OrderManagementSystem:
         self._ack_timestamps: Dict[str, datetime] = {}
         self._pending: Dict[str, Order] = {}
         self._audit = audit_logger or get_execution_audit_logger()
+        self._active_orders: Dict[str, Order] = {}
+        self._active_cache: tuple[Order, ...] = ()
+        self._active_cache_dirty = False
         ledger_path = self.config.ledger_path
         self._ledger = OrderLedger(ledger_path) if ledger_path is not None else None
         self._load_state()
@@ -157,6 +160,11 @@ class OrderManagementSystem:
             str(k): str(v) for k, v in payload.get("correlations", {}).items()
         }
         self._pending = {item.correlation_id: item.order for item in self._queue}
+        self._active_orders = {
+            order_id: order for order_id, order in self._orders.items() if order.is_active
+        }
+        self._active_cache = tuple(self._active_orders.values())
+        self._active_cache_dirty = False
         if self._ledger is not None:
             self._record_ledger_event("state_restored", metadata={"source": source})
 
@@ -389,6 +397,7 @@ class OrderManagementSystem:
         self._orders[submitted.order_id] = submitted
         self._processed[item.correlation_id] = submitted.order_id
         self._correlations[submitted.order_id] = item.correlation_id
+        self._update_active_order(submitted.order_id, submitted)
         if self._metrics.enabled:
             exchange = getattr(
                 self.connector, "name", self.connector.__class__.__name__.lower()
@@ -417,8 +426,10 @@ class OrderManagementSystem:
             return False
         cancelled = self.connector.cancel_order(order_id)
         if cancelled:
-            self._orders[order_id].cancel()
+            order = self._orders[order_id]
+            order.cancel()
             self._ack_timestamps.pop(order_id, None)
+            self._update_active_order(order_id, order)
             self._persist_state()
             self._record_ledger_event(
                 "order_cancelled",
@@ -430,6 +441,7 @@ class OrderManagementSystem:
     def register_fill(self, order_id: str, quantity: float, price: float) -> Order:
         order = self._orders[order_id]
         order.record_fill(quantity, price)
+        self._update_active_order(order_id, order)
         self.risk.register_fill(order.symbol, order.side.value, quantity, price)
         if self._metrics.enabled:
             exchange = getattr(
@@ -489,6 +501,7 @@ class OrderManagementSystem:
 
         if not stored.is_active:
             self._ack_timestamps.pop(order.order_id, None)
+        self._update_active_order(order.order_id, stored)
 
         self._persist_state()
         self._record_ledger_event(
@@ -507,6 +520,9 @@ class OrderManagementSystem:
         self._ack_timestamps.clear()
         self._pending.clear()
         self._correlations.clear()
+        self._active_orders.clear()
+        self._active_cache = ()
+        self._active_cache_dirty = False
         self._load_state()
         self._record_ledger_event("state_reloaded", metadata={"source": "reload"})
 
@@ -551,6 +567,7 @@ class OrderManagementSystem:
         self._orders[order.order_id] = order
         self._processed[correlation] = order.order_id
         self._correlations[order.order_id] = correlation
+        self._update_active_order(order.order_id, order)
         self._persist_state()
         hydrator = getattr(self.risk, "hydrate_positions", None)
         if callable(hydrator):
@@ -566,6 +583,7 @@ class OrderManagementSystem:
         if order_id not in self._orders:
             raise LookupError(f"Unknown order_id: {order_id}")
         original = self._orders.pop(order_id)
+        self._update_active_order(order_id, None)
         correlation = correlation_id or self._correlations.pop(order_id, None)
         if correlation is None:
             correlation = f"requeue-{order_id}"
@@ -586,7 +604,22 @@ class OrderManagementSystem:
         return correlation
 
     def outstanding(self) -> Iterable[Order]:
-        return [order for order in self._orders.values() if order.is_active]
+        if self._active_cache_dirty:
+            self._active_cache = tuple(self._active_orders.values())
+            self._active_cache_dirty = False
+        return self._active_cache
+
+    def _update_active_order(self, order_id: str | None, order: Order | None) -> None:
+        if order_id is None:
+            return
+        if order is not None and order.is_active:
+            current = self._active_orders.get(order_id)
+            if current is not order:
+                self._active_orders[order_id] = order
+                self._active_cache_dirty = True
+        else:
+            if self._active_orders.pop(order_id, None) is not None:
+                self._active_cache_dirty = True
 
 
 __all__ = [
