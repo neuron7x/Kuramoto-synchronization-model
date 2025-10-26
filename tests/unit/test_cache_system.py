@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Iterable
 
 import numpy as np
@@ -28,6 +29,26 @@ def test_key_normalizer_handles_nested_collections() -> None:
     key_b = {"a": (2, 3), "b": 1}
 
     assert CacheKeyNormalizer.normalize(key_a) == CacheKeyNormalizer.normalize(key_b)
+
+
+def test_key_normalizer_sorts_unordered_inputs() -> None:
+    lhs = {"filters": {"beta", "alpha", "gamma"}}
+    rhs = {"filters": {"gamma", "alpha", "beta"}}
+
+    assert CacheKeyNormalizer.normalize(lhs) == CacheKeyNormalizer.normalize(rhs)
+
+
+@dataclass
+class _Payload:
+    foo: int
+    bar: list[int]
+
+
+def test_key_normalizer_uses_object_state() -> None:
+    left = _Payload(foo=1, bar=[1, 2, 3])
+    right = _Payload(foo=1, bar=[1, 2, 3])
+
+    assert CacheKeyNormalizer.normalize(left) == CacheKeyNormalizer.normalize(right)
 
 
 def test_in_memory_cache_promotes_hot_entries() -> None:

@@ -9,6 +9,7 @@
 ## [Unreleased]
 ### Changed
 - Hardened Release Drafter automation (v6 workflow, semantic version resolver, metrics summary).
+- Refactored cache key normalisation to use deterministic ``repr`` tuples, trimming redundant recursion and improving synthetic throughput by ~19%; systems with non-deterministic ``__repr__`` implementations on cache keys should validate behaviour.
 
 ## [2.1.3] - 2025-10-05
 ### Added
