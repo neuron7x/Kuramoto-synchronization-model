@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import inspect
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -42,6 +43,7 @@ from application.api.idempotency import (
     IdempotencyConflictError,
     IdempotencySnapshot,
 )
+from application.api.debug import install_debug_routes
 from application.api.rate_limit import (
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
@@ -52,8 +54,10 @@ from application.settings import (
     AdminApiSettings,
     ApiRateLimitSettings,
     ApiSecuritySettings,
+    BackendRuntimeSettings,
 )
 from application.trading import signal_to_dto
+from core.utils.debug import VariableInspector
 from core.utils.metrics import MetricsCollector, get_metrics_collector
 from domain import Signal, SignalAction
 from execution.risk import (
@@ -63,6 +67,7 @@ from execution.risk import (
     SQLiteKillSwitchStateStore,
 )
 from observability.health import HealthServer
+from observability.logging import configure_logging
 from src.admin.remote_control import (
     AdminIdentity,
     AdminRateLimiter,
@@ -1362,6 +1367,7 @@ def create_app(
     security_settings: ApiSecuritySettings | None = None,
     dependency_probes: Mapping[str, DependencyProbe] | None = None,
     health_server: HealthServer | None = None,
+    runtime_settings: BackendRuntimeSettings | None = None,
 ) -> FastAPI:
     """Build the FastAPI application with configured dependencies.
 
@@ -1374,6 +1380,16 @@ def create_app(
             omitted the values are loaded from :class:`AdminApiSettings` using
             environment variables.
     """
+
+    runtime_settings = runtime_settings or BackendRuntimeSettings()
+    resolved_log_level = runtime_settings.resolve_log_level()
+    root_logger = logging.getLogger()
+    if runtime_settings.should_configure_logging(
+        handlers_installed=bool(root_logger.handlers)
+    ):
+        configure_logging(level=resolved_log_level)
+    else:
+        root_logger.setLevel(resolved_log_level)
 
     resolved_rate_settings = rate_limit_settings or ApiRateLimitSettings()
     limiter = rate_limiter or build_rate_limiter(resolved_rate_settings)
@@ -1493,6 +1509,7 @@ def create_app(
             "lightweight trading signals from streaming market data."
         ),
         version="0.2.0",
+        debug=runtime_settings.debug,
         contact={
             "name": "TradePulse Platform Team",
             "url": "https://github.com/neuron7x/TradePulse",
@@ -1549,6 +1566,28 @@ def create_app(
     app.state.idempotency_cache = idempotency_cache
     app.state.dependency_probes = dependency_probe_map
     app.state.health_server = health_server
+    inspector = VariableInspector(
+        redact_patterns=runtime_settings.redact_pattern_values()
+    )
+    if runtime_settings.inspect_variables:
+        inspector.register(
+            "environment",
+            lambda: inspector.collect_environment(runtime_settings.inspect_variables),
+        )
+    inspector.register("rate_limiter", limiter.snapshot)
+    inspector.register("admin_rate_limiter", admin_rate_limiter.snapshot)
+    inspector.register("ttl_cache", ttl_cache.snapshot)
+    inspector.register("idempotency_cache", idempotency_cache.snapshot)
+    inspector.register(
+        "runtime",
+        lambda: {
+            "debug": runtime_settings.debug,
+            "log_level": logging.getLevelName(resolved_log_level),
+            "forecaster": type(forecaster).__name__,
+        },
+    )
+    app.state.variable_inspector = inspector
+    app.state.runtime_settings = runtime_settings
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
         from prometheus_client import REGISTRY as prometheus_registry  # type: ignore
@@ -1564,6 +1603,29 @@ def create_app(
         metrics_collector.__dict__.update(refreshed_metrics.__dict__)
         setattr(metrics_module, "_collector", metrics_collector)
     app.state.metrics = metrics_collector
+    inspector.register(
+        "metrics",
+        lambda: {
+            "collector": type(metrics_collector).__name__,
+            "registry_attached": metrics_registry is not None,
+        },
+    )
+    install_debug_routes(
+        app,
+        inspector=inspector,
+        enabled=runtime_settings.debug,
+        identity_dependency=require_bearer,
+    )
+    if runtime_settings.debug and runtime_settings.log_variables_on_startup:
+        debug_logger = logging.getLogger("tradepulse.debug")
+
+        @app.on_event("startup")
+        async def _log_debug_snapshot() -> None:
+            snapshot = await inspector.snapshot()
+            debug_logger.debug(
+                "debug.variables.snapshot",
+                extra={"variables": snapshot, "component": "inference_api"},
+            )
 
     async def enforce_rate_limit(
         request: Request,

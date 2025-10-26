@@ -2,6 +2,7 @@
 """Shared utilities for TradePulse."""
 
 from .clock import freeze_time
+from .debug import VariableInspector
 from .logging import (
     JSONFormatter,
     StructuredLogger,
@@ -27,4 +28,5 @@ __all__ = [
     "SLOBurnRateRule",
     "SLOConfig",
     "freeze_time",
+    "VariableInspector",
 ]

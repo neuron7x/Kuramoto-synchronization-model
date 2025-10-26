@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence
 
 if TYPE_CHECKING:
     from application.configuration import CentralConfigurationStore
@@ -24,6 +25,7 @@ from pydantic import (
     PositiveInt,
     PostgresDsn,
     SecretStr,
+    field_validator,
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -599,6 +601,97 @@ class NotificationSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="TRADEPULSE_NOTIFY_", extra="ignore")
 
 
+class BackendRuntimeSettings(BaseSettings):
+    """Configure logging and debug behaviour for backend applications."""
+
+    debug: bool = Field(
+        False,
+        description=(
+            "Enable FastAPI debug mode and expose authenticated debug endpoints."
+        ),
+    )
+    log_level: int | str = Field(
+        "INFO",
+        description="Logging level applied to backend components.",
+    )
+    inspect_variables: tuple[str, ...] = Field(
+        default_factory=tuple,
+        description=(
+            "Environment variables surfaced through debug snapshots. Accepts a "
+            "comma separated list."
+        ),
+    )
+    redact_patterns: tuple[str, ...] = Field(
+        default=("secret", "token", "key", "password"),
+        description=(
+            "Case-insensitive substrings that trigger redaction in debug output."
+        ),
+    )
+    force_log_configuration: bool = Field(
+        False,
+        description=(
+            "Reinitialise logging even when handlers already exist. Useful for test"
+            " harnesses that replace handlers."
+        ),
+    )
+    log_variables_on_startup: bool = Field(
+        True,
+        description=(
+            "Emit a debug snapshot at startup when debug mode is enabled."
+        ),
+    )
+
+    model_config = SettingsConfigDict(
+        env_prefix="TRADEPULSE_BACKEND_", extra="ignore"
+    )
+
+    @staticmethod
+    def _coerce_sequence(value: Any, *, lower: bool) -> tuple[str, ...]:
+        if value is None:
+            return ()
+        if isinstance(value, str):
+            candidates = [item.strip() for item in value.split(",")]
+        elif isinstance(value, Iterable):
+            candidates = [str(item).strip() for item in value]
+        else:  # pragma: no cover - defensive guard
+            raise TypeError("Expected a string or iterable for configuration sequence")
+        filtered = [item.lower() if lower else item for item in candidates if item]
+        return tuple(dict.fromkeys(filtered))
+
+    @field_validator("inspect_variables", mode="before")
+    @classmethod
+    def _normalise_inspect_variables(cls, value: Any) -> tuple[str, ...]:
+        return cls._coerce_sequence(value, lower=False)
+
+    @field_validator("redact_patterns", mode="before")
+    @classmethod
+    def _normalise_redact_patterns(cls, value: Any) -> tuple[str, ...]:
+        return cls._coerce_sequence(value, lower=True)
+
+    def resolve_log_level(self) -> int:
+        """Return the numeric logging level configured for the backend."""
+
+        if isinstance(self.log_level, int):
+            return self.log_level
+        numeric = logging.getLevelName(str(self.log_level).upper())
+        if isinstance(numeric, int):
+            return numeric
+        raise ValueError(f"Unknown log level: {self.log_level}")
+
+    def should_configure_logging(
+        self, *, handlers_installed: bool, sink_provided: bool = False
+    ) -> bool:
+        """Decide whether logging should be reconfigured."""
+
+        if self.force_log_configuration or sink_provided:
+            return True
+        return not handlers_installed
+
+    def redact_pattern_values(self) -> tuple[str, ...]:
+        """Return the redaction substrings for debug sanitisation."""
+
+        return self.redact_patterns
+
 __all__ = [
     "AdminApiSettings",
     "ApiSecuritySettings",
@@ -606,4 +699,5 @@ __all__ = [
     "ApiRateLimitSettings",
     "EmailNotificationSettings",
     "NotificationSettings",
+    "BackendRuntimeSettings",
 ]
