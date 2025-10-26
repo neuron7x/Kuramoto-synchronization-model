@@ -47,5 +47,27 @@ def test_order_accepts_iceberg_type() -> None:
         quantity=1.0,
         price=100.0,
         order_type=OrderType.ICEBERG,
+        iceberg_visible=0.25,
     )
     assert order.order_type is OrderType.ICEBERG
+
+
+def test_iceberg_requires_visible_quantity() -> None:
+    with pytest.raises(ValueError, match="iceberg orders require iceberg_visible"):
+        Order(
+            symbol="BTCUSD",
+            side=OrderSide.BUY,
+            quantity=1.0,
+            price=100.0,
+            order_type=OrderType.ICEBERG,
+        )
+
+    with pytest.raises(ValueError, match="cannot exceed total order quantity"):
+        Order(
+            symbol="BTCUSD",
+            side=OrderSide.BUY,
+            quantity=1.0,
+            price=100.0,
+            order_type=OrderType.ICEBERG,
+            iceberg_visible=2.0,
+        )

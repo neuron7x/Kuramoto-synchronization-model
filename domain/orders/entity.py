@@ -19,6 +19,7 @@ class Order:
     price: float | None = None
     order_type: OrderType | str = OrderType.MARKET
     stop_price: float | None = None
+    iceberg_visible: float | None = None
     order_id: str | None = None
     broker_order_id: str | None = None
     status: OrderStatus | str = OrderStatus.PENDING
@@ -50,6 +51,16 @@ class Order:
             raise ValueError("price must be positive when provided")
         if self.stop_price is not None and self.stop_price <= 0:
             raise ValueError("stop_price must be positive when provided")
+        if self.iceberg_visible is not None and self.iceberg_visible <= 0:
+            raise ValueError("iceberg_visible must be positive when provided")
+        if (
+            self.order_type is OrderType.ICEBERG
+            and self.iceberg_visible is not None
+            and self.iceberg_visible > self.quantity + 1e-9
+        ):
+            raise ValueError("iceberg_visible cannot exceed total order quantity")
+        if self.order_type is OrderType.ICEBERG and self.iceberg_visible is None:
+            raise ValueError("iceberg orders require iceberg_visible quantity")
         if self.average_price is not None and self.average_price <= 0:
             raise ValueError("average_price must be positive when provided")
         if self.filled_quantity < 0:
@@ -143,6 +154,7 @@ class Order:
             "price": self.price,
             "order_type": self.order_type.value,
             "stop_price": self.stop_price,
+            "iceberg_visible": self.iceberg_visible,
             "order_id": self.order_id,
             "broker_order_id": self.broker_order_id,
             "status": self.status.value,

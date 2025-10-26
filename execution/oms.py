@@ -21,6 +21,7 @@ from .audit import ExecutionAuditLogger, get_execution_audit_logger
 from .compliance import ComplianceMonitor, ComplianceReport, ComplianceViolation
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .order_ledger import OrderLedger
+from .order_lifecycle import OrderEvent, OrderLifecycle
 
 DEFAULT_LEDGER_PATH = Path("observability/audit/order-ledger.jsonl")
 
@@ -76,6 +77,7 @@ class OrderManagementSystem:
         *,
         compliance_monitor: ComplianceMonitor | None = None,
         audit_logger: ExecutionAuditLogger | None = None,
+        lifecycle: OrderLifecycle | None = None,
     ) -> None:
         self.connector = connector
         self.risk = risk_controller
@@ -94,6 +96,8 @@ class OrderManagementSystem:
         self._active_cache_dirty = False
         self._fingerprints: Dict[str, str] = {}
         self._broker_lookup: Dict[str, str] = {}
+        self._lifecycle = lifecycle
+        self._lifecycle_sequences: Dict[str, int] = {}
         ledger_path = self.config.ledger_path
         self._ledger = OrderLedger(ledger_path) if ledger_path is not None else None
         self._load_state()
@@ -115,6 +119,7 @@ class OrderManagementSystem:
             "processed": self._processed,
             "correlations": self._correlations,
             "fingerprints": self._fingerprints,
+            "lifecycle_sequences": self._lifecycle_sequences,
         }
 
     def _persist_state(self) -> None:
@@ -182,6 +187,13 @@ class OrderManagementSystem:
                 order = self._orders.get(order_id)
                 if order is not None:
                     self._fingerprints[correlation] = self._fingerprint(order)
+        raw_sequences = payload.get("lifecycle_sequences")
+        if isinstance(raw_sequences, Mapping):
+            self._lifecycle_sequences = {
+                str(key): int(value) for key, value in raw_sequences.items()
+            }
+        else:
+            self._lifecycle_sequences = {}
         self._active_orders = {
             order_id: order for order_id, order in self._orders.items() if order.is_active
         }
@@ -196,6 +208,79 @@ class OrderManagementSystem:
             self._record_ledger_event("state_restored", metadata={"source": source})
 
     # ------------------------------------------------------------------
+    # Lifecycle helpers
+    def _ensure_lifecycle_sequence(self, order_id: str) -> None:
+        if not order_id or order_id in self._lifecycle_sequences:
+            return
+        sequence = 0
+        lifecycle = self._lifecycle
+        if lifecycle is not None:
+            try:
+                history = lifecycle.history(order_id)
+            except Exception:  # pragma: no cover - defensive guard
+                history = []
+            for transition in history:
+                if transition.event not in (OrderEvent.FILL_PARTIAL, OrderEvent.FILL_FINAL):
+                    continue
+                parts = transition.correlation_id.rsplit(":", 1)
+                if len(parts) != 2:
+                    continue
+                try:
+                    candidate = int(parts[1])
+                except ValueError:
+                    continue
+                if candidate > sequence:
+                    sequence = candidate
+        self._lifecycle_sequences[order_id] = sequence
+
+    def _next_fill_sequence(self, order_id: str) -> int:
+        self._ensure_lifecycle_sequence(order_id)
+        sequence = self._lifecycle_sequences.get(order_id, 0) + 1
+        self._lifecycle_sequences[order_id] = sequence
+        return sequence
+
+    def _record_lifecycle_event(
+        self,
+        order: Order,
+        event: OrderEvent,
+        *,
+        base_correlation: str | None,
+        metadata: Mapping[str, object] | None = None,
+        correlation_override: str | None = None,
+        sequence_hint: int | None = None,
+    ) -> None:
+        lifecycle = self._lifecycle
+        if lifecycle is None:
+            return
+        order_id = order.order_id or base_correlation or order.broker_order_id
+        if order_id is None:
+            return
+        base = base_correlation or order_id
+        correlation = correlation_override
+        if correlation is None:
+            suffix = event.value
+            if sequence_hint is not None:
+                suffix = f"{suffix}:{sequence_hint}"
+            correlation = f"{base}:{suffix}"
+        payload: Dict[str, object] = {
+            "symbol": order.symbol,
+            "side": order.side.value,
+            "order_type": order.order_type.value,
+            "quantity": float(order.quantity),
+            "filled_quantity": float(order.filled_quantity),
+            "status": order.status.value,
+        }
+        if order.iceberg_visible is not None:
+            payload["iceberg_visible"] = float(order.iceberg_visible)
+        if order.broker_order_id:
+            payload["broker_order_id"] = order.broker_order_id
+        if order.average_price is not None:
+            payload["average_price"] = float(order.average_price)
+        if metadata:
+            payload.update(metadata)
+        lifecycle.apply(order_id, event, correlation_id=correlation, metadata=payload)
+
+    # ------------------------------------------------------------------
     # Serialization helpers
     def _fingerprint(self, order: Order) -> str:
         payload: Dict[str, Any] = {
@@ -205,6 +290,11 @@ class OrderManagementSystem:
             "order_type": order.order_type.value,
             "price": None if order.price is None else float(order.price),
             "stop_price": None if order.stop_price is None else float(order.stop_price),
+            "iceberg_visible": (
+                None
+                if order.iceberg_visible is None
+                else float(order.iceberg_visible)
+            ),
         }
         metadata = getattr(order, "metadata", None)
         if metadata is not None:
@@ -237,6 +327,11 @@ class OrderManagementSystem:
             stop_price=(
                 float(data["stop_price"])
                 if data.get("stop_price") is not None
+                else None
+            ),
+            iceberg_visible=(
+                float(data["iceberg_visible"])
+                if data.get("iceberg_visible") is not None
                 else None
             ),
             order_id=str(data.get("order_id")) if data.get("order_id") else None,
@@ -434,6 +529,16 @@ class OrderManagementSystem:
                     self._queue.popleft()
                     self._pending.pop(item.correlation_id, None)
                     item.order.reject(str(exc))
+                    self._record_lifecycle_event(
+                        item.order,
+                        OrderEvent.REJECT,
+                        base_correlation=item.correlation_id,
+                        metadata={
+                            "reason": str(exc),
+                            "attempts": item.attempts,
+                            "transient": True,
+                        },
+                    )
                     self._persist_state()
                     self._record_ledger_event(
                         "order_rejected",
@@ -465,6 +570,12 @@ class OrderManagementSystem:
                 self._queue.popleft()
                 self._pending.pop(item.correlation_id, None)
                 item.order.reject(str(exc))
+                self._record_lifecycle_event(
+                    item.order,
+                    OrderEvent.REJECT,
+                    base_correlation=item.correlation_id,
+                    metadata={"reason": str(exc)},
+                )
                 self._persist_state()
                 self._record_ledger_event(
                     "order_rejected",
@@ -483,6 +594,20 @@ class OrderManagementSystem:
         self._correlations[submitted.order_id] = item.correlation_id
         if submitted.broker_order_id:
             self._broker_lookup[submitted.broker_order_id] = submitted.order_id
+        self._ensure_lifecycle_sequence(submitted.order_id)
+        base_correlation = item.correlation_id
+        self._record_lifecycle_event(
+            submitted,
+            OrderEvent.SUBMIT,
+            base_correlation=base_correlation,
+            metadata={"attempts": item.attempts},
+        )
+        self._record_lifecycle_event(
+            submitted,
+            OrderEvent.ACK,
+            base_correlation=base_correlation,
+            metadata={"attempts": item.attempts, "ack_latency": ack_latency},
+        )
         fingerprint = self._fingerprints.get(item.correlation_id)
         updated_fingerprint = self._fingerprint(submitted)
         if fingerprint != updated_fingerprint:
@@ -520,6 +645,12 @@ class OrderManagementSystem:
             order.cancel()
             self._ack_timestamps.pop(order_id, None)
             self._update_active_order(order_id, order)
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.CANCEL,
+                base_correlation=self._correlations.get(order_id),
+            )
+            self._lifecycle_sequences.pop(order_id, None)
             self._persist_state()
             self._record_ledger_event(
                 "order_cancelled",
@@ -528,9 +659,18 @@ class OrderManagementSystem:
             )
         return cancelled
 
-    def register_fill(self, order_id: str, quantity: float, price: float) -> Order:
+    def register_fill(
+        self,
+        order_id: str,
+        quantity: float,
+        price: float,
+        correlation_id: str | None = None,
+    ) -> Order:
         order = self._orders[order_id]
+        previous_status = order.status
+        previous_filled = order.filled_quantity
         order.record_fill(quantity, price)
+        self._ensure_lifecycle_sequence(order_id)
         self._update_active_order(order_id, order)
         self.risk.register_fill(order.symbol, order.side.value, quantity, price)
         if self._metrics.enabled:
@@ -562,6 +702,35 @@ class OrderManagementSystem:
                     signal_latency,
                 )
             self._ack_timestamps.pop(order_id, None)
+        base_correlation = self._correlations.get(order_id)
+        sequence = self._next_fill_sequence(order_id)
+        sequence_hint = None if correlation_id is not None else sequence
+        event = (
+            OrderEvent.FILL_FINAL
+            if order.status is OrderStatus.FILLED
+            else OrderEvent.FILL_PARTIAL
+        )
+        metadata: Dict[str, object] = {
+            "fill_quantity": float(quantity),
+            "fill_price": float(price),
+            "cumulative_filled": float(order.filled_quantity),
+        }
+        if previous_status is not order.status:
+            metadata["previous_status"] = previous_status.value
+        if order.status is OrderStatus.FILLED:
+            metadata["completed"] = True
+        if order.filled_quantity > previous_filled + 1e-9:
+            metadata["delta_filled"] = float(order.filled_quantity - previous_filled)
+        self._record_lifecycle_event(
+            order,
+            event,
+            base_correlation=base_correlation,
+            metadata=metadata,
+            correlation_override=correlation_id,
+            sequence_hint=sequence_hint,
+        )
+        if order.status is OrderStatus.FILLED:
+            self._lifecycle_sequences.pop(order_id, None)
         self._persist_state()
         self._record_ledger_event(
             "order_fill_recorded",
@@ -581,6 +750,8 @@ class OrderManagementSystem:
         if stored is None:
             raise LookupError(f"Unknown order_id: {order.order_id}")
 
+        previous_status = stored.status
+        previous_filled = stored.filled_quantity
         stored.status = OrderStatus(order.status)
         stored.filled_quantity = float(order.filled_quantity)
         stored.average_price = (
@@ -594,6 +765,61 @@ class OrderManagementSystem:
         self._update_active_order(order.order_id, stored)
         if stored.broker_order_id:
             self._broker_lookup[stored.broker_order_id] = stored.order_id
+
+        base_correlation = self._correlations.get(order.order_id)
+        if stored.status is OrderStatus.CANCELLED and previous_status is not OrderStatus.CANCELLED:
+            self._record_lifecycle_event(
+                stored,
+                OrderEvent.CANCEL,
+                base_correlation=base_correlation,
+                metadata={"source": "sync_remote_state"},
+            )
+            self._lifecycle_sequences.pop(order.order_id, None)
+        elif stored.status is OrderStatus.REJECTED and previous_status is not OrderStatus.REJECTED:
+            metadata: Dict[str, object] = {"source": "sync_remote_state"}
+            if stored.rejection_reason:
+                metadata["reason"] = stored.rejection_reason
+            self._record_lifecycle_event(
+                stored,
+                OrderEvent.REJECT,
+                base_correlation=base_correlation,
+                metadata=metadata,
+            )
+            self._lifecycle_sequences.pop(order.order_id, None)
+        else:
+            if stored.status in {OrderStatus.PARTIALLY_FILLED, OrderStatus.FILLED}:
+                if stored.filled_quantity > previous_filled + 1e-9 or (
+                    stored.status is OrderStatus.FILLED
+                    and previous_status is not OrderStatus.FILLED
+                ):
+                    self._ensure_lifecycle_sequence(order.order_id)
+                    sequence = self._next_fill_sequence(order.order_id)
+                    fill_event = (
+                        OrderEvent.FILL_FINAL
+                        if stored.status is OrderStatus.FILLED
+                        else OrderEvent.FILL_PARTIAL
+                    )
+                    price_reference = (
+                        order.average_price
+                        if order.average_price is not None
+                        else order.price
+                    )
+                    metadata = {
+                        "source": "sync_remote_state",
+                        "cumulative_filled": float(stored.filled_quantity),
+                        "delta_filled": float(max(0.0, stored.filled_quantity - previous_filled)),
+                    }
+                    if price_reference is not None:
+                        metadata["reference_price"] = float(price_reference)
+                    self._record_lifecycle_event(
+                        stored,
+                        fill_event,
+                        base_correlation=base_correlation,
+                        metadata=metadata,
+                        sequence_hint=sequence,
+                    )
+                    if stored.status is OrderStatus.FILLED:
+                        self._lifecycle_sequences.pop(order.order_id, None)
 
         self._persist_state()
         self._record_ledger_event(
@@ -617,6 +843,7 @@ class OrderManagementSystem:
         self._active_cache_dirty = False
         self._fingerprints.clear()
         self._broker_lookup.clear()
+        self._lifecycle_sequences.clear()
         self._load_state()
         self._record_ledger_event("state_reloaded", metadata={"source": "reload"})
 
@@ -672,6 +899,64 @@ class OrderManagementSystem:
         self._fingerprints[correlation] = self._fingerprint(order)
         if order.broker_order_id:
             self._broker_lookup[order.broker_order_id] = order.order_id
+        self._ensure_lifecycle_sequence(order.order_id)
+        lifecycle = self._lifecycle
+        recorded_events: set[OrderEvent] = set()
+        if lifecycle is not None:
+            try:
+                history = lifecycle.history(order.order_id)
+            except Exception:  # pragma: no cover - defensive guard
+                history = []
+            recorded_events = {transition.event for transition in history}
+        lifecycle_metadata = {"source": "adopt_open_order"}
+        if OrderEvent.SUBMIT not in recorded_events:
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.SUBMIT,
+                base_correlation=correlation,
+                metadata=lifecycle_metadata,
+            )
+        if OrderEvent.ACK not in recorded_events:
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.ACK,
+                base_correlation=correlation,
+                metadata=lifecycle_metadata,
+            )
+        if order.status is OrderStatus.PARTIALLY_FILLED:
+            sequence = self._next_fill_sequence(order.order_id)
+            metadata = {
+                "source": "adopt_open_order",
+                "synthetic": True,
+                "cumulative_filled": float(order.filled_quantity),
+            }
+            if order.average_price is not None:
+                metadata["average_price"] = float(order.average_price)
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.FILL_PARTIAL,
+                base_correlation=correlation,
+                metadata=metadata,
+                sequence_hint=sequence,
+            )
+        elif order.status is OrderStatus.FILLED:
+            sequence = self._next_fill_sequence(order.order_id)
+            metadata = {
+                "source": "adopt_open_order",
+                "synthetic": True,
+                "cumulative_filled": float(order.filled_quantity),
+                "completed": True,
+            }
+            if order.average_price is not None:
+                metadata["average_price"] = float(order.average_price)
+            self._record_lifecycle_event(
+                order,
+                OrderEvent.FILL_FINAL,
+                base_correlation=correlation,
+                metadata=metadata,
+                sequence_hint=sequence,
+            )
+            self._lifecycle_sequences.pop(order.order_id, None)
         self._update_active_order(order.order_id, order)
         self._persist_state()
         hydrator = getattr(self.risk, "hydrate_positions", None)
@@ -691,6 +976,7 @@ class OrderManagementSystem:
         self._update_active_order(order_id, None)
         if original.broker_order_id:
             self._broker_lookup.pop(original.broker_order_id, None)
+        self._lifecycle_sequences.pop(order_id, None)
         correlation = correlation_id or self._correlations.pop(order_id, None)
         if correlation is None:
             correlation = f"requeue-{order_id}"
