@@ -156,4 +156,7 @@ extra:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/animations.js
+
 copyright: Copyright &copy; 2024 TradePulse Contributors
