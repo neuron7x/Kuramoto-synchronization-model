@@ -1,6 +1,14 @@
 import { escapeHtml, formatNumber, formatPercent, formatTimestamp } from '../core/formatters.js';
 import { t, getMessage } from '../i18n/index.js';
 
+/**
+ * @typedef {import('../types/api').GithubOverview} GithubOverview
+ * @typedef {import('../types/api').GithubLanguageShare} GithubLanguageShare
+ * @typedef {import('../types/api').GithubWorkflowBadge} GithubWorkflowBadge
+ * @typedef {import('../types/api').CommunityProfile} CommunityProfile
+ * @typedef {import('../types/api').DashboardOverviewPayload} DashboardOverviewPayload
+ */
+
 function coerceNumber(value, fallback = 0) {
   if (Number.isFinite(value)) {
     return value;
@@ -102,6 +110,9 @@ function buildHeroStats(heroTranslations = {}, github = {}) {
   return stats.filter((stat) => stat.value !== null && stat.value !== undefined);
 }
 
+/**
+ * @param {{ key: string; label: string; value: string | number; unit?: string | null; tone?: string | null; trend?: string | null; }} stat
+ */
 function renderHeroStat(stat) {
   if (!stat) {
     return '';
@@ -125,6 +136,10 @@ function renderHeroStat(stat) {
   `;
 }
 
+/**
+ * @param {Record<string, unknown>} heroTranslations
+ * @param {GithubOverview} github
+ */
 function renderHero(heroTranslations = {}, github = {}) {
   const eyebrow = heroTranslations.eyebrow || t('views.overview.hero.eyebrow');
   const title = heroTranslations.title || t('views.overview.hero.title');
@@ -205,6 +220,10 @@ function renderMomentumMetric(metric) {
   `;
 }
 
+/**
+ * @param {GithubOverview} github
+ * @param {Record<string, unknown>} translations
+ */
 function renderMomentumPanel(github = {}, translations = {}) {
   const panelsT = translations || {};
   const momentumT = panelsT.momentum || {};
@@ -312,6 +331,10 @@ function renderBadge({ icon, label, value, hint }) {
   `;
 }
 
+/**
+ * @param {GithubOverview} github
+ * @param {Record<string, unknown>} translations
+ */
 function renderBadges(github = {}, translations = {}) {
   const badgesT = translations || {};
   const stats = [
@@ -363,6 +386,10 @@ function renderBadges(github = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {GithubOverview} github
+ * @param {Record<string, unknown>} translations
+ */
 function renderReleasePanel(github = {}, translations = {}) {
   const release = github.last_release || github.release || {};
   const panelsT = translations || {};
@@ -407,6 +434,9 @@ function renderReleasePanel(github = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {GithubLanguageShare | null | undefined} language
+ */
 function renderLanguageBar(language) {
   const name = language?.name || 'Unknown';
   const share = clamp01(language?.share ?? language?.percent ?? language?.percentage ?? 0);
@@ -425,6 +455,10 @@ function renderLanguageBar(language) {
   `;
 }
 
+/**
+ * @param {GithubOverview} github
+ * @param {Record<string, unknown>} translations
+ */
 function renderLanguagesPanel(github = {}, translations = {}) {
   const languages = Array.isArray(github.languages) ? github.languages.filter(Boolean) : [];
   if (languages.length === 0) {
@@ -446,6 +480,10 @@ function renderLanguagesPanel(github = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {GithubOverview} github
+ * @param {Record<string, unknown>} translations
+ */
 function renderWorkflowBadges(github = {}, translations = {}) {
   const workflows = Array.isArray(github.workflows) ? github.workflows.filter(Boolean) : [];
   const valid = workflows
@@ -491,6 +529,10 @@ function renderWorkflowBadges(github = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderCommunitySpotlight(community = {}, translations = {}) {
   if (!community || typeof community !== 'object') {
     return '';
@@ -668,15 +710,21 @@ function renderCommunitySpotlight(community = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {DashboardOverviewPayload | { github?: GithubOverview | null }} [options]
+ * @returns {{ html: string; github: GithubOverview }}
+ */
 export function renderOverviewView({ github = {} } = {}) {
+  /** @type {GithubOverview} */
+  const githubProfile = github ?? {};
   const translations = getTranslations();
-  const heroHtml = renderHero(translations.hero, github);
-  const badgesHtml = renderBadges(github, translations.badges);
-  const releasePanel = renderReleasePanel(github, translations.panels);
-  const languagesPanel = renderLanguagesPanel(github, translations.panels || {});
-  const workflowPanel = renderWorkflowBadges(github, translations.panels || {});
-  const momentumPanel = renderMomentumPanel(github, translations.panels || {});
-  const communityPanel = renderCommunitySpotlight(github.community, translations.panels || {});
+  const heroHtml = renderHero(translations.hero, githubProfile);
+  const badgesHtml = renderBadges(githubProfile, translations.badges);
+  const releasePanel = renderReleasePanel(githubProfile, translations.panels);
+  const languagesPanel = renderLanguagesPanel(githubProfile, translations.panels || {});
+  const workflowPanel = renderWorkflowBadges(githubProfile, translations.panels || {});
+  const momentumPanel = renderMomentumPanel(githubProfile, translations.panels || {});
+  const communityPanel = renderCommunitySpotlight(githubProfile.community, translations.panels || {});
 
   const html = `
     <article class="tp-view tp-view--overview">
@@ -704,7 +752,7 @@ export function renderOverviewView({ github = {} } = {}) {
 
   return {
     html,
-    github,
+    github: githubProfile,
   };
 }
 

@@ -19,7 +19,7 @@ export function sanitizeReportValue(value) {
     return text;
   }
 
-  return text.replace(MARKDOWN_META_CHAR_PATTERN, '\\$1');
+  return text.replace(MARKDOWN_META_CHAR_PATTERN, (match) => `\\${match}`);
 }
 
 export function escapeHtml(value) {
