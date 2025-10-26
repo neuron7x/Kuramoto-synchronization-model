@@ -10,6 +10,7 @@ loading so that workflows behave identically across Linux, macOS and Windows.
 
 ```bash
 python -m scripts --help
+python -m scripts bootstrap --include-dev --frontend --pre-commit
 python -m scripts lint --verbose
 python -m scripts test --pytest-args -k smoke
 python -m scripts gen-proto
@@ -46,6 +47,31 @@ simplifies debugging and makes regression tests easier to reproduce.
 Each top-level command is implemented in a dedicated module under
 [`scripts/commands`](./commands).  The modules provide reusable functions that
 can be imported from unit tests or other automation code.
+
+### Environment bootstrap automation
+
+Use the ``bootstrap`` command to provision a fully configured development
+environment in minutes. It creates (or refreshes) a virtualenv, installs the
+locked dependency sets, applies optional extras, configures ``pre-commit`` git
+hooks, and can install the dashboard frontend dependencies when requested.
+
+```bash
+python -m scripts bootstrap \
+  --include-dev \
+  --pre-commit \
+  --frontend \
+  --extras connectors gpu
+```
+
+Key options:
+
+- ``--venv-path`` controls where the virtual environment is created (default
+  ``.venv``).
+- ``--include-dev`` installs tooling from ``requirements-dev.lock``.
+- ``--extras`` installs optional extras defined in ``pyproject.toml``.
+- ``--pre-commit`` installs and wires git hooks.
+- ``--frontend`` installs dependencies for ``ui/dashboard`` using the available
+  Node package manager.
 
 ### Sanity cleanup automation
 

@@ -20,6 +20,20 @@ Optional but recommended:
 - **Poetry or pip-tools** if you manage custom dependency sets.
 - **Docker** to run the bundled docker-compose stack.
 
+## Automated bootstrap
+
+The fastest way to prepare a development machine is via the consolidated
+automation CLI:
+
+```bash
+python -m scripts bootstrap --include-dev --pre-commit --frontend --extras connectors gpu
+```
+
+The command will create ``.venv`` (or reuse it when present), install the locked
+Python dependencies, wire ``pre-commit`` git hooks, and install the dashboard
+frontend packages. Use ``--help`` for the full option matrix including custom
+virtualenv paths, optional extras, and frontend controls.
+
 ## Supported Platforms
 
 TradePulse is continuously tested on Linux (Ubuntu 22.04) and macOS (13+). Windows users should run inside WSL2 with Ubuntu 22.04 or newer. Native Windows execution is possible but not part of the automated CI matrix.

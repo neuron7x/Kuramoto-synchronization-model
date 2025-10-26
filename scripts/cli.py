@@ -48,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     from scripts.commands import (
         api,
+        bootstrap,
         build_core,
         dev,
         fpma,
@@ -61,6 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     from scripts.commands import test as test_cmd
 
+    bootstrap.build_parser(subparsers)
     build_core.build_parser(subparsers)
     api.build_parser(subparsers)
     dev.build_parser(subparsers)
