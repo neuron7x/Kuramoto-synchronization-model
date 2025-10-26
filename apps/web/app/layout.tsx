@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import './styles.css'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
 import { AppThemeProvider } from './providers'
+import { AuthProvider } from './auth/auth-provider'
 
 export const metadata: Metadata = {
   title: 'TradePulse Scenario Studio',
@@ -15,7 +16,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <AppRouterCacheProvider>
-          <AppThemeProvider>{children}</AppThemeProvider>
+          <AppThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </AppThemeProvider>
         </AppRouterCacheProvider>
       </body>
     </html>
