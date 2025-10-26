@@ -377,7 +377,7 @@ function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors:
   let score = 95
 
   if (warnings.length > 0) {
-    score -= Math.min(45, warnings.length * 12)
+    score -= Math.min(60, warnings.length * 15)
     checklist.push('Address the risk snapshot warnings to tighten the scenario envelope.')
   }
 
@@ -450,8 +450,6 @@ type ActionMessage =
 
 type FieldKey = keyof typeof FIELD_META
 
-const jsonFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 })
-
 export function ScenarioStudio() {
   const [templateId, setTemplateId] = useState<string>(SCENARIO_TEMPLATES[0]?.id ?? '')
   const [draft, setDraft] = useState<ScenarioDraft>(() =>
@@ -496,8 +494,12 @@ export function ScenarioStudio() {
     const payload = {
       template: templateId,
       configuration: {
-        initialBalance: jsonFormatter.format(normalized.initialBalance),
-        riskPerTradePercent: jsonFormatter.format(normalized.riskPerTrade),
+        initialBalance: Number.isFinite(normalized.initialBalance)
+          ? Number(normalized.initialBalance)
+          : normalized.initialBalance,
+        riskPerTradePercent: Number.isFinite(normalized.riskPerTrade)
+          ? Number(normalized.riskPerTrade)
+          : normalized.riskPerTrade,
         maxConcurrentPositions: normalized.maxPositions,
         timeframe: normalized.timeframe,
       },
@@ -650,10 +652,11 @@ export function ScenarioStudio() {
                       </List>
                     </Box>
 
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} data-testid="scenario-form">
                       {(Object.keys(FIELD_META) as FieldKey[]).map((fieldKey) => {
                         const meta = FIELD_META[fieldKey]
                         const error = errors[fieldKey]
+                        const fieldTestId = `input-${fieldKey}`
                         return (
                           <Grid key={fieldKey} item xs={12} md={fieldKey === 'timeframe' ? 12 : 6}>
                             <TextField
@@ -668,6 +671,8 @@ export function ScenarioStudio() {
                               type={meta.type}
                               helperText={error ?? meta.helper}
                               error={Boolean(error)}
+                              inputProps={{ 'data-testid': fieldTestId }}
+                              FormHelperTextProps={{ 'data-testid': error ? `error-${fieldKey}` : undefined }}
                             />
                           </Grid>
                         )
@@ -680,6 +685,8 @@ export function ScenarioStudio() {
                         color="primary"
                         startIcon={<ContentCopyIcon />}
                         onClick={handleCopy}
+                        data-testid="action-copy"
+                        disabled={hasErrors}
                       >
                         Copy JSON
                       </Button>
@@ -688,6 +695,8 @@ export function ScenarioStudio() {
                         color="primary"
                         startIcon={<DownloadIcon />}
                         onClick={handleDownload}
+                        data-testid="action-download"
+                        disabled={hasErrors}
                       >
                         Download JSON
                       </Button>
@@ -705,7 +714,7 @@ export function ScenarioStudio() {
                       <Alert
                         severity={actionMessage.kind}
                         onClose={() => setActionMessage(null)}
-                        data-testid="scenario-action-message"
+                        data-testid="action-feedback"
                       >
                         {actionMessage.text}
                       </Alert>
@@ -730,18 +739,25 @@ export function ScenarioStudio() {
                           label={scenarioHealth.status}
                           color={statusChipColor}
                           variant="outlined"
+                          data-testid="health-status"
                         />
                         <Typography variant="h4" component="p" data-testid="health-score">
-                          {scenarioHealth.score}
+                          {scenarioHealth.score} / 100
                         </Typography>
                       </Stack>
-                      <Typography variant="body2" color="text.secondary">
+                      <LinearProgress
+                        variant="determinate"
+                        value={scenarioHealth.score}
+                        aria-label="Scenario health score"
+                        data-testid="health-meter"
+                      />
+                      <Typography variant="body2" color="text.secondary" data-testid="health-summary">
                         {scenarioHealth.summary}
                       </Typography>
 
                       {warnings.length > 0 ? (
                         <Alert severity="warning" data-testid="scenario-warnings">
-                          <Stack spacing={1}>
+                          <Stack spacing={1} data-testid="warning-list">
                             {warnings.map((warning) => (
                               <Typography key={warning} component="p" variant="body2">
                                 {warning}
@@ -813,7 +829,7 @@ export function ScenarioStudio() {
                         }}
                       >
                         <Box component="pre" sx={{ m: 0, p: 2, fontSize: '0.9rem' }}>
-                          <code>{preview}</code>
+                          <code data-testid="scenario-json-preview">{preview}</code>
                         </Box>
                       </Paper>
                     </Stack>
