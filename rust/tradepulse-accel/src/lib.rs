@@ -18,7 +18,6 @@ use numpy::{PyArray1, PyArray2, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::PyErr;
-use std::cmp::Ordering;
 use std::fmt;
 
 /// Error type returned by numeric primitives when the input configuration is
@@ -134,7 +133,7 @@ pub fn quantiles_core(data: &[f64], probabilities: &[f64]) -> Result<Vec<f64>, N
         return Ok(vec![f64::NAN; probabilities.len()]);
     }
     let mut values = data.to_vec();
-    values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+    values.sort_by(|a, b| a.total_cmp(b));
     let n = values.len();
     let mut results = Vec::with_capacity(probabilities.len());
     for &probability in probabilities {
@@ -158,21 +157,27 @@ pub fn quantiles_core(data: &[f64], probabilities: &[f64]) -> Result<Vec<f64>, N
 /// The implementation uses a straightforward time-domain convolution which is
 /// efficient for the relatively small kernels used in TradePulse analytics.
 pub fn full_convolution(signal: &[f64], kernel: &[f64]) -> Vec<f64> {
+    if signal.is_empty() || kernel.is_empty() {
+        return Vec::new();
+    }
+
     let output_len = signal.len() + kernel.len() - 1;
     let mut output = vec![0.0; output_len];
+
+    let last_kernel_idx = kernel.len() - 1;
+    let signal_len = signal.len();
+
     for (i, value) in output.iter_mut().enumerate() {
+        let start = i.saturating_sub(last_kernel_idx);
+        let end = (i + 1).min(signal_len);
         let mut sum = 0.0;
-        for (j, kernel_value) in kernel.iter().enumerate() {
-            let signal_index = i as isize - j as isize;
-            if signal_index >= 0 {
-                let idx = signal_index as usize;
-                if idx < signal.len() {
-                    sum += signal[idx] * kernel_value;
-                }
-            }
+        for signal_idx in start..end {
+            let kernel_idx = i - signal_idx;
+            sum += signal[signal_idx] * kernel[kernel_idx];
         }
         *value = sum;
     }
+
     output
 }
 
@@ -201,17 +206,11 @@ pub fn convolve_core(
             full[start..end].to_vec()
         }
         ConvolutionMode::Valid => {
-            if n >= m {
-                let length = n - m + 1;
-                let start = m - 1;
-                let end = start + length;
-                full[start..end].to_vec()
-            } else {
-                let length = m - n + 1;
-                let start = n - 1;
-                let end = start + length;
-                full[start..end].to_vec()
-            }
+            let (shorter, longer) = (n.min(m), n.max(m));
+            let length = longer - shorter + 1;
+            let start = shorter - 1;
+            let end = start + length;
+            full[start..end].to_vec()
         }
     };
     Ok(result)
@@ -220,6 +219,52 @@ pub fn convolve_core(
 impl From<NumericError> for PyErr {
     fn from(value: NumericError) -> Self {
         PyValueError::new_err(value.to_string())
+    }
+}
+
+#[cfg(test)]
+mod core_tests {
+    use super::*;
+
+    #[test]
+    fn full_convolution_matches_reference() {
+        let signal = [1.0, 2.0, 3.0];
+        let kernel = [0.5, 0.25];
+        let expected = vec![0.5, 1.25, 2.0, 0.75];
+        assert_eq!(full_convolution(&signal, &kernel), expected);
+    }
+
+    #[test]
+    fn full_convolution_handles_empty_input() {
+        assert!(full_convolution(&[], &[1.0]).is_empty());
+        assert!(full_convolution(&[1.0], &[]).is_empty());
+    }
+
+    #[test]
+    fn convolve_core_respects_modes() {
+        let signal = [1.0, 2.0, 3.0];
+        let kernel = [0.5, 0.5];
+
+        let full = convolve_core(&signal, &kernel, ConvolutionMode::Full).unwrap();
+        assert_eq!(full, vec![0.5, 1.5, 2.5, 1.5]);
+
+        let same = convolve_core(&signal, &kernel, ConvolutionMode::Same).unwrap();
+        assert_eq!(same, vec![0.5, 1.5, 2.5]);
+
+        let valid = convolve_core(&signal, &kernel, ConvolutionMode::Valid).unwrap();
+        assert_eq!(valid, vec![1.5, 2.5]);
+    }
+
+    #[test]
+    fn quantiles_core_sorts_with_total_order() {
+        let data = [3.0, f64::NAN, 1.0];
+        let probabilities = [0.0, 0.5, 1.0];
+        let result = quantiles_core(&data, &probabilities).unwrap();
+
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0], 1.0);
+        assert_eq!(result[1], 3.0);
+        assert!(result[2].is_nan());
     }
 }
 
