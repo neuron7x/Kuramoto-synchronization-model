@@ -13,10 +13,11 @@ from dataclasses import dataclass
 import os
 from heapq import heappop, heappush
 from time import perf_counter
-from typing import Callable, Iterable, Mapping, MutableMapping, TypeAlias
+from types import MappingProxyType
+from typing import Callable, Iterable, Mapping, TypeAlias
 
 
-ModuleState = MutableMapping[str, object]
+ModuleState = Mapping[str, object]
 ModuleOutput = Mapping[str, object]
 ModuleHandler = Callable[[ModuleState], ModuleOutput | None]
 ModuleExecutionOutcome: TypeAlias = tuple[
@@ -288,8 +289,9 @@ class ModuleOrchestrator:
                         failure_details = (name, error)
                         break
 
+                    context_snapshot = MappingProxyType(dict(context))
                     future = executor.submit(
-                        self._invoke_handler, definitions[name], context
+                        self._invoke_handler, definitions[name], context_snapshot
                     )
                     in_flight[future] = name
 
