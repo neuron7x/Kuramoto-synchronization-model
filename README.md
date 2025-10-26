@@ -390,3 +390,39 @@ in paper trading before risking real capital.
 ---
 
 **[⬆ back to top](#-tradepulse)** · Made with ❤️ by the TradePulse community
+
+---
+
+## NeuroTrade PRO v1.2 — Integrated Neuro–AI Stack + SABRE Conformal Action Layer
+
+**Що всередині:**
+- Режими ринку (волатильнісні біни) → режимно-чутливе рішення
+- Квантильні моделі (L/M/U) → **Conformal (CQR) з експон. вагами + динамічна α**
+- **SABRE CAL**: дія лише коли нижня (або верхня) межа після витрат > 0
+- Execution: fee, half-spread, **impact (linear / quadratic / square_root)**, базовий queue-fill
+- Мікроструктура: spread, eff/realized spread, OFI (short-horizon), signed vol, Kyle λ, vol-of-vol, VWAP-dist, fracdiff
+- Risk guardrails: DD ліміт, cooldown, vola-throttle, exposure cap
+- CV: Purged & Embargoed K-Fold; Labeling: triple-barrier (приклад)
+- Оцінка: Sharpe, Deflated Sharpe (approx), CVaR
+- Моніторинг: **Logger** (MLflow/W&B якщо доступно), інакше no-op
+- **Walk-Forward** (серійний/паралельний), **Validate** (порівняння з baseline, coverage, capacity)
+
+### Швидкий старт
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+python scripts/make_synth.py
+python scripts/run_backtest.py --config configs/demo.yaml
+python scripts/run_walkforward.py --config configs/wf.yaml
+
+# Повна валідація
+python scripts/validate.py --config configs/demo.yaml
+```
+
+### Примітки
+
+* Для моніторингу:
+  * MLflow: `export MLFLOW_TRACKING_URI=file:./mlruns` та (опц.) `MLFLOW_EXPERIMENT_NAME=neurotrade_v12`
+  * W&B: `export WANDB_API_KEY=...` і `WANDB_PROJECT=neurotrade_v12`
+* **Не плутати** CAL із самою альфою: CAL — *safety layer* над будь-якою моделлю.

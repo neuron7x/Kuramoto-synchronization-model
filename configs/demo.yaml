@@ -1,0 +1,44 @@
+data:
+  path: neuropro/data/sim_ticks.csv
+  time_col: timestamp
+  price_col: mid
+  bid_col: bid
+  ask_col: ask
+  bid_size_col: bid_size
+  ask_size_col: ask_size
+  last_price_col: last
+  last_size_col: last_size
+
+features:
+  lookbacks: [5, 20, 60]
+  fracdiff_d: 0.4
+  ofi_window: 20
+
+regime:
+  bins: [0.0, 0.5, 1.5, 5.0]
+
+quantile:
+  low_q: 0.2
+  high_q: 0.8
+
+conformal:
+  alpha: 0.1
+  decay: 0.01
+  window: 2000
+  buffer_bps: 1.0
+
+policy:
+  max_pos: 1.0
+  kelly_shrink: 0.2
+
+execution:
+  fee_bps: 1.0
+  impact_coeff: 0.8
+  impact_model: square_root
+  queue_fill_p: 0.85
+
+risk:
+  intraday_dd_limit: 0.02
+  loss_streak_cooldown: 4
+  vola_spike_mult: 2.5
+  exposure_cap: 1.0
