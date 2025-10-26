@@ -57,7 +57,11 @@ from application.api.rate_limit import (
     build_rate_limiter,
 )
 from application.api.realtime import AnalyticsStore, RealTimeStreamManager
-from application.api.security import get_api_security_settings, verify_request_identity
+from application.api.security import (
+    get_api_security_settings,
+    verify_optional_request_identity,
+    verify_request_identity,
+)
 from application.settings import (
     AdminApiSettings,
     ApiRateLimitSettings,
@@ -1410,6 +1414,7 @@ def create_app(
         )
     )
     require_bearer = verify_request_identity()
+    optional_bearer = verify_optional_request_identity()
     require_bearer_with_mtls = verify_request_identity(require_client_certificate=True)
     audit_secret_provider = secret_manager.provider("audit_secret")
     rate_limit_max_attempts = resolved_settings.admin_rate_limit_max_attempts
@@ -1617,13 +1622,27 @@ def create_app(
                 extra={"variables": snapshot, "component": "inference_api"},
             )
 
+    async def _apply_rate_limit(
+        request: Request, identity: AdminIdentity | None
+    ) -> AdminIdentity | None:
+        ip_address = _resolve_ip(request)
+        subject = identity.subject if identity is not None else None
+        await limiter.check(subject=subject, ip_address=ip_address)
+        return identity
+
     async def enforce_rate_limit(
         request: Request,
         identity: AdminIdentity = Depends(require_bearer),
     ) -> AdminIdentity:
-        ip_address = _resolve_ip(request)
-        await limiter.check(subject=identity.subject, ip_address=ip_address)
-        return identity
+        resolved_identity = await _apply_rate_limit(request, identity)
+        assert resolved_identity is not None
+        return resolved_identity
+
+    async def enforce_public_rate_limit(
+        request: Request,
+        identity: AdminIdentity | None = Depends(optional_bearer),
+    ) -> AdminIdentity | None:
+        return await _apply_rate_limit(request, identity)
 
     def get_forecaster() -> OnlineSignalForecaster:
         return forecaster
@@ -2210,7 +2229,7 @@ def create_app(
     app.include_router(
         graphql_router,
         prefix="/graphql",
-        dependencies=[Depends(enforce_rate_limit)],
+        dependencies=[Depends(enforce_public_rate_limit)],
     )
 
     def _websocket_http_request(websocket: WebSocket) -> Request:
