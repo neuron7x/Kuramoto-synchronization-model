@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from analytics.regime.src.core import (
     CausalGuard,
@@ -14,6 +15,7 @@ from analytics.regime.src.core import (
     EWSConfig,
     FKDetector,
     FKDetectorConfig,
+    RegimeDetector,
     RicciFlowRebalancer,
     RicciFlowConfig,
     TopoSentinel,
@@ -52,6 +54,69 @@ def test_fk_detector_triggers_on_strong_synchronisation():
     assert math.isfinite(result.fk_index)
     assert math.isfinite(result.r_value)
     assert result.trigger_threshold == calibration.trigger_threshold
+
+
+def test_regime_detector_calibration_updates_thresholds():
+    prices = _synthetic_prices(240, 3)
+    volume_base = np.linspace(800.0, 1_200.0, len(prices))
+    volumes = pd.DataFrame(
+        {column: volume_base + i * 25.0 for i, column in enumerate(prices.columns)},
+        index=prices.index,
+    )
+    spread_base = np.linspace(0.04, 0.02, len(prices))
+    spreads = pd.DataFrame(
+        {column: spread_base + i * 0.002 for i, column in enumerate(prices.columns)},
+        index=prices.index,
+    )
+
+    detector = RegimeDetector()
+    original = detector.config
+
+    calibrated = detector.calibrate(
+        prices,
+        volumes=volumes,
+        spreads=spreads,
+        trending_quantile=0.8,
+        liquidity_high_quantile=0.75,
+        liquidity_low_quantile=0.25,
+        correlation_high_quantile=0.8,
+        correlation_low_quantile=0.2,
+    )
+
+    assert calibrated is detector.config
+    assert any(
+        [
+            calibrated.trending_zscore != original.trending_zscore,
+            calibrated.mean_reverting_autocorr_threshold
+            != original.mean_reverting_autocorr_threshold,
+            calibrated.liquidity_score_high != original.liquidity_score_high,
+            calibrated.liquidity_score_low != original.liquidity_score_low,
+            calibrated.correlation_high_threshold != original.correlation_high_threshold,
+            calibrated.correlation_low_threshold != original.correlation_low_threshold,
+        ]
+    )
+    assert calibrated.liquidity_score_high > calibrated.liquidity_score_low
+    assert 0.0 <= calibrated.correlation_low_threshold <= calibrated.correlation_high_threshold <= 1.0
+
+
+def test_regime_detector_calibration_requires_history():
+    index = pd.date_range("2024-01-01", periods=3, freq="h")
+    prices = pd.DataFrame({"asset_a": [100.0, 100.4, 100.6]}, index=index)
+    detector = RegimeDetector()
+
+    with pytest.raises(ValueError):
+        detector.calibrate(prices.iloc[:2])
+
+
+def test_regime_detector_calibration_skips_single_asset_correlation():
+    prices = _synthetic_prices(240, 1)
+    detector = RegimeDetector()
+    original = detector.config
+
+    calibrated = detector.calibrate(prices)
+
+    assert calibrated.correlation_high_threshold == original.correlation_high_threshold
+    assert calibrated.correlation_low_threshold == original.correlation_low_threshold
 
 
 def test_ricci_flow_rebalancer_projected_simplex():
