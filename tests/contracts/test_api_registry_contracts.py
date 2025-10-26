@@ -83,13 +83,20 @@ def _normalise_repo_relative(candidate: Path) -> Path:
         # (for example, /workspace/<project> vs /__w/<project>/<project>). When
         # that happens we search for the repository root suffix within the
         # absolute path and return the remaining tail so that comparisons remain
-        # stable across environments.
-        for start in range(len(candidate_parts) - repo_length + 1):
-            if candidate_parts[start : start + repo_length] == _REPO_ROOT_PARTS:
-                remainder = candidate_parts[start + repo_length :]
-                if remainder:
-                    return Path(*remainder)
-                return Path()
+        # stable across environments. We progressively drop leading components of
+        # the resolved repository root so paths like /__w/<repo>/<repo>/docs map
+        # back to docs/....
+        for drop in range(repo_length):
+            repo_suffix = _REPO_ROOT_PARTS[drop:]
+            if not repo_suffix:
+                continue
+            suffix_length = len(repo_suffix)
+            for start in range(len(candidate_parts) - suffix_length + 1):
+                if candidate_parts[start : start + suffix_length] == repo_suffix:
+                    remainder = candidate_parts[start + suffix_length :]
+                    if remainder:
+                        return Path(*remainder)
+                    return Path()
         return candidate
 
 
