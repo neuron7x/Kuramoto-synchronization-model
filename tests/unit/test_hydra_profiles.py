@@ -43,12 +43,12 @@ def test_set_random_seeds_is_repeatable(monkeypatch) -> None:
 
 
 def test_collect_run_metadata_includes_context(tmp_path: Path) -> None:
-    cfg = OmegaConf.create({"experiment": {"name": "local", "random_seed": 7}})
+    cfg = OmegaConf.create({"experiment": {"name": "dev", "random_seed": 7}})
     metadata = collect_run_metadata(tmp_path, Path.cwd(), cfg)
 
     assert metadata.run_dir == tmp_path
     assert metadata.original_cwd == Path.cwd()
-    assert metadata.environment == "local"
+    assert metadata.environment == "dev"
     assert metadata.random_seed == 7
     # ISO format should include explicit offset (e.g. +00:00) to avoid relying on Z suffix
     assert not metadata.timestamp_utc.endswith("Z")
@@ -95,7 +95,7 @@ def test_validate_experiment_profile_rejects_invalid_values() -> None:
     cfg = OmegaConf.create(
         {
             "experiment": {
-                "name": "local",
+                "name": "dev",
                 "db_uri": "sqlite:///memory",
                 "log_level": "INFO",
                 "random_seed": 1,
@@ -114,7 +114,7 @@ def test_available_experiment_profiles_excludes_base_profile() -> None:
     profiles = available_experiment_profiles()
 
     assert "base" not in profiles
-    assert {"ci", "local", "prod", "stage"}.issubset(set(profiles))
+    assert {"ci", "dev", "prod", "staging"}.issubset(set(profiles))
 
 
 def test_hydra_profiles_inherit_base_defaults() -> None:
@@ -124,7 +124,7 @@ def test_hydra_profiles_inherit_base_defaults() -> None:
         GlobalHydra.instance().clear()
 
     with hydra_initialize_config_dir(version_base="1.3", config_dir=str(conf_root)):
-        cfg = compose(config_name="config", overrides=["experiment=stage"])
+        cfg = compose(config_name="config", overrides=["experiment=staging"])
 
     stage_cfg = validate_experiment_profile(cfg)
 
