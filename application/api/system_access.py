@@ -16,6 +16,7 @@ from application.api.authorization import (
     get_authorization_gateway,
     require_permission,
 )
+from application.api.errors import register_exception_handlers
 from application.api.rate_limit import (
     SlidingWindowRateLimiter,
     build_rate_limiter,
@@ -815,6 +816,8 @@ def create_system_app(
         access: SystemAccess = Depends(_get_access),
     ) -> OrderResponse:
         return await access.place_order(payload, identity=identity)
+
+    register_exception_handlers(app)
 
     return app
 
