@@ -37,3 +37,30 @@ cargo bench -- --baseline main
 Criterion will highlight statistically significant regressions when the observed slowdown
 exceeds the configured noise threshold (1%) or significance level (5%). HTML reports are
 written to ``target/criterion`` for deeper inspection.
+
+## Python integration checks
+
+When you need to validate the PyO3 bindings directly from Rust, enable the optional
+`python-tests` feature:
+
+```bash
+PYO3_PYTHON=python3 cargo test --manifest-path rust/tradepulse-accel/Cargo.toml --features python-tests
+```
+
+Running the tests requires Python development headers to be available for the selected
+interpreter. As an alternative you can build the editable wheel and run smoke checks from
+Python:
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install maturin numpy
+.venv/bin/python -m maturin develop --manifest-path rust/tradepulse-accel/Cargo.toml
+.venv/bin/python - <<'PY'
+import numpy as np
+import tradepulse_accel as accel
+
+print(accel.sliding_windows(np.arange(6., dtype=float), window=3, step=2))
+print(accel.quantiles(np.array([1.0, 3.0, 2.0, 4.0]), [0.25, 0.5, 0.75]))
+print(accel.convolve(np.array([1.0, 2.0, 3.0]), np.array([0.5, 0.5]), 'same'))
+PY
+```
