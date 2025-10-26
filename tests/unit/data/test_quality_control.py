@@ -7,9 +7,11 @@ from core.data.quality_control import (
     QualityGateConfig,
     QualityGateError,
     QualityReport,
+    QualitySummary,
     RangeCheck,
     TemporalContract,
     quarantine_anomalies,
+    summarise_quality,
     validate_and_quarantine,
 )
 from core.data.validation import TimeSeriesValidationConfig, ValueColumnConfig
@@ -89,3 +91,69 @@ def test_temporal_contract_flags_stale_batches():
     assert report.contract_breaches
     with pytest.raises(QualityGateError):
         report.raise_if_blocked()
+
+
+def test_quality_summary_reports_metrics_and_validators():
+    frame = _frame()
+    config = TimeSeriesValidationConfig(
+        timestamp_column="timestamp",
+        value_columns=[ValueColumnConfig(name="close", dtype="float64")],
+    )
+    gate = QualityGateConfig(
+        schema=config,
+        price_column="close",
+        anomaly_threshold=2.0,
+        anomaly_window=2,
+    )
+    report = validate_and_quarantine(frame, gate)
+    summary = report.summarise(gate)
+
+    assert isinstance(summary, QualitySummary)
+    assert summary.total_rows == frame.shape[0]
+    assert summary.quarantined_rows == summary.sanitised_rows
+    validator_statuses = {outcome.category: outcome.status for outcome in summary.validator_outcomes}
+    assert validator_statuses["syntax"] == "pass"
+    assert validator_statuses["semantics"] == "warn"
+    assert validator_statuses["security"] == "warn"
+    assert summary.duplicate_rows == report.duplicates.shape[0]
+    payload = summary.to_dict()
+    assert payload["total_rows"] == frame.shape[0]
+    assert payload["validator_outcomes"]
+    assert payload["anomaly_threshold"] == pytest.approx(gate.anomaly_threshold)
+
+
+def test_quality_summary_flags_range_failures():
+    frame = _frame()
+    config = TimeSeriesValidationConfig(
+        timestamp_column="timestamp",
+        value_columns=[ValueColumnConfig(name="close", dtype="float64")],
+    )
+    gate = QualityGateConfig(
+        schema=config,
+        price_column="close",
+        range_checks=(RangeCheck(column="close", max_value=120.0),),
+    )
+    report = validate_and_quarantine(frame, gate)
+    summary = report.summarise(gate)
+
+    assert summary.blocked is True
+    assert summary.range_violation_rows["close"] == 1
+    semantics = next(outcome for outcome in summary.validator_outcomes if outcome.category == "semantics")
+    assert semantics.status == "fail"
+
+
+def test_quality_summary_passes_when_dataset_clean():
+    index = pd.date_range("2024-01-01", periods=4, freq="1min", tz="UTC")
+    frame = pd.DataFrame({"timestamp": index, "close": [100, 101, 102, 103]})
+    config = TimeSeriesValidationConfig(
+        timestamp_column="timestamp",
+        value_columns=[ValueColumnConfig(name="close", dtype="float64")],
+    )
+    gate = QualityGateConfig(schema=config, price_column="close")
+    report = validate_and_quarantine(frame, gate)
+    summary = summarise_quality(report, gate)
+
+    assert summary.quarantined_rows == 0
+    assert summary.quarantine_ratio == 0.0
+    for outcome in summary.validator_outcomes:
+        assert outcome.status == "pass"
