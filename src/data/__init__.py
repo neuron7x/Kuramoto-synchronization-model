@@ -38,6 +38,12 @@ from src.data.kafka_ingestion import (
     LagRecord,
     LagReport,
 )
+from src.data.market_sanitizer import (
+    MarketDataSanitizer,
+    SanitizationIssue,
+    SanitizationIssueKind,
+    SanitizedTickBatch,
+)
 from src.data.knowledge import (
     AnswerCache,
     AnswerCacheEntry,
@@ -113,6 +119,7 @@ __all__ = [
     "LagRecord",
     "LagReport",
     "LagSummary",
+    "MarketDataSanitizer",
     "MessageBroker",
     "NullMessageBroker",
     "NullTickEventPublisher",
@@ -122,6 +129,9 @@ __all__ = [
     "SearchQuery",
     "SearchResult",
     "SegmentationConfig",
+    "SanitizationIssue",
+    "SanitizationIssueKind",
+    "SanitizedTickBatch",
     "ShardManager",
     "SourcePrioritizer",
     "StaticTickRoutingStrategy",
