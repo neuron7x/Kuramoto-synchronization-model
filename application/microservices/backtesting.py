@@ -6,9 +6,11 @@ from dataclasses import dataclass
 
 from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import (
+    IntegrationContractRegistry,
     MarketDataSource,
     StrategyCallable,
     StrategyRun,
+    default_contract_registry,
 )
 from application.system import TradePulseSystem
 from application.trading import signal_to_dto
@@ -32,18 +34,28 @@ class BacktestingService(Microservice):
         system: TradePulseSystem,
         *,
         market_data_service: "MarketDataService | None" = None,
+        contracts: IntegrationContractRegistry | None = None,
     ) -> None:
         super().__init__(name="backtesting")
         self._system = system
         self._market_data_service = market_data_service
         self._last_result: BacktestResult | None = None
+        self._contracts = contracts or default_contract_registry()
+        try:
+            self._operation_contracts["run_backtest"] = self._contracts.get_service(
+                "tradepulse.service.backtesting.run"
+            )
+        except KeyError:  # pragma: no cover - defensive
+            pass
 
     @property
     def market_data_service(self) -> "MarketDataService":
         from application.microservices.market_data import MarketDataService
 
         if self._market_data_service is None:
-            self._market_data_service = MarketDataService(self._system)
+            self._market_data_service = MarketDataService(
+                self._system, contracts=self._contracts
+            )
             if self.state is not ServiceState.STOPPED:
                 self._market_data_service.start()
         return self._market_data_service
@@ -65,15 +77,23 @@ class BacktestingService(Microservice):
         market_frame = self.market_data_service.ingest(source)
         feature_frame = self.market_data_service.build_features(market_frame)
 
-        try:
-            signals = self._system.generate_signals(
-                feature_frame,
-                strategy=strategy,
-                symbol=source.symbol,
-            )
-        except Exception as exc:
-            self._mark_error(exc)
-            raise
+        contract = self._operation_contract("run_backtest")
+        attributes = {"strategy": strategy_name, "symbol": source.symbol}
+        if contract and contract.observability:
+            attributes = contract.observability.attributes(attributes)
+        with self._operation_context("run_backtest", attributes=attributes):
+            try:
+                signals = self._execute_with_retries(
+                    lambda: self._system.generate_signals(
+                        feature_frame,
+                        strategy=strategy,
+                        symbol=source.symbol,
+                    ),
+                    contract.retry_policy if contract else None,
+                )
+            except Exception as exc:
+                self._mark_error(exc)
+                raise
 
         payloads = self._serialise_signals(signals)
         run = StrategyRun(
