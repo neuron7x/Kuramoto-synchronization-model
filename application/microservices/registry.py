@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from application.microservices.base import Microservice, ServiceState
 from application.microservices.backtesting import BacktestingService
+from application.microservices.contracts import default_contract_registry
 from application.microservices.execution import ExecutionService
 from application.microservices.market_data import MarketDataService
 from application.system import TradePulseSystem
@@ -39,9 +40,12 @@ class ServiceRegistry:
 
     @classmethod
     def from_system(cls, system: TradePulseSystem) -> "ServiceRegistry":
-        market_data = MarketDataService(system)
-        backtesting = BacktestingService(system, market_data_service=market_data)
-        execution = ExecutionService(system)
+        contracts = default_contract_registry()
+        market_data = MarketDataService(system, contracts=contracts)
+        backtesting = BacktestingService(
+            system, market_data_service=market_data, contracts=contracts
+        )
+        execution = ExecutionService(system, contracts=contracts)
         registry = cls(
             market_data=market_data,
             backtesting=backtesting,
