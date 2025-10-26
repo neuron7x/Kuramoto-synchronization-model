@@ -6,10 +6,15 @@ import hashlib
 import importlib
 import itertools
 import json
+import os
+import shutil
+import shlex
+import subprocess
 import sys
 import threading
 import time
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Tuple
 
@@ -20,6 +25,7 @@ import pandas as pd
 from analytics.regime.src.core import tradepulse_v21 as v21
 from core.config.cli_models import (
     BacktestConfig,
+    DeploymentConfig,
     ExecConfig,
     FeatureFrameSourceConfig,
     FeatureParityConfig,
@@ -122,6 +128,78 @@ def _write_bytes(
     destination.write_bytes(payload)
     click.echo(f"[{command}] • wrote {destination} (sha256={digest})")
     return digest, True
+
+
+def _resolve_path(base: Path, target: Path | str) -> Path:
+    candidate = Path(target)
+    if candidate.is_absolute():
+        return candidate
+    return (base / candidate).resolve()
+
+
+def _resolve_kubectl_binary(base: Path, target: Path | str) -> Path:
+    candidate = Path(target)
+    if candidate.is_absolute():
+        return candidate
+
+    target_str = str(target)
+    has_dir_component = any(
+        sep and sep in target_str for sep in (os.sep, os.path.altsep)
+    )
+    if has_dir_component:
+        return (base / candidate).resolve()
+
+    resolved = shutil.which(target_str)
+    if resolved is not None:
+        return Path(resolved)
+
+    return candidate
+
+
+def _resolve_overlay_path(config_path: Path, cfg: DeploymentConfig) -> Path:
+    manifests = cfg.manifests
+    if manifests.path is not None:
+        return _resolve_path(config_path.parent, manifests.path)
+
+    name = manifests.name
+    if name is None:
+        name = DEFAULT_OVERLAY_NAMES.get(cfg.environment.value, cfg.environment.value)
+    root = _resolve_path(config_path.parent, manifests.root)
+    return (root / name).resolve()
+
+
+def _build_kubectl_command(
+    binary: Path,
+    cfg: DeploymentConfig,
+    *args: str,
+) -> list[str]:
+    command = [str(binary)]
+    kubectl_cfg = cfg.kubectl
+    if kubectl_cfg.context:
+        command.extend(["--context", kubectl_cfg.context])
+    if kubectl_cfg.namespace:
+        command.extend(["--namespace", kubectl_cfg.namespace])
+    if kubectl_cfg.extra_args:
+        command.extend(kubectl_cfg.extra_args)
+    command.extend(args)
+    return command
+
+
+def _run_kubectl(
+    command_name: str,
+    binary: Path,
+    cfg: DeploymentConfig,
+    env: dict[str, str],
+    *args: str,
+) -> None:
+    command = _build_kubectl_command(binary, cfg, *args)
+    click.echo(f"[{command_name}] $ {shlex.join(command)}")
+    try:
+        subprocess.run(command, check=True, env=env)
+    except FileNotFoundError as exc:
+        raise ComputeError(f"kubectl binary '{binary}' not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise ComputeError(f"kubectl command failed with exit code {exc.returncode}") from exc
 
 
 def _load_callable(entrypoint: str) -> Callable[..., Any]:
@@ -971,6 +1049,136 @@ def report(
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
+    help="Path to deployment YAML config.",
+)
+@click.option(
+    "--generate-config",
+    is_flag=True,
+    help="Write the default deployment config template.",
+)
+@click.option(
+    "--template-output",
+    type=click.Path(path_type=Path),
+    help="Destination for generated template.",
+)
+@click.pass_context
+def deploy(
+    ctx: click.Context,
+    config: Path | None,
+    generate_config: bool,
+    template_output: Path | None,
+) -> None:
+    """Apply TradePulse Kubernetes manifests via kubectl."""
+
+    command = "deploy"
+    manager = _get_manager(ctx)
+    if generate_config:
+        if template_output is None:
+            raise click.UsageError(
+                "--template-output must be provided when generating a template"
+            )
+        manager.render("deploy", template_output)
+        click.echo(f"[{command}] template written to {template_output}")
+        return
+    if config is None:
+        raise click.UsageError("--config is required when not generating a template")
+
+    with step_logger(command, "load config"):
+        cfg = manager.load_config(config, DeploymentConfig)
+
+    with step_logger(command, "resolve manifests"):
+        overlay_path = _resolve_overlay_path(config, cfg)
+        if not overlay_path.exists():
+            raise ArtifactError(f"Manifests directory {overlay_path} does not exist")
+
+    kubectl_binary = _resolve_kubectl_binary(config.parent, cfg.kubectl.binary)
+    kubectl_env = os.environ.copy()
+    kubectl_env.update(cfg.kubectl.env)
+
+    dry_run_mode = cfg.kubectl.dry_run
+    if dry_run_mode != "none":
+        with step_logger(command, "dry-run apply"):
+            _run_kubectl(
+                command,
+                kubectl_binary,
+                cfg,
+                kubectl_env,
+                "apply",
+                "-k",
+                str(overlay_path),
+                f"--dry-run={dry_run_mode}",
+            )
+
+    with step_logger(command, "apply manifests"):
+        _run_kubectl(
+            command,
+            kubectl_binary,
+            cfg,
+            kubectl_env,
+            "apply",
+            "-k",
+            str(overlay_path),
+        )
+
+    annotations = {
+        "tradepulse.dev/artifact-digest": cfg.artifact,
+        "tradepulse.dev/strategy-id": cfg.strategy,
+    }
+    annotations.update(cfg.annotations)
+
+    if annotations:
+        with step_logger(command, "annotate deployment"):
+            annotate_args = ["annotate", f"deployment/{cfg.deployment_name}"]
+            for key, value in sorted(annotations.items()):
+                annotate_args.append(f"{key}={value}")
+            annotate_args.append("--overwrite")
+            _run_kubectl(command, kubectl_binary, cfg, kubectl_env, *annotate_args)
+
+    if cfg.wait_for_rollout:
+        with step_logger(command, "wait for rollout"):
+            _run_kubectl(
+                command,
+                kubectl_binary,
+                cfg,
+                kubectl_env,
+                "rollout",
+                "status",
+                f"deployment/{cfg.deployment_name}",
+                f"--timeout={cfg.rollout_timeout_seconds}s",
+            )
+
+    summary_path = _resolve_path(config.parent, cfg.summary_path)
+    with step_logger(command, "write summary"):
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_payload = {
+            "name": cfg.name,
+            "environment": cfg.environment.value,
+            "strategy": cfg.strategy,
+            "artifact": cfg.artifact,
+            "deployment_name": cfg.deployment_name,
+            "overlay_path": str(overlay_path),
+            "kubectl_binary": str(kubectl_binary),
+            "kubectl_context": cfg.kubectl.context,
+            "kubectl_namespace": cfg.kubectl.namespace,
+            "dry_run": dry_run_mode,
+            "wait_for_rollout": cfg.wait_for_rollout,
+            "rollout_timeout_seconds": cfg.rollout_timeout_seconds,
+            "annotations": dict(sorted(annotations.items())),
+            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        }
+        summary_path.write_text(json.dumps(summary_payload, indent=2) + "\n", encoding="utf-8")
+        click.echo(f"[{command}] • wrote deployment summary to {summary_path}")
+
+    click.echo(
+        f"[{command}] completed environment={cfg.environment.value} deployment={cfg.deployment_name}"
+    )
+
+
+
+@cli.command()
+@click.option(
+    "--config",
+    type=click.Path(exists=True, path_type=Path),
     help="Path to feature parity YAML config.",
 )
 @click.option(
@@ -1179,3 +1387,8 @@ def causal_pipeline(
 cli.add_command(ingest, name="materialize")
 cli.add_command(optimize, name="train")
 cli.add_command(exec, name="serve")
+DEFAULT_OVERLAY_NAMES = {
+    "stage": "staging",
+    "prod": "production",
+}
+

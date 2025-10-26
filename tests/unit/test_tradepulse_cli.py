@@ -40,7 +40,15 @@ def _write_yaml(path: Path, data: Dict[str, Any]) -> None:
 
 def test_cli_generates_templates(tmp_path: Path) -> None:
     runner = CliRunner()
-    for command in ("ingest", "backtest", "optimize", "exec", "report", "parity"):
+    for command in (
+        "ingest",
+        "backtest",
+        "optimize",
+        "exec",
+        "report",
+        "parity",
+        "deploy",
+    ):
         destination = tmp_path / f"{command}.yaml"
         result = runner.invoke(
             cli, [command, "--generate-config", "--template-output", str(destination)]
@@ -153,6 +161,75 @@ def test_full_cli_flow(tmp_path: Path, sample_prices: Path) -> None:
 
     catalog = json.loads(catalog_path.read_text())
     assert len(catalog["artifacts"]) >= 3
+
+
+def test_deploy_cli_applies_manifests(tmp_path: Path) -> None:
+    runner = CliRunner()
+    manager = ConfigTemplateManager(Path("configs/templates"))
+    config_path = tmp_path / "deploy.yaml"
+    manager.render("deploy", config_path)
+
+    config_data = _load_yaml(config_path)
+    config_data["artifact"] = "ghcr.io/neuron7x/tradepulse@sha256:1234"
+    config_data["strategy"] = "alpha-live"
+    config_data["kubectl"]["extra_args"] = []
+    manifests_cfg = config_data.setdefault("manifests", {})
+    manifests_cfg.pop("name", None)
+    manifests_cfg["path"] = str(
+        Path("deploy/kustomize/overlays/staging").resolve()
+    )
+
+    log_path = tmp_path / "kubectl.log"
+    kubectl_stub = tmp_path / "kubectl"
+    kubectl_stub.write_text(
+        """#!/usr/bin/env python3
+import json
+import os
+import sys
+
+log = os.environ["KUBECTL_LOG"]
+with open(log, "a", encoding="utf-8") as handle:
+    json.dump({"argv": sys.argv[1:]}, handle)
+    handle.write("\\n")
+""",
+        encoding="utf-8",
+    )
+    kubectl_stub.chmod(0o755)
+
+    config_data["kubectl"]["binary"] = str(kubectl_stub)
+    config_data["kubectl"]["env"] = {"KUBECTL_LOG": str(log_path)}
+    config_data["summary_path"] = str(tmp_path / "summary.json")
+    _write_yaml(config_path, config_data)
+
+    result = runner.invoke(cli, ["deploy", "--config", str(config_path)])
+    assert result.exit_code == 0, result.output
+
+    entries = [
+        json.loads(line)["argv"]
+        for line in log_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(entries) == 4
+    assert entries[0][0] == "apply"
+    assert "--dry-run=client" in entries[0]
+    assert entries[1][0] == "apply"
+    assert all("--dry-run=" not in arg for arg in entries[1])
+    assert entries[2][0] == "annotate"
+    assert f"deployment/{config_data['deployment_name']}" in entries[2]
+    assert entries[3][:2] == ["rollout", "status"]
+
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["artifact"] == config_data["artifact"]
+    assert summary["strategy"] == config_data["strategy"]
+    assert summary["environment"] == config_data["environment"]
+    assert (
+        summary["annotations"]["tradepulse.dev/artifact-digest"]
+        == config_data["artifact"]
+    )
+    assert (
+        summary["annotations"]["tradepulse.dev/strategy-id"]
+        == config_data["strategy"]
+    )
 
 
 def test_parity_cli_synchronizes_store(tmp_path: Path) -> None:
