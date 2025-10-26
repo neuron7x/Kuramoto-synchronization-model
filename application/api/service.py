@@ -32,6 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
@@ -2206,10 +2207,64 @@ def create_app(
     app.include_router(versioned_router)
 
     graphql_router = create_graphql_router(analytics_store)
-    app.include_router(graphql_router, prefix="/graphql")
+    app.include_router(
+        graphql_router,
+        prefix="/graphql",
+        dependencies=[Depends(enforce_rate_limit)],
+    )
+
+    def _websocket_http_request(websocket: WebSocket) -> Request:
+        scope = dict(websocket.scope)
+        scope["type"] = "http"
+        scope["state"] = websocket.scope.setdefault("state", {})
+        return Request(scope)
+
+    async def _authenticate_websocket(websocket: WebSocket) -> AdminIdentity:
+        request = _websocket_http_request(websocket)
+        authorization = request.headers.get("authorization")
+        if not authorization:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Bearer token required for this endpoint.",
+            )
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Bearer token required for this endpoint.",
+            )
+
+        credentials = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
+        settings = get_api_security_settings()
+        identity = await require_bearer(request, credentials, settings)
+        ip_address = _resolve_ip(request)
+        await limiter.check(subject=identity.subject, ip_address=ip_address)
+        websocket.scope.setdefault("state", {})["identity"] = identity
+        return identity
+
+    def _websocket_close_reason(detail: Any) -> str:
+        if isinstance(detail, str):
+            return detail
+        if isinstance(detail, Mapping):
+            message = detail.get("message")
+            if isinstance(message, str):
+                return message
+            description = detail.get("detail")
+            if isinstance(description, str):
+                return description
+        return "Unauthorized"
 
     @app.websocket("/ws/stream")
     async def realtime_stream(websocket: WebSocket) -> None:
+        try:
+            await _authenticate_websocket(websocket)
+        except HTTPException as exc:
+            await websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason=_websocket_close_reason(exc.detail),
+            )
+            return
+
         await stream_manager.connect(websocket)
         try:
             snapshot = await analytics_store.snapshot()
