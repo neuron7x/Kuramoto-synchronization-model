@@ -50,7 +50,9 @@ docker compose up tradepulse prometheus elasticsearch logstash kibana filebeat
 
 Application logs emitted as JSON are collected automatically thanks to the
 Filebeat autodiscover rules. Kibana dashboards can be built on top of the
-`tradepulse-logs-*` index pattern.
+`tradepulse-logs-*` index pattern. Kubernetes users can rely on
+`deploy/kustomize/addons/logging` to roll out the same Filebeat/Logstash pairing
+cluster-wide and forward backend pod logs to Elasticsearch.
 
 ## Automated Health Monitoring
 

@@ -956,6 +956,13 @@ and forwards their JSON log streams to Logstash, which normalises the payload
 before indexing it under the `tradepulse-logs-*` pattern. Kibana surfaces the
 data at <http://localhost:5601> for ad-hoc queries and dashboards.
 
+For Kubernetes environments the staging and production Kustomize overlays now
+include a `filebeat` DaemonSet and a `logstash` Deployment. Applying either
+overlay deploys the log shipping stack and annotates backend pods so their
+structured stdout is forwarded automatically. Update the Logstash deployment's
+`ELASTICSEARCH_*` environment variables to point at your managed Elastic
+Cluster, or provide an `ELASTICSEARCH_API_KEY` when API key auth is preferred.
+
 ---
 
 ## Production Best Practices

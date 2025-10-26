@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - filebeat-rbac.yaml
+  - filebeat-daemonset.yaml
+  - logstash-deployment.yaml
+  - logstash-service.yaml
+
+configMapGenerator:
+  - name: tradepulse-filebeat-config
+    files:
+      - filebeat.yml=../../../../observability/logging/filebeat.kubernetes.yml
+  - name: tradepulse-logstash-pipeline
+    files:
+      - logstash.conf=../../../../observability/logstash/pipeline/logstash.conf
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+replacements:
+  - source:
+      kind: ServiceAccount
+      name: filebeat
+      fieldPath: metadata.namespace
+    targets:
+      - select:
+          kind: ClusterRoleBinding
+          name: tradepulse-filebeat
+        fieldPaths:
+          - subjects.0.namespace
+        options:
+          create: true

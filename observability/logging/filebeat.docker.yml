@@ -27,7 +27,7 @@ filebeat.autodiscover:
                     fields: ["input", "agent"]
               fields:
                 service.name: ${data.docker.container.labels.co.elastic.logs/module:tradepulse}
-                environment: local
+                environment: ${FILEBEAT_ENVIRONMENT:local}
               fields_under_root: true
               ignore_older: 72h
 
