@@ -213,11 +213,22 @@ class AsyncDataIngestor(AsyncDataIngestionService):
         """
         resolved_path = self._path_guard.resolve(path, description="CSV data file")
 
-        queue: asyncio.Queue[object] = asyncio.Queue()
+        queue: asyncio.Queue[object] = asyncio.Queue(maxsize=1)
         sentinel = object()
         loop = asyncio.get_running_loop()
 
         def _producer() -> None:
+            def _enqueue(item: object) -> None:
+                coro = queue.put(item)
+                try:
+                    fut = asyncio.run_coroutine_threadsafe(coro, loop)
+                    fut.result()
+                except asyncio.CancelledError:  # pragma: no cover - consumer cancelled
+                    return
+                except RuntimeError:  # pragma: no cover - loop closed
+                    coro.close()
+                    return
+
             try:
                 for chunk in _iter_csv_chunks(
                     resolved_path,
@@ -227,11 +238,11 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                     market=market,
                     chunk_size=chunk_size,
                 ):
-                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                    _enqueue(chunk)
             except Exception as exc:  # pragma: no cover - propagated to consumer
-                loop.call_soon_threadsafe(queue.put_nowait, exc)
+                _enqueue(exc)
             finally:
-                loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+                _enqueue(sentinel)
 
         worker_task = asyncio.create_task(asyncio.to_thread(_producer))
 
