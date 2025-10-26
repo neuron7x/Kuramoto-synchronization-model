@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Protocol, Sequence
@@ -159,12 +160,31 @@ class StreamingIngestionPipeline:
             raise ValueError(
                 "tick_handler and lag_handler must not be provided in kafka_kwargs"
             )
-        self._kafka_service = factory(
-            kafka_config,
-            tick_handler=self._tick_handler,
-            lag_handler=self._lag_handler,
-            **kwargs,
+        signature = inspect.signature(factory)
+        accepts_var_kw = any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in signature.parameters.values()
         )
+        call_kwargs: Dict[str, Any] = dict(kwargs)
+        for name, value in (
+            ("tick_handler", self._tick_handler),
+            ("lag_handler", self._lag_handler),
+        ):
+            if accepts_var_kw or name in signature.parameters:
+                call_kwargs[name] = value
+        self._kafka_service = factory(kafka_config, **call_kwargs)
+
+        if not hasattr(self._kafka_service, "tick_handler"):
+            setattr(self._kafka_service, "tick_handler", self._tick_handler)
+        else:
+            current = getattr(self._kafka_service, "tick_handler")
+            if current is None:
+                setattr(self._kafka_service, "tick_handler", self._tick_handler)
+        if (
+            self._lag_handler is not None
+            and not hasattr(self._kafka_service, "lag_handler")
+        ):
+            setattr(self._kafka_service, "lag_handler", self._lag_handler)
 
     @staticmethod
     def _build_kafka_service(

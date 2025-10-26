@@ -263,6 +263,30 @@ async def test_pipeline_aggregator_operates_on_shared_cache() -> None:
     assert result.key.timeframe == "1s"
 
 
+@pytest.mark.asyncio
+async def test_pipeline_accepts_minimal_kafka_factory_signature() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    route = CacheRoute(layer="raw", timeframe="1s")
+
+    pipeline = StreamingIngestionPipeline(
+        kafka_config=config,
+        routing_strategy=StaticTickRoutingStrategy(route_template=route),
+        kafka_service_factory=lambda cfg: _StubKafkaService(cfg),
+    )
+
+    assert isinstance(pipeline.kafka_service, _StubKafkaService)
+
+    await pipeline.start()
+    await pipeline.stop()
+
+    assert pipeline.kafka_service.started == 1
+    assert pipeline.kafka_service.stopped == 1
+
+
 def test_pipeline_rejects_tick_handler_in_kafka_kwargs() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
