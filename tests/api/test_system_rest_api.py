@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from application.api.system_access import create_system_app
+from application.settings import ApiRateLimitSettings, RateLimitPolicy
 from application.security.rbac import AuthorizationGateway, build_authorization_gateway
 from application.system import (
     ExchangeAdapterConfig,
@@ -322,3 +323,31 @@ def test_order_submission_emits_notification(
     assert events, "expected notification to be dispatched"
     assert events[0]["event"] == "order.submitted"
     assert events[0]["metadata"]["symbol"] == "ETHUSD"
+
+
+def test_rate_limit_blocks_excessive_requests(
+    system: TradePulseSystem,
+    identity_dependency: Callable[[], Awaitable[AdminIdentity]],
+    authorization_gateway: AuthorizationGateway,
+) -> None:
+    rate_settings = ApiRateLimitSettings(
+        default_policy=RateLimitPolicy(max_requests=2, window_seconds=60.0)
+    )
+    app = create_system_app(
+        system,
+        identity_dependency=identity_dependency,
+        reader_roles=("system:read",),
+        trader_roles=("system:trade",),
+        authorization_gateway=authorization_gateway,
+        rate_limit_settings=rate_settings,
+    )
+    client = TestClient(app)
+
+    first = client.get("/api/v1/status")
+    second = client.get("/api/v1/status")
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    blocked = client.get("/api/v1/status")
+    assert blocked.status_code == 429
+    assert blocked.json()["detail"] == "Rate limit exceeded for this client."
