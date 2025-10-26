@@ -222,7 +222,7 @@ def test_feature_endpoint_computes_latest_vector(
     configured_app: FastAPI, security_context: Callable[..., str]
 ) -> None:
     app = configured_app
-    client = TestClient(app)
+    client = TestClient(app, raise_server_exceptions=False)
 
     payload = _build_payload()
     token = security_context(subject="feature-user")
@@ -324,7 +324,7 @@ def test_prediction_endpoint_returns_signal(
     configured_app: FastAPI, security_context: Callable[..., str]
 ) -> None:
     app = configured_app
-    client = TestClient(app)
+    client = TestClient(app, raise_server_exceptions=False)
 
     payload = _build_payload()
     payload["horizon_seconds"] = 900
@@ -359,6 +359,116 @@ def test_prediction_endpoint_returns_signal(
     cached = client.post("/predictions", json=payload, headers=headers)
     assert cached.headers["X-Cache-Status"] == "hit"
     assert cached.json() == body
+
+
+def test_graphql_interface_exposes_latest_data(
+    configured_app: FastAPI, security_context: Callable[..., str]
+) -> None:
+    client = TestClient(configured_app)
+    token = security_context(subject="graphql-user")
+    headers = _auth_headers(token)
+
+    feature_payload = _build_payload()
+    feature_response = client.post(_api_v1("/features"), json=feature_payload, headers=headers)
+    assert feature_response.status_code == 200
+
+    prediction_payload = _build_payload()
+    prediction_payload["horizon_seconds"] = 900
+    prediction_response = client.post(
+        _api_v1("/predictions"), json=prediction_payload, headers=headers
+    )
+    assert prediction_response.status_code == 200
+
+    query = """
+    query($symbol: String!) {
+        latestFeature(symbol: $symbol) {
+            symbol
+            generatedAt
+            features
+            snapshots { timestamp }
+        }
+        latestSignal(symbol: $symbol) {
+            symbol
+            horizonSeconds
+            signal
+        }
+        recentSignals(limit: 1) {
+            symbol
+            signal
+        }
+    }
+    """
+    graphql_response = client.post(
+        "/graphql",
+        json={"query": query, "variables": {"symbol": "TEST-USD"}},
+    )
+    assert graphql_response.status_code == 200
+    payload = graphql_response.json()["data"]
+
+    latest_feature = payload["latestFeature"]
+    assert latest_feature["symbol"] == "TEST-USD"
+    assert isinstance(latest_feature["features"], dict)
+    assert latest_feature["snapshots"]
+
+    latest_signal = payload["latestSignal"]
+    assert latest_signal["symbol"] == "TEST-USD"
+    assert latest_signal["horizonSeconds"] == 900
+    assert latest_signal["signal"]["symbol"] == "TEST-USD"
+
+    recent_signals = payload["recentSignals"]
+    assert len(recent_signals) >= 1
+    assert recent_signals[0]["symbol"] == "TEST-USD"
+
+
+def test_websocket_stream_broadcasts_updates(
+    configured_app: FastAPI, security_context: Callable[..., str]
+) -> None:
+    client = TestClient(configured_app)
+    token = security_context(subject="stream-user")
+    headers = _auth_headers(token)
+
+    with client.websocket_connect("/ws/stream") as websocket:
+        initial = websocket.receive_json()
+        assert initial["type"] == "snapshot"
+        assert initial["features"] == []
+        assert initial["signals"] == []
+
+        feature_payload = _build_payload()
+        feature_response = client.post(
+            _api_v1("/features"), json=feature_payload, headers=headers
+        )
+        assert feature_response.status_code == 200
+        feature_event = websocket.receive_json()
+        assert feature_event["type"] == "feature"
+        assert feature_event["symbol"] == "TEST-USD"
+        assert "features" in feature_event
+
+        prediction_payload = _build_payload()
+        prediction_payload["horizon_seconds"] = 600
+        prediction_response = client.post(
+            _api_v1("/predictions"), json=prediction_payload, headers=headers
+        )
+        assert prediction_response.status_code == 200
+        signal_event = websocket.receive_json()
+        assert signal_event["type"] == "signal"
+        assert signal_event["symbol"] == "TEST-USD"
+        assert "signal" in signal_event
+
+
+def test_internal_errors_return_structured_payload(configured_app: FastAPI) -> None:
+    app = configured_app
+
+    @app.get("/boom")
+    async def boom() -> None:  # pragma: no cover - used in test only
+        raise RuntimeError("boom")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/boom")
+    assert response.status_code == 500
+    payload = response.json()["error"]
+    assert payload["code"] == "ERR_INTERNAL"
+    assert payload["path"] == "/boom"
+    assert payload["message"] == "Unexpected server error."
 
 
 def test_prediction_endpoint_honours_idempotency(
