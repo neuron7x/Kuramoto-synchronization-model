@@ -20,7 +20,7 @@
     },
     "schemas": {
       "ApiErrorCode": {
-        "description": "Stable error codes returned by the public HTTP API.",
+        "description": "Stable error codes returned by the public HTTP APIs.",
         "enum": [
           "ERR_BAD_REQUEST",
           "ERR_AUTH_REQUIRED",
@@ -84,7 +84,7 @@
         "type": "object"
       },
       "ErrorPayload": {
-        "description": "Canonical error payload returned by the HTTP API.",
+        "description": "Canonical error payload returned by the HTTP APIs.",
         "examples": [
           {
             "code": "ERR_VALIDATION_FAILED",
@@ -1137,6 +1137,556 @@
         ]
       }
     },
+    "/api/v1/features": {
+      "post": {
+        "operationId": "v1_compute_features_api_v1_features_post",
+        "parameters": [
+          {
+            "description": "Number of feature snapshots to return.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Number of feature snapshots to return.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Pagination cursor (exclusive) encoded as ISO 8601 timestamp.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pagination cursor (exclusive) encoded as ISO 8601 timestamp.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Filter snapshots on or after this timestamp.",
+            "in": "query",
+            "name": "startAt",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter snapshots on or after this timestamp.",
+              "title": "Startat"
+            }
+          },
+          {
+            "description": "Filter snapshots on or before this timestamp.",
+            "in": "query",
+            "name": "endAt",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter snapshots on or before this timestamp.",
+              "title": "Endat"
+            }
+          },
+          {
+            "description": "Return only feature keys with the provided prefix.",
+            "in": "query",
+            "name": "featurePrefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Return only feature keys with the provided prefix.",
+              "title": "Featureprefix"
+            }
+          },
+          {
+            "description": "Specific feature keys to include.",
+            "in": "query",
+            "name": "feature",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Specific feature keys to include.",
+              "title": "Feature"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeatureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureResponse"
+                }
+              }
+            },
+            "description": "Latest feature vector computed from the submitted bar window.",
+            "headers": {
+              "ETag": {
+                "description": "Entity tag representing the hash of the response body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Key": {
+                "description": "Echoes the idempotency key associated with the response.",
+                "schema": {
+                  "maxLength": 128,
+                  "type": "string"
+                }
+              },
+              "X-Cache-Status": {
+                "description": "Indicates whether the response was served from cache.",
+                "schema": {
+                  "enum": [
+                    "hit",
+                    "miss"
+                  ],
+                  "type": "string"
+                }
+              },
+              "X-Idempotent-Replay": {
+                "description": "Present with value 'true' when the response is replayed from the idempotency ledger.",
+                "schema": {
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request payload failed validation or business rules."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication token missing or invalid."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated caller lacks sufficient privileges."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No feature snapshots matched the requested filters."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Idempotency key conflict detected for the supplied payload."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Payload schema is syntactically valid but semantically incorrect."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Client exceeded configured rate limits."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server-side failure."
+          }
+        },
+        "security": [
+          {
+            "OAuth2Bearer": []
+          }
+        ],
+        "summary": "Generate the latest engineered feature vector",
+        "tags": [
+          "features"
+        ]
+      }
+    },
+    "/api/v1/predictions": {
+      "post": {
+        "operationId": "v1_generate_prediction_api_v1_predictions_post",
+        "parameters": [
+          {
+            "description": "Number of predictions to return.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Number of predictions to return.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Pagination cursor (exclusive) encoded as ISO 8601 timestamp.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pagination cursor (exclusive) encoded as ISO 8601 timestamp.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Return predictions generated at or after this time.",
+            "in": "query",
+            "name": "startAt",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Return predictions generated at or after this time.",
+              "title": "Startat"
+            }
+          },
+          {
+            "description": "Return predictions generated at or before this time.",
+            "in": "query",
+            "name": "endAt",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Return predictions generated at or before this time.",
+              "title": "Endat"
+            }
+          },
+          {
+            "description": "Filter predictions by signal action.",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter predictions by signal action.",
+              "title": "Action"
+            }
+          },
+          {
+            "description": "Minimum signal confidence to include.",
+            "in": "query",
+            "name": "minConfidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum signal confidence to include.",
+              "title": "Minconfidence"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionResponse"
+                }
+              }
+            },
+            "description": "Latest prediction derived from engineered features.",
+            "headers": {
+              "ETag": {
+                "description": "Entity tag representing the hash of the response body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Key": {
+                "description": "Echoes the idempotency key associated with the response.",
+                "schema": {
+                  "maxLength": 128,
+                  "type": "string"
+                }
+              },
+              "X-Cache-Status": {
+                "description": "Indicates whether the response was served from cache.",
+                "schema": {
+                  "enum": [
+                    "hit",
+                    "miss"
+                  ],
+                  "type": "string"
+                }
+              },
+              "X-Idempotent-Replay": {
+                "description": "Present with value 'true' when the response is replayed from the idempotency ledger.",
+                "schema": {
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request payload failed validation or business rules."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication token missing or invalid."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated caller lacks sufficient privileges."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No predictions matched the requested filters."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Idempotency key conflict detected for the supplied payload."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Payload schema is syntactically valid but semantically incorrect."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Client exceeded configured rate limits."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server-side failure."
+          }
+        },
+        "security": [
+          {
+            "OAuth2Bearer": []
+          }
+        ],
+        "summary": "Produce a trading signal for the latest bar",
+        "tags": [
+          "predictions"
+        ]
+      }
+    },
     "/features": {
       "post": {
         "deprecated": true,
@@ -1411,6 +1961,49 @@
         "tags": [
           "features"
         ]
+      }
+    },
+    "/graphql": {
+      "get": {
+        "operationId": "handle_http_get_graphql_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "The GraphiQL integrated development environment."
+          },
+          "404": {
+            "description": "Not found if GraphiQL or query via GET are not enabled."
+          }
+        },
+        "security": [
+          {
+            "OAuth2Bearer": []
+          }
+        ],
+        "summary": "Handle Http Get"
+      },
+      "post": {
+        "operationId": "handle_http_post_graphql_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2Bearer": []
+          }
+        ],
+        "summary": "Handle Http Post"
       }
     },
     "/health": {
