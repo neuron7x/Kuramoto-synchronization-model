@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Sequence
 
 import jwt
 import pytest
@@ -19,6 +19,7 @@ os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
 os.environ.setdefault(
     "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
 )
+os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "test-rbac-secret")
 
 from application.api import security as security_module
 from application.api import service as service_module
@@ -84,6 +85,7 @@ def security_context(monkeypatch: pytest.MonkeyPatch) -> Callable[..., str]:
         audience: str | None = None,
         issuer: str | None = None,
         lifetime: timedelta = timedelta(minutes=5),
+        roles: Sequence[str] | None = None,
     ) -> str:
         now = datetime.now(timezone.utc)
         payload = {
@@ -93,6 +95,8 @@ def security_context(monkeypatch: pytest.MonkeyPatch) -> Callable[..., str]:
             "iat": int(now.timestamp()),
             "exp": int((now + lifetime).timestamp()),
         }
+        if roles:
+            payload["roles"] = list(roles)
         return jwt.encode(payload, private_pem, algorithm="RS256", headers={"kid": kid})
 
     return mint_token
@@ -515,7 +519,7 @@ def test_admin_endpoints_require_client_certificate(
     configured_app: FastAPI, security_context: Callable[..., str]
 ) -> None:
     client = TestClient(configured_app)
-    token = security_context(subject="admin-user")
+    token = security_context(subject="admin-user", roles=("risk:officer",))
     headers = _auth_headers(token)
     response = client.get("/admin/kill-switch", headers=headers)
     assert response.status_code == 401
@@ -525,7 +529,7 @@ def test_admin_endpoints_accept_jwt_and_certificate(
     configured_app: FastAPI, security_context: Callable[..., str]
 ) -> None:
     client = TestClient(configured_app)
-    token = security_context(subject="admin-user")
+    token = security_context(subject="admin-user", roles=("risk:officer",))
     headers = _auth_headers(token, client_cert=True)
 
     response = client.get("/admin/kill-switch", headers=headers)
@@ -544,11 +548,29 @@ def test_admin_endpoints_accept_jwt_and_certificate(
     assert body["already_engaged"] is False
 
 
+def test_admin_endpoints_enforce_rbac(
+    configured_app: FastAPI, security_context: Callable[..., str]
+) -> None:
+    client = TestClient(configured_app)
+    token = security_context(subject="admin-user")
+    headers = _auth_headers(token, client_cert=True)
+    response = client.post(
+        "/admin/kill-switch",
+        headers=headers,
+        json={"reason": "manual intervention"},
+    )
+    assert response.status_code == 403
+    body = response.json()
+    assert body["error"]["code"] == "ERR_FORBIDDEN"
+    assert body["error"]["path"] == "/admin/kill-switch"
+    assert "Insufficient privileges" in body["error"]["message"]
+
+
 def test_admin_endpoint_rejects_wrong_audience(
     configured_app: FastAPI, security_context: Callable[..., str]
 ) -> None:
     client = TestClient(configured_app)
-    bad_token = security_context(audience="different-audience")
+    bad_token = security_context(audience="different-audience", roles=("risk:officer",))
     headers = _auth_headers(bad_token, client_cert=True)
     response = client.get("/admin/kill-switch", headers=headers)
     assert response.status_code == 401

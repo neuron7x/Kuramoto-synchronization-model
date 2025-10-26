@@ -10,6 +10,7 @@ os.environ.setdefault(
     "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
 )
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "import-audit-secret")
+os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "import-rbac-secret")
 
 from application.api.service import (
     create_app,

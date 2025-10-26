@@ -6,6 +6,7 @@ os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-test-secret")
 os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://openapi.test")
 os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
 os.environ.setdefault("TRADEPULSE_OAUTH2_JWKS_URI", "https://openapi.test/jwks")
+os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "contract-rbac-secret")
 
 from application.api.service import create_app
 from tests.api.test_service import security_context  # noqa: F401

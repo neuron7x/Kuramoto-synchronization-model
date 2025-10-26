@@ -3,6 +3,10 @@ from fastapi.testclient import TestClient
 
 def test_metrics_endpoint_exposes_prometheus_payload(monkeypatch):
     monkeypatch.setenv("TRADEPULSE_AUDIT_SECRET", "0123456789abcdef")
+    monkeypatch.setenv(
+        "TRADEPULSE_RBAC_AUDIT_SECRET",
+        "fedcba9876543210fedcba9876543210",
+    )
 
     from application.api.service import create_app
 

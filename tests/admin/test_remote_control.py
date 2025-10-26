@@ -238,6 +238,34 @@ def test_identity_dependency_errors_are_propagated() -> None:
     assert response.status_code == 401
 
 
+def test_permission_dependency_is_respected() -> None:
+    audit_logger = AuditLogger(
+        secret="unit-test-secret",
+        sink=lambda record: None,
+        clock=lambda: datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    risk_manager = RiskManagerFacade(RiskManager(RiskLimits()))
+
+    async def identity(_: Request) -> AdminIdentity:
+        return AdminIdentity(subject="unit-admin")
+
+    async def forbidden(_: Request) -> AdminIdentity:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="denied")
+
+    app = FastAPI()
+    app.include_router(
+        create_remote_control_router(
+            risk_manager,
+            audit_logger,
+            identity_dependency=identity,
+            execute_permission=forbidden,
+        )
+    )
+    client = TestClient(app)
+    response = client.post("/admin/kill-switch", json={"reason": "manual"})
+    assert response.status_code == 403
+
+
 def _request_from_headers(headers: dict[str, str]) -> Request:
     scope = {
         "type": "http",
