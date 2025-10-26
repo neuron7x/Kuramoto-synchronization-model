@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 import './styles.css'
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
+import { AppThemeProvider } from './providers'
 
 export const metadata: Metadata = {
   title: 'TradePulse Scenario Studio',
@@ -11,8 +13,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="tp-body">
-        {children}
+      <body>
+        <AppRouterCacheProvider>
+          <AppThemeProvider>{children}</AppThemeProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   )
