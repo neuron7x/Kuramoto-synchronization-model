@@ -16,12 +16,14 @@ from application.api.authorization import (
     get_authorization_gateway,
     require_permission,
 )
+from application.api.debug import install_debug_routes
 from application.api.security import verify_request_identity
 from application.security.rbac import AuthorizationGateway
-from application.settings import NotificationSettings
+from application.settings import BackendRuntimeSettings, NotificationSettings
 from application.system import TradePulseSystem
 from application.trading import order_to_dto
 from domain import Order, OrderSide, OrderType, Position
+from core.utils.debug import VariableInspector
 from observability.logging import configure_logging
 from observability.notifications import (
     EmailSender,
@@ -593,11 +595,23 @@ def create_system_app(
     notification_settings: NotificationSettings | None = None,
     log_sink: Callable[[dict[str, Any]], None] | None = None,
     log_level: int | str = logging.INFO,
+    runtime_settings: BackendRuntimeSettings | None = None,
 ) -> FastAPI:
     """Instantiate a FastAPI app exposing TradePulse system endpoints."""
 
-    if log_sink is not None or not logging.getLogger().handlers:
-        configure_logging(level=log_level, sink=log_sink)
+    provided_settings = runtime_settings is not None
+    runtime_settings = runtime_settings or BackendRuntimeSettings()
+    if not provided_settings and log_level != logging.INFO:
+        runtime_settings = runtime_settings.model_copy(update={"log_level": log_level})
+    resolved_log_level = runtime_settings.resolve_log_level()
+    root_logger = logging.getLogger()
+    if runtime_settings.should_configure_logging(
+        handlers_installed=bool(root_logger.handlers),
+        sink_provided=log_sink is not None,
+    ):
+        configure_logging(level=resolved_log_level, sink=log_sink)
+    else:
+        root_logger.setLevel(resolved_log_level)
 
     base_dependency = identity_dependency or verify_request_identity()
 
@@ -632,9 +646,76 @@ def create_system_app(
     logger = logging.getLogger("tradepulse.system_access")
     access = SystemAccess(system, logger=logger, notifier=notifier)
 
-    app = FastAPI(title="TradePulse System API", version=access.version)
+    app = FastAPI(
+        title="TradePulse System API",
+        version=access.version,
+        debug=runtime_settings.debug,
+    )
     app.state.system_access = access
     app.state.notification_dispatcher = notifier
+    inspector = VariableInspector(
+        redact_patterns=runtime_settings.redact_pattern_values()
+    )
+    if runtime_settings.inspect_variables:
+        inspector.register(
+            "environment",
+            lambda: inspector.collect_environment(runtime_settings.inspect_variables),
+        )
+
+    def _system_snapshot() -> dict[str, Any]:
+        connectors = sorted(system.connector_names)
+        connected = sorted(access._connected)
+        risk_manager = getattr(system, "risk_manager", None)
+        kill_switch = getattr(risk_manager, "kill_switch", None)
+        try:
+            engaged = bool(kill_switch.is_triggered()) if kill_switch is not None else None
+        except Exception:  # pragma: no cover - defensive guard
+            engaged = None
+        reason = getattr(kill_switch, "reason", None)
+        return {
+            "version": access.version,
+            "connectors": connectors,
+            "connected": connected,
+            "kill_switch_engaged": engaged,
+            "kill_switch_reason": reason,
+        }
+
+    inspector.register("system", _system_snapshot)
+    inspector.register(
+        "runtime",
+        lambda: {
+            "debug": runtime_settings.debug,
+            "log_level": logging.getLevelName(resolved_log_level),
+        },
+    )
+    inspector.register(
+        "notifications",
+        lambda: {
+            "dispatcher": type(notifier).__name__ if notifier is not None else None,
+            "email_configured": bool(notification_settings and notification_settings.email),
+            "slack_configured": bool(
+                notification_settings and notification_settings.slack_webhook_url
+            ),
+        },
+    )
+    app.state.variable_inspector = inspector
+    app.state.runtime_settings = runtime_settings
+    install_debug_routes(
+        app,
+        inspector=inspector,
+        enabled=runtime_settings.debug,
+        identity_dependency=reader_dependency,
+    )
+    if runtime_settings.debug and runtime_settings.log_variables_on_startup:
+        debug_logger = logging.getLogger("tradepulse.debug")
+
+        @app.on_event("startup")
+        async def _log_system_debug_snapshot() -> None:
+            snapshot = await inspector.snapshot()
+            debug_logger.debug(
+                "debug.variables.snapshot",
+                extra={"variables": snapshot, "component": "system_access"},
+            )
 
     @app.get("/api/v1/status", response_model=StatusResponse, tags=["system"])
     async def read_status(
