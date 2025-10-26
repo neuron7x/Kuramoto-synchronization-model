@@ -263,6 +263,29 @@ async def test_pipeline_aggregator_operates_on_shared_cache() -> None:
     assert result.key.timeframe == "1s"
 
 
+def test_pipeline_supports_config_only_factory() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    created: list[_StubKafkaService] = []
+
+    class _ConfigOnlyFactory:
+        def __call__(self, cfg: KafkaIngestionConfig) -> _StubKafkaService:
+            service = _StubKafkaService(cfg)
+            created.append(service)
+            return service
+
+    StreamingIngestionPipeline(
+        kafka_config=config,
+        kafka_service_factory=_ConfigOnlyFactory(),
+    )
+
+    assert created and created[0].tick_handler is None
+    assert created[0].lag_handler is None
+
+
 def test_pipeline_rejects_tick_handler_in_kafka_kwargs() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
@@ -323,3 +346,53 @@ def test_pipeline_respects_explicit_lag_handler() -> None:
     )
 
     assert created and created[0].lag_handler is lag_handler
+
+
+def test_pipeline_omits_lag_handler_when_factory_does_not_accept_it() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    lag_handler = object()
+    captured_tick_handler: CacheWriterTickHandler | None = None
+
+    def factory(
+        cfg: KafkaIngestionConfig, *, tick_handler: CacheWriterTickHandler
+    ) -> _StubKafkaService:
+        nonlocal captured_tick_handler
+        captured_tick_handler = tick_handler
+        return _StubKafkaService(cfg)
+
+    pipeline = StreamingIngestionPipeline(
+        kafka_config=config,
+        lag_handler=lag_handler,
+        kafka_service_factory=factory,
+    )
+
+    assert captured_tick_handler is pipeline.tick_handler
+
+
+def test_pipeline_omits_tick_handler_when_factory_only_accepts_lag() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    lag_handler = object()
+    captured_lag_handler: object | None = None
+
+    def factory(
+        cfg: KafkaIngestionConfig, *, lag_handler: object | None
+    ) -> _StubKafkaService:
+        nonlocal captured_lag_handler
+        captured_lag_handler = lag_handler
+        return _StubKafkaService(cfg)
+
+    StreamingIngestionPipeline(
+        kafka_config=config,
+        lag_handler=lag_handler,
+        kafka_service_factory=factory,
+    )
+
+    assert captured_lag_handler is lag_handler

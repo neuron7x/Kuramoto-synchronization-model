@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Protocol, Sequence
@@ -159,12 +160,62 @@ class StreamingIngestionPipeline:
             raise ValueError(
                 "tick_handler and lag_handler must not be provided in kafka_kwargs"
             )
-        self._kafka_service = factory(
-            kafka_config,
-            tick_handler=self._tick_handler,
-            lag_handler=self._lag_handler,
-            **kwargs,
+        supports = self._inspect_factory_support(factory)
+        if supports is None:
+            try:
+                self._kafka_service = factory(
+                    kafka_config,
+                    tick_handler=self._tick_handler,
+                    lag_handler=self._lag_handler,
+                    **kwargs,
+                )
+            except TypeError as exc:
+                if self._is_unexpected_handler_type_error(exc):
+                    try:
+                        self._kafka_service = factory(kafka_config, **kwargs)
+                    except TypeError:
+                        raise exc
+                else:
+                    raise
+        else:
+            supports_tick_handler, supports_lag_handler = supports
+            call_kwargs = dict(kwargs)
+            if supports_tick_handler:
+                call_kwargs["tick_handler"] = self._tick_handler
+            if supports_lag_handler:
+                call_kwargs["lag_handler"] = self._lag_handler
+            self._kafka_service = factory(kafka_config, **call_kwargs)
+
+    @staticmethod
+    def _inspect_factory_support(
+        factory: Callable[..., KafkaIngestionService]
+    ) -> tuple[bool, bool] | None:
+        try:
+            signature = inspect.signature(factory)
+        except (TypeError, ValueError):
+            return None
+
+        has_var_keyword = any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in signature.parameters.values()
         )
+        if has_var_keyword:
+            return True, True
+
+        supports_tick_handler = "tick_handler" in signature.parameters
+        supports_lag_handler = "lag_handler" in signature.parameters
+        return supports_tick_handler, supports_lag_handler
+
+    @staticmethod
+    def _is_unexpected_handler_type_error(exc: TypeError) -> bool:
+        message = str(exc)
+        unexpected_kw_fragments = (
+            "unexpected keyword argument",
+            "got an unexpected keyword argument",
+        )
+        if not any(fragment in message for fragment in unexpected_kw_fragments):
+            return False
+        return "tick_handler" in message or "lag_handler" in message
 
     @staticmethod
     def _build_kafka_service(
