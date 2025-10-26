@@ -186,6 +186,8 @@ class StreamingIngestionPipeline:
                 call_kwargs["lag_handler"] = self._lag_handler
             self._kafka_service = factory(kafka_config, **call_kwargs)
 
+        self._ensure_kafka_service_handlers()
+
     @staticmethod
     def _inspect_factory_support(
         factory: Callable[..., KafkaIngestionService]
@@ -216,6 +218,26 @@ class StreamingIngestionPipeline:
         if not any(fragment in message for fragment in unexpected_kw_fragments):
             return False
         return "tick_handler" in message or "lag_handler" in message
+
+    def _ensure_kafka_service_handlers(self) -> None:
+        service = self._kafka_service
+        if not hasattr(service, "tick_handler"):
+            setattr(service, "tick_handler", self._tick_handler)
+        else:
+            current_tick_handler = getattr(service, "tick_handler")
+            if current_tick_handler is None:
+                setattr(service, "tick_handler", self._tick_handler)
+
+        if self._lag_handler is None:
+            return
+
+        if not hasattr(service, "lag_handler"):
+            setattr(service, "lag_handler", self._lag_handler)
+            return
+
+        current_lag_handler = getattr(service, "lag_handler")
+        if current_lag_handler is None:
+            setattr(service, "lag_handler", self._lag_handler)
 
     @staticmethod
     def _build_kafka_service(
