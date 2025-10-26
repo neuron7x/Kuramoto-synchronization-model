@@ -16,10 +16,18 @@ from application.api.authorization import (
     get_authorization_gateway,
     require_permission,
 )
+from application.api.rate_limit import (
+    SlidingWindowRateLimiter,
+    build_rate_limiter,
+)
 from application.api.debug import install_debug_routes
 from application.api.security import verify_request_identity
 from application.security.rbac import AuthorizationGateway
-from application.settings import BackendRuntimeSettings, NotificationSettings
+from application.settings import (
+    ApiRateLimitSettings,
+    BackendRuntimeSettings,
+    NotificationSettings,
+)
 from application.system import TradePulseSystem
 from application.trading import order_to_dto
 from domain import Order, OrderSide, OrderType, Position
@@ -582,6 +590,23 @@ def _get_access(request: Request) -> SystemAccess:
     return access
 
 
+def _resolve_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        for part in forwarded_for.split(","):
+            candidate = part.strip().split()[0]
+            if candidate:
+                return candidate
+
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
 def create_system_app(
     system: TradePulseSystem,
     *,
@@ -596,8 +621,17 @@ def create_system_app(
     log_sink: Callable[[dict[str, Any]], None] | None = None,
     log_level: int | str = logging.INFO,
     runtime_settings: BackendRuntimeSettings | None = None,
+    rate_limiter: SlidingWindowRateLimiter | None = None,
+    rate_limit_settings: ApiRateLimitSettings | None = None,
 ) -> FastAPI:
-    """Instantiate a FastAPI app exposing TradePulse system endpoints."""
+    """Instantiate a FastAPI app exposing TradePulse system endpoints.
+
+    Args:
+        system: TradePulse orchestration facade powering the API.
+        rate_limiter: Optional limiter enforcing per-subject/IP throughput.
+        rate_limit_settings: Settings used to build a limiter when one is not
+            explicitly supplied.
+    """
 
     provided_settings = runtime_settings is not None
     runtime_settings = runtime_settings or BackendRuntimeSettings()
@@ -639,6 +673,9 @@ def create_system_app(
         attributes_provider=_trade_attributes_provider,
         gateway_dependency=_gateway_dependency,
     )
+
+    resolved_rate_limit_settings = rate_limit_settings or ApiRateLimitSettings()
+    limiter = rate_limiter or build_rate_limiter(resolved_rate_limit_settings)
 
     notifier = notification_dispatcher or _build_notification_dispatcher(
         notification_settings
@@ -698,14 +735,11 @@ def create_system_app(
             ),
         },
     )
+    inspector.register("rate_limiter", limiter.snapshot)
     app.state.variable_inspector = inspector
     app.state.runtime_settings = runtime_settings
-    install_debug_routes(
-        app,
-        inspector=inspector,
-        enabled=runtime_settings.debug,
-        identity_dependency=reader_dependency,
-    )
+    app.state.rate_limiter = limiter
+    app.state.rate_limit_settings = resolved_rate_limit_settings
     if runtime_settings.debug and runtime_settings.log_variables_on_startup:
         debug_logger = logging.getLogger("tradepulse.debug")
 
@@ -717,16 +751,43 @@ def create_system_app(
                 extra={"variables": snapshot, "component": "system_access"},
             )
 
+    def _wrap_with_rate_limit(
+        dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity]
+    ) -> Callable[..., Awaitable[AdminIdentity]]:
+        async def _rate_limited_dependency(
+            request: Request,
+            identity: AdminIdentity = Depends(dependency),
+        ) -> AdminIdentity:
+            subject = getattr(identity, "subject", None)
+            await limiter.check(
+                subject=subject,
+                ip_address=_resolve_ip(request),
+            )
+            return identity
+
+        return _rate_limited_dependency
+
+    rate_limited_reader_dependency = _wrap_with_rate_limit(reader_dependency)
+    rate_limited_positions_dependency = _wrap_with_rate_limit(positions_dependency)
+    rate_limited_trader_dependency = _wrap_with_rate_limit(trader_dependency)
+
+    install_debug_routes(
+        app,
+        inspector=inspector,
+        enabled=runtime_settings.debug,
+        identity_dependency=rate_limited_reader_dependency,
+    )
+
     @app.get("/api/v1/status", response_model=StatusResponse, tags=["system"])
     async def read_status(
-        identity: AdminIdentity = Depends(reader_dependency),
+        identity: AdminIdentity = Depends(rate_limited_reader_dependency),
         access: SystemAccess = Depends(_get_access),
     ) -> StatusResponse:
         return access.status(identity)
 
     @app.get("/api/v1/positions", response_model=PositionsResponse, tags=["system"])
     async def read_positions(
-        identity: AdminIdentity = Depends(positions_dependency),
+        identity: AdminIdentity = Depends(rate_limited_positions_dependency),
         access: SystemAccess = Depends(_get_access),
     ) -> PositionsResponse:
         return await access.list_positions(identity=identity)
@@ -739,7 +800,7 @@ def create_system_app(
     )
     async def submit_order(
         payload: OrderRequest,
-        identity: AdminIdentity = Depends(trader_dependency),
+        identity: AdminIdentity = Depends(rate_limited_trader_dependency),
         access: SystemAccess = Depends(_get_access),
     ) -> OrderResponse:
         return await access.place_order(payload, identity=identity)
