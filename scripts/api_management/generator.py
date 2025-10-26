@@ -82,6 +82,19 @@ class ApiArtifactGenerator:
     # ------------------------------------------------------------------
     # Client generation
     # ------------------------------------------------------------------
+    def _normalise_schema_reference(self, path: Path | None) -> str | None:
+        """Return a repository-relative string for the provided *path*."""
+
+        if path is None:
+            return None
+
+        resolved = path.resolve()
+        try:
+            relative = resolved.relative_to(self._repo_root)
+        except ValueError:
+            return str(resolved)
+        return str(relative)
+
     def _generate_python_client(self, path: Path) -> Path:
         routes = self._registry.routes
         method_blocks: list[str] = []
@@ -438,8 +451,8 @@ export class TradePulseClient {
                     "header": route.idempotency.header or self._registry.metadata.idempotency_header,
                     "ttl_seconds": route.idempotency.ttl_seconds,
                 },
-                "request_schema": str(route.request_schema) if route.request_schema else None,
-                "response_schema": str(route.response_schema),
+                "request_schema": self._normalise_schema_reference(route.request_schema),
+                "response_schema": self._normalise_schema_reference(route.response_schema),
                 "webhooks": list(route.webhooks),
             }
             route_index.append(entry)
@@ -481,7 +494,7 @@ export class TradePulseClient {
                         "headers": dict(test.request.headers),
                         "body": test.request.body,
                         "expected_status": test.expected_status,
-                        "response_schema": str(test.response_schema),
+                        "response_schema": self._normalise_schema_reference(test.response_schema),
                     }
                 )
         _write_json_if_changed(path, tests)

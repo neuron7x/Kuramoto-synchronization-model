@@ -9,7 +9,7 @@
     "method": "GET",
     "name": "signal-btc-ok",
     "path": "/v1/signals/BTC-USD",
-    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/market_signal_response.schema.json",
+    "response_schema": "schemas/http/json/1.0.0/market_signal_response.schema.json",
     "route": "get-market-signal"
   },
   {
@@ -32,7 +32,7 @@
     "method": "POST",
     "name": "prediction-accepted",
     "path": "/v1/predictions",
-    "response_schema": "/workspace/TradePulse/schemas/http/json/1.0.0/prediction_create_response.schema.json",
+    "response_schema": "schemas/http/json/1.0.0/prediction_create_response.schema.json",
     "route": "create-prediction"
   }
 ]
