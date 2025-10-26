@@ -1,0 +1,42 @@
+run:
+  deadline: 5m
+  modules-download-mode: readonly
+  timeout: 5m
+  skip-files:
+    - ".*_test\.go$"
+  tests: true
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - gosimple
+    - revive
+    - errcheck
+    - ineffassign
+    - gosec
+    - gofmt
+    - goimports
+    - goconst
+    - gocyclo
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+      text: "(G104|G404|G501)"
+linters-settings:
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/TradePulse/TradePulse
+  gocyclo:
+    min-complexity: 15
+  revive:
+    severity: warning
+    rules:
+      - name: exported
+        arguments: [disableStutteringCheck]
+  gosec:
+    excludes:
+      - G304
+      - G307

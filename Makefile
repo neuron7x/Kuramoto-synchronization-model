@@ -2,16 +2,26 @@
 
 # === FPM-A (Fractal Project Method) integration ===
 .PHONY: fpma-graph fpma-check lock build-package publish-package clean-dist \
-        test\:fast test\:all test\:heavy
+        test\:fast test\:all test\:heavy lint lint\:python lint\:go
 fpma-graph:
 	python -m scripts fpma graph
 
 fpma-check:
-	python -m scripts fpma check
+        python -m scripts fpma check
+
+.PHONY: lint lint\:python lint\:go
+lint: lint\:python lint\:go
+
+lint\:python:
+	python -m flake8
+	python -m mypy --config-file=mypy.ini
+
+lint\:go:
+	golangci-lint run ./...
 
 .PHONY: lock
 lock:
-	python -m pip install --upgrade pip
+        python -m pip install --upgrade pip
 	python -m pip install pip-tools
 	pip-compile --resolver=backtracking --strip-extras --no-annotate \
 	    --constraint constraints/security.txt \
