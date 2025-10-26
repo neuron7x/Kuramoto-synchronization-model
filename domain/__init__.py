@@ -5,6 +5,14 @@ with dedicated subpackages for orders, positions, and signals.
 """
 
 from .orders import Order, OrderSide, OrderStatus, OrderType
+from .portfolio import (
+    CorporateActionRecord,
+    CurrencyExposureSnapshot,
+    FXRates,
+    PortfolioAccounting,
+    PortfolioSnapshot,
+    PositionSnapshot,
+)
 from .positions import Position
 from .signals import Signal, SignalAction
 
@@ -13,7 +21,13 @@ __all__ = [
     "OrderSide",
     "OrderStatus",
     "OrderType",
+    "PortfolioAccounting",
+    "PortfolioSnapshot",
     "Position",
+    "PositionSnapshot",
     "Signal",
     "SignalAction",
+    "CorporateActionRecord",
+    "CurrencyExposureSnapshot",
+    "FXRates",
 ]
