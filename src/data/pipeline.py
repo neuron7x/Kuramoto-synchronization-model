@@ -1,4 +1,4 @@
-"""Compositional helpers to assemble streaming ingestion pipelines."""
+"""Compositional helpers for caching ticks while forming and sending TickBatchPersistedEvent notifications."""
 
 from __future__ import annotations
 
