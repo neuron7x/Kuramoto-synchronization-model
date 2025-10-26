@@ -5,12 +5,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Sequence
 
+import httpx
 import jwt
 import pytest
 pytest.importorskip("strawberry")
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from jwt.algorithms import RSAAlgorithm
 
@@ -887,3 +888,56 @@ def test_payload_guard_rejects_large_and_suspicious_bodies(
         headers=_auth_headers(token),
     )
     assert response_suspicious.status_code == 400
+
+
+class _DummyWebSocket:
+    def __init__(self) -> None:
+        self.closed_codes: list[int] = []
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    async def close(self, *, code: int) -> None:
+        self.closed_codes.append(code)
+
+
+@pytest.mark.asyncio
+async def test_shutdown_hook_marks_app_unhealthy_and_closes_streams() -> None:
+    app = create_app(settings=AdminApiSettings(audit_secret="unit-audit-secret"))
+    await app.router.startup()
+    shutdown_executed = False
+    transport = httpx.ASGITransport(app=app)
+
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://testserver"
+    ) as client:
+        ready_response = await client.get("/health")
+        assert ready_response.status_code == 200
+
+        stream_manager = app.state.stream_manager
+        dummy_socket = _DummyWebSocket()
+        async with stream_manager._lock:  # type: ignore[attr-defined]
+            stream_manager._connections.add(dummy_socket)  # type: ignore[attr-defined]
+
+        try:
+            await app.router.shutdown()
+            shutdown_executed = True
+        finally:
+            if not shutdown_executed:
+                await app.router.shutdown()
+
+        assert getattr(app.state, "shutting_down", False) is True
+        assert dummy_socket.closed_codes == [status.WS_1012_SERVICE_RESTART]
+        assert not stream_manager._connections  # type: ignore[attr-defined]
+
+        health_server = app.state.health_server
+        if health_server is not None:
+            snapshot = health_server.snapshot()
+            assert snapshot["ready"] is False
+            assert snapshot["live"] is False
+
+        shutdown_response = await client.get("/health")
+        assert shutdown_response.status_code == 503
+        payload = shutdown_response.json()
+        assert payload["status"] == "failed"
+        assert payload["components"]["lifecycle"]["status"] == "failed"
