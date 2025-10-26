@@ -18,7 +18,7 @@ use numpy::{PyArray1, PyArray2, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::PyErr;
-use std::fmt;
+use std::{borrow::Cow, cmp::Ordering, fmt};
 
 /// Error type returned by numeric primitives when the input configuration is
 /// invalid.
@@ -61,7 +61,7 @@ impl fmt::Display for NumericError {
 impl std::error::Error for NumericError {}
 
 /// Subset of the convolution modes supported by NumPy's `convolve`.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConvolutionMode {
     Full,
     Same,
@@ -87,6 +87,14 @@ fn check_non_empty(array: &[f64], name: &'static str) -> Result<(), NumericError
         return Err(NumericError::EmptyInput { name });
     }
     Ok(())
+}
+
+#[inline]
+fn is_sorted_total(data: &[f64]) -> bool {
+    data.len() <= 1
+        || data
+            .windows(2)
+            .all(|pair| pair[0].total_cmp(&pair[1]) != Ordering::Greater)
 }
 
 /// Compute overlapping sliding windows over a one-dimensional slice.
@@ -123,17 +131,25 @@ pub fn sliding_windows_core(
 /// return `NaN` values so that downstream callers can handle the missing data
 /// according to their needs.
 pub fn quantiles_core(data: &[f64], probabilities: &[f64]) -> Result<Vec<f64>, NumericError> {
-    if let Some(&value) = probabilities.iter().find(|p| !p.is_finite()) {
-        return Err(NumericError::ProbabilityNotFinite(value));
-    }
-    if let Some(&value) = probabilities.iter().find(|&&p| p < 0.0 || p > 1.0) {
-        return Err(NumericError::ProbabilityOutOfRange(value));
+    for &probability in probabilities {
+        if !probability.is_finite() {
+            return Err(NumericError::ProbabilityNotFinite(probability));
+        }
+        if !(0.0..=1.0).contains(&probability) {
+            return Err(NumericError::ProbabilityOutOfRange(probability));
+        }
     }
     if data.is_empty() {
         return Ok(vec![f64::NAN; probabilities.len()]);
     }
-    let mut values = data.to_vec();
-    values.sort_by(|a, b| a.total_cmp(b));
+    let values = if is_sorted_total(data) {
+        Cow::Borrowed(data)
+    } else {
+        let mut owned = data.to_vec();
+        owned.sort_by(|a, b| a.total_cmp(b));
+        Cow::Owned(owned)
+    };
+    let values = values.as_ref();
     let n = values.len();
     let mut results = Vec::with_capacity(probabilities.len());
     for &probability in probabilities {
@@ -164,18 +180,11 @@ pub fn full_convolution(signal: &[f64], kernel: &[f64]) -> Vec<f64> {
     let output_len = signal.len() + kernel.len() - 1;
     let mut output = vec![0.0; output_len];
 
-    let last_kernel_idx = kernel.len() - 1;
-    let signal_len = signal.len();
-
-    for (i, value) in output.iter_mut().enumerate() {
-        let start = i.saturating_sub(last_kernel_idx);
-        let end = (i + 1).min(signal_len);
-        let mut sum = 0.0;
-        for signal_idx in start..end {
-            let kernel_idx = i - signal_idx;
-            sum += signal[signal_idx] * kernel[kernel_idx];
+    for (signal_idx, &signal_value) in signal.iter().enumerate() {
+        for (kernel_idx, &kernel_value) in kernel.iter().enumerate() {
+            let output_idx = signal_idx + kernel_idx;
+            output[output_idx] = signal_value.mul_add(kernel_value, output[output_idx]);
         }
-        *value = sum;
     }
 
     output
@@ -241,6 +250,18 @@ mod core_tests {
     }
 
     #[test]
+    fn sliding_windows_core_rejects_invalid_parameters() {
+        assert!(matches!(
+            sliding_windows_core(&[1.0, 2.0], 0, 1),
+            Err(NumericError::InvalidWindow)
+        ));
+        assert!(matches!(
+            sliding_windows_core(&[1.0, 2.0], 1, 0),
+            Err(NumericError::InvalidStep)
+        ));
+    }
+
+    #[test]
     fn convolve_core_respects_modes() {
         let signal = [1.0, 2.0, 3.0];
         let kernel = [0.5, 0.5];
@@ -265,6 +286,22 @@ mod core_tests {
         assert_eq!(result[0], 1.0);
         assert_eq!(result[1], 3.0);
         assert!(result[2].is_nan());
+    }
+
+    #[test]
+    fn quantiles_core_rejects_non_finite_probability() {
+        let err = quantiles_core(&[1.0], &[f64::NAN]).unwrap_err();
+        if let NumericError::ProbabilityNotFinite(value) = err {
+            assert!(value.is_nan());
+        } else {
+            panic!("unexpected error variant: {err:?}");
+        }
+    }
+
+    #[test]
+    fn quantiles_core_rejects_out_of_range_probability() {
+        let err = quantiles_core(&[1.0], &[-0.1]).unwrap_err();
+        assert!(matches!(err, NumericError::ProbabilityOutOfRange(value) if value < 0.0));
     }
 }
 
