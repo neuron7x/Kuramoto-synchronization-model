@@ -1,0 +1,333 @@
+name: MLOps Orchestration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target deployment environment"
+        required: false
+        default: staging
+      dataset_path:
+        description: "Optional dataset path relative to the repository root"
+        required: false
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/mlops-orchestration.yml'
+      - 'scripts/mlops/**'
+      - 'core/experiments/**'
+      - 'deploy/**'
+      - 'infra/**'
+      - 'Dockerfile'
+      - 'requirements*.txt'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/mlops-orchestration.yml'
+      - 'scripts/mlops/**'
+      - 'core/experiments/**'
+      - 'deploy/**'
+      - 'infra/**'
+      - 'Dockerfile'
+      - 'requirements*.txt'
+  schedule:
+    - cron: '0 3 * * 1-5'
+
+concurrency:
+  group: mlops-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  PYTHON_VERSION: '3.11'
+  TERRAFORM_VERSION: '1.6.6'
+  KUSTOMIZE_VERSION: '5.4.3'
+  ARTIFACT_ROOT: artifacts/mlops
+  REGISTRY_ROOT: artifacts/model-registry
+  TERRAFORM_DIR: infra/terraform/eks
+  AWS_REGION: us-east-1
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}/mlops:${{ github.sha }}
+
+jobs:
+  validate:
+    name: Validate training stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            requirements.lock
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run targeted unit tests
+        run: |
+          pytest -q \
+            tests/unit/scripts/test_github_actions_mlops.py \
+            tests/unit/experiments/test_registry.py
+
+      - name: Persist validation diagnostics
+        if: always()
+        run: |
+          mkdir -p "${ARTIFACT_ROOT}/validation"
+          cp -a .pytest_cache "${ARTIFACT_ROOT}/validation/pytest_cache" 2>/dev/null || true
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlops-validation-logs
+          path: ${{ env.ARTIFACT_ROOT }}/validation
+          if-no-files-found: ignore
+
+  train-model:
+    name: Train and register model
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      run-id: ${{ steps.pipeline-summary.outputs.run_id }}
+      registry-path: ${{ steps.pipeline-summary.outputs.registry_path }}
+      metrics-path: ${{ steps.pipeline-summary.outputs.metrics_path }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            requirements.lock
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Request dynamic credentials from Vault
+        id: vault
+        if: ${{ secrets.MLOPS_VAULT_ADDRESS != '' && secrets.MLOPS_VAULT_ROLE != '' && secrets.MLOPS_VAULT_TOKEN != '' }}
+        env:
+          VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
+          VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
+          VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
+        run: |
+          mkdir -p "${ARTIFACT_ROOT}/secrets"
+          python -m scripts.cli secrets-issue-dynamic \
+            --address "${VAULT_ADDRESS}" \
+            --role "${VAULT_ROLE}" \
+            --token "${VAULT_TOKEN}" \
+            --output "${ARTIFACT_ROOT}/secrets/dynamic-credentials.json"
+
+      - name: Materialise placeholder secrets bundle
+        if: steps.vault.outcome == 'skipped'
+        run: |
+          mkdir -p "${ARTIFACT_ROOT}/secrets"
+          cat <<'JSON' > "${ARTIFACT_ROOT}/secrets/dynamic-credentials.json"
+          {"status": "skipped", "reason": "Vault credentials not provided"}
+          JSON
+
+      - name: Execute training pipeline
+        id: run-pipeline
+        env:
+          TARGET_ENV: ${{ github.event.inputs.environment || 'staging' }}
+          DATASET: ${{ github.event.inputs.dataset_path }}
+        run: |
+          python -m scripts.mlops.github_actions_pipeline \
+            --artifact-root "${ARTIFACT_ROOT}" \
+            --registry-root "${REGISTRY_ROOT}" \
+            --experiment "${{ github.repository }}/auto-training" \
+            --commit-sha "${{ github.sha }}" \
+            --environment "${TARGET_ENV}" \
+            ${DATASET:+--dataset-path "${DATASET}"}
+
+      - name: Capture pipeline summary
+        id: pipeline-summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+
+          summary_path = pathlib.Path("${{ env.ARTIFACT_ROOT }}") / "summary.json"
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"run_id={summary['run_id']}\n")
+              handle.write(f"registry_path={summary['registry_path']}\n")
+              handle.write(f"metrics_path={summary['metrics_path']}\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as report:
+              report.write("### Training summary\n")
+              report.write(f"- Run ID: `{summary['run_id']}`\n")
+              report.write(f"- Registry: `{summary['registry_path']}`\n")
+              report.write(f"- Metrics: `{summary['metrics']}`\n")
+          PY
+
+      - name: Upload training artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlops-training-artifacts
+          path: |
+            ${{ env.ARTIFACT_ROOT }}
+            ${{ env.REGISTRY_ROOT }}
+          retention-days: 14
+
+  build-container:
+    name: Build Docker image
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}
+
+      - name: Export image archive
+        run: |
+          mkdir -p image
+          docker save ${{ env.DOCKER_IMAGE }} -o image/mlops-image.tar
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlops-docker-image
+          path: image/mlops-image.tar
+          retention-days: 7
+
+  terraform-plan:
+    name: Terraform validation
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init (backend disabled)
+        run: |
+          cd "${TERRAFORM_DIR}"
+          terraform init -backend=false -input=false
+
+      - name: Terraform fmt
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} fmt -check -recursive
+
+      - name: Terraform validate
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} validate -no-color
+
+      - name: Configure AWS credentials
+        id: aws-creds
+        if: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID != '' && secrets.AWS_MLOPS_SECRET_ACCESS_KEY != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform plan
+        if: steps.aws-creds.outcome == 'success'
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} plan -input=false -no-color
+
+      - name: Skip plan (credentials missing)
+        if: steps.aws-creds.outcome != 'success'
+        run: echo "AWS credentials not provided; skipped terraform plan." >> "$GITHUB_STEP_SUMMARY"
+
+  render-manifests:
+    name: Render Kubernetes manifests
+    needs:
+      - train-model
+      - build-container
+      - terraform-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        cloud: [aws, gcp, azure]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: ${{ env.KUSTOMIZE_VERSION }}
+
+      - name: Build production manifest
+        run: |
+          kustomize build deploy/kustomize/overlays/production > manifest.yaml
+          mv manifest.yaml manifest-${{ matrix.cloud }}.yaml
+
+      - name: Generate ephemeral kubeconfig
+        run: |
+          cat <<'YAML' > kubeconfig
+          apiVersion: v1
+          kind: Config
+          clusters:
+            - cluster:
+                server: https://example.${{ matrix.cloud }}.internal
+              name: ${{ matrix.cloud }}-cluster
+          contexts:
+            - context:
+                cluster: ${{ matrix.cloud }}-cluster
+                user: orchestrator
+              name: ${{ matrix.cloud }}
+          current-context: ${{ matrix.cloud }}
+          users:
+            - name: orchestrator
+              user:
+                token: placeholder-token
+          YAML
+
+      - name: Dry-run apply manifest
+        run: |
+          kubectl --kubeconfig kubeconfig apply --dry-run=client -f manifest-${{ matrix.cloud }}.yaml
+
+      - name: Upload rendered manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: kustomize-${{ matrix.cloud }}-manifest
+          path: manifest-${{ matrix.cloud }}.yaml
+          retention-days: 7
