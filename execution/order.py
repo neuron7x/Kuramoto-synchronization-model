@@ -327,6 +327,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
                 request=request,
                 constraints=constraints,
                 notes=notes,
+                force_zero_order=True,
             )
 
         if constraints.max_drawdown > 0.0 and drawdown > 0.0:
@@ -349,6 +350,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
                 request=request,
                 constraints=constraints,
                 notes=notes,
+                force_zero_order=True,
             )
 
         candidate_fraction = max(-cppi_limit, min(candidate_fraction, cppi_limit))
