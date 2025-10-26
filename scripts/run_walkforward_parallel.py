@@ -50,10 +50,17 @@ def main() -> None:
     n = len(df)
     start = int(cfg["walkforward"]["train_frac"] * n)
     step = max(1, int(cfg["walkforward"]["step_frac"] * n))
-    jobs = [(s, min(n, s + step)) for s in range(start, n - 1, step)]
-    results = Parallel(n_jobs=args.n_jobs)(
-        delayed(_segment_run)(df, base_cfg, feat_cols, y_col, s, e) for s, e in jobs
-    )
+    jobs = []
+    for s in range(start, n - 1, step):
+        e = min(n, s + step)
+        jobs.append((s, e))
+
+    def _runner(s: int, e: int):
+        local_cfg = dict(base_cfg)
+        local_cfg["seed"] = int(base_cfg.get("seed", 7)) + int(s)
+        return _segment_run(df, local_cfg, feat_cols, y_col, s, e)
+
+    results = Parallel(n_jobs=args.n_jobs)(delayed(_runner)(s, e) for s, e in jobs)
     frames = [r for r in results if r is not None]
     out = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     out.to_csv("wf_results.csv", index=False)

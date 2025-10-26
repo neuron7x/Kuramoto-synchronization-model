@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections import deque
+from typing import Deque, List
+
 import numpy as np
 import pandas as pd
 
@@ -31,15 +34,21 @@ class BacktesterCAL:
             cfg["conformal"]["alpha"],
             cfg["conformal"]["decay"],
             cfg["conformal"]["window"],
+            online_window=cfg["conformal"].get("online_window", 2000),
         )
         self.policy = Policy(
-            cfg["policy"]["max_pos"], cfg["policy"]["kelly_shrink"]
+            cfg["policy"]["max_pos"],
+            cfg["policy"]["kelly_shrink"],
+            risk_gamma=cfg["policy"].get("risk_gamma", 10.0),
+            cvar_alpha=cfg["policy"].get("cvar_alpha", 0.95),
+            cvar_window=cfg["policy"].get("cvar_window", 1000),
         )
         self.exec = Execution(
             cfg["execution"]["fee_bps"],
             cfg["execution"]["impact_coeff"],
             cfg["execution"].get("impact_model", "square_root"),
             cfg["execution"].get("queue_fill_p", 0.85),
+            seed=cfg.get("seed", 7),
         )
         self.guard = Guardrails(
             cfg["risk"]["intraday_dd_limit"],
@@ -50,6 +59,10 @@ class BacktesterCAL:
         self.logger = Logger(
             params={"impact_model": cfg["execution"].get("impact_model", "square_root")}
         )
+        self.buffer_frac = (cfg["conformal"].get("buffer_bps", 0.0) or 0.0) * 1e-4
+        self.horizon = int(cfg.get("target", {}).get("horizon", 0))
+        self.online_update = bool(cfg["conformal"].get("online_update", False))
+        self._ret_hist: Deque[float] = deque(maxlen=int(2 * self.policy.cvar_window))
 
     def fit_quantiles(self, X_fit: pd.DataFrame, y_fit: pd.Series) -> None:
         self.qm.fit(X_fit, y_fit)
@@ -72,6 +85,7 @@ class BacktesterCAL:
         vol_col: str = "vol10",
         save_csv: str | None = None,
     ) -> pd.DataFrame:
+        self._ret_hist.clear()
         pos = 0.0
         eq = 0.0
         equity = [0.0]
@@ -79,6 +93,8 @@ class BacktesterCAL:
         vola_hist: list[float] = []
         rows: list[dict[str, float]] = []
         rv_ref = max(1e-9, df[vol_col].iloc[: max(10, len(df) // 5)].mean())
+        L_pred_hist: List[float] = []
+        U_pred_hist: List[float] = []
 
         for i in range(len(df) - 1):
             row = df.iloc[i]
@@ -99,17 +115,22 @@ class BacktesterCAL:
 
             xrow = dict(zip(feat_cols, df[feat_cols].iloc[i].values))
             L, M, U = self.qm.predict_all(xrow)
+            L_pred_hist.append(L)
+            U_pred_hist.append(U)
 
             rv_t = df[vol_col].iloc[i]
             self.cqr.dynamic_alpha(rv_t, rv_ref)
             Lc, Uc = self.cqr.interval(L, U)
+            self.logger.log_metric("alpha_eff", self.cqr.alpha, step=i)
 
             notional_frac = min(1.0, abs(1.0 - pos))
             costs = self.exec.costs(
                 df[spread_col].iloc[i], rv_t, notional_frac=notional_frac
             )
 
-            proposed = self.policy.decide(Lc, M, Uc, costs)
+            proposed = self.policy.decide(
+                Lc, M, Uc, costs, self.buffer_frac, self._ret_hist
+            )
             checks = self.guard.check(
                 equity,
                 feats.get("rv", 0.0),
@@ -130,6 +151,8 @@ class BacktesterCAL:
             equity.append(eq)
             loss_streak = (loss_streak + 1) if pnl < 0 else 0
             vola_hist.append(feats.get("rv", 0.0))
+            ret_norm = pnl / max(1e-9, feats["mid"])
+            self._ret_hist.append(ret_norm)
 
             rows.append(
                 {
@@ -155,6 +178,14 @@ class BacktesterCAL:
                 self.logger.log_metric(
                     "sharpe_partial", sharpe(np.diff(np.array(equity))), step=i
                 )
+
+            if self.online_update and self.horizon > 0 and i >= self.horizon:
+                idx = i - self.horizon
+                try:
+                    y_true = float(df[y_col].iloc[idx])
+                    self.cqr.update_online(L_pred_hist[idx], U_pred_hist[idx], y_true)
+                except Exception:
+                    pass
 
         res = pd.DataFrame(rows)
         if save_csv and not res.empty:

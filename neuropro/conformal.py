@@ -2,18 +2,29 @@
 
 from __future__ import annotations
 
+from collections import deque
+from typing import Iterable
+
 import numpy as np
 
 
 class ConformalCQR:
-    """Weighted CQR + dynamic alpha based on volatility."""
+    """Weighted CQR + dynamic alpha; optional online updates without leakage."""
 
-    def __init__(self, alpha: float = 0.1, decay: float = 0.005, window: int = 2000) -> None:
+    def __init__(
+        self,
+        alpha: float = 0.1,
+        decay: float = 0.005,
+        window: int = 2000,
+        online_window: int = 2000,
+    ) -> None:
         self.alpha0 = alpha
         self.alpha = alpha
         self.decay = decay
         self.window = window
         self.qhat: float | None = None
+        self.online_window = int(online_window)
+        self._resid: deque[float] = deque(maxlen=self.online_window)
 
     def _weights(self, n: int) -> np.ndarray:
         idx = np.arange(n)
@@ -21,12 +32,17 @@ class ConformalCQR:
         w /= w.sum()
         return w
 
-    def fit_calibrate(self, L_cal: np.ndarray, U_cal: np.ndarray, y_cal: np.ndarray):
-        if len(y_cal) > self.window:
-            L_cal = L_cal[-self.window :]
-            U_cal = U_cal[-self.window :]
-            y_cal = y_cal[-self.window :]
-        s = np.maximum(L_cal - y_cal, y_cal - U_cal)
+    def fit_calibrate(
+        self, L_cal: Iterable[float], U_cal: Iterable[float], y_cal: Iterable[float]
+    ):
+        L_arr = np.asarray(L_cal, dtype=float)
+        U_arr = np.asarray(U_cal, dtype=float)
+        y_arr = np.asarray(y_cal, dtype=float)
+        if len(y_arr) > self.window:
+            L_arr = L_arr[-self.window :]
+            U_arr = U_arr[-self.window :]
+            y_arr = y_arr[-self.window :]
+        s = np.maximum(L_arr - y_arr, y_arr - U_arr)
         n = len(s)
         if n == 0:
             self.qhat = 0.0
@@ -39,6 +55,8 @@ class ConformalCQR:
         q = 1.0 - self.alpha
         j = min(np.searchsorted(cdf, q, "left"), n - 1)
         self.qhat = float(s_sorted[j])
+        self._resid.clear()
+        self._resid.extend(float(val) for val in s[max(0, n - self.online_window) :])
         return self
 
     def dynamic_alpha(
@@ -52,7 +70,27 @@ class ConformalCQR:
         self.alpha = float(np.clip(adj, min_alpha, max_alpha))
         return self.alpha
 
+    def update_online(self, L_pred: float, U_pred: float, y_true: float):
+        s = float(max(L_pred - y_true, y_true - U_pred))
+        self._resid.append(s)
+        if not self._resid:
+            return self
+        s_arr = np.asarray(self._resid)
+        n = len(s_arr)
+        w = self._weights(n)
+        order = np.argsort(s_arr)
+        s_sorted = s_arr[order]
+        w_sorted = w[order]
+        cdf = np.cumsum(w_sorted)
+        q = 1.0 - self.alpha
+        j = min(np.searchsorted(cdf, q, "left"), n - 1)
+        self.qhat = float(s_sorted[j])
+        return self
+
     def interval(self, L_pred: float, U_pred: float) -> tuple[float, float]:
         if self.qhat is None:
             return L_pred, U_pred
-        return L_pred - self.qhat, U_pred + self.qhat
+        alpha_eff = max(self.alpha, 1e-9)
+        scale = max(1.0, np.sqrt(self.alpha0 / alpha_eff))
+        q = float(self.qhat * scale)
+        return L_pred - q, U_pred + q
