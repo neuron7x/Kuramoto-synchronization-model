@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
+from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import InvalidOperation
 from pathlib import Path
@@ -13,7 +14,6 @@ from typing import (
     AsyncIterator,
     Callable,
     Iterable,
-    List,
     Mapping,
     Optional,
     Tuple,
@@ -93,6 +93,64 @@ ConnectorFactory = Callable[[], BaseMarketDataConnector]
 ConnectorEntry = BaseMarketDataConnector | ConnectorFactory
 
 
+def _iter_csv_chunks(
+    path: Path,
+    *,
+    symbol: str,
+    venue: str,
+    instrument_type: InstrumentType,
+    market: Optional[str],
+    chunk_size: int,
+) -> Iterable[list[Ticker]]:
+    """Yield parsed CSV ticks in fixed-size batches."""
+
+    resolved_chunk_size = max(1, int(chunk_size))
+
+    with path.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+
+        if reader.fieldnames is None:
+            raise ValueError("CSV file must include a header row")
+
+        required = {"ts", "price"}
+        missing = required - set(reader.fieldnames)
+        if missing:
+            raise ValueError(f"CSV missing columns: {', '.join(sorted(missing))}")
+
+        chunk: list[Ticker] = []
+
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                ts_raw = float(row["ts"])
+                price = row["price"]
+                volume = row.get("volume", 0.0) or 0.0
+
+                tick = Ticker.create(
+                    symbol=symbol,
+                    venue=venue,
+                    price=price,
+                    timestamp=normalize_timestamp(ts_raw, market=market),
+                    volume=volume,
+                    instrument_type=instrument_type,
+                )
+                chunk.append(tick)
+
+                if len(chunk) >= resolved_chunk_size:
+                    yield chunk
+                    chunk = []
+
+            except (TypeError, ValueError, InvalidOperation) as exc:
+                logger.warning(
+                    f"Skipping malformed row {row_number}",
+                    path=str(path),
+                    error=str(exc),
+                )
+                continue
+
+        if chunk:
+            yield chunk
+
+
 class AsyncDataIngestor(AsyncDataIngestionService):
     """Async data ingestion with support for CSV and streaming sources."""
 
@@ -155,65 +213,51 @@ class AsyncDataIngestor(AsyncDataIngestionService):
         """
         resolved_path = self._path_guard.resolve(path, description="CSV data file")
 
+        queue: asyncio.Queue[object] = asyncio.Queue()
+        sentinel = object()
+        loop = asyncio.get_running_loop()
+
+        def _producer() -> None:
+            try:
+                for chunk in _iter_csv_chunks(
+                    resolved_path,
+                    symbol=symbol,
+                    venue=venue,
+                    instrument_type=instrument_type,
+                    market=market,
+                    chunk_size=chunk_size,
+                ):
+                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
+            except Exception as exc:  # pragma: no cover - propagated to consumer
+                loop.call_soon_threadsafe(queue.put_nowait, exc)
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+
+        worker_task = asyncio.create_task(asyncio.to_thread(_producer))
+
         with logger.operation("async_csv_read", path=str(resolved_path), symbol=symbol):
             try:
-                with resolved_path.open("r", encoding="utf-8") as f, _TickMetricBatcher(
+                with _TickMetricBatcher(
                     metrics,
                     "csv",
                     symbol,
                     flush_threshold=max(1, chunk_size),
                 ) as metric_batcher:
-                    reader = csv.DictReader(f)
+                    while True:
+                        item = await queue.get()
 
-                    if reader.fieldnames is None:
-                        raise ValueError("CSV file must include a header row")
+                        if item is sentinel:
+                            break
 
-                    required = {"ts", "price"}
-                    missing = required - set(reader.fieldnames)
-                    if missing:
-                        raise ValueError(f"CSV missing columns: {', '.join(missing)}")
+                        if isinstance(item, Exception):
+                            raise item
 
-                    chunk: List[Ticker] = []
-                    for row_number, row in enumerate(reader, start=2):
-                        try:
-                            ts_raw = float(row["ts"])
-                            price = row["price"]
-                            volume = row.get("volume", 0.0) or 0.0
-
-                            tick = Ticker.create(
-                                symbol=symbol,
-                                venue=venue,
-                                price=price,
-                                timestamp=normalize_timestamp(ts_raw, market=market),
-                                volume=volume,
-                                instrument_type=instrument_type,
+                        if not isinstance(item, list):
+                            raise TypeError(
+                                f"Unexpected payload type from CSV producer: {type(item)!r}"
                             )
-                            chunk.append(tick)
 
-                            if len(chunk) >= chunk_size:
-                                consumed = 0
-                                try:
-                                    for tick in chunk:
-                                        yield tick
-                                        consumed += 1
-                                finally:
-                                    if consumed:
-                                        metric_batcher.add(consumed)
-                                chunk = []
-
-                                if delay_ms > 0:
-                                    await asyncio.sleep(delay_ms / 1000.0)
-
-                        except (TypeError, ValueError, InvalidOperation) as exc:
-                            logger.warning(
-                                f"Skipping malformed row {row_number}",
-                                path=path,
-                                error=str(exc),
-                            )
-                            continue
-
-                    # Yield remaining ticks
-                    if chunk:
+                        chunk = item
                         consumed = 0
                         try:
                             for tick in chunk:
@@ -223,9 +267,20 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                             if consumed:
                                 metric_batcher.add(consumed)
 
+                        if delay_ms > 0:
+                            await asyncio.sleep(delay_ms / 1000.0)
+
             except Exception as exc:
-                logger.error("CSV ingestion failed", path=path, error=str(exc))
+                logger.error("CSV ingestion failed", path=str(resolved_path), error=str(exc))
                 raise
+            finally:
+                if not worker_task.done():
+                    worker_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await worker_task
+                else:
+                    # Ensure any exception is observed to avoid "exception was never retrieved" warnings.
+                    worker_task.exception()
 
     async def stream_ticks(
         self,
