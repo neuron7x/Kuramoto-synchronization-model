@@ -1647,7 +1647,7 @@ def create_app(
         if value not in values:
             response.headers["Vary"] = f"{existing}, {value}"
 
-    v1_router = APIRouter(prefix="/v1")
+    v1_router = APIRouter()
 
     async def replay_if_available(
         *,
@@ -2210,7 +2210,13 @@ def create_app(
             response.headers["Idempotency-Key"] = idempotency_key
         return body
 
-    app.include_router(v1_router)
+    versioned_router = APIRouter(prefix="/api")
+    versioned_router.include_router(v1_router, prefix="/v1")
+    app.include_router(versioned_router)
+
+    legacy_v1_router = APIRouter(prefix="/v1")
+    legacy_v1_router.include_router(v1_router)
+    app.include_router(legacy_v1_router)
 
     app.add_api_route(
         "/features",

@@ -7,6 +7,9 @@ from typing import Any, Mapping
 import httpx
 
 
+API_V1_BASE = "/api/v1"
+
+
 class TradePulseAPIClient:
     """Minimal synchronous client for the TradePulse public API."""
 
@@ -46,7 +49,7 @@ class TradePulseAPIClient:
     def get_market_signal(self, symbol: str, *, payload: Mapping[str, Any] | None = None, headers: Mapping[str, str] | None = None) -> httpx.Response:
         """Retrieve the latest trading signal for a symbol.
     
-        Method: GET /v1/signals/{symbol}
+        Method: GET /api/v1/signals/{symbol}
         Scope: signals:read
         Cache: public; max-age=15s
         Idempotency: optional
@@ -57,7 +60,7 @@ class TradePulseAPIClient:
         request_kwargs: dict[str, Any] = {"headers": request_headers}
         response = self._client.request(
             "GET",
-            f"/v1/signals/{symbol}",
+            f"{API_V1_BASE}/signals/{symbol}",
             **request_kwargs,
         )
         response.raise_for_status()
@@ -66,7 +69,7 @@ class TradePulseAPIClient:
     def create_prediction(self, *, payload: Mapping[str, Any] | None = None, headers: Mapping[str, str] | None = None) -> httpx.Response:
         """Submit feature vectors and request an inference run.
     
-        Method: POST /v1/predictions
+        Method: POST /api/v1/predictions
         Scope: predictions:write
         Cache: no-store; max-age=0s
         Idempotency: required via X-Idempotency-Key ttl=86400s
@@ -79,7 +82,7 @@ class TradePulseAPIClient:
             request_kwargs["json"] = payload
         response = self._client.request(
             "POST",
-            f"/v1/predictions",
+            f"{API_V1_BASE}/predictions",
             **request_kwargs,
         )
         response.raise_for_status()

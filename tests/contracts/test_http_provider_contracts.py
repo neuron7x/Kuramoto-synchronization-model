@@ -20,6 +20,13 @@ from application.settings import AdminApiSettings
 from domain import Signal, SignalAction
 from src.admin.remote_control import AdminIdentity
 
+
+API_V1_PREFIX = "/api/v1"
+
+
+def _api_v1(path: str) -> str:
+    return f"{API_V1_PREFIX}{path}"
+
 BASELINE_DIR = Path("schemas/http/json/1.0.0")
 
 
@@ -145,14 +152,14 @@ def _assert_contract(
 
 
 def test_feature_provider_matches_contract(provider_client: TestClient) -> None:
-    response = provider_client.post("/v1/features", json=_feature_payload())
+    response = provider_client.post(_api_v1("/features"), json=_feature_payload())
     assert response.status_code == 200
     body = response.json()
     _assert_contract("feature_response.schema.json", body, FeatureResponse)
 
 
 def test_prediction_provider_matches_contract(provider_client: TestClient) -> None:
-    response = provider_client.post("/v1/predictions", json=_prediction_payload())
+    response = provider_client.post(_api_v1("/predictions"), json=_prediction_payload())
     assert response.status_code == 200
     body = response.json()
     _assert_contract("prediction_response.schema.json", body, PredictionResponse)
@@ -160,10 +167,10 @@ def test_prediction_provider_matches_contract(provider_client: TestClient) -> No
 
 def test_idempotent_replay_respects_contract(provider_client: TestClient) -> None:
     headers = {"Idempotency-Key": "contract-idempotency"}
-    first = provider_client.post("/v1/features", json=_feature_payload(), headers=headers)
+    first = provider_client.post(_api_v1("/features"), json=_feature_payload(), headers=headers)
     assert first.status_code == 200
     assert first.headers.get("Idempotency-Key") == "contract-idempotency"
-    second = provider_client.post("/v1/features", json=_feature_payload(), headers=headers)
+    second = provider_client.post(_api_v1("/features"), json=_feature_payload(), headers=headers)
     assert second.status_code == 200
     assert second.headers.get("Idempotency-Key") == "contract-idempotency"
     assert second.headers.get("X-Idempotent-Replay") == "true"
