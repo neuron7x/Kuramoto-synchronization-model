@@ -754,15 +754,26 @@ def create_system_app(
     def _wrap_with_rate_limit(
         dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity]
     ) -> Callable[..., Awaitable[AdminIdentity]]:
+        async def _precheck_rate_limit(request: Request) -> Callable[[AdminIdentity | None], Awaitable[None]]:
+            ip_address = _resolve_ip(request)
+            await limiter.check(subject=None, ip_address=ip_address)
+
+            async def _finalize(identity: AdminIdentity | None) -> None:
+                if identity is None:
+                    return
+                subject = getattr(identity, "subject", None)
+                if subject is None:
+                    return
+                await limiter.check(subject=subject, ip_address=ip_address)
+
+            return _finalize
+
         async def _rate_limited_dependency(
             request: Request,
+            finalize: Callable[[AdminIdentity | None], Awaitable[None]] = Depends(_precheck_rate_limit),
             identity: AdminIdentity = Depends(dependency),
         ) -> AdminIdentity:
-            subject = getattr(identity, "subject", None)
-            await limiter.check(
-                subject=subject,
-                ip_address=_resolve_ip(request),
-            )
+            await finalize(identity)
             return identity
 
         return _rate_limited_dependency
