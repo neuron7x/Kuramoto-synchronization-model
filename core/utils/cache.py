@@ -38,32 +38,49 @@ logger = StructuredLogger(__name__)
 
 
 class CacheKeyNormalizer:
-    """Canonicalises cache keys to avoid semantic duplication.
+    """Canonicalise cache keys to avoid semantic duplication.
 
-    The normaliser is purposely strict: whitespace is trimmed, dictionaries
-    are serialised with sorted keys and non-JSONable types fall back to the
-    repr() representation.  The output is always a string safe for use as a
-    dictionary key.
+    The implementation normalises every supported collection recursively while
+    keeping the result human-readable.  Canonical ``repr`` serialisation is used
+    for ordered representations which improves determinism and avoids the
+    repeated ``normalize`` calls that the previous implementation required when
+    sorting mapping entries.
     """
 
-    @staticmethod
-    def normalize(key: Any) -> str:
+    @classmethod
+    def normalize(cls, key: Any) -> str:
         if isinstance(key, str):
             return key.strip()
         if isinstance(key, (int, float, bytes)):
             return str(key)
         if isinstance(key, Mapping):
-            normalized_items = {
-                CacheKeyNormalizer.normalize(k): CacheKeyNormalizer.normalize(v)
-                for k, v in sorted(key.items(), key=lambda item: CacheKeyNormalizer.normalize(item[0]))
-            }
-            return CacheKeyNormalizer.normalize(normalized_items.items())
-        if isinstance(key, (set, frozenset, tuple, list)):
-            normalized_sequence = [CacheKeyNormalizer.normalize(item) for item in key]
-            return "|".join(normalized_sequence)
+            return cls._normalize_mapping(key)
+        if isinstance(key, (list, tuple)):
+            return cls._normalize_sequence(key)
+        if isinstance(key, (set, frozenset)):
+            return cls._normalize_unordered(key)
         if hasattr(key, "__dict__"):
-            return CacheKeyNormalizer.normalize(vars(key))
+            return cls.normalize(vars(key))
         return repr(key)
+
+    @classmethod
+    def _normalize_mapping(cls, mapping: Mapping[Any, Any]) -> str:
+        normalized_items = [
+            (cls.normalize(item_key), cls.normalize(item_value))
+            for item_key, item_value in mapping.items()
+        ]
+        normalized_items.sort(key=lambda item: item[0])
+        return repr(tuple(normalized_items))
+
+    @classmethod
+    def _normalize_sequence(cls, sequence: Iterable[Any]) -> str:
+        normalized = tuple(cls.normalize(item) for item in sequence)
+        return repr(normalized)
+
+    @classmethod
+    def _normalize_unordered(cls, values: Iterable[Any]) -> str:
+        normalized = tuple(sorted(cls.normalize(item) for item in values))
+        return repr(normalized)
 
 
 # ---------------------------------------------------------------------------
