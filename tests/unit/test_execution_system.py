@@ -83,6 +83,37 @@ def test_oms_idempotent_submission_and_recovery(
     assert processed.order_id in {o.order_id for o in oms_reload.outstanding()}
 
 
+def test_oms_outstanding_cache(tmp_path, risk_manager: RiskManager) -> None:
+    state_path = tmp_path / "cache_state.json"
+    config = OMSConfig(state_path=state_path, auto_persist=False)
+    connector = BinanceConnector()
+    oms = OrderManagementSystem(connector, risk_manager, config)
+
+    order = Order(
+        symbol="BTCUSDT",
+        side=OrderSide.BUY,
+        quantity=1.0,
+        price=20_500.0,
+        order_type=OrderType.LIMIT,
+    )
+
+    oms.submit(order, correlation_id="cache-1")
+    placed = oms.process_next()
+    assert placed.order_id is not None
+
+    first = oms.outstanding()
+    second = oms.outstanding()
+    assert first is second
+    assert any(o.order_id == placed.order_id for o in first)
+
+    fill_price = placed.price or 20_500.0
+    oms.register_fill(placed.order_id, placed.quantity, float(fill_price))
+
+    third = oms.outstanding()
+    assert third is not first
+    assert len(third) == 0
+
+
 def test_oms_register_fill_updates_risk(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "fills_state.json"
     config = OMSConfig(state_path=state_path)

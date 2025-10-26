@@ -403,6 +403,41 @@ def test_signal_generation_latency_and_equity_curve_gauge() -> None:
     assert equity_gauge == 100.0
 
 
+def test_record_equity_curve_downsamples_and_resets() -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    series = np.linspace(0.0, 99.0, 100)
+    collector.record_equity_curve("trend", series, max_points=5)
+
+    expected_steps = {"0", "20", "40", "60", "80", "99"}
+    observed_steps = set()
+    for step in expected_steps:
+        value = _sample_value(
+            registry,
+            "tradepulse_backtest_equity_curve",
+            {"strategy": "trend", "step": step},
+        )
+        assert value is not None
+        observed_steps.add(step)
+    assert observed_steps == expected_steps
+
+    collector.record_equity_curve("trend", np.array([10.0, 20.0, 30.0]), max_points=3)
+    assert (
+        _sample_value(
+            registry,
+            "tradepulse_backtest_equity_curve",
+            {"strategy": "trend", "step": "99"},
+        )
+        is None
+    )
+    assert _sample_value(
+        registry,
+        "tradepulse_backtest_equity_curve",
+        {"strategy": "trend", "step": "2"},
+    ) == 30.0
+
+
 @pytest.mark.parametrize(
     "gauge_name,labels",
     [

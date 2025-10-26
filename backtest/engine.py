@@ -513,8 +513,7 @@ class WalkForwardEngine(BacktestEngine[Result]):
             report_path = export_performance_report(strategy_name, performance)
 
             if metrics.enabled:
-                for step, value in enumerate(equity_curve):
-                    metrics.record_equity_point(strategy_name, step, float(value))
+                metrics.record_equity_curve(strategy_name, equity_curve)
 
             ctx["pnl"] = pnl_total
             ctx["performance"] = performance.as_dict()
