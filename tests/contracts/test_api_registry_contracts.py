@@ -17,6 +17,7 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 _RESOLVED_REPO_ROOT = REPO_ROOT.resolve()
+_REPO_ROOT_PARTS = _RESOLVED_REPO_ROOT.parts
 REGISTRY_PATH = REPO_ROOT / "configs/api/registry.yaml"
 ROUTES_DOC_PATH = REPO_ROOT / "docs/api/routes.json"
 SMOKE_DOC_PATH = REPO_ROOT / "docs/api/smoke_tests.json"
@@ -66,19 +67,29 @@ def _canonical_schema_reference(value: str | None) -> Path | None:
         candidate = (_RESOLVED_REPO_ROOT / candidate).resolve()
     else:
         candidate = candidate.resolve()
+    normalised = _normalise_repo_relative(candidate)
+    return normalised
+
+
+def _normalise_repo_relative(candidate: Path) -> Path:
+    """Return a repository-relative version of ``candidate`` when possible."""
+
     try:
         return candidate.relative_to(_RESOLVED_REPO_ROOT)
     except ValueError:  # pragma: no cover - indicates reference outside repo
-        # Some generated documentation may capture absolute paths from
-        # environments with differing workspace roots. When that occurs we try
-        # to recover a repository-relative suffix so that comparisons remain
-        # stable across machines.
         candidate_parts = candidate.parts
-        for index in range(len(candidate_parts)):
-            suffix = Path(*candidate_parts[index:])
-            prospective = _RESOLVED_REPO_ROOT / suffix
-            if prospective.exists():
-                return suffix
+        repo_length = len(_REPO_ROOT_PARTS)
+        # Some build systems materialise absolute paths with differing prefixes
+        # (for example, /workspace/<project> vs /__w/<project>/<project>). When
+        # that happens we search for the repository root suffix within the
+        # absolute path and return the remaining tail so that comparisons remain
+        # stable across environments.
+        for start in range(len(candidate_parts) - repo_length + 1):
+            if candidate_parts[start : start + repo_length] == _REPO_ROOT_PARTS:
+                remainder = candidate_parts[start + repo_length :]
+                if remainder:
+                    return Path(*remainder)
+                return Path()
         return candidate
 
 
