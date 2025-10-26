@@ -255,6 +255,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
         if direction == 0:
             existing_position = state.position_for(request.symbol)
             target_position = existing_position
+            order_quantity = 0.0
             notes: dict[str, float] = {"direction": 0.0}
 
             leverage_cap = constraints.max_leverage
@@ -266,6 +267,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
                 max_position = max_notional / request.price
                 if abs(existing_position) > max_position + 1e-12:
                     target_position = math.copysign(max_position, existing_position)
+                    order_quantity = target_position - existing_position
                     notes["leverage_clip"] = max_position
 
             applied_fraction = 0.0
@@ -274,7 +276,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
             notes["final_fraction"] = applied_fraction
 
             return PositionSizingResult(
-                order_quantity=0.0,
+                order_quantity=order_quantity,
                 target_position=target_position,
                 applied_fraction=applied_fraction,
                 notes=notes,
