@@ -402,6 +402,7 @@ def test_graphql_interface_exposes_latest_data(
     graphql_response = client.post(
         "/graphql",
         json={"query": query, "variables": {"symbol": "TEST-USD"}},
+        headers=headers,
     )
     assert graphql_response.status_code == 200
     payload = graphql_response.json()["data"]
@@ -456,7 +457,7 @@ def test_websocket_stream_broadcasts_updates(
     token = security_context(subject="stream-user")
     headers = _auth_headers(token)
 
-    with client.websocket_connect("/ws/stream") as websocket:
+    with client.websocket_connect("/ws/stream", headers=headers) as websocket:
         initial = websocket.receive_json()
         assert initial["type"] == "snapshot"
         assert initial["features"] == []

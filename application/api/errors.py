@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
+from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import Any, Mapping
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -150,19 +151,32 @@ def register_exception_handlers(
     if default_codes:
         error_codes.update(default_codes)
 
+    def _make_json_safe(value: Any) -> Any:
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        if isinstance(value, Mapping):
+            return {key: _make_json_safe(item) for key, item in value.items()}
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            return [_make_json_safe(item) for item in value]
+        return str(value)
+
     @app.exception_handler(RequestValidationError)
     async def request_validation_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        errors = _make_json_safe(exc.errors())
+        error_list = errors if isinstance(errors, list) else [errors]
         payload = ErrorPayload(
             code=ApiErrorCode.VALIDATION_FAILED,
             message="Invalid request payload.",
             path=request.url.path,
-            meta={"errors": exc.errors()},
+            meta={"errors": error_list},
         )
+        content = ErrorResponse(error=payload).model_dump(mode="json")
+        content["detail"] = error_list
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content=ErrorResponse(error=payload).model_dump(mode="json"),
+            content=content,
         )
 
     @app.exception_handler(HTTPException)
@@ -171,6 +185,7 @@ def register_exception_handlers(
     ) -> JSONResponse:
         default_code = error_codes.get(exc.status_code, ApiErrorCode.INTERNAL)
         detail = exc.detail
+        serializable_detail = _make_json_safe(detail) if detail is not None else None
         message: str | None = None
         meta: Any | None = None
         code = default_code
@@ -193,10 +208,10 @@ def register_exception_handlers(
             path=request.url.path,
             meta=meta_payload,
         )
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=ErrorResponse(error=payload).model_dump(mode="json"),
-        )
+        content = ErrorResponse(error=payload).model_dump(mode="json")
+        if serializable_detail is not None:
+            content["detail"] = serializable_detail
+        return JSONResponse(status_code=exc.status_code, content=content)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(
