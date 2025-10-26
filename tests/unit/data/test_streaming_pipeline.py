@@ -10,7 +10,7 @@ import pytest
 from core.data.catalog import normalize_symbol
 from core.data.models import InstrumentType, PriceTick
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.kafka_ingestion import KafkaIngestionConfig
+from src.data.kafka_ingestion import KafkaIngestionConfig, LagHandler
 from src.data.pipeline import (
     CacheRoute,
     CacheWriterTickHandler,
@@ -92,6 +92,13 @@ class _StubKafkaService:
 
     async def stop(self) -> None:
         self.stopped += 1
+
+
+class _LagOptionalService:
+    def __init__(self, config: KafkaIngestionConfig) -> None:
+        self.config = config
+        self.tick_handler: CacheWriterTickHandler | None = None
+        self.lag_handler: LagHandler | None = None
 
 
 def _tick(symbol: str, *, price: float, when: datetime) -> PriceTick:
@@ -347,3 +354,21 @@ def test_pipeline_respects_explicit_lag_handler() -> None:
     )
 
     assert created and created[0].lag_handler is lag_handler
+
+
+def test_pipeline_overrides_none_lag_handler_attribute() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    lag_handler = object()
+
+    pipeline = StreamingIngestionPipeline(
+        kafka_config=config,
+        lag_handler=lag_handler,
+        kafka_service_factory=lambda cfg: _LagOptionalService(cfg),
+    )
+
+    assert isinstance(pipeline.kafka_service, _LagOptionalService)
+    assert pipeline.kafka_service.lag_handler is lag_handler

@@ -180,11 +180,13 @@ class StreamingIngestionPipeline:
             current = getattr(self._kafka_service, "tick_handler")
             if current is None:
                 setattr(self._kafka_service, "tick_handler", self._tick_handler)
-        if (
-            self._lag_handler is not None
-            and not hasattr(self._kafka_service, "lag_handler")
-        ):
-            setattr(self._kafka_service, "lag_handler", self._lag_handler)
+        if self._lag_handler is not None:
+            if not hasattr(self._kafka_service, "lag_handler"):
+                setattr(self._kafka_service, "lag_handler", self._lag_handler)
+            else:
+                current_lag_handler = getattr(self._kafka_service, "lag_handler")
+                if current_lag_handler is None:
+                    setattr(self._kafka_service, "lag_handler", self._lag_handler)
 
     @staticmethod
     def _build_kafka_service(
