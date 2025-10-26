@@ -10,6 +10,56 @@ import numpy as np
 from .hurst import hurst_exponent
 from .kuramoto import compute_phase
 
+try:  # pragma: no cover - optional GPU dependency
+    import cupy as cp  # type: ignore
+except Exception:  # pragma: no cover - executed on CPU-only environments
+    cp = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional acceleration
+    from numba import cuda, njit, prange
+except Exception:  # pragma: no cover - executed when numba missing
+    cuda = None  # type: ignore[assignment]
+    njit = None  # type: ignore[assignment]
+    prange = range  # type: ignore[assignment]
+
+
+_GPU_ROLLING_THRESHOLD = 32_768
+_CUDA_FLOAT_DTYPES = {np.dtype(np.float32), np.dtype(np.float64)}
+
+
+def _numba_available() -> bool:
+    return njit is not None
+
+
+def _cuda_available() -> bool:
+    if cuda is None:
+        return False
+    try:  # pragma: no cover - hardware dependent
+        return bool(cuda.is_available())
+    except Exception:
+        return False
+
+
+if cuda is not None:  # pragma: no cover - compiled when CUDA present
+
+    @cuda.jit
+    def _rolling_sum_cuda_kernel(values, window, out):
+        idx = cuda.grid(1)
+        if idx >= values.size:
+            return
+        start = idx - window + 1
+        if start < 0:
+            start = 0
+        acc = 0.0
+        for j in range(start, idx + 1):
+            acc += values[j]
+        out[idx] = acc
+
+else:  # pragma: no cover - executed without CUDA
+
+    def _rolling_sum_cuda_kernel(*_: object) -> None:
+        raise RuntimeError("CUDA backend unavailable")
+
 
 def _as_float_array(values: Iterable[float]) -> np.ndarray:
     array = np.asarray(values, dtype=float)
@@ -31,16 +81,63 @@ def _fill_missing(series: np.ndarray) -> np.ndarray:
     return filled
 
 
-def _rolling_sum(values: np.ndarray, window: int) -> np.ndarray:
+def _rolling_sum(
+    values: np.ndarray,
+    window: int,
+    *,
+    backend: Literal["auto", "cpu", "gpu"] = "auto",
+) -> np.ndarray:
     if window <= 0:
         raise ValueError("window must be positive")
     if values.size == 0:
         return np.empty(0, dtype=values.dtype)
-    cumulative = np.cumsum(values)
-    padded = np.empty(values.size + 1, dtype=values.dtype)
-    padded[0] = values.dtype.type(0)
+
+    array = np.asarray(values)
+    if array.ndim != 1:
+        raise ValueError("values must be one-dimensional")
+
+    use_cupy = False
+    use_cuda = False
+    if backend == "gpu":
+        use_cupy = cp is not None
+        use_cuda = not use_cupy and _cuda_available()
+    elif backend == "auto":
+        if cp is not None and array.size >= _GPU_ROLLING_THRESHOLD:
+            use_cupy = True
+        elif _cuda_available() and array.dtype in _CUDA_FLOAT_DTYPES:
+            use_cuda = True
+
+    if use_cupy:
+        try:  # pragma: no cover - exercised only when CuPy available
+            device_values = cp.asarray(array)
+            cumulative = cp.cumsum(device_values)
+            padded = cp.empty(device_values.size + 1, dtype=device_values.dtype)
+            padded[0] = device_values.dtype.type(0)
+            padded[1:] = cumulative
+            indices = cp.arange(device_values.size, dtype=cp.int64)
+            start = cp.maximum(indices - window + 1, 0)
+            result = padded[indices + 1] - padded[start]
+            return cp.asnumpy(result)
+        except Exception:
+            use_cupy = False
+
+    if use_cuda and array.dtype in _CUDA_FLOAT_DTYPES:
+        try:  # pragma: no cover - requires CUDA runtime
+            device_values = cuda.to_device(array.astype(array.dtype, copy=False))
+            device_out = cuda.device_array_like(device_values)
+            threads = 256
+            blocks = (array.size + threads - 1) // threads
+            _rolling_sum_cuda_kernel[blocks, threads](device_values, int(window), device_out)
+            cuda.synchronize()
+            return device_out.copy_to_host()
+        except Exception:
+            use_cuda = False
+
+    cumulative = np.cumsum(array)
+    padded = np.empty(array.size + 1, dtype=array.dtype)
+    padded[0] = array.dtype.type(0)
     padded[1:] = cumulative
-    indices = np.arange(values.size)
+    indices = np.arange(array.size)
     start = np.maximum(indices - window + 1, 0)
     return padded[indices + 1] - padded[start]
 
@@ -73,18 +170,133 @@ class _HurstBufferPool:
         return tau
 
 
+if _numba_available():  # pragma: no cover - compiled at import time
+
+    @njit(cache=True, fastmath=True)
+    def _hurst_from_window(
+        series: np.ndarray,
+        start: int,
+        stop: int,
+        min_lag: int,
+        max_lag_cap: int,
+    ) -> float:
+        length = stop - start
+        if length <= min_lag * 2:
+            return 0.5
+
+        local_max_lag = max_lag_cap
+        if local_max_lag <= 0 or local_max_lag > length // 2:
+            local_max_lag = length // 2
+        if local_max_lag <= min_lag:
+            return 0.5
+
+        lag_count = local_max_lag - min_lag + 1
+        sum_x = 0.0
+        sum_y = 0.0
+        sum_xx = 0.0
+        sum_xy = 0.0
+        count = 0
+
+        for offset in range(lag_count):
+            lag = min_lag + offset
+            sample_count = length - lag
+            if sample_count <= 0:
+                continue
+            acc = 0.0
+            acc_sq = 0.0
+            for idx in range(sample_count):
+                diff = series[start + idx + lag] - series[start + idx]
+                acc += diff
+                acc_sq += diff * diff
+            inv = 1.0 / sample_count
+            mean = acc * inv
+            variance = acc_sq * inv - mean * mean
+            if variance <= 0.0:
+                continue
+            tau = np.sqrt(variance)
+            x = np.log(lag)
+            y = np.log(tau)
+            sum_x += x
+            sum_y += y
+            sum_xx += x * x
+            sum_xy += x * y
+            count += 1
+
+        if count < 2:
+            return 0.5
+        denom = count * sum_xx - sum_x * sum_x
+        if denom <= 0.0:
+            return 0.5
+        slope = (count * sum_xy - sum_x * sum_y) / denom
+        if slope < 0.0:
+            slope = 0.0
+        elif slope > 1.0:
+            slope = 1.0
+        return slope
+
+
+    @njit(parallel=True, cache=True, fastmath=True)
+    def _rolling_hurst_numba(
+        series: np.ndarray,
+        window: int,
+        min_lag: int,
+        max_lag_cap: int,
+        min_samples: int,
+    ) -> np.ndarray:
+        n = series.size
+        result = np.empty(n, dtype=np.float64)
+        for idx in prange(n):
+            start = idx - window + 1
+            if start < 0:
+                start = 0
+            stop = idx + 1
+            length = stop - start
+            if length < min_samples:
+                result[idx] = 0.5
+                continue
+            value = _hurst_from_window(series, start, stop, min_lag, max_lag_cap)
+            if value < 0.0:
+                value = 0.0
+            elif value > 1.0:
+                value = 1.0
+            result[idx] = value
+        return result
+
+else:  # pragma: no cover - executed when numba missing
+
+    def _rolling_hurst_numba(
+        series: np.ndarray,
+        window: int,
+        min_lag: int,
+        max_lag_cap: int,
+        min_samples: int,
+    ) -> np.ndarray:
+        raise RuntimeError("Numba is not available")
+
+
 @dataclass(slots=True)
 class KuramotoIndicator:
-    """Compute rolling Kuramoto-style synchronisation scores."""
+    """Compute rolling Kuramoto-style synchronisation scores.
+
+    The ``backend`` parameter controls whether rolling statistics are evaluated
+    using vectorised NumPy (``"cpu"``), CuPy GPU acceleration (``"gpu"`` when
+    available) or an automatic heuristic that selects GPU execution for large
+    arrays when CuPy is present. The GPU path leverages device-side prefix sums
+    for memory-bandwidth-bound workloads while preserving numerical parity with
+    the CPU implementation.
+    """
 
     window: int = 200
     coupling: float = 1.0
+    backend: Literal["auto", "cpu", "gpu"] = "auto"
 
     def __post_init__(self) -> None:
         if self.window <= 0:
             raise ValueError("window must be positive")
         if self.coupling <= 0:
             raise ValueError("coupling must be positive")
+        if self.backend not in {"auto", "cpu", "gpu"}:
+            raise ValueError(f"Unsupported backend '{self.backend}'")
 
     def compute(self, prices: Iterable[float]) -> np.ndarray:
         raw = _as_float_array(prices)
@@ -95,7 +307,7 @@ class KuramotoIndicator:
         series = _fill_missing(raw)
         phases = compute_phase(series)
         complex_phase = np.exp(1j * phases)
-        totals = _rolling_sum(complex_phase, self.window)
+        totals = _rolling_sum(complex_phase, self.window, backend=self.backend)
         counts = np.minimum(np.arange(1, series.size + 1), self.window)
         min_samples = min(self.window, 10)
         mask = counts >= min_samples
@@ -108,7 +320,15 @@ class KuramotoIndicator:
 
 @dataclass(slots=True)
 class HurstIndicator:
-    """Rolling Hurst exponent estimator."""
+    """Rolling Hurst exponent estimator.
+
+    The indicator now ships with a Numba-parallel rolling kernel that reuses
+    the rescaled range computation from :func:`core.indicators.hurst.hurst_exponent`
+    while avoiding Python-level loops. When the backend is ``"auto"`` or
+    ``"numba"`` and Numba is available the accelerated path is used; otherwise
+    the implementation falls back to the original per-window evaluation which
+    still honours ``backend`` selections such as ``"cuda"`` for GPU execution.
+    """
 
     window: int = 100
     min_lag: int = 2
@@ -133,7 +353,28 @@ class HurstIndicator:
         series = _as_float_array(prices)
         if series.size == 0:
             return np.empty(0, dtype=float)
-        series = _fill_missing(series)
+        series = _fill_missing(series).astype(np.float64, copy=False)
+
+        use_numba = (
+            _numba_available()
+            and self.backend in {"auto", "numba"}
+            and series.size >= max(self.window, self.min_lag * 4)
+        )
+        if use_numba:
+            max_lag_cap = self.max_lag if self.max_lag is not None else -1
+            min_samples = max(self.min_lag * 2 + 2, self.min_lag + 3)
+            try:
+                accelerated = _rolling_hurst_numba(
+                    series,
+                    int(self.window),
+                    int(self.min_lag),
+                    int(max_lag_cap),
+                    int(min_samples),
+                )
+                return accelerated.astype(float, copy=False)
+            except Exception:  # pragma: no cover - defensive fallback
+                use_numba = False
+
         result = np.full(series.size, 0.5, dtype=float)
         buffer_pool = self._buffers
         for idx in range(series.size):
@@ -161,16 +402,25 @@ class HurstIndicator:
 
 @dataclass(slots=True)
 class VPINIndicator:
-    """Volume-synchronised probability of informed trading."""
+    """Volume-synchronised probability of informed trading.
+
+    When ``backend`` is set to ``"gpu"`` and CuPy is installed the indicator
+    executes the rolling bucket aggregation on the GPU. The default ``"auto"``
+    mode picks the GPU path for sufficiently large inputs, otherwise falling
+    back to the vectorised NumPy implementation.
+    """
 
     bucket_size: int = 50
     threshold: float = 0.8
+    backend: Literal["auto", "cpu", "gpu"] = "auto"
 
     def __post_init__(self) -> None:
         if self.bucket_size <= 0:
             raise ValueError("bucket_size must be positive")
         if self.threshold <= 0:
             raise ValueError("threshold must be positive")
+        if self.backend not in {"auto", "cpu", "gpu"}:
+            raise ValueError(f"Unsupported backend '{self.backend}'")
 
     def compute(self, volume_data: Iterable[Iterable[float]]) -> np.ndarray:
         array = np.asarray(volume_data, dtype=float)
@@ -190,8 +440,8 @@ class VPINIndicator:
             np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
         )
         imbalance = np.abs(buy - sell)
-        total_sums = _rolling_sum(total, self.bucket_size)
-        imb_sums = _rolling_sum(imbalance, self.bucket_size)
+        total_sums = _rolling_sum(total, self.bucket_size, backend=self.backend)
+        imb_sums = _rolling_sum(imbalance, self.bucket_size, backend=self.backend)
         result = np.zeros(total.size, dtype=float)
         valid = total_sums > 0.0
         if np.any(valid):
