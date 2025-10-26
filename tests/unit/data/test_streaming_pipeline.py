@@ -10,7 +10,7 @@ import pytest
 from core.data.catalog import normalize_symbol
 from core.data.models import InstrumentType, PriceTick
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.kafka_ingestion import KafkaIngestionConfig
+from src.data.kafka_ingestion import KafkaIngestionConfig, LagHandler
 from src.data.pipeline import (
     CacheRoute,
     CacheWriterTickHandler,
@@ -92,6 +92,13 @@ class _StubKafkaService:
 
     async def stop(self) -> None:
         self.stopped += 1
+
+
+class _LagOptionalService:
+    def __init__(self, config: KafkaIngestionConfig) -> None:
+        self.config = config
+        self.tick_handler: CacheWriterTickHandler | None = None
+        self.lag_handler: LagHandler | None = None
 
 
 def _tick(symbol: str, *, price: float, when: datetime) -> PriceTick:
@@ -263,27 +270,30 @@ async def test_pipeline_aggregator_operates_on_shared_cache() -> None:
     assert result.key.timeframe == "1s"
 
 
-def test_pipeline_supports_config_only_factory() -> None:
+@pytest.mark.asyncio
+async def test_pipeline_accepts_minimal_kafka_factory_signature() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
         group_id="tradepulse-test",
     )
-    created: list[_StubKafkaService] = []
+    route = CacheRoute(layer="raw", timeframe="1s")
 
-    class _ConfigOnlyFactory:
-        def __call__(self, cfg: KafkaIngestionConfig) -> _StubKafkaService:
-            service = _StubKafkaService(cfg)
-            created.append(service)
-            return service
-
-    StreamingIngestionPipeline(
+    pipeline = StreamingIngestionPipeline(
         kafka_config=config,
-        kafka_service_factory=_ConfigOnlyFactory(),
+        routing_strategy=StaticTickRoutingStrategy(route_template=route),
+        kafka_service_factory=lambda cfg: _StubKafkaService(cfg),
     )
 
-    assert created and created[0].tick_handler is None
-    assert created[0].lag_handler is None
+    assert isinstance(pipeline.kafka_service, _StubKafkaService)
+    assert pipeline.kafka_service.tick_handler is pipeline.tick_handler
+    assert pipeline.kafka_service.lag_handler is None
+
+    await pipeline.start()
+    await pipeline.stop()
+
+    assert pipeline.kafka_service.started == 1
+    assert pipeline.kafka_service.stopped == 1
 
 
 def test_pipeline_rejects_tick_handler_in_kafka_kwargs() -> None:
@@ -346,6 +356,25 @@ def test_pipeline_respects_explicit_lag_handler() -> None:
     )
 
     assert created and created[0].lag_handler is lag_handler
+
+
+def test_pipeline_overrides_none_lag_handler_attribute() -> None:
+    config = KafkaIngestionConfig(
+        topic="ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+    )
+    lag_handler = object()
+
+    pipeline = StreamingIngestionPipeline(
+        kafka_config=config,
+        lag_handler=lag_handler,
+        kafka_service_factory=lambda cfg: _LagOptionalService(cfg),
+    )
+
+    assert isinstance(pipeline.kafka_service, _LagOptionalService)
+    assert pipeline.kafka_service.tick_handler is pipeline.tick_handler
+    assert pipeline.kafka_service.lag_handler is lag_handler
 
 
 def test_pipeline_omits_lag_handler_when_factory_does_not_accept_it() -> None:
