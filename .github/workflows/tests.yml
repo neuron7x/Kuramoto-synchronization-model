@@ -107,16 +107,26 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: infra/terraform/tests/go.mod
+          go-version-file: go.mod
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ hashFiles('infra/terraform/tests/go.sum') }}
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum', 'infra/terraform/tests/go.sum') }}
           restore-keys: |
             go-${{ runner.os }}-
+      - name: Run Go service unit tests
+        run: |
+          mkdir -p reports/go
+          go test ./... -covermode=atomic -coverprofile=reports/go/services.coverage.out
+      - name: Upload Go coverage
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-services-coverage
+          path: reports/go/services.coverage.out
       - name: Run Terraform validation tests
         working-directory: infra/terraform/tests
         run: go test ./... -v
