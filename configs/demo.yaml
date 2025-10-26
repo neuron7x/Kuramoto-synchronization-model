@@ -26,10 +26,15 @@ conformal:
   decay: 0.01
   window: 2000
   buffer_bps: 1.0
+  online_update: false
+  online_window: 2000
 
 policy:
   max_pos: 1.0
   kelly_shrink: 0.2
+  cvar_window: 2000
+  cvar_alpha: 0.95
+  risk_gamma: 15.0   # чутливість динамічного ліміту до CVaR (експон. демпфування)
 
 execution:
   fee_bps: 1.0
@@ -42,3 +47,7 @@ risk:
   loss_streak_cooldown: 4
   vola_spike_mult: 2.5
   exposure_cap: 1.0
+
+seed: 7
+target:
+  horizon: 10        # к-сть кроків у y (для без-ліку онлайн калібрування)

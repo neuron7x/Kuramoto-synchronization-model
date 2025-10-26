@@ -12,16 +12,14 @@ class Execution:
         impact_coeff: float = 0.8,
         impact_model: str = "square_root",
         queue_fill_p: float = 0.85,
-        seed: int = 7,
+        seed: int | None = None,
     ) -> None:
         self.fee = fee_bps * 1e-4
         self.impact_coeff = impact_coeff
         self.impact_model = impact_model
         self.queue_fill_p = queue_fill_p
         # Використовуємо генератор випадкових чисел з фіксованим seed для відтворюваності
-        import numpy as _np
-
-        self.rng = _np.random.default_rng(seed)
+        self._rng = np.random.default_rng(seed)
 
     def costs(self, spread_frac: float, vol_proxy: float, notional_frac: float = 1.0) -> float:
         half = 0.5 * spread_frac
@@ -41,7 +39,7 @@ class Execution:
     def fill(self, mid: float, spread_frac: float, target_pos: float, cur_pos: float) -> float:
         side = np.sign(target_pos - cur_pos)
         slip = 0.5 * spread_frac * mid
-        improve = self.rng.random() < self.queue_fill_p
+        improve = self._rng.random() < self.queue_fill_p
         adj = (-0.25 * spread_frac * mid) if improve else 0.0
         fill_price = mid + side * slip + side * adj
         return float(fill_price)
