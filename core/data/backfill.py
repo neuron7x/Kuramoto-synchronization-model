@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC
 from queue import Empty, PriorityQueue
-from typing import List, MutableMapping, Optional
+from typing import Iterator, List, MutableMapping, Optional
 
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
@@ -132,6 +132,19 @@ class LayerCache:
 
         with self._lock:
             return self._entries.pop(key, None) is not None
+
+    def iter_entries(self) -> Iterator[tuple[CacheKey, CacheEntry]]:
+        """Yield a thread-safe snapshot of cached entries.
+
+        Callers receive a stable view of the cache contents without holding the
+        internal lock.  The returned :class:`CacheEntry` objects must be treated
+        as read-only to preserve cache integrity.
+        """
+
+        with self._lock:
+            snapshot = tuple(self._entries.items())
+        for key, entry in snapshot:
+            yield key, entry
 
 
 @dataclass(frozen=True)

@@ -9,7 +9,7 @@ from typing import Callable, Iterable, Sequence
 import numpy as np
 import pandas as pd
 
-from core.data.backfill import CacheKey, CacheRegistry, normalise_index
+from core.data.backfill import CacheEntry, CacheKey, CacheRegistry, normalise_index
 from core.data.catalog import normalize_symbol, normalize_venue
 from core.data.ingestion import DataIngestor
 from core.data.models import InstrumentType
@@ -249,6 +249,31 @@ class DataIngestionCacheService:
         self._registry = CacheRegistry()
         self._metadata.clear()
 
+    def rebuild_metadata(self) -> list[CacheEntrySnapshot]:
+        """Recompute metadata from the registry without re-ingesting payloads.
+
+        The ingestion cache can be primed outside of this service (for example,
+        during a warm start routine or by loading persisted cache files).
+        :class:`DataIngestionCacheService` only tracks metadata for payloads it
+        touches directly, so external mutations would otherwise be invisible.
+        This helper inspects every cache layer, rebuilds the in-memory metadata
+        map, and returns the refreshed snapshot ordered deterministically via
+        :meth:`cache_snapshot`.  The ``last_updated`` field reflects the service
+        clock at the time the rebuild occurs.
+        """
+
+        self._metadata.clear()
+        for layer in ("raw", "ohlcv", "features"):
+            cache = self._registry.cache_for(layer)
+            if not hasattr(cache, "iter_entries"):
+                raise TypeError(
+                    "Cache registry layer does not expose iter_entries(); upgrade the core layer"
+                )
+            for key, entry in cache.iter_entries():
+                snapshot = self._snapshot_from_entry(key, entry)
+                self._metadata[key] = snapshot
+        return self.cache_snapshot()
+
     # ------------------------------------------------------------------
     # Internal helpers
     def _coerce_datetime(self, value: datetime | None) -> pd.Timestamp | None:
@@ -281,6 +306,21 @@ class DataIngestionCacheService:
         timestamp = self._clock()
         return CacheEntrySnapshot(
             key=key, rows=rows, start=start, end=end, last_updated=timestamp
+        )
+
+    def _snapshot_from_entry(self, key: CacheKey, entry: CacheEntry) -> CacheEntrySnapshot:
+        rows = int(entry.frame.shape[0])
+        if rows == 0:
+            start = end = None
+        else:
+            start = entry.start.to_pydatetime()
+            end = entry.end.to_pydatetime()
+        return CacheEntrySnapshot(
+            key=key,
+            rows=rows,
+            start=start,
+            end=end,
+            last_updated=self._clock(),
         )
 
     def _build_key(

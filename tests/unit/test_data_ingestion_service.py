@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from core.data.backfill import CacheKey, CacheRegistry
 from core.data.ingestion import DataIngestor
 from core.data.models import InstrumentType
 from core.data.models import PriceTick as Ticker
@@ -505,3 +506,66 @@ def test_clear_resets_registry_and_metadata() -> None:
         )
         is None
     )
+
+
+def test_rebuild_metadata_hydrates_registry_state() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    frame = pd.DataFrame(
+        {"price": [100.0, 101.0], "volume": [1.0, 2.0]},
+        index=pd.DatetimeIndex([base, base + timedelta(minutes=1)], tz="UTC"),
+    )
+    registry = CacheRegistry()
+    key = CacheKey(layer="raw", symbol="BTC/USD", venue="BINANCE", timeframe="1min")
+    registry.cache_for("raw").put(key, frame)
+
+    clock = _Clock(datetime(2024, 1, 2, tzinfo=timezone.utc))
+    service = DataIngestionCacheService(cache_registry=registry, clock=clock)
+
+    snapshots = service.rebuild_metadata()
+
+    assert len(snapshots) == 1
+    snapshot = snapshots[0]
+    assert snapshot.key == key
+    assert snapshot.rows == 2
+    assert snapshot.start == base
+    assert snapshot.end == base + timedelta(minutes=1)
+    assert snapshot.last_updated == datetime(2024, 1, 2, tzinfo=timezone.utc)
+    assert service.metadata_for(
+        layer="raw", symbol="BTC/USD", venue="BINANCE", timeframe="1min"
+    ) == snapshot
+
+
+def test_rebuild_metadata_overwrites_stale_entries() -> None:
+    base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    ticks = [_tick(base + timedelta(minutes=i), 100.0 + i) for i in range(2)]
+    clock = _Clock(
+        datetime(2024, 1, 2, tzinfo=timezone.utc),
+        datetime(2024, 1, 3, tzinfo=timezone.utc),
+    )
+    service = DataIngestionCacheService(clock=clock)
+    service.cache_ticks(
+        ticks,
+        layer="raw",
+        symbol="BTCUSD",
+        venue="BINANCE",
+        timeframe="1min",
+    )
+
+    registry = service.cache_registry
+    registry.cache_for("raw").delete(
+        CacheKey(layer="raw", symbol="BTC/USD", venue="BINANCE", timeframe="1min")
+    )
+    new_key = CacheKey(layer="raw", symbol="ETH/USD", venue="BINANCE", timeframe="5min")
+    new_frame = pd.DataFrame(
+        {"price": [200.0], "volume": [3.0]},
+        index=pd.DatetimeIndex([base + timedelta(hours=1)], tz="UTC"),
+    )
+    registry.cache_for("raw").put(new_key, new_frame)
+
+    snapshots = service.rebuild_metadata()
+
+    assert len(snapshots) == 1
+    snapshot = snapshots[0]
+    assert snapshot.key == new_key
+    assert snapshot.rows == 1
+    assert snapshot.last_updated == datetime(2024, 1, 3, tzinfo=timezone.utc)
