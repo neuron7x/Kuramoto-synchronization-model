@@ -250,9 +250,7 @@ function computeWarnings(config: ScenarioConfig): string[] {
       const portfolioAtRisk = riskDollars * maxPositions
       if (portfolioAtRisk > initialBalance * 0.2) {
         warnings.push(
-          `Simultaneous risk is $${portfolioAtRisk.toFixed(2)} (~${((portfolioAtRisk / initialBalance) * 100).toFixed(
-            1,
-          )}% of equity). Add position staggering or tighten limits.`,
+          `Simultaneous risk is $${portfolioAtRisk.toFixed(2)} (~${((portfolioAtRisk / initialBalance) * 100).toFixed(1)}% of equity). Add position staggering or tighten limits.`,
         )
       }
     }
@@ -343,11 +341,7 @@ function buildTimeframeInsights(timeframe: string): string[] {
   return insights
 }
 
-function evaluateScenario(
-  config: ScenarioConfig,
-  warnings: string[],
-  hasErrors: boolean,
-): ScenarioHealth {
+function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors: boolean): ScenarioHealth {
   const checklist: string[] = []
 
   if (hasErrors) {
@@ -447,71 +441,81 @@ function evaluateScenario(
   }
 }
 
-export default function Home() {
-  const [templateId, setTemplateId] = useState<string>(SCENARIO_TEMPLATES[0].id)
-  const [draft, setDraft] = useState<ScenarioDraft>(() => toDraft(SCENARIO_TEMPLATES[0].defaults))
-  const [actionMessage, setActionMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+type ActionMessage =
+  | {
+      kind: 'success' | 'error'
+      text: string
+    }
+  | null
 
-  const selectedTemplate = useMemo(
-    () => SCENARIO_TEMPLATES.find((entry) => entry.id === templateId) ?? SCENARIO_TEMPLATES[0],
-    [templateId],
+type FieldKey = keyof typeof FIELD_META
+
+const jsonFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 })
+
+export function ScenarioStudio() {
+  const [templateId, setTemplateId] = useState<string>(SCENARIO_TEMPLATES[0]?.id ?? '')
+  const [draft, setDraft] = useState<ScenarioDraft>(() =>
+    SCENARIO_TEMPLATES[0] ? toDraft(SCENARIO_TEMPLATES[0].defaults) : toDraft({
+          initialBalance: 0,
+          riskPerTrade: 0,
+          maxPositions: 0,
+          timeframe: '',
+        }),
   )
+  const [actionMessage, setActionMessage] = useState<ActionMessage>(null)
+
+  const selectedTemplate = useMemo(() => {
+    return SCENARIO_TEMPLATES.find((template) => template.id === templateId) ?? SCENARIO_TEMPLATES[0]
+  }, [templateId])
+
+  const handleFieldChange = (field: FieldKey) => (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value
+    setDraft((previous) => ({ ...previous, [field]: value }))
+    setActionMessage(null)
+  }
 
   const parsedConfig = useMemo(() => parseDraft(draft), [draft])
   const errors = useMemo(() => validateDraft(draft), [draft])
-  const hasErrors = useMemo(() => Object.values(errors).some((item) => item !== null), [errors])
+  const hasErrors = useMemo(() => Object.values(errors).some((value) => value !== null), [errors])
   const warnings = useMemo(() => computeWarnings(parsedConfig), [parsedConfig])
-  const preview = useMemo(() => JSON.stringify(buildPreview(parsedConfig), null, 2), [parsedConfig])
   const timeframeInsights = useMemo(() => buildTimeframeInsights(parsedConfig.timeframe), [parsedConfig.timeframe])
   const scenarioHealth = useMemo(() => evaluateScenario(parsedConfig, warnings, hasErrors), [parsedConfig, warnings, hasErrors])
 
-  const riskDollars = useMemo(() => {
-    if (!Number.isFinite(parsedConfig.initialBalance) || !Number.isFinite(parsedConfig.riskPerTrade)) {
-      return null
+  const preview = useMemo(() => {
+    if (hasErrors || !selectedTemplate) {
+      return '{\n  "error": "Resolve validation issues before exporting the scenario."\n}'
     }
-    return (parsedConfig.initialBalance * parsedConfig.riskPerTrade) / 100
-  }, [parsedConfig])
 
-  const aggregateRisk = useMemo(() => {
-    if (riskDollars === null || !Number.isFinite(parsedConfig.maxPositions)) {
-      return null
+    const normalized: ScenarioConfig = {
+      initialBalance: Number.isFinite(parsedConfig.initialBalance) ? parsedConfig.initialBalance : 0,
+      riskPerTrade: Number.isFinite(parsedConfig.riskPerTrade) ? parsedConfig.riskPerTrade : 0,
+      maxPositions: Number.isFinite(parsedConfig.maxPositions) ? parsedConfig.maxPositions : 0,
+      timeframe: parsedConfig.timeframe,
     }
-    return riskDollars * parsedConfig.maxPositions
-  }, [parsedConfig, riskDollars])
 
-  const riskPercentOfEquity = useMemo(() => {
-    if (
-      riskDollars === null ||
-      !Number.isFinite(parsedConfig.initialBalance) ||
-      parsedConfig.initialBalance === 0
-    ) {
-      return null
+    const payload = {
+      template: templateId,
+      configuration: {
+        initialBalance: jsonFormatter.format(normalized.initialBalance),
+        riskPerTradePercent: jsonFormatter.format(normalized.riskPerTrade),
+        maxConcurrentPositions: normalized.maxPositions,
+        timeframe: normalized.timeframe,
+      },
+      health: {
+        score: scenarioHealth.score,
+        status: scenarioHealth.status,
+        warnings,
+      },
     }
-    return (riskDollars / parsedConfig.initialBalance) * 100
-  }, [parsedConfig, riskDollars])
 
-  const portfolioRiskPercent = useMemo(() => {
-    if (
-      aggregateRisk === null ||
-      !Number.isFinite(parsedConfig.initialBalance) ||
-      parsedConfig.initialBalance === 0
-    ) {
-      return null
+    return JSON.stringify(payload, null, 2)
+  }, [hasErrors, parsedConfig, scenarioHealth.score, scenarioHealth.status, selectedTemplate, templateId, warnings])
+
+  const handleReset = () => {
+    if (selectedTemplate) {
+      setDraft(toDraft(selectedTemplate.defaults))
+      setActionMessage(null)
     }
-    return (aggregateRisk / parsedConfig.initialBalance) * 100
-  }, [aggregateRisk, parsedConfig])
-
-  const handleChange = (field: ScenarioField) => (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const value = event.target.value
-    setActionMessage(null)
-    setDraft((current) => ({ ...current, [field]: value }))
-  }
-
-  const resetTemplate = () => {
-    setDraft(toDraft(selectedTemplate.defaults))
-    setActionMessage(null)
   }
 
   const handleCopy = async () => {
@@ -530,6 +534,7 @@ export default function Home() {
       await navigator.clipboard.writeText(preview)
       setActionMessage({ kind: 'success', text: 'Scenario JSON copied to clipboard.' })
     } catch (error) {
+      console.error('Failed to copy scenario JSON', error)
       setActionMessage({
         kind: 'error',
         text: 'Failed to copy the scenario JSON. Please try again.',
@@ -558,6 +563,7 @@ export default function Home() {
       URL.revokeObjectURL(url)
       setActionMessage({ kind: 'success', text: 'Scenario JSON download started.' })
     } catch (error) {
+      console.error('Failed to download scenario JSON', error)
       setActionMessage({
         kind: 'error',
         text: 'Failed to start the scenario JSON download. Please try again.',
@@ -571,11 +577,7 @@ export default function Home() {
   const statusChipColor = statusVisual.color
 
   return (
-    <Box
-      component="main"
-      data-testid="scenario-main"
-      sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}
-    >
+    <Box component="main" data-testid="scenario-main" sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}>
       <Container maxWidth="xl" data-testid="scenario-container">
         <Stack spacing={{ xs: 5, md: 6 }}>
           <Stack spacing={1.5} data-testid="onboarding-hero">
@@ -633,312 +635,190 @@ export default function Home() {
                         data-testid="template-description"
                         sx={{ mt: 1.5 }}
                       >
-                        {selectedTemplate.description}
+                        {selectedTemplate?.description}
                       </Typography>
 
                       <List dense disablePadding data-testid="template-notes" sx={{ mt: 2, pl: 0 }}>
-                        {selectedTemplate.notes.map((note) => (
-                          <ListItem key={note} disableGutters sx={{ alignItems: 'flex-start', py: 0.5 }}>
-                            <ListItemIcon sx={{ minWidth: 32, mt: '3px' }}>
+                        {selectedTemplate?.notes.map((note) => (
+                          <ListItem key={note} sx={{ px: 0 }}>
+                            <ListItemIcon sx={{ minWidth: 32 }}>
                               <AssignmentIcon color="primary" fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText
-                              primary={note}
-                              primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                            />
+                            <ListItemText primary={note} primaryTypographyProps={{ variant: 'body2' }} />
                           </ListItem>
                         ))}
                       </List>
                     </Box>
 
-                    <Box component="form" noValidate data-testid="scenario-form">
-                      <Grid container spacing={3}>
-                        {(Object.keys(FIELD_META) as ScenarioField[]).map((field) => {
-                          const meta = FIELD_META[field]
-                          const inputId = `field-${field}`
-                          const helperId = `${inputId}-helper`
-                          const errorId = `${inputId}-error`
-                          const hasError = Boolean(errors[field])
-                          const describedBy = hasError ? `${helperId} ${errorId}` : helperId
+                    <Grid container spacing={2}>
+                      {(Object.keys(FIELD_META) as FieldKey[]).map((fieldKey) => {
+                        const meta = FIELD_META[fieldKey]
+                        const error = errors[fieldKey]
+                        return (
+                          <Grid key={fieldKey} item xs={12} md={fieldKey === 'timeframe' ? 12 : 6}>
+                            <TextField
+                              fullWidth
+                              id={fieldKey}
+                              name={fieldKey}
+                              label={meta.label}
+                              placeholder={meta.placeholder}
+                              value={draft[fieldKey]}
+                              onChange={handleFieldChange(fieldKey)}
+                              inputMode={meta.inputMode}
+                              type={meta.type}
+                              helperText={error ?? meta.helper}
+                              error={Boolean(error)}
+                            />
+                          </Grid>
+                        )
+                      })}
+                    </Grid>
 
-                          return (
-                            <Grid item xs={12} sm={6} data-testid={`field-${field}`} key={field}>
-                              <Stack spacing={1}>
-                                <TextField
-                                  fullWidth
-                                  id={inputId}
-                                  name={field}
-                                  label={meta.label}
-                                  value={draft[field]}
-                                  onChange={handleChange(field)}
-                                  placeholder={meta.placeholder}
-                                  type={meta.type}
-                                  error={hasError}
-                                  helperText={meta.helper}
-                                  FormHelperTextProps={{
-                                    id: helperId,
-                                  }}
-                                  inputProps={{
-                                    inputMode: meta.inputMode,
-                                    'data-testid': `input-${field}`,
-                                    'aria-describedby': describedBy,
-                                    step: meta.type === 'number' ? 'any' : undefined,
-                                  }}
-                                  autoComplete="off"
-                                />
-                                {hasError ? (
-                                  <Typography
-                                    variant="body2"
-                                    color="error"
-                                    id={errorId}
-                                    data-testid={`error-${field}`}
-                                  >
-                                    {errors[field]}
-                                  </Typography>
-                                ) : null}
-                              </Stack>
-                            </Grid>
-                          )
-                        })}
-                      </Grid>
-
-                      <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={1.5}
-                        justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
-                        alignItems={{ xs: 'stretch', sm: 'center' }}
-                        sx={{ mt: 4 }}
-                        data-testid="action-buttons"
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<ContentCopyIcon />}
+                        onClick={handleCopy}
                       >
-                        <Button
-                          type="button"
-                          variant="outlined"
-                          color="inherit"
-                          onClick={resetTemplate}
-                          startIcon={<RestartAltIcon />}
-                          data-testid="action-reset"
-                        >
-                          Reset to template defaults
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="contained"
-                          color="primary"
-                          onClick={handleCopy}
-                          disabled={hasErrors}
-                          startIcon={<ContentCopyIcon />}
-                          data-testid="action-copy"
-                        >
-                          Copy to clipboard
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="contained"
-                          color="secondary"
-                          onClick={handleDownload}
-                          disabled={hasErrors}
-                          startIcon={<DownloadIcon />}
-                          data-testid="action-download"
-                        >
-                          Download JSON
-                        </Button>
-                      </Stack>
+                        Copy JSON
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleDownload}
+                      >
+                        Download JSON
+                      </Button>
+                      <Button
+                        variant="text"
+                        color="secondary"
+                        startIcon={<RestartAltIcon />}
+                        onClick={handleReset}
+                      >
+                        Reset
+                      </Button>
+                    </Stack>
 
-                      {actionMessage ? (
-                        <Alert
-                          severity={actionMessage.kind === 'success' ? 'success' : 'error'}
-                          role="status"
-                          aria-live="polite"
-                          data-testid="action-feedback"
-                          sx={{ mt: 3 }}
-                        >
-                          {actionMessage.text}
-                        </Alert>
-                      ) : null}
-                    </Box>
+                    {actionMessage ? (
+                      <Alert
+                        severity={actionMessage.kind}
+                        onClose={() => setActionMessage(null)}
+                        data-testid="scenario-action-message"
+                      >
+                        {actionMessage.text}
+                      </Alert>
+                    ) : null}
                   </Stack>
                 </CardContent>
               </Card>
             </Grid>
 
             <Grid item xs={12} lg={5}>
-              <Stack spacing={3} data-testid="insights-panels">
-                <Card component="article" variant="outlined" data-testid="scenario-health">
-                  <CardHeader title="Scenario health" />
+              <Stack spacing={3}>
+                <Card component="section" variant="outlined" data-testid="scenario-health-card">
+                  <CardHeader
+                    title="Scenario health snapshot"
+                    subheader="An automated review of concentration, leverage and timeframe hygiene."
+                  />
                   <CardContent>
-                    <Stack spacing={2}>
-                      <Box data-testid="health-status">
+                    <Stack spacing={3}>
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
                         <Chip
-                          icon={<StatusIcon fontSize="small" />}
+                          icon={<StatusIcon />}
                           label={scenarioHealth.status}
                           color={statusChipColor}
-                          variant="filled"
-                          sx={{ fontSize: '0.95rem', px: 1.5, py: 0.5 }}
+                          variant="outlined"
                         />
-                      </Box>
-
-                      <Typography variant="body1" fontWeight={600} data-testid="health-score">
-                        Score: {scenarioHealth.score} / 100
-                      </Typography>
-
-                      <Box
-                        role="meter"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={scenarioHealth.score}
-                        aria-valuetext={`${scenarioHealth.score} out of 100`}
-                        data-testid="health-meter"
-                        sx={{ mt: -0.5 }}
-                      >
-                        <LinearProgress
-                          variant="determinate"
-                          value={scenarioHealth.score}
-                          color={statusChipColor}
-                          sx={{ height: 10, borderRadius: 999 }}
-                        />
-                      </Box>
-
-                      <Typography variant="body1" color="text.secondary" data-testid="health-summary">
+                        <Typography variant="h4" component="p" data-testid="health-score">
+                          {scenarioHealth.score}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
                         {scenarioHealth.summary}
                       </Typography>
 
-                      {scenarioHealth.checklist.length > 0 ? (
-                        <List dense disablePadding data-testid="health-checklist">
-                          {scenarioHealth.checklist.map((item) => (
-                            <ListItem key={item} disableGutters sx={{ alignItems: 'flex-start', py: 0.5 }}>
-                              <ListItemIcon sx={{ minWidth: 32, mt: '3px' }}>
-                                <CheckCircleIcon color="primary" fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={item}
-                                primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      ) : null}
-                    </Stack>
-                  </CardContent>
-                </Card>
-
-                <Card component="article" variant="outlined" data-testid="risk-snapshot">
-                  <CardHeader title="Risk snapshot" />
-                  <CardContent>
-                    <Stack spacing={3} data-testid="metric-grid">
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                          <Paper variant="outlined" data-testid="metric-risk-per-trade" sx={{ p: 2, borderRadius: 3 }}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              Risk per trade
-                            </Typography>
-                            <Typography variant="h6">
-                              {riskDollars === null ? '—' : `$${riskDollars.toFixed(2)}`}
-                            </Typography>
-                            {riskPercentOfEquity !== null ? (
-                              <Typography variant="body2" color="text.secondary">
-                                {riskPercentOfEquity.toFixed(2)}% of equity
-                              </Typography>
-                            ) : null}
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <Paper variant="outlined" data-testid="metric-portfolio-risk" sx={{ p: 2, borderRadius: 3 }}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              Max portfolio risk
-                            </Typography>
-                            <Typography variant="h6">
-                              {aggregateRisk === null ? '—' : `$${aggregateRisk.toFixed(2)}`}
-                            </Typography>
-                            {portfolioRiskPercent !== null ? (
-                              <Typography variant="body2" color="text.secondary">
-                                {portfolioRiskPercent.toFixed(2)}% of equity
-                              </Typography>
-                            ) : null}
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <Paper variant="outlined" data-testid="metric-timeframe" sx={{ p: 2, borderRadius: 3 }}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              Timeframe
-                            </Typography>
-                            <Typography variant="h6">{parsedConfig.timeframe || '—'}</Typography>
-                          </Paper>
-                        </Grid>
-                      </Grid>
-
                       {warnings.length > 0 ? (
-                        <Stack spacing={1.5} data-testid="warning-list">
-                          {warnings.map((warning) => (
-                            <Alert
-                              key={warning}
-                              severity="warning"
-                              icon={<WarningAmberIcon />}
-                              sx={{ alignItems: 'flex-start' }}
-                            >
-                              {warning}
-                            </Alert>
-                          ))}
-                        </Stack>
+                        <Alert severity="warning" data-testid="scenario-warnings">
+                          <Stack spacing={1}>
+                            {warnings.map((warning) => (
+                              <Typography key={warning} component="p" variant="body2">
+                                {warning}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        </Alert>
                       ) : (
-                        <Typography color="text.secondary" data-testid="warning-placeholder">
-                          Risk controls look balanced for the selected template. Stress test transaction costs before live execution.
-                        </Typography>
+                        <Alert severity="success" data-testid="scenario-no-warnings">
+                          No risk warnings triggered. Document the assumptions before moving to production.
+                        </Alert>
                       )}
 
-                      {hasErrors ? (
-                        <Alert severity="error" data-testid="error-export-blocker">
-                          Resolve the highlighted fields above to unlock export-ready scenario JSON.
-                        </Alert>
-                      ) : null}
-
-                      {timeframeInsights.length > 0 ? (
-                        <Paper variant="outlined" data-testid="timeframe-insights" sx={{ p: 2.5, borderRadius: 3 }}>
-                          <Typography variant="h6" sx={{ mb: 1 }}>
-                            Timeframe insights
-                          </Typography>
-                          <List dense disablePadding>
-                            {timeframeInsights.map((insight) => (
-                              <ListItem key={insight} disableGutters sx={{ py: 0.5 }}>
-                                <ListItemIcon sx={{ minWidth: 32, mt: '3px' }}>
-                                  <AssignmentIcon color="primary" fontSize="small" />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={insight}
-                                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                                />
-                              </ListItem>
-                            ))}
-                          </List>
-                        </Paper>
-                      ) : null}
+                      <List dense disablePadding sx={{ pl: 0 }} data-testid="scenario-checklist">
+                        {scenarioHealth.checklist.map((item) => (
+                          <ListItem key={item} sx={{ px: 0 }}>
+                            <ListItemIcon sx={{ minWidth: 32 }}>
+                              <CheckCircleIcon color="success" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primaryTypographyProps={{ variant: 'body2' }} primary={item} />
+                          </ListItem>
+                        ))}
+                      </List>
                     </Stack>
                   </CardContent>
                 </Card>
 
-                <Card component="article" variant="outlined" data-testid="scenario-preview">
-                  <CardHeader title="Scenario JSON template" />
+                <Card component="section" variant="outlined" data-testid="scenario-timeframe-card">
+                  <CardHeader
+                    title="Timeframe insights"
+                    subheader="Understand the operational cadence implied by the execution interval."
+                  />
                   <CardContent>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Drop this snippet into <code>docs/scenarios.md</code> or configuration files as a starting point for backtests.
-                    </Typography>
-                    <Box
-                      component="pre"
-                      data-testid="scenario-json-preview"
-                      aria-label="Scenario JSON preview"
-                      sx={{
-                        bgcolor: '#0f172a',
-                        color: '#e2e8f0',
-                        borderRadius: 3,
-                        p: 2.5,
-                        fontSize: 14,
-                        overflowX: 'auto',
-                        boxShadow: 'inset 0 0 0 1px rgba(148, 163, 184, 0.2)',
-                      }}
-                    >
-                      {preview}
-                    </Box>
+                    {timeframeInsights.length === 0 ? (
+                      <Alert severity="info">Provide a valid timeframe to surface operational guidance.</Alert>
+                    ) : (
+                      <List dense disablePadding sx={{ pl: 0 }}>
+                        {timeframeInsights.map((insight) => (
+                          <ListItem key={insight} sx={{ px: 0 }}>
+                            <ListItemIcon sx={{ minWidth: 32 }}>
+                              <WarningAmberIcon color="warning" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primaryTypographyProps={{ variant: 'body2' }} primary={insight} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    )}
                   </CardContent>
                 </Card>
+
+                <Paper elevation={0} variant="outlined" component="section" data-testid="scenario-preview">
+                  <Box sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}`, px: 3, py: 2 }}>
+                    <Typography variant="subtitle1" component="h2">
+                      Scenario JSON preview
+                    </Typography>
+                  </Box>
+                  <Box sx={{ px: 3, py: 2 }}>
+                    <Stack spacing={2}>
+                      <Typography variant="body2" color="text.secondary">
+                        Review the JSON payload before exporting. This mirrors the structure sent to the deployment pipeline.
+                      </Typography>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          maxHeight: 320,
+                          overflow: 'auto',
+                          bgcolor: (theme) => theme.palette.grey[50],
+                          borderColor: (theme) => theme.palette.grey[200],
+                        }}
+                      >
+                        <Box component="pre" sx={{ m: 0, p: 2, fontSize: '0.9rem' }}>
+                          <code>{preview}</code>
+                        </Box>
+                      </Paper>
+                    </Stack>
+                  </Box>
+                </Paper>
               </Stack>
             </Grid>
           </Grid>
@@ -948,11 +828,16 @@ export default function Home() {
   )
 }
 
-function buildPreview(config: ScenarioConfig) {
-  return {
-    initialBalance: Number.isFinite(config.initialBalance) ? Number(config.initialBalance.toFixed(2)) : null,
-    riskPerTrade: Number.isFinite(config.riskPerTrade) ? Number(config.riskPerTrade.toFixed(2)) : null,
-    maxPositions: Number.isFinite(config.maxPositions) ? config.maxPositions : null,
-    timeframe: config.timeframe || null,
-  }
+export function ScenarioStudioFallback() {
+  return (
+    <Box component="main" sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 4 }}>
+      <Stack spacing={2} alignItems="center">
+        <LinearProgress sx={{ width: 240, maxWidth: '60vw' }} />
+        <Typography variant="body2" color="text.secondary">
+          Preparing the Scenario Studio…
+        </Typography>
+      </Stack>
+    </Box>
+  )
 }
+
