@@ -19,6 +19,8 @@ spec:
     metadata:
       annotations:
         seccomp.security.alpha.kubernetes.io/pod: runtime/default
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/module: tradepulse-api
       labels:
         app.kubernetes.io/name: tradepulse-api
     spec:
