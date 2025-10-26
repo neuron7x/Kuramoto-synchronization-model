@@ -1412,15 +1412,17 @@ class MetricsCollector:
         if limit <= 0:
             limit = 1
 
+        values_list: list[float] | None = None
         if _NUMPY_AVAILABLE:
             values = np.asarray(series, dtype=float)
             total_points = int(values.size)
         else:
             values_list = [float(v) for v in series]
             total_points = len(values_list)
-            if total_points == 0:
-                self._clear_equity_curve(strategy)
-                return
+
+        if total_points == 0:
+            self._clear_equity_curve(strategy)
+            return
 
         stride = max(1, int(math.ceil(total_points / limit)))
         indices = list(range(0, total_points, stride))
@@ -1431,6 +1433,7 @@ class MetricsCollector:
         if _NUMPY_AVAILABLE:
             sampled_values = values[indices]
         else:
+            assert values_list is not None
             sampled_values = [values_list[index] for index in indices]
 
         self._clear_equity_curve(strategy)
