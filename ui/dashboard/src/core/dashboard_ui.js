@@ -12,6 +12,12 @@ import { CHART_STYLES } from '../styles/chart.css.js';
 import { getMessage, t, getLocale, getLocaleConfig } from '../i18n/index.js';
 import { supportedLocales, localeMetadata } from '../i18n/config.js';
 
+/**
+ * @typedef {import('../types/api').DashboardData} DashboardData
+ * @typedef {import('../types/api').DashboardOverviewPayload} DashboardOverviewPayload
+ * @typedef {import('../types/api').DashboardCommunityPayload} DashboardCommunityPayload
+ */
+
 export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES].join('\n');
 
 const NAVIGATION_ENHANCEMENT_SCRIPT = `
@@ -438,6 +444,16 @@ function renderNavigation(router, currentRoute, currentLocale) {
   };
 }
 
+/**
+ * @param {{
+ *   overview?: DashboardOverviewPayload;
+ *   positions?: unknown;
+ *   orders?: unknown;
+ *   pnl?: unknown;
+ *   signals?: unknown;
+ *   community?: DashboardCommunityPayload;
+ * }} config
+ */
 function createDashboardRouter({ overview, positions, orders, pnl, signals, community }) {
   return createRouter({
     defaultRoute: 'overview',
@@ -452,6 +468,9 @@ function createDashboardRouter({ overview, positions, orders, pnl, signals, comm
   });
 }
 
+/**
+ * @param {DashboardData} [options]
+ */
 export function renderDashboard(options = {}) {
   const {
     route = 'overview',

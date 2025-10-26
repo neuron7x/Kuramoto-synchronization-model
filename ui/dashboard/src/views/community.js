@@ -1,6 +1,19 @@
 import { escapeHtml, formatCurrency, formatNumber } from '../core/formatters.js';
 import { getLocaleConfig, getMessage, t } from '../i18n/index.js';
 
+/**
+ * @typedef {import('../types/api').CommunityProfile} CommunityProfile
+ * @typedef {import('../types/api').CommunityProgram} CommunityProgram
+ * @typedef {import('../types/api').CommunityEvent} CommunityEvent
+ * @typedef {import('../types/api').CommunityResource} CommunityResource
+ * @typedef {import('../types/api').CommunityHub} CommunityHub
+ * @typedef {import('../types/api').CommunityOpportunity} CommunityOpportunity
+ * @typedef {import('../types/api').CommunityChampion} CommunityChampion
+ * @typedef {import('../types/api').CommunityChannel} CommunityChannel
+ * @typedef {import('../types/api').GithubOverview} GithubOverview
+ * @typedef {import('../types/api').DashboardCommunityPayload} DashboardCommunityPayload
+ */
+
 function coerceNumber(value, fallback = 0) {
   if (Number.isFinite(value)) {
     return value;
@@ -77,6 +90,10 @@ function formatTimelineLabel(value, translations = {}) {
   }
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @returns {Array<{ period: string | undefined; contributions: number | null; newcomers: number | null; ships: number | null; highlights: string[]; }>}
+ */
 function buildEngagementEntries(community = {}) {
   const timeline = Array.isArray(community.engagement)
     ? community.engagement
@@ -113,6 +130,10 @@ function buildEngagementEntries(community = {}) {
     .filter(Boolean);
 }
 
+/**
+ * @param {{ period: string | undefined; contributions: number | null; newcomers: number | null; ships: number | null; highlights: string[] }} entry
+ * @param {Record<string, unknown>} translations
+ */
 function renderTimelineEntry(entry, translations = {}) {
   const labels = translations.labels || {};
   const contributionsLabel = labels.contributions || 'Contributions';
@@ -171,6 +192,10 @@ function renderTimelineEntry(entry, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderEngagementSection(community = {}, translations = {}) {
   const entries = buildEngagementEntries(community);
   if (entries.length === 0) {
@@ -196,6 +221,10 @@ function renderEngagementSection(community = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityHub | null | undefined} hub
+ * @param {Record<string, unknown>} translations
+ */
 function renderHub(hub, translations = {}) {
   if (!hub) {
     return '';
@@ -234,6 +263,10 @@ function renderHub(hub, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderHubsSection(community = {}, translations = {}) {
   const hubs = Array.isArray(community.hubs) ? community.hubs.filter(Boolean) : [];
   if (hubs.length === 0) {
@@ -259,6 +292,10 @@ function renderHubsSection(community = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityOpportunity | null | undefined} opportunity
+ * @param {Record<string, unknown>} translations
+ */
 function renderOpportunity(opportunity, translations = {}) {
   if (!opportunity) {
     return '';
@@ -291,6 +328,10 @@ function renderOpportunity(opportunity, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderOpportunitiesSection(community = {}, translations = {}) {
   const opportunities = Array.isArray(community.opportunities)
     ? community.opportunities.filter(Boolean)
@@ -336,6 +377,10 @@ function getTranslations() {
   };
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function buildMetrics(community = {}, translations = {}) {
   const metrics = community.metrics || {};
   const currencyCode = getLocaleConfig()?.defaultCurrency || 'USD';
@@ -436,6 +481,10 @@ function buildMetrics(community = {}, translations = {}) {
     .filter(Boolean);
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderMetricsSection(community, translations = {}) {
   const metrics = buildMetrics(community, translations);
   if (metrics.length === 0) {
@@ -473,6 +522,10 @@ function renderMetricsSection(community, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProgram | null | undefined} program
+ * @param {Record<string, unknown>} translations
+ */
 function renderProgram(program, translations = {}) {
   const title = program?.name || program?.title;
   const description = program?.description || program?.summary || '';
@@ -500,6 +553,10 @@ function renderProgram(program, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderProgramsSection(community = {}, translations = {}) {
   const programs = Array.isArray(community.programs) ? community.programs.filter(Boolean) : [];
   if (programs.length === 0) {
@@ -536,6 +593,10 @@ function formatEventDate(value) {
   return date.toISOString().split('T')[0];
 }
 
+/**
+ * @param {CommunityEvent | null | undefined} event
+ * @param {Record<string, unknown>} translations
+ */
 function renderEvent(event, translations = {}) {
   const url = safeExternalUrl(event?.url || event?.href);
   const title = event?.name || event?.title || translations.fallbackTitle || 'Event';
@@ -568,6 +629,10 @@ function renderEvent(event, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderEventsSection(community = {}, translations = {}) {
   const events = Array.isArray(community.events) ? community.events.filter(Boolean) : [];
   if (events.length === 0) {
@@ -593,6 +658,9 @@ function renderEventsSection(community = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityResource[]} resources
+ */
 function buildResourceFilters(resources = []) {
   const categories = new Map();
   resources.forEach((resource) => {
@@ -607,6 +675,10 @@ function buildResourceFilters(resources = []) {
   return Array.from(categories.entries()).map(([value, label]) => ({ value, label }));
 }
 
+/**
+ * @param {Array<{ value: string; label: string }>} filters
+ * @param {Record<string, unknown>} translations
+ */
 function renderResourceFilters(filters, translations = {}) {
   if (!filters.length) {
     return '';
@@ -641,6 +713,10 @@ function renderResourceFilters(filters, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityResource | null | undefined} resource
+ * @param {Record<string, unknown>} translations
+ */
 function renderResource(resource, translations = {}) {
   const label = resource?.label || resource?.title || translations.fallbackTitle || 'Resource';
   const description = resource?.description || resource?.summary || '';
@@ -668,6 +744,10 @@ function renderResource(resource, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderResourcesSection(community = {}, translations = {}) {
   const resources = Array.isArray(community.resources) ? community.resources.filter(Boolean) : [];
   if (resources.length === 0) {
@@ -697,6 +777,10 @@ function renderResourcesSection(community = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityChampion | null | undefined} champion
+ * @param {Record<string, unknown>} translations
+ */
 function renderChampion(champion, translations = {}) {
   const name = champion?.name || champion?.handle || translations.fallbackTitle || 'Champion';
   const contributions = coerceNumber(champion?.contributions, null);
@@ -736,6 +820,10 @@ function renderChampion(champion, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} translations
+ */
 function renderChampionsSection(community = {}, translations = {}) {
   const champions = Array.isArray(community.champions) ? community.champions.filter(Boolean) : [];
   if (champions.length === 0) {
@@ -761,6 +849,10 @@ function renderChampionsSection(community = {}, translations = {}) {
   `;
 }
 
+/**
+ * @param {CommunityProfile | null | undefined} community
+ * @param {Record<string, unknown>} heroTranslations
+ */
 function renderChannels(community = {}, heroTranslations = {}) {
   const channels = Array.isArray(community.channels) ? community.channels.filter(Boolean) : [];
   if (channels.length === 0) {
@@ -794,17 +886,26 @@ function renderChannels(community = {}, heroTranslations = {}) {
   `;
 }
 
+/**
+ * @param {Record<string, unknown>} translations
+ * @param {CommunityProfile} community
+ * @param {GithubOverview} github
+ */
 function renderCommunityHero(translations = {}, community = {}, github = {}) {
+  /** @type {CommunityProfile} */
+  const profile = community || {};
+  /** @type {GithubOverview} */
+  const repository = github || {};
   const hero = translations.hero || {};
   const eyebrow = hero.eyebrow || t('views.community.hero.eyebrow');
   const title = hero.title || t('views.community.hero.title');
   const subtitle = hero.subtitle || t('views.community.hero.subtitle');
   const primaryUrl = safeExternalUrl(
-    community.primaryCta?.url || community.primaryCTA?.url || community.resources?.[0]?.url || github.url,
+    profile.primaryCta?.url || profile.primaryCTA?.url || profile.resources?.[0]?.url || repository.url,
   );
-  const primaryLabel = community.primaryCta?.label || community.primaryCTA?.label || hero.cta || t('views.community.hero.cta');
+  const primaryLabel = profile.primaryCta?.label || profile.primaryCTA?.label || hero.cta || t('views.community.hero.cta');
   const secondaryLabel = hero.secondaryCta;
-  const channels = renderChannels(community, hero);
+  const channels = renderChannels(profile, hero);
 
   const primaryAction =
     primaryUrl === '#'
@@ -816,8 +917,8 @@ function renderCommunityHero(translations = {}, community = {}, github = {}) {
         `;
 
   const secondaryChannel =
-    typeof secondaryLabel === 'string' && community.secondaryCta?.url
-      ? safeExternalUrl(community.secondaryCta.url)
+    typeof secondaryLabel === 'string' && profile.secondaryCta?.url
+      ? safeExternalUrl(profile.secondaryCta.url)
       : '#';
 
   const secondaryAction =
@@ -849,17 +950,25 @@ function renderCommunityHero(translations = {}, community = {}, github = {}) {
   `;
 }
 
+/**
+ * @param {DashboardCommunityPayload | { community?: CommunityProfile | null; github?: GithubOverview | null }} [options]
+ * @returns {{ html: string; community: CommunityProfile; github: GithubOverview }}
+ */
 export function renderCommunityView({ community = {}, github = {} } = {}) {
+  /** @type {CommunityProfile} */
+  const communityProfile = community ?? {};
+  /** @type {GithubOverview} */
+  const githubProfile = github ?? {};
   const translations = getTranslations();
-  const hero = renderCommunityHero(translations, community, github);
-  const metrics = renderMetricsSection(community, translations.metrics || {});
-  const engagement = renderEngagementSection(community, translations.engagement || {});
-  const hubs = renderHubsSection(community, translations.hubs || {});
-  const programs = renderProgramsSection(community, translations.programs || {});
-  const events = renderEventsSection(community, translations.events || {});
-  const opportunities = renderOpportunitiesSection(community, translations.opportunities || {});
-  const resources = renderResourcesSection(community, translations.resources || {});
-  const champions = renderChampionsSection(community, translations.champions || {});
+  const hero = renderCommunityHero(translations, communityProfile, githubProfile);
+  const metrics = renderMetricsSection(communityProfile, translations.metrics || {});
+  const engagement = renderEngagementSection(communityProfile, translations.engagement || {});
+  const hubs = renderHubsSection(communityProfile, translations.hubs || {});
+  const programs = renderProgramsSection(communityProfile, translations.programs || {});
+  const events = renderEventsSection(communityProfile, translations.events || {});
+  const opportunities = renderOpportunitiesSection(communityProfile, translations.opportunities || {});
+  const resources = renderResourcesSection(communityProfile, translations.resources || {});
+  const champions = renderChampionsSection(communityProfile, translations.champions || {});
 
   const sections = [metrics, engagement, hubs, programs, opportunities, events, champions, resources]
     .filter(Boolean)
@@ -882,7 +991,7 @@ export function renderCommunityView({ community = {}, github = {} } = {}) {
         </section>
       </article>
     `,
-    community,
-    github,
+    community: communityProfile,
+    github: githubProfile,
   };
 }
