@@ -1,0 +1,46 @@
+name: tradepulse-deployment
+description: Deploy TradePulse to the requested Kubernetes environment.
+tags:
+  - deployment
+metadata:
+  change_ticket: CHG-0000
+
+# Target environment for the deployment. Supported values are "stage" and "prod".
+environment: stage
+
+# Strategy identifier and artifact digest are recorded in annotations.
+strategy: example-strategy
+artifact: ghcr.io/neuron7x/tradepulse@sha256:CHANGE_ME
+
+# Configure how manifests are resolved. By default this references the kustomize
+# overlays shipped with the repository (staging/production).
+manifests:
+  root: deploy/kustomize/overlays
+  name: staging
+
+# Name of the Kubernetes Deployment that backs the TradePulse API.
+deployment_name: tradepulse-api
+
+# Controls whether the CLI waits for the rollout to complete and how long it
+# should wait before timing out.
+wait_for_rollout: true
+rollout_timeout_seconds: 600
+
+# kubectl invocation configuration. "binary" can be a relative path resolved
+# from this configuration file. "dry_run" can be one of "client", "server", or
+# "none" to skip the dry-run step.
+kubectl:
+  binary: kubectl
+  context: null
+  namespace: null
+  extra_args: []
+  env: {}
+  dry_run: client
+
+# Additional annotations applied to the deployment alongside the artifact and
+# strategy metadata above. Keys must be valid Kubernetes annotation keys.
+annotations:
+  tradepulse.dev/change-ticket: CHG-0000
+
+# Destination for the JSON summary emitted after a successful deployment.
+summary_path: reports/live/deployments/latest.json

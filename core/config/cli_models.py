@@ -9,6 +9,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .postgres import ensure_secure_postgres_uri, is_postgres_uri
+from .registry import Environment
 
 __all__ = [
     "CatalogConfig",
@@ -21,12 +22,15 @@ __all__ = [
     "ExperimentDeviationAlertConfig",
     "ExperimentReportConfig",
     "ExperimentTrackingConfig",
+    "DeploymentConfig",
+    "DeploymentManifestsConfig",
     "ExecutionConfig",
     "FeatureFrameSourceConfig",
     "FeatureParityConfig",
     "FeatureParitySpecConfig",
     "IngestConfig",
     "OptimizeConfig",
+    "KubectlConfig",
     "PostgresTLSConfig",
     "ReportConfig",
     "StrategyConfig",
@@ -343,4 +347,81 @@ class FeatureParityConfig(TradePulseBaseConfig):
     def _validate_mode(self) -> "FeatureParityConfig":
         if self.mode not in {"append", "overwrite"}:
             raise ValueError("mode must be either 'append' or 'overwrite'")
+        return self
+
+
+class DeploymentManifestsConfig(BaseModel):
+    """Describe how Kubernetes manifests should be located for deployment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    root: Path = Field(default=Path("deploy/kustomize/overlays"))
+    name: str | None = None
+    path: Path | None = None
+
+    @model_validator(mode="after")
+    def _validate_choice(self) -> "DeploymentManifestsConfig":
+        if self.path is not None and self.name is not None:
+            msg = "manifests.path and manifests.name are mutually exclusive"
+            raise ValueError(msg)
+        return self
+
+
+class KubectlConfig(BaseModel):
+    """Parameters controlling kubectl invocation for deployments."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    binary: Path = Field(default=Path("kubectl"))
+    context: str | None = None
+    namespace: str | None = None
+    extra_args: List[str] = Field(default_factory=list)
+    env: Dict[str, str] = Field(default_factory=dict)
+    dry_run: Literal["none", "client", "server"] = "client"
+
+
+class DeploymentConfig(TradePulseBaseConfig):
+    """Configuration driving the TradePulse deployment CLI command."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    environment: Environment
+    strategy: str
+    artifact: str
+    manifests: DeploymentManifestsConfig = Field(default_factory=DeploymentManifestsConfig)
+    deployment_name: str = "tradepulse-api"
+    wait_for_rollout: bool = True
+    rollout_timeout_seconds: float = 600.0
+    kubectl: KubectlConfig = Field(default_factory=KubectlConfig)
+    annotations: Dict[str, str] = Field(default_factory=dict)
+    summary_path: Path = Field(default=Path("reports/live/deployments/latest.json"))
+
+    @field_validator("strategy", "artifact")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("strategy and artifact must be non-empty strings")
+        return value.strip()
+
+    @field_validator("rollout_timeout_seconds")
+    @classmethod
+    def _validate_timeout(cls, value: float) -> float:
+        if value <= 0.0:
+            raise ValueError("rollout_timeout_seconds must be greater than zero")
+        return float(value)
+
+    @field_validator("annotations")
+    @classmethod
+    def _normalize_annotations(cls, value: Dict[str, str]) -> Dict[str, str]:
+        normalized: Dict[str, str] = {}
+        for key, val in value.items():
+            normalized[str(key)] = str(val)
+        return normalized
+
+    @model_validator(mode="after")
+    def _validate_rollout(self) -> "DeploymentConfig":
+        if not self.wait_for_rollout:
+            return self
+        if self.rollout_timeout_seconds <= 0.0:
+            raise ValueError("wait_for_rollout requires a positive rollout_timeout_seconds")
         return self
