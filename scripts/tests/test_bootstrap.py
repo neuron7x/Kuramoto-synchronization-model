@@ -99,6 +99,38 @@ def test_build_config_validates_missing_requirements(tmp_path: Path) -> None:
         bootstrap._build_config(args)
 
 
+def test_build_config_appends_default_requirements(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    default_requirements = tmp_path / "requirements.lock"
+    default_requirements.write_text("base==1.0\n", encoding="utf-8")
+    extra_requirements = tmp_path / "local.lock"
+    extra_requirements.write_text("extra==1.0\n", encoding="utf-8")
+
+    monkeypatch.setattr(bootstrap, "DEFAULT_REQUIREMENTS", (default_requirements,))
+
+    args = Namespace(
+        python=Path(sys.executable),
+        venv_path=tmp_path / ".venv",
+        recreate_venv=False,
+        upgrade_pip=True,
+        skip_python_deps=False,
+        include_dev=False,
+        requirements=[extra_requirements],
+        dev_requirements=None,
+        extras=(),
+        install_pre_commit=False,
+        install_frontend=False,
+        reinstall_frontend=False,
+        frontend_path=tmp_path,
+    )
+
+    config = bootstrap._build_config(args)
+
+    assert config.requirements == (
+        default_requirements.resolve(),
+        extra_requirements.resolve(),
+    )
+
+
 def test_execute_skips_virtualenv_when_present(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     venv_path = tmp_path / ".venv"
     _create_fake_venv(venv_path)

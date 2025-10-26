@@ -256,7 +256,8 @@ def _build_config(args: Namespace) -> BootstrapConfig:
     install_python_dependencies = not bool(getattr(args, "skip_python_deps", False))
     include_dev = bool(getattr(args, "include_dev", False))
 
-    requirements = tuple(getattr(args, "requirements") or DEFAULT_REQUIREMENTS)
+    extra_requirements = tuple(getattr(args, "requirements") or ())
+    requirements = DEFAULT_REQUIREMENTS + extra_requirements
     dev_requirements = tuple(getattr(args, "dev_requirements") or DEFAULT_DEV_REQUIREMENTS)
 
     resolved_requirements = _resolve_requirements(requirements)
