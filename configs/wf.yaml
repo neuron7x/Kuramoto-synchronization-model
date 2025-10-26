@@ -1,0 +1,5 @@
+extends: configs/demo.yaml
+walkforward:
+  train_frac: 0.6
+  step_frac: 0.1
+  min_window: 2000
