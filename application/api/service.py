@@ -1499,7 +1499,9 @@ def create_app(
     stream_manager = RealTimeStreamManager()
     app.state.analytics_store = analytics_store
     app.state.stream_manager = stream_manager
+    app.state.shutting_down = False
     analytics_logger = logging.getLogger("tradepulse.api.analytics")
+    lifecycle_logger = logging.getLogger("tradepulse.api.lifecycle")
 
     async def _record_feature_analytics(result: FeatureResponse) -> None:
         try:
@@ -1742,6 +1744,7 @@ def create_app(
             app.state, "metrics", None
         )
         components: dict[str, ComponentHealth] = {}
+        shutdown_in_progress = bool(getattr(app.state, "shutting_down", False))
 
         risk_manager: RiskManager = app.state.risk_manager
         kill_switch = risk_manager.kill_switch
@@ -1871,9 +1874,17 @@ def create_app(
                 metrics=component_metrics,
             )
 
+        if shutdown_in_progress:
+            components["lifecycle"] = ComponentHealth(
+                healthy=False,
+                status="failed",
+                detail="application shutting down",
+            )
+
         severity = "ready"
         if (
-            any(component.status == "failed" for component in components.values())
+            shutdown_in_progress
+            or any(component.status == "failed" for component in components.values())
             or dependency_failures
             or kill_engaged
         ):
@@ -1892,8 +1903,12 @@ def create_app(
 
         health_state: HealthServer | None = app.state.health_server
         if health_state is not None:
-            health_state.set_live(True)
-            health_state.set_ready(severity == "ready")
+            if shutdown_in_progress:
+                health_state.set_live(False)
+                health_state.set_ready(False)
+            else:
+                health_state.set_live(True)
+                health_state.set_ready(severity == "ready")
             for name, component in components.items():
                 health_state.update_component(name, component.healthy, component.detail)
 
@@ -2327,6 +2342,52 @@ def create_app(
         },
         deprecated=True,
     )
+
+    async def _shutdown_app() -> None:
+        app.state.shutting_down = True
+        health_state: HealthServer | None = getattr(app.state, "health_server", None)
+        if health_state is not None:
+            try:
+                health_state.set_ready(False)
+                health_state.set_live(False)
+            except Exception:  # pragma: no cover - defensive
+                lifecycle_logger.exception(
+                    "Failed to update health server state during shutdown",
+                    exc_info=True,
+                )
+
+        try:
+            await stream_manager.close_all()
+        except Exception:  # pragma: no cover - defensive
+            lifecycle_logger.exception(
+                "Failed to close realtime websocket connections during shutdown",
+                exc_info=True,
+            )
+
+        if health_state is not None:
+            try:
+                health_state.shutdown()
+            except Exception:  # pragma: no cover - defensive
+                lifecycle_logger.exception(
+                    "Failed to stop health server during shutdown",
+                    exc_info=True,
+                )
+
+        risk_manager_instance = getattr(app.state, "risk_manager", None)
+        if risk_manager_instance is not None:
+            close_method = getattr(risk_manager_instance, "close", None)
+            if callable(close_method):
+                try:
+                    result = close_method()
+                    if inspect.isawaitable(result):
+                        await result
+                except Exception:  # pragma: no cover - defensive
+                    lifecycle_logger.exception(
+                        "Failed to close risk manager during shutdown",
+                        exc_info=True,
+                    )
+
+    app.add_event_handler("shutdown", _shutdown_app)
 
     register_exception_handlers(app)
 

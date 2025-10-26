@@ -8,7 +8,7 @@ from collections import deque
 from datetime import datetime
 from typing import Any, Deque
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel
 
 LOGGER = logging.getLogger("tradepulse.api.realtime")
@@ -46,6 +46,21 @@ class RealTimeStreamManager:
             async with self._lock:
                 for connection in stale:
                     self._connections.discard(connection)
+
+    async def close_all(self, *, code: int = status.WS_1012_SERVICE_RESTART) -> None:
+        """Close every active WebSocket connection with a restart signal."""
+
+        async with self._lock:
+            connections = list(self._connections)
+            self._connections.clear()
+
+        for connection in connections:
+            try:
+                await connection.close(code=code)
+            except Exception:  # pragma: no cover - defensive
+                LOGGER.debug(
+                    "Failed to close realtime websocket connection", exc_info=True
+                )
 
 
 class AnalyticsStore:
