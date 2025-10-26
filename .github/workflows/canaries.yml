@@ -1,6 +1,7 @@
 name: Python Version Canaries
 
 permissions:
+  actions: write
   contents: read
 
 on:
