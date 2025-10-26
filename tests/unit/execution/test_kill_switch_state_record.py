@@ -34,6 +34,20 @@ def test_string_timestamp_allows_space_separator_and_converts_timezone() -> None
     assert record.updated_at == aware_timestamp.astimezone(timezone.utc)
 
 
+def test_timestamp_with_utc_z_suffix_is_accepted() -> None:
+    payload = {
+        "engaged": True,
+        "reason": "maintenance",
+        "updated_at": "2025-01-15T10:00:00Z",
+    }
+
+    record = KillSwitchStateRecord.model_validate(payload)
+
+    assert record.updated_at == datetime(2025, 1, 15, 10, 0, 0, tzinfo=timezone.utc)
+    assert record.reason == "maintenance"
+    assert record.engaged is True
+
+
 @pytest.mark.parametrize("bad_reason", ["", "\x00control"])
 def test_reason_validation_enforced_when_engaged(bad_reason: str) -> None:
     with pytest.raises(ValueError):

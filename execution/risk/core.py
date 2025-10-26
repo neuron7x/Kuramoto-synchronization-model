@@ -188,7 +188,9 @@ class KillSwitchStateRecord(BaseModel):
         else:
             if not isinstance(raw_ts, str):
                 raise TypeError("updated_at must be str or datetime")
-            normalised = raw_ts.replace(" ", "T")
+            normalised = raw_ts.strip().replace(" ", "T")
+            if normalised.endswith("Z") or normalised.endswith("z"):
+                normalised = f"{normalised[:-1]}+00:00"
             try:
                 timestamp = datetime.fromisoformat(normalised)
             except ValueError as exc:
