@@ -10,8 +10,12 @@ from pathlib import Path
 import pytest
 
 from scripts.runtime import (
+    AutomationContext,
+    AutomationRunner,
+    AutomationStep,
     ChecksumMismatchError,
     ProgressBar,
+    StepStatus,
     TransferError,
     compute_checksum,
     create_artifact_manager,
@@ -160,3 +164,109 @@ def test_find_resources(tmp_path: Path) -> None:
 
     results = list(find_resources("*.txt", [nested]))
     assert {path.name for path in results} == {"a.txt", "b.txt"}
+
+
+def test_automation_runner_executes_steps_in_dependency_order() -> None:
+    context = AutomationContext()
+    order: list[str] = []
+
+    def prepare(ctx: AutomationContext) -> int:
+        order.append("prepare")
+        ctx.data["base"] = 1
+        return 1
+
+    def process(ctx: AutomationContext) -> int:
+        order.append("process")
+        base = ctx.require_output("prepare")
+        return base + 1
+
+    def finalize(ctx: AutomationContext) -> int:
+        order.append("finalize")
+        processed = ctx.require_output("process")
+        return processed * 2
+
+    runner = AutomationRunner(
+        [
+            AutomationStep("prepare", prepare),
+            AutomationStep("process", process, dependencies=("prepare",)),
+            AutomationStep("finalize", finalize, dependencies=("process",)),
+        ]
+    )
+
+    report = runner.run(context)
+
+    assert order == ["prepare", "process", "finalize"]
+    assert report.succeeded
+    assert context.require_output("finalize") == 4
+
+
+def test_automation_runner_retries_on_failure() -> None:
+    attempts = {"count": 0}
+
+    def flaky(_ctx: AutomationContext) -> str:
+        attempts["count"] += 1
+        if attempts["count"] < 2:
+            raise RuntimeError("transient failure")
+        return "ok"
+
+    runner = AutomationRunner(
+        [AutomationStep("flaky", flaky, retry_attempts=1)]
+    )
+
+    report = runner.run()
+    result = report.results["flaky"]
+
+    assert result.status is StepStatus.SUCCEEDED
+    assert result.attempts == 2
+    assert attempts["count"] == 2
+
+
+def test_automation_runner_blocks_dependents_after_critical_failure() -> None:
+    def fail(_ctx: AutomationContext) -> None:
+        raise RuntimeError("boom")
+
+    def dependent(_ctx: AutomationContext) -> None:
+        raise AssertionError("dependent should not run")
+
+    runner = AutomationRunner(
+        [
+            AutomationStep("fail", fail, critical=True),
+            AutomationStep("dependent", dependent, dependencies=("fail",)),
+        ]
+    )
+
+    report = runner.run()
+
+    assert report.results["fail"].status is StepStatus.FAILED
+    assert report.results["dependent"].status is StepStatus.BLOCKED
+    assert not report.succeeded
+
+
+def test_automation_runner_respects_skip_predicate() -> None:
+    context = AutomationContext()
+    context.data["skip_optional"] = True
+
+    runner = AutomationRunner(
+        [
+            AutomationStep(
+                "optional",
+                lambda _ctx: 1,
+                skip_if=lambda ctx: ctx.data.get("skip_optional", False),
+            )
+        ]
+    )
+
+    report = runner.run(context)
+
+    assert report.results["optional"].status is StepStatus.SKIPPED
+    assert report.succeeded
+
+
+def test_automation_runner_detects_cycles() -> None:
+    with pytest.raises(ValueError):
+        AutomationRunner(
+            [
+                AutomationStep("a", lambda _ctx: None, dependencies=("b",)),
+                AutomationStep("b", lambda _ctx: None, dependencies=("a",)),
+            ]
+        )
