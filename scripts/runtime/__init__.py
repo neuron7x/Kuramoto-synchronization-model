@@ -7,6 +7,14 @@ from .._runtime_core import (
     parse_env_file,
 )
 from .artifacts import ArtifactManager, create_artifact_manager
+from .automation import (
+    AutomationContext,
+    AutomationReport,
+    AutomationRunner,
+    AutomationStep,
+    StepResult,
+    StepStatus,
+)
 from .checksum import ChecksumMismatchError, compute_checksum, verify_checksum
 from .exit_codes import EXIT_CODES
 from .pathfinder import find_resources
@@ -16,9 +24,15 @@ from .task_queue import TaskQueue, task_queue
 from .transfer import TransferError, transfer_with_resume
 
 __all__ = [
+    "AutomationContext",
+    "AutomationReport",
+    "AutomationRunner",
+    "AutomationStep",
     "ArtifactManager",
     "ChecksumMismatchError",
     "EXIT_CODES",
+    "StepResult",
+    "StepStatus",
     "ProgressBar",
     "TaskQueue",
     "TransferError",
