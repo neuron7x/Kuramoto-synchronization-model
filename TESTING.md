@@ -114,6 +114,20 @@ pytest tests/ \
 # Open htmlcov/index.html in browser
 ```
 
+### Static Analysis
+
+Static analysis is required before opening a pull request. The consolidated target runs
+the Python and Go analyzers configured for the project:
+
+```bash
+make lint
+```
+
+- `flake8` enforces the Python style guide across `analytics/`, `core/`, `execution/`, `tests/`, and other runtime packages.
+- `mypy` checks type safety with the settings captured in [`mypy.ini`](mypy.ini).
+- `golangci-lint` validates the Go services defined under [`go/`](go/) using the
+  shared [`.golangci.yml`](.golangci.yml) policy.
+
 ### Running Specific Test Categories
 
 **Unit tests only:**

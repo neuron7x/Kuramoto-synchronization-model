@@ -162,22 +162,22 @@ See [TESTING.md](TESTING.md) for detailed testing guidelines.
 ### 5. Check Code Quality
 
 ```bash
-# Run linter
+# Run Python linters
 ruff check .
+black .
+make lint:python
+
+# Run Go linters
+make lint:go
 
 # Auto-fix issues
 ruff check --fix .
-
-# Format code
-black .
-
-# Type checking
-mypy core/ backtest/ execution/
 
 # Security scan
 bandit -r core/ backtest/ execution/
 
 # Run all checks
+make lint
 make fpma-check  # Cyclomatic complexity
 python -m scripts lint  # Full lint suite
 ```
@@ -331,7 +331,7 @@ Before submitting a PR, ensure:
 
 ### Code Quality
 - [ ] Code follows project style guidelines
-- [ ] All linters pass (`ruff`, `mypy`, `bandit`)
+- [ ] All linters pass (`ruff`, `flake8`, `mypy`, `golangci-lint`, `bandit`)
 - [ ] No hardcoded secrets or credentials
 - [ ] Cyclomatic complexity is acceptable (`make fpma-check`)
 
