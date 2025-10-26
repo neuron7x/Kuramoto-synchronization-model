@@ -45,6 +45,23 @@ from .trading import (
     TradingStrategy,
     register_strategies,
 )
+from .engine import (
+    AcceptAllRiskPolicy,
+    IOContract,
+    InvalidModeTransition,
+    RiskAdvice,
+    RiskAdviceLevel,
+    RiskAssessment,
+    RiskPolicy,
+    StrategyCancel,
+    StrategyContext,
+    StrategyEngine,
+    StrategyEngineEvent,
+    StrategyEngineMode,
+    StrategyEventType,
+    StrategyModule,
+    StrategySignal,
+)
 
 __all__ = [
     "moving_average_signal",
@@ -85,4 +102,19 @@ __all__ = [
     "ComponentParameters",
     "StrategyPresetRegistry",
     "load_strategy_pipeline",
+    "StrategyEngine",
+    "StrategyEngineMode",
+    "StrategyEngineEvent",
+    "StrategyEventType",
+    "StrategyModule",
+    "StrategyContext",
+    "StrategySignal",
+    "StrategyCancel",
+    "RiskAdvice",
+    "RiskAdviceLevel",
+    "RiskAssessment",
+    "RiskPolicy",
+    "AcceptAllRiskPolicy",
+    "IOContract",
+    "InvalidModeTransition",
 ]
