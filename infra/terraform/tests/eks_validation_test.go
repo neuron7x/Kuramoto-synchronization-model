@@ -158,6 +158,14 @@ func TestEKSModuleTerraformValidate(t *testing.T) {
 		t.Skip("terraform binary not available in PATH")
 	}
 
+	// Some CI jobs (including our own release workflows) set TF_CLI_ARGS with
+	// environment specific -var-file flags to drive terraform plan/apply. The
+	// validate subcommand stopped accepting -var-file in Terraform 1.6, so make
+	// sure those inherited flags do not bleed into this test run.
+	for _, envVar := range []string{"TF_CLI_ARGS", "TF_CLI_ARGS_validate"} {
+		t.Setenv(envVar, "")
+	}
+
 	terraformDir := test_structure.CopyTerraformFolderToTemp(t, "..", "eks")
 	stagingVarsFile := filepath.Join("..", "eks", "environments", "staging.tfvars")
 	autoVarsFile := filepath.Join(terraformDir, "staging.auto.tfvars")
