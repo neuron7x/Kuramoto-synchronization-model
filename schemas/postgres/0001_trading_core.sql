@@ -86,7 +86,6 @@ BEGIN
             ADD CONSTRAINT orders_parent_order_account_fk
             FOREIGN KEY (parent_order_id, account_id)
             REFERENCES orders(order_id, account_id)
-            ON DELETE SET NULL
             DEFERRABLE INITIALLY IMMEDIATE;
     END IF;
 END $$;
@@ -100,7 +99,6 @@ BEGIN
             ADD CONSTRAINT orders_parent_order_instrument_fk
             FOREIGN KEY (parent_order_id, instrument_id)
             REFERENCES orders(order_id, instrument_id)
-            ON DELETE SET NULL
             DEFERRABLE INITIALLY IMMEDIATE;
     END IF;
 END $$;
@@ -288,7 +286,6 @@ BEGIN
             ADD CONSTRAINT cash_ledger_order_account_fk
             FOREIGN KEY (related_order_id, account_id)
             REFERENCES orders(order_id, account_id)
-            ON DELETE SET NULL
             DEFERRABLE INITIALLY IMMEDIATE;
     END IF;
 END $$;
@@ -302,7 +299,6 @@ BEGIN
             ADD CONSTRAINT cash_ledger_execution_account_fk
             FOREIGN KEY (related_exec_id, account_id)
             REFERENCES execution(execution_id, account_id)
-            ON DELETE SET NULL
             DEFERRABLE INITIALLY IMMEDIATE;
     END IF;
 END $$;
