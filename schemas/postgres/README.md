@@ -14,3 +14,6 @@ and should be applied in lexical order.
   accounts, orders, executions, positions, and the cash ledger) together with
   supporting types, indexes, and triggers that keep order history, executions,
   and ledger entries synchronised.
+- `0002_market_analytics.sql` – adds candle-based trade history storage,
+  indicator series management, and a structured logging table for operational
+  observability.
