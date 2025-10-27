@@ -169,7 +169,10 @@ class TradePulsePlatform:
         instrument_type: InstrumentType | None = None,
         market: str | None = None,
         layer: str = "raw",
-        required_fields: Iterable[str] = ("ts", "price"),
+        required_fields: Iterable[str] | None = None,
+        timestamp_field: str = "ts",
+        price_field: str = "price",
+        volume_field: str = "volume",
     ) -> pd.DataFrame:
         """Ingest a CSV file via the shared cache service."""
 
@@ -180,6 +183,9 @@ class TradePulsePlatform:
             "market": market,
             "layer": layer,
             "required_fields": required_fields,
+            "timestamp_field": timestamp_field,
+            "price_field": price_field,
+            "volume_field": volume_field,
         }
         if instrument_type is not None:
             kwargs["instrument_type"] = instrument_type

@@ -244,6 +244,10 @@ class TradePulseSystem:
         venue: str,
         instrument_type: InstrumentType = InstrumentType.SPOT,
         market: str | None = None,
+        required_fields: Iterable[str] | None = None,
+        timestamp_field: str = "ts",
+        price_field: str = "price",
+        volume_field: str = "volume",
     ) -> pd.DataFrame:
         """Load historical ticks from *path* and return a normalised OHLCV frame."""
 
@@ -256,7 +260,10 @@ class TradePulseSystem:
                 self._data_ingestor.historical_csv(
                     str(path),
                     records.append,
-                    required_fields=("ts", "price"),
+                    required_fields=required_fields,
+                    timestamp_field=timestamp_field,
+                    price_field=price_field,
+                    volume_field=volume_field,
                     symbol=symbol,
                     venue=venue,
                     instrument_type=instrument_type,

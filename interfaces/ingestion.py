@@ -18,7 +18,10 @@ class DataIngestionService(ABC):
         path: str,
         on_tick: Callable[[Ticker], None],
         *,
-        required_fields: Iterable[str] = ("ts", "price"),
+        required_fields: Iterable[str] | None = None,
+        timestamp_field: str = "ts",
+        price_field: str = "price",
+        volume_field: str = "volume",
         symbol: str = "UNKNOWN",
         venue: str = "CSV",
         instrument_type: InstrumentType = InstrumentType.SPOT,
@@ -51,6 +54,10 @@ class AsyncDataIngestionService(ABC):
         market: Optional[str] = None,
         chunk_size: int = 1000,
         delay_ms: int = 0,
+        required_fields: Iterable[str] | None = None,
+        timestamp_field: str = "ts",
+        price_field: str = "price",
+        volume_field: str = "volume",
     ) -> AsyncIterator[Ticker]:
         """Asynchronously stream ticks from a CSV file."""
 
