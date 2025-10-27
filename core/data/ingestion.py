@@ -5,7 +5,7 @@ import csv
 import logging
 from decimal import InvalidOperation
 from pathlib import Path
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable, Mapping, Optional
 
 try:
     from binance.websocket.spot.websocket_client import SpotWebsocketClient as BinanceWS
@@ -74,6 +74,7 @@ class DataIngestor(DataIngestionService):
         on_tick: Callable[[Ticker], None],
         *,
         required_fields: Iterable[str] = ("ts", "price"),
+        column_aliases: Optional[Mapping[str, str]] = None,
         symbol: str = "UNKNOWN",
         venue: str = "CSV",
         instrument_type: InstrumentType = InstrumentType.SPOT,
@@ -89,22 +90,33 @@ class DataIngestor(DataIngestionService):
             symbol=symbol,
             venue=venue,
         ):
+            column_alias_map = dict(column_aliases or {})
+
+            def _resolve(field: str) -> str:
+                return column_alias_map.get(field, field)
+
             with resolved_path.open("r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 if reader.fieldnames is None:
                     raise ValueError("CSV file must include a header row")
-                missing = [
-                    field for field in required_fields if field not in reader.fieldnames
-                ]
+                header_fields = set(reader.fieldnames)
+                missing = []
+                for field in required_fields:
+                    resolved_field = _resolve(field)
+                    if resolved_field not in header_fields:
+                        missing.append(resolved_field)
                 if missing:
                     raise ValueError(
                         f"CSV missing required columns: {', '.join(missing)}"
                     )
+                ts_field = _resolve("ts")
+                price_field = _resolve("price")
+                volume_field = _resolve("volume")
                 for row_number, row in enumerate(reader, start=2):
                     try:
-                        ts_raw = float(row["ts"])
-                        price = row["price"]
-                        volume = row.get("volume", 0.0) or 0.0
+                        ts_raw = float(row[ts_field])
+                        price = row[price_field]
+                        volume = row.get(volume_field, row.get("volume", 0.0)) or 0.0
                         timestamp = normalize_timestamp(ts_raw, market=market)
                         tick = Ticker.create(
                             symbol=symbol,

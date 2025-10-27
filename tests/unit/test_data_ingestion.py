@@ -25,6 +25,34 @@ def test_historical_csv_reads_rows(tmp_path: Path) -> None:
     assert records[1].volume == 6.0
 
 
+def test_historical_csv_supports_column_aliases(tmp_path: Path) -> None:
+    csv_path = tmp_path / "history_custom_columns.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=["custom_time", "custom_price", "custom_volume"]
+        )
+        writer.writeheader()
+        writer.writerow(
+            {"custom_time": "1", "custom_price": "100", "custom_volume": "5"}
+        )
+        writer.writerow(
+            {"custom_time": "2", "custom_price": "101", "custom_volume": "6"}
+        )
+
+    ingestor = DataIngestor()
+    records: list[Ticker] = []
+
+    ingestor.historical_csv(
+        str(csv_path),
+        records.append,
+        column_aliases={"ts": "custom_time", "price": "custom_price"},
+    )
+
+    assert len(records) == 2
+    assert records[0].price == 100.0
+    assert records[1].timestamp > records[0].timestamp
+
+
 def test_binance_ws_requires_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
     ingestor = DataIngestor()
     with pytest.raises(RuntimeError):
@@ -203,6 +231,23 @@ def test_historical_csv_validates_required_columns(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="missing required columns"):
         ingestor.historical_csv(str(csv_path), lambda _: None)
+
+
+def test_historical_csv_validates_required_columns_with_aliases(tmp_path: Path) -> None:
+    csv_path = tmp_path / "history_missing_alias.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["custom_time", "custom_volume"])
+        writer.writeheader()
+        writer.writerow({"custom_time": "1", "custom_volume": "5"})
+
+    ingestor = DataIngestor()
+
+    with pytest.raises(ValueError, match="missing required columns"):
+        ingestor.historical_csv(
+            str(csv_path),
+            lambda _: None,
+            column_aliases={"ts": "custom_time", "price": "custom_price"},
+        )
 
 
 def test_historical_csv_skips_malformed_rows(

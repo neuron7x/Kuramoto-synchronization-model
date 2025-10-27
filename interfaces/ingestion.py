@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Callable, Iterable, Optional
+from typing import AsyncIterator, Callable, Iterable, Mapping, Optional
 
 from core.data.models import InstrumentType
 from core.data.models import PriceTick as Ticker
@@ -19,6 +19,7 @@ class DataIngestionService(ABC):
         on_tick: Callable[[Ticker], None],
         *,
         required_fields: Iterable[str] = ("ts", "price"),
+        column_aliases: Optional[Mapping[str, str]] = None,
         symbol: str = "UNKNOWN",
         venue: str = "CSV",
         instrument_type: InstrumentType = InstrumentType.SPOT,
