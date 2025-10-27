@@ -62,4 +62,29 @@ export const CHART_STYLES = `
     text-align: center;
     color: rgba(148, 163, 184, 0.75);
   }
+
+  .tp-app[data-theme='light'] .tp-area-chart {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  }
+
+  .tp-app[data-theme='light'] .tp-area-chart::after {
+    background: linear-gradient(120deg, rgba(191, 219, 254, 0.45), rgba(148, 163, 184, 0));
+    mix-blend-mode: normal;
+  }
+
+  .tp-app[data-theme='light'] .tp-chart-legend__item {
+    color: rgba(30, 41, 59, 0.88);
+    background: rgba(248, 250, 252, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  }
+
+  .tp-app[data-theme='light'] .tp-chart-legend__item:hover {
+    background: rgba(59, 130, 246, 0.18);
+  }
+
+  .tp-app[data-theme='light'] .tp-chart-empty {
+    border-color: rgba(148, 163, 184, 0.25);
+    color: rgba(100, 116, 139, 0.75);
+  }
 `;

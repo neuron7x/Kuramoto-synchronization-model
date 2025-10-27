@@ -47,6 +47,14 @@
         "pl-PL": "Polacco",
         "ar-SA": "Arabo"
       }
+    },
+    "theme": {
+      "label": "Aspetto",
+      "helper": "Passa tra i temi chiaro e scuro. Salvato nelle preferenze del browser.",
+      "light": "Chiaro",
+      "dark": "Scuro",
+      "switchToLight": "Passa al tema chiaro",
+      "switchToDark": "Passa al tema scuro"
     }
   },
   "header": {

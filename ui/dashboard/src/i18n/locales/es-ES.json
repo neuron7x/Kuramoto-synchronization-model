@@ -47,6 +47,14 @@
         "pl-PL": "Polaco",
         "ar-SA": "Árabe"
       }
+    },
+    "theme": {
+      "label": "Apariencia",
+      "helper": "Cambia entre los temas claro y oscuro. Se guarda en las preferencias de tu navegador.",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "switchToLight": "Cambiar al tema claro",
+      "switchToDark": "Cambiar al tema oscuro"
     }
   },
   "header": {

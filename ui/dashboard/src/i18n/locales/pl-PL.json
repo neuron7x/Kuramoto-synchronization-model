@@ -47,6 +47,14 @@
         "pl-PL": "Polski",
         "ar-SA": "Arabski"
       }
+    },
+    "theme": {
+      "label": "Wygląd",
+      "helper": "Przełączaj między motywem jasnym i ciemnym. Zapisywane w ustawieniach przeglądarki.",
+      "light": "Jasny",
+      "dark": "Ciemny",
+      "switchToLight": "Przełącz na motyw jasny",
+      "switchToDark": "Przełącz na motyw ciemny"
     }
   },
   "header": {

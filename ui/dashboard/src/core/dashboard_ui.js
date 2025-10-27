@@ -32,6 +32,7 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       }
       var toggle = nav.querySelector('[data-action="toggle-nav"]');
       var overlay = nav.querySelector('[data-role="nav-overlay"]');
+      var themeToggle = nav.querySelector('[data-role="theme-toggle"]');
       var closeButtons = nav.querySelectorAll('[data-action="close-nav"]');
       var links = nav.querySelectorAll('a[data-route]');
       var navPanel = nav.querySelector('[data-role="nav-panel"]');
@@ -60,6 +61,12 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       var LOCALE_STORAGE_KEY = 'tp:locale';
       var LOCALE_COOKIE_NAME = 'tp_locale';
       var LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+      var THEME_STORAGE_KEY = 'tp:theme';
+      var THEME_DARK = 'dark';
+      var THEME_LIGHT = 'light';
+      var themeMediaQuery = null;
+      var themePreference = null;
+      var currentTheme = null;
 
       function persistLocalePreference(nextLocale) {
         try {
@@ -144,6 +151,92 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
         return false;
       }
 
+      function readThemePreference() {
+        try {
+          if (window.localStorage) {
+            var stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+            if (stored === THEME_DARK || stored === THEME_LIGHT) {
+              return stored;
+            }
+          }
+        } catch (error) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Unable to read theme preference', error);
+          }
+        }
+        return null;
+      }
+
+      function persistThemePreference(theme) {
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+          }
+        } catch (error) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Unable to persist theme preference', error);
+          }
+        }
+      }
+
+      function getSystemTheme() {
+        if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+          if (!themeMediaQuery) {
+            themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          }
+          return themeMediaQuery.matches ? THEME_DARK : THEME_LIGHT;
+        }
+        return THEME_DARK;
+      }
+
+      function applyThemePreference(theme, options) {
+        var nextTheme = theme === THEME_LIGHT ? THEME_LIGHT : THEME_DARK;
+        if (app) {
+          if (app.getAttribute('data-theme') !== nextTheme) {
+            app.setAttribute('data-theme', nextTheme);
+          }
+        }
+        if (typeof document !== 'undefined' && document.documentElement) {
+          document.documentElement.style.colorScheme = nextTheme;
+        }
+        if (themeToggle) {
+          themeToggle.setAttribute('data-theme-state', nextTheme);
+          themeToggle.setAttribute('aria-pressed', String(nextTheme === THEME_DARK));
+          var labelAttribute = nextTheme === THEME_DARK ? 'data-light-label' : 'data-dark-label';
+          var ariaLabel = themeToggle.getAttribute(labelAttribute);
+          if (ariaLabel) {
+            themeToggle.setAttribute('aria-label', ariaLabel);
+          }
+        }
+        if (!options || options.persist !== false) {
+          persistThemePreference(nextTheme);
+          themePreference = nextTheme;
+        }
+        currentTheme = nextTheme;
+        try {
+          if (!window.tp) {
+            window.tp = {};
+          }
+          window.tp.theme = nextTheme;
+        } catch (error) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Unable to update global theme reference', error);
+          }
+        }
+        if (!options || options.emit !== false) {
+          try {
+            if (typeof window !== 'undefined' && typeof window.CustomEvent === 'function') {
+              window.dispatchEvent(new CustomEvent('tp:theme-change', { detail: { theme: nextTheme } }));
+            }
+          } catch (error) {
+            if (typeof console !== 'undefined' && console.debug) {
+              console.debug('Unable to broadcast theme change', error);
+            }
+          }
+        }
+        return nextTheme;
+      }
+
       if (localeConfigNode) {
         try {
           localeConfig = JSON.parse(localeConfigNode.textContent || '{}');
@@ -161,6 +254,53 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
           if (typeof console !== 'undefined' && console.warn) {
             console.warn('Unable to parse locale config payload', error);
           }
+        }
+      }
+
+      var storedTheme = readThemePreference();
+      if (storedTheme === THEME_DARK || storedTheme === THEME_LIGHT) {
+        themePreference = storedTheme;
+      }
+      var initialTheme = themePreference || getSystemTheme();
+      currentTheme = applyThemePreference(initialTheme, { persist: Boolean(themePreference), emit: false });
+
+      if (!themePreference && themeMediaQuery) {
+        var handleThemePreferenceChange = function (event) {
+          if (themePreference) {
+            return;
+          }
+          applyThemePreference(event.matches ? THEME_DARK : THEME_LIGHT, { persist: false });
+        };
+        if (typeof themeMediaQuery.addEventListener === 'function') {
+          themeMediaQuery.addEventListener('change', handleThemePreferenceChange);
+        } else if (typeof themeMediaQuery.addListener === 'function') {
+          themeMediaQuery.addListener(handleThemePreferenceChange);
+        }
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+          var nextTheme = currentTheme === THEME_DARK ? THEME_LIGHT : THEME_DARK;
+          applyThemePreference(nextTheme, { persist: true });
+        });
+      }
+
+      try {
+        if (!window.tp) {
+          window.tp = {};
+        }
+        window.tp.getTheme = function () {
+          return currentTheme;
+        };
+        if (typeof window.tp.setTheme !== 'function') {
+          window.tp.setTheme = function (theme, options) {
+            var persist = !options || options.persist !== false;
+            return applyThemePreference(theme, { persist: persist });
+          };
+        }
+      } catch (error) {
+        if (typeof console !== 'undefined' && console.debug) {
+          console.debug('Unable to expose theme controls', error);
         }
       }
 
@@ -519,6 +659,41 @@ function renderLocaleSwitcher(currentLocale) {
   return { markup, payload: locales };
 }
 
+function renderThemeSwitcher() {
+  const themeMessages = getMessage('nav.theme') || {};
+  const label = themeMessages.label || 'Appearance';
+  const helper = themeMessages.helper || '';
+  const light = themeMessages.light || 'Light';
+  const dark = themeMessages.dark || 'Dark';
+  const switchToLight = themeMessages.switchToLight || 'Switch to light theme';
+  const switchToDark = themeMessages.switchToDark || 'Switch to dark theme';
+
+  const markup = `
+    <div class="tp-nav__theme">
+      <span class="tp-nav__theme-label">${escapeHtml(String(label))}</span>
+      <button
+        type="button"
+        class="tp-nav__theme-toggle"
+        data-role="theme-toggle"
+        data-theme-state="dark"
+        data-light-label="${escapeHtml(String(switchToLight))}"
+        data-dark-label="${escapeHtml(String(switchToDark))}"
+        aria-pressed="true"
+        aria-label="${escapeHtml(String(switchToLight))}"
+      >
+        <span class="tp-nav__theme-toggle-track" aria-hidden="true">
+          <span class="tp-nav__theme-toggle-thumb"></span>
+        </span>
+        <span class="tp-nav__theme-toggle-text" data-theme-option="dark">${escapeHtml(String(dark))}</span>
+        <span class="tp-nav__theme-toggle-text" data-theme-option="light">${escapeHtml(String(light))}</span>
+      </button>
+      ${helper ? `<p class="tp-nav__theme-helper">${escapeHtml(String(helper))}</p>` : ''}
+    </div>
+  `;
+
+  return { markup, payload: { label, helper, light, dark } };
+}
+
 function renderNavigation(router, currentRoute, currentLocale) {
   const sections = getMessage('nav.sections') || {};
   const liveBadge = t('nav.badges.live');
@@ -545,6 +720,7 @@ function renderNavigation(router, currentRoute, currentLocale) {
   });
 
   const localeSwitcher = renderLocaleSwitcher(currentLocale);
+  const themeSwitcher = renderThemeSwitcher();
 
   return {
     markup: `
@@ -574,12 +750,14 @@ function renderNavigation(router, currentRoute, currentLocale) {
           </button>
         </div>
         <ul class="tp-nav__links">${links.join('')}</ul>
+        ${themeSwitcher.markup}
         ${localeSwitcher.markup}
       </div>
       <div id="${overlayId}" class="tp-nav__overlay" data-role="nav-overlay" hidden aria-hidden="true"></div>
     </nav>
     `,
     locales: localeSwitcher.payload,
+    theme: themeSwitcher.payload,
   };
 }
 
@@ -636,7 +814,7 @@ export function renderDashboard(options = {}) {
   };
 
   const html = `
-    <div class="tp-app" data-locale="${escapeHtml(locale)}" dir="${escapeHtml(direction)}">
+    <div class="tp-app" data-locale="${escapeHtml(locale)}" data-theme="dark" dir="${escapeHtml(direction)}">
       <a class="tp-skip-link" href="#tp-main-content">${escapeHtml(String(skipLinkLabel))}</a>
       ${navigation.markup}
       <main id="tp-main-content" class="tp-shell" tabindex="-1" data-role="main-content">

@@ -47,6 +47,14 @@
         "pl-PL": "波兰语",
         "ar-SA": "阿拉伯语"
       }
+    },
+    "theme": {
+      "label": "外观",
+      "helper": "在浅色和深色主题之间切换。会保存在浏览器首选项中。",
+      "light": "浅色",
+      "dark": "深色",
+      "switchToLight": "切换到浅色主题",
+      "switchToDark": "切换到深色主题"
     }
   },
   "header": {

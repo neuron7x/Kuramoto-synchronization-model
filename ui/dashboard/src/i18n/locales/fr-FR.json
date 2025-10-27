@@ -47,6 +47,14 @@
         "pl-PL": "Polonais",
         "ar-SA": "Arabe"
       }
+    },
+    "theme": {
+      "label": "Apparence",
+      "helper": "Basculer entre les thèmes clair et sombre. Enregistré dans les préférences de votre navigateur.",
+      "light": "Clair",
+      "dark": "Sombre",
+      "switchToLight": "Passer au thème clair",
+      "switchToDark": "Passer au thème sombre"
     }
   },
   "header": {

@@ -47,6 +47,14 @@
         "pl-PL": "Polnisch",
         "ar-SA": "Arabisch"
       }
+    },
+    "theme": {
+      "label": "Darstellung",
+      "helper": "Zwischen hellem und dunklem Design wechseln. Wird in Ihren Browser-Einstellungen gespeichert.",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "switchToLight": "Zur hellen Ansicht wechseln",
+      "switchToDark": "Zur dunklen Ansicht wechseln"
     }
   },
   "header": {

@@ -47,6 +47,14 @@
         "pl-PL": "Polski",
         "ar-SA": "العربية"
       }
+    },
+    "theme": {
+      "label": "Appearance",
+      "helper": "Switch between light and dark themes. Stored in your browser preferences.",
+      "light": "Light",
+      "dark": "Dark",
+      "switchToLight": "Switch to light theme",
+      "switchToDark": "Switch to dark theme"
     }
   },
   "header": {

@@ -73,4 +73,36 @@ export const TABLE_STYLES = `
   .tp-live-table__row {
     transition: transform 0.35s ease, background 0.35s ease;
   }
+
+  .tp-app[data-theme='light'] .tp-live-table__head {
+    background: rgba(248, 250, 252, 0.95);
+  }
+
+  .tp-app[data-theme='light'] .tp-live-table__row:nth-child(odd) {
+    background: rgba(148, 163, 184, 0.08);
+  }
+
+  .tp-app[data-theme='light'] .tp-live-table__row:hover {
+    background: rgba(59, 130, 246, 0.18);
+  }
+
+  .tp-app[data-theme='light'] .tp-live-table__cell {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    color: rgba(30, 41, 59, 0.9);
+  }
+
+  .tp-app[data-theme='light'] .tp-live-table__header {
+    color: rgba(71, 85, 105, 0.82);
+    border-bottom-color: rgba(148, 163, 184, 0.28);
+  }
+
+  .tp-app[data-theme='light'] .tp-live-table__row--empty .tp-live-table__cell {
+    color: rgba(100, 116, 139, 0.75);
+  }
+
+  .tp-app[data-theme='light'] .tp-live-table__footer {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: rgba(71, 85, 105, 0.85);
+  }
 `;
