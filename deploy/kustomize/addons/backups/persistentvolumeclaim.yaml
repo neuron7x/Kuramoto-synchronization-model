@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: timescale-backups
+  labels:
+    app.kubernetes.io/name: timescale-backups
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Gi
+  volumeMode: Filesystem

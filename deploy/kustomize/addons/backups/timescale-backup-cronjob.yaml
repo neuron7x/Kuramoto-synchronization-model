@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: timescale-backup
+  labels:
+    app.kubernetes.io/name: timescale-backup
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: timescale-backup
+        spec:
+          restartPolicy: Never
+          serviceAccountName: tradepulse-api
+          securityContext:
+            runAsNonRoot: false
+          containers:
+            - name: backup
+              image: ghcr.io/neuron7x/tradepulse:stable
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+              args:
+                - |
+                  set -euo pipefail
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update >/dev/null
+                  apt-get install -y --no-install-recommends postgresql-client >/dev/null
+                  rm -rf /var/lib/apt/lists/*
+                  python -m scripts backup \
+                    --database-url "${DATABASE_URL}" \
+                    --backup-dir /var/backups/timescale \
+                    --archive-after-days "${ARCHIVE_AFTER_DAYS}" \
+                    --retention-days "${RETENTION_DAYS}" \
+                    --prefix "${BACKUP_PREFIX}"
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: tradepulse-timescale
+                      key: url
+                - name: ARCHIVE_AFTER_DAYS
+                  value: "14"
+                - name: RETENTION_DAYS
+                  value: "35"
+                - name: BACKUP_PREFIX
+                  value: "timescale"
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /var/backups
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: timescale-backups

@@ -6,6 +6,7 @@ namespace: tradepulse-production
 resources:
   - ../../namespaces/production
   - priorityclass.yaml
+  - ../../addons/backups
   - ../../addons/logging
   - ../../base
 

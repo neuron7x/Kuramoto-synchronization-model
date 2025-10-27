@@ -5,6 +5,7 @@ namespace: tradepulse-staging
 
 resources:
   - ../../namespaces/staging
+  - ../../addons/backups
   - ../../addons/logging
   - ../../base
 

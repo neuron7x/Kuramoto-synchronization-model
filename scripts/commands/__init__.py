@@ -4,6 +4,7 @@ from __future__ import annotations
 
 # SPDX-License-Identifier: MIT
 from . import (  # noqa: F401
+    backup,
     bootstrap,
     build_core,
     dev,
