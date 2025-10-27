@@ -79,6 +79,74 @@ CREATE INDEX IF NOT EXISTS orders_instrument_time_idx ON orders (instrument_id, 
 CREATE UNIQUE INDEX IF NOT EXISTS orders_order_account_uidx ON orders (order_id, account_id);
 CREATE UNIQUE INDEX IF NOT EXISTS orders_order_instrument_uidx ON orders (order_id, instrument_id);
 
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'orders_parent_order_account_fk'
+    ) THEN
+        ALTER TABLE orders
+            ADD CONSTRAINT orders_parent_order_account_fk
+            FOREIGN KEY (parent_order_id, account_id)
+            REFERENCES orders(order_id, account_id)
+            DEFERRABLE INITIALLY IMMEDIATE;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'orders_parent_order_instrument_fk'
+    ) THEN
+        ALTER TABLE orders
+            ADD CONSTRAINT orders_parent_order_instrument_fk
+            FOREIGN KEY (parent_order_id, instrument_id)
+            REFERENCES orders(order_id, instrument_id)
+            DEFERRABLE INITIALLY IMMEDIATE;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'orders_price_requirement_chk'
+    ) THEN
+        ALTER TABLE orders
+            ADD CONSTRAINT orders_price_requirement_chk
+            CHECK (
+                (order_type IN ('limit', 'stop_limit', 'iceberg') AND price IS NOT NULL)
+                OR (order_type NOT IN ('limit', 'stop_limit', 'iceberg') AND price IS NULL)
+            );
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'orders_stop_price_requirement_chk'
+    ) THEN
+        ALTER TABLE orders
+            ADD CONSTRAINT orders_stop_price_requirement_chk
+            CHECK (
+                (order_type IN ('stop', 'stop_limit') AND stop_price IS NOT NULL)
+                OR (order_type NOT IN ('stop', 'stop_limit') AND stop_price IS NULL)
+            );
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'orders_iceberg_visibility_chk'
+    ) THEN
+        ALTER TABLE orders
+            ADD CONSTRAINT orders_iceberg_visibility_chk
+            CHECK (
+                (order_type = 'iceberg' AND iceberg_visible IS NOT NULL AND iceberg_visible > 0)
+                OR (order_type <> 'iceberg' AND iceberg_visible IS NULL)
+            );
+    END IF;
+END $$;
+
 -- Order status history ------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS order_status_history (
@@ -125,6 +193,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS execution_external_idx
 CREATE INDEX IF NOT EXISTS execution_order_time_idx ON execution (order_id, execution_time);
 CREATE INDEX IF NOT EXISTS execution_account_time_idx ON execution (account_id, execution_time DESC);
 CREATE INDEX IF NOT EXISTS execution_instrument_time_idx ON execution (instrument_id, execution_time DESC);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'execution_account_identity_key'
+    ) THEN
+        ALTER TABLE execution
+            ADD CONSTRAINT execution_account_identity_key
+            UNIQUE (execution_id, account_id);
+    END IF;
+END $$;
 
 DO $$
 BEGIN
@@ -211,6 +290,54 @@ CREATE INDEX IF NOT EXISTS cash_ledger_order_time_idx
 CREATE INDEX IF NOT EXISTS cash_ledger_exec_time_idx
     ON cash_ledger (related_exec_id, occurred_at DESC)
     WHERE related_exec_id IS NOT NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_order_account_fk'
+    ) THEN
+        ALTER TABLE cash_ledger
+            ADD CONSTRAINT cash_ledger_order_account_fk
+            FOREIGN KEY (related_order_id, account_id)
+            REFERENCES orders(order_id, account_id)
+            DEFERRABLE INITIALLY IMMEDIATE;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_execution_account_fk'
+    ) THEN
+        ALTER TABLE cash_ledger
+            ADD CONSTRAINT cash_ledger_execution_account_fk
+            FOREIGN KEY (related_exec_id, account_id)
+            REFERENCES execution(execution_id, account_id)
+            DEFERRABLE INITIALLY IMMEDIATE;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_amount_nonzero_chk'
+    ) THEN
+        ALTER TABLE cash_ledger
+            ADD CONSTRAINT cash_ledger_amount_nonzero_chk
+            CHECK (amount <> 0);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_currency_not_blank_chk'
+    ) THEN
+        ALTER TABLE cash_ledger
+            ADD CONSTRAINT cash_ledger_currency_not_blank_chk
+            CHECK (btrim(currency) <> '');
+    END IF;
+END $$;
 
 -- Trigger helpers -----------------------------------------------------------
 
