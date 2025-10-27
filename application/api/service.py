@@ -961,11 +961,34 @@ class OnlineSignalForecaster:
         macd_crossover_component = np.tanh(macd - macd_signal_line)
         macd_histogram_component = np.tanh(macd_histogram * 2.0)
 
+        # Capture the prevailing divergence direction while tracking the
+        # combined energy of the MACD trend and histogram legs. Using the signed
+        # mean preserves bearish/bullish polarity, whereas the Euclidean norm
+        # measures how forcefully the legs move irrespective of sign.
         divergence_strength = 0.5 * (
             macd_trend_component + macd_histogram_component
         )
+        divergence_amplitude = np.hypot(
+            macd_trend_component, macd_histogram_component
+        ) / np.sqrt(2.0)
+        convergence_intensity = abs(macd_crossover_component)
+
+        # Penalise imbalance when divergence sprints away from the convergence
+        # cadence or when their directions disagree, while rewarding genuine
+        # agreement where the crossover leg takes the lead. This keeps the
+        # composite score centred without flattening supportive structure.
+        phase_alignment = np.sign(divergence_strength) * np.sign(
+            macd_crossover_component
+        )
+        phase_penalty = 1.0 + 0.6 * (1.0 - phase_alignment)
+
         imbalance = divergence_strength - macd_crossover_component
-        balance_correction = -np.tanh(imbalance * 1.5)
+        intensity_ratio = divergence_amplitude / (convergence_intensity + 1e-6)
+        intensity_bias = np.tanh((intensity_ratio - 1.0) * 0.9)
+        scaled_imbalance = imbalance * phase_penalty + intensity_bias * np.sign(
+            imbalance
+        )
+        balance_correction = -np.tanh(scaled_imbalance * 1.3)
 
         return {
             "macd_trend": macd_trend_component * 0.26,
