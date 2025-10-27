@@ -21,7 +21,7 @@ jobs:
           go-version: '1.22'
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.6.6'
 
@@ -29,10 +29,11 @@ jobs:
         run: terraform version
 
       - name: Download Go modules
+        working-directory: infra/terraform/tests
         run: go mod download
 
       - name: Run Terraform-related Go tests
         env:
           CI: true
-        run: |
-          go test ./infra/terraform/tests/... -v
+        working-directory: infra/terraform/tests
+        run: go test ./... -v
