@@ -32,6 +32,7 @@
     <div class="card__links">
       <a class="card__link" href="ARCHITECTURE/">Architecture Overview</a>
       <a class="card__link" href="architecture/system_overview/">System Diagrams</a>
+      <a class="card__link" href="architecture/system_modules_reference/">System Modules Reference</a>
       <a class="card__link" href="architecture/serving_resilience/">Serving Resilience</a>
     </div>
   </article>
