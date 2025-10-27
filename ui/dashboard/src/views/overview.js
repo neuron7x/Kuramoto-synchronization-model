@@ -494,10 +494,20 @@ function renderWorkflowBadges(github = {}, translations = {}) {
       }
       const href = safeExternalUrl(workflow.url || workflow.html_url);
       const label = workflow.name || workflow.label || 'Workflow';
+      const width = coerceNumber(
+        workflow.badgeWidth ?? workflow.badge_width ?? workflow.width,
+        null,
+      );
+      const height = coerceNumber(
+        workflow.badgeHeight ?? workflow.badge_height ?? workflow.height,
+        null,
+      );
       return {
         href,
         badgeSrc,
         label,
+        width,
+        height,
       };
     })
     .filter(Boolean);
@@ -509,11 +519,19 @@ function renderWorkflowBadges(github = {}, translations = {}) {
   const subtitle = translations.workflows?.subtitle || 'Latest GitHub Actions badges.';
 
   const items = valid
-    .map((workflow) => `
+    .map((workflow) => {
+      const widthAttr = Number.isFinite(workflow.width) && workflow.width > 0
+        ? ` width="${Number(workflow.width)}"`
+        : '';
+      const heightAttr = Number.isFinite(workflow.height) && workflow.height > 0
+        ? ` height="${Number(workflow.height)}"`
+        : '';
+      return `
         <a class="tp-github-workflow" href="${escapeHtml(workflow.href)}" target="_blank" rel="noopener noreferrer">
-          <img src="${escapeHtml(workflow.badgeSrc)}" alt="${escapeHtml(String(workflow.label))} status badge" loading="lazy" />
+          <img src="${escapeHtml(workflow.badgeSrc)}" alt="${escapeHtml(String(workflow.label))} status badge" loading="lazy" decoding="async" fetchpriority="low" style="max-width: 100%; height: auto;"${widthAttr}${heightAttr} />
         </a>
-      `)
+      `;
+    })
     .join('');
 
   return `

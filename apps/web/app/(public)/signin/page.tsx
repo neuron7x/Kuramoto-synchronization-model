@@ -1,13 +1,47 @@
 import type { Metadata } from 'next'
 
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 
-import { SignInForm } from './sign-in-form'
+const SignInForm = dynamic(
+  () =>
+    import('./sign-in-form').then((mod) => ({
+      default: mod.SignInForm,
+    })),
+  {
+    loading: () => <SignInFormFallback />,
+  },
+)
+
+function SignInFormFallback() {
+  return (
+    <Box
+      component="section"
+      role="status"
+      aria-live="polite"
+      sx={{
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        p: 4,
+      }}
+    >
+      <Stack spacing={2} sx={{ textAlign: 'center' }}>
+        <Typography component="p" variant="body1">
+          Preparing sign-in form…
+        </Typography>
+        <Typography component="p" variant="body2" color="text.secondary">
+          Secure authentication tools are being initialised.
+        </Typography>
+      </Stack>
+    </Box>
+  )
+}
 
 export const metadata: Metadata = {
   title: 'Sign in | TradePulse',
