@@ -101,6 +101,10 @@ def _iter_csv_chunks(
     instrument_type: InstrumentType,
     market: Optional[str],
     chunk_size: int,
+    required_fields: Iterable[str] | None,
+    timestamp_field: str,
+    price_field: str,
+    volume_field: str,
 ) -> Iterable[list[Ticker]]:
     """Yield parsed CSV ticks in fixed-size batches."""
 
@@ -112,7 +116,8 @@ def _iter_csv_chunks(
         if reader.fieldnames is None:
             raise ValueError("CSV file must include a header row")
 
-        required = {"ts", "price"}
+        required = set(required_fields or ())
+        required.update({timestamp_field, price_field})
         missing = required - set(reader.fieldnames)
         if missing:
             raise ValueError(f"CSV missing columns: {', '.join(sorted(missing))}")
@@ -121,9 +126,9 @@ def _iter_csv_chunks(
 
         for row_number, row in enumerate(reader, start=2):
             try:
-                ts_raw = float(row["ts"])
-                price = row["price"]
-                volume = row.get("volume", 0.0) or 0.0
+                ts_raw = float(row[timestamp_field])
+                price = row[price_field]
+                volume = row.get(volume_field, 0.0) or 0.0
 
                 tick = Ticker.create(
                     symbol=symbol,
@@ -193,6 +198,10 @@ class AsyncDataIngestor(AsyncDataIngestionService):
         market: Optional[str] = None,
         chunk_size: int = 1000,
         delay_ms: int = 0,
+        required_fields: Iterable[str] | None = None,
+        timestamp_field: str = "ts",
+        price_field: str = "price",
+        volume_field: str = "volume",
     ) -> AsyncIterator[Ticker]:
         """Async CSV reader that yields ticks.
 
@@ -204,6 +213,10 @@ class AsyncDataIngestor(AsyncDataIngestionService):
             market: Optional market calendar identifier for timezone normalization
             chunk_size: Number of rows to read at a time
             delay_ms: Optional delay between chunks (for simulation)
+            required_fields: Additional CSV columns that must be present
+            timestamp_field: Column containing the timestamp values
+            price_field: Column containing the price values
+            volume_field: Column containing the volume values
 
         Yields:
             Ticker objects from CSV
@@ -237,6 +250,10 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                     instrument_type=instrument_type,
                     market=market,
                     chunk_size=chunk_size,
+                    required_fields=required_fields,
+                    timestamp_field=timestamp_field,
+                    price_field=price_field,
+                    volume_field=volume_field,
                 ):
                     _enqueue(chunk)
             except Exception as exc:  # pragma: no cover - propagated to consumer

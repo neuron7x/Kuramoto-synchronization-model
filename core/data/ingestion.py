@@ -73,7 +73,10 @@ class DataIngestor(DataIngestionService):
         path: str,
         on_tick: Callable[[Ticker], None],
         *,
-        required_fields: Iterable[str] = ("ts", "price"),
+        required_fields: Iterable[str] | None = None,
+        timestamp_field: str = "ts",
+        price_field: str = "price",
+        volume_field: str = "volume",
         symbol: str = "UNKNOWN",
         venue: str = "CSV",
         instrument_type: InstrumentType = InstrumentType.SPOT,
@@ -93,8 +96,10 @@ class DataIngestor(DataIngestionService):
                 reader = csv.DictReader(f)
                 if reader.fieldnames is None:
                     raise ValueError("CSV file must include a header row")
+                required = set(required_fields or ())
+                required.update({timestamp_field, price_field})
                 missing = [
-                    field for field in required_fields if field not in reader.fieldnames
+                    field for field in sorted(required) if field not in reader.fieldnames
                 ]
                 if missing:
                     raise ValueError(
@@ -102,9 +107,9 @@ class DataIngestor(DataIngestionService):
                     )
                 for row_number, row in enumerate(reader, start=2):
                     try:
-                        ts_raw = float(row["ts"])
-                        price = row["price"]
-                        volume = row.get("volume", 0.0) or 0.0
+                        ts_raw = float(row[timestamp_field])
+                        price = row[price_field]
+                        volume = row.get(volume_field, 0.0) or 0.0
                         timestamp = normalize_timestamp(ts_raw, market=market)
                         tick = Ticker.create(
                             symbol=symbol,

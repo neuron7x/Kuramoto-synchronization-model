@@ -226,6 +226,38 @@ def test_historical_csv_skips_malformed_rows(
     assert any("Skipping malformed row" in message for message in caplog.messages)
 
 
+def test_historical_csv_supports_custom_columns(tmp_path: Path) -> None:
+    csv_path = tmp_path / "history_custom.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=["timestamp", "close", "trade_volume", "ignored"]
+        )
+        writer.writeheader()
+        writer.writerow(
+            {"timestamp": "1", "close": "100", "trade_volume": "5", "ignored": "x"}
+        )
+        writer.writerow(
+            {"timestamp": "2", "close": "101", "trade_volume": "6", "ignored": "y"}
+        )
+
+    ingestor = DataIngestor()
+    collected: list[Ticker] = []
+
+    ingestor.historical_csv(
+        str(csv_path),
+        collected.append,
+        timestamp_field="timestamp",
+        price_field="close",
+        volume_field="trade_volume",
+        required_fields=("ignored",),
+    )
+
+    assert len(collected) == 2
+    assert collected[0].price == pytest.approx(100.0)
+    assert collected[0].volume == pytest.approx(5.0)
+    assert collected[1].price == pytest.approx(101.0)
+
+
 def test_historical_csv_rejects_path_outside_allowlist(tmp_path: Path) -> None:
     csv_path = tmp_path / "outside.csv"
     csv_path.write_text("ts,price\n1,1\n", encoding="utf-8")

@@ -87,6 +87,29 @@ class TestAsyncDataIngestor:
                 pass
 
     @pytest.mark.asyncio
+    async def test_read_csv_custom_columns(self, tmp_path: Path) -> None:
+        """Custom column names should be supported for CSV ingestion."""
+        csv_file = tmp_path / "test_custom.csv"
+        csv_file.write_text(
+            "timestamp,close,qty\n1.0,100.0,10\n2.0,101.5,20\n",
+            encoding="utf-8",
+        )
+
+        ingestor = AsyncDataIngestor()
+        ticks: list[Ticker] = []
+
+        async for tick in ingestor.read_csv(
+            str(csv_file),
+            timestamp_field="timestamp",
+            price_field="close",
+            volume_field="qty",
+        ):
+            ticks.append(tick)
+
+        assert [tick.price for tick in ticks] == [100.0, 101.5]
+        assert [tick.volume for tick in ticks] == [10.0, 20.0]
+
+    @pytest.mark.asyncio
     async def test_stream_ticks_basic(self) -> None:
         """Test basic tick streaming."""
         ingestor = AsyncDataIngestor()
