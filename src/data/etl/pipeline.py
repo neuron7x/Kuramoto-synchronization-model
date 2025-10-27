@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
+import logging
+import math
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable, MutableMapping, Sequence
@@ -28,6 +31,9 @@ Extractor = Callable[["PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame
 Transformer = Callable[[pd.DataFrame, "PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame]
 Loader = Callable[[pd.DataFrame, "PipelineContext"], Awaitable[Any] | Any]
 Validator = Callable[[pd.DataFrame, "PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame]
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 async def _maybe_await(obj: Awaitable[Any] | Any) -> Any:
@@ -114,6 +120,17 @@ class PipelineRunResult:
     sla_breaches: list[str]
     report: str | None
     context_snapshot: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class _StopMessage:
+    """Sentinel payload requesting that a worker terminate once idle."""
+
+
+_STOP_MESSAGE = _StopMessage()
+
+
+QueueItem = PipelineRunConfig | _StopMessage
 
 
 class ETLPipeline:
@@ -350,17 +367,26 @@ class PipelineScheduler:
         self,
         pipeline: ETLPipeline,
         *,
-        resource_scaler: Callable[[int], int] | None = None,
+        resource_scaler: Callable[..., int] | None = None,
         poll_interval: timedelta = timedelta(seconds=1),
+        max_workers: int = 8,
     ) -> None:
         self._pipeline = pipeline
-        self._resource_scaler = resource_scaler or (lambda pending: max(1, min(8, 1 + pending)))
+        self._max_workers = max(1, max_workers)
+        self._resource_scaler: Callable[..., int] = resource_scaler or self._default_resource_scaler
         self._poll_interval = poll_interval
-        self._queue: asyncio.Queue[PipelineRunConfig] = asyncio.Queue()
-        self._workers: list[asyncio.Task[None]] = []
+        self._queue: asyncio.Queue[QueueItem] = asyncio.Queue()
+        self._workers: set[asyncio.Task[None]] = set()
+        self._pending_tasks = 0
+        self._active_tasks = 0
+        self._stop_signals = 0
         self._running = False
+        self._state_lock = asyncio.Lock()
+        self._scaler_accepts_active = self._scaler_supports_active(self._resource_scaler)
 
     async def submit(self, config: PipelineRunConfig) -> None:
+        async with self._state_lock:
+            self._pending_tasks += 1
         await self._queue.put(config)
         await self._maybe_scale()
 
@@ -371,35 +397,65 @@ class PipelineScheduler:
         await self._maybe_scale()
 
     async def shutdown(self) -> None:
+        if not self._running and not self._workers:
+            return
         self._running = False
-        for worker in self._workers:
-            worker.cancel()
+        async with self._state_lock:
+            self._enqueue_stop_signals(len(self._workers) - self._stop_signals)
         if self._workers:
             await asyncio.gather(*self._workers, return_exceptions=True)
-        self._workers.clear()
+        async with self._state_lock:
+            self._workers.clear()
+            self._pending_tasks = 0
+            self._active_tasks = 0
+            self._stop_signals = 0
 
     async def _worker(self) -> None:
+        task = asyncio.current_task()
         try:
-            while self._running:
-                config = await self._queue.get()
-                try:
-                    await self._pipeline.run(config)
-                finally:
+            while True:
+                item = await self._queue.get()
+                if item is _STOP_MESSAGE:
+                    async with self._state_lock:
+                        self._stop_signals = max(0, self._stop_signals - 1)
                     self._queue.task_done()
+                    break
+                async with self._state_lock:
+                    self._pending_tasks -= 1
+                    self._active_tasks += 1
+                try:
+                    await self._pipeline.run(item)
+                finally:
+                    async with self._state_lock:
+                        self._active_tasks -= 1
+                self._queue.task_done()
+                await self._maybe_scale()
         except asyncio.CancelledError:  # pragma: no cover - cooperative cancellation
-            return
+            raise
+        except Exception:  # pragma: no cover - unexpected worker crash
+            LOGGER.exception("Pipeline worker crashed", exc_info=True)
+            raise
+        finally:
+            if task is not None:
+                async with self._state_lock:
+                    self._workers.discard(task)
+            await self._maybe_scale()
 
     async def _maybe_scale(self) -> None:
         if not self._running:
             return
-        desired_workers = self._resource_scaler(self._queue.qsize())
-        while len(self._workers) < desired_workers:
-            worker = asyncio.create_task(self._worker())
-            self._workers.append(worker)
-        # shrink workers lazily when queue drains
-        while len(self._workers) > desired_workers > 0:
-            worker = self._workers.pop()
-            worker.cancel()
+        async with self._state_lock:
+            effective_workers = len(self._workers) - self._stop_signals
+            pending = max(0, self._pending_tasks)
+            active = max(0, self._active_tasks)
+            desired = self._calculate_desired_workers(pending, active)
+            desired = max(0, min(self._max_workers, desired))
+            if desired > effective_workers:
+                for _ in range(desired - effective_workers):
+                    worker = asyncio.create_task(self._worker())
+                    self._workers.add(worker)
+            elif desired < effective_workers:
+                self._enqueue_stop_signals(effective_workers - desired)
 
     async def run_forever(self) -> None:
         await self.start()
@@ -409,3 +465,42 @@ class PipelineScheduler:
                 await self._maybe_scale()
         finally:
             await self.shutdown()
+
+    def _default_resource_scaler(self, pending: int, active: int) -> int:
+        total_load = pending + active
+        if total_load <= 0:
+            return 0
+        baseline = max(active, 1)
+        backlog_ratio = pending / baseline
+        if backlog_ratio > 1.5:
+            burst = math.ceil(backlog_ratio)
+            return min(self._max_workers, baseline + burst)
+        if pending == 0 and active > 0 and backlog_ratio < 0.5:
+            return max(1, active - 1)
+        return min(self._max_workers, max(active, 1))
+
+    def _calculate_desired_workers(self, pending: int, active: int) -> int:
+        if self._scaler_accepts_active:
+            return int(self._resource_scaler(pending, active))
+        return int(self._resource_scaler(pending))
+
+    @staticmethod
+    def _scaler_supports_active(func: Callable[..., int]) -> bool:
+        try:
+            signature = inspect.signature(func)
+        except (TypeError, ValueError):  # pragma: no cover - builtin or C functions
+            return True
+        params = list(signature.parameters.values())
+        positional = [
+            p
+            for p in params
+            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        ]
+        if any(p.kind is inspect.Parameter.VAR_POSITIONAL for p in params):
+            return True
+        return len(positional) >= 2
+
+    def _enqueue_stop_signals(self, count: int) -> None:
+        for _ in range(max(0, count)):
+            self._stop_signals += 1
+            self._queue.put_nowait(_STOP_MESSAGE)
