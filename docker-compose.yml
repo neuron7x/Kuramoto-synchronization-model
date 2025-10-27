@@ -29,6 +29,35 @@ services:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "${TRADEPULSE_PROMETHEUS_PORT:-9090}:9090"
+  cortex:
+    build:
+      context: .
+      dockerfile: cortex_service/Dockerfile
+    environment:
+      CORTEX__DATABASE__URL: postgresql+psycopg://cortex:cortex@cortex-db:5432/cortex
+      CORTEX__SERVICE__LOG_LEVEL: INFO
+    volumes:
+      - ./cortex_service/config/service.yaml:/service/cortex_service/config/service.yaml:ro
+    ports:
+      - "${TRADEPULSE_CORTEX_PORT:-8001}:8001"
+    depends_on:
+      cortex-db:
+        condition: service_healthy
+  cortex-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cortex
+      POSTGRES_USER: cortex
+      POSTGRES_PASSWORD: cortex
+    ports:
+      - "${TRADEPULSE_CORTEX_DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cortex -d cortex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - cortex-db-data:/var/lib/postgresql/data
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
     environment:
@@ -70,3 +99,4 @@ services:
 
 volumes:
   elasticsearch-data:
+  cortex-db-data:
