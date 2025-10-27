@@ -30,10 +30,22 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class TimestampGapStats:
-    """Summary statistics describing gaps between consecutive timestamps."""
+    """Summary statistics describing gaps between consecutive timestamps.
+
+    In addition to the traditional ``median`` and ``max`` gap, the structure
+    keeps lightweight quality indicators so callers can reason about the health
+    of the timestamp column.  ``usable_gap_ratio`` expresses how many of the
+    theoretically possible gaps remained after filtering invalid timestamps and
+    monotonicity violations, while ``valid_row_ratio`` tracks how many original
+    rows contributed to the statistics.  ``monotonic_violations`` counts the
+    number of times the timestamp column moved backwards in the input order.
+    """
 
     median_seconds: float
     max_seconds: float
+    usable_gap_ratio: float
+    valid_row_ratio: float
+    monotonic_violations: int
 
 
 @dataclass(frozen=True)
@@ -106,6 +118,42 @@ def _compute_spike_counts(df: pd.DataFrame, threshold: float = 10.0) -> dict[str
     return spike_counts
 
 
+def _summarize_timestamp_gaps(series: pd.Series) -> TimestampGapStats | None:
+    """Compute gap statistics while tracking timestamp data quality."""
+
+    if series.empty:
+        return None
+
+    coerced = pd.to_datetime(series, errors="coerce")
+    total_rows = len(coerced)
+    valid = coerced.dropna()
+    valid_count = len(valid)
+    if valid_count < 2:
+        return None
+
+    valid_row_ratio = valid_count / total_rows if total_rows else 0.0
+
+    diffs = valid.diff().dt.total_seconds().iloc[1:]
+    monotonic_violations = int(diffs.lt(0).sum())
+
+    usable_pairs = max(valid_count - 1 - monotonic_violations, 0)
+    possible_pairs = max(total_rows - 1, 1)
+    usable_gap_ratio = usable_pairs / possible_pairs
+
+    sorted_valid = valid.sort_values()
+    gaps = sorted_valid.diff().dt.total_seconds().dropna()
+    if gaps.empty:
+        return None
+
+    return TimestampGapStats(
+        median_seconds=float(gaps.median()),
+        max_seconds=float(gaps.max()),
+        usable_gap_ratio=usable_gap_ratio,
+        valid_row_ratio=valid_row_ratio,
+        monotonic_violations=monotonic_violations,
+    )
+
+
 def analyze_csv(
     path: Path, timestamp_column: str | None = "ts", spike_threshold: float = 10.0
 ) -> CSVAnalysis:
@@ -118,15 +166,7 @@ def analyze_csv(
 
     timestamp_gap_stats: TimestampGapStats | None = None
     if timestamp_column and timestamp_column in df.columns:
-        ts = pd.to_datetime(df[timestamp_column], errors="coerce")
-        valid_ts = ts.dropna().sort_values()
-        if len(valid_ts) >= 2:
-            gaps = valid_ts.diff().dt.total_seconds().dropna()
-            if not gaps.empty:
-                timestamp_gap_stats = TimestampGapStats(
-                    median_seconds=float(gaps.median()),
-                    max_seconds=float(gaps.max()),
-                )
+        timestamp_gap_stats = _summarize_timestamp_gaps(df[timestamp_column])
 
     per_column_nan = (
         df.isna()
@@ -179,12 +219,23 @@ def format_analysis(analysis: CSVAnalysis, *, max_column_details: int = 5) -> st
         report_lines.append(f"- column NaN ratios: {column_details}")
 
     if analysis.timestamp_gap_stats:
-        report_lines.append(
+        gap_stats = analysis.timestamp_gap_stats
+        gap_line = (
             "- median gap (s): "
-            f"{analysis.timestamp_gap_stats.median_seconds:.3f}; "
-            "max gap (s): "
-            f"{analysis.timestamp_gap_stats.max_seconds:.3f}"
+            f"{gap_stats.median_seconds:.3f}; max gap (s): "
+            f"{gap_stats.max_seconds:.3f}; usable gaps: "
+            f"{gap_stats.usable_gap_ratio:.1%}"
         )
+
+        extras: list[str] = []
+        if gap_stats.valid_row_ratio < 1.0:
+            extras.append(f"valid ts rows: {gap_stats.valid_row_ratio:.1%}")
+        if gap_stats.monotonic_violations:
+            extras.append(f"monotonic violations: {gap_stats.monotonic_violations}")
+        if extras:
+            gap_line += "; " + "; ".join(extras)
+
+        report_lines.append(gap_line)
 
     if analysis.spike_counts:
         spike_details = ", ".join(
