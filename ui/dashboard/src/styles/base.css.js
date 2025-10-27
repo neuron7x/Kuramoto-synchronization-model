@@ -1855,12 +1855,26 @@ export const BASE_STYLES = `
       gap: 1.75rem;
       box-shadow: 18px 0 50px -30px rgba(15, 23, 42, 0.9);
       overflow-y: auto;
-      transform: translateX(-100%);
+      transform: translateX(0);
       transition: transform 0.35s ease;
+    }
+
+    .tp-nav[data-enhanced='true'] .tp-nav__panel {
+      transform: translateX(-100%);
     }
 
     .tp-nav[data-enhanced='true'][data-state='expanded'] .tp-nav__panel {
       transform: translateX(0);
+    }
+
+    .tp-nav:not([data-enhanced='true']) .tp-nav__panel {
+      position: static;
+      width: 100%;
+      max-width: none;
+      padding: 1.75rem 1.5rem 2rem;
+      box-shadow: none;
+      transform: none;
+      overflow: visible;
     }
 
     .tp-nav[data-enhanced='true'][data-state='expanded'] .tp-nav__overlay {
@@ -1915,6 +1929,106 @@ export const BASE_STYLES = `
 
     .tp-community__filters-toolbar {
       justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .tp-shell {
+      padding: 1.25rem 1rem 2rem;
+    }
+
+    .tp-view {
+      padding: 1.25rem;
+      border-radius: 18px;
+    }
+
+    .tp-view__title {
+      font-size: 1.4rem;
+    }
+
+    .tp-view__subtitle {
+      font-size: 0.9rem;
+    }
+
+    .tp-hero {
+      padding: 1.5rem;
+      border-radius: 22px;
+    }
+
+    .tp-hero__meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .tp-hero__stats {
+      grid-template-columns: minmax(0, 1fr);
+      padding: 1rem;
+      gap: 0.85rem;
+    }
+
+    .tp-grid {
+      gap: 1.25rem;
+    }
+
+    .tp-card {
+      padding: 1.25rem;
+    }
+
+    .tp-card__meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .tp-nav__mobile-bar {
+      padding: 0.85rem 1.25rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tp-shell {
+      padding: 1rem 0.85rem 1.75rem;
+    }
+
+    .tp-view {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+
+    .tp-view__title {
+      font-size: 1.3rem;
+    }
+
+    .tp-hero {
+      padding: 1.25rem;
+      border-radius: 20px;
+    }
+
+    .tp-hero__title {
+      font-size: clamp(1.75rem, 8vw, 2.1rem);
+    }
+
+    .tp-card {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+
+    .tp-hero__stats {
+      gap: 0.75rem;
+    }
+
+    .tp-nav__mobile-bar {
+      padding: 0.75rem 1rem;
+      gap: 0.5rem;
+    }
+
+    .tp-nav__toggle {
+      padding: 0.45rem 0.85rem;
+    }
+
+    .tp-nav__toggle-text {
+      font-size: 0.85rem;
     }
   }
 
