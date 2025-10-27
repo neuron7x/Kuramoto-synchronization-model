@@ -1,0 +1,38 @@
+name: CI — Pin Terraform version
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  terraform-validate:
+    name: Terraform validation tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.6.6'
+
+      - name: Verify Terraform version
+        run: terraform version
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Run Terraform-related Go tests
+        env:
+          CI: true
+        run: |
+          go test ./infra/terraform/tests/... -v
