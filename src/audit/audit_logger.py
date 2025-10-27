@@ -124,11 +124,12 @@ class AuditLogger:
             provider = secret_resolver
         else:
             assert secret is not None
-            if not secret:
+            secret_value = secret
+            if not secret_value:
                 raise ValueError("secret must be provided for audit logging")
 
-            def provider(secret: str = secret) -> str:
-                return secret
+            def provider(provided: str = secret_value) -> str:
+                return provided
 
         self._secret_provider: Callable[[], str] = provider
         resolved_logger = logger or logging.getLogger("tradepulse.audit")
@@ -212,9 +213,10 @@ class AuditLogger:
         return hmac.compare_digest(expected, record.signature)
 
     def _log_record(self, record: AuditRecord) -> None:
-        audit_payload = record.model_dump()
+        audit_payload = record.model_dump(mode="python")
         audit_payload["details"] = _redact_sensitive_payload(audit_payload["details"])
-        self._logger.info("audit.event", extra={"audit": audit_payload})
+        json_ready_payload = json.loads(_canonical_json(audit_payload))
+        self._logger.info("audit.event", extra={"audit": json_ready_payload})
 
     def _persist_record(self, record: AuditRecord) -> None:
         if self._store is None:

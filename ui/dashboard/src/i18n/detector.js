@@ -26,7 +26,7 @@ function parseQuery(search) {
 function safeDecode(value) {
   try {
     return decodeURIComponent(value);
-  } catch (error) {
+  } catch {
     return value;
   }
 }
