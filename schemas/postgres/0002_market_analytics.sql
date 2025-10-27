@@ -31,6 +31,20 @@ CREATE TABLE IF NOT EXISTS trade_history_candle (
     created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
     CHECK (open_time < close_time),
+    CHECK (
+        (close_time - open_time) =
+            CASE interval
+                WHEN '1m' THEN INTERVAL '1 minute'
+                WHEN '5m' THEN INTERVAL '5 minutes'
+                WHEN '15m' THEN INTERVAL '15 minutes'
+                WHEN '30m' THEN INTERVAL '30 minutes'
+                WHEN '1h' THEN INTERVAL '1 hour'
+                WHEN '4h' THEN INTERVAL '4 hours'
+                WHEN '1d' THEN INTERVAL '1 day'
+                WHEN '1w' THEN INTERVAL '1 week'
+                WHEN '1mo' THEN INTERVAL '1 month'
+            END
+    ),
     CHECK (low_price <= high_price),
     CHECK (high_price >= GREATEST(open_price, close_price)),
     CHECK (low_price <= LEAST(open_price, close_price)),
