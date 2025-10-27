@@ -78,6 +78,28 @@ def test_analyze_csv_detects_spikes(tmp_path):
     assert analysis.spike_counts == {"value": 1}
 
 
+def test_analyze_csv_handles_invalid_timestamps(tmp_path):
+    csv_path = tmp_path / "mixed.csv"
+    df = pd.DataFrame(
+        {
+            "ts": [
+                "2021-01-01T00:00:10Z",
+                "not-a-timestamp",
+                "2021-01-01T00:00:05Z",
+                "2021-01-01T00:00:20Z",
+            ],
+            "value": [1, 2, 3, 4],
+        }
+    )
+    df.to_csv(csv_path, index=False)
+
+    analysis = data_sanity.analyze_csv(csv_path)
+
+    assert analysis.timestamp_gap_stats is not None
+    assert analysis.timestamp_gap_stats.median_seconds == pytest.approx(7.5)
+    assert analysis.timestamp_gap_stats.max_seconds == pytest.approx(10.0)
+
+
 def test_main_handles_cli_execution(tmp_path, capsys):
     csv_path = tmp_path / "dataset.csv"
     _write_sample_csv(csv_path)

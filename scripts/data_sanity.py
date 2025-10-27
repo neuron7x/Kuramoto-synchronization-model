@@ -119,12 +119,14 @@ def analyze_csv(
     timestamp_gap_stats: TimestampGapStats | None = None
     if timestamp_column and timestamp_column in df.columns:
         ts = pd.to_datetime(df[timestamp_column], errors="coerce")
-        gaps = ts.diff().dt.total_seconds().dropna()
-        if not gaps.empty:
-            timestamp_gap_stats = TimestampGapStats(
-                median_seconds=float(gaps.median()),
-                max_seconds=float(gaps.max()),
-            )
+        valid_ts = ts.dropna().sort_values()
+        if len(valid_ts) >= 2:
+            gaps = valid_ts.diff().dt.total_seconds().dropna()
+            if not gaps.empty:
+                timestamp_gap_stats = TimestampGapStats(
+                    median_seconds=float(gaps.median()),
+                    max_seconds=float(gaps.max()),
+                )
 
     per_column_nan = (
         df.isna()
