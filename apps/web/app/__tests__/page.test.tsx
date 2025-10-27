@@ -90,7 +90,10 @@ describe('Scenario Studio home page', () => {
     }
 
     const writeText = jest.fn().mockResolvedValue(undefined)
-    ;(window.navigator.clipboard as { writeText: typeof writeText }).writeText = writeText
+    const clipboard = window.navigator.clipboard as unknown as {
+      writeText: typeof writeText
+    }
+    clipboard.writeText = writeText
 
     const user = userEvent.setup()
     renderHome()

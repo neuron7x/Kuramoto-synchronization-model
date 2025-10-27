@@ -20,6 +20,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import type { TextFieldProps } from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
 import AssignmentIcon from '@mui/icons-material/Assignment'
@@ -164,6 +165,8 @@ const SCENARIO_TEMPLATES: ScenarioTemplate[] = [
 ]
 
 type FieldErrors = Record<ScenarioField, string | null>
+
+type HelperTextSlotProps = NonNullable<TextFieldProps['slotProps']>['formHelperText']
 
 function parseNumber(value: string): number {
   const trimmed = value.replace(/,/g, '').trim()
@@ -657,6 +660,7 @@ export function ScenarioStudio() {
                         const meta = FIELD_META[fieldKey]
                         const error = errors[fieldKey]
                         const fieldTestId = `input-${fieldKey}`
+                        const helperTextTestId = error ? `error-${fieldKey}` : undefined
                         return (
                           <Grid key={fieldKey} item xs={12} md={fieldKey === 'timeframe' ? 12 : 6}>
                             <TextField
@@ -672,7 +676,13 @@ export function ScenarioStudio() {
                               helperText={error ?? meta.helper}
                               error={Boolean(error)}
                               inputProps={{ 'data-testid': fieldTestId }}
-                              FormHelperTextProps={{ 'data-testid': error ? `error-${fieldKey}` : undefined }}
+                              slotProps={{
+                                formHelperText: helperTextTestId
+                                  ? ({
+                                      'data-testid': helperTextTestId,
+                                    } as unknown as HelperTextSlotProps)
+                                  : undefined,
+                              }}
                             />
                           </Grid>
                         )
