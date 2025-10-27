@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -11,8 +13,33 @@ import (
 	"time"
 
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/require"
 )
+
+func copyFile(srcPath, dstPath string) error {
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+		return err
+	}
+
+	dst, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
+	}
+
+	return dst.Sync()
+}
 
 func errorMessages(err error) []string {
 	type singleUnwrapper interface {
@@ -131,15 +158,18 @@ func TestEKSModuleTerraformValidate(t *testing.T) {
 		t.Skip("terraform binary not available in PATH")
 	}
 
-	terraformDir := filepath.Join("..", "eks")
-	stagingVarsFile := filepath.Join(terraformDir, "environments", "staging.tfvars")
+	terraformDir := test_structure.CopyTerraformFolderToTemp(t, "..", "eks")
+	stagingVarsFile := filepath.Join("..", "eks", "environments", "staging.tfvars")
+	autoVarsFile := filepath.Join(terraformDir, "staging.auto.tfvars")
+
+	require.NoError(t, copyFile(stagingVarsFile, autoVarsFile))
+
 	options := &terraform.Options{
 		TerraformDir: terraformDir,
 		EnvVars: map[string]string{
 			"TF_IN_AUTOMATION": "true",
 			"TF_CLI_ARGS_init": "-backend=false",
 		},
-		VarFiles:    []string{stagingVarsFile},
 		NoColor:     true,
 		Reconfigure: true,
 	}
