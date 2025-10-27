@@ -48,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     from scripts.commands import (
         api,
+        backup,
         bootstrap,
         build_core,
         dev,
@@ -64,6 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     bootstrap.build_parser(subparsers)
     build_core.build_parser(subparsers)
+    backup.build_parser(subparsers)
     api.build_parser(subparsers)
     dev.build_parser(subparsers)
     lint.build_parser(subparsers)
