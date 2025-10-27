@@ -1,4 +1,12 @@
-"""Co-ordinate idempotent operations with exactly-once semantics."""
+"""Coordinate idempotent operations within the lifetime of a process.
+
+The coordinator keeps idempotency metadata in memory, providing restart-
+resilient behaviour only for as long as the hosting process stays alive.
+Entries age out once their acknowledgement and record TTLs expire, keeping the
+cache bounded and signalling how long results are considered replay-safe. To
+obtain true exactly-once guarantees across restarts or multiple workers, back
+this coordinator with durable external storage and replicate its purging
+policy."""
 
 from __future__ import annotations
 
