@@ -54,6 +54,9 @@ def test_analyze_csv_returns_expected_metrics(tmp_path):
     assert analysis.timestamp_gap_stats is not None
     assert analysis.timestamp_gap_stats.median_seconds == pytest.approx(10.0)
     assert analysis.timestamp_gap_stats.max_seconds == pytest.approx(15.0)
+    assert analysis.timestamp_gap_stats.usable_gap_ratio == pytest.approx(1.0)
+    assert analysis.timestamp_gap_stats.valid_row_ratio == pytest.approx(1.0)
+    assert analysis.timestamp_gap_stats.monotonic_violations == 0
     assert analysis.spike_counts == {}
 
 
@@ -67,6 +70,7 @@ def test_format_analysis_includes_column_limits(tmp_path):
     assert "column NaN ratios" in report
     assert "value=50.00%" in report
     assert "…" not in report
+    assert "usable gaps" in report
 
 
 def test_analyze_csv_detects_spikes(tmp_path):
@@ -76,6 +80,53 @@ def test_analyze_csv_detects_spikes(tmp_path):
     analysis = data_sanity.analyze_csv(csv_path)
 
     assert analysis.spike_counts == {"value": 1}
+
+
+def test_analyze_csv_handles_invalid_timestamps(tmp_path):
+    csv_path = tmp_path / "mixed.csv"
+    df = pd.DataFrame(
+        {
+            "ts": [
+                "2021-01-01T00:00:10Z",
+                "not-a-timestamp",
+                "2021-01-01T00:00:05Z",
+                "2021-01-01T00:00:20Z",
+            ],
+            "value": [1, 2, 3, 4],
+        }
+    )
+    df.to_csv(csv_path, index=False)
+
+    analysis = data_sanity.analyze_csv(csv_path)
+
+    assert analysis.timestamp_gap_stats is not None
+    assert analysis.timestamp_gap_stats.median_seconds == pytest.approx(7.5)
+    assert analysis.timestamp_gap_stats.max_seconds == pytest.approx(10.0)
+    assert analysis.timestamp_gap_stats.usable_gap_ratio == pytest.approx(1 / 3)
+    assert analysis.timestamp_gap_stats.valid_row_ratio == pytest.approx(0.75)
+    assert analysis.timestamp_gap_stats.monotonic_violations == 1
+
+
+def test_analyze_csv_flags_monotonic_issues(tmp_path):
+    csv_path = tmp_path / "backwards.csv"
+    df = pd.DataFrame(
+        {
+            "ts": [
+                "2021-01-01T00:00:10Z",
+                "2021-01-01T00:00:05Z",
+                "2021-01-01T00:00:08Z",
+                "2021-01-01T00:00:12Z",
+            ],
+            "value": [1, 2, 3, 4],
+        }
+    )
+    df.to_csv(csv_path, index=False)
+
+    analysis = data_sanity.analyze_csv(csv_path)
+
+    assert analysis.timestamp_gap_stats is not None
+    assert analysis.timestamp_gap_stats.monotonic_violations == 1
+    assert analysis.timestamp_gap_stats.usable_gap_ratio == pytest.approx(2 / 3)
 
 
 def test_main_handles_cli_execution(tmp_path, capsys):
