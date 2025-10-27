@@ -34,6 +34,8 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       var overlay = nav.querySelector('[data-role="nav-overlay"]');
       var closeButtons = nav.querySelectorAll('[data-action="close-nav"]');
       var links = nav.querySelectorAll('a[data-route]');
+      var navPanel = nav.querySelector('[data-role="nav-panel"]');
+      var mainContent = document.querySelector('[data-role="main-content"]');
       var srLabel = toggle ? toggle.querySelector('.tp-nav__toggle-sr') : null;
       var openLabel = toggle ? toggle.getAttribute('data-open-label') || toggle.getAttribute('aria-label') || '' : '';
       var closeLabel = toggle ? toggle.getAttribute('data-close-label') || openLabel : openLabel;
@@ -41,6 +43,20 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       var localeSelect = document.querySelector('[data-role="locale-select"]');
       var localeConfigNode = document.querySelector('script[data-role="locale-config"]');
       var localeConfig = null;
+      var focusableSelectors = [
+        'a[href]:not([tabindex="-1"])',
+        'button:not([disabled]):not([tabindex="-1"])',
+        'select:not([disabled]):not([tabindex="-1"])',
+        'textarea:not([disabled]):not([tabindex="-1"])',
+        'input:not([disabled]):not([tabindex="-1"])',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(',');
+      var previousFocus = null;
+      var mobileLayout = false;
+      var layoutQuery = null;
+      if (mainContent && !mainContent.hasAttribute('tabindex')) {
+        mainContent.setAttribute('tabindex', '-1');
+      }
       var LOCALE_STORAGE_KEY = 'tp:locale';
       var LOCALE_COOKIE_NAME = 'tp_locale';
       var LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
@@ -148,8 +164,48 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
         }
       }
 
-      function setState(open) {
-        nav.setAttribute('data-state', open ? 'expanded' : 'collapsed');
+      function isElementVisible(element) {
+        if (!element) {
+          return false;
+        }
+        if (element.hasAttribute && element.hasAttribute('disabled')) {
+          return false;
+        }
+        if (element.getAttribute && element.getAttribute('aria-hidden') === 'true') {
+          return false;
+        }
+        if (typeof element.getClientRects === 'function') {
+          return element.getClientRects().length > 0;
+        }
+        return true;
+      }
+
+      function getFocusableElements() {
+        var nodes = nav.querySelectorAll(focusableSelectors);
+        return Array.prototype.filter.call(nodes, function (node) {
+          return isElementVisible(node);
+        });
+      }
+
+      function focusDefaultNavItem() {
+        var activeLink = nav.querySelector('a[data-route][data-state="active"]');
+        if (activeLink && typeof activeLink.focus === 'function') {
+          activeLink.focus();
+          return;
+        }
+        var focusable = getFocusableElements();
+        if (focusable.length > 0 && typeof focusable[0].focus === 'function') {
+          focusable[0].focus();
+        }
+      }
+
+      function setState(open, options) {
+        var opts = options || {};
+        if (!mobileLayout) {
+          open = true;
+        }
+        var nextState = open ? 'expanded' : 'collapsed';
+        nav.setAttribute('data-state', nextState);
         if (toggle) {
           toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
           toggle.setAttribute('aria-label', open ? closeLabel : openLabel);
@@ -158,7 +214,58 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
           srLabel.textContent = open ? closeLabel : openLabel;
         }
         if (overlay) {
-          overlay.hidden = !open;
+          var showOverlay = mobileLayout && open;
+          overlay.hidden = !showOverlay;
+          overlay.setAttribute('aria-hidden', showOverlay ? 'false' : 'true');
+        }
+        if (navPanel) {
+          navPanel.setAttribute('aria-hidden', mobileLayout && !open ? 'true' : 'false');
+        }
+        if (!mobileLayout) {
+          return;
+        }
+        if (open) {
+          previousFocus = document.activeElement;
+          if (!opts.preventAutoFocus) {
+            focusDefaultNavItem();
+          }
+          return;
+        }
+        if (opts.skipFocusRestore) {
+          previousFocus = null;
+          return;
+        }
+        var focusTarget = opts.focusTarget && typeof opts.focusTarget.focus === 'function' ? opts.focusTarget : previousFocus;
+        if (!focusTarget || typeof focusTarget.focus !== 'function') {
+          focusTarget = toggle;
+        }
+        if (focusTarget && typeof focusTarget.focus === 'function') {
+          focusTarget.focus();
+        }
+        previousFocus = null;
+      }
+
+      function handleFocusTrap(event) {
+        if (!mobileLayout || nav.getAttribute('data-state') !== 'expanded') {
+          return;
+        }
+        if (event.key !== 'Tab') {
+          return;
+        }
+        var focusable = getFocusableElements();
+        if (focusable.length === 0) {
+          event.preventDefault();
+          return;
+        }
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        var activeElement = document.activeElement;
+        if (event.shiftKey && activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && activeElement === last) {
+          event.preventDefault();
+          first.focus();
         }
       }
 
@@ -225,7 +332,30 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       }
 
       nav.setAttribute('data-enhanced', 'true');
-      setState(false);
+      nav.addEventListener('keydown', handleFocusTrap);
+
+      function updateLayoutFromQuery(event) {
+        if (event && typeof event.matches === 'boolean') {
+          mobileLayout = event.matches;
+        } else if (layoutQuery) {
+          mobileLayout = layoutQuery.matches;
+        }
+        setState(mobileLayout ? false : true, { skipFocusRestore: true, preventAutoFocus: true });
+      }
+
+      if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+        layoutQuery = window.matchMedia('(max-width: 1080px)');
+        mobileLayout = layoutQuery.matches;
+        updateLayoutFromQuery({ matches: mobileLayout });
+        if (typeof layoutQuery.addEventListener === 'function') {
+          layoutQuery.addEventListener('change', updateLayoutFromQuery);
+        } else if (typeof layoutQuery.addListener === 'function') {
+          layoutQuery.addListener(updateLayoutFromQuery);
+        }
+      } else {
+        mobileLayout = toggle ? toggle.offsetParent !== null : false;
+        setState(mobileLayout ? false : true, { skipFocusRestore: true, preventAutoFocus: true });
+      }
 
       if (toggle) {
         toggle.addEventListener('click', function () {
@@ -236,24 +366,30 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
 
       if (overlay) {
         overlay.addEventListener('click', function () {
-          setState(false);
+          if (mobileLayout) {
+            setState(false);
+          }
         });
       }
 
       closeButtons.forEach(function (button) {
         button.addEventListener('click', function () {
-          setState(false);
+          if (mobileLayout) {
+            setState(false);
+          }
         });
       });
 
       links.forEach(function (link) {
         link.addEventListener('click', function () {
-          setState(false);
+          if (mobileLayout) {
+            setState(false, { focusTarget: mainContent });
+          }
         });
       });
 
       document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' && mobileLayout && nav.getAttribute('data-state') === 'expanded') {
           setState(false);
         }
       });
@@ -390,6 +526,8 @@ function renderNavigation(router, currentRoute, currentLocale) {
   const toggleLabel = t('nav.controls.toggle.label');
   const toggleOpen = t('nav.controls.toggle.open');
   const toggleClose = t('nav.controls.toggle.close');
+  const navPanelId = 'tp-nav-panel';
+  const overlayId = 'tp-nav-overlay';
   const links = router.list().map((route) => {
     const label = sections[route] || route;
     const activeClass = route === currentRoute ? ' tp-nav__link--active' : '';
@@ -419,6 +557,7 @@ function renderNavigation(router, currentRoute, currentLocale) {
           data-action="toggle-nav"
           data-open-label="${escapeHtml(String(toggleOpen))}"
           data-close-label="${escapeHtml(String(toggleClose))}"
+          aria-controls="${navPanelId}"
           aria-expanded="true"
           aria-label="${escapeHtml(String(toggleClose))}"
         >
@@ -427,7 +566,7 @@ function renderNavigation(router, currentRoute, currentLocale) {
           <span class="tp-nav__toggle-sr tp-sr-only">${escapeHtml(String(toggleClose))}</span>
         </button>
       </div>
-      <div class="tp-nav__panel" data-role="nav-panel">
+      <div id="${navPanelId}" class="tp-nav__panel" data-role="nav-panel" aria-hidden="false">
         <div class="tp-nav__panel-header">
           <h2 class="tp-nav__title">${escapeHtml(String(t('nav.title')))}</h2>
           <button type="button" class="tp-nav__close" data-action="close-nav" aria-label="${escapeHtml(String(toggleClose))}">
@@ -437,7 +576,7 @@ function renderNavigation(router, currentRoute, currentLocale) {
         <ul class="tp-nav__links">${links.join('')}</ul>
         ${localeSwitcher.markup}
       </div>
-      <div class="tp-nav__overlay" data-role="nav-overlay" hidden aria-hidden="true"></div>
+      <div id="${overlayId}" class="tp-nav__overlay" data-role="nav-overlay" hidden aria-hidden="true"></div>
     </nav>
     `,
     locales: localeSwitcher.payload,
@@ -490,6 +629,7 @@ export function renderDashboard(options = {}) {
   const headerHtml = renderHeader(header);
   const localeConfig = getLocaleConfig(locale) || {};
   const direction = localeConfig.direction || 'ltr';
+  const skipLinkLabel = getMessage('nav.accessibility.skipLink') || 'Skip to main content';
   const localePayload = {
     current: locale,
     locales: navigation.locales,
@@ -497,8 +637,9 @@ export function renderDashboard(options = {}) {
 
   const html = `
     <div class="tp-app" data-locale="${escapeHtml(locale)}" dir="${escapeHtml(direction)}">
+      <a class="tp-skip-link" href="#tp-main-content">${escapeHtml(String(skipLinkLabel))}</a>
       ${navigation.markup}
-      <main class="tp-shell">
+      <main id="tp-main-content" class="tp-shell" tabindex="-1" data-role="main-content">
         ${headerHtml}
         ${view.html}
       </main>

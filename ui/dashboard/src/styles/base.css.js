@@ -2,17 +2,24 @@ export const BASE_STYLES = `
   :root {
     color-scheme: dark;
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    --tp-surface-900: rgba(15, 23, 42, 0.85);
-    --tp-surface-800: rgba(15, 23, 42, 0.65);
-    --tp-surface-700: rgba(15, 23, 42, 0.55);
-    --tp-border-strong: rgba(148, 163, 184, 0.35);
-    --tp-border-soft: rgba(148, 163, 184, 0.15);
-    --tp-text-muted: rgba(226, 232, 240, 0.7);
-    --tp-text-subtle: rgba(148, 163, 184, 0.75);
+    --tp-surface-900: rgba(15, 23, 42, 0.92);
+    --tp-surface-800: rgba(15, 23, 42, 0.78);
+    --tp-surface-700: rgba(15, 23, 42, 0.62);
+    --tp-border-strong: rgba(148, 163, 184, 0.6);
+    --tp-border-soft: rgba(148, 163, 184, 0.28);
+    --tp-text-muted: rgba(226, 232, 240, 0.92);
+    --tp-text-subtle: rgba(203, 213, 225, 0.9);
     --tp-accent: #38bdf8;
     --tp-accent-strong: #2563eb;
     --tp-positive: #4ade80;
     --tp-negative: #f87171;
+    --tp-focus-ring: #38bdf8;
+    --tp-focus-ring-subtle: rgba(56, 189, 248, 0.35);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--tp-focus-ring);
+    outline-offset: 3px;
   }
 
   .tp-text-muted {
@@ -96,6 +103,26 @@ export const BASE_STYLES = `
     overflow: hidden;
   }
 
+  .tp-skip-link {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+    transform: translateY(-200%);
+    padding: 0.65rem 1.25rem;
+    border-radius: 10px;
+    background: var(--tp-accent-strong);
+    color: #f8fafc;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: transform 0.2s ease;
+    z-index: 30;
+  }
+
+  .tp-skip-link:focus-visible {
+    transform: translateY(0);
+    box-shadow: 0 0 0 4px rgba(2, 6, 23, 0.45);
+  }
+
   .tp-app::before {
     content: '';
     position: fixed;
@@ -176,6 +203,15 @@ export const BASE_STYLES = `
     list-style: none;
     padding: 0;
     margin: 0;
+  }
+
+  .tp-nav__link:focus-visible,
+  .tp-nav__toggle:focus-visible,
+  .tp-nav__close:focus-visible,
+  .tp-nav__locale-select:focus-visible {
+    outline: 2px solid var(--tp-focus-ring);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px var(--tp-focus-ring-subtle);
   }
 
   .tp-nav__locale {
@@ -261,7 +297,8 @@ export const BASE_STYLES = `
     font-weight: 600;
     padding: 0.25rem 0.6rem;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(37, 99, 235, 0.65);
+    color: #f8fafc;
     position: relative;
     animation: tpBadgePulse 4s ease-in-out infinite;
   }
@@ -272,9 +309,9 @@ export const BASE_STYLES = `
     gap: 0.6rem;
     padding: 0.55rem 1rem;
     border-radius: 999px;
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    background: rgba(15, 23, 42, 0.6);
-    color: rgba(226, 232, 240, 0.88);
+    border: 1px solid var(--tp-border-strong);
+    background: rgba(15, 23, 42, 0.82);
+    color: #f8fafc;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -283,8 +320,8 @@ export const BASE_STYLES = `
   }
 
   .tp-nav__toggle:hover {
-    background: rgba(56, 189, 248, 0.2);
-    border-color: rgba(56, 189, 248, 0.55);
+    background: rgba(37, 99, 235, 0.4);
+    border-color: rgba(37, 99, 235, 0.75);
     transform: translateY(-1px);
   }
 
