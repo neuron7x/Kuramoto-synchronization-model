@@ -215,6 +215,12 @@ This document summarizes the comprehensive documentation, security, and monitori
 - Establishes adoption metrics (coverage, freshness, verification health) and a
   continuous improvement loop tied to quarterly retrospectives
 
+**docs/documentation_quality_metrics.md - KPI Measurement Handbook**
+- Defines canonical KPIs for documentation governance with automation sources and SLO bands
+- Details nightly, weekly, and monthly workflows for scorecard generation and publication
+- Assigns operational ownership across steward, quality engineering, domain, and release roles
+- Provides extension process, verification checklist, and changelog requirements for new metrics
+
 **core/indicators/hurst.py - Complete Documentation**
 - Module-level documentation on Hurst exponent theory
 - References to academic papers (Hurst 1951, Peters 1994)
