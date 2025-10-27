@@ -9,7 +9,9 @@ import { escapeHtml, serializeForScript } from './formatters.js';
 import { BASE_STYLES } from '../styles/base.css.js';
 import { TABLE_STYLES } from '../styles/table.css.js';
 import { CHART_STYLES } from '../styles/chart.css.js';
+import { ONBOARDING_STYLES } from '../styles/onboarding.css.js';
 import { getMessage, t, getLocale, getLocaleConfig } from '../i18n/index.js';
+import { renderOnboarding } from './onboarding.js';
 import { supportedLocales, localeMetadata } from '../i18n/config.js';
 
 /**
@@ -18,7 +20,7 @@ import { supportedLocales, localeMetadata } from '../i18n/config.js';
  * @typedef {import('../types/api').DashboardCommunityPayload} DashboardCommunityPayload
  */
 
-export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES].join('\n');
+export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES, ONBOARDING_STYLES].join('\n');
 
 const NAVIGATION_ENHANCEMENT_SCRIPT = `
   <script>
@@ -620,6 +622,7 @@ export function renderDashboard(options = {}) {
     signals = {},
     community = {},
     header = {},
+    onboarding: onboardingConfig = {},
   } = options;
 
   const router = createDashboardRouter({ overview, positions, orders, pnl, signals, community });
@@ -630,6 +633,7 @@ export function renderDashboard(options = {}) {
   const localeConfig = getLocaleConfig(locale) || {};
   const direction = localeConfig.direction || 'ltr';
   const skipLinkLabel = getMessage('nav.accessibility.skipLink') || 'Skip to main content';
+  const onboardingUi = renderOnboarding(onboardingConfig);
   const localePayload = {
     current: locale,
     locales: navigation.locales,
@@ -643,9 +647,11 @@ export function renderDashboard(options = {}) {
         ${headerHtml}
         ${view.html}
       </main>
+      ${(onboardingUi.markup ?? '')}
     </div>
     <script type="application/json" data-role="locale-config">${serializeForScript(localePayload)}</script>
     ${NAVIGATION_ENHANCEMENT_SCRIPT}
+    ${(onboardingUi.script ?? '')}
   `;
 
   return {

@@ -49,6 +49,30 @@
       }
     }
   },
+  "onboarding": {
+    "title": "Get to know the dashboard",
+    "progress": "Step {current} of {total}",
+    "cta": {
+      "skip": "Skip tour",
+      "next": "Next",
+      "finish": "Finish",
+      "previous": "Back"
+    },
+    "steps": {
+      "navigation": {
+        "title": "Navigate your workspace",
+        "description": "Use the primary navigation to move between overview, PnL, orders, signals, and community intelligence."
+      },
+      "workspace": {
+        "title": "Understand each view",
+        "description": "Every section opens with a summary header that calls out the key objective and tags for that slice of telemetry."
+      },
+      "insights": {
+        "title": "Dive into live insights",
+        "description": "Scroll through the contextual panels to explore metrics, charts, and data tables tailored to the selected route."
+      }
+    }
+  },
   "header": {
     "title": "TradePulse Monitoring Hub",
     "subtitle": "Unified control over execution, risk, and telemetry.",

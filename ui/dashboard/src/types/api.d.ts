@@ -7,6 +7,20 @@
 
 import type { BarEvent, FillEvent, OrderEvent, SignalEvent, TickEvent } from '../types/events';
 
+export interface OnboardingStep {
+  id?: string;
+  title?: string;
+  description?: string;
+  selector?: string | string[];
+  selectors?: string[];
+}
+
+export interface OnboardingConfig {
+  enabled?: boolean;
+  storageKey?: string;
+  steps?: OnboardingStep[];
+}
+
 export interface GithubPullRequestSummary {
   merged_30d?: number | string | null;
   merged?: number | string | null;
@@ -271,4 +285,5 @@ export interface DashboardData {
     subtitle?: string;
     tags?: string[];
   };
+  onboarding?: OnboardingConfig | null;
 }
