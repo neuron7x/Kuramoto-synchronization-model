@@ -8,10 +8,12 @@ import pytest
 
 from src.system import (
     ModuleExecutionError,
+    ModuleExecutionDynamics,
     ModuleHandler,
     ModuleOrchestrator,
     ModuleRunResult,
     ModuleRunSummary,
+    ModuleTimelineEntry,
 )
 
 
@@ -202,4 +204,45 @@ def test_orchestrator_runs_independent_modules_concurrently() -> None:
     assert summary.succeeded is True
     assert summary.context["alpha"] is True
     assert summary.context["beta"] is True
+
+    dynamics = summary.build_dynamics()
+
+    assert isinstance(dynamics, ModuleExecutionDynamics)
+    assert isinstance(dynamics.module_timelines, tuple)
+    assert len(dynamics.module_timelines) == 2
+    assert dynamics.peak_concurrency >= 1
+    assert dynamics.total_runtime >= 0.0
+    assert dynamics.module_runtime_sum >= dynamics.total_runtime
+    for entry in dynamics.module_timelines:
+        assert isinstance(entry, ModuleTimelineEntry)
+        assert entry.started_at >= 0.0
+        assert entry.completed_at >= entry.started_at
+
+
+def test_execution_dynamics_captures_parallelism() -> None:
+    orchestrator = ModuleOrchestrator()
+    barrier = threading.Barrier(2)
+
+    def make_handler(name: str) -> ModuleHandler:
+        def handler(state: Mapping[str, object]) -> Mapping[str, object]:
+            barrier.wait(timeout=5)
+            barrier.wait(timeout=5)
+            return {name: True}
+
+        return handler
+
+    orchestrator.register("alpha", make_handler("alpha"), provides=["alpha"])
+    orchestrator.register("beta", make_handler("beta"), provides=["beta"])
+
+    summary = orchestrator.run(max_workers=2)
+    dynamics = summary.build_dynamics()
+
+    assert dynamics.peak_concurrency == 2
+    assert dynamics.concurrency_profile[2] > 0.0
+    assert dynamics.average_concurrency >= 1.5
+    assert dynamics.utilisation >= 0.75
+    assert dynamics.module_runtime_sum == pytest.approx(
+        sum(entry.duration for entry in dynamics.module_timelines),
+        rel=1e-9,
+    )
 

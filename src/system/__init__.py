@@ -16,11 +16,13 @@ from .integration import (
 )
 from .module_orchestrator import (
     ModuleDefinition,
+    ModuleExecutionDynamics,
     ModuleExecutionError,
     ModuleHandler,
     ModuleOrchestrator,
     ModuleRunResult,
     ModuleRunSummary,
+    ModuleTimelineEntry,
 )
 
 __all__ = [
@@ -32,11 +34,13 @@ __all__ = [
     "IntegrationRouter",
     "RouteDispatchResult",
     "ModuleDefinition",
+    "ModuleExecutionDynamics",
     "ModuleExecutionError",
     "ModuleHandler",
     "ModuleOrchestrator",
     "ModuleRunResult",
     "ModuleRunSummary",
+    "ModuleTimelineEntry",
     "StreamingPipelineSettings",
     "TradePulsePlatform",
     "build_tradepulse_platform",

@@ -55,6 +55,32 @@ class ModuleRunResult:
     duration: float
     output: dict[str, object] | None
     error: BaseException | None = None
+    started_at: float | None = None
+    completed_at: float | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class ModuleTimelineEntry:
+    """Timeline information for a single module execution."""
+
+    name: str
+    started_at: float
+    completed_at: float
+    duration: float
+    success: bool
+
+
+@dataclass(slots=True, frozen=True)
+class ModuleExecutionDynamics:
+    """Aggregate runtime characteristics for an orchestration run."""
+
+    total_runtime: float
+    module_timelines: tuple[ModuleTimelineEntry, ...]
+    concurrency_profile: Mapping[int, float]
+    peak_concurrency: int
+    average_concurrency: float
+    utilisation: float
+    module_runtime_sum: float
 
 
 @dataclass(slots=True)
@@ -70,6 +96,95 @@ class ModuleRunSummary:
         """Return ``True`` when every module finished successfully."""
 
         return all(result.success for result in self.results.values())
+
+    def build_dynamics(self) -> ModuleExecutionDynamics:
+        """Construct an execution dynamics snapshot for the orchestration run."""
+
+        timelines: list[ModuleTimelineEntry] = []
+        for name in self.order:
+            result = self.results.get(name)
+            if (
+                result is None
+                or result.started_at is None
+                or result.completed_at is None
+            ):
+                continue
+            timelines.append(
+                ModuleTimelineEntry(
+                    name=name,
+                    started_at=result.started_at,
+                    completed_at=result.completed_at,
+                    duration=result.duration,
+                    success=result.success,
+                )
+            )
+
+        if not timelines:
+            empty_profile: Mapping[int, float] = MappingProxyType({})
+            return ModuleExecutionDynamics(
+                total_runtime=0.0,
+                module_timelines=tuple(),
+                concurrency_profile=empty_profile,
+                peak_concurrency=0,
+                average_concurrency=0.0,
+                utilisation=0.0,
+                module_runtime_sum=0.0,
+            )
+
+        timelines.sort(key=lambda entry: entry.started_at)
+        total_runtime = timelines[-1].completed_at - timelines[0].started_at
+        module_runtime_sum = sum(entry.duration for entry in timelines)
+
+        events: list[tuple[float, int]] = []
+        for entry in timelines:
+            events.append((entry.started_at, 1))
+            events.append((entry.completed_at, -1))
+        events.sort(key=lambda item: (item[0], -item[1]))
+
+        active = 0
+        previous_time: float | None = None
+        concurrency_durations: dict[int, float] = {}
+        peak_concurrency = 0
+
+        for moment, delta in events:
+            if previous_time is not None and moment > previous_time:
+                duration = moment - previous_time
+                concurrency_durations[active] = (
+                    concurrency_durations.get(active, 0.0) + duration
+                )
+            active += delta
+            peak_concurrency = max(peak_concurrency, active)
+            previous_time = moment
+
+        if previous_time is not None:
+            # No more events after the final completion; ensure zero duration bucket exists
+            concurrency_durations.setdefault(active, 0.0)
+
+        if total_runtime <= 0.0:
+            average_concurrency = 0.0
+            utilisation = 0.0
+        else:
+            busy_time = sum(
+                level * duration for level, duration in concurrency_durations.items()
+            )
+            average_concurrency = busy_time / total_runtime
+            utilisation = (
+                busy_time / (peak_concurrency * total_runtime)
+                if peak_concurrency > 0
+                else 0.0
+            )
+
+        concurrency_profile = MappingProxyType(dict(sorted(concurrency_durations.items())))
+
+        return ModuleExecutionDynamics(
+            total_runtime=total_runtime,
+            module_timelines=tuple(timelines),
+            concurrency_profile=concurrency_profile,
+            peak_concurrency=peak_concurrency,
+            average_concurrency=average_concurrency,
+            utilisation=utilisation,
+            module_runtime_sum=module_runtime_sum,
+        )
 
 
 class ModuleExecutionError(RuntimeError):
@@ -263,6 +378,7 @@ class ModuleOrchestrator:
         next_to_finalize = 0
         failure_details: tuple[str, BaseException] | None = None
 
+        run_origin = perf_counter()
         executor = ThreadPoolExecutor(max_workers=worker_cap)
         try:
             while (ready_heap or in_flight) and failure_details is None:
@@ -291,7 +407,10 @@ class ModuleOrchestrator:
 
                     context_snapshot = MappingProxyType(dict(context))
                     future = executor.submit(
-                        self._invoke_handler, definitions[name], context_snapshot
+                        self._invoke_handler,
+                        definitions[name],
+                        context_snapshot,
+                        run_origin,
                     )
                     in_flight[future] = name
 
@@ -369,10 +488,11 @@ class ModuleOrchestrator:
     def _invoke_handler(
         definition: ModuleDefinition,
         context: ModuleState,
+        origin: float,
     ) -> ModuleExecutionOutcome:
         """Execute a module handler and normalise its outcome."""
 
-        start = perf_counter()
+        start_absolute = perf_counter()
         try:
             output = definition.handler(context)
             updates: dict[str, object] | None = None
@@ -382,7 +502,8 @@ class ModuleOrchestrator:
                         f"Module '{definition.name}' handler must return a mapping or None"
                     )
                 updates = dict(output)
-            duration = perf_counter() - start
+            end_absolute = perf_counter()
+            duration = end_absolute - start_absolute
             return (
                 ModuleRunResult(
                     name=definition.name,
@@ -390,12 +511,15 @@ class ModuleOrchestrator:
                     duration=duration,
                     output=updates,
                     error=None,
+                    started_at=start_absolute - origin,
+                    completed_at=end_absolute - origin,
                 ),
                 updates,
                 None,
             )
         except Exception as exc:
-            duration = perf_counter() - start
+            end_absolute = perf_counter()
+            duration = end_absolute - start_absolute
             return (
                 ModuleRunResult(
                     name=definition.name,
@@ -403,6 +527,8 @@ class ModuleOrchestrator:
                     duration=duration,
                     output=None,
                     error=exc,
+                    started_at=start_absolute - origin,
+                    completed_at=end_absolute - origin,
                 ),
                 None,
                 exc,
@@ -411,10 +537,12 @@ class ModuleOrchestrator:
 
 __all__ = [
     "ModuleDefinition",
+    "ModuleExecutionDynamics",
     "ModuleExecutionError",
     "ModuleHandler",
     "ModuleOrchestrator",
     "ModuleRunResult",
     "ModuleRunSummary",
+    "ModuleTimelineEntry",
 ]
 
