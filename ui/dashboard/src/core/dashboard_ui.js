@@ -20,6 +20,48 @@ import { supportedLocales, localeMetadata } from '../i18n/config.js';
 
 export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES].join('\n');
 
+const FALLBACK_MENU_GROUPS = [
+  {
+    id: 'intelligence',
+    label: 'Market intelligence',
+    description: 'Monitor performance, profitability, and open risk.',
+    items: ['overview', 'pnl', 'positions'],
+  },
+  {
+    id: 'execution',
+    label: 'Execution oversight',
+    description: 'Supervise orders and live trading directives.',
+    items: ['orders', 'signals'],
+  },
+  {
+    id: 'community',
+    label: 'Community insights',
+    description: 'Stay aligned with contributors and ecosystem health.',
+    items: ['community'],
+  },
+];
+
+const FALLBACK_TOOLBAR_ACTIONS = [
+  {
+    id: 'refresh',
+    label: 'Refresh data',
+    hint: 'Reload the latest telemetry for this view.',
+    feedback: { success: 'Refreshing…', complete: 'Updated', error: 'Refresh failed' },
+  },
+  {
+    id: 'export',
+    label: 'Export report',
+    hint: 'Download a JSON snapshot of the current context.',
+    feedback: { success: 'Preparing…', complete: 'Exported', error: 'Export failed' },
+  },
+  {
+    id: 'share',
+    label: 'Share link',
+    hint: 'Copy or share a link to this dashboard state.',
+    feedback: { success: 'Copying…', complete: 'Link ready', error: 'Share failed' },
+  },
+];
+
 const NAVIGATION_ENHANCEMENT_SCRIPT = `
   <script>
     (function () {
@@ -43,6 +85,8 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       var localeSelect = document.querySelector('[data-role="locale-select"]');
       var localeConfigNode = document.querySelector('script[data-role="locale-config"]');
       var localeConfig = null;
+      var toolbar = document.querySelector('[data-role="toolbar"]');
+      var toolbarTimers = typeof WeakMap === 'function' ? new WeakMap() : null;
       var focusableSelectors = [
         'a[href]:not([tabindex="-1"])',
         'button:not([disabled]):not([tabindex="-1"])',
@@ -331,8 +375,246 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
         }
       }
 
+      function setToolbarButtonState(button, state) {
+        if (!button) {
+          return;
+        }
+        if (!state) {
+          button.removeAttribute('data-state');
+          button.removeAttribute('aria-busy');
+          button.removeAttribute('disabled');
+          return;
+        }
+        button.setAttribute('data-state', state);
+        if (state === 'busy') {
+          button.setAttribute('aria-busy', 'true');
+          button.setAttribute('disabled', 'disabled');
+        }
+      }
+
+      function setToolbarFeedback(button, message, options) {
+        if (!button) {
+          return;
+        }
+        var opts = options || {};
+        if (!message) {
+          button.removeAttribute('data-feedback');
+          if (toolbarTimers && toolbarTimers.has(button)) {
+            clearTimeout(toolbarTimers.get(button));
+            toolbarTimers.delete(button);
+          }
+          return;
+        }
+        button.setAttribute('data-feedback', message);
+        if (toolbarTimers) {
+          var existingTimer = toolbarTimers.get(button);
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+          }
+          if (opts.persistent) {
+            toolbarTimers.delete(button);
+            return;
+          }
+          var timeout = window.setTimeout(function () {
+            button.removeAttribute('data-feedback');
+            toolbarTimers.delete(button);
+          }, typeof opts.duration === 'number' ? opts.duration : 2200);
+          toolbarTimers.set(button, timeout);
+        } else if (!opts.persistent) {
+          window.setTimeout(function () {
+            button.removeAttribute('data-feedback');
+          }, typeof opts.duration === 'number' ? opts.duration : 2200);
+        }
+      }
+
+      function getViewMetaPayload() {
+        var node = document.querySelector('[data-role="view-meta"]');
+        if (!node) {
+          return null;
+        }
+        try {
+          return JSON.parse(node.textContent || '{}');
+        } catch (error) {
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Unable to parse view metadata', error);
+          }
+        }
+        return null;
+      }
+
+      function exportCurrentViewReport() {
+        var payload = getViewMetaPayload() || {};
+        var route = payload && payload.route ? payload.route : toolbar ? toolbar.getAttribute('data-route') : '';
+        var report = {
+          route: route || null,
+          generatedAt: new Date().toISOString(),
+          payload: payload,
+        };
+        var blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = (route || 'dashboard') + '-report.json';
+        document.body.appendChild(link);
+        link.click();
+        window.setTimeout(function () {
+          if (link && link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          URL.revokeObjectURL(url);
+        }, 0);
+        return true;
+      }
+
+      function copyLinkToClipboard(url) {
+        if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          return navigator.clipboard
+            .writeText(url)
+            .then(function () {
+              return true;
+            })
+            .catch(function () {
+              return false;
+            });
+        }
+        return new Promise(function (resolve) {
+          try {
+            var textArea = document.createElement('textarea');
+            textArea.value = url;
+            textArea.setAttribute('readonly', '');
+            textArea.style.position = 'absolute';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            textArea.setSelectionRange(0, textArea.value.length);
+            var succeeded = false;
+            try {
+              succeeded = document.execCommand('copy');
+            } catch (error) {
+              succeeded = false;
+            }
+            document.body.removeChild(textArea);
+            if (!succeeded) {
+              try {
+                window.prompt('Copy this link', url);
+                resolve(true);
+                return;
+              } catch (promptError) {
+                resolve(false);
+                return;
+              }
+            }
+            resolve(succeeded);
+          } catch (error) {
+            resolve(false);
+          }
+        });
+      }
+
+      function shareCurrentViewLink() {
+        if (typeof window === 'undefined' || typeof window.location === 'undefined') {
+          return Promise.resolve(false);
+        }
+        var shareUrl = window.location.href;
+        if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+          return navigator
+            .share({ title: document.title, url: shareUrl })
+            .then(function () {
+              return true;
+            })
+            .catch(function () {
+              return copyLinkToClipboard(shareUrl);
+            });
+        }
+        return copyLinkToClipboard(shareUrl);
+      }
+
+      function handleToolbarAction(action) {
+        if (!action) {
+          return Promise.resolve(false);
+        }
+        if (action === 'refresh') {
+          return new Promise(function (resolve) {
+            window.setTimeout(function () {
+              resolve(true);
+              window.location.reload();
+            }, 120);
+          });
+        }
+        if (action === 'export') {
+          return new Promise(function (resolve, reject) {
+            try {
+              var result = exportCurrentViewReport();
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            }
+          });
+        }
+        if (action === 'share') {
+          return shareCurrentViewLink();
+        }
+        try {
+          if (typeof window !== 'undefined' && typeof window.CustomEvent === 'function') {
+            var detail = { action: action };
+            if (toolbar) {
+              detail.route = toolbar.getAttribute('data-route') || null;
+            }
+            var dispatched = window.dispatchEvent(new CustomEvent('tp:toolbar-action', { detail: detail, bubbles: true }));
+            return Promise.resolve(dispatched);
+          }
+        } catch (error) {
+          return Promise.reject(error);
+        }
+        return Promise.resolve(false);
+      }
+
       nav.setAttribute('data-enhanced', 'true');
       nav.addEventListener('keydown', handleFocusTrap);
+
+      if (toolbar) {
+        toolbar.addEventListener('click', function (event) {
+          var button = event.target.closest('[data-action="toolbar-action"]');
+          if (!button || button.disabled) {
+            return;
+          }
+          var action = button.getAttribute('data-id');
+          if (!action) {
+            return;
+          }
+          event.preventDefault();
+          var successLabel = button.getAttribute('data-success-label') || '';
+          var completeLabel = button.getAttribute('data-complete-label') || '';
+          var errorLabel = button.getAttribute('data-error-label') || '';
+          setToolbarButtonState(button, 'busy');
+          if (successLabel) {
+            setToolbarFeedback(button, successLabel, { persistent: true });
+          } else {
+            setToolbarFeedback(button, '');
+          }
+          handleToolbarAction(action)
+            .then(function (result) {
+              setToolbarButtonState(button, '');
+              setToolbarFeedback(button, '');
+              var message = completeLabel || (result ? successLabel : '');
+              if (!message && result) {
+                message = 'Done';
+              }
+              if (message) {
+                setToolbarFeedback(button, message);
+              }
+            })
+            .catch(function (error) {
+              setToolbarButtonState(button, '');
+              setToolbarFeedback(button, '');
+              var message = errorLabel || 'Failed';
+              setToolbarFeedback(button, message, { duration: 3200 });
+              if (typeof console !== 'undefined' && console.warn) {
+                console.warn('Toolbar action failed', action, error);
+              }
+            });
+        });
+      }
 
       function updateLayoutFromQuery(event) {
         if (event && typeof event.matches === 'boolean') {
@@ -430,6 +712,230 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
   </script>
 `;
 
+function resolveTranslationString(key, fallback = '') {
+  const value = t(key);
+  if (value == null) {
+    return fallback;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === key) {
+      return fallback;
+    }
+    return trimmed;
+  }
+  return fallback;
+}
+
+function toArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    return [value.trim()];
+  }
+  return [];
+}
+
+function normaliseMenuDefinition(router, sections) {
+  const menuConfig = getMessage('nav.menu') || {};
+  const availableRoutes = new Set(router.list());
+  const normalisedGroups = [];
+
+  const pushGroup = (id, rawGroup = {}) => {
+    const groupId = typeof id === 'string' && id ? id : rawGroup.id || `group-${normalisedGroups.length + 1}`;
+    const rawItems = toArray(rawGroup.items || rawGroup.routes);
+    const routes = rawItems.filter((route) => availableRoutes.has(route));
+    if (routes.length === 0) {
+      return;
+    }
+    const labelSource = typeof rawGroup.label === 'string' && rawGroup.label.trim() !== ''
+      ? rawGroup.label
+      : sections[routes[0]] || routes[0];
+    const descriptionSource = typeof rawGroup.description === 'string' ? rawGroup.description : '';
+    normalisedGroups.push({
+      id: groupId,
+      label: labelSource,
+      description: descriptionSource,
+      routes,
+    });
+  };
+
+  if (Array.isArray(menuConfig.groups)) {
+    menuConfig.groups.forEach((group, index) => {
+      pushGroup(group?.id || `group-${index + 1}`, group || {});
+    });
+  } else if (menuConfig.groups && typeof menuConfig.groups === 'object') {
+    Object.entries(menuConfig.groups).forEach(([id, group]) => {
+      pushGroup(id, group || {});
+    });
+  }
+
+  if (normalisedGroups.length === 0) {
+    FALLBACK_MENU_GROUPS.forEach((group) => {
+      pushGroup(group.id, group);
+    });
+  }
+
+  const titleSource = typeof menuConfig.title === 'string' && menuConfig.title.trim() !== ''
+    ? menuConfig.title
+    : resolveTranslationString('nav.menu.title', resolveTranslationString('nav.title', 'Navigation'));
+  const descriptionSource = typeof menuConfig.description === 'string' && menuConfig.description.trim() !== ''
+    ? menuConfig.description
+    : '';
+
+  return {
+    title: titleSource,
+    description: descriptionSource,
+    groups: normalisedGroups,
+  };
+}
+
+function normaliseToolbarDefinition() {
+  const toolbarConfig = getMessage('nav.toolbar') || {};
+  const normalisedActions = [];
+
+  const pushAction = (id, rawAction = {}) => {
+    const actionId = typeof id === 'string' && id ? id : rawAction.id;
+    if (!actionId) {
+      return;
+    }
+    const labelSource = typeof rawAction.label === 'string' && rawAction.label.trim() !== ''
+      ? rawAction.label
+      : actionId;
+    const hintSource = typeof rawAction.hint === 'string' ? rawAction.hint : '';
+    const feedback = rawAction.feedback && typeof rawAction.feedback === 'object' ? rawAction.feedback : {};
+    normalisedActions.push({
+      id: actionId,
+      label: labelSource,
+      hint: hintSource,
+      feedback: {
+        success: typeof feedback.success === 'string' ? feedback.success : '',
+        complete: typeof feedback.complete === 'string' ? feedback.complete : '',
+        error: typeof feedback.error === 'string' ? feedback.error : '',
+      },
+    });
+  };
+
+  if (Array.isArray(toolbarConfig.actions)) {
+    toolbarConfig.actions.forEach((action) => {
+      pushAction(action?.id, action || {});
+    });
+  } else if (toolbarConfig.actions && typeof toolbarConfig.actions === 'object') {
+    Object.entries(toolbarConfig.actions).forEach(([id, action]) => {
+      pushAction(id, action || {});
+    });
+  }
+
+  if (normalisedActions.length === 0) {
+    FALLBACK_TOOLBAR_ACTIONS.forEach((action) => pushAction(action.id, action));
+  }
+
+  const titleSource = typeof toolbarConfig.title === 'string' && toolbarConfig.title.trim() !== ''
+    ? toolbarConfig.title
+    : resolveTranslationString('nav.toolbar.title', 'Workspace actions');
+  const descriptionSource = typeof toolbarConfig.description === 'string' && toolbarConfig.description.trim() !== ''
+    ? toolbarConfig.description
+    : '';
+
+  return {
+    title: titleSource,
+    description: descriptionSource,
+    actions: normalisedActions,
+  };
+}
+
+function renderNavLink(route, sections, liveBadge, currentRoute) {
+  const label = sections[route] || route;
+  const activeClass = route === currentRoute ? ' tp-nav__link--active' : '';
+  const isActive = route === currentRoute;
+  const ariaCurrent = isActive ? ' aria-current="page"' : '';
+  const dataState = isActive ? ' data-state="active"' : '';
+  return `
+      <li class="tp-nav__menu-item">
+        <a class="tp-nav__link${activeClass}" href="#${escapeHtml(route)}" data-route="${escapeHtml(route)}"${dataState}${ariaCurrent}>
+          <span class="tp-nav__link-label">${escapeHtml(String(label))}</span>
+          <span class="tp-nav__badge">${escapeHtml(String(liveBadge))}</span>
+        </a>
+      </li>
+    `;
+}
+
+function renderBreadcrumbs(route, meta = {}) {
+  if (!route) {
+    return '';
+  }
+  const currentRoute = route;
+  const rootLabel = meta.breadcrumbRoot || resolveTranslationString('nav.title', 'Dashboard');
+  const ariaLabel = meta.breadcrumbAria || 'Breadcrumb';
+  const defaultRoute = meta.defaultRoute || 'overview';
+  const currentLabel = meta.routeLabel || currentRoute;
+  return `
+    <nav class="tp-breadcrumbs" aria-label="${escapeHtml(String(ariaLabel))}">
+      <ol class="tp-breadcrumbs__list">
+        <li class="tp-breadcrumbs__item">
+          <a class="tp-breadcrumbs__link" href="#${escapeHtml(defaultRoute)}" data-route="${escapeHtml(defaultRoute)}">
+            ${escapeHtml(String(rootLabel))}
+          </a>
+        </li>
+        <li class="tp-breadcrumbs__item" aria-current="page">
+          <span class="tp-breadcrumbs__current">${escapeHtml(String(currentLabel))}</span>
+        </li>
+      </ol>
+    </nav>
+  `;
+}
+
+function renderToolbar({ route, routeLabel }) {
+  const toolbar = normaliseToolbarDefinition();
+  if (!toolbar.actions.length) {
+    return { html: '', actions: [] };
+  }
+  const actions = toolbar.actions
+    .map((action) => {
+      const successLabel = action.feedback.success || '';
+      const completeLabel = action.feedback.complete || '';
+      const errorLabel = action.feedback.error || '';
+      return `
+        <button
+          type="button"
+          class="tp-toolbar__button"
+          data-action="toolbar-action"
+          data-id="${escapeHtml(action.id)}"
+          data-route="${escapeHtml(route)}"
+          ${successLabel ? `data-success-label="${escapeHtml(String(successLabel))}"` : ''}
+          ${completeLabel ? `data-complete-label="${escapeHtml(String(completeLabel))}"` : ''}
+          ${errorLabel ? `data-error-label="${escapeHtml(String(errorLabel))}"` : ''}
+          aria-label="${escapeHtml(String(action.label))}"
+        >
+          <span class="tp-toolbar__button-label">${escapeHtml(String(action.label))}</span>
+          ${action.hint ? `<span class="tp-toolbar__button-hint">${escapeHtml(String(action.hint))}</span>` : ''}
+        </button>
+      `;
+    })
+    .join('');
+
+  const descriptionBlock = toolbar.description
+    ? `<p class="tp-toolbar__description">${escapeHtml(String(toolbar.description))}</p>`
+    : '';
+
+  return {
+    html: `
+      <section class="tp-toolbar" data-role="toolbar" data-route="${escapeHtml(route)}">
+        <div class="tp-toolbar__header">
+          <div class="tp-toolbar__context">
+            <p class="tp-toolbar__eyebrow">${escapeHtml(String(toolbar.title))}</p>
+            <h2 class="tp-toolbar__title">${escapeHtml(String(routeLabel || route))}</h2>
+          </div>
+          ${descriptionBlock}
+        </div>
+        <div class="tp-toolbar__actions">${actions}</div>
+      </section>
+    `,
+    actions: toolbar.actions,
+  };
+}
+
 function resolveHeaderDefaults({ title, subtitle, tags }) {
   const defaultTags = getMessage('header.tags') || [];
   return {
@@ -521,34 +1027,62 @@ function renderLocaleSwitcher(currentLocale) {
 
 function renderNavigation(router, currentRoute, currentLocale) {
   const sections = getMessage('nav.sections') || {};
-  const liveBadge = t('nav.badges.live');
-  const brand = t('nav.brand');
-  const toggleLabel = t('nav.controls.toggle.label');
-  const toggleOpen = t('nav.controls.toggle.open');
-  const toggleClose = t('nav.controls.toggle.close');
+  const liveBadge = resolveTranslationString('nav.badges.live', 'Live');
+  const brand = resolveTranslationString('nav.brand', 'TradePulse');
+  const toggleLabel = resolveTranslationString('nav.controls.toggle.label', 'Menu');
+  const toggleOpen = resolveTranslationString('nav.controls.toggle.open', 'Open navigation');
+  const toggleClose = resolveTranslationString('nav.controls.toggle.close', 'Close navigation');
+  const navTitle = resolveTranslationString('nav.title', brand);
   const navPanelId = 'tp-nav-panel';
   const overlayId = 'tp-nav-overlay';
-  const links = router.list().map((route) => {
-    const label = sections[route] || route;
-    const activeClass = route === currentRoute ? ' tp-nav__link--active' : '';
-    const isActive = route === currentRoute;
-    const ariaCurrent = isActive ? ' aria-current="page"' : '';
-    const dataState = isActive ? ' data-state="active"' : '';
-    return `
-      <li>
-        <a class="tp-nav__link${activeClass}" href="#${escapeHtml(route)}" data-route="${escapeHtml(route)}"${dataState}${ariaCurrent}>
-          <span>${escapeHtml(String(label))}</span>
-          <span class="tp-nav__badge">${escapeHtml(String(liveBadge))}</span>
-        </a>
-      </li>
-    `;
-  });
-
+  const menuDefinition = normaliseMenuDefinition(router, sections);
   const localeSwitcher = renderLocaleSwitcher(currentLocale);
+  const defaultRoute = typeof router.defaultRoute === 'string' && router.defaultRoute.trim() !== ''
+    ? router.defaultRoute
+    : 'overview';
+  const routeLabel = sections[currentRoute] || currentRoute;
+  const breadcrumbsConfig = getMessage('nav.breadcrumbs') || {};
+  const breadcrumbRoot = typeof breadcrumbsConfig.root === 'string' && breadcrumbsConfig.root.trim() !== ''
+    ? breadcrumbsConfig.root
+    : navTitle;
+  const breadcrumbAria = typeof breadcrumbsConfig.ariaLabel === 'string' && breadcrumbsConfig.ariaLabel.trim() !== ''
+    ? breadcrumbsConfig.ariaLabel
+    : 'Breadcrumb';
+
+  const menuGroups = menuDefinition.groups
+    .map((group) => {
+      const items = group.routes
+        .map((route) => renderNavLink(route, sections, liveBadge, currentRoute))
+        .join('');
+      if (!items) {
+        return '';
+      }
+      const description = group.description
+        ? `<p class="tp-nav__menu-group-description">${escapeHtml(String(group.description))}</p>`
+        : '';
+      return `
+        <section class="tp-nav__menu-group" data-menu-group="${escapeHtml(String(group.id))}">
+          <header class="tp-nav__menu-group-header">
+            <h3 class="tp-nav__menu-group-title">${escapeHtml(String(group.label))}</h3>
+            ${description}
+          </header>
+          <ul class="tp-nav__links tp-nav__menu-links">${items}</ul>
+        </section>
+      `;
+    })
+    .filter(Boolean)
+    .join('');
+
+  const menuHeader = `
+        <header class="tp-nav__menu-header">
+          <h3 class="tp-nav__menu-title">${escapeHtml(String(menuDefinition.title || navTitle))}</h3>
+          ${menuDefinition.description ? `<p class="tp-nav__menu-description">${escapeHtml(String(menuDefinition.description))}</p>` : ''}
+        </header>
+  `;
 
   return {
     markup: `
-    <nav class="tp-nav" aria-label="Primary" data-role="primary-nav" data-state="expanded" data-enhanced="false">
+    <nav class="tp-nav" aria-label="Primary" data-role="primary-nav" data-state="expanded" data-enhanced="false" data-current-route="${escapeHtml(String(currentRoute))}">
       <div class="tp-nav__mobile-bar">
         <span class="tp-nav__brand">${escapeHtml(String(brand))}</span>
         <button
@@ -568,18 +1102,28 @@ function renderNavigation(router, currentRoute, currentLocale) {
       </div>
       <div id="${navPanelId}" class="tp-nav__panel" data-role="nav-panel" aria-hidden="false">
         <div class="tp-nav__panel-header">
-          <h2 class="tp-nav__title">${escapeHtml(String(t('nav.title')))}</h2>
+          <h2 class="tp-nav__title">${escapeHtml(String(navTitle))}</h2>
           <button type="button" class="tp-nav__close" data-action="close-nav" aria-label="${escapeHtml(String(toggleClose))}">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <ul class="tp-nav__links">${links.join('')}</ul>
+        <section class="tp-nav__menu" data-role="nav-menu">
+          ${menuHeader}
+          <div class="tp-nav__menu-groups">${menuGroups}</div>
+        </section>
         ${localeSwitcher.markup}
       </div>
       <div id="${overlayId}" class="tp-nav__overlay" data-role="nav-overlay" hidden aria-hidden="true"></div>
     </nav>
     `,
     locales: localeSwitcher.payload,
+    meta: {
+      route: currentRoute,
+      routeLabel,
+      defaultRoute,
+      breadcrumbRoot,
+      breadcrumbAria,
+    },
   };
 }
 
@@ -626,6 +1170,9 @@ export function renderDashboard(options = {}) {
   const { name: currentRoute, view } = router.navigate(route);
   const locale = getLocale();
   const navigation = renderNavigation(router, currentRoute, locale);
+  const routeLabel = navigation.meta ? navigation.meta.routeLabel : currentRoute;
+  const breadcrumbsHtml = renderBreadcrumbs(currentRoute, navigation.meta);
+  const toolbar = renderToolbar({ route: currentRoute, routeLabel });
   const headerHtml = renderHeader(header);
   const localeConfig = getLocaleConfig(locale) || {};
   const direction = localeConfig.direction || 'ltr';
@@ -640,6 +1187,8 @@ export function renderDashboard(options = {}) {
       <a class="tp-skip-link" href="#tp-main-content">${escapeHtml(String(skipLinkLabel))}</a>
       ${navigation.markup}
       <main id="tp-main-content" class="tp-shell" tabindex="-1" data-role="main-content">
+        ${breadcrumbsHtml}
+        ${toolbar.html}
         ${headerHtml}
         ${view.html}
       </main>

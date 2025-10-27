@@ -30,6 +30,73 @@
       "signals": "信号",
       "community": "社区"
     },
+    "menu": {
+      "title": "Navigation menu",
+      "description": "Focus on the area you need by scanning grouped capabilities.",
+      "groups": {
+        "intelligence": {
+          "label": "Market intelligence",
+          "description": "Monitor profitability, risk, and top-level telemetry.",
+          "items": [
+            "overview",
+            "pnl",
+            "positions"
+          ]
+        },
+        "execution": {
+          "label": "Execution oversight",
+          "description": "Track live orders and signal intent.",
+          "items": [
+            "orders",
+            "signals"
+          ]
+        },
+        "community": {
+          "label": "Community insights",
+          "description": "Stay aligned with shared learnings and releases.",
+          "items": [
+            "community"
+          ]
+        }
+      }
+    },
+    "toolbar": {
+      "title": "Workspace actions",
+      "description": "Operate this view without leaving the dashboard context.",
+      "actions": {
+        "refresh": {
+          "label": "Refresh data",
+          "hint": "Reload the latest telemetry for this route.",
+          "feedback": {
+            "success": "Refreshing…",
+            "complete": "Updated",
+            "error": "Refresh failed"
+          }
+        },
+        "export": {
+          "label": "Export report",
+          "hint": "Download a JSON snapshot for reviews.",
+          "feedback": {
+            "success": "Preparing…",
+            "complete": "Exported",
+            "error": "Export failed"
+          }
+        },
+        "share": {
+          "label": "Share link",
+          "hint": "Copy or share a deep link to this state.",
+          "feedback": {
+            "success": "Copying…",
+            "complete": "Link ready",
+            "error": "Share failed"
+          }
+        }
+      }
+    },
+    "breadcrumbs": {
+      "root": "Dashboard",
+      "ariaLabel": "Breadcrumb"
+    },
     "locales": {
       "title": "语言",
       "helper": "切换仪表盘语言。首选项会存储在浏览器中。",
