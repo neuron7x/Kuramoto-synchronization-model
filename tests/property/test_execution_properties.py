@@ -139,8 +139,18 @@ class TestOrderProperties:
         self, side: OrderSide, qty: float, price: float | None, order_type: OrderType
     ) -> None:
         """Order should be created with provided fields."""
+        kwargs: dict[str, float] = {}
+        if order_type is OrderType.ICEBERG:
+            visible = max(min(qty, qty * 0.5), 1e-9)
+            kwargs["iceberg_visible"] = visible
+
         order = Order(
-            symbol="BTCUSD", side=side, quantity=qty, price=price, order_type=order_type
+            symbol="BTCUSD",
+            side=side,
+            quantity=qty,
+            price=price,
+            order_type=order_type,
+            **kwargs,
         )
         assert order.side == side
         assert order.quantity == qty
