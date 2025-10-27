@@ -30,7 +30,7 @@ def _normalized_moment(values: Sequence[float], floor: float) -> float:
     mean = sum(values) / len(values)
     variance = sum((value - mean) ** 2 for value in values) / len(values)
     scale = math.sqrt(max(variance, floor))
-    return sum((value - mean) / scale for value in values) / len(values)
+    return mean / scale
 
 
 def _phase(values: Sequence[float], floor: float) -> float:
