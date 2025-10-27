@@ -327,13 +327,13 @@ volumes:
 
 ```dockerfile
 # Dockerfile
-FROM python:3.13-slim as builder
+FROM python:3.11-slim-bookworm as builder
 
 WORKDIR /app
 
 # Pull in the latest security fixes from Debian before layering application code.
 RUN apt-get update \
-    && apt-get upgrade -y --no-install-recommends \
+    && apt-get dist-upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
@@ -341,13 +341,13 @@ COPY requirements.lock .
 RUN pip install --user --no-cache-dir -r requirements.lock
 
 # Final stage
-FROM python:3.13-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
 # Apply security updates to the runtime image as well.
 RUN apt-get update \
-    && apt-get upgrade -y --no-install-recommends \
+    && apt-get dist-upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies

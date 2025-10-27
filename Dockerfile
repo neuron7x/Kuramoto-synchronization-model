@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-FROM python:3.13-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # before installing Python dependencies. Keeping the base packages current
 # ensures the vulnerability scanners report an accurate, hardened image.
 RUN apt-get update \
-    && apt-get upgrade -y --no-install-recommends \
+    && apt-get dist-upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.lock ./
