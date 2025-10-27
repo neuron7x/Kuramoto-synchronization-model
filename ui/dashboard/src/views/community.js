@@ -85,7 +85,7 @@ function formatTimelineLabel(value, translations = {}) {
       year: 'numeric',
     });
     return escapeHtml(formatted);
-  } catch (error) {
+  } catch {
     return escapeHtml(String(label));
   }
 }
