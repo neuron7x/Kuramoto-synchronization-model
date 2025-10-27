@@ -169,3 +169,23 @@ def test_inactive_sources_stop_blocking_watermark_progress() -> None:
     assert _dt(10) in ready_times
     assert backlog.watermark == _dt(11)
 
+
+def test_pruned_sources_are_removed_from_lag_and_delay_views() -> None:
+    clock = _FakeClock(_dt(0))
+    backlog = WatermarkBacklog(
+        allowed_lateness=timedelta(seconds=1),
+        expiration=timedelta(seconds=5),
+        clock=clock,
+    )
+
+    backlog.observe("alpha", _dt(0), payload={}, arrival_time=_dt(0.1))
+    backlog.observe("beta", _dt(0), payload={}, arrival_time=_dt(0.2))
+    backlog.observe("alpha", _dt(3), payload={}, arrival_time=_dt(3.1))
+
+    clock.advance(timedelta(seconds=10))
+    backlog.observe("alpha", _dt(10), payload={}, arrival_time=_dt(10.1))
+    backlog.drain_ready()
+
+    assert "beta" not in backlog.lag_summary()
+    assert "beta" not in backlog.delay_series()
+
