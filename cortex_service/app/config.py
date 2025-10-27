@@ -29,7 +29,7 @@ class ServiceMeta:
 class DatabaseSettings:
     """Database connectivity details."""
 
-    url: str
+    url: str = "sqlite+pysqlite:///:memory:"
     pool_size: int = 10
     pool_timeout: int = 30
     echo: bool = False
@@ -43,6 +43,9 @@ class SignalSettings:
     rescale_max: float = 1.0
     smoothing_factor: float = 0.25
     volatility_floor: float = 1e-6
+    neighbor_coupling: float = 0.5
+    valence_coupling: float = 0.75
+    signal_gain: float = 1.0
 
 
 @dataclass(slots=True)
@@ -52,6 +55,7 @@ class RiskSettings:
     max_absolute_exposure: float = 2.0
     var_confidence: float = 0.95
     stress_scenarios: tuple[float, ...] = (0.85, 0.5)
+    penalty_gain: float = 1.5
 
 
 @dataclass(slots=True)
@@ -62,6 +66,7 @@ class RegimeSettings:
     min_valence: float = -1.0
     max_valence: float = 1.0
     confidence_floor: float = 0.1
+    initial_valence: float = 0.0
 
 
 @dataclass(slots=True)

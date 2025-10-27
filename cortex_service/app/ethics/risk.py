@@ -2,72 +2,43 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from math import isfinite
-from statistics import NormalDist
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from ..config import RiskSettings
-
-
-@dataclass(slots=True)
-class Exposure:
-    """A portfolio exposure to a single instrument."""
-
-    instrument: str
-    exposure: float
-    limit: float
-    volatility: float
 
 
 @dataclass(slots=True)
 class RiskAssessment:
     """Container for computed risk metrics."""
 
-    score: float
-    value_at_risk: float
-    stressed_var: Sequence[float]
-    breached: Sequence[str]
+    risk_score: float
 
 
-def _confidence_scale(confidence: float) -> float:
-    """Return the normal quantile associated with the provided confidence."""
-
-    if not 0.0 < confidence < 1.0:
-        msg = "confidence must be between 0 and 1 (exclusive)"
+def _validate_inputs(pnl_deltas: Sequence[float], weights: Sequence[float]) -> None:
+    if len(pnl_deltas) != len(weights):
+        msg = "pnl_deltas and weights must have the same length"
+        raise ValueError(msg)
+    if not pnl_deltas:
+        msg = "pnl_deltas cannot be empty"
         raise ValueError(msg)
 
-    quantile = NormalDist().inv_cdf(confidence)
-    if not isfinite(quantile):
-        msg = "confidence produced a non-finite quantile"
+
+def compute_risk(pnl_deltas: Sequence[float], weights: Sequence[float], settings: RiskSettings) -> RiskAssessment:
+    """Compute a bounded risk score from PnL deltas and weights."""
+
+    _validate_inputs(pnl_deltas, weights)
+    total_weight = sum(weights)
+    if not math.isfinite(total_weight) or total_weight == 0:
+        msg = "weights must sum to a non-zero finite value"
         raise ValueError(msg)
 
-    return quantile
+    normalized_weights = [weight / total_weight for weight in weights]
+    mean_delta = sum(delta * weight for delta, weight in zip(pnl_deltas, normalized_weights))
+    amplified = -settings.penalty_gain * mean_delta
+    risk_score = math.tanh(amplified)
+    return RiskAssessment(risk_score=risk_score)
 
 
-def compute_risk(exposures: Iterable[Exposure], settings: RiskSettings) -> RiskAssessment:
-    """Compute a bounded risk score and associated metrics."""
-
-    exposures = list(exposures)
-    if not exposures:
-        return RiskAssessment(score=0.0, value_at_risk=0.0, stressed_var=(), breached=())
-
-    aggregate_var = 0.0
-    stress_results: list[float] = []
-    breaches: list[str] = []
-    max_abs = settings.max_absolute_exposure
-    for exposure in exposures:
-        scaled = abs(exposure.exposure) / (exposure.limit or max_abs)
-        if scaled > 1.0:
-            breaches.append(exposure.instrument)
-        aggregate_var += abs(exposure.exposure) * exposure.volatility
-        stress_results.append(abs(exposure.exposure) * exposure.volatility)
-
-    stress_metrics = [factor * aggregate_var for factor in settings.stress_scenarios]
-    confidence_scale = _confidence_scale(settings.var_confidence)
-    portfolio_var = aggregate_var * confidence_scale
-    risk_score = min(1.0, aggregate_var / (len(exposures) * max_abs))
-    return RiskAssessment(score=risk_score, value_at_risk=portfolio_var, stressed_var=tuple(stress_metrics), breached=tuple(breaches))
-
-
-__all__ = ["Exposure", "RiskAssessment", "compute_risk"]
+__all__ = ["RiskAssessment", "compute_risk"]

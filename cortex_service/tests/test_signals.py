@@ -1,139 +1,120 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
-import os
-
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
-
-os.environ.setdefault("CORTEX__DATABASE__URL", "'sqlite+pysqlite:///:memory:'")
-os.environ.setdefault("CORTEX__DATABASE__POOL_SIZE", "1")
-os.environ.setdefault("CORTEX__DATABASE__POOL_TIMEOUT", "30")
 
 from cortex_service.app.api import create_app
-from cortex_service.app.config import CortexSettings, DatabaseSettings, RegimeSettings, RiskSettings, ServiceMeta, SignalSettings
+from cortex_service.app.config import (
+    CortexSettings,
+    DatabaseSettings,
+    RegimeSettings,
+    RiskSettings,
+    ServiceMeta,
+    SignalSettings,
+)
 
 
 def _test_settings() -> CortexSettings:
     return CortexSettings(
         service=ServiceMeta(),
-        database=DatabaseSettings(url="sqlite+pysqlite:///:memory:", pool_size=1, pool_timeout=30, echo=False),
-        signals=SignalSettings(smoothing_factor=0.2, rescale_min=-1.0, rescale_max=1.0, volatility_floor=1e-6),
-        risk=RiskSettings(max_absolute_exposure=2.0, var_confidence=0.95, stress_scenarios=(0.8, 0.5)),
-        regime=RegimeSettings(decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1),
+        database=DatabaseSettings(),
+        signals=SignalSettings(
+            volatility_floor=1e-6,
+            neighbor_coupling=0.4,
+            valence_coupling=0.6,
+            signal_gain=1.0,
+        ),
+        risk=RiskSettings(penalty_gain=1.5),
+        regime=RegimeSettings(decay=0.2, min_valence=-1.0, max_valence=1.0, initial_valence=0.0),
     )
 
 
-def _sqlite_engine():
-    return create_engine(
-        "sqlite+pysqlite:///:memory:",
-        future=True,
-        poolclass=StaticPool,
-        connect_args={"check_same_thread": False},
-    )
-
-
-def test_signals_endpoint_computes_ensemble() -> None:
+def test_signals_endpoint_computes_cognition() -> None:
     settings = _test_settings()
-    engine = _sqlite_engine()
-    app = create_app(settings=settings, engine=engine)
+    app = create_app(settings=settings)
     client = TestClient(app)
 
     response = client.post(
         "/signals",
         json={
-            "as_of": datetime.now(tz=UTC).isoformat(),
-            "features": [
-                {"instrument": "AAPL", "name": "momentum", "value": 1.3, "mean": 0.2, "std": 0.5, "weight": 1.5},
-                {"instrument": "AAPL", "name": "volatility", "value": 0.4, "mean": 0.3, "std": 0.2, "weight": 0.7},
-            ],
+            "features": [0.12, -0.08, 0.03],
+            "neighbors": [[0.1, 0.05], [-0.02, 0.04]],
         },
     )
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["signals"][0]["instrument"] == "AAPL"
-    assert -1.0 <= payload["signals"][0]["strength"] <= 1.0
-    assert payload["synchrony"] >= 0.0
+    assert set(payload) == {"state", "signal", "coherence", "valence"}
+    assert -1.0 <= payload["signal"] <= 1.0
+    assert 0.0 <= payload["coherence"] <= 1.0
+    assert -1.0 <= payload["valence"] <= 1.0
 
 
-def test_risk_endpoint_returns_metrics() -> None:
+def test_risk_endpoint_returns_penalized_score() -> None:
     settings = _test_settings()
-    engine = _sqlite_engine()
-    app = create_app(settings=settings, engine=engine)
+    app = create_app(settings=settings)
     client = TestClient(app)
 
     response = client.post(
         "/risk",
         json={
-            "exposures": [
-                {
-                    "portfolio_id": "alpha",
-                    "instrument": "AAPL",
-                    "exposure": 0.7,
-                    "leverage": 1.2,
-                    "as_of": datetime.now(tz=UTC).isoformat(),
-                    "limit": 1.0,
-                    "volatility": 0.3,
-                }
-            ]
+            "pnl_deltas": [0.4, -0.2, 0.1],
+            "weights": [0.3, 0.5, 0.2],
         },
     )
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["score"] >= 0.0
-    assert payload["value_at_risk"] >= 0.0
+    assert -1.0 <= payload["risk_score"] <= 1.0
+    assert payload["risk_score"] < 0  # positive PnL reduces risk
 
 
-def test_regime_endpoint_persists_state() -> None:
+def test_regime_endpoint_updates_valence() -> None:
     settings = _test_settings()
-    engine = _sqlite_engine()
-    app = create_app(settings=settings, engine=engine)
+    app = create_app(settings=settings)
     client = TestClient(app)
 
-    first = client.post(
-        "/regime",
-        json={"feedback": 0.4, "volatility": 0.2, "as_of": datetime.now(tz=UTC).isoformat()},
-    )
+    first = client.post("/regime", json={"feedback": 0.4})
     assert first.status_code == 200
+    initial_valence = first.json()["valence"]
 
-    second = client.post(
-        "/regime",
-        json={"feedback": -0.3, "volatility": 0.1, "as_of": datetime.now(tz=UTC).isoformat()},
-    )
+    second = client.post("/regime", json={"feedback": -0.3})
     assert second.status_code == 200
-    assert second.json()["label"] in {"bullish", "bearish", "neutral", "indeterminate"}
+    updated_valence = second.json()["valence"]
+    assert -1.0 <= updated_valence <= 1.0
+    assert updated_valence != initial_valence
+
+    health = client.get("/health")
+    assert health.status_code == 200
+    assert health.json()["valence"] == updated_valence
 
 
-def test_memory_round_trip() -> None:
+def test_signals_rejects_empty_neighbors() -> None:
     settings = _test_settings()
-    engine = _sqlite_engine()
-    app = create_app(settings=settings, engine=engine)
+    app = create_app(settings=settings)
     client = TestClient(app)
 
-    as_of = datetime.now(tz=UTC).isoformat()
-    store = client.post(
-        "/memory",
+    response = client.post(
+        "/signals",
         json={
-            "exposures": [
-                {
-                    "portfolio_id": "alpha",
-                    "instrument": "AAPL",
-                    "exposure": 1.1,
-                    "leverage": 1.2,
-                    "as_of": as_of,
-                    "limit": 2.0,
-                    "volatility": 0.2,
-                }
-            ]
+            "features": [0.2, 0.1],
+            "neighbors": [[0.1, 0.0], []],
         },
     )
-    assert store.status_code == 202
 
-    fetch = client.get("/memory/alpha")
-    assert fetch.status_code == 200
-    payload = fetch.json()
-    assert payload["portfolio_id"] == "alpha"
-    assert payload["exposures"]
+    assert response.status_code == 400
+    payload = response.json()
+    assert "cannot be empty" in payload["detail"]
+
+
+def test_risk_mismatched_lengths() -> None:
+    settings = _test_settings()
+    app = create_app(settings=settings)
+    client = TestClient(app)
+
+    response = client.post(
+        "/risk",
+        json={"pnl_deltas": [0.1, 0.2], "weights": [0.4]},
+    )
+
+    assert response.status_code == 400
+    assert "same length" in response.json()["detail"]
