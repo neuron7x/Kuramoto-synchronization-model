@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from enum import Enum, auto
 import math
 from statistics import fmean
 from typing import Callable, Iterable, Mapping, MutableMapping, Sequence
@@ -25,11 +26,157 @@ __all__ = [
     "MarginMonitor",
     "MarketCondition",
     "PositionRequest",
+    "RegimeAdaptiveExposureGuard",
     "RiskMetricsCalculator",
     "RiskParityAllocator",
     "TimeWeightedExposureTracker",
     "VolatilityAdjustedSizer",
+    "VolatilityRegime",
 ]
+
+
+class VolatilityRegime(Enum):
+    """Classification of realised volatility regimes for adaptive risk controls."""
+
+    CALM = auto()
+    NORMAL = auto()
+    STRESSED = auto()
+    CRITICAL = auto()
+
+
+@dataclass(slots=True)
+class _RegimeState:
+    """Internal exponential moving statistics for a single symbol."""
+
+    ewma_abs_return: float = 0.0
+    samples: int = 0
+    last_timestamp: float | None = None
+    last_regime: VolatilityRegime | None = None
+    cooldown_until: float = 0.0
+
+
+class RegimeAdaptiveExposureGuard:
+    """Dynamically scale exposure allowances based on realised volatility regimes.
+
+    The guard ingests absolute returns via :meth:`observe` and maintains an
+    exponentially weighted estimate of realised volatility.  The resulting regime
+    classification (``CALM`` → ``CRITICAL``) is then mapped to exposure
+    multipliers so higher-volatility states automatically tighten position
+    limits, while tranquil markets may allow measured increases.
+
+    Parameters are chosen to be numerically stable and deterministic so the
+    guard can execute within latency-sensitive execution loops.
+    """
+
+    def __init__(
+        self,
+        *,
+        calm_threshold: float = 0.005,
+        stressed_threshold: float = 0.02,
+        critical_threshold: float = 0.04,
+        calm_multiplier: float = 1.1,
+        stressed_multiplier: float = 0.65,
+        critical_multiplier: float = 0.4,
+        half_life_seconds: float = 120.0,
+        min_samples: int = 5,
+        cooldown_seconds: float = 30.0,
+    ) -> None:
+        if calm_threshold <= 0:
+            raise ValueError("calm_threshold must be positive")
+        if not calm_threshold < stressed_threshold < critical_threshold:
+            raise ValueError("thresholds must satisfy calm < stressed < critical")
+        if calm_multiplier <= 0 or stressed_multiplier <= 0 or critical_multiplier <= 0:
+            raise ValueError("exposure multipliers must be positive")
+        if half_life_seconds <= 0:
+            raise ValueError("half_life_seconds must be positive")
+        if min_samples < 1:
+            raise ValueError("min_samples must be at least 1")
+        if cooldown_seconds < 0:
+            raise ValueError("cooldown_seconds cannot be negative")
+
+        self._calm_threshold = calm_threshold
+        self._stressed_threshold = stressed_threshold
+        self._critical_threshold = critical_threshold
+        self._multipliers = {
+            VolatilityRegime.CALM: calm_multiplier,
+            VolatilityRegime.NORMAL: 1.0,
+            VolatilityRegime.STRESSED: stressed_multiplier,
+            VolatilityRegime.CRITICAL: critical_multiplier,
+        }
+        self._decay = math.exp(math.log(0.5) / half_life_seconds)
+        self._min_samples = min_samples
+        self._cooldown = cooldown_seconds
+        self._states: MutableMapping[str, _RegimeState] = {}
+
+    def observe(self, symbol: str, return_value: float, timestamp: float | None = None) -> VolatilityRegime:
+        """Record a return observation and update the symbol's volatility regime."""
+
+        state = self._states.setdefault(symbol, _RegimeState())
+        abs_return = abs(float(return_value))
+        observation_time = float(timestamp) if timestamp is not None else datetime.now(timezone.utc).timestamp()
+        if state.samples == 0:
+            state.ewma_abs_return = abs_return
+        else:
+            previous_timestamp = state.last_timestamp or observation_time
+            delta = max(0.0, observation_time - previous_timestamp)
+            decay_factor = self._decay ** delta
+            state.ewma_abs_return = (state.ewma_abs_return * decay_factor) + ((1.0 - decay_factor) * abs_return)
+
+        state.samples += 1
+        state.last_timestamp = observation_time
+
+        previous_regime = state.last_regime or VolatilityRegime.NORMAL
+        if state.samples < self._min_samples:
+            regime = previous_regime
+        else:
+            regime = self._classify(state.ewma_abs_return)
+            previous_severity = self._severity(previous_regime)
+            current_severity = self._severity(regime)
+            if current_severity > previous_severity:
+                state.cooldown_until = observation_time + self._cooldown
+            elif (
+                current_severity < previous_severity
+                and observation_time < state.cooldown_until
+            ):
+                regime = previous_regime
+
+        state.last_regime = regime
+        return regime
+
+    def multiplier(self, symbol: str) -> float:
+        """Return the current exposure multiplier for ``symbol``."""
+
+        state = self._states.get(symbol)
+        if state is None or state.last_regime is None:
+            return 1.0
+        return self._multipliers[state.last_regime]
+
+    def regime(self, symbol: str) -> VolatilityRegime:
+        """Return the most recent volatility regime for ``symbol``."""
+
+        state = self._states.get(symbol)
+        if state is None or state.last_regime is None:
+            return VolatilityRegime.NORMAL
+        return state.last_regime
+
+    def _classify(self, realised_vol: float) -> VolatilityRegime:
+        if realised_vol <= self._calm_threshold:
+            return VolatilityRegime.CALM
+        if realised_vol <= self._stressed_threshold:
+            return VolatilityRegime.NORMAL
+        if realised_vol <= self._critical_threshold:
+            return VolatilityRegime.STRESSED
+        return VolatilityRegime.CRITICAL
+
+    @staticmethod
+    def _severity(regime: VolatilityRegime) -> int:
+        ordering = {
+            VolatilityRegime.CALM: 0,
+            VolatilityRegime.NORMAL: 1,
+            VolatilityRegime.STRESSED: 2,
+            VolatilityRegime.CRITICAL: 3,
+        }
+        return ordering[regime]
 
 
 @dataclass(slots=True)
@@ -290,6 +437,7 @@ class AdvancedRiskController:
         risk_metrics: RiskMetricsCalculator,
         kelly_sizer: KellyCriterionPositionSizer,
         vol_sizer: VolatilityAdjustedSizer,
+        regime_guard: RegimeAdaptiveExposureGuard | None = None,
     ) -> None:
         if capital <= 0:
             raise ValueError("capital must be positive")
@@ -302,6 +450,7 @@ class AdvancedRiskController:
         self._risk_metrics = risk_metrics
         self._kelly_sizer = kelly_sizer
         self._vol_sizer = vol_sizer
+        self._regime_guard = regime_guard
         self._state = AdvancedRiskState(equity=capital)
 
     @property
@@ -311,12 +460,30 @@ class AdvancedRiskController:
     def register_market_condition(self, market: MarketCondition) -> None:
         self._state.market_data[market.symbol] = market
 
-    def record_return(self, symbol: str, returns: Iterable[float]) -> None:
+    def record_return(self, symbol: str, returns: Iterable[float | tuple[float, datetime]]) -> None:
+        """Store historical returns and update adaptive risk telemetry."""
+
         history = self._state.returns_history.setdefault(symbol, [])
-        history.extend(float(r) for r in returns)
         max_points = 2_048
-        if len(history) > max_points:
-            del history[:-max_points]
+        for entry in returns:
+            if isinstance(entry, tuple):
+                if len(entry) != 2:
+                    raise ValueError("return tuples must contain value and timestamp")
+                value, ts = entry
+                value = float(value)
+                if not isinstance(ts, datetime):
+                    raise TypeError("timestamp must be a datetime instance")
+                timestamp = ts.astimezone(timezone.utc)
+            else:
+                value = float(entry)
+                timestamp = datetime.now(timezone.utc)
+
+            history.append(value)
+            if len(history) > max_points:
+                del history[:-max_points]
+
+            if self._regime_guard is not None:
+                self._regime_guard.observe(symbol, value, timestamp.timestamp())
 
     def evaluate_order(self, request: PositionRequest, *, account_equity: float) -> bool:
         market = self._state.market_data.get(request.symbol)
@@ -326,6 +493,8 @@ class AdvancedRiskController:
         kelly_fraction = min(1.0, self._kelly_sizer.fraction(market))
         volatility_scale = self._vol_sizer.scaling_factor(market)
         desired_notional = self._capital * kelly_fraction * volatility_scale
+        if self._regime_guard is not None:
+            desired_notional *= self._regime_guard.multiplier(request.symbol)
         aggregated_notional = self._state.positions.get(request.symbol, 0.0) + request.notional
 
         positions_preview = dict(self._state.positions)
@@ -358,4 +527,11 @@ class AdvancedRiskController:
     def portfolio_cvar(self, symbol: str) -> float:
         returns = self._state.returns_history.get(symbol, [])
         return self._risk_metrics.conditional_value_at_risk(returns)
+
+    def volatility_regime(self, symbol: str) -> VolatilityRegime:
+        """Expose the adaptive volatility regime for the requested symbol."""
+
+        if self._regime_guard is None:
+            raise RuntimeError("RegimeAdaptiveExposureGuard is not configured")
+        return self._regime_guard.regime(symbol)
 
