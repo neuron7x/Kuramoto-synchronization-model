@@ -1,3 +1,12 @@
+---
+owner: performance@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-01-15
+links:
+  - docs/metrics_discipline.md
+  - docs/risk_ml_observability.md
+---
+
 # Performance Optimization Guide
 
 This guide covers performance optimization techniques and best practices for TradePulse, including memory management, execution profiling, and GPU acceleration.
