@@ -169,8 +169,8 @@ class _CandidateState:
         self._confidence_delta.append(delta)
 
         baseline_conf = max(abs(float(baseline.confidence)), self.config.mape_epsilon)
-        mape = delta / baseline_conf
-        self._confidence_mape.append(mape)
+        mape_value = delta / baseline_conf
+        self._confidence_mape.append(mape_value)
 
         self._baseline_actions.append(_action_to_numeric(baseline.action))
         self._candidate_actions.append(_action_to_numeric(candidate.action))

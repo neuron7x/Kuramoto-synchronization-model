@@ -126,10 +126,10 @@ def test_engine_routes_signal_when_risk_approves() -> None:
 
 
 def test_engine_blocks_signal_when_risk_denies() -> None:
-    advices: list[str] = []
+    advice_messages: list[str] = []
 
     def sink(advice) -> None:
-        advices.append(advice.message)
+        advice_messages.append(advice.message)
 
     policy = _BlockingRiskPolicy(False, reason="limit breached")
     engine = StrategyEngine(risk_policy=policy, risk_advice_sink=sink, signal_router=lambda *_: (_ for _ in ()).throw(RuntimeError))
@@ -148,7 +148,7 @@ def test_engine_blocks_signal_when_risk_denies() -> None:
     assert event.type is StrategyEventType.RISK_ADVICE
     assert event.payload.level is RiskAdviceLevel.BLOCK
     assert "limit" in event.payload.message
-    assert advices == [event.payload.message]
+    assert advice_messages == [event.payload.message]
 
 
 def test_engine_enforces_output_contract() -> None:

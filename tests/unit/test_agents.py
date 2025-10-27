@@ -64,7 +64,7 @@ def test_strategy_mutation_changes_numeric_parameters() -> None:
 
 def test_strategy_simulate_performance_within_expected_range() -> None:
     random.seed(1)
-    strategy = Strategy(name="strat", params={})
+    strategy = Strategy(name="strategy", params={})
     score = strategy.simulate_performance(data=None)
     assert -1.0 <= score <= 2.0
 
