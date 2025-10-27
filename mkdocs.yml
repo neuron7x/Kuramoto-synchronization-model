@@ -111,6 +111,7 @@ nav:
       - Quality Gates: quality_gates.md
       - Documentation Governance: documentation_governance.md
       - Documentation Standardisation Playbook: documentation_standardisation_playbook.md
+      - Documentation Quality Metrics: documentation_quality_metrics.md
 
 markdown_extensions:
   - admonition

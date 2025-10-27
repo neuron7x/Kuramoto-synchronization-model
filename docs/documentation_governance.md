@@ -5,6 +5,7 @@ last_reviewed: 2025-02-14
 links:
   - docs/index.md
   - DOCUMENTATION_SUMMARY.md
+  - docs/documentation_quality_metrics.md
 ---
 
 # Documentation Governance and Quality Framework
