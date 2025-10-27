@@ -113,6 +113,7 @@ gpu = [
 
 [project.scripts]
 tradepulse-sync = "scripts.resilient_data_sync:main"
+tradepulse-db = "scripts.db_migrate:cli"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
