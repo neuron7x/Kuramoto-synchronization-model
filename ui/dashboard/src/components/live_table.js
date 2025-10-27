@@ -137,12 +137,14 @@ export class LiveTable {
 
     const html = `
       <div class="tp-live-table" role="region" aria-live="polite">
-        <table class="tp-live-table__table" role="table" aria-describedby="${summaryId}">
-          <thead class="tp-live-table__head">
-            <tr class="tp-live-table__row">${header}</tr>
-          </thead>
-          <tbody class="tp-live-table__body">${body}</tbody>
-        </table>
+        <div class="tp-live-table__viewport" role="presentation">
+          <table class="tp-live-table__table" role="table" aria-describedby="${summaryId}">
+            <thead class="tp-live-table__head">
+              <tr class="tp-live-table__row">${header}</tr>
+            </thead>
+            <tbody class="tp-live-table__body">${body}</tbody>
+          </table>
+        </div>
         <footer class="tp-live-table__footer">
           <span class="tp-live-table__footer-item">Page ${currentPage} of ${pageCount}</span>
           <span class="tp-live-table__footer-item">Rows ${sortedRows.length}</span>
