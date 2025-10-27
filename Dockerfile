@@ -1,11 +1,18 @@
 # SPDX-License-Identifier: MIT
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
+
+# Apply the latest Debian security patches to reduce the CVE surface area
+# before installing Python dependencies. Keeping the base packages current
+# ensures the vulnerability scanners report an accurate, hardened image.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.lock ./
 RUN pip install --no-cache-dir -r requirements.lock
