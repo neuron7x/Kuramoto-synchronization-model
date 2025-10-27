@@ -2,6 +2,7 @@ import { escapeHtml } from '../core/formatters.js';
 
 const DEFAULT_PAGE_SIZE = 10;
 const SORT_DIRECTIONS = new Set(['asc', 'desc']);
+const VIEWPORT_LABEL = 'Scrollable table viewport. Use arrow keys to pan horizontally.';
 
 function normaliseDirection(direction = 'desc') {
   const lower = String(direction).toLowerCase();
@@ -137,7 +138,12 @@ export class LiveTable {
 
     const html = `
       <div class="tp-live-table" role="region" aria-live="polite">
-        <div class="tp-live-table__viewport" role="presentation">
+        <div
+          class="tp-live-table__viewport"
+          role="group"
+          tabindex="0"
+          aria-label="${VIEWPORT_LABEL}"
+        >
           <table class="tp-live-table__table" role="table" aria-describedby="${summaryId}">
             <thead class="tp-live-table__head">
               <tr class="tp-live-table__row">${header}</tr>
