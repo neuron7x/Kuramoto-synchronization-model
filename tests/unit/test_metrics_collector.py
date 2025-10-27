@@ -506,3 +506,96 @@ def test_record_regression_metrics_sets_gauges() -> None:
     assert mae_value == pytest.approx(0.12)
     assert rmse_value == pytest.approx(0.3)
     assert r2_value == pytest.approx(0.85)
+
+
+def test_database_metrics_track_size_growth_and_latency() -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    collector.observe_database_size(database="tradepulse", host="db-primary", size_bytes=1024)
+    collector.observe_database_size(database="tradepulse", host="db-primary", size_bytes=2048)
+
+    collector.observe_database_query(
+        database="tradepulse",
+        host="db-primary",
+        statement_type="SELECT",
+        status="SUCCESS",
+        duration=0.123,
+    )
+    collector.observe_database_query(
+        database="tradepulse",
+        host="db-primary",
+        statement_type="insert",
+        status="error",
+        duration=0.456,
+    )
+
+    size_value = _sample_value(
+        registry,
+        "tradepulse_database_size_bytes",
+        {"database": "tradepulse", "host": "db-primary"},
+    )
+    growth_value = _sample_value(
+        registry,
+        "tradepulse_database_size_growth_bytes",
+        {"database": "tradepulse", "host": "db-primary"},
+    )
+
+    select_latency_count = _sample_value(
+        registry,
+        "tradepulse_database_query_latency_seconds_count",
+        {
+            "database": "tradepulse",
+            "host": "db-primary",
+            "statement_type": "select",
+            "status": "success",
+        },
+    )
+    select_latency_sum = _sample_value(
+        registry,
+        "tradepulse_database_query_latency_seconds_sum",
+        {
+            "database": "tradepulse",
+            "host": "db-primary",
+            "statement_type": "select",
+            "status": "success",
+        },
+    )
+    insert_latency_count = _sample_value(
+        registry,
+        "tradepulse_database_query_latency_seconds_count",
+        {
+            "database": "tradepulse",
+            "host": "db-primary",
+            "statement_type": "insert",
+            "status": "error",
+        },
+    )
+    total_success = _sample_value(
+        registry,
+        "tradepulse_database_query_total",
+        {
+            "database": "tradepulse",
+            "host": "db-primary",
+            "statement_type": "select",
+            "status": "success",
+        },
+    )
+    total_error = _sample_value(
+        registry,
+        "tradepulse_database_query_total",
+        {
+            "database": "tradepulse",
+            "host": "db-primary",
+            "statement_type": "insert",
+            "status": "error",
+        },
+    )
+
+    assert size_value == 2048.0
+    assert growth_value == 1024.0
+    assert select_latency_count == 1.0
+    assert select_latency_sum == pytest.approx(0.123, rel=1e-6)
+    assert insert_latency_count == 1.0
+    assert total_success == 1.0
+    assert total_error == 1.0

@@ -310,6 +310,34 @@
       "subsystem": "observability"
     },
     {
+      "name": "tradepulse_database_size_bytes",
+      "type": "gauge",
+      "description": "Current size of the database in bytes.",
+      "labels": ["database", "host"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_database_size_growth_bytes",
+      "type": "gauge",
+      "description": "Growth in database size since the previous measurement.",
+      "labels": ["database", "host"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_database_query_latency_seconds",
+      "type": "histogram",
+      "description": "Latency observed for database queries.",
+      "labels": ["database", "host", "statement_type", "status"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_database_query_total",
+      "type": "counter",
+      "description": "Total database queries executed grouped by outcome.",
+      "labels": ["database", "host", "statement_type", "status"],
+      "subsystem": "database"
+    },
+    {
       "name": "tradepulse_strategy_score",
       "type": "gauge",
       "description": "Composite score for a strategy's live performance.",

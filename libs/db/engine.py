@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import suppress
 from typing import Mapping
 
@@ -12,8 +13,12 @@ from sqlalchemy.pool import QueuePool
 from core.config.cli_models import PostgresTLSConfig
 
 from .config import DatabasePoolConfig, DatabaseRuntimeConfig
+from .monitoring import instrument_engine_metrics
 
 __all__ = ["create_engine_from_config", "warm_pool"]
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _build_connect_args(
@@ -73,6 +78,10 @@ def create_engine_from_config(
     if execution_options:
         effective_execution_options.update(execution_options)
     engine = engine.execution_options(**effective_execution_options)
+    try:
+        instrument_engine_metrics(engine, dsn=dsn)
+    except Exception:  # pragma: no cover - defensive guard
+        LOGGER.exception("Failed to instrument engine metrics", extra={"dsn": dsn})
     return engine
 
 

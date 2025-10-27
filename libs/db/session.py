@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+import logging
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from threading import Lock
@@ -11,8 +12,12 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from .engine import warm_pool
+from .monitoring import DatabaseMonitor, instrument_engine_metrics
 
 __all__ = ["SessionManager"]
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SessionManager:
@@ -25,6 +30,7 @@ class SessionManager:
         *,
         expire_on_commit: bool = False,
         owns_engines: bool = True,
+        monitoring_interval_seconds: float | None = 60.0,
     ) -> None:
         self._writer_engine = writer_engine
         self._reader_engines = tuple(reader_engines or ())
@@ -47,6 +53,10 @@ class SessionManager:
         self._lock = Lock()
         self._owns_engines = owns_engines
         self._closed = False
+        self._monitors: list[DatabaseMonitor] = []
+
+        self._instrument_engines()
+        self._start_monitors(interval_seconds=monitoring_interval_seconds)
 
     @contextmanager
     def session(self, *, read_only: bool = False) -> Iterator[Session]:
@@ -80,6 +90,7 @@ class SessionManager:
     def close(self) -> None:
         """Dispose all underlying SQLAlchemy engines if the manager owns them."""
 
+        self._stop_monitors()
         if not self._owns_engines:
             return
         with self._lock:
@@ -103,3 +114,46 @@ class SessionManager:
             with self._lock:
                 return next(self._reader_cycle)
         return self._writer_factory
+
+    # ------------------------------------------------------------------
+    # Monitoring helpers
+    def _instrument_engines(self) -> None:
+        engines = (self._writer_engine, *self._reader_engines)
+        for engine in engines:
+            try:
+                instrument_engine_metrics(engine)
+            except Exception:  # pragma: no cover - defensive guard
+                LOGGER.exception(
+                    "Failed to annotate engine with monitoring metadata",
+                    extra={"url": str(engine.url)},
+                )
+
+    def _start_monitors(self, *, interval_seconds: float | None) -> None:
+        if interval_seconds is None:
+            return
+        if interval_seconds <= 0:
+            raise ValueError("monitoring_interval_seconds must be positive when set")
+
+        engines = (self._writer_engine, *self._reader_engines)
+        for engine in engines:
+            try:
+                monitor = DatabaseMonitor(engine, interval_seconds=interval_seconds)
+            except Exception:  # pragma: no cover - defensive guard
+                LOGGER.exception(
+                    "Failed to initialise database monitor",
+                    extra={"url": str(engine.url)},
+                )
+                continue
+            monitor.start()
+            self._monitors.append(monitor)
+
+    def _stop_monitors(self) -> None:
+        while self._monitors:
+            monitor = self._monitors.pop()
+            try:
+                monitor.stop()
+            except Exception:  # pragma: no cover - defensive guard
+                LOGGER.exception(
+                    "Failed to stop database monitor",
+                    extra={"monitor": repr(monitor)},
+                )

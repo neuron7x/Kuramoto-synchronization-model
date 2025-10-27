@@ -554,6 +554,35 @@ class MetricsCollector:
             registry=registry,
         )
 
+        # Database metrics
+        self.database_size_bytes = Gauge(
+            "tradepulse_database_size_bytes",
+            "Current size of the database in bytes",
+            ["database", "host"],
+            registry=registry,
+        )
+
+        self.database_size_growth = Gauge(
+            "tradepulse_database_size_growth_bytes",
+            "Growth in database size since the previous measurement",
+            ["database", "host"],
+            registry=registry,
+        )
+
+        self.database_query_latency = Histogram(
+            "tradepulse_database_query_latency_seconds",
+            "Latency observed for database queries",
+            ["database", "host", "statement_type", "status"],
+            registry=registry,
+        )
+
+        self.database_query_total = Counter(
+            "tradepulse_database_query_total",
+            "Total database queries executed grouped by outcome",
+            ["database", "host", "statement_type", "status"],
+            registry=registry,
+        )
+
         # Cache warm-up and cold-start metrics
         self.cache_warmup_duration = Histogram(
             "tradepulse_cache_warmup_duration_seconds",
@@ -625,6 +654,7 @@ class MetricsCollector:
         self._signal_to_fill_latency_samples: Dict[
             tuple[str, str, str], deque[float]
         ] = defaultdict(lambda: deque(maxlen=256))
+        self._database_size_cache: Dict[tuple[str, str], float] = {}
 
         # Agent/optimization metrics
         self.optimization_duration = Histogram(
@@ -1570,6 +1600,59 @@ class MetricsCollector:
             1.0 if healthy else 0.0
         )
 
+    def observe_database_size(
+        self,
+        *,
+        database: str,
+        host: str,
+        size_bytes: float,
+    ) -> None:
+        """Record the current database size and derived growth."""
+
+        if not self._enabled:
+            return
+
+        database_label = self._normalise_label(database, default="default")
+        host_label = self._normalise_label(host, default="unknown")
+        size = max(0.0, float(size_bytes))
+        labels = {"database": database_label, "host": host_label}
+
+        self.database_size_bytes.labels(**labels).set(size)
+
+        previous = self._database_size_cache.get((database_label, host_label))
+        growth = 0.0 if previous is None else size - previous
+        self.database_size_growth.labels(**labels).set(growth)
+        self._database_size_cache[(database_label, host_label)] = size
+
+    def observe_database_query(
+        self,
+        *,
+        database: str,
+        host: str,
+        statement_type: str,
+        status: str,
+        duration: float,
+    ) -> None:
+        """Record latency and counters for a database query execution."""
+
+        if not self._enabled:
+            return
+
+        database_label = self._normalise_label(database, default="default")
+        host_label = self._normalise_label(host, default="unknown")
+        statement_label = self._normalise_label(statement_type, default="other").lower()
+        status_label = self._normalise_label(status, default="success").lower()
+        labels = {
+            "database": database_label,
+            "host": host_label,
+            "statement_type": statement_label,
+            "status": status_label,
+        }
+
+        bounded_duration = max(0.0, float(duration))
+        self.database_query_latency.labels(**labels).observe(bounded_duration)
+        self.database_query_total.labels(**labels).inc()
+
     def observe_cache_warmup(
         self,
         cache_name: str,
@@ -1636,6 +1719,16 @@ class MetricsCollector:
             return
 
         self.cache_degradation_events.labels(cache_name=cache_name, reason=reason).inc()
+
+    @staticmethod
+    def _normalise_label(value: object, *, default: str) -> str:
+        if value is None:
+            return default
+        if isinstance(value, str):
+            candidate = value.strip()
+        else:
+            candidate = str(value).strip()
+        return candidate or default
 
 
 # Global metrics collector instance
