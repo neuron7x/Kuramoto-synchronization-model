@@ -74,6 +74,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS orders_client_id_unique
 CREATE INDEX IF NOT EXISTS orders_lookup_idx ON orders (instrument_id, side, last_status);
 CREATE INDEX IF NOT EXISTS orders_parent_idx ON orders (parent_order_id);
 CREATE INDEX IF NOT EXISTS orders_account_placed_idx ON orders (account_id, placed_at DESC);
+CREATE INDEX IF NOT EXISTS orders_status_time_idx ON orders (account_id, last_status_at DESC);
+CREATE INDEX IF NOT EXISTS orders_instrument_time_idx ON orders (instrument_id, placed_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS orders_order_account_uidx ON orders (order_id, account_id);
 CREATE UNIQUE INDEX IF NOT EXISTS orders_order_instrument_uidx ON orders (order_id, instrument_id);
 
@@ -94,6 +96,8 @@ CREATE TABLE IF NOT EXISTS order_status_history (
 CREATE INDEX IF NOT EXISTS order_history_active_idx
     ON order_status_history (order_id, valid_to)
     WHERE valid_to IS NULL;
+CREATE INDEX IF NOT EXISTS order_history_chronology_idx
+    ON order_status_history (order_id, valid_from DESC);
 
 -- Executions ----------------------------------------------------------------
 
@@ -120,6 +124,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS execution_external_idx
 
 CREATE INDEX IF NOT EXISTS execution_order_time_idx ON execution (order_id, execution_time);
 CREATE INDEX IF NOT EXISTS execution_account_time_idx ON execution (account_id, execution_time DESC);
+CREATE INDEX IF NOT EXISTS execution_instrument_time_idx ON execution (instrument_id, execution_time DESC);
 
 DO $$
 BEGIN
@@ -164,6 +169,7 @@ CREATE TABLE IF NOT EXISTS position_lot (
 );
 
 CREATE INDEX IF NOT EXISTS position_active_idx ON position_lot (account_id, instrument_id, closed_at);
+CREATE INDEX IF NOT EXISTS position_lot_open_time_idx ON position_lot (account_id, opened_at DESC);
 
 CREATE TABLE IF NOT EXISTS position_snapshot (
     snapshot_id        BIGSERIAL PRIMARY KEY,
@@ -180,6 +186,8 @@ CREATE TABLE IF NOT EXISTS position_snapshot (
 
 CREATE INDEX IF NOT EXISTS position_snapshot_asof_idx
     ON position_snapshot (account_id, as_of DESC);
+CREATE INDEX IF NOT EXISTS position_snapshot_instrument_idx
+    ON position_snapshot (instrument_id, as_of DESC);
 
 -- Cash ledger ----------------------------------------------------------------
 
@@ -197,6 +205,12 @@ CREATE TABLE IF NOT EXISTS cash_ledger (
 
 CREATE INDEX IF NOT EXISTS cash_ledger_account_time_idx
     ON cash_ledger (account_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS cash_ledger_order_time_idx
+    ON cash_ledger (related_order_id, occurred_at DESC)
+    WHERE related_order_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS cash_ledger_exec_time_idx
+    ON cash_ledger (related_exec_id, occurred_at DESC)
+    WHERE related_exec_id IS NOT NULL;
 
 -- Trigger helpers -----------------------------------------------------------
 
