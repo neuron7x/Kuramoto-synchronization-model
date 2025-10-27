@@ -300,6 +300,8 @@ class WatermarkBacklog:
             self._latest_event_time.pop(source, None)
             self._progress.pop(source, None)
             self._last_index.pop(source, None)
+            self._delay_samples.pop(source, None)
+            self._lag_stats.pop(source, None)
 
 
 __all__ = [
