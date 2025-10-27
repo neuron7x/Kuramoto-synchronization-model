@@ -79,12 +79,18 @@ function buildSignalRows(signals = []) {
     .filter((signal) => signal && typeof signal === 'object')
     .map((signal) => {
       const timestamp = Number.isFinite(signal.timestamp) ? signal.timestamp : null;
-      const ttlSeconds = Number.isFinite(signal.ttl_seconds) ? Math.max(signal.ttl_seconds, 0) : null;
-      const expiresAt = timestamp !== null && ttlSeconds !== null ? timestamp + ttlSeconds * 1000 : null;
+      const ttlSeconds = Number.isFinite(signal.ttl_seconds)
+        ? Math.max(signal.ttl_seconds, 0)
+        : null;
+      const expiresAt =
+        timestamp !== null && ttlSeconds !== null ? timestamp + ttlSeconds * 1000 : null;
       const isActive = expiresAt === null ? true : expiresAt > now;
       const strength = Number.isFinite(signal.strength) ? signal.strength : 0;
-      const metadata = signal.metadata && typeof signal.metadata === 'object' ? signal.metadata : {};
-      const metadataEntries = Object.entries(metadata).filter(([, value]) => value !== null && value !== undefined && value !== '');
+      const metadata =
+        signal.metadata && typeof signal.metadata === 'object' ? signal.metadata : {};
+      const metadataEntries = Object.entries(metadata).filter(
+        ([, value]) => value !== null && value !== undefined && value !== '',
+      );
 
       return {
         ...signal,
@@ -149,11 +155,13 @@ function renderSummaryCards(summary, cardsTranslations) {
       cards.active?.total || '{count} active',
     ),
   );
-  const lastTimestamp = summary.latestTimestamp
-    ? formatTimestamp(summary.latestTimestamp)
-    : null;
+  const lastTimestamp = summary.latestTimestamp ? formatTimestamp(summary.latestTimestamp) : null;
   const lastTimestampDisplay = lastTimestamp
-    ? translate('views.signals.cards.active.updated', { time: lastTimestamp }, cards.active?.updated || 'Latest {time}')
+    ? translate(
+        'views.signals.cards.active.updated',
+        { time: lastTimestamp },
+        cards.active?.updated || 'Latest {time}',
+      )
     : translate('views.signals.cards.active.none', {}, cards.active?.none || 'No signals yet');
   const activeUpdated = escapeHtml(lastTimestampDisplay);
 
@@ -208,7 +216,11 @@ function renderSummaryCards(summary, cardsTranslations) {
       <article class="tp-card">
         <header class="tp-card__header">
           <h3 class="tp-card__title">${escapeHtml(
-            translate('views.signals.cards.active.title', {}, cards.active?.title || 'Active Signals'),
+            translate(
+              'views.signals.cards.active.title',
+              {},
+              cards.active?.title || 'Active Signals',
+            ),
           )}</h3>
           <div class="tp-card__meta">
             <span class="tp-stat">${activeTotal}</span>
@@ -219,7 +231,11 @@ function renderSummaryCards(summary, cardsTranslations) {
       <article class="tp-card">
         <header class="tp-card__header">
           <h3 class="tp-card__title">${escapeHtml(
-            translate('views.signals.cards.bias.title', {}, cards.bias?.title || 'Directional Bias'),
+            translate(
+              'views.signals.cards.bias.title',
+              {},
+              cards.bias?.title || 'Directional Bias',
+            ),
           )}</h3>
           <div class="tp-card__meta">
             <span class="tp-stat">${biasRatio}</span>
@@ -230,7 +246,11 @@ function renderSummaryCards(summary, cardsTranslations) {
       <article class="tp-card">
         <header class="tp-card__header">
           <h3 class="tp-card__title">${escapeHtml(
-            translate('views.signals.cards.conviction.title', {}, cards.conviction?.title || 'Conviction'),
+            translate(
+              'views.signals.cards.conviction.title',
+              {},
+              cards.conviction?.title || 'Conviction',
+            ),
           )}</h3>
           <div class="tp-card__meta">
             <span class="tp-stat">${averageConviction}</span>
@@ -257,7 +277,9 @@ function getTableConfig(rows, tableTranslations, pageSize) {
         label: columns.timestamp || 'Timestamp',
         accessor: (row) => row.timestamp,
         formatter: (value) =>
-          value ? `<time>${escapeHtml(formatTimestamp(value))}</time>` : `<span class="tp-text-subtle">${escapeHtml(String(empty))}</span>`,
+          value
+            ? `<time>${escapeHtml(formatTimestamp(value))}</time>`
+            : `<span class="tp-text-subtle">${escapeHtml(String(empty))}</span>`,
         sortValue: (row) => row.timestamp || 0,
       },
       {
@@ -331,12 +353,14 @@ function getTableConfig(rows, tableTranslations, pageSize) {
           return `
             <div class="tp-meta-list">
               ${entries
-                .map(([key, value]) => `
+                .map(
+                  ([key, value]) => `
                   <span class="tp-meta-list__item">
                     <span class="tp-meta-list__key">${escapeHtml(String(key))}</span>
                     <span>${escapeHtml(String(value))}</span>
                   </span>
-                `)
+                `,
+                )
                 .join('')}
             </div>
           `;
@@ -384,4 +408,3 @@ export function renderSignalsView({ signals = [], pageSize = 12, page = 1 } = {}
     summary,
   };
 }
-

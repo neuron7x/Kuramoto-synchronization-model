@@ -78,7 +78,10 @@ export function renderAreaChart({ id = 'chart', width = 480, height = 240, serie
 
   const gradientId = `${id}-gradient`;
   const labels = points
-    .map((point) => `<li class="tp-chart-legend__item"><span>${escapeHtml(point.label)}</span><strong>${escapeHtml(formatNumber(point.value, { maximumFractionDigits: 2 }))}</strong></li>`)
+    .map(
+      (point) =>
+        `<li class="tp-chart-legend__item"><span>${escapeHtml(point.label)}</span><strong>${escapeHtml(formatNumber(point.value, { maximumFractionDigits: 2 }))}</strong></li>`,
+    )
     .join('');
 
   const legend = labels

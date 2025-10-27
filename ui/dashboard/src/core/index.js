@@ -66,9 +66,7 @@ export function compareBacktests(backtests = [], metric = DEFAULT_METRIC) {
     };
   });
 
-  const ranking = enriched
-    .slice()
-    .sort((a, b) => b.score - a.score);
+  const ranking = enriched.slice().sort((a, b) => b.score - a.score);
 
   const best = ranking[0] || null;
   const worst = ranking[ranking.length - 1] || null;
@@ -101,13 +99,13 @@ export function exportReport(summary, options = {}) {
     if (Array.isArray(payload.ranking)) {
       rows.push(['id', 'strategy', 'score'].join(','));
       payload.ranking.forEach((entry) => {
-        rows.push([
-          sanitizeReportValue(entry.id),
-          sanitizeReportValue(entry.strategy),
-          sanitizeReportValue(
-            Number.isFinite(entry.score) ? entry.score.toFixed(precision) : '',
-          ),
-        ].join(','));
+        rows.push(
+          [
+            sanitizeReportValue(entry.id),
+            sanitizeReportValue(entry.strategy),
+            sanitizeReportValue(Number.isFinite(entry.score) ? entry.score.toFixed(precision) : ''),
+          ].join(','),
+        );
       });
     }
     return rows.join('\n');
@@ -117,9 +115,7 @@ export function exportReport(summary, options = {}) {
     const lines = ['| Strategy | Score |', '| --- | --- |'];
     (payload.ranking || []).forEach((entry) => {
       const score = Number.isFinite(entry.score) ? entry.score.toFixed(precision) : 'n/a';
-      lines.push(
-        `| ${sanitizeReportValue(entry.strategy)} | ${sanitizeReportValue(score)} |`,
-      );
+      lines.push(`| ${sanitizeReportValue(entry.strategy)} | ${sanitizeReportValue(score)} |`);
     });
     return lines.join('\n');
   }

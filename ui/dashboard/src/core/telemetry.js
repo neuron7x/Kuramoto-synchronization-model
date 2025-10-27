@@ -25,7 +25,9 @@ function emit(event) {
       const Custom = typeof target.CustomEvent === 'function' ? target.CustomEvent : null;
       const EventCtor = Custom || (typeof target.Event === 'function' ? target.Event : null);
       if (EventCtor) {
-        const evt = Custom ? new Custom(TELEMETRY_EVENT, { detail: payload }) : new EventCtor(TELEMETRY_EVENT);
+        const evt = Custom
+          ? new Custom(TELEMETRY_EVENT, { detail: payload })
+          : new EventCtor(TELEMETRY_EVENT);
         if (!Custom) {
           evt.detail = payload;
         }
@@ -37,7 +39,8 @@ function emit(event) {
       }
     }
   }
-  const isDevEnv = typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production';
+  const isDevEnv =
+    typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production';
   if (typeof console !== 'undefined' && console.debug && isDevEnv) {
     console.debug('[telemetry]', payload);
   }

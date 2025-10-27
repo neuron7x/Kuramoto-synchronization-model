@@ -59,7 +59,8 @@ function buildOrderRows(orders = [], fills = []) {
     };
     const quantity = Number.isFinite(order.quantity) ? order.quantity : 0;
     const limitPrice = Number.isFinite(order.price) ? order.price : null;
-    const progress = quantity > 0 ? Math.min(fill.filledQuantity / quantity, 1) : fill.filledQuantity > 0 ? 1 : 0;
+    const progress =
+      quantity > 0 ? Math.min(fill.filledQuantity / quantity, 1) : fill.filledQuantity > 0 ? 1 : 0;
     const remaining = quantity - fill.filledQuantity;
     const avgFillPrice = fill.filledQuantity > 0 ? fill.notional / fill.filledQuantity : null;
     const status = fill.lastStatus || (progress >= 1 ? 'FILLED' : 'WORKING');
@@ -90,8 +91,8 @@ function getOrdersTableTranslations() {
 export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page = 1 } = {}) {
   const rows = buildOrderRows(orders, fills);
   const { columns, badges, empty } = getOrdersTableTranslations();
-  const sideLabels = (badges.side || {});
-  const statusLabels = (badges.status || {});
+  const sideLabels = badges.side || {};
+  const statusLabels = badges.status || {};
   const table = createLiveTable({
     columns: [
       {
@@ -143,7 +144,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'remaining',
         label: columns.remaining || 'Remaining',
         accessor: (row) => row.remaining,
-        formatter: (value) => escapeHtml(formatNumber(Math.max(value, 0), { maximumFractionDigits: 4 })),
+        formatter: (value) =>
+          escapeHtml(formatNumber(Math.max(value, 0), { maximumFractionDigits: 4 })),
         sortValue: (row) => row.remaining,
         align: 'right',
       },
@@ -160,7 +162,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'limitPrice',
         label: columns.limitPrice || 'Limit Price',
         accessor: (row) => row.limitPrice,
-        formatter: (value) => (value === null ? escapeHtml(String(empty)) : escapeHtml(formatCurrency(value))),
+        formatter: (value) =>
+          value === null ? escapeHtml(String(empty)) : escapeHtml(formatCurrency(value)),
         sortValue: (row) => row.limitPrice ?? 0,
         align: 'right',
       },
@@ -168,7 +171,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'avgFillPrice',
         label: columns.avgFillPrice || 'Avg Fill',
         accessor: (row) => row.avgFillPrice,
-        formatter: (value) => (value === null ? escapeHtml(String(empty)) : escapeHtml(formatCurrency(value))),
+        formatter: (value) =>
+          value === null ? escapeHtml(String(empty)) : escapeHtml(formatCurrency(value)),
         sortValue: (row) => row.avgFillPrice ?? 0,
         align: 'right',
       },
@@ -185,7 +189,8 @@ export function renderOrdersView({ orders = [], fills = [], pageSize = 12, page 
         id: 'lastFill',
         label: columns.lastFill || 'Last Fill',
         accessor: (row) => row.lastFill,
-        formatter: (value) => (value ? `<time>${escapeHtml(formatTimestamp(value))}</time>` : escapeHtml(String(empty))),
+        formatter: (value) =>
+          value ? `<time>${escapeHtml(formatTimestamp(value))}</time>` : escapeHtml(String(empty)),
         sortValue: (row) => row.lastFill,
       },
     ],

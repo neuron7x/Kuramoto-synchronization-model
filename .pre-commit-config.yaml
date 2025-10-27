@@ -35,6 +35,11 @@ repos:
         additional_dependencies: [types-requests]
   - repo: local
     hooks:
+      - id: prettier
+        name: prettier (dashboard UI)
+        entry: tools/hooks/prettier_dashboard.sh
+        language: system
+        files: ^ui/dashboard/.*\.(?:[jt]sx?|json|ya?ml|css|scss|mdx?|html?)$
       - id: slotscheck
         name: slotscheck (core packages)
         entry: python -m slotscheck --module core --module backtest --module execution
@@ -44,9 +49,9 @@ repos:
         pass_filenames: false
       - id: eslint
         name: eslint (dashboard UI)
-        entry: npm run lint --prefix ui/dashboard
+        entry: bash -lc 'cd ui/dashboard && npm run lint -- --fix "$@"'
         language: system
-        pass_filenames: false
+        files: ^ui/dashboard/.*\.(?:[jt]sx?)$
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:

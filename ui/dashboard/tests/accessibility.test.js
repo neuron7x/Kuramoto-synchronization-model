@@ -40,9 +40,7 @@ const positions = {
     },
   ],
   orders: orders.orders,
-  ticks: [
-    { symbol: 'AAPL', last_price: 151, timestamp: baseTimestamp },
-  ],
+  ticks: [{ symbol: 'AAPL', last_price: 151, timestamp: baseTimestamp }],
 };
 
 const pnl = {
@@ -59,7 +57,13 @@ const pnl = {
 const signals = {
   signals: [
     { id: 'sig-a', label: 'Buy', strength: 0.7, ttl_seconds: 300, created_at: baseTimestamp },
-    { id: 'sig-b', label: 'Reduce', strength: -0.2, ttl_seconds: 0, created_at: baseTimestamp - 600_000 },
+    {
+      id: 'sig-b',
+      label: 'Reduce',
+      strength: -0.2,
+      ttl_seconds: 0,
+      created_at: baseTimestamp - 600_000,
+    },
   ],
 };
 
@@ -72,18 +76,30 @@ const dashboard = renderDashboard({
   header: { title: 'Accessibility Dashboard', subtitle: 'Ensuring inclusive UX.' },
 });
 
-assert.ok(dashboard.html.includes('aria-label="Primary"'), 'navigation should expose primary aria label');
-assert.ok(dashboard.html.includes('aria-current="page"'), 'active navigation link should set aria-current');
+assert.ok(
+  dashboard.html.includes('aria-label="Primary"'),
+  'navigation should expose primary aria label',
+);
+assert.ok(
+  dashboard.html.includes('aria-current="page"'),
+  'active navigation link should set aria-current',
+);
 
 const ordersView = renderOrdersView(orders);
-assert.ok(ordersView.html.includes('role="table"'), 'orders table should use table role for screen readers');
+assert.ok(
+  ordersView.html.includes('role="table"'),
+  'orders table should use table role for screen readers',
+);
 assert.ok(
   ordersView.html.includes('aria-describedby="tp-live-table-summary-'),
   'summary should annotate table context with descriptive id',
 );
 
 const positionsView = renderPositionsView(positions);
-assert.ok(positionsView.table.render().html.includes('role="table"'), 'positions table render should expose table role');
+assert.ok(
+  positionsView.table.render().html.includes('role="table"'),
+  'positions table render should expose table role',
+);
 
 const areaChart = renderAreaChart({
   id: 'a11y-chart',

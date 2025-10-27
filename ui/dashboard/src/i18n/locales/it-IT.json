@@ -52,10 +52,7 @@
   "header": {
     "title": "Centro di monitoraggio TradePulse",
     "subtitle": "Controllo unificato su esecuzione, rischio e telemetria.",
-    "tags": [
-      "multi-asset",
-      "tempo reale"
-    ]
+    "tags": ["multi-asset", "tempo reale"]
   },
   "views": {
     "overview": {

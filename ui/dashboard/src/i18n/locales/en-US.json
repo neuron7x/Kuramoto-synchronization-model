@@ -52,10 +52,7 @@
   "header": {
     "title": "TradePulse Monitoring Hub",
     "subtitle": "Unified control over execution, risk, and telemetry.",
-    "tags": [
-      "multi-asset",
-      "real-time"
-    ]
+    "tags": ["multi-asset", "real-time"]
   },
   "views": {
     "orders": {

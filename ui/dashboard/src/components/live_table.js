@@ -28,7 +28,13 @@ function buildSummaryId(columns) {
 }
 
 export class LiveTable {
-  constructor({ columns = [], rows = [], sortBy, sortDirection = 'desc', pageSize = DEFAULT_PAGE_SIZE } = {}) {
+  constructor({
+    columns = [],
+    rows = [],
+    sortBy,
+    sortDirection = 'desc',
+    pageSize = DEFAULT_PAGE_SIZE,
+  } = {}) {
     if (!Array.isArray(columns) || columns.length === 0) {
       throw new Error('LiveTable requires at least one column definition');
     }
@@ -43,7 +49,8 @@ export class LiveTable {
     this.rows = Array.isArray(rows) ? rows.slice() : [];
     this.sortBy = sortBy || this.columns[0].id;
     this.sortDirection = normaliseDirection(sortDirection);
-    this.pageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : DEFAULT_PAGE_SIZE;
+    this.pageSize =
+      Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : DEFAULT_PAGE_SIZE;
     this.page = 1;
   }
 
@@ -103,7 +110,9 @@ export class LiveTable {
     const cells = this.columns
       .map((column) => {
         const rawValue = column.accessor(row);
-        const display = column.formatter ? column.formatter(rawValue, row) : escapeHtml(rawValue ?? '—');
+        const display = column.formatter
+          ? column.formatter(rawValue, row)
+          : escapeHtml(rawValue ?? '—');
         return `<td class="tp-live-table__cell tp-live-table__cell--${column.align}">${display}</td>`;
       })
       .join('');
@@ -125,13 +134,16 @@ export class LiveTable {
     const header = this.columns
       .map((column) => {
         const isActive = column.id === this.sortBy;
-        const indicator = isActive ? `<span class="tp-live-table__sort">${this.sortDirection === 'asc' ? '▲' : '▼'}</span>` : '';
+        const indicator = isActive
+          ? `<span class="tp-live-table__sort">${this.sortDirection === 'asc' ? '▲' : '▼'}</span>`
+          : '';
         return `<th class="tp-live-table__header tp-live-table__cell--${column.align}" scope="col" data-column="${escapeHtml(column.id)}">${escapeHtml(column.label)}${indicator}</th>`;
       })
       .join('');
 
     const summaryId = buildSummaryId(this.columns);
-    const activeColumn = this.columns.find((column) => column.id === this.sortBy) || this.columns[0];
+    const activeColumn =
+      this.columns.find((column) => column.id === this.sortBy) || this.columns[0];
     const directionLabel = this.sortDirection === 'asc' ? 'ascending' : 'descending';
     const summaryText = `Sorted by ${escapeHtml(activeColumn.label)} (${directionLabel}). Total rows ${sortedRows.length}. Page ${currentPage} of ${pageCount}.`;
 

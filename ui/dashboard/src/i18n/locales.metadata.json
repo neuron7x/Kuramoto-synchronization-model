@@ -11,10 +11,7 @@
         "number": "#,##0.###",
         "currency": "¤#,##0.00"
       },
-      "privacyRegimes": [
-        "GDPR",
-        "CCPA"
-      ],
+      "privacyRegimes": ["GDPR", "CCPA"],
       "tone": {
         "voice": "Confident, data-led, and reassuring without hyperbole.",
         "guidelines": {
@@ -41,10 +38,7 @@
         "number": "# ##0,###",
         "currency": "¤ # ##0,00"
       },
-      "privacyRegimes": [
-        "GDPR",
-        "Закон України «Про захист персональних даних»"
-      ],
+      "privacyRegimes": ["GDPR", "Закон України «Про захист персональних даних»"],
       "tone": {
         "voice": "Діловий, підтримувальний, стримано оптимістичний.",
         "guidelines": {
@@ -71,10 +65,7 @@
         "number": "#.##0,###",
         "currency": "¤ #.##0,00"
       },
-      "privacyRegimes": [
-        "GDPR",
-        "BDSG"
-      ],
+      "privacyRegimes": ["GDPR", "BDSG"],
       "tone": {
         "voice": "Sachlich, vertrauenswürdig und präzise.",
         "guidelines": {
@@ -101,9 +92,7 @@
         "number": "#,##0.###",
         "currency": "¤#,##0"
       },
-      "privacyRegimes": [
-        "APPI"
-      ],
+      "privacyRegimes": ["APPI"],
       "tone": {
         "voice": "専門的で落ち着いた口調。信頼感と正確性を重視。",
         "guidelines": {
@@ -130,10 +119,7 @@
         "number": "#.##0,###",
         "currency": "¤ #.##0,00"
       },
-      "privacyRegimes": [
-        "GDPR",
-        "Ley Orgánica 3/2018"
-      ],
+      "privacyRegimes": ["GDPR", "Ley Orgánica 3/2018"],
       "tone": {
         "voice": "Preciso, transparente y cercano sin perder formalidad.",
         "guidelines": {
@@ -160,10 +146,7 @@
         "number": "#.##0,###",
         "currency": "¤ #.##0,00"
       },
-      "privacyRegimes": [
-        "GDPR",
-        "CNIL"
-      ],
+      "privacyRegimes": ["GDPR", "CNIL"],
       "tone": {
         "voice": "Professionnel, factuel et rassurant.",
         "guidelines": {
@@ -190,9 +173,7 @@
         "number": "#.##0,###",
         "currency": "¤ #.##0,00"
       },
-      "privacyRegimes": [
-        "LGPD"
-      ],
+      "privacyRegimes": ["LGPD"],
       "tone": {
         "voice": "Confiante, acessível e orientado a dados.",
         "guidelines": {
@@ -219,20 +200,12 @@
         "number": "#,##0.###",
         "currency": "¤#,##0.00"
       },
-      "privacyRegimes": [
-        "PIPL"
-      ],
+      "privacyRegimes": ["PIPL"],
       "tone": {
         "voice": "专业、可信、注重数据佐证。",
         "guidelines": {
-          "do": [
-            "突出风险控制、合规流程与可审计性。",
-            "使用正式书面语并提供量化依据。"
-          ],
-          "dont": [
-            "避免夸张修辞或带有情绪化的表达。",
-            "不使用网络俚语或口语化缩写。"
-          ]
+          "do": ["突出风险控制、合规流程与可审计性。", "使用正式书面语并提供量化依据。"],
+          "dont": ["避免夸张修辞或带有情绪化的表达。", "不使用网络俚语或口语化缩写。"]
         }
       },
       "reviewCadence": "每季度与上海本地语言团队复核。",
@@ -248,9 +221,7 @@
         "number": "#.##0,###",
         "currency": "¤ #.##0,00"
       },
-      "privacyRegimes": [
-        "GDPR"
-      ],
+      "privacyRegimes": ["GDPR"],
       "tone": {
         "voice": "Professionale, trasparente e pragmatico.",
         "guidelines": {
@@ -277,9 +248,7 @@
         "number": "#,##,##0.###",
         "currency": "¤#,##,##0.00"
       },
-      "privacyRegimes": [
-        "DPDP Act"
-      ],
+      "privacyRegimes": ["DPDP Act"],
       "tone": {
         "voice": "डेटा-आधारित, विश्वसनीय और सहयोगी शैली।",
         "guidelines": {
@@ -306,9 +275,7 @@
         "number": "#,##0,###",
         "currency": "¤ #,##0.00"
       },
-      "privacyRegimes": [
-        "GDPR"
-      ],
+      "privacyRegimes": ["GDPR"],
       "tone": {
         "voice": "Rzeczowy, wiarygodny i oparty na danych.",
         "guidelines": {
@@ -335,9 +302,7 @@
         "number": "#,##0.###",
         "currency": "¤ #,##0.00"
       },
-      "privacyRegimes": [
-        "PDPL"
-      ],
+      "privacyRegimes": ["PDPL"],
       "tone": {
         "voice": "أسلوب مهني موثوق يركز على الشفافية.",
         "guidelines": {

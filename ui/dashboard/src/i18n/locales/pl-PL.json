@@ -52,10 +52,7 @@
   "header": {
     "title": "Centrum monitoringu TradePulse",
     "subtitle": "Zintegrowana kontrola nad wykonaniem, ryzykiem i telemetrią.",
-    "tags": [
-      "multi-asset",
-      "na żywo"
-    ]
+    "tags": ["multi-asset", "na żywo"]
   },
   "views": {
     "overview": {

@@ -42,9 +42,10 @@ function parseCookies(cookieString) {
     .reduce((acc, segment) => {
       const separatorIndex = segment.indexOf('=');
       const key =
-        separatorIndex >= 0 ? safeDecode(segment.slice(0, separatorIndex).trim()) : safeDecode(segment);
-      const value =
-        separatorIndex >= 0 ? safeDecode(segment.slice(separatorIndex + 1).trim()) : '';
+        separatorIndex >= 0
+          ? safeDecode(segment.slice(0, separatorIndex).trim())
+          : safeDecode(segment);
+      const value = separatorIndex >= 0 ? safeDecode(segment.slice(separatorIndex + 1).trim()) : '';
       if (key) {
         acc[key] = value;
       }
@@ -60,9 +61,19 @@ export function detectLocale({
   cookies = typeof document !== 'undefined' ? document.cookie : '',
   explicitLocale,
 } = {}) {
-  const query = { ...parseQuery(search), ...parseQuery(hash.includes('?') ? hash.substring(hash.indexOf('?')) : '') };
+  const query = {
+    ...parseQuery(search),
+    ...parseQuery(hash.includes('?') ? hash.substring(hash.indexOf('?')) : ''),
+  };
   const cookieLocale = parseCookies(cookies).tp_locale;
-  const requested = normalise(explicitLocale || query.locale || query.lang || cookieLocale || storageLocale || navigatorLanguage);
+  const requested = normalise(
+    explicitLocale ||
+      query.locale ||
+      query.lang ||
+      cookieLocale ||
+      storageLocale ||
+      navigatorLanguage,
+  );
   const chain = getFallbackChain(requested).concat(getFallbackChain(defaultLocale));
   const unique = chain.filter(Boolean).filter((value, index, arr) => arr.indexOf(value) === index);
   const locale = unique.find((candidate) => supportedLocales.includes(candidate)) || defaultLocale;

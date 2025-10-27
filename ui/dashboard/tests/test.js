@@ -439,7 +439,13 @@ const signalEvents = [
 const table = createLiveTable({
   columns: [
     { id: 'symbol', label: 'Symbol' },
-    { id: 'pnl', label: 'PnL', sortValue: (row) => row.pnl, formatter: (value) => `<strong>${escapeHtml(value)}</strong>`, align: 'right' },
+    {
+      id: 'pnl',
+      label: 'PnL',
+      sortValue: (row) => row.pnl,
+      formatter: (value) => `<strong>${escapeHtml(value)}</strong>`,
+      align: 'right',
+    },
   ],
   rows: [
     { symbol: 'XYZ', pnl: 10 },
@@ -453,11 +459,17 @@ const table = createLiveTable({
 assert.ok(table instanceof LiveTable, 'createLiveTable should return a LiveTable instance');
 
 const ascRows = table.getSortedRows();
-assert.deepStrictEqual(ascRows.map((row) => row.symbol), ['XYZ', 'ABC']);
+assert.deepStrictEqual(
+  ascRows.map((row) => row.symbol),
+  ['XYZ', 'ABC'],
+);
 
 table.setSort('pnl', 'desc');
 const descRows = table.getSortedRows();
-assert.deepStrictEqual(descRows.map((row) => row.symbol), ['ABC', 'XYZ']);
+assert.deepStrictEqual(
+  descRows.map((row) => row.symbol),
+  ['ABC', 'XYZ'],
+);
 
 const { page, pageCount, html: tableHtml } = table.render(10);
 assert.strictEqual(page, 2, 'page should clamp to the last available page');
@@ -468,7 +480,10 @@ table.setPageSize(2);
 table.setRows([{ symbol: 'AAA', pnl: 5 }]);
 const emptyTable = table.render();
 assert.strictEqual(emptyTable.totalRows, 1);
-assert.ok(!emptyTable.html.includes('No data available'), 'table renders populated rows when present');
+assert.ok(
+  !emptyTable.html.includes('No data available'),
+  'table renders populated rows when present',
+);
 
 assert.throws(() => new LiveTable({ columns: [] }), /at least one column/);
 assert.throws(() => table.setPageSize(0), /positive number/);
@@ -492,7 +507,10 @@ assert.strictEqual(areaChart.max, 101);
 
 const emptyChart = renderAreaChart({ series: [{ timestamp: 3, value: NaN }] });
 assert.strictEqual(emptyChart.points.length, 0, 'non-finite values should be filtered out');
-assert.ok(emptyChart.html.includes('Chart data is not available'), 'empty charts should display placeholder');
+assert.ok(
+  emptyChart.html.includes('Chart data is not available'),
+  'empty charts should display placeholder',
+);
 
 console.log('area chart tests passed');
 
@@ -514,9 +532,19 @@ const dashboardView = renderDashboard({
 });
 
 assert.ok(dashboardView.html.includes('PnL &amp; Quotes'), 'navigation should expose pnl route');
-assert.ok(dashboardView.html.includes('Open Positions'), 'positions component should be rendered for active route');
-assert.ok(dashboardView.styles.includes('.tp-live-table'), 'styles should include live table classes');
-assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose shared stylesheet reference');
+assert.ok(
+  dashboardView.html.includes('Open Positions'),
+  'positions component should be rendered for active route',
+);
+assert.ok(
+  dashboardView.styles.includes('.tp-live-table'),
+  'styles should include live table classes',
+);
+assert.strictEqual(
+  dashboardView.styles,
+  DASHBOARD_STYLES,
+  'render should expose shared stylesheet reference',
+);
 assert.strictEqual(dashboardView.route, 'positions');
 
 const navigationLinks = (dashboardView.html.match(/<a class="tp-nav__link/g) || []).length;
@@ -539,25 +567,50 @@ assert.ok(orderProgress.remaining >= 0, 'remaining quantity should never be nega
 const pnlView = renderPnlQuotesView({ pnlPoints, quotes });
 assert.ok(pnlView.html.includes('Net PnL'));
 assert.ok(pnlView.charts.pnl.points.length > 0);
-assert.ok(pnlView.charts.quotes.points.every((point, index, arr) => index === 0 || arr[index - 1].timestamp <= point.timestamp));
+assert.ok(
+  pnlView.charts.quotes.points.every(
+    (point, index, arr) => index === 0 || arr[index - 1].timestamp <= point.timestamp,
+  ),
+);
 
 const signalsView = renderSignalsView({ signals: signalEvents });
 assert.ok(signalsView.html.includes('Signal Intelligence'), 'signals view should include heading');
 const signalRows = signalsView.table.getSortedRows();
 assert.ok(signalRows.length >= 3, 'signals table should surface all rows');
-assert.ok(signalRows.some((row) => row.isActive), 'signals should mark active entries');
-assert.ok(signalRows.some((row) => !row.isActive), 'signals should mark expired entries when ttl elapsed');
+assert.ok(
+  signalRows.some((row) => row.isActive),
+  'signals should mark active entries',
+);
+assert.ok(
+  signalRows.some((row) => !row.isActive),
+  'signals should mark expired entries when ttl elapsed',
+);
 assert.ok(signalsView.summary.activeCount >= 1, 'summary should count active signals');
 assert.ok(signalsView.html.includes('tp-meta-list'), 'signals view should render metadata chips');
 
 const overviewView = renderOverviewView({ github: githubOverview });
-assert.ok(overviewView.html.includes('Product Pulse'), 'overview view should include primary heading');
+assert.ok(
+  overviewView.html.includes('Product Pulse'),
+  'overview view should include primary heading',
+);
 assert.ok(overviewView.html.includes('4,820'), 'overview view should format star totals');
-assert.ok(overviewView.html.includes('tp-github-workflow'), 'overview view should surface GitHub badges');
+assert.ok(
+  overviewView.html.includes('tp-github-workflow'),
+  'overview view should surface GitHub badges',
+);
 assert.ok(overviewView.html.includes('Python'), 'overview view should list dominant languages');
-assert.ok(!overviewView.html.includes('javascript:'), 'overview view should sanitize external links');
-assert.ok(overviewView.html.includes('Open-source community'), 'overview view should include community spotlight panel');
-assert.ok(overviewView.html.includes('Mentorship seats'), 'community spotlight should describe mentorship capacity');
+assert.ok(
+  !overviewView.html.includes('javascript:'),
+  'overview view should sanitize external links',
+);
+assert.ok(
+  overviewView.html.includes('Open-source community'),
+  'overview view should include community spotlight panel',
+);
+assert.ok(
+  overviewView.html.includes('Mentorship seats'),
+  'community spotlight should describe mentorship capacity',
+);
 assert.strictEqual(overviewView.github, githubOverview);
 
 const overviewDashboard = renderDashboard({
@@ -568,24 +621,70 @@ const overviewDashboard = renderDashboard({
   signals: { signals: signalEvents },
   community: { community: communityProfile, github: githubOverview },
 });
-assert.strictEqual(overviewDashboard.route, 'overview', 'dashboard default route should highlight overview view');
-assert.ok(overviewDashboard.html.includes('tp-hero'), 'overview dashboard render should include hero section');
-assert.ok(overviewDashboard.html.includes('data-role="locale-select"'), 'dashboard should expose locale switcher control');
-assert.ok(overviewDashboard.html.includes('data-role="locale-config"'), 'dashboard should embed locale configuration payload');
-assert.ok(overviewDashboard.html.includes('data-locale="en-US"'), 'dashboard should tag root element with the active locale');
-assert.ok(overviewDashboard.html.includes('dir="ltr"'), 'dashboard should surface locale reading direction');
+assert.strictEqual(
+  overviewDashboard.route,
+  'overview',
+  'dashboard default route should highlight overview view',
+);
+assert.ok(
+  overviewDashboard.html.includes('tp-hero'),
+  'overview dashboard render should include hero section',
+);
+assert.ok(
+  overviewDashboard.html.includes('data-role="locale-select"'),
+  'dashboard should expose locale switcher control',
+);
+assert.ok(
+  overviewDashboard.html.includes('data-role="locale-config"'),
+  'dashboard should embed locale configuration payload',
+);
+assert.ok(
+  overviewDashboard.html.includes('data-locale="en-US"'),
+  'dashboard should tag root element with the active locale',
+);
+assert.ok(
+  overviewDashboard.html.includes('dir="ltr"'),
+  'dashboard should surface locale reading direction',
+);
 
 const communityView = renderCommunityView({ community: communityProfile, github: githubOverview });
-assert.ok(communityView.html.includes('Community Impact Center'), 'community view should include headline');
-assert.ok(communityView.html.includes('185,000'), 'community metrics should format download counts');
-assert.ok(communityView.html.includes('Mentorship sprint'), 'community view should list active programs');
+assert.ok(
+  communityView.html.includes('Community Impact Center'),
+  'community view should include headline',
+);
+assert.ok(
+  communityView.html.includes('185,000'),
+  'community metrics should format download counts',
+);
+assert.ok(
+  communityView.html.includes('Mentorship sprint'),
+  'community view should list active programs',
+);
 assert.ok(communityView.html.includes('Ana López'), 'community view should highlight champions');
-assert.ok(communityView.html.includes('Engagement timeline'), 'community view should render engagement timeline section');
-assert.ok(communityView.html.includes('Regional hubs'), 'community view should surface regional hubs section');
-assert.ok(communityView.html.includes('Contribution opportunities'), 'community view should list contribution opportunities');
-assert.ok(communityView.html.includes('data-role="resource-filters"'), 'community view should render resource filters');
-assert.ok(communityView.html.includes('data-filter="guides"'), 'resource filters should include normalised categories');
-assert.ok(!communityView.html.includes('javascript:'), 'community view should sanitise external links');
+assert.ok(
+  communityView.html.includes('Engagement timeline'),
+  'community view should render engagement timeline section',
+);
+assert.ok(
+  communityView.html.includes('Regional hubs'),
+  'community view should surface regional hubs section',
+);
+assert.ok(
+  communityView.html.includes('Contribution opportunities'),
+  'community view should list contribution opportunities',
+);
+assert.ok(
+  communityView.html.includes('data-role="resource-filters"'),
+  'community view should render resource filters',
+);
+assert.ok(
+  communityView.html.includes('data-filter="guides"'),
+  'resource filters should include normalised categories',
+);
+assert.ok(
+  !communityView.html.includes('javascript:'),
+  'community view should sanitise external links',
+);
 assert.strictEqual(communityView.community, communityProfile);
 
 const router = createRouter({
@@ -602,7 +701,11 @@ assert.deepStrictEqual(router.list().sort(), ['orders', 'pnl']);
 assert.throws(() => router.register('invalid route', () => null), /Invalid route name/);
 assert.throws(() => router.register('bad', 123), /must be a function/);
 assert.throws(() => router.navigate('missing'), /Unknown route/);
-assert.strictEqual(router.navigate(null).name, 'orders', 'null navigation should fallback to default route');
+assert.strictEqual(
+  router.navigate(null).name,
+  'orders',
+  'null navigation should fallback to default route',
+);
 
 assert.strictEqual(formatCurrency(10500), '$10,500');
 assert.strictEqual(formatPercent(0.256), '25.6%');
@@ -629,9 +732,15 @@ const sanitizedView = renderPositionsView({
 });
 
 assert.ok(!sanitizedView.html.includes('<script>'), 'positions view should escape script tags');
-assert.ok(sanitizedView.html.includes('&lt;b&gt;Automation&lt;/b&gt;'), 'escaped HTML should remain visible as text');
+assert.ok(
+  sanitizedView.html.includes('&lt;b&gt;Automation&lt;/b&gt;'),
+  'escaped HTML should remain visible as text',
+);
 
 const pnlStats = renderPnlQuotesView({ pnlPoints: [], quotes: [] });
-assert.ok(pnlStats.html.includes('Chart data is not available'), 'empty series should surface chart placeholder');
+assert.ok(
+  pnlStats.html.includes('Chart data is not available'),
+  'empty series should surface chart placeholder',
+);
 
 console.log('view sanitisation tests passed');

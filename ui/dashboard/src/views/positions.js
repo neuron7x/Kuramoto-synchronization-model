@@ -31,8 +31,8 @@ function indexTicks(ticks = []) {
     const mid = Number.isFinite(tick.last_price)
       ? tick.last_price
       : Number.isFinite(tick.bid_price) && Number.isFinite(tick.ask_price)
-      ? (tick.bid_price + tick.ask_price) / 2
-      : NaN;
+        ? (tick.bid_price + tick.ask_price) / 2
+        : NaN;
     if (Number.isFinite(mid)) {
       index.set(tick.symbol, mid);
     }
@@ -76,7 +76,10 @@ function aggregatePositions(fills = [], orders = [], ticks = []) {
     entry.netQuantity += signedQty;
     entry.netNotional += fillNotional;
     entry.totalQuantity += Math.abs(Number.isFinite(fill.filled_qty) ? fill.filled_qty : 0);
-    entry.totalNotional += Math.abs((Number.isFinite(fill.fill_price) ? fill.fill_price : 0) * (Number.isFinite(fill.filled_qty) ? fill.filled_qty : 0));
+    entry.totalNotional += Math.abs(
+      (Number.isFinite(fill.fill_price) ? fill.fill_price : 0) *
+        (Number.isFinite(fill.filled_qty) ? fill.filled_qty : 0),
+    );
     entry.lastFill = Math.max(entry.lastFill, Number.isFinite(fill.timestamp) ? fill.timestamp : 0);
     entry.fills += 1;
     const mark = priceIndex.get(fill.symbol);
@@ -87,7 +90,12 @@ function aggregatePositions(fills = [], orders = [], ticks = []) {
   });
 
   return Array.from(aggregates.values()).map((entry) => {
-    const avgPrice = entry.netQuantity !== 0 ? entry.netNotional / entry.netQuantity : entry.totalQuantity ? entry.totalNotional / entry.totalQuantity : 0;
+    const avgPrice =
+      entry.netQuantity !== 0
+        ? entry.netNotional / entry.netQuantity
+        : entry.totalQuantity
+          ? entry.totalNotional / entry.totalQuantity
+          : 0;
     const marketPrice = Number.isFinite(entry.marketPrice) ? entry.marketPrice : avgPrice;
     const exposure = Number.isFinite(marketPrice) ? marketPrice * entry.netQuantity : 0;
     const pnl = Number.isFinite(marketPrice) ? (marketPrice - avgPrice) * entry.netQuantity : 0;
@@ -109,7 +117,13 @@ function getPositionsTableTranslations() {
   };
 }
 
-export function renderPositionsView({ fills = [], orders = [], ticks = [], pageSize = 10, page = 1 } = {}) {
+export function renderPositionsView({
+  fills = [],
+  orders = [],
+  ticks = [],
+  pageSize = 10,
+  page = 1,
+} = {}) {
   const rows = aggregatePositions(fills, orders, ticks);
   const { columns, badges } = getPositionsTableTranslations();
   const pnlBadges = badges.pnl || {};
@@ -125,7 +139,8 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         id: 'netQuantity',
         label: columns.netQuantity || 'Net Quantity',
         accessor: (row) => row.netQuantity,
-        formatter: (value) => `<span>${escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }))}</span>`,
+        formatter: (value) =>
+          `<span>${escapeHtml(formatNumber(value, { maximumFractionDigits: 4 }))}</span>`,
         sortValue: (row) => row.netQuantity,
         align: 'right',
       },
@@ -160,11 +175,19 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
         formatter: (value, row) => {
           const direction = value >= 0 ? 'positive' : 'negative';
           const badgeLabel = pnlBadges[direction];
-          const percentValue = row.marketPrice && row.avgPrice ? (row.marketPrice - row.avgPrice) / (row.avgPrice || 1) : 0;
+          const percentValue =
+            row.marketPrice && row.avgPrice
+              ? (row.marketPrice - row.avgPrice) / (row.avgPrice || 1)
+              : 0;
           const percentText = formatPercent(percentValue);
           const template = badgeLabel || '{percent}';
-          const badgeText = template.includes('{percent}') ? template.replace('{percent}', percentText) : template;
-          const badge = value === 0 ? '' : `<span class="tp-pill tp-pill--${direction}">${escapeHtml(badgeText)}</span>`;
+          const badgeText = template.includes('{percent}')
+            ? template.replace('{percent}', percentText)
+            : template;
+          const badge =
+            value === 0
+              ? ''
+              : `<span class="tp-pill tp-pill--${direction}">${escapeHtml(badgeText)}</span>`;
           return `<span>${escapeHtml(formatCurrency(value))}</span>${badge}`;
         },
         sortValue: (row) => row.pnl,
@@ -195,14 +218,12 @@ export function renderPositionsView({ fills = [], orders = [], ticks = [], pageS
     },
     { count: rows.length, netExposure: 0, netPnl: 0 },
   );
-  const highlights = rows
-    .slice(0, 3)
-    .map((row) => ({
-      symbol: row.symbol,
-      netQuantity: Number.isFinite(row.netQuantity) ? row.netQuantity : 0,
-      exposure: Number.isFinite(row.exposure) ? row.exposure : 0,
-      pnl: Number.isFinite(row.pnl) ? row.pnl : 0,
-    }));
+  const highlights = rows.slice(0, 3).map((row) => ({
+    symbol: row.symbol,
+    netQuantity: Number.isFinite(row.netQuantity) ? row.netQuantity : 0,
+    exposure: Number.isFinite(row.exposure) ? row.exposure : 0,
+    pnl: Number.isFinite(row.pnl) ? row.pnl : 0,
+  }));
   const metadata = serializeForScript({
     route: 'positions',
     totals,

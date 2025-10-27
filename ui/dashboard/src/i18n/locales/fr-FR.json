@@ -52,10 +52,7 @@
   "header": {
     "title": "Centre de supervision TradePulse",
     "subtitle": "Pilotage unifié de l'exécution, du risque et de la télémétrie.",
-    "tags": [
-      "multi-actifs",
-      "temps réel"
-    ]
+    "tags": ["multi-actifs", "temps réel"]
   },
   "views": {
     "orders": {

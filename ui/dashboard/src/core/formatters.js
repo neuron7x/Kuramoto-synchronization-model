@@ -1,8 +1,5 @@
 const RISKY_LEADING_CHAR_PATTERN = /^[=+\-@]/;
-const MARKDOWN_META_CHAR_PATTERN = new RegExp(
-  String.raw`[\\\`*_{}\[\]()#+!|>]`,
-  'g',
-);
+const MARKDOWN_META_CHAR_PATTERN = new RegExp(String.raw`[\\\`*_{}\[\]()#+!|>]`, 'g');
 
 export function sanitizeReportValue(value) {
   if (value === null || value === undefined) {

@@ -24,7 +24,11 @@ function normalisePnlSeries(pnlPoints = [], currency = 'USD') {
 
 function normaliseQuoteSeries(quotes = []) {
   return quotes
-    .filter((tick) => Number.isFinite(tick?.last_price) || (Number.isFinite(tick?.bid_price) && Number.isFinite(tick?.ask_price)))
+    .filter(
+      (tick) =>
+        Number.isFinite(tick?.last_price) ||
+        (Number.isFinite(tick?.bid_price) && Number.isFinite(tick?.ask_price)),
+    )
     .map((tick) => {
       const price = Number.isFinite(tick.last_price)
         ? tick.last_price
@@ -50,7 +54,8 @@ function summarisePnl(points = [], currency = 'USD') {
   const totalDisplay = formatCurrency(last.value, currency);
   const changeDisplay = formatCurrency(change, currency);
   const runRateDisplay = formatCurrency(runRate, currency);
-  const changePercent = first.value !== 0 ? formatPercent(change / Math.abs(first.value)) : formatPercent(0);
+  const changePercent =
+    first.value !== 0 ? formatPercent(change / Math.abs(first.value)) : formatPercent(0);
   return {
     total: last.value,
     change,
@@ -93,19 +98,19 @@ export function renderPnlQuotesView({ pnlPoints = [], quotes = [], currency = 'U
     t('views.pnl.cards.pnl.delta', {
       value: pnlSummary.formatted?.change || formatCurrency(0, currency),
       percent: pnlSummary.formatted?.changePercent || formatPercent(0),
-    })
+    }),
   );
   const pnlRunRate = escapeHtml(
     t('views.pnl.cards.pnl.runRate', {
       value: pnlSummary.formatted?.runRateValue || formatCurrency(0, currency),
-    })
+    }),
   );
   const quoteLast = escapeHtml(formatNumber(quoteSummary.last, { maximumFractionDigits: 4 }));
   const quoteDelta = escapeHtml(
     t('views.pnl.cards.quotes.delta', {
       value: formatNumber(quoteSummary.change, { maximumFractionDigits: 4 }),
       percent: formatPercent(quoteSummary.changePercent),
-    })
+    }),
   );
   const metadata = serializeForScript({
     route: 'pnl',

@@ -1,6 +1,16 @@
-import { localeMetadata, defaultLocale, fallbackLocale, getFallbackChain, supportedLocales } from './config.js';
+import {
+  localeMetadata,
+  defaultLocale,
+  fallbackLocale,
+  getFallbackChain,
+  supportedLocales,
+} from './config.js';
 import { detectLocale } from './detector.js';
-import { recordLocaleAdopted, recordLocaleFallback, recordMissingTranslation } from '../core/telemetry.js';
+import {
+  recordLocaleAdopted,
+  recordLocaleFallback,
+  recordMissingTranslation,
+} from '../core/telemetry.js';
 
 import enUS from './locales/en-US.json' assert { type: 'json' };
 import ukUA from './locales/uk-UA.json' assert { type: 'json' };

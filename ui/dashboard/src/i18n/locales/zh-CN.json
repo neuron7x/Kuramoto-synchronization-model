@@ -52,10 +52,7 @@
   "header": {
     "title": "TradePulse 监控中心",
     "subtitle": "统一掌控执行、风险与遥测数据。",
-    "tags": [
-      "多资产",
-      "实时"
-    ]
+    "tags": ["多资产", "实时"]
   },
   "views": {
     "orders": {

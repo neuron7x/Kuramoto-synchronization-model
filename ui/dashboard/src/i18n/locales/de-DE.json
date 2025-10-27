@@ -52,10 +52,7 @@
   "header": {
     "title": "TradePulse Monitoring Hub",
     "subtitle": "Zentrale Steuerung von Ausführung, Risiko und Telemetrie.",
-    "tags": [
-      "Multi-Asset",
-      "Echtzeit"
-    ]
+    "tags": ["Multi-Asset", "Echtzeit"]
   },
   "views": {
     "orders": {

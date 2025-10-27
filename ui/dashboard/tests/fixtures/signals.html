@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -38,46 +38,46 @@
         }
 
         const sampleSignals = [
-        {
-          id: 'sig-1',
-          symbol: 'AAPL',
-          direction: 'BUY',
-          strength: 0.86,
-          timestamp: Date.now() - 45_000,
-          ttl_seconds: 300,
-          confidence: 0.94,
-          metadata: {
-            strategy: 'momentum',
-            horizon: '1h',
+          {
+            id: 'sig-1',
+            symbol: 'AAPL',
+            direction: 'BUY',
+            strength: 0.86,
+            timestamp: Date.now() - 45_000,
+            ttl_seconds: 300,
+            confidence: 0.94,
+            metadata: {
+              strategy: 'momentum',
+              horizon: '1h',
+            },
           },
-        },
-        {
-          id: 'sig-2',
-          symbol: 'MSFT',
-          direction: 'SELL',
-          strength: 0.42,
-          timestamp: Date.now() - 120_000,
-          ttl_seconds: 180,
-          confidence: 0.61,
-          metadata: {
-            strategy: 'mean_reversion',
-            horizon: '30m',
+          {
+            id: 'sig-2',
+            symbol: 'MSFT',
+            direction: 'SELL',
+            strength: 0.42,
+            timestamp: Date.now() - 120_000,
+            ttl_seconds: 180,
+            confidence: 0.61,
+            metadata: {
+              strategy: 'mean_reversion',
+              horizon: '30m',
+            },
           },
-        },
-        {
-          id: 'sig-3',
-          symbol: 'NVDA',
-          direction: 'BUY',
-          strength: 0.73,
-          timestamp: Date.now() - 12_000,
-          ttl_seconds: 90,
-          confidence: 0.88,
-          metadata: {
-            strategy: 'volatility_breakout',
-            horizon: '15m',
+          {
+            id: 'sig-3',
+            symbol: 'NVDA',
+            direction: 'BUY',
+            strength: 0.73,
+            timestamp: Date.now() - 12_000,
+            ttl_seconds: 90,
+            confidence: 0.88,
+            metadata: {
+              strategy: 'volatility_breakout',
+              horizon: '15m',
+            },
           },
-        },
-      ];
+        ];
 
         try {
           const renderStart = performance.now();

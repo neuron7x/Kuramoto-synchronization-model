@@ -52,10 +52,7 @@
   "header": {
     "title": "Centro de monitoramento TradePulse",
     "subtitle": "Comando unificado de execução, risco e telemetria.",
-    "tags": [
-      "multiativos",
-      "tempo real"
-    ]
+    "tags": ["multiativos", "tempo real"]
   },
   "views": {
     "orders": {

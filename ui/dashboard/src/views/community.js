@@ -98,10 +98,10 @@ function buildEngagementEntries(community = {}) {
   const timeline = Array.isArray(community.engagement)
     ? community.engagement
     : Array.isArray(community.timeline)
-    ? community.timeline
-    : Array.isArray(community.milestones)
-    ? community.milestones
-    : [];
+      ? community.timeline
+      : Array.isArray(community.milestones)
+        ? community.milestones
+        : [];
 
   return timeline
     .map((entry) => {
@@ -113,8 +113,8 @@ function buildEngagementEntries(community = {}) {
       const highlights = Array.isArray(entry.highlights)
         ? entry.highlights.filter(Boolean).slice(0, 3)
         : entry.highlight
-        ? [entry.highlight]
-        : [];
+          ? [entry.highlight]
+          : [];
       const ships = coerceNumber(entry.releases ?? entry.majorReleases ?? entry.ships, null);
       if (contributions == null && newcomers == null && ships == null && highlights.length === 0) {
         return null;
@@ -173,9 +173,7 @@ function renderTimelineEntry(entry, translations = {}) {
 
   const highlights = entry.highlights.length
     ? `<ul class="tp-community__timeline-highlights" aria-label="${escapeHtml(String(highlightsLabel))}">
-        ${entry.highlights
-          .map((highlight) => `<li>${escapeHtml(String(highlight))}</li>`)
-          .join('')}
+        ${entry.highlights.map((highlight) => `<li>${escapeHtml(String(highlight))}</li>`).join('')}
       </ul>`
     : '';
 
@@ -245,9 +243,11 @@ function renderHub(hub, translations = {}) {
       ${
         leads != null
           ? `<p class="tp-community__hub-leads">${escapeHtml(
-              String(formatTemplate(translations.leads || '{count} regional leads', {
-                count: formatNumber(leads, { maximumFractionDigits: 0 }),
-              })),
+              String(
+                formatTemplate(translations.leads || '{count} regional leads', {
+                  count: formatNumber(leads, { maximumFractionDigits: 0 }),
+                }),
+              ),
             )}</p>`
           : ''
       }
@@ -300,7 +300,8 @@ function renderOpportunity(opportunity, translations = {}) {
   if (!opportunity) {
     return '';
   }
-  const title = opportunity.title || opportunity.name || translations.fallbackTitle || 'Opportunity';
+  const title =
+    opportunity.title || opportunity.name || translations.fallbackTitle || 'Opportunity';
   const description = opportunity.description || opportunity.summary || '';
   const scope = opportunity.scope || opportunity.track || '';
   const url = safeExternalUrl(opportunity.url || opportunity.href);
@@ -410,7 +411,9 @@ function buildMetrics(community = {}, translations = {}) {
       key: 'maintainers',
       value: maintainers,
       format: (value) => formatNumber(value, { maximumFractionDigits: 0 }),
-      params: { count: maintainers != null ? formatNumber(maintainers, { maximumFractionDigits: 0 }) : '—' },
+      params: {
+        count: maintainers != null ? formatNumber(maintainers, { maximumFractionDigits: 0 }) : '—',
+      },
     },
     {
       key: 'sponsors',
@@ -418,10 +421,9 @@ function buildMetrics(community = {}, translations = {}) {
       format: (value) => formatNumber(value, { maximumFractionDigits: 0 }),
       params: {
         count: sponsors != null ? formatNumber(sponsors, { maximumFractionDigits: 0 }) : '—',
-        monthly:
-          Number.isFinite(sponsorshipMonthly)
-            ? formatCurrency(sponsorshipMonthly, currencyCode)
-            : '—',
+        monthly: Number.isFinite(sponsorshipMonthly)
+          ? formatCurrency(sponsorshipMonthly, currencyCode)
+          : '—',
       },
     },
     {
@@ -435,7 +437,8 @@ function buildMetrics(community = {}, translations = {}) {
     {
       key: 'response',
       value: responseHours,
-      format: (value) => `${formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h`,
+      format: (value) =>
+        `${formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h`,
       params: {
         hours:
           responseHours != null
@@ -449,7 +452,9 @@ function buildMetrics(community = {}, translations = {}) {
       format: (value) => formatNumber(value, { maximumFractionDigits: 0 }),
       params: {
         count:
-          goodFirstIssues != null ? formatNumber(goodFirstIssues, { maximumFractionDigits: 0 }) : '—',
+          goodFirstIssues != null
+            ? formatNumber(goodFirstIssues, { maximumFractionDigits: 0 })
+            : '—',
       },
     },
     {
@@ -458,7 +463,9 @@ function buildMetrics(community = {}, translations = {}) {
       format: (value) => formatNumber(value, { maximumFractionDigits: 0 }),
       params: {
         count:
-          mentorshipSeats != null ? formatNumber(mentorshipSeats, { maximumFractionDigits: 0 }) : '—',
+          mentorshipSeats != null
+            ? formatNumber(mentorshipSeats, { maximumFractionDigits: 0 })
+            : '—',
       },
     },
   ];
@@ -685,19 +692,23 @@ function renderResourceFilters(filters, translations = {}) {
   }
   const allLabel = translations.all || 'All';
   const helper = translations.helper || '';
-  const buttons = [`
+  const buttons = [
+    `
     <button type="button" class="tp-community__filter tp-community__filter--active" data-action="filter-resources" data-filter="all" aria-pressed="true">
       ${escapeHtml(String(allLabel))}
     </button>
-  `]
+  `,
+  ]
     .concat(
-      filters.map((filter) => `
+      filters.map(
+        (filter) => `
         <button type="button" class="tp-community__filter" data-action="filter-resources" data-filter="${escapeHtml(
           filter.value,
         )}" aria-pressed="false">
           ${escapeHtml(String(filter.label))}
         </button>
-      `),
+      `,
+      ),
     )
     .join('');
 
@@ -787,11 +798,12 @@ function renderChampion(champion, translations = {}) {
   const speciality = champion?.specialty || champion?.focus;
   const url = safeExternalUrl(champion?.url || champion?.profile);
   const contributionLabel = translations.contributions || '{count} contributions';
-  const contributionsText = contributions != null
-    ? formatTemplate(contributionLabel, {
-        count: formatNumber(contributions, { maximumFractionDigits: 0 }),
-      })
-    : '';
+  const contributionsText =
+    contributions != null
+      ? formatTemplate(contributionLabel, {
+          count: formatNumber(contributions, { maximumFractionDigits: 0 }),
+        })
+      : '';
 
   return `
     <li class="tp-community__champion">
@@ -862,7 +874,8 @@ function renderChannels(community = {}, heroTranslations = {}) {
   const items = channels
     .map((channel) => {
       const url = safeExternalUrl(channel?.url || channel?.href);
-      const label = channel?.label || channel?.name || heroTranslations.fallbackChannel || 'Community channel';
+      const label =
+        channel?.label || channel?.name || heroTranslations.fallbackChannel || 'Community channel';
       if (url === '#') {
         return '';
       }
@@ -901,9 +914,16 @@ function renderCommunityHero(translations = {}, community = {}, github = {}) {
   const title = hero.title || t('views.community.hero.title');
   const subtitle = hero.subtitle || t('views.community.hero.subtitle');
   const primaryUrl = safeExternalUrl(
-    profile.primaryCta?.url || profile.primaryCTA?.url || profile.resources?.[0]?.url || repository.url,
+    profile.primaryCta?.url ||
+      profile.primaryCTA?.url ||
+      profile.resources?.[0]?.url ||
+      repository.url,
   );
-  const primaryLabel = profile.primaryCta?.label || profile.primaryCTA?.label || hero.cta || t('views.community.hero.cta');
+  const primaryLabel =
+    profile.primaryCta?.label ||
+    profile.primaryCTA?.label ||
+    hero.cta ||
+    t('views.community.hero.cta');
   const secondaryLabel = hero.secondaryCta;
   const channels = renderChannels(profile, hero);
 
@@ -966,11 +986,23 @@ export function renderCommunityView({ community = {}, github = {} } = {}) {
   const hubs = renderHubsSection(communityProfile, translations.hubs || {});
   const programs = renderProgramsSection(communityProfile, translations.programs || {});
   const events = renderEventsSection(communityProfile, translations.events || {});
-  const opportunities = renderOpportunitiesSection(communityProfile, translations.opportunities || {});
+  const opportunities = renderOpportunitiesSection(
+    communityProfile,
+    translations.opportunities || {},
+  );
   const resources = renderResourcesSection(communityProfile, translations.resources || {});
   const champions = renderChampionsSection(communityProfile, translations.champions || {});
 
-  const sections = [metrics, engagement, hubs, programs, opportunities, events, champions, resources]
+  const sections = [
+    metrics,
+    engagement,
+    hubs,
+    programs,
+    opportunities,
+    events,
+    champions,
+    resources,
+  ]
     .filter(Boolean)
     .join('');
 

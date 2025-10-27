@@ -137,7 +137,10 @@ test.describe('dashboard signals experience', () => {
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
 
-    expect(accessibilityScanResults.violations, 'no accessibility regressions are expected').toEqual([]);
+    expect(
+      accessibilityScanResults.violations,
+      'no accessibility regressions are expected',
+    ).toEqual([]);
     test.info().attach('axe-report', {
       body: JSON.stringify(accessibilityScanResults, null, 2),
       contentType: 'application/json',
@@ -145,7 +148,10 @@ test.describe('dashboard signals experience', () => {
   });
 
   test('provides a semantic snapshot hook for CLIP-based guardrails', async ({ page }) => {
-    test.skip(!SEMANTIC_GUARDRAIL_ENABLED, 'Set UI_SEMANTIC_BASELINE=true to enable CLIP semantic assertions.');
+    test.skip(
+      !SEMANTIC_GUARDRAIL_ENABLED,
+      'Set UI_SEMANTIC_BASELINE=true to enable CLIP semantic assertions.',
+    );
 
     await mountSignalsFixture(page);
 

@@ -88,10 +88,7 @@ function buildHeroStats(heroTranslations = {}, github = {}) {
       label: statsT.velocity?.label || 'Velocity (30d)',
       value: formatNumber(commits),
       unit: statsT.velocity?.unit || 'commits',
-      trend:
-        merges > 0
-          ? (statsT.velocity?.trend || `${formatNumber(merges)} merges`)
-          : null,
+      trend: merges > 0 ? statsT.velocity?.trend || `${formatNumber(merges)} merges` : null,
       tone: 'neutral',
     },
     {
@@ -101,7 +98,8 @@ function buildHeroStats(heroTranslations = {}, github = {}) {
       unit: statsT.contributors?.unit || 'contributors',
       trend:
         newContributors !== 0
-          ? (statsT.contributors?.trend || `${newContributors > 0 ? '+' : ''}${formatNumber(newContributors)} new`)
+          ? statsT.contributors?.trend ||
+            `${newContributors > 0 ? '+' : ''}${formatNumber(newContributors)} new`
           : null,
       tone: newContributors === 0 ? null : newContributors > 0 ? 'positive' : 'negative',
     },
@@ -118,7 +116,9 @@ function renderHeroStat(stat) {
     return '';
   }
 
-  const unit = stat.unit ? `<span class="tp-hero__stat-unit">${escapeHtml(String(stat.unit))}</span>` : '';
+  const unit = stat.unit
+    ? `<span class="tp-hero__stat-unit">${escapeHtml(String(stat.unit))}</span>`
+    : '';
   const tone = stat.tone ? ` tp-hero__stat-trend--${stat.tone}` : '';
   const trend = stat.trend
     ? `<p class="tp-hero__stat-trend${tone}">${escapeHtml(String(stat.trend))}</p>`
@@ -151,9 +151,10 @@ function renderHero(heroTranslations = {}, github = {}) {
 
   const repoLabel = `${org}/${repo}`.replace(/^\/+|\/+$/g, '');
 
-  const action = url === '#'
-    ? ''
-    : `
+  const action =
+    url === '#'
+      ? ''
+      : `
         <a class="tp-hero__action" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
           <svg class="tp-hero__action-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
             <path
@@ -252,12 +253,12 @@ function renderMomentumPanel(github = {}, translations = {}) {
       value: `${formatNumber(commits)} commits`,
       hint:
         mergedPrs > 0
-          ? (momentumT.velocity?.hint || `${formatNumber(mergedPrs)} merges shipped this month`)
+          ? momentumT.velocity?.hint || `${formatNumber(mergedPrs)} merges shipped this month`
           : null,
-      trend:
-        mergeRatio
-          ? (momentumT.velocity?.trend || `${formatPercent(Math.min(mergeRatio, 2))} merge/commit ratio`)
-          : null,
+      trend: mergeRatio
+        ? momentumT.velocity?.trend ||
+          `${formatPercent(Math.min(mergeRatio, 2))} merge/commit ratio`
+        : null,
       tone: mergeRatio >= 0.5 ? 'positive' : 'neutral',
       progress: velocityTarget > 0 ? commits / velocityTarget : 0,
     },
@@ -267,12 +268,9 @@ function renderMomentumPanel(github = {}, translations = {}) {
       value: `${formatNumber(stars)} stars`,
       hint:
         Number.isFinite(starsDelta) && starsDelta !== 0
-          ? (momentumT.engagement?.hint || `${formatDelta(starsDelta)} month-over-month star growth`)
+          ? momentumT.engagement?.hint || `${formatDelta(starsDelta)} month-over-month star growth`
           : null,
-      trend:
-        watchersGrowth
-          ? (momentumT.engagement?.trend || formatDelta(watchersGrowth))
-          : null,
+      trend: watchersGrowth ? momentumT.engagement?.trend || formatDelta(watchersGrowth) : null,
       tone: watchersGrowth > 0 ? 'positive' : watchersGrowth < 0 ? 'negative' : 'neutral',
       progress: engagementTarget > 0 ? Math.max(0, watchersGrowth) / engagementTarget : 0,
     },
@@ -280,14 +278,13 @@ function renderMomentumPanel(github = {}, translations = {}) {
       key: 'contributors',
       label: momentumT.contributors?.label || 'Contributor energy',
       value: `${formatNumber(contributors)} people`,
-      hint:
-        newContributors
-          ? (momentumT.contributors?.hint || `${newContributors > 0 ? '+' : ''}${formatNumber(newContributors)} new engineers this month`)
-          : null,
-      trend:
-        contributorMomentum
-          ? (momentumT.contributors?.trend || formatDelta(contributorMomentum))
-          : null,
+      hint: newContributors
+        ? momentumT.contributors?.hint ||
+          `${newContributors > 0 ? '+' : ''}${formatNumber(newContributors)} new engineers this month`
+        : null,
+      trend: contributorMomentum
+        ? momentumT.contributors?.trend || formatDelta(contributorMomentum)
+        : null,
       tone: newContributors > 0 ? 'positive' : newContributors < 0 ? 'negative' : 'neutral',
       progress: contributorTarget > 0 ? contributors / contributorTarget : 0,
     },
@@ -361,7 +358,10 @@ function renderBadges(github = {}, translations = {}) {
       icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.177 0 9.62 3.295 11 7-1.38 3.705-5.823 7-11 7S2.38 15.705 1 12c1.38-3.705 5.823-7 11-7Zm0 3.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" fill="currentColor"/></svg>',
       value: formatNumber(coerceNumber(github.watchers, 0)),
       hint: badgesT.watchers?.hint
-        ? badgesT.watchers.hint.replace('{percent}', formatPercent(clamp01(github.watchers_growth || 0)))
+        ? badgesT.watchers.hint.replace(
+            '{percent}',
+            formatPercent(clamp01(github.watchers_growth || 0)),
+          )
         : null,
       label: badgesT.watchers?.label || 'Watchers',
     },
@@ -370,7 +370,10 @@ function renderBadges(github = {}, translations = {}) {
       icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 6.5a4 4 0 1 1 8 0 4 4 0 0 1-8 0Zm-3 11.25c0-2.21 2.91-4 6.5-4s6.5 1.79 6.5 4V20H4.5v-2.25Zm12.75-8.75a2.75 2.75 0 1 1 5.5 0 2.75 2.75 0 0 1-5.5 0Zm-1.25 8.75c0-.553.124-1.082.35-1.564 1.107-.69 2.556-1.186 4.15-1.347A4.5 4.5 0 0 1 22.5 20v1.5H15v-2.25Z" fill="currentColor"/></svg>',
       value: formatNumber(coerceNumber(github.contributors, 0)),
       hint: badgesT.contributors?.hint
-        ? badgesT.contributors.hint.replace('{new}', formatNumber(coerceNumber(github.new_contributors_30d)))
+        ? badgesT.contributors.hint.replace(
+            '{new}',
+            formatNumber(coerceNumber(github.new_contributors_30d)),
+          )
         : null,
       label: badgesT.contributors?.label || 'Contributors',
     },
@@ -379,7 +382,10 @@ function renderBadges(github = {}, translations = {}) {
   return `
     <dl class="tp-github-badges">
       ${stats
-        .filter((item) => Number.isFinite(coerceNumber(github[item.key], 0)) || item.key === 'contributors')
+        .filter(
+          (item) =>
+            Number.isFinite(coerceNumber(github[item.key], 0)) || item.key === 'contributors',
+        )
         .map((item) => renderBadge(item))
         .join('')}
     </dl>
@@ -509,11 +515,13 @@ function renderWorkflowBadges(github = {}, translations = {}) {
   const subtitle = translations.workflows?.subtitle || 'Latest GitHub Actions badges.';
 
   const items = valid
-    .map((workflow) => `
+    .map(
+      (workflow) => `
         <a class="tp-github-workflow" href="${escapeHtml(workflow.href)}" target="_blank" rel="noopener noreferrer">
           <img src="${escapeHtml(workflow.badgeSrc)}" alt="${escapeHtml(String(workflow.label))} status badge" loading="lazy" />
         </a>
-      `)
+      `,
+    )
     .join('');
 
   return `
@@ -601,8 +609,7 @@ function renderCommunitySpotlight(community = {}, translations = {}) {
     {
       key: 'sponsors',
       label: metricsT.sponsors?.label || 'Sponsors',
-      value:
-        sponsors != null ? formatNumber(sponsors, { maximumFractionDigits: 0 }) : '—',
+      value: sponsors != null ? formatNumber(sponsors, { maximumFractionDigits: 0 }) : '—',
       hint:
         sponsors != null
           ? formatTemplate(metricsT.sponsors?.hint || '', {
@@ -612,7 +619,9 @@ function renderCommunitySpotlight(community = {}, translations = {}) {
     },
   ].filter(Boolean);
 
-  const programs = Array.isArray(community.programs) ? community.programs.filter(Boolean).slice(0, 2) : [];
+  const programs = Array.isArray(community.programs)
+    ? community.programs.filter(Boolean).slice(0, 2)
+    : [];
   const resources = Array.isArray(community.resources)
     ? community.resources.filter(Boolean).slice(0, 2)
     : [];
@@ -724,7 +733,10 @@ export function renderOverviewView({ github = {} } = {}) {
   const languagesPanel = renderLanguagesPanel(githubProfile, translations.panels || {});
   const workflowPanel = renderWorkflowBadges(githubProfile, translations.panels || {});
   const momentumPanel = renderMomentumPanel(githubProfile, translations.panels || {});
-  const communityPanel = renderCommunitySpotlight(githubProfile.community, translations.panels || {});
+  const communityPanel = renderCommunitySpotlight(
+    githubProfile.community,
+    translations.panels || {},
+  );
 
   const html = `
     <article class="tp-view tp-view--overview">
@@ -755,4 +767,3 @@ export function renderOverviewView({ github = {} } = {}) {
     github: githubProfile,
   };
 }
-
