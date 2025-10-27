@@ -10,22 +10,23 @@ export const TABLE_STYLES = `
   }
 
   .tp-live-table__head {
-    background: rgba(15, 23, 42, 0.75);
+    background: rgba(15, 23, 42, 0.9);
   }
 
   .tp-live-table__row:nth-child(odd) {
-    background: rgba(148, 163, 184, 0.04);
+    background: rgba(148, 163, 184, 0.08);
   }
 
   .tp-live-table__row:hover {
-    background: rgba(56, 189, 248, 0.12);
+    background: rgba(56, 189, 248, 0.18);
     transform: translateY(-2px);
   }
 
   .tp-live-table__cell {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    border-bottom: 1px solid var(--tp-border-strong);
     font-size: 0.95rem;
+    color: rgba(226, 232, 240, 0.96);
     transition: color 0.3s ease;
   }
 
@@ -42,8 +43,8 @@ export const TABLE_STYLES = `
     font-size: 0.75rem;
     letter-spacing: 0.08em;
     font-weight: 600;
-    color: rgba(226, 232, 240, 0.65);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    color: var(--tp-text-muted);
+    border-bottom: 1px solid var(--tp-border-strong);
   }
 
   .tp-live-table__row--empty .tp-live-table__cell {
@@ -54,12 +55,15 @@ export const TABLE_STYLES = `
   .tp-live-table__footer {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 0.85rem;
-    color: rgba(148, 163, 184, 0.7);
-    padding: 0.25rem 0.5rem;
+    color: var(--tp-text-muted);
+    padding: 0.5rem 0.75rem;
     border-radius: 12px;
-    background: rgba(15, 23, 42, 0.55);
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid var(--tp-border-soft);
     backdrop-filter: blur(16px);
+    gap: 0.75rem;
   }
 
   .tp-live-table__sort {
