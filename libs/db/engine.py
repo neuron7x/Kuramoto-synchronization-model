@@ -8,6 +8,7 @@ from typing import Mapping
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.pool import QueuePool
 
 from core.config.cli_models import PostgresTLSConfig
@@ -81,7 +82,11 @@ def create_engine_from_config(
     try:
         instrument_engine_metrics(engine, dsn=dsn)
     except Exception:  # pragma: no cover - defensive guard
-        LOGGER.exception("Failed to instrument engine metrics", extra={"dsn": dsn})
+        try:
+            safe_dsn = make_url(dsn).render_as_string(hide_password=True)
+        except Exception:
+            safe_dsn = "<unavailable>"
+        LOGGER.exception("Failed to instrument engine metrics", extra={"dsn": safe_dsn})
     return engine
 
 
