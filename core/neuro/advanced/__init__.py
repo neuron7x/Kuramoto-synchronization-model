@@ -24,7 +24,7 @@ from .integrated import (
     TradeResult,
 )
 from .monitor import NeuroStateMonitor
-from .neuroecon import AdvancedNeuroEconCore
+from .neuroecon import AdvancedNeuroEconCore, DecisionOption
 from .nre import NeuroplasticReinforcementEngine
 
 __all__ = [
@@ -40,6 +40,7 @@ __all__ = [
     "MarketContext",
     "MultiscaleFractalAnalyzer",
     "AdvancedNeuroEconCore",
+    "DecisionOption",
     "NeuroAdvancedConfig",
     "NeuroDecisionIntegrator",
     "NeuroRiskManager",

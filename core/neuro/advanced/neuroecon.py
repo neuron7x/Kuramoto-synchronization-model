@@ -1,21 +1,48 @@
-"""Neuroeconomic decision core with lightweight graph-based reinforcement updates."""
+"""Neuroeconomic decision core with graph-based reinforcement learning primitives.
+
+This module exposes :class:`AdvancedNeuroEconCore`, a controllable actor-critic
+component for dopamine-modulated temporal-difference learning.  The design
+deliberately emphasises readability and explicit state transitions so that
+quantitative researchers can audit every transformation when integrating the
+core into trading workflows.
+"""
 
 from __future__ import annotations
 
-from typing import Dict, Mapping, Sequence, Tuple
+from dataclasses import dataclass
+from typing import Dict, Iterable, Mapping, Sequence, Tuple
 
 try:  # pragma: no cover - optional dependency guard
     import torch
     from torch import Tensor, nn
+    from torch.distributions import Categorical
 except Exception as exc:  # pragma: no cover - optional dependency guard
     torch = None  # type: ignore[assignment]
-    Tensor = nn = None  # type: ignore[assignment]
+    Tensor = nn = Categorical = None  # type: ignore[assignment]
     _IMPORT_ERROR = exc
 else:
     _IMPORT_ERROR = None
 
 
 if torch is not None and nn is not None:
+
+    @dataclass(frozen=True)
+    class DecisionOption:
+        """Describe a decision candidate considered by the neuroeconomic core."""
+
+        reward: float = 0.0
+        risk: float = 0.0
+        cost: float = 0.0
+
+        @classmethod
+        def from_mapping(cls, option: Mapping[str, float]) -> "DecisionOption":
+            """Create a :class:`DecisionOption` from a mapping-like object."""
+
+            return cls(
+                reward=float(option.get("reward", 0.0)),
+                risk=float(option.get("risk", 0.0)),
+                cost=float(option.get("cost", 0.0)),
+            )
 
     class _NeuroGraphEncoder(nn.Module):  # type: ignore[misc]
         """Single message passing step over a fixed cortico-striatal graph."""
@@ -64,6 +91,7 @@ if torch is not None and nn is not None:
             seed: int | None = 42,
             device: str | None = None,
             adjacency: Sequence[Sequence[float]] | None = None,
+            temperature: float = 1.0,
         ) -> None:
             super().__init__()
             if torch is None or nn is None:
@@ -75,6 +103,10 @@ if torch is not None and nn is not None:
             self.risk_tolerance = float(risk_tolerance)
             self.uncertainty_reduction = float(uncertainty_reduction)
             self.psychiatric_mod = float(psychiatric_mod)
+            self._temperature = float(temperature)
+
+            if self._temperature <= 0.0:
+                raise ValueError("temperature must be greater than zero")
 
             adjacency_tensor = self._build_adjacency(adjacency)
             self._device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
@@ -133,11 +165,37 @@ if torch is not None and nn is not None:
                 features[3, 0] = self.uncertainty_reduction
             return self._graph(features)
 
+        def evaluate_option(self, option: Mapping[str, float] | DecisionOption) -> float:
+            """Return the adjusted subjective value for a single option."""
+
+            decision = (
+                option
+                if isinstance(option, DecisionOption)
+                else DecisionOption.from_mapping(option)
+            )
+            adjusted_reward = (
+                decision.reward
+                * (1.0 + self.risk_tolerance * decision.risk)
+                * self.psychiatric_mod
+            )
+            adjusted_cost = decision.cost * (1.0 - self.uncertainty_reduction)
+            return adjusted_reward - adjusted_cost
+
+        def evaluate_options(
+            self, options: Iterable[Mapping[str, float] | DecisionOption]
+        ) -> Tensor:
+            """Evaluate a batch of options and return values on the model device."""
+
+            values = [self.evaluate_option(option) for option in options]
+            if not values:
+                raise ValueError("options must contain at least one candidate")
+            return torch.tensor(values, dtype=torch.float32, device=self._device)
+
         def get_q_value(self, state: float | int, action: int) -> float:
             key = (self._coerce_state(state), int(action))
             return self._q_values.get(key, 0.0)
 
-        def update_Q(
+        def temporal_difference_error(
             self,
             state: float | int,
             action: int,
@@ -145,6 +203,8 @@ if torch is not None and nn is not None:
             next_state: float | int,
             next_action: int,
         ) -> float:
+            """Compute the unmodulated temporal-difference error for a transition."""
+
             state_value = self._coerce_state(state)
             next_state_value = self._coerce_state(next_state)
 
@@ -160,31 +220,62 @@ if torch is not None and nn is not None:
             current_estimate = self._q_values.get(key, 0.0)
             next_estimate = self._q_values.get(next_key, 0.0)
 
-            td_error = float(reward) + self.gamma * (next_estimate + critic_next) - (
+            return float(reward) + self.gamma * (next_estimate + critic_next) - (
                 current_estimate + critic_current
             )
+
+        def update_Q(
+            self,
+            state: float | int,
+            action: int,
+            reward: float,
+            next_state: float | int,
+            next_action: int,
+        ) -> float:
+            td_error = self.temporal_difference_error(
+                state, action, reward, next_state, next_action
+            )
+
             modulated = td_error * self.dopamine_scale * self.psychiatric_mod
+            state_value = self._coerce_state(state)
+            key = (state_value, int(action))
+            current_estimate = self._q_values.get(key, 0.0)
             self._q_values[key] = current_estimate + self.alpha * modulated
             return modulated
 
-        def simulate_decision(self, options: Sequence[Mapping[str, float]]) -> Tuple[int, float]:
-            if not options:
-                raise ValueError("options must contain at least one candidate")
+        def policy_distribution(
+            self,
+            options: Sequence[Mapping[str, float]] | Sequence[DecisionOption],
+            *,
+            temperature: float | None = None,
+        ) -> Tuple[Categorical, Tensor]:
+            """Return a categorical policy distribution alongside option values."""
 
-            values = []
-            for option in options:
-                reward = float(option.get("reward", 0.0))
-                risk = float(option.get("risk", 0.0))
-                cost = float(option.get("cost", 0.0))
-                adjusted_reward = reward * (1.0 + self.risk_tolerance * risk) * self.psychiatric_mod
-                adjusted_cost = cost * (1.0 - self.uncertainty_reduction)
-                values.append(adjusted_reward - adjusted_cost)
+            values = self.evaluate_options(options).unsqueeze(-1)
+            logits = self._actor(values).squeeze(-1)
 
-            value_tensor = torch.tensor(values, dtype=torch.float32, device=self._device).unsqueeze(-1)
-            logits = self._actor(value_tensor).squeeze(-1)
-            probabilities = torch.softmax(logits, dim=0)
-            choice = int(torch.multinomial(probabilities, num_samples=1).item())
-            return choice, float(values[choice])
+            temp = float(self._temperature if temperature is None else temperature)
+            if temp <= 0.0:
+                raise ValueError("temperature must be greater than zero")
+
+            scaled_logits = logits / temp
+            probabilities = torch.softmax(scaled_logits, dim=0)
+            distribution = Categorical(probs=probabilities)
+            return distribution, values.squeeze(-1)
+
+        def simulate_decision(
+            self,
+            options: Sequence[Mapping[str, float]] | Sequence[DecisionOption],
+            *,
+            temperature: float | None = None,
+            deterministic: bool = False,
+        ) -> Tuple[int, float]:
+            distribution, values = self.policy_distribution(options, temperature=temperature)
+            if deterministic or distribution.probs.numel() == 1:
+                choice = int(torch.argmax(distribution.probs).item())
+            else:
+                choice = int(distribution.sample().item())
+            return choice, float(values[choice].item())
 
         def train_on_scenario(
             self,
@@ -219,4 +310,4 @@ else:
             raise ModuleNotFoundError("PyTorch is required for AdvancedNeuroEconCore") from _IMPORT_ERROR
 
 
-__all__ = ["AdvancedNeuroEconCore"]
+__all__ = ["AdvancedNeuroEconCore", "DecisionOption"]
