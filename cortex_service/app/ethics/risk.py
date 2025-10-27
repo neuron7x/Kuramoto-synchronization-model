@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import erf, sqrt
+from math import isfinite
+from statistics import NormalDist
 from typing import Iterable, Sequence
 
 from ..config import RiskSettings
@@ -30,7 +31,18 @@ class RiskAssessment:
 
 
 def _confidence_scale(confidence: float) -> float:
-    return sqrt(2) * erf(confidence)
+    """Return the normal quantile associated with the provided confidence."""
+
+    if not 0.0 < confidence < 1.0:
+        msg = "confidence must be between 0 and 1 (exclusive)"
+        raise ValueError(msg)
+
+    quantile = NormalDist().inv_cdf(confidence)
+    if not isfinite(quantile):
+        msg = "confidence produced a non-finite quantile"
+        raise ValueError(msg)
+
+    return quantile
 
 
 def compute_risk(exposures: Iterable[Exposure], settings: RiskSettings) -> RiskAssessment:
