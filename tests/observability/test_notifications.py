@@ -9,6 +9,7 @@ from observability.notifications import (
     EmailSender,
     NotificationDispatcher,
     SlackNotifier,
+    TeamsNotifier,
 )
 
 
@@ -117,9 +118,51 @@ async def test_slack_notifier_posts_payload() -> None:
 
 
 @pytest.mark.asyncio()
+async def test_teams_notifier_posts_payload() -> None:
+    events: list[dict[str, Any]] = []
+
+    class _DummyResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+    class _DummyClient:
+        def __init__(self) -> None:
+            self.closed = False
+
+        async def post(
+            self, url: str, *, json: dict[str, Any], timeout: float
+        ) -> _DummyResponse:
+            events.append({"url": url, "payload": json, "timeout": timeout})
+            return _DummyResponse()
+
+        async def aclose(self) -> None:
+            self.closed = True
+
+    client = _DummyClient()
+    notifier = TeamsNotifier(
+        "https://outlook.office.com/webhook/test",
+        theme_color="#2eb886",
+        timeout=4.0,
+        client=client,
+    )
+
+    await notifier.send(
+        "Deploy", "Deployment completed", metadata={"environment": "staging"}
+    )
+    await notifier.aclose()
+
+    assert events, "expected webhook payload to be posted"
+    payload = events[0]["payload"]
+    assert payload["text"].startswith("Deployment completed")
+    assert payload["sections"][0]["facts"][0]["name"] == "environment"
+    assert client.closed is False
+
+
+@pytest.mark.asyncio()
 async def test_dispatcher_routes_to_all_channels() -> None:
     email_calls: list[tuple[str, str]] = []
     slack_calls: list[str] = []
+    teams_calls: list[str] = []
 
     class _EmailStub:
         async def send(
@@ -144,9 +187,23 @@ async def test_dispatcher_routes_to_all_channels() -> None:
         async def aclose(self) -> None:
             return None
 
+    class _TeamsStub:
+        async def send(
+            self,
+            subject: str,
+            message: str,
+            *,
+            metadata: Mapping[str, Any] | None = None,
+        ) -> None:
+            teams_calls.append(message)
+
+        async def aclose(self) -> None:
+            return None
+
     dispatcher = NotificationDispatcher(
         email_sender=_EmailStub(),
         slack_notifier=_SlackStub(),
+        teams_notifier=_TeamsStub(),
         logger=logging.getLogger("test.notifications"),
     )
 
@@ -159,3 +216,4 @@ async def test_dispatcher_routes_to_all_channels() -> None:
 
     assert email_calls == [("Order Created", "New order submitted")]
     assert slack_calls == ["Order Created"]
+    assert teams_calls == ["New order submitted"]
