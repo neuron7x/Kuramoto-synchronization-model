@@ -38,10 +38,20 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
 
         try:
             response = await call_next(request)
-        except Exception:  # pragma: no cover - defensive guard
+        except Exception as exc:  # pragma: no cover - defensive guard
             duration = perf_counter() - start
-            LOGGER.exception("Unhandled exception while processing request")
-            self._collector.observe_api_request(route, method, 500, duration)
+            status_code = getattr(exc, "status_code", 500)
+            if status_code >= 500:
+                LOGGER.exception(
+                    "Unhandled exception while processing request with status %s",
+                    status_code,
+                )
+            else:
+                LOGGER.info(
+                    "Handled HTTP exception with status %s while processing request",
+                    status_code,
+                )
+            self._collector.observe_api_request(route, method, status_code, duration)
             raise
         else:
             duration = perf_counter() - start
