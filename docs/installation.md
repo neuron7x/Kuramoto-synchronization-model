@@ -36,7 +36,7 @@ virtualenv paths, optional extras, and frontend controls.
 
 ## Supported Platforms
 
-TradePulse is continuously tested on Linux (Ubuntu 22.04) and macOS (13+). Windows users should run inside WSL2 with Ubuntu 22.04 or newer. Native Windows execution is possible but not part of the automated CI matrix.
+TradePulse is continuously tested on Linux (Ubuntu 22.04) and macOS (13+). Windows users should run inside WSL2 with Ubuntu 22.04 or newer to match the supported dependency toolchain. Native Windows execution is possible but not part of the automated CI matrix.
 
 > ℹ️ Keep your Python minor version aligned with the published lock files (`requirements.lock`, `requirements-dev.lock`).
 
@@ -51,7 +51,7 @@ cd TradePulse
 
 # Create a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Windows (PowerShell): .venv\Scripts\Activate.ps1
+source .venv/bin/activate  # Windows (PowerShell): .\.venv\Scripts\Activate.ps1
 
 # Upgrade pip tooling
 python -m pip install --upgrade pip wheel setuptools
