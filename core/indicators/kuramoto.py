@@ -54,6 +54,35 @@ except Exception:  # fallback if SciPy not installed
     hilbert = None
 
 
+def _broadcast_weights(weights: np.ndarray | Sequence[float], shape: tuple[int, int]) -> np.ndarray:
+    """Broadcast weight vectors to match the phase matrix shape."""
+
+    weight_array = np.array(weights, dtype=float, copy=True)
+    if weight_array.ndim == 0:
+        raise ValueError("weights must be one- or two-dimensional")
+
+    if weight_array.ndim == 1:
+        if weight_array.size == shape[0]:
+            weight_array = np.broadcast_to(weight_array[:, None], shape).copy()
+        elif weight_array.size == shape[1]:
+            weight_array = np.broadcast_to(weight_array[None, :], shape).copy()
+        else:
+            raise ValueError(
+                "weights must match number of oscillators or time steps"
+            )
+    elif weight_array.ndim == 2:
+        if weight_array.shape != shape:
+            raise ValueError("weights must match the phase matrix shape")
+    else:
+        raise ValueError("weights must be one- or two-dimensional")
+
+    weight_array = np.nan_to_num(
+        weight_array, nan=0.0, posinf=0.0, neginf=0.0, copy=False
+    )
+    np.clip(weight_array, 0.0, None, out=weight_array)
+    return weight_array
+
+
 def compute_phase(
     x: np.ndarray,
     *,
@@ -171,7 +200,9 @@ def compute_phase(
         return phases.astype(dtype, copy=False)
 
 
-def kuramoto_order(phases: np.ndarray) -> float | np.ndarray:
+def kuramoto_order(
+    phases: np.ndarray, *, weights: np.ndarray | Sequence[float] | None = None
+) -> float | np.ndarray:
     """Evaluate the Kuramoto order parameter.
 
     The statistic measures synchrony as ``R = |(1/N) ∑_j e^{i θ_j}|``. Values
@@ -184,6 +215,8 @@ def kuramoto_order(phases: np.ndarray) -> float | np.ndarray:
         phases: Array of shape ``(N,)`` (single snapshot) or ``(N, T)`` (matrix of
             ``T`` snapshots across ``N`` oscillators). Complex inputs are projected
             onto their phase angles.
+        weights: Optional weighting applied to each oscillator when computing the
+            synchrony statistic. Supports shapes ``(N,)``, ``(T,)`` or ``(N, T)``.
 
     Returns:
         float | np.ndarray: ``float`` for one-dimensional input or an array of
@@ -221,55 +254,72 @@ def kuramoto_order(phases: np.ndarray) -> float | np.ndarray:
 
     with np.errstate(over="ignore", invalid="ignore"):
         phases_fp32 = np.asarray(phases_real, dtype=np.float32)
-    phases_fp64 = np.asarray(phases_real, dtype=np.float64)
-    mask = np.isfinite(phases_fp32)
 
-    cos_vals = np.empty_like(phases_fp32, dtype=np.float32)
-    sin_vals = np.empty_like(phases_fp32, dtype=np.float32)
-    if mask.all():
-        np.cos(phases_fp32, out=cos_vals)
-        np.sin(phases_fp32, out=sin_vals)
-    else:
-        cos_vals.fill(0.0)
-        sin_vals.fill(0.0)
-        np.cos(phases_fp32, out=cos_vals, where=mask)
-        np.sin(phases_fp32, out=sin_vals, where=mask)
-
+    squeeze_output = False
     if phases_fp32.ndim == 1:
-        count = int(mask.sum(dtype=np.int32))
-        if count == 0:
-            return 0.0
-        phases_valid = phases_fp64[mask]
-        sum_real = float(np.cos(phases_valid).sum(dtype=np.float64))
-        sum_imag = float(np.sin(phases_valid).sum(dtype=np.float64))
-        magnitude = (sum_real * sum_real + sum_imag * sum_imag) ** 0.5
-        value = magnitude / count
-        if value < 1e-8:
-            value = 0.0
-        return float(np.clip(value, 0.0, 1.0))
-
-    if phases_fp32.ndim != 2:
+        phases_fp32 = phases_fp32[:, None]
+        squeeze_output = True
+    elif phases_fp32.ndim != 2:
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
-    valid_counts = mask.sum(axis=0, dtype=np.int32)
-    if not np.any(valid_counts):
-        return np.zeros(phases_fp32.shape[1], dtype=float)
+    mask = np.isfinite(phases_fp32)
+    cos_vals = np.zeros_like(phases_fp32, dtype=np.float32)
+    sin_vals = np.zeros_like(phases_fp32, dtype=np.float32)
+    np.cos(phases_fp32, out=cos_vals, where=mask)
+    np.sin(phases_fp32, out=sin_vals, where=mask)
 
-    sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float32).astype(np.float64)
-    sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float32).astype(np.float64)
-    magnitude = np.hypot(sum_real, sum_imag)
-    values = np.divide(
-        magnitude,
-        valid_counts,
-        out=np.zeros_like(magnitude, dtype=float),
-        where=valid_counts > 0,
-    )
+    if weights is not None:
+        weight_matrix = _broadcast_weights(weights, phases_fp32.shape)
+        valid = mask & (weight_matrix > 0.0)
+        if not valid.any():
+            values = np.zeros(phases_fp32.shape[1], dtype=float)
+        else:
+            weight_matrix = np.where(valid, weight_matrix, 0.0)
+            sum_real = np.add.reduce(
+                cos_vals.astype(np.float64) * weight_matrix, axis=0
+            )
+            sum_imag = np.add.reduce(
+                sin_vals.astype(np.float64) * weight_matrix, axis=0
+            )
+            totals = np.add.reduce(weight_matrix, axis=0, dtype=np.float64)
+            magnitude = np.hypot(sum_real, sum_imag)
+            values = np.divide(
+                magnitude,
+                totals,
+                out=np.zeros_like(magnitude, dtype=float),
+                where=totals > 0.0,
+            )
+    else:
+        valid_counts = mask.sum(axis=0, dtype=np.float64)
+        if not np.any(valid_counts):
+            values = np.zeros(phases_fp32.shape[1], dtype=float)
+        else:
+            sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float32).astype(
+                np.float64
+            )
+            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float32).astype(
+                np.float64
+            )
+            magnitude = np.hypot(sum_real, sum_imag)
+            values = np.divide(
+                magnitude,
+                valid_counts,
+                out=np.zeros_like(magnitude, dtype=float),
+                where=valid_counts > 0.0,
+            )
+
     clipped = np.clip(values, 0.0, 1.0)
     clipped[clipped < 1e-8] = 0.0
+    if squeeze_output:
+        return float(clipped[0])
     return clipped
 
 
-def multi_asset_kuramoto(series_list: Sequence[np.ndarray]) -> float:
+def multi_asset_kuramoto(
+    series_list: Sequence[np.ndarray],
+    *,
+    weights: Sequence[float] | None = None,
+) -> float:
     """Aggregate cross-asset synchrony at the most recent timestamp.
 
     Each series is converted to its instantaneous phase before evaluating the
@@ -308,7 +358,10 @@ def multi_asset_kuramoto(series_list: Sequence[np.ndarray]) -> float:
 
     phases = [compute_phase(s) for s in sequences]
     last_phases = np.array([p[-1] for p in phases])
-    return kuramoto_order(last_phases)
+    if weights is not None:
+        if len(weights) != len(sequences):
+            raise ValueError("weights must match number of series")
+    return kuramoto_order(last_phases, weights=weights)
 
 
 # Optional GPU acceleration via CuPy (if available)
@@ -387,14 +440,15 @@ class KuramotoOrderFeature(BaseFeature):
         super().__init__(name or "kuramoto_order")
         self.use_float32 = use_float32
 
-    def transform(self, data: np.ndarray, **_: Any) -> FeatureResult:
+    def transform(self, data: np.ndarray, **kwargs: Any) -> FeatureResult:
         """Compute Kuramoto order parameter from phase samples.
 
         Args:
             data: One- or two-dimensional array of phase samples. When the input
                 is a price series the caller should precompute phases to honour
                 the separation of concerns established in ``docs/indicators.md``.
-            **_: Additional keyword arguments (ignored).
+            **kwargs: Optional keyword arguments (for example ``weights``)
+                supplying oscillator weights.
 
         Returns:
             FeatureResult: Value and metadata describing the synchrony snapshot.
@@ -405,15 +459,20 @@ class KuramotoOrderFeature(BaseFeature):
             >>> 0.0 <= result.value <= 1.0
             True
         """
+
+        weights = kwargs.get("weights")
+
         with _metrics.measure_feature_transform(self.name, "kuramoto"):
             # Convert to appropriate dtype if needed
             if self.use_float32:
                 data = np.asarray(data, dtype=np.float32)
-            value = kuramoto_order(data)
+            value = kuramoto_order(data, weights=weights)
             _metrics.record_feature_value(self.name, value)
             metadata: dict[str, Any] = {}
             if self.use_float32:
                 metadata["use_float32"] = True
+            if weights is not None:
+                metadata["weights"] = "provided"
 
             return FeatureResult(
                 name=self.name,
@@ -433,20 +492,24 @@ class MultiAssetKuramotoFeature(BaseFeature):
     def __init__(self, *, name: str | None = None) -> None:
         super().__init__(name or "multi_asset_kuramoto")
 
-    def transform(self, data: Sequence[np.ndarray], **_: Any) -> FeatureResult:
+    def transform(self, data: Sequence[np.ndarray], **kwargs: Any) -> FeatureResult:
         """Evaluate synchrony across multiple assets.
 
         Args:
             data: Sequence of equally sampled price arrays. Each array must share
                 the same length and temporal alignment.
-            **_: Additional keyword arguments (ignored).
+            **kwargs: Optional keyword arguments (e.g. ``weights``) supplying
+                per-asset weights.
 
         Returns:
             FeatureResult: Kuramoto order value along with asset-count metadata.
         """
 
-        value = multi_asset_kuramoto(data)
+        weights = kwargs.get("weights")
+        value = multi_asset_kuramoto(data, weights=weights)
         metadata = {"assets": len(data)}
+        if weights is not None:
+            metadata["weights"] = "provided"
         return FeatureResult(name=self.name, value=value, metadata=metadata)
 
 

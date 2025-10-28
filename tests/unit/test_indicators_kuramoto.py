@@ -68,6 +68,14 @@ def test_kuramoto_order_handles_matrix_input() -> None:
     assert np.all((0.0 <= result) & (result <= 1.0))
 
 
+def test_kuramoto_order_supports_weights() -> None:
+    phases = np.linspace(0.0, np.pi / 2, 12)
+    weights = np.linspace(1.0, 2.0, phases.size)
+    result = kuramoto_order(phases, weights=weights)
+    manual = np.abs(np.sum(np.exp(1j * phases) * weights)) / np.sum(weights)
+    assert pytest.approx(manual, rel=1e-6, abs=1e-6) == result
+
+
 def test_multi_asset_kuramoto_uses_last_phase_alignment() -> None:
     base = np.linspace(0, 6 * np.pi, 256, endpoint=False)
     series_a = np.sin(base)
@@ -77,6 +85,16 @@ def test_multi_asset_kuramoto_uses_last_phase_alignment() -> None:
     phase_b = compute_phase(series_b)[-1]
     reference = kuramoto_order(np.array([phase_a, phase_b]))
     assert pytest.approx(reference, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL) == result
+
+
+def test_multi_asset_kuramoto_accepts_weights() -> None:
+    base = np.linspace(0, 4 * np.pi, 128, endpoint=False)
+    series = [np.sin(base), np.sin(base + 0.1), np.sin(base + 0.3)]
+    weights = [1.0, 2.0, 0.5]
+    result = multi_asset_kuramoto(series, weights=weights)
+    phases = [compute_phase(s)[-1] for s in series]
+    manual = kuramoto_order(np.array(phases), weights=np.array(weights))
+    assert pytest.approx(manual, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL) == result
 
 
 def test_compute_phase_gpu_fallback_matches_cpu() -> None:
@@ -147,6 +165,16 @@ def test_kuramoto_order_feature_returns_expected_metadata() -> None:
     assert result.name == "kuramoto_order"
     assert result.metadata == {}
     assert result.value == pytest.approx(1.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
+
+
+def test_kuramoto_order_feature_accepts_weights() -> None:
+    feature = KuramotoOrderFeature()
+    phases = np.linspace(0.0, np.pi / 4, 16)
+    weights = np.linspace(1.0, 2.0, phases.size)
+    result = feature.transform(phases, weights=weights)
+    manual = kuramoto_order(phases, weights=weights)
+    assert result.metadata["weights"] == "provided"
+    assert result.value == pytest.approx(manual, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
 
 def test_multi_asset_kuramoto_feature_reports_asset_count(sin_wave: np.ndarray) -> None:

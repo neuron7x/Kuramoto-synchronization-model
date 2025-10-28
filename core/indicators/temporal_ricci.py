@@ -14,10 +14,18 @@ from __future__ import annotations
 import warnings
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, Dict, List, Optional, Tuple
+from typing import Deque, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
+from ..utils.logging import get_logger
+from ..utils.metrics import get_metrics_collector
+
+
+_logger = get_logger(__name__)
+_metrics = get_metrics_collector()
+_VOLUME_MODES = {"none", "linear", "sqrt", "log"}
 
 # ---------------------------------------------------------------------------
 # Lightweight graph abstraction
@@ -205,9 +213,20 @@ class OllivierRicciCurvatureLite:
 class PriceLevelGraph:
     """Build a weighted adjacency graph from price movements."""
 
-    def __init__(self, n_levels: int = 20, connection_threshold: float = 0.1) -> None:
+    def __init__(
+        self,
+        n_levels: int = 20,
+        connection_threshold: float = 0.1,
+        *,
+        volume_mode: Literal["none", "linear", "sqrt", "log"] = "linear",
+        volume_floor: float = 0.0,
+    ) -> None:
+        if volume_mode not in _VOLUME_MODES:
+            raise ValueError(f"Unsupported volume_mode '{volume_mode}'")
         self.n_levels = int(max(n_levels, 1))
         self.connection_threshold = float(np.clip(connection_threshold, 0.0, 1.0))
+        self.volume_mode = volume_mode
+        self.volume_floor = float(max(volume_floor, 0.0))
 
     def build(
         self, prices: np.ndarray, volumes: Optional[np.ndarray] = None
@@ -232,14 +251,25 @@ class PriceLevelGraph:
 
         weights = np.ones(indices.size - 1, dtype=float)
         if volumes is not None and volumes.size:
-            vol = np.asarray(volumes, dtype=float)
+            vol = np.array(volumes, dtype=float, copy=True)
             if vol.size == indices.size:
                 vol = vol[:-1]
             if vol.size != indices.size - 1:
                 raise ValueError("volumes length must match len(prices) - 1")
-            weights = np.maximum(
-                np.nan_to_num(vol, nan=0.0, posinf=0.0, neginf=0.0), 0.0
-            )
+            vol = np.nan_to_num(vol, nan=0.0, posinf=0.0, neginf=0.0)
+            np.clip(vol, 0.0, None, out=vol)
+            if self.volume_floor > 0.0:
+                vol[vol < self.volume_floor] = 0.0
+            if self.volume_mode == "none":
+                weights = np.ones_like(vol)
+            elif self.volume_mode == "sqrt":
+                weights = np.sqrt(vol, out=vol)
+            elif self.volume_mode == "log":
+                weights = np.log1p(vol, out=vol)
+            else:  # linear
+                weights = vol
+        elif self.volume_mode != "none":
+            weights = np.ones(indices.size - 1, dtype=float)
 
         transitions = np.column_stack((indices[:-1], indices[1:])).astype(int)
         mask = transitions[:, 0] != transitions[:, 1]
@@ -279,6 +309,11 @@ class TemporalRicciAnalyzer:
         *,
         retain_history: bool = True,
         connection_threshold: float = 0.1,
+        volume_mode: Literal["none", "linear", "sqrt", "log"] = "linear",
+        volume_floor: float = 0.0,
+        shock_sensitivity: float = 8.0,
+        transition_midpoint: float = 0.15,
+        curvature_ema_alpha: float | None = None,
     ) -> None:
         self.window_size = int(max(window_size, 1))
         self.n_snapshots = int(max(n_snapshots, 1))
@@ -286,9 +321,23 @@ class TemporalRicciAnalyzer:
         self.retain_history = retain_history
         self.connection_threshold = connection_threshold
 
+        if volume_mode not in _VOLUME_MODES:
+            raise ValueError(f"Unsupported volume_mode '{volume_mode}'")
+        self.volume_mode = volume_mode
+        self.volume_floor = float(max(volume_floor, 0.0))
+        self.shock_sensitivity = float(max(shock_sensitivity, 0.0))
+        self.transition_midpoint = float(transition_midpoint)
+        if curvature_ema_alpha is not None and not (0.0 < curvature_ema_alpha <= 1.0):
+            raise ValueError("curvature_ema_alpha must be in (0, 1]")
+        self.curvature_ema_alpha = curvature_ema_alpha
+        self._avg_curvature_ema: float | None = None
+
         self.ricci = OllivierRicciCurvatureLite(alpha=0.5)
         self.builder = PriceLevelGraph(
-            n_levels=self.n_levels, connection_threshold=connection_threshold
+            n_levels=self.n_levels,
+            connection_threshold=connection_threshold,
+            volume_mode=volume_mode,
+            volume_floor=self.volume_floor,
         )
         self.history: Deque[GraphSnapshot] = deque(
             maxlen=self.n_snapshots if retain_history else None
@@ -300,6 +349,17 @@ class TemporalRicciAnalyzer:
         graph = self.builder.build(prices, volumes)
         curvatures = self.ricci.compute_all_curvatures(graph)
         avg_curvature = float(np.mean(list(curvatures.values()))) if curvatures else 0.0
+        if self.curvature_ema_alpha is not None:
+            previous = self._avg_curvature_ema
+            if previous is None:
+                smoothed = avg_curvature
+            else:
+                alpha = self.curvature_ema_alpha
+                smoothed = float(alpha * avg_curvature + (1.0 - alpha) * previous)
+            self._avg_curvature_ema = smoothed
+            avg_curvature = smoothed
+        else:
+            self._avg_curvature_ema = None
         return GraphSnapshot(
             graph=graph,
             timestamp=ts,
@@ -379,8 +439,12 @@ class TemporalRicciAnalyzer:
         else:
             vol_diff = 0.0
 
-        beta = 8.0
-        transition = 1.0 / (1.0 + np.exp(-beta * (base_score - 0.15)))
+        midpoint = self.transition_midpoint
+        beta = self.shock_sensitivity
+        if beta <= 0.0:
+            transition = float(np.clip(0.5 + 0.5 * (base_score - midpoint), 0.0, 1.0))
+        else:
+            transition = float(1.0 / (1.0 + np.exp(-beta * (base_score - midpoint))))
         return float(
             np.clip(transition + 0.2 * curvature_component + 0.2 * vol_diff, 0.0, 1.0)
         )
@@ -423,73 +487,122 @@ class TemporalRicciAnalyzer:
         if df.empty or price_col not in df.columns:
             raise ValueError("DataFrame must contain a 'close' column and not be empty")
 
-        if reset_history or not self.retain_history:
-            self.history.clear()
-        elif self.history and df.index[0] <= self.history[-1].timestamp:
-            warnings.warn(
-                "TemporalRicciAnalyzer received non-monotonic timestamps; resetting history buffer",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            self.history.clear()
+        with _metrics.measure_indicator_compute("temporal_ricci") as ctx:
+            diagnostics: dict[str, float | dict[str, float]] = {
+                "sample_size": float(len(df)),
+                "window": float(self.window_size),
+            }
+            if reset_history or not self.retain_history:
+                self.history.clear()
+                self._avg_curvature_ema = None
+            elif self.history and df.index[0] <= self.history[-1].timestamp:
+                warnings.warn(
+                    "TemporalRicciAnalyzer received non-monotonic timestamps; resetting history buffer",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                self.history.clear()
+                self._avg_curvature_ema = None
 
-        price_series = df[price_col].astype(float)
-        series_length = len(price_series)
-        if self.window_size <= 0:
-            raise ValueError("window_size must be positive")
+            price_series = df[price_col].astype(float)
+            price_values = price_series.to_numpy()
+            ratio_metrics: Dict[str, float] = {}
+            if price_values.size:
+                ratio_metrics["input_finite"] = float(np.mean(np.isfinite(price_values)))
+            else:
+                ratio_metrics["input_finite"] = 0.0
+            diagnostics["ratios"] = ratio_metrics
+            series_length = len(price_series)
+            if self.window_size <= 0:
+                raise ValueError("window_size must be positive")
 
-        if series_length < self.window_size:
-            # Not enough data to construct a single snapshot; return neutral metrics.
-            return TemporalRicciResult(
-                temporal_curvature=0.0,
-                topological_transition_score=0.0,
-                graph_snapshots=list(self.history),
-                structural_stability=1.0,
-                edge_persistence=1.0,
-            )
+            if series_length < self.window_size:
+                ctx["value"] = 0.0
+                _metrics.record_indicator_value("temporal_ricci.transition_score", 0.0)
+                _metrics.record_indicator_value("temporal_ricci.structural_stability", 1.0)
+                _metrics.record_indicator_value("temporal_ricci.edge_persistence", 1.0)
+                ctx["diagnostics"] = diagnostics
+                return TemporalRicciResult(
+                    temporal_curvature=0.0,
+                    topological_transition_score=0.0,
+                    graph_snapshots=list(self.history),
+                    structural_stability=1.0,
+                    edge_persistence=1.0,
+                )
 
-        window = self.window_size
+            window = self.window_size
 
-        if self.n_snapshots <= 1:
-            step = window
-        else:
-            step = max(1, (series_length - window) // (self.n_snapshots - 1))
+            if self.n_snapshots <= 1:
+                step = window
+            else:
+                step = max(1, (series_length - window) // (self.n_snapshots - 1))
 
-        for start in range(0, max(1, series_length - window + 1), step):
-            segment = df.iloc[start : start + window]
-            if len(segment) < window:
-                continue
-
-            prices = segment[price_col].astype(float).to_numpy()
-            finite_mask = np.isfinite(prices)
-            if not finite_mask.all():
-                finite_values = prices[finite_mask]
-                if finite_values.size == 0:
+            attempts = 0
+            snapshots_built = 0
+            volume_segments = 0
+            positive_volume_segments = 0
+            for start in range(0, max(1, series_length - window + 1), step):
+                segment = df.iloc[start : start + window]
+                attempts += 1
+                if len(segment) < window:
                     continue
-                fill_value = float(np.mean(finite_values))
-                prices = np.where(finite_mask, prices, fill_value)
 
-            volumes = None
-            if volume_col and volume_col in segment.columns:
-                vol_values = segment[volume_col].astype(float).to_numpy()
-                if vol_values.size:
-                    volumes = np.nan_to_num(vol_values, nan=0.0, posinf=0.0, neginf=0.0)
+                prices = segment[price_col].astype(float).to_numpy()
+                finite_mask = np.isfinite(prices)
+                if not finite_mask.all():
+                    finite_values = prices[finite_mask]
+                    if finite_values.size == 0:
+                        continue
+                    fill_value = float(np.mean(finite_values))
+                    prices = np.where(finite_mask, prices, fill_value)
 
-            snapshot = self._snapshot(prices, volumes, segment.index[-1])
-            self.history.append(snapshot)
+                volumes = None
+                if volume_col and volume_col in segment.columns:
+                    vol_values = segment[volume_col].astype(float).to_numpy()
+                    if vol_values.size:
+                        volume_segments += 1
+                        volumes = np.nan_to_num(vol_values, nan=0.0, posinf=0.0, neginf=0.0)
+                        if np.any(volumes > 0.0):
+                            positive_volume_segments += 1
 
-        temporal_curvature = self._temporal_curvature()
-        transition_score = self._transition_score()
-        stability = self._stability()
-        persistence = self._persistence()
+                snapshot = self._snapshot(prices, volumes, segment.index[-1])
+                self.history.append(snapshot)
+                snapshots_built += 1
 
-        return TemporalRicciResult(
-            temporal_curvature=temporal_curvature,
-            topological_transition_score=transition_score,
-            graph_snapshots=list(self.history),
-            structural_stability=stability,
-            edge_persistence=persistence,
-        )
+            temporal_curvature = self._temporal_curvature()
+            transition_score = self._transition_score()
+            stability = self._stability()
+            persistence = self._persistence()
+
+            ctx["value"] = temporal_curvature
+            _metrics.record_indicator_value("temporal_ricci.transition_score", transition_score)
+            _metrics.record_indicator_value("temporal_ricci.structural_stability", stability)
+            _metrics.record_indicator_value("temporal_ricci.edge_persistence", persistence)
+            if self.history:
+                _metrics.record_indicator_value("temporal_ricci.avg_curvature", self.history[-1].avg_curvature)
+
+            if attempts:
+                ratio_metrics["snapshot_coverage"] = float(
+                    snapshots_built / max(1, attempts)
+                )
+            else:
+                ratio_metrics.setdefault("snapshot_coverage", 0.0)
+            if volume_segments:
+                ratio_metrics["volume_coverage"] = float(
+                    positive_volume_segments / volume_segments
+                )
+            elif volume_col and volume_col in df.columns:
+                ratio_metrics.setdefault("volume_coverage", 0.0)
+
+            ctx["diagnostics"] = diagnostics
+
+            return TemporalRicciResult(
+                temporal_curvature=temporal_curvature,
+                topological_transition_score=transition_score,
+                graph_snapshots=list(self.history),
+                structural_stability=stability,
+                edge_persistence=persistence,
+            )
 
 
 # Backwards compatible aliases expected by external callers -----------------
