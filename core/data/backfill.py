@@ -329,7 +329,7 @@ class _BackfillProgressTracker:
         self._completed_segments = 0
         self._failed_segments = 0
         self._bytes_transferred = 0
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def mark_success(self, bytes_transferred: int) -> BackfillProgressSnapshot:
         with self._lock:
@@ -361,7 +361,7 @@ class _ThroughputLimiter:
         self._rate = rate_per_second
         self._allowance = rate_per_second
         self._last_check = time.monotonic()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def acquire(self, tokens: float = 1.0) -> None:
         if tokens <= 0:
