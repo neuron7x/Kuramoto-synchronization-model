@@ -3,7 +3,8 @@ name: Deploy TradePulse Environments
 on:
   push:
     branches:
-      - main
+      - staging
+      - production
     paths:
       - '.github/workflows/deploy-environments.yml'
       - 'deploy/**'
@@ -13,17 +14,28 @@ on:
       - 'src/**'
   workflow_dispatch:
     inputs:
+      action:
+        description: "Deployment action to perform"
+        required: true
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - rollback
       environment:
-        description: "Environment to deploy (staging|production)"
-        required: false
+        description: "Environment to target (staging|production)"
+        required: true
         default: staging
         type: choice
         options:
           - staging
           - production
+      target_revision:
+        description: "Optional deployment revision (tag/sha) used when rolling back"
+        required: false
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -32,6 +44,7 @@ permissions:
 
 jobs:
   validate-infrastructure:
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'deploy'
     name: Validate infrastructure definitions
     runs-on: ubuntu-latest
     steps:
@@ -64,6 +77,7 @@ jobs:
         run: kustomize build deploy/kustomize/overlays/production >/tmp/production.yaml
 
   pre-deploy-smoke:
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'deploy'
     name: Run smoke tests before deployment
     runs-on: ubuntu-latest
     needs:
@@ -85,7 +99,7 @@ jobs:
           python -m pytest tests/smoke -m smoke -q
 
   deploy-staging:
-    if: github.repository == 'neuron7x/TradePulse' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'production')))
+    if: github.repository == 'neuron7x/TradePulse' && ((github.event_name == 'push' && github.ref == 'refs/heads/staging') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' && github.event.inputs.environment == 'staging'))
     name: Deploy staging
     runs-on: ubuntu-latest
     needs:
@@ -261,12 +275,21 @@ PY
         if: always() && steps.configure_kube.outputs.deploy_enabled == 'true'
         run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-staging --ignore-not-found
 
+      - name: Roll back staging deployment on failure
+        if: failure() && steps.configure_kube.outputs.deploy_enabled == 'true'
+        run: |
+          set -euo pipefail
+          echo "Attempting to roll back tradepulse-api deployment in staging" >&2
+          kubectl rollout undo deployment/tradepulse-api -n tradepulse-staging
+          kubectl rollout status deployment/tradepulse-api -n tradepulse-staging --timeout=5m
+
   deploy-production:
-    if: github.repository == 'neuron7x/TradePulse' && needs.deploy-staging.outputs.deploy_enabled == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
+    if: github.repository == 'neuron7x/TradePulse' && ((github.event_name == 'push' && github.ref == 'refs/heads/production') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' && github.event.inputs.environment == 'production'))
     name: Deploy production
     runs-on: ubuntu-latest
     needs:
-      - deploy-staging
+      - validate-infrastructure
+      - pre-deploy-smoke
     environment:
       name: production
     env:
@@ -414,3 +437,110 @@ PY
       - name: Remove canary deployment
         if: always()
         run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-production --ignore-not-found
+
+      - name: Roll back production deployment on failure
+        if: failure()
+        run: |
+          set -euo pipefail
+          echo "Attempting to roll back tradepulse-api deployment in production" >&2
+          kubectl rollout undo deployment/tradepulse-api -n tradepulse-production
+          kubectl rollout status deployment/tradepulse-api -n tradepulse-production --timeout=10m
+
+  rollback-environment:
+    if: github.repository == 'neuron7x/TradePulse' && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'rollback'
+    name: Roll back deployment
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+    steps:
+      - name: Resolve environment configuration
+        id: select_env
+        run: |
+          set -euo pipefail
+          env_name="${{ github.event.inputs.environment }}"
+          case "$env_name" in
+            staging)
+              if [ -z "${{ secrets.AWS_STAGING_ROLE_ARN }}" ] || [ -z "${{ secrets.AWS_STAGING_CLUSTER_NAME }}" ]; then
+                echo "Staging AWS deployment credentials are not configured" >&2
+                exit 1
+              fi
+              echo "role=${{ secrets.AWS_STAGING_ROLE_ARN }}" >>"$GITHUB_OUTPUT"
+              echo "cluster=${{ secrets.AWS_STAGING_CLUSTER_NAME }}" >>"$GITHUB_OUTPUT"
+              echo "namespace=tradepulse-staging" >>"$GITHUB_OUTPUT"
+              echo "kustomize_path=deploy/kustomize/overlays/staging" >>"$GITHUB_OUTPUT"
+              echo "timeout=5m" >>"$GITHUB_OUTPUT"
+              ;;
+            production)
+              if [ -z "${{ secrets.AWS_PRODUCTION_ROLE_ARN }}" ] || [ -z "${{ secrets.AWS_PRODUCTION_CLUSTER_NAME }}" ]; then
+                echo "Production AWS deployment credentials are not configured" >&2
+                exit 1
+              fi
+              echo "role=${{ secrets.AWS_PRODUCTION_ROLE_ARN }}" >>"$GITHUB_OUTPUT"
+              echo "cluster=${{ secrets.AWS_PRODUCTION_CLUSTER_NAME }}" >>"$GITHUB_OUTPUT"
+              echo "namespace=tradepulse-production" >>"$GITHUB_OUTPUT"
+              echo "kustomize_path=deploy/kustomize/overlays/production" >>"$GITHUB_OUTPUT"
+              echo "timeout=10m" >>"$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported environment: $env_name" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.select_env.outputs.role }}
+          role-session-name: GitHubActions-Rollback-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.2
+
+      - name: Configure kubeconfig
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.kube"
+          aws eks update-kubeconfig \
+            --name "${{ steps.select_env.outputs.cluster }}" \
+            --region "$AWS_REGION" \
+            --alias "tradepulse-${{ github.event.inputs.environment }}"
+
+      - name: Decide rollback strategy
+        id: rollback_strategy
+        run: |
+          if [ -n "${{ github.event.inputs.target_revision }}" ]; then
+            echo "mode=redeploy" >>"$GITHUB_OUTPUT"
+          else
+            echo "mode=undo" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository at target revision
+        if: steps.rollback_strategy.outputs.mode == 'redeploy'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_revision }}
+
+      - name: Install kustomize
+        if: steps.rollback_strategy.outputs.mode == 'redeploy'
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.4.1'
+
+      - name: Redeploy manifests from target revision
+        if: steps.rollback_strategy.outputs.mode == 'redeploy'
+        run: |
+          set -euo pipefail
+          kubectl apply -k "${{ steps.select_env.outputs.kustomize_path }}" --server-side --force-conflicts
+          kubectl rollout status deployment/tradepulse-api -n "${{ steps.select_env.outputs.namespace }}" --timeout="${{ steps.select_env.outputs.timeout }}"
+
+      - name: Roll back deployment to previous revision
+        if: steps.rollback_strategy.outputs.mode == 'undo'
+        run: |
+          set -euo pipefail
+          kubectl rollout undo deployment/tradepulse-api -n "${{ steps.select_env.outputs.namespace }}"
+          kubectl rollout status deployment/tradepulse-api -n "${{ steps.select_env.outputs.namespace }}" --timeout="${{ steps.select_env.outputs.timeout }}"
