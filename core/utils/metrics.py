@@ -102,6 +102,26 @@ class MetricsCollector:
 
         self._enabled = True
         self.registry = registry
+        if self.registry is not None:
+            # Ensure the default collectors are registered on the provided registry
+            # so standard Prometheus process/platform metrics are emitted.
+            try:
+                from prometheus_client import (
+                    GCCollector,
+                    PlatformCollector,
+                    ProcessCollector,
+                )
+
+                for collector_cls in (ProcessCollector, PlatformCollector, GCCollector):
+                    try:
+                        collector_cls(registry=self.registry)
+                    except ValueError:
+                        # Collector already registered – ignore duplicate.
+                        continue
+            except Exception:  # pragma: no cover - defensive guard
+                # If collector registration fails we still expose custom metrics
+                # rather than breaking application startup.
+                pass
         self._equity_curve_max_points = int(
             os.getenv("TRADEPULSE_METRICS_MAX_EQUITY_POINTS", "1024")
         )
