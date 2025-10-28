@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import math
 import multiprocessing
+import os
 import time
 from collections import defaultdict, deque
-import os
 from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
@@ -23,17 +23,20 @@ from typing import (
     Sequence,
 )
 
+_NUMPY_AVAILABLE = False
+_accelerated_quantiles: Any | None = None
+
 try:  # pragma: no cover - exercised indirectly in environments without numpy
     import numpy as np
     from numpy.typing import NDArray
 except ModuleNotFoundError:  # pragma: no cover - handled in fallback logic
     np = None  # type: ignore[assignment]
     NDArray = Any  # type: ignore[assignment]
-    _NUMPY_AVAILABLE = False
-    _accelerated_quantiles = None
 else:  # pragma: no cover - covered via normal test environment
     _NUMPY_AVAILABLE = True
-    from core.accelerators.numeric import quantiles as _accelerated_quantiles
+    from core.accelerators.numeric import quantiles as _numpy_quantiles
+
+    _accelerated_quantiles = _numpy_quantiles
 
 try:
     from prometheus_client import (
@@ -962,18 +965,16 @@ class MetricsCollector:
                 value = ctx.get("value")
                 if value is not None:
                     try:
-                        numeric = float(value)
+                        numeric: float | None = float(value)
                     except (TypeError, ValueError):
                         numeric = None
                     if numeric is not None and math.isfinite(numeric):
-                        self.indicator_value.labels(
-                            indicator_name=indicator_name
-                        ).set(numeric)
+                        self.indicator_value.labels(indicator_name=indicator_name).set(
+                            numeric
+                        )
                 diagnostics = ctx.get("diagnostics")
                 if diagnostics:
-                    self.record_indicator_diagnostics(
-                        indicator_name, diagnostics
-                    )
+                    self.record_indicator_diagnostics(indicator_name, diagnostics)
 
     @contextmanager
     def measure_backtest(self, strategy: str) -> Iterator[Dict[str, Any]]:
@@ -1061,16 +1062,16 @@ class MetricsCollector:
         sample_size = diagnostics.get("sample_size") or diagnostics.get("samples")
         numeric_sample = _as_float(sample_size) if sample_size is not None else None
         if numeric_sample is not None and numeric_sample >= 0.0:
-            self.indicator_sample_size.labels(
-                indicator_name=indicator_name
-            ).set(numeric_sample)
+            self.indicator_sample_size.labels(indicator_name=indicator_name).set(
+                numeric_sample
+            )
 
         window = diagnostics.get("window") or diagnostics.get("span")
         numeric_window = _as_float(window) if window is not None else None
         if numeric_window is not None and numeric_window >= 0.0:
-            self.indicator_window_size.labels(
-                indicator_name=indicator_name
-            ).set(numeric_window)
+            self.indicator_window_size.labels(indicator_name=indicator_name).set(
+                numeric_window
+            )
 
         ratios: Dict[str, float] = {}
         ratio_container = diagnostics.get("ratios") or diagnostics.get("quality")
@@ -1195,9 +1196,9 @@ class MetricsCollector:
         if not self._enabled:
             return
         bounded = max(0.0, min(1.0, float(saturation)))
-        self.model_saturation.labels(
-            model_name=model_name, deployment=deployment
-        ).set(bounded)
+        self.model_saturation.labels(model_name=model_name, deployment=deployment).set(
+            bounded
+        )
 
     def set_model_resource_usage(
         self,
@@ -1803,9 +1804,7 @@ class MetricsCollector:
         if not self._enabled:
             return
 
-        self.environment_parity_checks.labels(
-            strategy=strategy, status=status
-        ).inc()
+        self.environment_parity_checks.labels(strategy=strategy, status=status).inc()
 
         if not deviations:
             return
@@ -1824,8 +1823,21 @@ class MetricsCollector:
         if not self._enabled:
             return ""
 
-        payload = generate_latest(self.registry) if self.registry else generate_latest()
-        return payload.decode("utf-8")
+        payload_bytes = (
+            generate_latest(self.registry) if self.registry else generate_latest()
+        )
+        payload = payload_bytes.decode("utf-8")
+        if "process_cpu_seconds_total" not in payload:
+            cpu_seconds = time.process_time()
+            payload = (
+                payload
+                + "\n"
+                + "# HELP process_cpu_seconds_total Total user and system CPU time "
+                + "spent in seconds.\n"
+                + "# TYPE process_cpu_seconds_total counter\n"
+                + f"process_cpu_seconds_total {cpu_seconds:.6f}\n"
+            )
+        return payload
 
     def record_risk_validation(self, symbol: str, outcome: str) -> None:
         """Record the result of a risk validation."""

@@ -4,24 +4,26 @@
 from __future__ import annotations
 
 import logging
-from argparse import _SubParsersAction
+from argparse import ArgumentParser, _SubParsersAction
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Mapping, Sequence
 
-from interfaces.live_runner import LiveTradingRunner
 from scripts.commands.base import register
 
 LOGGER = logging.getLogger(__name__)
 
 
-def build_parser(subparsers: _SubParsersAction[object]) -> None:
+def build_parser(subparsers: _SubParsersAction[ArgumentParser]) -> None:
     parser = subparsers.add_parser("live", help=__doc__)
     parser.set_defaults(command="live", handler=handle)
     parser.add_argument(
         "--config",
         type=Path,
         default=None,
-        help="Path to the live trading TOML configuration file (defaults to configs/live/default.toml).",
+        help=(
+            "Path to the live trading TOML configuration file "
+            "(defaults to configs/live/default.toml)."
+        ),
     )
     parser.add_argument(
         "--venue",
@@ -51,18 +53,54 @@ def build_parser(subparsers: _SubParsersAction[object]) -> None:
 
 @register("live")
 def handle(args: object) -> int:
-    namespace = getattr(args, "__dict__", args)
-    config_path: Path | None = namespace.get("config")
-    venues: Sequence[str] | None = namespace.get("venues")
-    state_dir: Path | None = namespace.get("state_dir")
-    cold_start: bool = bool(namespace.get("cold_start", False))
-    metrics_port: int | None = namespace.get("metrics_port")
+    from interfaces.live_runner import LiveTradingRunner
+
+    namespace: Mapping[str, Any]
+    if isinstance(args, Mapping):
+        namespace = args
+    elif hasattr(args, "__dict__"):
+        namespace = vars(args)
+    else:
+        namespace = {}
+
+    config_path = namespace.get("config")
+    venues = namespace.get("venues")
+    state_dir = namespace.get("state_dir")
+    cold_start = bool(namespace.get("cold_start", False))
+    metrics_port = namespace.get("metrics_port")
+
+    resolved_config: Path | None
+    if isinstance(config_path, Path) or config_path is None:
+        resolved_config = config_path
+    else:
+        resolved_config = Path(str(config_path))
+
+    resolved_state_dir: Path | None
+    if isinstance(state_dir, Path) or state_dir is None:
+        resolved_state_dir = state_dir
+    else:
+        resolved_state_dir = Path(str(state_dir))
+    resolved_venues: Sequence[str] | None
+    if isinstance(venues, Sequence) and not isinstance(venues, (str, bytes)):
+        resolved_venues = [str(item) for item in venues]
+    elif venues is None:
+        resolved_venues = None
+    else:
+        resolved_venues = [str(venues)]
+
+    resolved_metrics_port: int | None
+    if isinstance(metrics_port, int):
+        resolved_metrics_port = metrics_port
+    elif metrics_port is None:
+        resolved_metrics_port = None
+    else:
+        resolved_metrics_port = int(str(metrics_port))
 
     runner = LiveTradingRunner(
-        config_path,
-        venues=venues,
-        state_dir_override=state_dir,
-        metrics_port=metrics_port,
+        resolved_config,
+        venues=resolved_venues,
+        state_dir_override=resolved_state_dir,
+        metrics_port=resolved_metrics_port,
     )
 
     LOGGER.info(
