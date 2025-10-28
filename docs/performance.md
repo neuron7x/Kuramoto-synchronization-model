@@ -112,7 +112,7 @@ from core.data.polars_pipeline import (
     use_arrow_memory_pool,
 )
 
-# Ensure categorical joins re-use string buffers across stages
+# Ensure categorical joins reuse string buffers across stages
 enable_global_string_cache(True)
 
 lazy_scan = scan_lazy(

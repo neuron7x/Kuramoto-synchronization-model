@@ -33,7 +33,7 @@ The TradePulse interface prioritizes rapid navigation between high-impact workfl
 - **Data View Toggle**: Switch between *Table*, *Timeline*, and *Heatmap* representations of trade history.
 - **Main Content Area**:
   - **Table View**: Paginated with frozen key columns (timestamp, instrument, side) and contextual tooltips for fees, slippage, and execution venue.
-  - **Timeline View**: Visual sequence of trades overlayed with market events to support forensic analysis.
+  - **Timeline View**: Visual sequence of trades overlaid with market events to support forensic analysis.
   - **Heatmap View**: Performance by instrument, exchange, or strategy with drill-down capability.
 - **Detail Drawer (Right)**: Expands on selected trade entries showing order lifecycle, counterparty, audit trail, and related analytics.
 - **Export & Compliance Toolbar (Bottom)**: One-click exports to CSV/Excel, API sync, and compliance attestation logging.
