@@ -103,7 +103,7 @@ async def test_require_roles_invalid_match_mode() -> None:
 
 @pytest.mark.anyio
 async def test_require_permission_delegates_to_gateway() -> None:
-    identity = AdminIdentity(subject="frank", roles=("system:trade",))
+    identity = AdminIdentity(subject="frank", roles=("trading:operator",))
 
     async def _identity_dependency() -> AdminIdentity:
         return identity
@@ -137,7 +137,7 @@ async def test_require_permission_delegates_to_gateway() -> None:
 
 @pytest.mark.anyio
 async def test_require_permission_propagates_http_errors() -> None:
-    identity = AdminIdentity(subject="grace", roles=("system:read",))
+    identity = AdminIdentity(subject="grace", roles=("foundation:viewer",))
 
     async def _identity_dependency() -> AdminIdentity:
         return identity

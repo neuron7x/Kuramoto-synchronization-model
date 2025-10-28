@@ -614,8 +614,8 @@ def create_system_app(
     identity_dependency: (
         Callable[..., Awaitable[AdminIdentity] | AdminIdentity] | None
     ) = None,
-    reader_roles: Sequence[str] = ("system:read",),
-    trader_roles: Sequence[str] = ("system:trade",),
+    reader_roles: Sequence[str] = ("foundation:viewer",),
+    trader_roles: Sequence[str] = ("trading:operator",),
     authorization_gateway: AuthorizationGateway | None = None,
     notification_dispatcher: NotificationDispatcher | None = None,
     notification_settings: NotificationSettings | None = None,
