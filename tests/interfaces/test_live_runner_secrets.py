@@ -5,9 +5,63 @@ from typing import Mapping
 from unittest.mock import MagicMock
 
 import httpx
+import pytest
 
 from interfaces.execution.common import AuthenticatedRESTExecutionConnector, HMACSigner
 from interfaces.live_runner import LiveTradingRunner
+
+
+def test_live_runner_uses_environment_vault_backend(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    config_path = tmp_path / "live.toml"
+    config_path.write_text(
+        """
+[loop]
+state_dir = "state"
+
+[[venues]]
+name = "dummy"
+class = "tests.interfaces.dummies.DummyConnector"
+sandbox = true
+
+  [venues.credentials]
+  env_prefix = "DUMMY"
+  required = ["API_KEY", "API_SECRET"]
+
+    [venues.credentials.secret_backend]
+    adapter = "vault"
+    path_env = "DUMMY_VAULT_PATH"
+
+      [venues.credentials.secret_backend.field_mapping]
+      API_KEY = "api_key"
+      API_SECRET = "api_secret"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    store = {"secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}}
+
+    monkeypatch.setenv("TRADEPULSE_VAULT_ADDR", "https://vault.tradepulse.local")
+    monkeypatch.setenv("TRADEPULSE_VAULT_TOKEN", "vault-token")
+    monkeypatch.setenv("DUMMY_VAULT_PATH", "secret/data/dummy")
+
+    def _fake_build(config, **_):  # type: ignore[no-untyped-def]
+        assert config.address == "https://vault.tradepulse.local"
+        return lambda path: dict(store[path])
+
+    monkeypatch.setattr(
+        "interfaces.secrets.backends.build_hashicorp_vault_resolver", _fake_build
+    )
+    monkeypatch.setattr(
+        "interfaces.live_runner.build_hashicorp_vault_resolver", _fake_build
+    )
+
+    runner = LiveTradingRunner(config_path=config_path)
+
+    credentials = runner._credentials["dummy"]  # noqa: SLF001 - inspection helper
+    assert credentials["API_KEY"] == "vault-key"
+    assert credentials["API_SECRET"] == "vault-secret"
 
 
 class _DummyAuthConnector(AuthenticatedRESTExecutionConnector):
