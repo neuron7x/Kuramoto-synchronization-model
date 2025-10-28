@@ -335,42 +335,56 @@ jobs:
         TRIVY_OUTCOME: ${{ steps.trivy-scan.outcome }}
         GRYPE_OUTCOME: ${{ steps.grype-scan.outcome }}
       run: |
-        set -eo pipefail
+        set -euo pipefail
 
-        failed=false
+        failed=0
+        summary_table='| Scanner | Outcome | Notes |
+| --- | --- | --- |
+'
 
-        case "$TRIVY_OUTCOME" in
-          failure)
-            echo "::error::Trivy scan detected critical vulnerabilities. Review trivy-results.sarif in the Security tab."
-            failed=true
-            ;;
-          success)
-            echo "Trivy scan passed with no critical vulnerabilities."
-            ;;
-          *)
-            echo "::warning::Trivy scan did not complete successfully (outcome: $TRIVY_OUTCOME)."
-            failed=true
-            ;;
-        esac
+        for scanner in Trivy Grype; do
+          outcome_var="${scanner^^}_OUTCOME"
+          outcome="${!outcome_var:-unknown}"
+          scanner_file=$(echo "$scanner" | tr '[:upper:]' '[:lower:]')
 
-        case "$GRYPE_OUTCOME" in
-          failure)
-            echo "::error::Grype scan detected critical vulnerabilities. Review grype-results.sarif in the Security tab."
-            failed=true
-            ;;
-          success)
-            echo "Grype scan passed with no critical vulnerabilities."
-            ;;
-          *)
-            echo "::warning::Grype scan did not complete successfully (outcome: $GRYPE_OUTCOME)."
-            failed=true
-            ;;
-        esac
+          case "$outcome" in
+            success)
+              echo "$scanner scan passed with no critical vulnerabilities."
+              printf -v summary_table '%s| %s | ✅ Success | No critical vulnerabilities detected. |\n' "$summary_table" "$scanner"
+              ;;
+            failure)
+              echo "::error::${scanner} scan detected critical vulnerabilities. Review ${scanner_file}-results.sarif in the Security tab."
+              printf -v summary_table '%s| %s | ❌ Failure | Critical vulnerabilities detected. Review %s-results.sarif. |\n' "$summary_table" "$scanner" "$scanner_file"
+              failed=1
+              ;;
+            cancelled)
+              echo "::warning::${scanner} scan was cancelled before completion."
+              printf -v summary_table '%s| %s | ⚠️ Cancelled | Scan cancelled before completion. |\n' "$summary_table" "$scanner"
+              failed=1
+              ;;
+            skipped)
+              echo "::warning::${scanner} scan was skipped and produced no results."
+              printf -v summary_table '%s| %s | ⚠️ Skipped | Scan skipped and did not produce results. |\n' "$summary_table" "$scanner"
+              failed=1
+              ;;
+            *)
+              echo "::warning::${scanner} scan did not complete successfully (outcome: $outcome)."
+              printf -v summary_table '%s| %s | ⚠️ Unknown | Scan ended with outcome "%s". |\n' "$summary_table" "$scanner" "$outcome"
+              failed=1
+              ;;
+          esac
+        done
 
-        if [ "$failed" = true ]; then
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          printf '%b' "$summary_table" >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+        if [ "$failed" -eq 1 ]; then
           echo "One or more container scans reported critical vulnerabilities or failed to complete."
           exit 1
         fi
+
+        echo "All container scans completed successfully."
 
   codeql-analysis:
     name: CodeQL Analysis
