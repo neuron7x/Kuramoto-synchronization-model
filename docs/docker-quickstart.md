@@ -327,7 +327,7 @@ volumes:
 
 ```dockerfile
 # Dockerfile
-FROM python:3.12-slim as builder
+FROM python:3.12.4-slim as builder
 
 WORKDIR /app
 
@@ -336,7 +336,7 @@ COPY requirements.lock .
 RUN pip install --user --no-cache-dir -r requirements.lock
 
 # Final stage
-FROM python:3.12-slim
+FROM python:3.12.4-slim
 
 WORKDIR /app
 
