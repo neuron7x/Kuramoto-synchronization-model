@@ -48,6 +48,17 @@ pub struct GuardConfig {
     pub heat: GuardBand,
 }
 
+impl GuardConfig {
+    pub fn validate(self) -> Result<Self, &'static str> {
+        Ok(Self {
+            kappa: self.kappa.validate()?,
+            var: self.var.validate()?,
+            max_drawdown: self.max_drawdown.validate()?,
+            heat: self.heat.validate()?,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct TimeoutConfig {
     pub action_max: f64,
@@ -89,13 +100,27 @@ pub struct ModeOrchestrator {
 }
 
 impl ModeOrchestrator {
-    pub fn new(config: ModeOrchestratorConfig) -> Self {
-        Self {
-            state: config.initial_state,
-            config,
+    pub fn new(config: ModeOrchestratorConfig) -> Result<Self, &'static str> {
+        let ModeOrchestratorConfig {
+            guards,
+            timeouts,
+            delays,
+            initial_state,
+        } = config;
+
+        let validated_config = ModeOrchestratorConfig {
+            guards: guards.validate()?,
+            timeouts,
+            delays,
+            initial_state,
+        };
+
+        Ok(Self {
+            state: validated_config.initial_state,
+            config: validated_config,
             state_entered_at: None,
             last_timestamp: None,
-        }
+        })
     }
 
     pub fn state(&self) -> ModeState {
