@@ -10,7 +10,9 @@ class P2Quantile:
     __slots__ = ("p", "_values")
 
     def __init__(self, q: float):
-        assert 0.0 < q < 1.0, "q in (0,1)"
+        if not (0.0 < q < 1.0):
+            msg = "Quantile must be within the open interval (0, 1)"
+            raise ValueError(msg)
         self.p = float(q)
         self._values: list[float] = []
 

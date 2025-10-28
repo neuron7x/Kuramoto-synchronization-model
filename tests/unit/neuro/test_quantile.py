@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+import pytest
 
 from core.neuro.quantile import P2Quantile
 
@@ -30,8 +31,5 @@ def test_quantile_reports_nan_before_updates() -> None:
 
 def test_invalid_quantile_raises() -> None:
     for p in (0.0, 1.0, -0.1, 1.1):
-        try:
+        with pytest.raises(ValueError):
             P2Quantile(p)
-        except AssertionError:
-            continue
-        raise AssertionError("invalid quantile should raise")
