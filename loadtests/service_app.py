@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import base64
 from pathlib import Path
 from secrets import token_urlsafe
 
@@ -20,8 +21,12 @@ def build_app() -> FastAPI:
     state_dir = Path("/tmp/tradepulse-loadtest")
     state_dir.mkdir(parents=True, exist_ok=True)
     audit_secret = os.getenv("LOADTEST_AUDIT_SECRET", token_urlsafe(32))
+    two_factor_secret = os.getenv("LOADTEST_TWO_FACTOR_SECRET")
+    if two_factor_secret is None:
+        two_factor_secret = base64.b32encode(os.urandom(20)).decode("ascii").rstrip("=")
     settings = AdminApiSettings(
         audit_secret=audit_secret,
+        two_factor_secret=two_factor_secret,
         kill_switch_store_path=state_dir / "kill_switch.sqlite",
         config_vault_path=state_dir / "config_vault.json",
     )

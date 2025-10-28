@@ -37,10 +37,13 @@ from application.settings import (
     KillSwitchPostgresSettings,
     RateLimitPolicy,
 )
+from application.security.two_factor import generate_totp_code
 from core.config.cli_models import PostgresTLSConfig
 
 
 API_V1_PREFIX = "/api/v1"
+TWO_FACTOR_HEADER = "X-Admin-OTP"
+TWO_FACTOR_SECRET = os.environ["TRADEPULSE_TWO_FACTOR_SECRET"]
 
 
 def _api_v1(path: str) -> str:
@@ -206,11 +209,26 @@ def _build_payload() -> dict[str, object]:
     return {"symbol": "TEST-USD", "bars": bars}
 
 
-def _auth_headers(token: str, *, client_cert: bool = False) -> dict[str, str]:
+def _auth_headers(
+    token: str,
+    *,
+    client_cert: bool = False,
+    two_factor_code: str | None = None,
+) -> dict[str, str]:
     headers = {"Authorization": f"Bearer {token}"}
     if client_cert:
         headers["X-Client-Cert"] = "test-cert"
+    if two_factor_code is not None:
+        headers[TWO_FACTOR_HEADER] = two_factor_code
     return headers
+
+
+def _admin_headers(token: str) -> dict[str, str]:
+    return _auth_headers(
+        token,
+        client_cert=True,
+        two_factor_code=generate_totp_code(TWO_FACTOR_SECRET),
+    )
 
 
 def test_feature_endpoint_rejects_missing_token(configured_app: FastAPI) -> None:
@@ -671,7 +689,7 @@ def test_admin_endpoints_accept_jwt_and_certificate(
 ) -> None:
     client = TestClient(configured_app)
     token = security_context(subject="admin-user", roles=("risk:officer",))
-    headers = _auth_headers(token, client_cert=True)
+    headers = _admin_headers(token)
 
     response = client.get("/admin/kill-switch", headers=headers)
     assert response.status_code == 200
@@ -694,7 +712,7 @@ def test_admin_endpoints_enforce_rbac(
 ) -> None:
     client = TestClient(configured_app)
     token = security_context(subject="admin-user")
-    headers = _auth_headers(token, client_cert=True)
+    headers = _admin_headers(token)
     response = client.post(
         "/admin/kill-switch",
         headers=headers,
@@ -705,6 +723,41 @@ def test_admin_endpoints_enforce_rbac(
     assert body["error"]["code"] == "ERR_FORBIDDEN"
     assert body["error"]["path"] == "/admin/kill-switch"
     assert "Insufficient privileges" in body["error"]["message"]
+
+
+def test_admin_endpoints_require_two_factor(
+    configured_app: FastAPI, security_context: Callable[..., str]
+) -> None:
+    client = TestClient(configured_app)
+    token = security_context(subject="admin-user", roles=("risk:officer",))
+    payload = {"reason": "manual intervention"}
+
+    missing_headers = _auth_headers(token, client_cert=True)
+    response = client.post(
+        "/admin/kill-switch", headers=missing_headers, json=payload
+    )
+    assert response.status_code == 401
+    body = response.json()
+    assert body["error"]["code"] == "ERR_AUTH_REQUIRED"
+    assert body["error"]["path"] == "/admin/kill-switch"
+
+    valid_code = generate_totp_code(TWO_FACTOR_SECRET)
+    replacement_digit = "0" if valid_code[0] != "0" else "1"
+    invalid_code = replacement_digit + valid_code[1:]
+    invalid_headers = _auth_headers(
+        token, client_cert=True, two_factor_code=invalid_code
+    )
+    response = client.post(
+        "/admin/kill-switch", headers=invalid_headers, json=payload
+    )
+    assert response.status_code == 401
+    body = response.json()
+    assert body["error"]["code"] == "ERR_AUTH_REQUIRED"
+    assert body["error"]["path"] == "/admin/kill-switch"
+
+    success_headers = _admin_headers(token)
+    response = client.post("/admin/kill-switch", headers=success_headers, json=payload)
+    assert response.status_code == 200
 
 
 def test_admin_endpoint_rejects_wrong_audience(

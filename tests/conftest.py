@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
+
+os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
 
 _fixture_path = Path(__file__).parent / "fixtures" / "conftest.py"
 spec = importlib.util.spec_from_file_location(

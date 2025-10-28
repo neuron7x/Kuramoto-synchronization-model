@@ -59,6 +59,7 @@ from application.api.rate_limit import (
 from application.api.realtime import AnalyticsStore, RealTimeStreamManager
 from application.api.security import (
     get_api_security_settings,
+    require_two_factor,
     verify_optional_request_identity,
     verify_request_identity,
 )
@@ -1440,6 +1441,7 @@ def create_app(
     optional_bearer = verify_optional_request_identity()
     require_bearer_with_mtls = verify_request_identity(require_client_certificate=True)
     audit_secret_provider = secret_manager.provider("audit_secret")
+    two_factor_secret_provider = secret_manager.provider("two_factor_secret")
     rate_limit_max_attempts = resolved_settings.admin_rate_limit_max_attempts
     rate_limit_interval = resolved_settings.admin_rate_limit_interval_seconds
 
@@ -1482,16 +1484,26 @@ def create_app(
     def _kill_switch_attributes(_: Request, __: AdminIdentity) -> Mapping[str, str]:
         return {"environment": resolved_settings.admin_environment}
 
+    two_factor_dependency = require_two_factor(
+        secret_provider=two_factor_secret_provider,
+        header_name=resolved_settings.two_factor_header_name,
+        digits=int(resolved_settings.two_factor_digits),
+        period_seconds=int(resolved_settings.two_factor_period_seconds),
+        drift_windows=int(resolved_settings.two_factor_allowed_drift_windows),
+        algorithm=resolved_settings.two_factor_algorithm,
+        identity_dependency=require_bearer_with_mtls,
+    )
+
     kill_switch_read_permission = require_permission(
         "risk.kill_switch",
         "read",
-        identity_dependency=require_bearer_with_mtls,
+        identity_dependency=two_factor_dependency,
         attributes_provider=_kill_switch_attributes,
     )
     kill_switch_execute_permission = require_permission(
         "risk.kill_switch",
         "execute",
-        identity_dependency=require_bearer_with_mtls,
+        identity_dependency=two_factor_dependency,
         attributes_provider=_kill_switch_attributes,
     )
 
@@ -1569,7 +1581,7 @@ def create_app(
         create_remote_control_router(
             risk_manager_facade,
             audit_logger,
-            identity_dependency=require_bearer_with_mtls,
+            identity_dependency=two_factor_dependency,
             rate_limiter=admin_rate_limiter,
             read_permission=kill_switch_read_permission,
             execute_permission=kill_switch_execute_permission,

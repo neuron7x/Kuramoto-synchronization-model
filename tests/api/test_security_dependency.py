@@ -23,8 +23,19 @@ os.environ.setdefault(
     "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
 )
 
-from application.api.security import get_api_security_settings, verify_request_identity
+from application.api.security import (
+    get_api_security_settings,
+    require_two_factor,
+    verify_request_identity,
+)
 from application.settings import ApiSecuritySettings
+from application.secrets.manager import SecretManagerError
+from application.security.two_factor import generate_totp_code
+from src.admin.remote_control import AdminIdentity
+
+
+TWO_FACTOR_HEADER = "X-Admin-OTP"
+TWO_FACTOR_SECRET = os.environ["TRADEPULSE_TWO_FACTOR_SECRET"]
 
 
 @dataclass(slots=True)
@@ -629,6 +640,100 @@ async def test_unsupported_signing_key_type_is_rejected(
         exc.value.detail
         == "Signing key type is incompatible with bearer token algorithm."
     )
+
+
+@pytest.mark.anyio
+async def test_two_factor_dependency_accepts_valid_code() -> None:
+    fixed_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    dependency = require_two_factor(
+        secret_provider=lambda: TWO_FACTOR_SECRET,
+        header_name=TWO_FACTOR_HEADER,
+        digits=6,
+        period_seconds=30,
+        drift_windows=1,
+        algorithm="SHA1",
+        clock=lambda: fixed_time,
+    )
+    code = generate_totp_code(TWO_FACTOR_SECRET, timestamp=fixed_time)
+    request = _make_request(headers={TWO_FACTOR_HEADER: code})
+    identity = AdminIdentity(subject="alice")
+
+    resolved = await dependency(request, identity)
+
+    assert resolved is identity
+
+
+@pytest.mark.anyio
+async def test_two_factor_dependency_rejects_missing_code() -> None:
+    dependency = require_two_factor(
+        secret_provider=lambda: TWO_FACTOR_SECRET,
+        header_name=TWO_FACTOR_HEADER,
+        digits=6,
+        period_seconds=30,
+        drift_windows=1,
+        algorithm="SHA1",
+        clock=lambda: datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    request = _make_request()
+    identity = AdminIdentity(subject="alice")
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, identity)
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Two-factor authentication code required for this endpoint."
+
+
+@pytest.mark.anyio
+async def test_two_factor_dependency_rejects_invalid_code() -> None:
+    fixed_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    dependency = require_two_factor(
+        secret_provider=lambda: TWO_FACTOR_SECRET,
+        header_name=TWO_FACTOR_HEADER,
+        digits=6,
+        period_seconds=30,
+        drift_windows=1,
+        algorithm="SHA1",
+        clock=lambda: fixed_time,
+    )
+    valid_code = generate_totp_code(TWO_FACTOR_SECRET, timestamp=fixed_time)
+    replacement_digit = "0" if valid_code[0] != "0" else "1"
+    invalid_code = replacement_digit + valid_code[1:]
+    request = _make_request(headers={TWO_FACTOR_HEADER: invalid_code})
+    identity = AdminIdentity(subject="alice")
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, identity)
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Invalid or expired two-factor authentication code."
+
+
+@pytest.mark.anyio
+async def test_two_factor_dependency_handles_secret_errors() -> None:
+    def failing_provider() -> str:
+        raise SecretManagerError("offline")
+
+    dependency = require_two_factor(
+        secret_provider=failing_provider,
+        header_name=TWO_FACTOR_HEADER,
+        digits=6,
+        period_seconds=30,
+        drift_windows=1,
+        algorithm="SHA1",
+        clock=lambda: datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    code = generate_totp_code(
+        TWO_FACTOR_SECRET, timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc)
+    )
+    request = _make_request(headers={TWO_FACTOR_HEADER: code})
+    identity = AdminIdentity(subject="alice")
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(request, identity)
+
+    assert exc.value.status_code == 503
+    assert exc.value.detail == "Two-factor authentication secret is unavailable."
 
 
 def test_manual_override_survives_loader_replacement(

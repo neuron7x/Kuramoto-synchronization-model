@@ -30,6 +30,7 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from application.security.two_factor import decode_totp_secret
 from core.config.cli_models import PostgresTLSConfig
 from core.config.postgres import ensure_secure_postgres_uri
 
@@ -166,6 +167,54 @@ class AdminApiSettings(BaseSettings):
         60.0,
         description="Length of the rolling window used for administrative rate limiting.",
     )
+    two_factor_secret: SecretStr = Field(
+        ...,
+        min_length=16,
+        description=(
+            "Base32 encoded shared secret used for administrator time-based one-time"
+            " passwords. Configure via TRADEPULSE_TWO_FACTOR_SECRET or a managed"
+            " secrets path."
+        ),
+    )
+    two_factor_secret_path: Path | None = Field(
+        default=None,
+        description=(
+            "Optional filesystem path managed by the platform secret manager that"
+            " stores the administrator TOTP secret. When provided the in-memory"
+            " fallback is only used until the file becomes available."
+        ),
+    )
+    two_factor_header_name: str = Field(
+        "X-Admin-OTP",
+        min_length=1,
+        description=(
+            "HTTP header that must contain a valid administrator TOTP code for"
+            " privileged requests."
+        ),
+    )
+    two_factor_digits: int = Field(
+        6,
+        ge=4,
+        le=10,
+        description="Number of digits expected in administrator TOTP codes.",
+    )
+    two_factor_period_seconds: PositiveInt = Field(
+        30,
+        description="Validity period, in seconds, for administrator TOTP codes.",
+    )
+    two_factor_allowed_drift_windows: int = Field(
+        1,
+        ge=0,
+        le=4,
+        description=(
+            "Number of additional TOTP windows accepted on either side of the current"
+            " period to tolerate minor clock drift."
+        ),
+    )
+    two_factor_algorithm: str = Field(
+        "SHA1",
+        description="HMAC algorithm used to validate administrator TOTP codes.",
+    )
     audit_webhook_url: HttpUrl | None = Field(
         default=None,
         description="Optional HTTP endpoint that receives signed audit records for external storage.",
@@ -251,6 +300,31 @@ class AdminApiSettings(BaseSettings):
             raise ValueError("admin_environment must be a non-empty string")
         return candidate.lower()
 
+    @field_validator("two_factor_secret")
+    @classmethod
+    def _validate_two_factor_secret(cls, value: SecretStr) -> SecretStr:
+        decode_totp_secret(value.get_secret_value())
+        return value
+
+    @field_validator("two_factor_header_name", mode="before")
+    @classmethod
+    def _normalise_two_factor_header(cls, value: Any) -> str:
+        candidate = str(value).strip()
+        if not candidate:
+            raise ValueError("two_factor_header_name must be a non-empty string")
+        return candidate
+
+    @field_validator("two_factor_algorithm", mode="before")
+    @classmethod
+    def _normalise_two_factor_algorithm(cls, value: Any) -> str:
+        candidate = str(value).strip()
+        if not candidate:
+            raise ValueError("two_factor_algorithm must be a non-empty string")
+        upper = candidate.upper()
+        if upper not in {"SHA1", "SHA256", "SHA512"}:
+            raise ValueError("two_factor_algorithm must be SHA1, SHA256, or SHA512")
+        return upper
+
     def build_secret_manager(
         self,
         *,
@@ -276,6 +350,16 @@ class AdminApiSettings(BaseSettings):
                 refresh_interval_seconds=refresh_interval,
             )
         }
+
+        secrets["two_factor_secret"] = ManagedSecret(
+            config=ManagedSecretConfig(
+                name="two_factor_secret",
+                path=self.two_factor_secret_path,
+                min_length=16,
+            ),
+            fallback=self.two_factor_secret.get_secret_value(),
+            refresh_interval_seconds=refresh_interval,
+        )
 
         if (
             self.siem_client_secret is not None
