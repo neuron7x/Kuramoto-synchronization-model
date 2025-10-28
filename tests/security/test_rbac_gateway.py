@@ -19,15 +19,15 @@ def rbac_policy_path(tmp_path: Path) -> Path:
     policy.write_text(
         """
         roles:
-          system:read:
+          foundation:viewer:
             description: Read system state
             permissions:
               - resource: system.status
                 action: read
-          system:trade:
+          trading:operator:
             description: Submit orders
             inherits:
-              - system:read
+              - foundation:viewer
             permissions:
               - resource: orders
                 action: submit
@@ -68,13 +68,13 @@ def test_load_rbac_configuration_parses_roles(rbac_policy_path: Path) -> None:
 
     roles = configuration.policy.roles_granting("system.status", "read")
 
-    assert roles == ("system:read", "system:trade")
+    assert roles == ("foundation:viewer", "trading:operator")
     assert configuration.temporary_grants[0].subject == "bob"
 
 
 def test_authorized_identity_allows_and_audits(rbac_policy_path: Path) -> None:
     gateway, audit_logger = _build_gateway(rbac_policy_path)
-    identity = AdminIdentity(subject="alice", roles=("system:trade",))
+    identity = AdminIdentity(subject="alice", roles=("trading:operator",))
 
     gateway.enforce(
         identity=identity,
@@ -90,16 +90,16 @@ def test_authorized_identity_allows_and_audits(rbac_policy_path: Path) -> None:
         details={
             "resource": "orders",
             "action": "submit",
-            "roles": ["system:trade"],
+            "roles": ["trading:operator"],
             "temporary": False,
-            "matched_source": "role:system:trade",
+            "matched_source": "role:trading:operator",
         },
     )
 
 
 def test_missing_role_is_denied(rbac_policy_path: Path) -> None:
     gateway, audit_logger = _build_gateway(rbac_policy_path)
-    identity = AdminIdentity(subject="carol", roles=("system:read",))
+    identity = AdminIdentity(subject="carol", roles=("foundation:viewer",))
 
     with pytest.raises(HTTPException) as exc_info:
         gateway.enforce(
@@ -111,14 +111,14 @@ def test_missing_role_is_denied(rbac_policy_path: Path) -> None:
 
     detail = exc_info.value.detail
     assert detail["failure_reason"] == "missing_role"
-    assert detail["required_roles"] == ["system:trade"]
+    assert detail["required_roles"] == ["trading:operator"]
 
     assert audit_logger.log_event.call_args_list[-1][1]["event_type"] == "authorization.deny"  # type: ignore[index]
 
 
 def test_attribute_mismatch_is_denied(rbac_policy_path: Path) -> None:
     gateway, _ = _build_gateway(rbac_policy_path)
-    identity = AdminIdentity(subject="dave", roles=("system:trade",))
+    identity = AdminIdentity(subject="dave", roles=("trading:operator",))
 
     with pytest.raises(HTTPException) as exc_info:
         gateway.enforce(
@@ -130,7 +130,7 @@ def test_attribute_mismatch_is_denied(rbac_policy_path: Path) -> None:
 
     detail = exc_info.value.detail
     assert detail["failure_reason"] == "attribute_mismatch"
-    assert detail["required_roles"] == ["system:trade"]
+    assert detail["required_roles"] == ["trading:operator"]
 
 
 def test_temporary_grant_respects_expiry(rbac_policy_path: Path) -> None:

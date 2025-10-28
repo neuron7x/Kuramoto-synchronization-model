@@ -59,7 +59,7 @@ def system() -> TradePulseSystem:
 @pytest.fixture()
 def authorized_identity() -> AdminIdentity:
     return AdminIdentity(
-        subject="integration-test", roles=("system:read", "system:trade")
+        subject="integration-test", roles=("foundation:viewer", "trading:operator")
     )
 
 
@@ -87,8 +87,8 @@ def client(
     app = create_system_app(
         system,
         identity_dependency=identity_dependency,
-        reader_roles=("system:read",),
-        trader_roles=("system:trade",),
+        reader_roles=("foundation:viewer",),
+        trader_roles=("trading:operator",),
         authorization_gateway=authorization_gateway,
     )
     return TestClient(app)
@@ -235,12 +235,12 @@ def test_trade_denied_when_desk_not_authorized(client: TestClient) -> None:
     payload = response.json()
     assert payload["detail"]["failure_reason"] == "attribute_mismatch"
     required_roles = payload["detail"]["required_roles"]
-    assert "system:trade" in required_roles
+    assert "trading:operator" in required_roles
 
 
 def test_trader_role_is_required(system: TradePulseSystem) -> None:
     async def _limited_identity() -> AdminIdentity:
-        return AdminIdentity(subject="integration-test", roles=("system:read",))
+        return AdminIdentity(subject="integration-test", roles=("foundation:viewer",))
 
     gateway = build_authorization_gateway(
         policy_path=Path(__file__).resolve().parents[2] / "configs" / "rbac" / "policy.yaml",
@@ -249,8 +249,8 @@ def test_trader_role_is_required(system: TradePulseSystem) -> None:
     app = create_system_app(
         system,
         identity_dependency=_limited_identity,
-        reader_roles=("system:read",),
-        trader_roles=("system:trade",),
+        reader_roles=("foundation:viewer",),
+        trader_roles=("trading:operator",),
         authorization_gateway=gateway,
     )
     client = TestClient(app)
@@ -269,7 +269,7 @@ def test_trader_role_is_required(system: TradePulseSystem) -> None:
     assert response.status_code == 403
     payload = response.json()
     required_roles = payload["detail"]["required_roles"]
-    assert "system:trade" in required_roles
+    assert "trading:operator" in required_roles
     assert payload["detail"]["failure_reason"] == "missing_role"
 
 
@@ -336,8 +336,8 @@ def test_rate_limit_blocks_excessive_requests(
     app = create_system_app(
         system,
         identity_dependency=identity_dependency,
-        reader_roles=("system:read",),
-        trader_roles=("system:trade",),
+        reader_roles=("foundation:viewer",),
+        trader_roles=("trading:operator",),
         authorization_gateway=authorization_gateway,
         rate_limit_settings=rate_settings,
     )
