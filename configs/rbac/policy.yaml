@@ -8,6 +8,10 @@ roles:
         action: read
       - resource: knowledge.runbooks
         action: read
+      - resource: system.status
+        action: read
+      - resource: system.positions
+        action: read
   research:quant:
     description: "Develop and validate strategies within research environments."
     inherits:
