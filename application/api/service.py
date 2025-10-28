@@ -987,32 +987,56 @@ class OnlineSignalForecaster:
         macd_crossover_component = np.tanh(macd - macd_signal_line)
         macd_histogram_component = np.tanh(macd_histogram * 2.0)
 
-        # Capture the prevailing divergence direction while tracking the
-        # combined energy of the MACD trend and histogram legs. Using the signed
-        # mean preserves bearish/bullish polarity, whereas the Euclidean norm
-        # measures how forcefully the legs move irrespective of sign.
-        divergence_strength = 0.5 * (macd_trend_component + macd_histogram_component)
-        divergence_amplitude = np.hypot(
-            macd_trend_component, macd_histogram_component
-        ) / np.sqrt(2.0)
-        convergence_intensity = abs(macd_crossover_component)
-
-        # Penalise imbalance when divergence sprints away from the convergence
-        # cadence or when their directions disagree, while rewarding genuine
-        # agreement where the crossover leg takes the lead. This keeps the
-        # composite score centred without flattening supportive structure.
-        phase_alignment = np.sign(divergence_strength) * np.sign(
-            macd_crossover_component
+        # Capture divergence dynamics via both direction (signed strength) and
+        # energy (magnitude), mirroring how discretionary traders reason about
+        # MACD legs fanning out. Using a compact vector representation keeps the
+        # transformations easy to audit while letting us express richer
+        # interactions than a single scalar average.
+        divergence_vector = np.array(
+            [macd_trend_component, macd_histogram_component], dtype=float
         )
-        phase_penalty = 1.0 + 0.6 * (1.0 - phase_alignment)
-
-        imbalance = divergence_strength - macd_crossover_component
-        intensity_ratio = divergence_amplitude / (convergence_intensity + 1e-6)
-        intensity_bias = np.tanh((intensity_ratio - 1.0) * 0.9)
-        scaled_imbalance = imbalance * phase_penalty + intensity_bias * np.sign(
-            imbalance
+        divergence_strength = float(np.mean(divergence_vector))
+        divergence_energy = float(
+            np.linalg.norm(divergence_vector) / np.sqrt(divergence_vector.size)
         )
-        balance_correction = -np.tanh(scaled_imbalance * 1.3)
+
+        convergence_strength = macd_crossover_component
+        convergence_energy = abs(convergence_strength)
+
+        # Alignment measures whether convergence is confirming divergence. Using
+        # a smooth activation instead of hard signs avoids choppy behaviour
+        # around zero-crossings and mirrors how operators phase-align oscillators
+        # in signal processing.
+        alignment = np.tanh(divergence_strength * convergence_strength * 2.5)
+
+        # Track how forcefully divergence outpaces convergence. The tanh keeps
+        # the ratio bounded while still emphasising large spreads.
+        magnitude_gap = divergence_energy - convergence_energy
+        magnitude_pressure = np.tanh((magnitude_gap - 0.05) * 1.8)
+
+        # Preserve directionality: when divergence and convergence point in the
+        # same direction but at different speeds we want only a gentle nudge,
+        # whereas opposing directions should trigger a sharper correction.
+        directional_tension = np.tanh((divergence_strength - convergence_strength) * 1.1)
+
+        # Blend the above ingredients into a single correction term. Positive
+        # raw values imply divergence dominance and yield a negative correction;
+        # negative values indicate healthy agreement and therefore earn a
+        # positive contribution.
+        raw_balance = (
+            magnitude_pressure
+            + 0.75 * directional_tension
+            - 1.0 * alignment
+        )
+
+        # When both legs are quiet we do not want the balance leg to oscillate
+        # unnecessarily, hence the neutraliser softly damps the correction.
+        neutraliser = 1.0 - np.exp(-((divergence_energy + convergence_energy) ** 2))
+        balance_drive = -np.tanh(raw_balance * 1.6)
+        alignment_bonus = float(np.clip(alignment, 0.0, 1.0))
+        magnitude_relief = float(np.clip(0.2 - magnitude_gap, 0.0, 0.2) / 0.2)
+        supportive_bonus = alignment_bonus * magnitude_relief * 0.25
+        balance_correction = (balance_drive + supportive_bonus) * neutraliser
 
         return {
             "macd_trend": macd_trend_component * 0.26,
