@@ -98,6 +98,8 @@ jobs:
           PY
   tests:
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     strategy:
       matrix:
         python-version: ['3.11']
@@ -354,14 +356,14 @@ jobs:
             coverage_html
           if-no-files-found: error
       - name: Upload coverage to Codecov (with token)
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           flags: py${{ matrix.python-version }}
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
       - name: Upload coverage to Codecov (OIDC)
-        if: ${{ secrets.CODECOV_TOKEN == '' }}
+        if: ${{ env.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml

@@ -11,6 +11,8 @@ on:
 jobs:
   test-coverage:
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     strategy:
       matrix:
         python-version: ['3.11']
@@ -56,12 +58,22 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
-      - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage to Codecov (token)
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: py${{ matrix.python-version }}
           name: coverage-py${{ matrix.python-version }}
           fail_ci_if_error: true
+
+      - name: Upload coverage to Codecov (OIDC)
+        if: ${{ env.CODECOV_TOKEN == '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: py${{ matrix.python-version }}
+          name: coverage-py${{ matrix.python-version }}
+          fail_ci_if_error: true
+          use_oidc: true

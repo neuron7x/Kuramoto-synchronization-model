@@ -29,9 +29,18 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "cibuildwheel>=2.16"
 
+      - name: Compute Python ABI tag
+        id: python_abi
+        shell: bash
+        run: |
+          set -euo pipefail
+          ver="${{ matrix.python-version }}"
+          tag="cp${ver/./}"
+          echo "tag=$tag" >>"$GITHUB_OUTPUT"
+
       - name: Build wheels
         env:
-          CIBW_BUILD: "cp${{ replace(matrix.python-version, '.', '') }}-*"
+          CIBW_BUILD: "${{ steps.python_abi.outputs.tag }}-*"
           CIBW_SKIP: "pp*"
           CIBW_ARCHS_MACOS: "universal2"
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"

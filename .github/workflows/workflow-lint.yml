@@ -1,0 +1,22 @@
+name: Workflow Lint
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**/*.yml'
+      - '.github/workflows/**/*.yaml'
+  push:
+    paths:
+      - '.github/workflows/**/*.yml'
+      - '.github/workflows/**/*.yaml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: rhysd/actionlint@v1
+      - name: Run yamllint on workflows
+        run: |
+          pipx install yamllint
+          yamllint .github/workflows
