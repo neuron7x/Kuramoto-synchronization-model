@@ -105,6 +105,49 @@ class MetricsCollector:
 
         self._enabled = True
         self.registry = registry
+        if self.registry is not None:
+            multiprocess_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
+            should_register_defaults = True
+
+            if multiprocess_dir:
+                try:
+                    from prometheus_client import multiprocess  # type: ignore
+                except ImportError:
+                    # Multiprocess collector isn't available; fall back to defaults.
+                    pass
+                else:
+                    # When the multiprocess module is available and the directory is
+                    # configured, the deployment is expected to register
+                    # ``multiprocess.MultiProcessCollector`` which exposes the same
+                    # metrics as the default collectors. Registering both would raise
+                    # ``ValueError: Duplicated timeseries`` so we skip registering the
+                    # defaults in that case.
+                    should_register_defaults = False
+
+            if should_register_defaults:
+                # Ensure the default collectors are registered on the provided registry
+                # so standard Prometheus process/platform metrics are emitted.
+                try:
+                    from prometheus_client import (
+                        GCCollector,
+                        PlatformCollector,
+                        ProcessCollector,
+                    )
+
+                    for collector_cls in (
+                        ProcessCollector,
+                        PlatformCollector,
+                        GCCollector,
+                    ):
+                        try:
+                            collector_cls(registry=self.registry)
+                        except ValueError:
+                            # Collector already registered – ignore duplicate.
+                            continue
+                except Exception:  # pragma: no cover - defensive guard
+                    # If collector registration fails we still expose custom metrics
+                    # rather than breaking application startup.
+                    pass
         self._equity_curve_max_points = int(
             os.getenv("TRADEPULSE_METRICS_MAX_EQUITY_POINTS", "1024")
         )
