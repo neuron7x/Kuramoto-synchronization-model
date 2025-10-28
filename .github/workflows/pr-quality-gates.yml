@@ -1,0 +1,228 @@
+name: PR Quality Gates
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    name: Lint & Type Safety
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install tooling
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt \
+            -r requirements.txt \
+            -r requirements-dev.txt \
+            pre-commit detect-secrets
+
+      - name: Run ruff lint
+        run: .venv/bin/ruff check .
+
+      - name: Ensure formatting with Black
+        run: .venv/bin/black --check .
+
+      - name: Static type checks with mypy
+        run: .venv/bin/mypy
+
+      - name: Validate slots usage
+        run: .venv/bin/python -m slotscheck --module core --module backtest --module execution
+
+      - name: Shell formatting
+        run: .venv/bin/pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
+
+      - name: Shell linting
+        run: .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
+
+      - name: Secret scanning for privileged modules
+        run: |
+          set -euo pipefail
+          scan_output="$(mktemp)"
+          .venv/bin/detect-secrets scan core backtest execution src application >"$scan_output"
+          python - <<'PY' "$scan_output"
+          import json
+          import sys
+
+          path = sys.argv[1]
+          data = json.loads(open(path, encoding="utf-8").read())
+          results = data.get("results", {})
+          violations = sum(len(entries) for entries in results.values())
+          if violations:
+              message = [
+                  "Potential secrets detected in privileged modules:",
+                  json.dumps(results, indent=2, sort_keys=True),
+              ]
+              raise SystemExit("\n".join(message))
+          PY
+
+  coverage:
+    name: Coverage Guardrail
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install dependencies
+        run: |
+          .venv/bin/pip install --upgrade pip
+          if [ -f requirements.txt ]; then .venv/bin/pip install -c constraints/security.txt -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt; fi
+
+      - name: Run tests with coverage
+        run: |
+          .venv/bin/pytest \
+            --cov=core \
+            --cov=backtest \
+            --cov=execution \
+            --cov-config=configs/quality/critical_surface.coveragerc \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: Enforce coverage thresholds
+        run: .venv/bin/python -m tools.coverage.guardrail --config configs/quality/critical_surface.toml --coverage coverage.xml
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-pr
+          path: coverage.xml
+
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install scanners
+        run: |
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install bandit safety pip-audit
+
+      - name: Run custom secret scanner
+        run: |
+          .venv/bin/python -c "
+          from core.utils.security import check_for_hardcoded_secrets
+          import sys
+          if check_for_hardcoded_secrets('.'):
+              sys.exit(1)
+          "
+
+      - name: Run Bandit on application code
+        run: |
+          .venv/bin/bandit -r core/ backtest/ execution/ -f json -o bandit-report.json || true
+          .venv/bin/bandit -r core/ backtest/ execution/ -ll
+
+      - name: Run Bandit on test utilities
+        run: .venv/bin/bandit -r tests/utils tests/scripts -ll
+
+      - name: Safety vulnerability scan
+        run: |
+          .venv/bin/safety check --json | tee safety-report.json >/dev/null || true
+          .venv/bin/safety check
+
+      - name: pip-audit vulnerability scan
+        run: |
+          .venv/bin/pip-audit --desc -o pip-audit-report.json --format json || true
+          .venv/bin/pip-audit --desc || true
+          if [ -f pip-audit-report.json ]; then
+            OTHER_VULNS=$(jq -r '
+              [.dependencies[] // empty |
+               select(.vulns != null and (.vulns | length) > 0) |
+               .vulns[] |
+               select(.id != "GHSA-4xh5-x5gv-qwph")
+              ] | length
+            ' pip-audit-report.json)
+
+            echo "Found $OTHER_VULNS vulnerabilities (excluding GHSA-4xh5-x5gv-qwph)"
+
+            if [ "$OTHER_VULNS" -gt 0 ]; then
+              echo "ERROR: Found vulnerabilities other than the known pip issue GHSA-4xh5-x5gv-qwph"
+              echo "Please review and fix these vulnerabilities:"
+              jq -r '
+                .dependencies[] // empty |
+                select(.vulns != null and (.vulns | length) > 0) |
+                .vulns[] |
+                select(.id != "GHSA-4xh5-x5gv-qwph") |
+                "  - \(.id): \(.description[:100])..."
+              ' pip-audit-report.json
+              exit 1
+            else
+              echo "SUCCESS: Only the known pip vulnerability GHSA-4xh5-x5gv-qwph is present"
+              echo "This will be fixed when pip 25.3 is released"
+            fi
+          else
+            echo "WARNING: pip-audit report not found; treating as failure to avoid false negatives"
+            exit 1
+          fi
+
+      - name: Upload security artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            pip-audit-report.json
