@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import timedelta
+import re
 from typing import Sequence
 
 __all__ = [
@@ -18,6 +19,19 @@ __all__ = [
     "SLAMetric",
     "TimeSeriesSchema",
 ]
+
+
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _ensure_identifier(value: str, *, label: str) -> str:
+    if not value:
+        raise ValueError(f"{label} must be a non-empty identifier")
+    if not _IDENTIFIER_RE.fullmatch(value):
+        raise ValueError(
+            f"{label} must match {_IDENTIFIER_RE.pattern!r}: {value!r}"
+        )
+    return value
 
 
 def _validate_positive_timedelta(value: timedelta, *, field_name: str) -> None:
@@ -49,6 +63,9 @@ class DimensionColumn:
         codec_clause = f" CODEC({self.codec})" if self.codec else ""
         return f"{self.name} {self.data_type}{constraint}{codec_clause}"
 
+    def __post_init__(self) -> None:
+        _ensure_identifier(self.name, label="dimension column name")
+
 
 @dataclass(frozen=True, slots=True)
 class AggregationSpec:
@@ -71,6 +88,9 @@ class MeasureColumn:
         codec_clause = f" CODEC({self.codec})" if self.codec else ""
         return f"{self.name} {self.data_type}{codec_clause}"
 
+    def __post_init__(self) -> None:
+        _ensure_identifier(self.name, label="measure column name")
+
 
 @dataclass(frozen=True, slots=True)
 class TimeSeriesSchema:
@@ -85,12 +105,16 @@ class TimeSeriesSchema:
     database: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.table:
-            raise ValueError("table must be a non-empty identifier")
-        if not self.timestamp_column:
-            raise ValueError("timestamp_column must be provided")
+        _ensure_identifier(self.table, label="table name")
+        _ensure_identifier(self.timestamp_column, label="timestamp column")
         if not self.measures:
             raise ValueError("At least one measure column is required")
+        if self.database is not None:
+            _ensure_identifier(self.database, label="database name")
+        for column in (*self.dimensions, *self.metadata):
+            _ensure_identifier(column.name, label="dimension column name")
+        for measure in self.measures:
+            _ensure_identifier(measure.name, label="measure column name")
 
     @property
     def fully_qualified_name(self) -> str:
@@ -139,6 +163,9 @@ class RollupAggregation:
     expression: str
     data_type: str
 
+    def __post_init__(self) -> None:
+        _ensure_identifier(self.alias, label="rollup aggregation alias")
+
 
 @dataclass(frozen=True, slots=True)
 class RollupMaterialization:
@@ -152,15 +179,21 @@ class RollupMaterialization:
     materialized_view_name: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.name:
-            raise ValueError("name must be provided for rollup materialization")
+        _ensure_identifier(self.name, label="rollup materialization name")
         _validate_positive_timedelta(self.interval, field_name="interval")
         if self.refresh_lag <= timedelta(0):
             raise ValueError("refresh_lag must be a positive duration")
         if not self.aggregations:
             raise ValueError("At least one aggregation must be provided")
-        if self.materialized_view_name is not None and not self.materialized_view_name:
-            raise ValueError("materialized_view_name must be a non-empty string when provided")
+        if self.materialized_view_name is not None:
+            if not self.materialized_view_name:
+                raise ValueError(
+                    "materialized_view_name must be a non-empty string when provided"
+                )
+            _ensure_identifier(
+                self.materialized_view_name,
+                label="materialized view name",
+            )
 
 
 @dataclass(frozen=True, slots=True)
