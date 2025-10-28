@@ -75,7 +75,9 @@ jobs:
 
     - name: Check for known vulnerabilities with Safety
       run: |
-        safety check --json --output safety-report.json || true
+        # Safety's `--output` flag selects the formatter, not a destination path. Capture
+        # the JSON report via redirection so the artifact upload step can access it.
+        safety check --json | tee safety-report.json >/dev/null || true
         safety check
 
     - name: Audit dependencies with pip-audit
