@@ -414,3 +414,63 @@ PY
       - name: Remove canary deployment
         if: always()
         run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-production --ignore-not-found
+
+  notify:
+    name: Notify deployment status
+    runs-on: ubuntu-latest
+    needs:
+      - validate-infrastructure
+      - pre-deploy-smoke
+      - deploy-staging
+      - deploy-production
+    if: ${{ always() }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install notification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt httpx
+
+      - name: Send deployment notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEPLOY_WEBHOOK }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_DEPLOY_CHANNEL }}
+          SLACK_USERNAME: ${{ secrets.SLACK_DEPLOY_USERNAME }}
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_DEPLOY_WEBHOOK }}
+          TEAMS_THEME_COLOR: ${{ secrets.TEAMS_DEPLOY_THEME_COLOR }}
+        run: |
+          overall="success"
+          for result in "${{ needs.validate-infrastructure.result }}" "${{ needs.pre-deploy-smoke.result }}" "${{ needs.deploy-staging.result }}" "${{ needs.deploy-production.result }}"; do
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              overall="$result"
+            fi
+          done
+          environment_label="staging"
+          if [ "${{ needs.deploy-staging.result }}" = "skipped" ]; then
+            environment_label="not-run"
+          fi
+          if [ "${{ needs.deploy-production.result }}" != "skipped" ]; then
+            environment_label="staging+production"
+          fi
+          python -m scripts.notify_status \
+            --stage deploy \
+            --status "$overall" \
+            --workflow "${{ github.workflow }}" \
+            --job "summary" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --branch "${{ github.ref_name }}" \
+            --commit "${{ github.sha }}" \
+            --actor "${{ github.actor }}" \
+            --environment "$environment_label" \
+            --field "validate-infrastructure=${{ needs.validate-infrastructure.result }}" \
+            --field "pre-deploy-smoke=${{ needs.pre-deploy-smoke.result }}" \
+            --field "deploy-staging=${{ needs.deploy-staging.result }}" \
+            --field "deploy-production=${{ needs.deploy-production.result }}"
