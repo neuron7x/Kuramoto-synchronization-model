@@ -375,7 +375,41 @@ mutmut results
 
 The guard emits a human-readable summary (and optional JSON artifact) of killed, surviving, and skipped mutants so you can drill down before pushing. Use `mutmut show <mutation-id>` to inspect survivors.
 
+#### Trading engine kill-rate gate
+
+Critical execution logic (`execution/paper_trading.py`) now ships with a focused mutation harness so we can monitor the health of its dedicated unit and smoke suites without having to run the entire mutation corpus. Trigger it with:
+
+```bash
+python -m tools.mutation.trading_engine_suite --threshold 0.9
+```
+
+CI runs this job on every pull request and publishes the results under the `trading-engine-mutation` artifact.
+
 > **AI-guided mutants.** We are experimenting with tree-sitter + LLM assisted mutant generation to stress trading invariants (e.g. ensuring `Order` objects never carry negative quantities). When enabled, these domain-specific mutants will land beside the existing mutation corpus and surface through the same guardrail.
+
+### Deployment Smoke Tests
+
+The `tests/smoke` package contains lightweight regression tests that assert the trading engine can execute representative orders end-to-end. These run in under a second and gate both the staging and production deployment workflows via the new `pre-deploy-smoke` job. To exercise them locally:
+
+```bash
+pytest tests/smoke -m smoke -q
+```
+
+or simply leverage the Makefile helper:
+
+```bash
+make test:smoke
+```
+
+### Security Gates
+
+Static (Bandit) and dynamic (FastAPI DAST probes) security checks are bundled into a single helper target:
+
+```bash
+make security-test
+```
+
+The CI workflow (`security-tests` job in `tests.yml`) executes the same commands, generating machine-readable reports under `reports/security/` for auditability.
 
 ## Writing Tests
 

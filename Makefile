@@ -79,11 +79,14 @@ docs-lint:
 .PHONY: i18n-validate
 i18n-validate:
 	python scripts/localization/sync_translations.py
-.PHONY: mutation-test
+.PHONY: mutation-test mutation-test\:trading-engine
 mutation-test:
-	mutmut run --use-coverage
-	python -m tools.mutation.kill_rate_guard --threshold 0.8
-	mutmut results
+        mutmut run --use-coverage
+        python -m tools.mutation.kill_rate_guard --threshold 0.8
+        mutmut results
+
+mutation-test\:trading-engine:
+        python -m tools.mutation.trading_engine_suite --threshold 0.9
 
 .PHONY: sbom supply-chain-verify dependencies-check
 sbom:
@@ -97,7 +100,12 @@ dependencies-check:
 
 .PHONY: security-audit
 security-audit:
-	python scripts/dependency_audit.py --requirement requirements.txt --requirement requirements-dev.txt
+        python scripts/dependency_audit.py --requirement requirements.txt --requirement requirements-dev.txt
+
+.PHONY: security-test
+security-test:
+        python -m tools.security.sast --fail-on-severity MEDIUM
+        python -m tools.security.dast_probe
 
 .PHONY: test\:fast-sanity test\:fast-suite
 test\:fast-sanity:
@@ -107,7 +115,11 @@ test\:fast-sanity:
 	pytest -q scripts/tests/test_api_management.py
 
 test\:fast-suite:
-	pytest tests/ -m "not slow and not heavy_math and not nightly"
+        pytest tests/ -m "not slow and not heavy_math and not nightly"
+
+.PHONY: test\:smoke
+test\:smoke:
+        pytest tests/smoke -m smoke -q
 
 .PHONY: test\:fast
 test\:fast: test\:fast-suite
