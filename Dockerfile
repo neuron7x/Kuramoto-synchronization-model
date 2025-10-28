@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
@@ -8,7 +8,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
 COPY requirements.lock ./
-RUN pip install --no-cache-dir -r requirements.lock
+
+# Ensure the base image is fully patched before installing Python dependencies.
+RUN set -eux; \
+    apt-get update; \
+    apt-get upgrade -y --no-install-recommends; \
+    apt-get autoremove -y; \
+    rm -rf /var/lib/apt/lists/*; \
+    pip install --no-cache-dir -r requirements.lock
 
 # Copy FastAPI application sources and supporting packages.
 COPY application ./application
