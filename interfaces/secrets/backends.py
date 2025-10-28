@@ -313,11 +313,16 @@ def build_aws_secrets_manager_resolver(
             session_kwargs["profile_name"] = config.profile_name
         if config.region_name:
             session_kwargs["region_name"] = config.region_name
-        session = boto3.session.Session(**session_kwargs)
-        client_kwargs: MutableMapping[str, Any] = {"verify": config.verify}
-        if config.endpoint_url:
-            client_kwargs["endpoint_url"] = config.endpoint_url
-        client = session.client("secretsmanager", **client_kwargs)
+        try:
+            session = boto3.session.Session(**session_kwargs)
+            client_kwargs: MutableMapping[str, Any] = {"verify": config.verify}
+            if config.endpoint_url:
+                client_kwargs["endpoint_url"] = config.endpoint_url
+            client = session.client("secretsmanager", **client_kwargs)
+        except BotoCoreError as exc:  # pragma: no cover - relies on boto3 runtime errors
+            raise SecretBackendError(
+                f"Failed to create AWS Secrets Manager client: {exc}"
+            ) from exc
 
     lock = threading.RLock()
 
