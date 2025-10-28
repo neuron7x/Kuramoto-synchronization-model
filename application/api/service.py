@@ -51,7 +51,11 @@ from application.api.errors import (
 )
 from application.api.graphql_api import create_graphql_router
 from application.api.debug import install_debug_routes
-from application.api.middleware import AccessLogMiddleware
+from application.api.middleware import (
+    AccessLogMiddleware,
+    PrometheusMetricsMiddleware,
+)
+from application.api.metrics import MetricsSampler
 from application.api.rate_limit import (
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
@@ -1532,6 +1536,22 @@ def create_app(
         ],
     )
 
+    metrics_registry = None
+    try:  # Lazy import to avoid hard dependency during tests without prometheus_client
+        from prometheus_client import REGISTRY as prometheus_registry  # type: ignore
+    except Exception:  # pragma: no cover - optional dependency
+        metrics_registry = None
+    else:
+        metrics_registry = prometheus_registry
+
+    metrics_module = __import__("core.utils.metrics", fromlist=["MetricsCollector"])
+    metrics_collector = get_metrics_collector(metrics_registry)
+    if metrics_registry is not None and getattr(metrics_collector, "registry", None) is None:
+        refreshed_metrics = metrics_module.MetricsCollector(metrics_registry)
+        metrics_collector.__dict__.update(refreshed_metrics.__dict__)
+        setattr(metrics_module, "_collector", metrics_collector)
+    app.state.metrics = metrics_collector
+
     analytics_store = AnalyticsStore()
     stream_manager = RealTimeStreamManager()
     app.state.analytics_store = analytics_store
@@ -1557,6 +1577,11 @@ def create_app(
         await stream_manager.broadcast(event)
 
     configure_openapi(app)
+
+    app.add_middleware(
+        PrometheusMetricsMiddleware,
+        collector=metrics_collector,
+    )
 
     app.add_middleware(
         AccessLogMiddleware,
@@ -1629,26 +1654,20 @@ def create_app(
     )
     app.state.variable_inspector = inspector
     app.state.runtime_settings = runtime_settings
-    metrics_registry = None
-    try:  # Lazy import to avoid hard dependency during tests without prometheus_client
-        from prometheus_client import REGISTRY as prometheus_registry  # type: ignore
-    except Exception:  # pragma: no cover - optional dependency
-        metrics_registry = None
-    else:
-        metrics_registry = prometheus_registry
-
-    metrics_module = __import__("core.utils.metrics", fromlist=["MetricsCollector"])
-    metrics_collector = get_metrics_collector(metrics_registry)
-    if metrics_registry is not None and getattr(metrics_collector, "registry", None) is None:
-        refreshed_metrics = metrics_module.MetricsCollector(metrics_registry)
-        metrics_collector.__dict__.update(refreshed_metrics.__dict__)
-        setattr(metrics_module, "_collector", metrics_collector)
-    app.state.metrics = metrics_collector
     inspector.register(
         "metrics",
         lambda: {
             "collector": type(metrics_collector).__name__,
             "registry_attached": metrics_registry is not None,
+        },
+    )
+    metrics_sampler = MetricsSampler(metrics_collector)
+    app.state.metrics_sampler = metrics_sampler
+    inspector.register(
+        "metrics_sampler",
+        lambda: {
+            "interval_seconds": metrics_sampler.interval,
+            "running": metrics_sampler.is_running,
         },
     )
     install_debug_routes(
@@ -1657,6 +1676,15 @@ def create_app(
         enabled=runtime_settings.debug,
         identity_dependency=require_bearer,
     )
+
+    async def _start_metrics_sampler() -> None:
+        metrics_sampler.start()
+
+    async def _stop_metrics_sampler() -> None:
+        await metrics_sampler.stop()
+
+    app.add_event_handler("startup", _start_metrics_sampler)
+    app.add_event_handler("shutdown", _stop_metrics_sampler)
     if runtime_settings.debug and runtime_settings.log_variables_on_startup:
         debug_logger = logging.getLogger("tradepulse.debug")
 

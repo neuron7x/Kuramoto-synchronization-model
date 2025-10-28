@@ -599,3 +599,80 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     assert insert_latency_count == 1.0
     assert total_success == 1.0
     assert total_error == 1.0
+
+
+def test_api_metrics_capture_requests_and_resources() -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    collector.track_api_in_flight("/health", "get", 1)
+    collector.track_api_in_flight("/health", "get", -1)
+    collector.observe_api_request("/health", "get", 200, 0.25)
+
+    latency_count = _sample_value(
+        registry,
+        "tradepulse_api_request_latency_seconds_count",
+        {"route": "/health", "method": "GET"},
+    )
+    total_requests = _sample_value(
+        registry,
+        "tradepulse_api_requests_total",
+        {"route": "/health", "method": "GET", "status": "200"},
+    )
+    in_flight = _sample_value(
+        registry,
+        "tradepulse_api_requests_in_flight",
+        {"route": "/health", "method": "GET"},
+    )
+
+    collector.set_process_resource_usage(
+        "inference_api",
+        cpu_percent=12.5,
+        memory_bytes=4096.0,
+        memory_percent=32.0,
+    )
+
+    cpu_gauge = _sample_value(
+        registry,
+        "tradepulse_process_cpu_percent",
+        {"process": "inference_api"},
+    )
+    memory_bytes = _sample_value(
+        registry,
+        "tradepulse_process_memory_bytes",
+        {"process": "inference_api"},
+    )
+    memory_percent = _sample_value(
+        registry,
+        "tradepulse_process_memory_percent",
+        {"process": "inference_api"},
+    )
+
+    assert latency_count == 1.0
+    assert total_requests == 1.0
+    assert in_flight == 0.0
+    assert cpu_gauge == pytest.approx(12.5)
+    assert memory_bytes == pytest.approx(4096.0)
+    assert memory_percent == pytest.approx(32.0)
+
+
+def test_queue_metrics_record_depth_and_latency() -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    collector.set_queue_depth("event_loop_ready", 7)
+    collector.observe_queue_latency("event_loop_ready", 0.15)
+
+    depth_value = _sample_value(
+        registry,
+        "tradepulse_api_queue_depth",
+        {"queue": "event_loop_ready"},
+    )
+    latency_count = _sample_value(
+        registry,
+        "tradepulse_api_queue_latency_seconds_count",
+        {"queue": "event_loop_ready"},
+    )
+
+    assert depth_value == 7.0
+    assert latency_count == 1.0

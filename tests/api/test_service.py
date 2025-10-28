@@ -837,6 +837,23 @@ def test_health_probe_emits_metrics_when_collector_present(
     assert component_keys, "Component health metrics should be recorded"
 
 
+def test_prometheus_metrics_include_api_counters(configured_app: FastAPI) -> None:
+    client = TestClient(configured_app)
+    response = client.get("/health")
+    assert response.status_code == 200
+
+    configured_app.state.metrics.set_process_resource_usage(
+        "inference_api", cpu_percent=0.0, memory_bytes=0.0, memory_percent=0.0
+    )
+
+    metrics_response = client.get("/metrics")
+    assert metrics_response.status_code == 200
+    body = metrics_response.text
+    assert "tradepulse_api_requests_total" in body
+    assert 'route="/health"' in body
+    assert "tradepulse_api_request_latency_seconds_count" in body
+
+
 def test_health_probe_reflects_kill_switch(configured_app: FastAPI) -> None:
     app = configured_app
     app.state.risk_manager.kill_switch.trigger("scheduled maintenance")
