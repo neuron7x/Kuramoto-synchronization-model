@@ -94,3 +94,34 @@ def test_portfolio_aggregation_is_weighted_average():
     assert math.isfinite(aggregated.theta)
     assert -1.0 <= aggregated.kappa <= 1.0
     assert math.isfinite(aggregated.divergence)
+
+
+def test_portfolio_aggregation_preserves_divergence_for_short_weights():
+    long_snapshot = DivConvSnapshot(
+        price_gradient=np.array([2.0, 0.0]),
+        flow_gradient=np.array([0.5, 1.5]),
+        theta=compute_theta([2.0, 0.0], [0.5, 1.5]),
+        kappa=compute_kappa([2.0, 0.0], [0.5, 1.5]),
+        divergence=3.0,
+    )
+    short_snapshot = DivConvSnapshot(
+        price_gradient=np.array([0.5, 1.5]),
+        flow_gradient=np.array([1.5, 0.5]),
+        theta=compute_theta([0.5, 1.5], [1.5, 0.5]),
+        kappa=compute_kappa([0.5, 1.5], [1.5, 0.5]),
+        divergence=1.2,
+    )
+
+    signals = [
+        DivConvSignal(asset_id="LONG", snapshot=long_snapshot, risk_weight=0.6, exposure=1.0),
+        DivConvSignal(asset_id="SHORT", snapshot=short_snapshot, risk_weight=-0.4, exposure=1.0),
+    ]
+
+    aggregated = aggregate_signals(signals)
+    total_abs_weight = sum(abs(signal.risk_weight) for signal in signals)
+    expected_divergence = sum(
+        abs(signal.risk_weight) / total_abs_weight * signal.snapshot.divergence
+        for signal in signals
+    )
+    assert math.isclose(aggregated.divergence, expected_divergence)
+    assert aggregated.divergence >= 0.0

@@ -257,7 +257,7 @@ def aggregate_signals(
     for (signal, _), weight in zip(snapshots, weights):
         price_grad = price_grad + weight * signal.snapshot.price_gradient
         flow_grad = flow_grad + weight * signal.snapshot.flow_gradient
-        divergence += weight * signal.snapshot.divergence
+        divergence += np.abs(weight) * signal.snapshot.divergence
 
     theta = compute_theta(price_grad, flow_grad)
     kappa = compute_kappa(price_grad, flow_grad)
