@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from execution.risk import RiskLimits, RiskManager
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
 
@@ -28,6 +30,14 @@ def test_facade_engage_reaffirms_without_new_reason() -> None:
     assert reaffirmed.already_engaged is True
     assert reaffirmed.reason == "initial reason"
     assert manager.kill_switch.reason == "initial reason"
+
+
+def test_facade_engage_requires_reason_for_first_activation() -> None:
+    manager = RiskManager(RiskLimits())
+    facade = RiskManagerFacade(manager)
+
+    with pytest.raises(ValueError):
+        facade.engage_kill_switch("   ")
 
 
 def test_facade_reset_returns_previous_reason() -> None:
