@@ -28,11 +28,12 @@ jobs:
         run: |
           pytest --cov=./ --cov-report=xml --cov-fail-under=80
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
-          token: ${{ secrets.CODECOV_TOKEN }} # Додайте цей секрет у налаштуваннях репозиторію
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:

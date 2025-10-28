@@ -102,6 +102,8 @@ jobs:
       matrix:
         python-version: ['3.11']
     name: Tests (Python ${{ matrix.python-version }})
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v5
       - name: Set up Go
@@ -257,7 +259,7 @@ jobs:
 
           if branch_rate < 90.0:
               raise SystemExit(f"Branch coverage {branch_rate:.2f}% is below the required 90% threshold")
-      PY
+          PY
       - name: Update missing-coverage label
         if: ${{ github.event_name == 'pull_request' && matrix.python-version == '3.11' }}
         uses: actions/github-script@v7
@@ -354,14 +356,14 @@ jobs:
             coverage_html
           if-no-files-found: error
       - name: Upload coverage to Codecov (with token)
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           flags: py${{ matrix.python-version }}
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
       - name: Upload coverage to Codecov (OIDC)
-        if: ${{ secrets.CODECOV_TOKEN == '' }}
+        if: ${{ env.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
