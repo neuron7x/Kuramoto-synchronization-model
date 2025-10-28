@@ -41,6 +41,64 @@ type AuthContextValue = {
 const PUBLIC_ROUTES = ['/signin']
 const AUTH_BROADCAST_CHANNEL = 'tp.auth:channel'
 const REFRESH_THRESHOLD_MS = 60_000
+const CSRF_COOKIE_NAME = 'tp.csrfToken'
+const CSRF_HEADER_NAME = 'x-tradepulse-csrf'
+
+function readCookie(name: string): string | null {
+  if (typeof document === 'undefined') {
+    return null
+  }
+  const entries = document.cookie ? document.cookie.split(';') : []
+  for (const entry of entries) {
+    const trimmed = entry.trim()
+    if (!trimmed) {
+      continue
+    }
+    const separatorIndex = trimmed.indexOf('=')
+    const cookieName = separatorIndex >= 0 ? trimmed.slice(0, separatorIndex) : trimmed
+    if (cookieName === name) {
+      const value = separatorIndex >= 0 ? trimmed.slice(separatorIndex + 1) : ''
+      try {
+        return decodeURIComponent(value)
+      } catch {
+        return value
+      }
+    }
+  }
+  return null
+}
+
+function generateCsrfToken(): string | null {
+  if (typeof crypto === 'undefined') {
+    return null
+  }
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  if (typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16)
+    crypto.getRandomValues(bytes)
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  }
+  return null
+}
+
+function ensureCsrfToken(): string | null {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return null
+  }
+  const existing = readCookie(CSRF_COOKIE_NAME)
+  if (existing) {
+    return existing
+  }
+  const generated = generateCsrfToken()
+  if (!generated) {
+    return null
+  }
+  const secureFlag = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${CSRF_COOKIE_NAME}=${encodeURIComponent(generated)}; Path=/; SameSite=Strict${secureFlag}`
+  return generated
+}
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
@@ -55,6 +113,7 @@ async function requestRefresh(): Promise<StoredAccessToken> {
     headers: {
       'content-type': 'application/json',
     },
+    credentials: 'same-origin',
     cache: 'no-store',
   })
 
@@ -71,11 +130,17 @@ async function requestRefresh(): Promise<StoredAccessToken> {
 }
 
 async function setRefreshCookie(session: AuthSession): Promise<void> {
+  const csrfToken = ensureCsrfToken()
+  if (!csrfToken) {
+    throw new Error('CSRF token unavailable for session persistence')
+  }
   const response = await fetch('/api/auth/session', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      [CSRF_HEADER_NAME]: csrfToken,
     },
+    credentials: 'same-origin',
     cache: 'no-store',
     body: JSON.stringify({ refreshToken: session.refreshToken, expiresAt: session.refreshTokenExpiresAt }),
   })
@@ -86,9 +151,17 @@ async function setRefreshCookie(session: AuthSession): Promise<void> {
 }
 
 async function clearRefreshCookie(): Promise<void> {
+  const csrfToken = ensureCsrfToken()
+  if (!csrfToken) {
+    throw new Error('CSRF token unavailable for session revocation')
+  }
   const response = await fetch('/api/auth/session', {
     method: 'DELETE',
+    headers: {
+      [CSRF_HEADER_NAME]: csrfToken,
+    },
     cache: 'no-store',
+    credentials: 'same-origin',
   })
 
   if (!response.ok) {

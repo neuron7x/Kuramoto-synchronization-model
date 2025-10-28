@@ -38,6 +38,23 @@ function safeExternalUrl(url) {
   return '#';
 }
 
+const SAFE_COLOR_PATTERN =
+  /^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\(\s*(?:\d{1,3}\s*,\s*){2}\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)|hsla?\(\s*\d{1,3}(?:\.\d+)?\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(?:,\s*(?:0|1|0?\.\d+))?\s*\)|[a-zA-Z]{1,20})$/;
+
+function sanitizeCssColor(value, fallback = '#38bdf8') {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+  if (SAFE_COLOR_PATTERN.test(trimmed)) {
+    return trimmed;
+  }
+  return fallback;
+}
+
 function formatTemplate(template, params = {}) {
   if (typeof template !== 'string') {
     return '';
@@ -441,10 +458,11 @@ function renderLanguageBar(language) {
   const name = language?.name || 'Unknown';
   const share = clamp01(language?.share ?? language?.percent ?? language?.percentage ?? 0);
   const percentLabel = formatPercent(share, { maximumFractionDigits: 1 });
+  const swatchColor = sanitizeCssColor(language?.color, '#38bdf8');
   return `
     <li class="tp-github-language">
       <div class="tp-github-language__label">
-        <span class="tp-github-language__swatch" style="--tp-language-color: ${escapeHtml(language?.color || '#38bdf8')};"></span>
+        <span class="tp-github-language__swatch" style="--tp-language-color: ${escapeHtml(swatchColor)};"></span>
         <span>${escapeHtml(String(name))}</span>
       </div>
       <div class="tp-progress tp-progress--slim" role="presentation">
