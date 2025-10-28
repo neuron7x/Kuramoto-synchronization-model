@@ -15,12 +15,15 @@ from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from application.settings import ApiSecuritySettings
+from application.secrets.manager import SecretManagerError
+from application.security.two_factor import verify_totp_code
 from src.admin.remote_control import AdminIdentity
 
 __all__ = [
     "verify_request_identity",
     "verify_optional_request_identity",
     "get_api_security_settings",
+    "require_two_factor",
 ]
 
 
@@ -390,6 +393,63 @@ def verify_request_identity(*, require_client_certificate: bool = False) -> Call
         return AdminIdentity(subject=subject, roles=roles)
 
     return dependency
+
+
+def require_two_factor(
+    *,
+    secret_provider: Callable[[], str],
+    header_name: str,
+    digits: int,
+    period_seconds: int,
+    drift_windows: int,
+    algorithm: str,
+    identity_dependency: Callable[..., Awaitable[AdminIdentity]] | None = None,
+    clock: Callable[[], datetime] | None = None,
+) -> Callable[[Request, AdminIdentity], Awaitable[AdminIdentity]]:
+    """Return a dependency that enforces TOTP-based two-factor authentication."""
+
+    if digits <= 0:
+        raise ValueError("digits must be positive")
+    if period_seconds <= 0:
+        raise ValueError("period_seconds must be positive")
+    if drift_windows < 0:
+        raise ValueError("drift_windows must be non-negative")
+    dependency = identity_dependency or verify_request_identity()
+
+    async def _dependency(
+        request: Request,
+        identity: AdminIdentity = Depends(dependency),
+    ) -> AdminIdentity:
+        code = request.headers.get(header_name)
+        if code is None or not code.strip():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Two-factor authentication code required for this endpoint.",
+            )
+        try:
+            secret = secret_provider()
+        except SecretManagerError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Two-factor authentication secret is unavailable.",
+            ) from exc
+        moment = clock() if clock is not None else datetime.now(timezone.utc)
+        if not verify_totp_code(
+            secret,
+            code,
+            timestamp=moment,
+            period_seconds=period_seconds,
+            digits=digits,
+            drift_windows=drift_windows,
+            algorithm=algorithm,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired two-factor authentication code.",
+            )
+        return identity
+
+    return _dependency
 
 
 def verify_optional_request_identity(

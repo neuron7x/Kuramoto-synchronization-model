@@ -64,6 +64,20 @@ def test_secret_manager_prefers_file_value(tmp_path):
     assert manager.get("audit_secret") == "rotated-file-secret-value"
 
 
+def test_two_factor_secret_path_overrides_inline_value(tmp_path):
+    path = tmp_path / "two_factor_secret"
+    path.write_text("JBSWY3DPEHPK3PXP", encoding="utf-8")
+    settings = AdminApiSettings(
+        audit_secret="explicit-secret-value",
+        two_factor_secret="MFRGGZDFMZTWQ2LK",
+        two_factor_secret_path=path,
+    )
+
+    manager = settings.build_secret_manager()
+
+    assert manager.get("two_factor_secret") == "JBSWY3DPEHPK3PXP"
+
+
 def test_siem_secret_path_satisfies_validation(tmp_path):
     secret_path = tmp_path / "siem_secret"
     secret_path.write_text("siem-client-secret-value", encoding="utf-8")
@@ -86,6 +100,15 @@ def test_missing_siem_secret_raises(monkeypatch):
             audit_secret="explicit-secret-value",
             siem_endpoint="https://siem.example.com/ingest",
             siem_client_id="siem-client",
+        )
+
+
+def test_invalid_two_factor_secret_rejected(monkeypatch):
+    monkeypatch.delenv("TRADEPULSE_TWO_FACTOR_SECRET", raising=False)
+    with pytest.raises(ValueError):
+        AdminApiSettings(
+            audit_secret="explicit-secret-value",
+            two_factor_secret="invalid-secret",
         )
 
 
