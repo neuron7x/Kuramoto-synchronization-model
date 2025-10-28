@@ -12,37 +12,98 @@ jobs:
   test-coverage:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.11']
-    name: Test Coverage (Python ${{ matrix.python-version }})
-    
+        shard: [1, 2, 3]
+    name: Test Coverage — shard ${{ matrix.shard }} of ${{ strategy.job-total }}
+    env:
+      COVERAGE_FILE: .coverage.${{ matrix.shard }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      
-      - name: Set up Python ${{ matrix.python-version }}
+
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
-      
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
-          pip install "pytest-cov>=7.0.0,<8"
 
-      - name: Run tests with coverage
+      - name: Run tests with coverage (shard ${{ matrix.shard }})
         run: |
           pytest \
             --cov=core \
             --cov=backtest \
             --cov=execution \
             --cov-config=configs/quality/critical_surface.coveragerc \
-            --cov-report=xml \
-            --cov-report=term-missing
+            --cov-report=term-missing \
+            --splits ${{ strategy.job-total }} \
+            --group ${{ matrix.shard }}
+
+      - name: Generate shard coverage report
+        run: python -m coverage xml -i -o coverage-${{ matrix.shard }}.xml
+
+      - name: Upload shard coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ matrix.shard }}
+          path: |
+            .coverage.${{ matrix.shard }}
+            coverage-${{ matrix.shard }}.xml
+
+  coverage-aggregate:
+    runs-on: ubuntu-latest
+    needs: test-coverage
+    name: Aggregate coverage & enforce guardrail
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install coverage tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt coverage
+
+      - name: Download shard coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-data-*
+          merge-multiple: true
+          path: .
+
+      - name: Combine coverage data
+        run: |
+          python -m coverage combine
+          python -m coverage xml -i -o coverage.xml
 
       - name: Enforce reliability coverage guardrail
         run: |
@@ -50,18 +111,12 @@ jobs:
             --config configs/quality/critical_surface.toml \
             --coverage coverage.xml
 
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.xml
-
       - name: Upload coverage to Codecov
         if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
-          flags: py${{ matrix.python-version }}
-          name: coverage-py${{ matrix.python-version }}
+          flags: py311
+          name: coverage-py311
           fail_ci_if_error: true
