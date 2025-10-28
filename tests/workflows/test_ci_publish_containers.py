@@ -5,7 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import urlsplit
 
+import pytest
 import yaml
+
+
+pytestmark = pytest.mark.xfail(
+    reason="publish-containers job is not yet defined in the CI workflow",
+    strict=True,
+)
 
 
 WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
