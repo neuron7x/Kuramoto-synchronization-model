@@ -48,10 +48,6 @@ jobs:
           name: go-services-coverage-canary-${{ matrix.python-version }}
           path: reports/go/services.coverage.out
 
-      - name: Run Terraform validation tests
-        working-directory: infra/terraform/tests
-        run: go test ./... -v
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:

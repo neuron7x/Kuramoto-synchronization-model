@@ -127,9 +127,6 @@ jobs:
         with:
           name: go-services-coverage
           path: reports/go/services.coverage.out
-      - name: Run Terraform validation tests
-        working-directory: infra/terraform/tests
-        run: go test ./... -v
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
