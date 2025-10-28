@@ -1,0 +1,57 @@
+name: CI — Pin Terraform version
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -euo pipefail
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  terraform-validate:
+    name: Terraform validation tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum', 'infra/terraform/tests/go.sum') }}
+          restore-keys: |
+            go-${{ runner.os }}-
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.6.6'
+
+      - name: Verify Terraform version
+        run: terraform version
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Run Terraform-related Go tests
+        env:
+          CI: true
+        run: go test ./infra/terraform/tests/... -v -count=1

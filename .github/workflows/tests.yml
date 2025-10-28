@@ -4,6 +4,14 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -euo pipefail
+
 on:
   push:
     branches: [ main, develop ]
@@ -38,50 +46,39 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements.lock
-            requirements-dev.txt
-            requirements-dev.lock
-            constraints/security.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Cache pre-commit environments
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Create virtual environment
-        run: python -m venv .venv
-      - name: Install Python dependencies
-        run: |
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
-          .venv/bin/pip install pre-commit detect-secrets
+      - name: Install linters & tooling extras
+        run: uv pip install pre-commit==3.8.0 detect-secrets==1.5.0 shellcheck-py==0.9.0.6
       - name: Validate localization bundles
-        run: .venv/bin/python scripts/localization/sync_translations.py --check
-      - name: Install shellcheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
+        run: uv run python scripts/localization/sync_translations.py --check
       - name: Run ruff
-        run: .venv/bin/ruff check .
+        run: uv run ruff check .
       - name: Run black
-        run: .venv/bin/black --check .
+        run: uv run black --check .
       - name: Run mypy
-        run: .venv/bin/mypy
+        run: uv run mypy
       - name: Run slotscheck
-        run: .venv/bin/python -m slotscheck --module core --module backtest --module execution
+        run: uv run python -m slotscheck --module core --module backtest --module execution
       - name: Run shfmt
-        run: .venv/bin/pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
+        run: uv run pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
       - name: Run shellcheck
-        run: .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
+        run: uv run pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
       - name: Run detect-secrets scan
         run: |
-          set -euo pipefail
           scan_output="$(mktemp)"
-          .venv/bin/detect-secrets scan core backtest execution src application >"$scan_output"
-          python - <<'PY' "$scan_output"
+          uv run detect-secrets scan core backtest execution src application >"$scan_output"
+          uv run python - <<'PY' "$scan_output"
           import json
           import sys
 
@@ -134,31 +131,24 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements.lock
-            requirements-dev.txt
-            requirements-dev.lock
-            constraints/security.txt
-      - name: Create virtual environment
-        run: python -m venv .venv
-      - name: Install dependencies
-        run: |
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Prepare test report directories
         run: |
           mkdir -p reports
       - name: Sync localization resources
         run: |
-          .venv/bin/python scripts/localization/sync_translations.py
+          uv run python scripts/localization/sync_translations.py
 
       - name: Summarize localization coverage
         id: localization_summary
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           import json
           import os
           import pathlib
@@ -202,7 +192,7 @@ jobs:
           path: reports/localization/coverage.json
       - name: Run unit and integration tests with coverage
         run: |
-          .venv/bin/python -m pytest \
+          uv run pytest \
             -m "not flaky" \
             tests/ \
             --cov=core --cov=backtest --cov=execution \
@@ -214,14 +204,14 @@ jobs:
             --flaky-report=reports/flaky-tests-skipped.json
       - name: Run end-to-end smoke tests
         run: |
-          .venv/bin/python -m pytest tests/e2e/ \
+          uv run pytest tests/e2e/ \
             -m "not slow and not flaky" \
             --junitxml=reports/e2e-tests.xml \
             --html=reports/e2e-report.html --self-contained-html
       - name: Publish coverage summary
         id: coverage_summary
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           import os
           import pathlib
           import xml.etree.ElementTree as ET
@@ -281,7 +271,7 @@ jobs:
             }
       - name: Run property-based tests with statistics
         run: |
-          .venv/bin/python -m pytest tests/property/ --hypothesis-show-statistics \
+          uv run pytest tests/property/ --hypothesis-show-statistics \
             --junitxml=reports/property-tests.xml \
             --html=reports/property-tests-report.html --self-contained-html
       - name: Summarize pytest results
@@ -373,26 +363,21 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements.lock
-            requirements-dev.txt
-            requirements-dev.lock
-            constraints/security.txt
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -c constraints/security.txt -r requirements.txt
-          python -m pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Run static security analysis (Bandit)
         run: |
-          python -m tools.security.sast \
+          uv run python -m tools.security.sast \
             --fail-on-severity MEDIUM \
             --output reports/security/bandit.json \
             --summary reports/security/sast_summary.json
       - name: Run dynamic security probes
-        run: python -m tools.security.dast_probe --report reports/security/dast_report.json
+        run: uv run python -m tools.security.dast_probe --report reports/security/dast_report.json
       - name: Upload security reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -415,13 +400,15 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -c constraints/security.txt -r requirements.txt
-          python -m pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.11'
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Run targeted mutation suite
-        run: python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
+        run: uv run python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
       - name: Upload trading engine mutation artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -484,25 +471,18 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements.lock
-            requirements-dev.txt
-            requirements-dev.lock
-            constraints/security.txt
-      - name: Create virtual environment
-        run: python -m venv .venv
-      - name: Install dependencies
-        run: |
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.11'
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Run performance benchmarks
         id: run_benchmarks
         run: |
           mkdir -p "$TP_BENCHMARK_ARTIFACT_DIR"
-          .venv/bin/python -m pytest tests/performance \
+          uv run pytest tests/performance \
             --benchmark-only \
             --benchmark-autosave \
             --benchmark-save=ci-latest \
@@ -512,7 +492,7 @@ jobs:
         if: always()
         id: benchmark_summary
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           import json
           import math
           import os
@@ -628,23 +608,16 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements.lock
-            requirements-dev.txt
-            requirements-dev.lock
-            constraints/security.txt
-      - name: Create virtual environment
-        run: python -m venv .venv
-      - name: Install dependencies
-        run: |
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.11'
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Run pytest in parallel with profiling
         run: |
-          .venv/bin/python -m pytest tests/ -n auto --durations=20 --profile
+          uv run pytest tests/ -n auto --durations=20 --profile
       - name: Collect profiling artifacts
         if: always()
         run: |
@@ -704,31 +677,24 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements.lock
-            requirements-dev.txt
-            requirements-dev.lock
-            constraints/security.txt
-      - name: Create virtual environment
-        run: python -m venv .venv
-      - name: Install dependencies
-        run: |
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.11'
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Prepare test report directories
         run: |
           mkdir -p reports
       - name: Sync localization resources
         run: |
-          .venv/bin/python scripts/localization/sync_translations.py
+          uv run python scripts/localization/sync_translations.py
 
       - name: Summarize localization coverage
         id: localization_summary
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           import json
           import os
           import pathlib
@@ -775,7 +741,7 @@ jobs:
         run: |
           set -o pipefail
           set +e
-          .venv/bin/python -m pytest tests/ -m flaky \
+          uv run pytest tests/ -m flaky \
             --reruns=2 --reruns-delay=2 \
             --junitxml=reports/flaky-tests.xml \
             --html=reports/flaky-tests-report.html --self-contained-html \

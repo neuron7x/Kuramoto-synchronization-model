@@ -1,5 +1,9 @@
 name: Deploy TradePulse Environments
 
+defaults:
+  run:
+    shell: bash -euo pipefail
+
 on:
   push:
     branches:
@@ -57,10 +61,12 @@ jobs:
           terraform_version: 1.6.6
 
       - name: Terraform init (backend disabled)
-        run: terraform -chdir=infra/terraform/eks init -backend=false
+        run: |
+          cd infra/terraform/eks
+          terraform init -backend=false -input=false
 
       - name: Terraform fmt
-        run: terraform -chdir=infra/terraform/eks fmt -check
+        run: terraform -chdir=infra/terraform/eks fmt -check -recursive
 
       - name: Terraform validate
         run: terraform -chdir=infra/terraform/eks validate -no-color
@@ -68,7 +74,10 @@ jobs:
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2
         with:
-          kustomize-version: '5.4.1'
+          kustomize-version: '5.4.3'
+
+      - name: Verify kustomize installation
+        run: kustomize version
 
       - name: Validate staging manifest build
         run: kustomize build deploy/kustomize/overlays/staging >/tmp/staging.yaml
@@ -89,14 +98,16 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -c constraints/security.txt -r requirements.txt
-          python -m pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: '3.11'
+          enable-cache: true
+      - name: Synchronize dependencies
+        run: uv pip sync requirements-dev.lock
       - name: Run smoke tests
         run: |
-          python -m pytest tests/smoke -m smoke -q
+          uv run pytest tests/smoke -m smoke -q
 
   deploy-staging:
     if: github.repository == 'neuron7x/TradePulse' && ((github.event_name == 'push' && github.ref == 'refs/heads/staging') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' && github.event.inputs.environment == 'staging'))
@@ -158,7 +169,7 @@ jobs:
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
         uses: imranismail/setup-kustomize@v2
         with:
-          kustomize-version: '5.4.1'
+          kustomize-version: '5.4.3'
 
       - name: Install PyYAML for manifest templating
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
@@ -315,7 +326,7 @@ PY
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2
         with:
-          kustomize-version: '5.4.1'
+          kustomize-version: '5.4.3'
 
       - name: Install PyYAML for manifest templating
         run: pip install --user --upgrade pyyaml
@@ -529,7 +540,7 @@ PY
         if: steps.rollback_strategy.outputs.mode == 'redeploy'
         uses: imranismail/setup-kustomize@v2
         with:
-          kustomize-version: '5.4.1'
+          kustomize-version: '5.4.3'
 
       - name: Redeploy manifests from target revision
         if: steps.rollback_strategy.outputs.mode == 'redeploy'
