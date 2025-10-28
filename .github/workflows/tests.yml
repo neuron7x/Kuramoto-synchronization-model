@@ -429,15 +429,13 @@ jobs:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
-          flags: py${{ matrix.python-version }}
-          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage to Codecov (OIDC)
         if: ${{ secrets.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
-          flags: py${{ matrix.python-version }}
-          name: py${{ matrix.python-version }}-coverage
+          flags: py311
+          name: py311-coverage
           fail_ci_if_error: false
           use_oidc: true
 
