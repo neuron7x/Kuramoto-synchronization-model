@@ -4,13 +4,24 @@ service:
   description: Cognitive signal orchestration for TradePulse portfolios
   metrics_path: /metrics
   log_level: INFO
+  host: 0.0.0.0
+  port: 8001
+  tls:
+    cert_file: /service/tls/cortex-server.pem
+    key_file: /service/tls/cortex-server.key.pem
+    client_ca_file: /service/tls/root-ca.pem
+    require_client_certificate: false
 
 
 database:
-  url: postgresql+psycopg://cortex:cortex@cortex-db:5432/cortex
+  url: postgresql+psycopg://cortex@cortex-db:5432/cortex?sslmode=verify-full
   pool_size: 10
   pool_timeout: 30
   echo: false
+  tls:
+    ca_file: /service/tls/root-ca.pem
+    cert_file: /service/tls/cortex-db-client.pem
+    key_file: /service/tls/cortex-db-client.key.pem
 
 signals:
   rescale_min: -1.0

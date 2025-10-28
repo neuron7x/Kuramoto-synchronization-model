@@ -9,9 +9,65 @@ from typing import Any
 
 import yaml
 
+from core.security import DEFAULT_HTTP_ALPN_PROTOCOLS, DEFAULT_MODERN_CIPHER_SUITES, parse_tls_version
+
 
 CONFIG_ENV_PREFIX = "CORTEX__"
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "service.yaml"
+
+
+class ConfigurationError(RuntimeError):
+    """Raised when configuration cannot be loaded or validated."""
+
+
+def _ensure_file(path: Path, *, description: str) -> Path:
+    if not path.exists():
+        raise ConfigurationError(f"{description} '{path}' does not exist")
+    if not path.is_file():
+        raise ConfigurationError(f"{description} '{path}' must be a file")
+    return path
+
+
+def _normalise_sequence(values: tuple[str, ...] | list[str] | str) -> tuple[str, ...]:
+    if isinstance(values, str):
+        candidates = [item.strip() for item in values.split(",")]
+    else:
+        candidates = [str(item).strip() for item in values]
+    return tuple(dict.fromkeys(item for item in candidates if item))
+
+
+@dataclass(slots=True)
+class ServiceTLSSettings:
+    """TLS parameters securing the cortex HTTP listener."""
+
+    cert_file: Path
+    key_file: Path
+    client_ca_file: Path | None = None
+    client_revocation_list_file: Path | None = None
+    require_client_certificate: bool = False
+    minimum_version: str = "TLSv1.2"
+    cipher_suites: tuple[str, ...] = DEFAULT_MODERN_CIPHER_SUITES
+    alpn_protocols: tuple[str, ...] = DEFAULT_HTTP_ALPN_PROTOCOLS
+
+    def __post_init__(self) -> None:
+        self.cert_file = _ensure_file(Path(self.cert_file), description="TLS certificate")
+        self.key_file = _ensure_file(Path(self.key_file), description="TLS private key")
+        if self.client_ca_file is not None:
+            self.client_ca_file = _ensure_file(
+                Path(self.client_ca_file), description="Trusted client CA bundle"
+            )
+        if self.client_revocation_list_file is not None:
+            self.client_revocation_list_file = _ensure_file(
+                Path(self.client_revocation_list_file),
+                description="Client certificate revocation list",
+            )
+        self.cipher_suites = _normalise_sequence(self.cipher_suites)
+        self.alpn_protocols = _normalise_sequence(self.alpn_protocols)
+        parse_tls_version(self.minimum_version)
+        if self.require_client_certificate and self.client_ca_file is None:
+            raise ConfigurationError(
+                "Client certificate authentication requires a trusted CA bundle"
+            )
 
 
 @dataclass(slots=True)
@@ -23,6 +79,9 @@ class ServiceMeta:
     description: str = "Cognitive signal orchestration for TradePulse portfolios"
     metrics_path: str = "/metrics"
     log_level: str = "INFO"
+    host: str = "0.0.0.0"
+    port: int = 8001
+    tls: ServiceTLSSettings | None = None
 
 
 @dataclass(slots=True)
@@ -33,6 +92,21 @@ class DatabaseSettings:
     pool_size: int = 10
     pool_timeout: int = 30
     echo: bool = False
+    tls: "DatabaseTLSSettings" | None = None
+
+
+@dataclass(slots=True)
+class DatabaseTLSSettings:
+    """TLS credentials required for PostgreSQL connectivity."""
+
+    ca_file: Path
+    cert_file: Path
+    key_file: Path
+
+    def __post_init__(self) -> None:
+        self.ca_file = _ensure_file(Path(self.ca_file), description="PostgreSQL CA bundle")
+        self.cert_file = _ensure_file(Path(self.cert_file), description="PostgreSQL client certificate")
+        self.key_file = _ensure_file(Path(self.key_file), description="PostgreSQL client key")
 
 
 @dataclass(slots=True)
@@ -73,10 +147,6 @@ class CortexSettings:
     signals: SignalSettings
     risk: RiskSettings
     regime: RegimeSettings
-
-
-class ConfigurationError(RuntimeError):
-    """Raised when configuration cannot be loaded or validated."""
 
 
 def _deep_update(mapping: dict[str, Any], path: list[str], value: Any) -> None:
@@ -120,9 +190,19 @@ def load_settings(config_path: str | os.PathLike[str] | None = None) -> CortexSe
     raw_config = _load_yaml_config(resolved_path)
     merged_config = _apply_env_overrides(raw_config)
 
+    service_payload = dict(merged_config.get("service", {}))
+    tls_payload = service_payload.get("tls")
+    if isinstance(tls_payload, dict):
+        service_payload["tls"] = ServiceTLSSettings(**tls_payload)
+
+    database_payload = dict(merged_config.get("database", {}))
+    db_tls_payload = database_payload.get("tls")
+    if isinstance(db_tls_payload, dict):
+        database_payload["tls"] = DatabaseTLSSettings(**db_tls_payload)
+
     try:
-        service = ServiceMeta(**merged_config.get("service", {}))
-        database = DatabaseSettings(**merged_config.get("database", {}))
+        service = ServiceMeta(**service_payload)
+        database = DatabaseSettings(**database_payload)
         signals = SignalSettings(**merged_config.get("signals", {}))
         risk_config = merged_config.get("risk", {})
         stress = risk_config.get("stress_scenarios", (0.85, 0.5))
@@ -140,10 +220,12 @@ __all__ = [
     "ConfigurationError",
     "CortexSettings",
     "DatabaseSettings",
+    "DatabaseTLSSettings",
     "DEFAULT_CONFIG_PATH",
     "RiskSettings",
     "RegimeSettings",
     "ServiceMeta",
+    "ServiceTLSSettings",
     "SignalSettings",
     "load_settings",
 ]

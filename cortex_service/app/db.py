@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from typing import Callable, Iterator
+from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from .config import CortexSettings
+from .config import ConfigurationError, CortexSettings
 
 
 class Base(DeclarativeBase):
@@ -32,13 +33,30 @@ def create_db_engine(settings: CortexSettings) -> Engine:
             connect_args={"check_same_thread": False},
             poolclass=StaticPool,
         )
-    return create_engine(
-        url,
-        echo=settings.database.echo,
-        pool_size=settings.database.pool_size,
-        pool_timeout=settings.database.pool_timeout,
-        future=True,
-    )
+    connect_kwargs: dict[str, object] = {
+        "echo": settings.database.echo,
+        "pool_size": settings.database.pool_size,
+        "pool_timeout": settings.database.pool_timeout,
+        "future": True,
+    }
+    parsed = urlparse(url)
+    if parsed.scheme.startswith("postgres"):
+        tls = settings.database.tls
+        if tls is None:
+            raise ConfigurationError("PostgreSQL connections require TLS credentials")
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        sslmode = (params.get("sslmode") or [None])[-1]
+        if sslmode not in {"verify-full", "verify-ca"}:
+            raise ConfigurationError(
+                "PostgreSQL connections must set sslmode to verify-full or verify-ca"
+            )
+        connect_kwargs["connect_args"] = {
+            "sslmode": sslmode,
+            "sslrootcert": str(tls.ca_file),
+            "sslcert": str(tls.cert_file),
+            "sslkey": str(tls.key_file),
+        }
+    return create_engine(url, **connect_kwargs)
 
 
 def configure_session_factory(engine: Engine) -> None:

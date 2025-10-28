@@ -20,6 +20,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    ValidationInfo,
     HttpUrl,
     PositiveFloat,
     PositiveInt,
@@ -32,6 +33,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from core.config.cli_models import PostgresTLSConfig
 from core.config.postgres import ensure_secure_postgres_uri
+from core.security import (
+    DEFAULT_HTTP_ALPN_PROTOCOLS,
+    DEFAULT_MODERN_CIPHER_SUITES,
+    parse_tls_version,
+)
 
 
 def _default_config_vault_key() -> SecretStr:
@@ -123,6 +129,140 @@ class ConfigNamespaceSettings(BaseModel):
         return self.model_copy(update={"readers": readers, "writers": writers})
 
     model_config = ConfigDict(extra="forbid")
+
+
+class ApiServerTLSSettings(BaseModel):
+    """TLS certificate bundle used to secure the external TradePulse API."""
+
+    certificate: Path = Field(
+        ..., alias="cert_file", description="PEM encoded certificate chain presented to clients."
+    )
+    private_key: Path = Field(
+        ..., alias="key_file", description="Private key paired with the server certificate."
+    )
+    client_ca: Path | None = Field(
+        default=None,
+        alias="client_ca_file",
+        description="Optional CA bundle trusted for client certificate authentication.",
+    )
+    client_revocation_list: Path | None = Field(
+        default=None,
+        alias="client_revocation_list_file",
+        description="Optional certificate revocation list enforced for mutual TLS.",
+    )
+    require_client_certificate: bool = Field(
+        True,
+        description="Require connecting clients to present a trusted certificate.",
+    )
+    minimum_version: str = Field(
+        "TLSv1.2",
+        description="Lowest TLS protocol version accepted for inbound requests.",
+    )
+    cipher_suites: tuple[str, ...] = Field(
+        DEFAULT_MODERN_CIPHER_SUITES,
+        description="TLS 1.2 cipher suites enabled for backwards compatible clients.",
+    )
+    alpn_protocols: tuple[str, ...] = Field(
+        DEFAULT_HTTP_ALPN_PROTOCOLS,
+        description="Application protocols announced during ALPN negotiation.",
+    )
+
+    @field_validator(
+        "certificate",
+        "private_key",
+        "client_ca",
+        "client_revocation_list",
+        mode="before",
+    )
+    @classmethod
+    def _coerce_path(cls, value: object) -> object:
+        if value is None or isinstance(value, Path):
+            return value
+        return Path(str(value))
+
+    @field_validator("cipher_suites", "alpn_protocols", mode="before")
+    @classmethod
+    def _normalise_sequence(
+        cls, value: object, info: ValidationInfo
+    ) -> tuple[str, ...]:
+        if value is None:
+            return ()
+        if isinstance(value, str):
+            candidates = [item.strip() for item in value.split(",")]
+        else:
+            candidates = [str(item).strip() for item in value]
+        cleaned = tuple(dict.fromkeys(item for item in candidates if item))
+        if not cleaned:
+            msg = f"{info.field_name.replace('_', ' ')} must not be empty"
+            raise ValueError(msg)
+        return cleaned
+
+    @field_validator("minimum_version")
+    @classmethod
+    def _validate_version(cls, value: str) -> str:
+        parse_tls_version(value)
+        return value
+
+    @model_validator(mode="after")
+    def _validate_files(self) -> "ApiServerTLSSettings":
+        for attribute in ("certificate", "private_key"):
+            candidate = getattr(self, attribute)
+            if not candidate.exists():
+                msg = f"{attribute.replace('_', ' ')} '{candidate}' does not exist"
+                raise ValueError(msg)
+            if not candidate.is_file():
+                msg = f"{attribute.replace('_', ' ')} '{candidate}' must be a file"
+                raise ValueError(msg)
+        for attribute in ("client_ca", "client_revocation_list"):
+            candidate = getattr(self, attribute)
+            if candidate is None:
+                continue
+            if not candidate.exists():
+                msg = f"{attribute.replace('_', ' ')} '{candidate}' does not exist"
+                raise ValueError(msg)
+            if not candidate.is_file():
+                msg = f"{attribute.replace('_', ' ')} '{candidate}' must be a file"
+                raise ValueError(msg)
+        if self.require_client_certificate and self.client_ca is None:
+            raise ValueError(
+                "Client certificate authentication requires a trusted CA bundle"
+            )
+        return self
+
+    def resolved_minimum_version(self) -> "ssl.TLSVersion":
+        """Return the negotiated minimum TLS version."""
+
+        import ssl  # Local import to avoid module level dependency.
+
+        return parse_tls_version(self.minimum_version)
+
+
+class ApiServerSettings(BaseSettings):
+    """Runtime configuration for the HTTPS listener."""
+
+    host: str = Field("0.0.0.0", description="Network interface bound by the API server.")
+    port: PositiveInt = Field(8000, description="TCP port exposed by the API server.")
+    allow_plaintext: bool = Field(
+        False,
+        description="Permit HTTP without TLS. Intended for specialised test harnesses only.",
+    )
+    tls: ApiServerTLSSettings | None = Field(
+        default=None,
+        description="Certificate material securing inbound HTTPS traffic.",
+    )
+
+    @model_validator(mode="after")
+    def _enforce_tls(self) -> "ApiServerSettings":
+        if not self.allow_plaintext and self.tls is None:
+            raise ValueError("TLS configuration is required for the TradePulse API server")
+        return self
+
+    model_config = SettingsConfigDict(
+        env_prefix="TRADEPULSE_API_SERVER_",
+        env_nested_delimiter="__",
+        extra="ignore",
+        secrets_dir=Path("/run/secrets"),
+    )
 
 
 class AdminApiSettings(BaseSettings):
@@ -709,6 +849,8 @@ class BackendRuntimeSettings(BaseSettings):
         return self.redact_patterns
 
 __all__ = [
+    "ApiServerTLSSettings",
+    "ApiServerSettings",
     "AdminApiSettings",
     "ApiSecuritySettings",
     "RateLimitPolicy",
