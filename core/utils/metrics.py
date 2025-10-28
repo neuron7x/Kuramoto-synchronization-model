@@ -1623,7 +1623,9 @@ class MetricsCollector:
         if _NUMPY_AVAILABLE:
             sampled_values = values[indices]
         else:
-            assert values_list is not None
+            if values_list is None:  # pragma: no cover - defensive guard
+                msg = "Expected list of values when NumPy is unavailable"
+                raise RuntimeError(msg)
             sampled_values = [values_list[index] for index in indices]
 
         self._clear_equity_curve(strategy)

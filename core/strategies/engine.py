@@ -439,8 +439,11 @@ class StrategyEngine:
     def _handle_signal(
         self, event: StrategyEngineEvent
     ) -> tuple[StrategyEngineEvent, ...]:
-        signal = event.payload
-        assert isinstance(signal, StrategySignal)  # for mypy narrowing
+        signal_payload = event.payload
+        if not isinstance(signal_payload, StrategySignal):
+            msg = "Signal events must carry StrategySignal payloads"
+            raise TypeError(msg)
+        signal = signal_payload
         assessment = self._risk_policy.assess(signal, mode=self._mode)
         adjusted_signal = assessment.apply(signal)
         dispatched: list[StrategyEngineEvent] = []
