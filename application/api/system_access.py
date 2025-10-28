@@ -33,6 +33,12 @@ from application.system import TradePulseSystem
 from application.trading import order_to_dto
 from domain import Order, OrderSide, OrderType, Position
 from core.utils.debug import VariableInspector
+from observability.audit.trail import (
+    AuditTrail,
+    AuditTrailError,
+    get_access_audit_trail,
+    get_system_audit_trail,
+)
 from observability.logging import configure_logging
 from observability.notifications import (
     EmailSender,
@@ -40,6 +46,8 @@ from observability.notifications import (
     SlackNotifier,
 )
 from src.admin.remote_control import AdminIdentity
+
+from application.api.middleware import AccessLogMiddleware
 
 
 def _read_version() -> str:
@@ -298,6 +306,7 @@ class SystemAccess:
         *,
         logger: logging.Logger | None = None,
         notifier: NotificationDispatcher | None = None,
+        audit_trail: AuditTrail | None = None,
     ) -> None:
         self._system = system
         self._started_at = datetime.now(timezone.utc)
@@ -307,6 +316,8 @@ class SystemAccess:
         self._version = _read_version()
         self._logger = logger or logging.getLogger("tradepulse.system_access")
         self._notifier = notifier
+        self._audit_trail = audit_trail or get_system_audit_trail()
+        self._auditable_levels = {"info", "warning", "error", "critical"}
 
     @property
     def version(self) -> str:
@@ -325,10 +336,29 @@ class SystemAccess:
             logger_method is None
         ):  # pragma: no cover - defensive guard for invalid level
             raise AttributeError(f"Unsupported log level requested: {level}")
-        payload = {"event": message, **fields}
-        if identity is not None:
-            payload.setdefault("subject", identity.subject)
-        logger_method(message, extra=payload)
+        audit_subject = identity.subject if identity is not None else None
+        logger_payload = {"event": message, **fields}
+        if audit_subject is not None:
+            logger_payload.setdefault("subject", audit_subject)
+        logger_method(message, extra=logger_payload)
+
+        if (
+            self._audit_trail is not None
+            and level.lower() in self._auditable_levels
+        ):
+            try:
+                self._audit_trail.record(
+                    message,
+                    severity=level.lower(),
+                    subject=audit_subject,
+                    details=fields,
+                )
+            except AuditTrailError:
+                self._logger.error(
+                    "system.audit.write_failed",
+                    extra={"event": message, "severity": level.lower()},
+                    exc_info=True,
+                )
 
     async def _notify_order_event(
         self,
@@ -682,7 +712,12 @@ def create_system_app(
         notification_settings
     )
     logger = logging.getLogger("tradepulse.system_access")
-    access = SystemAccess(system, logger=logger, notifier=notifier)
+    access = SystemAccess(
+        system,
+        logger=logger,
+        notifier=notifier,
+        audit_trail=get_system_audit_trail(),
+    )
 
     app = FastAPI(
         title="TradePulse System API",
@@ -691,6 +726,13 @@ def create_system_app(
     )
     app.state.system_access = access
     app.state.notification_dispatcher = notifier
+    app.add_middleware(
+        AccessLogMiddleware,
+        audit_trail=get_access_audit_trail(),
+        service="system_api",
+        capture_headers=("x-request-id", "x-correlation-id", "traceparent"),
+    )
+
     inspector = VariableInspector(
         redact_patterns=runtime_settings.redact_pattern_values()
     )

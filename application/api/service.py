@@ -51,6 +51,7 @@ from application.api.errors import (
 )
 from application.api.graphql_api import create_graphql_router
 from application.api.debug import install_debug_routes
+from application.api.middleware import AccessLogMiddleware
 from application.api.rate_limit import (
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
@@ -80,6 +81,7 @@ from execution.risk import (
     SQLiteKillSwitchStateStore,
 )
 from observability.health import HealthServer
+from observability.audit.trail import get_access_audit_trail
 from observability.logging import configure_logging
 from src.admin.remote_control import (
     AdminIdentity,
@@ -1555,6 +1557,13 @@ def create_app(
         await stream_manager.broadcast(event)
 
     configure_openapi(app)
+
+    app.add_middleware(
+        AccessLogMiddleware,
+        audit_trail=get_access_audit_trail(),
+        service="online_inference_api",
+        capture_headers=("x-request-id", "x-correlation-id", "traceparent"),
+    )
 
     app.add_middleware(
         CORSMiddleware,

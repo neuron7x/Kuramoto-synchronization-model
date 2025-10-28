@@ -6,6 +6,13 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
+from observability.audit.trail import (
+    get_access_audit_trail,
+    get_system_audit_trail,
+)
+
 os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
 
 _fixture_path = Path(__file__).parent / "fixtures" / "conftest.py"
@@ -21,3 +28,15 @@ spec.loader.exec_module(module)
 globals().update(
     {name: getattr(module, name) for name in dir(module) if not name.startswith("__")}
 )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def configure_audit_trails(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Isolate audit log files during the test run."""
+
+    tmp_dir = tmp_path_factory.mktemp("audit_trails")
+    get_access_audit_trail(tmp_dir / "access.jsonl")
+    get_system_audit_trail(tmp_dir / "system.jsonl")
+    yield
+    get_access_audit_trail("observability/audit/access.jsonl")
+    get_system_audit_trail("observability/audit/system.jsonl")
