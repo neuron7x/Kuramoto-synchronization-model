@@ -15,7 +15,7 @@ trading sessions.
    previous trading session (use `GET /admin/kill-switch` followed by
    `DELETE /admin/kill-switch` if required).
 3. **State directory** – ensure the state directory configured in
-   `LiveLoopConfig.state_dir` is writeable and backed up. Historical OMS state
+   `LiveLoopConfig.state_dir` is writable and backed up. Historical OMS state
    files are required for warm restarts and forensic analysis.
 4. **Metrics and logging** – confirm that the Prometheus collector and log
    aggregation pipelines are running to capture structured events emitted by

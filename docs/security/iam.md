@@ -67,7 +67,7 @@ RBAC scopes map to TradePulse capabilities across portfolio management, model op
 ## Least-Privilege Guardrails
 
 - **Segregation of duties** – No single user holds both `quant` and `trader` roles permanently. Exceptions need risk approval and expire within seven days.
-- **Scoped secrets** – Secret scopes mirror RBAC permissions. The vault broker issues dynamic credentials tagged with the requestor identity and role context.
+- **Scoped secrets** – Secret scopes mirror RBAC permissions. The vault broker issues dynamic credentials tagged with the requester identity and role context.
 - **Environment isolation** – Non-production roles map to separate namespaces (`dev`, `staging`) preventing privilege creep into production clusters.
 - **Observability** – Audit trails from FastAPI (`observability/audit/api_events.jsonl`) and IAM decisions (`observability/audit/iam_events.jsonl`) are correlated in the SIEM, enabling blast radius analysis and compliance reporting.
 
