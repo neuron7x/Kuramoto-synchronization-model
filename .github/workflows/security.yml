@@ -335,8 +335,40 @@ jobs:
         TRIVY_OUTCOME: ${{ steps.trivy-scan.outcome }}
         GRYPE_OUTCOME: ${{ steps.grype-scan.outcome }}
       run: |
-        if [ "$TRIVY_OUTCOME" = "failure" ] || [ "$GRYPE_OUTCOME" = "failure" ]; then
-          echo "One or more container scans reported critical vulnerabilities."
+        set -eo pipefail
+
+        failed=false
+
+        case "$TRIVY_OUTCOME" in
+          failure)
+            echo "::error::Trivy scan detected critical vulnerabilities. Review trivy-results.sarif in the Security tab."
+            failed=true
+            ;;
+          success)
+            echo "Trivy scan passed with no critical vulnerabilities."
+            ;;
+          *)
+            echo "::warning::Trivy scan did not complete successfully (outcome: $TRIVY_OUTCOME)."
+            failed=true
+            ;;
+        esac
+
+        case "$GRYPE_OUTCOME" in
+          failure)
+            echo "::error::Grype scan detected critical vulnerabilities. Review grype-results.sarif in the Security tab."
+            failed=true
+            ;;
+          success)
+            echo "Grype scan passed with no critical vulnerabilities."
+            ;;
+          *)
+            echo "::warning::Grype scan did not complete successfully (outcome: $GRYPE_OUTCOME)."
+            failed=true
+            ;;
+        esac
+
+        if [ "$failed" = true ]; then
+          echo "One or more container scans reported critical vulnerabilities or failed to complete."
           exit 1
         fi
 
