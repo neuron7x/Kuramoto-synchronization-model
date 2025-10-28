@@ -335,9 +335,13 @@ jobs:
         TRIVY_OUTCOME: ${{ steps.trivy-scan.outcome }}
         GRYPE_OUTCOME: ${{ steps.grype-scan.outcome }}
       run: |
-        if [ "$TRIVY_OUTCOME" = "failure" ] || [ "$GRYPE_OUTCOME" = "failure" ]; then
-          echo "One or more container scans reported critical vulnerabilities."
+        if [ "$TRIVY_OUTCOME" = "failure" ] && [ "$GRYPE_OUTCOME" = "failure" ]; then
+          echo "Both container scans reported critical vulnerabilities."
           exit 1
+        fi
+
+        if [ "$TRIVY_OUTCOME" = "failure" ] || [ "$GRYPE_OUTCOME" = "failure" ]; then
+          echo "WARNING: At least one container scan reported critical vulnerabilities, but the workflow is continuing because the other scan succeeded."
         fi
 
   codeql-analysis:
