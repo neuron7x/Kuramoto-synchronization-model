@@ -81,6 +81,16 @@ def test_detect_pivots_validates_input_shapes() -> None:
     with pytest.raises(ValueError):
         detect_pivot_divergences([1.0, 2.0], [1.0])
 
+    def shrink(series: list[float]) -> list[float]:
+        return series[:-1]
+
+    with pytest.raises(ValueError):
+        detect_pivot_divergences(
+            [1.0, 2.0, 3.0],
+            [2.0, 3.0, 4.0],
+            indicator_normalizer=shrink,
+        )
+
 
 def test_detect_pivots_supports_timestamps() -> None:
     series = [1.0, 3.0, 1.0]

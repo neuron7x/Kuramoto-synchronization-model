@@ -191,7 +191,9 @@ def detect_pivot_divergences(
     indicator_normalizer:
         Optional normalisation strategy. Accepts a string alias (``"zscore"``,
         ``"minmax"``, ``"identity"``), :class:`NormalizationMode`, a custom
-        callable, or an :class:`IndicatorNormalizationConfig` instance.
+        callable, or an :class:`IndicatorNormalizationConfig` instance. Custom
+        normalisers must return a one-dimensional array whose length matches
+        ``indicator_series``.
     """
 
     if len(price_series) != len(indicator_series):
@@ -206,6 +208,8 @@ def detect_pivot_divergences(
 
     normalizer = resolve_indicator_normalizer(indicator_normalizer)
     indicator_values = normalizer(indicator_series)
+    if indicator_values.shape != price_values.shape:
+        raise ValueError("Indicator normalizer must preserve the input series length")
 
     highs_price, lows_price = detect_pivots(
         price_values,

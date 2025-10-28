@@ -11,12 +11,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Protocol, Sequence, Tuple, Union, runtime_checkable
+from typing import Optional, Protocol, Tuple, Union, runtime_checkable
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 
-Array1D = np.ndarray
+Array1D = NDArray[np.float_]
 
 
 class NormalizationMode(str, Enum):
@@ -31,7 +32,7 @@ class NormalizationMode(str, Enum):
 class IndicatorNormalizer(Protocol):
     """Runtime protocol for normalising indicator series."""
 
-    def __call__(self, series: Sequence[float]) -> Array1D:  # pragma: no cover - protocol
+    def __call__(self, series: ArrayLike) -> Array1D:  # pragma: no cover - protocol
         """Transform ``series`` into a normalised ``numpy.ndarray``."""
 
 
@@ -43,11 +44,18 @@ class IndicatorNormalizationConfig:
     epsilon: float = 1e-12
     feature_range: Tuple[float, float] = (0.0, 1.0)
 
-    def __call__(self, series: Sequence[float]) -> Array1D:
+    def __post_init__(self) -> None:
+        if self.epsilon <= 0:
+            raise ValueError("epsilon must be strictly positive")
+        low, high = self.feature_range
+        if high <= low:
+            raise ValueError("feature_range must satisfy high > low")
+
+    def __call__(self, series: ArrayLike) -> Array1D:
         return normalize_indicator_series(series, config=self)
 
 
-def _ensure_array(series: Sequence[float]) -> Array1D:
+def _ensure_array(series: ArrayLike) -> Array1D:
     values = np.asarray(series, dtype=float)
     if values.ndim != 1:
         raise ValueError("series must be one-dimensional")
@@ -64,8 +72,6 @@ def _zscore_normalize(values: Array1D, *, epsilon: float) -> Array1D:
 
 def _minmax_normalize(values: Array1D, *, epsilon: float, feature_range: Tuple[float, float]) -> Array1D:
     low, high = feature_range
-    if high <= low:
-        raise ValueError("feature_range must satisfy high > low")
     min_val = float(np.min(values))
     max_val = float(np.max(values))
     span = max_val - min_val
@@ -77,7 +83,7 @@ def _minmax_normalize(values: Array1D, *, epsilon: float, feature_range: Tuple[f
 
 
 def normalize_indicator_series(
-    series: Sequence[float],
+    series: ArrayLike,
     *,
     mode: Optional[Union[NormalizationMode, str]] = None,
     config: Optional[IndicatorNormalizationConfig] = None,
@@ -134,7 +140,7 @@ def resolve_indicator_normalizer(
         return config
 
     if callable(normalizer):
-        def _wrapper(series: Sequence[float]) -> Array1D:
+        def _wrapper(series: ArrayLike) -> Array1D:
             values = normalizer(series)
             array = np.asarray(values, dtype=float)
             if array.ndim != 1:
