@@ -9,6 +9,8 @@ import numpy as np
 
 from .hurst import hurst_exponent
 from .kuramoto import compute_phase
+from ..utils.logging import get_logger
+from ..utils.metrics import get_metrics_collector
 
 try:  # pragma: no cover - optional GPU dependency
     import cupy as cp  # type: ignore
@@ -25,6 +27,57 @@ except Exception:  # pragma: no cover - executed when numba missing
 
 _GPU_ROLLING_THRESHOLD = 32_768
 _CUDA_FLOAT_DTYPES = {np.dtype(np.float32), np.dtype(np.float64)}
+
+_logger = get_logger(__name__)
+_metrics = get_metrics_collector()
+
+
+_WEIGHTING_MODES = {"none", "linear", "sqrt", "log"}
+
+
+def _prepare_weight_series(
+    values: Iterable[float], *, expected_size: int, mode: str
+) -> np.ndarray:
+    series = np.array(values, dtype=float, copy=True)
+    if series.ndim != 1:
+        raise ValueError("volumes must be one-dimensional")
+    if series.size != expected_size:
+        raise ValueError("volumes length must match prices length")
+
+    series = np.nan_to_num(series, nan=0.0, posinf=0.0, neginf=0.0)
+    np.clip(series, 0.0, None, out=series)
+
+    if mode == "sqrt":
+        np.sqrt(series, out=series, where=series >= 0.0)
+    elif mode == "log":
+        np.log1p(series, out=series)
+    elif mode != "linear":
+        raise ValueError(f"Unsupported weighting mode '{mode}'")
+
+    return series
+
+
+def _apply_exponential_smoothing(
+    values: np.ndarray, valid: np.ndarray, alpha: float
+) -> np.ndarray:
+    if not (0.0 < alpha < 1.0) or values.size == 0:
+        return values
+
+    smoothed = values.copy()
+    state = 0.0
+    has_state = False
+
+    for idx in range(smoothed.size):
+        if not valid[idx]:
+            continue
+        if not has_state:
+            state = smoothed[idx]
+            has_state = True
+        else:
+            state = alpha * smoothed[idx] + (1.0 - alpha) * state
+        smoothed[idx] = state
+
+    return smoothed
 
 
 def _numba_available() -> bool:
@@ -289,6 +342,9 @@ class KuramotoIndicator:
     window: int = 200
     coupling: float = 1.0
     backend: Literal["auto", "cpu", "gpu"] = "auto"
+    min_samples: int = 10
+    smoothing: float = 0.0
+    volume_weighting: Literal["none", "linear", "sqrt", "log"] = "none"
 
     def __post_init__(self) -> None:
         if self.window <= 0:
@@ -297,25 +353,99 @@ class KuramotoIndicator:
             raise ValueError("coupling must be positive")
         if self.backend not in {"auto", "cpu", "gpu"}:
             raise ValueError(f"Unsupported backend '{self.backend}'")
+        if self.min_samples <= 0:
+            raise ValueError("min_samples must be positive")
+        if not (0.0 <= self.smoothing < 1.0):
+            raise ValueError("smoothing must be within [0, 1)")
+        if self.volume_weighting not in _WEIGHTING_MODES:
+            raise ValueError(
+                f"Unsupported volume_weighting '{self.volume_weighting}'"
+            )
 
-    def compute(self, prices: Iterable[float]) -> np.ndarray:
-        raw = _as_float_array(prices)
-        if raw.size == 0:
-            return np.empty(0, dtype=float)
-        if not np.isfinite(raw).any():
-            return np.zeros_like(raw, dtype=float)
-        series = _fill_missing(raw)
-        phases = compute_phase(series)
-        complex_phase = np.exp(1j * phases)
-        totals = _rolling_sum(complex_phase, self.window, backend=self.backend)
-        counts = np.minimum(np.arange(1, series.size + 1), self.window)
-        min_samples = min(self.window, 10)
-        mask = counts >= min_samples
-        result = np.zeros_like(series, dtype=float)
-        if mask.any():
-            order = np.abs(totals[mask]) / counts[mask]
-            result[mask] = np.clip(self.coupling * order, 0.0, 1.0)
-        return result
+    def compute(
+        self, prices: Iterable[float], volumes: Iterable[float] | None = None
+    ) -> np.ndarray:
+        with _metrics.measure_indicator_compute("kuramoto_indicator") as ctx:
+            raw = _as_float_array(prices)
+            diagnostics: dict[str, float | dict[str, float]] = {
+                "sample_size": float(raw.size),
+                "window": float(self.window),
+            }
+            ratios: dict[str, float] = {}
+            if raw.size:
+                ratios["input_finite"] = float(np.mean(np.isfinite(raw)))
+            else:
+                ratios["input_finite"] = 0.0
+            diagnostics["ratios"] = ratios
+            if raw.size == 0:
+                ctx["value"] = 0.0
+                ratios.setdefault("valid_windows", 0.0)
+                ratios.setdefault("saturation", 0.0)
+                ctx["diagnostics"] = diagnostics
+                return np.empty(0, dtype=float)
+            if not np.isfinite(raw).any():
+                ctx["value"] = 0.0
+                ratios["valid_windows"] = 0.0
+                ratios["saturation"] = 0.0
+                ctx["diagnostics"] = diagnostics
+                return np.zeros_like(raw, dtype=float)
+
+            series = _fill_missing(raw)
+            phases = compute_phase(series)
+            complex_phase = np.exp(1j * phases)
+
+            min_samples = min(self.window, self.min_samples)
+            counts = np.minimum(np.arange(1, series.size + 1), self.window)
+            base_mask = counts >= min_samples
+
+            weight_series: np.ndarray | None = None
+            if self.volume_weighting != "none":
+                if volumes is None:
+                    raise ValueError(
+                        "volumes must be provided when volume_weighting is enabled"
+                    )
+                weight_series = _prepare_weight_series(
+                    volumes, expected_size=series.size, mode=self.volume_weighting
+                )
+
+            if weight_series is not None:
+                totals = _rolling_sum(
+                    complex_phase * weight_series, self.window, backend=self.backend
+                )
+                denominators = _rolling_sum(
+                    weight_series, self.window, backend=self.backend
+                )
+                valid = base_mask & (denominators > 0.0)
+                result = np.zeros_like(series, dtype=float)
+                if valid.any():
+                    order = np.abs(totals[valid]) / denominators[valid]
+                    result[valid] = np.clip(self.coupling * order, 0.0, 1.0)
+                ratios["valid_windows"] = float(np.mean(valid)) if valid.size else 0.0
+                denom_positive = denominators > 0.0
+                ratios["weight_positive"] = (
+                    float(np.mean(denom_positive)) if denom_positive.size else 0.0
+                )
+            else:
+                totals = _rolling_sum(complex_phase, self.window, backend=self.backend)
+                valid = base_mask
+                result = np.zeros_like(series, dtype=float)
+                if valid.any():
+                    order = np.abs(totals[valid]) / counts[valid]
+                    result[valid] = np.clip(self.coupling * order, 0.0, 1.0)
+                ratios["valid_windows"] = float(np.mean(valid)) if valid.size else 0.0
+
+            if self.smoothing > 0.0:
+                result = _apply_exponential_smoothing(result, valid, self.smoothing)
+
+            if result.size:
+                boundary = (result <= 1e-12) | (result >= 1.0 - 1e-12)
+                ratios["saturation"] = float(np.mean(boundary))
+            else:
+                ratios.setdefault("saturation", 0.0)
+
+            ctx["value"] = float(result[-1]) if result.size else 0.0
+            ctx["diagnostics"] = diagnostics
+            return result
 
 
 @dataclass(slots=True)
@@ -413,6 +543,9 @@ class VPINIndicator:
     bucket_size: int = 50
     threshold: float = 0.8
     backend: Literal["auto", "cpu", "gpu"] = "auto"
+    smoothing: float = 0.0
+    min_volume: float = 1e-9
+    use_signed_imbalance: bool = False
 
     def __post_init__(self) -> None:
         if self.bucket_size <= 0:
@@ -421,30 +554,74 @@ class VPINIndicator:
             raise ValueError("threshold must be positive")
         if self.backend not in {"auto", "cpu", "gpu"}:
             raise ValueError(f"Unsupported backend '{self.backend}'")
+        if not (0.0 <= self.smoothing < 1.0):
+            raise ValueError("smoothing must be within [0, 1)")
+        if self.min_volume < 0.0:
+            raise ValueError("min_volume must be non-negative")
 
     def compute(self, volume_data: Iterable[Iterable[float]]) -> np.ndarray:
-        array = np.asarray(volume_data, dtype=float)
-        if array.size == 0:
-            return np.empty(0, dtype=float)
-        if array.ndim != 2 or array.shape[1] < 3:
-            raise ValueError(
-                "volume_data must have columns [volume, buy_volume, sell_volume]"
+        with _metrics.measure_indicator_compute("vpin_indicator") as ctx:
+            array = np.asarray(volume_data, dtype=float)
+            row_count = int(array.shape[0]) if array.ndim >= 1 else 0
+            diagnostics: dict[str, float | dict[str, float]] = {
+                "sample_size": float(max(row_count, 0)),
+                "window": float(self.bucket_size),
+            }
+            ratio_metrics: dict[str, float] = {}
+            if array.size:
+                ratio_metrics["input_finite"] = float(np.mean(np.isfinite(array)))
+            else:
+                ratio_metrics["input_finite"] = 0.0
+            diagnostics["ratios"] = ratio_metrics
+            if array.size == 0:
+                ctx["value"] = 0.0
+                ratio_metrics.setdefault("valid_windows", 0.0)
+                ratio_metrics.setdefault("saturation", 0.0)
+                ctx["diagnostics"] = diagnostics
+                return np.empty(0, dtype=float)
+            if array.ndim != 2 or array.shape[1] < 3:
+                raise ValueError(
+                    "volume_data must have columns [volume, buy_volume, sell_volume]"
+                )
+            total = np.clip(
+                np.nan_to_num(array[:, 0], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
             )
-        total = np.clip(
-            np.nan_to_num(array[:, 0], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-        )
-        buy = np.clip(
-            np.nan_to_num(array[:, 1], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-        )
-        sell = np.clip(
-            np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-        )
-        imbalance = np.abs(buy - sell)
-        total_sums = _rolling_sum(total, self.bucket_size, backend=self.backend)
-        imb_sums = _rolling_sum(imbalance, self.bucket_size, backend=self.backend)
-        result = np.zeros(total.size, dtype=float)
-        valid = total_sums > 0.0
-        if np.any(valid):
-            ratios = imb_sums[valid] / total_sums[valid]
-            result[valid] = np.clip(ratios, 0.0, 1.0)
-        return result
+            buy = np.clip(
+                np.nan_to_num(array[:, 1], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
+            )
+            sell = np.clip(
+                np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
+            )
+
+            if self.use_signed_imbalance:
+                imbalance = buy - sell
+            else:
+                imbalance = np.abs(buy - sell)
+
+            total_sums = _rolling_sum(total, self.bucket_size, backend=self.backend)
+            imb_sums = _rolling_sum(imbalance, self.bucket_size, backend=self.backend)
+            result = np.zeros(total.size, dtype=float)
+
+            valid = total_sums > self.min_volume
+            if np.any(valid):
+                computed_ratios = imb_sums[valid] / total_sums[valid]
+                if self.use_signed_imbalance:
+                    result[valid] = np.clip(computed_ratios, -1.0, 1.0)
+                else:
+                    result[valid] = np.clip(np.abs(computed_ratios), 0.0, 1.0)
+            ratio_metrics["valid_windows"] = float(np.mean(valid)) if valid.size else 0.0
+            if total.size:
+                ratio_metrics["positive_volume"] = float(np.mean(total > self.min_volume))
+
+            if self.smoothing > 0.0:
+                result = _apply_exponential_smoothing(result, valid, self.smoothing)
+
+            if result.size:
+                saturation_mask = np.abs(result) >= (1.0 - 1e-12)
+                ratio_metrics["saturation"] = float(np.mean(saturation_mask))
+            else:
+                ratio_metrics.setdefault("saturation", 0.0)
+
+            ctx["value"] = float(result[-1]) if result.size else 0.0
+            ctx["diagnostics"] = diagnostics
+            return result

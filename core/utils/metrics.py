@@ -12,7 +12,16 @@ import time
 from collections import defaultdict, deque
 import os
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, Optional, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Sequence,
+)
 
 try:  # pragma: no cover - exercised indirectly in environments without numpy
     import numpy as np
@@ -116,6 +125,48 @@ class MetricsCollector:
             "tradepulse_feature_value",
             "Current feature value",
             ["feature_name"],
+            registry=registry,
+        )
+
+        self.indicator_compute_duration = Histogram(
+            "tradepulse_indicator_compute_duration_seconds",
+            "Time spent computing indicator values",
+            ["indicator_name"],
+            registry=registry,
+        )
+
+        self.indicator_compute_total = Counter(
+            "tradepulse_indicator_compute_total",
+            "Total number of indicator computations",
+            ["indicator_name", "status"],
+            registry=registry,
+        )
+
+        self.indicator_value = Gauge(
+            "tradepulse_indicator_value",
+            "Latest computed value for an indicator",
+            ["indicator_name"],
+            registry=registry,
+        )
+
+        self.indicator_sample_size = Gauge(
+            "tradepulse_indicator_sample_size",
+            "Number of samples processed during the last indicator computation",
+            ["indicator_name"],
+            registry=registry,
+        )
+
+        self.indicator_window_size = Gauge(
+            "tradepulse_indicator_window_size",
+            "Sliding window or bucket span configured for the indicator",
+            ["indicator_name"],
+            registry=registry,
+        )
+
+        self.indicator_quality_ratio = Gauge(
+            "tradepulse_indicator_quality_ratio",
+            "Quality ratios emitted by indicators (e.g. finite input share, valid coverage)",
+            ["indicator_name", "metric"],
             registry=registry,
         )
 
@@ -735,6 +786,50 @@ class MetricsCollector:
             ).inc()
 
     @contextmanager
+    def measure_indicator_compute(
+        self, indicator_name: str
+    ) -> Iterator[Dict[str, Any]]:
+        """Context manager for measuring indicator computations."""
+
+        if not self._enabled:
+            yield {}
+            return
+
+        start_time = time.time()
+        status = "success"
+        ctx: Dict[str, Any] = {}
+
+        try:
+            yield ctx
+        except Exception:
+            status = "error"
+            raise
+        finally:
+            duration = time.time() - start_time
+            self.indicator_compute_duration.labels(
+                indicator_name=indicator_name
+            ).observe(duration)
+            self.indicator_compute_total.labels(
+                indicator_name=indicator_name, status=status
+            ).inc()
+            if status == "success":
+                value = ctx.get("value")
+                if value is not None:
+                    try:
+                        numeric = float(value)
+                    except (TypeError, ValueError):
+                        numeric = None
+                    if numeric is not None and math.isfinite(numeric):
+                        self.indicator_value.labels(
+                            indicator_name=indicator_name
+                        ).set(numeric)
+                diagnostics = ctx.get("diagnostics")
+                if diagnostics:
+                    self.record_indicator_diagnostics(
+                        indicator_name, diagnostics
+                    )
+
+    @contextmanager
     def measure_backtest(self, strategy: str) -> Iterator[Dict[str, Any]]:
         """Context manager for measuring backtest execution.
 
@@ -790,6 +885,71 @@ class MetricsCollector:
         if not self._enabled:
             return
         self.feature_value.labels(feature_name=feature_name).set(value)
+
+    def record_indicator_value(self, indicator_name: str, value: float) -> None:
+        """Record the last value emitted by an indicator."""
+
+        if not self._enabled:
+            return
+        self.indicator_value.labels(indicator_name=indicator_name).set(float(value))
+
+    def record_indicator_diagnostics(
+        self,
+        indicator_name: str,
+        diagnostics: Mapping[str, Any] | None = None,
+    ) -> None:
+        """Persist diagnostic metadata reported by indicator computations."""
+
+        if not self._enabled or not diagnostics:
+            return
+
+        def _as_float(value: Any) -> float | None:
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                return None
+            if not math.isfinite(numeric):
+                return None
+            return numeric
+
+        sample_size = diagnostics.get("sample_size") or diagnostics.get("samples")
+        numeric_sample = _as_float(sample_size) if sample_size is not None else None
+        if numeric_sample is not None and numeric_sample >= 0.0:
+            self.indicator_sample_size.labels(
+                indicator_name=indicator_name
+            ).set(numeric_sample)
+
+        window = diagnostics.get("window") or diagnostics.get("span")
+        numeric_window = _as_float(window) if window is not None else None
+        if numeric_window is not None and numeric_window >= 0.0:
+            self.indicator_window_size.labels(
+                indicator_name=indicator_name
+            ).set(numeric_window)
+
+        ratios: Dict[str, float] = {}
+        ratio_container = diagnostics.get("ratios") or diagnostics.get("quality")
+        if isinstance(ratio_container, Mapping):
+            for key, value in ratio_container.items():
+                numeric = _as_float(value)
+                if numeric is None:
+                    continue
+                ratios[str(key)] = float(min(max(numeric, 0.0), 1.0))
+
+        if not ratios:
+            for key, value in diagnostics.items():
+                if not isinstance(key, str) or not key.endswith("_ratio"):
+                    continue
+                metric = key[: -len("_ratio")]
+                numeric = _as_float(value)
+                if numeric is None:
+                    continue
+                ratios[metric] = float(min(max(numeric, 0.0), 1.0))
+
+        for metric, numeric in ratios.items():
+            metric_label = self._normalise_label(metric, default="quality")
+            self.indicator_quality_ratio.labels(
+                indicator_name=indicator_name, metric=metric_label
+            ).set(numeric)
 
     def _update_latency_quantiles(
         self,

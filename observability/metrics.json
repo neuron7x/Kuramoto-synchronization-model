@@ -23,6 +23,48 @@
       "subsystem": "features"
     },
     {
+      "name": "tradepulse_indicator_compute_duration_seconds",
+      "type": "histogram",
+      "description": "Latency distribution for indicator computations.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_compute_total",
+      "type": "counter",
+      "description": "Total number of indicator computations executed.",
+      "labels": ["indicator_name", "status"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_value",
+      "type": "gauge",
+      "description": "Latest computed value for an indicator.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_sample_size",
+      "type": "gauge",
+      "description": "Number of samples processed during the most recent indicator computation.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_window_size",
+      "type": "gauge",
+      "description": "Effective sliding window or bucket span configured for indicator evaluation.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_quality_ratio",
+      "type": "gauge",
+      "description": "Indicator quality ratios (finite input share, valid coverage, saturation).",
+      "labels": ["indicator_name", "metric"],
+      "subsystem": "indicators"
+    },
+    {
       "name": "tradepulse_backtest_duration_seconds",
       "type": "histogram",
       "description": "Wall-clock time required to execute backtests.",

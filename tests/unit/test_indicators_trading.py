@@ -27,7 +27,7 @@ def test_kuramoto_indicator_matches_order_parameter() -> None:
 
     phases = compute_phase(np.asarray(prices, dtype=float))
     expected = np.zeros_like(phases, dtype=float)
-    min_samples = min(indicator.window, 10)
+    min_samples = min(indicator.window, indicator.min_samples)
     for idx in range(phases.size):
         start = max(0, idx - indicator.window + 1)
         count = idx - start + 1
@@ -49,6 +49,51 @@ def test_kuramoto_indicator_clips_with_coupling() -> None:
 
     assert np.all((result >= 0.0) & (result <= 1.0))
     assert np.any(result > 0.0)
+
+
+def test_kuramoto_indicator_requires_volumes_for_weighting() -> None:
+    """Volume-aware configuration should request explicit weights."""
+
+    indicator = KuramotoIndicator(volume_weighting="sqrt")
+    with pytest.raises(ValueError, match="volumes must be provided"):
+        indicator.compute([100.0, 101.0, 102.0])
+
+
+def test_kuramoto_indicator_weighted_matches_manual() -> None:
+    """Weighted synchrony should align with direct Kuramoto order."""
+
+    rng = np.random.default_rng(2025)
+    prices = np.cumsum(rng.normal(scale=0.2, size=96)) + 50.0
+    volumes = rng.uniform(50.0, 150.0, size=prices.size)
+    indicator = KuramotoIndicator(
+        window=24,
+        coupling=1.0,
+        min_samples=8,
+        volume_weighting="linear",
+        smoothing=0.0,
+    )
+
+    result = indicator.compute(prices, volumes=volumes)
+    phases = compute_phase(prices)
+    expected = np.zeros_like(result)
+    min_samples = min(indicator.window, indicator.min_samples)
+    for idx in range(result.size):
+        start = max(0, idx - indicator.window + 1)
+        count = idx - start + 1
+        if count < min_samples:
+            continue
+        slice_phases = phases[start : idx + 1]
+        slice_weights = volumes[start : idx + 1]
+        expected[idx] = float(kuramoto_order(slice_phases, weights=slice_weights))
+
+    assert np.allclose(result, expected, rtol=1e-6, atol=1e-6)
+
+
+def test_kuramoto_indicator_validates_smoothing() -> None:
+    """Invalid smoothing factors should raise a descriptive error."""
+
+    with pytest.raises(ValueError, match=r"smoothing must be within \[0, 1\)"):
+        KuramotoIndicator(smoothing=1.0)
 
 
 def test_as_float_array_validates_shape() -> None:
@@ -187,3 +232,29 @@ def test_vpin_indicator_handles_zero_volume() -> None:
     result = indicator.compute(data)
 
     assert np.all(result == 0.0)
+
+
+def test_vpin_indicator_signed_mode_preserves_direction() -> None:
+    """Signed imbalance mode should retain directionality within bounds."""
+
+    data = np.array(
+        [
+            [50.0, 40.0, 10.0],
+            [60.0, 20.0, 40.0],
+            [55.0, 45.0, 10.0],
+            [70.0, 15.0, 55.0],
+        ]
+    )
+    indicator = VPINIndicator(bucket_size=2, use_signed_imbalance=True, smoothing=0.0)
+
+    result = indicator.compute(data)
+
+    total = data[:, 0]
+    signed = data[:, 1] - data[:, 2]
+    total_sums = _rolling_sum(total, indicator.bucket_size, backend=indicator.backend)
+    signed_sums = _rolling_sum(signed, indicator.bucket_size, backend=indicator.backend)
+    expected = np.zeros_like(total_sums)
+    mask = total_sums > indicator.min_volume
+    expected[mask] = np.clip(signed_sums[mask] / total_sums[mask], -1.0, 1.0)
+
+    assert np.allclose(result, expected)
