@@ -1,17 +1,33 @@
 roles:
-  system:read:
-    description: "Read-only monitoring for system health and portfolio exposure."
+  foundation:viewer:
+    description: "Baseline read access to portfolio state, analytics, and runbooks."
     permissions:
-      - resource: system.status
+      - resource: analytics.dashboards
         action: read
-      - resource: system.positions
+      - resource: portfolio.positions
         action: read
-      - resource: ui.dashboard
-        action: view
-  system:trade:
-    description: "Execute and manage orders under production safeguards."
+      - resource: knowledge.runbooks
+        action: read
+  research:quant:
+    description: "Develop and validate strategies within research environments."
     inherits:
-      - system:read
+      - foundation:viewer
+    permissions:
+      - resource: research.backtests
+        action: run
+        attributes:
+          environment: ["research", "staging"]
+      - resource: strategies.repository
+        action: write
+      - resource: models.registry
+        action: register
+        attributes:
+          stage: ["experimental", "staging"]
+  trading:operator:
+    description: "Execute approved strategies and manage live positions."
+    inherits:
+      - foundation:viewer
+      - research:quant
     permissions:
       - resource: orders
         action: submit
@@ -23,10 +39,40 @@ roles:
         attributes:
           environment: ["production"]
           desk: ["execution", "quant"]
-  risk:officer:
-    description: "Operate risk controls and circuit breakers."
+      - resource: portfolio.limits
+        action: adjust
+        attributes:
+          approval: ["risk-certified"]
+  mlops:engineer:
+    description: "Operate the model lifecycle and feature store pipelines."
     inherits:
-      - system:read
+      - foundation:viewer
+    permissions:
+      - resource: models.registry
+        action: promote
+        attributes:
+          stage: ["staging", "production"]
+      - resource: feature_store.pipelines
+        action: manage
+      - resource: artifacts.lineage
+        action: read
+  platform:sre:
+    description: "Maintain infrastructure reliability and deployment automation."
+    inherits:
+      - foundation:viewer
+    permissions:
+      - resource: deployments
+        action: rollout
+        attributes:
+          environment: ["staging", "production"]
+      - resource: infrastructure.configuration
+        action: manage
+      - resource: observability.audits
+        action: read
+  risk:officer:
+    description: "Operate risk controls, kill switches, and compliance checks."
+    inherits:
+      - foundation:viewer
     permissions:
       - resource: risk.kill_switch
         action: read
@@ -36,18 +82,34 @@ roles:
         action: execute
         attributes:
           environment: ["production"]
-  admin:superuser:
-    description: "Full administrative control for break-glass scenarios."
+      - resource: risk.limits
+        action: approve
+  security:auditor:
+    description: "Perform security reviews and audit investigations."
     inherits:
-      - system:trade
-      - risk:officer
+      - foundation:viewer
     permissions:
-      - resource: admin.configuration
-        action: manage
       - resource: audit.records
         action: read
         attributes:
           environment: ["production", "staging"]
+      - resource: iam.role_bindings
+        action: read
+  iam:administrator:
+    description: "Least-privilege administrators for policy lifecycle and break-glass operations."
+    inherits:
+      - trading:operator
+      - mlops:engineer
+      - platform:sre
+      - risk:officer
+      - security:auditor
+    permissions:
+      - resource: iam.policies
+        action: manage
+      - resource: secrets.vault
+        action: rotate
+      - resource: access.temporary_grants
+        action: approve
 
 temporary_grants:
   - subject: incident-responder

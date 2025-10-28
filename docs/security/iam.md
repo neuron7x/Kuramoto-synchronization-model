@@ -41,12 +41,14 @@ RBAC scopes map to TradePulse capabilities across portfolio management, model op
 
 | Role | Scope | Example Permissions |
 | --- | --- | --- |
-| `viewer` | Read-only access to analytics dashboards and portfolio state. | `analytics:read`, `portfolio:read` |
-| `quant` | Build, backtest, and stage strategies. No production deployment rights. | `strategy:create`, `backtest:run`, `model:register` |
-| `trader` | Execute approved strategies in production windows. | `execution:launch`, `execution:pause`, `portfolio:adjust` |
-| `mlops` | Promote models, manage feature store pipelines, oversee model registry. | `model:promote`, `featurestore:sync`, `artifact:approve` |
-| `sre` | Operate platform infrastructure, manage incident response. | `deployment:rollout`, `system:configure`, `audit:view` |
-| `admin` | Restricted to IAM/security team for policy updates and break-glass access. | `iam:modify`, `role:assign`, `secret:rotate` |
+| `foundation:viewer` | Baseline read access to analytics, portfolios, and runbooks. | `analytics:read`, `portfolio:read`, `runbooks:read` |
+| `research:quant` | Build, backtest, and stage strategies without production execution rights. | `backtest:run`, `strategy:write`, `model:register` |
+| `trading:operator` | Execute approved strategies and manage live exposure in production. | `orders:submit`, `orders:cancel`, `portfolio:adjust` |
+| `mlops:engineer` | Promote models, operate feature store pipelines, and manage lineage. | `model:promote`, `featurestore:manage`, `artifact:read` |
+| `platform:sre` | Maintain platform reliability, deployments, and observability tooling. | `deployment:rollout`, `infrastructure:manage`, `audit:view` |
+| `risk:officer` | Govern risk controls, kill switches, and limit approvals. | `risk:read`, `risk:execute`, `risk:approve` |
+| `security:auditor` | Conduct security reviews and inspect IAM/audit evidence. | `audit:read`, `iam:read` |
+| `iam:administrator` | Restricted to IAM/security team for policy lifecycle and break-glass access. | `iam:manage`, `secret:rotate`, `grant:approve` |
 
 ### Policy Authoring Lifecycle
 
