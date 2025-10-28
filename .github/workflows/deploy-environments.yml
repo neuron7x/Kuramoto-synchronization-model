@@ -103,6 +103,7 @@ jobs:
         with:
           python-version: '3.11'
           enable-cache: true
+          cache-dependency-path: requirements-dev.lock
       - name: Synchronize dependencies
         run: uv pip sync requirements-dev.lock
       - name: Run smoke tests

@@ -14,10 +14,34 @@ defaults:
 on:
   pull_request:
     branches:
-      # Run coverage checks for every PR regardless of target branch.
+      # Run coverage checks when product code or tests change.
       - '**'
+    paths:
+      - '**/*.py'
+      - 'core/**'
+      - 'backtest/**'
+      - 'execution/**'
+      - 'application/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'requirements*.txt'
+      - 'requirements*.lock'
+      - 'configs/quality/**'
+      - '.github/workflows/ci.yml'
   push:
     branches: [main]
+    paths:
+      - '**/*.py'
+      - 'core/**'
+      - 'backtest/**'
+      - 'execution/**'
+      - 'application/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'requirements*.txt'
+      - 'requirements*.lock'
+      - 'configs/quality/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   test-coverage:
@@ -46,6 +70,7 @@ jobs:
         with:
           python-version: '3.11'
           enable-cache: true
+          cache-dependency-path: requirements-dev.lock
 
       - name: Synchronize dependencies
         run: uv pip sync requirements-dev.lock
@@ -93,6 +118,7 @@ jobs:
         with:
           python-version: '3.11'
           enable-cache: true
+          cache-dependency-path: requirements-dev.lock
 
       - name: Synchronize dependencies
         run: uv pip sync requirements-dev.lock
