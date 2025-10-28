@@ -9,6 +9,7 @@ from .pipeline import (
     OptunaTuner,
     PipelineContext,
 )
+from .quantization import QuantizationConfig, QuantizationResult, UniformAffineQuantizer
 
 __all__ = [
     "ABTestManager",
@@ -18,5 +19,8 @@ __all__ = [
     "ModelDriftDetector",
     "OptunaTuner",
     "PipelineContext",
+    "QuantizationConfig",
+    "QuantizationResult",
+    "UniformAffineQuantizer",
 ]
 
