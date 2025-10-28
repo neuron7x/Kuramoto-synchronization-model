@@ -31,24 +31,33 @@ class RiskManagerFacade:
         return self._risk_manager
 
     def engage_kill_switch(self, reason: str) -> KillSwitchState:
-        """Engage the global kill-switch with the provided reason."""
+        """Engage the global kill-switch with the provided reason.
+
+        Raises:
+            ValueError: If no reason is supplied while the kill-switch is
+                currently disengaged.
+        """
 
         kill_switch = self._risk_manager.kill_switch
         already_engaged = kill_switch.is_triggered()
         previous_reason = kill_switch.reason
 
+        normalised_reason = reason.strip()
+
         trigger_reason: str | None
-        if reason:
-            trigger_reason = reason
+        if normalised_reason:
+            trigger_reason = normalised_reason
         elif not already_engaged and previous_reason:
             trigger_reason = previous_reason
+        elif not already_engaged:
+            raise ValueError("reason must be provided when engaging the kill-switch")
         else:
             trigger_reason = None
 
         if trigger_reason:
             kill_switch.trigger(trigger_reason)
 
-        current_reason = kill_switch.reason or previous_reason
+        current_reason = kill_switch.reason or previous_reason or normalised_reason
         return KillSwitchState(
             engaged=kill_switch.is_triggered(),
             reason=current_reason,
