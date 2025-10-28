@@ -20,14 +20,14 @@ from observability.incidents import IncidentManager, IncidentRecord
 from observability.notifications import NotificationDispatcher
 from scripts.nightly.config import BaselineStore, MetricEvaluation
 from scripts.runtime import ArtifactManager
-from scripts.smoke_e2e import (
+from core.pipelines.smoke_e2e import (
     build_signal_function,
     ingest_prices,
     run_cli_analyze,
     seed_everything,
     summarise_result,
 )
-from scripts.smoke_e2e import (
+from core.pipelines.smoke_e2e import (
     run_backtest as run_smoke_backtest,
 )
 
