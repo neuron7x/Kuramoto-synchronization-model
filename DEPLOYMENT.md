@@ -242,6 +242,25 @@ runner = LiveTradingRunner(
 )
 ```
 
+When running in production you can skip manual registration entirely. The
+`LiveTradingRunner` inspects environment variables and configures centralised
+secret backends automatically:
+
+- **HashiCorp Vault** – set `TRADEPULSE_VAULT_ADDR` with either
+  `TRADEPULSE_VAULT_TOKEN` or `TRADEPULSE_VAULT_TOKEN_FILE`. Optional knobs like
+  `TRADEPULSE_VAULT_NAMESPACE`, `TRADEPULSE_VAULT_MOUNT`, and
+  `TRADEPULSE_VAULT_KV_VERSION` control namespaces and KV engine behaviour.
+  Audit metadata can be overridden via
+  `TRADEPULSE_VAULT_AUDIT_ACTOR` / `TRADEPULSE_VAULT_AUDIT_IP`.
+- **AWS Secrets Manager** – enable the integration with
+  `TRADEPULSE_AWS_SECRETS_MANAGER_ENABLED=true` and provide a region through
+  `TRADEPULSE_AWS_SECRETS_REGION`. TLS and endpoint overrides are respected via
+  `TRADEPULSE_AWS_SECRETS_VERIFY` and `TRADEPULSE_AWS_SECRETS_ENDPOINT`.
+
+With these variables in place secrets are fetched directly from Vault or AWS
+Secrets Manager and rotated transparently without embedding static API keys in
+configuration files.【F:interfaces/live_runner.py†L104-L171】【F:interfaces/secrets/backends.py†L1-L270】
+
 Connectors inheriting from `AuthenticatedRESTExecutionConnector` automatically reuse the resolver for credential rotations so a Vault/KMS rotation triggers a fresh fetch before the next REST call.【F:configs/live/default.toml†L8-L36】【F:interfaces/live_runner.py†L73-L140】【F:interfaces/execution/common.py†L52-L147】
 
 ## Health Checks and Observability

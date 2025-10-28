@@ -25,6 +25,14 @@ from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import RiskLimits, RiskManager
 from interfaces.execution.common import CredentialError, CredentialProvider
+from interfaces.secrets.backends import (
+    AWSSecretsManagerBackendConfig,
+    HashicorpVaultBackendConfig,
+    SecretBackendConfigurationError,
+    SecretBackendError,
+    build_aws_secrets_manager_resolver,
+    build_hashicorp_vault_resolver,
+)
 from interfaces.secrets.manager import SecretManager, SecretManagerError, VaultResolver
 
 LOGGER = logging.getLogger(__name__)
@@ -217,10 +225,10 @@ class LiveTradingRunner:
         self._connectors: Dict[str, ExecutionConnector] = {}
         self._credentials: Dict[str, Mapping[str, str]] = {}
         self._secret_manager = secret_manager
-        self._inline_secret_backends: Dict[str, VaultResolver] = {
-            str(name).lower(): resolver
-            for name, resolver in (secret_backends or {}).items()
-        }
+        self._inline_secret_backends: Dict[str, VaultResolver] = {}
+        self._register_default_backends()
+        for name, resolver in (secret_backends or {}).items():
+            self._inline_secret_backends[str(name).lower()] = resolver
         if self._secret_manager is not None:
             for adapter, resolver in self._inline_secret_backends.items():
                 self._secret_manager.register(adapter, resolver)
@@ -359,6 +367,65 @@ class LiveTradingRunner:
         if resolver is None:
             raise RuntimeError(f"No secret backend registered for adapter '{adapter}'")
         return resolver
+
+    def _register_default_backends(self) -> None:
+        backends: dict[str, VaultResolver] = {}
+
+        try:
+            vault_config = HashicorpVaultBackendConfig.from_environment()
+        except SecretBackendConfigurationError as exc:
+            LOGGER.warning(
+                "HashiCorp Vault backend is misconfigured",
+                extra={
+                    "event": "live_runner.secret_backend",
+                    "backend": "vault",
+                    "error": str(exc),
+                },
+            )
+        else:
+            if vault_config is not None:
+                try:
+                    backends["vault"] = build_hashicorp_vault_resolver(vault_config)
+                except SecretBackendError as exc:
+                    LOGGER.error(
+                        "Failed to initialise HashiCorp Vault backend",
+                        extra={
+                            "event": "live_runner.secret_backend",
+                            "backend": "vault",
+                            "error": str(exc),
+                        },
+                    )
+
+        try:
+            aws_config = AWSSecretsManagerBackendConfig.from_environment()
+        except SecretBackendConfigurationError as exc:
+            LOGGER.warning(
+                "AWS Secrets Manager backend is misconfigured", 
+                extra={
+                    "event": "live_runner.secret_backend",
+                    "backend": "aws-secrets-manager",
+                    "error": str(exc),
+                },
+            )
+        else:
+            if aws_config is not None:
+                try:
+                    resolver = build_aws_secrets_manager_resolver(aws_config)
+                except SecretBackendError as exc:
+                    LOGGER.error(
+                        "Failed to initialise AWS Secrets Manager backend",
+                        extra={
+                            "event": "live_runner.secret_backend",
+                            "backend": "aws-secrets-manager",
+                            "error": str(exc),
+                        },
+                    )
+                else:
+                    backends["aws-secrets-manager"] = resolver
+                    backends.setdefault("secretsmanager", resolver)
+
+        for name, resolver in backends.items():
+            self._inline_secret_backends.setdefault(name, resolver)
 
     def _wrap_backend_resolver(
         self, venue: str, backend: SecretBackendSettings
