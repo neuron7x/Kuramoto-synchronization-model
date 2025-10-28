@@ -35,6 +35,13 @@ from .multiscale_kuramoto import (
     TimeFrame,
     WaveletWindowSelector,
 )
+from .pivot_detection import (
+    DivergenceKind,
+    PivotDivergenceSignal,
+    PivotPoint,
+    detect_pivot_divergences,
+    detect_pivots,
+)
 from .pipeline import IndicatorPipeline, PipelineResult
 from .temporal_ricci import TemporalRicciAnalyzer
 from .trading import HurstIndicator, KuramotoIndicator, VPINIndicator
@@ -71,4 +78,9 @@ __all__ = [
     "MarketPhase",
     "TradePulseCompositeEngine",
     "TemporalRicciAnalyzer",
+    "PivotPoint",
+    "PivotDivergenceSignal",
+    "DivergenceKind",
+    "detect_pivots",
+    "detect_pivot_divergences",
 ]
