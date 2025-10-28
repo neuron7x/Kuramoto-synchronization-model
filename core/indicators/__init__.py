@@ -35,6 +35,13 @@ from .multiscale_kuramoto import (
     TimeFrame,
     WaveletWindowSelector,
 )
+from .normalization import (
+    IndicatorNormalizationConfig,
+    IndicatorNormalizer,
+    NormalizationMode,
+    normalize_indicator_series,
+    resolve_indicator_normalizer,
+)
 from .pivot_detection import (
     DivergenceKind,
     PivotDivergenceSignal,
@@ -78,6 +85,11 @@ __all__ = [
     "MarketPhase",
     "TradePulseCompositeEngine",
     "TemporalRicciAnalyzer",
+    "IndicatorNormalizer",
+    "IndicatorNormalizationConfig",
+    "NormalizationMode",
+    "normalize_indicator_series",
+    "resolve_indicator_normalizer",
     "PivotPoint",
     "PivotDivergenceSignal",
     "DivergenceKind",

@@ -23,10 +23,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
+from .normalization import (
+    IndicatorNormalizationConfig,
+    IndicatorNormalizer,
+    NormalizationMode,
+    resolve_indicator_normalizer,
+)
 
 @dataclass(frozen=True, slots=True)
 class PivotPoint:
@@ -165,6 +171,9 @@ def detect_pivot_divergences(
     tolerance: float = 1e-9,
     timestamps: Optional[Sequence[object]] = None,
     max_lag: Optional[int] = None,
+    indicator_normalizer: Optional[
+        Union[str, NormalizationMode, IndicatorNormalizer, IndicatorNormalizationConfig]
+    ] = None,
 ) -> List[PivotDivergenceSignal]:
     """Detect bullish and bearish divergences between price and indicator series.
 
@@ -172,7 +181,19 @@ def detect_pivot_divergences(
     consecutive pair of price pivots it attempts to align indicator pivots
     within ``max_lag`` steps. Divergence is confirmed when price and indicator
     move in opposite directions (higher-high vs. lower-high or lower-low vs.
-    higher-low) beyond ``tolerance``.
+    higher-low) beyond ``tolerance``. Indicator series are first normalised
+    using ``indicator_normalizer`` which defaults to ``z``-score scaling to
+    mitigate scale-driven distortions when pairing heterogeneous indicators
+    with spot prices.
+
+    Parameters
+    ----------
+    indicator_normalizer:
+        Optional normalisation strategy. Accepts a string alias (``"zscore"``,
+        ``"minmax"``, ``"identity"``), :class:`NormalizationMode`, a custom
+        callable, or an :class:`IndicatorNormalizationConfig` instance. Custom
+        normalisers must return a one-dimensional array whose length matches
+        ``indicator_series``.
     """
 
     if len(price_series) != len(indicator_series):
@@ -181,15 +202,24 @@ def detect_pivot_divergences(
     if max_lag is not None and max_lag < 0:
         raise ValueError("max_lag must be non-negative when provided")
 
+    price_values = np.asarray(price_series, dtype=float)
+    if price_values.ndim != 1:
+        raise ValueError("price_series must be one-dimensional")
+
+    normalizer = resolve_indicator_normalizer(indicator_normalizer)
+    indicator_values = normalizer(indicator_series)
+    if indicator_values.shape != price_values.shape:
+        raise ValueError("Indicator normalizer must preserve the input series length")
+
     highs_price, lows_price = detect_pivots(
-        price_series,
+        price_values,
         left=left,
         right=right,
         tolerance=tolerance,
         timestamps=timestamps,
     )
     highs_indicator, lows_indicator = detect_pivots(
-        indicator_series,
+        indicator_values,
         left=left,
         right=right,
         tolerance=tolerance,
@@ -198,6 +228,11 @@ def detect_pivot_divergences(
 
     signals: list[PivotDivergenceSignal] = []
     lag = max_lag if max_lag is not None else max(left, right)
+
+    price_scale = float(np.max(np.abs(price_values))) if price_values.size else 0.0
+    indicator_scale = float(np.std(indicator_values)) if indicator_values.size else 0.0
+    price_scale = max(price_scale, tolerance)
+    indicator_scale = max(indicator_scale, tolerance)
 
     def match_pivot(target: PivotPoint, candidates: Iterable[PivotPoint]) -> Optional[PivotPoint]:
         best: Optional[PivotPoint] = None
@@ -218,9 +253,9 @@ def detect_pivot_divergences(
                 best_dist = candidate_score
         return best
 
-    def compute_strength(delta_price: float, base_price: float, delta_indicator: float, base_indicator: float) -> float:
-        price_norm = abs(delta_price) / max(abs(base_price), tolerance)
-        indicator_norm = abs(delta_indicator) / max(abs(base_indicator), tolerance)
+    def compute_strength(delta_price: float, delta_indicator: float) -> float:
+        price_norm = abs(delta_price) / price_scale
+        indicator_norm = abs(delta_indicator) / indicator_scale
         return price_norm + indicator_norm
 
     for prev, curr in zip(highs_price, highs_price[1:]):
@@ -234,7 +269,7 @@ def detect_pivot_divergences(
             continue
         price_delta = curr.value - prev.value
         indicator_delta = curr_ind.value - prev_ind.value
-        strength = compute_strength(price_delta, prev.value, indicator_delta, prev_ind.value)
+        strength = compute_strength(price_delta, indicator_delta)
         signals.append(
             PivotDivergenceSignal(
                 kind=DivergenceKind.BEARISH,
@@ -257,7 +292,7 @@ def detect_pivot_divergences(
             continue
         price_delta = curr.value - prev.value
         indicator_delta = curr_ind.value - prev_ind.value
-        strength = compute_strength(price_delta, prev.value, indicator_delta, prev_ind.value)
+        strength = compute_strength(price_delta, indicator_delta)
         signals.append(
             PivotDivergenceSignal(
                 kind=DivergenceKind.BULLISH,
