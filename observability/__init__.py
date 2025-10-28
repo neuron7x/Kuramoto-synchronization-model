@@ -107,6 +107,7 @@ from .notifications import (  # noqa: F401
     EmailSender,
     NotificationDispatcher,
     SlackNotifier,
+    TeamsNotifier,
 )
 from .profiling import (  # noqa: F401
     ProfileCollector,
@@ -169,6 +170,7 @@ __all__ = [
     "StructuredLogFormatter",
     "EmailSender",
     "SlackNotifier",
+    "TeamsNotifier",
     "NotificationDispatcher",
     "MetricThreshold",
     "TriageStepReport",

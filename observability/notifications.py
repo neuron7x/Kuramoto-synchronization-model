@@ -11,7 +11,12 @@ from typing import Any, Mapping
 
 import httpx
 
-__all__ = ["EmailSender", "SlackNotifier", "NotificationDispatcher"]
+__all__ = [
+    "EmailSender",
+    "SlackNotifier",
+    "TeamsNotifier",
+    "NotificationDispatcher",
+]
 
 
 class EmailSender:
@@ -136,6 +141,60 @@ class SlackNotifier:
             await self._client.aclose()
 
 
+class TeamsNotifier:
+    """Send notifications to Microsoft Teams via incoming webhooks."""
+
+    def __init__(
+        self,
+        webhook_url: str,
+        *,
+        theme_color: str | None = None,
+        timeout: float = 5.0,
+        client: httpx.AsyncClient | None = None,
+    ) -> None:
+        self._webhook_url = webhook_url
+        self._theme_color = theme_color.upper() if theme_color else None
+        self._timeout = timeout
+        self._client = client or httpx.AsyncClient(timeout=timeout)
+        self._owns_client = client is None
+
+    async def send(
+        self,
+        subject: str,
+        message: str,
+        *,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "summary": subject or message,
+            "title": subject or message,
+            "text": message,
+        }
+        if self._theme_color:
+            payload["themeColor"] = self._theme_color.lstrip("#")
+        if metadata:
+            payload.setdefault("sections", []).append(
+                {
+                    "title": "Details",
+                    "facts": [
+                        {"name": str(key), "value": str(value)}
+                        for key, value in sorted(metadata.items())
+                    ],
+                    "markdown": True,
+                }
+            )
+        response = await self._client.post(
+            self._webhook_url, json=payload, timeout=self._timeout
+        )
+        response.raise_for_status()
+
+    async def aclose(self) -> None:
+        if self._owns_client:
+            await self._client.aclose()
+
+
 class NotificationDispatcher:
     """Coordinate notification delivery across configured channels."""
 
@@ -144,10 +203,12 @@ class NotificationDispatcher:
         *,
         email_sender: EmailSender | None = None,
         slack_notifier: SlackNotifier | None = None,
+        teams_notifier: TeamsNotifier | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         self._email_sender = email_sender
         self._slack_notifier = slack_notifier
+        self._teams_notifier = teams_notifier
         self._logger = logger or logging.getLogger("tradepulse.notifications")
 
     async def dispatch(
@@ -163,6 +224,8 @@ class NotificationDispatcher:
             tasks.append(self._email_sender.send(subject, message, metadata=metadata))
         if self._slack_notifier is not None:
             tasks.append(self._slack_notifier.send(subject, message, metadata=metadata))
+        if self._teams_notifier is not None:
+            tasks.append(self._teams_notifier.send(subject, message, metadata=metadata))
 
         if not tasks:
             self._logger.debug(
@@ -183,3 +246,5 @@ class NotificationDispatcher:
     async def aclose(self) -> None:
         if self._slack_notifier is not None:
             await self._slack_notifier.aclose()
+        if self._teams_notifier is not None:
+            await self._teams_notifier.aclose()
