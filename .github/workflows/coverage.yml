@@ -9,6 +9,8 @@ on:
 jobs:
   test-coverage:
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python
@@ -27,13 +29,23 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest --cov=./ --cov-report=xml --cov-fail-under=80
-      - name: Upload coverage to Codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage to Codecov (with token)
         if: ${{ env.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
+          flags: python311
+          name: python311-coverage
+          token: ${{ env.CODECOV_TOKEN }}
+      - name: Upload coverage to Codecov (OIDC)
+        if: ${{ env.CODECOV_TOKEN == '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: python311
+          name: python311-coverage
+          use_oidc: true
+          fail_ci_if_error: false
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
