@@ -13,7 +13,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
-from observability.audit.trail import AuditTrail, get_access_audit_trail
+from observability.audit.trail import (
+    AuditTrail,
+    AuditTrailError,
+    get_access_audit_trail,
+)
 
 
 def _resolve_ip_address(request: Request) -> str | None:
@@ -177,15 +181,30 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
                 severity = "error"
 
             if self._audit_trail is not None:
-                payload = self._audit_trail.record(
-                    "http.access",
-                    severity=severity,
-                    subject=subject,
-                    ip_address=ip_address,
-                    request_id=request_id,
-                    details=details,
-                )
+                try:
+                    payload = self._audit_trail.record(
+                        "http.access",
+                        severity=severity,
+                        subject=subject,
+                        ip_address=ip_address,
+                        request_id=request_id,
+                        details=details,
+                    )
+                except AuditTrailError:
+                    self._logger.error(
+                        "access.audit.write_failed",
+                        extra={
+                            "event": "http.access",
+                            "severity": severity,
+                            "request_id": request_id,
+                        },
+                        exc_info=True,
+                    )
+                    payload = None
             else:
+                payload = None
+
+            if payload is None:
                 payload = {
                     "event": "http.access",
                     "severity": severity,
