@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: MIT
 FROM python:3.12-slim
 
+# Apply the latest Debian security patches in the base image before installing
+# Python dependencies. This keeps the runtime hardened against known CVEs that
+# container scanners flag in the upstream image layers.
+RUN apt-get update \
+    && apt-get dist-upgrade -y \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,7 +17,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
 COPY requirements.lock ./
-RUN pip install --no-cache-dir -r requirements.lock
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.lock
 
 # Copy FastAPI application sources and supporting packages.
 COPY application ./application
