@@ -334,14 +334,32 @@ jobs:
       env:
         TRIVY_OUTCOME: ${{ steps.trivy-scan.outcome }}
         GRYPE_OUTCOME: ${{ steps.grype-scan.outcome }}
+        TRIVY_RESULTS: ${{ steps.trivy-check.outputs.found }}
+        GRYPE_RESULTS: ${{ steps.grype-check.outputs.found }}
       run: |
-        if [ "$TRIVY_OUTCOME" = "failure" ] && [ "$GRYPE_OUTCOME" = "failure" ]; then
-          echo "Both container scans reported critical vulnerabilities."
-          exit 1
+        fail=false
+
+        if [ "$TRIVY_OUTCOME" = "failure" ] && [ "$TRIVY_RESULTS" != "true" ]; then
+          echo "ERROR: Trivy scan failed to complete and did not produce a SARIF report."
+          fail=true
         fi
 
-        if [ "$TRIVY_OUTCOME" = "failure" ] || [ "$GRYPE_OUTCOME" = "failure" ]; then
-          echo "WARNING: At least one container scan reported critical vulnerabilities, but the workflow is continuing because the other scan succeeded."
+        if [ "$GRYPE_OUTCOME" = "failure" ] && [ "$GRYPE_RESULTS" != "true" ]; then
+          echo "ERROR: Grype scan failed to complete and did not produce a SARIF report."
+          fail=true
+        fi
+
+        if [ "$TRIVY_OUTCOME" = "failure" ] && [ "$GRYPE_OUTCOME" = "failure" ]; then
+          echo "Both container scans reported critical vulnerabilities."
+          fail=true
+        elif [ "$TRIVY_OUTCOME" = "failure" ] && [ "$TRIVY_RESULTS" = "true" ]; then
+          echo "WARNING: Trivy reported critical vulnerabilities, but the workflow is continuing because Grype succeeded. Please review the findings."
+        elif [ "$GRYPE_OUTCOME" = "failure" ] && [ "$GRYPE_RESULTS" = "true" ]; then
+          echo "WARNING: Grype reported critical vulnerabilities, but the workflow is continuing because Trivy succeeded. Please review the findings."
+        fi
+
+        if [ "$fail" = "true" ]; then
+          exit 1
         fi
 
   codeql-analysis:
