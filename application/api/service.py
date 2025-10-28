@@ -38,24 +38,24 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from analytics.signals.pipeline import FeaturePipelineConfig, SignalFeaturePipeline
+from application.api.authorization import require_permission
+from application.api.debug import install_debug_routes
+from application.api.errors import (
+    COMMON_ERROR_RESPONSES,
+    ApiErrorCode,
+    register_exception_handlers,
+)
+from application.api.graphql_api import create_graphql_router
 from application.api.idempotency import (
     IdempotencyCache,
     IdempotencyConflictError,
     IdempotencySnapshot,
 )
-from application.api.authorization import require_permission
-from application.api.errors import (
-    ApiErrorCode,
-    COMMON_ERROR_RESPONSES,
-    register_exception_handlers,
-)
-from application.api.graphql_api import create_graphql_router
-from application.api.debug import install_debug_routes
+from application.api.metrics import MetricsSampler
 from application.api.middleware import (
     AccessLogMiddleware,
     PrometheusMetricsMiddleware,
 )
-from application.api.metrics import MetricsSampler
 from application.api.rate_limit import (
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
@@ -84,8 +84,8 @@ from execution.risk import (
     RiskManager,
     SQLiteKillSwitchStateStore,
 )
-from observability.health import HealthServer
 from observability.audit.trail import get_access_audit_trail
+from observability.health import HealthServer
 from observability.logging import configure_logging
 from src.admin.remote_control import (
     AdminIdentity,
@@ -257,7 +257,10 @@ SUCCESS_HEADERS: dict[str, dict[str, Any]] = {
         "schema": {"type": "string"},
     },
     "X-Idempotent-Replay": {
-        "description": "Present with value 'true' when the response is replayed from the idempotency ledger.",
+        "description": (
+            "Present with value 'true' when the response is replayed from the "
+            "idempotency ledger."
+        ),
         "schema": {"type": "string", "enum": ["true"]},
     },
 }
@@ -826,7 +829,10 @@ class OnlineSignalForecaster:
                     status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail={
                         "code": ApiErrorCode.FEATURES_INVALID.value,
-                        "message": f"Unavailable MACD features: {', '.join(sorted(invalid_columns))}",
+                        "message": (
+                            "Unavailable MACD features: "
+                            f"{', '.join(sorted(invalid_columns))}"
+                        ),
                     },
                 )
             return None
@@ -934,17 +940,30 @@ class OnlineSignalForecaster:
             action=action,
             confidence=confidence,
             rationale=(
-                "Composite heuristic weighting MACD trend, crossover momentum, histogram strength, RSI, returns, and book imbalance"
+                "Composite heuristic weighting MACD trend, crossover momentum, "
+                "histogram strength, RSI, returns, and book imbalance"
             ),
             metadata={
                 "score": score,
                 "horizon_seconds": horizon_seconds,
                 "component_contributions": contributions,
                 "macd_component_explanations": {
-                    "macd_trend": "Measures overall EMA divergence; positive values indicate bullish acceleration.",
-                    "macd_crossover": "Rewards MACD leading the signal line; negative values highlight bearish crossovers.",
-                    "macd_histogram": "Scales the magnitude of MACD vs signal separation to favour decisive momentum.",
-                    "macd_balance": "Penalises divergence and convergence disagreement so MACD structure remains balanced.",
+                    "macd_trend": (
+                        "Measures overall EMA divergence; positive values indicate "
+                        "bullish acceleration."
+                    ),
+                    "macd_crossover": (
+                        "Rewards MACD leading the signal line; negative values "
+                        "highlight bearish crossovers."
+                    ),
+                    "macd_histogram": (
+                        "Scales the magnitude of MACD vs signal separation to favour "
+                        "decisive momentum."
+                    ),
+                    "macd_balance": (
+                        "Penalises divergence and convergence disagreement so MACD "
+                        "structure remains balanced."
+                    ),
                 },
             },
         )
@@ -972,9 +991,7 @@ class OnlineSignalForecaster:
         # combined energy of the MACD trend and histogram legs. Using the signed
         # mean preserves bearish/bullish polarity, whereas the Euclidean norm
         # measures how forcefully the legs move irrespective of sign.
-        divergence_strength = 0.5 * (
-            macd_trend_component + macd_histogram_component
-        )
+        divergence_strength = 0.5 * (macd_trend_component + macd_histogram_component)
         divergence_amplitude = np.hypot(
             macd_trend_component, macd_histogram_component
         ) / np.sqrt(2.0)
@@ -1245,7 +1262,10 @@ def configure_openapi(app: FastAPI) -> None:
             "x-backwards-compatibility",
             {
                 "guarantees": [
-                    "Schemas for existing response fields remain backward compatible within a major version.",
+                    (
+                        "Schemas for existing response fields remain backward "
+                        "compatible within a major version."
+                    ),
                     "Deprecated fields retain original semantics until removal.",
                 ]
             },
@@ -1256,7 +1276,10 @@ def configure_openapi(app: FastAPI) -> None:
         headers.setdefault(
             "Idempotency-Key",
             {
-                "description": "Idempotency key echoed on responses. Keys are valid for 15 minutes.",
+                "description": (
+                    "Idempotency key echoed on responses. Keys are valid for 15 "
+                    "minutes."
+                ),
                 "schema": {"type": "string", "maxLength": 128},
             },
         )
@@ -1264,7 +1287,10 @@ def configure_openapi(app: FastAPI) -> None:
         headers.setdefault(
             "X-Idempotent-Replay",
             {
-                "description": "Sent with value 'true' when a response is replayed from the idempotency ledger.",
+                "description": (
+                    "Sent with value 'true' when a response is replayed from the "
+                    "idempotency ledger."
+                ),
                 "schema": {"type": "string", "enum": ["true"]},
             },
         )
@@ -1275,13 +1301,15 @@ def configure_openapi(app: FastAPI) -> None:
             {
                 "type": "mutualTLS",
                 "description": (
-                    "Client certificate required for administrative endpoints. Certificates must be "
-                    "issued by the TradePulse platform CA."
+                    "Client certificate required for administrative endpoints. "
+                    "Certificates must be issued by the TradePulse platform CA."
                 ),
             },
         )
 
-        admin_security = [{"OAuth2Bearer": [], "MutualTLS": []}]
+        admin_security: list[dict[str, list[str]]] = [
+            {"OAuth2Bearer": [], "MutualTLS": []}
+        ]
         admin_error_responses = {
             "401": {
                 "description": "Authentication token missing or invalid.",
@@ -1405,7 +1433,8 @@ def create_app(
         joined = ", ".join(sorted(set(missing))) or "configuration values"
         raise RuntimeError(
             (
-                "Missing required secret(s): {}. Provide them via AdminApiSettings or environment variables."
+                "Missing required secret(s): {}. Provide them via AdminApiSettings "
+                "or environment variables."
             ).format(joined)
         ) from exc
 
@@ -1539,14 +1568,29 @@ def create_app(
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
         from prometheus_client import REGISTRY as prometheus_registry  # type: ignore
+        from prometheus_client import (
+            ProcessCollector,
+        )
     except Exception:  # pragma: no cover - optional dependency
         metrics_registry = None
     else:
         metrics_registry = prometheus_registry
+        try:
+            sample = metrics_registry.get_sample_value("process_cpu_seconds_total")
+        except Exception:  # pragma: no cover - registry API may differ across versions
+            sample = None
+        if sample is None:
+            try:
+                ProcessCollector(registry=metrics_registry)
+            except ValueError:
+                pass
 
     metrics_module = __import__("core.utils.metrics", fromlist=["MetricsCollector"])
     metrics_collector = get_metrics_collector(metrics_registry)
-    if metrics_registry is not None and getattr(metrics_collector, "registry", None) is None:
+    if (
+        metrics_registry is not None
+        and getattr(metrics_collector, "registry", None) is None
+    ):
         refreshed_metrics = metrics_module.MetricsCollector(metrics_registry)
         metrics_collector.__dict__.update(refreshed_metrics.__dict__)
         setattr(metrics_module, "_collector", metrics_collector)
@@ -1812,9 +1856,7 @@ def create_app(
     )
     async def health_check(response: Response) -> HealthResponse:
         overall_start = perf_counter()
-        metrics_collector: MetricsCollector | None = getattr(
-            app.state, "metrics", None
-        )
+        metrics_collector: MetricsCollector | None = getattr(app.state, "metrics", None)
         components: dict[str, ComponentHealth] = {}
         shutdown_in_progress = bool(getattr(app.state, "shutting_down", False))
 
@@ -1987,9 +2029,13 @@ def create_app(
         if metrics_collector and metrics_collector.enabled:
             duration = perf_counter() - overall_start
             metrics_collector.observe_health_check_latency("api.overall", duration)
-            metrics_collector.set_health_check_status("api.overall", severity == "ready")
+            metrics_collector.set_health_check_status(
+                "api.overall", severity == "ready"
+            )
             for name, component in components.items():
-                metrics_collector.set_health_check_status(f"component.{name}", component.healthy)
+                metrics_collector.set_health_check_status(
+                    f"component.{name}", component.healthy
+                )
 
         return health_payload
 
