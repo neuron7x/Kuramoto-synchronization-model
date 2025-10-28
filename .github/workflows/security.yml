@@ -312,7 +312,13 @@ jobs:
         fail-build: true
         severity-cutoff: critical
         output-format: sarif
-        output-file: grype-results.sarif
+
+    - name: Rename Grype SARIF output
+      if: always()
+      run: |
+        if [ -f results.sarif ]; then
+          mv results.sarif grype-results.sarif
+        fi
 
     - name: Check Grype SARIF file
       id: grype-check
@@ -375,13 +381,13 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4
+      uses: github/codeql-action/init@v3
       with:
         languages: python
         queries: security-extended
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:python"
 
