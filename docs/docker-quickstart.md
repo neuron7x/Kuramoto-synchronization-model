@@ -327,18 +327,30 @@ volumes:
 
 ```dockerfile
 # Dockerfile
-FROM python:3.12-slim as builder
+FROM python:3.13-slim as builder
 
 WORKDIR /app
+
+# Keep the build stage patched before installing Python deps.
+RUN apt-get update \
+  && apt-get upgrade -y --no-install-recommends \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY requirements.lock .
 RUN pip install --user --no-cache-dir -r requirements.lock
 
 # Final stage
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
+
+# Apply security updates in the runtime image as well.
+RUN apt-get update \
+  && apt-get upgrade -y --no-install-recommends \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies
 COPY --from=builder /root/.local /root/.local

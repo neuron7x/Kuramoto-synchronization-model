@@ -1,7 +1,13 @@
 # SPDX-License-Identifier: MIT
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
+
+# Apply the latest Debian security updates so container scans remain clean.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
