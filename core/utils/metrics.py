@@ -106,6 +106,63 @@ class MetricsCollector:
             os.getenv("TRADEPULSE_METRICS_MAX_EQUITY_POINTS", "1024")
         )
 
+        # API/service metrics
+        self.api_request_latency = Histogram(
+            "tradepulse_api_request_latency_seconds",
+            "Latency observed for HTTP API requests",
+            ["route", "method"],
+            registry=registry,
+        )
+
+        self.api_requests_total = Counter(
+            "tradepulse_api_requests_total",
+            "Total number of HTTP API requests grouped by status",
+            ["route", "method", "status"],
+            registry=registry,
+        )
+
+        self.api_requests_in_flight = Gauge(
+            "tradepulse_api_requests_in_flight",
+            "Number of HTTP API requests currently being processed",
+            ["route", "method"],
+            registry=registry,
+        )
+
+        self.api_queue_depth = Gauge(
+            "tradepulse_api_queue_depth",
+            "Depth of internal queues servicing the API",
+            ["queue"],
+            registry=registry,
+        )
+
+        self.api_queue_latency = Histogram(
+            "tradepulse_api_queue_latency_seconds",
+            "Observed latency experienced by API servicing queues",
+            ["queue"],
+            registry=registry,
+        )
+
+        self.process_cpu_percent = Gauge(
+            "tradepulse_process_cpu_percent",
+            "CPU utilisation percent for the serving process",
+            ["process"],
+            registry=registry,
+        )
+
+        self.process_memory_bytes = Gauge(
+            "tradepulse_process_memory_bytes",
+            "Resident memory footprint of the serving process in bytes",
+            ["process"],
+            registry=registry,
+        )
+
+        self.process_memory_percent = Gauge(
+            "tradepulse_process_memory_percent",
+            "Memory utilisation percent for the serving process",
+            ["process"],
+            registry=registry,
+        )
+
         # Feature/Indicator metrics
         self.feature_transform_duration = Histogram(
             "tradepulse_feature_transform_duration_seconds",
@@ -746,6 +803,95 @@ class MetricsCollector:
 
         final_status = str(override).strip()
         return final_status or status
+
+    # ------------------------------------------------------------------
+    # API/service helpers
+
+    def observe_api_request(
+        self, route: str, method: str, status_code: int, duration: float
+    ) -> None:
+        """Record latency and counters for an API request."""
+
+        if not self._enabled:
+            return
+
+        route_label = self._normalise_label(route, default="unknown")
+        method_label = self._normalise_label(method, default="other").upper()
+        status_label = self._normalise_label(status_code, default="unknown")
+
+        bounded_duration = max(0.0, float(duration))
+        self.api_request_latency.labels(route=route_label, method=method_label).observe(
+            bounded_duration
+        )
+        self.api_requests_total.labels(
+            route=route_label, method=method_label, status=status_label
+        ).inc()
+
+    def track_api_in_flight(self, route: str, method: str, delta: float) -> None:
+        """Adjust the in-flight gauge for API requests."""
+
+        if not self._enabled or delta == 0:
+            return
+
+        route_label = self._normalise_label(route, default="unknown")
+        method_label = self._normalise_label(method, default="other").upper()
+        gauge = self.api_requests_in_flight.labels(
+            route=route_label, method=method_label
+        )
+        change = float(delta)
+        if change > 0:
+            gauge.inc(change)
+        else:
+            gauge.dec(abs(change))
+
+    def set_queue_depth(self, queue_name: str, depth: float) -> None:
+        """Update the observed depth of an internal queue."""
+
+        if not self._enabled:
+            return
+
+        queue_label = self._normalise_label(queue_name, default="default")
+        bounded_depth = max(0.0, float(depth))
+        self.api_queue_depth.labels(queue=queue_label).set(bounded_depth)
+
+    def observe_queue_latency(self, queue_name: str, latency: float) -> None:
+        """Record latency experienced within an internal queue."""
+
+        if not self._enabled:
+            return
+
+        queue_label = self._normalise_label(queue_name, default="default")
+        bounded_latency = max(0.0, float(latency))
+        self.api_queue_latency.labels(queue=queue_label).observe(bounded_latency)
+
+    def set_process_resource_usage(
+        self,
+        process_name: str,
+        *,
+        cpu_percent: float | None = None,
+        memory_bytes: float | None = None,
+        memory_percent: float | None = None,
+    ) -> None:
+        """Update CPU and memory gauges for the serving process."""
+
+        if not self._enabled:
+            return
+
+        process_label = self._normalise_label(process_name, default="main")
+
+        if cpu_percent is not None:
+            self.process_cpu_percent.labels(process=process_label).set(
+                max(0.0, float(cpu_percent))
+            )
+
+        if memory_bytes is not None:
+            self.process_memory_bytes.labels(process=process_label).set(
+                max(0.0, float(memory_bytes))
+            )
+
+        if memory_percent is not None:
+            bounded = max(0.0, min(100.0, float(memory_percent)))
+            self.process_memory_percent.labels(process=process_label).set(bounded)
 
     @contextmanager
     def measure_feature_transform(
