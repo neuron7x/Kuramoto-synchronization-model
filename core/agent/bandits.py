@@ -3,18 +3,44 @@ from __future__ import annotations
 
 import math
 import random
-from typing import List
+from typing import List, Protocol, Sequence
+
+
+class _ArmRandom(Protocol):
+    """Protocol describing the minimal interface required for RNG hooks."""
+
+    def random(self) -> float:
+        """Return a float in the interval [0.0, 1.0)."""
+
+    def choice(self, seq: Sequence[str]) -> str:
+        """Select an element from the provided sequence."""
 
 
 class EpsilonGreedy:
-    def __init__(self, arms: List[str], epsilon: float = 0.1):
+    def __init__(
+        self,
+        arms: List[str],
+        epsilon: float = 0.1,
+        rng: _ArmRandom | None = None,
+    ):
         self.Q = {a: 0.0 for a in arms}
         self.N = {a: 0 for a in arms}
         self.epsilon = epsilon
+        self._rng: _ArmRandom = rng or random.SystemRandom()
+
+    @property
+    def rng(self) -> _ArmRandom:
+        """Expose the RNG to allow deterministic injection for testing."""
+
+        return self._rng
+
+    @rng.setter
+    def rng(self, rng: _ArmRandom) -> None:
+        self._rng = rng
 
     def select(self) -> str:
-        if random.random() < self.epsilon:
-            return random.choice(list(self.Q.keys()))
+        if self._rng.random() < self.epsilon:
+            return self._rng.choice(list(self.Q.keys()))
         arms = list(self.Q.keys())
         if not arms:
             raise ValueError("No arms available")

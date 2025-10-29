@@ -4,10 +4,21 @@ from __future__ import annotations
 import math
 import random
 import time
+from collections.abc import Sequence
 
 import pytest
 
 from core.agent.bandits import UCB1, EpsilonGreedy
+
+
+class _DeterministicArmRNG:
+    """Simple RNG stub to make epsilon-greedy exploration deterministic."""
+
+    def random(self) -> float:
+        return 0.0
+
+    def choice(self, seq: Sequence[str]) -> str:
+        return seq[1]
 from core.agent.memory import StrategyMemory, StrategyRecord
 from core.agent.strategy import PiAgent, Strategy
 
@@ -27,9 +38,8 @@ def test_ucb1_selects_unseen_arm_first() -> None:
     assert {choice1, choice2} == {"x", "y"}
 
 
-def test_epsilon_greedy_explores(monkeypatch: pytest.MonkeyPatch) -> None:
-    agent = EpsilonGreedy(["a", "b"], epsilon=1.0)
-    monkeypatch.setattr(random, "choice", lambda seq: seq[1])
+def test_epsilon_greedy_explores() -> None:
+    agent = EpsilonGreedy(["a", "b"], epsilon=1.0, rng=_DeterministicArmRNG())
     assert agent.select() == "b"
 
 
