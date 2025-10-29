@@ -50,10 +50,17 @@ class PivotPoint:
 
 
 class DivergenceKind(str, Enum):
-    """Enumeration of supported divergence archetypes."""
+    """Enumeration of supported divergence directions."""
 
     BULLISH = "bullish"
     BEARISH = "bearish"
+
+
+class DivergenceClass(str, Enum):
+    """Enumeration of divergence families detected by the algorithm."""
+
+    REGULAR = "regular"
+    HIDDEN = "hidden"
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +68,7 @@ class PivotDivergenceSignal:
     """Encapsulates a divergence detected between price and indicator pivots."""
 
     kind: DivergenceKind
+    divergence_class: DivergenceClass
     price_pivots: Tuple[PivotPoint, PivotPoint]
     indicator_pivots: Tuple[PivotPoint, PivotPoint]
     price_change: float
@@ -180,11 +188,13 @@ def detect_pivot_divergences(
     The function first extracts pivot highs and lows for both inputs. For each
     consecutive pair of price pivots it attempts to align indicator pivots
     within ``max_lag`` steps. Divergence is confirmed when price and indicator
-    move in opposite directions (higher-high vs. lower-high or lower-low vs.
-    higher-low) beyond ``tolerance``. Indicator series are first normalised
-    using ``indicator_normalizer`` which defaults to ``z``-score scaling to
-    mitigate scale-driven distortions when pairing heterogeneous indicators
-    with spot prices.
+    move in opposite directions beyond ``tolerance``. The routine recognises
+    both regular structures (higher-high vs. lower-high, lower-low vs.
+    higher-low) and hidden structures (lower-high vs. higher-high, higher-low
+    vs. lower-low). Indicator series are first normalised using
+    ``indicator_normalizer`` which defaults to ``z``-score scaling to mitigate
+    scale-driven distortions when pairing heterogeneous indicators with spot
+    prices.
 
     Parameters
     ----------
@@ -258,51 +268,93 @@ def detect_pivot_divergences(
         indicator_norm = abs(delta_indicator) / indicator_scale
         return price_norm + indicator_norm
 
-    for prev, curr in zip(highs_price, highs_price[1:]):
-        if curr.value <= prev.value + tolerance:
-            continue
-        prev_ind = match_pivot(prev, highs_indicator)
-        curr_ind = match_pivot(curr, highs_indicator)
-        if prev_ind is None or curr_ind is None:
-            continue
-        if curr_ind.value >= prev_ind.value - tolerance:
-            continue
-        price_delta = curr.value - prev.value
-        indicator_delta = curr_ind.value - prev_ind.value
+    def append_signal(
+        *,
+        direction: DivergenceKind,
+        classification: DivergenceClass,
+        price_pair: Tuple[PivotPoint, PivotPoint],
+        indicator_pair: Tuple[PivotPoint, PivotPoint],
+        price_delta: float,
+        indicator_delta: float,
+    ) -> None:
         strength = compute_strength(price_delta, indicator_delta)
         signals.append(
             PivotDivergenceSignal(
-                kind=DivergenceKind.BEARISH,
-                price_pivots=(prev, curr),
-                indicator_pivots=(prev_ind, curr_ind),
+                kind=direction,
+                divergence_class=classification,
+                price_pivots=price_pair,
+                indicator_pivots=indicator_pair,
                 price_change=price_delta,
                 indicator_change=indicator_delta,
                 strength=strength,
             )
         )
 
-    for prev, curr in zip(lows_price, lows_price[1:]):
-        if curr.value >= prev.value - tolerance:
+    for prev, curr in zip(highs_price, highs_price[1:]):
+        prev_ind = match_pivot(prev, highs_indicator)
+        curr_ind = match_pivot(curr, highs_indicator)
+        if prev_ind is None or curr_ind is None:
             continue
+
+        price_delta = curr.value - prev.value
+        indicator_delta = curr_ind.value - prev_ind.value
+
+        is_higher_high = price_delta > tolerance
+        is_lower_high = price_delta < -tolerance
+        indicator_lower_high = indicator_delta < -tolerance
+        indicator_higher_high = indicator_delta > tolerance
+
+        if is_higher_high and indicator_lower_high:
+            append_signal(
+                direction=DivergenceKind.BEARISH,
+                classification=DivergenceClass.REGULAR,
+                price_pair=(prev, curr),
+                indicator_pair=(prev_ind, curr_ind),
+                price_delta=price_delta,
+                indicator_delta=indicator_delta,
+            )
+        elif is_lower_high and indicator_higher_high:
+            append_signal(
+                direction=DivergenceKind.BEARISH,
+                classification=DivergenceClass.HIDDEN,
+                price_pair=(prev, curr),
+                indicator_pair=(prev_ind, curr_ind),
+                price_delta=price_delta,
+                indicator_delta=indicator_delta,
+            )
+
+    for prev, curr in zip(lows_price, lows_price[1:]):
         prev_ind = match_pivot(prev, lows_indicator)
         curr_ind = match_pivot(curr, lows_indicator)
         if prev_ind is None or curr_ind is None:
             continue
-        if curr_ind.value <= prev_ind.value + tolerance:
-            continue
+
         price_delta = curr.value - prev.value
         indicator_delta = curr_ind.value - prev_ind.value
-        strength = compute_strength(price_delta, indicator_delta)
-        signals.append(
-            PivotDivergenceSignal(
-                kind=DivergenceKind.BULLISH,
-                price_pivots=(prev, curr),
-                indicator_pivots=(prev_ind, curr_ind),
-                price_change=price_delta,
-                indicator_change=indicator_delta,
-                strength=strength,
+
+        is_lower_low = price_delta < -tolerance
+        is_higher_low = price_delta > tolerance
+        indicator_higher_low = indicator_delta > tolerance
+        indicator_lower_low = indicator_delta < -tolerance
+
+        if is_lower_low and indicator_higher_low:
+            append_signal(
+                direction=DivergenceKind.BULLISH,
+                classification=DivergenceClass.REGULAR,
+                price_pair=(prev, curr),
+                indicator_pair=(prev_ind, curr_ind),
+                price_delta=price_delta,
+                indicator_delta=indicator_delta,
             )
-        )
+        elif is_higher_low and indicator_lower_low:
+            append_signal(
+                direction=DivergenceKind.BULLISH,
+                classification=DivergenceClass.HIDDEN,
+                price_pair=(prev, curr),
+                indicator_pair=(prev_ind, curr_ind),
+                price_delta=price_delta,
+                indicator_delta=indicator_delta,
+            )
 
     return signals
 
@@ -311,6 +363,7 @@ __all__ = [
     "PivotPoint",
     "PivotDivergenceSignal",
     "DivergenceKind",
+    "DivergenceClass",
     "detect_pivots",
     "detect_pivot_divergences",
 ]
