@@ -65,3 +65,32 @@ def test_integrate_macro_features_allows_forward_lookup():
     )
 
     assert merged.loc[0, "value"] == 1.5
+
+
+def test_integrate_macro_features_masks_using_alternative_availability_column():
+    market = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2023-02-20"], utc=True),
+            "price": [101.0],
+        }
+    )
+
+    macro = pd.DataFrame(
+        {
+            "indicator": ["GDP"],
+            "period_end": pd.to_datetime(["2023-01-31"], utc=True),
+            "release_date": pd.to_datetime(["2023-02-15"], utc=True),
+            "available_at": pd.to_datetime(["2023-02-25"], utc=True),
+            "value": [2.0],
+        }
+    )
+
+    merged = integrate_macro_features(
+        market,
+        macro,
+        on="timestamp",
+        macro_time_column="period_end",
+        allow_future_leakage=False,
+    )
+
+    assert pd.isna(merged.loc[0, "value"])

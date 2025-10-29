@@ -63,7 +63,8 @@ class MacroSignalPipeline:
         """Execute the pipeline and return engineered macro features."""
 
         datasets: list[MacroDataSet] = []
-        run_identifier = run_id or f"macro-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+        run_started_at = datetime.now(UTC)
+        run_identifier = run_id or f"macro-{run_started_at.strftime('%Y%m%d%H%M%S')}"
 
         for indicator in indicators:
             client = self._clients.get(indicator.source)
@@ -91,13 +92,14 @@ class MacroSignalPipeline:
 
             frame = self._harmonise_frequency(frame, indicator)
             frame = self._apply_transformations(frame, indicator)
-            datasets.append(MacroDataSet(indicator=indicator, frame=frame))
+            if not frame.empty:
+                datasets.append(MacroDataSet(indicator=indicator, frame=frame))
 
         feature_frames = [dataset.ensure_sorted() for dataset in datasets]
         features = self._feature_builder.build(frame for frame in feature_frames)
 
         if not features.empty:
-            self._register_dataset(features, run_identifier)
+            self._register_dataset(features, run_identifier, run_started_at)
 
         return features
 
@@ -106,6 +108,17 @@ class MacroSignalPipeline:
             return frame
 
         resampled = frame.copy()
+
+        if "period_end" not in resampled.columns:
+            raise ValueError(f"Macro dataset for {indicator.code} missing 'period_end' column")
+        if "value" not in resampled.columns:
+            raise ValueError(f"Macro dataset for {indicator.code} missing 'value' column")
+
+        if "indicator" not in resampled.columns:
+            resampled["indicator"] = indicator.code
+        else:
+            resampled["indicator"] = resampled["indicator"].fillna(indicator.code)
+
         resampled["period_end"] = pd.to_datetime(resampled["period_end"], utc=True)
         freq = self._normalise_frequency(indicator.target_frequency)
         harmonised: list[pd.DataFrame] = []
@@ -121,12 +134,29 @@ class MacroSignalPipeline:
             local["indicator"] = code
             harmonised.append(local)
         resampled = pd.concat(harmonised, ignore_index=True) if harmonised else resampled
-        resampled["release_date"] = pd.to_datetime(resampled["release_date"], utc=True)
+        has_release_date = "release_date" in resampled.columns
+        if has_release_date:
+            resampled["release_date"] = pd.to_datetime(
+                resampled["release_date"], utc=True, errors="coerce"
+            )
+        else:
+            resampled["release_date"] = resampled["period_end"]
         if "consensus" in resampled.columns:
             resampled["consensus"] = pd.to_numeric(resampled["consensus"], errors="coerce")
         resampled["value"] = pd.to_numeric(resampled["value"], errors="coerce")
         lag = pd.to_timedelta(indicator.release_lag)
-        resampled["available_at"] = resampled["release_date"] + lag
+        availability_anchor = resampled["release_date"].fillna(resampled["period_end"])
+        if "available_at" in resampled.columns:
+            resampled["available_at"] = pd.to_datetime(
+                resampled["available_at"], utc=True, errors="coerce"
+            )
+            missing_available = resampled["available_at"].isna()
+            if missing_available.any():
+                resampled.loc[missing_available, "available_at"] = (
+                    availability_anchor[missing_available] + lag
+                )
+        else:
+            resampled["available_at"] = availability_anchor + lag
         return resampled
 
     def _apply_transformations(
@@ -153,7 +183,9 @@ class MacroSignalPipeline:
 
         return result
 
-    def _register_dataset(self, features: pd.DataFrame, run_id: str) -> None:
+    def _register_dataset(
+        self, features: pd.DataFrame, run_id: str, started_at: datetime
+    ) -> None:
         signature = dataframe_signature(features)
         entry = CatalogEntry(
             name="macro_features",
@@ -164,13 +196,14 @@ class MacroSignalPipeline:
             source_run_id=run_id,
         )
         self.catalog.register(entry)
+        finished_at = datetime.now(UTC)
         self.audit_log.record(
             AuditEntry(
                 run_id=run_id,
                 segment="macro_features",
                 status="success",
-                started_at=datetime.now(UTC),
-                finished_at=datetime.now(UTC),
+                started_at=started_at,
+                finished_at=finished_at,
                 details={"rows": len(features)},
             )
         )

@@ -24,7 +24,7 @@ class FakeMacroClient:
 
 
 def _build_payload(values: list[float], start_period: str) -> pd.DataFrame:
-    periods = pd.date_range(start_period, periods=len(values), freq="M", tz="UTC")
+    periods = pd.date_range(start_period, periods=len(values), freq="ME", tz="UTC")
     return pd.DataFrame(
         {
             "indicator": ["GDP"] * len(values),
