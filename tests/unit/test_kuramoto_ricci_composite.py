@@ -15,6 +15,7 @@ else:  # pragma: no branch
     HYPOTHESIS_AVAILABLE = True
 
 from core.indicators import (
+    AtrVolatilityAdapter,
     KuramotoRicciComposite,
     MarketPhase,
     MultiScaleKuramoto,
@@ -23,6 +24,7 @@ from core.indicators import (
     TimeFrame,
     TradePulseCompositeEngine,
     WaveletWindowSelector,
+    VolatilityRegime,
 )
 from core.indicators.kuramoto_ricci_composite import CompositeSignal
 from core.indicators.temporal_ricci import (
@@ -321,6 +323,8 @@ class TestCompositeIndicator:
         assert serialised["phase"] == signal.phase.value
         assert serialised["dominant_timeframe_sec"] == TimeFrame.M15.seconds
         assert serialised["skipped_timeframes"] == ["M1", "M5"]
+        assert serialised["volatility_regime"] == signal.volatility_regime
+        assert "volatility_normalized_atr" in serialised
 
 
 class TestCompositeEngine:
@@ -329,8 +333,14 @@ class TestCompositeEngine:
         rng = np.random.default_rng(987)
         t = np.arange(len(dates))
         prices = 100 + 3 * np.sin(2 * np.pi * t / 150) + rng.normal(0, 0.4, len(dates))
+        spread = np.abs(rng.normal(0.2, 0.05, len(dates)))
+        highs = prices + spread
+        lows = prices - spread
         volumes = rng.lognormal(mean=7, sigma=0.6, size=len(dates))
-        df = pd.DataFrame({"close": prices, "volume": volumes}, index=dates)
+        df = pd.DataFrame(
+            {"close": prices, "high": highs, "low": lows, "volume": volumes},
+            index=dates,
+        )
 
         engine = TradePulseCompositeEngine()
         signal = engine.analyze_market(df)
@@ -342,13 +352,61 @@ class TestCompositeEngine:
         assert 0.1 <= signal.risk_multiplier <= 2.0
         assert not np.isnan(signal.kuramoto_R)
         assert not np.isnan(signal.temporal_ricci)
+        assert signal.volatility_regime in {
+            VolatilityRegime.LOW.value,
+            VolatilityRegime.MEDIUM.value,
+            VolatilityRegime.HIGH.value,
+            "neutral",
+        }
+        assert 0.0 <= signal.volatility_score <= 1.0
+
+    def test_volatility_adapter_reacts_to_regimes(self) -> None:
+        dates = pd.date_range("2024-01-01", periods=720, freq="1min")
+
+        def make_frame(noise_scale: float) -> pd.DataFrame:
+            rng = np.random.default_rng(123)
+            noise = rng.normal(0, noise_scale, len(dates))
+            close = 100 + np.cumsum(noise)
+            spread = np.full(len(dates), max(noise_scale * 0.6, 0.05))
+            high = close + spread
+            low = close - spread
+            volume = np.full(len(dates), 1_000.0)
+            return pd.DataFrame(
+                {"close": close, "high": high, "low": low, "volume": volume},
+                index=dates,
+            )
+
+        engine = TradePulseCompositeEngine(volatility_adapter=AtrVolatilityAdapter())
+        low_df = make_frame(0.02)
+        signal_low = engine.analyze_market(low_df)
+        low_profile = engine.last_volatility_profile
+        low_window = engine.k.base_window
+
+        high_df = make_frame(1.2)
+        signal_high = engine.analyze_market(high_df)
+        high_profile = engine.last_volatility_profile
+        high_window = engine.k.base_window
+
+        assert low_profile.regime in {VolatilityRegime.LOW, VolatilityRegime.MEDIUM}
+        assert high_profile.regime in {VolatilityRegime.MEDIUM, VolatilityRegime.HIGH}
+        assert high_window <= low_window
+        assert signal_high.volatility_regime == high_profile.regime.value
+        assert signal_high.volatility_normalized_atr >= signal_low.volatility_normalized_atr
+        assert signal_high.risk_multiplier <= signal_low.risk_multiplier or np.isclose(
+            signal_high.risk_multiplier, signal_low.risk_multiplier
+        )
 
     def test_signal_history_idempotent_retries(self) -> None:
         dates = pd.date_range("2024-01-01", periods=300, freq="1min")
         rng = np.random.default_rng(654)
         prices = 100 + rng.normal(0, 0.5, len(dates))
         volumes = np.full(len(dates), 1000.0)
-        df = pd.DataFrame({"close": prices, "volume": volumes}, index=dates)
+        highs = prices + 0.3
+        lows = prices - 0.3
+        df = pd.DataFrame(
+            {"close": prices, "high": highs, "low": lows, "volume": volumes},
+            index=dates,
+        )
 
         engine = TradePulseCompositeEngine()
         engine.analyze_market(df)
@@ -365,7 +423,10 @@ class TestCompositeEngine:
         rng = np.random.default_rng(321)
         prices = 100 + rng.normal(0, 0.5, len(dates))
         volumes = np.full(len(dates), 1000.0)
-        df = pd.DataFrame({"close": prices, "volume": volumes}, index=dates)
+        df = pd.DataFrame(
+            {"close": prices, "high": prices + 0.2, "low": prices - 0.2, "volume": volumes},
+            index=dates,
+        )
 
         engine = TradePulseCompositeEngine()
         engine.analyze_market(df)
@@ -375,9 +436,17 @@ class TestCompositeEngine:
             pd.Index([df.index[-1] + pd.Timedelta(minutes=1)])
         )
         extended_prices = np.append(prices, prices[-1] + 0.1)
+        extended_highs = np.append(df["high"].to_numpy(), prices[-1] + 0.4)
+        extended_lows = np.append(df["low"].to_numpy(), prices[-1] - 0.4)
         extended_volumes = np.append(volumes, volumes[-1])
         df_extended = pd.DataFrame(
-            {"close": extended_prices, "volume": extended_volumes}, index=extended_index
+            {
+                "close": extended_prices,
+                "high": extended_highs,
+                "low": extended_lows,
+                "volume": extended_volumes,
+            },
+            index=extended_index,
         )
 
         engine.analyze_market(df_extended)
@@ -451,8 +520,18 @@ if HYPOTHESIS_AVAILABLE:
         @given(series=_synthetic_series())
         def test_engine_handles_various_volatilities(self, series: np.ndarray) -> None:
             dates = pd.date_range("2024-01-01", periods=len(series), freq="1min")
+            base_spread = float(np.std(np.diff(series)) if len(series) > 1 else 0.05)
+            spread = max(base_spread, 0.05)
+            highs = series + spread
+            lows = series - spread
             df = pd.DataFrame(
-                {"close": series, "volume": np.full(len(series), 1000.0)}, index=dates
+                {
+                    "close": series,
+                    "high": highs,
+                    "low": lows,
+                    "volume": np.full(len(series), 1000.0),
+                },
+                index=dates,
             )
 
             engine = TradePulseCompositeEngine()

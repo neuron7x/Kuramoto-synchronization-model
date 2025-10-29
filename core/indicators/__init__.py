@@ -45,6 +45,7 @@ from .pivot_detection import (
 from .pipeline import IndicatorPipeline, PipelineResult
 from .temporal_ricci import TemporalRicciAnalyzer
 from .trading import HurstIndicator, KuramotoIndicator, VPINIndicator
+from .volatility import AtrVolatilityAdapter, VolatilityProfile, VolatilityRegime
 
 __all__ = [
     "compute_phase",
@@ -78,6 +79,9 @@ __all__ = [
     "MarketPhase",
     "TradePulseCompositeEngine",
     "TemporalRicciAnalyzer",
+    "AtrVolatilityAdapter",
+    "VolatilityProfile",
+    "VolatilityRegime",
     "PivotPoint",
     "PivotDivergenceSignal",
     "DivergenceKind",

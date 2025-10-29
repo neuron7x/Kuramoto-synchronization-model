@@ -5,8 +5,13 @@ from typing import Dict, Optional
 import numpy as np
 import pandas as pd
 
+from ..utils.logging import get_logger
 from .multiscale_kuramoto import MultiScaleKuramoto, MultiScaleResult
 from .temporal_ricci import TemporalRicciAnalyzer, TemporalRicciResult
+from .volatility import AtrVolatilityAdapter, VolatilityProfile
+
+
+_logger = get_logger(__name__)
 
 
 class MarketPhase(Enum):
@@ -33,6 +38,10 @@ class CompositeSignal:
     dominant_timeframe_sec: Optional[int]
     timestamp: pd.Timestamp
     skipped_timeframes: list[str] = field(default_factory=list)
+    volatility_regime: str = "neutral"
+    volatility_score: float = 0.0
+    volatility_atr: float = 0.0
+    volatility_normalized_atr: float = 0.0
 
 
 class KuramotoRicciComposite:
@@ -45,7 +54,7 @@ class KuramotoRicciComposite:
         temporal_ricci_threshold: float = -0.2,
         transition_threshold: float = 0.7,
         min_confidence: float = 0.5,
-    ):
+    ) -> None:
         self.Rs = R_strong_emergent
         self.Rp = R_proto_emergent
         self.coh_min = coherence_threshold
@@ -53,6 +62,29 @@ class KuramotoRicciComposite:
         self.kt_thr = temporal_ricci_threshold
         self.trans_thr = transition_threshold
         self.min_conf = min_confidence
+        self._volatility_risk_scale = 1.0
+        self._volatility_regime = "neutral"
+        self._volatility_score = 0.0
+        self._volatility_atr = 0.0
+        self._volatility_normalized_atr = 0.0
+
+    def set_volatility_context(
+        self,
+        *,
+        risk_scale: float = 1.0,
+        regime: str = "neutral",
+        regime_score: float = 0.0,
+        atr: float = 0.0,
+        normalized_atr: float = 0.0,
+    ) -> None:
+        """Update risk scaling and metadata for the current volatility regime."""
+
+        risk_scale = float(max(risk_scale, 0.05))
+        self._volatility_risk_scale = risk_scale
+        self._volatility_regime = regime
+        self._volatility_score = float(np.clip(regime_score, 0.0, 1.0))
+        self._volatility_atr = float(max(atr, 0.0))
+        self._volatility_normalized_atr = float(max(normalized_atr, 0.0))
 
     def _phase(self, R: float, kt: float, trans: float, k_static: float) -> MarketPhase:
         if R > self.Rs and k_static < self.kneg and kt < self.kt_thr and trans < 0.5:
@@ -75,7 +107,6 @@ class KuramotoRicciComposite:
             conf *= 0.5
         elif phase == MarketPhase.TRANSITION:
             conf *= 0.5 + 0.5 * trans
-        # penalize near thresholds
         dist = min(abs(R - self.Rs), abs(R - self.Rp))
         if dist < 0.1:
             conf *= 0.8
@@ -84,16 +115,15 @@ class KuramotoRicciComposite:
     def _entry(self, phase: MarketPhase, R: float, kt: float, conf: float) -> float:
         if conf < self.min_conf:
             return 0.0
-        s = 0.0
         if phase == MarketPhase.STRONG_EMERGENT:
-            s = np.clip(-kt, 0.0, 1.0)  # more negative -> stronger long
+            signal = np.clip(-kt, 0.0, 1.0)
         elif phase == MarketPhase.PROTO_EMERGENT:
-            s = 0.5 * R
+            signal = 0.5 * R
         elif phase == MarketPhase.POST_EMERGENT:
-            s = -0.3
+            signal = -0.3
         else:
-            s = 0.0
-        return float(np.clip(s * conf, -1.0, 1.0))
+            signal = 0.0
+        return float(np.clip(signal * conf, -1.0, 1.0))
 
     def _exit(self, phase: MarketPhase, trans: float, R: float) -> float:
         if phase == MarketPhase.POST_EMERGENT:
@@ -116,7 +146,8 @@ class KuramotoRicciComposite:
             base = 0.3
         elif phase == MarketPhase.POST_EMERGENT:
             base = 0.2
-        return float(np.clip(base * coh, 0.1, 2.0))
+        scaled = base * coh * self._volatility_risk_scale
+        return float(np.clip(scaled, 0.1, 2.0))
 
     def analyze(
         self,
@@ -151,6 +182,10 @@ class KuramotoRicciComposite:
             ),
             timestamp=ts,
             skipped_timeframes=[str(tf) for tf in kres.skipped_timeframes],
+            volatility_regime=self._volatility_regime,
+            volatility_score=self._volatility_score,
+            volatility_atr=self._volatility_atr,
+            volatility_normalized_atr=self._volatility_normalized_atr,
         )
 
     def to_dict(self, s: CompositeSignal) -> Dict:
@@ -169,9 +204,12 @@ class KuramotoRicciComposite:
             "topological_transition": s.topological_transition,
             "dominant_timeframe_sec": s.dominant_timeframe_sec,
             "skipped_timeframes": s.skipped_timeframes,
+            "volatility_regime": s.volatility_regime,
+            "volatility_score": s.volatility_score,
+            "volatility_atr": s.volatility_atr,
+            "volatility_normalized_atr": s.volatility_normalized_atr,
         }
 
-    # Backwards-compatible wrappers for legacy API expectations
     def _determine_phase(
         self,
         R: float,
@@ -207,23 +245,84 @@ class KuramotoRicciComposite:
         return self._risk(phase, confidence, coherence)
 
 
+@dataclass(frozen=True)
+class _CompositeBaselines:
+    kuramoto_base_window: int
+    kuramoto_min_samples: int
+    selector_min_window: int
+    selector_max_window: int
+    ricci_window_size: int
+    ricci_connection_threshold: float
+    ricci_shock_sensitivity: float
+    ricci_transition_midpoint: float
+    composite_Rs: float
+    composite_Rp: float
+    composite_coherence: float
+    composite_kneg: float
+    composite_kt_thr: float
+    composite_trans_thr: float
+    composite_min_conf: float
+
+
 class TradePulseCompositeEngine:
     def __init__(
         self,
         kuramoto_config: Optional[Dict] = None,
         ricci_config: Optional[Dict] = None,
         composite_config: Optional[Dict] = None,
+        *,
+        volatility_adapter: Optional[AtrVolatilityAdapter] = None,
     ):
         self.k = MultiScaleKuramoto(**(kuramoto_config or {}))
         self.r = TemporalRicciAnalyzer(**(ricci_config or {}))
         self.c = KuramotoRicciComposite(**(composite_config or {}))
+        self.volatility_adapter = volatility_adapter or AtrVolatilityAdapter()
+        self._baselines = _CompositeBaselines(
+            kuramoto_base_window=self.k.base_window,
+            kuramoto_min_samples=self.k.min_samples_per_scale,
+            selector_min_window=self.k.selector.min_window,
+            selector_max_window=self.k.selector.max_window,
+            ricci_window_size=self.r.window_size,
+            ricci_connection_threshold=self.r.connection_threshold,
+            ricci_shock_sensitivity=self.r.shock_sensitivity,
+            ricci_transition_midpoint=self.r.transition_midpoint,
+            composite_Rs=self.c.Rs,
+            composite_Rp=self.c.Rp,
+            composite_coherence=self.c.coh_min,
+            composite_kneg=self.c.kneg,
+            composite_kt_thr=self.c.kt_thr,
+            composite_trans_thr=self.c.trans_thr,
+            composite_min_conf=self.c.min_conf,
+        )
+        self._last_volatility_profile: VolatilityProfile = (
+            self.volatility_adapter.neutral_profile()
+        )
+        self._apply_volatility_profile(self._last_volatility_profile)
         self.history: list[CompositeSignal] = []
         # Track signals by timestamp to guarantee idempotent retries.
         self._history_index: dict[pd.Timestamp, int] = {}
 
     def analyze_market(
-        self, df: pd.DataFrame, price_col: str = "close", volume_col: str = "volume"
+        self,
+        df: pd.DataFrame,
+        price_col: str = "close",
+        volume_col: str = "volume",
+        high_col: Optional[str] = "high",
+        low_col: Optional[str] = "low",
     ) -> CompositeSignal:
+        if self.volatility_adapter is not None:
+            try:
+                profile = self.volatility_adapter.evaluate(
+                    df,
+                    price_col=price_col,
+                    high_col=high_col,
+                    low_col=low_col,
+                )
+            except Exception as exc:  # pragma: no cover - defensive guardrail
+                _logger.warning("volatility adaptation failed; reverting to neutral", exc_info=exc)
+                profile = self.volatility_adapter.neutral_profile()
+            self._apply_volatility_profile(profile)
+
         kres = self.k.analyze(df, price_col=price_col)
         rres = self.r.analyze(df, price_col=price_col, volume_col=volume_col)
         static_ricci = (
@@ -232,6 +331,10 @@ class TradePulseCompositeEngine:
         sig = self.c.analyze(kres, rres, static_ricci, df.index[-1])
         self._record_signal(sig)
         return sig
+
+    @property
+    def last_volatility_profile(self) -> VolatilityProfile:
+        return self._last_volatility_profile
 
     def get_signal_dataframe(self) -> pd.DataFrame:
         if not self.history:
@@ -253,3 +356,66 @@ class TradePulseCompositeEngine:
 
         self.history.append(signal)
         self._history_index[ts] = len(self.history) - 1
+
+    def _apply_volatility_profile(self, profile: VolatilityProfile) -> None:
+        self._last_volatility_profile = profile
+        base = self._baselines
+
+        window_scale = float(max(profile.smoothing_scale, 0.1))
+        threshold_scale = float(max(profile.threshold_scale, 0.1))
+
+        self.k.base_window = _clamp_int(base.kuramoto_base_window * window_scale, minimum=32)
+        self.k.min_samples_per_scale = _clamp_int(
+            base.kuramoto_min_samples * window_scale,
+            minimum=16,
+        )
+        selector = self.k.selector
+        if selector is not None:
+            selector.min_window = _clamp_int(
+                base.selector_min_window * window_scale,
+                minimum=16,
+            )
+            selector.max_window = max(
+                selector.min_window,
+                _clamp_int(base.selector_max_window * window_scale, minimum=selector.min_window),
+            )
+            selector._widths_cache = None  # invalidate cached candidate widths
+
+        self.r.window_size = _clamp_int(base.ricci_window_size * window_scale, minimum=10)
+        self.r.connection_threshold = float(
+            np.clip(base.ricci_connection_threshold * threshold_scale, 0.01, 1.0)
+        )
+        self.r.builder.connection_threshold = self.r.connection_threshold
+        shock_scale = 1.0 / float(max(threshold_scale, 0.25)) ** 0.5
+        self.r.shock_sensitivity = float(
+            np.clip(base.ricci_shock_sensitivity * shock_scale, 0.5, 50.0)
+        )
+        self.r.transition_midpoint = float(
+            np.clip(base.ricci_transition_midpoint * threshold_scale, 0.01, 0.95)
+        )
+
+        self.c.Rs = float(np.clip(base.composite_Rs * threshold_scale, 0.2, 0.98))
+        proto = float(np.clip(base.composite_Rp * threshold_scale, 0.05, 0.95))
+        self.c.Rp = min(proto, self.c.Rs - 1e-3)
+        self.c.coh_min = float(np.clip(base.composite_coherence * threshold_scale, 0.1, 0.99))
+        self.c.kneg = float(base.composite_kneg * threshold_scale)
+        self.c.kt_thr = float(base.composite_kt_thr * threshold_scale)
+        self.c.trans_thr = float(np.clip(base.composite_trans_thr * threshold_scale, 0.2, 0.95))
+        confidence_scale = 1.0 + (threshold_scale - 1.0) * 0.6
+        self.c.min_conf = float(np.clip(base.composite_min_conf * confidence_scale, 0.2, 0.95))
+        self.c.set_volatility_context(
+            risk_scale=profile.risk_scale,
+            regime=profile.regime.value,
+            regime_score=profile.regime_score,
+            atr=profile.atr,
+            normalized_atr=profile.normalized_atr,
+        )
+
+
+def _clamp_int(value: float, *, minimum: int, maximum: Optional[int] = None) -> int:
+    rounded = int(round(value))
+    if rounded < minimum:
+        rounded = minimum
+    if maximum is not None and rounded > maximum:
+        rounded = maximum
+    return rounded
