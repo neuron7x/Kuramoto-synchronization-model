@@ -1,54 +1,25 @@
-# SPDX-License-Identifier: MIT
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.5
+    rev: v0.6.9
     hooks:
       - id: ruff
         args: ["--fix"]
+      - id: ruff-format
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:
       - id: black
-        language_version: python3
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile=black"]
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
-    hooks:
-      - id: flake8
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
-    hooks:
-      - id: shfmt
-        args: ["-w", "-i", "2", "-ci"]
-  - repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: 3.0.0
-    hooks:
-      - id: shellcheck
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-requests]
-  - repo: local
+        args: ["--strict"]
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
     hooks:
-      - id: slotscheck
-        name: slotscheck (core packages)
-        entry: python -m slotscheck --module core --module backtest --module execution
-        language: python
-        additional_dependencies:
-          - slotscheck==0.19.1
-        pass_filenames: false
-      - id: eslint
-        name: eslint (dashboard UI)
-        entry: npm run lint --prefix ui/dashboard
-        language: system
-        pass_filenames: false
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
+      - id: bandit
+        args: ["-r","-ll","."]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
     hooks:
-      - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
+      - id: gitleaks
