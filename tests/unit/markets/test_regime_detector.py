@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from markets.regime import RegimeDetectionResult, RegimeDetector
 
@@ -65,3 +66,54 @@ def test_regime_detector_produces_named_states() -> None:
     assert math.isclose(prob_sum, 1.0, rel_tol=1e-3)
     assert latest.features is not None
     assert {"trend", "momentum", "volatility", "volume_z"} <= set(latest.features.index)
+
+
+def test_predict_requires_fitted_model() -> None:
+    history = _synthetic_market_history()
+    detector = RegimeDetector(n_regimes=3, window=24)
+
+    with pytest.raises(RuntimeError):
+        detector.predict(history)
+
+
+def test_fit_requires_price_column() -> None:
+    detector = RegimeDetector(n_regimes=3, window=24)
+    history = _synthetic_market_history().rename(columns={"price": "close_price"})
+
+    with pytest.raises(KeyError):
+        detector.fit(history, price_col="price")
+
+
+def test_fit_rejects_insufficient_data_points() -> None:
+    detector = RegimeDetector(n_regimes=3, window=10)
+    minimal = pd.DataFrame(
+        {
+            "close": np.linspace(100, 105, 2),
+            "volume": np.linspace(1_000, 1_100, 2),
+        },
+        index=pd.date_range("2022-01-01", periods=2, freq="h"),
+    )
+
+    with pytest.raises(ValueError):
+        detector.fit(minimal)
+
+
+def test_latest_returns_timestamp_for_monotonic_index() -> None:
+    history = _synthetic_market_history()
+    detector = RegimeDetector(n_regimes=3, window=24, random_state=7)
+    detector.fit(history, price_col="price", volume_col="volume")
+
+    # Use a fresh frame to avoid reusing training features
+    recent = history.iloc[-120:]
+    latest = detector.latest(recent, price_col="price", volume_col="volume")
+
+    assert latest.timestamp == recent.index[-1]
+
+
+def test_volume_feature_defaults_to_zero_when_missing() -> None:
+    history = _synthetic_market_history().drop(columns=["volume"])
+    detector = RegimeDetector(n_regimes=3, window=24, random_state=5)
+    fitted = detector.fit(history, price_col="price", volume_col=None)
+
+    assert "regime" in fitted
+    assert np.allclose(fitted["volume_z"], 0.0)
