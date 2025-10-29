@@ -14,6 +14,11 @@ from .hierarchical_features import (
     TimeFrameSpec,
     compute_hierarchical_features,
 )
+from .ensemble_divergence import (
+    EnsembleDivergenceResult,
+    IndicatorDivergenceSignal,
+    compute_ensemble_divergence,
+)
 from .kuramoto import (
     KuramotoOrderFeature,
     MultiAssetKuramotoFeature,
@@ -58,6 +63,9 @@ __all__ = [
     "compute_phase_gpu",
     "kuramoto_order",
     "multi_asset_kuramoto",
+    "compute_ensemble_divergence",
+    "IndicatorDivergenceSignal",
+    "EnsembleDivergenceResult",
     "KuramotoOrderFeature",
     "MultiAssetKuramotoFeature",
     "KuramotoIndicator",
