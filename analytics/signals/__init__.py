@@ -1,5 +1,12 @@
 """Signal research utilities for feature engineering and model evaluation."""
 
+from .convergence import (
+    ConvergenceConfig,
+    ConvergenceDetector,
+    ConvergenceScores,
+    compute_convergence,
+    is_convergent,
+)
 from .irreversibility import (
     IGSConfig,
     IGSMetrics,
@@ -31,6 +38,11 @@ __all__ = [
     "SignalModelSelector",
     "build_supervised_learning_frame",
     "make_default_candidates",
+    "ConvergenceConfig",
+    "ConvergenceDetector",
+    "ConvergenceScores",
+    "compute_convergence",
+    "is_convergent",
     "IGSConfig",
     "IGSMetrics",
     "RollingPermutationEntropy",
