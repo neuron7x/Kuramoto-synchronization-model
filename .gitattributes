@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+*.py diff=python
+*.ipynb linguist-vendored
+
+# Keep line endings consistent for shell and configuration scripts
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.json text eol=lf
