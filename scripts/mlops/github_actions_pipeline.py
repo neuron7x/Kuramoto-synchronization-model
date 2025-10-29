@@ -14,6 +14,9 @@ from pathlib import Path
 from random import Random
 from typing import Any, Iterable, Sequence
 
+import numpy as np
+import pandas as pd
+
 from core.experiments import ArtifactSpec, ModelRegistry
 
 LOGGER = logging.getLogger(__name__)
@@ -52,30 +55,175 @@ def _derive_seed(config: PipelineConfig) -> int:
     return int.from_bytes(digest[:8], "big")
 
 
-def _synthesise_model_payload(seed: int) -> dict[str, Any]:
+def _normalise(values: np.ndarray) -> np.ndarray:
+    mean = float(values.mean())
+    std = float(values.std())
+    if std == 0.0 or not np.isfinite(std):
+        return np.zeros_like(values, dtype=float)
+    return (values - mean) / std
+
+
+def _load_dataset(path: Path | None) -> pd.DataFrame | None:
+    if path is None:
+        return None
+    if not path.exists():
+        raise FileNotFoundError(f"Dataset path does not exist: {path}")
+    dataset = pd.read_csv(path)
+    if dataset.empty:
+        raise ValueError(f"Dataset at {path} is empty")
+    if "ts" in dataset.columns:
+        dataset = dataset.sort_values("ts").reset_index(drop=True)
+    return dataset.dropna(axis=0, how="any")
+
+
+def _generate_synthetic_dataset(seed: int, rows: int = 256) -> pd.DataFrame:
     rng = Random(seed)
-    weights = [round(rng.uniform(-1.0, 1.0), 6) for _ in range(6)]
-    biases = [round(rng.uniform(-0.5, 0.5), 6) for _ in range(2)]
-    generated_at = datetime.now(tz=timezone.utc).isoformat()
+    ts = np.arange(rows, dtype=float)
+    baseline = 100.0 + 0.05 * ts
+    noise = np.array([rng.gauss(0.0, 0.6) for _ in range(rows)], dtype=float)
+    price = baseline + noise
+    volume = np.array([1000.0 + rng.randint(-60, 60) for _ in range(rows)], dtype=float)
+    return pd.DataFrame({"ts": ts, "price": price, "volume": volume})
+
+
+def _build_design_matrix(dataset: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    numeric_columns = [
+        column
+        for column in dataset.columns
+        if np.issubdtype(dataset[column].dtype, np.number)
+    ]
+    if not numeric_columns:
+        raise ValueError("Dataset must contain numeric columns")
+    if "price" in dataset.columns and np.issubdtype(dataset["price"].dtype, np.number):
+        target_column = "price"
+    else:
+        target_column = numeric_columns[-1]
+
+    target = dataset[target_column].to_numpy(dtype=float)
+
+    feature_arrays: list[np.ndarray] = []
+    feature_names: list[str] = []
+
+    if "ts" in dataset.columns and np.issubdtype(dataset["ts"].dtype, np.number):
+        ts_values = dataset["ts"].to_numpy(dtype=float)
+    else:
+        ts_values = np.arange(dataset.shape[0], dtype=float)
+    feature_arrays.append(_normalise(ts_values))
+    feature_names.append("ts_normalised")
+
+    if "volume" in dataset.columns and np.issubdtype(dataset["volume"].dtype, np.number):
+        feature_arrays.append(_normalise(dataset["volume"].to_numpy(dtype=float)))
+        feature_names.append("volume_normalised")
+
+    for column in numeric_columns:
+        if column in {target_column, "ts", "volume"}:
+            continue
+        feature_arrays.append(_normalise(dataset[column].to_numpy(dtype=float)))
+        feature_names.append(f"{column}_normalised")
+
+    if not feature_arrays:
+        feature_arrays.append(np.zeros(dataset.shape[0], dtype=float))
+        feature_names.append("bias_only")
+
+    intercept = np.ones(dataset.shape[0], dtype=float)
+    design_matrix = np.column_stack([intercept, *feature_arrays])
+    return design_matrix, target, feature_names
+
+
+def _regression_metrics(target: np.ndarray, prediction: np.ndarray) -> dict[str, float]:
+    residuals = target - prediction
+    mae = float(np.mean(np.abs(residuals)))
+    rmse = float(np.sqrt(np.mean(np.square(residuals))))
+    if target.size <= 1:
+        r2 = 1.0
+    else:
+        ss_res = float(np.sum(np.square(residuals)))
+        ss_tot = float(np.sum(np.square(target - target.mean())))
+        if ss_tot == 0.0:
+            r2 = 1.0 if ss_res == 0.0 else 0.0
+        else:
+            r2 = 1.0 - ss_res / ss_tot
+    r2 = float(max(-1.0, min(1.0, r2)))
     return {
-        "weights": weights,
-        "biases": biases,
-        "generated_at": generated_at,
+        "mae": mae,
+        "rmse": rmse,
+        "r2_score": r2,
+    }
+
+
+def _train_regression_model(
+    seed: int, dataset: pd.DataFrame | None
+) -> tuple[dict[str, Any], dict[str, float]]:
+    dataset_source = "provided" if dataset is not None else "synthetic"
+    if dataset is None or dataset.empty:
+        dataset = _generate_synthetic_dataset(seed)
+        dataset_source = "synthetic"
+
+    try:
+        design_matrix, target, feature_names = _build_design_matrix(dataset)
+    except ValueError:
+        dataset = _generate_synthetic_dataset(seed)
+        dataset_source = "synthetic"
+        design_matrix, target, feature_names = _build_design_matrix(dataset)
+
+    samples = design_matrix.shape[0]
+    if samples < 2:
+        dataset = _generate_synthetic_dataset(seed)
+        dataset_source = "synthetic"
+        design_matrix, target, feature_names = _build_design_matrix(dataset)
+        samples = design_matrix.shape[0]
+
+    train_size = int(samples * 0.8)
+    train_size = min(max(train_size, 1), samples - 1)
+    if samples == 1:
+        train_size = 1
+
+    x_train = design_matrix[:train_size]
+    y_train = target[:train_size]
+    x_valid = design_matrix[train_size:]
+    y_valid = target[train_size:]
+    validation_source = "holdout" if y_valid.size else "training"
+
+    if y_valid.size == 0:
+        x_valid = x_train
+        y_valid = y_train
+
+    coefficients, *_ = np.linalg.lstsq(x_train, y_train, rcond=None)
+    predictions = x_valid @ coefficients
+    metrics = _regression_metrics(y_valid, predictions)
+
+    weights = coefficients[1:]
+    mean_abs_weight = float(np.mean(np.abs(weights))) if weights.size else 0.0
+    metrics.update(
+        {
+            "weight_l1_norm": float(np.sum(np.abs(weights))),
+            "weight_l2_norm": float(np.linalg.norm(weights)),
+            "mean_abs_weight": mean_abs_weight,
+            "stability_index": float(1.0 / (1.0 + mean_abs_weight)),
+        }
+    )
+
+    coefficient_map = {
+        name: round(float(value), 8)
+        for name, value in zip(feature_names, weights.tolist())
+    }
+
+    payload = {
+        "intercept": round(float(coefficients[0]), 8),
+        "weights": [round(float(value), 8) for value in weights.tolist()],
+        "coefficients": coefficient_map,
+        "feature_names": feature_names,
+        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
         "seed": seed,
+        "dataset_source": dataset_source,
+        "training_rows": int(y_train.size),
+        "validation_rows": int(y_valid.size),
+        "total_rows": int(target.size),
+        "validation_source": validation_source,
     }
 
-
-def _compute_metrics(payload: dict[str, Any]) -> dict[str, float]:
-    weights = payload["weights"]
-    l1_norm = sum(abs(weight) for weight in weights)
-    mean_abs_weight = l1_norm / len(weights)
-    stability = 1.0 / (1.0 + mean_abs_weight)
-    pseudo_accuracy = max(0.0, min(1.0, 1.0 - mean_abs_weight / 2.0))
-    return {
-        "mean_abs_weight": round(mean_abs_weight, 6),
-        "stability_index": round(stability, 6),
-        "pseudo_accuracy": round(pseudo_accuracy, 6),
-    }
+    rounded_metrics = {key: round(value, 6) for key, value in metrics.items()}
+    return payload, rounded_metrics
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -174,10 +322,16 @@ def _register_run(
 def orchestrate_pipeline(config: PipelineConfig) -> dict[str, Any]:
     seed = _derive_seed(config)
     LOGGER.info("Derived deterministic seed", extra={"seed": seed})
-    payload = _synthesise_model_payload(seed)
-    LOGGER.info("Synthesised model payload", extra={"weights": payload["weights"]})
-    metrics = _compute_metrics(payload)
-    LOGGER.info("Computed evaluation metrics", extra=metrics)
+    dataset = _load_dataset(config.dataset_path)
+    payload, metrics = _train_regression_model(seed, dataset)
+    LOGGER.info(
+        "Trained regression model",
+        extra={
+            "coefficients": payload.get("coefficients"),
+            "dataset_source": payload.get("dataset_source"),
+            "metrics": metrics,
+        },
+    )
     artifacts, summary_path = _persist_artifacts(config, payload, metrics)
     run_id = _register_run(config, artifacts, metrics, seed)
     LOGGER.info("Registered run in local model registry", extra={"run_id": run_id})
