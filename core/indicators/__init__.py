@@ -48,6 +48,7 @@ from .normalization import (
     resolve_indicator_normalizer,
 )
 from .pivot_detection import (
+    DivergenceClass,
     DivergenceKind,
     PivotDivergenceSignal,
     PivotPoint,
@@ -100,6 +101,7 @@ __all__ = [
     "resolve_indicator_normalizer",
     "PivotPoint",
     "PivotDivergenceSignal",
+    "DivergenceClass",
     "DivergenceKind",
     "detect_pivots",
     "detect_pivot_divergences",
