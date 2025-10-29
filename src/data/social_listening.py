@@ -88,7 +88,7 @@ class SocialListeningPipeline:
                 await external_stop.wait()
                 return
             try:
-                await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+                await asyncio.gather(*tasks)
             finally:
                 for task in tasks:
                     if not task.done():
