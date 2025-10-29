@@ -46,7 +46,7 @@ nav:
       - Troubleshooting: troubleshooting.md
   - Core Concepts:
       - Architecture:
-          - Platform Overview: ARCHITECTURE.md
+          - Architecture Blueprint: ARCHITECTURE.md
           - System Diagrams: architecture/system_overview.md
           - Feature Store: architecture/feature_store.md
           - Architecture Review Program: architecture/architecture_review_program.md
@@ -112,6 +112,7 @@ nav:
       - Documentation Governance: documentation_governance.md
       - Documentation Standardisation Playbook: documentation_standardisation_playbook.md
       - Documentation Quality Metrics: documentation_quality_metrics.md
+      - Documentation Information Architecture: documentation_information_architecture.md
 
 markdown_extensions:
   - admonition
