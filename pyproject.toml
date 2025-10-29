@@ -163,12 +163,12 @@ use_coverage = true
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["core", "backtest", "execution", "analytics", "src"]
+source = ["core", "backtest", "execution", "analytics", "src", "app"]
 
 [tool.coverage.report]
 fail_under = 90
 show_missing = true
-skip_covered = false
+skip_covered = true
 
 [tool.ruff]
 line-length = 100
@@ -257,10 +257,3 @@ showcontent = true
 [tool.pytest.ini_options]
 addopts = "-q --maxfail=1 --disable-warnings --cov=. --cov-report=xml --cov-fail-under=85"
 
-[tool.coverage.run]
-branch = true
-source = ["src","app"]
-
-[tool.coverage.report]
-show_missing = true
-skip_covered = true

@@ -1,7 +1,9 @@
 FROM python:3.12-slim AS build
 WORKDIR /app
-COPY pyproject.toml poetry.lock* ./
-RUN pip install --no-cache-dir poetry && poetry export -f requirements.txt --output requirements.txt
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir poetry \
+    && if [ -f poetry.lock ]; then echo "Using existing poetry.lock"; else poetry lock --no-update; fi \
+    && poetry export -f requirements.txt --output requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip pip install --no-cache-dir -r requirements.txt
 FROM gcr.io/distroless/python3-debian12
 WORKDIR /app
