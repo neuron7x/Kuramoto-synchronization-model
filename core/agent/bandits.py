@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-import random
+from secrets import SystemRandom
 from typing import List
 
 
@@ -11,13 +11,14 @@ class EpsilonGreedy:
         self.Q = {a: 0.0 for a in arms}
         self.N = {a: 0 for a in arms}
         self.epsilon = epsilon
+        self._rng = SystemRandom()
 
     def select(self) -> str:
-        if random.random() < self.epsilon:
-            return random.choice(list(self.Q.keys()))
         arms = list(self.Q.keys())
         if not arms:
             raise ValueError("No arms available")
+        if self._rng.random() < self.epsilon:
+            return self._rng.choice(arms)
         return max(arms, key=lambda a: self.Q[a])
 
     def update(self, arm: str, reward: float):
