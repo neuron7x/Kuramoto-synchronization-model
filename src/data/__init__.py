@@ -38,6 +38,15 @@ from src.data.kafka_ingestion import (
     LagRecord,
     LagReport,
 )
+from src.data.macro import (
+    MacroDataClient,
+    MacroFeatureBuilder,
+    MacroFeatureConfig,
+    MacroIndicatorConfig,
+    MacroSignalPipeline,
+    MacrosynergyClient,
+    integrate_macro_features,
+)
 from src.data.knowledge import (
     AnswerCache,
     AnswerCacheEntry,
@@ -113,9 +122,16 @@ __all__ = [
     "LagRecord",
     "LagReport",
     "LagSummary",
+    "MacroDataClient",
+    "MacroFeatureBuilder",
+    "MacroFeatureConfig",
+    "MacroIndicatorConfig",
+    "MacroSignalPipeline",
+    "MacrosynergyClient",
     "MessageBroker",
     "NullMessageBroker",
     "NullTickEventPublisher",
+    "integrate_macro_features",
     "PipelineContext",
     "PipelineResult",
     "RabbitMQMessageBroker",
