@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from core.indicators import (
@@ -122,4 +123,31 @@ def test_detect_pivots_supports_timestamps() -> None:
 
     assert highs == [PivotPoint(index=1, value=3.0, kind="high", timestamp="t1")]
     assert lows == []
+
+
+def test_detect_pivot_divergences_accepts_custom_indicator_normalizer() -> None:
+    price = [1.0, 3.0, 2.0, 3.5, 2.5]
+    indicator = [1.5, 2.0, 1.8, 2.5, 2.2]
+
+    class RecordingNormalizer:
+        def __init__(self) -> None:
+            self.called = False
+
+        def __call__(self, series: list[float]) -> np.ndarray:
+            self.called = True
+            return np.asarray(series, dtype=float)
+
+    normalizer = RecordingNormalizer()
+
+    signals = detect_pivot_divergences(
+        price,
+        indicator,
+        left=1,
+        right=1,
+        tolerance=1e-6,
+        indicator_normalizer=normalizer,
+    )
+
+    assert normalizer.called is True
+    assert all(isinstance(signal, PivotDivergenceSignal) for signal in signals)
 

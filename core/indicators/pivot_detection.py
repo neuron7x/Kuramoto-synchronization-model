@@ -23,9 +23,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+
+from .normalization import (
+    IndicatorNormalizationConfig,
+    IndicatorNormalizer,
+    NormalizationMode,
+    resolve_indicator_normalizer,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,6 +174,9 @@ def detect_pivot_divergences(
     tolerance: float = 1e-9,
     timestamps: Optional[Sequence[object]] = None,
     max_lag: Optional[int] = None,
+    indicator_normalizer: Optional[
+        Union[str, NormalizationMode, IndicatorNormalizer, IndicatorNormalizationConfig]
+    ] = None,
 ) -> List[PivotDivergenceSignal]:
     """Detect bullish and bearish divergences between price and indicator series.
 
@@ -174,7 +184,9 @@ def detect_pivot_divergences(
     consecutive pair of price pivots it attempts to align indicator pivots
     within ``max_lag`` steps. Divergence is confirmed when price and indicator
     move in opposite directions (higher-high vs. lower-high or lower-low vs.
-    higher-low) beyond ``tolerance``.
+    higher-low) beyond ``tolerance``. Indicator values can be pre-processed via
+    ``indicator_normalizer`` (``z``-score scaling by default) to mitigate scale
+    differences between the two series.
     """
 
     if len(price_series) != len(indicator_series):
@@ -184,12 +196,13 @@ def detect_pivot_divergences(
         raise ValueError("max_lag must be non-negative when provided")
 
     price_values = np.asarray(price_series, dtype=float)
-    indicator_values = np.asarray(indicator_series, dtype=float)
-
     if price_values.ndim != 1:
         raise ValueError("price_series must be one-dimensional")
-    if indicator_values.ndim != 1:
-        raise ValueError("indicator_series must be one-dimensional")
+
+    normalizer = resolve_indicator_normalizer(indicator_normalizer)
+    indicator_values = normalizer(indicator_series)
+    if indicator_values.shape != price_values.shape:
+        raise ValueError("Indicator normalizer must preserve the input series length")
 
     highs_price, lows_price = detect_pivots(
         price_values,
