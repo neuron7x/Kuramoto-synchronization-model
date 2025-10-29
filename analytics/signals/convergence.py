@@ -206,11 +206,12 @@ class ConvergenceDetector:
         direction_df = pd.DataFrame(direction_changes)
         sign_df = _sign_matrix(direction_df, tolerance=cfg.tolerance)
 
-        counts = (sign_df != 0).sum(axis=1)
+        active_mask = sign_df.notna() & (sign_df != 0)
+        counts = active_mask.sum(axis=1)
         alignment = _safe_divide(sign_df.sum(axis=1), counts)
 
         majority = _majority_sign(sign_df)
-        majority_mask = sign_df.eq(majority, axis=0) & (sign_df != 0)
+        majority_mask = sign_df.eq(majority, axis=0) & active_mask
         support_ratio = _safe_divide(majority_mask.sum(axis=1), counts)
 
         magnitude_cols: MutableMapping[str, pd.Series] = {}
@@ -222,7 +223,7 @@ class ConvergenceDetector:
         majority_count = majority_mask.sum(axis=1)
         majority_strength = _safe_divide(majority_strength, majority_count)
 
-        opposing_mask = (sign_df != 0) & ~majority_mask
+        opposing_mask = active_mask & ~majority_mask
         opposing_strength = magnitude_df.where(opposing_mask).sum(axis=1)
         opposing_count = opposing_mask.sum(axis=1)
         opposing_strength = _safe_divide(opposing_strength, opposing_count)
