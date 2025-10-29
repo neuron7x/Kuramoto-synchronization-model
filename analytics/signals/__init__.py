@@ -28,6 +28,15 @@ from .pipeline import (
     build_supervised_learning_frame,
     make_default_candidates,
 )
+from .news_sentiment import (
+    FinBERTSentimentModel,
+    NewsArticle,
+    NewsCollector,
+    NewsSentimentModel,
+    NewsSentimentPipeline,
+    SentimentLabel,
+    aggregate_sentiment,
+)
 
 __all__ = [
     "FeaturePipelineConfig",
@@ -38,6 +47,13 @@ __all__ = [
     "SignalModelSelector",
     "build_supervised_learning_frame",
     "make_default_candidates",
+    "NewsArticle",
+    "NewsCollector",
+    "NewsSentimentModel",
+    "NewsSentimentPipeline",
+    "FinBERTSentimentModel",
+    "SentimentLabel",
+    "aggregate_sentiment",
     "ConvergenceConfig",
     "ConvergenceDetector",
     "ConvergenceScores",
