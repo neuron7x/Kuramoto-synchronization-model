@@ -7,11 +7,17 @@
 <!-- towncrier release notes start -->
 
 ## [Unreleased]
+### Added
+- Regression guard ensuring security-sensitive modules never import Python's non-cryptographic `random` API.
+- CI artifact uploads for Python, Node, and Go coverage reports.
+
 ### Changed
 - Hardened Release Drafter automation (v6 workflow, semantic version resolver, metrics summary).
 - Refactored cache key normalisation to use deterministic ``repr`` tuples, trimming redundant recursion and improving synthetic throughput by ~19%; systems with non-deterministic ``__repr__`` implementations on cache keys should validate behaviour.
 - Standardised local developer tooling with consolidated pre-commit hooks (ruff, black, mypy --strict, bandit, gitleaks) and aligned README onboarding instructions.
 - Replaced the CI entrypoint with a remediation-focused workflow (lint+security audit, integration, container scan) and refreshed Docker build to a multi-stage distroless image with non-root execution and runtime healthcheck.
+### Security
+- Documented the mandatory gitleaks scan + secret rotation playbook and expanded README guidance for `.env` handling and vault-backed secrets.
 
 ## [2.1.3] - 2025-10-05
 ### Added

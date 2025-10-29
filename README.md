@@ -322,6 +322,28 @@ risk:
   stop_loss_pct: 0.02
 ```
 
+### Secrets & Environment Management
+
+- Copy [`.env.example`](.env.example) to `.env` for local development and populate only the values you require.
+- Never commit `.env` files — they are ignored by git and intended for workstation-only secrets.
+- Production deployments must source secrets from a vault (HashiCorp Vault, AWS Secrets Manager, or GCP Secret Manager).
+- See [`application/settings.py`](application/settings.py) for environment variable contracts and [`SECURITY.md`](SECURITY.md) for rotation SLAs.
+- Rotate leaked credentials immediately and document the rotation in the [CHANGELOG](CHANGELOG.md) under the 🔐 Security section.
+
+For HashiCorp Vault, provide a resolver path via the `TRADEPULSE_VAULT_PATH` environment variable or the CLI:
+
+```bash
+# Authenticate to Vault and inject secrets for the live runner
+vault login
+python -m scripts.cli secrets-issue-dynamic \
+  --address https://vault.example:8200 \
+  --role tradepulse-live \
+  --mount database \
+  --output .secrets/live-runner.json
+```
+
+For cloud secret managers, update `deploy-environments.yml` with the ARN/ID of the secret and set the corresponding `*_VAULT_PATH` variable in CI.
+
 ## 🧪 Testing
 
 ```bash

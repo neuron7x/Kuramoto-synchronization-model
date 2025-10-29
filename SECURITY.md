@@ -124,6 +124,8 @@ api_key = "sk-12345..."  # in code
 git secrets --scan
 ```
 
+Run `gitleaks detect --redact --source .` before every push (the same command executes in CI). If anything leaks, revoke the credential, re-issue fresh ones with `python -m scripts.cli secrets-issue-dynamic` (or the appropriate cloud secret rotation workflow), and record the incident in both `SECURITY.md` (rotation log) and the 🔐 Security section of the changelog.
+
 #### 2. Input Validation
 
 **Always validate and sanitize inputs:**
