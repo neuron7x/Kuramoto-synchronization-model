@@ -57,6 +57,7 @@ nav:
       - Backtesting: backtest.md
       - Execution: execution.md
       - FPM-A Framework: FPM-A.md
+      - NeuroEcon Package: neuroecon.md
   - Developer Guides:
       - Extending TradePulse: extending.md
       - Integration API: integration-api.md
