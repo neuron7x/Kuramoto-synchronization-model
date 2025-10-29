@@ -95,7 +95,7 @@ class EnsembleDivergenceResult:
 
 
 def compute_ensemble_divergence(
-    signals: Sequence[IndicatorDivergenceSignal],
+    signals: Iterable[IndicatorDivergenceSignal],
     *,
     min_support: int = 2,
     min_consensus: float = 0.6,
@@ -118,7 +118,8 @@ def compute_ensemble_divergence(
     Parameters
     ----------
     signals:
-        Collection of individual indicator divergences to aggregate.
+        Iterable of individual indicator divergences to aggregate. The
+        iterable is materialised internally, so generators are supported.
     min_support:
         Minimum number of agreeing signals required to confirm a divergence.
     min_consensus:
@@ -134,7 +135,9 @@ def compute_ensemble_divergence(
         msg = "min_support must be a positive integer"
         raise ValueError(msg)
 
-    if not signals:
+    materialised = tuple(signals)
+
+    if not materialised:
         return EnsembleDivergenceResult(
             kind=None,
             score=0.0,
@@ -144,9 +147,9 @@ def compute_ensemble_divergence(
             conflicting_signals=tuple(),
         )
 
-    bullish, bearish = _partition_signals(signals)
+    bullish, bearish = _partition_signals(materialised)
 
-    total_confidence = sum(signal.confidence for signal in signals)
+    total_confidence = sum(signal.confidence for signal in materialised)
     if total_confidence == 0.0:
         return EnsembleDivergenceResult(
             kind=None,
@@ -154,7 +157,7 @@ def compute_ensemble_divergence(
             consensus=0.0,
             support=0,
             contributing_signals=tuple(),
-            conflicting_signals=tuple(signals),
+            conflicting_signals=tuple(materialised),
         )
 
     bull_metrics = _summarise_signals(bullish)
@@ -175,7 +178,7 @@ def compute_ensemble_divergence(
             consensus=0.0,
             support=0,
             contributing_signals=tuple(),
-            conflicting_signals=tuple(signals),
+            conflicting_signals=tuple(materialised),
         )
 
     kind, summary = candidate
