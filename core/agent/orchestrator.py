@@ -262,8 +262,21 @@ class StrategyOrchestrator:
                 if flow is self._sentinel:
                     return
 
-                assert isinstance(flow, StrategyFlow)
-                assert isinstance(future, Future)
+                if not isinstance(flow, StrategyFlow):
+                    message = (
+                        "Worker queue received an unexpected payload "
+                        f"of type {type(flow)!r}"
+                    )
+                    if isinstance(future, Future):
+                        future.set_exception(TypeError(message))
+                    else:  # pragma: no cover - defensive
+                        raise TypeError(message)
+                    continue
+
+                if not isinstance(future, Future):  # pragma: no cover - defensive
+                    raise TypeError(
+                        "Worker queue future must be a concurrent.futures.Future"
+                    )
 
                 with self._lock:
                     self._pending.discard(flow.name)
@@ -335,8 +348,14 @@ class StrategyOrchestrator:
                     self._queue.put((priority, sequence, flow, future))
                     return
 
-                assert isinstance(flow, StrategyFlow)
-                assert isinstance(future, Future)
+                if not isinstance(flow, StrategyFlow):  # pragma: no cover - defensive
+                    raise TypeError(
+                        "Pending queue contained a non-StrategyFlow payload"
+                    )
+                if not isinstance(future, Future):  # pragma: no cover - defensive
+                    raise TypeError(
+                        "Pending queue future must be a concurrent.futures.Future"
+                    )
 
                 future.cancel()
                 with self._lock:

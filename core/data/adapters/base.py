@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import random
+from random import SystemRandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Awaitable, Callable, Optional, TypeVar
@@ -26,6 +26,8 @@ __all__ = [
     "FaultTolerancePolicy",
     "IngestionAdapter",
 ]
+
+_SECURE_RANDOM = SystemRandom()
 
 logger = get_logger(__name__)
 
@@ -78,7 +80,7 @@ class RetryConfig:
         )
         if self.jitter <= 0:
             return base_delay
-        jitter_delta = random.uniform(0, base_delay * self.jitter)
+        jitter_delta = _SECURE_RANDOM.uniform(0, base_delay * self.jitter)
         delay = base_delay + jitter_delta
         return min(self.max_backoff, delay)
 
@@ -196,3 +198,4 @@ class IngestionAdapter(ABC):
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
         await self.aclose()
+

@@ -2,19 +2,26 @@
 from __future__ import annotations
 
 import math
-import random
+from random import Random, SystemRandom
 from typing import List
 
 
 class EpsilonGreedy:
-    def __init__(self, arms: List[str], epsilon: float = 0.1):
+    def __init__(
+        self,
+        arms: List[str],
+        epsilon: float = 0.1,
+        *,
+        rng: Random | None = None,
+    ):
         self.Q = {a: 0.0 for a in arms}
         self.N = {a: 0 for a in arms}
         self.epsilon = epsilon
+        self._rng: Random = rng or SystemRandom()
 
     def select(self) -> str:
-        if random.random() < self.epsilon:
-            return random.choice(list(self.Q.keys()))
+        if self._rng.random() < self.epsilon:
+            return self._rng.choice(list(self.Q.keys()))
         arms = list(self.Q.keys())
         if not arms:
             raise ValueError("No arms available")

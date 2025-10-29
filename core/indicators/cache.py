@@ -219,8 +219,10 @@ def _resolve_code_version() -> str:
                 return ref_path.read_text(encoding="utf-8").strip()
         if head:
             return head
-    except Exception:  # pragma: no cover - gitless environments
-        pass
+    except OSError as exc:  # pragma: no cover - gitless environments
+        _logger.debug("git_head_unavailable", exc_info=exc)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        _logger.warning("failed_to_resolve_git_head", exc_info=exc)
 
     version_file = git_dir / "VERSION"
     if version_file.exists():

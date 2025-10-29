@@ -11,6 +11,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Awaitable, Callable, Dict, MutableMapping, Optional
 
+from core.utils.logging import get_logger
+
+_LOGGER = get_logger(__name__)
+
 from .idempotency import (
     EventIdempotencyStore,
     InMemoryEventIdempotencyStore,
@@ -407,18 +411,38 @@ class NATSEventBus(BaseEventBus):
             raise RuntimeError("NATS client not initialised")
         lock = self._streams_initialised.setdefault(topic.metadata.name, asyncio.Lock())
         async with lock:
+            stream_name = topic.metadata.name.replace(".", "_")
             try:
                 await self._js.add_stream(
-                    name=topic.metadata.name.replace(".", "_"),
+                    name=stream_name,
                     subjects=[
                         topic.metadata.name,
                         topic.metadata.retry_topic,
                         topic.metadata.dlq_topic,
                     ],
                 )
-            except Exception:
-                # Stream likely already exists
-                pass
+            except Exception as exc:  # pragma: no cover - network race conditions
+                message = str(exc).lower()
+                known_conflict = any(
+                    keyword in message
+                    for keyword in (
+                        "already in use",
+                        "already exists",
+                        "duplicate",
+                    )
+                )
+                if known_conflict:
+                    _LOGGER.debug(
+                        "jetstream_stream_exists",
+                        extra={"stream": stream_name, "error": str(exc)},
+                    )
+                else:
+                    _LOGGER.error(
+                        "failed_to_create_jetstream_stream",
+                        extra={"stream": stream_name, "error": str(exc)},
+                        exc_info=exc,
+                    )
+                    raise
 
     async def _publish_retry_or_dlq(
         self, topic: EventTopic, envelope: EventEnvelope

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import math
-import random
+from random import Random, SystemRandom
 import threading
 import time
 from collections import defaultdict
@@ -378,7 +378,7 @@ class StrategyScheduler:
         evaluator: StrategyBatchEvaluator | None = None,
         time_source: Callable[[], float] | None = None,
         sleep: Callable[[float], None] | None = None,
-        rng: random.Random | None = None,
+        rng: Random | None = None,
         wall_time: Callable[[], float] | None = None,
         max_backoff: float = 900.0,
         max_sleep: float = 5.0,
@@ -395,7 +395,7 @@ class StrategyScheduler:
         self._time = time_source or time.monotonic
         self._sleep = sleep or time.sleep
         self._wall_clock = wall_time or time.time
-        self._rng = rng or random.Random()
+        self._rng: Random = rng or SystemRandom()
         self._max_backoff = float(max_backoff)
         self._max_sleep = float(max_sleep)
         self._idle_sleep = float(idle_sleep)
