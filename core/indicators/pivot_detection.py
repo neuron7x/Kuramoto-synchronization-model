@@ -48,6 +48,8 @@ class DivergenceKind(str, Enum):
 
     BULLISH = "bullish"
     BEARISH = "bearish"
+    BULLISH_HIDDEN = "bullish_hidden"
+    BEARISH_HIDDEN = "bearish_hidden"
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,20 +226,23 @@ def detect_pivot_divergences(
         return price_norm + indicator_norm
 
     for prev, curr in zip(highs_price, highs_price[1:]):
-        if curr.value <= prev.value + tolerance:
-            continue
         prev_ind = match_pivot(prev, highs_indicator)
         curr_ind = match_pivot(curr, highs_indicator)
         if prev_ind is None or curr_ind is None:
             continue
-        if curr_ind.value >= prev_ind.value - tolerance:
-            continue
         price_delta = curr.value - prev.value
         indicator_delta = curr_ind.value - prev_ind.value
+        signal_kind: Optional[DivergenceKind] = None
+        if price_delta > tolerance and indicator_delta < -tolerance:
+            signal_kind = DivergenceKind.BEARISH
+        elif price_delta < -tolerance and indicator_delta > tolerance:
+            signal_kind = DivergenceKind.BEARISH_HIDDEN
+        if signal_kind is None:
+            continue
         strength = compute_strength(price_delta, prev.value, indicator_delta, prev_ind.value)
         signals.append(
             PivotDivergenceSignal(
-                kind=DivergenceKind.BEARISH,
+                kind=signal_kind,
                 price_pivots=(prev, curr),
                 indicator_pivots=(prev_ind, curr_ind),
                 price_change=price_delta,
@@ -247,20 +252,23 @@ def detect_pivot_divergences(
         )
 
     for prev, curr in zip(lows_price, lows_price[1:]):
-        if curr.value >= prev.value - tolerance:
-            continue
         prev_ind = match_pivot(prev, lows_indicator)
         curr_ind = match_pivot(curr, lows_indicator)
         if prev_ind is None or curr_ind is None:
             continue
-        if curr_ind.value <= prev_ind.value + tolerance:
-            continue
         price_delta = curr.value - prev.value
         indicator_delta = curr_ind.value - prev_ind.value
+        signal_kind: Optional[DivergenceKind] = None
+        if price_delta < -tolerance and indicator_delta > tolerance:
+            signal_kind = DivergenceKind.BULLISH
+        elif price_delta > tolerance and indicator_delta < -tolerance:
+            signal_kind = DivergenceKind.BULLISH_HIDDEN
+        if signal_kind is None:
+            continue
         strength = compute_strength(price_delta, prev.value, indicator_delta, prev_ind.value)
         signals.append(
             PivotDivergenceSignal(
-                kind=DivergenceKind.BULLISH,
+                kind=signal_kind,
                 price_pivots=(prev, curr),
                 indicator_pivots=(prev_ind, curr_ind),
                 price_change=price_delta,

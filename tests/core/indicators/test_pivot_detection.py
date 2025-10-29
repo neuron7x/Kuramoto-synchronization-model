@@ -55,6 +55,38 @@ def test_detect_pivot_divergences_identifies_bullish_setup() -> None:
     assert signal.indicator_change > 0
 
 
+def test_detect_pivot_divergences_identifies_hidden_bearish_setup() -> None:
+    price = [1.0, 4.0, 2.5, 3.6, 2.2, 3.0]
+    indicator = [1.0, 2.5, 1.5, 3.2, 1.4, 1.0]
+
+    signals = detect_pivot_divergences(price, indicator, left=1, right=1, tolerance=1e-6)
+
+    hidden_bearish = [s for s in signals if s.kind is DivergenceKind.BEARISH_HIDDEN]
+    assert len(hidden_bearish) == 1
+    signal = hidden_bearish[0]
+
+    assert [p.index for p in signal.price_pivots] == [1, 3]
+    assert [p.index for p in signal.indicator_pivots] == [1, 3]
+    assert signal.price_change < 0
+    assert signal.indicator_change > 0
+
+
+def test_detect_pivot_divergences_identifies_hidden_bullish_setup() -> None:
+    price = [3.5, 1.0, 2.6, 1.5, 3.0]
+    indicator = [3.2, 1.5, 2.8, 1.0, 3.1]
+
+    signals = detect_pivot_divergences(price, indicator, left=1, right=1, tolerance=1e-6)
+
+    hidden_bullish = [s for s in signals if s.kind is DivergenceKind.BULLISH_HIDDEN]
+    assert len(hidden_bullish) == 1
+    signal = hidden_bullish[0]
+
+    assert [p.index for p in signal.price_pivots] == [1, 3]
+    assert [p.index for p in signal.indicator_pivots] == [1, 3]
+    assert signal.price_change > 0
+    assert signal.indicator_change < 0
+
+
 def test_detect_pivot_divergences_respects_max_lag_constraint() -> None:
     price = [1.0, 2.6, 1.4, 3.4, 1.2, 2.7, 1.1, 3.3, 1.0]
     indicator = [1.0, 2.1, 2.4, 2.5, 2.6, 2.4, 2.5, 2.2, 1.9]
