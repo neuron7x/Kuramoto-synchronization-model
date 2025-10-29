@@ -80,8 +80,8 @@ def test_ema_is_convex_combination(prev: float, value: float, alpha: float) -> N
         {"prev": prev, "value": value, "alpha": alpha, "result": result},
     )
 
-    lo = math.fmin(prev, value)
-    hi = math.fmax(prev, value)
+    lo = min(prev, value)
+    hi = max(prev, value)
     # allow small floating slop for extremal rounding when prev/value are large
     tolerance = max(1.0, abs(lo), abs(hi)) * 1e-12
     if result < lo:
