@@ -28,9 +28,37 @@ def test_ucb1_selects_unseen_arm_first() -> None:
 
 
 def test_epsilon_greedy_explores(monkeypatch: pytest.MonkeyPatch) -> None:
-    agent = EpsilonGreedy(["a", "b"], epsilon=1.0)
-    monkeypatch.setattr(random, "choice", lambda seq: seq[1])
+    class DummyRng:
+        def random(self) -> float:
+            return 0.0
+
+        def choice(self, seq):  # type: ignore[no-untyped-def]
+            return seq[-1]
+
+    agent = EpsilonGreedy(["a", "b"], epsilon=1.0, rng=DummyRng())
     assert agent.select() == "b"
+
+
+def test_epsilon_greedy_add_remove_arm() -> None:
+    agent = EpsilonGreedy(["a"], epsilon=0.1)
+    agent.add_arm("b")
+    assert set(agent.arms) == {"a", "b"}
+    agent.update("a", 1.0)
+    agent.remove_arm("a")
+    assert agent.arms == ("b",)
+    with pytest.raises(KeyError):
+        agent.update("a", 1.0)
+
+
+def test_epsilon_greedy_invalid_epsilon() -> None:
+    with pytest.raises(ValueError):
+        EpsilonGreedy(["a"], epsilon=-0.01)
+
+
+def test_ucb1_requires_known_arm() -> None:
+    agent = UCB1(["a"])
+    with pytest.raises(KeyError):
+        agent.update("missing", 0.1)
 
 
 def test_strategy_memory_topk_orders_by_freshness(
