@@ -120,3 +120,73 @@ jobs:
           flags: py311
           name: coverage-py311
           fail_ci_if_error: true
+
+  publish-containers:
+    if: github.event_name == 'push'
+    needs: coverage-aggregate
+    runs-on: ubuntu-latest
+    name: Publish container images
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GHCR_IMAGE: ghcr.io/${{ github.repository }}
+      DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_REPOSITORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare image targets
+        id: image-targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=("${GHCR_IMAGE}")
+          if [[ -n "${DOCKERHUB_IMAGE}" ]]; then
+            targets+=("docker.io/${DOCKERHUB_IMAGE}")
+          fi
+          {
+            echo "list<<EOF"
+            printf '%s\n' "${targets[@]}"
+            echo "EOF"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image-targets.outputs.list }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+
+      - name: Build and push container image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

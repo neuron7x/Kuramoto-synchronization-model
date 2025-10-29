@@ -5,14 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import urlsplit
 
-import pytest
 import yaml
-
-
-pytestmark = pytest.mark.xfail(
-    reason="publish-containers job is not yet defined in the CI workflow",
-    strict=True,
-)
 
 
 WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
@@ -34,6 +27,32 @@ def _get_publish_job(loaded: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(job, dict):
         raise AssertionError("publish-containers job must be defined in CI workflow")
     return job
+
+
+def _get_step(job: Dict[str, Any], *, uses: str) -> Dict[str, Any]:
+    steps = job.get("steps")
+    if not isinstance(steps, list):
+        raise AssertionError("publish-containers job must define a steps list")
+
+    matching = [
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("uses", "").startswith(uses)
+    ]
+    if not matching:
+        raise AssertionError(f"Expected a step using {uses!r}")
+    return matching[0]
+
+
+def _get_step_by_id(job: Dict[str, Any], *, step_id: str) -> Dict[str, Any]:
+    steps = job.get("steps")
+    if not isinstance(steps, list):
+        raise AssertionError("publish-containers job must define a steps list")
+
+    for step in steps:
+        if isinstance(step, dict) and step.get("id") == step_id:
+            return step
+    raise AssertionError(f"Expected a step with id={step_id!r}")
 
 
 def _validate_registry_image(image: str, expected_registry: str) -> None:
@@ -80,22 +99,15 @@ def test_publish_job_defines_expected_environment_variables() -> None:
 def test_publish_job_includes_required_steps() -> None:
     workflow = _load_ci_workflow()
     job = _get_publish_job(workflow)
-    steps = job.get("steps")
-    assert isinstance(steps, list)
 
-    def _step_uses(action: str) -> bool:
-        return any(
-            isinstance(step, dict)
-            and step.get("uses", "").startswith(action)
-            for step in steps
-        )
-
-    assert _step_uses("actions/checkout@")
-    assert _step_uses("docker/setup-qemu-action@v3")
-    assert _step_uses("docker/setup-buildx-action@v3")
-    assert _step_uses("docker/login-action@v3")
-    assert _step_uses("docker/metadata-action@v5")
-    assert _step_uses("docker/build-push-action@v5")
+    # ensure each mandatory tool appears at least once
+    _get_step(job, uses="actions/checkout@")
+    _get_step(job, uses="docker/setup-qemu-action@v3")
+    _get_step(job, uses="docker/setup-buildx-action@v3")
+    _get_step_by_id(job, step_id="image-targets")
+    _get_step(job, uses="docker/metadata-action@v5")
+    _get_step(job, uses="docker/build-push-action@v5")
+    _get_step(job, uses="docker/login-action@v3")
 
 
 def test_build_and_push_step_pushes_multi_arch_images() -> None:
@@ -113,3 +125,29 @@ def test_build_and_push_step_pushes_multi_arch_images() -> None:
     assert with_section["push"] is True
     assert with_section["platforms"] == "linux/amd64,linux/arm64"
     assert "${{ steps.meta.outputs.tags }}" in with_section["tags"]
+    assert with_section["labels"] == "${{ steps.meta.outputs.labels }}"
+
+
+def test_metadata_step_targets_expected_images() -> None:
+    workflow = _load_ci_workflow()
+    job = _get_publish_job(workflow)
+    metadata_step = _get_step(job, uses="docker/metadata-action@v5")
+    with_section = metadata_step.get("with")
+    assert isinstance(with_section, dict)
+    assert with_section.get("images") == "${{ steps.image-targets.outputs.list }}"
+
+    tags_raw = with_section.get("tags")
+    assert isinstance(tags_raw, str)
+    tags = {line.strip() for line in tags_raw.splitlines() if line.strip()}
+    assert {"type=ref,event=branch", "type=ref,event=tag", "type=sha"} <= tags
+
+
+def test_prepare_step_generates_expected_outputs() -> None:
+    workflow = _load_ci_workflow()
+    job = _get_publish_job(workflow)
+    step = _get_step_by_id(job, step_id="image-targets")
+    assert step["shell"] == "bash"
+    run_script = step["run"]
+    assert "targets=(\"${GHCR_IMAGE}\")" in run_script
+    assert "targets+=(\"docker.io/${DOCKERHUB_IMAGE}\")" in run_script
+    assert "GITHUB_OUTPUT" in run_script
