@@ -42,8 +42,14 @@ def integrate_macro_features(
     if macro_features.empty:
         return market_data.copy()
 
-    market = market_data.sort_values(on).reset_index(drop=True)
-    macro = macro_features.sort_values(macro_time_column).reset_index(drop=True)
+    use_indicator_grouping = "indicator" in market_data.columns and "indicator" in macro_features.columns
+
+    if use_indicator_grouping:
+        market = market_data.sort_values(["indicator", on]).reset_index(drop=True)
+        macro = macro_features.sort_values(["indicator", macro_time_column]).reset_index(drop=True)
+    else:
+        market = market_data.sort_values(on).reset_index(drop=True)
+        macro = macro_features.sort_values(macro_time_column).reset_index(drop=True)
 
     merged = pd.merge_asof(
         market,
@@ -51,14 +57,23 @@ def integrate_macro_features(
         left_on=on,
         right_on=macro_time_column,
         direction=direction,
-        by="indicator" if "indicator" in market.columns and "indicator" in macro.columns else None,
+        by="indicator" if use_indicator_grouping else None,
     )
-    if not allow_future_leakage and "release_date" in merged.columns:
-        macro_columns = [
-            col
-            for col in merged.columns
-            if col not in market.columns or col in {"release_date", macro_time_column, "indicator"}
-        ]
-        mask = merged["release_date"] > merged[on]
-        merged.loc[mask, macro_columns] = pd.NA
+    if not allow_future_leakage:
+        timing_column = None
+        if "available_at" in merged.columns:
+            timing_column = "available_at"
+        elif "release_date" in merged.columns:
+            timing_column = "release_date"
+
+        if timing_column is not None:
+            macro_columns = [
+                col
+                for col in merged.columns
+                if col not in market.columns
+                or col
+                in {"release_date", "available_at", macro_time_column, "indicator"}
+            ]
+            mask = merged[timing_column].notna() & (merged[timing_column] > merged[on])
+            merged.loc[mask, macro_columns] = pd.NA
     return merged
