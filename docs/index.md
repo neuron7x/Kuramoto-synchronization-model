@@ -181,6 +181,7 @@
     <div class="card__links">
       <a class="card__link" href="documentation_governance/">Governance Model</a>
       <a class="card__link" href="documentation_standardisation_playbook/">Standardisation</a>
+      <a class="card__link" href="documentation_information_architecture/">Information Architecture</a>
       <a class="card__link" href="adr/">Architecture Decisions</a>
     </div>
   </article>
