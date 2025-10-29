@@ -58,6 +58,17 @@
       <a class="card__link" href="security/dlp_and_retention/">DLP &amp; Retention</a>
     </div>
   </article>
+  <article class="card" data-animate="pop">
+    <h3 class="card__title">Нейроекономічна модель</h3>
+    <p class="card__meta">Дивергенція, конвергенція та квантові оновлення стану</p>
+    <p>Формалізуйте адаптивний когнітивний процес ринку з перевіреними
+      методами: Rescorla–Wagner, quantum active inference та геометрією
+      індикаторів. Отримайте повну документацію пакету <code>neuroecon</code>
+      разом із валідацією та прикладами.</p>
+    <div class="card__links">
+      <a class="card__link" href="neuroecon/">NeuroEcon Documentation</a>
+    </div>
+  </article>
 </div>
 
 <div class="section-header" data-animate="fade-up">
