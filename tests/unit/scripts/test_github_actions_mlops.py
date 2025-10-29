@@ -31,7 +31,15 @@ def test_orchestrate_pipeline_creates_expected_artifacts(pipeline_config: Pipeli
     assert model_path.exists(), "model artifact should be materialised"
     assert metrics_path.exists(), "metrics artifact should be materialised"
     assert context_path.exists(), "context artifact should be materialised"
-    assert 0.0 <= summary["metrics"]["pseudo_accuracy"] <= 1.0
+    metrics = summary["metrics"]
+    assert set(metrics) == {
+        "mean_squared_error",
+        "mean_absolute_error",
+        "r_squared",
+        "directional_accuracy",
+    }
+    assert metrics["mean_squared_error"] >= 0.0
+    assert 0.0 <= metrics["directional_accuracy"] <= 1.0
     assert summary["run_id"], "a run identifier should be returned"
 
     assert (
@@ -41,7 +49,8 @@ def test_orchestrate_pipeline_creates_expected_artifacts(pipeline_config: Pipeli
 
 def test_pipeline_copies_dataset_when_present(tmp_path: Path, pipeline_config: PipelineConfig) -> None:
     dataset = tmp_path / "dataset.csv"
-    dataset.write_text("value\n1\n2\n", encoding="utf-8")
+    closes = "\n".join(str(100 + idx * 0.1) for idx in range(80))
+    dataset.write_text(f"close\n{closes}\n", encoding="utf-8")
 
     config = PipelineConfig(
         artifact_root=pipeline_config.artifact_root,
