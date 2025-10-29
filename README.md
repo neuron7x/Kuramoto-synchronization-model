@@ -132,6 +132,37 @@ cd tradepulse
 pip install -e ".[dev]"
 ```
 
+### Developer Environment
+
+```bash
+# Bootstrap linting and security hooks
+pipx install pre-commit
+pre-commit install
+
+# Run the full hook suite before pushing
+pre-commit run --all-files
+
+# Type-check and test with coverage guarantees (>=85%)
+pytest -q --maxfail=1 --disable-warnings --cov=. --cov-report=xml
+
+# Install JavaScript tooling (respects root tsconfig + ESLint policies)
+npm install
+npx eslint . --ext .ts,.tsx
+
+# Verify Go packages using the stricter golangci-lint gate
+golangci-lint run
+```
+
+### Container Image
+
+```bash
+# Build the hardened runtime image with BuildKit caching
+DOCKER_BUILDKIT=1 docker build -t tradepulse:dev .
+
+# Execute the healthcheck locally (mirrors CI container scan job)
+docker run --rm tradepulse:dev python healthcheck.py
+```
+
 ### Your First Strategy
 
 ```python

@@ -253,3 +253,14 @@ showcontent = true
 directory = "chore"
 name = "🧰 Chores"
 showcontent = true
+
+[tool.pytest.ini_options]
+addopts = "-q --maxfail=1 --disable-warnings --cov=. --cov-report=xml --cov-fail-under=85"
+
+[tool.coverage.run]
+branch = true
+source = ["src", "app"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
