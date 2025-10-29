@@ -1,2 +1,3 @@
-# CODEOWNERS intentionally left without owners to avoid invalid handles.
-# Enable Branch Protection and add required reviewers in repository settings.
+# CODEOWNERS ensures consistent reviews and ownership for critical areas.
+# Default owner for the repository.
+* @neuron7x
