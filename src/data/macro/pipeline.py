@@ -146,7 +146,17 @@ class MacroSignalPipeline:
         resampled["value"] = pd.to_numeric(resampled["value"], errors="coerce")
         lag = pd.to_timedelta(indicator.release_lag)
         availability_anchor = resampled["release_date"].fillna(resampled["period_end"])
-        resampled["available_at"] = availability_anchor + lag
+        if "available_at" in resampled.columns:
+            resampled["available_at"] = pd.to_datetime(
+                resampled["available_at"], utc=True, errors="coerce"
+            )
+            missing_available = resampled["available_at"].isna()
+            if missing_available.any():
+                resampled.loc[missing_available, "available_at"] = (
+                    availability_anchor[missing_available] + lag
+                )
+        else:
+            resampled["available_at"] = availability_anchor + lag
         return resampled
 
     def _apply_transformations(
