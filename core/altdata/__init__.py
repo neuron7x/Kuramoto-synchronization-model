@@ -6,6 +6,13 @@ from .fusion import AltDataFusionEngine, FusionConfig
 from .news import NewsFeatureBuilder, NewsItem, NewsSentimentAnalyzer
 from .onchain import OnChainFeatureBuilder, OnChainMetric
 from .sentiment import SentimentFeatureBuilder, SentimentSignal
+from .social_listening import (
+    SocialListeningConfig,
+    SocialListeningProcessor,
+    SocialPost,
+    SocialSentimentScorer,
+    SocialSignalFactory,
+)
 
 __all__ = [
     "AltDataComplianceChecker",
@@ -22,4 +29,9 @@ __all__ = [
     "OnChainMetric",
     "SentimentFeatureBuilder",
     "SentimentSignal",
+    "SocialListeningConfig",
+    "SocialListeningProcessor",
+    "SocialPost",
+    "SocialSentimentScorer",
+    "SocialSignalFactory",
 ]
