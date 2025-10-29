@@ -233,11 +233,11 @@ def kuramoto_order(
 
     Notes:
         Non-finite values are ignored in the vector aggregation, matching the
-        resilience requirements from ``docs/runbook_data_incident.md``. The
-        numerical implementation uses both ``float32`` and ``float64`` buffers
-        to balance performance and stability for large ensembles; clipping at
-        ``1e-8`` enforces the governance rule that de-synchronised states report
-        exactly zero rather than a denormal.
+        resilience requirements from ``docs/runbook_data_incident.md``. To avoid
+        catastrophic cancellation when oscillators are in perfect antiphase, the
+        implementation accumulates in ``float64``. Values below ``1e-12`` are
+        clipped to zero so that de-synchronised states report an exact zero in
+        accordance with the governance rules.
     """
 
     phases_arr = np.asarray(phases)
@@ -253,35 +253,33 @@ def kuramoto_order(
         phases_real = phases_arr
 
     with np.errstate(over="ignore", invalid="ignore"):
-        phases_fp32 = np.asarray(phases_real, dtype=np.float32)
+        phases_fp64 = np.asarray(phases_real, dtype=np.float64)
 
     squeeze_output = False
-    if phases_fp32.ndim == 1:
-        phases_fp32 = phases_fp32[:, None]
+    if phases_fp64.ndim == 1:
+        phases_fp64 = phases_fp64[:, None]
         squeeze_output = True
-    elif phases_fp32.ndim != 2:
+    elif phases_fp64.ndim != 2:
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
-    mask = np.isfinite(phases_fp32)
-    cos_vals = np.zeros_like(phases_fp32, dtype=np.float32)
-    sin_vals = np.zeros_like(phases_fp32, dtype=np.float32)
-    np.cos(phases_fp32, out=cos_vals, where=mask)
-    np.sin(phases_fp32, out=sin_vals, where=mask)
+    mask = np.isfinite(phases_fp64)
+    cos_vals = np.zeros_like(phases_fp64, dtype=np.float64)
+    sin_vals = np.zeros_like(phases_fp64, dtype=np.float64)
+    np.cos(phases_fp64, out=cos_vals, where=mask)
+    np.sin(phases_fp64, out=sin_vals, where=mask)
 
     if weights is not None:
-        weight_matrix = _broadcast_weights(weights, phases_fp32.shape)
+        weight_matrix = _broadcast_weights(weights, phases_fp64.shape).astype(
+            np.float64, copy=False
+        )
         valid = mask & (weight_matrix > 0.0)
         if not valid.any():
-            values = np.zeros(phases_fp32.shape[1], dtype=float)
+            values = np.zeros(phases_fp64.shape[1], dtype=float)
         else:
             weight_matrix = np.where(valid, weight_matrix, 0.0)
-            sum_real = np.add.reduce(
-                cos_vals.astype(np.float64) * weight_matrix, axis=0
-            )
-            sum_imag = np.add.reduce(
-                sin_vals.astype(np.float64) * weight_matrix, axis=0
-            )
-            totals = np.add.reduce(weight_matrix, axis=0, dtype=np.float64)
+            sum_real = np.add.reduce(cos_vals * weight_matrix, axis=0)
+            sum_imag = np.add.reduce(sin_vals * weight_matrix, axis=0)
+            totals = np.add.reduce(weight_matrix, axis=0)
             magnitude = np.hypot(sum_real, sum_imag)
             values = np.divide(
                 magnitude,
@@ -292,14 +290,10 @@ def kuramoto_order(
     else:
         valid_counts = mask.sum(axis=0, dtype=np.float64)
         if not np.any(valid_counts):
-            values = np.zeros(phases_fp32.shape[1], dtype=float)
+            values = np.zeros(phases_fp64.shape[1], dtype=float)
         else:
-            sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float32).astype(
-                np.float64
-            )
-            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float32).astype(
-                np.float64
-            )
+            sum_real = np.add.reduce(cos_vals, axis=0)
+            sum_imag = np.add.reduce(sin_vals, axis=0)
             magnitude = np.hypot(sum_real, sum_imag)
             values = np.divide(
                 magnitude,
@@ -309,7 +303,7 @@ def kuramoto_order(
             )
 
     clipped = np.clip(values, 0.0, 1.0)
-    clipped[clipped < 1e-8] = 0.0
+    clipped[clipped < 1e-12] = 0.0
     if squeeze_output:
         return float(clipped[0])
     return clipped
