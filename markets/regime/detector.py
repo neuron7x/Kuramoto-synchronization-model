@@ -179,7 +179,7 @@ class RegimeDetector:
         labels: dict[int, str] = {}
 
         if summary.empty:
-            return {0: "range_bound"}
+            return {int(idx): "range_bound" for idx in range(self.n_regimes)}
 
         remaining = set(summary.index.tolist())
 
@@ -204,6 +204,9 @@ class RegimeDetector:
 
         for idx in remaining:
             labels[idx] = "range_bound"
+
+        for idx in range(self.n_regimes):
+            labels.setdefault(idx, "range_bound")
 
         # Ensure deterministic ordering for downstream consumers.
         return {int(idx): label for idx, label in sorted(labels.items(), key=lambda item: item[0])}
