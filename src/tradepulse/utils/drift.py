@@ -276,9 +276,9 @@ class DriftDetector:
         jsd_threshold = self.thresholds.threshold_for(feature, "jsd")
         ks_threshold = self.thresholds.threshold_for(feature, "ks")
         drift_flags = []
-        if np.isfinite(metric.js_divergence):
+        if np.isfinite(metric.js_divergence) and jsd_threshold is not None:
             drift_flags.append(metric.js_divergence > jsd_threshold)
-        if metric.ks.valid:
+        if metric.ks.valid and ks_threshold is not None:
             drift_flags.append(metric.ks.pvalue < ks_threshold)
         psi_threshold = self.thresholds.threshold_for(feature, "psi")
         if np.isfinite(metric.psi) and psi_threshold is not None:
