@@ -17,7 +17,7 @@ def sample_metadata() -> dict[str, object]:
         "retention_policy_days": 365,
         "retention_policy_reference": "policy://retention/market-data",
         "training_restrictions": ["no_personal_data", "approved_sources_only"],
-        "license": "MIT",
+        "license": "TradePulse Proprietary License Agreement (TPLA)",
         "intended_domains": ["quant_research"],
         "user_request_process": "https://intranet.tradepulse/privacy-portal",
         "user_request_sla_hours": 48,
@@ -225,7 +225,10 @@ def test_validator_accepts_compliant_metadata(sample_metadata: dict[str, object]
     report = validator.validate(sample_metadata)
     assert report.compliant
     assert report.issues == ()
-    assert report.metadata["license"] == "MIT"
+    assert (
+        report.metadata["license"]
+        == "TradePulse Proprietary License Agreement (TPLA)"
+    )
     assert "GDPR" in report.metadata["privacy_regimes"]
 
 
