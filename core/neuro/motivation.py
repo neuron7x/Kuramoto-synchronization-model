@@ -389,7 +389,7 @@ class FractalMotivationController:
         target_action = action or self._last_action
         if not target_action or target_action not in self.actions:
             return
-        self._update_after_selection(target_action, reward)
+        self._update_after_selection(target_action, reward, increment_counts=False)
 
     def _coerce_state(self, state: Sequence[float]) -> np.ndarray:
         array = np.asarray(state, dtype=float)
@@ -491,10 +491,17 @@ class FractalMotivationController:
                 scores[action] += 0.15 * abs(motivation_signal)
         return scores
 
-    def _update_after_selection(self, action: str, reward: float) -> None:
-        self.counts[action] += 1
-        self.total_count += 1
+    def _update_after_selection(
+        self, action: str, reward: float, *, increment_counts: bool = True
+    ) -> None:
+        if increment_counts:
+            self.counts[action] += 1
+            self.total_count += 1
+
         n = self.counts[action]
+        if n <= 0:
+            return
+
         value = self.values[action]
         self.values[action] = value + (reward - value) / n
 
