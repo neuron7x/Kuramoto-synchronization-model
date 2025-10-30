@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Tests for the resilient execution router abstraction."""
 
 from __future__ import annotations

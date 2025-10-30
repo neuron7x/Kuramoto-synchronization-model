@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from .cli import main
 
 if __name__ == "__main__":  # pragma: no cover - module execution

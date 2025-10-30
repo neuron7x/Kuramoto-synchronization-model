@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Deterministic math regression tests for core indicators.
 
 These tests cover the analytical edge cases for the Kuramoto order parameter,

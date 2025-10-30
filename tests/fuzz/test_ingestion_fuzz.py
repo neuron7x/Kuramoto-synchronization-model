@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Fuzz tests for data ingestion with malformed, edge case, and corrupted data."""
 from __future__ import annotations
 

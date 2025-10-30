@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Public exports for the order book simulator."""
 
 from .core import (

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Analytics helpers exposed as part of the public package API."""
 
 from .environment_parity import (  # noqa: F401

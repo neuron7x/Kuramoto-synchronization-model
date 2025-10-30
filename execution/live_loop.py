@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Long-running execution loop orchestrating OMS, connectors, and risk controls."""
 
 from __future__ import annotations

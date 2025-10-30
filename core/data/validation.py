@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """High-level time series validation helpers built on ``pydantic`` and ``pandera``.
 
 The validation pipeline is split into two layers:

@@ -378,17 +378,11 @@ For more detail, review [docs/roadmap.md](docs/roadmap.md).
 
 ## 📜 License
 
-TradePulse is released under the [MIT License](LICENSE).
+TradePulse is distributed under the [TradePulse Proprietary License Agreement (TPLA)](LICENSE).
 
-```
-MIT License
-
-Copyright (c) 2025 TradePulse Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
+The TPLA permits internal, non-commercial evaluation and development use only.
+Commercial usage of any portion of TradePulse requires a separate written
+agreement with TradePulse Technologies.
 
 ## ⚠️ Disclaimer
 

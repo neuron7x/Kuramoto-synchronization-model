@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Deterministic order lifecycle management with PostgreSQL journaling.
 
 The module provides two collaborating components:

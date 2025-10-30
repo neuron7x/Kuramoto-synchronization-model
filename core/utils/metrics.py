@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Prometheus metrics collection for TradePulse.
 
 This module provides instrumentation for all critical entrypoints and

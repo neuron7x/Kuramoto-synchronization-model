@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Indicator caching primitives with fingerprinting and incremental backfill.
 
 This module provides a production-grade caching layer tailored for quantitative

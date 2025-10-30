@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Numerical stability tests shared across CPU architectures."""
 from __future__ import annotations
 

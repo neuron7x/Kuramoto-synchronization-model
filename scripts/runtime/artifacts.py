@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path

@@ -15,7 +15,7 @@ automated follow-ups reproducible and auditable.
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone

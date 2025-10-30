@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Walk-forward backtesting engine with execution realism controls.
 
 This module provides governance-aligned performance accounting for TradePulse

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Margin-aware liquidation engine for automated deleveraging.
 
 The liquidation flow is inspired by the operational guidance in

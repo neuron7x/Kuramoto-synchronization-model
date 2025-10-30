@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Resilient execution routing across multiple broker/exchange connectors.
 
 The module coordinates :class:`~execution.connectors.ExecutionConnector`

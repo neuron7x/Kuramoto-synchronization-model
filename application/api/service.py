@@ -1579,8 +1579,8 @@ def create_app(
             "url": "https://github.com/neuron7x/TradePulse",
         },
         license_info={
-            "name": "MIT License",
-            "url": "https://opensource.org/licenses/MIT",
+            "name": "TradePulse Proprietary License Agreement (TPLA)",
+            "url": "https://github.com/neuron7x/TradePulse/blob/main/LICENSE",
         },
         openapi_tags=[
             {"name": "health", "description": "Operational endpoints"},

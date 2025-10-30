@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Utilities for sanitizing experiment configurations before logging."""
 from __future__ import annotations
 

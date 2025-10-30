@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests for Ollivier-Ricci curvature indicators.
 
 This module tests the MeanRicciFeature class and related functions for computing

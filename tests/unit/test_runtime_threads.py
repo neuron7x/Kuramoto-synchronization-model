@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Tests enforcing deterministic threading configuration for numeric libraries."""
 from __future__ import annotations
 

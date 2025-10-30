@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Hydra-powered experiment runner for TradePulse analytics."""
 from __future__ import annotations
 

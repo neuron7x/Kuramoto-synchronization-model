@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Plugin infrastructure for execution adapters.
 
 Provides a lightweight registry capable of dynamically loading broker/exchange

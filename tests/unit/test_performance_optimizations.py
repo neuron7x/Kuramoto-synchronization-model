@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Tests for performance optimization features.
 
 This module tests the optional performance optimization parameters (use_float32, chunk_size)

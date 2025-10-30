@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Shared helpers for deterministic, debuggable property tests.
 
 The utilities centralise Hypothesis configuration so that every property test

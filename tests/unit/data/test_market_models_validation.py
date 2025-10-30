@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
 

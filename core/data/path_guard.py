@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Utilities for constraining filesystem access to safe locations."""
 
 from __future__ import annotations

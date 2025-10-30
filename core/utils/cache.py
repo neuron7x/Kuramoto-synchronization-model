@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Multi-tier caching system with adaptive TTL, eviction and observability.
 
 This module implements a production-grade caching subsystem tailored for

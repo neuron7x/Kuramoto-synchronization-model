@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Ricci curvature-based structural stress indicators for price graphs.
 
 This module turns price histories into discrete graphs and computes

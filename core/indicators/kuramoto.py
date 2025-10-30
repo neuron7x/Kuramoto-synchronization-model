@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Kuramoto phase-synchrony indicators for oscillatory market structure analysis.
 
 The functions in this module translate raw price trajectories (produced by the

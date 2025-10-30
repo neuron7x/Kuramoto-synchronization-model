@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Production-grade Binance REST/WebSocket connector."""
 
 from __future__ import annotations

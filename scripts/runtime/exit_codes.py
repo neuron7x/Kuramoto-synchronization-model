@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 EXIT_CODES: dict[str, int] = {
     "success": 0,

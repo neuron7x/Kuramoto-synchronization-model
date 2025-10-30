@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from ._runtime_core import (
     DEFAULT_LOCALE,
     DEFAULT_SEED,

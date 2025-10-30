@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import json
 import logging
 from dataclasses import dataclass

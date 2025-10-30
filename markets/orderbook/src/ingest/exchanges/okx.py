@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Parsers for OKX books-l2-tbt feeds."""
 from __future__ import annotations
 

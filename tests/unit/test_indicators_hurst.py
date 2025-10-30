@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests for Hurst exponent estimation.
 
 This module tests the HurstFeature class and hurst_exponent function,

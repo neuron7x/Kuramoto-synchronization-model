@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """High performance level 2 order book ingestion service."""
 from __future__ import annotations
 

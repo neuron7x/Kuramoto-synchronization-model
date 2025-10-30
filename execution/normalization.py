@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Utilities for exchange-specific symbol and quantity normalization."""
 
 from __future__ import annotations

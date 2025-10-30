@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests for entropy-based market uncertainty indicators.
 
 This module tests the EntropyFeature and DeltaEntropyFeature classes,

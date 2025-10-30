@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Foundational feature/block interfaces for indicator transformers.
 
 These contracts make the fractal composition of indicators explicit: every

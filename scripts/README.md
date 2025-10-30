@@ -112,7 +112,7 @@ All scripts in this directory follow these standards:
 ### Python Scripts
 
 - **Shebang**: `#!/usr/bin/env python3` for executable scripts
-- **License**: SPDX-License-Identifier: MIT header
+- **License**: SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary header
 - **Imports**: `from __future__ import annotations` for Python 3.11+
 - **Type hints**: Full typing annotations on all functions
 - **CLI**: argparse or typer with comprehensive help text
@@ -194,5 +194,5 @@ When adding new scripts:
 
 ## License
 
-All scripts in this directory are licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.
+All scripts in this directory are licensed under the TradePulse Proprietary License Agreement (TPLA). See the [LICENSE](../LICENSE) file for details.
 

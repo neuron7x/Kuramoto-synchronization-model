@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Structured JSON logging utilities for TradePulse.
 
 This module provides structured logging with JSON formatting, correlation IDs,

@@ -12,7 +12,9 @@ TradePulse is an advanced algorithmic trading framework that combines geometric 
 
 ### Is TradePulse free and open source?
 
-Yes, TradePulse is released under the MIT License and is completely free to use for both personal and commercial purposes.
+TradePulse is distributed under the TradePulse Proprietary License Agreement (TPLA).
+You may evaluate and develop internally with the platform, but any commercial
+use requires a separate written agreement with TradePulse Technologies.
 
 ### What markets does TradePulse support?
 

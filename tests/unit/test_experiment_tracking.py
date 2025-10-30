@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests for the experiment tracking helpers."""
 from __future__ import annotations
 
