@@ -305,9 +305,13 @@ def load_thresholds(path: str | Path | None) -> DriftThresholds:
     if path.suffix.lower() in {".yaml", ".yml"}:
         import yaml  # Lazy import to avoid hard dependency when unused
 
-        data = yaml.safe_load(text)
+        loaded = yaml.safe_load(text)
+        data = loaded if loaded is not None else {}
     else:
-        data = json.loads(text)
+        text = text.strip()
+        data = json.loads(text) if text else {}
+    if not isinstance(data, Mapping):
+        raise TypeError("threshold configuration must be a mapping")
     default_jsd = float(data.get("jsd_threshold", 0.1))
     default_ks = float(data.get("ks_pvalue_threshold", 0.05))
     per_signal = data.get("thresholds")
