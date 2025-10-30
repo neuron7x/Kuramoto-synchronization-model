@@ -446,3 +446,10 @@ python scripts/validate.py --config configs/demo.yaml
   * MLflow: `export MLFLOW_TRACKING_URI=file:./mlruns` та (опц.) `MLFLOW_EXPERIMENT_NAME=neurotrade_v12`
   * W&B: `export WANDB_API_KEY=...` і `WANDB_PROJECT=neurotrade_v12`
 * **Не плутати** CAL із самою альфою: CAL — *safety layer* над будь-якою моделлю.
+
+### Нове: Fractal Motivation Engine
+
+* **Фрактальна мотивація** — модуль `core.neuro.motivation` поєднує інформаційний приріст, когерентність контексту та рожевий шум для побудови мотиваційного сигналу.
+* **Allostasis-aware control** — `FractalMotivationController` використовує регулятор алостазу, щоб знижувати ризик при високому навантаженні, та обирає стратегії через Thompson sampling.
+* **Інтеграція з NeuroTrade** — `EnhancedFractalNeuroeconomicCore` тепер модулює кандидатів через мотиваційний стан, додає телеметрію (`motivation_state`) і автоматично викликає режим `pause_and_audit`, якщо guardrails порушено.
+* **Моніторинг** — в реальному часі відстежується mean/std сигналу, ентропія дій і середній intrinsic reward; метрики доступні через `motivation_state.monitor_metrics`.

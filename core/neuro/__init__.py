@@ -18,6 +18,12 @@ from .advanced import (
     TradeResult,
 )
 from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from .motivation import (
+    FractalMotivationController,
+    FractalMotivationEngine,
+    MotivationDecision,
+    RealTimeMotivationMonitor,
+)
 from .shocks import ShockScenario, ShockScenarioGenerator
 from .training import (
     AsyncDataLoader,
@@ -67,4 +73,8 @@ __all__ = [
     "NeuroplasticReinforcementEngine",
     "ShockScenario",
     "ShockScenarioGenerator",
+    "FractalMotivationController",
+    "FractalMotivationEngine",
+    "MotivationDecision",
+    "RealTimeMotivationMonitor",
 ]
