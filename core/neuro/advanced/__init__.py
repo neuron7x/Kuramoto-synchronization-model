@@ -24,6 +24,7 @@ from .integrated import (
     TradeResult,
 )
 from .monitor import NeuroStateMonitor
+from .motivation import FractalMotivationController, VossNoiseGenerator
 from .neuroecon import AdvancedNeuroEconCore, DecisionOption
 from .nre import NeuroplasticReinforcementEngine
 from .divergence import (
@@ -74,5 +75,7 @@ __all__ = [
     "to_density_matrix",
     "von_neumann_entropy",
     "granger_causality",
+    "FractalMotivationController",
+    "VossNoiseGenerator",
 ]
 
