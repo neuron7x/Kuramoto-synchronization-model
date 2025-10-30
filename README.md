@@ -436,6 +436,9 @@ python scripts/validate.py --config configs/demo.yaml
 
 ### Примітки
 
+* Демонстраційний датасет `neuropro/data/sim_ticks.csv` більше не зберігається в репозиторії.
+  Він автоматично генерується при першому виклику `neuropro.data.read_ticks_csv` або
+  окремо через `python scripts/make_synth.py` (доступні опції `--n`, `--seed`, `--path`).
 * Для моніторингу:
   * MLflow: `export MLFLOW_TRACKING_URI=file:./mlruns` та (опц.) `MLFLOW_EXPERIMENT_NAME=neurotrade_v12`
   * W&B: `export WANDB_API_KEY=...` і `WANDB_PROJECT=neurotrade_v12`
