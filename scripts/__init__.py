@@ -16,7 +16,7 @@ environments, including test suites that exercise individual helper modules.
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 from importlib import import_module
 from typing import Any

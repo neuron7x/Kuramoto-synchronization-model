@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 # Filebeat configuration for collecting TradePulse backend logs on Kubernetes.
 filebeat.inputs:
   - type: filestream

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Metrics collection interfaces for order book ingestion."""
 from __future__ import annotations
 

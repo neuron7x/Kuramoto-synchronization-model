@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Command-line interface orchestrating research and operations workflows.
 
 The CLI glues together ingestion, indicator computation, backtesting, and live

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Run the production live execution loop using TOML configuration."""
 
 from __future__ import annotations

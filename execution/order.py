@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Order sizing utilities anchored in governance-aligned risk budgeting.
 
 The sizing rules here implement the capital allocation policy referenced in

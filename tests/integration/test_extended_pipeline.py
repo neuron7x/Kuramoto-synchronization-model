@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Additional integration tests for complete pipeline flows."""
 from __future__ import annotations
 

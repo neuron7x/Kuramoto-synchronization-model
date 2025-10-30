@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Nightly stress tests for DST, holidays, and infrastructure outages."""
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Thread watchdog supervising background worker threads.
 
 The watchdog keeps a registry of worker callables, restarting them if the

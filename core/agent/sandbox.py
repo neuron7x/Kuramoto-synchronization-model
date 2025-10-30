@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Sandbox execution utilities for isolating strategy evaluations."""
 
 from __future__ import annotations

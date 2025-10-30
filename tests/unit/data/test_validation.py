@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests for the strict time series validation helpers."""
 
 from __future__ import annotations

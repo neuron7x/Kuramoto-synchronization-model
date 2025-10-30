@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Canonical dictionaries for venues/instruments and normalization helpers.
 
 The ingestion and execution boundaries frequently receive heterogeneous

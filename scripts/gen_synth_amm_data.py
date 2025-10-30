@@ -6,7 +6,7 @@ useful for testing trading algorithms and market analysis tools.
 """
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import argparse
 import csv
 import logging

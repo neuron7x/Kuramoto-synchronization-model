@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Neuro-consensus microservice builder for TradePulse."""
 
 from __future__ import annotations

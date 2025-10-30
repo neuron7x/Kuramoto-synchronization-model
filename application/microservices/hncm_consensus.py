@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Build domain Signal via HNCM-style consensus."""
 
 from __future__ import annotations

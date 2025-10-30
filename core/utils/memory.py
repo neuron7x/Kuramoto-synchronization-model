@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Lightweight memory pooling utilities used by performance critical paths."""
 
 from __future__ import annotations

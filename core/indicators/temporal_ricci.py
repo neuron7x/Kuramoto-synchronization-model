@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Temporal Ricci curvature analysis for price time series.
 
 This module provides a lightweight approximation of the Ollivier–Ricci

@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust accelerators for TradePulse numeric primitives"
 authors = ["TradePulse Contributors"]
-license = "MIT"
+license = "LicenseRef-TradePulse-Proprietary"
+license-file = "../../LICENSE"
 readme = "README.md"
 
 [features]

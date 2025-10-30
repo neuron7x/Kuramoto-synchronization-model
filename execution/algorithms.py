@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Execution algorithms for slicing large parent orders."""
 
 from __future__ import annotations

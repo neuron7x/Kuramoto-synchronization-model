@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 [[targets]]
 path = "core/indicators/kuramoto.py"
 min_line_rate = 80.0

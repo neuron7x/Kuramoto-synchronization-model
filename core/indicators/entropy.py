@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Entropy-based market uncertainty indicators.
 
 This module provides Shannon entropy and delta entropy calculations for

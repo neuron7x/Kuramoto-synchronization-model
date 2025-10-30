@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 # concrete adapter for SumPort
 from src.ports.ports import SumPort
 

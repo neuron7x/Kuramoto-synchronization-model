@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests for exchange lot and tick mapping in the normalizer."""
 
 from __future__ import annotations

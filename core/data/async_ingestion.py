@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Async data ingestion APIs for TradePulse with strict path validation."""
 from __future__ import annotations
 

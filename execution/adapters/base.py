@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Foundational primitives for authenticated REST/WebSocket connectors."""
 
 from __future__ import annotations

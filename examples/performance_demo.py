@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Performance optimization examples and benchmarks.
 
 This script demonstrates the performance improvements from using float32

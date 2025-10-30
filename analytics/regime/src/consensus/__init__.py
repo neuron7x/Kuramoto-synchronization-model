@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from .hncm_adapter import (
     AgentVote,
     ConsensusDecision,

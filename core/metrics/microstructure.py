@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Microstructure metrics used by research and reporting pipelines."""
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Hurst exponent calculation for detecting long-memory processes in markets.
 
 The Hurst exponent (H) characterizes long-term memory in time series:

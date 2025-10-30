@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 alpha: 0.2
 buy_threshold: 0.15
 sell_threshold: -0.15

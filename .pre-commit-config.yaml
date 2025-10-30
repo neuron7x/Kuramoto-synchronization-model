@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.5

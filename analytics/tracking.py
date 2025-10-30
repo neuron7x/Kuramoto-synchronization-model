@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Experiment tracking utilities providing reproducibility and reporting."""
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Canonical market data models used across TradePulse.
 
 The platform expects a single, strongly typed representation for all market

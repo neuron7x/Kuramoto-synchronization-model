@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Limit order book simulator with microstructure aware extensions.
 
 The module focuses on deterministic, testable components that can be used in

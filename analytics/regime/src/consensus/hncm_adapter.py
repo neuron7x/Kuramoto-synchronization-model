@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """HNCM-style adaptive consensus for TradePulse.
 
 Адаптивний шар колективного інтелекту:

@@ -617,7 +617,8 @@ def function_name(arg1: type, arg2: type) -> return_type:
 
 ## License and Patents
 
-This project is licensed under **MIT License** (see [LICENSE](LICENSE)).
+This project is licensed under the **TradePulse Proprietary License Agreement (TPLA)**
+(see [LICENSE](LICENSE)).
 
 By contributing, you agree to license your contributions under the same terms.
 

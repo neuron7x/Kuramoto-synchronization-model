@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Portfolio level accounting utilities for realised/unrealised PnL."""
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: MIT
+-- SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 -- Migration: Create kill_switch_state table for Postgres-backed kill-switch store.
 
 BEGIN;

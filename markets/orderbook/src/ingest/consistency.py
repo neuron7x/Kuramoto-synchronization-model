@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Consistency validation utilities for order book ingestion."""
 from __future__ import annotations
 

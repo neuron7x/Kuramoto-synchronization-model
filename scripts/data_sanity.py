@@ -19,7 +19,7 @@ Typical usage from the repository root::
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import argparse
 from dataclasses import dataclass
 from pathlib import Path

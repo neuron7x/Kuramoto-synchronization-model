@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Orchestration helpers for running the live execution loop."""
 
 from __future__ import annotations

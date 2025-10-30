@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 # Resilient data synchronization helper that demonstrates robust scripting practices.
 #
 # Features implemented:

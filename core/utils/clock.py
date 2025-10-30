@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from contextlib import ExitStack, contextmanager
 from datetime import date, datetime, timezone
 from typing import Iterator

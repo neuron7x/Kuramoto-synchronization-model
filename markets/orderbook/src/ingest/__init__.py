@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Level 2 order book ingestion exports."""
 from .consistency import ConsistencyError, ConsistencyValidator
 from .ingester import IngestConfig, OrderBookIngestService, SnapshotRequester

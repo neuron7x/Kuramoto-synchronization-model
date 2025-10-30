@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """High-performance indicator pipeline orchestration utilities."""
 
 from __future__ import annotations

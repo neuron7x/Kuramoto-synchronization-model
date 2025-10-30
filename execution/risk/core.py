@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Execution risk controls with kill-switch governance and telemetry hooks.
 
 This module houses the reference :class:`RiskManager` used by the live trading

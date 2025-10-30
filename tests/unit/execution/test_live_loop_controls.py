@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Unit tests exercising lifecycle controls in :mod:`execution.live_loop`."""
 
 from __future__ import annotations

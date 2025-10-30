@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import logging
 from argparse import _SubParsersAction
 from pathlib import Path

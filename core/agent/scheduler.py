@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Deterministic scheduler that periodically evaluates trading strategies."""
 from __future__ import annotations
 

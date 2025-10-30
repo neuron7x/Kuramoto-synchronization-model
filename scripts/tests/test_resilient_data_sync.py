@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import json
 from pathlib import Path
 

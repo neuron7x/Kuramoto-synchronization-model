@@ -218,7 +218,7 @@ All Python scripts use:
 
 **License verification**:
 
-- All scripts have SPDX-License-Identifier: MIT ✓
+- All scripts have SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary ✓
 - Dependencies checked via `dependency_audit.py` ✓
 - No GPL or incompatible licenses detected ✓
 

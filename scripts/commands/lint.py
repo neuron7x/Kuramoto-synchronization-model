@@ -11,7 +11,7 @@ from typing import Callable, Sequence
 
 from scripts.commands.base import ensure_tools_exist, register, run_subprocess
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 
 LOGGER = logging.getLogger(__name__)

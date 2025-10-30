@@ -1,7 +1,7 @@
 """Core module build and release orchestration pipeline."""
 from __future__ import annotations
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import argparse
 import datetime as dt
 import logging

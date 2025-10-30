@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Canonical asset directory and symbol mapping utilities.
 
 The :class:`AssetCatalog` centralises metadata about traded instruments so the

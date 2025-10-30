@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Nightly coverage for heavy indicator math, long backtests, and fuzzing."""
 from __future__ import annotations
 

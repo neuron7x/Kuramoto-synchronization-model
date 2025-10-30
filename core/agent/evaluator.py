@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """High-throughput helpers for evaluating strategy populations."""
 
 from __future__ import annotations

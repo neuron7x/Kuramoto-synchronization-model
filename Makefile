@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 # === FPM-A (Fractal Project Method) integration ===
 .PHONY: fpma-graph fpma-check lock build-package publish-package clean-dist \

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Production-grade Coinbase Advanced Trade REST/WebSocket connector."""
 
 from __future__ import annotations
