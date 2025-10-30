@@ -33,8 +33,8 @@ def test_ucb_scores_are_finite_after_update() -> None:
     scores = controller.ucb_scores()
 
     assert recommended in actions
-    assert controller.total_count == len(actions)
-    assert all(math.isfinite(score) for score in scores.values())
+    assert controller.total_count == 1
+    assert math.isfinite(scores[recommended])
 
 
 def test_hazard_penalty_reduces_open_action_values() -> None:
@@ -51,5 +51,5 @@ def test_hazard_penalty_reduces_open_action_values() -> None:
     safe_controller.get_recommended_action(state, safe_signals)
     hazard_controller.get_recommended_action(state, hazard_signals)
 
-    assert hazard_controller.total_count == len(actions)
+    assert hazard_controller.total_count == 1
     assert hazard_controller.ucb_scores()["open_long"] <= safe_controller.ucb_scores()["open_long"]

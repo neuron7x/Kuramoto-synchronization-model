@@ -191,17 +191,21 @@ class FractalMotivationController:
             intrinsic = self.compute_intrinsic_reward(state, simulated_next)
             base_rewards[action] = pnl + penalty + intrinsic
 
-        for action, reward in base_rewards.items():
-            self.update(action, reward)
-
+        # Choose an action using the current UCB statistics prior to applying
+        # any updates so that only the reward for the executed action is
+        # incorporated into the running statistics.
         scores = self.ucb_scores()
         recommended = max(scores, key=scores.get)
+
+        observed_reward = base_rewards[recommended]
+        self.update(recommended, observed_reward)
 
         payload = {
             "timestamp": timestamp,
             "state": list(state),
             "signals": dict(signals),
             "ucb_scores": scores,
+            "base_rewards": base_rewards,
             "recommended": recommended,
         }
         self._logger.info(json.dumps(payload))
