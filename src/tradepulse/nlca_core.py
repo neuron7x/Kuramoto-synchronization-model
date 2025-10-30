@@ -619,7 +619,10 @@ class NLCA:
                         action = 'STOP_NO_GO'
                         reason = 'Go/No-Go denied'
                     else:
-                        alt_EVC = self.compute_EVC(expected_profit - 0.01, ECE_val - 0.01)
+                        probe_step = 0.01 * max(abs(expected_profit), abs(ECE_val), 1.0)
+                        alt_expected = expected_profit - probe_step
+                        alt_ECE = ECE_val + probe_step
+                        alt_EVC = self.compute_EVC(alt_expected, alt_ECE)
                         delta_EVC = EVC_val - alt_EVC
                         intensify = self.allocate_intensity(delta_EVC)
 
