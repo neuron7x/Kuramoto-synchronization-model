@@ -4,6 +4,10 @@
 
 This document summarizes the comprehensive documentation, security, and monitoring improvements delivered for the TradePulse repository.
 
+> **New (April 2025):** Added [`docs/project-status.md`](docs/project-status.md) to give
+> stakeholders a live snapshot of release readiness across testing,
+> documentation, and dashboard hardening workstreams.
+
 ---
 
 ## What Was Accomplished
