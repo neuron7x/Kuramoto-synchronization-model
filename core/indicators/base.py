@@ -13,6 +13,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, MutableSequence, Sequence
 from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 from dataclasses import dataclass, field
 from typing import Any, Callable, Literal
 
@@ -205,8 +206,9 @@ class ParallelFeatureBlock(BaseBlock):
 
     def _run_process(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            transform = partial(_process_transform, block_name=self.name)
             futures = [
-                executor.submit(_process_transform, feature, data, kwargs, self.name)
+                executor.submit(transform, feature, data, kwargs)
                 for feature in self.features
             ]
             results = [future.result() for future in futures]

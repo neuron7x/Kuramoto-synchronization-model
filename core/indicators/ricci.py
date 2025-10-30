@@ -244,8 +244,22 @@ def _normalized_neighbor_weights(G: nx.Graph, node: int) -> tuple[np.ndarray, np
 
 def _build_node_distribution(G: nx.Graph, node: int, offset: float, scale: float) -> NodeDistribution:
     support, weights = _normalized_neighbor_weights(G, node)
-    support_arr = np.array(support, dtype=float, copy=True)
+    support_idx = np.asarray(support, dtype=int)
+    support_arr = support_idx.astype(float, copy=True)
     weight_arr = np.array(weights, dtype=float, copy=True)
+
+    # When ``node`` has genuine neighbours the Ollivier–Ricci definition we
+    # follow requires working with the *closed* neighbourhood. This guarantees
+    # that perfectly symmetric graphs (e.g. complete graphs) yield identical
+    # distributions and therefore curvature ``κ = 1``. For isolated nodes the
+    # helper already returns ``[node]`` with unit mass, which we preserve.
+    has_self_mass = np.any(support_idx == int(node))
+    if support_arr.size and not has_self_mass:
+        self_mass = 1.0 / float(support_arr.size + 1)
+        weight_arr *= 1.0 - self_mass
+        support_arr = np.concatenate(([float(node)], support_arr))
+        weight_arr = np.concatenate(([self_mass], weight_arr))
+
     positions = offset + support_arr * scale
     return NodeDistribution(
         support=support_arr,
@@ -329,7 +343,9 @@ def local_distribution(G: nx.Graph, node: int, radius: int = 1) -> np.ndarray:
 
     Returns:
         np.ndarray: Probability vector whose elements sum to one and correspond
-        to the relative transition weights from ``node``.
+        to the relative transition weights from ``node``. The first entry
+        represents the self-loop weight for the closed neighbourhood measure
+        used in Ollivier–Ricci curvature.
 
     Notes:
         When ``node`` is isolated a single mass ``[1.0]`` is returned to avoid
@@ -337,8 +353,15 @@ def local_distribution(G: nx.Graph, node: int, radius: int = 1) -> np.ndarray:
         the governance requirements of ``docs/quality_gates.md``.
     """
     _ = radius  # reserved for future use
-    _, weights = _normalized_neighbor_weights(G, int(node))
-    return weights.copy()
+    support, weights = _normalized_neighbor_weights(G, int(node))
+    support_idx = np.asarray(support, dtype=int)
+    weights = np.array(weights, dtype=float, copy=True)
+    has_self_mass = np.any(support_idx == int(node))
+    if weights.size and not has_self_mass:
+        self_mass = 1.0 / float(weights.size + 1)
+        weights *= 1.0 - self_mass
+        weights = np.concatenate(([self_mass], weights))
+    return weights
 
 
 def ricci_curvature_edge(
