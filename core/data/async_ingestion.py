@@ -526,7 +526,13 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
         Ticks from all streams in arrival order, skipping streams that fail.
     """
 
-    queue: asyncio.Queue[tuple[int, Ticker | None]] = asyncio.Queue()
+    # Bound the shared queue so that each stream can only prefetch a limited
+    # number of ticks. This prevents a fast or stalled stream from buffering an
+    # unbounded number of items when the downstream consumer is slow, while
+    # still allowing a small amount of ahead-of-time reads for fairness.
+    prefetch_per_stream = 2
+    max_queue_size = max(1, len(streams) * prefetch_per_stream)
+    queue: asyncio.Queue[tuple[int, Ticker | None]] = asyncio.Queue(maxsize=max_queue_size)
 
     async def _pump(index: int, stream: AsyncIterator[Ticker]) -> None:
         symbol = getattr(stream, "symbol", None)
