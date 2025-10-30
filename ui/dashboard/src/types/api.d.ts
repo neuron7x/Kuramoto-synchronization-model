@@ -59,6 +59,50 @@ export interface GithubWorkflowBadge {
   href?: string;
 }
 
+export interface GithubQualitySlo {
+  coverage?: number | string | null;
+  coverage_target?: number | string | null;
+  uptime?: number | string | null;
+  uptime_target?: number | string | null;
+  [key: string]: unknown;
+}
+
+export interface GithubQualityMetrics {
+  coverage?: number | string | null;
+  coverage_ratio?: number | string | null;
+  coverageRate?: number | string | null;
+  coverage_target?: number | string | null;
+  coverageTarget?: number | string | null;
+  uptime?: number | string | null;
+  uptime_90d?: number | string | null;
+  uptimeRolling?: number | string | null;
+  uptime_target?: number | string | null;
+  uptimeTarget?: number | string | null;
+  incidents_30d?: number | string | null;
+  incidents?: number | string | null;
+  mttr_hours?: number | string | null;
+  mttr?: number | string | null;
+  health_score?: number | string | null;
+  health?: number | string | null;
+  status?: string | null;
+  last_audit?: string | null;
+  lastAudit?: string | null;
+  [key: string]: unknown;
+}
+
+export interface GithubQualityProfile {
+  metrics?: GithubQualityMetrics | null;
+  slo?: GithubQualitySlo | null;
+  status?: string | null;
+  last_audit?: string | null;
+  lastAudit?: string | null;
+  audit?: { completed_at?: string | null; notes?: string | null } | null;
+  health_score?: number | string | null;
+  incidents_30d?: number | string | null;
+  mttr_hours?: number | string | null;
+  [key: string]: unknown;
+}
+
 export interface CommunityMetrics {
   maintainers?: number | string | null;
   sponsors?: number | string | null;
@@ -224,6 +268,7 @@ export interface GithubOverview {
   languages?: GithubLanguageShare[];
   workflows?: GithubWorkflowBadge[];
   badges?: GithubWorkflowBadge[];
+  quality?: GithubQualityProfile | GithubQualityMetrics | null;
   community?: CommunityProfile | null;
   programs?: CommunityProgram[];
   resources?: CommunityResource[];

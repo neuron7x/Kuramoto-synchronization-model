@@ -321,3 +321,108 @@ class TestDeriveSignal:
         assert response.horizon_seconds == horizon
         assert response.signal["metadata"]["horizon_seconds"] == horizon
         assert response.signal["metadata"]["score"] == pytest.approx(score, rel=1e-6)
+
+    def test_macd_components_flat_state_is_neutral(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        forecaster = make_forecaster(pd.DataFrame())
+        components = forecaster._compute_macd_components(  # pylint: disable=protected-access
+            macd=0.0,
+            macd_signal_line=0.0,
+            macd_histogram=0.0,
+        )
+
+        assert components["macd_trend"] == pytest.approx(0.0)
+        assert components["macd_crossover"] == pytest.approx(0.0)
+        assert components["macd_histogram"] == pytest.approx(0.0)
+        assert components["macd_balance"] == pytest.approx(0.0)
+
+    def test_macd_components_alignment_bonus_when_in_sync(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        forecaster = make_forecaster(pd.DataFrame())
+        components = forecaster._compute_macd_components(  # pylint: disable=protected-access
+            macd=0.9,
+            macd_signal_line=0.4,
+            macd_histogram=0.5,
+        )
+
+        assert components["macd_trend"] > 0
+        assert components["macd_crossover"] > 0
+        assert components["macd_histogram"] > 0
+        assert components["macd_balance"] > -0.15
+
+    def test_derive_signal_clamps_confidence(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        series = pd.Series(
+            {
+                "macd": 3.5,
+                "macd_signal": 0.1,
+                "macd_histogram": 2.8,
+                "rsi": 90.0,
+                "return_1": 0.12,
+                "queue_imbalance": 2.0,
+                "volatility_20": 0.02,
+            }
+        )
+        forecaster = make_forecaster(pd.DataFrame([series]))
+
+        signal, score = forecaster.derive_signal("BTC-USD", series, 1200)
+        assert score > 0
+        assert signal.confidence == pytest.approx(1.0)
+        assert signal.action is SignalAction.BUY
+
+    def test_derive_signal_hold_when_score_below_threshold(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        series = pd.Series(
+            {
+                "macd": 0.05,
+                "macd_signal": 0.04,
+                "macd_histogram": 0.01,
+                "rsi": 49.5,
+                "return_1": 0.0005,
+                "queue_imbalance": 0.0,
+                "volatility_20": 0.03,
+            }
+        )
+        forecaster = make_forecaster(pd.DataFrame([series]))
+
+        signal, score = forecaster.derive_signal("ETH-USD", series, 600)
+        assert abs(score) < 0.12
+        assert signal.action is SignalAction.HOLD
+        assert 0.0 <= signal.confidence <= 0.2
+
+    def test_normalised_feature_rows_skips_invalid_records(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        rows = pd.DataFrame(
+            [
+                {"macd": 0.1, "macd_signal": 0.05, "macd_histogram": 0.02},
+                {"macd": float("nan"), "macd_signal": 0.1, "macd_histogram": 0.03},
+                {"macd": 0.2, "macd_signal": 0.19},
+            ],
+            index=pd.date_range("2024-01-01", periods=3, freq="1min", tz="UTC"),
+        )
+
+        forecaster = make_forecaster(rows)
+        normalised = forecaster.normalised_feature_rows(rows, strict=False)
+        assert len(normalised) == 1
+        timestamp, vector = normalised[0]
+        assert timestamp.tzinfo is not None
+        assert set(vector.index) >= {"macd", "macd_signal", "macd_histogram"}
+
+    def test_normalised_feature_rows_strict_mode_raises(
+        self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
+    ) -> None:
+        rows = pd.DataFrame(
+            [
+                {"macd": 0.2, "macd_signal": 0.15, "macd_histogram": float("nan")},
+            ],
+            index=pd.date_range("2024-01-01", periods=1, freq="1min", tz="UTC"),
+        )
+
+        forecaster = make_forecaster(rows)
+        with pytest.raises(HTTPException):
+            forecaster.normalised_feature_rows(rows, strict=True)

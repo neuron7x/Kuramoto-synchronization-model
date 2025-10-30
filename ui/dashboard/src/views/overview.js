@@ -22,6 +22,19 @@ function coerceNumber(value, fallback = 0) {
   return fallback;
 }
 
+function coerceOptionalNumber(value) {
+  if (Number.isFinite(value)) {
+    return Number(value);
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
 function clamp01(value) {
   const numeric = coerceNumber(value, 0);
   if (!Number.isFinite(numeric)) {
@@ -53,6 +66,57 @@ function sanitizeCssColor(value, fallback = '#38bdf8') {
     return trimmed;
   }
   return fallback;
+}
+
+function toRatio(value) {
+  const numeric = coerceOptionalNumber(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  if (numeric > 1) {
+    return clamp01(numeric / 100);
+  }
+  if (numeric < 0) {
+    return 0;
+  }
+  return clamp01(numeric);
+}
+
+function formatRatio(value, options) {
+  if (!Number.isFinite(value)) {
+    return '—';
+  }
+  return formatPercent(value, options);
+}
+
+function toneFromStatus(status) {
+  if (typeof status !== 'string') {
+    return null;
+  }
+  const lowered = status.toLowerCase();
+  if (['operational', 'healthy', 'green', 'pass'].includes(lowered)) {
+    return 'positive';
+  }
+  if (['degraded', 'warning', 'amber', 'needs attention'].includes(lowered)) {
+    return 'neutral';
+  }
+  if (['critical', 'red', 'failed', 'outage'].includes(lowered)) {
+    return 'negative';
+  }
+  return null;
+}
+
+function compareAgainstTarget(actual, target) {
+  if (!Number.isFinite(actual) || !Number.isFinite(target)) {
+    return null;
+  }
+  if (actual >= target) {
+    return 'positive';
+  }
+  if (actual >= target * 0.95) {
+    return 'neutral';
+  }
+  return 'negative';
 }
 
 function formatTemplate(template, params = {}) {
@@ -565,6 +629,168 @@ function renderWorkflowBadges(github = {}, translations = {}) {
   `;
 }
 
+function renderQualityPanel(github = {}, translations = {}) {
+  const rawQuality = github.quality;
+  if (!rawQuality || typeof rawQuality !== 'object') {
+    return '';
+  }
+
+  const panelT = translations.quality || {};
+  const metricsSource =
+    typeof rawQuality.metrics === 'object' && rawQuality.metrics !== null
+      ? rawQuality.metrics
+      : rawQuality;
+  const sloSource =
+    typeof rawQuality.slo === 'object' && rawQuality.slo !== null
+      ? rawQuality.slo
+      : {};
+
+  const coverage = toRatio(
+    metricsSource.coverage ?? metricsSource.coverage_ratio ?? metricsSource.coverageRate,
+  );
+  const coverageTarget = toRatio(
+    sloSource.coverage ?? metricsSource.coverage_target ?? metricsSource.coverageTarget,
+  );
+  const uptime = toRatio(
+    metricsSource.uptime ?? metricsSource.uptime_90d ?? metricsSource.uptimeRolling,
+  );
+  const uptimeTarget = toRatio(
+    sloSource.uptime ?? metricsSource.uptime_target ?? metricsSource.uptimeTarget,
+  );
+  const incidents = coerceOptionalNumber(
+    metricsSource.incidents_30d ?? metricsSource.incidents ?? rawQuality.incidents_30d,
+  );
+  const mttrHours = coerceOptionalNumber(
+    metricsSource.mttr_hours ?? metricsSource.mttr ?? rawQuality.mttr_hours,
+  );
+  const healthScore = coerceOptionalNumber(
+    metricsSource.health_score ?? metricsSource.health ?? rawQuality.health_score,
+  );
+  const status = rawQuality.status || metricsSource.status;
+  const lastAudit =
+    rawQuality.last_audit ||
+    rawQuality.lastAudit ||
+    metricsSource.last_audit ||
+    (rawQuality.audit && rawQuality.audit.completed_at) ||
+    null;
+
+  const metrics = [
+    {
+      key: 'coverage',
+      label: panelT.metrics?.coverage?.label || 'Automated coverage',
+      value: formatRatio(coverage, { maximumFractionDigits: 1 }),
+      hint:
+        Number.isFinite(coverageTarget)
+          ? formatTemplate(panelT.metrics?.coverage?.hint || 'Target {target}', {
+              target: formatRatio(coverageTarget, { maximumFractionDigits: 1 }),
+            })
+          : '',
+      tone: compareAgainstTarget(coverage, coverageTarget),
+    },
+    {
+      key: 'uptime',
+      label: panelT.metrics?.uptime?.label || 'Uptime (90d)',
+      value: formatRatio(uptime, { maximumFractionDigits: 2 }),
+      hint:
+        Number.isFinite(uptimeTarget)
+          ? formatTemplate(panelT.metrics?.uptime?.hint || 'Target {target}', {
+              target: formatRatio(uptimeTarget, { maximumFractionDigits: 2 }),
+            })
+          : '',
+      tone: compareAgainstTarget(uptime, uptimeTarget),
+    },
+    {
+      key: 'incidents',
+      label: panelT.metrics?.incidents?.label || 'Incidents (30d)',
+      value: Number.isFinite(incidents)
+        ? formatNumber(Math.max(0, incidents), { maximumFractionDigits: 0 })
+        : '—',
+      hint: panelT.metrics?.incidents?.hint || '',
+      tone: Number.isFinite(incidents) && incidents > 0 ? 'negative' : 'positive',
+    },
+    {
+      key: 'mttr',
+      label: panelT.metrics?.mttr?.label || 'MTTR',
+      value: Number.isFinite(mttrHours)
+        ? `${formatNumber(Math.max(0, mttrHours), {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })}h`
+        : '—',
+      hint: panelT.metrics?.mttr?.hint || '',
+      tone: Number.isFinite(mttrHours) && mttrHours > 4 ? 'negative' : 'neutral',
+    },
+    {
+      key: 'health',
+      label: panelT.metrics?.health?.label || 'Health score',
+      value: Number.isFinite(healthScore)
+        ? healthScore <= 1
+          ? formatRatio(Math.max(0, healthScore), { maximumFractionDigits: 1 })
+          : formatNumber(healthScore, { maximumFractionDigits: 1 })
+        : '—',
+      hint: panelT.metrics?.health?.hint || '',
+      tone: Number.isFinite(healthScore) && healthScore < 0.7 ? 'negative' : null,
+    },
+  ].filter((metric) => metric.value !== '—' || metric.hint);
+
+  if (metrics.length === 0 && !status && !lastAudit) {
+    return '';
+  }
+
+  const statusTone = toneFromStatus(status);
+  const statusBadge = status
+    ? `<span class="tp-pill${statusTone ? ` tp-pill--${statusTone}` : ''}">${escapeHtml(String(status))}</span>`
+    : '';
+
+  const metricsMarkup = metrics.length
+    ? `
+        <dl class="tp-quality__metrics">
+          ${metrics
+            .map(
+              (metric) => `
+                <div class="tp-quality__metric">
+                  <dt>${escapeHtml(String(metric.label))}</dt>
+                  <dd>
+                    <span class="tp-quality__metric-value${
+                      metric.tone ? ` tp-quality__metric-value--${metric.tone}` : ''
+                    }">${escapeHtml(String(metric.value))}</span>
+                    ${
+                      metric.hint
+                        ? `<p class="tp-quality__metric-hint">${escapeHtml(String(metric.hint))}</p>`
+                        : ''
+                    }
+                  </dd>
+                </div>
+              `,
+            )
+            .join('')}
+        </dl>
+      `
+    : '';
+
+  const auditMarkup = lastAudit
+    ? `<p class="tp-quality__audit">${escapeHtml(
+        formatTemplate(panelT.audit?.label || 'Last audit {date}', {
+          date: formatTimestamp(new Date(lastAudit).getTime()),
+        }),
+      )}</p>`
+    : '';
+
+  return `
+    <section class="tp-card tp-github-panel tp-quality">
+      <header class="tp-card__header">
+        <h3 class="tp-card__title">${escapeHtml(String(panelT.title || 'Reliability guardrails'))}</h3>
+        <p class="tp-text-subtle">${escapeHtml(
+          String(panelT.subtitle || 'SLO adherence across reliability-critical signals.'),
+        )}</p>
+        ${statusBadge}
+      </header>
+      ${metricsMarkup}
+      ${auditMarkup}
+    </section>
+  `;
+}
+
 /**
  * @param {CommunityProfile | null | undefined} community
  * @param {Record<string, unknown>} translations
@@ -760,6 +986,7 @@ export function renderOverviewView({ github = {} } = {}) {
   const languagesPanel = renderLanguagesPanel(githubProfile, translations.panels || {});
   const workflowPanel = renderWorkflowBadges(githubProfile, translations.panels || {});
   const momentumPanel = renderMomentumPanel(githubProfile, translations.panels || {});
+  const qualityPanel = renderQualityPanel(githubProfile, translations.panels || {});
   const communityPanel = renderCommunitySpotlight(githubProfile.community, translations.panels || {});
 
   const html = `
@@ -779,6 +1006,7 @@ export function renderOverviewView({ github = {} } = {}) {
         </section>
         ${releasePanel}
         ${momentumPanel}
+        ${qualityPanel}
         ${languagesPanel}
         ${workflowPanel}
         ${communityPanel}
