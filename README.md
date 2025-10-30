@@ -20,6 +20,7 @@ TradePulse to move from research to live execution with confidence.
 
 - [Why TradePulse?](#-why-tradepulse)
 - [Feature Highlights](#-feature-highlights)
+- [Project Status](#-project-status)
 - [Quick Start](#-quick-start)
 - [Demo Dashboard](#-demo-dashboard)
 - [System Architecture](#-system-architecture)
@@ -56,6 +57,25 @@ snapshot = engine.analyze_market(bars)
 print(f"Phase: {snapshot.phase.value}")
 print(f"Confidence: {snapshot.confidence:.3f}, Entry: {snapshot.entry_signal:.3f}")
 ```
+
+
+## 📊 Project Status
+
+TradePulse already ships with a fully operational research and execution core—
+including geometric indicators, the event-driven backtester, and the CLI
+tooling—but the **v1.0 release remains on hold** while we close a few critical
+gaps:
+
+- **Automated tests**: overall coverage is still well below the 98 % bar set in
+  the release checklist, so hardening the test suite is the current top
+  priority.
+- **Documentation polish**: several deep-dive sections referenced from the
+  roadmap are still being drafted, and onboarding guides need final review.
+- **Web dashboard**: the Streamlit dashboard bundled with the repo is presently
+  a placeholder and is not production ready yet.
+
+These items are tracked in the public roadmap, and incremental updates are
+published in the weekly changelog until the release criteria are satisfied.
 
 ## ✨ Feature Highlights
 
