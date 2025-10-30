@@ -526,38 +526,54 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
         Ticks from all streams in arrival order, skipping streams that fail.
     """
 
-    pending_tasks: dict[Any, AsyncIterator[Ticker]] = {}
+    queue: asyncio.Queue[tuple[int, Ticker | None]] = asyncio.Queue()
 
-    for stream in streams:
-        task = asyncio.create_task(anext(stream))  # type: ignore[arg-type]
-        pending_tasks[task] = stream
-
-    while pending_tasks:
-        done, _ = await asyncio.wait(
-            pending_tasks.keys(),
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        for task in done:
-            stream = pending_tasks.pop(task)
-
+    async def _pump(index: int, stream: AsyncIterator[Ticker]) -> None:
+        symbol = getattr(stream, "symbol", None)
+        try:
+            while True:
+                try:
+                    tick = await anext(stream)  # type: ignore[arg-type]
+                except StopAsyncIteration:
+                    break
+                await queue.put((index, tick))
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "Async stream terminated with error",
+                stream=symbol,
+                error=str(exc),
+                exc_info=exc,
+            )
+        finally:
             try:
-                tick = task.result()
-            except StopAsyncIteration:
-                # Stream exhausted, do not reschedule.
-                continue
-            except Exception as exc:
-                logger.warning(
-                    "Async stream terminated with error",
-                    stream=getattr(stream, "symbol", None),
-                    error=str(exc),
-                )
-                continue
+                await asyncio.shield(queue.put((index, None)))
+            except Exception:
+                pass
+            aclose = getattr(stream, "aclose", None)
+            if callable(aclose):
+                with suppress(Exception):
+                    await asyncio.shield(aclose())
 
-            yield tick
+    workers = [
+        asyncio.create_task(_pump(idx, stream))
+        for idx, stream in enumerate(streams)
+    ]
 
-            next_task = asyncio.create_task(anext(stream))  # type: ignore[arg-type]
-            pending_tasks[next_task] = stream
+    remaining = len(workers)
+    try:
+        while remaining:
+            _, item = await queue.get()
+            if item is None:
+                remaining -= 1
+                continue
+            yield item
+    finally:
+        for worker in workers:
+            worker.cancel()
+        if workers:
+            await asyncio.gather(*workers, return_exceptions=True)
 
 
 __all__ = [
