@@ -58,18 +58,22 @@ class DriftMetric:
     js_divergence: float | float
     ks: DriftTestResult
     psi: float
+    js_threshold: float | None = None
+    ks_threshold: float | None = None
+    psi_threshold: float | None = None
 
     @property
     def drifted(self) -> bool:
         """Whether any of the metrics indicates drift."""
 
-        return any(
-            (
-                np.isfinite(self.js_divergence) and self.js_divergence > 0,
-                self.ks.valid and self.ks.pvalue < 0.05,
-                np.isfinite(self.psi) and self.psi > 0,
-            )
-        )
+        drift_flags: list[bool] = []
+        if np.isfinite(self.js_divergence) and self.js_threshold is not None:
+            drift_flags.append(self.js_divergence > self.js_threshold)
+        if self.ks.valid and self.ks_threshold is not None:
+            drift_flags.append(self.ks.pvalue < self.ks_threshold)
+        if np.isfinite(self.psi) and self.psi_threshold is not None:
+            drift_flags.append(self.psi > self.psi_threshold)
+        return any(drift_flags)
 
 
 @dataclass(frozen=True)
@@ -78,20 +82,28 @@ class DriftThresholds:
 
     default_jsd: float = 0.1
     default_ks: float = 0.05
-    per_signal: Mapping[str, Mapping[str, float]] | None = None
+    default_psi: float | None = None
+    per_signal: Mapping[str, Mapping[str, float | None]] | None = None
 
-    def threshold_for(self, signal: str, metric: str) -> float:
+    def threshold_for(self, signal: str, metric: str) -> float | None:
         """Return the configured threshold for ``metric`` on ``signal``."""
 
-        if self.per_signal and signal in self.per_signal:
-            return float(self.per_signal[signal].get(metric, self._default(metric)))
-        return self._default(metric)
+        configured: float | None
+        if self.per_signal and signal in self.per_signal and metric in self.per_signal[signal]:
+            configured = self.per_signal[signal][metric]
+        else:
+            configured = self._default(metric)
+        if configured is None:
+            return None
+        return float(configured)
 
-    def _default(self, metric: str) -> float:
+    def _default(self, metric: str) -> float | None:
         if metric == "jsd":
             return self.default_jsd
         if metric in {"ks", "ks_pvalue"}:
             return self.default_ks
+        if metric == "psi":
+            return self.default_psi
         raise KeyError(metric)
 
 
@@ -206,7 +218,18 @@ def compute_parallel_drift(
         jsd_value = compute_js_divergence(base, curr) if "jsd" in metrics else float("nan")
         ks_result = compute_ks_test(base, curr) if "ks" in metrics else DriftTestResult(float("nan"), float("nan"), False, "skipped")
         psi_value = compute_psi(base, curr) if "psi" in metrics else float("nan")
-        return column, DriftMetric(column, jsd_value, ks_result, psi_value)
+        js_threshold = thresholds.threshold_for(column, "jsd") if "jsd" in metrics else None
+        ks_threshold = thresholds.threshold_for(column, "ks") if "ks" in metrics else None
+        psi_threshold = thresholds.threshold_for(column, "psi") if "psi" in metrics else None
+        return column, DriftMetric(
+            column,
+            jsd_value,
+            ks_result,
+            psi_value,
+            js_threshold,
+            ks_threshold,
+            psi_threshold,
+        )
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         results = dict(executor.map(_compute, columns))
@@ -257,8 +280,9 @@ class DriftDetector:
             drift_flags.append(metric.js_divergence > jsd_threshold)
         if metric.ks.valid:
             drift_flags.append(metric.ks.pvalue < ks_threshold)
-        if np.isfinite(metric.psi):
-            drift_flags.append(metric.psi > 0)
+        psi_threshold = self.thresholds.threshold_for(feature, "psi")
+        if np.isfinite(metric.psi) and psi_threshold is not None:
+            drift_flags.append(metric.psi > psi_threshold)
         return any(drift_flags)
 
 
@@ -310,8 +334,10 @@ def load_thresholds(path: str | Path | None) -> DriftThresholds:
         data = json.loads(text)
     default_jsd = float(data.get("jsd_threshold", 0.1))
     default_ks = float(data.get("ks_pvalue_threshold", 0.05))
+    default_psi_raw = data.get("psi_threshold")
+    default_psi = float(default_psi_raw) if default_psi_raw is not None else None
     per_signal = data.get("thresholds")
-    return DriftThresholds(default_jsd, default_ks, per_signal)
+    return DriftThresholds(default_jsd, default_ks, default_psi, per_signal)
 
 
 __all__ = [
