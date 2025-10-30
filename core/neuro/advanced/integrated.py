@@ -16,6 +16,7 @@ from .dpa import DopaminePredictionNetwork
 from .monitor import NeuroStateMonitor
 from .nre import NeuroplasticReinforcementEngine
 from .types import MarketContext, TradeOutcome, TradeResult
+from ..motivation import FractalMotivationController, MotivationDecision
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +195,17 @@ class EnhancedFractalNeuroeconomicCore:
         self._candidate_generator = CandidateGenerator()
         self._risk_manager = NeuroRiskManager(config)
         self._integrator = NeuroDecisionIntegrator(config, self._nre)
+        self._motivation = FractalMotivationController(
+            actions=(
+                "exploit",
+                "explore",
+                "deepen",
+                "broaden",
+                "stabilize",
+                "pause_and_audit",
+            ),
+            exploration_coef=max(0.6, min(1.4, config.decision_weights.confidence + 0.5)),
+        )
 
     @property
     def dopamine(self) -> DopaminePredictionNetwork:
@@ -225,6 +237,22 @@ class EnhancedFractalNeuroeconomicCore:
         }
 
         neuro_context = await self._build_neuro_context(assets, base_strategies, fractal)
+        motivation_state = self._motivation.recommend(
+            state=[
+                fractal["volatility"],
+                fractal["trend_strength"],
+                fractal["hurst"],
+                fractal["fractal_dim"],
+            ],
+            signals={
+                "PnL": float(portfolio.get("PnL", 0.0)),
+                "risk_ok": bool(portfolio.get("risk_ok", True)),
+                "compliance_ok": bool(portfolio.get("compliance_ok", True)),
+                "hazard": portfolio.get("hazard", fractal["regime"] == "choppy"),
+                "volatility": fractal["volatility"],
+                "trend_strength": fractal["trend_strength"],
+            },
+        )
         candidates = self._candidate_generator.generate(assets, base_strategies, fractal)
 
         modulated: List[Dict[str, Any]] = []
@@ -252,6 +280,7 @@ class EnhancedFractalNeuroeconomicCore:
                 "final_confidence": adjusted["confidence"],
             }
             adjusted = await self._risk_manager.apply(adjusted, neuro_context, market_context)
+            self._apply_motivation_modulation(adjusted, motivation_state)
             modulated.append(adjusted)
 
         final_decision = await self._integrator.integrate(modulated, neuro_context, market_context)
@@ -261,6 +290,7 @@ class EnhancedFractalNeuroeconomicCore:
             "neuro_context": neuro_context,
             "fractal_features": fractal,
             "market_context": market_context,
+            "motivation_state": motivation_state,
         }
 
     async def update_neuro_states(self, execution_results: Dict[str, Any]) -> None:
@@ -276,11 +306,15 @@ class EnhancedFractalNeuroeconomicCore:
             "context_fit": execution_results.get("context_fit", 1.0),
         }
 
+        realized_rewards: list[float] = []
         for trade_data in trades:
             trade = self._parse_trade(trade_data)
             self._dpa.update(trade.asset, trade.strategy, trade.pnl_percentage, trade.expected_reward)
             self._aic.update(trade, market_context)
             self._nre.reinforce(trade.strategy, trade, learning_context)
+            realized_rewards.append(trade.pnl_percentage)
+        if realized_rewards:
+            self._motivation.register_outcome(float(np.mean(realized_rewards)))
 
     async def _build_neuro_context(
         self,
@@ -340,6 +374,46 @@ class EnhancedFractalNeuroeconomicCore:
                 if isinstance(prices, list) and len(prices) >= 20:
                     series[name] = np.asarray(prices, dtype=float)
         return series
+
+    def _apply_motivation_modulation(
+        self, candidate: Dict[str, Any], motivation: MotivationDecision
+    ) -> None:
+        modulation = candidate.setdefault("neuro_modulation", {})
+        modulation.update(
+            {
+                "motivation_signal": motivation.motivation_signal,
+                "motivation_action": motivation.action,
+                "motivation_scores": motivation.scores,
+                "motivation_metrics": motivation.monitor_metrics,
+                "intrinsic_reward": motivation.intrinsic_reward,
+                "allostatic_load": motivation.allostatic_load,
+            }
+        )
+        signal = motivation.motivation_signal
+        if motivation.action == "exploit":
+            candidate["expected_edge"] = float(candidate["expected_edge"] * (1.0 + 0.1 * signal))
+        elif motivation.action == "explore":
+            candidate["confidence"] = float(candidate["confidence"] * (1.0 + 0.05 * abs(signal)))
+        elif motivation.action == "deepen":
+            candidate["position_size"] = float(
+                np.clip(
+                    candidate["position_size"] * (1.0 + 0.08 * signal),
+                    self._cfg.policy_bounds.min_position,
+                    self._cfg.policy_bounds.max_position,
+                )
+            )
+        elif motivation.action == "broaden":
+            candidate["risk_level"] = float(
+                np.clip(
+                    candidate["risk_level"] * (1.0 - 0.1 * abs(signal)),
+                    self._cfg.policy_bounds.min_risk,
+                    self._cfg.policy_bounds.max_risk,
+                )
+            )
+        elif motivation.action == "pause_and_audit":
+            candidate["position_size"] = 0.0
+            candidate["risk_level"] = float(self._cfg.policy_bounds.min_risk)
+            candidate["confidence"] = float(candidate["confidence"] * 0.4)
 
 
 class IntegratedNeuroTradingSystem:
