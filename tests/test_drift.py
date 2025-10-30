@@ -10,6 +10,7 @@ from tradepulse.utils.drift import (
     compute_parallel_drift,
     compute_psi,
     generate_synthetic_data,
+    load_thresholds,
 )
 
 
@@ -80,3 +81,18 @@ def test_generate_synthetic_data_categorical():
     base, drift = generate_synthetic_data(100, 2, 0.3, seed=7, include_categorical=True)
     assert "category" in base.columns
     assert base.shape == drift.shape
+
+
+def test_load_thresholds_empty_yaml(tmp_path):
+    cfg_path = tmp_path / "thresholds.yaml"
+    cfg_path.write_text("")
+    thresholds = load_thresholds(cfg_path)
+    assert thresholds.default_jsd == 0.1
+    assert thresholds.default_ks == 0.05
+
+
+def test_load_thresholds_requires_mapping(tmp_path):
+    cfg_path = tmp_path / "thresholds.yaml"
+    cfg_path.write_text("- 0.1\n- 0.2\n")
+    with pytest.raises(TypeError):
+        load_thresholds(cfg_path)
