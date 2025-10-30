@@ -235,9 +235,11 @@ def kuramoto_order(
         Non-finite values are ignored in the vector aggregation, matching the
         resilience requirements from ``docs/runbook_data_incident.md``. To avoid
         catastrophic cancellation when oscillators are in perfect antiphase, the
-        implementation accumulates in ``float64``. Values below ``1e-12`` are
-        clipped to zero so that de-synchronised states report an exact zero in
-        accordance with the governance rules.
+        implementation evaluates the order parameter in ``complex128`` while
+        normalising with ``float64`` totals. Small magnitudes are clipped to
+        zero with a tolerance that scales with ensemble size so that
+        de-synchronised states report an exact zero in accordance with the
+        governance rules.
     """
 
     phases_arr = np.asarray(phases)
@@ -263,24 +265,25 @@ def kuramoto_order(
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
     mask = np.isfinite(phases_fp64)
-    cos_vals = np.zeros_like(phases_fp64, dtype=np.float64)
-    sin_vals = np.zeros_like(phases_fp64, dtype=np.float64)
-    np.cos(phases_fp64, out=cos_vals, where=mask)
-    np.sin(phases_fp64, out=sin_vals, where=mask)
+    phases_clean = np.where(mask, phases_fp64, 0.0)
+    phase_vectors = np.exp(1j * phases_clean).astype(np.complex128, copy=False)
+    if not mask.all():
+        phase_vectors[~mask] = 0.0
 
     if weights is not None:
         weight_matrix = _broadcast_weights(weights, phases_fp64.shape).astype(
             np.float64, copy=False
         )
-        valid = mask & (weight_matrix > 0.0)
-        if not valid.any():
+        valid_weights = np.where(mask & (weight_matrix > 0.0), weight_matrix, 0.0)
+        if not np.any(valid_weights):
             values = np.zeros(phases_fp64.shape[1], dtype=float)
         else:
-            weight_matrix = np.where(valid, weight_matrix, 0.0)
-            sum_real = np.add.reduce(cos_vals * weight_matrix, axis=0)
-            sum_imag = np.add.reduce(sin_vals * weight_matrix, axis=0)
-            totals = np.add.reduce(weight_matrix, axis=0)
-            magnitude = np.hypot(sum_real, sum_imag)
+            weighted_vectors = phase_vectors * valid_weights
+            sum_vectors = np.add.reduce(
+                weighted_vectors, axis=0, dtype=np.complex128
+            )
+            totals = np.add.reduce(valid_weights, axis=0, dtype=np.float64)
+            magnitude = np.abs(sum_vectors)
             values = np.divide(
                 magnitude,
                 totals,
@@ -292,9 +295,10 @@ def kuramoto_order(
         if not np.any(valid_counts):
             values = np.zeros(phases_fp64.shape[1], dtype=float)
         else:
-            sum_real = np.add.reduce(cos_vals, axis=0)
-            sum_imag = np.add.reduce(sin_vals, axis=0)
-            magnitude = np.hypot(sum_real, sum_imag)
+            sum_vectors = np.add.reduce(
+                phase_vectors, axis=0, dtype=np.complex128
+            )
+            magnitude = np.abs(sum_vectors)
             values = np.divide(
                 magnitude,
                 valid_counts,
@@ -303,7 +307,9 @@ def kuramoto_order(
             )
 
     clipped = np.clip(values, 0.0, 1.0)
-    clipped[clipped < 1e-12] = 0.0
+    oscillator_count = phases_fp64.shape[0]
+    tolerance = max(np.finfo(np.float64).eps * oscillator_count * 16, 1e-12)
+    clipped[clipped < tolerance] = 0.0
     if squeeze_output:
         return float(clipped[0])
     return clipped
