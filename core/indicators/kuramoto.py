@@ -263,10 +263,14 @@ def kuramoto_order(
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
     mask = np.isfinite(phases_fp32)
-    cos_vals = np.zeros_like(phases_fp32, dtype=np.float32)
-    sin_vals = np.zeros_like(phases_fp32, dtype=np.float32)
+    # Compute trigonometric projections in float64 to avoid drift when
+    # aggregating perfectly de-synchronised samples (e.g. phases at 0 and π).
+    cos_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
+    sin_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
     np.cos(phases_fp32, out=cos_vals, where=mask)
     np.sin(phases_fp32, out=sin_vals, where=mask)
+
+    float32_eps = np.finfo(np.float32).eps
 
     if weights is not None:
         weight_matrix = _broadcast_weights(weights, phases_fp32.shape)
@@ -275,38 +279,34 @@ def kuramoto_order(
             values = np.zeros(phases_fp32.shape[1], dtype=float)
         else:
             weight_matrix = np.where(valid, weight_matrix, 0.0)
-            sum_real = np.add.reduce(
-                cos_vals.astype(np.float64) * weight_matrix, axis=0
-            )
-            sum_imag = np.add.reduce(
-                sin_vals.astype(np.float64) * weight_matrix, axis=0
-            )
+            sum_real = np.add.reduce(cos_vals * weight_matrix, axis=0, dtype=np.float64)
+            sum_imag = np.add.reduce(sin_vals * weight_matrix, axis=0, dtype=np.float64)
             totals = np.add.reduce(weight_matrix, axis=0, dtype=np.float64)
             magnitude = np.hypot(sum_real, sum_imag)
+            zero_tolerance = float32_eps * np.maximum(totals, 1.0)
             values = np.divide(
                 magnitude,
                 totals,
                 out=np.zeros_like(magnitude, dtype=float),
                 where=totals > 0.0,
             )
+            values = np.where(magnitude <= zero_tolerance, 0.0, values)
     else:
         valid_counts = mask.sum(axis=0, dtype=np.float64)
         if not np.any(valid_counts):
             values = np.zeros(phases_fp32.shape[1], dtype=float)
         else:
-            sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float32).astype(
-                np.float64
-            )
-            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float32).astype(
-                np.float64
-            )
+            sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float64)
+            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float64)
             magnitude = np.hypot(sum_real, sum_imag)
+            zero_tolerance = float32_eps * np.maximum(valid_counts, 1.0)
             values = np.divide(
                 magnitude,
                 valid_counts,
                 out=np.zeros_like(magnitude, dtype=float),
                 where=valid_counts > 0.0,
             )
+            values = np.where(magnitude <= zero_tolerance, 0.0, values)
 
     clipped = np.clip(values, 0.0, 1.0)
     clipped[clipped < 1e-8] = 0.0
