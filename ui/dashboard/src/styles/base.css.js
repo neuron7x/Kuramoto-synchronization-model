@@ -1946,6 +1946,61 @@ export const BASE_STYLES = `
     gap: 0.35rem;
   }
 
+  .tp-quality {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .tp-quality__metrics {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tp-quality__metric {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .tp-quality__metric > dt {
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.7);
+  }
+
+  .tp-quality__metric-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.95);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .tp-quality__metric-value--positive {
+    color: var(--tp-positive);
+  }
+
+  .tp-quality__metric-value--negative {
+    color: var(--tp-negative);
+  }
+
+  .tp-quality__metric-value--neutral {
+    color: rgba(251, 191, 36, 0.85);
+  }
+
+  .tp-quality__metric-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.85rem;
+    color: rgba(148, 163, 184, 0.85);
+  }
+
+  .tp-quality__audit {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(226, 232, 240, 0.8);
+  }
+
   .tp-card__title {
     margin: 0;
     font-size: 1.25rem;

@@ -71,7 +71,24 @@ TradePulse — це модульна платформа для побудови,
 - Перевірте пайплайни моніторингу (`docs/monitoring.md`) і сповіщення (`docs/troubleshooting.md`).
 - Підготуйте чеклист релізу, використовуючи `reports/release_readiness.md`.
 
-## 6. Чекліст готовності користувача
+## 6. Контроль якості та покриття
+
+Перед виходом у продакшн перевірте, що якість відповідає очікуванням команди SRE та бізнесу:
+
+- Запустіть критичні тести з покриттям для онлайн-форекастера:  
+  ```bash
+  pytest tests/unit/api/test_online_signal_forecaster.py tests/unit/api/test_service_helpers.py \
+    --cov=application.api.service --cov-report=term-missing
+  ```
+  Звіт має показати покриття `application.api.service` ≥ 85 % і відсутність «missing lines» у критичних гілках (`derive_signal`, `_filter_feature_frame`, middleware).
+- Виконайте фронтенд-тести дашборда, щоб підтвердити інтеграцію reliability-панелі та санітаризацію даних:  
+  ```bash
+  (cd ui/dashboard && npm test)
+  ```
+- Для повної впевненості згенеруйте локальний репорт: `pytest --cov-report=xml` і передайте `coverage.xml` у CI guardrail (`python -m tools.coverage.guardrail --coverage coverage.xml`).
+- Перегляньте дашборд `ui/dashboard` у браузері (див. README) і переконайтеся, що блок **Reliability guardrails** відображає актуальні метрики (coverage, uptime, MTTR, статус аудиту).
+
+## 7. Чекліст готовності користувача
 
 - [ ] Зрозумів основні компоненти (Markets → Indicators → Execution).
 - [ ] Може запускати бектести з власним конфігом.
@@ -79,7 +96,7 @@ TradePulse — це модульна платформа для побудови,
 - [ ] Опанував базові сценарії моніторингу та алертингу.
 - [ ] Задокументував власний робочий процес у внутрішньому wiki або README.
 
-## 7. Корисні ресурси та наступні кроки
+## 8. Корисні ресурси та наступні кроки
 
 - **Ком'юніті**: приєднуйтесь до обговорень у GitHub Discussions або Slack-ком'юніті (див. `README.md`).
 - **Дорожня карта**: перегляньте `DOCUMENTATION_SUMMARY.md`, щоб знати, які матеріали підтримуються.

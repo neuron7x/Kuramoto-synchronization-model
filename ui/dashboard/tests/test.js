@@ -377,6 +377,21 @@ const githubOverview = {
       url: 'https://github.com/tradepulse-ai/tradepulse/actions/workflows/quality.yml',
     },
   ],
+  quality: {
+    metrics: {
+      coverage: 0.982,
+      uptime_90d: 0.9992,
+      incidents_30d: 1,
+      mttr_hours: 1.4,
+      health_score: 0.92,
+    },
+    slo: {
+      coverage: 0.98,
+      uptime: 0.999,
+    },
+    status: 'Operational',
+    last_audit: '2025-02-15T10:00:00Z',
+  },
   community: communityProfile,
 };
 
@@ -558,6 +573,10 @@ assert.ok(overviewView.html.includes('Python'), 'overview view should list domin
 assert.ok(!overviewView.html.includes('javascript:'), 'overview view should sanitize external links');
 assert.ok(overviewView.html.includes('Open-source community'), 'overview view should include community spotlight panel');
 assert.ok(overviewView.html.includes('Mentorship seats'), 'community spotlight should describe mentorship capacity');
+assert.ok(overviewView.html.includes('Reliability guardrails'), 'overview view should render reliability panel');
+assert.ok(overviewView.html.includes('98.2%'), 'quality panel should surface coverage percentage');
+assert.ok(overviewView.html.includes('Operational'), 'quality panel should highlight status badge');
+assert.ok(overviewView.html.includes('Last audit'), 'quality panel should include audit metadata');
 assert.strictEqual(overviewView.github, githubOverview);
 
 const overviewDashboard = renderDashboard({
