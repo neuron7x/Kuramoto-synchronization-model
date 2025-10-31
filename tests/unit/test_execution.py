@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -176,6 +177,79 @@ def test_risk_manager_normalises_symbol_aliases() -> None:
     manager.register_fill("BTCUSDT", "buy", qty=1.0, price=20.0)
     assert manager.current_position("btc/usdt") == pytest.approx(1.0)
     assert manager.current_notional("BTC_USDT") == pytest.approx(20.0)
+
+
+def test_risk_manager_blocks_when_gross_exposure_exceeds_limit() -> None:
+    limits = RiskLimits(
+        max_notional=1_000.0,
+        max_position=100.0,
+        max_gross_exposure=200.0,
+    )
+    manager = RiskManager(limits)
+    manager.update_portfolio_equity(10_000.0)
+
+    manager.validate_order("ETH", "buy", qty=1.0, price=50.0)
+    manager.register_fill("ETH", "buy", qty=1.0, price=50.0)
+
+    with pytest.raises(LimitViolation) as exc:
+        manager.validate_order("ETH", "buy", qty=2.0, price=100.0)
+
+    assert "gross exposure" in str(exc.value).lower()
+
+
+def test_risk_manager_blocks_on_portfolio_heat_cap() -> None:
+    limits = RiskLimits(
+        max_notional=1_000.0,
+        max_position=100.0,
+        max_gross_exposure=10_000.0,
+        max_portfolio_heat=120.0,
+    )
+    manager = RiskManager(limits)
+    manager.update_portfolio_equity(5_000.0)
+
+    manager.validate_order("SOL", "buy", qty=1.0, price=50.0)
+    manager.register_fill("SOL", "buy", qty=1.0, price=50.0)
+
+    with pytest.raises(LimitViolation) as exc:
+        manager.validate_order("SOL", "buy", qty=1.0, price=100.0)
+
+    assert "risk heat" in str(exc.value).lower()
+
+
+def test_risk_manager_blocks_on_leverage_limit() -> None:
+    limits = RiskLimits(
+        max_notional=5_000.0,
+        max_position=1_000.0,
+        max_gross_exposure=10_000.0,
+        max_leverage=2.0,
+    )
+    manager = RiskManager(limits)
+    manager.update_portfolio_equity(100.0)
+
+    manager.validate_order("BTC", "buy", qty=1.0, price=20.0)
+    manager.register_fill("BTC", "buy", qty=1.0, price=20.0)
+
+    with pytest.raises(LimitViolation) as exc:
+        manager.validate_order("BTC", "buy", qty=2.0, price=150.0)
+
+    assert "leverage" in str(exc.value).lower()
+
+
+def test_risk_manager_blocks_when_daily_drawdown_exceeded() -> None:
+    limits = RiskLimits(
+        max_notional=1_000.0,
+        max_position=100.0,
+        max_daily_drawdown=0.1,
+    )
+    manager = RiskManager(limits)
+    start = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    manager.update_portfolio_equity(1_000.0, timestamp=start)
+    manager.update_portfolio_equity(850.0, timestamp=start + timedelta(hours=1))
+
+    with pytest.raises(LimitViolation) as exc:
+        manager.validate_order("ADA", "buy", qty=1.0, price=10.0)
+
+    assert "drawdown" in str(exc.value).lower()
 
 
 def test_idempotent_retry_executor_retries_and_caches() -> None:

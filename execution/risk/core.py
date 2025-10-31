@@ -43,7 +43,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import (
     Callable,
@@ -112,6 +112,10 @@ class RiskLimits:
     max_position: float = float("inf")
     max_orders_per_interval: int = 60
     interval_seconds: float = 1.0
+    max_gross_exposure: float = float("inf")
+    max_portfolio_heat: float = float("inf")
+    max_leverage: float = float("inf")
+    max_daily_drawdown: float = 1.0
     kill_switch_limit_multiplier: float = 1.5
     kill_switch_violation_threshold: int = 3
     kill_switch_rate_limit_threshold: int = 3
@@ -127,6 +131,16 @@ class RiskLimits:
             self.kill_switch_violation_threshold = 1
         if self.kill_switch_rate_limit_threshold < 1:
             self.kill_switch_rate_limit_threshold = 1
+        if self.max_gross_exposure < 0:
+            self.max_gross_exposure = 0.0
+        if self.max_portfolio_heat < 0:
+            self.max_portfolio_heat = 0.0
+        if self.max_leverage < 0:
+            self.max_leverage = float("inf")
+        if self.max_daily_drawdown < 0:
+            self.max_daily_drawdown = 0.0
+        if self.max_daily_drawdown > 1.0:
+            self.max_daily_drawdown = 1.0
 
 
 class KillSwitchStateStore(Protocol):
@@ -154,6 +168,74 @@ class RiskStateStore(Protocol):
 
 
 T = TypeVar("T")
+
+
+@dataclass(slots=True)
+class PortfolioExposureEvaluation:
+    """Snapshot of projected portfolio exposure during validation."""
+
+    current_position: float
+    projected_position: float
+    current_notional: float
+    projected_notional: float
+    current_gross: float
+    projected_gross: float
+    current_heat: float
+    projected_heat: float
+    current_leverage: float | None
+    projected_leverage: float | None
+    daily_drawdown: float
+
+
+class PortfolioEquityTracker:
+    """Track equity peaks/troughs for leverage and drawdown controls."""
+
+    def __init__(self) -> None:
+        self._equity = 0.0
+        self._peak_equity = 0.0
+        self._daily_peak = 0.0
+        self._daily_trough = 0.0
+        self._anchor_date: date | None = None
+
+    def update(self, equity: float, *, timestamp: datetime | None = None) -> None:
+        """Refresh equity telemetry used for leverage and drawdown limits."""
+
+        equity = float(equity)
+        ts = timestamp or datetime.now(timezone.utc)
+        anchor = ts.astimezone(timezone.utc).date()
+
+        if self._anchor_date != anchor:
+            self._anchor_date = anchor
+            self._daily_peak = equity
+            self._daily_trough = equity
+        else:
+            self._daily_peak = max(self._daily_peak, equity)
+            self._daily_trough = min(self._daily_trough, equity)
+
+        self._equity = equity
+        self._peak_equity = max(self._peak_equity, equity)
+
+    @property
+    def equity(self) -> float:
+        return self._equity
+
+    @property
+    def peak_equity(self) -> float:
+        return self._peak_equity
+
+    def daily_drawdown(self) -> float:
+        peak = self._daily_peak
+        if peak <= 0.0:
+            return 0.0
+        return max(0.0, (peak - self._equity) / peak)
+
+    def leverage(self, gross_exposure: float) -> float | None:
+        equity = self._equity
+        if equity <= 0.0:
+            return None
+        if gross_exposure <= 0.0:
+            return 0.0
+        return float(gross_exposure) / equity
 
 
 class KillSwitchStateRecord(BaseModel):
@@ -817,6 +899,7 @@ class RiskManager(RiskController):
         audit_logger: ExecutionAuditLogger | None = None,
         kill_switch_store: KillSwitchStateStore | None = None,
         risk_state_store: RiskStateStore | None = None,
+        portfolio_analyzer: PortfolioRiskAnalyzer | None = None,
     ) -> None:
         self.limits = limits
         self._kill_switch = KillSwitch(store=kill_switch_store)
@@ -830,6 +913,8 @@ class RiskManager(RiskController):
         self._audit = audit_logger or get_execution_audit_logger()
         self._limit_violation_streak = 0
         self._throttle_violation_streak = 0
+        self._portfolio_analyzer = portfolio_analyzer or DefaultPortfolioRiskAnalyzer()
+        self._equity_tracker = PortfolioEquityTracker()
         self._restore_risk_state()
 
     def _canonical_symbol(self, symbol: str) -> str:
@@ -881,6 +966,198 @@ class RiskManager(RiskController):
                 "Failed to persist risk exposure snapshot",  # noqa: TRY400
                 extra={"event": "risk.persist_failed", "error": str(exc)},
             )
+
+    def _portfolio_payload(
+        self,
+        positions: Mapping[str, float],
+        notionals: Mapping[str, float],
+    ) -> list[Mapping[str, float]]:
+        payload: list[Mapping[str, float]] = []
+        symbols = set(positions) | set(notionals)
+        for symbol in symbols:
+            qty = float(positions.get(symbol, 0.0))
+            notional = abs(float(notionals.get(symbol, 0.0)))
+            if abs(qty) <= 1e-12 or notional <= 1e-12:
+                continue
+            price = notional / abs(qty)
+            payload.append(
+                {
+                    "qty": abs(qty),
+                    "price": price,
+                    "risk_weight": 1.0,
+                    "side": "long" if qty >= 0.0 else "short",
+                }
+            )
+        return payload
+
+    def _evaluate_portfolio_exposure(
+        self,
+        symbol: str,
+        *,
+        projected_position: float,
+        projected_notional: float,
+    ) -> PortfolioExposureEvaluation:
+        positions = dict(self._positions)
+        notionals = dict(self._last_notional)
+        current_notional = float(notionals.get(symbol, 0.0))
+        total_gross = float(sum(notionals.values()))
+
+        projected_positions = dict(positions)
+        if abs(projected_position) <= 1e-12:
+            projected_positions.pop(symbol, None)
+        else:
+            projected_positions[symbol] = projected_position
+
+        projected_notionals = dict(notionals)
+        if projected_notional <= 1e-12:
+            projected_notionals.pop(symbol, None)
+        else:
+            projected_notionals[symbol] = projected_notional
+
+        projected_gross = float(sum(projected_notionals.values()))
+        current_heat = float(
+            self._portfolio_analyzer.heat(self._portfolio_payload(positions, notionals))
+        )
+        projected_heat = float(
+            self._portfolio_analyzer.heat(
+                self._portfolio_payload(projected_positions, projected_notionals)
+            )
+        )
+        current_leverage = self._equity_tracker.leverage(total_gross)
+        projected_leverage = self._equity_tracker.leverage(projected_gross)
+        daily_drawdown = self._equity_tracker.daily_drawdown()
+
+        return PortfolioExposureEvaluation(
+            current_position=float(positions.get(symbol, 0.0)),
+            projected_position=float(projected_position),
+            current_notional=current_notional,
+            projected_notional=projected_notional,
+            current_gross=total_gross,
+            projected_gross=projected_gross,
+            current_heat=current_heat,
+            projected_heat=projected_heat,
+            current_leverage=current_leverage,
+            projected_leverage=projected_leverage,
+            daily_drawdown=daily_drawdown,
+        )
+
+    def _exposure_context(
+        self, evaluation: PortfolioExposureEvaluation
+    ) -> dict[str, float | None]:
+        return {
+            "current_position": evaluation.current_position,
+            "projected_position": evaluation.projected_position,
+            "current_notional": evaluation.current_notional,
+            "projected_notional": evaluation.projected_notional,
+            "current_gross_exposure": evaluation.current_gross,
+            "projected_gross_exposure": evaluation.projected_gross,
+            "current_portfolio_heat": evaluation.current_heat,
+            "projected_portfolio_heat": evaluation.projected_heat,
+            "current_leverage": evaluation.current_leverage,
+            "projected_leverage": evaluation.projected_leverage,
+            "daily_drawdown": evaluation.daily_drawdown,
+        }
+
+    def _enforce_portfolio_limits(
+        self,
+        symbol: str,
+        side: str,
+        quantity: float,
+        price: float,
+        evaluation: PortfolioExposureEvaluation,
+    ) -> dict[str, float | None]:
+        context = self._exposure_context(evaluation)
+        self._logger.debug(
+            "Portfolio exposure evaluation",  # noqa: TRY400 - structured log helper
+            extra={
+                "event": "risk.portfolio_exposure",
+                "symbol": symbol,
+                "side": side,
+                "quantity": quantity,
+                "price": price,
+                "context": context,
+            },
+        )
+
+        violation_reason: str | None = None
+        violation_type: str | None = None
+        projected_value: float | None = None
+        limit_value: float | None = None
+
+        if (
+            self.limits.max_gross_exposure < float("inf")
+            and evaluation.projected_gross > self.limits.max_gross_exposure
+        ):
+            violation_reason = (
+                "Portfolio gross exposure cap exceeded: "
+                f"{evaluation.projected_gross} > {self.limits.max_gross_exposure}"
+            )
+            violation_type = "gross_exposure_limit"
+            projected_value = evaluation.projected_gross
+            limit_value = self.limits.max_gross_exposure
+        elif (
+            self.limits.max_portfolio_heat < float("inf")
+            and evaluation.projected_heat > self.limits.max_portfolio_heat
+        ):
+            violation_reason = (
+                "Portfolio risk heat cap exceeded: "
+                f"{evaluation.projected_heat} > {self.limits.max_portfolio_heat}"
+            )
+            violation_type = "portfolio_heat_limit"
+            projected_value = evaluation.projected_heat
+            limit_value = self.limits.max_portfolio_heat
+        elif (
+            self.limits.max_leverage < float("inf")
+            and evaluation.projected_leverage is not None
+            and evaluation.projected_leverage > self.limits.max_leverage
+        ):
+            violation_reason = (
+                "Leverage limit exceeded: "
+                f"{evaluation.projected_leverage} > {self.limits.max_leverage}"
+            )
+            violation_type = "leverage_limit"
+            projected_value = evaluation.projected_leverage
+            limit_value = self.limits.max_leverage
+        elif evaluation.daily_drawdown > self.limits.max_daily_drawdown:
+            violation_reason = (
+                "Daily drawdown limit exceeded: "
+                f"{evaluation.daily_drawdown:.6f} > {self.limits.max_daily_drawdown:.6f}"
+            )
+            violation_type = "daily_drawdown_limit"
+            projected_value = evaluation.daily_drawdown
+            limit_value = self.limits.max_daily_drawdown
+
+        if violation_reason is not None:
+            self._limit_violation_streak += 1
+            severe = False
+            if projected_value is not None and limit_value is not None:
+                severe = projected_value > (
+                    limit_value * self.limits.kill_switch_limit_multiplier
+                )
+            if severe or (
+                self._limit_violation_streak
+                >= self.limits.kill_switch_violation_threshold
+            ):
+                self._trigger_kill_switch(
+                    violation_reason,
+                    symbol=symbol,
+                    violation_type=violation_type,
+                )
+            metric_tag = violation_type or "portfolio_limit"
+            self._metrics.record_risk_validation(symbol, metric_tag)
+            self._record_risk_audit(
+                symbol=symbol,
+                side=side,
+                quantity=quantity,
+                price=price,
+                status="rejected",
+                reason=violation_reason,
+                violation_type=metric_tag,
+                context=context,
+            )
+            raise LimitViolation(violation_reason)
+
+        return context
 
     def hydrate_positions(
         self,
@@ -961,6 +1238,7 @@ class RiskManager(RiskController):
         status: str,
         reason: str | None = None,
         violation_type: str | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         payload = {
             "event": "risk_validation",
@@ -975,6 +1253,8 @@ class RiskManager(RiskController):
             "consecutive_limit_violations": self._limit_violation_streak,
             "consecutive_rate_limit_violations": self._throttle_violation_streak,
         }
+        if context:
+            payload["context"] = dict(context)
         self._audit.emit(payload)
 
     def _trigger_kill_switch(
@@ -1140,6 +1420,22 @@ class RiskManager(RiskController):
             )
             raise LimitViolation(reason)
 
+        evaluation = self._evaluate_portfolio_exposure(
+            canonical_symbol,
+            projected_position=new_position,
+            projected_notional=projected_notional,
+        )
+        try:
+            context = self._enforce_portfolio_limits(
+                canonical_symbol,
+                side.lower(),
+                float(qty),
+                float(price),
+                evaluation,
+            )
+        except LimitViolation:
+            raise
+
         if self.limits.max_orders_per_interval > 0:
             self._submissions.append(now)
         else:
@@ -1154,6 +1450,7 @@ class RiskManager(RiskController):
             status="passed",
             reason=None,
             violation_type=None,
+            context=context,
         )
 
     @property
@@ -1181,8 +1478,13 @@ class RiskManager(RiskController):
         canonical_symbol = self._canonical_symbol(symbol)
         side_sign = 1.0 if side.lower() == "buy" else -1.0
         position = float(self._positions.get(canonical_symbol, 0.0)) + side_sign * qty
-        self._positions[canonical_symbol] = position
-        self._last_notional[canonical_symbol] = abs(position * price)
+        notional = abs(position * price)
+        if abs(position) <= 1e-12:
+            self._positions.pop(canonical_symbol, None)
+            self._last_notional.pop(canonical_symbol, None)
+        else:
+            self._positions[canonical_symbol] = position
+            self._last_notional[canonical_symbol] = notional
         self._persist_risk_state()
 
     def current_position(self, symbol: str) -> float:
@@ -1196,6 +1498,13 @@ class RiskManager(RiskController):
 
         canonical_symbol = self._canonical_symbol(symbol)
         return float(self._last_notional.get(canonical_symbol, 0.0))
+
+    def update_portfolio_equity(
+        self, equity: float, *, timestamp: datetime | None = None
+    ) -> None:
+        """Refresh portfolio equity telemetry for leverage and drawdown checks."""
+
+        self._equity_tracker.update(equity, timestamp=timestamp)
 
 
 class IdempotentRetryExecutor:
