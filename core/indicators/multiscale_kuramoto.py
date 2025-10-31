@@ -274,7 +274,9 @@ def _higuchi_fractal_dimension(values: np.ndarray, k_max: int = 8) -> float:
     except Exception:  # pragma: no cover - numerical degeneracy
         return 1.0
 
-    dimension = float(np.clip(slope, 1.0, 2.0))
+    # Higuchi's regression slope approximates ``D - 1`` for a 1-D signal, so
+    # reintroduce the offset before clamping to the valid fractal range.
+    dimension = float(np.clip(1.0 + slope, 1.0, 2.0))
     if not np.isfinite(dimension):
         return 1.0
     return dimension
