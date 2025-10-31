@@ -1490,11 +1490,14 @@ def create_app(
     if resolved_settings.audit_webhook_url is not None:
         audit_sink = HttpAuditSink(str(resolved_settings.audit_webhook_url))
 
+    access_controller = resolved_settings.build_access_controller()
+
     secret_manager = resolved_settings.build_secret_manager(
         audit_logger_factory=lambda manager: AuditLogger(
             secret_resolver=manager.provider("audit_secret"),
             sink=audit_sink,
-        )
+        ),
+        access_controller=access_controller,
     )
     require_bearer = verify_request_identity()
     optional_bearer = verify_optional_request_identity()
@@ -1533,7 +1536,8 @@ def create_app(
             resolved_settings.kill_switch_store_path
         )
     risk_manager_facade = RiskManagerFacade(
-        RiskManager(RiskLimits(), kill_switch_store=kill_switch_store)
+        RiskManager(RiskLimits(), kill_switch_store=kill_switch_store),
+        access_controller=access_controller,
     )
     admin_rate_limiter = AdminRateLimiter(
         max_attempts=int(rate_limit_max_attempts),
@@ -1691,6 +1695,7 @@ def create_app(
         )
     )
     app.state.risk_manager = risk_manager_facade.risk_manager
+    app.state.access_controller = access_controller
     app.state.audit_logger = audit_logger
     app.state.secret_manager = secret_manager
     app.state.admin_rate_limiter = admin_rate_limiter

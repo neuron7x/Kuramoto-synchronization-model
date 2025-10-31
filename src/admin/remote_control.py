@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.audit.audit_logger import AuditLogger
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
+from src.security import AccessDeniedError
 
 __all__ = [
     "AdminIdentity",
@@ -277,7 +278,15 @@ def create_remote_control_router(
     ) -> KillSwitchResponse:
         """Engage the risk manager kill-switch and log the operation."""
 
-        state: KillSwitchState = manager.engage_kill_switch(payload.reason)
+        try:
+            state: KillSwitchState = manager.engage_kill_switch(
+                payload.reason, actor=identity.subject, roles=identity.roles
+            )
+        except AccessDeniedError as exc:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
         event_type = (
             "kill_switch_reaffirmed" if state.already_engaged else "kill_switch_engaged"
         )
@@ -310,7 +319,15 @@ def create_remote_control_router(
     ) -> KillSwitchResponse:
         """Return the current kill-switch status and audit the read."""
 
-        state = manager.kill_switch_state()
+        try:
+            state = manager.kill_switch_state(
+                actor=identity.subject, roles=identity.roles
+            )
+        except AccessDeniedError as exc:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
         logger.log_event(
             event_type="kill_switch_state_viewed",
             actor=identity.subject,
@@ -340,7 +357,15 @@ def create_remote_control_router(
     ) -> KillSwitchResponse:
         """Reset the kill-switch in an idempotent manner and audit the action."""
 
-        state = manager.reset_kill_switch()
+        try:
+            state = manager.reset_kill_switch(
+                actor=identity.subject, roles=identity.roles
+            )
+        except AccessDeniedError as exc:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
         event_type = (
             "kill_switch_reset" if state.already_engaged else "kill_switch_reset_noop"
         )

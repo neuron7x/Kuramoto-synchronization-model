@@ -42,7 +42,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import deque
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import (
@@ -831,6 +831,35 @@ class RiskManager(RiskController):
         self._limit_violation_streak = 0
         self._throttle_violation_streak = 0
         self._restore_risk_state()
+
+    def update_limits(self, **updates: object) -> RiskLimits:
+        """Apply supported updates to :class:`RiskLimits` and return the result."""
+
+        allowed_fields = {
+            "max_notional",
+            "max_position",
+            "kill_switch_violation_threshold",
+            "kill_switch_limit_multiplier",
+            "kill_switch_rate_limit_threshold",
+            "max_orders_per_interval",
+        }
+        invalid = set(updates) - allowed_fields
+        if invalid:
+            joined = ", ".join(sorted(invalid))
+            raise ValueError(f"Unsupported risk limit fields: {joined}")
+        sanitized = {key: value for key, value in updates.items() if value is not None}
+        if not sanitized:
+            return self.limits
+        new_limits = replace(self.limits, **sanitized)
+        self._logger.info(  # noqa: TRY400 - structured logging
+            "Risk limits updated",
+            extra={
+                "event": "risk.limits_updated",
+                "changes": sanitized,
+            },
+        )
+        self.limits = new_limits
+        return self.limits
 
     def _canonical_symbol(self, symbol: str) -> str:
         return normalize_symbol(symbol)

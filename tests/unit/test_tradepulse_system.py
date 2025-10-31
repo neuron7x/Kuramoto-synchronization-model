@@ -18,6 +18,15 @@ from application.system import (
 from core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
 from execution.connectors import BinanceConnector
+from src.security import AccessController, AccessDeniedError, AccessPolicy
+import yaml
+
+
+def _build_controller(tmp_path: Path, payload: dict[str, object]) -> AccessController:
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+    policy = AccessPolicy.load(policy_path)
+    return AccessController(policy)
 
 
 class FakeAsyncIngestor:
@@ -307,3 +316,32 @@ async def test_fetch_market_snapshot_records_kwargs(tmp_path: Path) -> None:
         "instrument_type": InstrumentType.FUTURES,
         "kwargs": {"depth": depth},
     }
+
+
+def test_connector_credentials_enforces_access_control(tmp_path: Path) -> None:
+    controller = _build_controller(
+        tmp_path,
+        {
+            "subjects": {"system": {"permissions": ["read_exchange_keys"]}},
+            "roles": {
+                "risk": {"permissions": ["read_exchange_keys"]},
+                "ops": {"permissions": ["reset_kill_switch"]},
+            },
+        },
+    )
+
+    venue = ExchangeAdapterConfig(
+        name="binance",
+        connector=BinanceConnector(),
+        credentials={"API_KEY": "key", "API_SECRET": "secret"},
+    )
+    config = TradePulseSystemConfig(venues=[venue], live_settings=LiveLoopSettings())
+    system = TradePulseSystem(config, access_controller=controller)
+
+    credentials = system.connector_credentials(
+        "binance", actor="alice", roles=("risk",)
+    )
+    assert credentials == {"API_KEY": "key", "API_SECRET": "secret"}
+
+    with pytest.raises(AccessDeniedError):
+        system.connector_credentials("binance", actor="bob", roles=("ops",))

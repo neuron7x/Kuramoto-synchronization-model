@@ -1,0 +1,50 @@
+# TradePulse access control matrix for privileged operations.
+#
+# The policy distinguishes between concrete subjects (service accounts or
+# automation) and human roles. Subjects may inherit permissions from other
+# entries to avoid duplication. Permissions support optional resource scopes;
+# when omitted they apply globally.
+subjects:
+  system:
+    description: "Internal services executing within the secured cluster."
+    permissions:
+      - action: read_exchange_keys
+      - action: modify_risk_limits
+      - action: engage_kill_switch
+      - action: reset_kill_switch
+  tradepulse-live-runner:
+    description: "Managed process responsible for the production execution loop."
+    inherits:
+      - operations
+    permissions:
+      - action: read_exchange_keys
+  risk-automation-daemon:
+    description: "Automation workflows that tune limits under supervision."
+    inherits:
+      - risk_committee
+    permissions:
+      - action: engage_kill_switch
+      - action: reset_kill_switch
+
+roles:
+  operations:
+    description: "Execution desk operators handling day-to-day venue management."
+    permissions:
+      - action: read_exchange_keys
+        resources: ["*"]
+      - action: engage_kill_switch
+        resources: ["*"]
+      - action: reset_kill_switch
+        resources: ["*"]
+  risk_committee:
+    description: "Risk officers authorised to modify production guardrails."
+    inherits:
+      - operations
+    permissions:
+      - action: modify_risk_limits
+        resources: ["*"]
+  compliance_auditor:
+    description: "Observers allowed to inspect kill-switch status without mutation rights."
+    permissions:
+      - action: read_kill_switch_state
+        resources: ["*"]
