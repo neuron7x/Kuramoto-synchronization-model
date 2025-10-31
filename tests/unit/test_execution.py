@@ -235,6 +235,22 @@ def test_risk_manager_blocks_on_leverage_limit() -> None:
     assert "leverage" in str(exc.value).lower()
 
 
+def test_risk_manager_blocks_when_equity_non_positive() -> None:
+    limits = RiskLimits(
+        max_notional=5_000.0,
+        max_position=1_000.0,
+        max_gross_exposure=10_000.0,
+        max_leverage=2.0,
+    )
+    manager = RiskManager(limits)
+    manager.update_portfolio_equity(-1_000.0)
+
+    with pytest.raises(LimitViolation) as exc:
+        manager.validate_order("ETH", "buy", qty=10.0, price=100.0)
+
+    assert "leverage" in str(exc.value).lower()
+
+
 def test_risk_manager_blocks_when_daily_drawdown_exceeded() -> None:
     limits = RiskLimits(
         max_notional=1_000.0,

@@ -36,6 +36,7 @@ without modifying risk logic.
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import threading
 import time
@@ -230,12 +231,15 @@ class PortfolioEquityTracker:
         return max(0.0, (peak - self._equity) / peak)
 
     def leverage(self, gross_exposure: float) -> float | None:
-        equity = self._equity
-        if equity <= 0.0:
-            return None
+        gross_exposure = float(gross_exposure)
         if gross_exposure <= 0.0:
             return 0.0
-        return float(gross_exposure) / equity
+
+        equity = self._equity
+        if equity <= 0.0:
+            return math.inf
+
+        return gross_exposure / equity
 
 
 class KillSwitchStateRecord(BaseModel):
