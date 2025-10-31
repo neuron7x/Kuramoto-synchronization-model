@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 import threading
+import time
 from typing import Mapping
 
 import pytest
@@ -13,6 +14,7 @@ from src.system import (
     ModuleOrchestrator,
     ModuleRunResult,
     ModuleRunSummary,
+    ModuleSynchronisationEntry,
     ModuleTimelineEntry,
 )
 
@@ -204,6 +206,11 @@ def test_orchestrator_runs_independent_modules_concurrently() -> None:
     assert summary.succeeded is True
     assert summary.context["alpha"] is True
     assert summary.context["beta"] is True
+    for name in ("alpha", "beta"):
+        result = summary.results[name]
+        assert result.ready_at is not None
+        assert result.scheduled_at is not None
+        assert result.total_wait_time is not None
 
     dynamics = summary.build_dynamics()
 
@@ -213,6 +220,17 @@ def test_orchestrator_runs_independent_modules_concurrently() -> None:
     assert dynamics.peak_concurrency >= 1
     assert dynamics.total_runtime >= 0.0
     assert dynamics.module_runtime_sum >= dynamics.total_runtime
+    assert isinstance(dynamics.synchronisation, tuple)
+    assert len(dynamics.synchronisation) == 2
+    for sync_entry in dynamics.synchronisation:
+        assert isinstance(sync_entry, ModuleSynchronisationEntry)
+        assert sync_entry.ready_at is not None
+        assert sync_entry.started_at is not None
+        assert sync_entry.queue_delay is not None
+    assert dynamics.total_queue_delay >= 0.0
+    assert dynamics.average_queue_delay >= 0.0
+    assert dynamics.max_queue_delay >= 0.0
+    assert dynamics.total_idle_time >= 0.0
     for entry in dynamics.module_timelines:
         assert isinstance(entry, ModuleTimelineEntry)
         assert entry.started_at >= 0.0
@@ -245,4 +263,43 @@ def test_execution_dynamics_captures_parallelism() -> None:
         sum(entry.duration for entry in dynamics.module_timelines),
         rel=1e-9,
     )
+
+
+def test_synchronisation_metrics_capture_queue_delays() -> None:
+    orchestrator = ModuleOrchestrator()
+
+    def slow_handler(state: Mapping[str, object]) -> Mapping[str, object]:
+        time.sleep(0.05)
+        return {"slow": True}
+
+    def fast_handler(state: Mapping[str, object]) -> Mapping[str, object]:
+        return {"fast": True}
+
+    orchestrator.register("module_a", slow_handler, provides=["slow"])
+    orchestrator.register("module_b", fast_handler, provides=["fast"])
+
+    summary = orchestrator.run(max_workers=1)
+    dynamics = summary.build_dynamics()
+
+    slow_result = summary.results["module_a"]
+    fast_result = summary.results["module_b"]
+
+    assert slow_result.queue_delay is not None
+    assert slow_result.queue_delay <= 0.1
+    assert fast_result.queue_delay is not None
+    assert fast_result.queue_delay >= 0.03
+    assert fast_result.total_wait_time is not None
+    assert fast_result.total_wait_time >= fast_result.queue_delay
+
+    synchronisation = {entry.name: entry for entry in dynamics.synchronisation}
+    assert "module_b" in synchronisation
+    assert synchronisation["module_b"].queue_delay is not None
+    assert synchronisation["module_b"].queue_delay == pytest.approx(
+        fast_result.queue_delay,
+        rel=0.25,
+        abs=0.01,
+    )
+    assert dynamics.total_queue_delay >= fast_result.queue_delay
+    assert dynamics.max_queue_delay >= fast_result.queue_delay
+    assert dynamics.average_queue_delay >= fast_result.queue_delay / 2
 

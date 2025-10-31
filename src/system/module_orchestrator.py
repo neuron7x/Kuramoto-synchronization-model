@@ -57,6 +57,35 @@ class ModuleRunResult:
     error: BaseException | None = None
     started_at: float | None = None
     completed_at: float | None = None
+    ready_at: float | None = None
+    scheduled_at: float | None = None
+
+    @property
+    def queue_delay(self) -> float | None:
+        """Time spent waiting for a worker after becoming ready."""
+
+        if self.ready_at is None or self.scheduled_at is None:
+            return None
+        delay = self.scheduled_at - self.ready_at
+        return delay if delay > 0.0 else 0.0
+
+    @property
+    def launch_delay(self) -> float | None:
+        """Delay between scheduling and the handler actually starting."""
+
+        if self.scheduled_at is None or self.started_at is None:
+            return None
+        delay = self.started_at - self.scheduled_at
+        return delay if delay > 0.0 else 0.0
+
+    @property
+    def total_wait_time(self) -> float | None:
+        """Aggregate wait time from readiness until execution began."""
+
+        if self.ready_at is None or self.started_at is None:
+            return None
+        delay = self.started_at - self.ready_at
+        return delay if delay > 0.0 else 0.0
 
 
 @dataclass(slots=True, frozen=True)
@@ -71,6 +100,20 @@ class ModuleTimelineEntry:
 
 
 @dataclass(slots=True, frozen=True)
+class ModuleSynchronisationEntry:
+    """Detailed timing information about module readiness and execution."""
+
+    name: str
+    ready_at: float | None
+    scheduled_at: float | None
+    started_at: float | None
+    completed_at: float | None
+    queue_delay: float | None
+    launch_delay: float | None
+    total_wait_time: float | None
+
+
+@dataclass(slots=True, frozen=True)
 class ModuleExecutionDynamics:
     """Aggregate runtime characteristics for an orchestration run."""
 
@@ -81,6 +124,11 @@ class ModuleExecutionDynamics:
     average_concurrency: float
     utilisation: float
     module_runtime_sum: float
+    synchronisation: tuple[ModuleSynchronisationEntry, ...]
+    total_queue_delay: float
+    average_queue_delay: float
+    max_queue_delay: float
+    total_idle_time: float
 
 
 @dataclass(slots=True)
@@ -101,39 +149,64 @@ class ModuleRunSummary:
         """Construct an execution dynamics snapshot for the orchestration run."""
 
         timelines: list[ModuleTimelineEntry] = []
+        synchronisation_entries: list[ModuleSynchronisationEntry] = []
+        queue_delays: list[float] = []
+
         for name in self.order:
             result = self.results.get(name)
-            if (
-                result is None
-                or result.started_at is None
-                or result.completed_at is None
-            ):
-                continue
-            timelines.append(
-                ModuleTimelineEntry(
+            ready_at: float | None = None
+            scheduled_at: float | None = None
+            started_at: float | None = None
+            completed_at: float | None = None
+            queue_delay: float | None = None
+            launch_delay: float | None = None
+            total_wait: float | None = None
+
+            if result is not None:
+                ready_at = result.ready_at
+                scheduled_at = result.scheduled_at
+                started_at = result.started_at
+                completed_at = result.completed_at
+                queue_delay = result.queue_delay
+                launch_delay = result.launch_delay
+                total_wait = result.total_wait_time
+
+                if (
+                    result.started_at is not None
+                    and result.completed_at is not None
+                ):
+                    timelines.append(
+                        ModuleTimelineEntry(
+                            name=name,
+                            started_at=result.started_at,
+                            completed_at=result.completed_at,
+                            duration=result.duration,
+                            success=result.success,
+                        )
+                    )
+                    if queue_delay is not None:
+                        queue_delays.append(queue_delay)
+
+            synchronisation_entries.append(
+                ModuleSynchronisationEntry(
                     name=name,
-                    started_at=result.started_at,
-                    completed_at=result.completed_at,
-                    duration=result.duration,
-                    success=result.success,
+                    ready_at=ready_at,
+                    scheduled_at=scheduled_at,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                    queue_delay=queue_delay,
+                    launch_delay=launch_delay,
+                    total_wait_time=total_wait,
                 )
             )
 
-        if not timelines:
-            empty_profile: Mapping[int, float] = MappingProxyType({})
-            return ModuleExecutionDynamics(
-                total_runtime=0.0,
-                module_timelines=tuple(),
-                concurrency_profile=empty_profile,
-                peak_concurrency=0,
-                average_concurrency=0.0,
-                utilisation=0.0,
-                module_runtime_sum=0.0,
-            )
-
-        timelines.sort(key=lambda entry: entry.started_at)
-        total_runtime = timelines[-1].completed_at - timelines[0].started_at
-        module_runtime_sum = sum(entry.duration for entry in timelines)
+        if timelines:
+            timelines.sort(key=lambda entry: entry.started_at)
+            total_runtime = timelines[-1].completed_at - timelines[0].started_at
+            module_runtime_sum = sum(entry.duration for entry in timelines)
+        else:
+            total_runtime = 0.0
+            module_runtime_sum = 0.0
 
         events: list[tuple[float, int]] = []
         for entry in timelines:
@@ -196,6 +269,12 @@ class ModuleRunSummary:
             )
 
         concurrency_profile = MappingProxyType(dict(sorted(concurrency_durations.items())))
+        total_queue_delay = sum(queue_delays)
+        average_queue_delay = (
+            total_queue_delay / len(queue_delays) if queue_delays else 0.0
+        )
+        max_queue_delay = max(queue_delays) if queue_delays else 0.0
+        total_idle_time = concurrency_profile.get(0, 0.0)
 
         return ModuleExecutionDynamics(
             total_runtime=total_runtime,
@@ -205,6 +284,11 @@ class ModuleRunSummary:
             average_concurrency=average_concurrency,
             utilisation=utilisation,
             module_runtime_sum=module_runtime_sum,
+            synchronisation=tuple(synchronisation_entries),
+            total_queue_delay=total_queue_delay,
+            average_queue_delay=average_queue_delay,
+            max_queue_delay=max_queue_delay,
+            total_idle_time=total_idle_time,
         )
 
 
@@ -380,9 +464,11 @@ class ModuleOrchestrator:
 
         order_index = {name: index for index, name in enumerate(order)}
         ready_heap: list[tuple[int, str]] = []
+        ready_timestamps: dict[str, float] = {}
         for name, count in remaining_dependencies.items():
             if count == 0:
                 heappush(ready_heap, (order_index[name], name))
+                ready_timestamps[name] = 0.0
 
         worker_cap: int
         if max_workers is None:
@@ -398,6 +484,7 @@ class ModuleOrchestrator:
         order_list = list(order)
         next_to_finalize = 0
         failure_details: tuple[str, BaseException] | None = None
+        scheduled_timestamps: dict[str, float] = {}
 
         run_origin = perf_counter()
         executor = ThreadPoolExecutor(max_workers=worker_cap)
@@ -409,6 +496,9 @@ class ModuleOrchestrator:
                     and failure_details is None
                 ):
                     _, name = heappop(ready_heap)
+                    scheduled_time = perf_counter() - run_origin
+                    scheduled_timestamps[name] = scheduled_time
+                    ready_timestamps.setdefault(name, scheduled_time)
                     definition = definitions[name]
                     missing = definition.requires - context.keys()
                     if missing:
@@ -422,6 +512,8 @@ class ModuleOrchestrator:
                             duration=0.0,
                             output=None,
                             error=error,
+                            ready_at=ready_timestamps.get(name),
+                            scheduled_at=scheduled_time,
                         )
                         failure_details = (name, error)
                         break
@@ -442,6 +534,8 @@ class ModuleOrchestrator:
                 for future in done:
                     name = in_flight.pop(future)
                     result, updates, error = future.result()
+                    result.ready_at = ready_timestamps.get(name)
+                    result.scheduled_at = scheduled_timestamps.get(name)
                     results[name] = result
                     if error is None:
                         pending_updates[name] = updates
@@ -469,19 +563,19 @@ class ModuleOrchestrator:
                             f"Module '{module_name}' failed to provide context keys: "
                             f"{', '.join(sorted(missing_keys))}"
                         )
-                        results[module_name] = ModuleRunResult(
-                            name=module_name,
-                            success=False,
-                            duration=module_result.duration,
-                            output=None,
-                            error=error,
-                        )
+                        module_result.success = False
+                        module_result.output = None
+                        module_result.error = error
+                        results[module_name] = module_result
                         failure_details = failure_details or (module_name, error)
                         break
 
                     for follower in dependents[module_name]:
                         remaining_dependencies[follower] -= 1
                         if remaining_dependencies[follower] == 0:
+                            ready_timestamps.setdefault(
+                                follower, perf_counter() - run_origin
+                            )
                             heappush(ready_heap, (order_index[follower], follower))
 
                     next_to_finalize += 1
@@ -564,6 +658,7 @@ __all__ = [
     "ModuleOrchestrator",
     "ModuleRunResult",
     "ModuleRunSummary",
+    "ModuleSynchronisationEntry",
     "ModuleTimelineEntry",
 ]
 
