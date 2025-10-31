@@ -1,56 +1,40 @@
+"""Thermodynamic controller with crisis-aware adaptations."""
 from __future__ import annotations
 
+import hashlib
 import time
-from typing import Dict, Tuple
-import warnings
 from dataclasses import dataclass
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
+import numpy as np
 
 from core.energy import BondType, delta_free_energy, system_free_energy
-try:
+from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
+from runtime.link_activator import LinkActivator
+from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
+
+try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
-    from evolution.bond_evolver import evolve_bonds as _evolve_bonds
-except ModuleNotFoundError as exc:  # pragma: no cover - exercised via dedicated tests
+except ModuleNotFoundError as exc:  # pragma: no cover
     if exc.name != "deap":
         raise
 
-    _FALLBACK_WARNING_EMITTED = False
-
     @dataclass(slots=True)
-    class MetricsSnapshot:
+    class MetricsSnapshot:  # type: ignore[override]
         latencies: Dict[Tuple[str, str], float]
         coherency: Dict[Tuple[str, str], float]
         resource_usage: float
         entropy: float
 
-    def evolve_bonds(  # type: ignore[override]
-        base_graph: nx.DiGraph,
-        snap: "MetricsSnapshot",
-        generations: int,
-        pop_size: int = 16,
-        cx_prob: float = 0.4,
-        mut_prob: float = 0.6,
-    ) -> nx.DiGraph:
-        global _FALLBACK_WARNING_EMITTED
-
-        if not _FALLBACK_WARNING_EMITTED:
-            warnings.warn(
-                "DEAP dependency is missing; bond evolution fallback keeps the graph unchanged.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            _FALLBACK_WARNING_EMITTED = True
-
-        return base_graph.copy()
-
-else:
+else:  # pragma: no cover - exercised in existing suite
     MetricsSnapshot = _BondMetricsSnapshot
-    evolve_bonds = _evolve_bonds
 
 
 class PrometheusMetrics:
-    def record(self, key: str, value: float, labels: Dict[str, str] | None = None) -> None:
+    """Minimal metrics exporter used in unit tests."""
+
+    def record(self, key: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         print(f"[metric] {key}={value} {labels or {}}")
 
 
@@ -66,7 +50,7 @@ def estimate_entropy(graph: nx.DiGraph) -> float:
     entropy = 0.0
     for count in counts.values():
         p = count / total
-        entropy += -p * math.log(p + 1e-12)
+        entropy -= p * math.log(p + 1e-12)
 
     max_entropy = math.log(len(counts) + 1e-12)
     return entropy / max_entropy if max_entropy > 0 else 0.0
@@ -114,17 +98,154 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
 
 
 class ThermoController:
-    def __init__(self, graph: nx.DiGraph, metrics_exporter: PrometheusMetrics | None = None) -> None:
+    """Thermodynamic control loop with safety guarantees."""
+
+    def __init__(self, graph: nx.DiGraph, metrics_exporter: Optional[PrometheusMetrics] = None) -> None:
         self.graph = graph
         self.metrics = metrics_exporter or PrometheusMetrics()
-        self.prev_F: float | None = None
-        self.prev_t: float | None = None
 
+        self.link_activator = LinkActivator()
+        self.recovery_agent = AdaptiveRecoveryAgent()
+        self.telemetry_history: List[Dict[str, float | str]] = []
+
+        snapshot = self.snapshot_metrics()
+        self._latest_snapshot = snapshot
+        self.current_topology = self._graph_to_topology(graph)
+
+        initial_F = self._compute_free_energy(snapshot=snapshot)
+        self.baseline_F = initial_F
+        self.baseline_ema = initial_F
+        self.previous_F = initial_F
+        self.previous_t = time.time()
+        self.dF_dt = 0.0
+        self.epsilon_adaptive = 0.0
+        self.crisis_step_count = 0
+        self.bottleneck_edge: Optional[str] = None
+        self.bottleneck_cost = 0.0
+        self._baseline_latency = self._compute_average_latency(snapshot)
+
+        self.crisis_ga = CrisisAwareGA(
+            fitness_func=self._evaluate_topology,
+            F_baseline=self.baseline_F,
+            crisis_threshold=0.1,
+        )
+
+    # Core loop ----------------------------------------------------------
+    def control_step(self) -> None:
+        snapshot = self.snapshot_metrics()
+        self._latest_snapshot = snapshot
+        current_time = time.time()
+
+        current_F = self._compute_free_energy(snapshot=snapshot)
+        if self.previous_F is not None and self.previous_t is not None:
+            dt = max(current_time - self.previous_t, 1e-9)
+            self.dF_dt = delta_free_energy(self.previous_F, current_F, dt)
+        else:  # pragma: no cover - initial iteration
+            self.dF_dt = 0.0
+
+        self._update_baseline(current_F)
+        self._update_adaptive_epsilon(self.dF_dt)
+        self._update_bottleneck(snapshot)
+
+        crisis_mode = CrisisMode.detect(current_F, self.baseline_F, self.crisis_ga.crisis_threshold)
+        in_crisis = crisis_mode != CrisisMode.NORMAL or abs(self.dF_dt) > self.epsilon_adaptive
+
+        if in_crisis:
+            current_F = self._handle_crisis(snapshot, current_F, crisis_mode)
+        else:
+            self.crisis_step_count = 0
+            if gradient_descent_step(self.graph, snapshot, lr=0.02):
+                self.current_topology = self._graph_to_topology(self.graph)
+                current_F = self._compute_free_energy(snapshot=snapshot)
+
+        self.metrics.record("system_free_energy", current_F)
+        self.metrics.record("system_dFdt", self.dF_dt)
+        self.previous_F = current_F
+        self.previous_t = current_time
+        self._record_telemetry(current_F, crisis_mode)
+
+    # ------------------------------------------------------------------
+    # Backwards compatibility properties
+    @property
+    def prev_F(self) -> float | None:
+        """Alias maintained for scripts expecting the legacy attribute."""
+
+        return self.previous_F
+
+    @prev_F.setter
+    def prev_F(self, value: float | None) -> None:
+        self.previous_F = value
+
+    @property
+    def prev_t(self) -> float | None:
+        """Alias maintained for scripts expecting the legacy attribute."""
+
+        return self.previous_t
+
+    @prev_t.setter
+    def prev_t(self, value: float | None) -> None:
+        self.previous_t = value
+
+    # Crisis handling ----------------------------------------------------
+    def _handle_crisis(self, snapshot: MetricsSnapshot, current_F: float, crisis_mode: str) -> float:
+        self.crisis_step_count += 1
+        latency_spike = self._detect_latency_spike(snapshot)
+        state = RecoveryState(
+            F_current=current_F,
+            F_baseline=self.baseline_F,
+            latency_spike=latency_spike,
+            steps_in_crisis=self.crisis_step_count,
+        )
+
+        action = self.recovery_agent.choose_action(state)
+        recovery_params = self.recovery_agent.get_recovery_params(action)
+        _ = recovery_params  # Currently used for observability only
+
+        new_topology, new_F, _ = self.crisis_ga.evolve(self.current_topology, current_F)
+        accepted = self._check_monotonic_with_tolerance(current_F, new_F)
+
+        next_state = RecoveryState(
+            F_current=new_F if accepted else current_F,
+            F_baseline=self.baseline_F,
+            latency_spike=self._detect_latency_spike(snapshot),
+            steps_in_crisis=self.crisis_step_count,
+        )
+
+        resulting_F = current_F
+        if accepted:
+            if self._apply_topology_changes(new_topology):
+                self.current_topology = self._graph_to_topology(self.graph)
+                self.previous_F = new_F
+                reward = -(new_F - current_F)
+                resulting_F = new_F
+            else:
+                reward = -abs(new_F - current_F)
+        else:
+            reward = -abs(new_F - current_F)
+
+        self.recovery_agent.update(state, action, reward, next_state)
+        return resulting_F
+
+    # Telemetry helpers --------------------------------------------------
+    def _record_telemetry(self, current_F: float, crisis_mode: str) -> None:
+        record = {
+            "timestamp": time.time(),
+            "F": current_F,
+            "dF_dt": self.dF_dt,
+            "epsilon": self.epsilon_adaptive,
+            "baseline_ema": self.baseline_ema,
+            "bottleneck_edge": self.bottleneck_edge or "",
+            "bottleneck_cost": self.bottleneck_cost,
+            "crisis_mode": crisis_mode,
+        }
+        self.telemetry_history.append(record)
+
+    # Metrics helpers ----------------------------------------------------
     def snapshot_metrics(self) -> MetricsSnapshot:
         latencies: Dict[Tuple[str, str], float] = {}
         coherency: Dict[Tuple[str, str], float] = {}
 
-        for (src, dst, data) in self.graph.edges(data=True):
+        for src, dst, data in self.graph.edges(data=True):
             latencies[(src, dst)] = data.get("latency_norm", 0.5)
             coherency[(src, dst)] = data.get("coherency", 0.8)
 
@@ -139,58 +260,111 @@ class ThermoController:
             entropy=entropy,
         )
 
-    def hot_swap_bonds(self, new_graph: nx.DiGraph | None = None) -> None:
-        if new_graph is not None:
-            self.graph = new_graph
+    def _update_baseline(self, current_F: float) -> None:
+        self.baseline_ema = 0.9 * self.baseline_ema + 0.1 * current_F
 
-    def control_step(self) -> None:
-        snapshot = self.snapshot_metrics()
+    def _update_adaptive_epsilon(self, dF_dt: float) -> None:
+        self.epsilon_adaptive = max(1e-9, 0.01 * self.baseline_ema + 0.05 * abs(dF_dt))
 
-        bonds_now = {(u, v): data.get("type") for u, v, data in self.graph.edges(data=True)}
-        energy_before = system_free_energy(
-            bonds_now,
+    def _update_bottleneck(self, snapshot: MetricsSnapshot) -> None:
+        if snapshot.latencies:
+            (src, dst), value = max(snapshot.latencies.items(), key=lambda item: item[1])
+            self.bottleneck_edge = f"{src}->{dst}"
+            self.bottleneck_cost = value
+        else:
+            self.bottleneck_edge = None
+            self.bottleneck_cost = 0.0
+
+    def _detect_latency_spike(self, snapshot: MetricsSnapshot) -> float:
+        avg_latency = self._compute_average_latency(snapshot)
+        if self._baseline_latency == 0:
+            return 1.0
+        return max(avg_latency / self._baseline_latency, 1.0)
+
+    def _compute_average_latency(self, snapshot: MetricsSnapshot) -> float:
+        if not snapshot.latencies:
+            return 0.0
+        return float(sum(snapshot.latencies.values()) / len(snapshot.latencies))
+
+    # Safety -------------------------------------------------------------
+    def _check_monotonic_with_tolerance(self, F_old: float, F_new: float, window_size: int = 3) -> bool:
+        epsilon_spike = 0.01 * self.baseline_ema
+        if F_new > F_old + epsilon_spike:
+            return False
+        if F_new > F_old:
+            predictions = self._predict_recovery_window(F_new, window_size)
+            return float(np.mean(predictions)) < F_old
+        return True
+
+    def _predict_recovery_window(self, F_new: float, window_size: int) -> List[float]:
+        decay = 0.9
+        return [F_new * (decay ** i) + self.baseline_F * (1 - decay ** i) for i in range(1, window_size + 1)]
+
+    def _apply_topology_changes(self, new_topology: Topology) -> bool:
+        changed = self._diff_topologies(self.current_topology, new_topology)
+        success = True
+        for src, dst, old_type, new_type in changed:
+            self.graph.add_edge(src, dst)
+            self.graph.edges[(src, dst)]["type"] = new_type
+            result = self.link_activator.apply(new_type, src, dst)
+            if not result.success:
+                self.graph.edges[(src, dst)]["type"] = old_type
+                success = False
+        return success
+
+    # Data conversion ----------------------------------------------------
+    def _graph_to_topology(self, graph: nx.DiGraph) -> Topology:
+        return [(src, dst, data.get("type", "vdw")) for src, dst, data in graph.edges(data=True)]
+
+    def _diff_topologies(
+        self, old: Iterable[Tuple[str, str, str]], new: Iterable[Tuple[str, str, str]]
+    ) -> List[Tuple[str, str, str, str]]:
+        old_map = {(src, dst): bond for src, dst, bond in old}
+        new_map = {(src, dst): bond for src, dst, bond in new}
+        changed: List[Tuple[str, str, str, str]] = []
+        for edge, new_type in new_map.items():
+            old_type = old_map.get(edge)
+            if old_type != new_type:
+                changed.append((edge[0], edge[1], old_type or "vdw", new_type))
+        return changed
+
+    def _compute_free_energy(
+        self,
+        topology: Optional[Topology] = None,
+        snapshot: Optional[MetricsSnapshot] = None,
+    ) -> float:
+        snapshot = snapshot or self._latest_snapshot
+        topology = topology or self.current_topology
+        bonds = {(src, dst): bond for src, dst, bond in topology}
+        return system_free_energy(
+            bonds,
             snapshot.latencies,
             snapshot.coherency,
             snapshot.resource_usage,
             snapshot.entropy,
         )
 
-        time_now = time.time()
+    def _evaluate_topology(self, topology: Topology) -> float:
+        return self._compute_free_energy(topology=topology, snapshot=self._latest_snapshot)
 
-        gradient_descent_step(self.graph, snapshot, lr=0.02)
+    # Public getters -----------------------------------------------------
+    def get_current_F(self) -> float:
+        return float(self.previous_F)
 
-        bonds_after_local = {(u, v): data.get("type") for u, v, data in self.graph.edges(data=True)}
-        energy_after_local = system_free_energy(
-            bonds_after_local,
-            snapshot.latencies,
-            snapshot.coherency,
-            snapshot.resource_usage,
-            snapshot.entropy,
-        )
+    def get_dF_dt(self) -> float:
+        return float(self.dF_dt)
 
-        final_energy = energy_after_local
+    def get_bottleneck_cost(self) -> float:
+        return float(self.bottleneck_cost)
 
-        if energy_before - energy_after_local < 1e-10:
-            evolved = evolve_bonds(self.graph, snapshot, generations=50)
-            self.hot_swap_bonds(evolved)
+    def get_bottleneck_edge(self) -> Optional[str]:
+        return self.bottleneck_edge
 
-            bonds_after_evo = {(u, v): data.get("type") for u, v, data in self.graph.edges(data=True)}
-            energy_after_evo = system_free_energy(
-                bonds_after_evo,
-                snapshot.latencies,
-                snapshot.coherency,
-                snapshot.resource_usage,
-                snapshot.entropy,
-            )
-            final_energy = energy_after_evo
-
-        if self.prev_F is not None and self.prev_t is not None:
-            dFdt = delta_free_energy(self.prev_F, final_energy, time_now - self.prev_t)
-            self.metrics.record("system_dFdt", dFdt)
-
-        self.metrics.record("system_free_energy", final_energy)
-        self.prev_F = final_energy
-        self.prev_t = time_now
+    def get_topology_id(self) -> str:
+        digest = hashlib.sha1()
+        for src, dst, bond in sorted(self.current_topology):
+            digest.update(f"{src}->{dst}:{bond}".encode())
+        return digest.hexdigest()
 
 
 __all__ = [

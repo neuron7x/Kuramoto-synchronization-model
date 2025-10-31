@@ -1,36 +1,87 @@
 name: Thermodynamic Validation
 on:
   push:
-    branches: [ "main", "feature/**" ]
+    branches: ["main", "feature/**"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   validate-energy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt || true
           pip install deap networkx pytest numpy
-
       - name: Run stability tests
-        run: |
-          pytest -q tests/test_energy.py -m stability
-
+        run: pytest -q tests/test_energy.py -m stability
       - name: Benchmark bonds / ensure ΔF improvement
-        run: |
-          python scripts/benchmark_bonds.py --target-dF 1e-10
-
+        run: python scripts/benchmark_bonds.py --target-dF 1e-10
       - name: Evolve bonds and save optimized graph
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+        run: python evolution/bond_evolver.py --generations 50 --output optimized_graph.json
+
+  test-link-activator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
         run: |
-          python evolution/bond_evolver.py --generations 50 --output optimized_graph.json
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run link activator tests
+        run: pytest tests/test_link_activator.py -v
+
+  test-recovery-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run recovery agent tests
+        run: pytest tests/test_recovery_agent.py -v
+
+  security-policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure SECURITY.md exists
+        run: test -f SECURITY.md
+      - name: Scan for monotonic violations
+        run: |
+          if grep -R "monotonic_constraint_violated" logs/ 2>/dev/null; then
+            echo "ERROR: Monotonic constraint violations detected"
+            exit 1
+          fi
+
+  integration-polygon:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run Polygon validation
+        env:
+          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          RUN_POLYGON_TESTS: "1"
+        run: pytest tests/test_polygon_integration.py -v
