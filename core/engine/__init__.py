@@ -17,6 +17,19 @@ from .core import (
     Signal,
     SignalGenerator,
 )
+from .energy import (
+    COULOMB_CONSTANT,
+    MIN_BANDWIDTH,
+    MIN_DISTANCE,
+    PulseBuffer,
+    ThermodynamicSystem,
+    buffer_uncertainty,
+    compute_edge_latency,
+    compute_potential_energy,
+    gradient_descent_step,
+    measure_entropy,
+    total_latency,
+)
 
 __all__ = [
     "CoreEngine",
@@ -34,4 +47,15 @@ __all__ = [
     "RiskManager",
     "Signal",
     "SignalGenerator",
+    "COULOMB_CONSTANT",
+    "MIN_BANDWIDTH",
+    "MIN_DISTANCE",
+    "PulseBuffer",
+    "ThermodynamicSystem",
+    "buffer_uncertainty",
+    "compute_edge_latency",
+    "compute_potential_energy",
+    "gradient_descent_step",
+    "measure_entropy",
+    "total_latency",
 ]
