@@ -164,6 +164,28 @@ class ThermoController:
         self.previous_t = current_time
         self._record_telemetry(current_F, crisis_mode)
 
+    # ------------------------------------------------------------------
+    # Backwards compatibility properties
+    @property
+    def prev_F(self) -> float | None:
+        """Alias maintained for scripts expecting the legacy attribute."""
+
+        return self.previous_F
+
+    @prev_F.setter
+    def prev_F(self, value: float | None) -> None:
+        self.previous_F = value
+
+    @property
+    def prev_t(self) -> float | None:
+        """Alias maintained for scripts expecting the legacy attribute."""
+
+        return self.previous_t
+
+    @prev_t.setter
+    def prev_t(self, value: float | None) -> None:
+        self.previous_t = value
+
     # Crisis handling ----------------------------------------------------
     def _handle_crisis(self, snapshot: MetricsSnapshot, current_F: float, crisis_mode: str) -> float:
         self.crisis_step_count += 1
