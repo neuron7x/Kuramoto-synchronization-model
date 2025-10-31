@@ -2,9 +2,25 @@ from __future__ import annotations
 
 import argparse
 import statistics
+import sys
 import time
+from pathlib import Path
 
 import networkx as nx
+
+# ``python scripts/benchmark_bonds.py`` sets ``sys.path[0]`` to the ``scripts``
+# directory, which omits the project root and shadows the top-level ``runtime``
+# namespace with ``scripts/runtime``. Normalise the path order so that imports
+# resolve against the repository packages without requiring PYTHONPATH tweaks.
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parents[0]
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+script_dir_str = str(SCRIPT_DIR)
+if script_dir_str in sys.path:
+    sys.path.remove(script_dir_str)
 
 from core.energy import delta_free_energy
 from runtime.thermo_controller import ThermoController
