@@ -10,6 +10,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections import deque
+from datetime import datetime, timezone
 from typing import (
     Any,
     AsyncContextManager,
@@ -23,7 +24,12 @@ from typing import (
 import httpx
 
 from domain import Order
-from execution.connectors import ExecutionConnector, OrderError, TransientOrderError
+from execution.connectors import (
+    ExecutionConnector,
+    OrderError,
+    StreamHealth,
+    TransientOrderError,
+)
 
 
 def _first_present(payload: Mapping[str, Any], *keys: str) -> Any:
@@ -132,6 +138,11 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         ws_factory: Callable[[str], AsyncContextManager[Any]] | None = None,
         rate_limit: tuple[int, float] = (1200, 60.0),
         max_backoff: float = 30.0,
+        stream_stale_after: float = 3.0,
+        stream_reconnect_after: float | None = None,
+        stream_poll_interval: float = 1.0,
+        clock: Callable[[], float] | None = None,
+        wall_clock: Callable[[], datetime] | None = None,
     ) -> None:
         super().__init__(sandbox=sandbox)
         self.name = name
@@ -151,6 +162,23 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         self._lock = threading.Lock()
         self._connected = False
         self._credentials: Mapping[str, str] = {}
+        self._clock = clock or time.monotonic
+        self._wall_clock = wall_clock or (lambda: datetime.now(timezone.utc))
+        self._stream_poll_interval = max(0.1, float(stream_poll_interval))
+        self._stream_stale_after = max(self._stream_poll_interval, float(stream_stale_after))
+        reconnect_after = (
+            float(stream_reconnect_after)
+            if stream_reconnect_after is not None
+            else self._stream_stale_after * 2.0
+        )
+        self._stream_reconnect_after = max(self._stream_stale_after, reconnect_after)
+        self._stream_health_state = StreamHealth(is_healthy=True)
+        self._stream_health_lock = threading.Lock()
+        self._stream_last_message_monotonic: float | None = None
+        self._stream_last_message_wall: datetime | None = None
+        self._stream_stale_since_monotonic: float | None = None
+        self._stream_stale_since_wall: datetime | None = None
+        self._stream_connected_monotonic: float | None = None
 
     # ------------------------------------------------------------------
     # Abstract hooks for subclasses
@@ -244,6 +272,10 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
             self._http_client.close()
             self._http_client = None
         self._connected = False
+
+    def stream_health(self) -> StreamHealth:  # type: ignore[override]
+        with self._stream_health_lock:
+            return self._stream_health_state
 
     # ------------------------------------------------------------------
     # REST helpers
@@ -410,27 +442,9 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 async with self._ws_factory(url) as websocket:  # type: ignore[misc]
                     attempt = 0
                     backoff = 1.0
+                    self._mark_stream_connected()
                     while not self._ws_stop.is_set():
-                        try:
-                            message = await asyncio.wait_for(
-                                websocket.recv(), timeout=1.0
-                            )
-                        except asyncio.TimeoutError:
-                            continue
-                        except Exception as exc:  # pragma: no cover - defensive
-                            self._logger.warning(
-                                "WebSocket receive failed", extra={"error": str(exc)}
-                            )
-                            break
-                        if message is None:
-                            continue
-                        try:
-                            payload = json.loads(message)
-                        except json.JSONDecodeError:
-                            self._logger.debug("Ignoring non-JSON message from stream")
-                            continue
-                        if isinstance(payload, Mapping):
-                            self._handle_stream_message(payload)
+                        await self._poll_stream_message(websocket)
             except Exception as exc:
                 attempt += 1
                 delay = min(self._max_backoff, backoff * (2 ** max(0, attempt - 1)))
@@ -442,7 +456,112 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                     await asyncio.wait_for(asyncio.sleep(delay), timeout=delay)
                 except asyncio.TimeoutError:
                     pass
+            finally:
+                if not self._ws_stop.is_set():
+                    self._mark_stream_disconnected()
         self._logger.debug("WebSocket loop exiting")
+
+    async def _poll_stream_message(self, websocket: Any) -> None:
+        try:
+            message = await asyncio.wait_for(
+                websocket.recv(), timeout=self._stream_poll_interval
+            )
+        except asyncio.TimeoutError:
+            if self._evaluate_stream_health():
+                raise ConnectionError("market data stream stale")
+            return
+        except Exception as exc:  # pragma: no cover - defensive
+            raise ConnectionError(f"stream receive failed: {exc}") from exc
+
+        if message is None:
+            return
+        try:
+            payload = json.loads(message)
+        except json.JSONDecodeError:
+            self._logger.debug("Ignoring non-JSON message from stream")
+            return
+        if isinstance(payload, Mapping):
+            self._mark_stream_active()
+            self._handle_stream_message(payload)
+
+    def _mark_stream_connected(self) -> None:
+        now = self._clock()
+        with self._stream_health_lock:
+            self._stream_connected_monotonic = now
+            self._stream_last_message_monotonic = now
+            self._stream_last_message_wall = None
+            self._stream_stale_since_monotonic = None
+            self._stream_stale_since_wall = None
+            self._stream_health_state = StreamHealth(is_healthy=True)
+
+    def _mark_stream_active(self) -> None:
+        now_monotonic = self._clock()
+        now_wall = self._wall_clock()
+        with self._stream_health_lock:
+            was_stale = self._stream_stale_since_monotonic is not None
+            self._stream_last_message_monotonic = now_monotonic
+            self._stream_last_message_wall = now_wall
+            self._stream_stale_since_monotonic = None
+            self._stream_stale_since_wall = None
+            self._stream_health_state = StreamHealth(
+                is_healthy=True, last_message_at=now_wall
+            )
+        if was_stale:
+            self._logger.info(
+                "Market data stream recovered",
+                extra={
+                    "event": f"{self.name}.stream_recovered",
+                    "recovered_at": now_wall.isoformat(),
+                },
+            )
+
+    def _mark_stream_disconnected(self) -> None:
+        with self._stream_health_lock:
+            self._stream_connected_monotonic = None
+        if self._ws_stop.is_set():
+            return
+        now_monotonic = self._clock()
+        now_wall = self._wall_clock()
+        self._mark_stream_stale(now_monotonic, now_wall)
+
+    def _mark_stream_stale(self, monotonic_ts: float, wall_ts: datetime) -> None:
+        with self._stream_health_lock:
+            if self._stream_stale_since_monotonic is not None:
+                return
+            last_wall = self._stream_last_message_wall
+            self._stream_stale_since_monotonic = monotonic_ts
+            self._stream_stale_since_wall = wall_ts
+            self._stream_health_state = StreamHealth(
+                is_healthy=False,
+                last_message_at=last_wall,
+                stale_since=wall_ts,
+            )
+        self._logger.warning(
+            "Market data stream stale",
+            extra={
+                "event": f"{self.name}.stream_stale",
+                "stale_since": wall_ts.isoformat(),
+                "last_message_at": last_wall.isoformat() if last_wall else None,
+            },
+        )
+
+    def _evaluate_stream_health(self) -> bool:
+        if self._stream_stale_after <= 0:
+            return False
+        now = self._clock()
+        with self._stream_health_lock:
+            last = self._stream_last_message_monotonic
+            connected_at = self._stream_connected_monotonic
+            stale_since = self._stream_stale_since_monotonic
+        reference = last if last is not None else connected_at
+        if reference is None:
+            reference = now
+        if now - reference < self._stream_stale_after:
+            return False
+        if stale_since is None:
+            self._mark_stream_stale(now, self._wall_clock())
+            stale_since = now
+        return now - stale_since >= self._stream_reconnect_after
 
 
 __all__ = ["RESTWebSocketConnector", "SlidingWindowRateLimiter"]

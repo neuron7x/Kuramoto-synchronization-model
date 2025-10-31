@@ -8,13 +8,14 @@ import threading
 from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, Iterable, Mapping, MutableMapping, Sequence
 
 from core.utils.metrics import get_metrics_collector
 from domain import Order
 
-from .connectors import ExecutionConnector, OrderError, TransientOrderError
+from .connectors import ExecutionConnector, OrderError, StreamHealth, TransientOrderError
 from .oms import OMSConfig, OrderManagementSystem
 from .risk import RiskManager
 from .session_snapshot import (
@@ -46,6 +47,10 @@ class Signal:
                 logging.getLogger(__name__).exception(
                     "Signal handler failed", extra={"event": "signal.error"}
                 )
+
+
+class StaleMarketDataError(RuntimeError):
+    """Raised when trading is attempted while market data streams are stale."""
 
 
 @dataclass(slots=True)
@@ -242,6 +247,25 @@ class LiveExecutionLoop:
         context = self._contexts.get(venue)
         if context is None:
             raise LookupError(f"Unknown venue: {venue}")
+        health = context.connector.stream_health()
+        if isinstance(health, StreamHealth) and not health.is_healthy:
+            stale_since = (
+                health.stale_since.isoformat()
+                if isinstance(health.stale_since, datetime)
+                else health.stale_since
+            )
+            self._logger.warning(
+                "Blocking order due to stale market data",
+                extra={
+                    "event": "live_loop.stream_stale_block",
+                    "venue": venue,
+                    "stale_since": stale_since,
+                    "correlation_id": correlation_id,
+                },
+            )
+            raise StaleMarketDataError(
+                f"Market data stream for {venue} is stale; blocking order submission"
+            )
         submitted = context.oms.submit(order, correlation_id=correlation_id)
         self._activity.set()
         self._logger.debug(
@@ -887,4 +911,4 @@ class LiveExecutionLoop:
         self.on_position_snapshot.emit(venue, positions_list)
 
 
-__all__ = ["LiveExecutionLoop", "LiveLoopConfig"]
+__all__ = ["LiveExecutionLoop", "LiveLoopConfig", "StaleMarketDataError"]

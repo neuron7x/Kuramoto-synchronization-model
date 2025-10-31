@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,17 +27,46 @@ from core.data.ingestion import DataIngestor
 from core.data.models import InstrumentType, PriceTick
 from core.utils.metrics import get_metrics_collector
 from domain import Order, OrderSide, OrderType, Signal, SignalAction
+from application.secrets.manager import SecretManager, secret_caller_context
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import RiskLimits, RiskManager
 from src.security import AccessController, AccessDeniedError
 
 __all__ = [
+    "CredentialSecret",
     "ExchangeAdapterConfig",
     "LiveLoopSettings",
     "TradePulseSystemConfig",
     "TradePulseSystem",
 ]
+
+
+@dataclass(slots=True, frozen=True)
+class CredentialSecret:
+    """Reference to encrypted connector credentials stored in the secrets vault."""
+
+    name: str
+    encoding: str = "json"
+
+    def parse(self, raw: str) -> Mapping[str, str]:
+        """Deserialize the secret payload into a credentials mapping."""
+
+        if not raw:
+            raise ValueError(f"Secret '{self.name}' returned an empty payload")
+        if self.encoding != "json":
+            raise ValueError(f"Unsupported credential encoding: {self.encoding}")
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+            raise ValueError(
+                f"Secret '{self.name}' could not be decoded as JSON"
+            ) from exc
+        if not isinstance(payload, Mapping):
+            raise ValueError(
+                f"Secret '{self.name}' must decode to a key/value mapping"
+            )
+        return {str(key): str(value) for key, value in payload.items()}
 
 
 @dataclass(slots=True)
@@ -46,6 +76,20 @@ class ExchangeAdapterConfig:
     name: str
     connector: ExecutionConnector
     credentials: Mapping[str, str] | None = None
+    credential_secret: CredentialSecret | None = None
+
+    def __post_init__(self) -> None:
+        if not self.name or not self.name.strip():
+            raise ValueError("venue name must be provided")
+        if self.credentials:
+            raise ValueError(
+                "Inline exchange credentials are not supported. "
+                "Store secrets in the vault and reference them via credential_secret."
+            )
+        if self.credential_secret is not None and not isinstance(
+            self.credential_secret, CredentialSecret
+        ):
+            raise TypeError("credential_secret must be a CredentialSecret instance")
 
 
 @dataclass(slots=True)
@@ -104,6 +148,7 @@ class TradePulseSystem:
         async_data_ingestor: AsyncDataIngestor | None = None,
         risk_manager: RiskManager | None = None,
         access_controller: AccessController | None = None,
+        secret_manager: SecretManager | None = None,
     ) -> None:
         if not config.venues:
             raise ValueError("At least one execution venue must be configured")
@@ -122,20 +167,27 @@ class TradePulseSystem:
         self._risk_manager = risk_manager or RiskManager(config.risk_limits)
         self._metrics = get_metrics_collector()
         self._access_controller = access_controller
+        self._secret_manager = secret_manager
         self._clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
 
         connectors: MutableMapping[str, ExecutionConnector] = {}
-        credentials: MutableMapping[str, Mapping[str, str]] = {}
+        credential_secrets: MutableMapping[str, CredentialSecret] = {}
         for venue in config.venues:
             key = venue.name.lower()
             if key in connectors:
                 raise ValueError(f"Duplicate venue name configured: {venue.name}")
             connectors[key] = venue.connector
-            if venue.credentials:
-                credentials[key] = dict(venue.credentials)
+            if venue.credential_secret is not None:
+                if secret_manager is None:
+                    raise ValueError(
+                        "credential_secret configured without a secret manager"
+                    )
+                credential_secrets[key] = venue.credential_secret
 
         self._connectors: Mapping[str, ExecutionConnector] = dict(connectors)
-        self._credentials: Mapping[str, Mapping[str, str]] = dict(credentials)
+        self._credential_secrets: Mapping[str, CredentialSecret] = dict(
+            credential_secrets
+        )
         self._live_loop: LiveExecutionLoop | None = None
 
         self._last_symbol: str | None = None
@@ -201,8 +253,8 @@ class TradePulseSystem:
     ) -> Mapping[str, str] | None:
         """Return credentials associated with ``venue`` if configured."""
 
-        creds = self._credentials.get(venue.lower())
-        if creds is None:
+        binding = self._credential_secrets.get(venue.lower())
+        if binding is None:
             return None
         controller = self._access_controller
         if controller is not None:
@@ -217,7 +269,17 @@ class TradePulseSystem:
                 raise AccessDeniedError(
                     f"Actor '{actor or 'system'}' lacks permission to read credentials for {venue}"
                 ) from exc
-        return creds
+        manager = self._secret_manager
+        if manager is None:
+            raise RuntimeError("Secret manager is not configured")
+        role_payload: Iterable[str] | None = roles
+        with secret_caller_context(
+            actor=actor or "system",
+            ip_address="127.0.0.1",
+            roles=tuple(str(role) for role in role_payload or ()),
+        ):
+            raw = manager.get(binding.name)
+        return binding.parse(raw)
 
     @property
     def last_ingestion_started_at(self) -> datetime | None:
@@ -456,7 +518,7 @@ class TradePulseSystem:
         """Return a lazily initialised :class:`LiveExecutionLoop`."""
 
         if self._live_loop is None:
-            credentials = self._credentials or None
+            credentials = self._resolve_connector_credentials()
             config = self._config.live_settings.build_config(credentials=credentials)
             self._live_loop = LiveExecutionLoop(
                 self._connectors, self._risk_manager, config=config
@@ -526,6 +588,23 @@ class TradePulseSystem:
 
     # ------------------------------------------------------------------
     # Internal helpers
+    def _resolve_connector_credentials(
+        self,
+    ) -> Mapping[str, Mapping[str, str]] | None:
+        if not self._credential_secrets:
+            return None
+        manager = self._secret_manager
+        if manager is None:
+            raise RuntimeError("Secret manager is not configured")
+        resolved: dict[str, Mapping[str, str]] = {}
+        for venue, binding in self._credential_secrets.items():
+            with secret_caller_context(
+                actor="system", ip_address="127.0.0.1", roles=()
+            ):
+                raw = manager.get(binding.name)
+            resolved[venue] = binding.parse(raw)
+        return resolved
+
     @staticmethod
     def _ticks_to_frame(ticks: Sequence[PriceTick]) -> pd.DataFrame:
         records: list[dict[str, object]] = []

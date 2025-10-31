@@ -9,7 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from application.secrets.manager import ManagedSecret, ManagedSecretConfig, SecretManager
 from application.system import (
+    CredentialSecret,
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
@@ -19,6 +21,7 @@ from core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
 from execution.connectors import BinanceConnector
 from src.security import AccessController, AccessDeniedError, AccessPolicy
+import json
 import yaml
 
 
@@ -330,13 +333,26 @@ def test_connector_credentials_enforces_access_control(tmp_path: Path) -> None:
         },
     )
 
+    secret_value = json.dumps({"API_KEY": "key", "API_SECRET": "secret"})
+    managed = ManagedSecret(
+        config=ManagedSecretConfig(
+            name="binance.credentials",
+            min_length=1,
+            required_permission="read_exchange_keys",
+        ),
+        fallback=secret_value,
+        refresh_interval_seconds=0.0,
+    )
+    secret_manager = SecretManager({"binance.credentials": managed}, access_controller=controller)
     venue = ExchangeAdapterConfig(
         name="binance",
         connector=BinanceConnector(),
-        credentials={"API_KEY": "key", "API_SECRET": "secret"},
+        credential_secret=CredentialSecret("binance.credentials"),
     )
     config = TradePulseSystemConfig(venues=[venue], live_settings=LiveLoopSettings())
-    system = TradePulseSystem(config, access_controller=controller)
+    system = TradePulseSystem(
+        config, access_controller=controller, secret_manager=secret_manager
+    )
 
     credentials = system.connector_credentials(
         "binance", actor="alice", roles=("risk",)

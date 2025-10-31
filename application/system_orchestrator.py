@@ -8,6 +8,7 @@ from typing import Iterable, Sequence
 import pandas as pd
 
 from analytics.signals.pipeline import FeaturePipelineConfig
+from application.secrets.manager import SecretManager
 from application.microservices.backtesting import BacktestingService
 from application.microservices.contracts import (
     ExecutionRequest,
@@ -36,6 +37,7 @@ def build_tradepulse_system(
     live_settings: LiveLoopSettings | None = None,
     allowed_data_roots: Iterable[str | Path] | None = None,
     max_csv_bytes: int | None = None,
+    secret_manager: SecretManager | None = None,
 ) -> TradePulseSystem:
     """Return a ready-to-use :class:`TradePulseSystem` instance.
 
@@ -62,7 +64,7 @@ def build_tradepulse_system(
         allowed_data_roots=allowed_data_roots,
         max_csv_bytes=max_csv_bytes,
     )
-    return TradePulseSystem(config)
+    return TradePulseSystem(config, secret_manager=secret_manager)
 
 
 class TradePulseOrchestrator:

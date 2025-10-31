@@ -12,6 +12,7 @@ from .microservices import (
     StrategyRun,
 )
 from .system import (
+    CredentialSecret,
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
@@ -24,6 +25,7 @@ __all__ = [
     "BacktestingService",
     "ExecutionRequest",
     "ExecutionService",
+    "CredentialSecret",
     "ExchangeAdapterConfig",
     "LiveLoopSettings",
     "MarketDataSource",

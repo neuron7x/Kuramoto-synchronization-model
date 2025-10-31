@@ -3,13 +3,14 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Tuple
 
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.connectors import BinanceConnector
-from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from execution.connectors import BinanceConnector, StreamHealth
+from execution.live_loop import LiveExecutionLoop, LiveLoopConfig, StaleMarketDataError
 from execution.session_snapshot import SessionSnapshotError
 from execution.risk import RiskLimits, RiskManager
 
@@ -109,3 +110,26 @@ def test_start_requires_snapshot(loop_env) -> None:
         loop.start(cold_start=True)
 
     assert not loop.started
+
+
+def test_submit_order_blocks_on_stale_stream(loop_env) -> None:
+    loop, connector = loop_env
+    order = Order(
+        symbol="BTCUSDT",
+        side=OrderSide.BUY,
+        quantity=0.25,
+        price=20_000,
+        order_type=OrderType.LIMIT,
+    )
+
+    def stale_health() -> StreamHealth:
+        return StreamHealth(
+            is_healthy=False,
+            last_message_at=None,
+            stale_since=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        )
+
+    connector.stream_health = stale_health  # type: ignore[assignment]
+
+    with pytest.raises(StaleMarketDataError):
+        loop.submit_order("binance", order, correlation_id="cid-1")

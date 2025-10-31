@@ -1,19 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Mapping
 
 import httpx
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.adapters.base import RESTWebSocketConnector, SlidingWindowRateLimiter
-from execution.connectors import OrderError, TransientOrderError
+from execution.connectors import OrderError, StreamHealth, TransientOrderError
 
 
 class DummyRESTConnector(RESTWebSocketConnector):
     """Minimal concrete connector used to exercise base behaviours."""
 
-    def __init__(self, transport: httpx.BaseTransport) -> None:
+    def __init__(
+        self,
+        transport: httpx.BaseTransport,
+        *,
+        stream_stale_after: float = 1.0,
+        stream_poll_interval: float = 1.0,
+        clock: Callable[[], float] | None = None,
+        wall_clock: Callable[[], datetime] | None = None,
+    ) -> None:
         super().__init__(
             name="dummy",
             base_url="https://example.com",
@@ -21,6 +30,10 @@ class DummyRESTConnector(RESTWebSocketConnector):
             http_client=httpx.Client(
                 base_url="https://example.com", transport=transport
             ),
+            stream_stale_after=stream_stale_after,
+            stream_poll_interval=stream_poll_interval,
+            clock=clock,
+            wall_clock=wall_clock,
         )
 
     def _resolve_credentials(
@@ -276,4 +289,58 @@ def test_rest_connector_error_handling() -> None:
     connector.connect({})
     with pytest.raises(OrderError):
         connector.fetch_order("missing")
+    connector.disconnect()
+
+
+def test_rest_connector_stream_health_transitions() -> None:
+    monotonic_time = {"value": 0.0}
+    wall_time = {"value": datetime(2024, 1, 1, tzinfo=timezone.utc)}
+
+    def clock() -> float:
+        return monotonic_time["value"]
+
+    def wall_clock() -> datetime:
+        return wall_time["value"]
+
+    connector = DummyRESTConnector(
+        httpx.MockTransport(lambda request: httpx.Response(200, json={})),
+        stream_stale_after=0.5,
+        clock=clock,
+        wall_clock=wall_clock,
+        stream_poll_interval=0.1,
+    )
+    connector.connect({})
+
+    assert connector.stream_health() == StreamHealth(is_healthy=True)
+
+    wall_time["value"] += timedelta(seconds=0.1)
+    monotonic_time["value"] += 0.1
+    connector._mark_stream_active()
+    active_state = connector.stream_health()
+    assert active_state.is_healthy
+    assert active_state.last_message_at == wall_time["value"]
+
+    wall_time["value"] += timedelta(seconds=0.3)
+    monotonic_time["value"] += 0.3
+    assert connector._evaluate_stream_health() is False
+    assert connector.stream_health().is_healthy
+
+    wall_time["value"] += timedelta(seconds=1.0)
+    monotonic_time["value"] += 1.0
+    assert connector._evaluate_stream_health() is False
+    stale_state = connector.stream_health()
+    assert stale_state.is_stale
+    assert stale_state.stale_since == wall_time["value"]
+
+    wall_time["value"] += timedelta(seconds=1.0)
+    monotonic_time["value"] += 1.0
+    assert connector._evaluate_stream_health() is True
+
+    wall_time["value"] += timedelta(seconds=0.2)
+    monotonic_time["value"] += 0.2
+    connector._mark_stream_active()
+    recovered = connector.stream_health()
+    assert recovered.is_healthy
+    assert recovered.stale_since is None
+
     connector.disconnect()

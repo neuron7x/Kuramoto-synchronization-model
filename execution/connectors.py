@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import threading
 from collections import deque
-from dataclasses import replace
+from dataclasses import dataclass, replace
+from datetime import datetime
 from typing import Deque, Dict, Iterable, List, Mapping
 from uuid import uuid4
 
@@ -25,6 +26,21 @@ except (
     BinanceRESTConnector = None  # type: ignore[assignment]
     CoinbaseRESTConnector = None  # type: ignore[assignment]
     KrakenRESTConnector = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, slots=True)
+class StreamHealth:
+    """Snapshot of a connector's market data stream health."""
+
+    is_healthy: bool
+    last_message_at: datetime | None = None
+    stale_since: datetime | None = None
+
+    @property
+    def is_stale(self) -> bool:
+        """Return ``True`` when the underlying stream is stale."""
+
+        return not self.is_healthy
 
 
 class OrderError(RuntimeError):
@@ -166,6 +182,13 @@ class ExecutionConnector:
         if not self.cancel_order(order_id):
             raise OrderError(f"Unknown order_id: {order_id}")
         return self.place_order(new_order, idempotency_key=idempotency_key)
+
+    # ------------------------------------------------------------------
+    # Market data stream health hooks
+    def stream_health(self) -> StreamHealth:
+        """Return the connector's perceived market data stream health."""
+
+        return StreamHealth(is_healthy=True)
 
 
 class SimulatedExchangeConnector(ExecutionConnector):
@@ -382,6 +405,7 @@ __all__ = [
     "TransientOrderError",
     "ExecutionConnector",
     "SimulatedExchangeConnector",
+    "StreamHealth",
     "BinanceConnector",
     "BybitConnector",
     "KrakenConnector",
