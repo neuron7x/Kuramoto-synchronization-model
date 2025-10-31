@@ -87,7 +87,7 @@ class AdapterCheckResult:
     detail: Optional[str] = None
 
     def __post_init__(self) -> None:  # type: ignore[override]
-        allowed = {"passed", "failed", "skipped"}
+        allowed = {"passed", "failed", "skipped", "warn"}
         if self.status not in allowed:
             raise ValueError(f"Unsupported check status '{self.status}'")
         if not self.name:

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -10,6 +11,8 @@ import json
 import os
 import time
 from typing import Any, Dict, Iterable, Mapping
+
+import httpx
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 
@@ -19,12 +22,16 @@ from .base import (
     _coerce_optional_float,
     _first_present,
 )
-from .plugin import (
-    AdapterCheckResult,
-    AdapterContract,
-    AdapterDiagnostic,
-    AdapterPlugin,
+from .healthcheck import (
+    ConnectorHealth,
+    HealthCheck,
+    HealthStatus,
+    diagnostic_from_health,
+    evaluate_price_stability,
+    get_overrides,
+    health_status_from_checks,
 )
+from .plugin import AdapterCheckResult, AdapterContract, AdapterDiagnostic, AdapterPlugin
 
 _STATUS_MAP = {
     "OPEN": OrderStatus.OPEN,
@@ -408,32 +415,227 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
                 self._idempotency_cache[idempotency_key] = parsed
         return parsed
 
+    # ------------------------------------------------------------------
+    # Healthcheck
+    def healthcheck(self, credentials: Mapping[str, str] | None = None) -> ConnectorHealth:
+        adapter_id = "coinbase.advanced-trade"
+        overrides = get_overrides(adapter_id)
+        http_factory = overrides.http_client_factory if overrides else None
+        ws_probe = overrides.websocket_probe if overrides else None
+        client = (
+            http_factory()
+            if http_factory
+            else httpx.Client(
+                base_url=self._base_url,
+                timeout=httpx.Timeout(5.0, read=10.0, connect=5.0),
+            )
+        )
+        checks: list[HealthCheck] = []
+        metadata: Dict[str, Any] = {}
+        try:
+            rest_latency_ms: float | None = None
+            rest_status = HealthStatus.OK
+            rest_detail = ""
+            try:
+                start = time.perf_counter()
+                response = client.get("/products", params={"limit": 1})
+                rest_latency_ms = (time.perf_counter() - start) * 1000.0
+                metadata["rest_latency_ms"] = rest_latency_ms
+                if response.status_code != 200:
+                    rest_status = HealthStatus.FAIL
+                    rest_detail = f"HTTP {response.status_code} from /products"
+                elif rest_latency_ms > 3000:
+                    rest_status = HealthStatus.FAIL
+                    rest_detail = (
+                        f"REST latency {rest_latency_ms:.0f} ms exceeds 3s threshold"
+                    )
+                elif rest_latency_ms > 1500:
+                    rest_status = HealthStatus.WARN
+                    rest_detail = (
+                        f"REST latency {rest_latency_ms:.0f} ms exceeds target"
+                    )
+                else:
+                    rest_detail = "REST products probe succeeded"
+            except httpx.HTTPError as exc:
+                rest_status = HealthStatus.FAIL
+                rest_detail = f"REST probe failed: {exc}"
+            checks.append(
+                HealthCheck(
+                    name="rest-latency",
+                    status=rest_status,
+                    detail=rest_detail,
+                    latency_ms=rest_latency_ms,
+                )
+            )
+
+            auth_status = HealthStatus.FAIL
+            auth_detail = "Credentials not provided"
+            auth_latency_ms: float | None = None
+            supplied = credentials or (self._credentials or None)
+            try:
+                resolved = self._resolve_credentials(supplied)
+            except Exception as exc:
+                auth_detail = f"Credential resolution failed: {exc}"
+            else:
+                prev_client = self._http_client
+                prev_creds = getattr(self, "_credentials", {})
+                try:
+                    self._http_client = client
+                    self._credentials = resolved
+                    self._synchronize_time(force=True)
+                    start = time.perf_counter()
+                    params, _, headers, _ = self._sign_request(
+                        "GET",
+                        "/accounts",
+                        params={"limit": "1"},
+                        json_payload=None,
+                        headers={},
+                    )
+                    response = client.get("/accounts", params=params, headers=headers)
+                    auth_latency_ms = (time.perf_counter() - start) * 1000.0
+                    if response.status_code == 200:
+                        auth_status = HealthStatus.OK
+                        auth_detail = "Authenticated /accounts request succeeded"
+                    elif response.status_code in {401, 403}:
+                        auth_status = HealthStatus.FAIL
+                        auth_detail = f"Authentication rejected ({response.status_code})"
+                    else:
+                        auth_status = HealthStatus.WARN
+                        auth_detail = f"Unexpected auth status {response.status_code}"
+                except Exception as exc:  # pragma: no cover - defensive guard
+                    auth_status = HealthStatus.FAIL
+                    auth_detail = f"Authentication probe failed: {exc}"
+                finally:
+                    self._http_client = prev_client
+                    self._credentials = prev_creds  # type: ignore[assignment]
+            checks.append(
+                HealthCheck(
+                    name="credentials",
+                    status=auth_status,
+                    detail=auth_detail,
+                    latency_ms=auth_latency_ms,
+                )
+            )
+
+            rate_status = HealthStatus.OK
+            rate_detail = "No rate-limit violations observed"
+            rate_latency_ms: float | None = None
+            try:
+                start = time.perf_counter()
+                violations = 0
+                for _ in range(3):
+                    response = client.get("/products", params={"limit": 1})
+                    if response.status_code == 429:
+                        violations += 1
+                rate_latency_ms = (time.perf_counter() - start) * 1000.0
+                if violations:
+                    rate_status = HealthStatus.FAIL
+                    rate_detail = "HTTP 429 received during probe"
+                elif rate_latency_ms and rate_latency_ms > 4000:
+                    rate_status = HealthStatus.WARN
+                    rate_detail = "Rate-limit probe unusually slow"
+            except httpx.HTTPError as exc:
+                rate_status = HealthStatus.FAIL
+                rate_detail = f"Rate-limit probe failed: {exc}"
+            checks.append(
+                HealthCheck(
+                    name="rate-limit",
+                    status=rate_status,
+                    detail=rate_detail,
+                    latency_ms=rate_latency_ms,
+                )
+            )
+        finally:
+            client.close()
+
+        probe = ws_probe
+        if probe is None:
+
+            async def _default_probe(url: str, count: int, timeout: float):
+                import websockets
+
+                timestamps: list[float] = []
+                payloads: list[str] = []
+                async with websockets.connect(url, close_timeout=1.0) as websocket:
+                    subscribe = {
+                        "type": "subscribe",
+                        "channel": "ticker",
+                        "product_ids": ["BTC-USD"],
+                    }
+                    await websocket.send(json.dumps(subscribe))
+                    while len(payloads) < count:
+                        raw = await asyncio.wait_for(websocket.recv(), timeout=timeout)
+                        message = json.loads(raw)
+                        if message.get("type") != "ticker":
+                            continue
+                        payloads.append(raw)
+                        timestamps.append(time.perf_counter())
+                intervals = [
+                    (timestamps[idx] - timestamps[idx - 1]) * 1000.0
+                    for idx in range(1, len(timestamps))
+                ]
+                return payloads, intervals
+
+            probe = _default_probe
+
+        ws_status = HealthStatus.FAIL
+        ws_detail = "WebSocket probe not executed"
+        ws_latency_ms: float | None = None
+        ws_intervals: list[float] = []
+        try:
+            start = time.perf_counter()
+            messages, intervals = asyncio.run(probe(self._stream_base, 3, 5.0))
+            ws_latency_ms = (time.perf_counter() - start) * 1000.0
+            ws_intervals = intervals
+            metadata["websocket_intervals_ms"] = intervals
+            stability_status = evaluate_price_stability(messages)
+            interval_status = HealthStatus.OK
+            if intervals:
+                worst = max(intervals)
+                metadata["websocket_max_interval_ms"] = worst
+                if worst > 5000:
+                    interval_status = HealthStatus.FAIL
+                elif worst > 2500:
+                    interval_status = HealthStatus.WARN
+            ws_status = health_status_from_checks(
+                [
+                    HealthCheck(name="ws-price", status=stability_status),
+                    HealthCheck(name="ws-interval", status=interval_status),
+                ]
+            )
+            if ws_status is HealthStatus.OK:
+                ws_detail = "WebSocket stream delivered ticker updates"
+            elif ws_status is HealthStatus.WARN:
+                ws_detail = "WebSocket stream slow but responsive"
+            else:
+                ws_detail = "WebSocket stream unstable"
+        except Exception as exc:  # pragma: no cover - defensive guard
+            ws_status = HealthStatus.FAIL
+            ws_detail = f"WebSocket probe failed: {exc}"
+        checks.append(
+            HealthCheck(
+                name="websocket",
+                status=ws_status,
+                detail=ws_detail,
+                latency_ms=ws_latency_ms,
+                data={"intervals_ms": ws_intervals},
+            )
+        )
+
+        overall = health_status_from_checks(checks)
+        metadata["status"] = overall.value
+        return ConnectorHealth(status=overall, checks=tuple(checks), metadata=metadata)
+
 
 def _self_test() -> AdapterDiagnostic:
-    checks = []
-    try:
-        connector = CoinbaseRESTConnector(sandbox=True)
-        checks.append(
-            AdapterCheckResult(
-                name="instantiate",
-                status="passed",
-                detail="Connector instantiated with sandbox configuration",
-            )
-        )
-        if not connector.sandbox:
-            raise AssertionError("Connector sandbox flag not set")
-        checks.append(
-            AdapterCheckResult(
-                name="sandbox-flag",
-                status="passed",
-                detail="Sandbox mode enabled by default",
-            )
-        )
-    except Exception as exc:  # pragma: no cover - defensive guard
-        checks.append(
-            AdapterCheckResult(name="instantiate", status="failed", detail=str(exc))
-        )
-    return AdapterDiagnostic(adapter_id="coinbase.advanced-trade", checks=tuple(checks))
+    connector = CoinbaseRESTConnector(sandbox=True)
+    health = connector.healthcheck()
+    return diagnostic_from_health(
+        "coinbase.advanced-trade",
+        health,
+        adapter_check_cls=AdapterCheckResult,
+        adapter_diag_cls=AdapterDiagnostic,
+    )
 
 
 PLUGIN = AdapterPlugin(

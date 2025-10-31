@@ -12,6 +12,7 @@ from uuid import uuid4
 from domain import Order, OrderSide, OrderStatus
 
 from .normalization import NormalizationError, SymbolNormalizer, SymbolSpecification
+from execution.health import ConnectorHealth, HealthCheck, HealthStatus
 
 try:  # pragma: no cover - optional import for live connectors
     from execution.adapters import (
@@ -167,6 +168,15 @@ class ExecutionConnector:
             raise OrderError(f"Unknown order_id: {order_id}")
         return self.place_order(new_order, idempotency_key=idempotency_key)
 
+    def healthcheck(self, credentials: Mapping[str, str] | None = None) -> ConnectorHealth:
+        """Return a conservative default health snapshot for the connector."""
+
+        detail = "Healthcheck not implemented for connector"
+        checks = (
+            HealthCheck(name="healthcheck", status=HealthStatus.WARN, detail=detail),
+        )
+        return ConnectorHealth(status=HealthStatus.WARN, checks=checks)
+
 
 class SimulatedExchangeConnector(ExecutionConnector):
     """Base class providing deterministic sandbox behaviour."""
@@ -267,6 +277,13 @@ class SimulatedExchangeConnector(ExecutionConnector):
         if not self.cancel_order(order_id):
             raise OrderError(f"Unknown order_id: {order_id}")
         return self.place_order(new_order, idempotency_key=idempotency_key)
+
+    def healthcheck(self, credentials: Mapping[str, str] | None = None) -> ConnectorHealth:
+        detail = "Deterministic simulated connector"
+        checks = (
+            HealthCheck(name="simulation", status=HealthStatus.OK, detail=detail),
+        )
+        return ConnectorHealth(status=HealthStatus.OK, checks=checks)
 
 
 class BinanceConnector(SimulatedExchangeConnector):

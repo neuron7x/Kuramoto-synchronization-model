@@ -17,6 +17,7 @@ from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .oms import OMSConfig, OrderManagementSystem
 from .risk import RiskManager
 from .watchdog import Watchdog
+from execution.health import HealthStatus
 
 
 class Signal:
@@ -160,6 +161,29 @@ class LiveExecutionLoop:
         self._stop.clear()
         self._activity.clear()
         self._kill_notified = False
+
+        for context in self._contexts.values():
+            credentials = None
+            if self._config.credentials is not None:
+                credentials = self._config.credentials.get(context.name)
+            health = context.connector.healthcheck(credentials)
+            if health.status is not HealthStatus.OK:
+                detail = ", ".join(
+                    f"{check.name}={check.status.value}" for check in health.checks
+                )
+                message = (
+                    f"Connector {context.name} failed healthcheck: {health.status.value}"
+                )
+                self._logger.error(
+                    message,
+                    extra={
+                        "event": "live_loop.healthcheck_failed",
+                        "venue": context.name,
+                        "status": health.status.value,
+                        "detail": detail,
+                    },
+                )
+                raise RuntimeError(message)
 
         for context in self._contexts.values():
             self._initialise_connector(context)

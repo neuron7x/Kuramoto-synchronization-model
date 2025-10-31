@@ -8,8 +8,11 @@ import hmac
 import os
 import threading
 import time
+import asyncio
 from typing import Any, Dict, Iterable, Mapping
 from urllib.parse import urlencode
+
+import httpx
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 
@@ -18,6 +21,16 @@ from .base import (
     _coerce_float,
     _coerce_optional_float,
     _first_present,
+)
+from .healthcheck import (
+    ConnectorHealth,
+    HealthCheck,
+    HealthStatus,
+    diagnostic_from_health,
+    evaluate_price_stability,
+    get_overrides,
+    health_status_from_checks,
+    probe_websocket_stream,
 )
 from .plugin import (
     AdapterCheckResult,
@@ -508,32 +521,210 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             self._listen_key_thread = None
         super().disconnect()
 
+    # ------------------------------------------------------------------
+    # Healthcheck
+    def healthcheck(self, credentials: Mapping[str, str] | None = None) -> ConnectorHealth:
+        adapter_id = "binance.spot"
+        overrides = get_overrides(adapter_id)
+        http_factory = overrides.http_client_factory if overrides else None
+        ws_probe = overrides.websocket_probe if overrides else None
+        client = (
+            http_factory()
+            if http_factory
+            else httpx.Client(
+                base_url=self._base_url,
+                timeout=httpx.Timeout(5.0, read=10.0, connect=5.0),
+            )
+        )
+        checks: list[HealthCheck] = []
+        metadata: Dict[str, Any] = {}
+        try:
+            # REST latency probe
+            latency_status = HealthStatus.OK
+            latency_detail = ""
+            rest_latency_ms: float | None = None
+            try:
+                start = time.perf_counter()
+                response = client.get("/api/v3/time")
+                rest_latency_ms = (time.perf_counter() - start) * 1000.0
+                metadata["rest_latency_ms"] = rest_latency_ms
+                if response.status_code != 200:
+                    latency_status = HealthStatus.FAIL
+                    latency_detail = f"HTTP {response.status_code} during /time probe"
+                elif rest_latency_ms > 3000:
+                    latency_status = HealthStatus.FAIL
+                    latency_detail = (
+                        f"REST latency {rest_latency_ms:.0f} ms exceeds 3s threshold"
+                    )
+                elif rest_latency_ms > 1500:
+                    latency_status = HealthStatus.WARN
+                    latency_detail = (
+                        f"REST latency {rest_latency_ms:.0f} ms exceeds target"
+                    )
+                else:
+                    latency_detail = "REST ping responded within target budget"
+            except httpx.HTTPError as exc:
+                latency_status = HealthStatus.FAIL
+                latency_detail = f"REST probe failed: {exc}"
+            checks.append(
+                HealthCheck(
+                    name="rest-latency",
+                    status=latency_status,
+                    detail=latency_detail,
+                    latency_ms=rest_latency_ms,
+                )
+            )
+
+            # Credential / authentication probe
+            auth_status = HealthStatus.FAIL
+            auth_detail = "Credentials not provided"
+            auth_latency_ms: float | None = None
+            resolved: Mapping[str, str] | None = None
+            supplied = credentials or (self._credentials or None)
+            try:
+                resolved = self._resolve_credentials(supplied)
+            except Exception as exc:
+                auth_detail = f"Credential resolution failed: {exc}"
+            else:
+                previous_client = self._http_client
+                previous_creds = getattr(self, "_credentials", {})
+                try:
+                    self._http_client = client
+                    self._credentials = resolved
+                    self._synchronize_time(force=True)
+                    start = time.perf_counter()
+                    params, _, headers, _ = self._sign_request(
+                        "GET",
+                        "/api/v3/account",
+                        params={},
+                        json_payload=None,
+                        headers={},
+                    )
+                    response = client.get("/api/v3/account", params=params, headers=headers)
+                    auth_latency_ms = (time.perf_counter() - start) * 1000.0
+                    if response.status_code == 200:
+                        auth_status = HealthStatus.OK
+                        auth_detail = "Authenticated request succeeded"
+                    elif response.status_code in {401, 403}:
+                        auth_status = HealthStatus.FAIL
+                        auth_detail = f"Authentication rejected ({response.status_code})"
+                    else:
+                        auth_status = HealthStatus.WARN
+                        auth_detail = f"Unexpected status {response.status_code}"
+                except Exception as exc:  # pragma: no cover - defensive guard
+                    auth_status = HealthStatus.FAIL
+                    auth_detail = f"Authentication probe failed: {exc}"
+                finally:
+                    self._http_client = previous_client
+                    self._credentials = previous_creds  # type: ignore[assignment]
+            checks.append(
+                HealthCheck(
+                    name="credentials",
+                    status=auth_status,
+                    detail=auth_detail,
+                    latency_ms=auth_latency_ms,
+                )
+            )
+
+            # Rate limit resilience probe (ensure no HTTP 429)
+            rate_status = HealthStatus.OK
+            rate_detail = "No rate-limit violations observed"
+            rate_latency_ms: float | None = None
+            try:
+                start = time.perf_counter()
+                violations = 0
+                for _ in range(3):
+                    response = client.get("/api/v3/time")
+                    if response.status_code == 429:
+                        violations += 1
+                rate_latency_ms = (time.perf_counter() - start) * 1000.0
+                if violations:
+                    rate_status = HealthStatus.FAIL
+                    rate_detail = "Exchange responded with HTTP 429"
+                elif rate_latency_ms and rate_latency_ms > 4000:
+                    rate_status = HealthStatus.WARN
+                    rate_detail = "Rate-limit probe unusually slow"
+            except httpx.HTTPError as exc:
+                rate_status = HealthStatus.FAIL
+                rate_detail = f"Rate-limit probe failed: {exc}"
+            checks.append(
+                HealthCheck(
+                    name="rate-limit",
+                    status=rate_status,
+                    detail=rate_detail,
+                    latency_ms=rate_latency_ms,
+                )
+            )
+
+        finally:
+            client.close()
+
+        # WebSocket stability probe
+        ws_status = HealthStatus.FAIL
+        ws_detail = "Streaming probe not executed"
+        ws_intervals: list[float] = []
+        ws_latency_ms: float | None = None
+        probe = ws_probe
+        if probe is None:
+            async def _default_probe(url: str, count: int, timeout: float):
+                return await probe_websocket_stream(url, message_count=count, message_timeout=timeout)
+
+            probe = _default_probe
+        stream_url = f"{self._stream_base}/btcusdt@trade"
+        try:
+            start = time.perf_counter()
+            messages, intervals = asyncio.run(probe(stream_url, 3, 5.0))
+            ws_latency_ms = (time.perf_counter() - start) * 1000.0
+            ws_intervals = intervals
+            metadata["websocket_intervals_ms"] = intervals
+            stability_status = evaluate_price_stability(messages)
+            interval_status = HealthStatus.OK
+            if intervals:
+                worst = max(intervals)
+                metadata["websocket_max_interval_ms"] = worst
+                if worst > 5000:
+                    interval_status = HealthStatus.FAIL
+                elif worst > 2500:
+                    interval_status = HealthStatus.WARN
+            ws_status = health_status_from_checks(
+                [
+                    HealthCheck(name="ws-price", status=stability_status),
+                    HealthCheck(name="ws-interval", status=interval_status),
+                ]
+            )
+            if ws_status is HealthStatus.OK:
+                ws_detail = "WebSocket stream delivered stable pricing"
+            elif ws_status is HealthStatus.WARN:
+                ws_detail = "WebSocket stream slow but responsive"
+            else:
+                ws_detail = "WebSocket stream unstable"
+        except Exception as exc:  # pragma: no cover - defensive guard
+            ws_status = HealthStatus.FAIL
+            ws_detail = f"WebSocket probe failed: {exc}"
+        checks.append(
+            HealthCheck(
+                name="websocket",
+                status=ws_status,
+                detail=ws_detail,
+                latency_ms=ws_latency_ms,
+                data={"intervals_ms": ws_intervals},
+            )
+        )
+
+        overall = health_status_from_checks(checks)
+        metadata["status"] = overall.value
+        return ConnectorHealth(status=overall, checks=tuple(checks), metadata=metadata)
+
 
 def _self_test() -> AdapterDiagnostic:
-    checks = []
-    try:
-        connector = BinanceRESTConnector(sandbox=True)
-        checks.append(
-            AdapterCheckResult(
-                name="instantiate",
-                status="passed",
-                detail="Connector instantiated with sandbox configuration",
-            )
-        )
-        if not connector.sandbox:
-            raise AssertionError("Connector sandbox flag not set")
-        checks.append(
-            AdapterCheckResult(
-                name="sandbox-flag",
-                status="passed",
-                detail="Sandbox mode enabled by default",
-            )
-        )
-    except Exception as exc:  # pragma: no cover - defensive guard
-        checks.append(
-            AdapterCheckResult(name="instantiate", status="failed", detail=str(exc))
-        )
-    return AdapterDiagnostic(adapter_id="binance.spot", checks=tuple(checks))
+    connector = BinanceRESTConnector(sandbox=True)
+    health = connector.healthcheck()
+    return diagnostic_from_health(
+        "binance.spot",
+        health,
+        adapter_check_cls=AdapterCheckResult,
+        adapter_diag_cls=AdapterDiagnostic,
+    )
 
 
 PLUGIN = AdapterPlugin(
