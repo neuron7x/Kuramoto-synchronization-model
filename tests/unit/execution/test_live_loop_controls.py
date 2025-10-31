@@ -10,6 +10,7 @@ import pytest
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import BinanceConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from execution.session_snapshot import SessionSnapshotError
 from execution.risk import RiskLimits, RiskManager
 
 
@@ -93,3 +94,18 @@ def test_cancel_all_outstanding_logs_rejections(monkeypatch, loop_env) -> None:
     assert list(context.oms.outstanding())[0].order_id == order_id
     assert loop._order_connector[order_id] == "binance"
     assert loop._last_reported_fill[order_id] == 0.2
+
+
+def test_start_requires_snapshot(loop_env) -> None:
+    loop, _ = loop_env
+
+    class FailingSnapshotter:
+        def capture(self, connectors, *, preloaded=None):  # type: ignore[unused-argument]
+            raise SessionSnapshotError("boom")
+
+    loop._session_snapshotter = FailingSnapshotter()  # type: ignore[assignment]
+
+    with pytest.raises(RuntimeError, match="snapshot"):
+        loop.start(cold_start=True)
+
+    assert not loop.started
