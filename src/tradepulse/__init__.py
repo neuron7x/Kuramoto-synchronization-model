@@ -12,6 +12,15 @@ from .protocol import (
     compute_threshold_tau_d,
     compute_time_warp_invariant_metric,
 )
+from .sdk import (
+    AuditEvent,
+    ExecutionResult,
+    MarketState,
+    RiskCheckResult,
+    SDKConfig,
+    SuggestedOrder,
+    TradePulseSDK,
+)
 
 __all__ = [
     "DivConvSignal",
@@ -24,4 +33,11 @@ __all__ = [
     "compute_threshold_tau_c",
     "compute_threshold_tau_d",
     "compute_time_warp_invariant_metric",
+    "TradePulseSDK",
+    "SDKConfig",
+    "MarketState",
+    "SuggestedOrder",
+    "RiskCheckResult",
+    "ExecutionResult",
+    "AuditEvent",
 ]
