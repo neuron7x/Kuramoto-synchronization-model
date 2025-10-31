@@ -68,6 +68,30 @@ def test_parallel_drift():
     assert any(metric.drifted for metric in results.values())
 
 
+def test_parallel_drift_handles_non_numeric_columns():
+    base = pd.DataFrame({"f0": [0.0, 1.0, 2.0], "category": ["A", "B", "A"]})
+    drift = pd.DataFrame({"f0": [0.5, 1.5, 2.5], "category": ["B", "C", "B"]})
+    results = compute_parallel_drift(base, drift)
+
+    assert set(results.keys()) == {"f0", "category"}
+    cat_metric = results["category"]
+    assert np.isnan(cat_metric.js_divergence)
+    assert not cat_metric.ks.valid
+    assert cat_metric.ks.message == "non-numeric column"
+    assert np.isnan(cat_metric.psi)
+
+
+def test_parallel_drift_coerces_numeric_strings():
+    base = pd.DataFrame({"num": ["1", "2", "3", "4"]})
+    drift = pd.DataFrame({"num": ["2", "3", "4", "5"]})
+    results = compute_parallel_drift(base, drift)
+
+    metric = results["num"]
+    assert metric.ks.valid
+    assert np.isfinite(metric.js_divergence)
+    assert np.isfinite(metric.psi)
+
+
 def test_drift_detector_summary():
     base, drift = generate_synthetic_data(200, 2, 0.0, seed=123)
     thresholds = DriftThresholds(default_jsd=0.05, default_ks=0.05)

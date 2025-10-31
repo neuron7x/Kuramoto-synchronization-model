@@ -20,10 +20,11 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
+from typing import Any, Mapping, MutableMapping, Sequence
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import ks_2samp
 
@@ -55,7 +56,7 @@ class DriftMetric:
     """Container aggregating multiple drift measurements for a feature."""
 
     feature: str
-    js_divergence: float | float
+    js_divergence: float
     ks: DriftTestResult
     psi: float
 
@@ -103,6 +104,17 @@ def _as_array(values: ArrayLike, *, name: str) -> np.ndarray:
     if not np.all(np.isfinite(array) | np.isnan(array)):
         raise ValueError(f"{name} contains non-finite values")
     return array
+
+
+def _coerce_numeric_series(series: pd.Series, *, column: str, frame: str) -> tuple[np.ndarray | None, str | None]:
+    """Return a float array for *series* or an error message if conversion fails."""
+
+    if is_numeric_dtype(series.dtype):
+        return series.to_numpy(dtype=float, copy=False), None
+    coerced = pd.to_numeric(series, errors="coerce")
+    if coerced.notna().any():
+        return coerced.to_numpy(dtype=float), None
+    return None, f"{frame} column contains no numeric values"
 
 
 def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
@@ -199,13 +211,26 @@ def compute_parallel_drift(
 
     columns = [col for col in baseline.columns if col in current.columns]
     thresholds = thresholds or DriftThresholds()
+    metrics_set = frozenset(metrics)
+    non_numeric_message = "non-numeric column"
 
     def _compute(column: str) -> tuple[str, DriftMetric]:
-        base = baseline[column].to_numpy(dtype=float, copy=False)
-        curr = current[column].to_numpy(dtype=float, copy=False)
-        jsd_value = compute_js_divergence(base, curr) if "jsd" in metrics else float("nan")
-        ks_result = compute_ks_test(base, curr) if "ks" in metrics else DriftTestResult(float("nan"), float("nan"), False, "skipped")
-        psi_value = compute_psi(base, curr) if "psi" in metrics else float("nan")
+        base, base_error = _coerce_numeric_series(baseline[column], column=column, frame="baseline")
+        curr, curr_error = _coerce_numeric_series(current[column], column=column, frame="current")
+        if base is None or curr is None:
+            message = base_error or curr_error or non_numeric_message
+            logger.warning(
+                "Column %s cannot be processed for drift metrics: %s", column, message
+            )
+            skipped = DriftTestResult(float("nan"), float("nan"), False, non_numeric_message)
+            return column, DriftMetric(column, float("nan"), skipped, float("nan"))
+
+        jsd_value = compute_js_divergence(base, curr) if "jsd" in metrics_set else float("nan")
+        if "ks" in metrics_set:
+            ks_result = compute_ks_test(base, curr)
+        else:
+            ks_result = DriftTestResult(float("nan"), float("nan"), False, "skipped")
+        psi_value = compute_psi(base, curr) if "psi" in metrics_set else float("nan")
         return column, DriftMetric(column, jsd_value, ks_result, psi_value)
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
