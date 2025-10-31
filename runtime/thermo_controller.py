@@ -8,12 +8,12 @@ from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
-import numpy as np
 
 from evolution import bond_evolver
 from core.energy import BondType, delta_free_energy, system_free_energy
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
+from runtime.monotonic_gate import assert_monotonic_invariant, predict_recovery_window
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
@@ -336,17 +336,20 @@ class ThermoController:
 
     # Safety -------------------------------------------------------------
     def _check_monotonic_with_tolerance(self, F_old: float, F_new: float, window_size: int = 3) -> bool:
-        epsilon_spike = 0.01 * self.baseline_ema
-        if F_new > F_old + epsilon_spike:
-            return False
+        predictions: Optional[List[float]] = None
         if F_new > F_old:
-            predictions = self._predict_recovery_window(F_new, window_size)
-            return float(np.mean(predictions)) < F_old
-        return True
+            predictions = predict_recovery_window(F_new, self.baseline_F, window_size)
 
-    def _predict_recovery_window(self, F_new: float, window_size: int) -> List[float]:
-        decay = 0.9
-        return [F_new * (decay ** i) + self.baseline_F * (1 - decay ** i) for i in range(1, window_size + 1)]
+        try:
+            assert_monotonic_invariant(
+                F_old,
+                F_new,
+                baseline_ema=self.baseline_ema,
+                predictions=predictions,
+            )
+        except AssertionError:
+            return False
+        return True
 
     def _apply_topology_changes(self, new_topology: Topology) -> bool:
         changed = self._diff_topologies(self.current_topology, new_topology)

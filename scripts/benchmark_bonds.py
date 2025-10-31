@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import statistics
 import sys
 import time
@@ -69,11 +70,12 @@ def run_benchmark(iterations: int = 200) -> dict[str, float | int]:
     }
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target-dF", type=float, default=1e-10)
     parser.add_argument("--iterations", type=int, default=200)
-    args = parser.parse_args()
+    parser.add_argument("--report", type=Path, help="Optional JSON report destination")
+    args = parser.parse_args(argv)
 
     metrics = run_benchmark(iterations=args.iterations)
     print("[benchmark_bonds] metrics:", metrics)
@@ -83,6 +85,9 @@ def main() -> None:
         raise SystemExit(
             f"dF/dt gate failed. mean_abs={mean_abs} > target={args.target_dF}"
         )
+
+    if args.report:
+        args.report.write_text(json.dumps(metrics, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

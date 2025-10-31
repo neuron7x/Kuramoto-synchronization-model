@@ -39,6 +39,7 @@ def test_dFdt_is_small_under_controller():
     assert abs(dFdt) <= controller.epsilon_adaptive
 
 
+@pytest.mark.monotonic
 def test_free_energy_monotonic_drop():
     graph = nx.DiGraph()
     graph.add_node("a", cpu_norm=0.5)

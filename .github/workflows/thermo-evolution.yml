@@ -6,6 +6,25 @@ on:
     branches: ["main"]
 
 jobs:
+  thermo-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Compute baseline free energy
+        run: python core/energy.py --baseline --samples 10 --alpha 0.05
+      - name: Verify monotonic invariant suite
+        run: pytest -m monotonic -v
+      - name: Emit invariant proof report
+        run: python scripts/benchmark_bonds.py --iterations 50 --report monotonic_proof.json
+
   validate-energy:
     runs-on: ubuntu-latest
     steps:
