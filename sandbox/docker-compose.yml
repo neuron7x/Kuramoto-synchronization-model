@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+  mock-market:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    command: ["sandbox.market.app:create_app", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      - sandbox_internal
+
+  signal-core:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    command: ["sandbox.signal.app:create_app", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      SANDBOX_SIGNAL_MARKET_URL: http://mock-market:8000
+      SANDBOX_SIGNAL_ANALYSIS_WINDOW: 64
+      SANDBOX_SIGNAL_SENSITIVITY: 0.004
+    depends_on:
+      - mock-market
+    networks:
+      - sandbox_internal
+
+  risk-engine:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    command: ["sandbox.risk.app:create_app", "--host", "0.0.0.0", "--port", "8002"]
+    environment:
+      SANDBOX_RISK_CONTROL_URL: http://control-api:8004
+      SANDBOX_RISK_MAX_POSITION: 50
+      SANDBOX_RISK_MAX_NOTIONAL: 250000
+    networks:
+      - sandbox_internal
+
+  execution-paper:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    command: ["sandbox.execution.app:create_app", "--host", "0.0.0.0", "--port", "8003"]
+    environment:
+      SANDBOX_EXECUTION_SIGNAL_URL: http://signal-core:8001
+      SANDBOX_EXECUTION_RISK_URL: http://risk-engine:8002
+      SANDBOX_EXECUTION_CONTROL_URL: http://control-api:8004
+      SANDBOX_EXECUTION_SLIPPAGE_BPS: 5
+    depends_on:
+      - signal-core
+      - risk-engine
+    ports:
+      - "8003:8003"
+    networks:
+      - sandbox_internal
+      - sandbox_public
+
+  control-api:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    command: ["sandbox.control.app:create_app", "--host", "0.0.0.0", "--port", "8004"]
+    environment:
+      SANDBOX_CONTROL_HEALTH_TARGETS: '{"mock-market": "http://mock-market:8000/health", "signal-core": "http://signal-core:8001/health", "risk-engine": "http://risk-engine:8002/health", "execution-paper": "http://execution-paper:8003/health"}'
+    depends_on:
+      - mock-market
+      - signal-core
+      - risk-engine
+      - execution-paper
+    ports:
+      - "8004:8004"
+    networks:
+      - sandbox_internal
+      - sandbox_public
+
+networks:
+  sandbox_internal:
+    internal: true
+  sandbox_public:
+    internal: false
