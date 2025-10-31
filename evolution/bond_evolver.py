@@ -6,7 +6,14 @@ import random
 from typing import Dict, Tuple
 
 import networkx as nx
-from deap import algorithms, base, creator, tools
+
+try:  # pragma: no cover - exercised indirectly in tests
+    from deap import algorithms, base, creator, tools  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - import guard
+    algorithms = base = creator = tools = None  # type: ignore[assignment]
+    _DEAP_AVAILABLE = False
+else:  # pragma: no cover - exercised when optional dependency is present
+    _DEAP_AVAILABLE = True
 
 from core.energy import BondType, system_free_energy
 
@@ -77,6 +84,13 @@ def evolve_bonds(
     cx_prob: float = 0.4,
     mut_prob: float = 0.6,
 ) -> nx.DiGraph:
+    if not _DEAP_AVAILABLE:
+        return _fallback_evolve_bonds(
+            base_graph=base_graph,
+            snap=snap,
+            generations=generations,
+        )
+
     if not hasattr(creator, "FitnessMin"):
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     if not hasattr(creator, "Individual"):
@@ -124,6 +138,70 @@ def evolve_bonds(
 
     best = tools.selBest(population, k=1)[0]
     return best
+
+
+def _fallback_evolve_bonds(
+    base_graph: nx.DiGraph,
+    snap: MetricsSnapshot,
+    generations: int,
+) -> nx.DiGraph:
+    """Deterministic optimiser used when :mod:`deap` is unavailable.
+
+    The evolutionary search is approximated with a greedy local search and a
+    lightweight random restart strategy.  This keeps the public behaviour of
+    :func:`evolve_bonds` stable for callers while avoiding the hard dependency
+    on ``deap`` during unit testing environments.
+    """
+
+    # Make a working copy so the caller's graph remains untouched.
+    best_graph = base_graph.copy()
+    best_energy = evaluate_graph(best_graph, snap)
+
+    # Normalise the number of generations to at least one to make sure the
+    # optimiser always performs work regardless of the caller's input.
+    max_iters = max(1, generations)
+    improvement_epsilon = 1e-12
+
+    for _ in range(max_iters):
+        improved = False
+
+        # Greedy improvement – try to optimise every edge individually.
+        edges = list(best_graph.edges())
+        random.shuffle(edges)
+        for edge in edges:
+            current_type = best_graph.edges[edge].get("type")
+            candidates = [bond for bond in BondType.__args__ if bond != current_type]
+            for candidate in candidates:
+                candidate_graph = best_graph.copy()
+                candidate_graph.edges[edge]["type"] = candidate
+                candidate_energy = evaluate_graph(candidate_graph, snap)
+                if candidate_energy < best_energy - improvement_epsilon:
+                    best_graph = candidate_graph
+                    best_energy = candidate_energy
+                    improved = True
+                    break
+            if improved:
+                break
+
+        if improved:
+            continue
+
+        # If we could not improve greedily, try a stochastic kick before
+        # concluding convergence.  This helps escape shallow local minima.
+        candidate_graph = best_graph.copy()
+        perturbations = max(1, len(edges) // 2)
+        for _ in range(perturbations):
+            mutate_bond_type(candidate_graph)
+        candidate_energy = evaluate_graph(candidate_graph, snap)
+        if candidate_energy < best_energy - improvement_epsilon:
+            best_graph = candidate_graph
+            best_energy = candidate_energy
+            continue
+
+        # Neither greedy nor stochastic moves helped – we are converged.
+        break
+
+    return best_graph
 
 
 def save_graph(graph: nx.DiGraph, path: str) -> None:
