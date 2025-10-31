@@ -180,6 +180,14 @@ class TradePulseSDK:
 
         session_id = self._resolve_session(order)
         state = self._sessions[session_id]
+        if state.approved is None:
+            result = self.risk_check(order)
+            if not result.approved:
+                raise RuntimeError(
+                    "Order failed risk validation and cannot be executed"
+                )
+            state = self._sessions[session_id]
+
         if state.approved is False:
             raise RuntimeError("Order was rejected by risk checks and cannot be executed")
 
