@@ -167,11 +167,14 @@ class CoreEngine:
                 decisions = tuple(
                     self._risk_manager.assess(signal, context) for signal in signals
                 )
+                received_count = len(signals)
+                approved_count = sum(1 for decision in decisions if decision.approved)
+                rejected_count = received_count - approved_count
 
                 if self._config.drop_rejected_signals:
                     approved_pairs = tuple(
                         (signal, decision)
-                        for signal, decision in zip(signals, decisions, strict=False)
+                        for signal, decision in zip(signals, decisions, strict=True)
                         if decision.approved
                     )
                     signals = tuple(signal for signal, _ in approved_pairs)
@@ -179,10 +182,19 @@ class CoreEngine:
 
                 executions = tuple(
                     self._execution_client.execute(signal, decision, context)
-                    for signal, decision in zip(signals, decisions, strict=False)
+                    for signal, decision in zip(signals, decisions, strict=True)
                 )
 
-                logs = self._emit_logs(signals, decisions, executions, context, market_data)
+                logs = self._emit_logs(
+                    signals,
+                    decisions,
+                    executions,
+                    context,
+                    market_data,
+                    received_signals=received_count,
+                    approved_signals=approved_count,
+                    rejected_signals=rejected_count,
+                )
 
                 yield EngineCycle(
                     market_data=market_data,
@@ -228,9 +240,12 @@ class CoreEngine:
         executions: Iterable[ExecutionOutcome],
         context: EngineContext,
         data: MarketData,
+        *,
+        received_signals: int,
+        approved_signals: int,
+        rejected_signals: int,
     ) -> tuple[LogEntry, ...]:
         signals_tuple = tuple(signals)
-        decisions_tuple = tuple(decisions)
         executions_tuple = tuple(executions)
         entries = (
             LogEntry(
@@ -240,7 +255,9 @@ class CoreEngine:
                     "run_id": context.run_id,
                     "data_source": data.source,
                     "signals": len(signals_tuple),
-                    "approved_signals": sum(1 for decision in decisions_tuple if decision.approved),
+                    "received_signals": received_signals,
+                    "approved_signals": approved_signals,
+                    "rejected_signals": rejected_signals,
                     "executions": len(executions_tuple),
                 },
             ),
