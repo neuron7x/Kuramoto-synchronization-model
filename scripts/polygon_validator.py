@@ -56,19 +56,42 @@ class PolygonValidator:
 
     # Metric extraction --------------------------------------------------
     def extract_metrics(self) -> Tuple[List[float], List[float]]:
+        """Derive latency and coherency traces from loaded OHLCV bars.
+
+        The previous implementation attempted to feed pairs of scalar volumes
+        into :func:`numpy.corrcoef`, which raises "invalid index to scalar"
+        whenever ``corrcoef`` receives fewer than two observations.  The CI job
+        runs the integration test against real Polygon slices and frequently
+        encounters sparse responses (e.g. due to market holidays), which meant
+        the integration suite crashed before producing any metrics.
+
+        To keep the behaviour deterministic while remaining numerically
+        well-behaved we now approximate coherency via a bounded volatility
+        ratio: large swings in trade volume reduce coherency whereas stable
+        volume keeps coherency close to one.  Latency estimation is unchanged
+        aside from explicitly using the absolute spread for clarity.
+        """
+
         if len(self.data) < 2:
             return [1.0], [0.8]
 
         latencies: List[float] = []
         coherencies: List[float] = []
+
         for i in range(len(self.data) - 1):
             bar = self.data[i]
             next_bar = self.data[i + 1]
-            spread = (bar["h"] - bar["l"]) / max(bar["c"], 1e-6)
-            latencies.append(max(spread * 1e3, 0.0))
 
-            corr_matrix = np.corrcoef([bar["v"], next_bar["v"]])
-            coherency.append(float(np.clip(corr_matrix[0, 1], 0.0, 1.0)))
+            spread = abs(bar["h"] - bar["l"]) / max(bar["c"], 1e-6)
+            latency_score = max(spread * 1e3, 0.0)
+            latencies.append(float(latency_score))
+
+            volume_delta = abs(next_bar["v"] - bar["v"])
+            volume_scale = max(bar["v"], next_bar["v"], 1e-6)
+            volatility_ratio = min(volume_delta / volume_scale, 1.0)
+            coherence_score = 1.0 - volatility_ratio
+            coherencies.append(float(np.clip(coherence_score, 0.0, 1.0)))
+
         return latencies, coherencies
 
     # Benchmarks ---------------------------------------------------------
