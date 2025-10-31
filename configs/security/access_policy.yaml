@@ -32,6 +32,8 @@ roles:
     permissions:
       - action: read_exchange_keys
         resources: ["*"]
+      - action: read_kill_switch_state
+        resources: ["*"]
       - action: engage_kill_switch
         resources: ["*"]
       - action: reset_kill_switch
@@ -43,6 +45,10 @@ roles:
     permissions:
       - action: modify_risk_limits
         resources: ["*"]
+  "risk:officer":
+    description: "Federated IAM risk officers mapped from the RBAC configuration."
+    inherits:
+      - risk_committee
   compliance_auditor:
     description: "Observers allowed to inspect kill-switch status without mutation rights."
     permissions:
