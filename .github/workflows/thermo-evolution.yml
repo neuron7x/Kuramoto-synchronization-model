@@ -30,6 +30,10 @@ jobs:
         run: |
           python scripts/benchmark_bonds.py --target-dF 1e-10
 
+      - name: Enforce monotonic constraint audit gate
+        run: |
+          python scripts/check_monotonic_constraint.py
+
       - name: Evolve bonds and save optimized graph
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
         run: |

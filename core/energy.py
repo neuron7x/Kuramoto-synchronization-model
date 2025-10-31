@@ -55,6 +55,33 @@ def _bond_energy(
     return params["base_energy"] + latency_cost + incoherence_cost - stability_gain
 
 
+def bond_free_energy(
+    src: str,
+    dst: str,
+    kind: BondType,
+    latency: float,
+    coherence: float,
+) -> float:
+    """Return the scaled free-energy contribution for an individual bond.
+
+    The helper mirrors :func:`system_free_energy` but focuses on a single edge,
+    exposing the value in Joules (scaled by :data:`ENERGY_SCALE`). The inputs
+    are already normalised latency and coherency metrics to keep the function
+    side-effect free and inexpensive to use inside hot control loops.
+    """
+
+    latency = max(float(latency), 0.0)
+    coherence = float(np.clip(coherence, 0.0, 1.0))
+
+    params = BOND_LIBRARY[kind]
+    latency_cost = params["latency_weight"] * math.log(1.0 + latency)
+    incoherence_cost = params["coherency_weight"] * (1.0 - coherence) ** 2
+    stability_gain = params["stability_bonus"] * coherence
+
+    raw_energy = params["base_energy"] + latency_cost + incoherence_cost - stability_gain
+    return ENERGY_SCALE * raw_energy
+
+
 def system_free_energy(
     bonds: Dict[Tuple[str, str], BondType],
     latencies: Dict[Tuple[str, str], float],
@@ -86,6 +113,7 @@ __all__ = [
     "K_BOLTZMANN_EFFECTIVE",
     "SYSTEM_TEMPERATURE_K",
     "ENERGY_SCALE",
+    "bond_free_energy",
     "system_free_energy",
     "delta_free_energy",
 ]

@@ -96,6 +96,19 @@ We maintain a [Security Hall of Fame](SECURITY_HALL_OF_FAME.md) recognizing secu
 
 ---
 
+## Thermodynamic Stability Controls
+
+### Monotonic Free Energy Descent Constraint
+
+TradePulse enforces a thermodynamic guardrail across all autonomous topology mutations. The controller treats the free energy ``F`` as a Lyapunov function and rejects any proposed change that would increase it.
+
+- **Invariant**: ``F_new ≤ F_old``. Violations are rejected automatically and recorded in ``observability/audit/thermo_audit.log`` for human review.
+- **Audit trail**: each rejection is persisted as structured JSON and surfaced via the CI job ``scripts/check_monotonic_constraint.py``. Any non-empty audit log fails the build to force operator acknowledgement.
+- **Runtime enforcement**: the controller also gates changes when the observed ``|dF/dt|`` exceeds an adaptive threshold (10% of the cold-start baseline), preventing destabilising oscillations when the system runs at microsecond cadence.
+- **Change management**: manual overrides require the runbook documented in `docs/operations/thermo_override.md` (see incident response playbooks) and explicit sign-off from the on-call engineering manager.
+
+This policy aligns the autonomic control loop with financial and safety regulations by guaranteeing monotonic convergence of the thermodynamic model.
+
 ## Security Best Practices
 
 ### For Contributors

@@ -233,18 +233,36 @@ graph TB
 
 ## Thermodynamic Layer (ThermoController)
 
-Ми моделюємо архітектуру TradePulse як термодинамічну систему.  
-Вільна енергія F = U + kT·entropy + α·resource_usage.  
-Мета — мінімізувати F у рантаймі.
+Ми моделюємо архітектуру TradePulse як термодинамічну систему
+з Lyapunov-функцією вільної енергії `F = U + kT·entropy + α·resource_usage`.
+Контролер тепер production-ready та включає наступні можливості:
+
+- **Адаптивна стабільність** — `ε = 0.1 × mean(|dF/dt|)` з 10 семплів
+  холодного старту. Якщо миттєвий градієнт перевищує поріг, зміни блокуються.
+- **Monotonic Free Energy Constraint** — гарантує `F_new ≤ F_old`, веде JSON-аудит
+  (`observability/audit/thermo_audit.log`) і блокує CI через
+  `scripts/check_monotonic_constraint.py`, якщо зафіксовано порушення.
+- **LinkActivator** — транслює типи зв’язків у реальні протоколи:
+  - `metallic → CRDT (y-crdt)`
+  - `ionic → RDMA (pyverbs)`
+  - `covalent → SharedMemory + CPU pinning`
+  - `hydrogen → Ephemeral asyncio session`
+  - `vdw → Redis gossip`
+- **Telemetry & API** — контролер експортує `F`, `dF/dt`, bottleneck-ребра та
+  `topology_id` через Prometheus-подібний JSON (`runtime/thermo_api.py`).
+- **Per-edge anomaly handling** — latency/coherency аномалії підхоплюються GA,
+  що цілеспрямовано мутує лише проблемні ребра.
 
 Компоненти:
-- `core/energy.py`: розрахунок F, dF/dt (із масштабуванням до ~10⁻¹⁸ Дж для числової стабільності)
-- `runtime/thermo_controller.py`: керування топологією сервісів, локальний спуск і повна еволюція
-- `evolution/bond_evolver.py`: генетичний оптимізатор типів зв’язків (covalent / ionic / metallic / vdw / hydrogen)
-- `scripts/benchmark_bonds.py`: бенчмарк стабільності (pulses/s, dF/dt)
+- `core/energy.py` — розрахунок F, dF/dt, per-edge `bond_free_energy`
+- `runtime/thermo_controller.py` — адаптивний контроль + інтеграція LinkActivator
+- `runtime/link_activator.py` — мапінг термодинамічних зв’язків у протоколи виконання
+- `runtime/thermo_api.py` — FastAPI-ендпойнт `/thermo/status`
+- `evolution/bond_evolver.py` — генетичний оптимізатор типів зв’язків
+- `scripts/benchmark_bonds.py` — бенчмарк стабільності (pulses/s, dF/dt)
 
 CI гарантує:
-- |dF/dt| < 1e-12 (сталість)
+- |dF/dt| < 1e-12 та відсутність порушень монотонності
 - Зменшення F між кроками контролера
 - Генерацію `optimized_graph.json` на main push
 
