@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import hashlib
 import time
+import warnings
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
 
+from evolution import bond_evolver
 from core.energy import BondType, delta_free_energy, system_free_energy
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
@@ -29,6 +31,52 @@ except ModuleNotFoundError as exc:  # pragma: no cover
 
 else:  # pragma: no cover - exercised in existing suite
     MetricsSnapshot = _BondMetricsSnapshot
+
+
+_FALLBACK_WARNING_EMITTED = False
+
+
+def evolve_bonds(
+    graph: nx.DiGraph,
+    snapshot: MetricsSnapshot,
+    generations: int,
+    *,
+    pop_size: int = 16,
+    cx_prob: float = 0.4,
+    mut_prob: float = 0.6,
+) -> nx.DiGraph:
+    """Delegate to the evolutionary optimiser with a deterministic fallback.
+
+    The public thermodynamic API guarantees that callers can evolve bond
+    topologies even when the optional :mod:`deap` dependency is unavailable.
+    ``evolution.bond_evolver`` already ships a deterministic fallback
+    implementation – here we wrap it to emit an explicit ``RuntimeWarning`` so
+    operators understand why the stochastic optimiser was not used.
+    """
+
+    global _FALLBACK_WARNING_EMITTED
+
+    deap_available = getattr(bond_evolver, "_DEAP_AVAILABLE", False)
+    if not deap_available and not _FALLBACK_WARNING_EMITTED:
+        warnings.warn(
+            "DEAP is not available; using deterministic thermodynamic fallback optimiser.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        _FALLBACK_WARNING_EMITTED = True
+
+    return bond_evolver.evolve_bonds(
+        graph,
+        snapshot,
+        generations,
+        pop_size=pop_size,
+        cx_prob=cx_prob,
+        mut_prob=mut_prob,
+    )
+
+
+if getattr(bond_evolver, "_DEAP_AVAILABLE", False):
+    evolve_bonds.__module__ = bond_evolver.evolve_bonds.__module__
 
 
 class PrometheusMetrics:
@@ -368,6 +416,7 @@ class ThermoController:
 
 
 __all__ = [
+    "evolve_bonds",
     "ThermoController",
     "PrometheusMetrics",
     "estimate_entropy",
