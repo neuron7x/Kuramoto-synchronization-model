@@ -233,20 +233,69 @@ graph TB
 
 ## Thermodynamic Layer (ThermoController)
 
-Ми моделюємо архітектуру TradePulse як термодинамічну систему.  
-Вільна енергія F = U + kT·entropy + α·resource_usage.  
-Мета — мінімізувати F у рантаймі.
+The thermodynamic layer governs topology optimisation by enforcing a
+monotonic free-energy descent constraint while remaining resilient to
+market stress. The controller now runs with a production-ready stack
+comprised of deterministic protocol activation, a crisis-aware genetic
+algorithm, and an adaptive recovery agent.
 
-Компоненти:
-- `core/energy.py`: розрахунок F, dF/dt (із масштабуванням до ~10⁻¹⁸ Дж для числової стабільності)
-- `runtime/thermo_controller.py`: керування топологією сервісів, локальний спуск і повна еволюція
-- `evolution/bond_evolver.py`: генетичний оптимізатор типів зв’язків (covalent / ionic / metallic / vdw / hydrogen)
-- `scripts/benchmark_bonds.py`: бенчмарк стабільності (pulses/s, dF/dt)
+### Architecture Overview
 
-CI гарантує:
-- |dF/dt| < 1e-12 (сталість)
-- Зменшення F між кроками контролера
-- Генерацію `optimized_graph.json` на main push
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    Thermodynamic Control Loop                │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Measure  →  Analyse  →  Plan  →  Execute                    │
+│                                                              │
+│  • system_free_energy()                                      │
+│  • dF/dt & adaptive epsilon                                  │
+│  • Crisis detection (normal/elevated/critical)               │
+│  • CrisisAwareGA + AdaptiveRecoveryAgent                     │
+│  • LinkActivator (primary → fallback → last resort)          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+- `runtime/link_activator.py` — maps bond types to concrete
+  communication protocols (CRDT, RDMA, gRPC, shared memory, gossip,
+  local fallbacks) and records activation telemetry.
+- `runtime/recovery_agent.py` — Q-learning agent selecting recovery
+  intensity (slow/medium/fast) based on free-energy deviation,
+  latency spike and crisis duration.
+- `evolution/crisis_ga.py` — crisis-aware genetic algorithm that
+  scales population and mutation rate according to the detected crisis
+  mode.
+- `runtime/thermo_controller.py` — orchestrates the loop, enforces the
+  monotonic constraint with tolerance windows, and drives LinkActivator
+  for hot-swapping protocols.
+- `runtime/thermo_api.py` — FastAPI service exposing `/thermo/status`,
+  `/thermo/history`, `/thermo/crisis`, `/thermo/activations`, and a
+  `/thermo/reset` hook for integration tests.
+- `scripts/polygon_validator.py` — offline-friendly Polygon loader with
+  synthetic fallback for validating CVaR and flash-crash behaviour.
+
+### Safety Guarantees
+
+- **Monotonic descent** — every accepted mutation must satisfy
+  `F_new ≤ F_old + ε`, where `ε = 0.01 × baseline_EMA`.
+- **Crisis handling** — latency spikes or large `|dF/dt|` trigger the
+  adaptive recovery agent and the crisis-aware GA.
+- **Telemetry** — each control step logs timestamp, free energy,
+  derivative, epsilon, bottleneck edge, crisis mode and activation
+  history. Accessible via the FastAPI endpoints.
+
+### Validation & Testing
+
+- Unit tests cover the link activator, recovery agent and controller
+  monotonic constraint (`tests/test_link_activator.py`,
+  `tests/test_recovery_agent.py`, `tests/test_energy.py`).
+- Integration harness for Polygon-based stress tests lives in
+  `tests/test_polygon_integration.py` and is opt-in through
+  `RUN_POLYGON_TESTS=1`.
+- CI workflow `.github/workflows/thermo-evolution.yml` now runs the
+  dedicated unit suites and validates the security policy.
 
 ## 📚 Documentation
 

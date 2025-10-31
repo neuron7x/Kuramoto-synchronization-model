@@ -516,6 +516,47 @@ In case of a security incident:
 
 ---
 
+## Thermodynamic Stability Guarantee
+
+The thermodynamic control loop introduces autonomous topology changes.
+To keep the system safe and auditable we enforce the following
+guardrails:
+
+### Monotonic Free Energy Constraint
+
+- **Policy**: Accept mutations only when `F_new ≤ F_old + ε`, where
+  `ε = 0.01 × baseline_EMA`.
+- **Implementation**: `runtime/thermo_controller.py::ThermoController._check_monotonic_with_tolerance`.
+- **Audit Trail**: Every control step records telemetry accessible via
+  `GET /thermo/history`.
+
+### Crisis Handling & Recovery
+
+- **Detection**: Crisis modes (normal, elevated, critical) are derived
+  from free-energy deviation and spikes in `|dF/dt|`.
+- **Response**: `AdaptiveRecoveryAgent` selects recovery intensity which
+  the crisis-aware GA translates into population and mutation scaling.
+- **Fallback**: `LinkActivator.apply` provides deterministic protocol
+  hierarchies (primary → fallback → last resort).
+
+### Known Limitation
+
+Flash-crash simulations (`scripts/polygon_validator.py`) may surface a
+small positive drift after recovery (`monotonic_held = False`). The
+controller logs the event and keeps the previous topology until human
+review.
+
+### Compliance Mapping
+
+- **SEC / FINRA** — monotonic constraint prevents uncontrolled
+  self-modification and produces an auditable trail.
+- **EU AI Act** — crisis detection plus the manual reset endpoint
+  (`POST /thermo/reset`) guarantee human oversight.
+- **SOC 2** — telemetry captures timestamps, ΔF and activation metadata
+  for every change.
+
+---
+
 ## Contact
 
 - **Security Issues**: security@tradepulse.local
