@@ -41,6 +41,23 @@ def _log_debug_enabled() -> bool:
     return bool(checker and checker(logging.DEBUG))
 
 
+def _extended_float_dtype() -> np.dtype:
+    """Return the highest precision floating dtype available on this platform."""
+
+    for candidate in (
+        getattr(np, "float128", None),
+        getattr(np, "longdouble", None),
+        np.float64,
+    ):
+        if candidate is None:
+            continue
+        try:
+            return np.dtype(candidate)
+        except TypeError:  # pragma: no cover - extremely rare NumPy build
+            continue
+    return np.dtype(np.float64)
+
+
 try:
     from scipy import fft as _scipy_fft  # type: ignore
 
@@ -234,10 +251,12 @@ def kuramoto_order(
     Notes:
         Non-finite values are ignored in the vector aggregation, matching the
         resilience requirements from ``docs/runbook_data_incident.md``. The
-        numerical implementation uses both ``float32`` and ``float64`` buffers
-        to balance performance and stability for large ensembles; clipping at
-        ``1e-8`` enforces the governance rule that de-synchronised states report
-        exactly zero rather than a denormal.
+        numerical implementation promotes calculations to the highest precision
+        floating type available (``longdouble``/``float128`` when supported) to
+        preserve translation invariance for adversarially large phase offsets.
+        Magnitudes below ``1e-8`` are clamped to zero to honour the governance
+        rule that fully de-synchronised states report an exact zero instead of a
+        denormal.
     """
 
     phases_arr = np.asarray(phases)
@@ -252,64 +271,81 @@ def kuramoto_order(
     else:
         phases_real = phases_arr
 
+    acc_dtype = _extended_float_dtype()
+
     with np.errstate(over="ignore", invalid="ignore"):
-        phases_fp32 = np.asarray(phases_real, dtype=np.float32)
+        phase_matrix = np.asarray(phases_real, dtype=acc_dtype)
 
     squeeze_output = False
-    if phases_fp32.ndim == 1:
-        phases_fp32 = phases_fp32[:, None]
+    if phase_matrix.ndim == 1:
+        phase_matrix = phase_matrix[:, None]
         squeeze_output = True
-    elif phases_fp32.ndim != 2:
+    elif phase_matrix.ndim != 2:
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
-    mask = np.isfinite(phases_fp32)
+    mask = np.isfinite(phase_matrix)
+    wrap_angles = acc_dtype.itemsize <= np.dtype(np.float64).itemsize
+    if wrap_angles and mask.any():
+        wrapped = phase_matrix.copy()
+        finite_values = wrapped[mask]
+        # Keep phases within [-pi, pi] so that large absolute offsets do not
+        # degrade the trigonometric evaluation. This guarantees translation
+        # invariance of the order parameter even for adversarially large inputs.
+        pi_const = acc_dtype.type(np.pi)
+        two_pi = acc_dtype.type(2.0 * np.pi)
+        finite_values = np.mod(finite_values + pi_const, two_pi) - pi_const
+        wrapped[mask] = finite_values
+        phase_matrix = wrapped
+
     # Compute trigonometric projections in float64 to avoid drift when
     # aggregating perfectly de-synchronised samples (e.g. phases at 0 and π).
-    cos_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
-    sin_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
-    np.cos(phases_fp32, out=cos_vals, where=mask)
-    np.sin(phases_fp32, out=sin_vals, where=mask)
+    cos_vals = np.zeros(phase_matrix.shape, dtype=acc_dtype)
+    sin_vals = np.zeros(phase_matrix.shape, dtype=acc_dtype)
+    np.cos(phase_matrix, out=cos_vals, where=mask)
+    np.sin(phase_matrix, out=sin_vals, where=mask)
 
-    float32_eps = np.finfo(np.float32).eps
+    float32_eps = acc_dtype.type(np.finfo(np.float32).eps)
 
     if weights is not None:
-        weight_matrix = _broadcast_weights(weights, phases_fp32.shape)
+        weight_matrix = _broadcast_weights(weights, phase_matrix.shape)
+        weight_matrix = np.asarray(weight_matrix, dtype=acc_dtype)
         valid = mask & (weight_matrix > 0.0)
         if not valid.any():
-            values = np.zeros(phases_fp32.shape[1], dtype=float)
+            values = np.zeros(phase_matrix.shape[1], dtype=acc_dtype)
         else:
-            weight_matrix = np.where(valid, weight_matrix, 0.0)
-            sum_real = np.add.reduce(cos_vals * weight_matrix, axis=0, dtype=np.float64)
-            sum_imag = np.add.reduce(sin_vals * weight_matrix, axis=0, dtype=np.float64)
-            totals = np.add.reduce(weight_matrix, axis=0, dtype=np.float64)
+            weight_matrix = np.where(valid, weight_matrix, acc_dtype.type(0.0))
+            sum_real = np.add.reduce(cos_vals * weight_matrix, axis=0, dtype=acc_dtype)
+            sum_imag = np.add.reduce(sin_vals * weight_matrix, axis=0, dtype=acc_dtype)
+            totals = np.add.reduce(weight_matrix, axis=0, dtype=acc_dtype)
             magnitude = np.hypot(sum_real, sum_imag)
-            zero_tolerance = float32_eps * np.maximum(totals, 1.0)
+            zero_tolerance = float32_eps * np.maximum(totals, acc_dtype.type(1.0))
             values = np.divide(
                 magnitude,
                 totals,
-                out=np.zeros_like(magnitude, dtype=float),
+                out=np.zeros_like(magnitude, dtype=acc_dtype),
                 where=totals > 0.0,
             )
-            values = np.where(magnitude <= zero_tolerance, 0.0, values)
+            values = np.where(magnitude <= zero_tolerance, acc_dtype.type(0.0), values)
     else:
-        valid_counts = mask.sum(axis=0, dtype=np.float64)
+        valid_counts = mask.sum(axis=0, dtype=acc_dtype)
         if not np.any(valid_counts):
-            values = np.zeros(phases_fp32.shape[1], dtype=float)
+            values = np.zeros(phase_matrix.shape[1], dtype=acc_dtype)
         else:
-            sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float64)
-            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float64)
+            sum_real = np.add.reduce(cos_vals, axis=0, dtype=acc_dtype)
+            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=acc_dtype)
             magnitude = np.hypot(sum_real, sum_imag)
-            zero_tolerance = float32_eps * np.maximum(valid_counts, 1.0)
+            zero_tolerance = float32_eps * np.maximum(valid_counts, acc_dtype.type(1.0))
             values = np.divide(
                 magnitude,
                 valid_counts,
-                out=np.zeros_like(magnitude, dtype=float),
+                out=np.zeros_like(magnitude, dtype=acc_dtype),
                 where=valid_counts > 0.0,
             )
-            values = np.where(magnitude <= zero_tolerance, 0.0, values)
+            values = np.where(magnitude <= zero_tolerance, acc_dtype.type(0.0), values)
 
-    clipped = np.clip(values, 0.0, 1.0)
-    clipped[clipped < 1e-8] = 0.0
+    clipped = np.clip(values, acc_dtype.type(0.0), acc_dtype.type(1.0))
+    clipped = np.where(clipped < acc_dtype.type(1e-8), acc_dtype.type(0.0), clipped)
+    clipped = np.asarray(clipped, dtype=float)
     if squeeze_output:
         return float(clipped[0])
     return clipped

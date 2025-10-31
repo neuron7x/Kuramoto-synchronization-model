@@ -74,3 +74,17 @@ def test_kuramoto_order_accepts_complex_inputs_without_warning() -> None:
     assert complex_value == pytest.approx(
         real_value, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
     )
+
+
+def test_kuramoto_order_remains_translation_invariant_for_large_offsets() -> None:
+    """Large constant shifts must not perturb the order parameter."""
+
+    phases = np.array(
+        [3.262689235598566e05, 3.534673481631987e-302, 8.369803765714615e-135,
+         4.565323556750808e05, -3.044318659463569e05, 8.507489007909643e05],
+        dtype=float,
+    )
+    baseline = kuramoto_order(phases)
+    shifted = kuramoto_order(phases + 0.12)
+
+    assert shifted == pytest.approx(baseline, rel=1e-12, abs=1e-12)
