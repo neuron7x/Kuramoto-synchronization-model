@@ -22,6 +22,7 @@ from .module_orchestrator import (
     ModuleOrchestrator,
     ModuleRunResult,
     ModuleRunSummary,
+    ModuleSynchronisationEntry,
     ModuleTimelineEntry,
 )
 
@@ -40,6 +41,7 @@ __all__ = [
     "ModuleOrchestrator",
     "ModuleRunResult",
     "ModuleRunSummary",
+    "ModuleSynchronisationEntry",
     "ModuleTimelineEntry",
     "StreamingPipelineSettings",
     "TradePulsePlatform",
