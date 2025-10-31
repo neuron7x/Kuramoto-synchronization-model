@@ -1352,6 +1352,22 @@ class RiskManager(RiskController):
         canonical_symbol = self._canonical_symbol(symbol)
         return float(self._last_notional.get(canonical_symbol, 0.0))
 
+    def exposure_snapshot(self) -> dict[str, dict[str, float]]:
+        """Return a serialisable snapshot of tracked positions and notionals."""
+
+        snapshot: dict[str, dict[str, float]] = {}
+        for symbol, position in self._positions.items():
+            snapshot[symbol] = {
+                "position": float(position),
+                "notional": float(self._last_notional.get(symbol, 0.0)),
+            }
+        for symbol, notional in self._last_notional.items():
+            if symbol in snapshot:
+                snapshot[symbol]["notional"] = float(notional)
+                continue
+            snapshot[symbol] = {"position": 0.0, "notional": float(notional)}
+        return dict(sorted(snapshot.items()))
+
 
 class IdempotentRetryExecutor:
     """Retry wrapper that guarantees idempotency via explicit keys.

@@ -43,6 +43,11 @@ from .router import (
     ResilientExecutionRouter,
     SlippageModel,
 )
+from .session_snapshot import (
+    ExecutionMode,
+    SessionSnapshotError,
+    SessionSnapshotter,
+)
 from .risk import (
     IdempotentRetryExecutor,
     JsonRiskStateStore,
@@ -138,4 +143,7 @@ __all__ = [
     "OrderAssessment",
     "WorkflowAssessment",
     "RiskComplianceWorkflow",
+    "SessionSnapshotter",
+    "SessionSnapshotError",
+    "ExecutionMode",
 ]

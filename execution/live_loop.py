@@ -6,9 +6,10 @@ from __future__ import annotations
 import logging
 import threading
 from collections import defaultdict
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Mapping, MutableMapping
+from typing import Callable, Dict, Iterable, Mapping, MutableMapping, Sequence
 
 from core.utils.metrics import get_metrics_collector
 from domain import Order
@@ -16,6 +17,11 @@ from domain import Order
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .oms import OMSConfig, OrderManagementSystem
 from .risk import RiskManager
+from .session_snapshot import (
+    ExecutionMode,
+    SessionSnapshotError,
+    SessionSnapshotter,
+)
 from .watchdog import Watchdog
 
 
@@ -104,6 +110,7 @@ class LiveExecutionLoop:
         risk_manager: RiskManager,
         *,
         config: LiveLoopConfig,
+        session_snapshotter: SessionSnapshotter | None = None,
     ) -> None:
         if not connectors:
             raise ValueError("at least one connector must be provided")
@@ -120,6 +127,13 @@ class LiveExecutionLoop:
         self._started = False
         self._kill_notified = False
         self._watchdog: Watchdog | None = None
+        self._session_snapshotter = session_snapshotter or SessionSnapshotter(
+            config.state_dir / "session_snapshots",
+            mode=ExecutionMode.LIVE,
+            risk_manager=self._risk_manager,
+        )
+        self._pre_session_positions: Dict[str, Sequence[Mapping[str, object]]] = {}
+        self._pre_session_position_issues: Dict[str, Sequence[str]] = {}
 
         for name, connector in connectors.items():
             state_path = self._config.state_dir / f"{name}_oms.json"
@@ -169,6 +183,23 @@ class LiveExecutionLoop:
                 self._reconcile_state(context)
 
         self._refresh_risk_state_from_connectors()
+
+        try:
+            self._capture_session_snapshot()
+        except SessionSnapshotError as exc:
+            self._logger.error(
+                "Failed to capture session snapshot",
+                extra={
+                    "event": "live_loop.snapshot_failed",
+                    "error": str(exc),
+                },
+            )
+            for context in self._contexts.values():
+                with suppress(Exception):
+                    context.connector.disconnect()
+            raise RuntimeError(
+                "Cannot start live execution loop without a valid session snapshot"
+            ) from exc
 
         self._watchdog = Watchdog(
             name="execution-live-loop",
@@ -404,11 +435,34 @@ class LiveExecutionLoop:
         if state_changed:
             self._refresh_risk_state_from_connectors()
 
+    def _capture_session_snapshot(self) -> None:
+        connectors = {
+            name: context.connector for name, context in self._contexts.items()
+        }
+        if not connectors:
+            raise SessionSnapshotError("no connectors configured for snapshot")
+        preloaded: dict[
+            str, tuple[Sequence[Mapping[str, object]], Sequence[str]]
+        ] = {}
+        for name in connectors:
+            positions = self._pre_session_positions.get(name, ())
+            issues = self._pre_session_position_issues.get(name, ())
+            preloaded[name] = (positions, issues)
+        self._session_snapshotter.capture(connectors, preloaded=preloaded)
+
     def _refresh_risk_state_from_connectors(self) -> None:
         hydrator = getattr(self._risk_manager, "hydrate_positions", None)
         if not callable(hydrator):
             return
-        snapshot, sources, expected = self._build_risk_snapshot()
+        (
+            snapshot,
+            sources,
+            expected,
+            raw_positions,
+            position_errors,
+        ) = self._build_risk_snapshot()
+        self._pre_session_positions = raw_positions
+        self._pre_session_position_issues = position_errors
         if sources == 0:
             return
         try:
@@ -425,14 +479,23 @@ class LiveExecutionLoop:
 
     def _build_risk_snapshot(
         self,
-    ) -> tuple[dict[str, tuple[float, float]], int, int]:
+    ) -> tuple[
+        dict[str, tuple[float, float]],
+        int,
+        int,
+        dict[str, Sequence[Mapping[str, object]]],
+        dict[str, Sequence[str]],
+    ]:
         snapshot: dict[str, tuple[float, float]] = {}
         sources = 0
         expected = 0
+        raw_positions: dict[str, list[Mapping[str, object]]] = {}
+        issues: dict[str, list[str]] = {}
         for context in self._contexts.values():
             connector = context.connector
             get_positions = getattr(connector, "get_positions", None)
             if not callable(get_positions):
+                issues.setdefault(context.name, []).append("positions_unsupported")
                 continue
             expected += 1
             try:
@@ -446,9 +509,20 @@ class LiveExecutionLoop:
                         "error": str(exc),
                     },
                 )
+                issues.setdefault(context.name, []).append(
+                    f"positions_unavailable:{type(exc).__name__}:{exc}".rstrip(":")
+                )
                 continue
             sources += 1
-            for payload in positions:
+            positions_list = list(positions)
+            normalised_positions = [
+                payload
+                for payload in positions_list
+                if isinstance(payload, Mapping)
+            ]
+            if normalised_positions:
+                raw_positions[context.name] = normalised_positions
+            for payload in positions_list:
                 parsed = self._parse_position_payload(payload)
                 if parsed is None:
                     continue
@@ -481,7 +555,7 @@ class LiveExecutionLoop:
                     snapshot.pop(symbol, None)
                 else:
                     snapshot[symbol] = (combined_qty, combined_notional)
-        return snapshot, sources, expected
+        return snapshot, sources, expected, raw_positions, issues
 
     @staticmethod
     def _parse_position_payload(

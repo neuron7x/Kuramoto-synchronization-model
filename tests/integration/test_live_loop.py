@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
@@ -148,6 +149,26 @@ def test_live_loop_recovers_and_requeues_orders(
     assert stray.order_id in adopted_ids
 
     loop_restart.shutdown()
+
+
+def test_live_loop_creates_session_snapshot(
+    live_loop_config: LiveLoopConfig,
+) -> None:
+    connector = BinanceConnector()
+    risk_manager = RiskManager(RiskLimits(max_notional=100_000.0, max_position=10.0))
+    loop = LiveExecutionLoop({"binance": connector}, risk_manager, config=live_loop_config)
+
+    loop.start(cold_start=True)
+    try:
+        snapshot_dir = live_loop_config.state_dir / "session_snapshots"
+        files = sorted(snapshot_dir.glob("*.json"))
+        assert files
+        payload = json.loads(files[-1].read_text())
+        assert payload["mode"] == "live"
+        assert payload["risk_limits"]["max_position"] == 10.0
+        assert "hash" in payload
+    finally:
+        loop.shutdown()
 
 
 def test_live_loop_warm_start_enforces_limits(live_loop_config: LiveLoopConfig) -> None:
