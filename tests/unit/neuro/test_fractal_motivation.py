@@ -24,6 +24,15 @@ def test_fractal_motivation_engine_signal_is_finite() -> None:
     )
 
     assert math.isfinite(signal)
+    metrics = engine.latest_fractal_metrics
+    assert set(metrics) == {
+        "hurst",
+        "fractal_dim",
+        "volatility",
+        "scaling_exponent",
+        "stability",
+        "energy",
+    }
 
 
 def test_controller_recommend_handles_guardrails() -> None:

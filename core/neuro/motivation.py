@@ -19,34 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from scipy.integrate import odeint
 
-
-class VossNoiseGenerator:
-    """Generate pink (1/f) noise using the Voss–McCartney algorithm."""
-
-    def __init__(self, dimensions: int = 8, *, seed: int | None = None) -> None:
-        if dimensions <= 0:
-            raise ValueError("dimensions must be positive")
-        self._dimensions = dimensions
-        self._rng = np.random.default_rng(seed)
-        self._sources = self._rng.standard_normal(dimensions)
-        self._counter = 0
-
-    def sample(self) -> float:
-        """Return a single pink-noise sample."""
-
-        if self._counter == 0:
-            self._sources[0] = self._rng.standard_normal()
-        else:
-            idx = 0
-            counter = self._counter
-            while counter % 2 == 0 and idx < self._dimensions:
-                idx += 1
-                counter //= 2
-            if idx < self._dimensions:
-                self._sources[idx] = self._rng.standard_normal()
-
-        self._counter = (self._counter + 1) % (1 << self._dimensions)
-        return float(self._sources.sum() / math.sqrt(self._dimensions))
+from core.neuro.fractal import FractalSummary, summarise_fractal_properties
 
 
 class FractalBandit:
@@ -85,37 +58,6 @@ class FractalBandit:
         self._beta[strategy_idx] += 1.0 - reward_clipped
 
 
-class LinguisticFractalityTracker:
-    """Estimate Hurst exponents for symbolic sequences using R/S analysis."""
-
-    def estimate_hurst_exponent(self, sequence: Sequence[float], scale: int) -> float:
-        data = np.asarray(sequence, dtype=float)
-        if data.size < max(2 * scale, 4):
-            return 0.5
-        demeaned = data - data.mean()
-        cumulative = np.cumsum(demeaned)
-        rs = (cumulative.max() - cumulative.min()) / (data.std() + 1e-9)
-        hurst = np.log(rs + 1e-9) / np.log(data.size)
-        return float(np.clip(hurst, 0.0, 1.0))
-
-
-class ScaleSpecificValue:
-    """Estimate a scale-dependent value statistic for motivation aggregation."""
-
-    def __init__(self, scale: int) -> None:
-        if scale <= 0:
-            raise ValueError("scale must be positive")
-        self.scale = scale
-
-    def estimate(self, data: np.ndarray) -> float:
-        if data.ndim != 1:
-            raise ValueError("data must be a 1D array")
-        if data.size < self.scale:
-            return float(data.mean())
-        reshaped = data[: data.size - data.size % self.scale].reshape(-1, self.scale)
-        return float(reshaped.mean(axis=1).mean())
-
-
 class FractalMotivationEngine:
     """Combine information gain, coherence, and fractal noise into a signal."""
 
@@ -124,14 +66,23 @@ class FractalMotivationEngine:
             raise ValueError("state_dim must be positive")
         self.state_dim = state_dim
         self.temporal_scales = (1, 4, 16, 64)
-        self.value_estimators = tuple(
-            ScaleSpecificValue(scale) for scale in self.temporal_scales
-        )
-        self.pink_noise = VossNoiseGenerator()
+        self._latest_summary: FractalSummary | None = None
         self.strategy_bandit = FractalBandit(
             ("exploit", "explore", "deepen", "broaden")
         )
-        self.linguistic_tracker = LinguisticFractalityTracker()
+
+    @property
+    def latest_fractal_metrics(self) -> Mapping[str, float]:
+        if self._latest_summary is None:
+            return {
+                "hurst": 0.5,
+                "fractal_dim": 1.5,
+                "volatility": 0.0,
+                "scaling_exponent": 0.5,
+                "stability": 1.0,
+                "energy": 0.0,
+            }
+        return dict(self._latest_summary.as_mapping())
 
     def _compute_information_gain(
         self, current: np.ndarray, previous: np.ndarray | None
@@ -169,8 +120,45 @@ class FractalMotivationEngine:
     ) -> float:
         info_gain = self._compute_information_gain(current, previous)
         coherence = self._compute_context_coherence(hidden_states)
-        fractal_state = self.pink_noise.sample()
+        fractal_state = self._fractal_component(hidden_states)
         return float(self._motivation_policy(info_gain, coherence, fractal_state))
+
+    def _fractal_component(self, hidden_states: np.ndarray) -> float:
+        data = np.asarray(hidden_states, dtype=float)
+        if data.ndim == 1:
+            data = data[np.newaxis, :]
+
+        summaries: list[FractalSummary] = []
+        for row in data:
+            try:
+                summaries.append(summarise_fractal_properties(row))
+            except ValueError:
+                continue
+
+        if not summaries:
+            self._latest_summary = None
+            return 0.0
+
+        hurst = float(np.mean([summary.hurst for summary in summaries]))
+        dimension = float(np.mean([summary.fractal_dimension for summary in summaries]))
+        volatility = float(np.mean([summary.volatility for summary in summaries]))
+        scaling = float(np.mean([summary.scaling_exponent for summary in summaries]))
+        stability = float(np.mean([summary.stability for summary in summaries]))
+        energy = float(np.mean([summary.energy for summary in summaries]))
+
+        self._latest_summary = FractalSummary(
+            hurst=hurst,
+            fractal_dimension=dimension,
+            volatility=volatility,
+            scaling_exponent=scaling,
+            stability=stability,
+            energy=energy,
+        )
+
+        scaled_energy = energy / (1.0 + volatility)
+        hurst_deviation = (hurst - 0.5) * 2.0
+        fractal_state = stability * hurst_deviation + 0.1 * scaled_energy
+        return float(fractal_state)
 
 
 class AllostaticRegulator:
@@ -440,8 +428,9 @@ class FractalMotivationController:
         actual = self.value_predictor(next_state)
         rpe = float(actual - predicted)
         info_gain = float(np.linalg.norm(next_state - state))
-        pink_noise = self.fractal_engine.pink_noise.sample()
-        intrinsic = rpe + 0.1 * info_gain + 0.01 * motivation_signal + pink_noise
+        metrics = self.fractal_engine.latest_fractal_metrics
+        energy = metrics.get("energy", 0.0)
+        intrinsic = rpe + 0.1 * info_gain + 0.05 * energy + 0.01 * motivation_signal
         allostatic = self.allostatic_reg.update(rpe, info_gain)
         modulation = max(0.0, 1.0 - abs(allostatic))
         return float(intrinsic * modulation), float(allostatic)
@@ -511,10 +500,7 @@ __all__ = [
     "FractalBandit",
     "FractalMotivationController",
     "FractalMotivationEngine",
-    "LinguisticFractalityTracker",
     "MotivationDecision",
     "RealTimeMotivationMonitor",
-    "ScaleSpecificValue",
     "ValuePredictor",
-    "VossNoiseGenerator",
 ]
