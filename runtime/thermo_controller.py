@@ -2,11 +2,51 @@ from __future__ import annotations
 
 import time
 from typing import Dict, Tuple
+import warnings
+from dataclasses import dataclass
 
 import networkx as nx
 
 from core.energy import BondType, delta_free_energy, system_free_energy
-from evolution.bond_evolver import MetricsSnapshot, evolve_bonds
+try:
+    from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
+    from evolution.bond_evolver import evolve_bonds as _evolve_bonds
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised via dedicated tests
+    if exc.name != "deap":
+        raise
+
+    _FALLBACK_WARNING_EMITTED = False
+
+    @dataclass(slots=True)
+    class MetricsSnapshot:
+        latencies: Dict[Tuple[str, str], float]
+        coherency: Dict[Tuple[str, str], float]
+        resource_usage: float
+        entropy: float
+
+    def evolve_bonds(  # type: ignore[override]
+        base_graph: nx.DiGraph,
+        snap: "MetricsSnapshot",
+        generations: int,
+        pop_size: int = 16,
+        cx_prob: float = 0.4,
+        mut_prob: float = 0.6,
+    ) -> nx.DiGraph:
+        global _FALLBACK_WARNING_EMITTED
+
+        if not _FALLBACK_WARNING_EMITTED:
+            warnings.warn(
+                "DEAP dependency is missing; bond evolution fallback keeps the graph unchanged.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            _FALLBACK_WARNING_EMITTED = True
+
+        return base_graph.copy()
+
+else:
+    MetricsSnapshot = _BondMetricsSnapshot
+    evolve_bonds = _evolve_bonds
 
 
 class PrometheusMetrics:
