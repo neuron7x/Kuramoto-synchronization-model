@@ -29,6 +29,7 @@ from domain import Order, OrderSide, OrderType, Signal, SignalAction
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import RiskLimits, RiskManager
+from execution.risk.profile import RiskProfile, load_risk_profile
 
 __all__ = [
     "ExchangeAdapterConfig",
@@ -82,7 +83,9 @@ class TradePulseSystemConfig:
     feature_pipeline: FeaturePipelineConfig = field(
         default_factory=FeaturePipelineConfig
     )
-    risk_limits: RiskLimits = field(default_factory=RiskLimits)
+    risk_profile_path: Path | None = None
+    risk_mode: str | None = None
+    risk_limits: RiskLimits | None = None
     live_settings: LiveLoopSettings = field(default_factory=LiveLoopSettings)
     allowed_data_roots: Iterable[str | Path] | None = None
     max_csv_bytes: int | None = None
@@ -90,6 +93,13 @@ class TradePulseSystemConfig:
         Mapping[str, BaseMarketDataConnector | Callable[[], BaseMarketDataConnector]]
         | None
     ) = None
+    risk_profile: RiskProfile = field(init=False)
+
+    def __post_init__(self) -> None:
+        profile = load_risk_profile(self.risk_profile_path, mode=self.risk_mode)
+        object.__setattr__(self, "risk_profile", profile)
+        if self.risk_limits is None:
+            self.risk_limits = profile.build_risk_limits()
 
 
 class TradePulseSystem:
@@ -117,7 +127,14 @@ class TradePulseSystem:
             market_connectors=config.market_data_connectors,
         )
         self._pipeline = SignalFeaturePipeline(config.feature_pipeline)
-        self._risk_manager = risk_manager or RiskManager(config.risk_limits)
+        profile = getattr(config, "risk_profile", load_risk_profile())
+        self._risk_profile = profile
+        limits = config.risk_limits or profile.build_risk_limits()
+        self._risk_manager = risk_manager or RiskManager(
+            limits,
+            allowed_instruments=profile.allowed_instruments,
+            profile_mode=profile.active_mode,
+        )
         self._metrics = get_metrics_collector()
         self._clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
 
@@ -155,6 +172,12 @@ class TradePulseSystem:
         """Return the synchronous ingestion service."""
 
         return self._data_ingestor
+
+    @property
+    def risk_profile(self) -> RiskProfile:
+        """Return the active risk profile."""
+
+        return self._risk_profile
 
     @property
     def async_data_ingestor(self) -> AsyncDataIngestor:

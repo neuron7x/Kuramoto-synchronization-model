@@ -23,7 +23,8 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for older interpreter
 from core.utils.metrics import PROMETHEUS_AVAILABLE, start_metrics_server
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.risk import RiskLimits, RiskManager
+from execution.risk import RiskManager
+from execution.risk.profile import RiskProfile, load_risk_profile
 from interfaces.execution.common import CredentialError, CredentialProvider
 from interfaces.secrets.backends import (
     AWSSecretsManagerBackendConfig,
@@ -177,6 +178,7 @@ class LiveTradingRunner:
         self._raw_loop = dict(raw_config.get("loop", {}))
         self._raw_risk = dict(raw_config.get("risk", {}))
         self._raw_metrics = dict(raw_config.get("metrics", {}))
+        self._risk_profile: RiskProfile | None = None
 
         requested = {v.lower() for v in venues} if venues else None
         raw_venues = raw_config.get("venues", [])
@@ -506,9 +508,18 @@ class LiveTradingRunner:
     def _build_risk_manager(self) -> None:
         if self._risk_manager is not None:
             return
-        risk_kwargs = _dataclass_kwargs(RiskLimits, self._raw_risk)
-        limits = RiskLimits(**risk_kwargs)
-        self._risk_manager = RiskManager(limits)
+        profile = load_risk_profile(
+            self._raw_risk.get("profile"),
+            mode=self._raw_risk.get("mode"),
+            base_dir=self._config_dir,
+        )
+        self._risk_profile = profile
+        limits = profile.build_risk_limits()
+        self._risk_manager = RiskManager(
+            limits,
+            allowed_instruments=profile.allowed_instruments,
+            profile_mode=profile.active_mode,
+        )
 
     def _build_loop_config(self) -> None:
         if self._loop_config is not None:

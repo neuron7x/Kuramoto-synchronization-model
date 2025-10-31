@@ -55,6 +55,12 @@ from .risk import (
     RiskStateStore,
     SQLiteKillSwitchStateStore,
 )
+from .risk.profile import (
+    RiskProfile,
+    clear_risk_profile_cache,
+    load_risk_profile,
+    resolve_risk_profile_path,
+)
 from .rollout import (
     BlueGreenRolloutOrchestrator,
     RolloutAbortedError,
@@ -112,6 +118,10 @@ __all__ = [
     "LimitViolation",
     "OrderRateExceeded",
     "IdempotentRetryExecutor",
+    "RiskProfile",
+    "load_risk_profile",
+    "resolve_risk_profile_path",
+    "clear_risk_profile_cache",
     "LatencySample",
     "LatencyModel",
     "DeterministicLatencyModel",

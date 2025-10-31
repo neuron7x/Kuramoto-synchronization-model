@@ -27,6 +27,7 @@ from application.system import (
 from domain import Order
 from execution.connectors import BinanceConnector, CoinbaseConnector
 from execution.risk import RiskLimits
+from execution.risk.profile import load_risk_profile
 
 def build_tradepulse_system(
     venues: Sequence[ExchangeAdapterConfig] | None = None,
@@ -51,7 +52,8 @@ def build_tradepulse_system(
         )
 
     pipeline_config = feature_pipeline or FeaturePipelineConfig()
-    risk = risk_limits or RiskLimits()
+    profile = load_risk_profile()
+    risk = risk_limits or profile.build_risk_limits()
     live = live_settings or LiveLoopSettings()
 
     config = TradePulseSystemConfig(

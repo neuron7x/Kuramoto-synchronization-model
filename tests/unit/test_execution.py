@@ -121,6 +121,16 @@ def test_kill_switch_blocks_all_orders() -> None:
         manager.validate_order("BTC", "buy", qty=1.0, price=10.0)
 
 
+def test_risk_manager_blocks_instruments_not_in_profile() -> None:
+    limits = RiskLimits(max_notional=10_000.0, max_position=10.0)
+    manager = RiskManager(limits, allowed_instruments=("BTC/USDT",))
+
+    manager.validate_order("BTCUSDT", "buy", qty=1.0, price=50.0)
+
+    with pytest.raises(LimitViolation):
+        manager.validate_order("ETHUSDT", "buy", qty=1.0, price=50.0)
+
+
 def test_risk_manager_trips_kill_switch_on_severe_violation(tmp_path) -> None:
     clock = _TimeStub()
     audit_path = tmp_path / "audit.jsonl"

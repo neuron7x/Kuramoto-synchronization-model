@@ -8,13 +8,8 @@ heartbeat_interval = 10.0
 max_backoff = 60.0
 
 [risk]
-max_notional = 100000.0
-max_position = 10.0
-max_orders_per_interval = 120
-interval_seconds = 1.0
-kill_switch_limit_multiplier = 1.5
-kill_switch_violation_threshold = 3
-kill_switch_rate_limit_threshold = 3
+profile = "../../risk_profile.toml"
+mode = "paper"
 
 [metrics]
 port = 9000

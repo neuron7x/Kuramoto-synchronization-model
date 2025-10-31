@@ -26,7 +26,11 @@ from typing import Mapping, Protocol
 
 from domain import Order
 
+from execution.risk.profile import load_risk_profile
+
 from .position_sizer import calculate_position_size
+
+DEFAULT_MAX_LEVERAGE = load_risk_profile().max_leverage
 
 try:  # pragma: no cover - optional dependency boundary
     from interfaces.execution import PositionSizer
@@ -39,7 +43,7 @@ except ModuleNotFoundError:  # pragma: no cover
             risk: float,
             price: float,
             *,
-            max_leverage: float = 5.0,
+            max_leverage: float = DEFAULT_MAX_LEVERAGE,
         ) -> float: ...
 
 
@@ -56,7 +60,7 @@ class RiskAwarePositionSizer(PositionSizer):
         risk: float,
         price: float,
         *,
-        max_leverage: float = 5.0,
+        max_leverage: float = DEFAULT_MAX_LEVERAGE,
     ) -> float:
         """Allocate position size based on balance, risk budget, and leverage.
 
@@ -106,7 +110,7 @@ class PositionSizingConstraints:
     volatility_buffer: float = 0.02
     min_order_size: float = 0.0
     max_order_size: float | None = None
-    max_leverage: float = 5.0
+    max_leverage: float = DEFAULT_MAX_LEVERAGE
 
     def __post_init__(self) -> None:
         if self.max_drawdown < 0.0:
@@ -205,7 +209,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
         risk: float,
         price: float,
         *,
-        max_leverage: float = 5.0,
+        max_leverage: float = DEFAULT_MAX_LEVERAGE,
     ) -> float:
         state = PortfolioState(
             balance=balance,
@@ -500,7 +504,7 @@ def position_sizing(
     risk: float,
     price: float,
     *,
-    max_leverage: float = 5.0,
+    max_leverage: float = DEFAULT_MAX_LEVERAGE,
 ) -> float:
     """Convenience wrapper returning risk-aware position size in base units.
 

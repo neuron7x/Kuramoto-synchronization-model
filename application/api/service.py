@@ -80,10 +80,10 @@ from core.utils.metrics import MetricsCollector, get_metrics_collector
 from domain import Signal, SignalAction
 from execution.risk import (
     PostgresKillSwitchStateStore,
-    RiskLimits,
     RiskManager,
     SQLiteKillSwitchStateStore,
 )
+from execution.risk.profile import load_risk_profile
 from observability.audit.trail import get_access_audit_trail
 from observability.health import HealthServer
 from observability.logging import configure_logging
@@ -1532,8 +1532,15 @@ def create_app(
         kill_switch_store = SQLiteKillSwitchStateStore(
             resolved_settings.kill_switch_store_path
         )
+    risk_profile = load_risk_profile()
+    risk_limits = risk_profile.build_risk_limits()
     risk_manager_facade = RiskManagerFacade(
-        RiskManager(RiskLimits(), kill_switch_store=kill_switch_store)
+        RiskManager(
+            risk_limits,
+            kill_switch_store=kill_switch_store,
+            allowed_instruments=risk_profile.allowed_instruments,
+            profile_mode=risk_profile.active_mode,
+        )
     )
     admin_rate_limiter = AdminRateLimiter(
         max_attempts=int(rate_limit_max_attempts),

@@ -41,7 +41,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections import deque
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -813,6 +813,8 @@ class RiskManager(RiskController):
         self,
         limits: RiskLimits,
         *,
+        allowed_instruments: Collection[str] | None = None,
+        profile_mode: str | None = None,
         time_source: Callable[[], float] | None = None,
         audit_logger: ExecutionAuditLogger | None = None,
         kill_switch_store: KillSwitchStateStore | None = None,
@@ -830,6 +832,16 @@ class RiskManager(RiskController):
         self._audit = audit_logger or get_execution_audit_logger()
         self._limit_violation_streak = 0
         self._throttle_violation_streak = 0
+        if allowed_instruments:
+            canonical = {
+                normalize_symbol(symbol)
+                for symbol in allowed_instruments
+                if str(symbol).strip()
+            }
+            self._allowed_instruments: set[str] | None = set(canonical)
+        else:
+            self._allowed_instruments = None
+        self._profile_mode = (profile_mode or "").strip().lower() or None
         self._restore_risk_state()
 
     def _canonical_symbol(self, symbol: str) -> str:
@@ -974,6 +986,7 @@ class RiskManager(RiskController):
             "kill_switch_engaged": self._kill_switch.is_triggered(),
             "consecutive_limit_violations": self._limit_violation_streak,
             "consecutive_rate_limit_violations": self._throttle_violation_streak,
+            "risk_mode": self._profile_mode,
         }
         self._audit.emit(payload)
 
@@ -1042,6 +1055,26 @@ class RiskManager(RiskController):
 
         self._validate_inputs(qty, price)
         canonical_symbol = self._canonical_symbol(symbol)
+        if (
+            self._allowed_instruments is not None
+            and canonical_symbol not in self._allowed_instruments
+        ):
+            reason = (
+                f"Instrument {canonical_symbol} is not permitted under the active risk profile"
+            )
+            self._metrics.record_risk_validation(
+                canonical_symbol, "instrument_restricted"
+            )
+            self._record_risk_audit(
+                symbol=canonical_symbol,
+                side=side.lower(),
+                quantity=float(qty),
+                price=float(price),
+                status="blocked",
+                reason=reason,
+                violation_type="instrument_restriction",
+            )
+            raise LimitViolation(reason)
         try:
             self._kill_switch.guard()
         except RiskError as exc:

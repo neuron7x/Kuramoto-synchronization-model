@@ -12,6 +12,7 @@ from interfaces.live_runner import LiveTradingRunner
 
 
 def _write_config(path: Path, state_dir: Path) -> None:
+    profile_path = Path(__file__).resolve().parents[2] / "risk_profile.toml"
     contents = f"""
     [loop]
     state_dir = "{state_dir.as_posix()}"
@@ -21,10 +22,8 @@ def _write_config(path: Path, state_dir: Path) -> None:
     max_backoff = 0.2
 
     [risk]
-    max_notional = 100000.0
-    max_position = 10.0
-    max_orders_per_interval = 50
-    interval_seconds = 1.0
+    profile = "{profile_path.as_posix()}"
+    mode = "paper"
 
     [[venues]]
     name = "binance"

@@ -1,0 +1,21 @@
+name = "default"
+mode = "paper"
+
+[modes]
+default = "paper"
+allowed = ["paper", "live", "shadow"]
+
+[limits]
+max_notional = 100000.0
+max_position = 10.0
+max_leverage = 5.0
+max_orders_per_interval = 120
+interval_seconds = 1.0
+
+[limits.kill_switch]
+limit_multiplier = 1.5
+violation_threshold = 3
+rate_limit_threshold = 3
+
+[permissions]
+allowed_instruments = []
