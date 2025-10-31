@@ -3,12 +3,32 @@ from __future__ import annotations
 import argparse
 import json
 import random
-from typing import Dict, Tuple
+from typing import Dict, Tuple, TYPE_CHECKING
 
 import networkx as nx
-from deap import algorithms, base, creator, tools
 
 from core.energy import BondType, system_free_energy
+
+
+if TYPE_CHECKING:  # pragma: no cover - imported for static analyzers only
+    from deap import algorithms as _algorithms
+    from deap import base as _base
+    from deap import creator as _creator
+    from deap import tools as _tools
+
+
+def _import_deap():
+    try:
+        from deap import algorithms as _algorithms
+        from deap import base as _base
+        from deap import creator as _creator
+        from deap import tools as _tools
+    except ImportError as exc:  # pragma: no cover - exercised via tests
+        raise RuntimeError(
+            "deap is required for bond evolution. Install it via 'pip install deap'."
+        ) from exc
+
+    return _algorithms, _base, _creator, _tools
 
 
 class MetricsSnapshot:
@@ -77,6 +97,8 @@ def evolve_bonds(
     cx_prob: float = 0.4,
     mut_prob: float = 0.6,
 ) -> nx.DiGraph:
+    algorithms, base, creator, tools = _import_deap()
+
     if not hasattr(creator, "FitnessMin"):
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     if not hasattr(creator, "Individual"):
@@ -182,3 +204,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

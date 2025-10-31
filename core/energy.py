@@ -40,19 +40,44 @@ def _bond_energy(
     latencies: Dict[Tuple[str, str], float],
     coherency: Dict[Tuple[str, str], float],
 ) -> float:
+    """Compute the (dimensionless) contribution for a single directed bond.
+
+    The inputs are defensive against partially populated latency/coherency maps
+    by falling back to conservative defaults.  Values are clipped to the
+    physically meaningful range to avoid runaway gradients when operators feed
+    noisy telemetry into the controller.
+    """
+
     params = BOND_LIBRARY[kind]
 
     latency = float(latencies.get((src, dst), 1.0))
     coherence = float(coherency.get((src, dst), 0.0))
 
+    if not math.isfinite(latency):
+        latency = 1.0
+    if not math.isfinite(coherence):
+        coherence = 0.0
+
     latency = max(latency, 0.0)
     coherence = float(np.clip(coherence, 0.0, 1.0))
 
-    latency_cost = params["latency_weight"] * math.log(1.0 + latency)
+    latency_cost = params["latency_weight"] * math.log1p(latency)
     incoherence_cost = params["coherency_weight"] * (1.0 - coherence) ** 2
     stability_gain = params["stability_bonus"] * coherence
 
     return params["base_energy"] + latency_cost + incoherence_cost - stability_gain
+
+
+def _bounded_resource_usage(value: float) -> float:
+    if not math.isfinite(value):
+        return 1.0
+    return float(np.clip(value, 0.0, 1.0))
+
+
+def _bounded_entropy(value: float) -> float:
+    if not math.isfinite(value) or value < 0.0:
+        return 0.0
+    return value
 
 
 def system_free_energy(
@@ -62,19 +87,24 @@ def system_free_energy(
     resource_usage: float,
     entropy: float,
 ) -> float:
-    internal_energy = 0.0
-    for (src, dst), kind in bonds.items():
-        internal_energy += _bond_energy(src, dst, kind, latencies, coherency)
+    """Compute the scaled Helmholtz free energy for the runtime graph."""
 
-    resource_term = 2.0 * float(np.clip(resource_usage, 0.0, 1.0))
-    entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * max(entropy, 0.0)
+    internal_energy = math.fsum(
+        _bond_energy(src, dst, kind, latencies, coherency)
+        for (src, dst), kind in bonds.items()
+    )
+
+    resource_term = 2.0 * _bounded_resource_usage(resource_usage)
+    entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * _bounded_entropy(entropy)
 
     free_energy = internal_energy + resource_term + entropy_term
     return ENERGY_SCALE * free_energy
 
 
 def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
-    if dt_seconds <= 0:
+    """Return the time derivative of the free energy, guarding against dt→0."""
+
+    if dt_seconds <= 0 or not math.isfinite(dt_seconds):
         return 0.0
     return (F_now - F_prev) / dt_seconds
 

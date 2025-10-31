@@ -1,10 +1,13 @@
 import time
 
+import math
+
 import networkx as nx
 import pytest
 
-from core.energy import delta_free_energy
-from runtime.thermo_controller import ThermoController
+from core.energy import delta_free_energy, system_free_energy
+from evolution.bond_evolver import MetricsSnapshot
+from runtime.thermo_controller import ThermoController, gradient_descent_step
 
 pytestmark = pytest.mark.stability
 
@@ -56,3 +59,53 @@ def test_free_energy_monotonic_drop():
 
     assert F_before is not None and F_after is not None
     assert F_after <= F_before + 1e-12
+
+
+def test_gradient_descent_step_improves_energy():
+    graph = nx.DiGraph()
+    graph.add_node("a", cpu_norm=0.4)
+    graph.add_node("b", cpu_norm=0.4)
+    graph.add_edge("a", "b", type="vdw", latency_norm=0.2, coherency=0.95)
+
+    controller = ThermoController(graph)
+    snapshot = controller.snapshot_metrics()
+
+    bonds_before = {(u, v): data.get("type") for u, v, data in graph.edges(data=True)}
+    energy_before = system_free_energy(
+        bonds_before,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    changed = gradient_descent_step(graph, snapshot, lr=0.05)
+
+    bonds_after = {(u, v): data.get("type") for u, v, data in graph.edges(data=True)}
+    energy_after = system_free_energy(
+        bonds_after,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    assert changed
+    assert energy_after < energy_before
+
+
+def test_system_free_energy_bounds_non_finite_metrics():
+    bonds = {("a", "b"): "vdw"}
+    latencies = {("a", "b"): math.inf}
+    coherency = {("a", "b"): math.nan}
+    snapshot = MetricsSnapshot(latencies, coherency, resource_usage=math.inf, entropy=math.nan)
+
+    energy = system_free_energy(
+        bonds,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    assert math.isfinite(energy)

@@ -239,6 +239,7 @@ graph TB
 
 Компоненти:
 - `core/energy.py`: розрахунок F, dF/dt (із масштабуванням до ~10⁻¹⁸ Дж для числової стабільності)
+- `core/energy.py`: розрахунок F, dF/dt (із масштабуванням до ~10⁻¹⁸ Дж для числової стабільності та валідацією телеметрії)
 - `runtime/thermo_controller.py`: керування топологією сервісів, локальний спуск і повна еволюція
 - `evolution/bond_evolver.py`: генетичний оптимізатор типів зв’язків (covalent / ionic / metallic / vdw / hydrogen)
 - `scripts/benchmark_bonds.py`: бенчмарк стабільності (pulses/s, dF/dt)

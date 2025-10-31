@@ -5,7 +5,12 @@ from typing import Dict, Tuple
 
 import networkx as nx
 
-from core.energy import BondType, delta_free_energy, system_free_energy
+from core.energy import (
+    BondType,
+    ENERGY_SCALE,
+    delta_free_energy,
+    system_free_energy,
+)
 from evolution.bond_evolver import MetricsSnapshot, evolve_bonds
 
 
@@ -43,20 +48,19 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
     )
 
     improved = False
-    improvement_threshold = max(lr, 1e-6) * 1e-12
+    improvement_threshold = ENERGY_SCALE * max(lr, 1e-6)
 
     for (src, dst, data) in list(graph.edges(data=True)):
-        current_type = data.get("type")
+        current_type = bonds.get((src, dst), data.get("type"))
         candidates = [bond for bond in BondType.__args__ if bond != current_type]
 
         best_type = current_type
         best_energy = base_energy
 
         for candidate in candidates:
-            graph.edges[(src, dst)]["type"] = candidate
-            bonds_tmp = {(u, v): attrs.get("type") for u, v, attrs in graph.edges(data=True)}
+            bonds[(src, dst)] = candidate
             energy = system_free_energy(
-                bonds_tmp,
+                bonds,
                 snap.latencies,
                 snap.coherency,
                 snap.resource_usage,
@@ -66,9 +70,11 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
                 best_energy = energy
                 best_type = candidate
 
+        bonds[(src, dst)] = best_type
         graph.edges[(src, dst)]["type"] = best_type
         if best_type != current_type:
             improved = True
+            base_energy = best_energy
 
     return improved
 
