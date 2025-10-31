@@ -97,6 +97,26 @@ def test_structured_logger_operation_failure_logs_error(
     assert error_record.extra_fields["portfolio"] == "alpha"
 
 
+def test_structured_logger_preserves_exc_info(caplog: pytest.LogCaptureFixture) -> None:
+    """Structured logger should forward exc_info instead of serialising it."""
+
+    caplog.set_level(logging.WARNING)
+
+    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-warning")
+    exc = RuntimeError("stream failure")
+
+    logger.warning("Async stream terminated with error", stream="FLAKY", exc_info=exc)
+
+    (record,) = caplog.records[-1:]
+
+    assert record.message == "Async stream terminated with error"
+    assert record.correlation_id == "cid-warning"
+    assert record.extra_fields["stream"] == "FLAKY"
+    assert "exc_info" not in record.extra_fields
+    assert record.exc_info is not None
+    assert record.exc_info[1] is exc
+
+
 def test_configure_logging_emits_json_payload() -> None:
     stream = io.StringIO()
     configure_logging(level="DEBUG", use_json=True, stream=stream)
