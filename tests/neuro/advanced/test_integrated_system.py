@@ -13,7 +13,7 @@ async def test_integrated_system_produces_decision() -> None:
     cfg = NeuroAdvancedConfig()
     system = IntegratedNeuroTradingSystem(cfg)
 
-    prices = np.cumsum(np.random.default_rng(42).normal(0.0, 0.5, size=64)) + 100
+    prices = np.maximum(1.0, np.cumsum(np.random.default_rng(42).normal(0.0, 0.5, size=64)) + 100)
     market_data = {"series": {"EURUSD": prices.tolist()}}
     portfolio_state = {"strategies": ["fractal_momentum", "fractal_mean_reversion"]}
 
@@ -22,6 +22,8 @@ async def test_integrated_system_produces_decision() -> None:
     assert "final_decision" in result
     assert "modulated_candidates" in result
     assert result["fractal_features"]["n"] == len(prices)
+    assert "asset_fractal_features" in result
+    assert set(result["asset_fractal_features"].keys()) == {"EURUSD"}
 
 
 @pytest.mark.asyncio
@@ -29,7 +31,7 @@ async def test_integrated_system_updates_learning_state() -> None:
     system = IntegratedNeuroTradingSystem()
     rng = np.random.default_rng(7)
 
-    prices = np.cumsum(rng.normal(0.0, 0.5, size=64)) + 50
+    prices = np.maximum(1.0, np.cumsum(rng.normal(0.0, 0.5, size=64)) + 50)
     market_data = {"series": {"BTC": prices.tolist()}}
     portfolio_state = {"strategies": ["fractal_momentum"]}
     cycle = await system.process_trading_cycle(market_data, portfolio_state)
