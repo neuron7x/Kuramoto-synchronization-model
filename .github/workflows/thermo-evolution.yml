@@ -1,0 +1,36 @@
+name: Thermodynamic Validation
+on:
+  push:
+    branches: [ "main", "feature/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-energy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install deap networkx pytest numpy
+
+      - name: Run stability tests
+        run: |
+          pytest -q tests/test_energy.py -m stability
+
+      - name: Benchmark bonds / ensure ΔF improvement
+        run: |
+          python scripts/benchmark_bonds.py --target-dF 1e-10
+
+      - name: Evolve bonds and save optimized graph
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+        run: |
+          python evolution/bond_evolver.py --generations 50 --output optimized_graph.json

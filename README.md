@@ -24,6 +24,7 @@ TradePulse to move from research to live execution with confidence.
 - [Quick Start](#-quick-start)
 - [Demo Dashboard](#-demo-dashboard)
 - [System Architecture](#-system-architecture)
+- [Thermodynamic Layer](#thermodynamic-layer-thermocontroller)
 - [Documentation](#-documentation)
 - [Use Cases](#-use-cases)
 - [Configuration](#-configuration)
@@ -229,6 +230,23 @@ graph TB
   style E fill:#f5a623
   style H fill:#bd10e0
 ```
+
+## Thermodynamic Layer (ThermoController)
+
+Ми моделюємо архітектуру TradePulse як термодинамічну систему.  
+Вільна енергія F = U + kT·entropy + α·resource_usage.  
+Мета — мінімізувати F у рантаймі.
+
+Компоненти:
+- `core/energy.py`: розрахунок F, dF/dt
+- `runtime/thermo_controller.py`: керування топологією сервісів, локальний спуск і повна еволюція
+- `evolution/bond_evolver.py`: генетичний оптимізатор типів зв’язків (covalent / ionic / metallic / vdw / hydrogen)
+- `scripts/benchmark_bonds.py`: бенчмарк стабільності (pulses/s, dF/dt)
+
+CI гарантує:
+- |dF/dt| < 1e-12 (сталість)
+- Зменшення F між кроками контролера
+- Генерацію `optimized_graph.json` на main push
 
 ## 📚 Documentation
 
