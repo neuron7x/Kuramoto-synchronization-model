@@ -10,6 +10,7 @@ from contextlib import suppress
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping, Sequence
+from time import monotonic
 
 from core.utils.metrics import get_metrics_collector
 from domain import Order, OrderStatus
@@ -122,6 +123,7 @@ class LiveExecutionLoop:
         self._contexts: Dict[str, _VenueContext] = {}
         self._order_connector: Dict[str, str] = {}
         self._last_reported_fill: Dict[str, float] = {}
+        self._last_stream_event: Dict[str, float] = {}
         self._stop = threading.Event()
         self._activity = threading.Event()
         self._started = False
@@ -762,6 +764,7 @@ class LiveExecutionLoop:
             if event is None:
                 break
             processed = True
+            self._last_stream_event[context.name] = monotonic()
             try:
                 self._handle_stream_event(context, event)
             except Exception as exc:  # pragma: no cover - defensive logging
@@ -787,7 +790,25 @@ class LiveExecutionLoop:
                         "venue": context.name,
                     },
                 )
-            return healthy
+                return False
+
+            last_seen = self._last_stream_event.get(context.name)
+            if last_seen is None:
+                return False
+
+            silence = monotonic() - last_seen
+            if silence >= self._config.fill_poll_interval:
+                self._logger.info(
+                    "Stream healthy but idle; polling outstanding orders",
+                    extra={
+                        "event": "live_loop.stream_idle",
+                        "venue": context.name,
+                        "idle_for": round(silence, 3),
+                    },
+                )
+                return False
+
+            return True
         return False
 
     def _handle_stream_event(self, context: _VenueContext, event: Mapping[str, Any]) -> None:
