@@ -489,7 +489,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
                         "/accounts",
                         params={"limit": "1"},
                         json_payload=None,
-                        headers={},
+                        headers=self._default_headers(),
                     )
                     response = client.get("/accounts", params=params, headers=headers)
                     auth_latency_ms = (time.perf_counter() - start) * 1000.0

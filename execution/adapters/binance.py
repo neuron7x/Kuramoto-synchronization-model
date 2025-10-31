@@ -598,7 +598,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
                         "/api/v3/account",
                         params={},
                         json_payload=None,
-                        headers={},
+                        headers=self._default_headers(),
                     )
                     response = client.get("/api/v3/account", params=params, headers=headers)
                     auth_latency_ms = (time.perf_counter() - start) * 1000.0

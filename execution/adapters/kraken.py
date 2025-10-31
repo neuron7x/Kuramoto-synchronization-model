@@ -445,7 +445,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
                         "/0/private/Balance",
                         params={},
                         json_payload=None,
-                        headers={},
+                        headers=self._default_headers(),
                     )
                     response = client.post(
                         "/0/private/Balance", data=data, headers=headers
@@ -467,7 +467,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
                             "/0/private/GetWebSocketsToken",
                             params={},
                             json_payload=None,
-                            headers={},
+                            headers=self._default_headers(),
                         )
                         token_response = client.post(
                             "/0/private/GetWebSocketsToken",
