@@ -96,11 +96,48 @@ class StructuredLogger:
         self.correlation_id = resolved or generate_correlation_id()
 
     def _log(self, level: int, msg: str, **kwargs: Any) -> None:
-        """Internal logging method with structured fields."""
+        """Internal logging method with structured fields.
+
+        Parameters mirror :meth:`logging.Logger.log` so callers can supply
+        ``exc_info``/``stack_info`` while keeping structured extras.  The
+        previous implementation treated every keyword argument as an
+        ``extra`` field which meant ``exc_info`` ended up as a raw exception
+        object in the JSON payload.  The JSON formatter cannot serialise
+        exceptions which caused the log record to be dropped entirely – the
+        behaviour observed in ``merge_streams`` tests when a stream raised.
+        """
+
+        exc_info = kwargs.pop("exc_info", None)
+        stack_info = kwargs.pop("stack_info", False)
+        stacklevel = kwargs.pop("stacklevel", 1)
+
+        if exc_info:
+            if exc_info is True:
+                exc_info = sys.exc_info()
+            elif isinstance(exc_info, BaseException):
+                exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
+            elif not isinstance(exc_info, tuple):
+                # Defensive normalisation for unexpected types
+                exc_info = sys.exc_info()
+
+        try:
+            resolved_stacklevel = max(int(stacklevel), 1) + 1
+        except Exception:
+            resolved_stacklevel = 2
+
+        extra_fields = kwargs
         extra_data: Dict[str, Any] = {"correlation_id": self.correlation_id}
-        if kwargs:
-            extra_data["extra_fields"] = kwargs
-        self.logger.log(level, msg, extra=extra_data)
+        if extra_fields:
+            extra_data["extra_fields"] = extra_fields
+
+        self.logger.log(
+            level,
+            msg,
+            extra=extra_data,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=resolved_stacklevel,
+        )
 
     def debug(self, msg: str, **kwargs: Any) -> None:
         """Log debug message with structured fields."""
