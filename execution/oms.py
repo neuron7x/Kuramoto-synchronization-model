@@ -34,6 +34,7 @@ class QueuedOrder:
     order: Order
     attempts: int = 0
     last_error: str | None = None
+    latency_trace: Mapping[str, Any] | None = None
 
 
 @dataclass(slots=True)
@@ -113,6 +114,7 @@ class OrderManagementSystem:
                     "order": self._serialize_order(item.order),
                     "attempts": item.attempts,
                     "last_error": item.last_error,
+                    "latency_trace": item.latency_trace,
                 }
                 for item in self._queue
             ],
@@ -163,6 +165,7 @@ class OrderManagementSystem:
                     if item.get("last_error") is not None
                     else None
                 ),
+                item.get("latency_trace"),
             )
             for item in payload.get("queue", [])
         )
@@ -362,8 +365,21 @@ class OrderManagementSystem:
 
     # ------------------------------------------------------------------
     # Queue operations
-    def submit(self, order: Order, *, correlation_id: str) -> Order:
+    def submit(
+        self,
+        order: Order,
+        *,
+        correlation_id: str,
+        latency_trace: Mapping[str, Any] | None = None,
+    ) -> Order:
         """Submit an order, enforcing idempotency with correlation IDs."""
+
+        if isinstance(latency_trace, dict):
+            trace = latency_trace
+        elif latency_trace is None:
+            trace = {}
+        else:
+            trace = dict(latency_trace)
 
         fingerprint = self._fingerprint(order)
         existing_fp = self._fingerprints.get(correlation_id)
@@ -382,6 +398,15 @@ class OrderManagementSystem:
                 self._fingerprints[correlation_id] = fingerprint
             return self._pending[correlation_id]
         self._fingerprints[correlation_id] = fingerprint
+
+        price_received = float(trace.get("price_received_monotonic", time.perf_counter()))
+        signal_decided = float(trace.get("signal_decided_monotonic", price_received))
+        trace.setdefault("price_received_monotonic", price_received)
+        trace.setdefault("signal_decided_monotonic", signal_decided)
+        venue_label = str(trace.get("venue", "unknown"))
+        symbol_label = order.symbol
+
+        risk_checked_at: float | None = None
 
         try:
             if self._compliance is not None:
@@ -440,14 +465,38 @@ class OrderManagementSystem:
             self.risk.validate_order(
                 order.symbol, order.side.value, order.quantity, reference_price
             )
+            risk_checked_at = time.perf_counter()
         except Exception:
             self._fingerprints.pop(correlation_id, None)
             raise
 
-        queued_order = QueuedOrder(correlation_id, order)
+        if risk_checked_at is None:
+            risk_checked_at = time.perf_counter()
+        trace["risk_checked_monotonic"] = risk_checked_at
+        self._metrics.record_signal_to_risk_latency(
+            symbol_label,
+            venue_label,
+            max(0.0, risk_checked_at - signal_decided),
+        )
+
+        queued_order = QueuedOrder(
+            correlation_id, order, latency_trace=trace or None
+        )
         self._queue.append(queued_order)
         self._pending[correlation_id] = order
         self._persist_state()
+        order_enqueued_at = time.perf_counter()
+        trace["order_enqueued_monotonic"] = order_enqueued_at
+        self._metrics.record_risk_to_order_latency(
+            symbol_label,
+            venue_label,
+            max(0.0, order_enqueued_at - risk_checked_at),
+        )
+        self._metrics.record_market_to_order_latency(
+            symbol_label,
+            venue_label,
+            max(0.0, order_enqueued_at - price_received),
+        )
         self._record_ledger_event(
             "order_queued",
             order=order,

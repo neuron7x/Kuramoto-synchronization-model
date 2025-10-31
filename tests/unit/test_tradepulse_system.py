@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 import pandas as pd
@@ -81,12 +81,23 @@ class FakeLiveLoop:
         self.last_order: Order | None = None
         self.last_correlation_id: str | None = None
 
+        self.last_latency_trace: Mapping[str, Any] | None = None
+
     def submit_order(
-        self, venue: str, order: Order, *, correlation_id: str
+        self,
+        venue: str,
+        order: Order,
+        *,
+        correlation_id: str,
+        latency_trace: Mapping[str, Any] | None = None,
     ) -> Order:
         self.last_venue = venue
         self.last_order = order
         self.last_correlation_id = correlation_id
+        if latency_trace is not None:
+            self.last_latency_trace = dict(latency_trace)
+        else:
+            self.last_latency_trace = None
         return order
 
 
@@ -203,6 +214,13 @@ def test_submit_signal_exit_defaults(
     assert order.order_type is OrderType.MARKET
     expected_correlation = f"{signal.symbol}-{int(signal.timestamp.timestamp() * 1e9)}"
     assert fake_loop.last_correlation_id == expected_correlation
+    trace = fake_loop.last_latency_trace
+    assert trace is not None
+    assert trace["symbol"] == "BTCUSDT"
+    assert trace["venue"] == "binance"
+    assert "price_received_monotonic" in trace
+    assert "signal_decided_monotonic" in trace
+    assert "signal_submitted_monotonic" in trace
 
     limit_order = system.submit_signal(
         signal,

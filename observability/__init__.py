@@ -85,6 +85,7 @@ from .model_monitoring import (  # noqa: F401
     ResourceSnapshot,
 )
 from .release_gates import (  # noqa: F401
+    LatencyBudget,
     ReleaseGateEvaluator,
     ReleaseGateResult,
 )
@@ -177,6 +178,7 @@ __all__ = [
     "ProfileCollector",
     "ProfileReport",
     "ProfileSectionResult",
+    "LatencyBudget",
     "ReleaseGateEvaluator",
     "ReleaseGateResult",
     "DriftDetector",

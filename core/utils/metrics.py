@@ -6,6 +6,7 @@ performance-sensitive operations.
 """
 from __future__ import annotations
 
+import logging
 import math
 import multiprocessing
 import os
@@ -148,6 +149,7 @@ class MetricsCollector:
                     # If collector registration fails we still expose custom metrics
                     # rather than breaking application startup.
                     pass
+        self._latency_logger = logging.getLogger("tradepulse.latency")
         self._equity_curve_max_points = int(
             os.getenv("TRADEPULSE_METRICS_MAX_EQUITY_POINTS", "1024")
         )
@@ -603,6 +605,34 @@ class MetricsCollector:
             registry=registry,
         )
 
+        self.market_to_signal_latency_quantiles = Gauge(
+            "tradepulse_market_to_signal_latency_quantiles_seconds",
+            "Latency from market price ingestion until signal decision",
+            ["symbol", "venue", "quantile"],
+            registry=registry,
+        )
+
+        self.signal_to_risk_latency_quantiles = Gauge(
+            "tradepulse_signal_to_risk_latency_quantiles_seconds",
+            "Latency from signal decision until risk controls complete",
+            ["symbol", "venue", "quantile"],
+            registry=registry,
+        )
+
+        self.risk_to_order_latency_quantiles = Gauge(
+            "tradepulse_risk_to_order_latency_quantiles_seconds",
+            "Latency from risk completion until order formation",
+            ["symbol", "venue", "quantile"],
+            registry=registry,
+        )
+
+        self.market_to_order_latency_quantiles = Gauge(
+            "tradepulse_market_to_order_latency_quantiles_seconds",
+            "End-to-end latency from market price ingestion until order formation",
+            ["symbol", "venue", "quantile"],
+            registry=registry,
+        )
+
         self.risk_validation_total = Counter(
             "tradepulse_risk_validations_total",
             "Total risk validation outcomes",
@@ -807,6 +837,18 @@ class MetricsCollector:
         )
         self._signal_to_fill_latency_samples: Dict[
             tuple[str, str, str], deque[float]
+        ] = defaultdict(lambda: deque(maxlen=256))
+        self._market_to_signal_latency_samples: Dict[
+            tuple[str, str], deque[float]
+        ] = defaultdict(lambda: deque(maxlen=256))
+        self._signal_to_risk_latency_samples: Dict[
+            tuple[str, str], deque[float]
+        ] = defaultdict(lambda: deque(maxlen=256))
+        self._risk_to_order_latency_samples: Dict[
+            tuple[str, str], deque[float]
+        ] = defaultdict(lambda: deque(maxlen=256))
+        self._market_to_order_latency_samples: Dict[
+            tuple[str, str], deque[float]
         ] = defaultdict(lambda: deque(maxlen=256))
         self._database_size_cache: Dict[tuple[str, str], float] = {}
 
@@ -1141,36 +1183,40 @@ class MetricsCollector:
                 indicator_name=indicator_name, metric=metric_label
             ).set(numeric)
 
+    def _compute_quantiles(self, values: Sequence[float]) -> Dict[float, float]:
+        quantiles = (0.5, 0.95, 0.99)
+        if _NUMPY_AVAILABLE and np is not None and _accelerated_quantiles is not None:
+            arr = np.fromiter(values, dtype=float, count=len(values))
+            if arr.size == 0:
+                return {}
+            accelerated = _accelerated_quantiles(arr, quantiles)
+            return {
+                q: float(value)
+                for q, value in zip(quantiles, accelerated, strict=False)
+            }
+        return _fallback_quantiles(list(values), quantiles)
+
     def _update_latency_quantiles(
         self,
         gauge: Gauge,
         labels: Dict[str, str],
         samples: deque[float],
-    ) -> None:
+    ) -> Dict[float, float]:
         if not self._enabled or not samples:
-            return
+            return {}
         values = list(map(float, samples))
         if not values:
-            return
+            return {}
 
-        quantiles = (0.5, 0.95, 0.99)
-        if _NUMPY_AVAILABLE and np is not None and _accelerated_quantiles is not None:
-            arr = np.fromiter(values, dtype=float, count=len(values))
-            if arr.size == 0:
-                return
-            accelerated = _accelerated_quantiles(arr, quantiles)
-            quantile_values = {
-                q: float(value)
-                for q, value in zip(quantiles, accelerated, strict=False)
-            }
-        else:
-            quantile_values = _fallback_quantiles(values, quantiles)
+        quantile_values = self._compute_quantiles(values)
 
-        for quantile, name in zip(quantiles, ("p50", "p95", "p99")):
+        for quantile, name in zip((0.5, 0.95, 0.99), ("p50", "p95", "p99")):
             value = quantile_values.get(quantile)
             if value is None:
                 continue
             gauge.labels(**labels, quantile=name).set(value)
+
+        return quantile_values
 
     # ------------------------------------------------------------------
     # Model observability helpers
@@ -1718,6 +1764,120 @@ class MetricsCollector:
             samples,
         )
 
+    def _log_latency_passport(
+        self,
+        stage: str,
+        labels: Mapping[str, str],
+        quantiles: Mapping[float, float] | None,
+    ) -> None:
+        if not quantiles:
+            return
+        payload: dict[str, object] = {
+            "event": "latency.passport",
+            "stage": stage,
+        }
+        payload.update({key: value for key, value in labels.items()})
+        mapping = {
+            0.5: "p50_ms",
+            0.95: "p95_ms",
+            0.99: "p99_ms",
+        }
+        for quantile, field in mapping.items():
+            value = quantiles.get(quantile)
+            if value is None:
+                continue
+            payload[field] = round(float(value) * 1000.0, 3)
+        if len(payload) <= 2:
+            return
+        self._latency_logger.info(
+            "Execution latency passport update",
+            extra={"latency_passport": payload},
+        )
+
+    def record_market_to_signal_latency(
+        self, symbol: str, venue: str, duration: float
+    ) -> None:
+        """Record latency between market price ingestion and signal decision."""
+
+        if not self._enabled:
+            return
+
+        norm_symbol = self._normalise_label(symbol, default="unknown")
+        norm_venue = self._normalise_label(venue, default="unknown")
+        bounded = max(0.0, float(duration))
+        samples = self._market_to_signal_latency_samples[(norm_symbol, norm_venue)]
+        samples.append(bounded)
+        labels = {"symbol": norm_symbol, "venue": norm_venue}
+        quantiles = self._update_latency_quantiles(
+            self.market_to_signal_latency_quantiles,
+            labels,
+            samples,
+        )
+        self._log_latency_passport("market_to_signal", labels, quantiles)
+
+    def record_signal_to_risk_latency(
+        self, symbol: str, venue: str, duration: float
+    ) -> None:
+        """Record latency between signal decision and risk completion."""
+
+        if not self._enabled:
+            return
+
+        norm_symbol = self._normalise_label(symbol, default="unknown")
+        norm_venue = self._normalise_label(venue, default="unknown")
+        bounded = max(0.0, float(duration))
+        samples = self._signal_to_risk_latency_samples[(norm_symbol, norm_venue)]
+        samples.append(bounded)
+        labels = {"symbol": norm_symbol, "venue": norm_venue}
+        quantiles = self._update_latency_quantiles(
+            self.signal_to_risk_latency_quantiles,
+            labels,
+            samples,
+        )
+        self._log_latency_passport("signal_to_risk", labels, quantiles)
+
+    def record_risk_to_order_latency(
+        self, symbol: str, venue: str, duration: float
+    ) -> None:
+        """Record latency between completed risk checks and order formation."""
+
+        if not self._enabled:
+            return
+
+        norm_symbol = self._normalise_label(symbol, default="unknown")
+        norm_venue = self._normalise_label(venue, default="unknown")
+        bounded = max(0.0, float(duration))
+        samples = self._risk_to_order_latency_samples[(norm_symbol, norm_venue)]
+        samples.append(bounded)
+        labels = {"symbol": norm_symbol, "venue": norm_venue}
+        quantiles = self._update_latency_quantiles(
+            self.risk_to_order_latency_quantiles,
+            labels,
+            samples,
+        )
+        self._log_latency_passport("risk_to_order", labels, quantiles)
+
+    def record_market_to_order_latency(
+        self, symbol: str, venue: str, duration: float
+    ) -> None:
+        """Record end-to-end latency from market price ingestion until order formation."""
+
+        if not self._enabled:
+            return
+
+        norm_symbol = self._normalise_label(symbol, default="unknown")
+        norm_venue = self._normalise_label(venue, default="unknown")
+        bounded = max(0.0, float(duration))
+        samples = self._market_to_order_latency_samples[(norm_symbol, norm_venue)]
+        samples.append(bounded)
+        labels = {"symbol": norm_symbol, "venue": norm_venue}
+        quantiles = self._update_latency_quantiles(
+            self.market_to_order_latency_quantiles,
+            labels,
+            samples,
+        )
+        self._log_latency_passport("market_to_order", labels, quantiles)
+
     def record_signal_to_fill_latency(
         self,
         strategy: str,
@@ -1738,6 +1898,56 @@ class MetricsCollector:
             {"strategy": strategy, "exchange": exchange, "symbol": symbol},
             samples,
         )
+
+    def execution_latency_passport(self) -> dict[str, dict[str, float]]:
+        """Return aggregated latency quantiles for the execution pipeline."""
+
+        if not self._enabled:
+            return {}
+
+        stages: list[tuple[str, Dict[tuple[str, str], deque[float]]]] = [
+            ("market_to_signal", self._market_to_signal_latency_samples),
+            ("signal_to_risk", self._signal_to_risk_latency_samples),
+            ("risk_to_order", self._risk_to_order_latency_samples),
+            ("market_to_order", self._market_to_order_latency_samples),
+        ]
+        passport: dict[str, dict[str, float]] = {}
+        for stage, store in stages:
+            combined: list[float] = []
+            for samples in store.values():
+                combined.extend(float(value) for value in samples)
+            if not combined:
+                continue
+            quantiles = self._compute_quantiles(combined)
+            if not quantiles:
+                continue
+            passport[stage] = {
+                "p50_ms": round(quantiles.get(0.5, 0.0) * 1000.0, 3),
+                "p95_ms": round(quantiles.get(0.95, 0.0) * 1000.0, 3),
+                "p99_ms": round(quantiles.get(0.99, 0.0) * 1000.0, 3),
+            }
+        return passport
+
+    def execution_latency_samples_ms(self) -> dict[str, list[float]]:
+        """Return raw latency samples in milliseconds for release gating."""
+
+        if not self._enabled:
+            return {}
+
+        stages: list[tuple[str, Dict[tuple[str, str], deque[float]]]] = [
+            ("market_to_signal", self._market_to_signal_latency_samples),
+            ("signal_to_risk", self._signal_to_risk_latency_samples),
+            ("risk_to_order", self._risk_to_order_latency_samples),
+            ("market_to_order", self._market_to_order_latency_samples),
+        ]
+        samples_ms: dict[str, list[float]] = {}
+        for stage, store in stages:
+            aggregated: list[float] = []
+            for values in store.values():
+                aggregated.extend(float(value) * 1000.0 for value in values)
+            if aggregated:
+                samples_ms[stage] = aggregated
+        return samples_ms
 
     def set_strategy_score(self, strategy_name: str, score: float) -> None:
         """Record the latest strategy score."""

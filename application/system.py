@@ -367,6 +367,7 @@ class TradePulseSystem:
 
         prices = aligned[price_col].to_numpy(dtype=float)
         start = perf_counter()
+        decision_start = start
         with self._metrics.measure_signal_generation(strategy_name) as ctx:
             try:
                 raw_scores = np.asarray(strategy(prices), dtype=float)
@@ -394,7 +395,18 @@ class TradePulseSystem:
                         action = SignalAction.HOLD
 
                     confidence = float(np.clip(abs(score), 0.0, 1.0))
-                    metadata = {"score": float(score)}
+                    latency_trace: dict[str, float | str] = {
+                        "price_received_monotonic": decision_start,
+                        "signal_decided_monotonic": perf_counter(),
+                        "symbol": resolved_symbol,
+                        "strategy": strategy_name,
+                    }
+                    if self._last_venue is not None:
+                        latency_trace.setdefault("venue", self._last_venue)
+                    metadata = {
+                        "score": float(score),
+                        "latency_trace": latency_trace,
+                    }
                     signals.append(
                         Signal(
                             symbol=resolved_symbol,
@@ -482,6 +494,33 @@ class TradePulseSystem:
             order_type=order_type,
         )
 
+        metadata = signal.metadata or {}
+        raw_trace = metadata.get("latency_trace")
+        if isinstance(raw_trace, dict):
+            latency_trace = raw_trace
+        elif raw_trace is None:
+            latency_trace = {}
+            metadata["latency_trace"] = latency_trace
+        else:
+            latency_trace = dict(raw_trace)
+            metadata["latency_trace"] = latency_trace
+
+        now = perf_counter()
+        price_received = float(latency_trace.get("price_received_monotonic", now))
+        signal_decided = float(
+            latency_trace.get("signal_decided_monotonic", price_received)
+        )
+        latency_trace.setdefault("price_received_monotonic", price_received)
+        latency_trace.setdefault("signal_decided_monotonic", signal_decided)
+        latency_trace["signal_submitted_monotonic"] = now
+        latency_trace["symbol"] = signal.symbol
+        latency_trace["venue"] = venue
+
+        duration_market_to_signal = max(0.0, signal_decided - price_received)
+        self._metrics.record_market_to_signal_latency(
+            signal.symbol, venue, duration_market_to_signal
+        )
+
         loop = self.ensure_live_loop()
         derived_correlation = (
             correlation_id
@@ -489,7 +528,10 @@ class TradePulseSystem:
         )
         try:
             submitted = loop.submit_order(
-                venue_key, order, correlation_id=derived_correlation
+                venue_key,
+                order,
+                correlation_id=derived_correlation,
+                latency_trace=latency_trace,
             )
         except Exception as exc:
             self._last_execution_error = str(exc)

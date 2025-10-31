@@ -80,3 +80,26 @@ def test_compliance_and_checklist_gates() -> None:
     violation_result = evaluator.evaluate_compliance(failing_reports)
     assert violation_result.passed is False
     assert "blocked" in str(violation_result.reason)
+
+
+def test_execution_pipeline_gate_enforces_stage_metrics() -> None:
+    evaluator = ReleaseGateEvaluator()
+    healthy_samples = {
+        "market_to_signal": [20.0, 22.0, 18.0],
+        "signal_to_risk": [8.0, 9.0, 10.0],
+        "risk_to_order": [12.0, 15.0, 18.0],
+        "market_to_order": [40.0, 42.0, 44.0],
+    }
+
+    result = evaluator.evaluate_execution_pipeline(healthy_samples)
+    assert result.passed is True
+
+    missing_stage = evaluator.evaluate_execution_pipeline({"market_to_signal": [10.0]})
+    assert missing_stage.passed is False
+    assert "missing" in (missing_stage.reason or "")
+
+    breaching_samples = dict(healthy_samples)
+    breaching_samples["risk_to_order"] = [100.0]
+    breach_result = evaluator.evaluate_execution_pipeline(breaching_samples)
+    assert breach_result.passed is False
+    assert "risk_to_order" in (breach_result.reason or "")

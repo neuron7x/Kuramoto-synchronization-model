@@ -34,6 +34,24 @@ class ReleaseGateResult:
         )
 
 
+@dataclass(slots=True, frozen=True)
+class LatencyBudget:
+    """Latency thresholds that must be satisfied for a stage."""
+
+    median_ms: float
+    p95_ms: float
+    max_ms: float
+
+
+def _default_execution_latency_budgets() -> dict[str, LatencyBudget]:
+    return {
+        "market_to_signal": LatencyBudget(25.0, 60.0, 90.0),
+        "signal_to_risk": LatencyBudget(12.0, 30.0, 60.0),
+        "risk_to_order": LatencyBudget(18.0, 45.0, 75.0),
+        "market_to_order": LatencyBudget(45.0, 90.0, 150.0),
+    }
+
+
 @dataclass(slots=True)
 class ReleaseGateEvaluator:
     """Evaluate release criteria for latency, compliance, and checklists."""
@@ -41,6 +59,9 @@ class ReleaseGateEvaluator:
     latency_median_target_ms: float = 40.0
     latency_p95_target_ms: float = 80.0
     latency_max_target_ms: float = 150.0
+    execution_stage_budgets: Mapping[str, LatencyBudget] = field(
+        default_factory=_default_execution_latency_budgets
+    )
 
     def evaluate_latency(self, samples_ms: Sequence[float]) -> ReleaseGateResult:
         """Validate latency distribution against configured thresholds."""
@@ -86,6 +107,49 @@ class ReleaseGateEvaluator:
                     f"max latency {max_latency:.3f}ms exceeds hard limit"
                     f" {self.latency_max_target_ms:.3f}ms"
                 ),
+                metrics=metrics,
+            )
+        return ReleaseGateResult(name, True, metrics=metrics)
+
+    def evaluate_execution_pipeline(
+        self, stage_samples_ms: Mapping[str, Sequence[float]]
+    ) -> ReleaseGateResult:
+        """Validate latency budgets for each execution pipeline stage."""
+
+        name = "execution_pipeline_latency"
+        metrics: MutableMapping[str, float] = {}
+        failures: list[str] = []
+        for stage, budget in self.execution_stage_budgets.items():
+            samples = stage_samples_ms.get(stage)
+            if not samples:
+                failures.append(f"{stage} missing samples")
+                continue
+            median = _percentile(samples, 50.0)
+            p95 = _percentile(samples, 95.0)
+            max_latency = max(samples)
+            metrics[f"{stage}_median_ms"] = round(median, 3)
+            metrics[f"{stage}_p95_ms"] = round(p95, 3)
+            metrics[f"{stage}_max_ms"] = round(max_latency, 3)
+            metrics[f"{stage}_count"] = float(len(samples))
+
+            if median > budget.median_ms:
+                failures.append(
+                    f"{stage} median {median:.3f}ms exceeds {budget.median_ms:.3f}ms"
+                )
+            if p95 > budget.p95_ms:
+                failures.append(
+                    f"{stage} p95 {p95:.3f}ms exceeds {budget.p95_ms:.3f}ms"
+                )
+            if max_latency > budget.max_ms:
+                failures.append(
+                    f"{stage} max {max_latency:.3f}ms exceeds {budget.max_ms:.3f}ms"
+                )
+
+        if failures:
+            return ReleaseGateResult(
+                name,
+                False,
+                reason="; ".join(failures),
                 metrics=metrics,
             )
         return ReleaseGateResult(name, True, metrics=metrics)

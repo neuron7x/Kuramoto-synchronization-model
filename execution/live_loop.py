@@ -8,7 +8,7 @@ import threading
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Mapping, MutableMapping
+from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping
 
 from core.utils.metrics import get_metrics_collector
 from domain import Order
@@ -205,13 +205,24 @@ class LiveExecutionLoop:
                 )
         self._started = False
 
-    def submit_order(self, venue: str, order: Order, *, correlation_id: str) -> Order:
+    def submit_order(
+        self,
+        venue: str,
+        order: Order,
+        *,
+        correlation_id: str,
+        latency_trace: Mapping[str, Any] | None = None,
+    ) -> Order:
         """Submit an order via the underlying OMS."""
 
         context = self._contexts.get(venue)
         if context is None:
             raise LookupError(f"Unknown venue: {venue}")
-        submitted = context.oms.submit(order, correlation_id=correlation_id)
+        submitted = context.oms.submit(
+            order,
+            correlation_id=correlation_id,
+            latency_trace=latency_trace,
+        )
         self._activity.set()
         self._logger.debug(
             "Order enqueued",

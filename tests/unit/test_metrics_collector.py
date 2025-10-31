@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from collections import deque
+import logging
 from typing import Iterable
 
 import numpy as np
@@ -436,6 +437,33 @@ def test_record_equity_curve_downsamples_and_resets() -> None:
         "tradepulse_backtest_equity_curve",
         {"strategy": "trend", "step": "2"},
     ) == 30.0
+
+
+def test_execution_latency_passport_and_logging(caplog: pytest.LogCaptureFixture) -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    caplog.set_level(logging.INFO, logger="tradepulse.latency")
+
+    collector.record_market_to_signal_latency("BTCUSDT", "BINANCE", 0.012)
+    collector.record_signal_to_risk_latency("BTCUSDT", "BINANCE", 0.004)
+    collector.record_risk_to_order_latency("BTCUSDT", "BINANCE", 0.006)
+    collector.record_market_to_order_latency("BTCUSDT", "BINANCE", 0.025)
+
+    p95_market_to_signal = _sample_value(
+        registry,
+        "tradepulse_market_to_signal_latency_quantiles_seconds",
+        {"symbol": "BTCUSDT", "venue": "BINANCE", "quantile": "p95"},
+    )
+    assert p95_market_to_signal is not None
+
+    passport = collector.execution_latency_passport()
+    assert "market_to_order" in passport
+    assert passport["market_to_order"]["p95_ms"] >= 25.0
+
+    samples = collector.execution_latency_samples_ms()
+    assert samples["market_to_signal"]
+    assert any("latency_passport" in record.__dict__ for record in caplog.records)
 
 
 @pytest.mark.parametrize(
