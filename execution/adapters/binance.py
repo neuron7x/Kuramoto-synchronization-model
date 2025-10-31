@@ -322,8 +322,6 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         return positions
 
     def _stream_url(self) -> str | None:
-        if self._ws_factory is None:
-            return None
         response = self._request(
             "POST", "/api/v3/userDataStream", params={}, signed=False
         )

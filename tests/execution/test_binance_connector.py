@@ -158,3 +158,40 @@ def test_binance_stream_emits_fill_event() -> None:
     assert event["order_id"] == "555"
     assert connector.stream_is_healthy()
     connector.disconnect()
+
+
+def test_binance_stream_emits_balance_event() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST" and request.url.path == "/api/v3/userDataStream":
+            return httpx.Response(200, json={"listenKey": "abc123"})
+        raise AssertionError(f"Unexpected request: {request.method} {request.url}")
+
+    message = json.dumps(
+        {
+            "e": "outboundAccountPosition",
+            "E": 1660000001,
+            "B": [
+                {"a": "BTC", "f": "0.25", "l": "0.10"},
+                {"a": "USDT", "f": "1000", "l": "0"},
+            ],
+        }
+    )
+
+    ws = DummyWebSocket([message])
+    connector = BinanceExecutionConnector(
+        sandbox=True,
+        enable_stream=True,
+        transport=httpx.MockTransport(handler),
+        ws_factory=lambda url: ws,
+    )
+    connector.connect(credentials={"API_KEY": "test-key", "API_SECRET": "test-secret"})
+
+    event = connector.next_event(timeout=1.0)
+    assert event is not None
+    assert event["type"] == "balance"
+    balances = {entry["asset"]: entry for entry in event["balances"]}
+    assert balances["BTC"]["free"] == pytest.approx(0.25)
+    assert balances["BTC"]["locked"] == pytest.approx(0.10)
+    assert balances["USDT"]["free"] == pytest.approx(1000)
+
+    connector.disconnect()

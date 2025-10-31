@@ -258,8 +258,6 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         return positions
 
     def _stream_url(self) -> str | None:
-        if self._ws_factory is None:
-            return None
         token_response = self._request(
             "POST", "/0/private/GetWebSocketsToken", params={}, signed=True
         )

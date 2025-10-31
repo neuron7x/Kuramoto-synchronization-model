@@ -320,8 +320,6 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         return positions
 
     def _stream_url(self) -> str | None:
-        if self._ws_factory is None:
-            return None
         return self._stream_base
 
     def _handle_stream_message(self, payload: Mapping[str, Any]) -> None:

@@ -139,7 +139,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         self._logger = logging.getLogger(f"execution.connector.{name}")
         self._http_client = http_client
         self._owns_client = http_client is None
-        self._ws_factory = ws_factory
+        self._ws_factory = ws_factory or self._default_ws_factory
         self._rate_limiter = SlidingWindowRateLimiter(
             max_requests=max(rate_limit[0], 1), interval_seconds=max(rate_limit[1], 0.1)
         )
@@ -377,11 +377,6 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
     # ------------------------------------------------------------------
     # Streaming helpers
     def _start_stream(self, url: str) -> None:
-        if self._ws_factory is None:
-            self._logger.debug(
-                "Streaming disabled because no WebSocket factory was provided"
-            )
-            return
         self._ws_stop.clear()
         self._ws_thread = threading.Thread(
             target=self._run_stream_loop,
@@ -390,6 +385,24 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
             daemon=True,
         )
         self._ws_thread.start()
+
+    @staticmethod
+    def _default_ws_factory(url: str) -> AsyncContextManager[Any]:
+        if not url:
+            raise RuntimeError("WebSocket URL is required for streaming support")
+        try:
+            from websockets.asyncio.client import connect
+        except Exception as exc:  # pragma: no cover - optional dependency guard
+            raise RuntimeError(
+                "websockets>=15.0 is required for market data streaming"
+            ) from exc
+        return connect(
+            url,
+            ping_interval=20.0,
+            ping_timeout=20.0,
+            close_timeout=5.0,
+            max_size=2**20,
+        )
 
     def _run_stream_loop(self, url: str) -> None:
         loop = asyncio.new_event_loop()
