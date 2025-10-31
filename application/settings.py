@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from core.config.template_manager import ConfigTemplateManager
     from core.utils.security import SecretDetector
     from src.audit.audit_logger import AuditLogger
+    from src.security import AccessController
 
 from pydantic import (
     AnyUrl,
@@ -380,6 +381,13 @@ class AdminApiSettings(BaseSettings):
         default_factory=lambda: (ConfigNamespaceSettings(name="system"),),
         description="Isolated namespaces used for configuration and secret segregation.",
     )
+    access_policy_path: Path = Field(
+        Path("configs/security/access_policy.yaml"),
+        description=(
+            "Filesystem path to the access control policy defining privileged "
+            "operations."
+        ),
+    )
     kill_switch_store_path: Path = Field(
         Path("state/kill_switch_state.sqlite"),
         description="Filesystem path used to persist the risk kill-switch state.",
@@ -469,6 +477,7 @@ class AdminApiSettings(BaseSettings):
         self,
         *,
         audit_logger_factory: Callable[["SecretManager"], "AuditLogger"] | None = None,
+        access_controller: "AccessController" | None = None,
     ) -> "SecretManager":
         """Return a configured secret manager for administrative components."""
 
@@ -518,7 +527,19 @@ class AdminApiSettings(BaseSettings):
                 refresh_interval_seconds=refresh_interval,
             )
 
-        return SecretManager(secrets, audit_logger_factory=audit_logger_factory)
+        return SecretManager(
+            secrets,
+            audit_logger_factory=audit_logger_factory,
+            access_controller=access_controller,
+        )
+
+    def build_access_controller(self) -> "AccessController":
+        """Instantiate the access controller defined by the configured policy."""
+
+        from src.security import AccessController, AccessPolicy
+
+        policy = AccessPolicy.load(self.access_policy_path)
+        return AccessController(policy)
 
     def build_configuration_store(
         self,

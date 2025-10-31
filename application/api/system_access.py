@@ -46,6 +46,7 @@ from observability.notifications import (
     SlackNotifier,
 )
 from src.admin.remote_control import AdminIdentity
+from src.security import AccessDeniedError
 
 from application.api.middleware import AccessLogMiddleware
 
@@ -412,7 +413,23 @@ class SystemAccess:
             )
             return
         connector = self._system.get_connector(venue)
-        credentials = self._system.connector_credentials(venue)
+        actor = self._actor(identity)
+        roles = identity.roles if identity is not None else ()
+        try:
+            credentials = self._system.connector_credentials(
+                venue, actor=actor, roles=roles
+            )
+        except AccessDeniedError as exc:
+            self._log(
+                "warning",
+                "system.connector.access_denied",
+                identity=identity,
+                venue=venue,
+            )
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
         self._log("debug", "system.connector.connect", identity=identity, venue=venue)
         try:
             connector.connect(credentials)

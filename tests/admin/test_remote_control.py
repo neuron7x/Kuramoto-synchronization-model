@@ -3,11 +3,14 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Iterator
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
 from starlette.requests import Request as StarletteRequest
+
+import yaml
 
 from execution.risk import RiskLimits, RiskManager
 from src.admin.remote_control import (
@@ -20,6 +23,7 @@ from src.admin.remote_control import (
 )
 from src.audit.audit_logger import AuditLogger, AuditRecord
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
+from src.security import AccessController, AccessPolicy
 
 RemoteControlBundle = tuple[TestClient, RiskManager, list[AuditRecord], AuditLogger]
 
@@ -98,7 +102,9 @@ def test_kill_switch_endpoint_reflects_facade_state() -> None:
         def __init__(self) -> None:
             self.reasons: list[str] = []
 
-        def engage_kill_switch(self, reason: str) -> KillSwitchState:
+        def engage_kill_switch(
+            self, reason: str, *, actor: str = "system", roles: tuple[str, ...] = ()
+        ) -> KillSwitchState:
             self.reasons.append(reason)
             return KillSwitchState(engaged=False, reason=reason, already_engaged=False)
 
@@ -264,6 +270,51 @@ def test_permission_dependency_is_respected() -> None:
     client = TestClient(app)
     response = client.post("/admin/kill-switch", json={"reason": "manual"})
     assert response.status_code == 403
+
+
+def test_kill_switch_endpoint_requires_access_policy(tmp_path: Path) -> None:
+    records: list[AuditRecord] = []
+    audit_logger = AuditLogger(
+        secret="unit-test-secret",
+        sink=records.append,
+        clock=lambda: datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(
+        yaml.safe_dump(
+            {
+                "subjects": {"system": {"permissions": ["reset_kill_switch"]}},
+                "roles": {"observer": {"permissions": ["read_kill_switch_state"]}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    controller = AccessController(AccessPolicy.load(policy_path))
+    risk_manager = RiskManager(RiskLimits())
+    facade = RiskManagerFacade(risk_manager, access_controller=controller)
+
+    async def identity(_: Request) -> AdminIdentity:
+        return AdminIdentity(subject="alice", roles=("observer",))
+
+    app = FastAPI()
+    app.include_router(
+        create_remote_control_router(
+            facade,
+            audit_logger,
+            identity_dependency=identity,
+        )
+    )
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/admin/kill-switch", json={"reason": "manual"}
+        )
+    finally:
+        client.close()
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert risk_manager.kill_switch.is_triggered() is False
+    assert records == []
 
 
 def _request_from_headers(headers: dict[str, str]) -> Request:

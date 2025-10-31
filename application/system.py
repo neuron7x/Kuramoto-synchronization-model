@@ -29,6 +29,7 @@ from domain import Order, OrderSide, OrderType, Signal, SignalAction
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import RiskLimits, RiskManager
+from src.security import AccessController, AccessDeniedError
 
 __all__ = [
     "ExchangeAdapterConfig",
@@ -102,6 +103,7 @@ class TradePulseSystem:
         data_ingestor: DataIngestor | None = None,
         async_data_ingestor: AsyncDataIngestor | None = None,
         risk_manager: RiskManager | None = None,
+        access_controller: AccessController | None = None,
     ) -> None:
         if not config.venues:
             raise ValueError("At least one execution venue must be configured")
@@ -119,6 +121,7 @@ class TradePulseSystem:
         self._pipeline = SignalFeaturePipeline(config.feature_pipeline)
         self._risk_manager = risk_manager or RiskManager(config.risk_limits)
         self._metrics = get_metrics_collector()
+        self._access_controller = access_controller
         self._clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
 
         connectors: MutableMapping[str, ExecutionConnector] = {}
@@ -189,10 +192,32 @@ class TradePulseSystem:
         except KeyError as exc:
             raise LookupError(f"Unknown execution venue: {venue}") from exc
 
-    def connector_credentials(self, venue: str) -> Mapping[str, str] | None:
+    def connector_credentials(
+        self,
+        venue: str,
+        *,
+        actor: str | None = None,
+        roles: Iterable[str] | None = None,
+    ) -> Mapping[str, str] | None:
         """Return credentials associated with ``venue`` if configured."""
 
-        return self._credentials.get(venue.lower())
+        creds = self._credentials.get(venue.lower())
+        if creds is None:
+            return None
+        controller = self._access_controller
+        if controller is not None:
+            try:
+                controller.require(
+                    "read_exchange_keys",
+                    actor=actor,
+                    roles=roles or (),
+                    resource=venue.lower(),
+                )
+            except AccessDeniedError as exc:
+                raise AccessDeniedError(
+                    f"Actor '{actor or 'system'}' lacks permission to read credentials for {venue}"
+                ) from exc
+        return creds
 
     @property
     def last_ingestion_started_at(self) -> datetime | None:

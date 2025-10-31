@@ -6,12 +6,15 @@ import logging
 import threading
 import time
 from contextlib import contextmanager
+from collections.abc import Iterable
 from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Mapping
 
 if TYPE_CHECKING:
+    from src.security import AccessController
+
     from .vault import SecretVault
 
 from src.audit.audit_logger import AuditLogger
@@ -38,6 +41,7 @@ class ManagedSecretConfig:
     path: Path | None = None
     resolver: Callable[[], str] | None = None
     min_length: int = 16
+    required_permission: str | None = None
 
 
 class ManagedSecret:
@@ -222,12 +226,14 @@ class SecretManager:
         *,
         audit_logger: AuditLogger | None = None,
         audit_logger_factory: Callable[["SecretManager"], AuditLogger] | None = None,
+        access_controller: "AccessController" | None = None,
     ) -> None:
         if not secrets:
             raise ValueError("At least one secret must be managed")
         self._secrets: Dict[str, ManagedSecret] = dict(secrets)
         self._audit_state = threading.local()
         self._audit_logger: AuditLogger | None = None
+        self._access_controller = access_controller
         if audit_logger is not None and audit_logger_factory is not None:
             raise ValueError(
                 "Provide either audit_logger or audit_logger_factory, not both"
@@ -248,6 +254,7 @@ class SecretManager:
         if secret is None:
             self._audit_operation(name=name, operation="get", status="missing")
             raise SecretManagerError(f"Unknown secret '{name}'")
+        self._enforce_access(secret)
         try:
             value = secret.get_secret()
         except SecretManagerError:
@@ -261,10 +268,12 @@ class SecretManager:
         if secret is None:
             self._audit_operation(name=name, operation="provider", status="missing")
             raise SecretManagerError(f"Unknown secret '{name}'")
+        self._enforce_access(secret)
         self._audit_operation(name=name, operation="provider", status="issued")
 
         def _resolver() -> str:
             try:
+                self._enforce_access(secret)
                 value = secret.get_secret()
             except SecretManagerError:
                 self._audit_operation(
@@ -337,16 +346,38 @@ class SecretManager:
         metadata["managed"] = managed
         return metadata
 
+    def _enforce_access(self, secret: ManagedSecret) -> None:
+        controller = self._access_controller
+        permission = secret.config.required_permission
+        if controller is None or not permission:
+            return
+        context = dict(_SECRET_CALLER_CONTEXT.get())
+        actor = context.get("actor")
+        roles_value = context.get("roles")
+        roles: Iterable[str]
+        if isinstance(roles_value, str):
+            roles = (roles_value,)
+        elif isinstance(roles_value, Iterable):
+            roles = tuple(str(role) for role in roles_value)
+        else:
+            roles = ()
+        controller.require(
+            permission,
+            actor=actor,
+            roles=roles,
+            resource=secret.config.name,
+        )
 
-_SECRET_CALLER_CONTEXT: ContextVar[dict[str, str]] = ContextVar(
+
+_SECRET_CALLER_CONTEXT: ContextVar[dict[str, object]] = ContextVar(
     "secret_caller_context",
-    default={"actor": "system", "ip_address": "127.0.0.1"},
+    default={"actor": "system", "ip_address": "127.0.0.1", "roles": ()},
 )
 
 
 @contextmanager
 def secret_caller_context(
-    *, actor: str, ip_address: str, **extra: str
+    *, actor: str, ip_address: str, **extra: object
 ) -> Iterator[None]:
     """Temporarily override the caller context for secret access auditing."""
 
