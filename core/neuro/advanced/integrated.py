@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -25,15 +26,17 @@ class MultiscaleFractalAnalyzer:
     """Extracts fractal and volatility features from price series."""
 
     async def analyze(self, prices: np.ndarray) -> Dict[str, Any]:
-        prices = np.asarray(prices, dtype=float)
-        if prices.ndim != 1 or prices.size < 20:
-            raise ValueError("Expected a 1D array with at least 20 price points")
-        returns = np.diff(np.log(prices + 1e-12))
+        prices = self._validate_prices(prices)
+        returns = np.diff(np.log(prices))
         volatility = float(np.std(returns))
         trend = float(np.tanh((prices[-1] - prices[0]) / (np.std(prices) + 1e-9)))
         hurst = float(self._approx_hurst_rs(returns))
         fractal_dim = float(np.clip(2.0 - hurst, 1.0, 2.0))
+        dynamics = self._compute_multiscale_dynamics(returns)
         regime = self._classify_regime(hurst, trend, volatility)
+        persistence_index = float(
+            np.clip(0.5 + (dynamics["scaling_exponent"] - 0.5) * 0.8, 0.0, 1.0)
+        )
         return {
             "volatility": volatility,
             "trend_strength": trend,
@@ -41,7 +44,30 @@ class MultiscaleFractalAnalyzer:
             "fractal_dim": fractal_dim,
             "regime": regime,
             "n": int(prices.size),
+            "dynamics": dynamics,
+            "persistence_index": persistence_index,
         }
+
+    async def analyze_assets(
+        self, asset_series: Mapping[str, Sequence[float]]
+    ) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
+        if not asset_series:
+            raise ValueError("asset_series must contain at least one asset")
+
+        tasks = [self.analyze(np.asarray(series, dtype=float)) for series in asset_series.values()]
+        assets = list(asset_series.keys())
+        results = await asyncio.gather(*tasks)
+        per_asset = {asset: result for asset, result in zip(assets, results)}
+        aggregated = self._aggregate_features(per_asset)
+        return per_asset, aggregated
+
+    def _validate_prices(self, prices: Sequence[float] | np.ndarray) -> np.ndarray:
+        array = np.asarray(prices, dtype=float)
+        if array.ndim != 1 or array.size < 20:
+            raise ValueError("Expected a 1D array with at least 20 price points")
+        if np.any(array <= 0.0):
+            raise ValueError("Prices must be strictly positive for log-return analysis")
+        return array
 
     def _approx_hurst_rs(self, returns: np.ndarray) -> float:
         if returns.size < 50:
@@ -51,6 +77,108 @@ class MultiscaleFractalAnalyzer:
         rs = (cumulative.max() - cumulative.min()) / (returns.std() + 1e-9)
         hurst = 0.5 + 0.1 * np.log(rs + 1e-9)
         return float(np.clip(hurst, 0.0, 1.0))
+
+    def _compute_multiscale_dynamics(self, returns: np.ndarray) -> Dict[str, Any]:
+        scales = np.asarray([1, 2, 4, 8], dtype=float)
+        volatilities: List[float] = []
+        realised_scales: List[float] = []
+        for scale in scales:
+            window = int(scale)
+            segments = returns[: returns.size - (returns.size % window)]
+            if segments.size < 2 * window:
+                continue
+            reshaped = segments.reshape(-1, window)
+            aggregated = reshaped.sum(axis=1)
+            vol = float(np.std(aggregated))
+            if vol <= 0.0:
+                continue
+            volatilities.append(vol)
+            realised_scales.append(scale)
+
+        if len(volatilities) < 2:
+            scaling_exponent = 0.5
+            stability = 0.5
+        else:
+            log_scales = np.log(realised_scales)
+            log_vols = np.log(volatilities)
+            slope, intercept = np.polyfit(log_scales, log_vols, 1)
+            scaling_exponent = float(np.clip(slope, -0.2, 1.2))
+            deviation = abs(scaling_exponent - 0.5)
+            stability = float(np.exp(-(deviation / 0.25) ** 2))
+
+        return {
+            "scales": realised_scales,
+            "volatility_by_scale": volatilities,
+            "scaling_exponent": float(scaling_exponent),
+            "stability": float(np.clip(stability, 0.0, 1.0)),
+        }
+
+    def _aggregate_features(self, features: Mapping[str, Dict[str, Any]]) -> Dict[str, Any]:
+        if not features:
+            raise ValueError("Cannot aggregate empty feature mapping")
+
+        items = list(features.items())
+        volatilities = np.asarray([max(1e-12, item[1]["volatility"]) for item in items], dtype=float)
+        weights = volatilities / volatilities.sum() if float(volatilities.sum()) > 0 else np.full_like(volatilities, 1.0 / len(items))
+
+        def _weighted(field: str) -> float:
+            values = np.asarray([item[1][field] for item in items], dtype=float)
+            return float(np.dot(values, weights))
+
+        trend_strength = _weighted("trend_strength")
+        volatility = _weighted("volatility")
+        hurst = _weighted("hurst")
+        fractal_dim = _weighted("fractal_dim")
+        persistence_index = _weighted("persistence_index")
+
+        scaling_values = np.asarray(
+            [item[1]["dynamics"].get("scaling_exponent", 0.5) for item in items], dtype=float
+        )
+        stability_values = np.asarray(
+            [item[1]["dynamics"].get("stability", 0.5) for item in items], dtype=float
+        )
+        scaling = float(np.dot(scaling_values, weights))
+        stability = float(np.dot(stability_values, weights))
+
+        regimes = Counter(item[1]["regime"] for item in items)
+        dominant_regime, dominant_count = regimes.most_common(1)[0]
+        regime_confidence = float(dominant_count / len(items))
+
+        volatility_dispersion = float(np.std([item[1]["volatility"] for item in items]))
+
+        scale_values: Dict[float, List[float]] = defaultdict(list)
+        for _, data in items:
+            scales = data["dynamics"].get("scales", [])
+            vols = data["dynamics"].get("volatility_by_scale", [])
+            for scale, vol in zip(scales, vols):
+                scale_values[float(scale)].append(float(vol))
+        sorted_scales = sorted(scale_values.keys())
+        aggregated_vol_by_scale = [
+            float(np.mean(scale_values[scale])) if scale_values[scale] else 0.0
+            for scale in sorted_scales
+        ]
+
+        return {
+            "volatility": volatility,
+            "trend_strength": trend_strength,
+            "hurst": hurst,
+            "fractal_dim": fractal_dim,
+            "regime": dominant_regime,
+            "regime_distribution": dict(regimes),
+            "regime_confidence": regime_confidence,
+            "n": int(sum(item[1]["n"] for item in items)),
+            "asset_count": len(items),
+            "volatility_dispersion": volatility_dispersion,
+            "dynamics": {
+                "scaling_exponent": scaling,
+                "stability": stability,
+                "scales": sorted_scales,
+                "volatility_by_scale": aggregated_vol_by_scale,
+            },
+            "persistence_index": persistence_index,
+            "fractal_scaling": scaling,
+            "fractal_stability": stability,
+        }
 
     def _classify_regime(self, hurst: float, trend: float, volatility: float) -> str:
         if abs(trend) > 0.35 and hurst > 0.55:
@@ -65,19 +193,34 @@ class CandidateGenerator:
 
     def generate(
         self,
-        assets: List[str],
-        base_strategies: Optional[List[str]],
-        features: Dict[str, Any],
+        asset_features: Mapping[str, Dict[str, Any]],
+        aggregated_features: Dict[str, Any],
+        base_strategies: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         strategies = base_strategies or ["fractal_momentum", "fractal_mean_reversion"]
         output: List[Dict[str, Any]] = []
-        trend = float(features["trend_strength"])
-        volatility = float(features["volatility"])
-        edge_trend = float(abs(trend)) * 0.03
-        edge_mean_reversion = float((1.0 - abs(trend)) * 0.02 + (0.015 if features["regime"] == "choppy" else 0.0))
-        risk_base = float(np.clip(0.45 + volatility * 10.0, 0.15, 2.0))
+        global_trend = float(aggregated_features.get("trend_strength", 0.0))
+        global_volatility = float(aggregated_features.get("volatility", 0.0))
+        global_scaling = float(aggregated_features.get("fractal_scaling", 0.5))
+        global_stability = float(aggregated_features.get("fractal_stability", 0.5))
 
-        for asset in assets:
+        for asset, features in asset_features.items():
+            trend = float(features.get("trend_strength", global_trend))
+            volatility = float(features.get("volatility", global_volatility))
+            scaling = float(features.get("dynamics", {}).get("scaling_exponent", global_scaling))
+            stability = float(features.get("dynamics", {}).get("stability", global_stability))
+
+            persistence_bias = float(1.0 + (scaling - 0.5) * 0.6)
+            stability_bias = float(0.8 + 0.4 * stability)
+            volatility_factor = float(np.clip(0.45 + volatility * 10.0, 0.15, 2.0))
+            risk_base = float(np.clip(volatility_factor * stability_bias, 0.15, 2.0))
+
+            edge_trend = float(abs(trend)) * 0.03 * persistence_bias
+            edge_mean_reversion = float(
+                (1.0 - abs(trend)) * 0.02 * stability_bias
+                + (0.015 if features.get("regime", aggregated_features.get("regime")) == "choppy" else 0.0)
+            )
+
             if "fractal_momentum" in strategies:
                 output.append(
                     {
@@ -88,6 +231,7 @@ class CandidateGenerator:
                         "risk_level": risk_base,
                         "confidence": 0.75,
                         "expected_edge": edge_trend,
+                        "fractal_features": features,
                     }
                 )
             if "fractal_mean_reversion" in strategies:
@@ -100,6 +244,7 @@ class CandidateGenerator:
                         "risk_level": float(np.clip(risk_base * 0.9, 0.15, 2.0)),
                         "confidence": 0.7,
                         "expected_edge": edge_mean_reversion,
+                        "fractal_features": features,
                     }
                 )
         return output
@@ -123,6 +268,11 @@ class NeuroRiskManager:
         volatility = float(market_context.get("volatility", 0.0))
 
         damping = max(0.35, min(1.0, 0.95 / (1.0 + 5.0 * volatility))) * max(0.4, confidence)
+        asset = decision.get("asset")
+        asset_context = None
+        if asset:
+            asset_context = market_context.get("asset_contexts", {}).get(asset)
+        damping *= self._fractal_damping_factor(market_context, asset_context)
         if confidence < self._cfg.slo_gate_confidence_min and volatility > self._cfg.slo_gate_max_volatility:
             damping *= self._cfg.slo_emergency_downscale
 
@@ -139,6 +289,23 @@ class NeuroRiskManager:
         adjusted.setdefault("risk_params", {})
         adjusted["risk_params"].update({"sl_dist": sl_dist, "tp_dist": tp_dist})
         return adjusted
+
+    def _fractal_damping_factor(
+        self, market_context: Dict[str, Any], asset_context: Optional[Dict[str, Any]]
+    ) -> float:
+        context = dict(market_context)
+        if asset_context:
+            context.update(asset_context)
+
+        scaling = float(context.get("fractal_scaling", market_context.get("fractal_scaling", 0.5)))
+        stability = float(np.clip(context.get("fractal_stability", market_context.get("fractal_stability", 0.5)), 0.0, 1.0))
+        dimension = float(context.get("fractal_dim", market_context.get("fractal_dim", 1.5)))
+
+        persistence = float(np.clip(1.0 + (scaling - 0.5) * 1.4, 0.6, 1.4))
+        stability_factor = 0.6 + 0.4 * stability
+        dimension_factor = float(np.clip(1.0 - 0.25 * abs(dimension - 1.5), 0.5, 1.1))
+
+        return float(np.clip(persistence * stability_factor * dimension_factor, 0.5, 1.25))
 
 
 class NeuroDecisionIntegrator:
@@ -225,18 +392,35 @@ class EnhancedFractalNeuroeconomicCore:
         asset_series = self._extract_price_series(market_data)
         if not asset_series:
             raise ValueError("market_data does not contain any price series")
-        first_asset, first_prices = next(iter(asset_series.items()))
-        fractal = await self._analyzer.analyze(first_prices)
-
+        asset_features, fractal = await self._analyzer.analyze_assets(asset_series)
         assets = list(asset_series.keys())
         base_strategies = portfolio.get("strategies") or ["fractal_momentum", "fractal_mean_reversion"]
+        dynamics = fractal.get("dynamics", {})
+        asset_contexts = {
+            asset: {
+                "fractal_scaling": data.get("dynamics", {}).get("scaling_exponent", fractal.get("fractal_scaling", 0.5)),
+                "fractal_stability": data.get("dynamics", {}).get("stability", fractal.get("fractal_stability", 0.5)),
+                "fractal_dim": data.get("fractal_dim", fractal.get("fractal_dim", 1.5)),
+                "volatility": data.get("volatility", fractal.get("volatility", 0.0)),
+                "trend_strength": data.get("trend_strength", fractal.get("trend_strength", 0.0)),
+                "regime": data.get("regime", fractal.get("regime", "normal")),
+            }
+            for asset, data in asset_features.items()
+        }
         market_context = {
             "volatility": fractal["volatility"],
             "trend_strength": fractal["trend_strength"],
             "regime": fractal["regime"],
+            "fractal_scaling": dynamics.get("scaling_exponent", 0.5),
+            "fractal_stability": dynamics.get("stability", 0.5),
+            "fractal_dim": fractal["fractal_dim"],
+            "asset_contexts": asset_contexts,
+            "regime_distribution": fractal.get("regime_distribution", {}),
+            "regime_confidence": fractal.get("regime_confidence", 0.0),
+            "volatility_dispersion": fractal.get("volatility_dispersion", 0.0),
         }
 
-        neuro_context = await self._build_neuro_context(assets, base_strategies, fractal)
+        neuro_context = await self._build_neuro_context(assets, base_strategies, fractal, asset_features)
         motivation_state = self._motivation.recommend(
             state=[
                 fractal["volatility"],
@@ -253,7 +437,7 @@ class EnhancedFractalNeuroeconomicCore:
                 "trend_strength": fractal["trend_strength"],
             },
         )
-        candidates = self._candidate_generator.generate(assets, base_strategies, fractal)
+        candidates = self._candidate_generator.generate(asset_features, fractal, base_strategies)
 
         modulated: List[Dict[str, Any]] = []
         for candidate in candidates:
@@ -279,6 +463,7 @@ class EnhancedFractalNeuroeconomicCore:
                 "strategy_weight": strategy_weight,
                 "final_confidence": adjusted["confidence"],
             }
+            adjusted.setdefault("fractal_features", candidate.get("fractal_features", {}))
             adjusted = await self._risk_manager.apply(adjusted, neuro_context, market_context)
             self._apply_motivation_modulation(adjusted, motivation_state)
             modulated.append(adjusted)
@@ -289,6 +474,7 @@ class EnhancedFractalNeuroeconomicCore:
             "modulated_candidates": modulated,
             "neuro_context": neuro_context,
             "fractal_features": fractal,
+            "asset_fractal_features": asset_features,
             "market_context": market_context,
             "motivation_state": motivation_state,
         }
@@ -321,6 +507,7 @@ class EnhancedFractalNeuroeconomicCore:
         assets: Iterable[str],
         strategies: Iterable[str],
         fractal: Dict[str, Any],
+        asset_fractals: Mapping[str, Dict[str, Any]],
     ) -> Dict[str, Any]:
         dopamine_states: Dict[str, float] = {}
         for asset in assets:
@@ -334,6 +521,14 @@ class EnhancedFractalNeuroeconomicCore:
             "market_volatility": float(fractal["volatility"]),
             "trend_strength": float(fractal["trend_strength"]),
             "regime": fractal["regime"],
+            "fractal_scaling": float(
+                fractal.get("dynamics", {}).get("scaling_exponent", fractal.get("fractal_scaling", 0.5))
+            ),
+            "fractal_stability": float(
+                fractal.get("dynamics", {}).get("stability", fractal.get("fractal_stability", 0.5))
+            ),
+            "persistence_index": float(fractal.get("persistence_index", 0.5)),
+            "asset_fractal_features": dict(asset_fractals),
         }
 
     def _parse_trade(self, trade_data: Dict[str, Any]) -> TradeResult:
