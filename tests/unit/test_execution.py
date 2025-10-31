@@ -170,6 +170,58 @@ def test_risk_manager_trips_kill_switch_after_repeated_throttling(tmp_path) -> N
     assert "Order throttle exceeded" in manager.kill_switch.reason
 
 
+def test_risk_limits_normalises_drawdown_percentage() -> None:
+    limits = RiskLimits(max_relative_drawdown=5)
+    assert limits.max_relative_drawdown == pytest.approx(0.05)
+
+
+def test_risk_manager_drawdown_kill_switch(tmp_path) -> None:
+    audit_path = tmp_path / "drawdown_audit.jsonl"
+    audit = ExecutionAuditLogger(audit_path)
+    limits = RiskLimits(
+        max_notional=1_000_000.0,
+        max_position=1_000.0,
+        max_relative_drawdown=0.05,
+    )
+    manager = RiskManager(limits, audit_logger=audit)
+
+    manager.update_portfolio_equity(100_000.0, realized_pnl=0.0, unrealized_pnl=0.0)
+    assert manager.current_drawdown == pytest.approx(0.0)
+    assert not manager.kill_switch.is_triggered()
+
+    manager.update_portfolio_equity(97_000.0)
+    assert manager.current_drawdown == pytest.approx(0.03)
+    assert not manager.kill_switch.is_triggered()
+
+    manager.update_portfolio_equity(94_000.0, realized_pnl=-6_000.0)
+    assert manager.kill_switch.is_triggered()
+    assert manager.paper_trading_active is True
+    reason = manager.kill_switch.reason.lower()
+    assert "drawdown" in reason
+    assert "paper" in reason
+
+    entries = [
+        json.loads(line)
+        for line in audit_path.read_text().splitlines()
+        if line.strip()
+    ]
+    breach = [entry for entry in entries if entry.get("event") == "portfolio_drawdown_breach"]
+    assert breach
+    last = breach[-1]
+    assert last["drawdown"] >= limits.max_relative_drawdown
+    assert last["equity"] == pytest.approx(94_000.0)
+    assert last["peak_equity"] == pytest.approx(100_000.0)
+
+
+def test_update_portfolio_equity_rejects_invalid_values() -> None:
+    manager = RiskManager(RiskLimits(max_relative_drawdown=0.1))
+
+    with pytest.raises(ValueError):
+        manager.update_portfolio_equity(float("nan"))
+
+    with pytest.raises(ValueError):
+        manager.update_portfolio_equity(-1.0)
+
 def test_risk_manager_normalises_symbol_aliases() -> None:
     manager = RiskManager(RiskLimits(max_notional=1_000.0, max_position=10.0))
     manager.validate_order("btc-usdt", "buy", qty=1.0, price=20.0)

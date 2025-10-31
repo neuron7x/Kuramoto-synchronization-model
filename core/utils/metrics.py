@@ -617,6 +617,12 @@ class MetricsCollector:
             registry=registry,
         )
 
+        self.drawdown_percent = Gauge(
+            "tradepulse_drawdown_percent",
+            "Current portfolio drawdown expressed as a percentage",
+            registry=registry,
+        )
+
         self.compliance_checks_total = Counter(
             "tradepulse_compliance_checks_total",
             "Compliance check outcomes",
@@ -1895,6 +1901,17 @@ class MetricsCollector:
         if not self._enabled:
             return
         self.kill_switch_triggers_total.labels(reason=reason).inc()
+
+    def record_drawdown(self, drawdown_fraction: float) -> None:
+        """Record the latest observed portfolio drawdown."""
+
+        if not self._enabled:
+            return
+
+        if math.isnan(drawdown_fraction) or math.isinf(drawdown_fraction):
+            return
+
+        self.drawdown_percent.set(max(0.0, drawdown_fraction) * 100.0)
 
     def record_compliance_check(
         self,
