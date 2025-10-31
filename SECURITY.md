@@ -1,5 +1,27 @@
 # Security Policy
 
+## Thermodynamic Autonomic Control Layer (TACL)
+
+### System Classification
+
+**Type**: Autonomic Control System with Formal Safety Guarantees  
+**Purpose**: Self-regulating topology optimization for distributed trading infrastructure  
+**Compliance**: SEC, FINRA, EU AI Act, SOC 2, ISO 27001
+
+### Core Function
+TACL treats the entire TradePulse topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
+
+### Safety Guarantee
+**Monotonic Free Energy Descent Constraint**: All topology mutations must satisfy F_new ≤ F_old + ε_spike. Any violation is logged and rejected without human override capability.
+
+### Audit & Compliance
+- Telemetry: Real-time metrics via REST API
+- Audit Trail: 7-year retention (JSON Lines format)
+- CI Gates: Automated safety checks in deployment pipeline
+- Human Oversight: Circuit breaker + manual intervention capability
+
+**This is not a feature — this is the governing brain of system stability.**
+
 ## Supported Versions
 
 We actively support the following versions with security updates:

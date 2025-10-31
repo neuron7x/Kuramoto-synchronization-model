@@ -24,7 +24,7 @@ TradePulse to move from research to live execution with confidence.
 - [Quick Start](#-quick-start)
 - [Demo Dashboard](#-demo-dashboard)
 - [System Architecture](#-system-architecture)
-- [Thermodynamic Layer](#thermodynamic-layer-thermocontroller)
+- [Thermodynamic Autonomic Control Layer (TACL)](#thermodynamic-autonomic-control-layer-tacl)
 - [Documentation](#-documentation)
 - [Use Cases](#-use-cases)
 - [Configuration](#-configuration)
@@ -231,13 +231,17 @@ graph TB
   style H fill:#bd10e0
 ```
 
-## Thermodynamic Layer (ThermoController)
+## Thermodynamic Autonomic Control Layer (TACL)
 
-The thermodynamic layer governs topology optimisation by enforcing a
-monotonic free-energy descent constraint while remaining resilient to
-market stress. The controller now runs with a production-ready stack
-comprised of deterministic protocol activation, a crisis-aware genetic
-algorithm, and an adaptive recovery agent.
+TACL is the self-regulating control system that manages TradePulse topology as a physical system. It measures free energy F (latency, coherency, resource costs), detects stress, evolutionarily reconfigures service bonds via GA/RL/LinkActivator, performs hot-swap of protocols (RDMA, CRDT, shared memory), and guarantees safety through **Monotonic Free Energy Descent** constraint: no change can increase F without human override.
+
+**Features**:
+- Real-time telemetry & observability API
+- CI gates with formal safety guarantees
+- 7-year audit trail for compliance
+- Crisis-aware adaptive recovery
+
+**This is not a feature — this is the governing brain of system stability.**
 
 ### Architecture Overview
 
