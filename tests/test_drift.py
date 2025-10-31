@@ -92,6 +92,18 @@ def test_parallel_drift_coerces_numeric_strings():
     assert np.isfinite(metric.psi)
 
 
+def test_parallel_drift_filters_coerced_nans():
+    base = pd.DataFrame({"num": ["1", "bad", None, "2", "\t3"]})
+    drift = pd.DataFrame({"num": ["2", "bad", None, "3", "4"]})
+    results = compute_parallel_drift(base, drift)
+
+    metric = results["num"]
+    assert metric.ks.valid
+    assert np.isfinite(metric.js_divergence)
+    assert np.isfinite(metric.psi)
+    assert metric.js_divergence > 0
+
+
 def test_drift_detector_summary():
     base, drift = generate_synthetic_data(200, 2, 0.0, seed=123)
     thresholds = DriftThresholds(default_jsd=0.05, default_ks=0.05)

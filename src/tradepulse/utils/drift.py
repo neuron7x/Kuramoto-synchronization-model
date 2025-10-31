@@ -110,11 +110,21 @@ def _coerce_numeric_series(series: pd.Series, *, column: str, frame: str) -> tup
     """Return a float array for *series* or an error message if conversion fails."""
 
     if is_numeric_dtype(series.dtype):
-        return series.to_numpy(dtype=float, copy=False), None
-    coerced = pd.to_numeric(series, errors="coerce")
-    if coerced.notna().any():
-        return coerced.to_numpy(dtype=float), None
-    return None, f"{frame} column contains no numeric values"
+        array = series.to_numpy(dtype=float, copy=False)
+    else:
+        coerced = pd.to_numeric(series, errors="coerce")
+        if not coerced.notna().any():
+            return None, f"{frame} column contains no numeric values"
+        array = coerced.to_numpy(dtype=float)
+
+    valid = np.isfinite(array)
+    if valid.all():
+        return array, None
+
+    filtered = array[valid]
+    if filtered.size == 0:
+        return None, f"{frame} column contains no numeric values"
+    return filtered, None
 
 
 def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
