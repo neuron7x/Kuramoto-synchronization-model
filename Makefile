@@ -56,7 +56,9 @@ schema-catalog:
 
 .PHONY: scripts-lint scripts-test scripts-gen-proto scripts-dev-up scripts-dev-down
 scripts-lint:
-	TRADEPULSE_TWO_FACTOR_SECRET=MFRGGZDFMZTWQ2LK python -m scripts lint
+	TRADEPULSE_TWO_FACTOR_SECRET=MFRGGZDFMZTWQ2LK \
+	TRADEPULSE_BOOTSTRAP_STRATEGY=lazy \
+	python -m scripts lint
 
 scripts-test:
 	python -m scripts test

@@ -263,8 +263,8 @@ export function renderOnboarding(options = {}) {
             return '';
           }
           return progressTemplate
-            .replace(/\{current\}/gi, String(current))
-            .replace(/\{total\}/gi, String(total));
+            .replace(/{current}/gi, String(current))
+            .replace(/{total}/gi, String(total));
         }
 
         function ensureVisible(target) {

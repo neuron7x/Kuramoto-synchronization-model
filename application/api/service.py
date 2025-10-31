@@ -7,6 +7,7 @@ import hashlib
 import inspect
 import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from json import JSONDecodeError
@@ -2541,11 +2542,103 @@ def create_app(
     return app
 
 
-app = create_app()
+BOOTSTRAP_STRATEGY_ENV = "TRADEPULSE_BOOTSTRAP_STRATEGY"
+_DEFAULT_BOOTSTRAP_STRATEGY = "eager"
+_LAZY_STRATEGIES = {"lazy"}
+_FALLBACK_STRATEGIES = {"degraded"}
+
+
+def _normalise_bootstrap_strategy(value: str | None) -> str:
+    """Return a normalised bootstrap strategy value."""
+
+    if not value:
+        return _DEFAULT_BOOTSTRAP_STRATEGY
+    normalised = value.strip().lower()
+    return normalised or _DEFAULT_BOOTSTRAP_STRATEGY
+
+
+def _safe_exception_message(exc: Exception, *, limit: int = 240) -> str:
+    """Generate a bounded textual representation of an exception."""
+
+    message = str(exc).strip() or exc.__class__.__name__
+    if len(message) <= limit:
+        return message
+    return f"{message[: limit - 1]}…"
+
+
+def _build_degraded_application(*, reason: str, detail: str | None = None) -> FastAPI:
+    """Construct a lightweight FastAPI instance exposing degraded status."""
+
+    degraded_app = FastAPI(
+        title="TradePulse API (bootstrap disabled)",
+        description=(
+            "This instance is running in a degraded mode where the full application "
+            "stack was not initialised."
+        ),
+        version="0.0.0",
+        docs_url=None,
+        redoc_url=None,
+    )
+    degraded_app.state.degraded_reason = reason
+    degraded_app.state.degraded_detail = detail
+
+    @degraded_app.get("/healthz", tags=["health"], include_in_schema=False)
+    async def degraded_healthcheck() -> dict[str, str]:
+        payload = {"status": "degraded", "reason": reason}
+        if detail:
+            payload["detail"] = detail
+        return payload
+
+    @degraded_app.get("/", include_in_schema=False)
+    async def degraded_root() -> None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=reason,
+        )
+
+    return degraded_app
+
+
+def bootstrap_application() -> FastAPI:
+    """Create the FastAPI application honouring bootstrap strategy overrides."""
+
+    strategy = _normalise_bootstrap_strategy(os.getenv(BOOTSTRAP_STRATEGY_ENV))
+    bootstrap_logger = logging.getLogger("tradepulse.bootstrap")
+
+    if strategy in _LAZY_STRATEGIES:
+        bootstrap_logger.info(
+            "Skipping TradePulse API bootstrap (strategy=%s).", strategy
+        )
+        return _build_degraded_application(
+            reason=(
+                "Bootstrap disabled via TRADEPULSE_BOOTSTRAP_STRATEGY={}.".format(
+                    strategy
+                )
+            )
+        )
+
+    try:
+        return create_app()
+    except Exception as exc:
+        if strategy in _FALLBACK_STRATEGIES:
+            detail = _safe_exception_message(exc)
+            bootstrap_logger.warning(
+                "Falling back to degraded bootstrap due to initialisation failure.",
+                exc_info=True,
+            )
+            return _build_degraded_application(
+                reason="Application bootstrap failed in degraded mode.",
+                detail=detail,
+            )
+        raise
+
+
+app = bootstrap_application()
 
 __all__ = [
     "app",
     "create_app",
+    "bootstrap_application",
     "FeatureRequest",
     "FeatureResponse",
     "PredictionRequest",
