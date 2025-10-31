@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence
+from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -230,6 +230,56 @@ def _kuramoto(phases: np.ndarray) -> tuple[float, float]:
     return float(np.abs(complex_mean)), float(np.angle(complex_mean))
 
 
+def _higuchi_fractal_dimension(values: np.ndarray, k_max: int = 8) -> float:
+    """Estimate the Higuchi fractal dimension of ``values``.
+
+    The estimator is numerically stable for short financial series and provides
+    a bounded :math:`D \in [1, 2]` that characterises signal roughness.
+    """
+
+    signal = np.asarray(values, dtype=float)
+    n = int(signal.size)
+    if n < 2:
+        return 1.0
+
+    k_max = int(max(2, min(k_max, n - 1)))
+    log_k: list[float] = []
+    log_lk: list[float] = []
+
+    for k in range(1, k_max + 1):
+        lengths: list[float] = []
+        inv_k = 1.0 / float(k)
+        for m in range(k):
+            idx = np.arange(m, n, k, dtype=int)
+            if idx.size < 2:
+                continue
+            diffs = np.abs(np.diff(signal[idx]))
+            if diffs.size == 0:
+                continue
+            norm = (n - 1) * inv_k / float(idx.size - 1)
+            lengths.append(float(np.sum(diffs)) * norm)
+        if not lengths:
+            continue
+        mean_length = float(np.mean(lengths))
+        if not np.isfinite(mean_length) or mean_length <= 0.0:
+            continue
+        log_k.append(-np.log(float(k)))
+        log_lk.append(np.log(mean_length))
+
+    if len(log_k) < 2:
+        return 1.0
+
+    try:
+        slope, _ = np.polyfit(np.asarray(log_k), np.asarray(log_lk), deg=1)
+    except Exception:  # pragma: no cover - numerical degeneracy
+        return 1.0
+
+    dimension = float(np.clip(slope, 1.0, 2.0))
+    if not np.isfinite(dimension):
+        return 1.0
+    return dimension
+
+
 class WaveletWindowSelector:
     """Selects an analysis window via wavelet energy concentration."""
 
@@ -241,6 +291,8 @@ class WaveletWindowSelector:
         wavelet: str = "ricker",
         levels: int = 16,
         max_samples: int | None = 16_384,
+        enable_fractal_pruning: bool = True,
+        fractal_k_max: int = 8,
     ) -> None:
         if min_window <= 0 or max_window <= 0:
             raise ValueError("window bounds must be positive")
@@ -257,13 +309,19 @@ class WaveletWindowSelector:
         if max_samples is not None and max_samples <= 0:
             raise ValueError("max_samples must be positive when provided")
 
+        if fractal_k_max <= 1:
+            raise ValueError("fractal_k_max must be greater than 1")
+
         self.min_window = min_window
         self.max_window = max_window
         self.wavelet = wavelet
         self.levels = max(2, levels)
         self.max_samples = int(max_samples) if max_samples is not None else None
+        self.enable_fractal_pruning = bool(enable_fractal_pruning)
+        self.fractal_k_max = int(fractal_k_max)
         self._fallback_window = self._compute_fallback_window()
         self._widths_cache: np.ndarray | None = None
+        self._last_stats: Dict[str, float] = {}
 
     def _compute_fallback_window(self) -> int:
         geometric = math.sqrt(float(self.min_window) * float(self.max_window))
@@ -285,6 +343,49 @@ class WaveletWindowSelector:
             self._widths_cache = widths
         return self._widths_cache
 
+    def _fallback_window_for_dimension(self, dimension: float) -> int:
+        if dimension <= 1.2:
+            scale = 1.25
+        elif dimension >= 1.6:
+            scale = 0.85
+        else:
+            scale = 1.0
+        candidate = int(round(self._fallback_window * scale))
+        if candidate < self.min_window:
+            return self.min_window
+        if candidate > self.max_window:
+            return self.max_window
+        return candidate
+
+    def _prune_widths(
+        self, widths: np.ndarray, dimension: float
+    ) -> Tuple[np.ndarray, bool]:
+        if not self.enable_fractal_pruning or widths.size <= 3:
+            return widths, False
+
+        lower_mask = dimension >= 1.55
+        upper_mask = dimension <= 1.25
+
+        if upper_mask:
+            threshold = float(np.quantile(widths, 0.6))
+            candidates = widths[widths >= threshold]
+        elif lower_mask:
+            threshold = float(np.quantile(widths, 0.4))
+            candidates = widths[widths <= threshold]
+        else:
+            lower = float(np.quantile(widths, 0.25))
+            upper = float(np.quantile(widths, 0.75))
+            mask = (widths >= lower) & (widths <= upper)
+            candidates = widths[mask]
+
+        if candidates.size < 3:
+            return widths, False
+
+        return candidates.astype(int, copy=True), candidates.size != widths.size
+
+    def stats(self) -> Mapping[str, float]:
+        return dict(self._last_stats)
+
     def select_window(self, prices: Sequence[float]) -> int:
         if self.max_window > 1_048_576:
             raise ValueError(
@@ -297,28 +398,81 @@ class WaveletWindowSelector:
         values = np.asarray(prices, dtype=float)
         if values.size == 0:
             raise ValueError("cannot select window from empty price series")
+        original_samples = float(values.size)
         if self.max_samples is not None and values.size > self.max_samples:
             values = values[-self.max_samples :]
+        considered_samples = float(values.size)
+
+        dimension = _higuchi_fractal_dimension(values, self.fractal_k_max)
+        stats: Dict[str, float] = {
+            "selector_fractal_dimension": float(dimension),
+            "selector_samples_original": original_samples,
+            "selector_samples_considered": considered_samples,
+        }
         if _signal is None:
-            return self._fallback_window
+            stats.update(
+                {
+                    "selector_candidates_before": 0.0,
+                    "selector_candidates_after": 0.0,
+                    "selector_fractal_reduction_ratio": 1.0,
+                    "selector_fractal_pruning_applied": 0.0,
+                    "selector_wavelet_fallback": 1.0,
+                }
+            )
+            self._last_stats = stats
+            return self._fallback_window_for_dimension(dimension)
 
         widths = self._candidate_widths()
         if widths.size == 0:
+            stats.update(
+                {
+                    "selector_candidates_before": 0.0,
+                    "selector_candidates_after": 0.0,
+                    "selector_fractal_reduction_ratio": 1.0,
+                    "selector_fractal_pruning_applied": 0.0,
+                }
+            )
+            self._last_stats = stats
+            return self.min_window
+
+        pruned_widths, pruned = self._prune_widths(widths, dimension)
+        stats.update(
+            {
+                "selector_candidates_before": float(widths.size),
+                "selector_candidates_after": float(pruned_widths.size),
+                "selector_fractal_pruning_applied": float(pruned),
+                "selector_fractal_reduction_ratio": (
+                    float(pruned_widths.size) / float(widths.size)
+                    if widths.size
+                    else 1.0
+                ),
+                "selector_wavelet_fallback": 0.0,
+            }
+        )
+
+        if pruned_widths.size == 0:
+            self._last_stats = stats
             return self.min_window
 
         try:
-            transform = _signal.cwt(values, _signal.ricker, widths)
+            transform = _signal.cwt(values, _signal.ricker, pruned_widths)
         except Exception:  # pragma: no cover - SciPy edge cases
-            return self._fallback_window
+            stats["selector_wavelet_fallback"] = 1.0
+            self._last_stats = stats
+            return self._fallback_window_for_dimension(dimension)
 
         energy = np.sum(transform**2, axis=1)
         best_idx = int(np.argmax(energy))
-        best_width = int(widths[best_idx])
+        best_width = int(pruned_widths[best_idx])
         if best_width < self.min_window:
-            return self.min_window
-        if best_width > self.max_window:
-            return self.max_window
-        return best_width
+            result = self.min_window
+        elif best_width > self.max_window:
+            result = self.max_window
+        else:
+            result = best_width
+
+        self._last_stats = stats
+        return result
 
 
 class MultiScaleKuramoto:
@@ -477,8 +631,15 @@ class MultiScaleKuramoto:
             else self.base_window
         )
 
+        selector_stats: Mapping[str, float] = {}
+        if self.use_adaptive_window:
+            stats_fn = getattr(self.selector, "stats", None)
+            if callable(stats_fn):
+                selector_stats = dict(stats_fn())
+
         energy_profile = {
             **resampler.stats(),
+            **selector_stats,
             "samples_processed": float(samples_processed),
         }
 
@@ -514,7 +675,15 @@ class MultiScaleKuramotoFeature(BaseFeature):
         if selector is None:
             return {}
         params: dict[str, Any] = {"class": selector.__class__.__name__}
-        for attr in ("min_window", "max_window", "wavelet", "levels", "max_samples"):
+        for attr in (
+            "min_window",
+            "max_window",
+            "wavelet",
+            "levels",
+            "max_samples",
+            "enable_fractal_pruning",
+            "fractal_k_max",
+        ):
             if hasattr(selector, attr):
                 params[attr] = getattr(selector, attr)
         return params

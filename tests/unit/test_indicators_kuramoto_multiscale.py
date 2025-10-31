@@ -87,6 +87,54 @@ def test_wavelet_selector_limits_sample_count_for_energy_efficiency() -> None:
     assert selector.min_window <= window <= selector.max_window
 
 
+@pytest.mark.skipif(kuramoto_mod._signal is None, reason="SciPy not installed")
+def test_wavelet_selector_fractal_pruning_reduces_candidates() -> None:
+    selector = WaveletWindowSelector(
+        min_window=32,
+        max_window=256,
+        levels=24,
+        enable_fractal_pruning=True,
+    )
+    noise = np.random.default_rng(42).normal(size=4096)
+    window = selector.select_window(noise)
+    stats = selector.stats()
+    assert selector.min_window <= window <= selector.max_window
+    assert stats["selector_fractal_pruning_applied"] == pytest.approx(1.0)
+    assert stats["selector_candidates_after"] < stats["selector_candidates_before"]
+    assert 0.0 < stats["selector_fractal_reduction_ratio"] <= 1.0
+
+
+@pytest.mark.skipif(kuramoto_mod._signal is None, reason="SciPy not installed")
+def test_wavelet_selector_can_disable_fractal_pruning() -> None:
+    selector = WaveletWindowSelector(
+        min_window=32,
+        max_window=256,
+        levels=12,
+        enable_fractal_pruning=False,
+    )
+    signal = np.linspace(0.0, 1.0, 2048)
+    selector.select_window(signal)
+    stats = selector.stats()
+    assert stats["selector_fractal_pruning_applied"] == pytest.approx(0.0)
+    assert stats["selector_candidates_after"] == stats["selector_candidates_before"]
+
+
+@pytest.mark.skipif(kuramoto_mod._signal is None, reason="SciPy not installed")
+def test_multiscale_analyzer_reports_selector_energy_stats() -> None:
+    analyzer = MultiScaleKuramoto(
+        use_adaptive_window=True,
+        base_window=128,
+        min_samples_per_scale=64,
+    )
+    df = _synth_dataframe(periods=1024)
+    result = analyzer.analyze(df)
+    energy = result.energy_profile
+    assert 1.0 <= energy["selector_fractal_dimension"] <= 2.0
+    assert 0.0 < energy["selector_fractal_reduction_ratio"] <= 1.0
+    assert energy["selector_candidates_after"] <= energy["selector_candidates_before"]
+    assert 0.0 <= energy["selector_wavelet_fallback"] <= 1.0
+
+
 def test_multiscale_analyzer_requires_price_column() -> None:
     df = _synth_dataframe().rename(columns={"close": "price"})
     analyzer = MultiScaleKuramoto(use_adaptive_window=False)
@@ -171,6 +219,10 @@ def test_multiscale_analyzer_uses_selector_for_adaptive_window() -> None:
     assert result.adaptive_window == 200
     assert "resample_requests" in result.energy_profile
     assert result.energy_profile["resample_requests"] >= 1.0
+    if "selector_fractal_dimension" in result.energy_profile:
+        assert 1.0 <= result.energy_profile["selector_fractal_dimension"] <= 2.0
+    if "selector_fractal_reduction_ratio" in result.energy_profile:
+        assert 0.0 < result.energy_profile["selector_fractal_reduction_ratio"] <= 1.0
 
 
 def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
