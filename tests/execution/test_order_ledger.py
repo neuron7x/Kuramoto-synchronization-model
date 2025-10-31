@@ -35,7 +35,13 @@ class DummyConnector:
 
 class DummyRiskController:
     def validate_order(
-        self, symbol: str, side: str, quantity: float, price: float | None
+        self,
+        symbol: str,
+        side: str,
+        quantity: float,
+        price: float | None,
+        *,
+        correlation_id: str | None = None,
     ) -> None:
         return None
 

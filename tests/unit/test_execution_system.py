@@ -282,8 +282,16 @@ def test_oms_compliance_blocking_triggers_audit(tmp_path) -> None:
     ]
     assert compliance_events
     last_event = compliance_events[-1]
-    assert last_event["status"] == "blocked"
-    assert last_event["report"]["violations"]
+    assert last_event["outputs"]["status"] == "blocked"
+    assert last_event["outputs"]["report"]["violations"]
+    rejected = [
+        entry
+        for entry in entries
+        if entry.get("event") == "order_rejected"
+        and entry.get("correlation_id") == "compliance-block"
+    ]
+    assert rejected
+    assert rejected[-1]["outputs"]["stage"] == "compliance"
 
 
 def test_oms_audit_records_successful_flow(tmp_path) -> None:
@@ -328,13 +336,22 @@ def test_oms_audit_records_successful_flow(tmp_path) -> None:
     risk_event = next(
         entry
         for entry in entries
-        if entry.get("event") == "risk_validation" and entry.get("status") == "passed"
+        if entry.get("event") == "risk_validation"
+        and entry.get("outputs", {}).get("status") == "passed"
     )
+    queued_event = next(
+        entry for entry in entries if entry.get("event") == "order_queued"
+    )
+    ack_events = [
+        entry for entry in entries if entry.get("event") == "order_acknowledged"
+    ]
 
-    assert compliance_event["status"] == "passed"
-    assert not compliance_event["report"]["blocked"]
-    assert risk_event["symbol"].replace("/", "") == "ETHUSDT"
-    assert risk_event["status"] == "passed"
+    assert compliance_event["outputs"]["status"] == "passed"
+    assert not compliance_event["outputs"]["report"]["blocked"]
+    assert risk_event["inputs"]["symbol"].replace("/", "") == "ETHUSDT"
+    assert risk_event["outputs"]["status"] == "passed"
+    assert queued_event["outputs"]["status"] == "queued"
+    assert not ack_events
 
 
 def test_execution_algorithms_split_quantities() -> None:

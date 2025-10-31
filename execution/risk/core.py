@@ -72,7 +72,7 @@ from libs.db import (
     create_engine_from_config,
 )
 
-from ..audit import ExecutionAuditLogger, get_execution_audit_logger
+from ..audit import ExecutionAuditLogger, build_audit_record, get_execution_audit_logger
 
 
 class RiskError(RuntimeError):
@@ -924,7 +924,9 @@ class RiskManager(RiskController):
 
         self._persist_risk_state()
 
-    def _check_rate_limit(self, symbol: str, now: float) -> None:
+    def _check_rate_limit(
+        self, symbol: str, now: float, correlation_id: str | None = None
+    ) -> None:
         if self.limits.max_orders_per_interval <= 0:
             return
         window = max(self.limits.interval_seconds, 0.0)
@@ -941,6 +943,7 @@ class RiskManager(RiskController):
                     reason,
                     symbol=symbol,
                     violation_type="rate_limit",
+                    correlation_id=correlation_id,
                 )
             raise OrderRateExceeded(reason)
         self._throttle_violation_streak = 0
@@ -959,23 +962,32 @@ class RiskManager(RiskController):
         quantity: float,
         price: float,
         status: str,
+        correlation_id: str | None = None,
         reason: str | None = None,
         violation_type: str | None = None,
     ) -> None:
-        payload = {
-            "event": "risk_validation",
-            "status": status,
+        inputs = {
             "symbol": symbol,
             "side": side,
             "quantity": quantity,
             "price": price,
+        }
+        outputs = {
+            "status": status,
             "reason": reason,
             "violation_type": violation_type,
             "kill_switch_engaged": self._kill_switch.is_triggered(),
             "consecutive_limit_violations": self._limit_violation_streak,
             "consecutive_rate_limit_violations": self._throttle_violation_streak,
         }
-        self._audit.emit(payload)
+        self._audit.emit(
+            build_audit_record(
+                event="risk_validation",
+                inputs=inputs,
+                outputs=outputs,
+                correlation_id=correlation_id,
+            )
+        )
 
     def _trigger_kill_switch(
         self,
@@ -983,6 +995,7 @@ class RiskManager(RiskController):
         *,
         symbol: str | None = None,
         violation_type: str | None = None,
+        correlation_id: str | None = None,
     ) -> None:
         if self._kill_switch.is_triggered():
             return
@@ -996,18 +1009,31 @@ class RiskManager(RiskController):
             consecutive_rate_limit_violations=self._throttle_violation_streak,
         )
         self._metrics.record_kill_switch_trigger(reason)
+        outputs = {
+            "reason": reason,
+            "symbol": symbol,
+            "violation_type": violation_type,
+            "consecutive_limit_violations": self._limit_violation_streak,
+            "consecutive_rate_limit_violations": self._throttle_violation_streak,
+        }
         self._audit.emit(
-            {
-                "event": "kill_switch_triggered",
-                "reason": reason,
-                "symbol": symbol,
-                "violation_type": violation_type,
-                "consecutive_limit_violations": self._limit_violation_streak,
-                "consecutive_rate_limit_violations": self._throttle_violation_streak,
-            }
+            build_audit_record(
+                event="kill_switch_triggered",
+                inputs={"symbol": symbol, "violation_type": violation_type},
+                outputs=outputs,
+                correlation_id=correlation_id,
+            )
         )
 
-    def validate_order(self, symbol: str, side: str, qty: float, price: float) -> None:
+    def validate_order(
+        self,
+        symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+        *,
+        correlation_id: str | None = None,
+    ) -> None:
         """Apply risk checks before admitting an order to the execution stack.
 
         Args:
@@ -1017,6 +1043,8 @@ class RiskManager(RiskController):
             qty: Order quantity expressed in base units. Must be non-negative.
             price: Reference price used for notional calculations. Must be
                 strictly positive.
+            correlation_id: Optional orchestration identifier used to tie the
+                validation decision back to the originating signal/order flow.
 
         Raises:
             ValueError: If ``qty`` or ``price`` fall outside allowable ranges.
@@ -1054,13 +1082,14 @@ class RiskManager(RiskController):
                 quantity=float(qty),
                 price=float(price),
                 status="blocked",
+                correlation_id=correlation_id,
                 reason=str(exc),
                 violation_type="kill_switch",
             )
             raise
         now = self._time()
         try:
-            self._check_rate_limit(canonical_symbol, now)
+            self._check_rate_limit(canonical_symbol, now, correlation_id)
         except OrderRateExceeded as exc:
             reason = str(exc)
             self._metrics.record_risk_validation(canonical_symbol, "rate_limited")
@@ -1070,6 +1099,7 @@ class RiskManager(RiskController):
                 quantity=float(qty),
                 price=float(price),
                 status="rejected",
+                correlation_id=correlation_id,
                 reason=reason,
                 violation_type="rate_limit",
             )
@@ -1096,6 +1126,7 @@ class RiskManager(RiskController):
                     reason,
                     symbol=canonical_symbol,
                     violation_type="position_limit",
+                    correlation_id=correlation_id,
                 )
             self._metrics.record_risk_validation(canonical_symbol, "position_limit")
             self._record_risk_audit(
@@ -1104,6 +1135,7 @@ class RiskManager(RiskController):
                 quantity=float(qty),
                 price=float(price),
                 status="rejected",
+                correlation_id=correlation_id,
                 reason=reason,
                 violation_type="position_limit",
             )
@@ -1127,6 +1159,7 @@ class RiskManager(RiskController):
                     reason,
                     symbol=canonical_symbol,
                     violation_type="notional_limit",
+                    correlation_id=correlation_id,
                 )
             self._metrics.record_risk_validation(canonical_symbol, "notional_limit")
             self._record_risk_audit(
@@ -1135,6 +1168,7 @@ class RiskManager(RiskController):
                 quantity=float(qty),
                 price=float(price),
                 status="rejected",
+                correlation_id=correlation_id,
                 reason=reason,
                 violation_type="notional_limit",
             )
@@ -1152,6 +1186,7 @@ class RiskManager(RiskController):
             quantity=float(qty),
             price=float(price),
             status="passed",
+            correlation_id=correlation_id,
             reason=None,
             violation_type=None,
         )

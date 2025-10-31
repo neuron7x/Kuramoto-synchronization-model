@@ -84,7 +84,13 @@ class RiskComplianceWorkflow:
                 rejected.append(assessment)
                 continue
             try:
-                self._risk.validate_order(order.symbol, order.side, order.quantity, order.price)
+                self._risk.validate_order(
+                    order.symbol,
+                    order.side,
+                    order.quantity,
+                    order.price,
+                    correlation_id=None,
+                )
             except (LimitViolation, OrderRateExceeded) as exc:
                 rejected.append(OrderAssessment(order, report, str(exc)))
                 continue

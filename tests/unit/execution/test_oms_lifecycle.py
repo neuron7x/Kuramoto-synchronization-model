@@ -17,7 +17,15 @@ from libs.db import DataAccessLayer
 
 
 class StubRiskController(RiskController):
-    def validate_order(self, symbol: str, side: str, qty: float, price: float) -> None:
+    def validate_order(
+        self,
+        symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+        *,
+        correlation_id: str | None = None,
+    ) -> None:
         return None
 
     def register_fill(self, symbol: str, side: str, qty: float, price: float) -> None:

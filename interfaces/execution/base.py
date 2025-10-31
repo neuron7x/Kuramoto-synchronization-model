@@ -25,7 +25,15 @@ class RiskController(ABC):
     """Contract for enforcing trading risk limits."""
 
     @abstractmethod
-    def validate_order(self, symbol: str, side: str, qty: float, price: float) -> None:
+    def validate_order(
+        self,
+        symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+        *,
+        correlation_id: str | None = None,
+    ) -> None:
         """Validate an order request prior to submission."""
 
     @abstractmethod

@@ -144,7 +144,7 @@ def test_risk_manager_trips_kill_switch_on_severe_violation(tmp_path) -> None:
     kill_events = [
         entry for entry in entries if entry.get("event") == "kill_switch_triggered"
     ]
-    assert kill_events and kill_events[0]["violation_type"] == "position_limit"
+    assert kill_events and kill_events[0]["outputs"]["violation_type"] == "position_limit"
 
 
 def test_risk_manager_trips_kill_switch_after_repeated_throttling(tmp_path) -> None:
@@ -168,6 +168,14 @@ def test_risk_manager_trips_kill_switch_after_repeated_throttling(tmp_path) -> N
 
     assert manager.kill_switch.is_triggered()
     assert "Order throttle exceeded" in manager.kill_switch.reason
+
+    entries = [
+        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
+    ]
+    kill_events = [
+        entry for entry in entries if entry.get("event") == "kill_switch_triggered"
+    ]
+    assert kill_events and kill_events[0]["outputs"]["violation_type"] == "rate_limit"
 
 
 def test_risk_manager_normalises_symbol_aliases() -> None:

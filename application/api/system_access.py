@@ -514,6 +514,7 @@ class SystemAccess:
                     request.side.value,
                     request.quantity,
                     risk_price,
+                    correlation_id=request.client_order_id,
                 )
             except Exception as exc:
                 self._log(

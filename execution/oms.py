@@ -17,7 +17,7 @@ from core.utils.metrics import get_metrics_collector
 from domain import Order, OrderSide, OrderStatus
 from interfaces.execution import RiskController
 
-from .audit import ExecutionAuditLogger, get_execution_audit_logger
+from .audit import ExecutionAuditLogger, build_audit_record, get_execution_audit_logger
 from .compliance import ComplianceMonitor, ComplianceReport, ComplianceViolation
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .order_ledger import OrderLedger
@@ -383,64 +383,101 @@ class OrderManagementSystem:
             return self._pending[correlation_id]
         self._fingerprints[correlation_id] = fingerprint
 
-        try:
-            if self._compliance is not None:
-                report = None
-                try:
-                    report = self._compliance.check(
-                        order.symbol, order.quantity, order.price
-                    )
-                except ComplianceViolation as exc:
-                    report = exc.report
-                    self._metrics.record_compliance_check(
-                        order.symbol,
-                        "blocked",
-                        () if report is None else report.violations,
-                    )
-                    self._emit_compliance_audit(order, correlation_id, report, str(exc))
+        if self._compliance is not None:
+            report: ComplianceReport | None = None
+            try:
+                report = self._compliance.check(
+                    order.symbol, order.quantity, order.price
+                )
+            except ComplianceViolation as exc:
+                report = exc.report
+                self._metrics.record_compliance_check(
+                    order.symbol,
+                    "blocked",
+                    () if report is None else report.violations,
+                )
+                self._emit_compliance_audit(order, correlation_id, report, str(exc))
+                self._record_ledger_event(
+                    "compliance_blocked",
+                    order=order,
+                    correlation_id=correlation_id,
+                    metadata={
+                        "violations": []
+                        if report is None
+                        else report.violations,
+                        "error": str(exc),
+                    },
+                )
+                self._audit_order_event(
+                    "order_rejected",
+                    order,
+                    correlation_id=correlation_id,
+                    outputs={
+                        "stage": "compliance",
+                        "reason": str(exc),
+                        "violations": []
+                        if report is None
+                        else list(report.violations),
+                    },
+                )
+                self._fingerprints.pop(correlation_id, None)
+                raise
+            status = "passed" if report is None or report.is_clean() else "warning"
+            if report is not None:
+                self._metrics.record_compliance_check(
+                    order.symbol,
+                    "blocked" if report.blocked else status,
+                    report.violations,
+                )
+                self._emit_compliance_audit(order, correlation_id, report, None)
+                if report.blocked:
                     self._record_ledger_event(
                         "compliance_blocked",
                         order=order,
                         correlation_id=correlation_id,
                         metadata={
-                            "violations": []
-                            if report is None
-                            else report.violations,
-                            "error": str(exc),
+                            "violations": report.violations,
+                            "blocked": True,
                         },
                     )
-                    raise
-                status = "passed" if report is None or report.is_clean() else "warning"
-                if report is not None:
-                    self._metrics.record_compliance_check(
-                        order.symbol,
-                        "blocked" if report.blocked else status,
-                        report.violations,
+                    self._audit_order_event(
+                        "order_rejected",
+                        order,
+                        correlation_id=correlation_id,
+                        outputs={
+                            "stage": "compliance",
+                            "reason": "blocked",
+                            "violations": list(report.violations),
+                        },
                     )
-                    self._emit_compliance_audit(order, correlation_id, report, None)
-                    if report.blocked:
-                        self._record_ledger_event(
-                            "compliance_blocked",
-                            order=order,
-                            correlation_id=correlation_id,
-                            metadata={
-                                "violations": report.violations,
-                                "blocked": True,
-                            },
-                        )
-                        raise ComplianceViolation(
-                            "Compliance check blocked order", report=report
-                        )
+                    self._fingerprints.pop(correlation_id, None)
+                    raise ComplianceViolation(
+                        "Compliance check blocked order", report=report
+                    )
 
-            reference_price = (
-                order.price
-                if order.price is not None
-                else max(order.average_price or 0.0, 1.0)
-            )
+        reference_price = (
+            order.price
+            if order.price is not None
+            else max(order.average_price or 0.0, 1.0)
+        )
+        try:
             self.risk.validate_order(
-                order.symbol, order.side.value, order.quantity, reference_price
+                order.symbol,
+                order.side.value,
+                order.quantity,
+                reference_price,
+                correlation_id=correlation_id,
             )
-        except Exception:
+        except Exception as exc:
+            self._audit_order_event(
+                "order_rejected",
+                order,
+                correlation_id=correlation_id,
+                outputs={
+                    "stage": "risk",
+                    "reason": str(exc),
+                },
+            )
             self._fingerprints.pop(correlation_id, None)
             raise
 
@@ -453,6 +490,12 @@ class OrderManagementSystem:
             order=order,
             correlation_id=correlation_id,
         )
+        self._audit_order_event(
+            "order_queued",
+            order,
+            correlation_id=correlation_id,
+            outputs={"status": "queued", "queue_depth": len(self._queue)},
+        )
         return order
 
     def _emit_compliance_audit(
@@ -462,17 +505,17 @@ class OrderManagementSystem:
         report: ComplianceReport | None,
         error: str | None,
     ) -> None:
-        payload = {
-            "event": "compliance_check",
+        inputs = {
             "symbol": order.symbol,
             "side": order.side.value,
             "quantity": float(order.quantity),
             "price": None if order.price is None else float(order.price),
-            "correlation_id": correlation_id,
-            "error": error,
+            "order_type": order.order_type.value,
+            "order_snapshot": order.to_dict(),
         }
+        outputs: dict[str, object | None] = {"error": error}
         if report is not None:
-            payload["report"] = report.to_dict()
+            outputs["report"] = report.to_dict()
             if report.blocked:
                 status = "blocked"
             elif report.is_clean():
@@ -480,10 +523,17 @@ class OrderManagementSystem:
             else:
                 status = "warning"
         else:
-            payload["report"] = None
+            outputs["report"] = None
             status = "blocked" if error else "passed"
-        payload["status"] = status
-        self._audit.emit(payload)
+        outputs["status"] = status
+        self._audit.emit(
+            build_audit_record(
+                event="compliance_check",
+                inputs=inputs,
+                outputs=outputs,
+                correlation_id=correlation_id,
+            )
+        )
 
     def _place_order_with_timeout(self, order: Order, correlation_id: str) -> Order:
         timeout = self.config.request_timeout
@@ -550,6 +600,17 @@ class OrderManagementSystem:
                             "transient": True,
                         },
                     )
+                    self._audit_order_event(
+                        "order_rejected",
+                        item.order,
+                        correlation_id=item.correlation_id,
+                        outputs={
+                            "stage": "connector",
+                            "reason": str(exc),
+                            "attempts": item.attempts,
+                            "transient": True,
+                        },
+                    )
                     return item.order
                 backoff = max(0.0, float(self.config.backoff_seconds))
                 self._persist_state()
@@ -560,6 +621,17 @@ class OrderManagementSystem:
                     metadata={
                         "attempts": item.attempts,
                         "error": str(exc),
+                        "backoff_seconds": backoff * item.attempts,
+                    },
+                )
+                self._audit_order_event(
+                    "order_retry_scheduled",
+                    item.order,
+                    correlation_id=item.correlation_id,
+                    outputs={
+                        "stage": "connector",
+                        "reason": str(exc),
+                        "attempts": item.attempts,
                         "backoff_seconds": backoff * item.attempts,
                     },
                 )
@@ -582,6 +654,17 @@ class OrderManagementSystem:
                     order=item.order,
                     correlation_id=item.correlation_id,
                     metadata={"reason": str(exc)},
+                )
+                self._audit_order_event(
+                    "order_rejected",
+                    item.order,
+                    correlation_id=item.correlation_id,
+                    outputs={
+                        "stage": "connector",
+                        "reason": str(exc),
+                        "attempts": item.attempts,
+                        "transient": False,
+                    },
                 )
                 return item.order
             break
@@ -627,6 +710,17 @@ class OrderManagementSystem:
             order=submitted,
             correlation_id=item.correlation_id,
             metadata={"attempts": item.attempts, "ack_latency": ack_latency},
+        )
+        self._audit_order_event(
+            "order_acknowledged",
+            submitted,
+            correlation_id=item.correlation_id,
+            outputs={
+                "order_id": submitted.order_id,
+                "attempts": item.attempts,
+                "ack_latency": ack_latency,
+                "status": submitted.status.value,
+            },
         )
         return submitted
 
@@ -869,6 +963,36 @@ class OrderManagementSystem:
             metadata=metadata,
             state_snapshot=self._state_payload(),
         )
+
+    def _audit_order_event(
+        self,
+        event: str,
+        order: Order,
+        *,
+        correlation_id: str | None,
+        inputs: Mapping[str, object] | None = None,
+        outputs: Mapping[str, object] | None = None,
+        context: Mapping[str, object] | None = None,
+    ) -> None:
+        order_payload = order.to_dict()
+        base_inputs: dict[str, object] = {
+            "symbol": order.symbol,
+            "side": order.side.value,
+            "quantity": float(order.quantity),
+            "price": None if order.price is None else float(order.price),
+            "order_type": order.order_type.value,
+            "order_snapshot": order_payload,
+        }
+        if inputs:
+            base_inputs.update(dict(inputs))
+        payload = build_audit_record(
+            event=event,
+            inputs=base_inputs,
+            outputs=dict(outputs or {}),
+            correlation_id=correlation_id,
+            context=context,
+        )
+        self._audit.emit(payload)
 
     # ------------------------------------------------------------------
     # Recovery helpers

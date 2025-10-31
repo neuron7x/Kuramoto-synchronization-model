@@ -29,6 +29,7 @@ from domain import Order, OrderSide, OrderType, Signal, SignalAction
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import RiskLimits, RiskManager
+from execution.audit import build_audit_record, get_execution_audit_logger
 
 __all__ = [
     "ExchangeAdapterConfig",
@@ -120,6 +121,7 @@ class TradePulseSystem:
         self._risk_manager = risk_manager or RiskManager(config.risk_limits)
         self._metrics = get_metrics_collector()
         self._clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
+        self._audit = get_execution_audit_logger()
 
         connectors: MutableMapping[str, ExecutionConnector] = {}
         credentials: MutableMapping[str, Mapping[str, str]] = {}
@@ -486,6 +488,23 @@ class TradePulseSystem:
         derived_correlation = (
             correlation_id
             or f"{signal.symbol}-{int(signal.timestamp.timestamp() * 1e9)}"
+        )
+        self._audit.emit(
+            build_audit_record(
+                event="signal_submitted",
+                inputs={
+                    "signal": signal.to_dict(),
+                    "venue": venue_key,
+                    "quantity": quantity,
+                    "price": price,
+                    "order_type": order_type.value,
+                },
+                outputs={
+                    "correlation_id": derived_correlation,
+                    "order_preview": order.to_dict(),
+                },
+                correlation_id=derived_correlation,
+            )
         )
         try:
             submitted = loop.submit_order(

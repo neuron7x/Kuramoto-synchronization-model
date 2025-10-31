@@ -10,8 +10,37 @@ from typing import Callable, Iterable, Mapping, MutableSequence, Optional
 
 __all__ = [
     "ExecutionAuditLogger",
+    "build_audit_record",
     "get_execution_audit_logger",
 ]
+
+
+def build_audit_record(
+    *,
+    event: str,
+    inputs: Mapping[str, object] | None = None,
+    outputs: Mapping[str, object] | None = None,
+    correlation_id: str | None = None,
+    context: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Create a structured audit payload.
+
+    The helper normalises *inputs* and *outputs* to dictionaries so callers can
+    consistently capture the parameters and side-effects associated with an
+    orchestrator action. ``correlation_id`` and ``context`` are optional but
+    provide additional linkage for downstream analytics pipelines.
+    """
+
+    record: dict[str, object] = {
+        "event": event,
+        "inputs": dict(inputs or {}),
+        "outputs": dict(outputs or {}),
+    }
+    if correlation_id is not None:
+        record["correlation_id"] = correlation_id
+    if context:
+        record["context"] = dict(context)
+    return record
 
 
 class ExecutionAuditLogger:

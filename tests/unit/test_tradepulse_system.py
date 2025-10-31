@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import AsyncIterator, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,7 @@ from application.system import (
 from core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
 from execution.connectors import BinanceConnector
+from execution.audit import ExecutionAuditLogger
 
 
 class FakeAsyncIngestor:
@@ -145,6 +147,29 @@ def test_tradepulse_system_generates_features_and_orders(tmp_path: Path) -> None
     assert order.side.value in {"buy", "sell"}
     assert system.last_execution_submission_at is not None
     assert system.last_execution_error is None
+
+
+def test_signal_submission_emits_audit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    audit_path = tmp_path / "orchestrator_audit.jsonl"
+    from execution import audit as execution_audit
+
+    audit_logger = ExecutionAuditLogger(audit_path)
+    monkeypatch.setattr(execution_audit, "_audit_logger", audit_logger)
+
+    system = _build_system(tmp_path)
+    signal = Signal(symbol="BTCUSDT", action=SignalAction.BUY, confidence=0.9)
+
+    system.submit_signal(signal, venue="binance", quantity=0.1, price=30_000.0)
+
+    entries = [
+        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
+    ]
+    event = next(entry for entry in entries if entry.get("event") == "signal_submitted")
+    assert event["inputs"]["signal"]["symbol"] == signal.symbol
+    assert event["outputs"]["correlation_id"] == event["correlation_id"]
+    assert event["outputs"]["order_preview"]["symbol"] == signal.symbol
 
 
 def test_tradepulse_system_rejects_hold_signal(tmp_path: Path) -> None:
