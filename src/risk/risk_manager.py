@@ -110,7 +110,7 @@ class RiskManagerFacade:
 
         if self._access_controller is not None:
             self._require_permission(
-                "read_kill_switch_state", actor=actor, roles=roles, optional=True
+                "read_kill_switch_state", actor=actor, roles=roles
             )
         kill_switch = self._risk_manager.kill_switch
         return KillSwitchState(
