@@ -19,6 +19,13 @@ from .common import (
     HMACSigner,
 )
 
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
 _STATUS_MAP = {
     "NEW": OrderStatus.OPEN,
     "PARTIALLY_FILLED": OrderStatus.PARTIALLY_FILLED,
@@ -224,19 +231,67 @@ class BinanceExecutionConnector(AuthenticatedRESTExecutionConnector):
         self._start_streaming()
 
     def _handle_stream_payload(self, payload: dict[str, Any]) -> None:
-        event_type = payload.get("e")
-        if event_type == "executionReport":
+        event_type = str(payload.get("e") or "").lower()
+        if event_type == "executionreport":
+            filled_qty = _safe_float(payload.get("l")) or 0.0
             normalized = {
                 "type": "fill",
                 "symbol": payload.get("s"),
                 "order_id": str(payload.get("i")),
                 "client_order_id": payload.get("c"),
                 "status": payload.get("X"),
-                "filled_qty": float(payload.get("l", 0.0)),
-                "fill_price": float(payload.get("L", 0.0)),
+                "filled_qty": filled_qty,
+                "fill_price": _safe_float(payload.get("L")) or 0.0,
                 "event_time": payload.get("E"),
+                "cumulative_qty": _safe_float(payload.get("z")),
+                "average_price": _safe_float(payload.get("ap")),
             }
+            quote_qty = _safe_float(payload.get("Z"))
+            if quote_qty is not None:
+                normalized["quote_qty"] = quote_qty
             self._event_queue.put(normalized)
+            return
+        if event_type == "outboundaccountposition":
+            balances: list[dict[str, Any]] = []
+            for entry in payload.get("B", []):
+                if not isinstance(entry, Mapping):
+                    continue
+                asset = str(entry.get("a") or entry.get("asset") or "").upper()
+                if not asset:
+                    continue
+                free = _safe_float(entry.get("f") or entry.get("free"))
+                locked = _safe_float(entry.get("l") or entry.get("locked"))
+                balance_entry: dict[str, Any] = {"asset": asset}
+                if free is not None:
+                    balance_entry["free"] = free
+                if locked is not None:
+                    balance_entry["locked"] = locked
+                total = _safe_float(entry.get("T") or entry.get("balance"))
+                if total is None and free is not None and locked is not None:
+                    total = free + locked
+                if total is not None:
+                    balance_entry["total"] = total
+                balances.append(balance_entry)
+            if balances:
+                self._event_queue.put(
+                    {
+                        "type": "balance",
+                        "balances": balances,
+                        "event_time": payload.get("E"),
+                    }
+                )
+            return
+        if event_type == "balanceupdate":
+            asset = str(payload.get("a") or "").upper()
+            delta = _safe_float(payload.get("d"))
+            if asset and delta is not None:
+                self._event_queue.put(
+                    {
+                        "type": "balance",
+                        "balances": [{"asset": asset, "delta": delta}],
+                        "event_time": payload.get("E"),
+                    }
+                )
             return
         super()._handle_stream_payload(payload)
 

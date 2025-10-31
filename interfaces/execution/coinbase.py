@@ -199,8 +199,10 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
 
     def _handle_stream_payload(self, payload: dict[str, Any]) -> None:
         events = payload.get("events") or []
+        handled = False
         for event in events:
-            if event.get("type") == "fill":
+            event_type = str(event.get("type") or "").lower()
+            if event_type == "fill":
                 normalized = {
                     "type": "fill",
                     "order_id": event.get("order_id"),
@@ -208,9 +210,63 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
                     "filled_qty": float(event.get("filled_size", 0)),
                     "price": float(event.get("price", 0)),
                     "event_time": payload.get("timestamp") or event.get("timestamp"),
+                    "status": event.get("status"),
+                    "cumulative_qty": event.get("cumulative_filled_size"),
+                    "average_price": event.get("average_filled_price"),
                 }
                 self._event_queue.put(normalized)
-                return
+                handled = True
+            elif event_type in {"snapshot", "balance_update", "account"} or event.get(
+                "balances"
+            ):
+                balances: list[dict[str, Any]] = []
+                raw_balances = event.get("balances") or event.get("balance_updates")
+                if isinstance(raw_balances, Mapping):
+                    balance_iter = raw_balances.values()
+                else:
+                    balance_iter = raw_balances or []
+                for entry in balance_iter:
+                    if not isinstance(entry, Mapping):
+                        continue
+                    currency = str(
+                        entry.get("currency")
+                        or entry.get("asset")
+                        or entry.get("symbol")
+                        or ""
+                    ).upper()
+                    if not currency:
+                        continue
+                    available = entry.get("available_balance") or entry.get("available")
+                    hold = entry.get("hold_balance") or entry.get("hold")
+                    balance_entry: dict[str, Any] = {"asset": currency}
+                    if isinstance(available, Mapping):
+                        available = available.get("value")
+                    if isinstance(hold, Mapping):
+                        hold = hold.get("value")
+                    if available is not None:
+                        balance_entry["free"] = float(available)
+                    if hold is not None:
+                        balance_entry["locked"] = float(hold)
+                    total = entry.get("total_balance") or entry.get("balance")
+                    if isinstance(total, Mapping):
+                        total = total.get("value")
+                    if total is not None:
+                        balance_entry["total"] = float(total)
+                    delta = entry.get("delta") or entry.get("change")
+                    if delta is not None:
+                        balance_entry["delta"] = float(delta)
+                    balances.append(balance_entry)
+                if balances:
+                    self._event_queue.put(
+                        {
+                            "type": "balance",
+                            "balances": balances,
+                            "event_time": payload.get("timestamp") or event.get("timestamp"),
+                        }
+                    )
+                    handled = True
+        if handled:
+            return
         super()._handle_stream_payload(payload)
 
     # ------------------------------------------------------------------

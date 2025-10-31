@@ -7,12 +7,13 @@ import logging
 import threading
 from collections import defaultdict
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Mapping, MutableMapping, Sequence
+from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping, Sequence
+from time import monotonic
 
 from core.utils.metrics import get_metrics_collector
-from domain import Order
+from domain import Order, OrderStatus
 
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .oms import OMSConfig, OrderManagementSystem
@@ -122,6 +123,7 @@ class LiveExecutionLoop:
         self._contexts: Dict[str, _VenueContext] = {}
         self._order_connector: Dict[str, str] = {}
         self._last_reported_fill: Dict[str, float] = {}
+        self._last_stream_event: Dict[str, float] = {}
         self._stop = threading.Event()
         self._activity = threading.Event()
         self._started = False
@@ -134,6 +136,7 @@ class LiveExecutionLoop:
         )
         self._pre_session_positions: Dict[str, Sequence[Mapping[str, object]]] = {}
         self._pre_session_position_issues: Dict[str, Sequence[str]] = {}
+        self._market_state: Dict[str, Dict[str, Any]] = defaultdict(dict)
 
         for name, connector in connectors.items():
             state_path = self._config.state_dir / f"{name}_oms.json"
@@ -673,75 +676,369 @@ class LiveExecutionLoop:
                     return
                 self._activity.clear()
 
+    def _poll_outstanding_orders(self, context: _VenueContext) -> None:
+        outstanding = list(context.oms.outstanding())
+        for order in outstanding:
+            if order.order_id is None or not order.is_active:
+                continue
+            try:
+                remote = context.connector.fetch_order(order.order_id)
+            except OrderError as exc:
+                self._logger.warning(
+                    "Failed to fetch order state",
+                    extra={
+                        "event": "live_loop.fetch_failed",
+                        "venue": context.name,
+                        "order_id": order.order_id,
+                        "error": str(exc),
+                    },
+                )
+                continue
+            except (TransientOrderError, ConnectionError, TimeoutError) as exc:
+                self._logger.warning(
+                    "Transient error while polling order",
+                    extra={
+                        "event": "live_loop.poll_retry",
+                        "venue": context.name,
+                        "order_id": order.order_id,
+                        "error": str(exc),
+                    },
+                )
+                continue
+
+            last = self._last_reported_fill.get(order.order_id, 0.0)
+            delta = max(0.0, remote.filled_quantity - last)
+            if delta > 0:
+                price = remote.average_price or remote.price or 0.0
+                if price <= 0:
+                    price = 1.0
+                context.oms.register_fill(order.order_id, delta, price)
+                self._last_reported_fill[order.order_id] = remote.filled_quantity
+                self._logger.info(
+                    "Registered fill",
+                    extra={
+                        "event": "live_loop.register_fill",
+                        "venue": context.name,
+                        "order_id": order.order_id,
+                        "fill_qty": delta,
+                    },
+                )
+
+            if not remote.is_active:
+                try:
+                    context.oms.sync_remote_state(remote)
+                except LookupError:
+                    self._logger.warning(
+                        "Remote order missing from OMS during sync",
+                        extra={
+                            "event": "live_loop.sync_missing",
+                            "venue": context.name,
+                            "order_id": order.order_id,
+                        },
+                    )
+                self._order_connector.pop(order.order_id, None)
+                self._last_reported_fill.pop(order.order_id, None)
+
     def _fill_polling_loop(self) -> None:
         while not self._stop.is_set():
             for context in self._contexts.values():
-                outstanding = list(context.oms.outstanding())
-                for order in outstanding:
-                    if order.order_id is None or not order.is_active:
-                        continue
-                    try:
-                        remote = context.connector.fetch_order(order.order_id)
-                    except OrderError as exc:
-                        self._logger.warning(
-                            "Failed to fetch order state",
-                            extra={
-                                "event": "live_loop.fetch_failed",
-                                "venue": context.name,
-                                "order_id": order.order_id,
-                                "error": str(exc),
-                            },
-                        )
-                        continue
-                    except (TransientOrderError, ConnectionError, TimeoutError) as exc:
-                        self._logger.warning(
-                            "Transient error while polling order",
-                            extra={
-                                "event": "live_loop.poll_retry",
-                                "venue": context.name,
-                                "order_id": order.order_id,
-                                "error": str(exc),
-                            },
-                        )
-                        continue
-
-                    last = self._last_reported_fill.get(order.order_id, 0.0)
-                    delta = max(0.0, remote.filled_quantity - last)
-                    if delta > 0:
-                        price = remote.average_price or remote.price or 0.0
-                        if price <= 0:
-                            price = 1.0
-                        context.oms.register_fill(order.order_id, delta, price)
-                        self._last_reported_fill[order.order_id] = (
-                            remote.filled_quantity
-                        )
-                        self._logger.info(
-                            "Registered fill",
-                            extra={
-                                "event": "live_loop.register_fill",
-                                "venue": context.name,
-                                "order_id": order.order_id,
-                                "fill_qty": delta,
-                            },
-                        )
-
-                    if not remote.is_active:
-                        try:
-                            context.oms.sync_remote_state(remote)
-                        except LookupError:
-                            self._logger.warning(
-                                "Remote order missing from OMS during sync",
-                                extra={
-                                    "event": "live_loop.sync_missing",
-                                    "venue": context.name,
-                                    "order_id": order.order_id,
-                                },
-                            )
-                        self._order_connector.pop(order.order_id, None)
-                        self._last_reported_fill.pop(order.order_id, None)
+                if self._process_stream_events(context):
+                    continue
+                self._poll_outstanding_orders(context)
 
             if self._stop.wait(self._config.fill_poll_interval):
                 return
+
+    def _process_stream_events(self, context: _VenueContext) -> bool:
+        connector = context.connector
+        next_event = getattr(connector, "next_event", None)
+        if not callable(next_event):
+            return False
+
+        processed = False
+        while not self._stop.is_set():
+            try:
+                event = next_event(timeout=0.0)
+            except TypeError:
+                return False
+            if event is None:
+                break
+            processed = True
+            self._last_stream_event[context.name] = monotonic()
+            try:
+                self._handle_stream_event(context, event)
+            except Exception as exc:  # pragma: no cover - defensive logging
+                self._logger.exception(
+                    "Failed to process stream event",
+                    extra={
+                        "event": "live_loop.stream_error",
+                        "venue": context.name,
+                        "error": str(exc),
+                    },
+                )
+        if processed:
+            return True
+
+        health_check = getattr(connector, "stream_is_healthy", None)
+        if callable(health_check):
+            healthy = bool(health_check())
+            if not healthy:
+                self._logger.warning(
+                    "Stream unhealthy; falling back to REST polling",
+                    extra={
+                        "event": "live_loop.stream_unhealthy",
+                        "venue": context.name,
+                    },
+                )
+                return False
+
+            last_seen = self._last_stream_event.get(context.name)
+            if last_seen is None:
+                return False
+
+            silence = monotonic() - last_seen
+            if silence >= self._config.fill_poll_interval:
+                self._logger.info(
+                    "Stream healthy but idle; polling outstanding orders",
+                    extra={
+                        "event": "live_loop.stream_idle",
+                        "venue": context.name,
+                        "idle_for": round(silence, 3),
+                    },
+                )
+                return False
+
+            return True
+        return False
+
+    def _handle_stream_event(self, context: _VenueContext, event: Mapping[str, Any]) -> None:
+        event_type = str(event.get("type") or "").lower()
+        if not event_type:
+            return
+
+        if event_type == "fill":
+            order_id = str(
+                event.get("order_id")
+                or event.get("client_order_id")
+                or event.get("i")
+                or ""
+            ).strip()
+            if not order_id:
+                return
+            quantity = self._coerce_float(
+                event.get("filled_qty")
+                or event.get("fill_qty")
+                or event.get("last_qty")
+                or event.get("quantity")
+            )
+            price = self._coerce_float(
+                event.get("fill_price")
+                or event.get("price")
+                or event.get("avg_price")
+                or event.get("average_price")
+            )
+            if quantity is not None and quantity > 0:
+                fill_price = price if price and price > 0 else 1.0
+                try:
+                    context.oms.register_fill(order_id, quantity, fill_price)
+                    self._last_reported_fill[order_id] = (
+                        self._last_reported_fill.get(order_id, 0.0) + quantity
+                    )
+                except KeyError:
+                    self._logger.warning(
+                        "Stream reported fill for unknown order",
+                        extra={
+                            "event": "live_loop.stream_unknown_fill",
+                            "venue": context.name,
+                            "order_id": order_id,
+                        },
+                    )
+            cumulative = self._coerce_float(
+                event.get("cumulative_qty")
+                or event.get("cummulative_qty")
+                or event.get("filled_quantity")
+                or event.get("cumulative_filled")
+            )
+            avg_price = self._coerce_float(
+                event.get("average_price")
+                or event.get("avg_price")
+                or event.get("fill_price")
+                or event.get("price")
+            )
+            status = self._map_stream_status(event.get("status"))
+            if status is not None or cumulative is not None or avg_price is not None:
+                self._apply_stream_status(context, order_id, status, cumulative, avg_price)
+            return
+
+        if event_type in {"balance", "account"}:
+            balances = self._normalise_balances(event.get("balances") or event)
+            if balances:
+                venue_state = self._market_state.setdefault(context.name, {})
+                venue_state["balances"] = balances
+            return
+
+        if event_type in {"book", "order_book", "ticker"}:
+            symbol = str(
+                event.get("symbol")
+                or event.get("product_id")
+                or event.get("s")
+                or ""
+            ).upper()
+            if symbol:
+                venue_state = self._market_state.setdefault(context.name, {})
+                books = venue_state.setdefault("order_book", {})
+                entry: dict[str, float] = books.setdefault(symbol, {})
+                for source, target in {
+                    "bid": "bid",
+                    "best_bid": "bid",
+                    "bid_price": "bid",
+                    "b": "bid",
+                    "ask": "ask",
+                    "best_ask": "ask",
+                    "ask_price": "ask",
+                    "a": "ask",
+                    "bid_qty": "bid_qty",
+                    "ask_qty": "ask_qty",
+                    "bid_size": "bid_qty",
+                    "ask_size": "ask_qty",
+                }.items():
+                    value = self._coerce_float(event.get(source))
+                    if value is not None:
+                        entry[target] = value
+            return
+
+        if event_type in {"trade", "last_trade"}:
+            symbol = str(
+                event.get("symbol")
+                or event.get("product_id")
+                or event.get("s")
+                or ""
+            ).upper()
+            price = self._coerce_float(event.get("price") or event.get("trade_price"))
+            quantity = self._coerce_float(event.get("quantity") or event.get("size"))
+            if symbol and price is not None:
+                venue_state = self._market_state.setdefault(context.name, {})
+                trades = venue_state.setdefault("trades", {})
+                trade_payload: dict[str, float] = {"price": price}
+                if quantity is not None:
+                    trade_payload["quantity"] = quantity
+                trades[symbol] = trade_payload
+            return
+
+    @staticmethod
+    def _map_stream_status(status: Any) -> OrderStatus | None:
+        if status is None:
+            return None
+        raw = str(status).strip().lower()
+        mapping = {
+            "filled": OrderStatus.FILLED,
+            "fill": OrderStatus.FILLED,
+            "partially_filled": OrderStatus.PARTIALLY_FILLED,
+            "partial_fill": OrderStatus.PARTIALLY_FILLED,
+            "new": OrderStatus.OPEN,
+            "open": OrderStatus.OPEN,
+            "pending": OrderStatus.PENDING,
+            "canceled": OrderStatus.CANCELLED,
+            "cancelled": OrderStatus.CANCELLED,
+            "expired": OrderStatus.CANCELLED,
+            "rejected": OrderStatus.REJECTED,
+        }
+        return mapping.get(raw)
+
+    def _apply_stream_status(
+        self,
+        context: _VenueContext,
+        order_id: str,
+        status: OrderStatus | None,
+        cumulative: float | None,
+        average_price: float | None,
+    ) -> None:
+        if not order_id:
+            return
+        orders = getattr(context.oms, "_orders", {})
+        original = orders.get(order_id)
+        if original is None:
+            return
+        updated = replace(original)
+        if cumulative is not None and cumulative >= 0:
+            updated.filled_quantity = min(float(updated.quantity), float(cumulative))
+        if average_price is not None and average_price > 0:
+            updated.average_price = average_price
+        if status is OrderStatus.CANCELLED:
+            updated.cancel()
+        elif status is not None:
+            updated.status = status
+        try:
+            context.oms.sync_remote_state(updated)
+        except LookupError:
+            return
+        if cumulative is not None:
+            self._last_reported_fill[order_id] = float(updated.filled_quantity)
+        if not updated.is_active:
+            self._order_connector.pop(order_id, None)
+            self._last_reported_fill.pop(order_id, None)
+
+    def _normalise_balances(self, balances: Any) -> dict[str, dict[str, float]]:
+        result: dict[str, dict[str, float]] = {}
+        items: Iterable[Any]
+        if isinstance(balances, Mapping):
+            items = balances.values()
+        elif isinstance(balances, (list, tuple)):
+            items = balances
+        else:
+            return result
+        for entry in items:
+            if not isinstance(entry, Mapping):
+                continue
+            asset = str(
+                entry.get("asset")
+                or entry.get("currency")
+                or entry.get("symbol")
+                or entry.get("code")
+                or entry.get("a")
+                or ""
+            ).strip().upper()
+            if not asset:
+                continue
+            free = self._extract_balance_value(entry, "free", "available", "available_balance")
+            locked = self._extract_balance_value(entry, "locked", "hold", "locked_balance")
+            delta = self._extract_balance_value(entry, "delta", "change", "balance_delta")
+            payload: dict[str, float] = {}
+            if free is not None:
+                payload["free"] = free
+            if locked is not None:
+                payload["locked"] = locked
+            if delta is not None:
+                payload["delta"] = delta
+            total = self._coerce_float(entry.get("balance") or entry.get("total"))
+            if total is None and free is not None and locked is not None:
+                total = free + locked
+            if total is not None:
+                payload["total"] = total
+            if payload:
+                result[asset] = payload
+        return result
+
+    def _extract_balance_value(self, entry: Mapping[str, Any], *keys: str) -> float | None:
+        for key in keys:
+            value = entry.get(key)
+            if isinstance(value, Mapping):
+                candidate = value.get("value")
+                if candidate is not None:
+                    value = candidate
+            amount = self._coerce_float(value)
+            if amount is not None:
+                return amount
+        return None
+
+    @staticmethod
+    def _coerce_float(value: Any) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
     def _heartbeat_loop(self) -> None:
         backoff_attempts: MutableMapping[str, int] = defaultdict(int)
