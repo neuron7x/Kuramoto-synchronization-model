@@ -33,6 +33,7 @@ class MultiscaleFractalAnalyzer:
         trend = float(np.tanh((prices[-1] - prices[0]) / (np.std(prices) + 1e-9)))
         hurst = float(self._approx_hurst_rs(returns))
         fractal_dim = float(np.clip(2.0 - hurst, 1.0, 2.0))
+        dynamics = self._compute_multiscale_dynamics(returns)
         regime = self._classify_regime(hurst, trend, volatility)
         return {
             "volatility": volatility,
@@ -41,6 +42,7 @@ class MultiscaleFractalAnalyzer:
             "fractal_dim": fractal_dim,
             "regime": regime,
             "n": int(prices.size),
+            "dynamics": dynamics,
         }
 
     def _approx_hurst_rs(self, returns: np.ndarray) -> float:
@@ -51,6 +53,41 @@ class MultiscaleFractalAnalyzer:
         rs = (cumulative.max() - cumulative.min()) / (returns.std() + 1e-9)
         hurst = 0.5 + 0.1 * np.log(rs + 1e-9)
         return float(np.clip(hurst, 0.0, 1.0))
+
+    def _compute_multiscale_dynamics(self, returns: np.ndarray) -> Dict[str, Any]:
+        scales = np.asarray([1, 2, 4, 8], dtype=float)
+        volatilities: List[float] = []
+        realised_scales: List[float] = []
+        for scale in scales:
+            window = int(scale)
+            segments = returns[: returns.size - (returns.size % window)]
+            if segments.size < 2 * window:
+                continue
+            reshaped = segments.reshape(-1, window)
+            aggregated = reshaped.sum(axis=1)
+            vol = float(np.std(aggregated))
+            if vol <= 0.0:
+                continue
+            volatilities.append(vol)
+            realised_scales.append(scale)
+
+        if len(volatilities) < 2:
+            scaling_exponent = 0.5
+            stability = 0.5
+        else:
+            log_scales = np.log(realised_scales)
+            log_vols = np.log(volatilities)
+            slope, intercept = np.polyfit(log_scales, log_vols, 1)
+            scaling_exponent = float(np.clip(slope, -0.2, 1.2))
+            deviation = abs(scaling_exponent - 0.5)
+            stability = float(np.exp(-(deviation / 0.25) ** 2))
+
+        return {
+            "scales": realised_scales,
+            "volatility_by_scale": volatilities,
+            "scaling_exponent": float(scaling_exponent),
+            "stability": float(np.clip(stability, 0.0, 1.0)),
+        }
 
     def _classify_regime(self, hurst: float, trend: float, volatility: float) -> str:
         if abs(trend) > 0.35 and hurst > 0.55:
@@ -123,6 +160,7 @@ class NeuroRiskManager:
         volatility = float(market_context.get("volatility", 0.0))
 
         damping = max(0.35, min(1.0, 0.95 / (1.0 + 5.0 * volatility))) * max(0.4, confidence)
+        damping *= self._fractal_damping_factor(market_context)
         if confidence < self._cfg.slo_gate_confidence_min and volatility > self._cfg.slo_gate_max_volatility:
             damping *= self._cfg.slo_emergency_downscale
 
@@ -139,6 +177,17 @@ class NeuroRiskManager:
         adjusted.setdefault("risk_params", {})
         adjusted["risk_params"].update({"sl_dist": sl_dist, "tp_dist": tp_dist})
         return adjusted
+
+    def _fractal_damping_factor(self, market_context: Dict[str, Any]) -> float:
+        scaling = float(market_context.get("fractal_scaling", 0.5))
+        stability = float(np.clip(market_context.get("fractal_stability", 0.5), 0.0, 1.0))
+        dimension = float(market_context.get("fractal_dim", 1.5))
+
+        persistence = float(np.clip(1.0 + (scaling - 0.5) * 1.4, 0.6, 1.4))
+        stability_factor = 0.6 + 0.4 * stability
+        dimension_factor = float(np.clip(1.0 - 0.25 * abs(dimension - 1.5), 0.5, 1.1))
+
+        return float(np.clip(persistence * stability_factor * dimension_factor, 0.5, 1.25))
 
 
 class NeuroDecisionIntegrator:
@@ -230,10 +279,14 @@ class EnhancedFractalNeuroeconomicCore:
 
         assets = list(asset_series.keys())
         base_strategies = portfolio.get("strategies") or ["fractal_momentum", "fractal_mean_reversion"]
+        dynamics = fractal.get("dynamics", {})
         market_context = {
             "volatility": fractal["volatility"],
             "trend_strength": fractal["trend_strength"],
             "regime": fractal["regime"],
+            "fractal_scaling": dynamics.get("scaling_exponent", 0.5),
+            "fractal_stability": dynamics.get("stability", 0.5),
+            "fractal_dim": fractal["fractal_dim"],
         }
 
         neuro_context = await self._build_neuro_context(assets, base_strategies, fractal)
@@ -334,6 +387,8 @@ class EnhancedFractalNeuroeconomicCore:
             "market_volatility": float(fractal["volatility"]),
             "trend_strength": float(fractal["trend_strength"]),
             "regime": fractal["regime"],
+            "fractal_scaling": float(fractal.get("dynamics", {}).get("scaling_exponent", 0.5)),
+            "fractal_stability": float(fractal.get("dynamics", {}).get("stability", 0.5)),
         }
 
     def _parse_trade(self, trade_data: Dict[str, Any]) -> TradeResult:
