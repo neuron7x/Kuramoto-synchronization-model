@@ -36,6 +36,7 @@ without modifying risk logic.
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import threading
 import time
@@ -106,6 +107,9 @@ class RiskLimits:
             the kill-switch.
         kill_switch_rate_limit_threshold: Consecutive throttle breaches that
             trigger the kill-switch.
+        max_relative_drawdown: Maximum fractional equity drawdown tolerated before
+            the kill-switch engages. Values between 0 and 1 are treated as ratios,
+            while values between 1 and 100 are interpreted as percentages.
     """
 
     max_notional: float = float("inf")
@@ -115,6 +119,7 @@ class RiskLimits:
     kill_switch_limit_multiplier: float = 1.5
     kill_switch_violation_threshold: int = 3
     kill_switch_rate_limit_threshold: int = 3
+    max_relative_drawdown: float | None = None
 
     def __post_init__(self) -> None:
         if self.max_orders_per_interval < 0:
@@ -127,6 +132,16 @@ class RiskLimits:
             self.kill_switch_violation_threshold = 1
         if self.kill_switch_rate_limit_threshold < 1:
             self.kill_switch_rate_limit_threshold = 1
+        if self.max_relative_drawdown is not None:
+            numeric = float(self.max_relative_drawdown)
+            if numeric <= 0:
+                raise ValueError("max_relative_drawdown must be positive")
+            if numeric >= 1:
+                if numeric <= 100:
+                    numeric /= 100.0
+                else:
+                    raise ValueError("max_relative_drawdown must be <= 100")
+            self.max_relative_drawdown = numeric
 
 
 class KillSwitchStateStore(Protocol):
@@ -830,6 +845,12 @@ class RiskManager(RiskController):
         self._audit = audit_logger or get_execution_audit_logger()
         self._limit_violation_streak = 0
         self._throttle_violation_streak = 0
+        self._equity = 0.0
+        self._peak_equity = 0.0
+        self._current_drawdown = 0.0
+        self._realized_pnl = 0.0
+        self._unrealized_pnl = 0.0
+        self._drawdown_halt_notified = False
         self._restore_risk_state()
 
     def _canonical_symbol(self, symbol: str) -> str:
@@ -881,6 +902,111 @@ class RiskManager(RiskController):
                 "Failed to persist risk exposure snapshot",  # noqa: TRY400
                 extra={"event": "risk.persist_failed", "error": str(exc)},
             )
+
+    @property
+    def equity(self) -> float:
+        """Return the most recent portfolio equity observation."""
+
+        return self._equity
+
+    @property
+    def peak_equity(self) -> float:
+        """Return the recorded equity high-water mark."""
+
+        return self._peak_equity
+
+    @property
+    def current_drawdown(self) -> float:
+        """Return the current fractional drawdown."""
+
+        return self._current_drawdown
+
+    @property
+    def realized_pnl(self) -> float:
+        """Return the last recorded realised PnL value."""
+
+        return self._realized_pnl
+
+    @property
+    def unrealized_pnl(self) -> float:
+        """Return the last recorded unrealised PnL value."""
+
+        return self._unrealized_pnl
+
+    @property
+    def paper_trading_active(self) -> bool:
+        """Indicate whether real trading should remain halted."""
+
+        return self._kill_switch.is_triggered()
+
+    def update_portfolio_equity(
+        self,
+        equity: float,
+        *,
+        realized_pnl: float | None = None,
+        unrealized_pnl: float | None = None,
+    ) -> None:
+        """Record portfolio equity/PnL and enforce drawdown guardrails."""
+
+        equity_value = float(equity)
+        if not math.isfinite(equity_value):
+            raise ValueError("equity must be finite")
+        if equity_value < 0:
+            raise ValueError("equity must be non-negative")
+
+        self._equity = equity_value
+        if equity_value > self._peak_equity:
+            self._peak_equity = equity_value
+
+        if realized_pnl is not None:
+            realized_value = float(realized_pnl)
+            if not math.isfinite(realized_value):
+                raise ValueError("realized_pnl must be finite")
+            self._realized_pnl = realized_value
+
+        if unrealized_pnl is not None:
+            unrealized_value = float(unrealized_pnl)
+            if not math.isfinite(unrealized_value):
+                raise ValueError("unrealized_pnl must be finite")
+            self._unrealized_pnl = unrealized_value
+
+        if self._peak_equity > 0:
+            drawdown = max(0.0, (self._peak_equity - self._equity) / self._peak_equity)
+        else:
+            drawdown = 0.0
+
+        self._current_drawdown = drawdown
+        self._metrics.record_drawdown(drawdown)
+
+        limit = self.limits.max_relative_drawdown
+        if limit is None:
+            self._drawdown_halt_notified = False
+            return
+
+        if drawdown >= limit:
+            reason = (
+                "Equity drawdown "
+                f"{drawdown:.2%} breached limit {limit:.2%} "
+                f"(peak={self._peak_equity:.2f}, equity={self._equity:.2f}) "
+                "– switching to paper trading"
+            )
+            if not self._drawdown_halt_notified:
+                self._audit.emit(
+                    {
+                        "event": "portfolio_drawdown_breach",
+                        "equity": self._equity,
+                        "peak_equity": self._peak_equity,
+                        "drawdown": drawdown,
+                        "drawdown_limit": limit,
+                        "realized_pnl": self._realized_pnl,
+                        "unrealized_pnl": self._unrealized_pnl,
+                        "reason": reason,
+                    }
+                )
+                self._drawdown_halt_notified = True
+            self._trigger_kill_switch(reason, violation_type="drawdown_limit")
+        else:
+            self._drawdown_halt_notified = False
 
     def hydrate_positions(
         self,
