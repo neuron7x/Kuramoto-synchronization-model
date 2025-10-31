@@ -26,6 +26,12 @@ BOND_LIBRARY: Dict[BondType, BondParams] = {
 K_BOLTZMANN_EFFECTIVE = 1.38e-23
 SYSTEM_TEMPERATURE_K = 300.0
 
+# We operate on dimensionless, normalised energy units.  The raw contributions
+# coming from bond, resource and entropy terms are scaled down to match
+# physically plausible magnitudes (≈10⁻¹⁸ J) which keeps numerical derivatives
+# stable even when control loops run at sub-millisecond cadence.
+ENERGY_SCALE = 1e-18
+
 
 def _bond_energy(
     src: str,
@@ -63,7 +69,8 @@ def system_free_energy(
     resource_term = 2.0 * float(np.clip(resource_usage, 0.0, 1.0))
     entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * max(entropy, 0.0)
 
-    return internal_energy + resource_term + entropy_term
+    free_energy = internal_energy + resource_term + entropy_term
+    return ENERGY_SCALE * free_energy
 
 
 def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
@@ -78,6 +85,7 @@ __all__ = [
     "BOND_LIBRARY",
     "K_BOLTZMANN_EFFECTIVE",
     "SYSTEM_TEMPERATURE_K",
+    "ENERGY_SCALE",
     "system_free_energy",
     "delta_free_energy",
 ]
