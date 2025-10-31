@@ -16,7 +16,15 @@ from application.system import (
     TradePulseSystemConfig,
 )
 from core.data.models import InstrumentType, PriceTick
-from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
+from domain import (
+    ModelMetadata,
+    Order,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+    Signal,
+    SignalAction,
+)
 from execution.connectors import BinanceConnector
 
 
@@ -122,12 +130,14 @@ def test_tradepulse_system_generates_features_and_orders(tmp_path: Path) -> None
     signals = system.generate_signals(features, strategy=strategy)
     assert signals
     assert all(signal.symbol == "BTCUSDT" for signal in signals)
+    assert all(signal.model_metadata == system.model_metadata for signal in signals)
     assert system.last_signal_generated_at is not None
     assert system.last_signal_latency_seconds is not None
     assert system.last_signal_error is None
 
     payloads = system.signals_to_dtos(signals)
     assert payloads[-1]["symbol"] == "BTCUSDT"
+    assert payloads[-1]["model_id"] == system.model_metadata.model_id
 
     loop = system.ensure_live_loop()
     assert loop is system.ensure_live_loop()  # idempotent
@@ -149,7 +159,12 @@ def test_tradepulse_system_generates_features_and_orders(tmp_path: Path) -> None
 
 def test_tradepulse_system_rejects_hold_signal(tmp_path: Path) -> None:
     system = _build_system(tmp_path)
-    signal = Signal(symbol="BTCUSDT", action=SignalAction.HOLD, confidence=0.2)
+    signal = Signal(
+        symbol="BTCUSDT",
+        action=SignalAction.HOLD,
+        confidence=0.2,
+        model_metadata=TEST_MODEL_METADATA,
+    )
 
     with pytest.raises(ValueError):
         system.submit_signal(signal, venue="binance", quantity=1.0)
@@ -180,6 +195,7 @@ def test_generate_signals_filters_invalid_scores(tmp_path: Path) -> None:
         SignalAction.SELL,
     }
     assert all(np.isfinite(signal.metadata["score"]) for signal in signals)
+    assert all(signal.model_metadata == system.model_metadata for signal in signals)
 
 
 def test_submit_signal_exit_defaults(
@@ -194,6 +210,7 @@ def test_submit_signal_exit_defaults(
         symbol="BTCUSDT",
         action=SignalAction.EXIT,
         confidence=1.0,
+        model_metadata=TEST_MODEL_METADATA,
         timestamp=timestamp,
     )
 
@@ -307,3 +324,10 @@ async def test_fetch_market_snapshot_records_kwargs(tmp_path: Path) -> None:
         "instrument_type": InstrumentType.FUTURES,
         "kwargs": {"depth": depth},
     }
+TEST_MODEL_METADATA = ModelMetadata(
+    model_id="test.tradepulse.system",
+    model_version="0.0.1",
+    model_hash="system-test-model",
+    training_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+)
+

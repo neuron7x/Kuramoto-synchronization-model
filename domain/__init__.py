@@ -14,7 +14,7 @@ from .portfolio import (
     PositionSnapshot,
 )
 from .positions import Position
-from .signals import Signal, SignalAction
+from .signals import ModelMetadata, Signal, SignalAction
 
 __all__ = [
     "Order",
@@ -27,6 +27,7 @@ __all__ = [
     "PositionSnapshot",
     "Signal",
     "SignalAction",
+    "ModelMetadata",
     "CorporateActionRecord",
     "CurrencyExposureSnapshot",
     "FXRates",

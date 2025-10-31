@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import hashlib
+from datetime import datetime, timezone
 from typing import Mapping, Optional
 
 from analytics.regime.src.consensus.hncm_adapter import (
@@ -10,7 +12,15 @@ from analytics.regime.src.consensus.hncm_adapter import (
     HNCMConsensusAdapter,
     ews_to_vote,
 )
-from domain.signals import Signal, SignalAction
+from domain.signals import ModelMetadata, Signal, SignalAction
+
+
+HNCM_CONSENSUS_MODEL_METADATA = ModelMetadata(
+    model_id="tradepulse.hncm.consensus",
+    model_version="2025.1",
+    model_hash=hashlib.sha256(b"tradepulse.hncm.consensus:2025.1").hexdigest(),
+    training_timestamp=datetime(2025, 2, 1, tzinfo=timezone.utc),
+)
 
 
 def build_signal_with_consensus(
@@ -19,6 +29,7 @@ def build_signal_with_consensus(
     ews_result: object,
     agent_scores: Mapping[str, float],
     adapter: Optional[HNCMConsensusAdapter] = None,
+    model_metadata: ModelMetadata | None = None,
 ) -> Signal:
     """Зібрати доменний :class:`Signal` з EWS та інших агентів.
 
@@ -44,6 +55,13 @@ def build_signal_with_consensus(
             for v in decision.votes
         ],
     }
+    resolved_metadata = model_metadata or HNCM_CONSENSUS_MODEL_METADATA
 
-    return Signal(symbol=symbol, action=action_map[decision.action], confidence=decision.confidence,
-                  rationale=rationale, metadata=metadata)
+    return Signal(
+        symbol=symbol,
+        action=action_map[decision.action],
+        confidence=decision.confidence,
+        model_metadata=resolved_metadata,
+        rationale=rationale,
+        metadata=metadata,
+    )

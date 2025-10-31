@@ -18,7 +18,7 @@ os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "contract-rbac-secret")
 
 from application.api.service import FeatureResponse, PredictionResponse, create_app
 from application.settings import AdminApiSettings
-from domain import Signal, SignalAction
+from domain import ModelMetadata, Signal, SignalAction
 from src.admin.remote_control import AdminIdentity
 
 
@@ -66,6 +66,7 @@ class _ContractForecaster:
             symbol=symbol,
             action=SignalAction.BUY,
             confidence=0.78,
+            model_metadata=CONTRACT_TEST_MODEL_METADATA,
             rationale="Contract test stub signal.",
             metadata={
                 "horizon_seconds": horizon_seconds,
@@ -178,3 +179,10 @@ def test_idempotent_replay_respects_contract(provider_client: TestClient) -> Non
     assert second.json() == first.json()
     _assert_contract("feature_response.schema.json", first.json(), FeatureResponse)
     _assert_contract("feature_response.schema.json", second.json(), FeatureResponse)
+CONTRACT_TEST_MODEL_METADATA = ModelMetadata(
+    model_id="contract.test.model",
+    model_version="0.0.1",
+    model_hash="contract-test-model",
+    training_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+)
+

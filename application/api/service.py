@@ -77,7 +77,7 @@ from application.settings import (
 from application.trading import signal_to_dto
 from core.utils.debug import VariableInspector
 from core.utils.metrics import MetricsCollector, get_metrics_collector
-from domain import Signal, SignalAction
+from domain import ModelMetadata, Signal, SignalAction
 from execution.risk import (
     PostgresKillSwitchStateStore,
     RiskLimits,
@@ -939,6 +939,7 @@ class OnlineSignalForecaster:
             symbol=symbol,
             action=action,
             confidence=confidence,
+            model_metadata=MACD_HEURISTIC_MODEL_METADATA,
             rationale=(
                 "Composite heuristic weighting MACD trend, crossover momentum, "
                 "histogram strength, RSI, returns, and book imbalance"
@@ -2553,3 +2554,10 @@ __all__ = [
     "DependencyProbe",
     "DependencyProbeResult",
 ]
+MACD_HEURISTIC_MODEL_METADATA = ModelMetadata(
+    model_id="tradepulse.macd.heuristic",
+    model_version="2025.1",
+    model_hash=hashlib.sha256(b"tradepulse.macd.heuristic:2025.1").hexdigest(),
+    training_timestamp=datetime(2025, 1, 10, tzinfo=timezone.utc),
+)
+

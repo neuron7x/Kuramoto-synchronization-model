@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import hashlib
+from datetime import datetime, timezone
 from typing import Mapping, Optional
 
-from domain.signals import Signal, SignalAction
+from domain.signals import ModelMetadata, Signal, SignalAction
 
 # Local import path in repository context:
 from analytics.regime.src.consensus.hncm_neuro import (
@@ -28,6 +30,7 @@ def build_signal_with_neuro_consensus(
     ews_result: object,
     agent_scores: Mapping[str, float],
     adapter: Optional[NeuroConsensusAdapter] = None,
+    model_metadata: ModelMetadata | None = None,
 ) -> Signal:
     adapter = adapter or NeuroConsensusAdapter()
     votes = [ews_to_vote("ews", ews_result)]
@@ -42,8 +45,19 @@ def build_signal_with_neuro_consensus(
         "votes": [{"agent": v.agent, "score": v.score, "confidence": v.confidence} for v in decision.votes],
         "neuro": {"tau": adapter.tau},
     }
-    return Signal(symbol=symbol,
-                  action=action_map[decision.action],
-                  confidence=decision.confidence,
-                  rationale=rationale,
-                  metadata=metadata)
+    resolved_metadata = model_metadata or NEURO_CONSENSUS_MODEL_METADATA
+    return Signal(
+        symbol=symbol,
+        action=action_map[decision.action],
+        confidence=decision.confidence,
+        model_metadata=resolved_metadata,
+        rationale=rationale,
+        metadata=metadata,
+    )
+NEURO_CONSENSUS_MODEL_METADATA = ModelMetadata(
+    model_id="tradepulse.neuro.consensus",
+    model_version="2025.1",
+    model_hash=hashlib.sha256(b"tradepulse.neuro.consensus:2025.1").hexdigest(),
+    training_timestamp=datetime(2025, 2, 1, tzinfo=timezone.utc),
+)
+

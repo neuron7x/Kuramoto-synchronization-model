@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from application.trading import (
     dto_to_signal,
     order_to_dto,
@@ -5,6 +7,7 @@ from application.trading import (
     signal_to_dto,
 )
 from domain import (
+    ModelMetadata,
     Order,
     OrderSide,
     OrderStatus,
@@ -16,12 +19,27 @@ from domain import (
 
 
 def test_signal_dto_round_trip() -> None:
-    signal = Signal(symbol="BTCUSD", action=SignalAction.BUY, confidence=0.8)
+    provenance = ModelMetadata(
+        model_id="test.dto.model",
+        model_version="0.0.1",
+        model_hash="dto-test-model",
+        training_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+    signal = Signal(
+        symbol="BTCUSD",
+        action=SignalAction.BUY,
+        confidence=0.8,
+        model_metadata=provenance,
+        rationale="unit-test",
+        metadata={"note": "round-trip"},
+    )
     dto = signal_to_dto(signal)
     restored = dto_to_signal(dto)
     assert restored.symbol == signal.symbol
     assert restored.action == signal.action
     assert restored.confidence == signal.confidence
+    assert restored.model_metadata == provenance
+    assert restored.metadata == signal.metadata
 
 
 def test_order_position_dto_exports() -> None:

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
-from domain import Order, Position, Signal
+from domain import ModelMetadata, Order, Position, Signal
 
 
 def signal_to_dto(signal: Signal) -> dict[str, Any]:
@@ -39,10 +39,30 @@ def dto_to_signal(data: Mapping[str, Any]) -> Signal:
     else:  # pragma: no cover - defensive branch
         raise TypeError("timestamp must be str, datetime, or None")
 
+    raw_training_ts = data.get("training_timestamp")
+    if isinstance(raw_training_ts, str):
+        training_ts = datetime.fromisoformat(raw_training_ts)
+    elif isinstance(raw_training_ts, datetime):
+        training_ts = raw_training_ts
+    else:
+        raise TypeError("training_timestamp must be an ISO string or datetime")
+
+    try:
+        model_metadata = ModelMetadata(
+            model_id=str(data["model_id"]),
+            model_version=str(data["model_version"]),
+            model_hash=str(data["model_hash"]),
+            training_timestamp=training_ts,
+        )
+    except KeyError as exc:  # pragma: no cover - validated by Signal tests
+        missing = exc.args[0]
+        raise KeyError(f"Signal payload missing required model metadata field: {missing}") from exc
+
     return Signal(
         symbol=str(data["symbol"]),
         action=data["action"],
         confidence=float(data.get("confidence", 0.0)),
+        model_metadata=model_metadata,
         timestamp=timestamp,
         rationale=data.get("rationale"),
         metadata=data.get("metadata"),

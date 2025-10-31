@@ -6,13 +6,21 @@ from typing import Any
 
 import pytest
 
-from domain.signal import Signal, SignalAction
+from domain.signal import ModelMetadata, Signal, SignalAction
 from execution.shadow import (
     ShadowArchiveRecord,
     ShadowDecision,
     ShadowDeploymentConfig,
     ShadowDeploymentOrchestrator,
     ShadowMetrics,
+)
+
+
+TEST_MODEL_METADATA = ModelMetadata(
+    model_id="test.shadow.baseline",
+    model_version="0.0.1",
+    model_hash="shadow-test-model",
+    training_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
 )
 
 
@@ -37,6 +45,7 @@ class DeterministicBaseline:
             symbol=str(market_state.get("symbol", "BTCUSDT")),
             action=SignalAction.HOLD,
             confidence=0.6,
+            model_metadata=TEST_MODEL_METADATA,
             timestamp=timestamp,
         )
 
@@ -46,6 +55,7 @@ def _candidate_same(market_state: Mapping[str, Any]) -> Signal:
         symbol=str(market_state.get("symbol", "BTCUSDT")),
         action=SignalAction.HOLD,
         confidence=0.6,
+        model_metadata=TEST_MODEL_METADATA,
         timestamp=market_state["timestamp"],
     )
 
@@ -55,6 +65,7 @@ def _candidate_flip(market_state: Mapping[str, Any]) -> Signal:
         symbol=str(market_state.get("symbol", "BTCUSDT")),
         action=SignalAction.BUY,
         confidence=0.9,
+        model_metadata=TEST_MODEL_METADATA,
         timestamp=market_state["timestamp"],
     )
 

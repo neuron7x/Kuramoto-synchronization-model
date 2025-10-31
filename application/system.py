@@ -15,6 +15,8 @@ from typing import (
     Sequence,
 )
 
+import hashlib
+
 import numpy as np
 import pandas as pd
 
@@ -25,7 +27,7 @@ from core.data.connectors.market import BaseMarketDataConnector
 from core.data.ingestion import DataIngestor
 from core.data.models import InstrumentType, PriceTick
 from core.utils.metrics import get_metrics_collector
-from domain import Order, OrderSide, OrderType, Signal, SignalAction
+from domain import ModelMetadata, Order, OrderSide, OrderType, Signal, SignalAction
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import RiskLimits, RiskManager
@@ -36,6 +38,18 @@ __all__ = [
     "TradePulseSystemConfig",
     "TradePulseSystem",
 ]
+
+
+def _default_model_metadata() -> ModelMetadata:
+    """Return provenance metadata for the baseline heuristic model."""
+
+    digest = hashlib.sha256(b"tradepulse.system.baseline").hexdigest()
+    return ModelMetadata(
+        model_id="tradepulse.system.baseline",
+        model_version="1.0.0",
+        model_hash=digest,
+        training_timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
 
 
 @dataclass(slots=True)
@@ -79,6 +93,7 @@ class TradePulseSystemConfig:
     """Bundle settings required to assemble a :class:`TradePulseSystem`."""
 
     venues: Sequence[ExchangeAdapterConfig]
+    model_metadata: ModelMetadata = field(default_factory=_default_model_metadata)
     feature_pipeline: FeaturePipelineConfig = field(
         default_factory=FeaturePipelineConfig
     )
@@ -117,6 +132,7 @@ class TradePulseSystem:
             market_connectors=config.market_data_connectors,
         )
         self._pipeline = SignalFeaturePipeline(config.feature_pipeline)
+        self._model_metadata = config.model_metadata
         self._risk_manager = risk_manager or RiskManager(config.risk_limits)
         self._metrics = get_metrics_collector()
         self._clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
@@ -173,6 +189,12 @@ class TradePulseSystem:
         """Return the shared risk manager instance."""
 
         return self._risk_manager
+
+    @property
+    def model_metadata(self) -> ModelMetadata:
+        """Return the provenance metadata for generated signals."""
+
+        return self._model_metadata
 
     @property
     def connector_names(self) -> tuple[str, ...]:
@@ -400,6 +422,7 @@ class TradePulseSystem:
                             symbol=resolved_symbol,
                             action=action,
                             confidence=confidence,
+                            model_metadata=self._model_metadata,
                             timestamp=pd.Timestamp(timestamp).to_pydatetime(),
                             metadata=metadata,
                         )
