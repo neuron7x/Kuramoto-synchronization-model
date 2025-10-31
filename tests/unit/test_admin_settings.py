@@ -291,3 +291,28 @@ def test_build_configuration_store_provisions_namespaces(tmp_path):
             actor="intruder",
             ip_address="198.51.100.200",
         )
+
+
+def test_default_access_policy_grants_risk_officers():
+    settings = AdminApiSettings(
+        audit_secret="explicit-secret-value",
+        two_factor_secret="JBSWY3DPEHPK3PXP",
+    )
+
+    controller = settings.build_access_controller()
+
+    assert controller.is_allowed(
+        "read_kill_switch_state",
+        actor="admin-user",
+        roles=("risk:officer",),
+    )
+    assert controller.is_allowed(
+        "engage_kill_switch",
+        actor="admin-user",
+        roles=("risk:officer",),
+    )
+    assert controller.is_allowed(
+        "reset_kill_switch",
+        actor="admin-user",
+        roles=("risk:officer",),
+    )
