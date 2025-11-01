@@ -126,17 +126,39 @@ class ArchitectureScanner:
         """Find Python package roots that should be analysed."""
 
         includes: List[Path] = []
-        for child in self.root.iterdir():
-            if child.is_dir() and (child / "__init__.py").exists():
-                includes.append(child)
-
         src_dir = self.root / "src"
+        search_roots = [self.root]
         if src_dir.exists():
-            for child in src_dir.iterdir():
-                if child.is_dir() and (child / "__init__.py").exists():
+            search_roots.append(src_dir)
+
+        for base in search_roots:
+            for child in sorted(base.iterdir()):
+                if not child.is_dir():
+                    continue
+                if child.name.startswith(".") or child.name == "__pycache__":
+                    continue
+                if base is self.root and child == src_dir:
+                    continue
+                if self._contains_python_package(child):
                     includes.append(child)
 
         return includes
+
+    def _contains_python_package(self, directory: Path) -> bool:
+        """Return True if the directory contains a Python package anywhere within."""
+
+        stack: List[Path] = [directory]
+        while stack:
+            current = stack.pop()
+            if (current / "__init__.py").exists():
+                return True
+            for child in current.iterdir():
+                if not child.is_dir():
+                    continue
+                if child.name.startswith(".") or child.name == "__pycache__":
+                    continue
+                stack.append(child)
+        return False
 
     def scan(self) -> ArchitectureReport:
         modules: Dict[str, ModuleInfo] = {}

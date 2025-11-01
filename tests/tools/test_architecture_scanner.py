@@ -78,3 +78,16 @@ def test_modules_without_dependents(tmp_path: Path) -> None:
 
     assert report.modules_without_dependents() == ["domain.a"]
     assert report.orphan_modules() == ["domain.c"]
+
+
+def test_scanner_includes_nested_packages(tmp_path: Path) -> None:
+    container = tmp_path / "libs"
+    nested_pkg = container / "db"
+    nested_pkg.mkdir(parents=True)
+    (nested_pkg / "__init__.py").write_text("", encoding="utf-8")
+    _write(nested_pkg / "models.py", "VALUE = 7\n")
+
+    scanner = ArchitectureScanner(tmp_path)
+    report = scanner.scan()
+
+    assert "libs.db.models" in report.modules
