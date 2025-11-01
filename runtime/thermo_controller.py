@@ -3,16 +3,25 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 import time
 import warnings
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, get_args
 
 import networkx as nx
 import numpy as np
 
 from evolution import bond_evolver
-from core.energy import BondType, delta_free_energy, system_free_energy
+from core.energy import (
+    BOND_LIBRARY,
+    ENERGY_SCALE,
+    K_BOLTZMANN_EFFECTIVE,
+    SYSTEM_TEMPERATURE_K,
+    BondType,
+    delta_free_energy,
+    system_free_energy,
+)
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
@@ -129,7 +138,21 @@ def estimate_entropy(graph: nx.DiGraph) -> float:
 
 
 def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 0.02) -> bool:
-    bonds = {(u, v): data.get("type") for u, v, data in graph.edges(data=True)}
+    def _edge_energy(src: str, dst: str, kind: str) -> float:
+        params = BOND_LIBRARY[kind]  # type: ignore[literal-required]
+        latency = max(float(snap.latencies.get((src, dst), 1.0)), 0.0)
+        coherence = float(np.clip(snap.coherency.get((src, dst), 0.0), 0.0, 1.0))
+
+        latency_cost = params["latency_weight"] * math.log1p(latency)
+        incoherence_cost = params["coherency_weight"] * (1.0 - coherence) ** 2
+        stability_gain = params["stability_bonus"] * coherence
+        return params["base_energy"] + latency_cost + incoherence_cost - stability_gain
+
+    resource_term = 2.0 * float(np.clip(snap.resource_usage, 0.0, 1.0))
+    entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * max(snap.entropy, 0.0)
+    constant_energy = resource_term + entropy_term
+
+    bonds = {(u, v): data.get("type", "vdw") for u, v, data in graph.edges(data=True)}
     base_energy = system_free_energy(
         bonds,
         snap.latencies,
@@ -137,34 +160,47 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
         snap.resource_usage,
         snap.entropy,
     )
+    internal_energy = base_energy / ENERGY_SCALE - constant_energy
+
+    edge_cache: Dict[Tuple[str, str], float] = {}
+    for src, dst in graph.edges():
+        bond_type = graph.edges[(src, dst)].get("type", "vdw")
+        edge_cache[(src, dst)] = _edge_energy(src, dst, bond_type)
 
     improved = False
-    improvement_threshold = max(lr, 1e-6) * 1e-12
+    min_scale = 1e-18
+    candidate_types = tuple(b for b in get_args(BondType))
 
-    for (src, dst, data) in list(graph.edges(data=True)):
-        current_type = data.get("type")
-        candidates = [bond for bond in BondType.__args__ if bond != current_type]
+    for src, dst in list(graph.edges()):
+        current_type = graph.edges[(src, dst)].get("type", "vdw")
+        current_energy = edge_cache[(src, dst)]
 
         best_type = current_type
-        best_energy = base_energy
+        best_internal = internal_energy
+        best_total_energy = base_energy
+        improvement_threshold = max(lr, 1e-6) * max(abs(base_energy), min_scale)
 
-        for candidate in candidates:
-            graph.edges[(src, dst)]["type"] = candidate
-            bonds_tmp = {(u, v): attrs.get("type") for u, v, attrs in graph.edges(data=True)}
-            energy = system_free_energy(
-                bonds_tmp,
-                snap.latencies,
-                snap.coherency,
-                snap.resource_usage,
-                snap.entropy,
-            )
-            if energy < best_energy - improvement_threshold:
-                best_energy = energy
+        for candidate in candidate_types:
+            if candidate == current_type:
+                continue
+
+            candidate_internal = _edge_energy(src, dst, candidate)
+            new_internal_total = internal_energy - current_energy + candidate_internal
+            candidate_energy = ENERGY_SCALE * (new_internal_total + constant_energy)
+
+            if candidate_energy < best_total_energy - improvement_threshold:
+                best_total_energy = candidate_energy
+                best_internal = new_internal_total
                 best_type = candidate
 
         graph.edges[(src, dst)]["type"] = best_type
         if best_type != current_type:
             improved = True
+            internal_energy = best_internal
+            base_energy = best_total_energy
+            edge_cache[(src, dst)] = _edge_energy(src, dst, best_type)
+        else:
+            edge_cache[(src, dst)] = current_energy
 
     return improved
 

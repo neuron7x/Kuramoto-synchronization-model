@@ -6,7 +6,7 @@ import networkx as nx
 import pytest
 
 import runtime.thermo_controller as thermo_module
-from core.energy import delta_free_energy
+from core.energy import delta_free_energy, system_free_energy
 from runtime.recovery_agent import RecoveryAction
 from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
@@ -182,3 +182,61 @@ def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
     assert list(controller.graph.edges(data=True)) == initial_edges
     assert controller.telemetry_history[-1]["crisis_mode"] == CRITICAL_HALT_STATE
     assert any(getattr(record, "code", None) == "B1" for record in caplog.records)
+
+
+def test_gradient_descent_step_reduces_free_energy():
+    graph = nx.DiGraph()
+    graph.add_node("u", cpu_norm=0.4)
+    graph.add_node("v", cpu_norm=0.3)
+    graph.add_edge("u", "v", type="vdw", latency_norm=0.4, coherency=0.9)
+
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies={("u", "v"): 0.4},
+        coherency={("u", "v"): 0.9},
+        resource_usage=0.35,
+        entropy=0.25,
+    )
+
+    bonds_before = {(src, dst): data["type"] for src, dst, data in graph.edges(data=True)}
+    energy_before = system_free_energy(
+        bonds_before,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    changed = thermo_module.gradient_descent_step(graph, snapshot, lr=0.05)
+
+    bonds_after = {(src, dst): data["type"] for src, dst, data in graph.edges(data=True)}
+    energy_after = system_free_energy(
+        bonds_after,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    assert changed is True
+    assert bonds_after[("u", "v")] != bonds_before[("u", "v")]
+    assert energy_after < energy_before
+
+
+def test_gradient_descent_step_converges_after_improvement():
+    graph = nx.DiGraph()
+    graph.add_node("a", cpu_norm=0.5)
+    graph.add_node("b", cpu_norm=0.4)
+    graph.add_node("c", cpu_norm=0.6)
+
+    graph.add_edge("a", "b", type="covalent", latency_norm=0.7, coherency=0.85)
+    graph.add_edge("b", "c", type="ionic", latency_norm=0.5, coherency=0.8)
+
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies={("a", "b"): 0.7, ("b", "c"): 0.5},
+        coherency={("a", "b"): 0.85, ("b", "c"): 0.8},
+        resource_usage=0.5,
+        entropy=0.3,
+    )
+
+    assert thermo_module.gradient_descent_step(graph, snapshot, lr=0.05) is True
+    assert thermo_module.gradient_descent_step(graph, snapshot, lr=0.05) is False
