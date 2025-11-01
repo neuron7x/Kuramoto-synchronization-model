@@ -408,7 +408,21 @@ class ThermoController:
         }
 
     def _restore_internal_state(self, state: Dict[str, Any]) -> None:
-        self.graph = state["graph"]
+        graph_state: nx.DiGraph = state["graph"]
+
+        # Restore graph contents without swapping the original instance to
+        # ensure callers holding references observe a no-op after simulation.
+        self.graph.clear()
+        self.graph.graph.clear()
+        self.graph.add_nodes_from(
+            (node, copy.deepcopy(data)) for node, data in graph_state.nodes(data=True)
+        )
+        self.graph.add_edges_from(
+            (src, dst, copy.deepcopy(data))
+            for src, dst, data in graph_state.edges(data=True)
+        )
+        self.graph.graph.update(copy.deepcopy(graph_state.graph))
+
         self.current_topology = state["current_topology"]
         self.circuit_breaker_active = state["circuit_breaker_active"]
         self.controller_state = state["controller_state"]
