@@ -167,11 +167,44 @@ def test_monotonic_fe_with_plan_allows_action(controller: TACLController, mandat
         description="temporary throttle",
         critical=False,
         mandate=mandate,
-        forecast=Forecast(fe_after=controller.current_fe + 0.1, stabilization_plan=plan),
+        forecast=Forecast(
+            fe_after=controller.current_fe,
+            stabilization_plan=plan,
+        ),
     )
     decision = controller.allow_action(request)
     assert decision.allowed
     assert decision.audit_event.decision == "allow"
+
+
+def test_forecast_must_respect_plan_ceiling(controller: TACLController, mandate: Mandate) -> None:
+    controller.observe_system(
+        FreeEnergyInputs(
+            resource_pressure=0.3,
+            latency_risk=0.2,
+            safety_violations=0.1,
+            external_impact_risk=0.1,
+        )
+    )
+    plan = StabilizationPlan(
+        description="rollback",
+        fe_ceiling=controller.current_fe,
+        verification_steps=("check",),
+    )
+    request = ActionRequest(
+        agent_id=mandate.agent_id,
+        action_class=ActionClass.REMEDIATION,
+        description="temporary throttle",
+        critical=False,
+        mandate=mandate,
+        forecast=Forecast(
+            fe_after=controller.current_fe + 0.5,
+            stabilization_plan=plan,
+        ),
+    )
+    decision = controller.allow_action(request)
+    assert not decision.allowed
+    assert decision.reason == "violates_monotonic_fe"
 
 
 def test_audit_event_contains_expected_fields(controller: TACLController, mandate: Mandate) -> None:

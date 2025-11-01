@@ -357,8 +357,11 @@ class TACLController:
         else:
             forecast = request.forecast
             if forecast.fe_after > self._current_fe:
-                plan_valid = self._validate_stabilization_plan(forecast.stabilization_plan)
+                plan = forecast.stabilization_plan
+                plan_valid = self._validate_stabilization_plan(plan)
                 if not (forecast.has_immediate_stabilization_plan and plan_valid):
+                    reason = "violates_monotonic_fe"
+                elif plan is not None and forecast.fe_after > plan.fe_ceiling:
                     reason = "violates_monotonic_fe"
             if reason is None and request.critical and not self._has_dual_approval(request.approvals):
                 reason = "missing_dual_approval"
