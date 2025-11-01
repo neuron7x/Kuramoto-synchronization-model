@@ -59,6 +59,15 @@ class CrisisComputation:
 _FALLBACK_WARNING_EMITTED = False
 
 
+_BOND_TYPES: Tuple[str, ...] = tuple(getattr(BondType, "__args__", ())) or (
+    "covalent",
+    "ionic",
+    "metallic",
+    "vdw",
+    "hydrogen",
+)
+
+
 CRITICAL_HALT_STATE = "CRITICAL_HALT"
 
 
@@ -131,7 +140,7 @@ def estimate_entropy(graph: nx.DiGraph) -> float:
 
 
 def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 0.02) -> bool:
-    bonds = {(u, v): data.get("type") for u, v, data in graph.edges(data=True)}
+    bonds = {(u, v): data.get("type", "vdw") for u, v, data in graph.edges(data=True)}
     base_energy = system_free_energy(
         bonds,
         snap.latencies,
@@ -141,32 +150,37 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
     )
 
     improved = False
-    improvement_threshold = max(lr, 1e-6) * 1e-12
+    improvement_threshold = max(abs(base_energy) * 1e-6, 1e-24)
 
-    for (src, dst, data) in list(graph.edges(data=True)):
-        current_type = data.get("type")
-        candidates = [bond for bond in BondType.__args__ if bond != current_type]
-
+    for src, dst in list(graph.edges()):
+        current_type = bonds.get((src, dst), "vdw")
         best_type = current_type
         best_energy = base_energy
 
-        for candidate in candidates:
-            graph.edges[(src, dst)]["type"] = candidate
-            bonds_tmp = {(u, v): attrs.get("type") for u, v, attrs in graph.edges(data=True)}
+        for candidate in _BOND_TYPES:
+            if candidate == current_type:
+                continue
+
+            bonds[(src, dst)] = candidate
             energy = system_free_energy(
-                bonds_tmp,
+                bonds,
                 snap.latencies,
                 snap.coherency,
                 snap.resource_usage,
                 snap.entropy,
             )
-            if energy < best_energy - improvement_threshold:
+
+            if energy + improvement_threshold < best_energy:
                 best_energy = energy
                 best_type = candidate
 
+        bonds[(src, dst)] = best_type
         graph.edges[(src, dst)]["type"] = best_type
+
         if best_type != current_type:
             improved = True
+
+        base_energy = best_energy
 
     return improved
 
