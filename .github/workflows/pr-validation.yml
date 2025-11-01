@@ -326,6 +326,7 @@ jobs:
   stage-g-summary:
     name: Stage G — Aggregate PR summary
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs:
       - stage-a-security
       - stage-b-static
@@ -337,6 +338,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           path: pr-validation-artifacts
 
