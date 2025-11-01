@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import sys
+from pathlib import Path
 from typing import Dict, Tuple
 
 import networkx as nx
@@ -14,6 +16,12 @@ except ModuleNotFoundError:  # pragma: no cover - import guard
     _DEAP_AVAILABLE = False
 else:  # pragma: no cover - exercised when optional dependency is present
     _DEAP_AVAILABLE = True
+
+if __package__ in {None, ""}:  # pragma: no cover - exercised via CLI invocation.
+    project_root = Path(__file__).resolve().parents[1]
+    project_root_str = str(project_root)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
 
 from core.energy import BondType, system_free_energy
 
