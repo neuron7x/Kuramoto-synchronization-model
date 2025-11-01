@@ -63,6 +63,7 @@ def get_status() -> Dict[str, object]:
         "max_edge_cost": controller.get_bottleneck_cost(),
         "bottleneck_edge": controller.get_bottleneck_edge(),
         "topology_id": controller.get_topology_id(),
+        "violations_total": controller.get_monotonic_violations_total(),
         "crisis_mode": controller.telemetry_history[-1]["crisis_mode"] if controller.telemetry_history else "normal",
         "timestamp": time.time(),
     }
