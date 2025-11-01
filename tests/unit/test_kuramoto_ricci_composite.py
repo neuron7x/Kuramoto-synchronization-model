@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -386,6 +388,46 @@ class TestCompositeEngine:
         assert engine.signal_history[-1].timestamp == df_extended.index[-1]
         df_signals = engine.get_signal_dataframe()
         assert len(df_signals) == 2
+
+    def test_analyze_market_replay_returns_cached_signal(self) -> None:
+        dates = pd.date_range("2024-01-01", periods=300, freq="1min")
+        rng = np.random.default_rng(777)
+        prices = 150 + rng.normal(0, 0.4, len(dates))
+        volumes = np.full(len(dates), 500.0)
+        df = pd.DataFrame({"close": prices, "volume": volumes}, index=dates)
+
+        engine = TradePulseCompositeEngine()
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            first = engine.analyze_market(df)
+            second = engine.analyze_market(df)
+
+        assert second is first
+        assert len(engine.signal_history) == 1
+        assert engine.signal_history[0].timestamp == df.index[-1]
+        runtime_warnings = [w for w in caught if issubclass(w.category, RuntimeWarning)]
+        assert runtime_warnings == []
+
+    def test_analyze_market_backwards_resets_state(self) -> None:
+        dates = pd.date_range("2024-01-01", periods=360, freq="1min")
+        rng = np.random.default_rng(123)
+        prices = 110 + rng.normal(0, 0.6, len(dates))
+        volumes = rng.lognormal(mean=7.2, sigma=0.4, size=len(dates))
+        df = pd.DataFrame({"close": prices, "volume": volumes}, index=dates)
+
+        engine = TradePulseCompositeEngine()
+        recent_signal = engine.analyze_market(df)
+        assert recent_signal.timestamp == df.index[-1]
+        assert len(engine.signal_history) == 1
+
+        earlier_df = df.iloc[:200]
+        backfilled = engine.analyze_market(earlier_df)
+
+        assert len(engine.signal_history) == 1
+        assert engine.signal_history[0].timestamp == earlier_df.index[-1]
+        assert backfilled.timestamp == earlier_df.index[-1]
+        assert engine.r.history
+        assert engine.r.history[-1].timestamp <= earlier_df.index[-1]
 
     def test_get_signal_dataframe_empty_history(self) -> None:
         engine = TradePulseCompositeEngine()

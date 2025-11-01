@@ -221,15 +221,52 @@ class TradePulseCompositeEngine:
         # Track signals by timestamp to guarantee idempotent retries.
         self._history_index: dict[pd.Timestamp, int] = {}
 
+    def _clear_history(self) -> None:
+        self.history.clear()
+        self._history_index.clear()
+
     def analyze_market(
         self, df: pd.DataFrame, price_col: str = "close", volume_col: str = "volume"
     ) -> CompositeSignal:
-        kres = self.k.analyze(df, price_col=price_col)
-        rres = self.r.analyze(df, price_col=price_col, volume_col=volume_col)
+        if not isinstance(df.index, pd.DatetimeIndex):
+            raise TypeError("TradePulseCompositeEngine requires a DatetimeIndex")
+
+        sanitized = df.sort_index()
+        if sanitized.index.has_duplicates:
+            sanitized = sanitized[~sanitized.index.duplicated(keep="last")]
+
+        if sanitized.empty:
+            raise ValueError("DataFrame must contain at least one row after sanitisation")
+
+        latest_ts = sanitized.index[-1]
+        last_signal: CompositeSignal | None = self.history[-1] if self.history else None
+
+        should_reset_history = False
+        if last_signal is not None:
+            last_ts = last_signal.timestamp
+            if latest_ts == last_ts:
+                return last_signal
+            reset_temporal = sanitized.index[0] <= last_ts
+            if latest_ts < last_ts:
+                should_reset_history = True
+                last_signal = None
+                reset_temporal = True
+        else:
+            reset_temporal = False
+
+        kres = self.k.analyze(sanitized, price_col=price_col)
+        rres = self.r.analyze(
+            sanitized,
+            price_col=price_col,
+            volume_col=volume_col,
+            reset_history=reset_temporal,
+        )
         static_ricci = (
             rres.graph_snapshots[-1].avg_curvature if rres.graph_snapshots else 0.0
         )
-        sig = self.c.analyze(kres, rres, static_ricci, df.index[-1])
+        sig = self.c.analyze(kres, rres, static_ricci, sanitized.index[-1])
+        if should_reset_history:
+            self._clear_history()
         self._record_signal(sig)
         return sig
 
