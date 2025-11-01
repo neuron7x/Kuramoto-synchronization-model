@@ -5,6 +5,7 @@ import hashlib
 import logging
 import time
 import warnings
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -40,6 +41,17 @@ class ToleranceCheck:
 
     accepted: bool
     reason: str
+
+
+@dataclass(slots=True)
+class ControlStepResult:
+    """Structured outcome for a controller iteration."""
+
+    accepted: bool
+    circuit_breaker_active: bool
+    tolerance: Optional[ToleranceCheck]
+    controller_state: str
+    simulated: bool = False
 
 
 @dataclass(slots=True)
@@ -209,7 +221,14 @@ class ThermoController:
         )
 
     # Core loop ----------------------------------------------------------
-    def control_step(self) -> None:
+    def control_step(self, *, simulated: bool = False) -> ControlStepResult:
+        if simulated:
+            simulation = deepcopy(self)
+            result = simulation.control_step(simulated=False)
+            result.simulated = True
+            return result
+
+        tolerance: Optional[ToleranceCheck] = None
         snapshot = self.snapshot_metrics()
         self._latest_snapshot = snapshot
         current_time = time.time()
@@ -330,6 +349,14 @@ class ThermoController:
         self.previous_t = current_time
         self.controller_state = control_state
         self._record_telemetry(current_F, control_state)
+
+        accepted = tolerance.accepted if tolerance is not None else not self.circuit_breaker_active
+        return ControlStepResult(
+            accepted=accepted,
+            circuit_breaker_active=self.circuit_breaker_active,
+            tolerance=tolerance,
+            controller_state=self.controller_state,
+        )
 
     # ------------------------------------------------------------------
     # Backwards compatibility properties
@@ -567,4 +594,5 @@ __all__ = [
     "estimate_entropy",
     "gradient_descent_step",
     "CRITICAL_HALT_STATE",
+    "ControlStepResult",
 ]

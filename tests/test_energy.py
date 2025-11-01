@@ -8,7 +8,11 @@ import pytest
 import runtime.thermo_controller as thermo_module
 from core.energy import delta_free_energy
 from runtime.recovery_agent import RecoveryAction
-from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
+from runtime.thermo_controller import (
+    CRITICAL_HALT_STATE,
+    ControlStepResult,
+    ThermoController,
+)
 
 pytestmark = pytest.mark.stability
 
@@ -182,3 +186,41 @@ def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
     assert list(controller.graph.edges(data=True)) == initial_edges
     assert controller.telemetry_history[-1]["crisis_mode"] == CRITICAL_HALT_STATE
     assert any(getattr(record, "code", None) == "B1" for record in caplog.records)
+
+
+def test_control_step_returns_result_metadata():
+    graph = nx.DiGraph()
+    graph.add_node("ingest", cpu_norm=0.4)
+    graph.add_node("matcher", cpu_norm=0.6)
+    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9)
+
+    controller = ThermoController(graph)
+
+    result = controller.control_step()
+
+    assert isinstance(result, ControlStepResult)
+    assert result.simulated is False
+    assert result.accepted is True
+
+
+def test_control_step_simulation_is_side_effect_free():
+    graph = nx.DiGraph()
+    graph.add_node("ingest", cpu_norm=0.4)
+    graph.add_node("matcher", cpu_norm=0.6)
+    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9)
+
+    controller = ThermoController(graph)
+    initial_prev_F = controller.previous_F
+    initial_prev_t = controller.previous_t
+    initial_topology = list(controller.current_topology)
+    initial_history = list(controller.telemetry_history)
+
+    result = controller.control_step(simulated=True)
+
+    assert result.simulated is True
+    assert result.accepted is True
+    assert controller.previous_F == initial_prev_F
+    assert controller.previous_t == initial_prev_t
+    assert controller.current_topology == initial_topology
+    assert controller.telemetry_history == initial_history
+    assert controller.circuit_breaker_active is False

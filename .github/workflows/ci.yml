@@ -43,6 +43,9 @@ jobs:
           if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
 
+      - name: Admission check
+        run: python scripts/admission_check.py
+
       - name: Run tests with coverage (shard ${{ matrix.shard }})
         run: |
           pytest \
