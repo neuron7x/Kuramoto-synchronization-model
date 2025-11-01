@@ -57,6 +57,9 @@ class CrisisComputation:
 _FALLBACK_WARNING_EMITTED = False
 
 
+CRITICAL_HALT_STATE = "CRITICAL_HALT"
+
+
 def evolve_bonds(
     graph: nx.DiGraph,
     snapshot: MetricsSnapshot,
@@ -175,6 +178,7 @@ class ThermoController:
 
         self.audit_logger = logging.getLogger("tradepulse.audit")
         self.circuit_breaker_active = False
+        self.controller_state: str = CrisisMode.NORMAL
         self._last_tolerance_check: Optional[ToleranceCheck] = None
 
         self.link_activator = LinkActivator()
@@ -196,6 +200,7 @@ class ThermoController:
         self.bottleneck_edge: Optional[str] = None
         self.bottleneck_cost = 0.0
         self._baseline_latency = self._compute_average_latency(snapshot)
+        self.unresolved_rise_steps = 0
 
         self.crisis_ga = CrisisAwareGA(
             fitness_func=self._evaluate_topology,
@@ -210,6 +215,28 @@ class ThermoController:
         current_time = time.time()
 
         current_F = self._compute_free_energy(snapshot=snapshot)
+        if self.previous_F is not None and current_F > self.previous_F:
+            self.unresolved_rise_steps += 1
+        else:
+            self.unresolved_rise_steps = 0
+
+        was_active_before_step = self.circuit_breaker_active
+        sustained_rise_triggered = False
+        if self.unresolved_rise_steps > 5:
+            self.circuit_breaker_active = True
+            if not was_active_before_step:
+                sustained_rise_triggered = True
+                self.audit_logger.critical(
+                    "B1 Thermodynamic circuit breaker activated due to sustained free energy rise",
+                    extra={
+                        "event": "thermo.circuit_breaker",
+                        "code": "B1",
+                        "state": CRITICAL_HALT_STATE,
+                        "rise_steps": self.unresolved_rise_steps,
+                        "F_current": f"{current_F:.6f}",
+                    },
+                )
+
         if self.previous_F is not None and self.previous_t is not None:
             dt = max(current_time - self.previous_t, 1e-9)
             self.dF_dt = delta_free_energy(self.previous_F, current_F, dt)
@@ -221,21 +248,33 @@ class ThermoController:
         self._update_bottleneck(snapshot)
 
         crisis_mode = CrisisMode.detect(current_F, self.baseline_F, self.crisis_ga.crisis_threshold)
+        control_state = CRITICAL_HALT_STATE if self.circuit_breaker_active else crisis_mode
         in_crisis = crisis_mode != CrisisMode.NORMAL or abs(self.dF_dt) > self.epsilon_adaptive
 
         resulting_F = current_F
-        if in_crisis:
+        if self.circuit_breaker_active:
+            self._last_tolerance_check = None
+            if was_active_before_step and not sustained_rise_triggered:
+                self.audit_logger.info(
+                    "Thermodynamic circuit breaker blocking topology mutation",
+                    extra={
+                        "event": "thermo.circuit_breaker",
+                        "state": CRITICAL_HALT_STATE,
+                    },
+                )
+        elif in_crisis:
             crisis_result = self._handle_crisis(snapshot, current_F, crisis_mode)
             tolerance = crisis_result.tolerance
             self._last_tolerance_check = tolerance
 
-            previously_active = self.circuit_breaker_active
+            was_active_before_tolerance = self.circuit_breaker_active
             if not tolerance.accepted:
                 self.circuit_breaker_active = True
-                log_level = logging.ERROR if not previously_active else logging.INFO
+                control_state = CRITICAL_HALT_STATE
+                log_level = logging.ERROR if not was_active_before_tolerance else logging.INFO
                 message = (
                     "Thermodynamic circuit breaker activated due to unsafe topology proposal"
-                    if not previously_active
+                    if not was_active_before_tolerance
                     else "Thermodynamic circuit breaker blocking topology mutation"
                 )
                 self.audit_logger.log(
@@ -275,11 +314,13 @@ class ThermoController:
                         reward,
                         next_state,
                     )
+            control_state = crisis_mode if not self.circuit_breaker_active else CRITICAL_HALT_STATE
         else:
             self.crisis_step_count = 0
-            if gradient_descent_step(self.graph, snapshot, lr=0.02):
+            if not self.circuit_breaker_active and gradient_descent_step(self.graph, snapshot, lr=0.02):
                 self.current_topology = self._graph_to_topology(self.graph)
                 resulting_F = self._compute_free_energy(snapshot=snapshot)
+            control_state = crisis_mode
 
         current_F = resulting_F
 
@@ -287,7 +328,8 @@ class ThermoController:
         self.metrics.record("system_dFdt", self.dF_dt)
         self.previous_F = current_F
         self.previous_t = current_time
-        self._record_telemetry(current_F, crisis_mode)
+        self.controller_state = control_state
+        self._record_telemetry(current_F, control_state)
 
     # ------------------------------------------------------------------
     # Backwards compatibility properties
@@ -524,4 +566,5 @@ __all__ = [
     "PrometheusMetrics",
     "estimate_entropy",
     "gradient_descent_step",
+    "CRITICAL_HALT_STATE",
 ]

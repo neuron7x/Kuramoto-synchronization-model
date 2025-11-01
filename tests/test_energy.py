@@ -5,9 +5,10 @@ import types
 import networkx as nx
 import pytest
 
+import runtime.thermo_controller as thermo_module
 from core.energy import delta_free_energy
 from runtime.recovery_agent import RecoveryAction
-from runtime.thermo_controller import ThermoController
+from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
 pytestmark = pytest.mark.stability
 
@@ -127,3 +128,57 @@ def test_circuit_breaker_blocks_unbounded_spike(caplog):
     assert call_counts["ga"] == 1
     assert call_counts["update"] == 0
     assert any("circuit breaker" in record.message.lower() for record in caplog.records)
+
+
+def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
+    graph = nx.DiGraph()
+    graph.add_node("node_a", cpu_norm=0.4)
+    graph.add_node("node_b", cpu_norm=0.5)
+    graph.add_edge("node_a", "node_b", type="vdw", latency_norm=0.8, coherency=0.7)
+
+    controller = ThermoController(graph)
+
+    controller.baseline_F = 100.0
+    controller.baseline_ema = 100.0
+    controller.previous_F = 100.0
+    controller.crisis_ga.F_baseline = 100.0
+    controller.unresolved_rise_steps = 0
+
+    rising_values = iter([100.1, 100.2, 100.3, 100.4, 100.5, 100.6, 100.7])
+
+    def compute_stub(self, topology=None, snapshot=None):  # type: ignore[unused-argument]
+        return next(rising_values)
+
+    controller._compute_free_energy = types.MethodType(compute_stub, controller)
+
+    def epsilon_stub(self, dF_dt: float) -> None:  # type: ignore[unused-argument]
+        self.epsilon_adaptive = float("inf")
+
+    controller._update_adaptive_epsilon = types.MethodType(epsilon_stub, controller)
+
+    gradient_calls = {"count": 0}
+
+    def gradient_stub(graph, snapshot, lr=0.02):  # type: ignore[unused-argument]
+        if controller.circuit_breaker_active:
+            raise AssertionError("gradient descent should not run during CRITICAL_HALT")
+        gradient_calls["count"] += 1
+        return False
+
+    monkeypatch.setattr(thermo_module, "gradient_descent_step", gradient_stub)
+
+    initial_topology = list(controller.current_topology)
+    initial_edges = list(controller.graph.edges(data=True))
+
+    with caplog.at_level(logging.CRITICAL, logger="tradepulse.audit"):
+        for _ in range(7):
+            controller.previous_t = time.time() - 1.0
+            controller.control_step()
+
+    assert controller.circuit_breaker_active is True
+    assert controller.controller_state == CRITICAL_HALT_STATE
+    assert controller.unresolved_rise_steps >= 6
+    assert gradient_calls["count"] == 5
+    assert controller.current_topology == initial_topology
+    assert list(controller.graph.edges(data=True)) == initial_edges
+    assert controller.telemetry_history[-1]["crisis_mode"] == CRITICAL_HALT_STATE
+    assert any(getattr(record, "code", None) == "B1" for record in caplog.records)
