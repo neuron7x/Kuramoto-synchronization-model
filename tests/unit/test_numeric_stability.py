@@ -37,6 +37,19 @@ def test_kuramoto_order_consistent_precision() -> None:
     assert reduced == pytest.approx(baseline, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
 
+def test_kuramoto_order_translation_invariance_for_large_shifts() -> None:
+    """Translation invariance should hold even for adversarially large shifts."""
+
+    rng = np.random.default_rng(7)
+    phases = rng.uniform(-1e6, 1e6, size=256)
+    shift = 3.7e5 + np.pi / 7.0
+
+    baseline = kuramoto_order(phases)
+    shifted = kuramoto_order(phases + shift)
+
+    assert shifted == pytest.approx(baseline, rel=1e-10, abs=1e-10)
+
+
 def test_kuramoto_order_handles_nan_and_inf_matrix() -> None:
     """Matrix inputs containing NaN/Inf should clamp to finite probabilities."""
 
