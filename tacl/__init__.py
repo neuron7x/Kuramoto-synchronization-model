@@ -1,5 +1,11 @@
 """Thermodynamic Autonomic Control Layer (TACL) utilities."""
 
+from .behavioral_contract import (
+    BehavioralContract,
+    BehavioralContractReport,
+    BehavioralContractViolation,
+    ContractBreach,
+)
 from .energy_model import (
     DEFAULT_THRESHOLDS,
     DEFAULT_WEIGHTS,
@@ -19,5 +25,9 @@ __all__ = [
     "EnergyValidationError",
     "EnergyValidationResult",
     "EnergyValidator",
+    "BehavioralContract",
+    "BehavioralContractReport",
+    "BehavioralContractViolation",
+    "ContractBreach",
     "load_scenarios",
 ]
