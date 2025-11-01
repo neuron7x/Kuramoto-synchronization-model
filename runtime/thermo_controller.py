@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
 import warnings
 from dataclasses import dataclass
@@ -31,6 +32,26 @@ except ModuleNotFoundError as exc:  # pragma: no cover
 
 else:  # pragma: no cover - exercised in existing suite
     MetricsSnapshot = _BondMetricsSnapshot
+
+
+@dataclass(slots=True)
+class ToleranceCheck:
+    """Outcome of a monotonicity check for a proposed topology."""
+
+    accepted: bool
+    reason: str
+
+
+@dataclass(slots=True)
+class CrisisComputation:
+    """Intermediate crisis handling artefact returned to the control loop."""
+
+    state: RecoveryState
+    action: Optional[str]
+    new_topology: Optional[Topology]
+    proposed_F: float
+    tolerance: ToleranceCheck
+    latency_spike: float
 
 
 _FALLBACK_WARNING_EMITTED = False
@@ -152,6 +173,10 @@ class ThermoController:
         self.graph = graph
         self.metrics = metrics_exporter or PrometheusMetrics()
 
+        self.audit_logger = logging.getLogger("tradepulse.audit")
+        self.circuit_breaker_active = False
+        self._last_tolerance_check: Optional[ToleranceCheck] = None
+
         self.link_activator = LinkActivator()
         self.recovery_agent = AdaptiveRecoveryAgent()
         self.telemetry_history: List[Dict[str, float | str]] = []
@@ -198,13 +223,65 @@ class ThermoController:
         crisis_mode = CrisisMode.detect(current_F, self.baseline_F, self.crisis_ga.crisis_threshold)
         in_crisis = crisis_mode != CrisisMode.NORMAL or abs(self.dF_dt) > self.epsilon_adaptive
 
+        resulting_F = current_F
         if in_crisis:
-            current_F = self._handle_crisis(snapshot, current_F, crisis_mode)
+            crisis_result = self._handle_crisis(snapshot, current_F, crisis_mode)
+            tolerance = crisis_result.tolerance
+            self._last_tolerance_check = tolerance
+
+            previously_active = self.circuit_breaker_active
+            if not tolerance.accepted:
+                self.circuit_breaker_active = True
+                log_level = logging.ERROR if not previously_active else logging.INFO
+                message = (
+                    "Thermodynamic circuit breaker activated due to unsafe topology proposal"
+                    if not previously_active
+                    else "Thermodynamic circuit breaker blocking topology mutation"
+                )
+                self.audit_logger.log(
+                    log_level,
+                    message,
+                    extra={
+                        "event": "thermo.circuit_breaker",
+                        "reason": tolerance.reason,
+                        "F_old": f"{current_F:.6f}",
+                        "F_new": f"{crisis_result.proposed_F:.6f}",
+                    },
+                )
+            else:
+                reward = -abs(crisis_result.proposed_F - current_F)
+                if (
+                    crisis_result.new_topology is not None
+                    and self._apply_topology_changes(crisis_result.new_topology)
+                ):
+                    self.current_topology = self._graph_to_topology(self.graph)
+                    resulting_F = crisis_result.proposed_F
+                    reward = -(crisis_result.proposed_F - current_F)
+
+                next_state = RecoveryState(
+                    F_current=resulting_F,
+                    F_baseline=self.baseline_F,
+                    latency_spike=self._detect_latency_spike(snapshot),
+                    steps_in_crisis=self.crisis_step_count,
+                )
+
+                if (
+                    not self.circuit_breaker_active
+                    and crisis_result.action is not None
+                ):
+                    self.recovery_agent.update(
+                        crisis_result.state,
+                        crisis_result.action,
+                        reward,
+                        next_state,
+                    )
         else:
             self.crisis_step_count = 0
             if gradient_descent_step(self.graph, snapshot, lr=0.02):
                 self.current_topology = self._graph_to_topology(self.graph)
-                current_F = self._compute_free_energy(snapshot=snapshot)
+                resulting_F = self._compute_free_energy(snapshot=snapshot)
+
+        current_F = resulting_F
 
         self.metrics.record("system_free_energy", current_F)
         self.metrics.record("system_dFdt", self.dF_dt)
@@ -235,7 +312,9 @@ class ThermoController:
         self.previous_t = value
 
     # Crisis handling ----------------------------------------------------
-    def _handle_crisis(self, snapshot: MetricsSnapshot, current_F: float, crisis_mode: str) -> float:
+    def _handle_crisis(
+        self, snapshot: MetricsSnapshot, current_F: float, crisis_mode: str
+    ) -> CrisisComputation:
         self.crisis_step_count += 1
         latency_spike = self._detect_latency_spike(snapshot)
         state = RecoveryState(
@@ -245,34 +324,35 @@ class ThermoController:
             steps_in_crisis=self.crisis_step_count,
         )
 
+        if self.circuit_breaker_active:
+            tolerance = ToleranceCheck(
+                accepted=False,
+                reason="circuit_breaker_active",
+            )
+            return CrisisComputation(
+                state=state,
+                action=None,
+                new_topology=None,
+                proposed_F=current_F,
+                tolerance=tolerance,
+                latency_spike=latency_spike,
+            )
+
         action = self.recovery_agent.choose_action(state)
         recovery_params = self.recovery_agent.get_recovery_params(action)
         _ = recovery_params  # Currently used for observability only
 
         new_topology, new_F, _ = self.crisis_ga.evolve(self.current_topology, current_F)
-        accepted = self._check_monotonic_with_tolerance(current_F, new_F)
+        tolerance = self._check_monotonic_with_tolerance(current_F, new_F)
 
-        next_state = RecoveryState(
-            F_current=new_F if accepted else current_F,
-            F_baseline=self.baseline_F,
-            latency_spike=self._detect_latency_spike(snapshot),
-            steps_in_crisis=self.crisis_step_count,
+        return CrisisComputation(
+            state=state,
+            action=action,
+            new_topology=new_topology,
+            proposed_F=new_F,
+            tolerance=tolerance,
+            latency_spike=latency_spike,
         )
-
-        resulting_F = current_F
-        if accepted:
-            if self._apply_topology_changes(new_topology):
-                self.current_topology = self._graph_to_topology(self.graph)
-                self.previous_F = new_F
-                reward = -(new_F - current_F)
-                resulting_F = new_F
-            else:
-                reward = -abs(new_F - current_F)
-        else:
-            reward = -abs(new_F - current_F)
-
-        self.recovery_agent.update(state, action, reward, next_state)
-        return resulting_F
 
     # Telemetry helpers --------------------------------------------------
     def _record_telemetry(self, current_F: float, crisis_mode: str) -> None:
@@ -335,14 +415,37 @@ class ThermoController:
         return float(sum(snapshot.latencies.values()) / len(snapshot.latencies))
 
     # Safety -------------------------------------------------------------
-    def _check_monotonic_with_tolerance(self, F_old: float, F_new: float, window_size: int = 3) -> bool:
+    def _check_monotonic_with_tolerance(
+        self, F_old: float, F_new: float, window_size: int = 3
+    ) -> ToleranceCheck:
         epsilon_spike = 0.01 * self.baseline_ema
         if F_new > F_old + epsilon_spike:
-            return False
+            return ToleranceCheck(
+                accepted=False,
+                reason=(
+                    "free_energy_spike_exceeds_tolerance("
+                    f"F_old={F_old:.6f}, F_new={F_new:.6f}, epsilon={epsilon_spike:.6f})"
+                ),
+            )
         if F_new > F_old:
             predictions = self._predict_recovery_window(F_new, window_size)
-            return float(np.mean(predictions)) < F_old
-        return True
+            predicted_mean = float(np.mean(predictions))
+            if predicted_mean < F_old:
+                return ToleranceCheck(
+                    accepted=True,
+                    reason="temporary_spike_with_expected_recovery",
+                )
+            return ToleranceCheck(
+                accepted=False,
+                reason=(
+                    "no_recovery_within_prediction_window("
+                    f"predicted_mean={predicted_mean:.6f}, F_old={F_old:.6f})"
+                ),
+            )
+        return ToleranceCheck(
+            accepted=True,
+            reason="non_increasing_free_energy",
+        )
 
     def _predict_recovery_window(self, F_new: float, window_size: int) -> List[float]:
         decay = 0.9
