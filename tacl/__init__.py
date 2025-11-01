@@ -1,5 +1,23 @@
 """Thermodynamic Autonomic Control Layer (TACL) utilities."""
 
+from .contract import (
+    ActionClass,
+    ActionRequest,
+    AgentState,
+    Approval,
+    Forecast,
+    Decision,
+    FreeEnergyInputs,
+    FreeEnergyModel,
+    KillSwitch,
+    Mandate,
+    MandateRole,
+    PolicyMatrix,
+    StabilizationPlan,
+    SystemBand,
+    TACLController,
+    format_verification_steps,
+)
 from .energy_model import (
     DEFAULT_THRESHOLDS,
     DEFAULT_WEIGHTS,
@@ -12,6 +30,22 @@ from .energy_model import (
 from .validate import load_scenarios
 
 __all__ = [
+    "ActionClass",
+    "ActionRequest",
+    "AgentState",
+    "Approval",
+    "Forecast",
+    "Decision",
+    "FreeEnergyInputs",
+    "FreeEnergyModel",
+    "KillSwitch",
+    "Mandate",
+    "MandateRole",
+    "PolicyMatrix",
+    "StabilizationPlan",
+    "SystemBand",
+    "TACLController",
+    "format_verification_steps",
     "DEFAULT_THRESHOLDS",
     "DEFAULT_WEIGHTS",
     "EnergyMetrics",
