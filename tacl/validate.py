@@ -60,9 +60,18 @@ def run_validation(mode: str, *, scenarios: Mapping[str, EnergyMetrics]) -> int:
         nominal = scenarios.get("nominal")
         if nominal is None:
             raise FileNotFoundError("nominal scenario missing from fixtures")
-        result = validator.validate(nominal)
-        summary["nominal_free_energy"] = round(result.free_energy, 6)
-        summary["nominal_entropy"] = round(result.entropy, 6)
+        try:
+            result = validator.validate(nominal)
+        except EnergyValidationError as exc:
+            passed = False
+            summary["nominal_result"] = {
+                "passed": False,
+                "free_energy": round(exc.result.free_energy, 6),
+                "reason": exc.result.reason,
+            }
+        else:
+            summary["nominal_free_energy"] = round(result.free_energy, 6)
+            summary["nominal_entropy"] = round(result.entropy, 6)
 
     if mode == "ci":
         degradations = {
