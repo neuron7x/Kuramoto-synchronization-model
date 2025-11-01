@@ -1,11 +1,35 @@
 name: Thermodynamic Validation
 on:
   push:
-    branches: ["main", "feature/**"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
 jobs:
+  thermo-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Enforce thermodynamic monotonicity
+        run: pytest -m monotonic -q
+
+  admission-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run thermodynamic admission check
+        run: python scripts/admission_check.py
+
   validate-energy:
     runs-on: ubuntu-latest
     steps:
