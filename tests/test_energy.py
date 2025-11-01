@@ -7,7 +7,13 @@ import pytest
 from typing import Tuple
 
 import runtime.thermo_controller as thermo_module
-from core.energy import BondType, delta_free_energy, system_free_energy
+from core.energy import (
+    BondType,
+    ENERGY_SCALE,
+    bond_internal_energy,
+    delta_free_energy,
+    system_free_energy,
+)
 from runtime.recovery_agent import RecoveryAction
 from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
@@ -59,6 +65,50 @@ def test_free_energy_monotonic_drop():
     F_after = controller.get_current_F()
 
     assert F_after <= F_before + controller.epsilon_adaptive
+
+
+def test_bond_internal_energy_matches_system_component():
+    latencies = {("ingest", "matcher"): 0.75}
+    coherency = {("ingest", "matcher"): 0.6}
+    bonds = {("ingest", "matcher"): "ionic"}
+
+    per_bond = bond_internal_energy("ingest", "matcher", "ionic", latencies, coherency)
+    total = system_free_energy(bonds, latencies, coherency, resource_usage=0.0, entropy=0.0)
+
+    assert total == pytest.approx(per_bond * ENERGY_SCALE)
+
+
+def test_gradient_descent_step_avoids_recomputing_total_energy(monkeypatch):
+    graph = nx.DiGraph()
+    graph.add_node("ingest", cpu_norm=0.4)
+    graph.add_node("matcher", cpu_norm=0.5)
+    graph.add_node("risk", cpu_norm=0.3)
+    graph.add_edge("ingest", "matcher", type="vdw")
+    graph.add_edge("matcher", "risk", type="ionic")
+
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies={("ingest", "matcher"): 0.9, ("matcher", "risk"): 0.4},
+        coherency={("ingest", "matcher"): 0.3, ("matcher", "risk"): 0.8},
+        resource_usage=0.2,
+        entropy=0.1,
+    )
+
+    call_count = {"total": 0}
+    original = thermo_module.system_free_energy
+
+    def counting_system_free_energy(*args, **kwargs):
+        call_count["total"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(thermo_module, "system_free_energy", counting_system_free_energy)
+
+    before_types = {(u, v): data["type"] for u, v, data in graph.edges(data=True)}
+
+    improved = thermo_module.gradient_descent_step(graph, snapshot, lr=0.05)
+
+    assert call_count["total"] == 1
+    assert improved is True
+    assert any(graph.edges[edge]["type"] != before_types[edge] for edge in before_types)
 
 
 def test_gradient_descent_step_reduces_energy():
