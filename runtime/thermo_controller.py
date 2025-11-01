@@ -185,6 +185,9 @@ class ThermoController:
         self.recovery_agent = AdaptiveRecoveryAgent()
         self.telemetry_history: List[Dict[str, float | str]] = []
 
+        self.override_reason: Optional[str] = None
+        self.override_time: Optional[float] = None
+
         snapshot = self.snapshot_metrics()
         self._latest_snapshot = snapshot
         self.current_topology = self._graph_to_topology(graph)
@@ -330,6 +333,30 @@ class ThermoController:
         self.previous_t = current_time
         self.controller_state = control_state
         self._record_telemetry(current_F, control_state)
+
+    def manual_override(self, reason: str) -> None:
+        """Clear circuit breaker state after human validation."""
+
+        previous_state = self.controller_state
+        self.circuit_breaker_active = False
+        self.unresolved_rise_steps = 0
+        self.crisis_step_count = 0
+        self._last_tolerance_check = None
+        self.override_reason = reason
+        self.override_time = time.time()
+        self.controller_state = CrisisMode.NORMAL
+
+        self.audit_logger.warning(
+            "B1 Thermodynamic circuit breaker manually overridden by operator",
+            extra={
+                "event": "thermo.circuit_breaker",
+                "code": "B1",
+                "manual_override": True,
+                "reason": reason,
+                "state_before": previous_state,
+                "override_time": f"{self.override_time:.6f}",
+            },
+        )
 
     # ------------------------------------------------------------------
     # Backwards compatibility properties
