@@ -325,18 +325,21 @@ class ActionGovernor:
             allowed = mandate_decision.allowed
             reason = mandate_decision.reason
         else:
-            if forecast is None:
-                raise ValueError("Free energy forecast required for non-passive actions")
-            tacl_decision = self._tacl_gate.evaluate(forecast)
-            if mandate_decision.allowed and tacl_decision.allowed:
-                allowed = True
-                reason = tacl_decision.reason
-            elif not mandate_decision.allowed:
+            if not mandate_decision.allowed:
                 allowed = False
                 reason = mandate_decision.reason
             else:
-                allowed = False
-                reason = tacl_decision.reason
+                if forecast is None:
+                    raise ValueError(
+                        "Free energy forecast required for non-passive actions"
+                    )
+                tacl_decision = self._tacl_gate.evaluate(forecast)
+                if tacl_decision.allowed:
+                    allowed = True
+                    reason = tacl_decision.reason
+                else:
+                    allowed = False
+                    reason = tacl_decision.reason
 
         decision = ActionDecision(
             intent=intent,
