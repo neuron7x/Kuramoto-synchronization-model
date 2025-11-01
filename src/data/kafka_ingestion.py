@@ -211,7 +211,6 @@ class HotSymbolCache:
                         )
                     )
                 entry.ticks = []
-                entry.last_seen = now
         while len(self._entries) > self._max_entries:
             key, entry = self._entries.popitem(last=False)
             if entry.ticks:
