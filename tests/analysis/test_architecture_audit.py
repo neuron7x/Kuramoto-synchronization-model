@@ -69,6 +69,10 @@ def sample_project(tmp_path: Path) -> list[Path]:
         "    id: int\n"
         "    quantity: int\n",
     )
+    _write(
+        package_root / "usage.py",
+        "from pkg import b\n",
+    )
     return [package_root]
 
 
@@ -86,6 +90,9 @@ def test_architecture_audit_detects_cycles_and_conflicts(sample_project: list[Pa
     assert ("typeddict", "Product") in conflict_types
 
     assert report.dangling_dependencies.get("pkg.a") == {"pkg.missing_module"}
+
+    usage_imports = report.modules["pkg.usage"].imports
+    assert "pkg.b" in usage_imports
 
 
 def test_run_audit_cli_wrapper(sample_project: list[Path]) -> None:

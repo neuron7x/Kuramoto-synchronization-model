@@ -66,9 +66,20 @@ def _extract_imports(tree: ast.AST, module_name: str) -> set[str]:
             resolved_base = ".".join(part for part in resolved_base_parts if part)
 
             if node.module:
-                imports.add(resolved_base)
+                if resolved_base:
+                    imports.add(resolved_base)
+
+                for alias in node.names:
+                    if alias.name == "*":
+                        continue
+                    if resolved_base:
+                        imports.add(f"{resolved_base}.{alias.name}")
+                    else:
+                        imports.add(alias.name)
             else:
                 for alias in node.names:
+                    if alias.name == "*":
+                        continue
                     if resolved_base:
                         imports.add(f"{resolved_base}.{alias.name}")
                     else:
