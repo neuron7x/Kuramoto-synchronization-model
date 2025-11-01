@@ -124,7 +124,7 @@ func runTerraformValidationWithContext(ctx context.Context, t *testing.T, option
 	}
 }
 
-func TestEKSModuleTerraformValidate(t *testing.T) {
+func TestL6EKSModuleTerraformValidate(t *testing.T) {
 	t.Parallel()
 
 	if _, err := exec.LookPath("terraform"); err != nil {

@@ -8,7 +8,7 @@ import (
 
 type errWrapper func(error) error
 
-func TestIsTerraformRegistryConnectivityError(t *testing.T) {
+func TestL6IsTerraformRegistryConnectivityError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
