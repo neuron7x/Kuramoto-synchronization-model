@@ -112,8 +112,8 @@ async function mountSignalsFixture(page) {
   return { view, metrics };
 }
 
-test.describe('dashboard signals experience', () => {
-  test('renders live signals within latency budget', async ({ page }) => {
+test.describe('@L7 dashboard signals experience', () => {
+  test('[L7] renders live signals within latency budget', async ({ page }) => {
     const navigationStart = performance.now();
     const { metrics } = await mountSignalsFixture(page);
     await page.waitForSelector('.tp-live-table__body');
@@ -131,7 +131,7 @@ test.describe('dashboard signals experience', () => {
     expect(navigationDuration, 'fixture navigation should complete quickly').toBeLessThan(2_000);
   });
 
-  test('meets WCAG AA expectations via axe-core', async ({ page }) => {
+  test('[L7] meets WCAG AA expectations via axe-core', async ({ page }) => {
     await mountSignalsFixture(page);
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -144,7 +144,7 @@ test.describe('dashboard signals experience', () => {
     });
   });
 
-  test('provides a semantic snapshot hook for CLIP-based guardrails', async ({ page }) => {
+  test('[L7] provides a semantic snapshot hook for CLIP-based guardrails', async ({ page }) => {
     test.skip(!SEMANTIC_GUARDRAIL_ENABLED, 'Set UI_SEMANTIC_BASELINE=true to enable CLIP semantic assertions.');
 
     await mountSignalsFixture(page);

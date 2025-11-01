@@ -1,5 +1,8 @@
 import assert from 'assert';
 
+const TEST_LEVEL = 'L7';
+console.info(`[${TEST_LEVEL}] ui/dashboard accessibility contract check`);
+
 import { renderDashboard } from '../src/core/index.js';
 import { renderOrdersView } from '../src/views/orders.js';
 import { renderPositionsView } from '../src/views/positions.js';
