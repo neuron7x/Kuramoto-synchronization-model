@@ -551,6 +551,9 @@ guardrails:
 - **Implementation**: `runtime/thermo_controller.py::ThermoController._check_monotonic_with_tolerance`.
 - **Audit Trail**: Every control step records telemetry accessible via
   `GET /thermo/history`.
+- **Operational Response**: оператори зобов’язані реагувати на будь-яке
+  зростання цього значення >0, використовуючи поле `violations_total`
+  з `GET /thermo/status`.
 
 ### Crisis Handling & Recovery
 

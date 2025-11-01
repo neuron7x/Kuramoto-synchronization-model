@@ -232,6 +232,7 @@ class ThermoController:
         self.circuit_breaker_active = False
         self.controller_state: str = CrisisMode.NORMAL
         self._last_tolerance_check: Optional[ToleranceCheck] = None
+        self.monotonic_violations_total = 0
 
         self.link_activator = LinkActivator()
         self.recovery_agent = AdaptiveRecoveryAgent()
@@ -463,9 +464,11 @@ class ThermoController:
         )
 
         if self.circuit_breaker_active:
-            tolerance = ToleranceCheck(
-                accepted=False,
-                reason="circuit_breaker_active",
+            tolerance = self._record_tolerance_outcome(
+                ToleranceCheck(
+                    accepted=False,
+                    reason="circuit_breaker_active",
+                )
             )
             return CrisisComputation(
                 state=state,
@@ -481,7 +484,9 @@ class ThermoController:
         _ = recovery_params  # Currently used for observability only
 
         new_topology, new_F, _ = self.crisis_ga.evolve(self.current_topology, current_F)
-        tolerance = self._check_monotonic_with_tolerance(current_F, new_F)
+        tolerance = self._record_tolerance_outcome(
+            self._check_monotonic_with_tolerance(current_F, new_F)
+        )
 
         return CrisisComputation(
             state=state,
@@ -633,6 +638,15 @@ class ThermoController:
             reason="non_increasing_free_energy",
         )
 
+    def _record_tolerance_outcome(self, tolerance: ToleranceCheck) -> ToleranceCheck:
+        if not tolerance.accepted:
+            self.monotonic_violations_total += 1
+            self.metrics.record(
+                "monotonic_violations_total",
+                float(self.monotonic_violations_total),
+            )
+        return tolerance
+
     def _predict_recovery_window(self, F_new: float, window_size: int) -> List[float]:
         decay = 0.9
         return [F_new * (decay ** i) + self.baseline_F * (1 - decay ** i) for i in range(1, window_size + 1)]
@@ -702,6 +716,9 @@ class ThermoController:
         for src, dst, bond in sorted(self.current_topology):
             digest.update(f"{src}->{dst}:{bond}".encode())
         return digest.hexdigest()
+
+    def get_monotonic_violations_total(self) -> int:
+        return int(self.monotonic_violations_total)
 
 
 __all__ = [
