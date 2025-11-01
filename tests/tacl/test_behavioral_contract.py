@@ -7,7 +7,12 @@ from tacl.behavioral_contract import (
     BehavioralContractViolation,
     ContractBreach,
 )
-from tacl.energy_model import EnergyMetrics, EnergyValidationResult, EnergyValidator
+from tacl.energy_model import (
+    EnergyMetrics,
+    EnergyValidationError,
+    EnergyValidationResult,
+    EnergyValidator,
+)
 
 
 def _result(free_energy: float) -> EnergyValidationResult:
@@ -53,26 +58,26 @@ def test_contract_permits_dual_approval_override() -> None:
 
 
 def test_validator_bridge_enforces_contract() -> None:
-    validator = EnergyValidator(max_free_energy=1.2)
+    validator = EnergyValidator(max_free_energy=1.6)
     contract = BehavioralContract(action_potential=1.2, rest_potential=0.8)
     metrics_sequence = [
         EnergyMetrics(
-            latency_p95=64.0,
-            latency_p99=92.0,
-            coherency_drift=0.031,
-            cpu_burn=0.58,
-            mem_cost=4.2,
-            queue_depth=18.0,
-            packet_loss=0.001,
+            latency_p95=85.0 * 0.5,
+            latency_p99=120.0 * 0.5,
+            coherency_drift=0.08 * 0.5,
+            cpu_burn=0.75 * 0.5,
+            mem_cost=6.5 * 0.5,
+            queue_depth=32.0 * 0.5,
+            packet_loss=0.005 * 0.5,
         ),
         EnergyMetrics(
-            latency_p95=128.0,
-            latency_p99=164.0,
-            coherency_drift=0.25,
-            cpu_burn=0.9,
-            mem_cost=9.0,
-            queue_depth=48.0,
-            packet_loss=0.02,
+            latency_p95=85.0 * 0.7,
+            latency_p99=120.0 * 0.7,
+            coherency_drift=0.08 * 0.7,
+            cpu_burn=0.75 * 0.7,
+            mem_cost=6.5 * 0.7,
+            queue_depth=32.0 * 0.7,
+            packet_loss=0.005 * 0.7,
         ),
     ]
 
@@ -80,3 +85,22 @@ def test_validator_bridge_enforces_contract() -> None:
         validator.enforce_contract(metrics_sequence, contract)
 
     assert any(isinstance(breach, ContractBreach) and breach.kind == "action_potential" for breach in exc.value.report.breaches)
+
+
+def test_validator_bridge_preserves_free_energy_bound() -> None:
+    validator = EnergyValidator(max_free_energy=1.1)
+    contract = BehavioralContract(action_potential=1.3, rest_potential=0.8)
+    metrics_sequence = [
+        EnergyMetrics(
+            latency_p95=85.0,
+            latency_p99=120.0,
+            coherency_drift=0.08,
+            cpu_burn=0.75,
+            mem_cost=6.5,
+            queue_depth=32.0,
+            packet_loss=0.005,
+        )
+    ]
+
+    with pytest.raises(EnergyValidationError):
+        validator.enforce_contract(metrics_sequence, contract)

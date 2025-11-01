@@ -242,7 +242,7 @@ class EnergyValidator:
     ) -> "BehavioralContractReport":
         """Evaluate a telemetry sequence and enforce a behavioural contract."""
 
-        results = [self.evaluate(metrics) for metrics in metrics_sequence]
+        results = [self.validate(metrics) for metrics in metrics_sequence]
         return contract.enforce(results, approvals=approvals)
 
 
