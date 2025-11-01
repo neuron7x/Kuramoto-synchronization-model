@@ -28,6 +28,7 @@ from typing import Iterable
 import pytest
 
 from core.utils.determinism import apply_thread_determinism
+from tests._helpers.quality_levels import LEVEL_MARKERS, resolve_level
 
 
 class _FlakyTracker:
@@ -326,9 +327,14 @@ def pytest_collection_modifyitems(
     config: pytest.Config, items: list[pytest.Item]
 ) -> None:
     tracker = getattr(config, "_tradepulse_flaky_tracker", None)
-    if tracker is None:
-        return
     for item in items:
+        if not any(marker.name in LEVEL_MARKERS for marker in item.iter_markers()):
+            level = resolve_level(pathlib.Path(item.location[0]))
+            item.add_marker(level)
+            item.user_properties.append(("quality_level", level))
+
+        if tracker is None:
+            continue
         if item.get_closest_marker("flaky") is not None:
             tracker.register(item)
 

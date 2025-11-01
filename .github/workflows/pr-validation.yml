@@ -1,0 +1,368 @@
+name: PR Validation - TradePulse
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20.12.2'
+  GO_VERSION: '1.22.7'
+
+jobs:
+  stage-a-security:
+    name: Stage A — Repository hygiene & security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Verify repository layout
+        run: python -m tools.ci.verify_repository_layout
+
+      - name: Dependency alignment
+        run: make dependencies-check
+
+      - name: Security audit
+        run: make security-audit
+
+      - name: Generate SBOM
+        run: make sbom
+
+      - name: Upload Stage A artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-a-security
+          path: |
+            .ci_artifacts/repository_structure.json
+            .ci_artifacts/repository_structure.md
+            sbom/cyclonedx-sbom.json
+          if-no-files-found: warn
+
+  stage-b-static:
+    name: Stage B — Static analysis
+    runs-on: ubuntu-latest
+    needs: stage-a-security
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run Python linters and type-checkers
+        run: make lint:python
+
+      - name: Go lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.58.2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform fmt
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        working-directory: infra/terraform/eks
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Upload Stage B artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-b-static
+          path: |
+            infra/terraform/eks/.terraform
+            infra/terraform/eks/.terraform.lock.hcl
+          if-no-files-found: ignore
+
+  stage-c-l1-l2:
+    name: Stage C — L1/L2 pytest suites
+    runs-on: ubuntu-latest
+    needs: stage-b-static
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run L1/L2 tests with coverage
+        run: |
+          pytest \
+            -m "l1 or l2" \
+            --cov=core \
+            --cov=backtest \
+            --cov=execution \
+            --cov-config=configs/quality/critical_surface.coveragerc \
+            --cov-report=term \
+            --cov-report=xml:coverage.xml
+
+      - name: Enforce coverage guardrail
+        run: python -m tools.coverage.guardrail --coverage coverage.xml
+
+      - name: Persist coverage summary
+        run: |
+          python - <<'PY'
+          import json
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          report = Path("coverage.xml")
+          tree = ET.parse(report)
+          root = tree.getroot()
+          summary = {
+              "line_rate": round(float(root.get("line-rate", "0")) * 100.0, 3),
+          }
+          if root.get("branch-rate") is not None:
+              summary["branch_rate"] = round(float(root.get("branch-rate")) * 100.0, 3)
+          artifacts = Path(".ci_artifacts")
+          artifacts.mkdir(exist_ok=True)
+          (artifacts / "coverage_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload Stage C artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-c-l1-l2
+          path: |
+            coverage.xml
+            .ci_artifacts/coverage_summary.json
+          if-no-files-found: error
+
+  stage-d-l3-l4:
+    name: Stage D — L3/L4 integration suites
+    runs-on: ubuntu-latest
+    needs: stage-c-l1-l2
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run L3/L4 pytest suites
+        run: |
+          pytest -m "l3 or l4" --junitxml=reports/stage_d_pytest.xml --durations=20
+
+      - name: Upload Stage D artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-d-l3-l4
+          path: reports/stage_d_pytest.xml
+          if-no-files-found: warn
+
+  stage-e-l5:
+    name: Stage E — L5 stability gates
+    runs-on: ubuntu-latest
+    needs: stage-d-l3-l4
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: TACL energy validation
+        run: python -m tacl.validate --run ci
+
+      - name: Release gate evaluation
+        run: python -m tacl.release_gates --config ci/release_gates.yml
+
+      - name: Run L5 pytest suites
+        run: |
+          pytest -m "l5" --junitxml=reports/stage_e_pytest.xml --durations=20
+
+      - name: Upload Stage E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-e-l5
+          path: |
+            .ci_artifacts
+            reports/stage_e_pytest.xml
+          if-no-files-found: error
+
+  stage-f-l6-l7:
+    name: Stage F — L6/L7 infrastructure & UI
+    runs-on: ubuntu-latest
+    needs: stage-e-l5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Run Terratest suite
+        working-directory: infra/terraform/tests
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          go test -v ./... | tee "$GITHUB_WORKSPACE/artifacts/terratest.log"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/dashboard/package-lock.json
+
+      - name: Install UI dependencies
+        working-directory: ui/dashboard
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ui/dashboard
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright e2e
+        working-directory: ui/dashboard
+        run: |
+          npx playwright test --reporter=junit --reporter=line --output=playwright-report
+          if [ -f playwright-report/results.xml ]; then
+            cp playwright-report/results.xml stage-f-playwright-results.xml
+          fi
+
+      - name: Upload Stage F artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-f-l6-l7
+          path: |
+            artifacts/terratest.log
+            ui/dashboard/playwright-report
+            ui/dashboard/stage-f-playwright-results.xml
+          if-no-files-found: warn
+
+  stage-g-summary:
+    name: Stage G — Aggregate PR summary
+    runs-on: ubuntu-latest
+    needs:
+      - stage-a-security
+      - stage-b-static
+      - stage-c-l1-l2
+      - stage-d-l3-l4
+      - stage-e-l5
+      - stage-f-l6-l7
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: pr-validation-artifacts
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build PR validation summary
+        run: |
+          python -m tools.ci.pr_summary \
+            --stage stage-a=${{ needs.stage-a-security.result }} \
+            --stage stage-b=${{ needs.stage-b-static.result }} \
+            --stage stage-c=${{ needs.stage-c-l1-l2.result }} \
+            --stage stage-d=${{ needs.stage-d-l3-l4.result }} \
+            --stage stage-e=${{ needs.stage-e-l5.result }} \
+            --stage stage-f=${{ needs.stage-f-l6-l7.result }} \
+            --coverage pr-validation-artifacts/stage-c-l1-l2/coverage.xml \
+            --release pr-validation-artifacts/stage-e-l5/.ci_artifacts/release_gates.json \
+            --energy pr-validation-artifacts/stage-e-l5/.ci_artifacts/energy_validation.json
+
+      - name: Upload PR summary artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-g-summary
+          path: |
+            .ci_artifacts/pr_validation_summary.json
+            .ci_artifacts/pr_validation_summary.md
+          if-no-files-found: error
