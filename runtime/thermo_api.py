@@ -1,11 +1,14 @@
 """FastAPI application exposing thermodynamic telemetry."""
 from __future__ import annotations
 
+import hmac
+import os
 import time
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import networkx as nx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel
 
 from runtime.thermo_controller import ThermoController
 
@@ -33,6 +36,21 @@ def get_controller() -> ThermoController:
     if _controller is None:
         _controller = ThermoController(_build_default_graph())
     return _controller
+
+
+class ManualOverrideRequest(BaseModel):
+    token: str
+    reason: str
+
+
+def _get_manual_override_token() -> str:
+    token = os.getenv("THERMO_OVERRIDE_TOKEN")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Manual override token is not configured",
+        )
+    return token
 
 
 @app.get("/thermo/status")
@@ -76,6 +94,17 @@ def reset_controller() -> Dict[str, object]:
     global _controller
     _controller = ThermoController(_build_default_graph())
     return {"status": "reset", "timestamp": time.time()}
+
+
+@app.post("/thermo/override")
+def manual_override(request: ManualOverrideRequest) -> Dict[str, object]:
+    expected_token = _get_manual_override_token()
+    if not hmac.compare_digest(request.token, expected_token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    controller = get_controller()
+    controller.manual_override(request.reason)
+    return {"status": "override_accepted", "timestamp": time.time()}
 
 
 if __name__ == "__main__":  # pragma: no cover
