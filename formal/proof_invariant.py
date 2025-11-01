@@ -1,11 +1,22 @@
 """SMT-based proof of bounded free energy growth."""
 from __future__ import annotations
 
+import importlib.util
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from z3 import And, Or, Real, Solver, Sum, sat, unsat  # type: ignore[import]
+if TYPE_CHECKING:  # pragma: no cover - only for static analysers
+    from z3 import And, Or, Real, Solver, Sum, sat, unsat  # type: ignore[import]
+
+
+HAS_Z3 = importlib.util.find_spec("z3") is not None
+"""Whether the optional :mod:`z3` dependency is available."""
+
+MISSING_Z3_MESSAGE = (
+    "The z3-solver package is required to run the invariant proof. "
+    "Install it with `pip install z3-solver` or use requirements-dev.txt."
+)
 
 
 @dataclass(slots=True)
@@ -30,6 +41,11 @@ def run_proof(output_path: Optional[Path] = None) -> ProofResult:
     grows by :data:`DELTA_GROWTH` after three steps; ``unsat`` means the growth
     cannot happen under the constraints.
     """
+
+    if not HAS_Z3:
+        raise RuntimeError(MISSING_Z3_MESSAGE)
+
+    from z3 import And, Or, Real, Solver, Sum, sat, unsat  # type: ignore[import]
 
     solver = Solver()
 
