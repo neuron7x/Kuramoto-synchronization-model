@@ -1,0 +1,56 @@
+{
+  "coverage": {
+    "observed": 0.937,
+    "passed": true,
+    "required": 0.92
+  },
+  "energy": {
+    "entropy": 0.41023,
+    "free_energy": 1.263632,
+    "passed": true
+  },
+  "latency": {
+    "metrics": {
+      "count": 7.0,
+      "max_ms": 54.0,
+      "median_ms": 50.3,
+      "p95_ms": 53.76
+    },
+    "passed": true,
+    "reason": null
+  },
+  "negative_tests": {
+    "degraded_high_latency": {
+      "free_energy": 2.096551,
+      "passed": false
+    },
+    "degraded_packet_loss": {
+      "free_energy": 1.72422,
+      "passed": false
+    }
+  },
+  "passed": true,
+  "performance": {
+    "budgets": [
+      {
+        "budget_ms": 110.0,
+        "component": "order_router",
+        "observed_ms": 92.0,
+        "passed": true
+      },
+      {
+        "budget_ms": 85.0,
+        "component": "link_activator",
+        "observed_ms": 68.0,
+        "passed": true
+      },
+      {
+        "budget_ms": 60.0,
+        "component": "thermo_validator",
+        "observed_ms": 41.0,
+        "passed": true
+      }
+    ],
+    "passed": true
+  }
+}

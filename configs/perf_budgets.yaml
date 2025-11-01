@@ -1,0 +1,10 @@
+components:
+  order_router:
+    observed_ms: 92.0
+    budget_ms: 110.0
+  link_activator:
+    observed_ms: 68.0
+    budget_ms: 85.0
+  thermo_validator:
+    observed_ms: 41.0
+    budget_ms: 60.0

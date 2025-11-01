@@ -1,0 +1,1 @@
+CI log retrieval failed: GitHub CLI (gh) is unavailable in the execution environment. Commands such as `gh run list` and `gh run download` returned shell errors. Documenting this limitation to unblock local debugging.

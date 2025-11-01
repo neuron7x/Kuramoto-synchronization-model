@@ -1,0 +1,25 @@
+scenarios:
+  nominal:
+    latency_p95: 64.0
+    latency_p99: 92.0
+    coherency_drift: 0.031
+    cpu_burn: 0.58
+    mem_cost: 4.2
+    queue_depth: 18.0
+    packet_loss: 0.001
+  degraded_high_latency:
+    latency_p95: 110.0
+    latency_p99: 160.0
+    coherency_drift: 0.12
+    cpu_burn: 0.81
+    mem_cost: 6.3
+    queue_depth: 45.0
+    packet_loss: 0.004
+  degraded_packet_loss:
+    latency_p95: 70.0
+    latency_p99: 96.0
+    coherency_drift: 0.05
+    cpu_burn: 0.62
+    mem_cost: 4.8
+    queue_depth: 20.0
+    packet_loss: 0.009
