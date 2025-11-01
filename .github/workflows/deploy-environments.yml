@@ -94,6 +94,8 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -c constraints/security.txt -r requirements.txt
           python -m pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: admission
+        run: python scripts/admission_check.py
       - name: Run smoke tests
         run: |
           python -m pytest tests/smoke -m smoke -q

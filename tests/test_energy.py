@@ -182,3 +182,25 @@ def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
     assert list(controller.graph.edges(data=True)) == initial_edges
     assert controller.telemetry_history[-1]["crisis_mode"] == CRITICAL_HALT_STATE
     assert any(getattr(record, "code", None) == "B1" for record in caplog.records)
+
+
+def test_control_step_simulated_restores_state():
+    graph = nx.DiGraph()
+    graph.add_node("ingest", cpu_norm=0.4)
+    graph.add_node("matcher", cpu_norm=0.6)
+    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9)
+
+    controller = ThermoController(graph)
+
+    baseline_topology = list(controller.current_topology)
+    baseline_edges = list(controller.graph.edges(data=True))
+    baseline_history = list(controller.telemetry_history)
+
+    result = controller.control_step(simulated=True)
+
+    assert result.accepted is True
+    assert list(controller.graph.edges(data=True)) == baseline_edges
+    assert controller.current_topology == baseline_topology
+    assert controller.telemetry_history == baseline_history
+    assert controller.circuit_breaker_active is False
+    assert controller.controller_state == thermo_module.CrisisMode.NORMAL

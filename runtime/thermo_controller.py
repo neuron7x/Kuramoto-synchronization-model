@@ -1,12 +1,13 @@
 """Thermodynamic controller with crisis-aware adaptations."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import logging
 import time
 import warnings
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -52,6 +53,25 @@ class CrisisComputation:
     proposed_F: float
     tolerance: ToleranceCheck
     latency_spike: float
+
+
+@dataclass(slots=True)
+class ControlStepResult:
+    """Summary of a control step iteration."""
+
+    tolerance: Optional[ToleranceCheck]
+    circuit_breaker_active: bool
+    controller_state: str
+
+    @property
+    def accepted(self) -> bool:
+        """Return ``True`` when the proposed topology passes admission checks."""
+
+        if self.circuit_breaker_active:
+            return False
+        if self.tolerance is None:
+            return True
+        return self.tolerance.accepted
 
 
 _FALLBACK_WARNING_EMITTED = False
@@ -212,7 +232,33 @@ class ThermoController:
         )
 
     # Core loop ----------------------------------------------------------
-    def control_step(self) -> None:
+    def control_step(self, *, simulated: bool = False) -> ControlStepResult:
+        """Execute one control loop iteration.
+
+        When ``simulated`` is ``True`` the controller performs a dry run and
+        restores its internal state afterwards. The return value captures the
+        admission outcome observed during the iteration so callers can apply
+        additional gating logic without mutating the live controller.
+        """
+
+        state_snapshot: Optional[Dict[str, Any]] = None
+        if simulated:
+            state_snapshot = self._capture_internal_state()
+
+        try:
+            tolerance = self._perform_control_step()
+            result = ControlStepResult(
+                tolerance=tolerance,
+                circuit_breaker_active=self.circuit_breaker_active,
+                controller_state=self.controller_state,
+            )
+        finally:
+            if simulated and state_snapshot is not None:
+                self._restore_internal_state(state_snapshot)
+
+        return result
+
+    def _perform_control_step(self) -> Optional[ToleranceCheck]:
         snapshot = self.snapshot_metrics()
         self._latest_snapshot = snapshot
         current_time = time.time()
@@ -333,6 +379,56 @@ class ThermoController:
         self.previous_t = current_time
         self.controller_state = control_state
         self._record_telemetry(current_F, control_state)
+
+        return self._last_tolerance_check
+
+    def _capture_internal_state(self) -> Dict[str, Any]:
+        return {
+            "graph": copy.deepcopy(self.graph),
+            "current_topology": list(self.current_topology),
+            "circuit_breaker_active": self.circuit_breaker_active,
+            "controller_state": self.controller_state,
+            "unresolved_rise_steps": self.unresolved_rise_steps,
+            "crisis_step_count": self.crisis_step_count,
+            "previous_F": self.previous_F,
+            "previous_t": self.previous_t,
+            "dF_dt": self.dF_dt,
+            "baseline_F": self.baseline_F,
+            "baseline_ema": self.baseline_ema,
+            "epsilon_adaptive": self.epsilon_adaptive,
+            "bottleneck_edge": self.bottleneck_edge,
+            "bottleneck_cost": self.bottleneck_cost,
+            "_baseline_latency": self._baseline_latency,
+            "_last_tolerance_check": copy.deepcopy(self._last_tolerance_check),
+            "_latest_snapshot": copy.deepcopy(self._latest_snapshot),
+            "telemetry_history": copy.deepcopy(self.telemetry_history),
+            "link_activator": copy.deepcopy(self.link_activator),
+            "recovery_agent": copy.deepcopy(self.recovery_agent),
+            "crisis_ga": copy.deepcopy(self.crisis_ga),
+        }
+
+    def _restore_internal_state(self, state: Dict[str, Any]) -> None:
+        self.graph = state["graph"]
+        self.current_topology = state["current_topology"]
+        self.circuit_breaker_active = state["circuit_breaker_active"]
+        self.controller_state = state["controller_state"]
+        self.unresolved_rise_steps = state["unresolved_rise_steps"]
+        self.crisis_step_count = state["crisis_step_count"]
+        self.previous_F = state["previous_F"]
+        self.previous_t = state["previous_t"]
+        self.dF_dt = state["dF_dt"]
+        self.baseline_F = state["baseline_F"]
+        self.baseline_ema = state["baseline_ema"]
+        self.epsilon_adaptive = state["epsilon_adaptive"]
+        self.bottleneck_edge = state["bottleneck_edge"]
+        self.bottleneck_cost = state["bottleneck_cost"]
+        self._baseline_latency = state["_baseline_latency"]
+        self._last_tolerance_check = state["_last_tolerance_check"]
+        self._latest_snapshot = state["_latest_snapshot"]
+        self.telemetry_history = state["telemetry_history"]
+        self.link_activator = state["link_activator"]
+        self.recovery_agent = state["recovery_agent"]
+        self.crisis_ga = state["crisis_ga"]
 
     def manual_override(self, reason: str) -> None:
         """Clear circuit breaker state after human validation."""
@@ -594,4 +690,5 @@ __all__ = [
     "estimate_entropy",
     "gradient_descent_step",
     "CRITICAL_HALT_STATE",
+    "ControlStepResult",
 ]
