@@ -17,7 +17,10 @@ response.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Mapping, MutableMapping
+from typing import Iterable, Mapping, MutableMapping, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .behavioral_contract import BehavioralContract, BehavioralContractReport
 
 
 # Thresholds and weights follow the production tuning captured in incident
@@ -229,6 +232,18 @@ class EnergyValidator:
         if not result.passed:
             raise EnergyValidationError(result.reason or "energy validation failed", result)
         return result
+
+    def enforce_contract(
+        self,
+        metrics_sequence: Iterable[EnergyMetrics],
+        contract: "BehavioralContract",
+        *,
+        approvals: Iterable[str] | None = None,
+    ) -> "BehavioralContractReport":
+        """Evaluate a telemetry sequence and enforce a behavioural contract."""
+
+        results = [self.evaluate(metrics) for metrics in metrics_sequence]
+        return contract.enforce(results, approvals=approvals)
 
 
 __all__ = [
