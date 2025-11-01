@@ -55,6 +55,28 @@ def _bond_energy(
     return params["base_energy"] + latency_cost + incoherence_cost - stability_gain
 
 
+def bond_internal_energy(
+    src: str,
+    dst: str,
+    kind: BondType,
+    latencies: Dict[Tuple[str, str], float],
+    coherency: Dict[Tuple[str, str], float],
+) -> float:
+    """Return the unscaled internal energy contribution for a single bond.
+
+    ``system_free_energy`` exposes a coarse-grained API that scales the final
+    value after summing the internal contributions of all bonds and the
+    resource / entropy terms.  The optimisation loops inside
+    ``runtime.thermo_controller`` frequently need to reason about the delta
+    introduced by changing a single bond.  Recomputing the entire system energy
+    for each candidate bond type becomes prohibitively expensive on dense
+    graphs.  This helper surfaces the per-bond term so callers can update the
+    global free energy incrementally.
+    """
+
+    return _bond_energy(src, dst, kind, latencies, coherency)
+
+
 def system_free_energy(
     bonds: Dict[Tuple[str, str], BondType],
     latencies: Dict[Tuple[str, str], float],
@@ -87,5 +109,6 @@ __all__ = [
     "SYSTEM_TEMPERATURE_K",
     "ENERGY_SCALE",
     "system_free_energy",
+    "bond_internal_energy",
     "delta_free_energy",
 ]

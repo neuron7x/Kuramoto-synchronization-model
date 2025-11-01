@@ -12,7 +12,13 @@ import networkx as nx
 import numpy as np
 
 from evolution import bond_evolver
-from core.energy import BondType, delta_free_energy, system_free_energy
+from core.energy import (
+    BondType,
+    ENERGY_SCALE,
+    bond_internal_energy,
+    delta_free_energy,
+    system_free_energy,
+)
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
@@ -128,9 +134,14 @@ def estimate_entropy(graph: nx.DiGraph) -> float:
     return entropy / max_entropy if max_entropy > 0 else 0.0
 
 
+_BOND_TYPES: Tuple[BondType, ...] = tuple(BondType.__args__)
+
+
 def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 0.02) -> bool:
-    bonds = {(u, v): data.get("type") for u, v, data in graph.edges(data=True)}
-    base_energy = system_free_energy(
+    """Local search over bond types using incremental free-energy updates."""
+
+    bonds = {(u, v): data.get("type", "vdw") for u, v, data in graph.edges(data=True)}
+    current_energy = system_free_energy(
         bonds,
         snap.latencies,
         snap.coherency,
@@ -139,31 +150,42 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
     )
 
     improved = False
-    improvement_threshold = max(lr, 1e-6) * 1e-12
+    improvement_threshold = max(lr, 1e-6) * ENERGY_SCALE
 
-    for (src, dst, data) in list(graph.edges(data=True)):
-        current_type = data.get("type")
-        candidates = [bond for bond in BondType.__args__ if bond != current_type]
+    for src, dst, data in list(graph.edges(data=True)):
+        current_type = data.get("type", "vdw")
+        current_internal = bond_internal_energy(
+            src,
+            dst,
+            current_type,
+            snap.latencies,
+            snap.coherency,
+        )
 
         best_type = current_type
-        best_energy = base_energy
+        best_energy = current_energy
 
-        for candidate in candidates:
-            graph.edges[(src, dst)]["type"] = candidate
-            bonds_tmp = {(u, v): attrs.get("type") for u, v, attrs in graph.edges(data=True)}
-            energy = system_free_energy(
-                bonds_tmp,
+        for candidate in _BOND_TYPES:
+            if candidate == current_type:
+                continue
+
+            candidate_internal = bond_internal_energy(
+                src,
+                dst,
+                candidate,
                 snap.latencies,
                 snap.coherency,
-                snap.resource_usage,
-                snap.entropy,
             )
-            if energy < best_energy - improvement_threshold:
-                best_energy = energy
+            candidate_energy = current_energy + ENERGY_SCALE * (
+                candidate_internal - current_internal
+            )
+            if candidate_energy < best_energy - improvement_threshold:
+                best_energy = candidate_energy
                 best_type = candidate
 
-        graph.edges[(src, dst)]["type"] = best_type
         if best_type != current_type:
+            graph.edges[(src, dst)]["type"] = best_type
+            current_energy = best_energy
             improved = True
 
     return improved

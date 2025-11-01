@@ -6,7 +6,12 @@ import networkx as nx
 import pytest
 
 import runtime.thermo_controller as thermo_module
-from core.energy import delta_free_energy
+from core.energy import (
+    ENERGY_SCALE,
+    bond_internal_energy,
+    delta_free_energy,
+    system_free_energy,
+)
 from runtime.recovery_agent import RecoveryAction
 from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
@@ -182,3 +187,70 @@ def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
     assert list(controller.graph.edges(data=True)) == initial_edges
     assert controller.telemetry_history[-1]["crisis_mode"] == CRITICAL_HALT_STATE
     assert any(getattr(record, "code", None) == "B1" for record in caplog.records)
+
+
+def test_bond_internal_energy_matches_free_energy_delta() -> None:
+    latencies = {("a", "b"): 0.9}
+    coherency = {("a", "b"): 0.6}
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies=latencies,
+        coherency=coherency,
+        resource_usage=0.25,
+        entropy=0.15,
+    )
+
+    bonds = {("a", "b"): "vdw"}
+    base = system_free_energy(
+        bonds,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    mutated = dict(bonds)
+    mutated[("a", "b")] = "ionic"
+    mutated_energy = system_free_energy(
+        mutated,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    delta = mutated_energy - base
+    internal_delta = ENERGY_SCALE * (
+        bond_internal_energy("a", "b", "ionic", latencies, coherency)
+        - bond_internal_energy("a", "b", "vdw", latencies, coherency)
+    )
+
+    assert delta == pytest.approx(internal_delta)
+
+
+def test_gradient_descent_step_uses_single_energy_eval(monkeypatch) -> None:
+    graph = nx.DiGraph()
+    graph.add_edge("a", "b", type="covalent")
+    graph.add_edge("b", "c", type="vdw")
+
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies={("a", "b"): 1.5, ("b", "c"): 0.7},
+        coherency={("a", "b"): 0.1, ("b", "c"): 0.95},
+        resource_usage=0.2,
+        entropy=0.05,
+    )
+
+    call_counter = {"count": 0}
+    original = thermo_module.system_free_energy
+
+    def counting_system_free_energy(*args, **kwargs):
+        call_counter["count"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(thermo_module, "system_free_energy", counting_system_free_energy)
+
+    improved = thermo_module.gradient_descent_step(graph, snapshot, lr=0.05)
+
+    assert call_counter["count"] == 1
+    assert improved is True
+    assert graph.edges["a", "b"]["type"] == "vdw"
+    assert graph.edges["b", "c"]["type"] in {"hydrogen", "metallic"}
