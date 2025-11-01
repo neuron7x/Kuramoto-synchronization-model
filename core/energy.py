@@ -33,7 +33,7 @@ SYSTEM_TEMPERATURE_K = 300.0
 ENERGY_SCALE = 1e-18
 
 
-def _bond_energy(
+def bond_internal_energy(
     src: str,
     dst: str,
     kind: BondType,
@@ -64,7 +64,7 @@ def system_free_energy(
 ) -> float:
     internal_energy = 0.0
     for (src, dst), kind in bonds.items():
-        internal_energy += _bond_energy(src, dst, kind, latencies, coherency)
+        internal_energy += bond_internal_energy(src, dst, kind, latencies, coherency)
 
     resource_term = 2.0 * float(np.clip(resource_usage, 0.0, 1.0))
     entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * max(entropy, 0.0)
@@ -86,6 +86,7 @@ __all__ = [
     "K_BOLTZMANN_EFFECTIVE",
     "SYSTEM_TEMPERATURE_K",
     "ENERGY_SCALE",
+    "bond_internal_energy",
     "system_free_energy",
     "delta_free_energy",
 ]
