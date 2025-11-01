@@ -1,0 +1,14 @@
+latency:
+  samples_ms: [45.0, 47.5, 49.1, 50.3, 51.8, 53.2, 54.0]
+  median_target_ms: 60.0
+  p95_target_ms: 85.0
+  max_target_ms: 120.0
+coverage:
+  observed: 0.937
+  required: 0.92
+perf_budgets_file: configs/perf_budgets.yaml
+scenario_file: tacl/link_activator_test_scenarios.yaml
+energy_scenario: nominal
+energy_negative_tests:
+  - degraded_high_latency
+  - degraded_packet_loss

@@ -1,0 +1,16 @@
+{
+  "mode": "smoke",
+  "nominal_entropy": 0.41023,
+  "nominal_free_energy": 1.263632,
+  "passed": true,
+  "smoke": "completed",
+  "thresholds": {
+    "coherency_drift": 0.08,
+    "cpu_burn": 0.75,
+    "latency_p95": 85.0,
+    "latency_p99": 120.0,
+    "mem_cost": 6.5,
+    "packet_loss": 0.005,
+    "queue_depth": 32.0
+  }
+}

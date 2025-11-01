@@ -1,0 +1,50 @@
+name: Progressive Release Gates
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'tacl/**'
+      - 'ci/release_gates.yml'
+      - 'configs/perf_budgets.yaml'
+      - 'tests/e2e/test_progressive_rollout.py'
+      - '.github/workflows/progressive-release-gates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  attestations: write
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run release gates evaluation
+        run: python -m tacl.release_gates --config ci/release_gates.yml
+
+      - name: Upload release gate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gates-report
+          path: |
+            .ci_artifacts/release_gates.json
+            .ci_artifacts/release_gates.md
