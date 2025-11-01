@@ -172,7 +172,7 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
 
     improved = False
     scale_reference = max(abs(base_energy), ENERGY_SCALE)
-    improvement_threshold = scale_reference * max(lr, 1e-6)
+    improvement_threshold = scale_reference * 1e-6
 
     for src, dst in list(graph.edges()):
         current_type = bonds.get((src, dst))
