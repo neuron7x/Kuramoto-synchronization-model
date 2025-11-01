@@ -241,13 +241,14 @@ class TradePulseCompositeEngine:
         latest_ts = sanitized.index[-1]
         last_signal: CompositeSignal | None = self.history[-1] if self.history else None
 
+        should_reset_history = False
         if last_signal is not None:
             last_ts = last_signal.timestamp
             if latest_ts == last_ts:
                 return last_signal
             reset_temporal = sanitized.index[0] <= last_ts
             if latest_ts < last_ts:
-                self._clear_history()
+                should_reset_history = True
                 last_signal = None
                 reset_temporal = True
         else:
@@ -264,6 +265,8 @@ class TradePulseCompositeEngine:
             rres.graph_snapshots[-1].avg_curvature if rres.graph_snapshots else 0.0
         )
         sig = self.c.analyze(kres, rres, static_ricci, sanitized.index[-1])
+        if should_reset_history:
+            self._clear_history()
         self._record_signal(sig)
         return sig
 
