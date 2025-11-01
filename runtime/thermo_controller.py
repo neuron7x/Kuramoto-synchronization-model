@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import time
 import warnings
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
@@ -172,6 +174,8 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
 class ThermoController:
     """Thermodynamic control loop with safety guarantees."""
 
+    AUDIT_LOG_PATH = Path("/var/log/tradepulse/thermo_audit.jsonl")
+
     def __init__(self, graph: nx.DiGraph, metrics_exporter: Optional[PrometheusMetrics] = None) -> None:
         self.graph = graph
         self.metrics = metrics_exporter or PrometheusMetrics()
@@ -205,6 +209,9 @@ class ThermoController:
         self._baseline_latency = self._compute_average_latency(snapshot)
         self.unresolved_rise_steps = 0
 
+        self.manual_override_active = False
+        self.manual_override_reason = ""
+
         self.crisis_ga = CrisisAwareGA(
             fitness_func=self._evaluate_topology,
             F_baseline=self.baseline_F,
@@ -217,7 +224,9 @@ class ThermoController:
         self._latest_snapshot = snapshot
         current_time = time.time()
 
+        topology_before_step = list(self.current_topology)
         current_F = self._compute_free_energy(snapshot=snapshot)
+        F_before_action = current_F
         if self.previous_F is not None and current_F > self.previous_F:
             self.unresolved_rise_steps += 1
         else:
@@ -255,6 +264,7 @@ class ThermoController:
         in_crisis = crisis_mode != CrisisMode.NORMAL or abs(self.dF_dt) > self.epsilon_adaptive
 
         resulting_F = current_F
+        decision_action = "accepted"
         if self.circuit_breaker_active:
             self._last_tolerance_check = None
             if was_active_before_step and not sustained_rise_triggered:
@@ -265,6 +275,7 @@ class ThermoController:
                         "state": CRITICAL_HALT_STATE,
                     },
                 )
+            decision_action = "rejected"
         elif in_crisis:
             crisis_result = self._handle_crisis(snapshot, current_F, crisis_mode)
             tolerance = crisis_result.tolerance
@@ -290,6 +301,7 @@ class ThermoController:
                         "F_new": f"{crisis_result.proposed_F:.6f}",
                     },
                 )
+                decision_action = "rejected"
             else:
                 reward = -abs(crisis_result.proposed_F - current_F)
                 if (
@@ -317,6 +329,7 @@ class ThermoController:
                         reward,
                         next_state,
                     )
+                decision_action = "accepted"
             control_state = crisis_mode if not self.circuit_breaker_active else CRITICAL_HALT_STATE
         else:
             self.crisis_step_count = 0
@@ -324,6 +337,7 @@ class ThermoController:
                 self.current_topology = self._graph_to_topology(self.graph)
                 resulting_F = self._compute_free_energy(snapshot=snapshot)
             control_state = crisis_mode
+            decision_action = "rejected" if self.circuit_breaker_active else "accepted"
 
         current_F = resulting_F
 
@@ -332,7 +346,14 @@ class ThermoController:
         self.previous_F = current_F
         self.previous_t = current_time
         self.controller_state = control_state
-        self._record_telemetry(current_F, control_state)
+        topology_changes = self._diff_topologies(topology_before_step, self.current_topology)
+        self._record_telemetry(
+            F_old=F_before_action,
+            F_new=current_F,
+            crisis_mode=control_state,
+            action=decision_action,
+            topology_changes=topology_changes,
+        )
 
     def manual_override(self, reason: str) -> None:
         """Clear circuit breaker state after human validation."""
@@ -424,18 +445,66 @@ class ThermoController:
         )
 
     # Telemetry helpers --------------------------------------------------
-    def _record_telemetry(self, current_F: float, crisis_mode: str) -> None:
+    def _record_telemetry(
+        self,
+        *,
+        F_old: float,
+        F_new: float,
+        crisis_mode: str,
+        action: str,
+        topology_changes: List[Tuple[str, str, str, str]],
+    ) -> None:
+        timestamp = time.time()
+        topology_change_records = [
+            {"src": src, "dst": dst, "old": old_type, "new": new_type}
+            for src, dst, old_type, new_type in topology_changes
+        ]
         record = {
-            "timestamp": time.time(),
-            "F": current_F,
+            "timestamp": timestamp,
+            "F": F_new,
+            "F_old": F_old,
+            "F_new": F_new,
             "dF_dt": self.dF_dt,
             "epsilon": self.epsilon_adaptive,
             "baseline_ema": self.baseline_ema,
             "bottleneck_edge": self.bottleneck_edge or "",
             "bottleneck_cost": self.bottleneck_cost,
             "crisis_mode": crisis_mode,
+            "circuit_breaker_active": self.circuit_breaker_active,
+            "topology_changes": topology_change_records,
+            "manual_override": self.manual_override_active,
+            "override_reason": self.manual_override_reason,
+            "action": action,
         }
         self.telemetry_history.append(record)
+
+        audit_payload = {
+            "ts": timestamp,
+            "F_old": F_old,
+            "F_new": F_new,
+            "dF_dt": self.dF_dt,
+            "epsilon": self.epsilon_adaptive,
+            "crisis_mode": crisis_mode,
+            "circuit_breaker_active": self.circuit_breaker_active,
+            "topology_changes": topology_change_records,
+            "manual_override": self.manual_override_active,
+            "override_reason": self.manual_override_reason,
+            "action": action,
+        }
+
+        try:
+            audit_path = self.AUDIT_LOG_PATH
+            audit_path.parent.mkdir(parents=True, exist_ok=True)
+            with audit_path.open("a", encoding="utf-8") as audit_file:
+                audit_file.write(json.dumps(audit_payload, ensure_ascii=False) + "\n")
+        except OSError as exc:  # pragma: no cover - filesystem failure
+            self.audit_logger.error(
+                "Failed to persist thermodynamic audit record",
+                extra={
+                    "event": "thermo.audit.write_failed",
+                    "error": str(exc),
+                },
+            )
 
     # Metrics helpers ----------------------------------------------------
     def snapshot_metrics(self) -> MetricsSnapshot:
