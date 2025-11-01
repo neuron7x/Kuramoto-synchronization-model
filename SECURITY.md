@@ -12,15 +12,15 @@
 TACL treats the entire TradePulse topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
 
 ### Safety Guarantee
-**Monotonic Free Energy Descent Constraint**: All topology mutations must satisfy F_new ≤ F_old + ε_spike. Any violation is logged and rejected without human override capability.
+**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/tradepulse/thermo_audit.jsonl`, with rotation and archival guaranteeing ≥7 years of retention.
 
 ### Audit & Compliance
 - Telemetry: Real-time metrics via REST API
-- Audit Trail: 7-year retention (JSON Lines format)
+- Audit Trail: `/var/log/tradepulse/thermo_audit.jsonl` with automated rotation and ≥7-year retention
 - CI Gates: Automated safety checks in deployment pipeline
-- Human Oversight: Circuit breaker + manual intervention capability
+- Human Oversight: Hardware circuit breaker halts topology evolution until an authorised manual override clears the halt state
 
-**This is not a feature — this is the governing brain of system stability.**
+**This layer enforces thermodynamic stability using Lyapunov-style energy descent, GA/RL adaptation, runtime monotonic safety gates, and auditable decision logs.**
 
 ## Supported Versions
 

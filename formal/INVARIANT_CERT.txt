@@ -1,0 +1,5 @@
+Free energy boundedness proof
+Solver status: unsat
+epsilon_cap <= 0.05
+delta_growth = 0.2
+Result: UNSAT – no unbounded growth exists under the transition rules.
