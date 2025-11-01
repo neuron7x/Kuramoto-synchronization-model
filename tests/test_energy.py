@@ -4,9 +4,10 @@ import types
 
 import networkx as nx
 import pytest
+from typing import Tuple
 
 import runtime.thermo_controller as thermo_module
-from core.energy import delta_free_energy
+from core.energy import BondType, delta_free_energy, system_free_energy
 from runtime.recovery_agent import RecoveryAction
 from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
@@ -58,6 +59,90 @@ def test_free_energy_monotonic_drop():
     F_after = controller.get_current_F()
 
     assert F_after <= F_before + controller.epsilon_adaptive
+
+
+def test_gradient_descent_step_reduces_energy():
+    graph = nx.DiGraph()
+    graph.add_edge("node_a", "node_b", type="vdw")
+
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies={("node_a", "node_b"): 0.5},
+        coherency={("node_a", "node_b"): 0.6},
+        resource_usage=0.4,
+        entropy=0.2,
+    )
+
+    initial_energy = system_free_energy(
+        {(u, v): data["type"] for u, v, data in graph.edges(data=True)},
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    changed = thermo_module.gradient_descent_step(graph, snapshot)
+
+    final_bonds = {(u, v): data["type"] for u, v, data in graph.edges(data=True)}
+    final_energy = system_free_energy(
+        final_bonds,
+        snapshot.latencies,
+        snapshot.coherency,
+        snapshot.resource_usage,
+        snapshot.entropy,
+    )
+
+    assert changed is True
+    assert final_energy < initial_energy
+    assert final_bonds[("node_a", "node_b")] in {"metallic", "hydrogen"}
+
+
+def test_gradient_descent_step_preserves_best_local_improvement():
+    graph = nx.DiGraph()
+    graph.add_edge("node_a", "node_b", type="covalent")
+    graph.add_edge("node_b", "node_c", type="metallic")
+
+    snapshot = thermo_module.MetricsSnapshot(
+        latencies={("node_a", "node_b"): 0.1, ("node_b", "node_c"): 0.1},
+        coherency={("node_a", "node_b"): 0.1, ("node_b", "node_c"): 0.4},
+        resource_usage=0.2,
+        entropy=0.1,
+    )
+
+    bonds_before = {(u, v): data["type"] for u, v, data in graph.edges(data=True)}
+
+    def energy(bonds: dict[tuple[str, str], str]) -> float:
+        return system_free_energy(
+            bonds,
+            snapshot.latencies,
+            snapshot.coherency,
+            snapshot.resource_usage,
+            snapshot.entropy,
+        )
+
+    initial_energy = energy(bonds_before)
+
+    bond_types: Tuple[str, ...] = tuple(getattr(BondType, "__args__", ())) or (
+        "covalent",
+        "ionic",
+        "metallic",
+        "vdw",
+        "hydrogen",
+    )
+
+    best_single_edge_energy = min(
+        energy({**bonds_before, ("node_a", "node_b"): candidate})
+        for candidate in bond_types
+    )
+
+    changed = thermo_module.gradient_descent_step(graph, snapshot)
+
+    bonds_after = {(u, v): data["type"] for u, v, data in graph.edges(data=True)}
+    final_energy = energy(bonds_after)
+
+    assert changed is True
+    assert final_energy < initial_energy
+    assert bonds_after[("node_b", "node_c")] == "metallic"
+    assert final_energy <= best_single_edge_energy + 1e-24
 
 
 def test_circuit_breaker_blocks_unbounded_spike(caplog):
