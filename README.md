@@ -241,7 +241,9 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 - 7-year audit trail for compliance
 - Crisis-aware adaptive recovery
 
-**This is not a feature — this is the governing brain of system stability.**
+**This layer enforces thermodynamic stability of the topology using Lyapunov-style energy descent, GA/RL adaptation, runtime monotonic safety gates, and auditable decision logs.**
+
+**Prototype classification:** TRL7 (post-staging)
 
 ### Architecture Overview
 
