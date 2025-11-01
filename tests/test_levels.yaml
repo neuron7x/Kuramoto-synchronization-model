@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# TradePulse test level mapping.
+# Each entry enumerates the canonical directory globs that map to the
+# TradePulse validation levels (L0–L7). Patterns are matched using
+# pathlib.PurePosixPath.match, so ** and * wildcards are supported.
+# The fallback_level applies to any test under tests/ that does not
+# match a more specific pattern, ensuring we fail fast when adding new
+# suites without an explicit classification.
+fallback_level: L3
+levels:
+  - level: L5
+    patterns:
+      - tests/chaos/**
+      - tests/fuzz/**
+      - tests/nightly/**
+      - tests/performance/**
+      - tests/tacl/**
+  - level: L4
+    patterns:
+      - tests/e2e/**
+      - tests/smoke/**
+  - level: L3
+    patterns:
+      - tests/admin/**
+      - tests/evolution/**
+      - tests/execution/**
+      - tests/hydrobrain_v2/**
+      - tests/integration/**
+      - tests/neuro/**
+      - tests/neuropro/**
+      - tests/sandbox/**
+      - tests/scripts/**
+      - tests/strategies/**
+      - tests/tools/**
+      - tests/workflows/**
+  - level: L2
+    patterns:
+      - tests/api/**
+      - tests/contracts/**
+      - tests/interfaces/**
+      - tests/observability/**
+      - tests/protocol/**
+      - tests/sdk/**
+      - tests/security/**
+  - level: L1
+    patterns:
+      - tests/analysis/**
+      - tests/analytics/**
+      - tests/core/**
+      - tests/data/**
+      - tests/generated/**
+      - tests/property/**
+      - tests/unit/**
+      - tests/utils/**
+overrides:
+  tests/e2e/test_progressive_rollout.py: L5

@@ -42,8 +42,9 @@
 | UI & telemetry | Rendering latency, accessibility | `ui/dashboard/tests/e2e/dashboard.spec.ts` (L7)【F:ui/dashboard/tests/e2e/dashboard.spec.ts†L1-L111】, `ui/dashboard/tests/accessibility.test.js` (L7)【F:ui/dashboard/tests/accessibility.test.js†L1-L49】 |
 
 ## 2. Classification and labelling framework
-* Pytest markers for L0–L7 plus `UNSTABLE` are now centrally declared in `pytest.ini`, enabling deterministic filtering and enforcing TradePulse testing doctrine across suites.【F:pytest.ini†L1-L17】
-* Collection-time enforcement assigns every test a level marker and records it in item metadata, preventing unclassified tests from running and providing an audit trail for level usage.【F:tests/conftest.py†L33-L127】
+* Pytest markers for L0–L7 plus `UNSTABLE` are centrally declared in `pytest.ini`, enabling deterministic filtering and enforcing TradePulse testing doctrine across suites.【F:pytest.ini†L1-L22】
+* A repository-owned manifest (`tests/test_levels.yaml`) drives the canonical directory and file mappings for each level; adding a suite without updating this manifest fails collection, preventing silent regressions.【F:tests/test_levels.yaml†L1-L49】
+* Collection-time enforcement reads the manifest, aligns it with any explicit markers in code, and records the resolved level in item metadata, preventing unclassified tests from running and providing an audit trail for level usage.【F:tests/conftest.py†L1-L170】
 * Playwright suites embed `@L7` titles so UI e2e runs expose their level to `--grep` filters, while Node smoke harnesses log the level for downstream parsers.【F:ui/dashboard/tests/e2e/dashboard.spec.ts†L1-L111】【F:ui/dashboard/tests/test.js†L1-L46】
 * Terraform Terratests use `TestL6*` prefixes to satisfy the naming convention for infrastructure readiness gates.【F:infra/terraform/tests/eks_validation_test.go†L92-L140】【F:infra/terraform/tests/eks_validation_connectivity_test.go†L9-L54】
 

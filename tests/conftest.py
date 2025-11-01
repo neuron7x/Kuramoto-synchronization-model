@@ -4,10 +4,13 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
-from pathlib import Path
-from typing import Iterable
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path, PurePosixPath
+from typing import Iterable, Sequence
 
 import pytest
+import yaml
 
 from observability.audit.trail import (
     get_access_audit_trail,
@@ -43,65 +46,21 @@ _LEVEL_DESCRIPTIONS: dict[str, str] = {
     "UNSTABLE": "Quarantined suites with known flakiness that still surface elevated risk",
 }
 
-_LEVEL_RULES: list[tuple[str, tuple[str, ...]]] = [
-    (
-        "L5",
-        (
-            "tests/chaos",
-            "tests/fuzz",
-            "tests/nightly",
-            "tests/performance",
-            "tests/tacl",
-        ),
-    ),
-    ("L4", ("tests/e2e", "tests/smoke")),
-    (
-        "L3",
-        (
-            "tests/admin",
-            "tests/evolution",
-            "tests/execution",
-            "tests/hydrobrain_v2",
-            "tests/integration",
-            "tests/neuro",
-            "tests/neuropro",
-            "tests/sandbox",
-            "tests/scripts",
-            "tests/strategies",
-            "tests/tools",
-            "tests/workflows",
-        ),
-    ),
-    (
-        "L2",
-        (
-            "tests/api",
-            "tests/contracts",
-            "tests/interfaces",
-            "tests/observability",
-            "tests/protocol",
-            "tests/sdk",
-            "tests/security",
-        ),
-    ),
-    (
-        "L1",
-        (
-            "tests/analysis",
-            "tests/analytics",
-            "tests/core",
-            "tests/data",
-            "tests/generated",
-            "tests/property",
-            "tests/unit",
-            "tests/utils",
-        ),
-    ),
-]
 
-_FILE_LEVEL_OVERRIDES: dict[str, str] = {
-    "tests/e2e/test_progressive_rollout.py": "L5",
-}
+@dataclass(frozen=True)
+class _LevelRule:
+    level: str
+    patterns: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _LevelConfig:
+    overrides: dict[Path, str]
+    rules: tuple[_LevelRule, ...]
+    fallback_level: str | None
+
+
+_CONFIG_PATH = Path(__file__).with_name("test_levels.yaml")
 
 
 def _normalize(path: Path) -> Path:
@@ -111,38 +70,99 @@ def _normalize(path: Path) -> Path:
         return path
 
 
-def _iter_rule_matches(root: Path, rules: Iterable[tuple[str, tuple[str, ...]]]):
-    for level, locations in rules:
-        for location in locations:
-            candidate = _normalize(root / location)
-            yield level, candidate
+def _load_level_config(root: Path) -> _LevelConfig:
+    if not _CONFIG_PATH.exists():
+        raise pytest.UsageError(
+            "tests/test_levels.yaml is missing; please provide the TradePulse test level map."
+        )
+
+    raw = yaml.safe_load(_CONFIG_PATH.read_text(encoding="utf-8")) or {}
+
+    def _ensure_level(name: str) -> str:
+        if name not in _LEVEL_DESCRIPTIONS:
+            raise pytest.UsageError(
+                f"Unknown TradePulse level '{name}' referenced in {_CONFIG_PATH}."
+            )
+        return name
+
+    fallback_level = raw.get("fallback_level")
+    if fallback_level is not None:
+        fallback_level = _ensure_level(str(fallback_level))
+
+    rules: list[_LevelRule] = []
+    for entry in raw.get("levels", []):
+        if not isinstance(entry, dict) or "level" not in entry:
+            raise pytest.UsageError(
+                f"Invalid rule entry {entry!r} in {_CONFIG_PATH}; expected mapping with 'level'."
+            )
+        level = _ensure_level(str(entry["level"]))
+        patterns = entry.get("patterns", [])
+        if not isinstance(patterns, Sequence) or isinstance(patterns, (str, bytes)):
+            raise pytest.UsageError(
+                f"Patterns for level {level} must be a sequence in {_CONFIG_PATH}."
+            )
+        normalized_patterns = tuple(
+            PurePosixPath(str(pattern).strip()).as_posix().lstrip("./")
+            for pattern in patterns
+            if str(pattern).strip()
+        )
+        rules.append(_LevelRule(level=level, patterns=normalized_patterns))
+
+    overrides_raw = raw.get("overrides", {})
+    if not isinstance(overrides_raw, dict):
+        raise pytest.UsageError(
+            f"overrides in {_CONFIG_PATH} must be a mapping of paths to levels."
+        )
+
+    overrides: dict[Path, str] = {}
+    for location, level_name in overrides_raw.items():
+        if not isinstance(location, str):
+            raise pytest.UsageError(
+                f"Override path keys must be strings in {_CONFIG_PATH}, got {location!r}."
+            )
+        level = _ensure_level(str(level_name))
+        overrides[_normalize(root / location)] = level
+
+    return _LevelConfig(overrides=overrides, rules=tuple(rules), fallback_level=fallback_level)
+
+
+@lru_cache(maxsize=1)
+def _cached_level_config(root: Path) -> _LevelConfig:
+    return _load_level_config(root)
+
+
+def _match_patterns(relative: PurePosixPath, rules: Iterable[_LevelRule]) -> str | None:
+    for rule in rules:
+        for pattern in rule.patterns:
+            if relative.match(pattern):
+                return rule.level
+    return None
 
 
 def _determine_level(root: Path, path: Path) -> str:
+    config = _cached_level_config(root)
     normalized = _normalize(path)
+
+    override_level = config.overrides.get(normalized)
+    if override_level is not None:
+        return override_level
+
     try:
-        relative = str(path.relative_to(root))
+        relative = PurePosixPath(normalized.relative_to(root).as_posix())
     except ValueError:
-        relative = None
+        relative = PurePosixPath(normalized.as_posix())
 
-    override_candidates = {str(path), str(normalized)}
-    if relative is not None:
-        override_candidates.add(relative)
+    matched_level = _match_patterns(relative, config.rules)
+    if matched_level is not None:
+        return matched_level
 
-    for candidate in override_candidates:
-        if candidate in _FILE_LEVEL_OVERRIDES:
-            return _FILE_LEVEL_OVERRIDES[candidate]
-
-    for level, candidate in _iter_rule_matches(root, _LEVEL_RULES):
-        if candidate == normalized or candidate in normalized.parents:
-            return level
-
-    if normalized.parent == _normalize(root / "tests"):
-        return "L3"
+    if config.fallback_level is not None and relative.parts and relative.parts[0] == "tests":
+        return config.fallback_level
 
     raise pytest.UsageError(
-        f"Test {path} is missing a TradePulse level classification. "
-        "Add the file to _LEVEL_RULES or _FILE_LEVEL_OVERRIDES to designate a level."
+        "Unable to classify test {path} with TradePulse level. "
+        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker."
+        .format(path=path)
     )
 
 
@@ -168,7 +188,30 @@ def pytest_collection_modifyitems(  # type: ignore[override]
 ) -> None:
     root = _normalize(Path(config.rootpath))
     for item in items:
-        level = _determine_level(root, Path(item.fspath))
-        if not any(mark.name == level for mark in item.iter_markers()):
+        existing_levels = [
+            mark.name
+            for mark in item.iter_markers()
+            if mark.name in _LEVEL_DESCRIPTIONS
+        ]
+
+        level_from_config = _determine_level(root, Path(item.fspath))
+
+        if existing_levels:
+            unique_levels = {level.upper() for level in existing_levels}
+            if len(unique_levels) > 1:
+                raise pytest.UsageError(
+                    f"Test {item.nodeid} has conflicting TradePulse levels: {sorted(unique_levels)}"
+                )
+            (declared_level,) = unique_levels
+            if declared_level != level_from_config:
+                raise pytest.UsageError(
+                    "Test {nodeid} is marked as {declared} but mapped to {computed} in tests/test_levels.yaml. "
+                    "Update the marker or adjust the mapping."
+                    .format(nodeid=item.nodeid, declared=declared_level, computed=level_from_config)
+                )
+            level = declared_level
+        else:
+            level = level_from_config
             item.add_marker(level)
+
         item.user_properties.append(("tradepulse_level", level))
