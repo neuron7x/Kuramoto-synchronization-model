@@ -18,6 +18,7 @@ from observability.audit.trail import (
 )
 
 os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
+os.environ.setdefault("THERMO_DUAL_SECRET", "test-secret")
 
 _fixture_path = Path(__file__).parent / "fixtures" / "conftest.py"
 spec = importlib.util.spec_from_file_location(

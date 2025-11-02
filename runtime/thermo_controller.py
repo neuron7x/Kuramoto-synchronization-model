@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import time
 import warnings
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 from evolution import bond_evolver
 from core.energy import (
@@ -24,6 +26,15 @@ from core.energy import (
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
+from runtime.filters.vlpo_core_filter import VLPOCoreFilter
+from runtime.behavior_contract import (
+    ActionClass,
+    SystemState,
+    get_current_state,
+    tacl_gate,
+)
+from runtime.dual_approval import DualApprovalManager
+from runtime.kill_switch import is_kill_switch_active
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
@@ -236,6 +247,9 @@ class ThermoController:
 
         self.link_activator = LinkActivator()
         self.recovery_agent = AdaptiveRecoveryAgent()
+        self.vlpo_filter = VLPOCoreFilter()
+        self.dual_approval = DualApprovalManager()
+        self._dual_approval_token = os.getenv("THERMO_DUAL_TOKEN", "")
         self.telemetry_history: List[Dict[str, float | str]] = []
 
         self.override_reason: Optional[str] = None
@@ -269,6 +283,23 @@ class ThermoController:
 
     # Core loop ----------------------------------------------------------
     def control_step(self) -> None:
+        if is_kill_switch_active():
+            current_F = float(self.previous_F)
+            self.circuit_breaker_active = True
+            self.controller_state = CRITICAL_HALT_STATE
+            self.audit_logger.error(
+                "Thermodynamic control loop halted: kill switch active",
+                extra={"event": "thermo.kill_switch", "state": CRITICAL_HALT_STATE},
+            )
+            self._record_telemetry(
+                F_old=current_F,
+                F_new=current_F,
+                crisis_mode=CRITICAL_HALT_STATE,
+                action="kill_switch",
+                topology_changes=[],
+            )
+            return
+
         snapshot = self.snapshot_metrics()
         self._latest_snapshot = snapshot
         current_time = time.time()
@@ -352,33 +383,98 @@ class ThermoController:
                 )
                 decision_action = "rejected"
             else:
-                reward = -abs(crisis_result.proposed_F - current_F)
-                if (
-                    crisis_result.new_topology is not None
-                    and self._apply_topology_changes(crisis_result.new_topology)
-                ):
-                    self.current_topology = self._graph_to_topology(self.graph)
-                    resulting_F = crisis_result.proposed_F
-                    reward = -(crisis_result.proposed_F - current_F)
-
-                next_state = RecoveryState(
-                    F_current=resulting_F,
-                    F_baseline=self.baseline_F,
-                    latency_spike=self._detect_latency_spike(snapshot),
-                    steps_in_crisis=self.crisis_step_count,
+                action_class = (
+                    ActionClass.A2_SYSTEMIC
+                    if crisis_result.new_topology is not None
+                    else ActionClass.A0_OBSERVATION
+                )
+                system_state_enum = get_current_state(current_F, self.baseline_F)
+                recovery_path = tolerance.reason.startswith("temporary_spike")
+                gate_decision = tacl_gate(
+                    module_name="thermo_controller",
+                    action_class=action_class,
+                    system_state=system_state_enum,
+                    F_now=current_F,
+                    F_next=crisis_result.proposed_F,
+                    epsilon=self.epsilon_adaptive,
+                    recovery_path=recovery_path,
+                    dual_approved=bool(self._dual_approval_token),
                 )
 
-                if (
-                    not self.circuit_breaker_active
-                    and crisis_result.action is not None
-                ):
-                    self.recovery_agent.update(
-                        crisis_result.state,
-                        crisis_result.action,
-                        reward,
-                        next_state,
+                if not gate_decision.allowed:
+                    self.circuit_breaker_active = True
+                    control_state = CRITICAL_HALT_STATE
+                    self.audit_logger.error(
+                        "TACL gate denied systemic action",
+                        extra={
+                            "event": "thermo.circuit_breaker",
+                            "reason": gate_decision.reason,
+                            "F_old": f"{current_F:.6f}",
+                            "F_new": f"{crisis_result.proposed_F:.6f}",
+                        },
                     )
-                decision_action = "accepted"
+                    resulting_F = current_F
+                    decision_action = "rejected"
+                else:
+                    proceed = True
+                    if action_class is ActionClass.A2_SYSTEMIC:
+                        if not self._dual_approval_token:
+                            self.circuit_breaker_active = True
+                            control_state = CRITICAL_HALT_STATE
+                            self.audit_logger.error(
+                                "Dual approval token missing",
+                                extra={"event": "thermo.dual_approval", "error": "token_missing"},
+                            )
+                            resulting_F = current_F
+                            decision_action = "rejected"
+                            proceed = False
+                        else:
+                            try:
+                                self.dual_approval.validate(
+                                    action_id="thermo_topology",
+                                    token=self._dual_approval_token,
+                                )
+                            except ValueError as exc:
+                                self.circuit_breaker_active = True
+                                control_state = CRITICAL_HALT_STATE
+                                self.audit_logger.error(
+                                    "Dual approval validation failed",
+                                    extra={"event": "thermo.dual_approval", "error": str(exc)},
+                                )
+                                resulting_F = current_F
+                                decision_action = "rejected"
+                                proceed = False
+                            else:
+                                self._dual_approval_token = ""
+
+                    if proceed:
+                        reward = -abs(crisis_result.proposed_F - current_F)
+                        if (
+                            crisis_result.new_topology is not None
+                            and self._apply_topology_changes(crisis_result.new_topology)
+                        ):
+                            self.current_topology = self._graph_to_topology(self.graph)
+                            resulting_F = crisis_result.proposed_F
+                            reward = -(crisis_result.proposed_F - current_F)
+
+                        next_state = RecoveryState(
+                            F_current=resulting_F,
+                            F_baseline=self.baseline_F,
+                            latency_spike=self._detect_latency_spike(snapshot),
+                            steps_in_crisis=self.crisis_step_count,
+                        )
+
+                        if (
+                            not self.circuit_breaker_active
+                            and crisis_result.action is not None
+                        ):
+                            self.recovery_agent.update(
+                                crisis_result.state,
+                                crisis_result.action,
+                                reward,
+                                next_state,
+                            )
+                        decision_action = "accepted"
             control_state = crisis_mode if not self.circuit_breaker_active else CRITICAL_HALT_STATE
         else:
             self.crisis_step_count = 0
@@ -427,6 +523,11 @@ class ThermoController:
                 "override_time": f"{self.override_time:.6f}",
             },
         )
+
+    def set_dual_approval_token(self, token: str) -> None:
+        """Inject a dual-approval token for the next systemic action."""
+
+        self._dual_approval_token = token
 
     # ------------------------------------------------------------------
     # Backwards compatibility properties
@@ -561,12 +662,27 @@ class ThermoController:
 
     # Metrics helpers ----------------------------------------------------
     def snapshot_metrics(self) -> MetricsSnapshot:
-        latencies: Dict[Tuple[str, str], float] = {}
-        coherency: Dict[Tuple[str, str], float] = {}
+        edges: List[Tuple[str, str]] = []
+        latency_values: List[float] = []
+        coherency_values: List[float] = []
 
         for src, dst, data in self.graph.edges(data=True):
-            latencies[(src, dst)] = data.get("latency_norm", 0.5)
-            coherency[(src, dst)] = data.get("coherency", 0.8)
+            edges.append((src, dst))
+            latency_values.append(float(data.get("latency_norm", 0.5)))
+            coherency_values.append(float(data.get("coherency", 0.8)))
+
+        latencies: Dict[Tuple[str, str], float] = {}
+        coherency: Dict[Tuple[str, str], float] = {}
+        if edges:
+            df = pd.DataFrame({"latency": latency_values, "coherency": coherency_values})
+            filtered = self.vlpo_filter.filter(df, target_col="coherency")
+            for (edge, latency, coherence) in zip(
+                edges,
+                filtered["latency"].to_numpy(dtype=float),
+                filtered["coherency"].to_numpy(dtype=float),
+            ):
+                latencies[edge] = float(latency)
+                coherency[edge] = float(np.clip(coherence, 0.0, 1.0))
 
         resource_usage = sum(self.graph.nodes[node].get("cpu_norm", 0.1) for node in self.graph.nodes())
         resource_usage /= max(len(self.graph.nodes()), 1)

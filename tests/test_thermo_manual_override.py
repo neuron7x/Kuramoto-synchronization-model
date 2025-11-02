@@ -5,6 +5,7 @@ import networkx as nx
 import pytest
 from fastapi.testclient import TestClient
 
+from runtime.dual_approval import DualApprovalManager
 from runtime.thermo_controller import CRITICAL_HALT_STATE, CrisisMode, ThermoController
 from runtime import thermo_api
 
@@ -14,7 +15,10 @@ def _build_simple_controller() -> ThermoController:
     graph.add_node("a", cpu_norm=0.4)
     graph.add_node("b", cpu_norm=0.5)
     graph.add_edge("a", "b", type="vdw", latency_norm=0.8, coherency=0.7)
-    return ThermoController(graph)
+    controller = ThermoController(graph)
+    token = DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+    controller.set_dual_approval_token(token)
+    return controller
 
 
 def test_manual_override_resets_circuit_breaker(caplog):

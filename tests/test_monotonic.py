@@ -8,7 +8,13 @@ import networkx as nx
 import numpy as np
 import pytest
 
+from runtime.dual_approval import DualApprovalManager
 from runtime.thermo_controller import MetricsSnapshot, ThermoController
+
+
+def _issue_token() -> str:
+    manager = DualApprovalManager(secret="test-secret")
+    return manager.issue_service_token(action_id="thermo_topology")
 
 
 def _compute_epsilon_spike(controller: ThermoController) -> float:
@@ -41,6 +47,7 @@ def _build_resilient_graph() -> nx.DiGraph:
 @pytest.mark.monotonic
 def test_ga_evolution_respects_monotonicity_budget() -> None:
     controller = ThermoController(_build_resilient_graph())
+    controller.set_dual_approval_token(_issue_token())
     controller.crisis_ga._rng = np.random.default_rng(2024)
 
     F_old = controller._compute_free_energy(snapshot=controller._latest_snapshot)
@@ -83,6 +90,7 @@ def _build_high_stress_graph() -> nx.DiGraph:
 @pytest.mark.monotonic
 def test_worsened_topology_trips_monotonicity_guardrail() -> None:
     controller = ThermoController(_build_high_stress_graph())
+    controller.set_dual_approval_token(_issue_token())
     snapshot = _clone_snapshot(controller._latest_snapshot)
 
     F_old = controller._compute_free_energy(snapshot=snapshot)

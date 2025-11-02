@@ -15,9 +15,15 @@ from core.energy import (
     system_free_energy,
 )
 from runtime.recovery_agent import RecoveryAction
+from runtime.dual_approval import DualApprovalManager
 from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
 pytestmark = pytest.mark.stability
+
+
+def _token() -> str:
+    manager = DualApprovalManager(secret="test-secret")
+    return manager.issue_service_token(action_id="thermo_topology")
 
 
 def test_dFdt_is_small_under_controller():
@@ -33,6 +39,7 @@ def test_dFdt_is_small_under_controller():
     graph.add_edge("broker", "ingest", type="hydrogen", latency_norm=1.1, coherency=0.6)
 
     controller = ThermoController(graph)
+    controller.set_dual_approval_token(_token())
 
     controller.control_step()
     F1 = controller.get_current_F()
@@ -57,6 +64,7 @@ def test_free_energy_monotonic_drop():
     graph.add_edge("a", "b", type="vdw", latency_norm=1.0, coherency=0.4)
 
     controller = ThermoController(graph)
+    controller.set_dual_approval_token(_token())
 
     controller.control_step()
     F_before = controller.get_current_F()
@@ -202,6 +210,7 @@ def test_circuit_breaker_blocks_unbounded_spike(caplog):
     graph.add_edge("node_a", "node_b", type="vdw", latency_norm=0.7, coherency=0.5)
 
     controller = ThermoController(graph)
+    controller.set_dual_approval_token(_token())
 
     initial_edges = list(controller.graph.edges(data=True))
     initial_topology = controller._graph_to_topology(controller.graph)
@@ -272,6 +281,7 @@ def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
     graph.add_edge("node_a", "node_b", type="vdw", latency_norm=0.8, coherency=0.7)
 
     controller = ThermoController(graph)
+    controller.set_dual_approval_token(_token())
 
     controller.baseline_F = 100.0
     controller.baseline_ema = 100.0
