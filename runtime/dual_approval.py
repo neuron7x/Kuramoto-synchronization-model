@@ -37,7 +37,10 @@ class DualApprovalManager:
         if not token:
             raise ValueError("dual_approval_token_missing")
 
-        payload = jwt.decode(token, self.secret, algorithms=[self.algorithm])
+        try:
+            payload = jwt.decode(token, self.secret, algorithms=[self.algorithm])
+        except jwt.exceptions.PyJWTError as exc:
+            raise ValueError("dual_approval_token_invalid") from exc
         payload_action = str(payload.get("action_id", ""))
         if payload_action != action_id:
             raise ValueError("dual_approval_action_mismatch")
