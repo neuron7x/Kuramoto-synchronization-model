@@ -259,28 +259,37 @@ class EnergyValidator:
             results.append(result)
 
         shift = contract.rest_potential - self._contract_floor
-        if abs(shift) <= 1e-12:
-            rebased = results
-        else:
-            rebased = []
-            for result in results:
-                rebased_result = replace(
-                    result,
-                    free_energy=result.free_energy + shift,
-                    internal_energy=result.internal_energy + shift,
-                )
-                if rebased_result.free_energy > self._max_free_energy:
+        rebased = []
+        for result in results:
+            if result.free_energy > self._max_free_energy:
+                if abs(shift) <= 1e-12:
                     message = (
-                        f"free energy {rebased_result.free_energy:.3f} exceeds bound {self._max_free_energy:.3f} "
-                        f"after contract rebasing (shift={shift:.6f})"
+                        f"free energy {result.free_energy:.3f} exceeds bound "
+                        f"{self._max_free_energy:.3f}"
                     )
-                    failure = replace(
-                        rebased_result,
-                        passed=False,
-                        reason=message,
+                else:
+                    message = (
+                        f"free energy {result.free_energy:.3f} exceeds bound "
+                        f"{self._max_free_energy:.3f} before contract rebasing "
+                        f"(shift={shift:.6f})"
                     )
-                    raise EnergyValidationError(message, failure)
-                rebased.append(rebased_result)
+                failure = replace(
+                    result,
+                    passed=False,
+                    reason=message,
+                )
+                raise EnergyValidationError(message, failure)
+
+            if abs(shift) <= 1e-12:
+                rebased.append(result)
+            else:
+                rebased.append(
+                    replace(
+                        result,
+                        free_energy=result.free_energy + shift,
+                        internal_energy=result.internal_energy + shift,
+                    )
+                )
 
         return contract.enforce(rebased, approvals=approvals)
 
