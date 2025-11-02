@@ -29,6 +29,8 @@ def test_free_energy_normalises_weights() -> None:
     model = EnergyModel()
     free_energy, internal, entropy, penalties = model.free_energy(metrics)
 
+    assert all(value == pytest.approx(0.0, abs=1e-9) for value in penalties.values())
+
     weight_total = sum(DEFAULT_WEIGHTS.values())
     expected_internal = 0.92 + sum(
         penalties[name] * (DEFAULT_WEIGHTS[name] / weight_total)
@@ -72,13 +74,13 @@ def test_cli_creates_artifacts(
     monkeypatch.chdir(workspace)
     exit_code = run_validation("single", scenarios={
         "single": EnergyMetrics(
-            latency_p95=120.0,
-            latency_p99=160.0,
-            coherency_drift=0.14,
-            cpu_burn=0.82,
-            mem_cost=6.1,
-            queue_depth=44.0,
-            packet_loss=0.006,
+            latency_p95=170.0,
+            latency_p99=240.0,
+            coherency_drift=0.18,
+            cpu_burn=0.88,
+            mem_cost=7.1,
+            queue_depth=52.0,
+            packet_loss=0.012,
         )
     })
     assert exit_code == 1

@@ -137,8 +137,10 @@ class EnergyModel:
 
     def _penalty(self, name: str, value: float) -> float:
         threshold = self._thresholds[name]
-        ratio = value / threshold if threshold else 0.0
-        return max(ratio, 0.0)
+        if threshold <= 0:
+            return 0.0
+        ratio = value / threshold
+        return max(ratio - 1.0, 0.0)
 
     def _stability(self, name: str, value: float) -> float:
         threshold = self._thresholds[name]
