@@ -9,7 +9,7 @@ import time
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -27,6 +27,7 @@ from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
 from runtime.filters.vlpo_core_filter import VLPOCoreFilter
+from runtime.cns_stabilizer import CNSStabilizer
 from runtime.behavior_contract import (
     ActionClass,
     SystemState,
@@ -136,6 +137,22 @@ class PrometheusMetrics:
 
     def record(self, key: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         print(f"[metric] {key}={value} {labels or {}}")
+
+
+class _NoopMetric:
+    """Fallback metric collector used when prometheus_client is unavailable."""
+
+    def labels(self, **_: Any) -> "_NoopMetric":
+        return self
+
+    def inc(self, amount: float = 1.0) -> None:
+        _ = amount
+
+    def set(self, value: float) -> None:
+        _ = value
+
+    def observe(self, value: float) -> None:
+        _ = value
 
 
 def estimate_entropy(graph: nx.DiGraph) -> float:
@@ -254,10 +271,15 @@ class ThermoController:
         self._dual_approval_token = os.getenv("THERMO_DUAL_TOKEN", "")
         self.telemetry_history: List[Dict[str, float | str]] = []
 
+        self.stabilizer = CNSStabilizer(normalize="logret", hybrid_mode=True)
+        self.stabilizer.start_circadian()
+        self._init_homeostasis_metrics()
+        self._last_stabilizer_event: Optional[Dict[str, Any]] = None
+
         self.override_reason: Optional[str] = None
         self.override_time: Optional[float] = None
 
-        snapshot = self.snapshot_metrics()
+        snapshot = self.snapshot_metrics(ga_phase="init")
         self._latest_snapshot = snapshot
         self.current_topology = self._graph_to_topology(graph)
 
@@ -284,6 +306,134 @@ class ThermoController:
         )
 
     # Core loop ----------------------------------------------------------
+
+    def _init_homeostasis_metrics(self) -> None:
+        try:
+            from prometheus_client import Counter, Gauge, Histogram, REGISTRY
+        except Exception:  # pragma: no cover - optional dependency not installed
+            noop = _NoopMetric()
+            self.integrity_ratio = noop
+            self.phase_counter = noop
+            self.veto_events = noop
+            self.delta_f_hist = noop
+            return
+
+        def _create(factory: Any, name: str, documentation: str, labelnames: Iterable[str] = ()) -> Any:
+            labels_tuple = tuple(labelnames)
+            try:
+                return factory(name, documentation, labelnames=labels_tuple)
+            except ValueError:
+                existing = getattr(REGISTRY, "_names_to_collectors", {}).get(name)
+                if existing is not None:
+                    return existing
+                return factory(name, documentation, labelnames=labels_tuple, registry=None)
+
+        self.integrity_ratio = _create(
+            Gauge,
+            "homeostasis_integrity_ratio",
+            "ΔF margin / threshold ratio (CNSStabilizer v2.1)",
+        )
+        self.phase_counter = _create(
+            Counter,
+            "stabilizer_phase_total",
+            "Phases annotated by CNSStabilizer",
+            ("phase",),
+        )
+        self.veto_events = _create(
+            Counter,
+            "stabilizer_veto_events_total",
+            "Hard veto decisions from CNSStabilizer",
+            ("type",),
+        )
+        self.delta_f_hist = _create(
+            Histogram,
+            "tacl_delta_f",
+            "Observed ΔF after Kalman/PID/micro-recovery",
+        )
+
+    def _record_homeostasis_metrics(self, event: Optional[Dict[str, Any]]) -> None:
+        if not event:
+            return
+        data = event.get("data", {}) if isinstance(event, dict) else {}
+        phase = str(data.get("phase", "unknown"))
+        try:
+            ratio = float(self.stabilizer.get_integrity_ratio())
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            ratio = 0.0
+        self.integrity_ratio.set(ratio)
+        self.phase_counter.labels(phase=phase).inc()
+
+        if data.get("action") == "veto":
+            veto_type = str(data.get("type", "unknown"))
+            self.veto_events.labels(type=veto_type).inc()
+
+        delta_f_value = data.get("delta_f")
+        if isinstance(delta_f_value, (int, float)):
+            self.delta_f_hist.observe(float(delta_f_value))
+
+    def _apply_stabilizer(self, df: pd.DataFrame, ga_phase: str) -> pd.DataFrame:
+        if df.empty or "coherency" not in df:
+            return df
+
+        raw_signals = df["coherency"].to_numpy(dtype=float).tolist()
+        filtered_signals = self.stabilizer.process_signals_sync(raw_signals, ga_phase=ga_phase)
+        eventlog = self.stabilizer.get_eventlog()
+        self._last_stabilizer_event = eventlog[-1] if eventlog else None
+
+        if getattr(self, "crisis_ga", None) is not None:
+            ga_feedback = self.stabilizer.get_ga_fitness_feedback()
+            self.crisis_ga.apply_homeostasis_feedback(ga_feedback)
+
+        self._record_homeostasis_metrics(self._last_stabilizer_event)
+
+        ratio = self.stabilizer.get_integrity_ratio()
+        should_export = ratio < 0.8 or (self.stabilizer.epoch % 10 == 0)
+        if should_export:
+            try:
+                self.stabilizer.export_heatmap("/var/log/tacl/delta_f_heatmap.csv")
+            except OSError:  # pragma: no cover - path may be missing in tests
+                pass
+
+        stabilised_df = df.copy()
+        if not filtered_signals:
+            stabilised_df["coherency"] = 0.0
+            return stabilised_df
+
+        filtered_array = np.asarray(filtered_signals, dtype=float)
+        if len(filtered_array) != len(stabilised_df):
+            indices = np.linspace(0, len(filtered_array) - 1, num=len(stabilised_df))
+            filtered_array = np.interp(indices, np.arange(len(filtered_array)), filtered_array)
+        stabilised_df["coherency"] = filtered_array
+        return stabilised_df
+
+    def _handle_stabilizer_veto(self, snapshot: MetricsSnapshot, event: Dict[str, Any]) -> None:
+        current_F = self._compute_free_energy(snapshot=snapshot)
+        phase = str(event.get("data", {}).get("phase", "unknown"))
+        integrity = float(event.get("data", {}).get("integrity", 0.0))
+        veto_type = str(event.get("data", {}).get("type", "unknown"))
+
+        self.audit_logger.warning(
+            "CNS stabiliser vetoed signal chunk",
+            extra={
+                "event": "thermo.cns.veto",
+                "phase": phase,
+                "veto_type": veto_type,
+                "integrity": f"{integrity:.3f}",
+            },
+        )
+
+        self.metrics.record("system_free_energy", current_F)
+        self.metrics.record("system_dFdt", self.dF_dt)
+        self.previous_F = current_F
+        self.previous_t = time.time()
+
+        self._record_telemetry(
+            F_old=current_F,
+            F_new=current_F,
+            crisis_mode=self.controller_state,
+            action="cns_veto",
+            topology_changes=[],
+        )
     def control_step(self) -> None:
         if is_kill_switch_active():
             current_F = float(self.previous_F)
@@ -302,9 +452,14 @@ class ThermoController:
             )
             return
 
-        snapshot = self.snapshot_metrics()
+        snapshot = self.snapshot_metrics(ga_phase="pre_evolve")
         self._latest_snapshot = snapshot
         current_time = time.time()
+
+        last_event = self._last_stabilizer_event or {}
+        if isinstance(last_event, dict) and last_event.get("data", {}).get("action") == "veto":
+            self._handle_stabilizer_veto(snapshot, last_event)
+            return
 
         topology_before_step = list(self.current_topology)
         current_F = self._compute_free_energy(snapshot=snapshot)
@@ -663,7 +818,7 @@ class ThermoController:
             )
 
     # Metrics helpers ----------------------------------------------------
-    def snapshot_metrics(self) -> MetricsSnapshot:
+    def snapshot_metrics(self, ga_phase: str = "pre_evolve") -> MetricsSnapshot:
         edges: List[Tuple[str, str]] = []
         latency_values: List[float] = []
         coherency_values: List[float] = []
@@ -678,6 +833,7 @@ class ThermoController:
         if edges:
             df = pd.DataFrame({"latency": latency_values, "coherency": coherency_values})
             filtered = self.vlpo_filter.filter(df, target_col="coherency")
+            filtered = self._apply_stabilizer(filtered, ga_phase)
             for (edge, latency, coherence) in zip(
                 edges,
                 filtered["latency"].to_numpy(dtype=float),

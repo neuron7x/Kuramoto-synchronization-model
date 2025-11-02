@@ -64,6 +64,7 @@ class CrisisAwareGA:
 
         self.generation_count = 0
         self.crisis_history: List[Dict[str, float | str]] = []
+        self.homeostasis_penalty = 0.0
 
         logger.debug(
             "CrisisAwareGA initialised baseline=%.6f threshold=%.2f",
@@ -86,10 +87,11 @@ class CrisisAwareGA:
 
         population = self._initialise_population(initial_topology, config.population_size)
         best: Topology = deepcopy(initial_topology)
-        best_fitness = self.fitness_func(best)
+        best_fitness = self.fitness_func(best) + self.homeostasis_penalty
 
         for _ in range(config.num_generations):
             fitnesses = np.array([self.fitness_func(ind) for ind in population])
+            fitnesses = fitnesses + self.homeostasis_penalty
             idx_best = int(np.argmin(fitnesses))
             if fitnesses[idx_best] < best_fitness:
                 best_fitness = float(fitnesses[idx_best])
@@ -99,6 +101,11 @@ class CrisisAwareGA:
 
         self.generation_count += 1
         return best, best_fitness, crisis_mode
+
+    def apply_homeostasis_feedback(self, delta_score: float) -> None:
+        """Integrate CNS stability rewards/penalties into GA fitness."""
+
+        self.homeostasis_penalty += float(delta_score)
 
     def get_crisis_statistics(self) -> Dict[str, object]:
         if not self.crisis_history:
