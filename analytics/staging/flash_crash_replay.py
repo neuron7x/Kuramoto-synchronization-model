@@ -16,7 +16,11 @@ from runtime.thermo_controller import CRITICAL_HALT_STATE, CrisisMode, ThermoCon
 
 @dataclass(slots=True)
 class FlashCrashMetrics:
-    """Key metrics captured during the flash-crash replay."""
+    """Key metrics captured during the flash-crash replay.
+
+    All figures originate from the synthetic staging scenario and are intended
+    solely for internal benchmarking.
+    """
 
     steps: int
     vpin_series: List[float]
@@ -32,7 +36,7 @@ class FlashCrashMetrics:
     circuit_breaker_triggered: bool
     critical_steps: List[int]
     manual_override_steps: List[int]
-    cvar_95: float
+    tail_free_energy_mean_95: float
 
 
 @dataclass(slots=True)
@@ -121,7 +125,7 @@ def simulate_flash_crash_replay(
         if entry.get("crisis_mode") in {CrisisMode.CRITICAL, CRITICAL_HALT_STATE}
     ]
     manual_override_steps = [idx for idx, entry in enumerate(telemetry) if entry.get("manual_override")]
-    cvar_95 = _compute_cvar(free_energy_series, alpha=0.05)
+    tail_free_energy_mean_95 = _compute_tail_free_energy_mean(free_energy_series, alpha=0.05)
 
     metrics = FlashCrashMetrics(
         steps=steps,
@@ -138,7 +142,7 @@ def simulate_flash_crash_replay(
         circuit_breaker_triggered=bool(circuit_breaker_triggered),
         critical_steps=critical_steps,
         manual_override_steps=manual_override_steps,
-        cvar_95=float(cvar_95),
+        tail_free_energy_mean_95=float(tail_free_energy_mean_95),
     )
 
     return FlashCrashResult(metrics=metrics, telemetry=telemetry, free_energy_series=free_energy_series)
@@ -210,9 +214,16 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
 
     report_lines.extend(
         [
-            "## Risk Metrics",
-            f"- CVaR (95%): {metrics.cvar_95:.6f}",
-            "- CVaR requirement met: yes" if metrics.cvar_95 < 0.101 else "- CVaR requirement met: no",
+            "## Synthetic Tail Metrics (Internal Benchmark)",
+            (
+                "- Tail free-energy mean (95% internal): "
+                f"{metrics.tail_free_energy_mean_95:.6f}"
+            ),
+            (
+                "- Internal tail budget met: yes"
+                if metrics.tail_free_energy_mean_95 < 0.101
+                else "- Internal tail budget met: no"
+            ),
             "",
             "## Link Activator Stability",
             "- Protocol traces:"
@@ -314,7 +325,8 @@ def _group_protocols(history: Iterable[Dict[str, object]]) -> Dict[str, List[Opt
     return grouped
 
 
-def _compute_cvar(series: Sequence[float], *, alpha: float) -> float:
+def _compute_tail_free_energy_mean(series: Sequence[float], *, alpha: float) -> float:
+    """Return the mean of the synthetic free-energy tail used for internal QA."""
     if not series:
         return 0.0
     sorted_values = np.sort(np.asarray(series, dtype=float))

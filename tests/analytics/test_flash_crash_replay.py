@@ -34,5 +34,5 @@ def test_flash_crash_report_outputs(tmp_path: Path) -> None:
     generate_staging_report(result, report_path)
     content = report_path.read_text(encoding="utf-8")
     assert "48h Staging Report" in content
-    assert "CVaR" in content
+    assert "Synthetic Tail Metrics" in content
     assert "thermo_audit.jsonl" in content
