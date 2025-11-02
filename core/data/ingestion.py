@@ -120,9 +120,11 @@ class DataIngestor(DataIngestionService):
                             instrument_type=instrument_type,
                         )
                     except (TypeError, ValueError, InvalidOperation) as exc:
+                        message = "Skipping malformed row"
                         logger.warning(
-                            "Skipping malformed row %s in %s: %s", row_number, path, exc
+                            "%s %s in %s: %s", message, row_number, path, exc
                         )
+                        logging.getLogger().warning(message, exc_info=exc)
                         continue
                     on_tick(tick)
 
@@ -150,7 +152,9 @@ class DataIngestor(DataIngestionService):
                     instrument_type=InstrumentType.SPOT,
                 )
             except (TypeError, ValueError, InvalidOperation) as exc:
-                logger.warning("Failed to parse websocket payload: %s", exc)
+                message = "Failed to parse websocket payload"
+                logger.warning("%s: %s", message, exc)
+                logging.getLogger().warning(message, exc_info=exc)
                 return
             on_tick(tick)
 

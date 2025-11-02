@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable
 
 import pandas as pd
 
@@ -110,13 +110,27 @@ def _polars_backend() -> _Backend:
 
     def _read(path: Path) -> pd.DataFrame:
         dataset = pl.read_parquet(path)
-        try:
-            return dataset.to_pandas(use_pyarrow=False)
-        except ModuleNotFoundError as exc:
-            missing = getattr(exc, "name", None)
-            if missing not in (None, "pyarrow"):  # pragma: no cover - defensive
-                raise
-            return _materialize_without_pyarrow(dataset)
+
+        def _iter_converters() -> Iterable[Callable[[], pd.DataFrame]]:
+            yield lambda: dataset.to_pandas(use_pyarrow=False)
+            yield dataset.to_pandas
+
+        for converter in _iter_converters():
+            try:
+                return converter()
+            except TypeError:
+                # Polars >= 1.35 dropped the ``use_pyarrow`` keyword. Fall back to
+                # a second attempt without the argument before materialising the
+                # frame manually.
+                continue
+            except ModuleNotFoundError as exc:
+                missing = getattr(exc, "name", None)
+                if missing not in (None, "pyarrow"):  # pragma: no cover - defensive
+                    raise
+                # Try the next converter before materialising via dictionaries.
+                continue
+
+        return _materialize_without_pyarrow(dataset)
 
     def _to_bytes(frame: pd.DataFrame, index: bool) -> bytes:
         buffer = io.BytesIO()

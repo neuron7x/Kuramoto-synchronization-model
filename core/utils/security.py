@@ -88,7 +88,9 @@ class SecretDetector:
                             masked_line = self._mask_line(line)
                             findings.append((secret_type, line_num, masked_line))
         except OSError as exc:
-            _LOGGER.debug("Skipping unreadable file during secret scan", exc_info=exc)
+            message = "Skipping unreadable file"
+            _LOGGER.debug("%s during secret scan", message, exc_info=exc)
+            logging.getLogger().warning(message, exc_info=exc)
 
         return findings
 

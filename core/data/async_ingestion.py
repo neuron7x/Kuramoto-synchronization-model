@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import csv
 from contextlib import suppress
+import logging
 from datetime import datetime, timezone
 from decimal import InvalidOperation
 from pathlib import Path
@@ -534,24 +535,64 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
     max_queue_size = max(1, len(streams) * prefetch_per_stream)
     queue: asyncio.Queue[tuple[int, Ticker | None]] = asyncio.Queue(maxsize=max_queue_size)
 
-    async def _pump(index: int, stream: AsyncIterator[Ticker]) -> None:
+    stop_event = asyncio.Event()
+
+    async def _pump(
+        index: int, stream: AsyncIterator[Ticker], *, stop_signal: asyncio.Event
+    ) -> None:
         symbol = getattr(stream, "symbol", None)
-        try:
-            while True:
-                try:
-                    tick = await anext(stream)  # type: ignore[arg-type]
-                except StopAsyncIteration:
-                    break
-                await queue.put((index, tick))
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
+
+        def _log_stream_failure(exc: BaseException) -> None:
+            message = "Async stream terminated with error"
             logger.warning(
-                "Async stream terminated with error",
+                message,
                 stream=symbol,
                 error=str(exc),
                 exc_info=exc,
             )
+            logging.getLogger().warning(message, exc_info=exc)
+
+        pending: asyncio.Task[Ticker] | None = None
+        try:
+            while True:
+                if stop_signal.is_set():
+                    try:
+                        await anext(stream)  # type: ignore[arg-type]
+                    except StopAsyncIteration:
+                        pass
+                    except Exception as exc:
+                        _log_stream_failure(exc)
+                    finally:
+                        pending = None
+                    break
+                pending = asyncio.create_task(anext(stream))  # type: ignore[arg-type]
+                try:
+                    tick = await pending
+                except StopAsyncIteration:
+                    pending = None
+                    break
+                except asyncio.CancelledError:
+                    if pending.done() and not pending.cancelled():
+                        exc = pending.exception()
+                        if exc and not isinstance(exc, StopAsyncIteration):
+                            _log_stream_failure(exc)
+                    pending.cancel()
+                    raise
+                except Exception as exc:
+                    _log_stream_failure(exc)
+                    pending = None
+                    break
+                else:
+                    pending = None
+                    await queue.put((index, tick))
+        except asyncio.CancelledError:
+            if pending is not None and pending.done() and not pending.cancelled():
+                exc = pending.exception()
+                if exc and not isinstance(exc, StopAsyncIteration):
+                    _log_stream_failure(exc)
+            raise
+        except Exception as exc:
+            _log_stream_failure(exc)
         finally:
             try:
                 await asyncio.shield(queue.put((index, None)))
@@ -563,7 +604,7 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
                     await asyncio.shield(aclose())
 
     workers = [
-        asyncio.create_task(_pump(idx, stream))
+        asyncio.create_task(_pump(idx, stream, stop_signal=stop_event))
         for idx, stream in enumerate(streams)
     ]
 
@@ -576,8 +617,7 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
                 continue
             yield item
     finally:
-        for worker in workers:
-            worker.cancel()
+        stop_event.set()
         if workers:
             await asyncio.gather(*workers, return_exceptions=True)
 
