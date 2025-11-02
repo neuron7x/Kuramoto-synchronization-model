@@ -16,7 +16,7 @@ response.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Iterable, Mapping, MutableMapping, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -217,6 +217,10 @@ class EnergyValidator:
             weights=weights or DEFAULT_WEIGHTS,
         )
         self._max_free_energy = float(max_free_energy)
+        zero_payload = {name: 0.0 for name in self._model.metrics}
+        zero_metrics = EnergyMetrics(**zero_payload)
+        floor_free_energy, _, _, _ = self._model.free_energy(zero_metrics)
+        self._contract_floor = float(floor_free_energy)
 
     @property
     def model(self) -> EnergyModel:
@@ -244,8 +248,41 @@ class EnergyValidator:
     ) -> "BehavioralContractReport":
         """Evaluate a telemetry sequence and enforce a behavioural contract."""
 
-        results = [self.validate(metrics) for metrics in metrics_sequence]
-        return contract.enforce(results, approvals=approvals)
+        results = []
+        for metrics in metrics_sequence:
+            result = self.evaluate(metrics)
+            if not result.passed:
+                raise EnergyValidationError(
+                    result.reason or "energy validation failed",
+                    result,
+                )
+            results.append(result)
+
+        shift = contract.rest_potential - self._contract_floor
+        if abs(shift) <= 1e-12:
+            rebased = results
+        else:
+            rebased = []
+            for result in results:
+                rebased_result = replace(
+                    result,
+                    free_energy=result.free_energy + shift,
+                    internal_energy=result.internal_energy + shift,
+                )
+                if rebased_result.free_energy > self._max_free_energy:
+                    message = (
+                        f"free energy {rebased_result.free_energy:.3f} exceeds bound {self._max_free_energy:.3f} "
+                        f"after contract rebasing (shift={shift:.6f})"
+                    )
+                    failure = replace(
+                        rebased_result,
+                        passed=False,
+                        reason=message,
+                    )
+                    raise EnergyValidationError(message, failure)
+                rebased.append(rebased_result)
+
+        return contract.enforce(rebased, approvals=approvals)
 
 
 __all__ = [
