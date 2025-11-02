@@ -37,9 +37,9 @@ and protocol activator safety behaviour in a representative pre-production soak.
 - Manual override was not required.
 - Circuit breaker active: yes
 
-## Risk Metrics
-- CVaR (95%): 0.000000
-- CVaR requirement met: yes
+## Synthetic Tail Metrics (Internal Benchmark)
+- Tail free-energy mean (95% internal): 0.000000
+- Internal tail budget met: yes
 
 ## Link Activator Stability
 - Protocol traces:

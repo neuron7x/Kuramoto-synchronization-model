@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import time
 import warnings
 from dataclasses import dataclass
@@ -222,7 +223,9 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
 class ThermoController:
     """Thermodynamic control loop with safety guarantees."""
 
-    AUDIT_LOG_PATH = Path("/var/log/tradepulse/thermo_audit.jsonl")
+    AUDIT_LOG_PATH = Path(
+        os.environ.get("THERMO_AUDIT_LOG_PATH", "/var/log/tradepulse/thermo_audit.jsonl")
+    )
 
     def __init__(self, graph: nx.DiGraph, metrics_exporter: Optional[PrometheusMetrics] = None) -> None:
         self.graph = graph

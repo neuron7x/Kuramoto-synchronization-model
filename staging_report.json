@@ -46,7 +46,7 @@
       46,
       47
     ],
-    "cvar_95": 8.978599601456391e-17,
+    "tail_free_energy_mean_95": 8.978599601456391e-17,
     "link_activator_fallback_stable": true,
     "link_activator_protocols": {
       "broker->ingest:hydrogen": [

@@ -280,7 +280,8 @@ TACL is the self-regulating control system that manages TradePulse topology as a
   `/thermo/history`, `/thermo/crisis`, `/thermo/activations`, and a
   `/thermo/reset` hook for integration tests.
 - `scripts/polygon_validator.py` — offline-friendly Polygon loader with
-  synthetic fallback for validating CVaR and flash-crash behaviour.
+  synthetic fallback for validating the internal tail free-energy proxy and
+  flash-crash behaviour.
 
 ### Safety Guarantees
 
@@ -482,6 +483,9 @@ in paper trading before risking real capital.
 
 ## NeuroTrade PRO v1.2 — Integrated Neuro–AI Stack + SABRE Conformal Action Layer
 
+> **Note:** All performance metrics below stem from internal synthetic
+> benchmarks and are not comparable to published external studies.
+
 **Що всередині:**
 - Режими ринку (волатильнісні біни) → режимно-чутливе рішення
 - Квантильні моделі (L/M/U) → **Conformal (CQR) з експон. вагами + динамічна α**
@@ -490,7 +494,8 @@ in paper trading before risking real capital.
 - Мікроструктура: spread, eff/realized spread, OFI (short-horizon), signed vol, Kyle λ, vol-of-vol, VWAP-dist, fracdiff
 - Risk guardrails: DD ліміт, cooldown, vola-throttle, exposure cap
 - CV: Purged & Embargoed K-Fold; Labeling: triple-barrier (приклад)
-- Оцінка: Sharpe, Deflated Sharpe (approx), CVaR
+- Оцінка (internal synthetic benchmark): Sharpe, Deflated Sharpe (approx),
+  tail free-energy mean 95%
 - Моніторинг: **Logger** (MLflow/W&B якщо доступно), інакше no-op
 - **Walk-Forward** (серійний/паралельний), **Validate** (порівняння з baseline, coverage, capacity)
 
