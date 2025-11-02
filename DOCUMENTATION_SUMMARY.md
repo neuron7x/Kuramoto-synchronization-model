@@ -4,6 +4,10 @@
 
 This document summarizes the comprehensive documentation, security, and monitoring improvements delivered for the TradePulse repository.
 
+> **New (May 2025):** Added [`docs/documentation-architecture.md`](docs/documentation-architecture.md)
+> to outline the documentation hierarchy, authoring principles, and contributor
+> workflow.
+>
 > **New (April 2025):** Added [`docs/project-status.md`](docs/project-status.md) to give
 > stakeholders a live snapshot of release readiness across testing,
 > documentation, and dashboard hardening workstreams.
