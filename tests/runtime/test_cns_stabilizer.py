@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from runtime.cns_stabilizer import CNSStabilizer
+from runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
 
 
 np.random.seed(42)
@@ -71,7 +72,9 @@ def test_micro_recovery_logs_event():
     stabilizer._micro_recovery(ga_phase="test_phase")
     assert stabilizer.pid_kp < old_kp
     assert stabilizer.micro_recovery_count == 1
-    assert any(evt["data"].get("action") == "micro_recovery" for evt in stabilizer.get_eventlog())
+    event = stabilizer.get_eventlog()[-1]
+    assert event["data"].get("action") == "micro_recovery"
+    assert event["data"].get("mode") == "quiescent"
 
 
 def test_circadian_reset_task_initialises():
@@ -124,7 +127,10 @@ async def test_process_signals_async_and_eventlog():
     assert len(result) == len(raw)
     eventlog = stabilizer.get_eventlog()
     assert eventlog
-    assert "phase" in eventlog[-1]["data"]
+    last_event = eventlog[-1]
+    assert "phase" in last_event["data"]
+    assert last_event["data"].get("allowed") is True
+    assert last_event["data"].get("action_class") == "INFLUENCE_INTERNAL"
 
 
 def test_process_signals_sync_alignment():
@@ -132,7 +138,9 @@ def test_process_signals_sync_alignment():
     raw = np.linspace(100.0, 100.5, 16)
     aligned = stabilizer.process_signals_sync(raw.tolist(), ga_phase="pre_evolve")
     assert len(aligned) == len(raw)
-    assert stabilizer.get_eventlog()[-1]["data"]["chunk_size"] == len(raw)
+    event = stabilizer.get_eventlog()[-1]
+    assert event["data"]["chunk_size"] == len(raw)
+    assert event["allowed"] is True
 
 
 def test_heatmap_export_roundtrip(tmp_path):
@@ -176,6 +184,58 @@ def test_eventlog_structure_contains_latency():
     assert "latency" in event["data"]
     assert "chunk_size" in event["data"]
     assert "processed_samples" in event["data"]
+    assert event["mode"] in {"active", "quiescent"}
+    assert isinstance(event["allowed"], bool)
+
+
+def test_kill_switch_blocks_processing():
+    stabilizer = CNSStabilizer()
+    activate_kill_switch()
+    try:
+        result = stabilizer.process_signals_sync([0.1, 0.2, 0.3], ga_phase="pre_evolve")
+        assert result == []
+        event = stabilizer.get_eventlog()[-1]
+        assert event["data"]["type"] == "kill_switch"
+        assert event["allowed"] is False
+        assert event["mode"] == "quiescent"
+    finally:
+        deactivate_kill_switch()
+
+
+def test_hybrid_throttle_emits_event():
+    stabilizer = CNSStabilizer(hybrid_mode=True)
+    stabilizer.delta_f_history = deque([0.0, 0.5, 1.5], maxlen=10)
+    raw = np.linspace(-5.0, 5.0, 64)
+    stabilizer.process_signals_sync(raw.tolist(), ga_phase="pre_evolve")
+    hybrid_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("type") == "hybrid"]
+    assert hybrid_events
+    throttle_event = hybrid_events[-1]
+    assert throttle_event["data"].get("action") == "throttle"
+    assert throttle_event["data"].get("hybrid") == 0.5
+    assert throttle_event["data"].get("action_class") == "SELF_REGULATE"
+
+
+def test_monotonic_violation_triggers_veto(monkeypatch):
+    stabilizer = CNSStabilizer()
+
+    values = iter([0.1, 0.6, 1.1, 1.1])
+
+    def fake_compute_delta_f(_: np.ndarray) -> float:
+        try:
+            return next(values)
+        except StopIteration:  # pragma: no cover - safety net
+            return 1.1
+
+    monkeypatch.setattr(stabilizer, "compute_delta_f", fake_compute_delta_f)
+
+    result = stabilizer.process_signals_sync([1.0, 1.1, 1.2], ga_phase="pre_evolve")
+    assert result == []
+    event = stabilizer.get_eventlog()[-1]
+    assert event["data"].get("type") == "monotonic"
+    assert event["allowed"] is False
+    assert event["mode"] == "quiescent"
+    recovery_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("action") == "micro_recovery"]
+    assert recovery_events
 
 
 def test_micro_recovery_invocation_in_audit(monkeypatch):

@@ -15,6 +15,8 @@ from scipy.linalg import inv
 from scipy.signal import convolve
 from scipy.stats import entropy
 
+from runtime.kill_switch import is_kill_switch_active
+
 
 @dataclass(slots=True)
 class StabilizerEvent:
@@ -24,6 +26,9 @@ class StabilizerEvent:
     ga_phase: str
     data: Dict[str, object]
     timestamp: float
+    action_class: str
+    mode: str
+    allowed: bool
 
 
 class CNSStabilizer:
@@ -76,6 +81,7 @@ class CNSStabilizer:
         self.epoch = 0
         self.heatmap_data: List[Dict[str, float | str]] = []
         self.micro_recovery_count = 0
+        self._last_audit_status = "confirmed"
 
     async def process_signals(self, raw_signals: List[float], *, ga_phase: str = "pre_evolve") -> List[float]:
         """Process a batch of raw signals asynchronously.
@@ -90,6 +96,25 @@ class CNSStabilizer:
 
         start_time = time.time()
         self.epoch += 1
+
+        kill_switch_active = is_kill_switch_active()
+        if kill_switch_active:
+            integrity_ratio = self.get_integrity_ratio()
+            self._log_event(
+                ga_phase,
+                {
+                    "phase": "halt",
+                    "action": "veto",
+                    "type": "kill_switch",
+                    "reason": "kill_switch_active",
+                    "integrity": integrity_ratio,
+                    "monotonic": self._last_audit_status,
+                },
+                action_class="OBSERVE",
+                allowed=False,
+                kill_switch_active=True,
+            )
+            return []
 
         raw_length = int(len(raw_signals))
         signals_norm = self._normalize(np.asarray(raw_signals, dtype=float))
@@ -110,7 +135,11 @@ class CNSStabilizer:
                             "phase": phase,
                             "action": "veto",
                             "type": "hpa",
+                            "integrity": self.get_integrity_ratio(),
+                            "monotonic": self._last_audit_status,
                         },
+                        action_class="SELF_REGULATE",
+                        allowed=False,
                     )
                     return []
 
@@ -136,7 +165,11 @@ class CNSStabilizer:
                     },
                     "action": "throttle",
                     "type": "hybrid",
+                    "integrity": self.get_integrity_ratio(),
+                    "monotonic": self._last_audit_status,
                 },
+                action_class="SELF_REGULATE",
+                allowed=True,
             )
         elif td_error < self.td_threshold:
             phase = self._annotate_phase(td_error)
@@ -148,7 +181,11 @@ class CNSStabilizer:
                     "phase": phase,
                     "action": "veto",
                     "type": "td",
+                    "integrity": self.get_integrity_ratio(),
+                    "monotonic": self._last_audit_status,
                 },
+                action_class="SELF_REGULATE",
+                allowed=False,
             )
             return []
 
@@ -186,6 +223,7 @@ class CNSStabilizer:
         new_delta_f_proxy = self.compute_delta_f(filtered_states)
         tolerance = 1e-6
         audit_status = "confirmed" if new_delta_f_proxy <= real_delta_f + tolerance else "violated"
+        self._last_audit_status = audit_status
         self.audit_log.append(
             (
                 "Epoch %d: Monotonic descent %s (ΔF'=%.4f %s ΔF=%.4f)"
@@ -208,6 +246,12 @@ class CNSStabilizer:
             self.threshold = float(np.clip(self.threshold + self.safety_margin * 0.1, 0.1, 2.0))
 
         integrity_ratio = self.get_integrity_ratio()
+        mode = self._determine_mode(
+            phase=phase,
+            integrity=integrity_ratio,
+            kill_switch_active=False,
+            monotonic_status=audit_status,
+        )
 
         self.heatmap_data.append(
             {
@@ -217,6 +261,27 @@ class CNSStabilizer:
                 "margin": self.safety_margin,
             }
         )
+
+        if audit_status == "violated" and integrity_ratio < 0.8:
+            self._log_gate("monotonic_veto", new_delta_f_proxy)
+            self._log_event(
+                ga_phase,
+                {
+                    "delta_f": real_delta_f,
+                    "phase": phase,
+                    "action": "veto",
+                    "type": "monotonic",
+                    "integrity": integrity_ratio,
+                    "monotonic": audit_status,
+                    "threshold_before_pid": threshold_before_pid,
+                    "threshold_after_pid": self.threshold,
+                    "recovery_path": False,
+                },
+                action_class="SELF_REGULATE",
+                allowed=False,
+                mode=mode,
+            )
+            return []
 
         if real_delta_f > self.threshold:
             self._log_gate("delta_f_denied", real_delta_f)
@@ -230,7 +295,11 @@ class CNSStabilizer:
                     "integrity": integrity_ratio,
                     "threshold_before_pid": threshold_before_pid,
                     "threshold_after_pid": self.threshold,
+                    "monotonic": audit_status,
                 },
+                action_class="SELF_REGULATE",
+                allowed=False,
+                mode=mode,
             )
             return []
 
@@ -252,7 +321,11 @@ class CNSStabilizer:
                 "chunk_size": len(aligned_chunk),
                 "processed_samples": chunk_length,
                 "latency": latency,
+                "monotonic": audit_status,
             },
+            action_class="INFLUENCE_INTERNAL",
+            allowed=True,
+            mode=mode,
         )
 
         return aligned_chunk
@@ -301,7 +374,11 @@ class CNSStabilizer:
                 "kp": self.pid_kp,
                 "ki": self.pid_ki,
                 "count": self.micro_recovery_count,
+                "monotonic": self._last_audit_status,
             },
+            action_class="SELF_REGULATE",
+            allowed=True,
+            mode="quiescent",
         )
 
     def export_heatmap(self, filepath: str = "delta_f_heatmap.csv") -> pd.DataFrame:
@@ -397,20 +474,66 @@ class CNSStabilizer:
             self._circadian_loop = loop
             self.reset_task = loop.create_task(self.circadian_reset())
 
-    def _log_event(self, ga_phase: str, data: Dict[str, object]) -> None:
+    def _determine_mode(
+        self,
+        *,
+        phase: str,
+        integrity: float,
+        kill_switch_active: bool,
+        monotonic_status: str,
+    ) -> str:
+        if kill_switch_active or integrity < 0.8 or phase == "pre-spike" or monotonic_status == "violated":
+            return "quiescent"
+        return "active"
+
+    def _log_event(
+        self,
+        ga_phase: str,
+        data: Dict[str, object],
+        *,
+        action_class: str,
+        allowed: bool,
+        mode: Optional[str] = None,
+        kill_switch_active: Optional[bool] = None,
+    ) -> None:
+        if kill_switch_active is None:
+            kill_switch_active = is_kill_switch_active()
+        integrity = float(data.get("integrity", self.get_integrity_ratio()))
+        phase = str(data.get("phase", "stable"))
+        monotonic_status = str(data.get("monotonic", self._last_audit_status))
+        resolved_mode = mode or self._determine_mode(
+            phase=phase,
+            integrity=integrity,
+            kill_switch_active=kill_switch_active,
+            monotonic_status=monotonic_status,
+        )
+        enriched = dict(data)
+        enriched.setdefault("action_class", action_class)
+        enriched.setdefault("mode", resolved_mode)
+        enriched.setdefault("allowed", allowed)
         event = StabilizerEvent(
             epoch=self.epoch,
             ga_phase=ga_phase,
-            data=data,
+            data=enriched,
             timestamp=time.time(),
+            action_class=action_class,
+            mode=resolved_mode,
+            allowed=allowed,
         )
         self.eventlog.append(event)
-        print(json.dumps({
-            "epoch": event.epoch,
-            "ga_phase": event.ga_phase,
-            "data": event.data,
-            "timestamp": event.timestamp,
-        }))
+        print(
+            json.dumps(
+                {
+                    "epoch": event.epoch,
+                    "ga_phase": event.ga_phase,
+                    "data": event.data,
+                    "timestamp": event.timestamp,
+                    "action_class": event.action_class,
+                    "mode": event.mode,
+                    "allowed": event.allowed,
+                }
+            )
+        )
 
     def get_audit_log(self) -> List[str]:
         return list(self.audit_log)
@@ -425,6 +548,9 @@ class CNSStabilizer:
                 "ga_phase": event.ga_phase,
                 "data": event.data,
                 "timestamp": event.timestamp,
+                "action_class": event.action_class,
+                "mode": event.mode,
+                "allowed": event.allowed,
             }
             for event in self.eventlog
         ]
