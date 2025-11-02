@@ -74,7 +74,7 @@ def test_micro_recovery_logs_event():
     assert stabilizer.micro_recovery_count == 1
     event = stabilizer.get_eventlog()[-1]
     assert event["data"].get("action") == "micro_recovery"
-    assert event["data"].get("mode") == "quiescent"
+    assert event["data"].get("system_mode") == "PoR"
 
 
 def test_circadian_reset_task_initialises():
@@ -131,6 +131,7 @@ async def test_process_signals_async_and_eventlog():
     assert "phase" in last_event["data"]
     assert last_event["data"].get("allowed") is True
     assert last_event["data"].get("action_class") == "INFLUENCE_INTERNAL"
+    assert last_event["data"].get("system_mode") == "PoR"
 
 
 def test_process_signals_sync_alignment():
@@ -141,6 +142,7 @@ def test_process_signals_sync_alignment():
     event = stabilizer.get_eventlog()[-1]
     assert event["data"]["chunk_size"] == len(raw)
     assert event["allowed"] is True
+    assert stabilizer.get_system_mode() == "PoR"
 
 
 def test_heatmap_export_roundtrip(tmp_path):
@@ -184,7 +186,8 @@ def test_eventlog_structure_contains_latency():
     assert "latency" in event["data"]
     assert "chunk_size" in event["data"]
     assert "processed_samples" in event["data"]
-    assert event["mode"] in {"active", "quiescent"}
+    assert event["mode"] in {"PoA", "PoR"}
+    assert event["data"].get("system_mode") in {"PoA", "PoR"}
     assert isinstance(event["allowed"], bool)
 
 
@@ -197,7 +200,8 @@ def test_kill_switch_blocks_processing():
         event = stabilizer.get_eventlog()[-1]
         assert event["data"]["type"] == "kill_switch"
         assert event["allowed"] is False
-        assert event["mode"] == "quiescent"
+        assert event["mode"] == "PoR"
+        assert stabilizer.get_system_mode() == "PoR"
     finally:
         deactivate_kill_switch()
 
@@ -213,6 +217,7 @@ def test_hybrid_throttle_emits_event():
     assert throttle_event["data"].get("action") == "throttle"
     assert throttle_event["data"].get("hybrid") == 0.5
     assert throttle_event["data"].get("action_class") == "SELF_REGULATE"
+    assert throttle_event["data"].get("system_mode") in {"PoA", "PoR"}
 
 
 def test_monotonic_violation_triggers_veto(monkeypatch):
@@ -233,7 +238,7 @@ def test_monotonic_violation_triggers_veto(monkeypatch):
     event = stabilizer.get_eventlog()[-1]
     assert event["data"].get("type") == "monotonic"
     assert event["allowed"] is False
-    assert event["mode"] == "quiescent"
+    assert event["mode"] == "PoR"
     recovery_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("action") == "micro_recovery"]
     assert recovery_events
 
@@ -258,3 +263,21 @@ def test_heatmap_export_default_path(tmp_path):
     csv_path = tmp_path / "custom.csv"
     df = stabilizer.export_heatmap(str(csv_path))
     assert not df.empty
+
+
+def test_system_mode_transitions_to_poa():
+    stabilizer = CNSStabilizer()
+    stabilizer.threshold = 1.0
+    stabilizer.safety_margin = 0.9
+    stabilizer._log_event(  # type: ignore[attr-defined]
+        "test_phase",
+        {
+            "phase": "stable",
+            "action": "pass",
+            "integrity": 0.9,
+            "monotonic": "confirmed",
+        },
+        action_class="INFLUENCE_INTERNAL",
+        allowed=True,
+    )
+    assert stabilizer.get_system_mode() == "PoA"

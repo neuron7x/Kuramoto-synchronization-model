@@ -105,7 +105,7 @@ class CrisisAwareGA:
     def apply_homeostasis_feedback(self, delta_score: float) -> None:
         """Integrate CNS stability rewards/penalties into GA fitness."""
 
-        self.homeostasis_penalty += float(delta_score)
+        self.homeostasis_penalty = float(delta_score)
 
     def get_crisis_statistics(self) -> Dict[str, object]:
         if not self.crisis_history:

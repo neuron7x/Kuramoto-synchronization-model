@@ -82,6 +82,7 @@ class CNSStabilizer:
         self.heatmap_data: List[Dict[str, float | str]] = []
         self.micro_recovery_count = 0
         self._last_audit_status = "confirmed"
+        self.system_mode = "PoR"
 
     async def process_signals(self, raw_signals: List[float], *, ga_phase: str = "pre_evolve") -> List[float]:
         """Process a batch of raw signals asynchronously.
@@ -378,7 +379,6 @@ class CNSStabilizer:
             },
             action_class="SELF_REGULATE",
             allowed=True,
-            mode="quiescent",
         )
 
     def export_heatmap(self, filepath: str = "delta_f_heatmap.csv") -> pd.DataFrame:
@@ -482,9 +482,14 @@ class CNSStabilizer:
         kill_switch_active: bool,
         monotonic_status: str,
     ) -> str:
-        if kill_switch_active or integrity < 0.8 or phase == "pre-spike" or monotonic_status == "violated":
-            return "quiescent"
-        return "active"
+        if (
+            kill_switch_active
+            or integrity < 0.8
+            or phase == "pre-spike"
+            or monotonic_status == "violated"
+        ):
+            return "PoR"
+        return "PoA"
 
     def _log_event(
         self,
@@ -507,9 +512,11 @@ class CNSStabilizer:
             kill_switch_active=kill_switch_active,
             monotonic_status=monotonic_status,
         )
+        self.system_mode = resolved_mode
         enriched = dict(data)
         enriched.setdefault("action_class", action_class)
         enriched.setdefault("mode", resolved_mode)
+        enriched.setdefault("system_mode", resolved_mode)
         enriched.setdefault("allowed", allowed)
         event = StabilizerEvent(
             epoch=self.epoch,
@@ -530,6 +537,7 @@ class CNSStabilizer:
                     "timestamp": event.timestamp,
                     "action_class": event.action_class,
                     "mode": event.mode,
+                    "system_mode": event.mode,
                     "allowed": event.allowed,
                 }
             )
@@ -550,6 +558,7 @@ class CNSStabilizer:
                 "timestamp": event.timestamp,
                 "action_class": event.action_class,
                 "mode": event.mode,
+                "system_mode": event.mode,
                 "allowed": event.allowed,
             }
             for event in self.eventlog
@@ -557,6 +566,23 @@ class CNSStabilizer:
 
     def get_integrity_ratio(self) -> float:
         return self.safety_margin / self.threshold if self.threshold > 0 else 0.0
+
+    def get_system_mode(self) -> str:
+        return self.system_mode
+
+    def notify_external_block(self, *, ga_phase: str, reason: str) -> None:
+        self._log_event(
+            ga_phase,
+            {
+                "phase": "halt",
+                "action": "external_block",
+                "reason": reason,
+                "integrity": self.get_integrity_ratio(),
+                "monotonic": self._last_audit_status,
+            },
+            action_class="INFLUENCE_EXTERNAL",
+            allowed=False,
+        )
 
     def _extract_chunk(self, filtered_states: np.ndarray, chunk_length: int) -> List[float]:
         if chunk_length == 0:

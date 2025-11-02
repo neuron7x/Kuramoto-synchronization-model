@@ -380,6 +380,15 @@ class ThermoController:
         eventlog = self.stabilizer.get_eventlog()
         self._last_stabilizer_event = eventlog[-1] if eventlog else None
 
+        if self.stabilizer.get_system_mode() == "PoR":
+            self.stabilizer.notify_external_block(ga_phase=ga_phase, reason="system_mode_PoR")
+            eventlog = self.stabilizer.get_eventlog()
+            self._last_stabilizer_event = eventlog[-1] if eventlog else None
+            self._record_homeostasis_metrics(self._last_stabilizer_event)
+            blocked_df = df.copy()
+            blocked_df["coherency"] = 0.0
+            return blocked_df
+
         if getattr(self, "crisis_ga", None) is not None:
             ga_feedback = self.stabilizer.get_ga_fitness_feedback()
             self.crisis_ga.apply_homeostasis_feedback(ga_feedback)
