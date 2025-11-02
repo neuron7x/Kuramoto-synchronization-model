@@ -20,9 +20,8 @@ if str(REPO_ROOT) not in sys.path:
 from runtime.thermo_controller import MetricsSnapshot, ThermoController
 
 
-def _compute_epsilon_spike(controller: ThermoController) -> float:
-    baseline = float(controller.baseline_ema)
-    return max(1e-24, 0.01 * abs(baseline))
+def _compute_epsilon_spike(controller: ThermoController, F_old: float) -> float:
+    return controller._monotonic_tolerance_budget(F_old)
 
 
 def _build_reference_graph() -> nx.DiGraph:
@@ -61,7 +60,7 @@ def _validate_monotonic_acceptance() -> bool:
     controller = ThermoController(_build_reference_graph())
     F_old = controller._compute_free_energy(snapshot=controller._latest_snapshot)
     new_topology, F_new, _ = controller.crisis_ga.evolve(controller.current_topology, F_old)
-    epsilon_spike = _compute_epsilon_spike(controller)
+    epsilon_spike = _compute_epsilon_spike(controller, F_old)
 
     tolerance = controller._check_monotonic_with_tolerance(F_old, F_new)
     if not tolerance.accepted:

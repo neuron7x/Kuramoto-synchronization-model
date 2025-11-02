@@ -724,10 +724,28 @@ class ThermoController:
         return float(sum(snapshot.latencies.values()) / len(snapshot.latencies))
 
     # Safety -------------------------------------------------------------
+    def _monotonic_tolerance_budget(self, F_reference: float) -> float:
+        """Return the admissible free-energy spike for monotonicity checks.
+
+        Historically the controller used ``0.01 * baseline_ema`` as the
+        tolerance.  When the baseline hovered around zero – especially with
+        slightly negative free energy – this resulted in a *negative*
+        tolerance, meaning even improvements were flagged as regressions.  The
+        new formulation clamps the tolerance to a small, positive budget that
+        scales with both the historical baseline and the currently evaluated
+        free energy.  We also fold in a fraction of the adaptive epsilon so the
+        budget grows gracefully during sharp transients.
+        """
+
+        baseline_scale = max(abs(self.baseline_ema), abs(F_reference))
+        epsilon_from_baseline = 0.01 * baseline_scale
+        epsilon_from_dynamics = 0.5 * abs(self.epsilon_adaptive)
+        return max(1e-9, epsilon_from_baseline, epsilon_from_dynamics)
+
     def _check_monotonic_with_tolerance(
         self, F_old: float, F_new: float, window_size: int = 3
     ) -> ToleranceCheck:
-        epsilon_spike = 0.01 * self.baseline_ema
+        epsilon_spike = self._monotonic_tolerance_budget(F_old)
         if F_new > F_old + epsilon_spike:
             return ToleranceCheck(
                 accepted=False,
