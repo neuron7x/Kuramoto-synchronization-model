@@ -5,6 +5,7 @@ import types
 import networkx as nx
 import pytest
 
+from runtime.dual_approval import DualApprovalManager
 from runtime.recovery_agent import RecoveryState
 from runtime.thermo_controller import CrisisComputation, ThermoController, ToleranceCheck
 
@@ -22,6 +23,9 @@ def test_audit_log_records_normal_step(tmp_path, monkeypatch):
     monkeypatch.setattr(ThermoController, "AUDIT_LOG_PATH", log_path)
 
     controller = ThermoController(_build_simple_graph())
+    controller.set_dual_approval_token(
+        DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+    )
     controller.manual_override_active = True
     controller.manual_override_reason = "maintenance window"
 
@@ -45,6 +49,9 @@ def test_audit_log_records_rejected_actions(tmp_path, monkeypatch):
     monkeypatch.setattr(ThermoController, "AUDIT_LOG_PATH", log_path)
 
     controller = ThermoController(_build_simple_graph())
+    controller.set_dual_approval_token(
+        DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+    )
     controller.baseline_F = 1.0
     controller.baseline_ema = 1.0
     controller.previous_F = 1.0
