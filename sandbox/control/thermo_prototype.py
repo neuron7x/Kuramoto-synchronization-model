@@ -18,12 +18,12 @@ available in standalone notebooks.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Union
 
 import networkx as nx
 import numpy as np
 
-from core.energy import BondType, system_free_energy
+from core.energy import system_free_energy
 from runtime.thermo_controller import estimate_entropy
 from evolution.crisis_ga import CrisisMode
 
@@ -39,7 +39,7 @@ class PrototypeResult:
     energy_trace: List[float]
     stable: bool
 
-    def as_dict(self) -> Dict[str, float | List[float] | bool]:
+    def as_dict(self) -> Dict[str, Union[float, List[float], bool]]:
         """Return a JSON-serialisable representation of the result."""
 
         return {
@@ -68,7 +68,7 @@ class BacktestResult:
     false_positive_rate: float
     false_negative_rate: float
 
-    def as_dict(self) -> Dict[str, float | List[float] | List[str]]:
+    def as_dict(self) -> Dict[str, Union[float, List[float], List[str]]]:
         """Return a JSON-serialisable representation of the backtest result."""
 
         return {
@@ -118,7 +118,8 @@ def _build_graph(seed: int) -> nx.DiGraph:
     graph = nx.DiGraph()
     graph.add_nodes_from(_default_nodes())
 
-    bond_types = list(BondType.__args__)
+    # Explicit bond types list for compatibility across Python versions
+    bond_types = ["covalent", "ionic", "metallic", "vdw", "hydrogen"]
 
     for src, dst in _edge_layout():
         graph.add_edge(
@@ -173,9 +174,12 @@ def _optimise(graph: nx.DiGraph) -> Tuple[nx.DiGraph, float]:
     best_graph = graph.copy()
     improvement_threshold = max(abs(baseline_energy) * 1e-6, 1e-24)
 
+    # Explicit bond types list for compatibility across Python versions
+    bond_types = ["covalent", "ionic", "metallic", "vdw", "hydrogen"]
+
     for src, dst, data in graph.edges(data=True):
         current_type = data.get("type", "vdw")
-        for candidate in BondType.__args__:
+        for candidate in bond_types:
             if candidate == current_type:
                 continue
 
@@ -285,7 +289,7 @@ def run_backtest_on_synthetic_crises(
             data["latency_norm"] = float(rng.uniform(1.1, 2.5))
 
         # Increase entropy by diversifying bond types
-        bond_types = list(BondType.__args__)
+        bond_types = ["covalent", "ionic", "metallic", "vdw", "hydrogen"]
         for src, dst, data in graph.edges(data=True):
             data["type"] = str(rng.choice(bond_types))
 

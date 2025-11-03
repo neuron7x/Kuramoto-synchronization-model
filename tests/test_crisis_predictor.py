@@ -269,9 +269,16 @@ class TestCrisisPredictorFalsifiability:
         )
 
         # Should have at least some misclassifications
+        # Count actual crisis and normal scenarios
+        num_crisis = sum(
+            1 for label in result.crisis_labels if label != CrisisMode.NORMAL
+        )
+        num_normal = len(result.crisis_labels) - num_crisis
+
+        # Calculate total errors based on actual counts
         total_errors = (
-            result.false_positive_rate * len(result.crisis_labels) / 2
-            + result.false_negative_rate * len(result.crisis_labels) / 2
+            result.false_positive_rate * num_normal
+            + result.false_negative_rate * num_crisis
         )
         assert total_errors > 0, (
             "Model has zero errors - fails falsifiability test"
