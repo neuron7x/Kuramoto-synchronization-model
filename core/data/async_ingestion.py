@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import csv
 from contextlib import suppress
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import InvalidOperation
 from pathlib import Path
@@ -532,26 +533,43 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
     # still allowing a small amount of ahead-of-time reads for fairness.
     prefetch_per_stream = 2
     max_queue_size = max(1, len(streams) * prefetch_per_stream)
-    queue: asyncio.Queue[tuple[int, Ticker | None]] = asyncio.Queue(maxsize=max_queue_size)
+    @dataclass(frozen=True, slots=True)
+    class _StreamError:
+        stream: str | None
+        exception: Exception
+
+    queue: asyncio.Queue[tuple[int, Ticker | None | _StreamError]] = asyncio.Queue(
+        maxsize=max_queue_size
+    )
 
     async def _pump(index: int, stream: AsyncIterator[Ticker]) -> None:
         symbol = getattr(stream, "symbol", None)
         try:
             while True:
                 try:
-                    tick = await anext(stream)  # type: ignore[arg-type]
+                    tick = await asyncio.shield(anext(stream))  # type: ignore[arg-type]
                 except StopAsyncIteration:
+                    break
+                except Exception as exc:
+                    logger.warning(
+                        "Async stream terminated with error",
+                        stream=symbol,
+                        error=str(exc),
+                        exc_info=exc,
+                    )
+                    await asyncio.shield(queue.put((index, _StreamError(symbol, exc))))
                     break
                 await queue.put((index, tick))
         except asyncio.CancelledError:
             raise
         except Exception as exc:
             logger.warning(
-                "Async stream terminated with error",
+                "Async stream pump failed",
                 stream=symbol,
                 error=str(exc),
                 exc_info=exc,
             )
+            await asyncio.shield(queue.put((index, _StreamError(symbol, exc))))
         finally:
             try:
                 await asyncio.shield(queue.put((index, None)))
@@ -571,6 +589,14 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
     try:
         while remaining:
             _, item = await queue.get()
+            if isinstance(item, _StreamError):
+                logger.warning(
+                    "Async stream terminated with error",
+                    stream=item.stream,
+                    error=str(item.exception),
+                    exc_info=item.exception,
+                )
+                continue
             if item is None:
                 remaining -= 1
                 continue
@@ -580,6 +606,18 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
             worker.cancel()
         if workers:
             await asyncio.gather(*workers, return_exceptions=True)
+        while True:
+            try:
+                _, item = queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+            if isinstance(item, _StreamError):
+                logger.warning(
+                    "Async stream terminated with error",
+                    stream=item.stream,
+                    error=str(item.exception),
+                    exc_info=item.exception,
+                )
 
 
 __all__ = [

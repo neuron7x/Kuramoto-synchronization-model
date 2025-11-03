@@ -281,15 +281,33 @@ class EnergyValidator:
                 raise EnergyValidationError(message, failure)
 
             if abs(shift) <= 1e-12:
-                rebased.append(result)
+                rebased_result = result
             else:
-                rebased.append(
-                    replace(
-                        result,
-                        free_energy=result.free_energy + shift,
-                        internal_energy=result.internal_energy + shift,
-                    )
+                rebased_result = replace(
+                    result,
+                    free_energy=result.free_energy + shift,
+                    internal_energy=result.internal_energy + shift,
                 )
+
+            if rebased_result.free_energy > self._max_free_energy:
+                if abs(shift) <= 1e-12:
+                    message = (
+                        f"free energy {rebased_result.free_energy:.3f} exceeds bound "
+                        f"{self._max_free_energy:.3f}"
+                    )
+                else:
+                    message = (
+                        f"rebased free energy {rebased_result.free_energy:.3f} exceeds bound "
+                        f"{self._max_free_energy:.3f} (shift={shift:.6f})"
+                    )
+                failure = replace(
+                    rebased_result,
+                    passed=False,
+                    reason=message,
+                )
+                raise EnergyValidationError(message, failure)
+
+            rebased.append(rebased_result)
 
         return contract.enforce(rebased, approvals=approvals)
 

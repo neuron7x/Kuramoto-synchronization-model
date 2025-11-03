@@ -218,8 +218,18 @@ def configure_logging(
     root_logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, level.upper()))
 
-    # Remove existing handlers
-    root_logger.handlers.clear()
+    # Remove handlers previously attached by TradePulse without disturbing
+    # external handlers such as pytest's log capture fixtures.
+    managed: list[logging.Handler] = []
+    for handler in list(root_logger.handlers):
+        if getattr(handler, "_tradepulse_managed", False):
+            managed.append(handler)
+            root_logger.removeHandler(handler)
+    for handler in managed:
+        try:
+            handler.close()
+        except Exception:  # pragma: no cover - defensive cleanup
+            pass
 
     # Create handler
     handler = logging.StreamHandler(stream or sys.stdout)
@@ -233,6 +243,7 @@ def configure_logging(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         handler.setFormatter(formatter)
+    handler._tradepulse_managed = True  # type: ignore[attr-defined]
     root_logger.addHandler(handler)
 
 
