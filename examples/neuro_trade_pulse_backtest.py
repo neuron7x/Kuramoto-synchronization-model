@@ -8,8 +8,9 @@ from strategies.neuro_trade_pulse import NeuroTradePulseStrategy
 def to_bars(prices: np.ndarray) -> pd.DataFrame:
     n = prices.size
     idx = pd.date_range("2024-01-01", periods=n, freq="1min")
-    # simple synthetic volume
-    volume = np.exp(np.random.normal(9.0, 0.4, n))
+    # simple synthetic volume with fixed seed for reproducibility
+    rng = np.random.default_rng(seed=42)
+    volume = np.exp(rng.normal(9.0, 0.4, n))
     return pd.DataFrame({"close": prices, "volume": volume}, index=idx)
 
 

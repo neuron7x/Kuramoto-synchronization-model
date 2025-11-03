@@ -23,6 +23,8 @@ class NeuroTradePulseConfig:
     - negative_curvature_gate: if static Ricci curvature is too negative, actions are suppressed.
     - warmup: first N samples return 0 (avoid early noise while composite stabilises).
     - motivation_scale: scales the modulation effect of the motivation signal on the action sign.
+    - motivation_threshold: minimum absolute motivation value required for action; below this, signals suppressed.
+    - state_scaling_factor: scaling factor applied to state vectors in hidden state construction.
     """
 
     discount_rate: float = 0.95
@@ -30,6 +32,8 @@ class NeuroTradePulseConfig:
     negative_curvature_gate: float = -0.15
     warmup: int = 64
     motivation_scale: float = 0.5
+    motivation_threshold: float = 0.05
+    state_scaling_factor: float = 0.5
 
 
 class NeuroTradePulseStrategy:
@@ -74,7 +78,7 @@ class NeuroTradePulseStrategy:
             delta = state_vec - prev
         return np.vstack([
             state_vec,
-            0.5 * state_vec,
+            self.cfg.state_scaling_factor * state_vec,
             np.tanh(delta),
         ])
 
@@ -101,7 +105,7 @@ class NeuroTradePulseStrategy:
             m = 0.0
 
         # Scale sign by motivation: if motivation near-zero -> conservative flat
-        if abs(m) < 0.05:
+        if abs(m) < self.cfg.motivation_threshold:
             return 0.0
 
         return float(np.sign(base * (1.0 + self.cfg.motivation_scale * m))) if base != 0.0 else 0.0

@@ -94,7 +94,7 @@ def test_low_confidence_suppresses_signals() -> None:
 
     # With very high confidence threshold, most signals should be suppressed
     non_zero = (signals != 0.0).sum()
-    # Allow some non-zero signals in warmup period is passed
+    # Allow some non-zero signals after warmup period has passed
     assert non_zero < len(signals) * 0.5  # Less than 50% should be non-zero
 
 
@@ -141,3 +141,5 @@ def test_config_defaults() -> None:
     assert cfg.negative_curvature_gate == -0.15
     assert cfg.warmup == 64
     assert cfg.motivation_scale == 0.5
+    assert cfg.motivation_threshold == 0.05
+    assert cfg.state_scaling_factor == 0.5
