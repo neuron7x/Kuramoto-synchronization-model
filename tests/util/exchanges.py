@@ -126,6 +126,7 @@ def get_authenticated_balance(subject):
             sig = hmac.new(secret.encode(), query.encode(), hashlib.sha256).hexdigest()
             headers = {"X-MBX-APIKEY": key}
             data = subject.get("/api/v3/account", params={"timestamp": ts, "recvWindow": 5000, "signature": sig}, headers=headers)
+            # Remove commission fields to keep response focused on balances
             data.pop("makerCommission", None)
             data.pop("takerCommission", None)
             return {"balances": data.get("balances", [])}

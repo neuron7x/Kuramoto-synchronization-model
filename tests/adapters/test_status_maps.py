@@ -16,7 +16,8 @@ def _collect_canonical_statuses() -> Set[str]:
     try:
         interfaces = importlib.import_module(INTERFACES_PKG)
     except Exception:
-        return {"open","partially_filled","filled","cancelled","rejected","expired","pending","closed"}
+        # Fallback to common status names found in domain.Order.OrderStatus
+        return {"open","partially_filled","filled","cancelled","rejected","pending"}
 
     for _, name, ispkg in pkgutil.walk_packages(interfaces.__path__, interfaces.__name__ + "."):
         try:
@@ -31,7 +32,7 @@ def _collect_canonical_statuses() -> Set[str]:
                 for it in obj:
                     if isinstance(it, str):
                         names.add(it.lower())
-    return names or {"open","partially_filled","filled","cancelled","rejected","expired","pending","closed"}
+    return names or {"open","partially_filled","filled","cancelled","rejected","pending"}
 
 CANONICAL_STATUS_NAMES = _collect_canonical_statuses()
 
