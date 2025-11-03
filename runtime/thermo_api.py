@@ -1,4 +1,5 @@
 """FastAPI application exposing thermodynamic telemetry."""
+
 from __future__ import annotations
 
 import hmac
@@ -32,7 +33,9 @@ def _build_default_graph() -> nx.DiGraph:
     graph.add_node("risk", cpu_norm=0.5)
     graph.add_node("broker", cpu_norm=0.3)
 
-    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9)
+    graph.add_edge(
+        "ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9
+    )
     graph.add_edge("matcher", "risk", type="ionic", latency_norm=0.8, coherency=0.7)
     graph.add_edge("risk", "broker", type="metallic", latency_norm=0.2, coherency=0.85)
     graph.add_edge("broker", "ingest", type="hydrogen", latency_norm=1.1, coherency=0.6)
@@ -61,7 +64,9 @@ def _get_manual_override_token() -> str:
     return token
 
 
-@app.get("/thermo/status", dependencies=[] if _STATUS_PUBLIC else [Depends(api_key_guard())])
+@app.get(
+    "/thermo/status", dependencies=[] if _STATUS_PUBLIC else [Depends(api_key_guard())]
+)
 @limiter.limit("60/minute")
 def get_status(request: Request) -> Dict[str, object]:
     controller = get_controller()
@@ -74,7 +79,11 @@ def get_status(request: Request) -> Dict[str, object]:
         "bottleneck_edge": controller.get_bottleneck_edge(),
         "topology_id": controller.get_topology_id(),
         "violations_total": controller.get_monotonic_violations_total(),
-        "crisis_mode": controller.telemetry_history[-1]["crisis_mode"] if controller.telemetry_history else "normal",
+        "crisis_mode": (
+            controller.telemetry_history[-1]["crisis_mode"]
+            if controller.telemetry_history
+            else "normal"
+        ),
         "H_norm": snapshot.entropy,
         "timestamp": time.time(),
     }
@@ -114,10 +123,14 @@ def reset_controller(request: Request) -> Dict[str, object]:
 
 @app.post("/thermo/override")
 @limiter.limit("60/minute")
-def manual_override(request: Request, override_request: ManualOverrideRequest) -> Dict[str, object]:
+def manual_override(
+    request: Request, override_request: ManualOverrideRequest
+) -> Dict[str, object]:
     expected_token = _get_manual_override_token()
     if not hmac.compare_digest(override_request.token, expected_token):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
 
     controller = get_controller()
     controller.manual_override(override_request.reason)

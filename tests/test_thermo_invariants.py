@@ -38,9 +38,9 @@ def test_monotonic_acceptance():
     assert tol.accepted, f"TACL gate rejected improvement: {tol.reason}"
 
     eps = c._monotonic_tolerance_budget(F_old)
-    assert F_new <= F_old + eps + 1e-12, (
-        f"Monotonicity broken: F_old={F_old}, F_new={F_new}, eps={eps}"
-    )
+    assert (
+        F_new <= F_old + eps + 1e-12
+    ), f"Monotonicity broken: F_old={F_old}, F_new={F_new}, eps={eps}"
 
 
 def test_monotonic_rejection_on_degradation():
@@ -71,6 +71,6 @@ def test_circuit_breaker_triggers_on_sustained_rise():
         # Now call control_step which will detect the sustained rise
         c.control_step()
 
-    assert c.circuit_breaker_active, (
-        "Circuit breaker did not activate on sustained rise"
-    )
+    assert (
+        c.circuit_breaker_active
+    ), "Circuit breaker did not activate on sustained rise"

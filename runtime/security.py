@@ -1,13 +1,14 @@
 """
 Minimal security helpers for FastAPI endpoints: API key check + rate limiting.
 """
+
 from __future__ import annotations
 
 import hmac
 import os
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -32,7 +33,9 @@ def api_key_guard(header_name: str = "X-THERMO-KEY"):
     async def _check(req: Request):
         received = req.headers.get(header_name)
         if not received or not _ct_equal(received, expected):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
+            )
         return True
 
     return _check
