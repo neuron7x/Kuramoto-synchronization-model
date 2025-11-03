@@ -1,14 +1,45 @@
-name: CI - Test Coverage
+name: CI
 
 on:
-  pull_request:
-    branches:
-      # Run coverage checks for every PR regardless of target branch.
-      - '**'
   push:
-    branches: [main]
+    branches: [ "main", "copilot/**" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage ruff black mypy fastapi pydantic networkx slowapi
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Type check (mypy)
+        run: mypy --ignore-missing-imports .
+
+      - name: Tests
+        env:
+          PYTHONPATH: .
+        run: |
+          coverage run -m pytest -q
+          coverage report -m
+
   test-coverage:
     runs-on: ubuntu-latest
     strategy:

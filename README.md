@@ -296,6 +296,35 @@ TACL is the self-regulating control system that manages TradePulse topology as a
   derivative, epsilon, bottleneck edge, crisis mode and activation
   history. Accessible via the FastAPI endpoints.
 
+### API Security
+
+The Thermodynamic API (`runtime/thermo_api.py`) is protected by API key authentication and rate limiting to ensure secure access to telemetry and control endpoints.
+
+**Authentication:**
+- All `/thermo/*` endpoints (except optionally `/thermo/status`) require a valid API key via the `X-THERMO-KEY` header
+- Set `THERMO_API_KEY` environment variable to enable authentication
+- Example: `curl -H "X-THERMO-KEY: your-secret-key" http://localhost:8080/thermo/status`
+
+**Rate Limiting:**
+- 60 requests per minute per client IP address
+- Protects against scraping and abuse
+- Returns HTTP 429 (Too Many Requests) when limit exceeded
+
+**Optional Public Status:**
+- Set `THERMO_STATUS_PUBLIC=true` to make `/thermo/status` publicly accessible without authentication
+- Useful for monitoring dashboards and health checks
+- Default is secure (authentication required)
+
+**Local Development Setup:**
+```bash
+# Set API key for local testing
+export THERMO_API_KEY="dev-secret-key-change-in-production"
+export THERMO_STATUS_PUBLIC="false"  # Secure by default
+
+# Start the API server
+python -m runtime.thermo_api
+```
+
 ### Validation & Testing
 
 - Unit tests cover the link activator, recovery agent and controller

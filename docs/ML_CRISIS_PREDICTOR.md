@@ -32,15 +32,19 @@ The ML Crisis Predictor must satisfy the following operational requirements to e
 System entropy is computed as the normalized Shannon entropy of bond type distribution across the topology graph:
 
 ```
-entropy = -Σ(p_i * log(p_i)) / log(n)
+H_norm = -Σ(p_i * log(p_i)) / log(n)
 ```
 
-**Operational Thresholds:**
-- **Normal**: entropy < 0.7
-- **Elevated**: 0.7 ≤ entropy < 2.0
-- **Crisis**: entropy ≥ 2.0
+where `p_i` is the proportion of edges with bond type i, and `n` is the number of distinct bond types present.
 
-High entropy (≥ 2.0) indicates excessive diversity in bond types, which correlates with unstable or poorly optimized system configurations. During crisis injection for validation, synthetic topologies are generated with entropy > 2.0 to simulate chaotic system states.
+**Operational Thresholds:**
+- **Normal**: H_norm < 0.7
+- **Elevated**: 0.7 ≤ H_norm < 0.9
+- **Crisis**: H_norm ≥ 0.9
+
+High entropy (≥ 0.9) indicates excessive diversity in bond types, which correlates with unstable or poorly optimized system configurations. During crisis injection for validation, synthetic topologies are generated with entropy approaching 1.0 to simulate chaotic system states.
+
+The normalized entropy is bounded to [0, 1], with 0 representing perfect homogeneity (all edges of one bond type) and 1 representing maximum disorder (uniform distribution across all bond types). See ADR-001 for detailed formulation and rationale.
 
 #### 3. Latency Spike Detection
 
@@ -94,7 +98,7 @@ For crisis scenarios (50% of test cases):
 
 2. **Entropy Maximization**:
    - Randomly assign bond types across full spectrum (covalent, ionic, metallic, vdw, hydrogen)
-   - Maximizes Shannon entropy to achieve values > 2.0
+   - Maximizes Shannon entropy to achieve values approaching 1.0
    - Simulates topology chaos, excessive bond diversity
 
 3. **Free Energy Perturbation**:
@@ -168,8 +172,8 @@ Based on validation runs with seed=42 and num_scenarios=100:
 - False Negative Rate: 20-35% (median ~25%)
 
 **Scenario Characteristics:**
-- Crisis scenarios: latency_mean ≥ 1.1, entropy > 2.0
-- Normal scenarios: latency_mean < 1.0, entropy < 0.7
+- Crisis scenarios: latency_mean ≥ 1.1, H_norm approaching 1.0
+- Normal scenarios: latency_mean < 1.0, H_norm < 0.7
 - Clear separation in latency distributions between crisis and normal
 
 ### Validation Criteria for Production Release

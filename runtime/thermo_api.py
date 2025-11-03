@@ -7,14 +7,22 @@ import time
 from typing import Dict, Optional
 
 import networkx as nx
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from pydantic import BaseModel
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from runtime.security import api_key_guard, limiter
 from runtime.thermo_controller import ThermoController
 
 app = FastAPI(title="TradePulse Thermodynamic API", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _controller: Optional[ThermoController] = None
+
+# Flag to optionally keep /thermo/status public
+_STATUS_PUBLIC = os.getenv("THERMO_STATUS_PUBLIC", "false").lower() == "true"
 
 
 def _build_default_graph() -> nx.DiGraph:
@@ -53,9 +61,11 @@ def _get_manual_override_token() -> str:
     return token
 
 
-@app.get("/thermo/status")
-def get_status() -> Dict[str, object]:
+@app.get("/thermo/status", dependencies=[] if _STATUS_PUBLIC else [Depends(api_key_guard())])
+@limiter.limit("60/minute")
+def get_status(request: Request) -> Dict[str, object]:
     controller = get_controller()
+    snapshot = controller._latest_snapshot
     return {
         "current_F": controller.get_current_F(),
         "dF_dt": controller.get_dF_dt(),
@@ -65,46 +75,52 @@ def get_status() -> Dict[str, object]:
         "topology_id": controller.get_topology_id(),
         "violations_total": controller.get_monotonic_violations_total(),
         "crisis_mode": controller.telemetry_history[-1]["crisis_mode"] if controller.telemetry_history else "normal",
+        "H_norm": snapshot.entropy,
         "timestamp": time.time(),
     }
 
 
-@app.get("/thermo/history")
-def get_history(limit: int = 100) -> Dict[str, object]:
+@app.get("/thermo/history", dependencies=[Depends(api_key_guard())])
+@limiter.limit("60/minute")
+def get_history(request: Request, limit: int = 100) -> Dict[str, object]:
     controller = get_controller()
     records = controller.telemetry_history[-limit:]
     return {"records": records, "count": len(records)}
 
 
-@app.get("/thermo/crisis")
-def get_crisis_stats() -> Dict[str, object]:
+@app.get("/thermo/crisis", dependencies=[Depends(api_key_guard())])
+@limiter.limit("60/minute")
+def get_crisis_stats(request: Request) -> Dict[str, object]:
     controller = get_controller()
     return controller.crisis_ga.get_crisis_statistics()
 
 
-@app.get("/thermo/activations")
-def get_activations(limit: int = 50) -> Dict[str, object]:
+@app.get("/thermo/activations", dependencies=[Depends(api_key_guard())])
+@limiter.limit("60/minute")
+def get_activations(request: Request, limit: int = 50) -> Dict[str, object]:
     controller = get_controller()
     activations = controller.link_activator.get_activation_history()[-limit:]
     total_cost = controller.link_activator.get_total_cost()
     return {"activations": activations, "total_cost": total_cost}
 
 
-@app.post("/thermo/reset")
-def reset_controller() -> Dict[str, object]:
+@app.post("/thermo/reset", dependencies=[Depends(api_key_guard())])
+@limiter.limit("60/minute")
+def reset_controller(request: Request) -> Dict[str, object]:
     global _controller
     _controller = ThermoController(_build_default_graph())
     return {"status": "reset", "timestamp": time.time()}
 
 
 @app.post("/thermo/override")
-def manual_override(request: ManualOverrideRequest) -> Dict[str, object]:
+@limiter.limit("60/minute")
+def manual_override(request: Request, override_request: ManualOverrideRequest) -> Dict[str, object]:
     expected_token = _get_manual_override_token()
-    if not hmac.compare_digest(request.token, expected_token):
+    if not hmac.compare_digest(override_request.token, expected_token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     controller = get_controller()
-    controller.manual_override(request.reason)
+    controller.manual_override(override_request.reason)
     return {"status": "override_accepted", "timestamp": time.time()}
 
 
