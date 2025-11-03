@@ -133,12 +133,34 @@ def compute_hierarchical_features(
         name: _ensure_datetime_index(frame)
         for name, frame in ohlcv_by_tf.items()
     }
+    max_samples = max(frame.index.size for frame in prepared.values())
     ref_frame = prepared[reference]
     ref_index = ref_frame.index.asi8
     sample_count = ref_index.size
     if sample_count == 0:
         raise ValueError("reference timeframe must contain data")
     features: Dict[str, Dict[str, float]] = {}
+    returns_buffer = cache.buffer(
+        "shared:returns_source", (max_samples,), dtype=np.float32
+    )
+    phase_buffer = cache.buffer(
+        "shared:phase_source", (max_samples,), dtype=np.float32
+    )
+    cos_buffer = cache.buffer(
+        "shared:phase_cos", (max_samples,), dtype=np.float32
+    )
+    sin_buffer = cache.buffer(
+        "shared:phase_sin", (max_samples,), dtype=np.float32
+    )
+    finite_mask = cache.buffer(
+        "shared:phase_finite", (max_samples,), dtype=bool
+    )
+    hurst_scratch_buffer = cache.buffer(
+        "shared:hurst_diff", (max_samples,), dtype=np.float32
+    )
+    hurst_tau_buffer = cache.buffer(
+        "shared:hurst_tau", (_DEFAULT_LAGS.size,), dtype=np.float32
+    )
     agg_cos = cache.buffer("phase_accum_cos", (sample_count,))
     agg_sin = cache.buffer("phase_accum_sin", (sample_count,))
     agg_counts = cache.buffer("phase_accum_counts", (sample_count,), dtype=np.int32)
@@ -151,7 +173,7 @@ def compute_hierarchical_features(
             features[name] = {"entropy": 0.0, "hurst": 0.5, "kuramoto": 0.0}
             continue
 
-        returns_source = cache.buffer(f"{name}:returns_source", (close_src.size,))
+        returns_source = returns_buffer[: close_src.size]
         returns_source.fill(0.0)
         if close_src.size > 1:
             np.subtract(close_src[1:], close_src[:-1], out=returns_source[1:])
@@ -159,21 +181,21 @@ def compute_hierarchical_features(
         phase_source = compute_phase(
             returns_source,
             use_float32=True,
-            out=cache.buffer(f"{name}:phase_source", (close_src.size,)),
+            out=phase_buffer[: close_src.size],
         )
-        finite_source = np.isfinite(phase_source)
+        finite_source = np.isfinite(phase_source, out=finite_mask[: close_src.size])
 
-        cos_buffer = cache.buffer(f"{name}:phase_cos", (close_src.size,))
-        sin_buffer = cache.buffer(f"{name}:phase_sin", (close_src.size,))
-        cos_buffer.fill(0.0)
-        sin_buffer.fill(0.0)
-        np.cos(phase_source, out=cos_buffer, where=finite_source)
-        np.sin(phase_source, out=sin_buffer, where=finite_source)
+        cos_view = cos_buffer[: close_src.size]
+        sin_view = sin_buffer[: close_src.size]
+        cos_view.fill(0.0)
+        sin_view.fill(0.0)
+        np.cos(phase_source, out=cos_view, where=finite_source)
+        np.sin(phase_source, out=sin_view, where=finite_source)
 
         finite_count = int(finite_source.sum(dtype=np.int32))
         if finite_count:
-            cos_valid = cos_buffer[finite_source]
-            sin_valid = sin_buffer[finite_source]
+            cos_valid = cos_view[finite_source]
+            sin_valid = sin_view[finite_source]
             local_sum_real = float(np.add.reduce(cos_valid, dtype=np.float64))
             local_sum_imag = float(np.add.reduce(sin_valid, dtype=np.float64))
             local_magnitude = (
@@ -194,8 +216,8 @@ def compute_hierarchical_features(
                 if np.any(finite_aligned):
                     aligned_indices = src_positions[finite_aligned]
                     bins = ref_positions[finite_aligned]
-                    cos_aligned = cos_buffer[aligned_indices]
-                    sin_aligned = sin_buffer[aligned_indices]
+                    cos_aligned = cos_view[aligned_indices]
+                    sin_aligned = sin_view[aligned_indices]
                     unique_bins, first_idx, counts = np.unique(
                         bins, return_index=True, return_counts=True
                     )
@@ -205,8 +227,8 @@ def compute_hierarchical_features(
                     agg_sin[unique_bins] += sin_sums
                     agg_counts[unique_bins] += counts.astype(np.int32, copy=False)
 
-        hurst_scratch = cache.buffer(f"{name}:hurst_diff", (close_src.size,))
-        hurst_tau = cache.buffer(f"{name}:hurst_tau", (_DEFAULT_LAGS.size,))
+        hurst_scratch = hurst_scratch_buffer[: close_src.size]
+        hurst_tau = hurst_tau_buffer[: _DEFAULT_LAGS.size]
         features[name] = {
             "entropy": _shannon_entropy(returns_source),
             "hurst": float(
