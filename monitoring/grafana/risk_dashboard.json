@@ -1,0 +1,351 @@
+{
+  "dashboard": {
+    "title": "TradePulse Risk Controls",
+    "tags": ["risk", "compliance", "trading"],
+    "timezone": "utc",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Kill Switch Status",
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "tradepulse_risk_kill_switch{env=\"prod\"}",
+            "refId": "A",
+            "legendFormat": "Kill Switch"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "0": {
+                    "text": "DISABLED",
+                    "color": "green"
+                  },
+                  "1": {
+                    "text": "ENABLED",
+                    "color": "red"
+                  }
+                }
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "green"
+                },
+                {
+                  "value": 1,
+                  "color": "red"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Circuit Breaker State",
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "tradepulse_risk_circuit_state{state=\"open\"}",
+            "refId": "A",
+            "legendFormat": "Open"
+          },
+          {
+            "expr": "tradepulse_risk_circuit_state{state=\"half_open\"}",
+            "refId": "B",
+            "legendFormat": "Half-Open"
+          },
+          {
+            "expr": "tradepulse_risk_circuit_state{state=\"closed\"}",
+            "refId": "C",
+            "legendFormat": "Closed"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "grey"
+                },
+                {
+                  "value": 1,
+                  "color": "green"
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Open"
+              },
+              "properties": [
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "grey"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Half-Open"
+              },
+              "properties": [
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "grey"
+                      },
+                      {
+                        "value": 1,
+                        "color": "yellow"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 3,
+        "title": "Gross Exposure",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 4
+        },
+        "targets": [
+          {
+            "expr": "tradepulse_risk_gross_exposure{env=\"prod\"}",
+            "refId": "A",
+            "legendFormat": "Gross Exposure"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "currencyUSD",
+            "label": "Exposure ($)"
+          },
+          {
+            "format": "short"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        }
+      },
+      {
+        "id": 4,
+        "title": "Daily Drawdown",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 4
+        },
+        "targets": [
+          {
+            "expr": "tradepulse_risk_daily_drawdown{env=\"prod\", mode=\"percent\"}",
+            "refId": "A",
+            "legendFormat": "Drawdown ({{mode}})"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percentunit",
+            "label": "Drawdown"
+          },
+          {
+            "format": "short"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        }
+      },
+      {
+        "id": 5,
+        "title": "Risk Rejections (Last 1h)",
+        "type": "table",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 12
+        },
+        "targets": [
+          {
+            "expr": "sum by (reason) (increase(tradepulse_risk_rejections_total[1h]))",
+            "refId": "A",
+            "legendFormat": "{{reason}}",
+            "instant": false,
+            "range": true
+          }
+        ],
+        "options": {
+          "showHeader": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": null,
+                  "color": "green"
+                },
+                {
+                  "value": 10,
+                  "color": "yellow"
+                },
+                {
+                  "value": 50,
+                  "color": "red"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Circuit Breaker Trips (Last 1h)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 12
+        },
+        "targets": [
+          {
+            "expr": "sum by (reason) (increase(tradepulse_risk_circuit_trips_total[1h]))",
+            "refId": "A",
+            "legendFormat": "{{reason}}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Trips"
+          },
+          {
+            "format": "short"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        }
+      },
+      {
+        "id": 7,
+        "title": "Open Orders Count",
+        "type": "graph",
+        "gridPos": {
+          "h": 6,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        },
+        "targets": [
+          {
+            "expr": "tradepulse_risk_open_orders{env=\"prod\"}",
+            "refId": "A",
+            "legendFormat": "Open Orders"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Count"
+          },
+          {
+            "format": "short"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        }
+      },
+      {
+        "id": 8,
+        "title": "Last Trip Reason",
+        "type": "text",
+        "gridPos": {
+          "h": 6,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        },
+        "options": {
+          "mode": "markdown",
+          "content": "**Last Trip Reason:**\n\nQuery `/admin/risk/state` endpoint to view the last trip reason and timestamp.\n\nExample:\n```\ncurl -H 'Authorization: Bearer $TOKEN' https://api.tradepulse.example.com/admin/risk/state\n```"
+        }
+      }
+    ]
+  }
+}
