@@ -166,8 +166,9 @@ class EEPFractalRegulator:
             # Estimate spectral slope
             n = len(data)
             lags = np.arange(1, min(n // 2, 50))
-            autocorr = np.array([np.corrcoef(data[:-lag], data[lag:])[0, 1]
-                                for lag in lags if lag < n])
+            autocorr = np.array(
+                [np.corrcoef(data[:-lag], data[lag:])[0, 1] for lag in lags if lag < n]
+            )
 
             if len(autocorr) < 3 or not np.any(np.isfinite(autocorr)):
                 return 1.0
@@ -215,7 +216,9 @@ class EEPFractalRegulator:
                 mid = len(data) // 2
                 first_half_mean = np.mean(data[:mid])
                 second_half_mean = np.mean(data[mid:])
-                regime_shift = abs(first_half_mean - second_half_mean) / (volatility + 1e-10)
+                regime_shift = abs(first_half_mean - second_half_mean) / (
+                    volatility + 1e-10
+                )
                 regime_component = np.exp(-regime_shift)
             else:
                 regime_component = 1.0
@@ -264,8 +267,8 @@ class EEPFractalRegulator:
             if csi < self.crisis_threshold:
                 # Crisis mode: apply energy damping
                 damped_efficiency = (
-                    current_efficiency * self.energy_damping +
-                    self._last_efficiency * (1 - self.energy_damping)
+                    current_efficiency * self.energy_damping
+                    + self._last_efficiency * (1 - self.energy_damping)
                 )
             else:
                 damped_efficiency = current_efficiency
@@ -342,9 +345,11 @@ class EEPFractalRegulator:
             results.append(metrics)
 
             if verbose:
-                print(f"Step {i+1}: state={metrics.state:.3f}, "
-                      f"H={metrics.hurst:.3f}, PLE={metrics.ple:.3f}, "
-                      f"CSI={metrics.csi:.3f}, energy={metrics.energy_cost:.3f}")
+                print(
+                    f"Step {i + 1}: state={metrics.state:.3f}, "
+                    f"H={metrics.hurst:.3f}, PLE={metrics.ple:.3f}, "
+                    f"CSI={metrics.csi:.3f}, energy={metrics.energy_cost:.3f}"
+                )
 
         return results
 

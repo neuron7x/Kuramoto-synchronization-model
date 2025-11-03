@@ -29,6 +29,7 @@ from domain import Order
 from execution.connectors import BinanceConnector, CoinbaseConnector
 from execution.risk import RiskLimits
 
+
 def build_tradepulse_system(
     venues: Sequence[ExchangeAdapterConfig] | None = None,
     *,
@@ -68,7 +69,7 @@ def build_tradepulse_system(
 
 class TradePulseOrchestrator:
     """High-level façade that wires ingestion, analytics, and execution.
-    
+
     Supports optional fractal regulator for adaptive crisis handling and
     system health monitoring.
     """
@@ -87,17 +88,17 @@ class TradePulseOrchestrator:
         self._market_data = self._services.market_data
         self._backtesting = self._services.backtesting
         self._execution = self._services.execution
-        
+
         # Initialize optional fractal regulator for crisis handling
         self._fractal_regulator: EEPFractalRegulator | None = None
         if enable_fractal_regulator:
             config = regulator_config or {}
             self._fractal_regulator = EEPFractalRegulator(
-                window_size=config.get('window_size', 100),
-                embodied_baseline=config.get('embodied_baseline', 1.0),
-                crisis_threshold=config.get('crisis_threshold', 0.3),
-                energy_damping=config.get('energy_damping', 0.9),
-                seed=config.get('seed'),
+                window_size=config.get("window_size", 100),
+                embodied_baseline=config.get("embodied_baseline", 1.0),
+                crisis_threshold=config.get("crisis_threshold", 0.3),
+                energy_damping=config.get("energy_damping", 0.9),
+                seed=config.get("seed"),
             )
         self._crisis_callback = None
 
@@ -163,15 +164,15 @@ class TradePulseOrchestrator:
     @property
     def fractal_regulator(self) -> EEPFractalRegulator | None:
         """Expose the fractal regulator if enabled."""
-        
+
         return self._fractal_regulator
 
     def set_crisis_callback(self, callback: callable) -> None:
         """Set a callback to be invoked when crisis is detected.
-        
+
         Args:
             callback: Function taking RegulatorMetrics as argument
-            
+
         Example:
             >>> def on_crisis(metrics):
             ...     print(f"Crisis detected! CSI={metrics.csi}")
@@ -181,16 +182,16 @@ class TradePulseOrchestrator:
 
     def update_system_health(self, signal: float) -> RegulatorMetrics | None:
         """Update system health monitor with a signal value.
-        
+
         Args:
             signal: System health signal (e.g., latency, error rate, composite metric)
-            
+
         Returns:
             RegulatorMetrics if regulator is enabled, None otherwise
-            
+
         Raises:
             ValueError: If signal is not finite
-            
+
         Example:
             >>> metrics = orchestrator.update_system_health(0.5)
             >>> if metrics and metrics.csi < 0.3:
@@ -198,18 +199,18 @@ class TradePulseOrchestrator:
         """
         if self._fractal_regulator is None:
             return None
-            
+
         metrics = self._fractal_regulator.update_state(signal)
-        
+
         # Invoke crisis callback if in crisis
         if self._crisis_callback and self._fractal_regulator.is_in_crisis():
             self._crisis_callback(metrics)
-            
+
         return metrics
 
     def is_system_in_crisis(self) -> bool:
         """Check if system is currently in crisis state.
-        
+
         Returns:
             True if fractal regulator is enabled and detects crisis, False otherwise
         """
@@ -219,7 +220,7 @@ class TradePulseOrchestrator:
 
     def get_system_health_metrics(self) -> RegulatorMetrics | None:
         """Get current system health metrics without updating state.
-        
+
         Returns:
             Current RegulatorMetrics if regulator is enabled, None otherwise
         """
