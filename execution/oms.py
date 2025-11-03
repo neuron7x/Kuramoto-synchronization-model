@@ -78,11 +78,15 @@ class OrderManagementSystem:
         compliance_monitor: ComplianceMonitor | None = None,
         audit_logger: ExecutionAuditLogger | None = None,
         lifecycle: OrderLifecycle | None = None,
+        risk_compliance: object | None = None,
+        circuit_breaker: object | None = None,
     ) -> None:
         self.connector = connector
         self.risk = risk_controller
         self.config = config
         self._compliance = compliance_monitor
+        self._risk_compliance = risk_compliance
+        self._circuit_breaker = circuit_breaker
         self._queue: Deque[QueuedOrder] = deque()
         self._orders: MutableMapping[str, Order] = {}
         self._processed: Dict[str, str] = {}
@@ -432,6 +436,99 @@ class OrderManagementSystem:
                             "Compliance check blocked order", report=report
                         )
 
+            if self._circuit_breaker is not None:
+                if not self._circuit_breaker.can_execute():
+                    reason = "Circuit breaker is OPEN"
+                    last_trip = self._circuit_breaker.get_last_trip_reason()
+                    if last_trip:
+                        reason = f"{reason}: {last_trip}"
+                    ttl = self._circuit_breaker.get_time_until_recovery()
+                    order.reject(reason)
+                    self._record_ledger_event(
+                        "risk_blocked",
+                        order=order,
+                        correlation_id=correlation_id,
+                        metadata={
+                            "reason": reason,
+                            "circuit_state": "open",
+                            "ttl_seconds": ttl,
+                        },
+                    )
+                    self._emit_risk_audit(order, correlation_id, reason, {"ttl_seconds": ttl})
+                    raise ComplianceViolation(reason)
+
+            if self._risk_compliance is not None:
+                reference_price = (
+                    order.price
+                    if order.price is not None
+                    else max(order.average_price or 0.0, 1.0)
+                )
+
+                positions = {}
+                gross_exposure = 0.0
+                equity = 0.0
+                peak_equity = 0.0
+
+                if hasattr(self.risk, "current_position"):
+                    try:
+                        positions = {
+                            symbol: self.risk.current_position(symbol)
+                            for symbol in [order.symbol]
+                        }
+                    except Exception:
+                        pass
+
+                if hasattr(self.risk, "_gross_notional"):
+                    try:
+                        gross_exposure = self.risk._gross_notional
+                    except Exception:
+                        pass
+
+                if hasattr(self.risk, "_balance"):
+                    try:
+                        equity = self.risk._balance
+                        peak_equity = getattr(self.risk, "_peak_equity", equity)
+                    except Exception:
+                        pass
+
+                portfolio_state = {
+                    "positions": positions,
+                    "gross_exposure": gross_exposure,
+                    "equity": equity,
+                    "peak_equity": peak_equity,
+                }
+                market_data = {"price": reference_price}
+
+                risk_decision = self._risk_compliance.check_order(
+                    order, market_data, portfolio_state
+                )
+
+                if not risk_decision.allowed:
+                    order.reject("RISK_LIMIT_BREACH")
+                    self._record_ledger_event(
+                        "risk_blocked",
+                        order=order,
+                        correlation_id=correlation_id,
+                        metadata={
+                            "reasons": risk_decision.reasons,
+                            "breached_limits": risk_decision.breached_limits,
+                        },
+                    )
+                    self._emit_risk_audit(
+                        order,
+                        correlation_id,
+                        "; ".join(risk_decision.reasons),
+                        risk_decision.breached_limits,
+                    )
+
+                    if self._circuit_breaker is not None:
+                        for reason in risk_decision.reasons:
+                            self._circuit_breaker.record_risk_breach(reason)
+
+                    raise ComplianceViolation(
+                        f"Risk limit breach: {'; '.join(risk_decision.reasons)}"
+                    )
+
             reference_price = (
                 order.price
                 if order.price is not None
@@ -483,6 +580,29 @@ class OrderManagementSystem:
             payload["report"] = None
             status = "blocked" if error else "passed"
         payload["status"] = status
+        self._audit.emit(payload)
+
+    def _emit_risk_audit(
+        self,
+        order: Order,
+        correlation_id: str,
+        reason: str,
+        breached_limits: dict,
+    ) -> None:
+        """Emit structured audit log for risk rejection."""
+        payload = {
+            "event": "risk_check",
+            "symbol": order.symbol,
+            "side": order.side.value,
+            "quantity": float(order.quantity),
+            "price": None if order.price is None else float(order.price),
+            "order_id": order.order_id,
+            "correlation_id": correlation_id,
+            "status": "blocked",
+            "reason": reason,
+            "breached_limits": breached_limits,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
         self._audit.emit(payload)
 
     def _place_order_with_timeout(self, order: Order, correlation_id: str) -> Order:

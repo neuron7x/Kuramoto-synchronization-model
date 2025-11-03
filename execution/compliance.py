@@ -203,7 +203,7 @@ class RiskCompliance:
                     allowed=False,
                     reasons=tuple(reasons),
                     breached_limits=breached,
-                    next_reset=next_reset,
+                    next_reset_at=next_reset,
                 )
 
             price = market_data.get("price", order.price)
