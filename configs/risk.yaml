@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Risk controls configuration for TradePulse
+#
+# These settings define the risk limits, circuit breaker behavior,
+# and kill-switch controls for pre-trade order validation.
+#
+# Environment variable overrides:
+#   RISK_KILL_SWITCH: Set to "true" to enable global kill switch
+#   RISK_MAX_NOTIONAL_PER_ORDER: Maximum notional per order
+#   RISK_MAX_GROSS_EXPOSURE: Maximum gross portfolio exposure
+#   RISK_DAILY_MAX_DRAWDOWN_THRESHOLD: Daily drawdown limit
+#   RISK_CIRCUIT_BREAKER_ENABLED: Enable circuit breaker
+
+risk:
+  # Global kill switch - blocks ALL new orders when enabled
+  # Can be toggled via admin API endpoint
+  kill_switch: false
+
+  # Maximum notional value per single order
+  # Set to 0 to disable this check
+  max_notional_per_order: 0
+
+  # Per-symbol position limits
+  per_symbol_position_cap:
+    # Type: "units" (absolute position size) or "notional" (position value)
+    type: units
+    # Default cap applied to all symbols (0 = disabled)
+    default: 0
+    # Symbol-specific overrides (optional)
+    overrides: {}
+      # Example:
+      # BTC/USD: 10.0
+      # ETH/USD: 100.0
+
+  # Maximum gross exposure (sum of absolute notional positions)
+  # Set to 0 to disable this check
+  max_gross_exposure: 0
+
+  # Daily drawdown limit
+  daily_max_drawdown:
+    # Mode: "percent" (percentage of peak) or "notional" (absolute amount)
+    mode: percent
+    # Threshold: 0.10 = 10% drawdown limit
+    threshold: 0.10
+    # Window: "daily" (resets at UTC midnight)
+    window: daily
+
+  # Maximum open orders per account (flood protection)
+  # Set to 0 to disable this check
+  max_open_orders_per_account: 0
+
+  # Circuit breaker configuration
+  circuit_breaker:
+    # Number of risk breaches to trip the circuit breaker
+    breaches_threshold: 5
+    # Time window (seconds) for counting breaches
+    window_seconds: 300
+    # Cool-down period (seconds) before attempting recovery
+    cool_down_seconds: 600
+    # Maximum calls allowed in half-open state
+    half_open_max_calls: 3
