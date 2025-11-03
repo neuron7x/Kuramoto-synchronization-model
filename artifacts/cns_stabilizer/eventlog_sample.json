@@ -1,0 +1,16 @@
+{
+  "epoch": 1,
+  "ga_phase": "sample",
+  "data": {
+    "delta_f": 0.3442917483074525,
+    "phase": "stable",
+    "action": "pass",
+    "integrity": 0.0,
+    "margin": 0.0,
+    "threshold_after_pid": 0.633716699322981,
+    "chunk_size": 128,
+    "processed_samples": 127,
+    "latency": 0.009057044982910156
+  },
+  "timestamp": 1762098686.820971
+}

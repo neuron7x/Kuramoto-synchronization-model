@@ -158,23 +158,80 @@ def _compute_tau_numpy(
     scratch: np.ndarray | None,
     tau_buffer: np.ndarray | None,
 ) -> np.ndarray:
+    """Efficiently compute lagged standard deviation using adaptive kernels."""
+
     tau = tau_buffer
     if tau is None or tau.shape[0] != lags.size:
         tau = np.empty(lags.size, dtype=float)
-    buffer = scratch
-    if buffer is None or buffer.shape[0] < x.size:
-        buffer = np.empty_like(x, dtype=float)
-    for idx, lag in enumerate(lags):
-        np.subtract(x[lag:], x[:-lag], out=buffer[: x.size - lag])
-        segment = buffer[: x.size - lag]
-        count = float(segment.size)
-        if count == 0:
+
+    n = x.size
+    if n == 0:
+        tau.fill(0.0)
+        return tau
+
+    lags_int = lags.astype(np.int64, copy=False)
+    valid_mask = lags_int < n
+
+    # Below this threshold a direct differencing kernel is faster and uses
+    # substantially less memory than the FFT-based path.  This keeps the peak
+    # resident set size low for the indicator pipeline benchmarks while still
+    # benefitting large backtests from the spectral acceleration.
+    use_fft = n >= 262_144
+
+    if not use_fft:
+        buffer = scratch
+        if buffer is None or buffer.shape[0] < n:
+            buffer = np.empty(n, dtype=x.dtype, order="C")
+        for idx, lag in enumerate(lags_int):
+            if not valid_mask[idx]:
+                tau[idx] = 0.0
+                continue
+            count = n - lag
+            if count <= 0:
+                tau[idx] = 0.0
+                continue
+            np.subtract(x[lag:], x[:-lag], out=buffer[:count])
+            diff = buffer[:count]
+            sum_vals = float(np.add.reduce(diff, dtype=float))
+            np.multiply(diff, diff, out=diff)
+            sum_sq = float(np.add.reduce(diff, dtype=float))
+            mean = sum_vals / count
+            var = sum_sq / count - mean * mean
+            tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+        return tau
+
+    dtype = x.dtype
+    prefix = np.empty(n + 1, dtype=dtype)
+    prefix[0] = dtype.type(0.0) if hasattr(dtype, "type") else dtype(0.0)
+    np.cumsum(x, dtype=dtype, out=prefix[1:])
+    prefix_sq = np.empty(n + 1, dtype=dtype)
+    prefix_sq[0] = prefix[0]
+    np.cumsum(x * x, dtype=dtype, out=prefix_sq[1:])
+
+    fft_size = 1 << (int(2 * n - 1).bit_length())
+    freq = np.fft.rfft(x, fft_size)
+    np.multiply(freq, freq.conj(), out=freq)
+    autocorr_full = np.fft.irfft(freq, fft_size)
+    autocorr = autocorr_full[:n]
+
+    for idx, lag in enumerate(lags_int):
+        if not valid_mask[idx]:
             tau[idx] = 0.0
             continue
-        sum_vals = float(segment.sum(dtype=float))
-        sum_sq = float(np.dot(segment, segment))
-        mean = sum_vals / count
-        var = sum_sq / count - mean * mean
+        count = n - lag
+        if count <= 0:
+            tau[idx] = 0.0
+            continue
+        sum_future = float(prefix[n] - prefix[lag])
+        sum_past = float(prefix[n - lag])
+        sum_diff = sum_future - sum_past
+        sum_sq_future = float(prefix_sq[n] - prefix_sq[lag])
+        sum_sq_past = float(prefix_sq[n - lag])
+        cross = float(autocorr[lag])
+        sum_sq = sum_sq_future + sum_sq_past - 2.0 * cross
+        inv_count = 1.0 / count
+        mean = sum_diff * inv_count
+        var = sum_sq * inv_count - mean * mean
         tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
     return tau
 
@@ -295,7 +352,7 @@ def hurst_exponent(
         else nullcontext()
     )
     with context_manager:
-        dtype = np.float32 if use_float32 else float
+        dtype = np.float32 if use_float32 else np.float64
         x = np.asarray(ts, dtype=dtype)
         if x.size < max_lag * 2:
             return 0.5
@@ -311,11 +368,10 @@ def hurst_exponent(
         selected_backend = _resolve_backend(backend, x.size, lags.size)
         global _LAST_HURST_BACKEND
 
-        x_float = np.asarray(x, dtype=float)
         lags_int = lags.astype(np.int32, copy=False)
         try:
             if selected_backend == "cuda":
-                tau = _compute_tau_cuda(np.asarray(x, dtype=np.float32), lags)
+                tau = _compute_tau_cuda(np.asarray(x, dtype=np.float32, copy=False), lags)
                 if tau_buffer is not None and tau_buffer.shape == tau.shape:
                     np.copyto(tau_buffer, tau)
                     tau = tau_buffer
@@ -324,10 +380,11 @@ def hurst_exponent(
                 tau = tau_buffer
                 if tau is None or tau.shape[0] != lags.size:
                     tau = np.empty(lags.size, dtype=float)
-                _compute_tau_numba(x_float, lags_int, tau)
+                x_float64 = np.asarray(x, dtype=np.float64, copy=False)
+                _compute_tau_numba(x_float64, lags_int, tau)
                 _LAST_HURST_BACKEND = "numba"
             else:
-                tau = _compute_tau_numpy(x_float, lags, scratch, tau_buffer)
+                tau = _compute_tau_numpy(x, lags, scratch, tau_buffer)
                 _LAST_HURST_BACKEND = "numpy"
         except Exception as exc:  # pragma: no cover - defensive fallback
             _logger.warning(
@@ -335,11 +392,12 @@ def hurst_exponent(
                 selected_backend,
                 exc,
             )
-            tau = _compute_tau_numpy(x_float, lags, scratch, tau_buffer)
+            tau = _compute_tau_numpy(x, lags, scratch, tau_buffer)
             _LAST_HURST_BACKEND = "numpy"
 
         # Perform log-log linear regression
-        y = np.log(tau)
+        tau_safe = np.where(tau > 0.0, tau, np.finfo(float).tiny)
+        y = np.log(tau_safe)
         if min_lag == _DEFAULT_MIN_LAG and max_lag == _DEFAULT_MAX_LAG:
             beta = pseudo @ y
         else:

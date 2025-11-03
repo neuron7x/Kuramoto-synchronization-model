@@ -1,0 +1,80 @@
+{
+  "0": {
+    "name": "normal",
+    "suppression_accuracy": 1.0,
+    "false_deny_rate": 0.0,
+    "mse": 10697.404097700122,
+    "latency_ms": 42.70946979522705,
+    "monotonic_rate": 1.0,
+    "integrity_ratio": 0.12123115689065361,
+    "phase_accuracy": 1.0,
+    "ga_gain": 0.4,
+    "micro_recovery_count": 0.0,
+    "veto_rate": 0.0
+  },
+  "1": {
+    "name": "normal_2",
+    "suppression_accuracy": 1.0,
+    "false_deny_rate": 0.0,
+    "mse": 10055.212313922195,
+    "latency_ms": 41.167765855789185,
+    "monotonic_rate": 1.0,
+    "integrity_ratio": 0.2326363437832345,
+    "phase_accuracy": 1.0,
+    "ga_gain": 0.4,
+    "micro_recovery_count": 0.0,
+    "veto_rate": 0.0
+  },
+  "2": {
+    "name": "spike",
+    "suppression_accuracy": 1.0,
+    "false_deny_rate": 0.0,
+    "mse": 10523.643264792296,
+    "latency_ms": 35.39128303527832,
+    "monotonic_rate": 1.0,
+    "integrity_ratio": 0.2124944992909779,
+    "phase_accuracy": 1.0,
+    "ga_gain": 0.25,
+    "micro_recovery_count": 0.0,
+    "veto_rate": 0.375
+  },
+  "3": {
+    "name": "spike_2",
+    "suppression_accuracy": 1.0,
+    "false_deny_rate": 0.0,
+    "mse": 9990.05111380374,
+    "latency_ms": 41.22251272201538,
+    "monotonic_rate": 1.0,
+    "integrity_ratio": 0.16985559706374048,
+    "phase_accuracy": 1.0,
+    "ga_gain": 0.4,
+    "micro_recovery_count": 0.0,
+    "veto_rate": 0.0
+  },
+  "4": {
+    "name": "flash_crash",
+    "suppression_accuracy": 1.0,
+    "false_deny_rate": 0.0,
+    "mse": 7276.624353120353,
+    "latency_ms": 40.846675634384155,
+    "monotonic_rate": 1.0,
+    "integrity_ratio": 0.09461159762284987,
+    "phase_accuracy": 1.0,
+    "ga_gain": 0.4,
+    "micro_recovery_count": 0.0,
+    "veto_rate": 0.0
+  },
+  "mean": {
+    "name": NaN,
+    "suppression_accuracy": 1.0,
+    "false_deny_rate": 0.0,
+    "mse": 9708.587028667742,
+    "latency_ms": 40.26754140853882,
+    "monotonic_rate": 1.0,
+    "integrity_ratio": 0.16616583893029127,
+    "phase_accuracy": 1.0,
+    "ga_gain": 0.37,
+    "micro_recovery_count": 0.0,
+    "veto_rate": 0.075
+  }
+}
