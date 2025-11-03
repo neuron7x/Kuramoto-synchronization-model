@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple
 
+from .neuro_trade_pulse import NeuroTradePulseConfig, NeuroTradePulseStrategy
 from .registry import (
     StrategyRegistry,
     StrategySpec,
@@ -40,6 +41,8 @@ register_strategy(
 
 
 __all__ = [
+    "NeuroTradePulseConfig",
+    "NeuroTradePulseStrategy",
     "StrategyRegistry",
     "StrategySpec",
     "UnknownStrategyError",
