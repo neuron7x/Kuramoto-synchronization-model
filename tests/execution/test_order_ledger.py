@@ -237,6 +237,7 @@ def test_order_ledger_self_heals_corruption_and_supports_rollback(
         max_journal_size=1024 * 1024,
         archive_retention=2,
         index_stride=1,
+        corruption_action="truncate",  # Explicitly use truncate action
     )
     ledger = OrderLedger(ledger_path, config=config)
 

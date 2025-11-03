@@ -49,6 +49,10 @@ class OrderLedgerConfig:
     max_journal_size: int = 128 * 1024 * 1024
     archive_retention: int = 4
     index_stride: int = 64
+    corruption_action: str = "read_only"  # "read_only", "truncate", "abort"
+    enable_db_persistence: bool = False
+    db_connection_string: str | None = None
+    recovery_rto_target_seconds: float = 2.0
 
     def __post_init__(self) -> None:
         if self.snapshot_interval < 1:
@@ -63,6 +67,10 @@ class OrderLedgerConfig:
             raise ValueError("archive_retention must be >= 1")
         if self.index_stride < 1:
             raise ValueError("index_stride must be >= 1")
+        if self.corruption_action not in ("read_only", "truncate", "abort"):
+            raise ValueError("corruption_action must be 'read_only', 'truncate', or 'abort'")
+        if self.recovery_rto_target_seconds <= 0:
+            raise ValueError("recovery_rto_target_seconds must be positive")
 
 
 @dataclass(slots=True)
@@ -224,6 +232,9 @@ class OrderLedger:
         self._anchor_digest: str | None = None
         self._tail_digest: str | None = None
         self._last_state_event: tuple[int, str, str | None, Any, str | None] | None = None
+        self._read_only: bool = False
+        self._corruption_detected: bool = False
+        self._corruption_details: str | None = None
         self._rebuild_from_disk()
 
     @property
@@ -250,6 +261,21 @@ class OrderLedger:
 
         return self._index_path
 
+    @property
+    def is_read_only(self) -> bool:
+        """Return True if ledger is in read-only mode due to corruption."""
+        return self._read_only
+
+    @property
+    def corruption_detected(self) -> bool:
+        """Return True if corruption was detected during recovery."""
+        return self._corruption_detected
+
+    @property
+    def corruption_details(self) -> str | None:
+        """Return details about detected corruption."""
+        return self._corruption_details
+
     def append(
         self,
         event: str,
@@ -260,6 +286,11 @@ class OrderLedger:
         state_snapshot: Mapping[str, Any] | None = None,
     ) -> OrderLedgerEvent:
         """Append a new entry to the ledger and return the structured event."""
+
+        if self._read_only:
+            raise RuntimeError(
+                f"Ledger is in read-only mode due to corruption: {self._corruption_details}"
+            )
 
         timestamp = datetime.now(timezone.utc).isoformat()
         with self._lock:
@@ -692,8 +723,14 @@ class OrderLedger:
         last_state_event: tuple[int, str, str | None, Any, str | None] | None = None
         offsets: list[tuple[int, int, str | None]] = []
         anchor_digest: str | None = metadata.anchor_digest
+        corruption_at_sequence: int | None = None
+        corruption_reason: str | None = None
+        
         if self._path.exists():
-            with self._path.open("r+", encoding="utf-8") as handle:
+            # Determine how to open the file based on corruption action
+            mode = "r" if self._config.corruption_action == "read_only" else "r+"
+            
+            with self._path.open(mode, encoding="utf-8") as handle:
                 previous_digest: str | None = None
                 event_count = 0
                 while True:
@@ -705,9 +742,12 @@ class OrderLedger:
                         continue
                     try:
                         payload = json.loads(line)
-                    except json.JSONDecodeError:
-                        handle.seek(offset)
-                        handle.truncate()
+                    except json.JSONDecodeError as exc:
+                        corruption_at_sequence = event_count + 1
+                        corruption_reason = f"JSON decode error at offset {offset}: {exc}"
+                        if self._config.corruption_action == "truncate":
+                            handle.seek(offset)
+                            handle.truncate()
                         break
                     digest = str(payload.get("digest"))
                     content = dict(payload)
@@ -716,8 +756,11 @@ class OrderLedger:
                         _canonical_dumps(content).encode("utf-8")
                     ).hexdigest()
                     if computed != digest:
-                        handle.seek(offset)
-                        handle.truncate()
+                        corruption_at_sequence = int(payload.get("sequence", event_count + 1))
+                        corruption_reason = f"Digest mismatch at sequence {corruption_at_sequence}: expected={digest}, computed={computed}"
+                        if self._config.corruption_action == "truncate":
+                            handle.seek(offset)
+                            handle.truncate()
                         break
                     previous = content.get("previous_digest")
                     if event_count == 0:
@@ -725,8 +768,11 @@ class OrderLedger:
                         first_sequence = int(content["sequence"])
                     else:
                         if previous != previous_digest:
-                            handle.seek(offset)
-                            handle.truncate()
+                            corruption_at_sequence = int(content["sequence"])
+                            corruption_reason = f"Broken digest chain at sequence {corruption_at_sequence}: expected_previous={previous_digest}, actual_previous={previous}"
+                            if self._config.corruption_action == "truncate":
+                                handle.seek(offset)
+                                handle.truncate()
                             break
                     event_count += 1
                     previous_digest = digest
@@ -759,6 +805,18 @@ class OrderLedger:
                     metadata.next_sequence = 1
                     metadata.tail_digest = None
                     metadata.compacted_through = 0
+        
+        # Handle corruption detection
+        if corruption_at_sequence is not None:
+            self._corruption_detected = True
+            self._corruption_details = corruption_reason
+            
+            if self._config.corruption_action == "read_only":
+                self._read_only = True
+            elif self._config.corruption_action == "abort":
+                raise ValueError(f"Ledger corruption detected: {corruption_reason}")
+            # "truncate" action already handled above
+        
         metadata.anchor_digest = anchor_digest
         self._metadata = metadata
         self._anchor_digest = metadata.anchor_digest
