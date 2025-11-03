@@ -10,7 +10,6 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
 import pytest
-import vcr
 import yaml
 
 from observability.audit.trail import (
@@ -220,6 +219,7 @@ def pytest_collection_modifyitems(  # type: ignore[override]
 
 
 # VCR configuration for recording HTTP interactions
+# VCR is imported lazily to avoid requiring it for all tests
 
 sensitive_headers = [
     "X-MBX-APIKEY",
@@ -267,19 +267,25 @@ def scrub_response(response):
             pass
     return response
 
-vcr_default = vcr.VCR(
-    cassette_library_dir="tests/fixtures/recordings",
-    record_mode=os.getenv("VCR_RECORD", "once"),
-    filter_headers=[(h, "REDACTED") for h in sensitive_headers],
-    before_record_request=scrub_request,
-    before_record_response=scrub_response,
-    decode_compressed_response=True,
-)
-
 @pytest.fixture(autouse=True)
 def _vcr_adapter_tests(request):
     """Auto-apply VCR to adapter tests."""
+    # Only apply VCR to tests in tests/adapters directory
     if request.fspath.strpath.endswith(".py") and "tests/adapters" in request.fspath.strpath:
+        try:
+            import vcr
+        except ImportError:
+            pytest.skip("vcrpy is required for adapter tests")
+        
+        vcr_default = vcr.VCR(
+            cassette_library_dir="tests/fixtures/recordings",
+            record_mode=os.getenv("VCR_RECORD", "once"),
+            filter_headers=[(h, "REDACTED") for h in sensitive_headers],
+            before_record_request=scrub_request,
+            before_record_response=scrub_response,
+            decode_compressed_response=True,
+        )
+        
         cassette_name = request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
         with vcr_default.use_cassette(cassette_name):
             yield
