@@ -1,0 +1,58 @@
+name: Exchange Canary (Binance, Coinbase, Kraken)
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # nightly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  EXCHANGE_CANARY: "1"
+  PYTHONUNBUFFERED: "1"
+  PYTEST_ADDOPTS: "-q -ra"
+
+concurrency:
+  group: canary-${{ matrix.exchange }}
+  cancel-in-progress: true
+
+jobs:
+  canary:
+    name: Canary - ${{ matrix.exchange }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        exchange: [binance, coinbase, kraken]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "requirements.txt"
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install pytest requests vcrpy pyyaml tenacity
+
+      - name: Run canary tests (live)
+        env:
+          EXCHANGE: ${{ matrix.exchange }}
+          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+          BINANCE_API_SECRET: ${{ secrets.BINANCE_API_SECRET }}
+          COINBASE_API_KEY: ${{ secrets.COINBASE_API_KEY }}
+          COINBASE_API_SECRET: ${{ secrets.COINBASE_API_SECRET }}
+          COINBASE_API_PASSPHRASE: ${{ secrets.COINBASE_API_PASSPHRASE }}
+          KRAKEN_API_KEY: ${{ secrets.KRAKEN_API_KEY }}
+          KRAKEN_API_SECRET: ${{ secrets.KRAKEN_API_SECRET }}
+        run: |
+          pytest -k "canary and $EXCHANGE" tests/canary -q --disable-warnings --maxfail=1

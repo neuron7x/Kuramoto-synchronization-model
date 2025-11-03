@@ -1,0 +1,54 @@
+name: Update Exchange Compatibility Matrix
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: exchange-matrix
+  cancel-in-progress: true
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "requirements.txt"
+
+      - name: Install deps
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install pyyaml
+
+      - name: Ensure docs dir
+        run: mkdir -p docs
+
+      - name: Generate matrix
+        run: |
+          python scripts/generate_exchange_matrix.py --write docs/exchanges.md
+
+      - name: Commit docs if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain docs/exchanges.md)" ]; then
+            git add docs/exchanges.md
+            git commit -m "docs: auto-update exchanges compatibility matrix"
+            git push
+          else
+            echo "No changes in docs/exchanges.md"
+          fi
