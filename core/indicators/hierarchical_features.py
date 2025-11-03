@@ -162,13 +162,20 @@ def compute_hierarchical_features(
             out=cache.buffer(f"{name}:phase_source", (close_src.size,)),
         )
         finite_source = np.isfinite(phase_source)
+
+        cos_buffer = cache.buffer(f"{name}:phase_cos", (close_src.size,))
+        sin_buffer = cache.buffer(f"{name}:phase_sin", (close_src.size,))
+        cos_buffer.fill(0.0)
+        sin_buffer.fill(0.0)
+        np.cos(phase_source, out=cos_buffer, where=finite_source)
+        np.sin(phase_source, out=sin_buffer, where=finite_source)
+
         finite_count = int(finite_source.sum(dtype=np.int32))
         if finite_count:
-            phase_valid = phase_source[finite_source]
-            cos_local = np.cos(phase_valid).astype(np.float32, copy=False)
-            sin_local = np.sin(phase_valid).astype(np.float32, copy=False)
-            local_sum_real = float(np.add.reduce(cos_local, dtype=np.float64))
-            local_sum_imag = float(np.add.reduce(sin_local, dtype=np.float64))
+            cos_valid = cos_buffer[finite_source]
+            sin_valid = sin_buffer[finite_source]
+            local_sum_real = float(np.add.reduce(cos_valid, dtype=np.float64))
+            local_sum_imag = float(np.add.reduce(sin_valid, dtype=np.float64))
             local_magnitude = (
                 local_sum_real * local_sum_real + local_sum_imag * local_sum_imag
             ) ** 0.5
@@ -183,16 +190,20 @@ def compute_hierarchical_features(
             if np.any(valid_mask):
                 ref_positions = np.nonzero(valid_mask)[0]
                 src_positions = positions[valid_mask]
-                phase_aligned = phase_source[src_positions]
-                finite_aligned = np.isfinite(phase_aligned)
+                finite_aligned = finite_source[src_positions]
                 if np.any(finite_aligned):
-                    ref_sel = ref_positions[finite_aligned]
-                    phase_sel = phase_aligned[finite_aligned]
-                    cos_vals = np.cos(phase_sel).astype(np.float32, copy=False)
-                    sin_vals = np.sin(phase_sel).astype(np.float32, copy=False)
-                    np.add.at(agg_cos, ref_sel, cos_vals)
-                    np.add.at(agg_sin, ref_sel, sin_vals)
-                    np.add.at(agg_counts, ref_sel, 1)
+                    aligned_indices = src_positions[finite_aligned]
+                    bins = ref_positions[finite_aligned]
+                    cos_aligned = cos_buffer[aligned_indices]
+                    sin_aligned = sin_buffer[aligned_indices]
+                    unique_bins, first_idx, counts = np.unique(
+                        bins, return_index=True, return_counts=True
+                    )
+                    cos_sums = np.add.reduceat(cos_aligned, first_idx).astype(np.float32, copy=False)
+                    sin_sums = np.add.reduceat(sin_aligned, first_idx).astype(np.float32, copy=False)
+                    agg_cos[unique_bins] += cos_sums
+                    agg_sin[unique_bins] += sin_sums
+                    agg_counts[unique_bins] += counts.astype(np.int32, copy=False)
 
         hurst_scratch = cache.buffer(f"{name}:hurst_diff", (close_src.size,))
         hurst_tau = cache.buffer(f"{name}:hurst_tau", (_DEFAULT_LAGS.size,))
