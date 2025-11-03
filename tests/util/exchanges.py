@@ -30,6 +30,19 @@ class HttpClient:
         r.raise_for_status()
         return r.json()
 
+    def post(self, path, data=None, params=None, headers=None):
+        p = {}
+        p.update(self.params)
+        if params:
+            p.update(params)
+        h = {}
+        h.update(self.headers)
+        if headers:
+            h.update(headers)
+        r = requests.post(self.base + path, data=data, params=p, headers=h, timeout=DEFAULT_TIMEOUT)
+        r.raise_for_status()
+        return r.json()
+
 def _binance_http():
     return HttpClient("https://api.binance.com")
 
@@ -112,9 +125,7 @@ def get_authenticated_balance(subject):
             query = f"timestamp={ts}&recvWindow=5000"
             sig = hmac.new(secret.encode(), query.encode(), hashlib.sha256).hexdigest()
             headers = {"X-MBX-APIKEY": key}
-            r = requests.get(subject.base + "/api/v3/account", params={"timestamp": ts, "recvWindow": 5000, "signature": sig}, headers=headers, timeout=DEFAULT_TIMEOUT)
-            r.raise_for_status()
-            data = r.json()
+            data = subject.get("/api/v3/account", params={"timestamp": ts, "recvWindow": 5000, "signature": sig}, headers=headers)
             data.pop("makerCommission", None)
             data.pop("takerCommission", None)
             return {"balances": data.get("balances", [])}
@@ -136,9 +147,9 @@ def get_authenticated_balance(subject):
                 "CB-ACCESS-TIMESTAMP": ts,
                 "CB-ACCESS-PASSPHRASE": passphrase,
             }
-            r = requests.get("https://api.coinbase.com" + path, headers=headers, timeout=DEFAULT_TIMEOUT)
-            r.raise_for_status()
-            data = r.json()
+            # Use a separate client with the base URL (subject.base points to api.coinbase.com/api/v3)
+            auth_client = HttpClient("https://api.coinbase.com")
+            data = auth_client.get(path, headers=headers)
             accounts = data.get("accounts", [])
             return {"accounts": [{"uuid": a.get("uuid"), "currency": a.get("currency"), "available_balance": a.get("available_balance")} for a in accounts]}
 
@@ -159,9 +170,9 @@ def get_authenticated_balance(subject):
                 "API-Sign": sig,
                 "Content-Type": "application/x-www-form-urlencoded",
             }
-            r = requests.post("https://api.kraken.com" + path, data=postdata, headers=headers, timeout=DEFAULT_TIMEOUT)
-            r.raise_for_status()
-            data = r.json()
+            # Use a separate client with the base URL (subject.base points to api.kraken.com/0)
+            auth_client = HttpClient("https://api.kraken.com")
+            data = auth_client.post(path, data=postdata, headers=headers)
             if data.get("error"):
                 raise RuntimeError(f"Kraken error: {data['error']}")
             return {"balances": data.get("result", {})}

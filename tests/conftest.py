@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
 import pytest
+import vcr
 import yaml
 
 from observability.audit.trail import (
@@ -219,7 +220,6 @@ def pytest_collection_modifyitems(  # type: ignore[override]
 
 
 # VCR configuration for recording HTTP interactions
-import vcr
 
 sensitive_headers = [
     "X-MBX-APIKEY",
