@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass, replace as dataclass_replace
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from domain import Order
+from domain import Order, OrderSide
 
 from .normalization import NormalizationError, SymbolNormalizer
 
@@ -168,7 +168,7 @@ class RiskCompliance:
     def set_kill_switch(self, enabled: bool) -> None:
         """Enable or disable the global kill switch."""
         with self._lock:
-            object.__setattr__(self._config, "kill_switch", enabled)
+            self._config = dataclass_replace(self._config, kill_switch=enabled)
             if enabled:
                 self._last_trip_reason = "kill_switch_enabled"
                 self._last_trip_time = datetime.now(timezone.utc)
@@ -225,7 +225,6 @@ class RiskCompliance:
             else:
                 current_position = 0.0
 
-            from domain import OrderSide
             side = OrderSide(order.side)
             position_delta = order.quantity if side == OrderSide.BUY else -order.quantity
             new_position = current_position + position_delta
@@ -352,12 +351,14 @@ class RiskCompliance:
 
     def _next_daily_reset(self, from_time: datetime) -> datetime:
         """Calculate next daily reset time."""
+        from datetime import timedelta
+        next_day = from_time + timedelta(days=1)
         return datetime(
-            from_time.year,
-            from_time.month,
-            from_time.day,
+            next_day.year,
+            next_day.month,
+            next_day.day,
             0,
             0,
             0,
             tzinfo=timezone.utc,
-        ).replace(day=from_time.day + 1)
+        )
