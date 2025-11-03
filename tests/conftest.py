@@ -216,3 +216,69 @@ def pytest_collection_modifyitems(  # type: ignore[override]
             item.add_marker(level)
 
         item.user_properties.append(("tradepulse_level", level))
+
+
+# VCR configuration for recording HTTP interactions
+import vcr
+
+sensitive_headers = [
+    "X-MBX-APIKEY",
+    "CB-ACCESS-KEY",
+    "CB-ACCESS-SIGN",
+    "CB-ACCESS-PASSPHRASE",
+    "CB-ACCESS-TIMESTAMP",
+    "API-Key",
+    "API-Sign",
+    "Authorization",
+]
+sensitive_query = ["timestamp", "signature", "recvWindow"]
+sensitive_body_keys = ["apiKey", "secret", "signature", "passphrase"]
+
+def scrub_request(request):
+    from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+    u = urlsplit(request.uri)
+    q = []
+    for k, v in parse_qsl(u.query, keep_blank_values=True):
+        if k in sensitive_query:
+            q.append((k, "REDACTED"))
+        else:
+            q.append((k, v))
+    request.uri = urlunsplit((u.scheme, u.netloc, u.path, urlencode(q), u.fragment))
+    for h in list(request.headers.keys()):
+        if h in sensitive_headers:
+            request.headers[h] = "REDACTED"
+    return request
+
+def scrub_response(response):
+    import json
+    ctype = response["headers"].get("Content-Type", [""])[0]
+    if "application/json" in ctype:
+        try:
+            data = json.loads(response["body"]["string"])
+            def cleanse(obj):
+                if isinstance(obj, dict):
+                    return {k: ("REDACTED" if k in sensitive_body_keys else cleanse(v)) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [cleanse(x) for x in obj]
+                return obj
+            data = cleanse(data)
+            response["body"]["string"] = json.dumps(data).encode()
+        except Exception:
+            pass
+    return response
+
+vcr_default = vcr.VCR(
+    cassette_library_dir="tests/fixtures/recordings",
+    record_mode=os.getenv("VCR_RECORD", "once"),
+    filter_headers=[(h, "REDACTED") for h in sensitive_headers],
+    before_record_request=scrub_request,
+    before_record_response=scrub_response,
+    decode_compressed_response=True,
+)
+
+def pytest_runtest_call(item):
+    if item.fspath.strpath.endswith(".py") and "tests/adapters" in item.fspath.strpath:
+        cassette_name = item.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
+        with vcr_default.use_cassette(cassette_name):
+            item.runtest()
+

@@ -15,6 +15,7 @@ levels:
       - tests/nightly/**
       - tests/performance/**
       - tests/tacl/**
+      - tests/canary/**
   - level: L4
     patterns:
       - tests/e2e/**
@@ -42,6 +43,7 @@ levels:
       - tests/protocol/**
       - tests/sdk/**
       - tests/security/**
+      - tests/adapters/**
   - level: L1
     patterns:
       - tests/analysis/**
@@ -52,5 +54,6 @@ levels:
       - tests/property/**
       - tests/unit/**
       - tests/utils/**
+      - tests/util/**
 overrides:
   tests/e2e/test_progressive_rollout.py: L5
