@@ -118,6 +118,160 @@ Warm starts resume trading after a controlled shutdown or short outage.
 2. Confirm that no orders remain queued and that OMS state files were persisted.
 3. Archive logs and metrics for the session as part of the post-trade review.
 
+## Idempotent Order Submission and Recovery
+
+### Overview
+
+The live execution loop now implements production-hardening features to ensure
+resilient order lifecycle management:
+
+- **Idempotent submissions** – every order submission carries an idempotency key
+  (derived from `correlation_id` or a deterministic hash). Retries are
+  deduplicated so only one placement reaches the venue.
+- **Order ledger** – append-only JSONL at `<state_dir>/order_ledger.jsonl`
+  records `submit/ack/fill/cancel/reject` events with monotonically increasing
+  offsets and timestamps.
+- **OMS snapshots** – periodic snapshots at `<state_dir>/oms_snapshots/*.json`
+  include `ledger_offset`, OMS state, risk limits, and a checksum for integrity
+  verification.
+- **Recovery** – on warm start, the loop restores the last snapshot, replays the
+  ledger from the last offset, reconnects with jittered backoff, and adopts any
+  venue-open orders not present in the OMS.
+
+### Idempotency Keys
+
+Order submissions automatically generate idempotency keys:
+- If a `correlation_id` is provided, the key is `corr:{correlation_id}`.
+- Otherwise, a deterministic hash is computed from order attributes (symbol,
+  side, quantity, price) bucketed by minute.
+
+Duplicate submissions with the same idempotency key within the same venue will
+be deduplicated at the connector level, ensuring no duplicate orders reach the
+exchange.
+
+### Order Ledger
+
+The order ledger (`order_ledger.jsonl`) is an append-only journal capturing every
+order lifecycle event:
+
+```json
+{
+  "sequence": 42,
+  "event": "submit",
+  "timestamp": "2025-11-03T13:45:00Z",
+  "order_id": "abc123",
+  "correlation_id": "corr:my-order",
+  "metadata": {...},
+  "digest": "sha256:..."
+}
+```
+
+- **Sequence numbers** are monotonically increasing and used to replay events
+  after a snapshot.
+- **Digests** form a hash chain for integrity verification during replay.
+
+### OMS Snapshots
+
+OMS snapshots are persisted periodically (default: every 30 seconds, configurable
+via `LiveLoopConfig.snapshot_interval`):
+
+```json
+{
+  "mode": "live",
+  "ts": 1730642700.123,
+  "ledger_offset": 42,
+  "oms": {
+    "ledger_offset": 42,
+    "venues": {
+      "binance": {
+        "order-123": {
+          "status": "ack",
+          "last_update": 1730642695.0,
+          "order": {...}
+        }
+      }
+    },
+    "checksum": "sha256:..."
+  },
+  "checksum": "sha256:..."
+}
+```
+
+- Snapshots are stored at `<state_dir>/oms_snapshots/oms_snapshot_{timestamp}.json`.
+- The last 5 snapshots are retained; older snapshots are automatically pruned.
+
+### Recovery Procedure
+
+When starting the live loop with `cold_start=False`, the recovery sequence is:
+
+1. **Restore last snapshot** – load the most recent `oms_snapshot_*.json` file
+   and reconstruct the OMS state.
+2. **Replay ledger delta** – iterate through `order_ledger.jsonl` from the last
+   snapshot offset to the current ledger tail, applying all events.
+3. **Reconnect with backoff** – connectors reconnect using exponential backoff
+   with full jitter (capped by `LiveLoopConfig.max_backoff`).
+4. **Adopt stray orders** – query each venue for open orders via
+   `connector.open_orders()` and adopt any orders not present in the OMS. These
+   "stray" orders may have been placed in a previous session or by another
+   process.
+5. **Resume normal operation** – resubscribe to WebSocket streams, reseed
+   positions, and begin processing new order submissions.
+
+### Recovery SLOs
+
+The recovery procedure targets the following operational SLOs:
+
+- **Reconciliation time** – complete recovery (snapshot restore + ledger replay +
+  stray adoption) within ≤ 2 seconds on standard hardware.
+- **Zero orphan orders** – all venue-open orders are adopted into the OMS or
+  explicitly cancelled by policy (configurable). No orders should be "lost"
+  between sessions.
+- **48-hour staging soak** – run a staging environment for 48 hours without
+  duplicate submissions or missed fills, validated via idempotency keys and
+  reconciliation logs.
+
+### Operational Commands
+
+**Check ledger health:**
+```bash
+# Verify ledger integrity
+python -m execution.order_ledger verify <state_dir>/order_ledger.jsonl
+```
+
+**Inspect OMS snapshot:**
+```bash
+# View latest snapshot
+cat <state_dir>/oms_snapshots/oms_snapshot_*.json | tail -1 | jq .
+```
+
+**Force snapshot creation:**
+```python
+# From Python REPL or admin script
+loop._persist_oms_snapshot_if_needed()
+```
+
+### Troubleshooting
+
+**Snapshot not restoring:**
+- Check that `<state_dir>/oms_snapshots/` contains valid JSON files.
+- Verify checksum integrity by comparing computed hash with stored checksum.
+- Review logs for `live_loop.snapshot_restore_failed` events.
+
+**Stray orders not adopted:**
+- Confirm `cold_start=False` was used on restart.
+- Check `live_loop.adopt_orders` log events for adoption count.
+- Verify `connector.open_orders()` returns the expected orders.
+
+**Duplicate order placements:**
+- Ensure `correlation_id` is provided and consistent across retries.
+- Check `IdempotentSubmitter` cache via logs or metrics.
+- Review ledger for duplicate `submit` events with same `idempotency_key`.
+
+**Reconnection storms:**
+- Verify `max_backoff` is set appropriately (default 60s).
+- Check for upstream connectivity issues or API rate limits.
+- Review `live_loop.heartbeat_retry` events for backoff delays.
+
 ## Contacts and Escalation
 
 - **Execution engineering on-call** – primary contact for connector incidents.
