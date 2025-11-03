@@ -60,7 +60,8 @@ def test_monotonic_rejection_on_degradation():
 def test_circuit_breaker_triggers_on_sustained_rise():
     c = ThermoController(_graph())
     # Simulate sustained free energy rise by directly manipulating controller state
-    # and calling control_step which checks for sustained rises
+    # and calling control_step which checks for sustained rises.
+    # Circuit breaker activates after unresolved_rise_steps > 5, so we need 7 iterations.
     for i in range(7):
         # Mock a rising free energy by manipulating the snapshot
         snap = c._latest_snapshot

@@ -121,7 +121,7 @@ def reset_controller(request: Request) -> Dict[str, object]:
     return {"status": "reset", "timestamp": time.time()}
 
 
-@app.post("/thermo/override")
+@app.post("/thermo/override", dependencies=[Depends(api_key_guard())])
 @limiter.limit("60/minute")
 def manual_override(
     request: Request, override_request: ManualOverrideRequest
