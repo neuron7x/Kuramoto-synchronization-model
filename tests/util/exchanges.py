@@ -73,13 +73,13 @@ def get_server_time(subject) -> int:
             v = f()
             return int(v)
     if isinstance(subject, HttpClient):
-        if subject.base.endswith("binance.com"):
+        if subject.base == "https://api.binance.com":
             j = subject.get("/api/v3/time")
             return int(j["serverTime"])
-        if subject.base.endswith("coinbase.com/api/v3"):
+        if subject.base == "https://api.coinbase.com/api/v3":
             j = subject.get("/brokerage/time")
             return int(j["epoch_seconds"]) * 1000
-        if subject.base.endswith("kraken.com/0"):
+        if subject.base == "https://api.kraken.com/0":
             j = subject.get("/public/Time")
             return int(float(j["result"]["unixtime"])) * 1000
     raise RuntimeError("Cannot obtain server time")
@@ -94,16 +94,16 @@ def get_exchange_info_or_symbols(subject):
             if isinstance(v, list):
                 return {"symbols": v}
     if isinstance(subject, HttpClient):
-        if subject.base.endswith("binance.com"):
+        if subject.base == "https://api.binance.com":
             j = subject.get("/api/v3/exchangeInfo")
             symbols = [s["symbol"] for s in j.get("symbols", []) if s.get("status") == "TRADING"]
             return {"raw": j, "symbols": symbols}
-        if subject.base.endswith("coinbase.com/api/v3"):
+        if subject.base == "https://api.coinbase.com/api/v3":
             j = subject.get("/brokerage/products", params={"limit": 250})
             products = j.get("products", [])
             symbols = [p["product_id"] for p in products if p.get("status") == "online"]
             return {"raw": j, "symbols": symbols}
-        if subject.base.endswith("kraken.com/0"):
+        if subject.base == "https://api.kraken.com/0":
             j = subject.get("/public/AssetPairs")
             pairs = j.get("result", {})
             symbols = list(pairs.keys())
@@ -116,7 +116,7 @@ def get_authenticated_balance(subject):
         if callable(f):
             return f()
     if isinstance(subject, HttpClient):
-        if subject.base.endswith("binance.com"):
+        if subject.base == "https://api.binance.com":
             key = os.getenv("BINANCE_API_KEY")
             secret = os.getenv("BINANCE_API_SECRET")
             if not key or not secret:
@@ -131,7 +131,7 @@ def get_authenticated_balance(subject):
             data.pop("takerCommission", None)
             return {"balances": data.get("balances", [])}
 
-        if subject.base.endswith("coinbase.com/api/v3"):
+        if subject.base == "https://api.coinbase.com/api/v3":
             key = os.getenv("COINBASE_API_KEY")
             secret = os.getenv("COINBASE_API_SECRET")
             passphrase = os.getenv("COINBASE_API_PASSPHRASE", "")
@@ -154,7 +154,7 @@ def get_authenticated_balance(subject):
             accounts = data.get("accounts", [])
             return {"accounts": [{"uuid": a.get("uuid"), "currency": a.get("currency"), "available_balance": a.get("available_balance")} for a in accounts]}
 
-        if subject.base.endswith("kraken.com/0"):
+        if subject.base == "https://api.kraken.com/0":
             key = os.getenv("KRAKEN_API_KEY")
             secret = os.getenv("KRAKEN_API_SECRET")
             if not key or not secret:
