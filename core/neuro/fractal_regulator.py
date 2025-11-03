@@ -13,6 +13,7 @@ The regulator can be used as:
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from typing import Sequence
 
@@ -78,9 +79,9 @@ class EEPFractalRegulator:
         self.energy_damping = energy_damping
         self._rng = np.random.default_rng(seed)
 
-        # State tracking
-        self._state_history: list[float] = []
-        self._energy_history: list[float] = []
+        # State tracking with deque for O(1) operations
+        self._state_history: deque[float] = deque(maxlen=window_size)
+        self._energy_history: deque[float] = deque(maxlen=window_size)
         self._last_efficiency: float = 1.0
 
     def update_state(self, signal: float) -> RegulatorMetrics:
@@ -98,10 +99,8 @@ class EEPFractalRegulator:
         if not np.isfinite(signal):
             raise ValueError("signal must be finite")
 
-        # Add to state history
+        # Add to state history (deque automatically handles maxlen)
         self._state_history.append(float(signal))
-        if len(self._state_history) > self.window_size:
-            self._state_history.pop(0)
 
         # Compute metrics
         current_state = float(signal)
@@ -111,10 +110,8 @@ class EEPFractalRegulator:
         energy_cost = self._compute_energy_cost()
         efficiency_delta = self.optimize_efficiency()
 
-        # Track energy
+        # Track energy (deque automatically handles maxlen)
         self._energy_history.append(energy_cost)
-        if len(self._energy_history) > self.window_size:
-            self._energy_history.pop(0)
 
         return RegulatorMetrics(
             state=current_state,

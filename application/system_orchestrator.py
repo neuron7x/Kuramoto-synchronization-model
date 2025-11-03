@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
 import pandas as pd
 
@@ -167,7 +167,7 @@ class TradePulseOrchestrator:
 
         return self._fractal_regulator
 
-    def set_crisis_callback(self, callback: callable) -> None:
+    def set_crisis_callback(self, callback: Callable[[RegulatorMetrics], None]) -> None:
         """Set a callback to be invoked when crisis is detected.
 
         Args:

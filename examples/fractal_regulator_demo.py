@@ -9,10 +9,6 @@ This script demonstrates:
 
 from __future__ import annotations
 
-import sys
-
-sys.path.insert(0, "/home/runner/work/TradePulse/TradePulse")
-
 import numpy as np
 
 # Direct import to avoid module dependencies
@@ -92,10 +88,10 @@ def demo_trade_cycle_simulation():
     # Analyze results
     crisis_periods = [i for i, m in enumerate(results) if m.csi < 0.4]
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Total periods:     {len(results)}")
     print(f"  Crisis periods:    {len(crisis_periods)}")
-    print(f"  Crisis ratio:      {len(crisis_periods)/len(results)*100:.1f}%")
+    print(f"  Crisis ratio:      {len(crisis_periods) / len(results) * 100:.1f}%")
     print(f"  Avg Hurst:         {np.mean([m.hurst for m in results]):.3f}")
     print(f"  Avg CSI:           {np.mean([m.csi for m in results]):.3f}")
     print(f"  Min CSI:           {min(m.csi for m in results):.3f}")
@@ -128,7 +124,7 @@ def demo_parameter_sensitivity():
 
         print(
             f"  Threshold {threshold:.1f}: {crisis_count:3d} crisis periods "
-            f"({crisis_count/len(results)*100:.1f}%)"
+            f"({crisis_count / len(results) * 100:.1f}%)"
         )
 
 
