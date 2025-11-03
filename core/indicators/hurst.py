@@ -158,23 +158,72 @@ def _compute_tau_numpy(
     scratch: np.ndarray | None,
     tau_buffer: np.ndarray | None,
 ) -> np.ndarray:
+    """Efficiently compute lagged standard deviation using prefix sums."""
+
     tau = tau_buffer
     if tau is None or tau.shape[0] != lags.size:
         tau = np.empty(lags.size, dtype=float)
-    buffer = scratch
-    if buffer is None or buffer.shape[0] < x.size:
-        buffer = np.empty_like(x, dtype=float)
-    for idx, lag in enumerate(lags):
-        np.subtract(x[lag:], x[:-lag], out=buffer[: x.size - lag])
-        segment = buffer[: x.size - lag]
-        count = float(segment.size)
-        if count == 0:
+
+    n = x.size
+    if n == 0:
+        tau.fill(0.0)
+        return tau
+
+    lags_int = lags.astype(np.int64, copy=False)
+    valid_mask = lags_int < n
+
+    if n < 1024:
+        buffer = scratch
+        if buffer is None or buffer.shape[0] < n:
+            buffer = np.empty(n, dtype=float)
+        for idx, lag in enumerate(lags_int):
+            if not valid_mask[idx]:
+                tau[idx] = 0.0
+                continue
+            count = n - lag
+            if count <= 0:
+                tau[idx] = 0.0
+                continue
+            np.subtract(x[lag:], x[:-lag], out=buffer[:count])
+            segment = buffer[:count]
+            sum_vals = float(segment.sum(dtype=float))
+            sum_sq = float(np.dot(segment, segment))
+            mean = sum_vals / count
+            var = sum_sq / count - mean * mean
+            tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+        return tau
+
+    prefix = np.empty(n + 1, dtype=float)
+    prefix[0] = 0.0
+    np.cumsum(x, dtype=float, out=prefix[1:])
+    prefix_sq = np.empty(n + 1, dtype=float)
+    prefix_sq[0] = 0.0
+    np.cumsum(x * x, dtype=float, out=prefix_sq[1:])
+
+    fft_size = 1 << (int(2 * n - 1).bit_length())
+    freq = np.fft.rfft(x, fft_size)
+    power = freq * np.conjugate(freq)
+    autocorr_full = np.fft.irfft(power, fft_size)
+    autocorr = autocorr_full[:n]
+
+    for idx, lag in enumerate(lags_int):
+        if not valid_mask[idx]:
             tau[idx] = 0.0
             continue
-        sum_vals = float(segment.sum(dtype=float))
-        sum_sq = float(np.dot(segment, segment))
-        mean = sum_vals / count
-        var = sum_sq / count - mean * mean
+        count = n - lag
+        if count <= 0:
+            tau[idx] = 0.0
+            continue
+        sum_future = prefix[n] - prefix[lag]
+        sum_past = prefix[n - lag]
+        sum_diff = sum_future - sum_past
+        sum_sq_future = prefix_sq[n] - prefix_sq[lag]
+        sum_sq_past = prefix_sq[n - lag]
+        cross = autocorr[lag]
+        sum_sq = sum_sq_future + sum_sq_past - 2.0 * cross
+        inv_count = 1.0 / count
+        mean = sum_diff * inv_count
+        var = sum_sq * inv_count - mean * mean
         tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
     return tau
 
@@ -339,7 +388,8 @@ def hurst_exponent(
             _LAST_HURST_BACKEND = "numpy"
 
         # Perform log-log linear regression
-        y = np.log(tau)
+        tau_safe = np.where(tau > 0.0, tau, np.finfo(float).tiny)
+        y = np.log(tau_safe)
         if min_lag == _DEFAULT_MIN_LAG and max_lag == _DEFAULT_MAX_LAG:
             beta = pseudo @ y
         else:

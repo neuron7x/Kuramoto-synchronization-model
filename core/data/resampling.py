@@ -9,14 +9,34 @@ import pandas as pd
 
 
 def _ensure_datetime_index(frame: pd.DataFrame) -> pd.DataFrame:
-    if not isinstance(frame.index, pd.DatetimeIndex):
+    """Return a frame with a monotonic, timezone-aware ``DatetimeIndex``."""
+
+    index = frame.index
+    if not isinstance(index, pd.DatetimeIndex):
         raise TypeError("frame must have a DatetimeIndex")
-    if frame.index.tz is None:
-        frame = frame.tz_localize("UTC")
-    frame = frame.sort_index()
-    if not frame.index.is_unique:
-        frame = frame[~frame.index.duplicated(keep="last")]
-    return frame
+
+    result = frame
+
+    if index.tz is None:
+        # ``tz_localize`` allocates a new index; perform a shallow copy once to
+        # avoid copying the full frame repeatedly when called in hot paths.
+        result = frame.copy(deep=False)
+        result.index = index.tz_localize("UTC")
+        index = result.index
+    else:
+        tz_name = getattr(index.tz, "zone", None) or str(index.tz)
+        if tz_name != "UTC":
+            result = frame.tz_convert("UTC")
+            index = result.index
+
+    if not index.is_monotonic_increasing:
+        result = result.sort_index()
+        index = result.index
+
+    if not index.is_unique:
+        result = result.loc[~index.duplicated(keep="last")]
+
+    return result
 
 
 def resample_ticks_to_l1(
@@ -61,18 +81,18 @@ def align_timeframes(
         raise ValueError("reference timeframe missing")
     ref_frame = _ensure_datetime_index(frames[reference])
     ref_index = ref_frame.index
-    ref_unique = ref_index.drop_duplicates(keep="last")
 
-    aligned: Dict[str, pd.DataFrame] = {reference: ref_frame.copy()}
+    aligned: Dict[str, pd.DataFrame] = {reference: ref_frame}
     for name, frame in frames.items():
         if name == reference:
             continue
         frame = _ensure_datetime_index(frame)
-        unique_frame = frame
         if not frame.index.is_unique:
-            unique_frame = frame[~frame.index.duplicated(keep="last")]
-        aligned_unique = unique_frame.reindex(ref_unique, method="pad")
-        aligned[name] = aligned_unique.reindex(ref_index, method="pad")
+            frame = frame.loc[~frame.index.duplicated(keep="last")]
+        if frame.index.equals(ref_index):
+            aligned[name] = frame
+            continue
+        aligned[name] = frame.reindex(ref_index, method="pad", copy=False)
     return aligned
 
 

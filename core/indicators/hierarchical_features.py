@@ -8,7 +8,7 @@ from typing import Dict, Mapping, MutableMapping, Optional, Sequence
 import numpy as np
 import pandas as pd
 
-from core.data.resampling import align_timeframes
+from core.data.resampling import _ensure_datetime_index
 
 from .hurst import hurst_exponent
 from .kuramoto import compute_phase
@@ -129,22 +129,54 @@ def compute_hierarchical_features(
         raise ValueError("ohlcv_by_tf must not be empty")
     cache = cache or FeatureBufferCache()
     reference = next(iter(ohlcv_by_tf))
-    aligned = align_timeframes(ohlcv_by_tf, reference=reference)
+    prepared = {
+        name: _ensure_datetime_index(frame)
+        for name, frame in ohlcv_by_tf.items()
+    }
+    ref_frame = prepared[reference]
+    ref_index = ref_frame.index.asi8
+    sample_count = ref_index.size
+    if sample_count == 0:
+        raise ValueError("reference timeframe must contain data")
+    aligned: Dict[str, np.ndarray] = {}
+    source_series: Dict[str, np.ndarray] = {}
+    ref_close = ref_frame["close"].to_numpy(dtype=np.float32, copy=False)
+    aligned[reference] = cache.array(
+        f"{reference}:close_aligned",
+        ref_close,
+    )
+    source_series[reference] = aligned[reference]
+    for name, frame in prepared.items():
+        if name == reference:
+            continue
+        close_src = frame["close"].to_numpy(dtype=np.float32, copy=False)
+        source_series[name] = close_src
+        target = cache.buffer(f"{name}:close_aligned", (sample_count,))
+        target.fill(np.nan)
+        if close_src.size == 0:
+            aligned[name] = target
+            continue
+        idx = frame.index.asi8
+        positions = np.searchsorted(idx, ref_index, side="right") - 1
+        valid_mask = positions >= 0
+        if np.any(valid_mask):
+            np.copyto(
+                target[valid_mask],
+                close_src[positions[valid_mask]],
+                casting="unsafe",
+            )
+        aligned[name] = target
     features: Dict[str, Dict[str, float]] = {}
     aligned_items = list(aligned.items())
     if not aligned_items:
         raise ValueError("aligned timeframes must not be empty")
-    sample_count = len(aligned_items[0][1]["close"])
     agg_cos = cache.buffer("phase_accum_cos", (sample_count,))
     agg_sin = cache.buffer("phase_accum_sin", (sample_count,))
     agg_counts = cache.buffer("phase_accum_counts", (sample_count,), dtype=np.int32)
     agg_cos.fill(0.0)
     agg_sin.fill(0.0)
     agg_counts.fill(0)
-    for name, frame in aligned_items:
-        close = cache.array(
-            f"{name}:close", frame["close"].to_numpy(dtype=np.float32, copy=False)
-        )
+    for name, close in aligned_items:
         returns = cache.buffer(f"{name}:returns", (close.size,))
         returns[0] = np.float32(0.0)
         if close.size > 1:
@@ -181,13 +213,19 @@ def compute_hierarchical_features(
             cos_vals.fill(0.0)
             sin_vals.fill(0.0)
             local_kuramoto = 0.0
-        hurst_scratch = cache.buffer(f"{name}:hurst_diff", (close.size,))
+        source_close = source_series[name]
+        returns_source = cache.buffer(f"{name}:returns_source", (source_close.size,))
+        if returns_source.size:
+            returns_source[0] = np.float32(0.0)
+            if returns_source.size > 1:
+                np.subtract(source_close[1:], source_close[:-1], out=returns_source[1:])
+        hurst_scratch = cache.buffer(f"{name}:hurst_diff", (source_close.size,))
         hurst_tau = cache.buffer(f"{name}:hurst_tau", (_DEFAULT_LAGS.size,))
         features[name] = {
-            "entropy": _shannon_entropy(returns),
+            "entropy": _shannon_entropy(returns_source),
             "hurst": float(
                 hurst_exponent(
-                    close,
+                    source_close,
                     use_float32=True,
                     scratch=hurst_scratch,
                     tau_buffer=hurst_tau,
