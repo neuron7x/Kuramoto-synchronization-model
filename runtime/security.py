@@ -22,15 +22,15 @@ def _ct_equal(a: str, b: str) -> bool:
 
 def api_key_guard(header_name: str = "X-THERMO-KEY"):
     """Dependency to protect thermo endpoints via static API key."""
-    expected: Optional[str] = os.getenv("THERMO_API_KEY")
-    if not expected:
-        # Lock down by default when not configured.
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="THERMO_API_KEY is not configured",
-        )
 
     async def _check(req: Request):
+        expected: Optional[str] = os.getenv("THERMO_API_KEY")
+        if not expected:
+            # Lock down by default when not configured.
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="THERMO_API_KEY is not configured",
+            )
         received = req.headers.get(header_name)
         if not received or not _ct_equal(received, expected):
             raise HTTPException(
