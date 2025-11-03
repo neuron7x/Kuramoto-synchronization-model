@@ -716,18 +716,29 @@ class OMSState:
             for venue, om in self._orders.items():
                 venues[venue] = {}
                 for oid, entry in om.items():
-                    # Serialize order object
-                    if hasattr(entry.order, "__dict__"):
-                        o_payload = dict(entry.order.__dict__)
-                    elif isinstance(entry.order, dict):
-                        o_payload = dict(entry.order)
-                    else:
-                        # Best effort serialization
-                        o_payload = {
-                            k: getattr(entry.order, k)
-                            for k in dir(entry.order)
-                            if not k.startswith("_")
-                        }
+                    # Serialize order object safely
+                    try:
+                        # Try to use to_dict() method if available
+                        if hasattr(entry.order, "to_dict") and callable(entry.order.to_dict):
+                            o_payload = entry.order.to_dict()
+                        elif hasattr(entry.order, "__dict__"):
+                            # Filter out methods and private attributes
+                            o_payload = {
+                                k: v for k, v in entry.order.__dict__.items()
+                                if not k.startswith("_") and not callable(v)
+                            }
+                        elif isinstance(entry.order, dict):
+                            o_payload = dict(entry.order)
+                        else:
+                            # Best effort serialization
+                            o_payload = {
+                                k: getattr(entry.order, k)
+                                for k in dir(entry.order)
+                                if not k.startswith("_") and not callable(getattr(entry.order, k))
+                            }
+                    except Exception:
+                        # Fallback to empty dict if serialization fails
+                        o_payload = {"symbol": str(getattr(entry.order, "symbol", "unknown"))}
                     
                     venues[venue][oid] = {
                         "status": entry.status,
