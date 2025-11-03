@@ -18,13 +18,14 @@ available in standalone notebooks.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Union
 
 import networkx as nx
 import numpy as np
 
-from core.energy import BondType, system_free_energy
+from core.energy import system_free_energy
 from runtime.thermo_controller import estimate_entropy
+from evolution.crisis_ga import CrisisMode
 
 
 @dataclass(frozen=True)
@@ -38,7 +39,7 @@ class PrototypeResult:
     energy_trace: List[float]
     stable: bool
 
-    def as_dict(self) -> Dict[str, float | List[float] | bool]:
+    def as_dict(self) -> Dict[str, Union[float, List[float], bool]]:
         """Return a JSON-serialisable representation of the result."""
 
         return {
@@ -48,6 +49,40 @@ class PrototypeResult:
             "derivative": self.derivative,
             "energy_trace": self.energy_trace,
             "stable": self.stable,
+        }
+
+
+@dataclass(frozen=True)
+class BacktestResult:
+    """Container for crisis backtest validation outcomes."""
+
+    accuracy: float
+    precision: float
+    recall: float
+    f1_score: float
+    crisis_labels: List[str]
+    predicted_labels: List[str]
+    free_energies: List[float]
+    entropy_values: List[float]
+    latency_means: List[float]
+    false_positive_rate: float
+    false_negative_rate: float
+
+    def as_dict(self) -> Dict[str, Union[float, List[float], List[str]]]:
+        """Return a JSON-serialisable representation of the backtest result."""
+
+        return {
+            "accuracy": self.accuracy,
+            "precision": self.precision,
+            "recall": self.recall,
+            "f1_score": self.f1_score,
+            "crisis_labels": self.crisis_labels,
+            "predicted_labels": self.predicted_labels,
+            "free_energies": self.free_energies,
+            "entropy_values": self.entropy_values,
+            "latency_means": self.latency_means,
+            "false_positive_rate": self.false_positive_rate,
+            "false_negative_rate": self.false_negative_rate,
         }
 
 
@@ -83,7 +118,8 @@ def _build_graph(seed: int) -> nx.DiGraph:
     graph = nx.DiGraph()
     graph.add_nodes_from(_default_nodes())
 
-    bond_types = list(BondType.__args__)
+    # Explicit bond types list for compatibility across Python versions
+    bond_types = ["covalent", "ionic", "metallic", "vdw", "hydrogen"]
 
     for src, dst in _edge_layout():
         graph.add_edge(
@@ -138,9 +174,12 @@ def _optimise(graph: nx.DiGraph) -> Tuple[nx.DiGraph, float]:
     best_graph = graph.copy()
     improvement_threshold = max(abs(baseline_energy) * 1e-6, 1e-24)
 
+    # Explicit bond types list for compatibility across Python versions
+    bond_types = ["covalent", "ionic", "metallic", "vdw", "hydrogen"]
+
     for src, dst, data in graph.edges(data=True):
         current_type = data.get("type", "vdw")
-        for candidate in BondType.__args__:
+        for candidate in bond_types:
             if candidate == current_type:
                 continue
 
@@ -195,5 +234,177 @@ def run_prototype(
     )
 
 
-__all__ = ["run_prototype", "PrototypeResult"]
+def run_backtest_on_synthetic_crises(
+    seed: int = 42,
+    num_scenarios: int = 50,
+    crisis_threshold: float = 0.1,
+) -> BacktestResult:
+    """Execute synthetic crisis validation backtest.
 
+    Synthesizes topologies with varying entropy and latency characteristics,
+    simulates crisis conditions, and evaluates ML crisis prediction performance.
+    This function provides falsifiability validation for the crisis detection
+    system by testing it against controlled synthetic data.
+
+    Parameters
+    ----------
+    seed:
+        RNG seed for reproducible synthetic data generation.
+    num_scenarios:
+        Number of synthetic scenarios to generate and evaluate.
+        Half will be crisis scenarios, half will be normal scenarios.
+    crisis_threshold:
+        Deviation threshold (as fraction of baseline) to classify as crisis.
+
+    Returns
+    -------
+    BacktestResult containing accuracy, precision, recall, F1 score, and
+    detailed statistics for falsifiability analysis.
+    """
+
+    rng = np.random.default_rng(seed)
+
+    # Generate baseline scenario
+    baseline_graph = _build_graph(seed)
+    baseline_energy = _free_energy(baseline_graph)
+
+    crisis_labels: List[str] = []
+    predicted_labels: List[str] = []
+    free_energies: List[float] = []
+    entropy_values: List[float] = []
+    latency_means: List[float] = []
+
+    # Generate half crisis scenarios and half normal scenarios
+    num_crisis = num_scenarios // 2
+    num_normal = num_scenarios - num_crisis
+
+    # Generate crisis scenarios (high entropy > 2.0, elevated latency > 1.5σ)
+    for i in range(num_crisis):
+        graph = _build_graph(seed + i + 1000)
+
+        # Inject crisis conditions: high entropy and elevated latency
+        for src, dst, data in graph.edges(data=True):
+            # Elevate latency to > 1.5 standard deviations (base is ~0.65, std ~0.3)
+            # 1.5σ above mean ≈ 0.65 + 1.5 * 0.3 = 1.1
+            data["latency_norm"] = float(rng.uniform(1.1, 2.5))
+
+        # Increase entropy by diversifying bond types
+        bond_types = ["covalent", "ionic", "metallic", "vdw", "hydrogen"]
+        for src, dst, data in graph.edges(data=True):
+            data["type"] = str(rng.choice(bond_types))
+
+        entropy = estimate_entropy(graph)
+        latencies, coherency, resource_usage, _ = _snapshot_metrics(graph)
+        F = system_free_energy(
+            bonds={(u, v): d.get("type", "vdw") for u, v, d in graph.edges(data=True)},
+            latencies=latencies,
+            coherency=coherency,
+            resource_usage=resource_usage,
+            entropy=entropy,
+        )
+
+        # Compute predicted crisis mode
+        predicted_mode = CrisisMode.detect(F, baseline_energy, crisis_threshold)
+
+        crisis_labels.append(CrisisMode.ELEVATED)  # Ground truth
+        predicted_labels.append(predicted_mode)
+        free_energies.append(F)
+        entropy_values.append(entropy)
+        latency_means.append(float(np.mean(list(latencies.values()))))
+
+    # Generate normal scenarios (low entropy, normal latency)
+    for i in range(num_normal):
+        graph = _build_graph(seed + i + 2000)
+
+        # Keep latency in normal range (< 1.0)
+        for src, dst, data in graph.edges(data=True):
+            data["latency_norm"] = float(rng.uniform(0.2, 0.9))
+
+        # Keep entropy low by using fewer bond types
+        for src, dst, data in graph.edges(data=True):
+            # Use primarily vdw and metallic (low energy bonds)
+            data["type"] = str(rng.choice(["vdw", "metallic"]))
+
+        entropy = estimate_entropy(graph)
+        latencies, coherency, resource_usage, _ = _snapshot_metrics(graph)
+        F = system_free_energy(
+            bonds={(u, v): d.get("type", "vdw") for u, v, d in graph.edges(data=True)},
+            latencies=latencies,
+            coherency=coherency,
+            resource_usage=resource_usage,
+            entropy=entropy,
+        )
+
+        # Compute predicted crisis mode
+        predicted_mode = CrisisMode.detect(F, baseline_energy, crisis_threshold)
+
+        crisis_labels.append(CrisisMode.NORMAL)  # Ground truth
+        predicted_labels.append(predicted_mode)
+        free_energies.append(F)
+        entropy_values.append(entropy)
+        latency_means.append(float(np.mean(list(latencies.values()))))
+
+    # Calculate performance metrics
+    true_positives = sum(
+        1 for true, pred in zip(crisis_labels, predicted_labels)
+        if true != CrisisMode.NORMAL and pred != CrisisMode.NORMAL
+    )
+    false_positives = sum(
+        1 for true, pred in zip(crisis_labels, predicted_labels)
+        if true == CrisisMode.NORMAL and pred != CrisisMode.NORMAL
+    )
+    true_negatives = sum(
+        1 for true, pred in zip(crisis_labels, predicted_labels)
+        if true == CrisisMode.NORMAL and pred == CrisisMode.NORMAL
+    )
+    false_negatives = sum(
+        1 for true, pred in zip(crisis_labels, predicted_labels)
+        if true != CrisisMode.NORMAL and pred == CrisisMode.NORMAL
+    )
+
+    total = len(crisis_labels)
+    accuracy = (true_positives + true_negatives) / total if total > 0 else 0.0
+
+    precision = (
+        true_positives / (true_positives + false_positives)
+        if (true_positives + false_positives) > 0
+        else 0.0
+    )
+    recall = (
+        true_positives / (true_positives + false_negatives)
+        if (true_positives + false_negatives) > 0
+        else 0.0
+    )
+    f1_score = (
+        2 * (precision * recall) / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    false_positive_rate = (
+        false_positives / (false_positives + true_negatives)
+        if (false_positives + true_negatives) > 0
+        else 0.0
+    )
+    false_negative_rate = (
+        false_negatives / (false_negatives + true_positives)
+        if (false_negatives + true_positives) > 0
+        else 0.0
+    )
+
+    return BacktestResult(
+        accuracy=accuracy,
+        precision=precision,
+        recall=recall,
+        f1_score=f1_score,
+        crisis_labels=crisis_labels,
+        predicted_labels=predicted_labels,
+        free_energies=free_energies,
+        entropy_values=entropy_values,
+        latency_means=latency_means,
+        false_positive_rate=false_positive_rate,
+        false_negative_rate=false_negative_rate,
+    )
+
+
+__all__ = ["run_prototype", "PrototypeResult", "run_backtest_on_synthetic_crises", "BacktestResult"]
