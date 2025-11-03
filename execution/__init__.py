@@ -22,7 +22,7 @@ from .liquidation import (
 from .live_loop import LiveExecutionLoop, LiveLoopConfig
 from .normalization import NormalizationError, SymbolNormalizer, SymbolSpecification
 from .oms import OMSConfig, OrderManagementSystem
-from .order_ledger import OrderLedger, OrderLedgerEvent
+from .order_ledger import OrderLedger, OrderLedgerConfig, OrderLedgerEvent
 from .order_lifecycle import OrderEvent, OrderLifecycle, OrderLifecycleStore
 from .paper_trading import (
     DeterministicLatencyModel,
@@ -35,6 +35,7 @@ from .paper_trading import (
 )
 from .portfolio import PortfolioAccounting, PortfolioSnapshot
 from .position_sizer import calculate_position_size
+from .recovery import RecoveryManager, RecoveryStats, recover_from_ledger
 from .router import (
     ErrorMapper,
     ExecutionRoute,
@@ -100,6 +101,7 @@ __all__ = [
     "OMSConfig",
     "OrderManagementSystem",
     "OrderLedger",
+    "OrderLedgerConfig",
     "OrderLedgerEvent",
     "OrderEvent",
     "OrderLifecycle",
@@ -146,4 +148,7 @@ __all__ = [
     "SessionSnapshotter",
     "SessionSnapshotError",
     "ExecutionMode",
+    "RecoveryManager",
+    "RecoveryStats",
+    "recover_from_ledger",
 ]

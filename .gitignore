@@ -65,3 +65,12 @@ dist/
 *.egg-info/
 # <<< SANITY CLEANUP
 
+
+# Order ledger files (exclude runtime data, keep directory structure)
+data/ledger/**/*.jsonl
+data/ledger/**/*.jsonl.index
+data/ledger/**/*.jsonl.meta.json
+data/ledger/**/*.jsonl.snapshots/
+data/ledger/**/*.tar.gz
+!data/ledger/**/.gitkeep
+!data/ledger/README.md
