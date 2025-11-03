@@ -138,94 +138,69 @@ def compute_hierarchical_features(
     sample_count = ref_index.size
     if sample_count == 0:
         raise ValueError("reference timeframe must contain data")
-    aligned: Dict[str, np.ndarray] = {}
-    source_series: Dict[str, np.ndarray] = {}
-    ref_close = ref_frame["close"].to_numpy(dtype=np.float32, copy=False)
-    aligned[reference] = cache.array(
-        f"{reference}:close_aligned",
-        ref_close,
-    )
-    source_series[reference] = aligned[reference]
-    for name, frame in prepared.items():
-        if name == reference:
-            continue
-        close_src = frame["close"].to_numpy(dtype=np.float32, copy=False)
-        source_series[name] = close_src
-        target = cache.buffer(f"{name}:close_aligned", (sample_count,))
-        target.fill(np.nan)
-        if close_src.size == 0:
-            aligned[name] = target
-            continue
-        idx = frame.index.asi8
-        positions = np.searchsorted(idx, ref_index, side="right") - 1
-        valid_mask = positions >= 0
-        if np.any(valid_mask):
-            np.copyto(
-                target[valid_mask],
-                close_src[positions[valid_mask]],
-                casting="unsafe",
-            )
-        aligned[name] = target
     features: Dict[str, Dict[str, float]] = {}
-    aligned_items = list(aligned.items())
-    if not aligned_items:
-        raise ValueError("aligned timeframes must not be empty")
     agg_cos = cache.buffer("phase_accum_cos", (sample_count,))
     agg_sin = cache.buffer("phase_accum_sin", (sample_count,))
     agg_counts = cache.buffer("phase_accum_counts", (sample_count,), dtype=np.int32)
     agg_cos.fill(0.0)
     agg_sin.fill(0.0)
     agg_counts.fill(0)
-    for name, close in aligned_items:
-        returns = cache.buffer(f"{name}:returns", (close.size,))
-        returns[0] = np.float32(0.0)
-        if close.size > 1:
-            np.subtract(close[1:], close[:-1], out=returns[1:])
-        phases = compute_phase(
-            returns,
+    for name, frame in prepared.items():
+        close_src = frame["close"].to_numpy(dtype=np.float32, copy=False)
+        if close_src.size == 0:
+            features[name] = {"entropy": 0.0, "hurst": 0.5, "kuramoto": 0.0}
+            continue
+
+        returns_source = cache.buffer(f"{name}:returns_source", (close_src.size,))
+        returns_source.fill(0.0)
+        if close_src.size > 1:
+            np.subtract(close_src[1:], close_src[:-1], out=returns_source[1:])
+
+        phase_source = compute_phase(
+            returns_source,
             use_float32=True,
-            out=cache.buffer(f"{name}:phase", (close.size,)),
+            out=cache.buffer(f"{name}:phase_source", (close_src.size,)),
         )
-        mask = cache.buffer(f"{name}:phase_mask", (close.size,), dtype=bool)
-        np.isfinite(phases, out=mask)
-        cos_vals = cache.buffer(f"{name}:phase_cos", (close.size,))
-        sin_vals = cache.buffer(f"{name}:phase_sin", (close.size,))
-        cos_vals.fill(0.0)
-        sin_vals.fill(0.0)
-        mask_view = mask[: close.size]
-        agg_cos_view = agg_cos[: close.size]
-        agg_sin_view = agg_sin[: close.size]
-        agg_counts_view = agg_counts[: close.size]
-        np.cos(phases, out=cos_vals, where=mask_view)
-        np.sin(phases, out=sin_vals, where=mask_view)
-        valid_count = int(mask_view.sum(dtype=np.int32))
-        if valid_count:
-            agg_cos_view += cos_vals
-            agg_sin_view += sin_vals
-            agg_counts_view += mask_view
-            local_sum_real = float(np.add.reduce(cos_vals, dtype=np.float64))
-            local_sum_imag = float(np.add.reduce(sin_vals, dtype=np.float64))
+        finite_source = np.isfinite(phase_source)
+        finite_count = int(finite_source.sum(dtype=np.int32))
+        if finite_count:
+            phase_valid = phase_source[finite_source]
+            cos_local = np.cos(phase_valid).astype(np.float32, copy=False)
+            sin_local = np.sin(phase_valid).astype(np.float32, copy=False)
+            local_sum_real = float(np.add.reduce(cos_local, dtype=np.float64))
+            local_sum_imag = float(np.add.reduce(sin_local, dtype=np.float64))
             local_magnitude = (
                 local_sum_real * local_sum_real + local_sum_imag * local_sum_imag
             ) ** 0.5
-            local_kuramoto = float(np.clip(local_magnitude / valid_count, 0.0, 1.0))
+            local_kuramoto = float(np.clip(local_magnitude / finite_count, 0.0, 1.0))
         else:
-            cos_vals.fill(0.0)
-            sin_vals.fill(0.0)
             local_kuramoto = 0.0
-        source_close = source_series[name]
-        returns_source = cache.buffer(f"{name}:returns_source", (source_close.size,))
-        if returns_source.size:
-            returns_source[0] = np.float32(0.0)
-            if returns_source.size > 1:
-                np.subtract(source_close[1:], source_close[:-1], out=returns_source[1:])
-        hurst_scratch = cache.buffer(f"{name}:hurst_diff", (source_close.size,))
+
+        idx = frame.index.asi8
+        if idx.size:
+            positions = np.searchsorted(idx, ref_index, side="right") - 1
+            valid_mask = positions >= 0
+            if np.any(valid_mask):
+                ref_positions = np.nonzero(valid_mask)[0]
+                src_positions = positions[valid_mask]
+                phase_aligned = phase_source[src_positions]
+                finite_aligned = np.isfinite(phase_aligned)
+                if np.any(finite_aligned):
+                    ref_sel = ref_positions[finite_aligned]
+                    phase_sel = phase_aligned[finite_aligned]
+                    cos_vals = np.cos(phase_sel).astype(np.float32, copy=False)
+                    sin_vals = np.sin(phase_sel).astype(np.float32, copy=False)
+                    np.add.at(agg_cos, ref_sel, cos_vals)
+                    np.add.at(agg_sin, ref_sel, sin_vals)
+                    np.add.at(agg_counts, ref_sel, 1)
+
+        hurst_scratch = cache.buffer(f"{name}:hurst_diff", (close_src.size,))
         hurst_tau = cache.buffer(f"{name}:hurst_tau", (_DEFAULT_LAGS.size,))
         features[name] = {
             "entropy": _shannon_entropy(returns_source),
             "hurst": float(
                 hurst_exponent(
-                    source_close,
+                    close_src,
                     use_float32=True,
                     scratch=hurst_scratch,
                     tau_buffer=hurst_tau,
@@ -242,9 +217,11 @@ def compute_hierarchical_features(
                     np.nanmean(np.asarray(imbalance, dtype=np.float32))
                 )
             if microprice is not None:
-                microprice = np.asarray(microprice, dtype=np.float32)
-                price_delta = microprice - close
-                features[name]["microprice_basis"] = float(np.nanmean(price_delta))
+                micro = np.asarray(microprice, dtype=np.float32)
+                length = min(micro.size, close_src.size)
+                if length:
+                    price_delta = micro[:length] - close_src[:length]
+                    features[name]["microprice_basis"] = float(np.nanmean(price_delta))
     valid = agg_counts > 0
     if not np.any(valid):
         phase_coherence = 0.0
