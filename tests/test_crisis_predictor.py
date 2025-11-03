@@ -270,8 +270,8 @@ class TestCrisisPredictorFalsifiability:
 
         # Should have at least some misclassifications
         total_errors = (
-            result.false_positive_rate * len(result.crisis_labels) / 2 +
-            result.false_negative_rate * len(result.crisis_labels) / 2
+            result.false_positive_rate * len(result.crisis_labels) / 2
+            + result.false_negative_rate * len(result.crisis_labels) / 2
         )
         assert total_errors > 0, (
             "Model has zero errors - fails falsifiability test"

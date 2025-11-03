@@ -259,36 +259,36 @@ def run_backtest_on_synthetic_crises(
     """
 
     rng = np.random.default_rng(seed)
-    
+
     # Generate baseline scenario
     baseline_graph = _build_graph(seed)
     baseline_energy = _free_energy(baseline_graph)
-    
+
     crisis_labels: List[str] = []
     predicted_labels: List[str] = []
     free_energies: List[float] = []
     entropy_values: List[float] = []
     latency_means: List[float] = []
-    
+
     # Generate half crisis scenarios and half normal scenarios
     num_crisis = num_scenarios // 2
     num_normal = num_scenarios - num_crisis
-    
+
     # Generate crisis scenarios (high entropy > 2.0, elevated latency > 1.5σ)
     for i in range(num_crisis):
         graph = _build_graph(seed + i + 1000)
-        
+
         # Inject crisis conditions: high entropy and elevated latency
         for src, dst, data in graph.edges(data=True):
             # Elevate latency to > 1.5 standard deviations (base is ~0.65, std ~0.3)
             # 1.5σ above mean ≈ 0.65 + 1.5 * 0.3 = 1.1
             data["latency_norm"] = float(rng.uniform(1.1, 2.5))
-            
+
         # Increase entropy by diversifying bond types
         bond_types = list(BondType.__args__)
         for src, dst, data in graph.edges(data=True):
             data["type"] = str(rng.choice(bond_types))
-        
+
         entropy = estimate_entropy(graph)
         latencies, coherency, resource_usage, _ = _snapshot_metrics(graph)
         F = system_free_energy(
@@ -298,29 +298,29 @@ def run_backtest_on_synthetic_crises(
             resource_usage=resource_usage,
             entropy=entropy,
         )
-        
+
         # Compute predicted crisis mode
         predicted_mode = CrisisMode.detect(F, baseline_energy, crisis_threshold)
-        
+
         crisis_labels.append(CrisisMode.ELEVATED)  # Ground truth
         predicted_labels.append(predicted_mode)
         free_energies.append(F)
         entropy_values.append(entropy)
         latency_means.append(float(np.mean(list(latencies.values()))))
-    
+
     # Generate normal scenarios (low entropy, normal latency)
     for i in range(num_normal):
         graph = _build_graph(seed + i + 2000)
-        
+
         # Keep latency in normal range (< 1.0)
         for src, dst, data in graph.edges(data=True):
             data["latency_norm"] = float(rng.uniform(0.2, 0.9))
-        
+
         # Keep entropy low by using fewer bond types
         for src, dst, data in graph.edges(data=True):
             # Use primarily vdw and metallic (low energy bonds)
             data["type"] = str(rng.choice(["vdw", "metallic"]))
-        
+
         entropy = estimate_entropy(graph)
         latencies, coherency, resource_usage, _ = _snapshot_metrics(graph)
         F = system_free_energy(
@@ -330,16 +330,16 @@ def run_backtest_on_synthetic_crises(
             resource_usage=resource_usage,
             entropy=entropy,
         )
-        
+
         # Compute predicted crisis mode
         predicted_mode = CrisisMode.detect(F, baseline_energy, crisis_threshold)
-        
+
         crisis_labels.append(CrisisMode.NORMAL)  # Ground truth
         predicted_labels.append(predicted_mode)
         free_energies.append(F)
         entropy_values.append(entropy)
         latency_means.append(float(np.mean(list(latencies.values()))))
-    
+
     # Calculate performance metrics
     true_positives = sum(
         1 for true, pred in zip(crisis_labels, predicted_labels)
@@ -357,16 +357,37 @@ def run_backtest_on_synthetic_crises(
         1 for true, pred in zip(crisis_labels, predicted_labels)
         if true != CrisisMode.NORMAL and pred == CrisisMode.NORMAL
     )
-    
+
     total = len(crisis_labels)
     accuracy = (true_positives + true_negatives) / total if total > 0 else 0.0
-    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0.0
-    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0.0
-    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-    
-    false_positive_rate = false_positives / (false_positives + true_negatives) if (false_positives + true_negatives) > 0 else 0.0
-    false_negative_rate = false_negatives / (false_negatives + true_positives) if (false_negatives + true_positives) > 0 else 0.0
-    
+
+    precision = (
+        true_positives / (true_positives + false_positives)
+        if (true_positives + false_positives) > 0
+        else 0.0
+    )
+    recall = (
+        true_positives / (true_positives + false_negatives)
+        if (true_positives + false_negatives) > 0
+        else 0.0
+    )
+    f1_score = (
+        2 * (precision * recall) / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    false_positive_rate = (
+        false_positives / (false_positives + true_negatives)
+        if (false_positives + true_negatives) > 0
+        else 0.0
+    )
+    false_negative_rate = (
+        false_negatives / (false_negatives + true_positives)
+        if (false_negatives + true_positives) > 0
+        else 0.0
+    )
+
     return BacktestResult(
         accuracy=accuracy,
         precision=precision,
@@ -383,4 +404,3 @@ def run_backtest_on_synthetic_crises(
 
 
 __all__ = ["run_prototype", "PrototypeResult", "run_backtest_on_synthetic_crises", "BacktestResult"]
-
