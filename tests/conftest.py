@@ -276,9 +276,13 @@ vcr_default = vcr.VCR(
     decode_compressed_response=True,
 )
 
-def pytest_runtest_call(item):
-    if item.fspath.strpath.endswith(".py") and "tests/adapters" in item.fspath.strpath:
-        cassette_name = item.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
+@pytest.fixture(autouse=True)
+def _vcr_adapter_tests(request):
+    """Auto-apply VCR to adapter tests."""
+    if request.fspath.strpath.endswith(".py") and "tests/adapters" in request.fspath.strpath:
+        cassette_name = request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
         with vcr_default.use_cassette(cassette_name):
-            item.runtest()
+            yield
+    else:
+        yield
 
