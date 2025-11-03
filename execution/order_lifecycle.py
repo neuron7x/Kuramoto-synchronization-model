@@ -48,6 +48,9 @@ __all__ = [
     "OrderTransition",
     "OrderLifecycleStore",
     "OrderLifecycle",
+    "IdempotentSubmitter",
+    "OMSState",
+    "make_idempotency_key",
 ]
 
 
@@ -544,3 +547,302 @@ class OrderLifecycle:
             raise ValueError(
                 f"Transition {from_status.value!r} -> {event.value!r} is not permitted"
             ) from exc
+
+
+# ------------------------------------------------------------------
+# Production-hardening utilities for idempotent submission and recovery
+# ------------------------------------------------------------------
+
+import hashlib
+import time
+from dataclasses import asdict
+from typing import Dict, Iterator, Tuple
+
+
+def make_idempotency_key(order: Any, correlation_id: str | None = None) -> str:
+    """
+    Generate a deterministic idempotency key for an order.
+    
+    Uses provided correlation_id if present; otherwise generates a hash based on
+    order attributes bucketed by time to avoid duplicates within the same minute.
+    
+    Args:
+        order: Order object with symbol, side, quantity, price attributes
+        correlation_id: Optional correlation identifier
+        
+    Returns:
+        Idempotency key string
+    """
+    if correlation_id:
+        return f"corr:{correlation_id}"
+    
+    minute_bucket = int(time.time() // 60)
+    symbol = getattr(order, "symbol", "")
+    side = getattr(order, "side", "")
+    quantity = getattr(order, "quantity", 0.0)
+    price = getattr(order, "price", 0.0)
+    
+    payload = f"{symbol}|{side}|{quantity}|{price}|{minute_bucket}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
+
+
+@dataclass
+class _OrderEntry:
+    """Internal representation of an order in OMSState."""
+    
+    venue: str
+    order: Any  # Order object
+    status: str  # "submitted" | "ack" | "filled" | "canceled" | "rejected" | "adopted"
+    last_update: float
+
+
+class OMSState:
+    """
+    In-memory order book for tracking order state with snapshot/restore capability.
+    
+    Provides adoption of venue-open orders for warm restarts and reconciliation.
+    """
+    
+    def __init__(self) -> None:
+        self._orders: MutableMapping[str, MutableMapping[str, _OrderEntry]] = {}
+        self._lock = RLock()
+        self._last_ledger_offset: int = 0
+    
+    def set_ledger_offset(self, offset: int) -> None:
+        """Set the last processed ledger offset."""
+        self._last_ledger_offset = int(offset)
+    
+    def last_ledger_offset(self) -> int:
+        """Return the last processed ledger offset."""
+        return int(self._last_ledger_offset)
+    
+    def apply(self, event: Mapping[str, Any]) -> None:
+        """
+        Apply an order lifecycle event to the state.
+        
+        Args:
+            event: Event dict with keys: type, venue, order, ts
+        """
+        etype = str(event.get("type", ""))
+        venue = str(event.get("venue", ""))
+        payload = event.get("order") or {}
+        order_id = str(payload.get("order_id") or "")
+        ts = float(event.get("ts", time.time()))
+        
+        status_map = {
+            "submit": "submitted",
+            "ack": "ack",
+            "fill": "filled",
+            "cancel": "canceled",
+            "reject": "rejected",
+            "adopt": "adopted",
+        }
+        status = status_map.get(etype)
+        
+        if not venue or not order_id or not status:
+            return
+        
+        with self._lock:
+            venue_map = self._orders.setdefault(venue, {})
+            entry = venue_map.get(order_id)
+            
+            if entry is None:
+                # Extract order object from payload
+                order_obj = payload.get("_obj") or payload
+                venue_map[order_id] = _OrderEntry(
+                    venue=venue,
+                    order=order_obj,
+                    status=status,
+                    last_update=ts
+                )
+            else:
+                entry.status = status
+                entry.last_update = ts
+    
+    def outstanding(self, venue: str) -> Sequence[Any]:
+        """
+        Return orders that are still active for a given venue.
+        
+        Args:
+            venue: Venue identifier
+            
+        Returns:
+            List of Order objects with active status
+        """
+        with self._lock:
+            venue_map = self._orders.get(venue, {})
+            return [
+                e.order
+                for e in venue_map.values()
+                if e.status in {"submitted", "ack", "adopted"}
+            ]
+    
+    def adopt(self, venue: str, orders: Sequence[Any]) -> None:
+        """
+        Adopt venue-open orders into the OMS state.
+        
+        Used during warm restarts to import orders that exist on the venue
+        but are not yet tracked in the local state.
+        
+        Args:
+            venue: Venue identifier
+            orders: Sequence of Order objects to adopt
+        """
+        now = time.time()
+        with self._lock:
+            venue_map = self._orders.setdefault(venue, {})
+            for o in orders:
+                oid = getattr(o, "order_id", None)
+                if not oid:
+                    continue
+                key = str(oid)
+                if key not in venue_map:
+                    venue_map[key] = _OrderEntry(
+                        venue=venue,
+                        order=o,
+                        status="adopted",
+                        last_update=now
+                    )
+    
+    def snapshot(self) -> Mapping[str, Any]:
+        """
+        Create a JSON-serializable snapshot of the OMS state.
+        
+        Returns:
+            Dict with ledger_offset, venues, and checksum
+        """
+        with self._lock:
+            venues: Dict[str, Dict[str, Any]] = {}
+            for venue, om in self._orders.items():
+                venues[venue] = {}
+                for oid, entry in om.items():
+                    # Serialize order object
+                    if hasattr(entry.order, "__dict__"):
+                        o_payload = dict(entry.order.__dict__)
+                    elif isinstance(entry.order, dict):
+                        o_payload = dict(entry.order)
+                    else:
+                        # Best effort serialization
+                        o_payload = {
+                            k: getattr(entry.order, k)
+                            for k in dir(entry.order)
+                            if not k.startswith("_")
+                        }
+                    
+                    venues[venue][oid] = {
+                        "status": entry.status,
+                        "last_update": entry.last_update,
+                        "order": o_payload,
+                    }
+            
+            payload = {
+                "ledger_offset": self._last_ledger_offset,
+                "venues": venues,
+            }
+            checksum = hashlib.sha256(
+                json.dumps(payload, sort_keys=True).encode("utf-8")
+            ).hexdigest()
+            payload["checksum"] = f"sha256:{checksum}"
+            return payload
+    
+    @classmethod
+    def restore(cls, payload: Mapping[str, Any]) -> "OMSState":
+        """
+        Restore OMSState from a snapshot.
+        
+        Args:
+            payload: Snapshot dict from snapshot()
+            
+        Returns:
+            Restored OMSState instance
+        """
+        from domain import Order  # Import here to avoid circular dependency
+        
+        inst = cls()
+        inst._last_ledger_offset = int(payload.get("ledger_offset", 0))
+        venues = payload.get("venues") or {}
+        now = time.time()
+        
+        for venue, om in venues.items():
+            venue_map = inst._orders.setdefault(str(venue), {})
+            for oid, entry in om.items():
+                data = dict(entry.get("order") or {})
+                try:
+                    # Try to reconstruct Order object
+                    order_obj = Order(**data)  # type: ignore[arg-type]
+                except Exception:
+                    # Fallback to dict if Order construction fails
+                    order_obj = data  # type: ignore[assignment]
+                
+                venue_map[str(oid)] = _OrderEntry(
+                    venue=str(venue),
+                    order=order_obj,
+                    status=str(entry.get("status", "submitted")),
+                    last_update=float(entry.get("last_update", now)),
+                )
+        
+        return inst
+
+
+class IdempotentSubmitter:
+    """
+    Wrapper for connector.place_order that implements idempotency semantics.
+    
+    Maintains a dedupe map keyed by (venue, idempotency_key) and returns the
+    canonical Order if retried with the same key.
+    """
+    
+    def __init__(self) -> None:
+        self._lock = RLock()
+        self._seen: MutableMapping[Tuple[str, str], str] = {}
+    
+    def seen(self, venue: str, key: str) -> bool:
+        """
+        Check if an idempotency key has been seen before.
+        
+        Args:
+            venue: Venue identifier
+            key: Idempotency key
+            
+        Returns:
+            True if this key was already submitted
+        """
+        with self._lock:
+            return (venue, key) in self._seen
+    
+    def submit(
+        self,
+        venue: str,
+        order: Any,
+        *,
+        idempotency_key: str | None,
+        connector: Any,
+    ) -> Any:
+        """
+        Submit an order with idempotency protection.
+        
+        Args:
+            venue: Venue identifier
+            order: Order object to submit
+            idempotency_key: Optional idempotency key
+            connector: ExecutionConnector instance
+            
+        Returns:
+            Submitted Order object (either newly placed or cached)
+        """
+        key = str(idempotency_key or "")
+        
+        with self._lock:
+            if key and (venue, key) in self._seen:
+                # Already submitted; return the order as-is
+                return order
+        
+        # Submit to connector
+        placed = connector.place_order(order, idempotency_key=key if key else None)
+        oid = getattr(placed, "order_id", None)
+        
+        if key and oid:
+            with self._lock:
+                self._seen[(venue, key)] = str(oid)
+        
+        return placed

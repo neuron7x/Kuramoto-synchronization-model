@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
+import random
 import threading
+import time
 from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass, replace
@@ -17,6 +21,8 @@ from domain import Order, OrderStatus
 
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .oms import OMSConfig, OrderManagementSystem
+from .order_ledger import OrderLedger
+from .order_lifecycle import IdempotentSubmitter, OMSState, make_idempotency_key
 from .risk import RiskManager
 from .session_snapshot import (
     ExecutionMode,
@@ -24,6 +30,23 @@ from .session_snapshot import (
     SessionSnapshotter,
 )
 from .watchdog import Watchdog
+
+
+def _full_jitter_backoff(base: float, attempt: int, cap: float) -> float:
+    """
+    Calculate exponential backoff with full jitter.
+    
+    Returns a random delay between 0 and min(cap, base * 2^attempt).
+    
+    Args:
+        base: Base delay in seconds
+        attempt: Attempt number (0-indexed)
+        cap: Maximum delay cap
+        
+    Returns:
+        Delay in seconds with full jitter
+    """
+    return float(random.uniform(0.0, min(cap, base * (2 ** max(0, attempt)))))
 
 
 class Signal:
@@ -58,6 +81,7 @@ class LiveLoopConfig:
     fill_poll_interval: float = 1.0
     heartbeat_interval: float = 10.0
     max_backoff: float = 60.0
+    snapshot_interval: float = 30.0
     credentials: Mapping[str, Mapping[str, str]] | None = None
     ledger_dir: Path | str | None = None
 
@@ -84,6 +108,11 @@ class LiveLoopConfig:
             self,
             "max_backoff",
             max(self.heartbeat_interval, float(self.max_backoff)),
+        )
+        object.__setattr__(
+            self,
+            "snapshot_interval",
+            max(1.0, float(self.snapshot_interval)),
         )
         ledger_dir = self.ledger_dir
         if ledger_dir is None:
@@ -137,6 +166,18 @@ class LiveExecutionLoop:
         self._pre_session_positions: Dict[str, Sequence[Mapping[str, object]]] = {}
         self._pre_session_position_issues: Dict[str, Sequence[str]] = {}
         self._market_state: Dict[str, Dict[str, Any]] = defaultdict(dict)
+
+        # NEW: Production-hardening lifecycle components
+        self._order_ledger = OrderLedger(
+            config.ledger_dir / "order_ledger.jsonl"
+        )
+        self._oms_state = OMSState()
+        self._idempotent_submitter = IdempotentSubmitter()
+        self._last_snapshot_ts = 0.0
+        self._reconnect_backoff_attempts: Dict[str, int] = defaultdict(int)
+
+        # Try to restore from last snapshot
+        self._restore_snapshot_if_present()
 
         for name, connector in connectors.items():
             state_path = self._config.state_dir / f"{name}_oms.json"
@@ -311,6 +352,138 @@ class LiveExecutionLoop:
 
     # ------------------------------------------------------------------
     # Internal helpers
+    def _restore_snapshot_if_present(self) -> None:
+        """
+        Restore the last OMS snapshot if available; otherwise start with empty state.
+        
+        On restore, replays the ledger from the last offset to catch up with any
+        events that occurred after the snapshot was taken.
+        """
+        try:
+            snapshot_dir = self._config.state_dir / "oms_snapshots"
+            snapshot_dir.mkdir(parents=True, exist_ok=True)
+            
+            files = sorted(snapshot_dir.glob("*.json"))
+            if not files:
+                self._logger.info("No OMS snapshot found; starting with empty state")
+                return
+            
+            last_snapshot = files[-1]
+            self._logger.info(
+                f"Restoring OMS snapshot from {last_snapshot.name}",
+                extra={"event": "live_loop.snapshot_restore", "path": str(last_snapshot)},
+            )
+            
+            payload = json.loads(last_snapshot.read_text(encoding="utf-8"))
+            oms_data = payload.get("oms")
+            if oms_data:
+                self._oms_state = OMSState.restore(oms_data)
+            
+            last_offset = int(payload.get("ledger_offset", 0))
+            if last_offset:
+                self._oms_state.set_ledger_offset(last_offset)
+                # Replay ledger from last_offset to catch up
+                for record in self._order_ledger.replay_from(last_offset + 1):
+                    evt = record.event if hasattr(record, 'event') else record.get("event") or {}
+                    self._oms_state.apply(evt)
+                
+                self._logger.info(
+                    f"Replayed ledger from offset {last_offset}",
+                    extra={"event": "live_loop.ledger_replay", "offset": last_offset},
+                )
+        except Exception as exc:
+            self._logger.warning(
+                f"Failed to restore snapshot: {exc}",
+                extra={"event": "live_loop.snapshot_restore_failed", "error": str(exc)},
+            )
+    
+    def _persist_oms_snapshot_if_needed(self) -> None:
+        """
+        Periodically persist an OMS snapshot with ledger offset.
+        
+        Snapshots include the ledger offset, OMS state, and a checksum for integrity.
+        """
+        now = time.time()
+        if now - self._last_snapshot_ts < self._config.snapshot_interval:
+            return
+        
+        try:
+            snapshot_dir = self._config.state_dir / "oms_snapshots"
+            snapshot_dir.mkdir(parents=True, exist_ok=True)
+            
+            payload = {
+                "mode": "live",
+                "ts": now,
+                "ledger_offset": self._order_ledger.last_offset() if self._order_ledger else 0,
+                "oms": self._oms_state.snapshot(),
+            }
+            
+            # Optional: add checksum
+            checksum = hashlib.sha256(
+                json.dumps(payload, sort_keys=True).encode("utf-8")
+            ).hexdigest()
+            payload["checksum"] = f"sha256:{checksum}"
+            
+            fname = snapshot_dir / f"oms_snapshot_{int(now)}.json"
+            fname.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                encoding="utf-8"
+            )
+            
+            self._last_snapshot_ts = now
+            self._logger.debug(
+                f"Persisted OMS snapshot to {fname.name}",
+                extra={"event": "live_loop.snapshot_persisted", "path": str(fname)},
+            )
+            
+            # Clean up old snapshots (keep last 5)
+            all_snapshots = sorted(snapshot_dir.glob("oms_snapshot_*.json"))
+            for old_snapshot in all_snapshots[:-5]:
+                try:
+                    old_snapshot.unlink()
+                except Exception:
+                    pass
+        except Exception as exc:
+            self._logger.debug(
+                f"Snapshot persistence failed: {exc}",
+                extra={"event": "live_loop.snapshot_persist_failed", "error": str(exc)},
+            )
+    
+    def _reconcile_open_orders(self, context: _VenueContext) -> None:
+        """
+        Reconcile venue-open orders with OMS state by adopting unknown orders.
+        
+        This is called on restart/reconnect to ensure all venue-open orders are
+        tracked in the local OMS state.
+        """
+        try:
+            open_orders = list(context.connector.open_orders())
+        except Exception as exc:
+            self._logger.warning(
+                f"Failed to fetch open orders for {context.name}: {exc}",
+                extra={
+                    "event": "live_loop.reconcile_open_failed",
+                    "venue": context.name,
+                    "error": str(exc)
+                },
+            )
+            return
+        
+        # Adopt orders into OMS state
+        self._oms_state.adopt(context.name, open_orders)
+        
+        if open_orders:
+            self._logger.info(
+                f"Adopted {len(open_orders)} open orders from {context.name}",
+                extra={
+                    "event": "live_loop.adopt_orders",
+                    "venue": context.name,
+                    "count": len(open_orders),
+                },
+            )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
     def _resolve_context_for_order(
         self, order_id: str, *, venue: str | None = None
     ) -> _VenueContext | None:
@@ -334,7 +507,7 @@ class LiveExecutionLoop:
         credentials = None
         if self._config.credentials is not None:
             credentials = self._config.credentials.get(context.name)
-        backoff = self._config.heartbeat_interval
+        
         attempt = 0
         while not self._stop.is_set():
             try:
@@ -343,11 +516,17 @@ class LiveExecutionLoop:
                     "Connector initialised",
                     extra={"event": "live_loop.connector_ready", "venue": context.name},
                 )
+                # Reset backoff counter on successful connection
+                self._reconnect_backoff_attempts[context.name] = 0
                 return
             except Exception as exc:  # pragma: no cover - rarely triggered in tests
                 attempt += 1
-                delay = min(
-                    self._config.max_backoff, backoff * max(1, 2 ** (attempt - 1))
+                self._reconnect_backoff_attempts[context.name] = attempt
+                # Use full jitter backoff
+                delay = _full_jitter_backoff(
+                    self._config.heartbeat_interval,
+                    attempt - 1,
+                    self._config.max_backoff
                 )
                 self._logger.warning(
                     "Connector initialisation failed",
@@ -371,6 +550,9 @@ class LiveExecutionLoop:
             self._last_reported_fill[order.order_id] = order.filled_quantity
 
     def _reconcile_state(self, context: _VenueContext) -> None:
+        # First, reconcile open orders with OMS state
+        self._reconcile_open_orders(context)
+        
         try:
             venue_orders = {
                 order.order_id: order
@@ -1041,8 +1223,10 @@ class LiveExecutionLoop:
             return None
 
     def _heartbeat_loop(self) -> None:
-        backoff_attempts: MutableMapping[str, int] = defaultdict(int)
         while not self._stop.is_set():
+            # Periodically persist OMS snapshot
+            self._persist_oms_snapshot_if_needed()
+            
             if (
                 self._risk_manager.kill_switch.is_triggered()
                 and not self._kill_notified
@@ -1062,13 +1246,15 @@ class LiveExecutionLoop:
                 try:
                     positions = context.connector.get_positions()
                     self._emit_position_snapshot(context.name, positions)
-                    backoff_attempts[context.name] = 0
+                    self._reconnect_backoff_attempts[context.name] = 0
                 except Exception as exc:
-                    attempt = backoff_attempts[context.name] + 1
-                    backoff_attempts[context.name] = attempt
-                    delay = min(
-                        self._config.max_backoff,
-                        self._config.heartbeat_interval * (2 ** (attempt - 1)),
+                    attempt = self._reconnect_backoff_attempts.get(context.name, 0) + 1
+                    self._reconnect_backoff_attempts[context.name] = attempt
+                    # Use full jitter backoff
+                    delay = _full_jitter_backoff(
+                        self._config.heartbeat_interval,
+                        attempt - 1,
+                        self._config.max_backoff
                     )
                     self._logger.warning(
                         "Heartbeat failure",
@@ -1096,8 +1282,10 @@ class LiveExecutionLoop:
                                 "attempt": attempt,
                             },
                         )
-                        backoff_attempts[context.name] = 0
+                        self._reconnect_backoff_attempts[context.name] = 0
                         self.on_reconnect.emit(context.name, 0, 0.0, None)
+                        # After reconnect, reconcile open orders
+                        self._reconcile_open_orders(context)
                     except Exception as reconnect_exc:  # pragma: no cover - defensive
                         self._logger.exception(
                             "Reconnection attempt failed",
