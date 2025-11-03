@@ -4,7 +4,7 @@
 black==25.9.0
 flake8==7.1.1
 isort==5.13.2
-ruff==0.14.0
+ruff==0.14.3
 slotscheck==0.19.1
 
 # Type checking
@@ -15,7 +15,7 @@ pytest==8.4.2
 pytest-benchmark==5.1.0
 pytest-cov==7.0.0
 pytest-asyncio==1.2.0
-hypothesis==6.140.3
+hypothesis==6.144.0
 pytest-html==4.1.1
 pytest-xdist==3.8.0
 pytest-split==0.10.0
