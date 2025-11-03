@@ -414,7 +414,11 @@ class LiveExecutionLoop:
             payload = {
                 "mode": "live",
                 "ts": now,
-                "ledger_offset": self._order_ledger.last_offset() if self._order_ledger else 0,
+                "ledger_offset": (
+                    self._order_ledger.latest_event(verify=False).sequence
+                    if self._order_ledger and self._order_ledger.latest_event(verify=False)
+                    else 0
+                ),
                 "oms": self._oms_state.snapshot(),
             }
             

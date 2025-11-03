@@ -32,16 +32,21 @@ deployment runbooks:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from threading import RLock
-from typing import Any, Callable, Mapping, MutableMapping, Sequence
+from typing import Any, Callable, Dict, Iterator, Mapping, MutableMapping, Sequence, Tuple, TYPE_CHECKING
 
 from domain import OrderStatus
 from libs.db import DataAccessLayer
+
+if TYPE_CHECKING:
+    from domain import Order as OrderType
 
 __all__ = [
     "OrderEvent",
@@ -553,11 +558,6 @@ class OrderLifecycle:
 # Production-hardening utilities for idempotent submission and recovery
 # ------------------------------------------------------------------
 
-import hashlib
-import time
-from dataclasses import asdict
-from typing import Dict, Iterator, Tuple
-
 
 def make_idempotency_key(order: Any, correlation_id: str | None = None) -> str:
     """
@@ -767,7 +767,11 @@ class OMSState:
         Returns:
             Restored OMSState instance
         """
-        from domain import Order  # Import here to avoid circular dependency
+        # Import Order here to avoid circular dependency at module load time
+        try:
+            from domain import Order
+        except ImportError:
+            Order = None  # type: ignore[assignment,misc]
         
         inst = cls()
         inst._last_ledger_offset = int(payload.get("ledger_offset", 0))
@@ -778,12 +782,16 @@ class OMSState:
             venue_map = inst._orders.setdefault(str(venue), {})
             for oid, entry in om.items():
                 data = dict(entry.get("order") or {})
-                try:
-                    # Try to reconstruct Order object
-                    order_obj = Order(**data)  # type: ignore[arg-type]
-                except Exception:
-                    # Fallback to dict if Order construction fails
-                    order_obj = data  # type: ignore[assignment]
+                order_obj: Any
+                if Order is not None:
+                    try:
+                        # Try to reconstruct Order object
+                        order_obj = Order(**data)
+                    except Exception:
+                        # Fallback to dict if Order construction fails
+                        order_obj = data
+                else:
+                    order_obj = data
                 
                 venue_map[str(oid)] = _OrderEntry(
                     venue=str(venue),
