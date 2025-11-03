@@ -110,10 +110,13 @@ published in the weekly changelog until the release criteria are satisfied.
 
 ### 🚀 Production Ready
 - **Live Trading** — multi-exchange support out of the box
-- **Risk Management** — pre-trade checks and configurable limits
+- **Risk Management** — comprehensive pre-trade compliance and exposure limits
+- **Kill Switch** — global emergency stop with secure admin API
+- **Circuit Breakers** — automatic trading halt after failures or breaches
+- **Position Limits** — per-symbol and portfolio-wide exposure caps
+- **Drawdown Protection** — daily loss limits with automatic reset
 - **Paper Trading** — safe deployment dry runs
 - **Canary Releases** — progressive rollout tooling
-- **Circuit Breakers** — automatic fault protection
 
 ### 🔒 Enterprise Security
 - **HashiCorp Vault** — centralized secret management

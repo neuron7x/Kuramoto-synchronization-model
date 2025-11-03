@@ -33,6 +33,8 @@ class CircuitBreakerConfig:
     recovery_timeout: float = 30.0
     half_open_max_calls: int = 3
     rolling_window: int = 50
+    breaches_threshold: int = 5
+    breaches_window_seconds: float = 300.0
 
 
 class CircuitBreaker:
@@ -46,6 +48,8 @@ class CircuitBreaker:
         self._last_failure_time: float = 0.0
         self._recent_outcomes: Deque[bool] = deque(maxlen=config.rolling_window)
         self._half_open_calls = 0
+        self._risk_breaches: Deque[Tuple[float, str]] = deque()
+        self._last_trip_reason: Optional[str] = None
 
     @property
     def state(self) -> CircuitBreakerState:
@@ -107,6 +111,45 @@ class CircuitBreaker:
         self._state = CircuitBreakerState.CLOSED
         self._consecutive_failures = 0
         self._half_open_calls = 0
+
+    def record_risk_breach(self, reason: str) -> None:
+        """Record a risk compliance breach."""
+        with self._lock:
+            now = time.monotonic()
+            self._risk_breaches.append((now, reason))
+            self._last_trip_reason = reason
+            self._clean_old_breaches(now)
+
+    def _clean_old_breaches(self, now: float) -> None:
+        """Remove breaches outside the rolling window."""
+        window = getattr(self._config, "breaches_window_seconds", 300)
+        while self._risk_breaches and now - self._risk_breaches[0][0] > window:
+            self._risk_breaches.popleft()
+
+    def can_execute(self) -> bool:
+        """Check if execution is allowed based on circuit breaker state."""
+        with self._lock:
+            if self._state is CircuitBreakerState.OPEN:
+                now = time.monotonic()
+                if now - self._last_failure_time >= self._config.recovery_timeout:
+                    self._transition_to_half_open()
+                    return True
+                return False
+            return self._state in (CircuitBreakerState.CLOSED, CircuitBreakerState.HALF_OPEN)
+
+    def get_last_trip_reason(self) -> Optional[str]:
+        """Get the reason for the last trip."""
+        with self._lock:
+            return self._last_trip_reason
+
+    def get_time_until_recovery(self) -> float:
+        """Get time in seconds until recovery if breaker is open."""
+        with self._lock:
+            if self._state is not CircuitBreakerState.OPEN:
+                return 0.0
+            elapsed = time.monotonic() - self._last_failure_time
+            remaining = max(0.0, self._config.recovery_timeout - elapsed)
+            return remaining
 
 
 class RateLimiter(Protocol):
