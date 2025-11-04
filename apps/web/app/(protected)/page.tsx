@@ -9,7 +9,7 @@ const ScenarioStudio = nextDynamic(
   {
     ssr: false,
     loading: () => <ScenarioStudioFallback />,
-  },
+  }
 )
 
 function ScenarioStudioFallback() {
@@ -61,4 +61,3 @@ export const revalidate = 3600
 export default function ProtectedHomePage() {
   return <ScenarioStudio />
 }
-

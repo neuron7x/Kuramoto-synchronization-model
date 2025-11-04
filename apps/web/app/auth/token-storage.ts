@@ -35,13 +35,19 @@ async function resolveCryptoKey(): Promise<CryptoKey> {
   const cryptoKey = sessionStorage.getItem(ACCESS_TOKEN_KEY_STORAGE)
   if (cryptoKey) {
     const raw = decodeBase64(cryptoKey)
-    return crypto.subtle.importKey('raw', toArrayBuffer(raw), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+    return crypto.subtle.importKey('raw', toArrayBuffer(raw), { name: 'AES-GCM' }, false, [
+      'encrypt',
+      'decrypt',
+    ])
   }
 
   const rawKey = crypto.getRandomValues(new Uint8Array(32))
   const exportedKey = encodeBase64(rawKey)
   sessionStorage.setItem(ACCESS_TOKEN_KEY_STORAGE, exportedKey)
-  return crypto.subtle.importKey('raw', toArrayBuffer(rawKey), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+  return crypto.subtle.importKey('raw', toArrayBuffer(rawKey), { name: 'AES-GCM' }, false, [
+    'encrypt',
+    'decrypt',
+  ])
 }
 
 export async function persistAccessToken(session: PersistedAccessToken): Promise<void> {
@@ -85,7 +91,7 @@ export async function readAccessToken(): Promise<PersistedAccessToken | null> {
     const decrypted = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: toArrayBuffer(decodeBase64(parsed.iv)) },
       key,
-      toArrayBuffer(decodeBase64(parsed.data)),
+      toArrayBuffer(decodeBase64(parsed.data))
     )
     const payload = new TextDecoder().decode(decrypted)
     const session = JSON.parse(payload) as PersistedAccessToken
@@ -109,4 +115,3 @@ export async function clearAccessToken(): Promise<void> {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
   sessionStorage.removeItem(ACCESS_TOKEN_KEY_STORAGE)
 }
-

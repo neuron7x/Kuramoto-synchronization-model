@@ -67,25 +67,27 @@ type ScenarioHealth = {
   checklist: string[]
 }
 
-const HEALTH_STATUS_CONFIG: Record<ScenarioHealthStatus, { color: 'success' | 'warning' | 'error'; Icon: typeof CheckCircleIcon }> =
-  {
-    'Production-ready': {
-      color: 'success',
-      Icon: CheckCircleIcon,
-    },
-    'Needs review': {
-      color: 'warning',
-      Icon: WarningAmberIcon,
-    },
-    'High risk': {
-      color: 'error',
-      Icon: ErrorOutlineIcon,
-    },
-    'Resolve errors': {
-      color: 'error',
-      Icon: ErrorOutlineIcon,
-    },
-  }
+const HEALTH_STATUS_CONFIG: Record<
+  ScenarioHealthStatus,
+  { color: 'success' | 'warning' | 'error'; Icon: typeof CheckCircleIcon }
+> = {
+  'Production-ready': {
+    color: 'success',
+    Icon: CheckCircleIcon,
+  },
+  'Needs review': {
+    color: 'warning',
+    Icon: WarningAmberIcon,
+  },
+  'High risk': {
+    color: 'error',
+    Icon: ErrorOutlineIcon,
+  },
+  'Resolve errors': {
+    color: 'error',
+    Icon: ErrorOutlineIcon,
+  },
+}
 
 const FIELD_META: Record<ScenarioField, FieldMeta> = {
   initialBalance: {
@@ -207,21 +209,26 @@ function validateDraft(draft: ScenarioDraft): FieldErrors {
   }
 
   if (!Number.isFinite(parsed.initialBalance) || parsed.initialBalance <= 0) {
-    errors.initialBalance = 'Enter a positive starting balance. Include only digits (no currency symbols).'
+    errors.initialBalance =
+      'Enter a positive starting balance. Include only digits (no currency symbols).'
   } else if (parsed.initialBalance < 500) {
-    errors.initialBalance = 'Balances under 500 USD often create unstable allocations. Consider at least 500+.'
+    errors.initialBalance =
+      'Balances under 500 USD often create unstable allocations. Consider at least 500+.'
   }
 
   if (!Number.isFinite(parsed.riskPerTrade) || parsed.riskPerTrade <= 0) {
     errors.riskPerTrade = 'Risk per trade must be a positive percentage (e.g. 0.5 for 0.5%).'
   } else if (parsed.riskPerTrade > 5) {
-    errors.riskPerTrade = 'Risk above 5% is rarely survivable. Reduce exposure or split the position.'
+    errors.riskPerTrade =
+      'Risk above 5% is rarely survivable. Reduce exposure or split the position.'
   }
 
   if (!Number.isFinite(parsed.maxPositions) || parsed.maxPositions <= 0) {
-    errors.maxPositions = 'Set how many concurrent positions you allow. Use an integer greater than zero.'
+    errors.maxPositions =
+      'Set how many concurrent positions you allow. Use an integer greater than zero.'
   } else if (parsed.maxPositions > 10) {
-    errors.maxPositions = 'Managing more than 10 simultaneous trades is error-prone. Tighten the cap.'
+    errors.maxPositions =
+      'Managing more than 10 simultaneous trades is error-prone. Tighten the cap.'
   }
 
   if (!parsed.timeframe) {
@@ -241,11 +248,11 @@ function computeWarnings(config: ScenarioConfig): string[] {
     const riskDollars = (initialBalance * riskPerTrade) / 100
     if (riskDollars > initialBalance * 0.03) {
       warnings.push(
-        `Each position risks $${riskDollars.toFixed(2)}, which exceeds 3% of equity. Consider reducing risk per trade.`,
+        `Each position risks $${riskDollars.toFixed(2)}, which exceeds 3% of equity. Consider reducing risk per trade.`
       )
     } else if (riskDollars < initialBalance * 0.001) {
       warnings.push(
-        `Each position risks only $${riskDollars.toFixed(2)}. Verify commissions do not dominate P&L.`,
+        `Each position risks only $${riskDollars.toFixed(2)}. Verify commissions do not dominate P&L.`
       )
     }
 
@@ -253,7 +260,7 @@ function computeWarnings(config: ScenarioConfig): string[] {
       const portfolioAtRisk = riskDollars * maxPositions
       if (portfolioAtRisk > initialBalance * 0.2) {
         warnings.push(
-          `Simultaneous risk is $${portfolioAtRisk.toFixed(2)} (~${((portfolioAtRisk / initialBalance) * 100).toFixed(1)}% of equity). Add position staggering or tighten limits.`,
+          `Simultaneous risk is $${portfolioAtRisk.toFixed(2)} (~${((portfolioAtRisk / initialBalance) * 100).toFixed(1)}% of equity). Add position staggering or tighten limits.`
         )
       }
     }
@@ -327,24 +334,40 @@ function buildTimeframeInsights(timeframe: string): string[] {
   if (minutes > 0) {
     const barsPerDay = Math.round((24 * 60) / minutes)
     if (barsPerDay >= 1200) {
-      insights.push('Expect well over 1,200 bars per day—ensure streaming analytics and log aggregation are in place.')
+      insights.push(
+        'Expect well over 1,200 bars per day—ensure streaming analytics and log aggregation are in place.'
+      )
     } else if (barsPerDay > 0) {
-      insights.push(`Roughly ${barsPerDay.toLocaleString()} bars per day—size Monte Carlo samples accordingly.`)
+      insights.push(
+        `Roughly ${barsPerDay.toLocaleString()} bars per day—size Monte Carlo samples accordingly.`
+      )
     }
   }
   if (minutes <= 5) {
-    insights.push('Execution cadence is fast; confirm order routing and slippage controls are tuned for low latency.')
+    insights.push(
+      'Execution cadence is fast; confirm order routing and slippage controls are tuned for low latency.'
+    )
   } else if (minutes <= 60) {
-    insights.push('Mid-frequency cadence allows session-based monitoring. Prepare intraday review checklists.')
+    insights.push(
+      'Mid-frequency cadence allows session-based monitoring. Prepare intraday review checklists.'
+    )
   } else if (minutes >= 720 && minutes < 1440) {
-    insights.push('Plan for daily risk syncs—the cadence spans multiple sessions, so overnight gaps matter.')
+    insights.push(
+      'Plan for daily risk syncs—the cadence spans multiple sessions, so overnight gaps matter.'
+    )
   } else if (minutes >= 1440) {
-    insights.push('Slow cadence—capture macro or fundamental catalysts between bars to avoid stale positioning.')
+    insights.push(
+      'Slow cadence—capture macro or fundamental catalysts between bars to avoid stale positioning.'
+    )
   }
   return insights
 }
 
-function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors: boolean): ScenarioHealth {
+function evaluateScenario(
+  config: ScenarioConfig,
+  warnings: string[],
+  hasErrors: boolean
+): ScenarioHealth {
   const checklist: string[] = []
 
   if (hasErrors) {
@@ -372,7 +395,8 @@ function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors:
     return {
       status: 'Needs review',
       score: 45,
-      summary: 'Complete the remaining fields to benchmark the scenario and surface optimisation ideas.',
+      summary:
+        'Complete the remaining fields to benchmark the scenario and surface optimisation ideas.',
       checklist,
     }
   }
@@ -391,7 +415,9 @@ function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors:
 
   if (riskPerTrade > 2) {
     score -= 10
-    checklist.push('Keep risk per trade at or below 2% to stay within resilient drawdown tolerances.')
+    checklist.push(
+      'Keep risk per trade at or below 2% to stay within resilient drawdown tolerances.'
+    )
   } else if (riskPerTrade < 0.25) {
     score -= 6
     checklist.push('Confirm commissions remain negligible when risking under 0.25% per trade.')
@@ -431,7 +457,8 @@ function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors:
     summary = 'Scenario is workable but tighten the highlighted levers before automation.'
   } else {
     status = 'High risk'
-    summary = 'Risk envelope is stretched. Reduce concentration before running the strategy in staging.'
+    summary =
+      'Risk envelope is stretched. Reduce concentration before running the strategy in staging.'
   }
 
   const uniqueChecklist = Array.from(new Set(checklist))
@@ -444,29 +471,31 @@ function evaluateScenario(config: ScenarioConfig, warnings: string[], hasErrors:
   }
 }
 
-type ActionMessage =
-  | {
-      kind: 'success' | 'error'
-      text: string
-    }
-  | null
+type ActionMessage = {
+  kind: 'success' | 'error'
+  text: string
+} | null
 
 type FieldKey = keyof typeof FIELD_META
 
 export function ScenarioStudio() {
   const [templateId, setTemplateId] = useState<string>(SCENARIO_TEMPLATES[0]?.id ?? '')
   const [draft, setDraft] = useState<ScenarioDraft>(() =>
-    SCENARIO_TEMPLATES[0] ? toDraft(SCENARIO_TEMPLATES[0].defaults) : toDraft({
+    SCENARIO_TEMPLATES[0]
+      ? toDraft(SCENARIO_TEMPLATES[0].defaults)
+      : toDraft({
           initialBalance: 0,
           riskPerTrade: 0,
           maxPositions: 0,
           timeframe: '',
-        }),
+        })
   )
   const [actionMessage, setActionMessage] = useState<ActionMessage>(null)
 
   const selectedTemplate = useMemo(() => {
-    return SCENARIO_TEMPLATES.find((template) => template.id === templateId) ?? SCENARIO_TEMPLATES[0]
+    return (
+      SCENARIO_TEMPLATES.find((template) => template.id === templateId) ?? SCENARIO_TEMPLATES[0]
+    )
   }, [templateId])
 
   const handleFieldChange = (field: FieldKey) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -479,8 +508,14 @@ export function ScenarioStudio() {
   const errors = useMemo(() => validateDraft(draft), [draft])
   const hasErrors = useMemo(() => Object.values(errors).some((value) => value !== null), [errors])
   const warnings = useMemo(() => computeWarnings(parsedConfig), [parsedConfig])
-  const timeframeInsights = useMemo(() => buildTimeframeInsights(parsedConfig.timeframe), [parsedConfig.timeframe])
-  const scenarioHealth = useMemo(() => evaluateScenario(parsedConfig, warnings, hasErrors), [parsedConfig, warnings, hasErrors])
+  const timeframeInsights = useMemo(
+    () => buildTimeframeInsights(parsedConfig.timeframe),
+    [parsedConfig.timeframe]
+  )
+  const scenarioHealth = useMemo(
+    () => evaluateScenario(parsedConfig, warnings, hasErrors),
+    [parsedConfig, warnings, hasErrors]
+  )
 
   const preview = useMemo(() => {
     if (hasErrors || !selectedTemplate) {
@@ -488,7 +523,9 @@ export function ScenarioStudio() {
     }
 
     const normalized: ScenarioConfig = {
-      initialBalance: Number.isFinite(parsedConfig.initialBalance) ? parsedConfig.initialBalance : 0,
+      initialBalance: Number.isFinite(parsedConfig.initialBalance)
+        ? parsedConfig.initialBalance
+        : 0,
       riskPerTrade: Number.isFinite(parsedConfig.riskPerTrade) ? parsedConfig.riskPerTrade : 0,
       maxPositions: Number.isFinite(parsedConfig.maxPositions) ? parsedConfig.maxPositions : 0,
       timeframe: parsedConfig.timeframe,
@@ -514,7 +551,15 @@ export function ScenarioStudio() {
     }
 
     return JSON.stringify(payload, null, 2)
-  }, [hasErrors, parsedConfig, scenarioHealth.score, scenarioHealth.status, selectedTemplate, templateId, warnings])
+  }, [
+    hasErrors,
+    parsedConfig,
+    scenarioHealth.score,
+    scenarioHealth.status,
+    selectedTemplate,
+    templateId,
+    warnings,
+  ])
 
   const handleReset = () => {
     if (selectedTemplate) {
@@ -582,7 +627,11 @@ export function ScenarioStudio() {
   const statusChipColor = statusVisual.color
 
   return (
-    <Box component="main" data-testid="scenario-main" sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}>
+    <Box
+      component="main"
+      data-testid="scenario-main"
+      sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}
+    >
       <Container maxWidth="xl" data-testid="scenario-container">
         <Stack spacing={{ xs: 5, md: 6 }}>
           <Stack spacing={1.5} data-testid="onboarding-hero">
@@ -590,8 +639,9 @@ export function ScenarioStudio() {
               Scenario Studio
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Sanity-check strategy inputs before pushing them into execution. Select a template, adjust the levers, and review
-              automatic hints about risk concentration and timeframe hygiene.
+              Sanity-check strategy inputs before pushing them into execution. Select a template,
+              adjust the levers, and review automatic hints about risk concentration and timeframe
+              hygiene.
             </Typography>
           </Stack>
 
@@ -649,7 +699,10 @@ export function ScenarioStudio() {
                             <ListItemIcon sx={{ minWidth: 32 }}>
                               <AssignmentIcon color="primary" fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText primary={note} primaryTypographyProps={{ variant: 'body2' }} />
+                            <ListItemText
+                              primary={note}
+                              primaryTypographyProps={{ variant: 'body2' }}
+                            />
                           </ListItem>
                         ))}
                       </List>
@@ -761,7 +814,11 @@ export function ScenarioStudio() {
                         aria-label="Scenario health score"
                         data-testid="health-meter"
                       />
-                      <Typography variant="body2" color="text.secondary" data-testid="health-summary">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        data-testid="health-summary"
+                      >
                         {scenarioHealth.summary}
                       </Typography>
 
@@ -777,7 +834,8 @@ export function ScenarioStudio() {
                         </Alert>
                       ) : (
                         <Alert severity="success" data-testid="scenario-no-warnings">
-                          No risk warnings triggered. Document the assumptions before moving to production.
+                          No risk warnings triggered. Document the assumptions before moving to
+                          production.
                         </Alert>
                       )}
 
@@ -787,7 +845,10 @@ export function ScenarioStudio() {
                             <ListItemIcon sx={{ minWidth: 32 }}>
                               <CheckCircleIcon color="success" fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText primaryTypographyProps={{ variant: 'body2' }} primary={item} />
+                            <ListItemText
+                              primaryTypographyProps={{ variant: 'body2' }}
+                              primary={item}
+                            />
                           </ListItem>
                         ))}
                       </List>
@@ -802,7 +863,9 @@ export function ScenarioStudio() {
                   />
                   <CardContent>
                     {timeframeInsights.length === 0 ? (
-                      <Alert severity="info">Provide a valid timeframe to surface operational guidance.</Alert>
+                      <Alert severity="info">
+                        Provide a valid timeframe to surface operational guidance.
+                      </Alert>
                     ) : (
                       <List dense disablePadding sx={{ pl: 0 }}>
                         {timeframeInsights.map((insight) => (
@@ -810,7 +873,10 @@ export function ScenarioStudio() {
                             <ListItemIcon sx={{ minWidth: 32 }}>
                               <WarningAmberIcon color="warning" fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText primaryTypographyProps={{ variant: 'body2' }} primary={insight} />
+                            <ListItemText
+                              primaryTypographyProps={{ variant: 'body2' }}
+                              primary={insight}
+                            />
                           </ListItem>
                         ))}
                       </List>
@@ -818,8 +884,19 @@ export function ScenarioStudio() {
                   </CardContent>
                 </Card>
 
-                <Paper elevation={0} variant="outlined" component="section" data-testid="scenario-preview">
-                  <Box sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}`, px: 3, py: 2 }}>
+                <Paper
+                  elevation={0}
+                  variant="outlined"
+                  component="section"
+                  data-testid="scenario-preview"
+                >
+                  <Box
+                    sx={{
+                      borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                      px: 3,
+                      py: 2,
+                    }}
+                  >
                     <Typography variant="subtitle1" component="h2">
                       Scenario JSON preview
                     </Typography>
@@ -827,7 +904,8 @@ export function ScenarioStudio() {
                   <Box sx={{ px: 3, py: 2 }}>
                     <Stack spacing={2}>
                       <Typography variant="body2" color="text.secondary">
-                        Review the JSON payload before exporting. This mirrors the structure sent to the deployment pipeline.
+                        Review the JSON payload before exporting. This mirrors the structure sent to
+                        the deployment pipeline.
                       </Typography>
                       <Paper
                         variant="outlined"
@@ -866,4 +944,3 @@ export function ScenarioStudioFallback() {
     </Box>
   )
 }
-

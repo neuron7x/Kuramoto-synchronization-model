@@ -15,7 +15,7 @@ const SignInForm = dynamic(
     })),
   {
     loading: () => <SignInFormFallback />,
-  },
+  }
 )
 
 function SignInFormFallback() {
@@ -45,7 +45,8 @@ function SignInFormFallback() {
 
 export const metadata: Metadata = {
   title: 'Sign in | TradePulse',
-  description: 'Access the TradePulse Scenario Studio with secure token handling and refresh support.',
+  description:
+    'Access the TradePulse Scenario Studio with secure token handling and refresh support.',
 }
 
 export default function SignInPage() {
@@ -58,7 +59,8 @@ export default function SignInPage() {
               Welcome back
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Sign in to continue building resilient trading scenarios with guardrails and automatic health insights.
+              Sign in to continue building resilient trading scenarios with guardrails and automatic
+              health insights.
             </Typography>
           </Stack>
           <SignInForm />
@@ -71,4 +73,3 @@ export default function SignInPage() {
     </Box>
   )
 }
-

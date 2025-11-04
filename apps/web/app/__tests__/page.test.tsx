@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import ProtectedHomePage from '../(protected)/page'
@@ -8,15 +8,17 @@ function renderHome() {
   return render(
     <AppThemeProvider>
       <ProtectedHomePage />
-    </AppThemeProvider>,
+    </AppThemeProvider>
   )
 }
 
 describe('Scenario Studio home page', () => {
-  test('renders default template with health summary and preview', () => {
+  test('renders default template with health summary and preview', async () => {
     renderHome()
 
-    expect(screen.getByRole('heading', { name: 'Scenario Studio' })).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Scenario Studio' })).toBeInTheDocument()
+    })
 
     const templateSelect = screen.getByTestId('template-select') as HTMLSelectElement
     expect(templateSelect.value).toBe('momentum-breakout')

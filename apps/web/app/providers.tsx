@@ -93,7 +93,7 @@ const baseTheme = responsiveFontSizes(
         },
       },
     },
-  }),
+  })
 )
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {

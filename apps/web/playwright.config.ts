@@ -1,6 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000'
 
 export default defineConfig({
   testDir: './tests',
@@ -11,10 +11,7 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
-  reporter: [
-    ['list'],
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-  ],
+  reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -54,4 +51,4 @@ export default defineConfig({
         stderr: 'pipe',
         timeout: 120_000,
       },
-});
+})

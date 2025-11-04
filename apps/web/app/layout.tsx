@@ -8,7 +8,8 @@ import { AuthProvider } from './auth/auth-provider'
 
 export const metadata: Metadata = {
   title: 'TradePulse Scenario Studio',
-  description: 'Sanity-check strategy templates with guardrails before promoting them to production.',
+  description:
+    'Sanity-check strategy templates with guardrails before promoting them to production.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

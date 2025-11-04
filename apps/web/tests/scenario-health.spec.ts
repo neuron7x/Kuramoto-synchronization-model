@@ -3,7 +3,9 @@ import { expect, test } from '@playwright/test'
 test.describe('Scenario health analytics', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
-    await page.addStyleTag({ content: '* { transition-duration: 0s !important; animation-duration: 0s !important; }' })
+    await page.addStyleTag({
+      content: '* { transition-duration: 0s !important; animation-duration: 0s !important; }',
+    })
     await expect(page.getByTestId('scenario-form')).toBeVisible()
   })
 
