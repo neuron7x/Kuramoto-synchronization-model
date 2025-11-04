@@ -136,9 +136,6 @@ class RiskMetrics:
         if not self._enabled:
             return
 
-        state_map = {"closed": 0.0, "open": 1.0, "half_open": 2.0}
-        value = state_map.get(state.lower(), 0.0)
-
         for s in ["closed", "open", "half_open"]:
             self.circuit_state.labels(state=s).set(1.0 if s == state.lower() else 0.0)
 

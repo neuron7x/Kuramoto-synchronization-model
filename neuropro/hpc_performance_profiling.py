@@ -132,22 +132,21 @@ def profile_components(model, data):
             with torch.no_grad():
                 with record_function("afferent_synthesis"):
                     state = model.afferent_synthesis(data)
-                
+
                 with record_function("hpc_forward"):
                     pred, pwpe = model.hpc_forward(state)
-                
+
                 with record_function("actor"):
-                    action_logits = model.actor(state)
-                
+                    _ = model.actor(state)
+
                 with record_function("critic"):
-                    value = model.critic(state)
-    
+                    _ = model.critic(state)
+
     # Print profiling results
     print("\n" + "="*80)
     print("Component-wise Profiling (CPU)")
     print("="*80)
     print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=20))
-    
     return prof
 
 
@@ -248,12 +247,12 @@ def run_comprehensive_profile():
     print(f"P50:  {train_stats['p50_ms']:.2f} ms")
     print(f"P95:  {train_stats['p95_ms']:.2f} ms")
     print(f"P99:  {train_stats['p99_ms']:.2f} ms")
-    
+
     # 5. Component-wise profiling
     print("\n5. Component-wise Profiling")
     print("-"*80)
-    prof = profile_components(model, data)
-    
+    _ = profile_components(model, data)
+
     # 6. Memory profiling
     print("\n6. Memory Usage")
     print("-"*80)
