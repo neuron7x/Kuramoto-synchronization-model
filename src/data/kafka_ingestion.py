@@ -196,7 +196,6 @@ class HotSymbolCache:
 
     def _evict_stale(self, now: float) -> list[HotSymbolSnapshot]:
         flushed: list[HotSymbolSnapshot] = []
-        expired_keys: list[tuple[str, str, InstrumentType]] = []
         for key, entry in list(self._entries.items()):
             if now - entry.last_seen >= self._ttl_seconds:
                 if entry.ticks:
@@ -212,9 +211,6 @@ class HotSymbolCache:
                         )
                     )
                 entry.ticks = []
-                expired_keys.append(key)
-        for key in expired_keys:
-            self._entries.pop(key, None)
         while len(self._entries) > self._max_entries:
             key, entry = self._entries.popitem(last=False)
             if entry.ticks:
