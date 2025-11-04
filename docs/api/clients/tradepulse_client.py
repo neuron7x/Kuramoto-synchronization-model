@@ -47,7 +47,7 @@ class TradePulseAPIClient:
 
     def get_market_signal(self, symbol: str, *, payload: Mapping[str, Any] | None = None, headers: Mapping[str, str] | None = None) -> httpx.Response:
         """Retrieve the latest trading signal for a symbol.
-    
+
         Method: GET /api/v1/signals/{symbol}
         Scope: signals:read
         Cache: public; max-age=15s
@@ -67,7 +67,7 @@ class TradePulseAPIClient:
 
     def create_prediction(self, *, payload: Mapping[str, Any] | None = None, headers: Mapping[str, str] | None = None) -> httpx.Response:
         """Submit feature vectors and request an inference run.
-    
+
         Method: POST /api/v1/predictions
         Scope: predictions:write
         Cache: no-store; max-age=0s

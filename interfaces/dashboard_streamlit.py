@@ -169,19 +169,19 @@ else:
         The Kuramoto model describes synchronization of coupled oscillators. In trading:
         - **R ≈ 1**: Strong phase synchronization (trending market)
         - **R ≈ 0**: No synchronization (random walk)
-        
+
         ### Shannon Entropy
         Measures the information content and uncertainty in price distribution:
         - **High H**: More unpredictable, diverse outcomes
         - **Low H**: More concentrated, predictable distribution
-        
+
         ### Delta Entropy
         Tracks the change in entropy over time:
         - **Positive ΔH**: Increasing uncertainty
         - **Negative ΔH**: Decreasing uncertainty, potential regime shift
-        
+
         ---
-        
+
         **TradePulse** combines geometric indicators with traditional technical analysis
         for robust market regime detection and signal generation.
         """)

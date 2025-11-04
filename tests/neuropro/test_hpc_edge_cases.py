@@ -130,7 +130,7 @@ class TestNaNHandling:
 
         # Should fail gracefully or use fallback
         try:
-            action = model.decide_action(data)
+            model.decide_action(data)
         except Exception as e:
             assert "nan" in str(e).lower() or "empty" in str(e).lower()
 
@@ -160,7 +160,7 @@ class TestUnstableModelStates:
             action = torch.tensor([1])
             next_state = state
 
-            td_error = model.sr_drl_step(state, action, reward, next_state, 0.15)
+            model.sr_drl_step(state, action, reward, next_state, 0.15)
 
             # Check parameters are still valid
             for param in model.parameters():
@@ -209,7 +209,7 @@ class TestRobustnessWithPerturbations:
         data = generate_synthetic_data(n_days=100, seed=42)
 
         # Get baseline action
-        baseline_action = model.decide_action(data)
+        model.decide_action(data)
 
         # Add perturbation to data
         noise = np.random.normal(0, perturb, size=data.shape)
@@ -231,7 +231,7 @@ class TestRobustnessWithPerturbations:
         pwpes = []
 
         for i in range(10):
-            action = model.decide_action(data, prev_pwpe)
+            model.decide_action(data, prev_pwpe)
             pwpe = model.get_pwpe(data)
             pwpes.append(pwpe)
             prev_pwpe = pwpe
@@ -304,7 +304,7 @@ class TestEdgeCaseScenarios:
 
         # Should handle or fail gracefully
         try:
-            action = model.decide_action(data)
+            model.decide_action(data)
         except Exception:
             # Expected for invalid data
             pass

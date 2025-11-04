@@ -45,13 +45,13 @@ def test_temperature_setting(
 ) -> ExplorationResult:
     """
     Test a specific Gumbel-Softmax temperature setting.
-    
+
     Args:
         temperature: Temperature parameter τ
         data: Market data
         model: HPC-AI model
         n_steps: Number of decision steps to test
-    
+
     Returns:
         ExplorationResult with metrics
     """
@@ -114,12 +114,12 @@ def grid_search_temperature(
 ) -> Dict[str, List[ExplorationResult]]:
     """
     Grid search over temperature values.
-    
+
     Args:
         temp_grid: List of temperature values to test
         data_synthetic: Synthetic market data
         data_real: Optional real market data
-    
+
     Returns:
         Dictionary with results for synthetic and real data
     """
@@ -185,7 +185,7 @@ def grid_search_temperature(
 def analyze_results(results: Dict[str, List[ExplorationResult]]):
     """
     Analyze grid search results and recommend optimal temperature.
-    
+
     Args:
         results: Dictionary with results from grid search
     """

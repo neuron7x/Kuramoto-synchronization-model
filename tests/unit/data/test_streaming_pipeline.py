@@ -349,7 +349,7 @@ def test_pipeline_respects_explicit_lag_handler() -> None:
         created.append(service)
         return service
 
-    pipeline = StreamingIngestionPipeline(
+    StreamingIngestionPipeline(
         kafka_config=config,
         lag_handler=lag_handler,
         kafka_service_factory=factory,

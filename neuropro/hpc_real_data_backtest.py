@@ -16,9 +16,9 @@ from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 
 try:
-    from backtest.event_driven import ArrayDataHandler, EventDrivenBacktestEngine
+    from backtest.event_driven import ArrayDataHandler, EventDrivenBacktestEngine  # noqa: F401
     from backtest.events import MarketEvent, SignalEvent
-    from backtest.performance import compute_performance_metrics
+    from backtest.performance import compute_performance_metrics  # noqa: F401
     BACKTEST_AVAILABLE = True
 except ImportError:
     BACKTEST_AVAILABLE = False
@@ -71,7 +71,7 @@ class HPCAIStrategy:
     ):
         """
         Initialize HPC-AI strategy.
-        
+
         Args:
             model: HPC-AI model instance
             lookback_window: Number of historical bars to use
@@ -87,10 +87,10 @@ class HPCAIStrategy:
     def on_market_data(self, event: MarketEvent) -> Optional[SignalEvent]:
         """
         Process market data and generate trading signal.
-        
+
         Args:
             event: Market event with price data
-            
+
         Returns:
             SignalEvent if action is BUY or SELL, None if HOLD
         """
@@ -161,11 +161,11 @@ class SimplifiedBacktest:
     ) -> BacktestResult:
         """
         Run simplified backtest.
-        
+
         Args:
             strategy: HPC-AI strategy
             prices: Price series
-            
+
         Returns:
             BacktestResult with metrics
         """
@@ -292,14 +292,14 @@ def run_hpc_ai_backtest(
 ) -> BacktestResult:
     """
     Run HPC-AI backtest on real or synthetic data.
-    
+
     Args:
         data: Market data DataFrame with OHLCV
         model: HPC-AI model (creates new if None)
         initial_capital: Starting capital
         lookback_window: Historical window size
         position_size: Position size as fraction of capital
-        
+
     Returns:
         BacktestResult with performance metrics
     """
@@ -337,11 +337,11 @@ def compare_with_baseline(
 ) -> Dict[str, BacktestResult]:
     """
     Compare HPC-AI with baseline strategies.
-    
+
     Args:
         data: Market data
         initial_capital: Starting capital
-        
+
     Returns:
         Dictionary of strategy results
     """
@@ -383,7 +383,7 @@ def compare_with_baseline(
 def print_backtest_report(results: Dict[str, BacktestResult]):
     """
     Print formatted backtest comparison report.
-    
+
     Args:
         results: Dictionary of backtest results
     """

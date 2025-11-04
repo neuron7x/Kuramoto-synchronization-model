@@ -53,7 +53,7 @@ def _kraken_http():
 
 def load_adapter_or_http_client(exchange: str):
     """Load an HTTP client for the exchange.
-    
+
     For canary tests, we use simple HTTP clients rather than full adapters
     to avoid credential and instantiation complexity.
     """
