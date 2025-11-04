@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 import pandas as pd
+import torch
 
 from evolution import bond_evolver
 from core.energy import (
@@ -1020,6 +1021,113 @@ class ThermoController:
 
     def get_monotonic_violations_total(self) -> int:
         return int(self.monotonic_violations_total)
+
+    # HPC-AI Integration -------------------------------------------------
+    def init_hpc_ai(
+        self,
+        input_dim: int = 10,
+        state_dim: int = 128,
+        action_dim: int = 3,
+        learning_rate: float = 1e-4,
+    ) -> None:
+        """
+        Initialize HPC-AI module for adaptive trading.
+
+        Args:
+            input_dim: Input feature dimension
+            state_dim: Latent state dimension
+            action_dim: Number of actions (Hold=0, Buy=1, Sell=2)
+            learning_rate: Learning rate for optimizer
+        """
+        try:
+            from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
+
+            self.hpc_ai = HPCActiveInferenceModuleV4(
+                input_dim=input_dim,
+                state_dim=state_dim,
+                action_dim=action_dim,
+                learning_rate=learning_rate,
+            )
+            self.prev_pwpe = 0.0
+            self._hpc_ai_enabled = True
+        except ImportError as e:
+            warnings.warn(
+                f"Failed to initialize HPC-AI module: {e}. HPC-AI features disabled.",
+                RuntimeWarning,
+            )
+            self._hpc_ai_enabled = False
+
+    def hpc_ai_control_step(
+        self,
+        market_data: pd.DataFrame,
+        execute_action: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Execute HPC-AI control step with optional action execution.
+
+        Args:
+            market_data: Market data DataFrame with OHLCV
+            execute_action: Whether to execute the decided action
+
+        Returns:
+            Dictionary with action, td_error, pwpe, and state info
+        """
+        if not getattr(self, "_hpc_ai_enabled", False):
+            return {
+                "action": 0,
+                "td_error": 0.0,
+                "pwpe": 0.0,
+                "error": "HPC-AI not initialized",
+            }
+
+        # Decide action
+        action = self.hpc_ai.decide_action(market_data, self.prev_pwpe)
+
+        # Execute action if requested (placeholder)
+        if execute_action:
+            if action == 1:
+                self.audit_logger.info(
+                    "HPC-AI Buy signal",
+                    extra={"event": "hpc_ai.action", "action": "buy"},
+                )
+            elif action == 2:
+                self.audit_logger.info(
+                    "HPC-AI Sell signal",
+                    extra={"event": "hpc_ai.action", "action": "sell"},
+                )
+
+        # Compute metrics (mock for now)
+        pnl = 0.0
+        sharpe = 1.0
+        drawdown = 0.0
+
+        expert_metrics = torch.tensor([sharpe, drawdown, pnl], dtype=torch.float32)
+        state = self.hpc_ai.afferent_synthesis(market_data)
+        pred, pwpe = self.hpc_ai.hpc_forward(state)
+        reward = self.hpc_ai.compute_self_reward(expert_metrics, pwpe.item())
+
+        # Simulate next state (use same data for now)
+        next_state = state
+
+        # Update with SRDRL
+        td_error = self.hpc_ai.sr_drl_step(
+            state,
+            torch.tensor([action], dtype=torch.int64),
+            reward,
+            next_state,
+            pwpe.item(),
+        )
+
+        # Update previous PWPE
+        self.prev_pwpe = pwpe.item()
+
+        return {
+            "action": action,
+            "td_error": td_error,
+            "pwpe": pwpe.item(),
+            "reward": reward,
+            "state_norm": torch.norm(state).item(),
+        }
 
 
 __all__ = [
