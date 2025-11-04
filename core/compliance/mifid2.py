@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 import json
 import logging
 from pathlib import Path
-from typing import Iterable, Mapping
+from typing import Mapping
 
 LOGGER = logging.getLogger(__name__)
 
