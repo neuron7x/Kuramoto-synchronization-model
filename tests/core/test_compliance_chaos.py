@@ -18,7 +18,7 @@ def test_regulatory_validator_surfaces_black_swan_gaps(monkeypatch):
     validator = RegulatoryComplianceValidator(
         required_privacy_regimes=("gdpr", "ccpa"),
         required_iso_controls=("iso27001",),
-        required_nist_controls=("nist-csf",), 
+        required_nist_controls=("nist-csf",),
         minimum_training_restrictions=2,
         maximum_audit_interval_days=90,
     )

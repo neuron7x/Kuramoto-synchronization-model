@@ -5,8 +5,6 @@ This example demonstrates the full pipeline of the Hierarchical Predictive Codin
 with Active Inference (HPC-AI v4) module for adaptive trading.
 """
 
-import pandas as pd
-import numpy as np
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
     generate_synthetic_data,

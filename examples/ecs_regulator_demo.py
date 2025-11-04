@@ -159,8 +159,8 @@ def main():
     for i in range(n_steps):
         # Update stress with market conditions
         regulator.update_stress(
-            market_returns[:i+1], 
-            drawdowns[i] if i > 0 else 0.0, 
+            market_returns[:i+1],
+            drawdowns[i] if i > 0 else 0.0,
             prev_fe
         )
         prev_fe = regulator.free_energy_proxy

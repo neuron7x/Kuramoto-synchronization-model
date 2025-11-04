@@ -184,7 +184,7 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
         f"- Peak VPIN: {metrics.vpin_max:.3f}",
         "",
         "## Thermodynamic Response",
-        f"- RL actions observed: {len(metrics.rl_actions)}", 
+        f"- RL actions observed: {len(metrics.rl_actions)}",
         f"- RL action changes: {metrics.rl_action_changes} (rate {metrics.rl_action_change_rate:.3f})",
         f"- RL policy stable: {'yes' if metrics.rl_stable else 'no'}",
         f"- Monotonic invariant violations: {metrics.monotonic_violations}",

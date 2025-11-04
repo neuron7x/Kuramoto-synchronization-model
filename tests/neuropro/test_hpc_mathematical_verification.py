@@ -266,8 +266,8 @@ class TestSelfRewardFormulation:
         
         # Low uncertainty
         reward_low = small_model.compute_self_reward(expert_metrics, pwpe=0.01)
-        
-        # High uncertainty  
+
+        # High uncertainty
         reward_high = small_model.compute_self_reward(expert_metrics, pwpe=0.8)
         
         # High uncertainty should reduce reward magnitude
