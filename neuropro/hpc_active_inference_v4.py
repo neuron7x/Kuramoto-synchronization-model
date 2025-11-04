@@ -311,7 +311,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
         critic_loss = td_error.pow(2).mean()
 
         # Reward prediction loss
-        expert_reward = torch.tensor([reward], dtype=torch.float32).to(self.device)
+        expert_reward = torch.tensor([[reward]], dtype=torch.float32).to(self.device)
         reward_input = torch.tensor([[reward, 0.0, 0.0]], dtype=torch.float32).to(
             self.device
         )
