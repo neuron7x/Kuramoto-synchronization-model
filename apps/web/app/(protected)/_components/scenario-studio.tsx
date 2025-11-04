@@ -855,14 +855,21 @@ export function ScenarioStudio() {
                           </Stack>
                           <Stack direction="row" alignItems="baseline" spacing={1}>
                             <Typography
-                              variant="h2"
+                              variant="h4"
                               component="p"
                               data-testid="health-score"
-                              sx={{ fontWeight: 700 }}
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: { xs: '3rem', sm: '3.5rem' },
+                              }}
                             >
                               {scenarioHealth.score}
                             </Typography>
-                            <Typography variant="h5" color="text.secondary">
+                            <Typography
+                              variant="h5"
+                              color="text.secondary"
+                              sx={{ fontSize: '1.5rem' }}
+                            >
                               / 100
                             </Typography>
                           </Stack>

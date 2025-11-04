@@ -13,18 +13,14 @@ body {
   box-sizing: border-box;
 }
 
-/* Smooth scroll behavior */
+/* Smooth scroll behavior and prevent layout shift on scrollbar */
 html {
   scroll-behavior: smooth;
+  overflow-y: scroll;
 }
 
 /* Focus visible for accessibility */
 *:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
-}
-
-/* Prevent layout shift on scrollbar */
-html {
-  overflow-y: scroll;
 }
