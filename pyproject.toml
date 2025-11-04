@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=69", "setuptools_scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -117,8 +117,11 @@ tradepulse-sync = "scripts.resilient_data_sync:main"
 tradepulse-db = "scripts.db_migrate:cli"
 
 [tool.setuptools.dynamic]
-version = { file = "VERSION" }
 readme = { file = "README.md", content-type = "text/markdown" }
+
+[tool.setuptools_scm]
+version_file = "src/_version.py"
+fallback_version = "0.1.0"
 
 [tool.setuptools.packages.find]
 where = ["."]
