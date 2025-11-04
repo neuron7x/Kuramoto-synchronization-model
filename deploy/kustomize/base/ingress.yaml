@@ -23,6 +23,8 @@ metadata:
     # CORS (adjust as needed)
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    # SECURITY: Restrict to your domains in production
+    # nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.tradepulse.example.com"
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     

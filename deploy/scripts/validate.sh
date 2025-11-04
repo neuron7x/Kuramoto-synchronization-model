@@ -126,7 +126,7 @@ echo ""
 echo "Validating YAML syntax..."
 yaml_errors=0
 while IFS= read -r -d '' yaml_file; do
-    if python3 -c "import yaml, sys; yaml.safe_load_all(open('$yaml_file'))" 2>/dev/null; then
+    if python3 -c "import yaml, sys; [_ for _ in yaml.safe_load_all(open('$yaml_file'))]" 2>/dev/null; then
         : # Silent success
     else
         print_status "fail" "YAML syntax error in $yaml_file"

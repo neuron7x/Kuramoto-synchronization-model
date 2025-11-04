@@ -429,8 +429,8 @@ kubectl get apiservices | grep metrics
 ### Networking Issues
 
 ```bash
-# Test service connectivity
-kubectl run -it --rm debug --image=nicolaka/netshoot --restart=Never -- /bin/bash
+# Test service connectivity (using pinned version for reproducibility)
+kubectl run -it --rm debug --image=nicolaka/netshoot:v0.11 --restart=Never -- /bin/bash
 > curl http://tradepulse-api.tradepulse-staging.svc.cluster.local/health
 
 # Check service endpoints

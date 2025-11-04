@@ -113,10 +113,17 @@ if [[ ! -f "$CA_CERT_PATH" ]]; then
     warning "CA certificate not found: $CA_CERT_PATH"
     info "Creating self-signed CA for development..."
     
+    # Set restrictive umask for security
+    old_umask=$(umask)
+    umask 077
+    
     mkdir -p /tmp/tradepulse-certs
     openssl req -x509 -newkey rsa:4096 -keyout /tmp/tradepulse-certs/ca-key.pem \
         -out /tmp/tradepulse-certs/client-ca.pem -days 365 -nodes \
         -subj "/CN=TradePulse Dev CA/O=TradePulse/C=US" 2>/dev/null
+    
+    # Restore original umask
+    umask "$old_umask"
     
     CA_CERT_PATH="/tmp/tradepulse-certs/client-ca.pem"
     success "Generated development CA at $CA_CERT_PATH"

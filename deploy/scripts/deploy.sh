@@ -190,7 +190,24 @@ if [[ "$DRY_RUN" == "true" ]]; then
     success "Dry run complete"
 else
     warning "Applying changes to cluster..."
-    read -p "Continue with deployment to $ENVIRONMENT? (yes/no): " confirm
+    
+    # Check if running in non-interactive environment
+    if [ -t 0 ]; then
+        read -p "Continue with deployment to $ENVIRONMENT? (yes/no): " -t 30 confirm || {
+            info "Timeout waiting for confirmation - defaulting to no"
+            confirm="no"
+        }
+    else
+        # Non-interactive mode - require explicit environment variable
+        if [[ "${DEPLOY_CONFIRM:-no}" == "yes" ]]; then
+            confirm="yes"
+            info "Non-interactive mode - proceeding with deployment (DEPLOY_CONFIRM=yes)"
+        else
+            confirm="no"
+            warning "Non-interactive mode - deployment cancelled (set DEPLOY_CONFIRM=yes to proceed)"
+        fi
+    fi
+    
     if [[ "$confirm" != "yes" ]]; then
         info "Deployment cancelled"
         exit 0

@@ -13,7 +13,10 @@ metadata:
     
     # Stricter TLS
     nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.3"
+    # TLS 1.3 ciphers
     nginx.ingress.kubernetes.io/ssl-ciphers: "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    # TLS 1.2 ciphers (fallback)
+    nginx.ingress.kubernetes.io/ssl-ciphers-tls12: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
 spec:
   tls:
     - hosts:
