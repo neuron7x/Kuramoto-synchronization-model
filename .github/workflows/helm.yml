@@ -55,6 +55,9 @@ jobs:
       
       - name: Template charts
         run: |
+          # Update dependencies first
+          helm dependency update deploy/helm/tradepulse
+          
           helm template tradepulse deploy/helm/tradepulse \
             --values deploy/helm/tradepulse/values.yaml \
             --output-dir /tmp/helm-output
@@ -140,6 +143,9 @@ jobs:
       
       - name: Install chart with minimal config
         run: |
+          # Update dependencies first
+          helm dependency update deploy/helm/tradepulse
+          
           helm install tradepulse deploy/helm/tradepulse \
             --namespace tradepulse \
             --set sandbox.enabled=true \
@@ -147,6 +153,8 @@ jobs:
             --set observability.enabled=false \
             --set global.networkPolicy.enabled=false \
             --set sandbox.serviceMonitor.enabled=false \
+            --set sandbox.autoscaling.enabled=false \
+            --set sandbox.podDisruptionBudget.enabled=false \
             --timeout 5m \
             --wait
       
@@ -191,6 +199,9 @@ jobs:
       
       - name: Template charts
         run: |
+          # Update dependencies first
+          helm dependency update deploy/helm/tradepulse
+          
           helm template tradepulse deploy/helm/tradepulse \
             --values deploy/helm/tradepulse/values.yaml \
             --output-dir /tmp/helm-output
@@ -233,16 +244,14 @@ jobs:
       
       - name: Template charts
         run: |
+          # Update dependencies first
+          helm dependency update deploy/helm/tradepulse
+          
           helm template tradepulse deploy/helm/tradepulse \
             --values deploy/helm/tradepulse/values.yaml \
             --output-dir /tmp/helm-output
       
-      - name: Run Polaris
-        uses: fairwindsops/polaris@master
-        with:
-          version: 9.0.0
-      
-      - name: Scan manifests
+      - name: Install and run Polaris
         run: |
           # Install polaris CLI
           wget -O polaris https://github.com/FairwindsOps/polaris/releases/download/9.0.0/polaris_linux_amd64
