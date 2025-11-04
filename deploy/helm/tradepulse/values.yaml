@@ -155,7 +155,9 @@ observability:
   # Grafana
   grafana:
     enabled: true
-    adminPassword: "changeme"
+    # SECURITY: Change this password before deploying to production
+    # Use a secret management solution like HashiCorp Vault or Kubernetes Secrets
+    adminPassword: ""  # Must be set via --set grafana.adminPassword or secrets
   
   # OpenTelemetry Collector
   otelCollector:

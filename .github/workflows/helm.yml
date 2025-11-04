@@ -63,10 +63,21 @@ jobs:
           sudo mv kubeval /usr/local/bin
           
           # Validate all generated manifests
+          VALIDATION_FAILED=0
           find /tmp/helm-output -name '*.yaml' -type f | while read manifest; do
             echo "Validating $manifest"
-            kubeval --strict "$manifest" || true
+            if ! kubeval --strict "$manifest"; then
+              echo "ERROR: Validation failed for $manifest"
+              VALIDATION_FAILED=1
+            fi
           done
+          
+          if [ $VALIDATION_FAILED -ne 0 ]; then
+            echo "❌ Manifest validation failed"
+            exit 1
+          fi
+          
+          echo "✓ All manifests validated successfully"
 
   kind-smoke-test:
     name: Kind Smoke Test

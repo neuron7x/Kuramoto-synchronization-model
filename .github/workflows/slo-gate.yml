@@ -46,7 +46,12 @@ jobs:
           from datetime import datetime, timedelta
           
           # Configuration
-          PROMETHEUS_URL = os.getenv('PROMETHEUS_URL', 'http://prometheus:9090')
+          PROMETHEUS_URL = os.getenv('PROMETHEUS_URL')
+          if not PROMETHEUS_URL:
+              print("ERROR: PROMETHEUS_URL environment variable not set")
+              print("Please configure PROMETHEUS_URL secret in repository settings")
+              exit(1)
+          
           CANARY_SERVICE = os.getenv('CANARY_SERVICE', 'tradepulse-sandbox-canary')
           
           # Time range: last 15 minutes
