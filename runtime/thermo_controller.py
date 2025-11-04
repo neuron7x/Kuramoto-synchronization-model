@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 import pandas as pd
+import torch
 
 from evolution import bond_evolver
 from core.energy import (
@@ -1099,8 +1100,6 @@ class ThermoController:
         pnl = 0.0
         sharpe = 1.0
         drawdown = 0.0
-
-        import torch
 
         expert_metrics = torch.tensor([sharpe, drawdown, pnl], dtype=torch.float32)
         state = self.hpc_ai.afferent_synthesis(market_data)

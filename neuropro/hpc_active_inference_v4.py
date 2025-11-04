@@ -161,7 +161,11 @@ class HPCActiveInferenceModuleV4(nn.Module):
             }, index=[0])
             
         except Exception as e:
-            warnings.warn(f"Failed to use TradePulseCompositeEngine: {e}. Using fallback.")
+            warnings.warn(
+                f"Failed to use TradePulseCompositeEngine: {e}. Using fallback.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
             # Fallback: use basic features
             required_cols = ['open', 'high', 'low', 'close', 'volume']
             features = data[required_cols].iloc[-1:].copy()
