@@ -79,5 +79,5 @@ def test_resolve_indicator_normalizer_identity_roundtrip() -> None:
     normalized = normalizer(series)
 
     assert isinstance(normalized, np.ndarray)
-    assert normalized.dtype == np.float_
+    assert normalized.dtype == np.float64
     assert np.allclose(normalized, series)
