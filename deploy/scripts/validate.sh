@@ -132,7 +132,7 @@ while IFS= read -r -d '' yaml_file; do
         print_status "fail" "YAML syntax error in $yaml_file"
         ((yaml_errors++))
     fi
-done < <(find "$DEPLOY_DIR" -name "*.yaml" -o -name "*.yml" -print0)
+done < <(find "$DEPLOY_DIR" \( -name "*.yaml" -o -name "*.yml" \) -print0)
 
 if [ $yaml_errors -eq 0 ]; then
     print_status "pass" "All YAML files have valid syntax"

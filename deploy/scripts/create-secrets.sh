@@ -29,7 +29,7 @@ echo ""
 # Check if namespace exists
 if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
     warning "Namespace '$NAMESPACE' doesn't exist"
-    read -p "Create namespace? (yes/no): " create_ns
+    read -r -p "Create namespace? (yes/no): " create_ns
     if [[ "$create_ns" == "yes" ]]; then
         kubectl create namespace "$NAMESPACE"
         success "Namespace created"
@@ -41,12 +41,11 @@ fi
 
 # Function to prompt for secret value
 prompt_secret() {
-    local var_name=$1
     local description=$2
     local default_value="${3:-}"
     
     if [[ "$INTERACTIVE" == "true" ]]; then
-        read -p "$description [$default_value]: " value
+        read -r -p "$description [$default_value]: " value
         echo "${value:-$default_value}"
     else
         echo "$default_value"
@@ -61,9 +60,9 @@ echo ""
 AUDIT_SECRET=$(openssl rand -base64 32 2>/dev/null || echo "PLEASE_CHANGE_ME_$(date +%s)")
 if [[ "$INTERACTIVE" == "true" ]]; then
     echo "Generated audit secret: $AUDIT_SECRET"
-    read -p "Use generated secret? (yes/no): " use_gen
+    read -r -p "Use generated secret? (yes/no): " use_gen
     if [[ "$use_gen" != "yes" ]]; then
-        read -p "Enter audit secret: " AUDIT_SECRET
+        read -r -p "Enter audit secret: " AUDIT_SECRET
     fi
 fi
 
@@ -74,7 +73,7 @@ OAUTH2_JWKS_URI=$(prompt_secret "OAUTH2_JWKS_URI" "OAuth2 JWKS URI" "https://aut
 # Check if secret already exists
 if kubectl get secret tradepulse-secrets -n "$NAMESPACE" &> /dev/null; then
     warning "Secret 'tradepulse-secrets' already exists"
-    read -p "Overwrite? (yes/no): " overwrite
+    read -r -p "Overwrite? (yes/no): " overwrite
     if [[ "$overwrite" == "yes" ]]; then
         kubectl delete secret tradepulse-secrets -n "$NAMESPACE"
     else
@@ -101,8 +100,8 @@ info "Creating tradepulse-mtls-client..."
 echo ""
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-    read -p "Path to client CA certificate (client-ca.pem): " CA_CERT_PATH
-    read -p "Path to certificate revocation list (client.crl): " CRL_PATH
+    read -r -p "Path to client CA certificate (client-ca.pem): " CA_CERT_PATH
+    read -r -p "Path to certificate revocation list (client.crl): " CRL_PATH
 else
     CA_CERT_PATH="${CA_CERT_PATH:-./certs/client-ca.pem}"
     CRL_PATH="${CRL_PATH:-./certs/client.crl}"
@@ -142,7 +141,7 @@ fi
 # Check if secret already exists
 if kubectl get secret tradepulse-mtls-client -n "$NAMESPACE" &> /dev/null; then
     warning "Secret 'tradepulse-mtls-client' already exists"
-    read -p "Overwrite? (yes/no): " overwrite
+    read -r -p "Overwrite? (yes/no): " overwrite
     if [[ "$overwrite" == "yes" ]]; then
         kubectl delete secret tradepulse-mtls-client -n "$NAMESPACE"
     else
@@ -167,7 +166,7 @@ info "Creating tradepulse-timescale (optional, for database backups)..."
 echo ""
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-    read -p "Create TimescaleDB secret? (yes/no): " create_db
+    read -r -p "Create TimescaleDB secret? (yes/no): " create_db
 else
     create_db="no"
 fi
@@ -177,7 +176,7 @@ if [[ "$create_db" == "yes" ]]; then
     
     if kubectl get secret tradepulse-timescale -n "$NAMESPACE" &> /dev/null; then
         warning "Secret 'tradepulse-timescale' already exists"
-        read -p "Overwrite? (yes/no): " overwrite
+        read -r -p "Overwrite? (yes/no): " overwrite
         if [[ "$overwrite" == "yes" ]]; then
             kubectl delete secret tradepulse-timescale -n "$NAMESPACE"
         else

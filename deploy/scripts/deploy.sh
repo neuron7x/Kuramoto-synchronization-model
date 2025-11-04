@@ -156,11 +156,11 @@ echo ""
 
 # Build manifests
 info "Building Kubernetes manifests..."
-if ! kubectl kustomize "$KUSTOMIZE_OVERLAY" > /tmp/tradepulse-$ENVIRONMENT.yaml; then
+if ! kubectl kustomize "$KUSTOMIZE_OVERLAY" > "/tmp/tradepulse-$ENVIRONMENT.yaml"; then
     error "Failed to build manifests"
     exit 1
 fi
-resource_count=$(grep -c "^kind:" /tmp/tradepulse-$ENVIRONMENT.yaml || true)
+resource_count=$(grep -c "^kind:" "/tmp/tradepulse-$ENVIRONMENT.yaml" || true)
 success "Built $resource_count resources"
 
 echo ""
@@ -182,7 +182,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     info "Dry run mode - showing manifest preview..."
     echo ""
     echo "===== Generated Manifests ====="
-    head -100 /tmp/tradepulse-$ENVIRONMENT.yaml
+    head -100 "/tmp/tradepulse-$ENVIRONMENT.yaml"
     echo ""
     echo "===== End of Preview (first 100 lines) ====="
     info "Full manifest saved to: /tmp/tradepulse-$ENVIRONMENT.yaml"
@@ -193,7 +193,7 @@ else
     
     # Check if running in non-interactive environment
     if [ -t 0 ]; then
-        read -p "Continue with deployment to $ENVIRONMENT? (yes/no): " -t 30 confirm || {
+        read -r -p "Continue with deployment to $ENVIRONMENT? (yes/no): " -t 30 confirm || {
             info "Timeout waiting for confirmation - defaulting to no"
             confirm="no"
         }
