@@ -143,11 +143,11 @@ else:
             
             # Visualization
             st.write("### Price Series")
-            st.line_chart(df.set_index(df.index)["price"], use_container_width=True)
+            st.line_chart(df["price"], use_container_width=True)
             
             if "volume" in df.columns:
                 st.write("### Volume")
-                st.bar_chart(df.set_index(df.index)["volume"], use_container_width=True)
+                st.bar_chart(df["volume"], use_container_width=True)
             
             # Market regime interpretation
             st.write("### Market Regime Analysis")

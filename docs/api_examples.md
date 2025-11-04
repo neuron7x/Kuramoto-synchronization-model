@@ -69,7 +69,7 @@ import pandas as pd
 # Prepare data
 bars = pd.DataFrame({
     'close': prices,
-    'volume': volumes
+    'volume': [1000] * len(prices)  # Placeholder volumes
 }, index=pd.date_range('2024-01-01', periods=len(prices), freq='1H'))
 
 # Analyze market regime
@@ -520,6 +520,21 @@ def multi_timeframe_strategy(
     prices_minute: np.ndarray
 ) -> np.ndarray:
     """Combine signals from multiple timeframes"""
+    
+    # Helper function to calculate RSI
+    def calculate_rsi(prices, period=14):
+        """Calculate Relative Strength Index"""
+        deltas = np.diff(prices)
+        gains = np.where(deltas > 0, deltas, 0)
+        losses = np.where(deltas < 0, -deltas, 0)
+        
+        avg_gain = np.mean(gains[-period:])
+        avg_loss = np.mean(losses[-period:])
+        
+        if avg_loss == 0:
+            return 100
+        rs = avg_gain / avg_loss
+        return 100 - (100 / (1 + rs))
     
     # Daily: Trend direction
     daily_ma = prices_daily[-50:].mean()
