@@ -47,18 +47,22 @@ spec:
         - name: OTEL_SERVICE_NAME
           value: {{ printf "%s-sandbox" .Values.global.otel.serviceName | quote }}
         {{- end }}
+        {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /health
+            path: {{ .Values.livenessProbe.path }}
             port: http
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+        {{- end }}
+        {{- if .Values.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /ready
+            path: {{ .Values.readinessProbe.path }}
             port: http
-          initialDelaySeconds: 10
-          periodSeconds: 5
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+        {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         volumeMounts:

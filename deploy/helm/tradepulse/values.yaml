@@ -90,12 +90,23 @@ sandbox:
     interval: 30s
     scrapeTimeout: 10s
   
+  # Health probes configuration
+  livenessProbe:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  readinessProbe:
+    enabled: true
+    path: /ready
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  
   # Environment variables
   env:
     - name: LOG_LEVEL
       value: "info"
-    - name: OTEL_EXPORTER_OTLP_ENDPOINT
-      value: "http://otel-collector:4317"
   
   # Secrets
   secrets:

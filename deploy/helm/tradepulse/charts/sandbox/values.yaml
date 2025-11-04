@@ -56,6 +56,19 @@ serviceMonitor:
   interval: 30s
   scrapeTimeout: 10s
 
+# Health probes configuration
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  enabled: true
+  path: /ready
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
 env: []
 
 serviceAccount:

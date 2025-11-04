@@ -152,9 +152,12 @@ jobs:
             --set admin.enabled=false \
             --set observability.enabled=false \
             --set global.networkPolicy.enabled=false \
+            --set global.otel.enabled=false \
             --set sandbox.serviceMonitor.enabled=false \
             --set sandbox.autoscaling.enabled=false \
             --set sandbox.podDisruptionBudget.enabled=false \
+            --set sandbox.livenessProbe.enabled=false \
+            --set sandbox.readinessProbe.enabled=false \
             --timeout 5m \
             --wait
       
