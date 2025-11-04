@@ -132,14 +132,12 @@ func TestL6EKSModuleTerraformValidate(t *testing.T) {
 	}
 
 	terraformDir := filepath.Join("..", "eks")
-	stagingVarsFile := filepath.Join(terraformDir, "environments", "staging.tfvars")
 	options := &terraform.Options{
 		TerraformDir: terraformDir,
 		EnvVars: map[string]string{
 			"TF_IN_AUTOMATION": "true",
 			"TF_CLI_ARGS_init": "-backend=false",
 		},
-		VarFiles:    []string{stagingVarsFile},
 		NoColor:     true,
 		Reconfigure: true,
 	}
