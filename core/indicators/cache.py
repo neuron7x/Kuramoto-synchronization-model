@@ -219,8 +219,8 @@ def _resolve_code_version() -> str:
                 return ref_path.read_text(encoding="utf-8").strip()
         if head:
             return head
-    except Exception:  # pragma: no cover - gitless environments
-        pass
+    except Exception:  # pragma: no cover - gitless environments; graceful fallback when git metadata unavailable
+        pass  # nosec B110 - intentional silent fallback for non-git deployments
 
     version_file = git_dir / "VERSION"
     if version_file.exists():

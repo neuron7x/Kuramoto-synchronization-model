@@ -626,12 +626,28 @@ def expensive_indicator(prices_tuple):
 3. Use compiled extensions:
 ```python
 # Consider Cython or Numba for hot paths
-from numba import jit
+import numpy as np
 
-@jit(nopython=True)
-def fast_indicator(prices):
-    # Compiled to machine code
-    pass
+try:
+    from numba import jit
+    
+    @jit(nopython=True)
+    def fast_indicator(prices):
+        """Compute simple moving average using Numba JIT compilation."""
+        window = 20
+        n = len(prices)
+        if n < window:
+            return np.zeros(n)
+        result = np.zeros(n)
+        for i in range(window - 1, n):
+            result[i] = np.mean(prices[i - window + 1:i + 1])
+        return result
+except ImportError:
+    # Fallback to pure numpy if numba is not available
+    def fast_indicator(prices):
+        """Compute simple moving average using numpy."""
+        window = 20
+        return np.convolve(prices, np.ones(window) / window, mode='same')
 ```
 
 ---

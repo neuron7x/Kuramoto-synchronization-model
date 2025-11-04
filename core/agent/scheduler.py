@@ -395,7 +395,7 @@ class StrategyScheduler:
         self._time = time_source or time.monotonic
         self._sleep = sleep or time.sleep
         self._wall_clock = wall_time or time.time
-        self._rng = rng or random.Random()
+        self._rng = rng or random.Random()  # nosec B311 - non-cryptographic jitter for backoff timing
         self._max_backoff = float(max_backoff)
         self._max_sleep = float(max_sleep)
         self._idle_sleep = float(idle_sleep)

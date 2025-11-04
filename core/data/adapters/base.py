@@ -78,7 +78,7 @@ class RetryConfig:
         )
         if self.jitter <= 0:
             return base_delay
-        jitter_delta = random.uniform(0, base_delay * self.jitter)
+        jitter_delta = random.uniform(0, base_delay * self.jitter)  # nosec B311 - non-cryptographic jitter for retry timing
         delay = base_delay + jitter_delta
         return min(self.max_backoff, delay)
 
