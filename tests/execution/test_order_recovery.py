@@ -381,7 +381,8 @@ def test_reconnect_triggers_reconciliation(
     risk_manager: RiskManager,
 ) -> None:
     """Test that reconnection triggers open order reconciliation."""
-    connector = FlakyConnector(failures_remaining=1)  # Fail once
+    # Need 2 failures: one during startup risk hydration, one in heartbeat loop
+    connector = FlakyConnector(failures_remaining=2)
     
     # Add a stray order before starting
     stray = connector.place_order(
@@ -403,7 +404,12 @@ def test_reconnect_triggers_reconciliation(
     loop.start(cold_start=True)
     try:
         # Wait for initial heartbeat failure and reconnect
-        time.sleep(0.2)
+        # With heartbeat_interval=0.05s and max_backoff=0.1s, we need time for:
+        # 1. First heartbeat at t=0.05s (fails)
+        # 2. Backoff with jitter (up to 0.05s with full jitter)
+        # 3. Reconnect and reconciliation
+        # Total: 0.05 + 0.05 + margin = ~0.15s minimum, use 0.3s to be safe
+        time.sleep(0.3)
         
         # After reconnect, stray order should be adopted
         outstanding = loop._oms_state.outstanding("binance")
