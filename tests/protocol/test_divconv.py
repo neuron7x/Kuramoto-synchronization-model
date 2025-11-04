@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import pytest
 
 from tradepulse.protocol import (
     DivConvSignal,
@@ -125,3 +126,105 @@ def test_portfolio_aggregation_preserves_divergence_for_short_weights():
     )
     assert math.isclose(aggregated.divergence, expected_divergence)
     assert aggregated.divergence >= 0.0
+
+
+def test_compute_price_gradient_requires_strictly_increasing_times():
+    prices = np.array([1.0, 2.0, 3.0])
+    times = np.array([0.0, 0.0, 1.0])
+    with pytest.raises(ValueError, match="strictly increasing"):
+        compute_price_gradient(prices, times=times)
+
+
+def test_compute_price_gradient_requires_matching_times_shape():
+    prices = np.array([1.0, 2.0, 3.0])
+    times = np.array([0.0, 0.5])
+    with pytest.raises(ValueError, match="same shape"):
+        compute_price_gradient(prices, times=times)
+
+
+def test_compute_theta_rejects_zero_norm_vectors():
+    with pytest.raises(ValueError, match="near-zero"):
+        compute_theta([0.0, 0.0, 0.0], [1.0, 0.0, 0.0])
+
+
+def test_compute_kappa_requires_matching_shapes():
+    with pytest.raises(ValueError, match="same dimensionality"):
+        compute_kappa([1.0, 0.0], [1.0, 0.0, 0.0])
+
+
+def test_time_warp_metric_weight_alignment_validation():
+    basis = [np.array([1.0, 0.0]), np.array([0.0, 1.0])]
+    weights = [0.5]
+    with pytest.raises(ValueError, match="must align"):
+        compute_time_warp_invariant_metric(basis, weights=weights)
+
+
+def test_time_warp_metric_rejects_non_vector_inputs():
+    basis = [np.ones((2, 2))]
+    with pytest.raises(ValueError, match="one-dimensional"):
+        compute_time_warp_invariant_metric(basis)
+
+
+def test_divergence_functional_validates_metric_shape():
+    price = np.array([1.0, 2.0])
+    flow = np.array([0.5, 1.5])
+    with pytest.raises(ValueError, match="square"):
+        compute_divergence_functional(price, flow, metric=np.ones((2, 3)))
+    with pytest.raises(ValueError, match="dimensionality"):
+        compute_divergence_functional(price, flow, metric=np.eye(3))
+
+
+def test_threshold_helpers_validate_parameters():
+    divergence = np.array([0.1, 0.2, 0.3])
+    with pytest.raises(ValueError, match="alpha"):
+        compute_threshold_tau_d(divergence, alpha=1.5)
+    with pytest.raises(ValueError, match="beta"):
+        compute_threshold_tau_c(divergence, beta=0.0)
+    with pytest.raises(ValueError, match="must not be empty"):
+        compute_threshold_tau_d([], alpha=0.5)
+
+
+def test_aggregate_signals_requires_non_empty_iterable():
+    with pytest.raises(ValueError, match="at least one"):
+        aggregate_signals([])
+
+
+def test_aggregate_signals_rejects_zero_normalised_weights():
+    snapshot = DivConvSnapshot(
+        price_gradient=np.array([1.0, 0.0]),
+        flow_gradient=np.array([0.0, 1.0]),
+        theta=compute_theta([1.0, 0.0], [0.0, 1.0]),
+        kappa=compute_kappa([1.0, 0.0], [0.0, 1.0]),
+        divergence=1.0,
+    )
+    signals = [
+        DivConvSignal(asset_id="A", snapshot=snapshot, risk_weight=0.0, exposure=1.0),
+        DivConvSignal(asset_id="B", snapshot=snapshot, risk_weight=0.0, exposure=1.0),
+    ]
+    with pytest.raises(ValueError, match="must not all be zero"):
+        aggregate_signals(signals)
+
+
+def test_aggregate_signals_accepts_pre_normalised_weights():
+    snapshot_a = DivConvSnapshot(
+        price_gradient=np.array([1.0, 0.0]),
+        flow_gradient=np.array([0.0, 1.0]),
+        theta=compute_theta([1.0, 0.0], [0.0, 1.0]),
+        kappa=compute_kappa([1.0, 0.0], [0.0, 1.0]),
+        divergence=1.0,
+    )
+    snapshot_b = DivConvSnapshot(
+        price_gradient=np.array([0.0, 1.0]),
+        flow_gradient=np.array([1.0, 0.0]),
+        theta=compute_theta([0.0, 1.0], [1.0, 0.0]),
+        kappa=compute_kappa([0.0, 1.0], [1.0, 0.0]),
+        divergence=2.0,
+    )
+    signals = [
+        DivConvSignal(asset_id="A", snapshot=snapshot_a, risk_weight=0.6, exposure=1.0),
+        DivConvSignal(asset_id="B", snapshot=snapshot_b, risk_weight=0.4, exposure=1.0),
+    ]
+    aggregated = aggregate_signals(signals, normalise_weights=False)
+    assert np.allclose(aggregated.price_gradient, np.array([0.6, 0.4]))
+    assert np.allclose(aggregated.flow_gradient, np.array([0.4, 0.6]))
+    assert math.isclose(aggregated.divergence, 1.4)
