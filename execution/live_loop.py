@@ -386,18 +386,17 @@ class LiveExecutionLoop:
                 # Replay ledger from last_offset to catch up
                 # Aggregate replay from all venue OMS ledgers
                 for context in self._contexts.values():
-                    if hasattr(context.oms, "_ledger") and context.oms._ledger:
-                        for record in context.oms._ledger.replay_from(last_offset + 1):
-                            evt = (
-                                record.event
-                                if hasattr(record, "event")
-                                else record.get("event") or {}
-                            )
-                            # Pass sequence number to track ledger offset
-                            seq = (
-                                record.sequence if hasattr(record, "sequence") else None
-                            )
-                            self._oms_state.apply(evt, sequence=seq)
+                    for record in context.oms.replay_ledger_from(
+                        last_offset + 1, verify=False
+                    ):
+                        evt = (
+                            record.event
+                            if hasattr(record, "event")
+                            else record.get("event") or {}
+                        )
+                        # Pass sequence number to track ledger offset
+                        seq = record.sequence if hasattr(record, "sequence") else None
+                        self._oms_state.apply(evt, sequence=seq)
 
                 self._logger.info(
                     f"Replayed ledger from offset {last_offset}",
@@ -427,10 +426,9 @@ class LiveExecutionLoop:
             # Use the maximum sequence across all venue ledgers
             current_ledger_offset = 0
             for context in self._contexts.values():
-                if hasattr(context.oms, "_ledger") and context.oms._ledger:
-                    latest = context.oms._ledger.latest_event(verify=False)
-                    if latest and latest.sequence > current_ledger_offset:
-                        current_ledger_offset = latest.sequence
+                latest_seq = context.oms.latest_ledger_sequence()
+                if latest_seq and latest_seq > current_ledger_offset:
+                    current_ledger_offset = latest_seq
 
             # Sync OMS state's ledger offset
             if current_ledger_offset > 0:
