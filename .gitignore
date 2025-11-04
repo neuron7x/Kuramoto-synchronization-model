@@ -45,6 +45,9 @@ ui/dashboard/node_modules/
 rust/target/
 rust/**/target/
 
+# Auto-generated version file
+src/_version.py
+
 # >>> SANITY CLEANUP
 # Managed by scripts.sanity_cleanup. Do not edit manually.
 __pycache__/
