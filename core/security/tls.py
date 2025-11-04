@@ -103,9 +103,65 @@ def create_server_ssl_context(
     return context
 
 
+def create_client_ssl_context(
+    *,
+    trusted_server_ca: Path | None = None,
+    client_certificate: Path | None = None,
+    client_private_key: Path | None = None,
+    minimum_version: ssl.TLSVersion = ssl.TLSVersion.TLSv1_2,
+    cipher_suites: Sequence[str] | str | None = None,
+    alpn_protocols: Iterable[str] = DEFAULT_HTTP_ALPN_PROTOCOLS,
+    check_hostname: bool = True,
+) -> ssl.SSLContext:
+    """Construct an :class:`ssl.SSLContext` configured for client usage.
+    
+    Args:
+        trusted_server_ca: Path to CA bundle for verifying server certificates.
+        client_certificate: Optional path to client certificate for mutual TLS.
+        client_private_key: Optional path to client private key for mutual TLS.
+        minimum_version: Minimum TLS version to accept.
+        cipher_suites: Cipher suites to enable (string or sequence).
+        alpn_protocols: Application-Layer Protocol Negotiation protocols.
+        check_hostname: Whether to verify the server hostname against the certificate.
+        
+    Returns:
+        Configured SSL context for client connections.
+        
+    Raises:
+        ValueError: If client certificate provided without private key.
+        FileNotFoundError: If specified files don't exist.
+    """
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    context.minimum_version = minimum_version
+    context.maximum_version = ssl.TLSVersion.TLSv1_3
+    context.options |= ssl.OP_NO_COMPRESSION
+    context.check_hostname = check_hostname
+    context.set_alpn_protocols(list(alpn_protocols))
+
+    if cipher_suites:
+        suites = _normalise_sequence(cipher_suites)
+        if suites:
+            context.set_ciphers(":".join(suites))
+
+    if trusted_server_ca is not None:
+        trusted_server_ca = _ensure_file(trusted_server_ca, description="Trusted server CA bundle")
+        context.load_verify_locations(cafile=str(trusted_server_ca))
+
+    if client_certificate is not None or client_private_key is not None:
+        if client_certificate is None or client_private_key is None:
+            msg = "Both client certificate and private key must be provided for mutual TLS"
+            raise ValueError(msg)
+        client_certificate = _ensure_file(client_certificate, description="Client certificate")
+        client_private_key = _ensure_file(client_private_key, description="Client private key")
+        context.load_cert_chain(certfile=str(client_certificate), keyfile=str(client_private_key))
+
+    return context
+
+
 __all__ = [
     "DEFAULT_HTTP_ALPN_PROTOCOLS",
     "DEFAULT_MODERN_CIPHER_SUITES",
     "create_server_ssl_context",
+    "create_client_ssl_context",
     "parse_tls_version",
 ]

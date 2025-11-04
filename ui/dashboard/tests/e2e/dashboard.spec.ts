@@ -157,11 +157,72 @@ test.describe('@L7 dashboard signals experience', () => {
     const clip = await pipeline('feature-extraction', 'Xenova/clip-vit-base-patch32');
     const embedding = await clip(screenshot, { pooling: 'mean', normalize: true });
 
+    // Store the embedding for baseline comparison
+    const embeddingData = Array.from(embedding.data);
     test.info().attach('semantic-embedding', {
-      body: JSON.stringify(embedding.data),
+      body: JSON.stringify(embeddingData),
       contentType: 'application/json',
     });
 
-    test.fixme(true, 'Pending baseline integration for semantic consistency.');
+    // Load baseline embedding if it exists
+    const path = await import('path');
+    const fs = await import('fs');
+    const baselinePath = path.join(__dirname, 'fixtures', 'clip-baseline.json');
+    
+    let baselineEmbedding: number[] | null = null;
+    try {
+      const baselineJson = fs.readFileSync(baselinePath, 'utf-8');
+      baselineEmbedding = JSON.parse(baselineJson);
+    } catch (error) {
+      // No baseline exists yet - store current embedding as baseline
+      fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
+      fs.writeFileSync(baselinePath, JSON.stringify(embeddingData, null, 2));
+      test.info().annotations.push({
+        type: 'info',
+        description: 'Created new CLIP baseline embedding',
+      });
+      return;
+    }
+
+    // Compute cosine similarity between current and baseline embeddings
+    const cosineSimilarity = computeCosineSimilarity(embeddingData, baselineEmbedding);
+    test.info().annotations.push({
+      type: 'info',
+      description: `CLIP cosine similarity: ${cosineSimilarity.toFixed(4)}`,
+    });
+
+    // Assert that visual semantics haven't regressed beyond threshold
+    const SIMILARITY_THRESHOLD = 0.97;
+    expect(cosineSimilarity, 'Visual semantics should match baseline within tolerance').toBeGreaterThanOrEqual(
+      SIMILARITY_THRESHOLD,
+    );
   });
 });
+
+/**
+ * Compute cosine similarity between two embedding vectors.
+ * @param a - First embedding vector
+ * @param b - Second embedding vector
+ * @returns Cosine similarity score between 0 and 1
+ */
+function computeCosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error('Embedding vectors must have the same length');
+  }
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  if (normA === 0 || normB === 0) {
+    return 0;
+  }
+
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}

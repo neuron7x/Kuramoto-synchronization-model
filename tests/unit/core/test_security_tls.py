@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
-from core.security import create_server_ssl_context, parse_tls_version
+from core.security import create_server_ssl_context, create_client_ssl_context, parse_tls_version
 
 
 def _write_certificate_bundle(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -83,6 +83,55 @@ def _write_certificate_bundle(tmp_path: Path) -> tuple[Path, Path, Path]:
     return root_path, server_cert_path, server_key_path
 
 
+def _write_client_certificate(tmp_path: Path, root_cert_path: Path) -> tuple[Path, Path]:
+    """Generate client certificate for mutual TLS testing."""
+    base = tmp_path / "tls"
+    one_day = timedelta(days=1)
+    now = datetime.now(timezone.utc)
+
+    # Load root CA for signing
+    root_cert_bytes = root_cert_path.read_bytes()
+    root_cert = x509.load_pem_x509_certificate(root_cert_bytes)
+    
+    # Generate a new root key for simplicity (in real scenario, would reuse)
+    root_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+    client_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    client_subject = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "TradePulse Test Client"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "client.tradepulse.test"),
+        ]
+    )
+    client_cert = (
+        x509.CertificateBuilder()
+        .subject_name(client_subject)
+        .issuer_name(root_cert.subject)
+        .public_key(client_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - one_day)
+        .not_valid_after(now + timedelta(days=180))
+        .add_extension(
+            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]),
+            critical=False,
+        )
+        .sign(root_key, hashes.SHA256())
+    )
+
+    client_cert_path = base / "client.pem"
+    client_cert_path.write_bytes(client_cert.public_bytes(serialization.Encoding.PEM))
+    client_key_path = base / "client.key"
+    client_key_path.write_bytes(
+        client_key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+    return client_cert_path, client_key_path
+
+
 def test_create_server_ssl_context_enforces_client_ca(tmp_path: Path) -> None:
     _, cert, key = _write_certificate_bundle(tmp_path)
 
@@ -112,3 +161,73 @@ def test_create_server_ssl_context_supports_optional_client_auth(tmp_path: Path)
 def test_parse_tls_version_rejects_unknown_version() -> None:
     with pytest.raises(ValueError):
         parse_tls_version("TLSv1.1")
+
+
+def test_create_client_ssl_context_basic(tmp_path: Path) -> None:
+    """Test creating a basic client SSL context without mutual TLS."""
+    ca, _, _ = _write_certificate_bundle(tmp_path)
+
+    context = create_client_ssl_context(
+        trusted_server_ca=ca,
+        minimum_version=parse_tls_version("TLSv1.2"),
+    )
+
+    assert context.check_hostname is True
+    assert context.minimum_version is ssl.TLSVersion.TLSv1_2
+    assert context.maximum_version is ssl.TLSVersion.TLSv1_3
+
+
+def test_create_client_ssl_context_with_mutual_tls(tmp_path: Path) -> None:
+    """Test creating a client SSL context with mutual TLS (client certificate)."""
+    ca, _, _ = _write_certificate_bundle(tmp_path)
+    client_cert, client_key = _write_client_certificate(tmp_path, ca)
+
+    context = create_client_ssl_context(
+        trusted_server_ca=ca,
+        client_certificate=client_cert,
+        client_private_key=client_key,
+        minimum_version=parse_tls_version("TLSv1.2"),
+    )
+
+    assert context.check_hostname is True
+    assert context.minimum_version is ssl.TLSVersion.TLSv1_2
+
+
+def test_create_client_ssl_context_requires_both_cert_and_key(tmp_path: Path) -> None:
+    """Test that client certificate requires both cert and key."""
+    ca, _, _ = _write_certificate_bundle(tmp_path)
+    client_cert, _ = _write_client_certificate(tmp_path, ca)
+
+    with pytest.raises(ValueError, match="Both client certificate and private key"):
+        create_client_ssl_context(
+            trusted_server_ca=ca,
+            client_certificate=client_cert,
+        )
+
+
+def test_create_client_ssl_context_with_cipher_suites(tmp_path: Path) -> None:
+    """Test client SSL context with custom cipher suites."""
+    ca, _, _ = _write_certificate_bundle(tmp_path)
+
+    context = create_client_ssl_context(
+        trusted_server_ca=ca,
+        cipher_suites=["ECDHE-RSA-AES256-GCM-SHA384", "ECDHE-RSA-AES128-GCM-SHA256"],
+        minimum_version=parse_tls_version("TLSv1.2"),
+    )
+
+    assert context.minimum_version is ssl.TLSVersion.TLSv1_2
+
+
+def test_create_server_ssl_context_with_cipher_suites(tmp_path: Path) -> None:
+    """Test server SSL context with custom cipher suites."""
+    _, cert, key = _write_certificate_bundle(tmp_path)
+
+    context = create_server_ssl_context(
+        certificate_chain=cert,
+        private_key=key,
+        cipher_suites="ECDHE-RSA-AES256-GCM-SHA384,ECDHE-RSA-AES128-GCM-SHA256",
+        minimum_version=parse_tls_version("TLSv1.3"),
+    )
+
+    assert context.minimum_version is ssl.TLSVersion.TLSv1_3
+    assert context.maximum_version is ssl.TLSVersion.TLSv1_3
