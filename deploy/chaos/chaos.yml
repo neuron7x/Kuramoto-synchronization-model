@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: tradepulse
     app.kubernetes.io/part-of: chaos-validation
+  annotations:
+    description: "Comprehensive chaos engineering test suite for TradePulse"
 spec:
   entry: orchestrate-chaos
   templates:
@@ -15,8 +17,15 @@ spec:
         - inject-latency
         - disrupt-matching-nodes
         - verify-observability
+        - network-partition
+        - pod-failure
+        - cpu-stress
+        - final-verification
+
+    # Network latency injection
     - name: inject-latency
       templateType: Task
+      deadline: 5m
       task:
         container:
           name: latency
@@ -29,9 +38,13 @@ spec:
             - '--namespace=execution'
             - '--selector=app=execution-gateway'
             - '--latency=250ms'
+            - '--jitter=50ms'
             - '--duration=5m'
+
+    # Pod disruption to test resilience
     - name: disrupt-matching-nodes
       templateType: Task
+      deadline: 10m
       task:
         container:
           name: disruption
@@ -46,8 +59,66 @@ spec:
             - '--percent=30'
             - '--grace-period=10s'
             - '--duration=10m'
+
+    # Network partition simulation
+    - name: network-partition
+      templateType: Task
+      deadline: 3m
+      task:
+        container:
+          name: partition
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - network
+            - partition
+          args:
+            - '--namespace=tradepulse-staging'
+            - '--selector=app.kubernetes.io/name=tradepulse-api'
+            - '--target-selector=app=timescaledb'
+            - '--duration=2m'
+
+    # Random pod failure
+    - name: pod-failure
+      templateType: Task
+      deadline: 5m
+      task:
+        container:
+          name: pod-kill
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - pod
+            - failure
+          args:
+            - '--namespace=tradepulse-staging'
+            - '--selector=app.kubernetes.io/name=tradepulse-api'
+            - '--mode=one'
+            - '--duration=3m'
+
+    # CPU stress test
+    - name: cpu-stress
+      templateType: Task
+      deadline: 4m
+      task:
+        container:
+          name: cpu-stress
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - stress
+            - cpu
+          args:
+            - '--namespace=tradepulse-staging'
+            - '--selector=app.kubernetes.io/name=tradepulse-api'
+            - '--workers=2'
+            - '--load=80'
+            - '--duration=3m'
+
+    # Verify observability metrics
     - name: verify-observability
       templateType: Task
+      deadline: 15m
       task:
         container:
           name: observability
@@ -63,4 +134,27 @@ spec:
             - '--lte=0.02'
             - '--window=15m'
             - '--labels=experiment=tradepulse-chaos'
+
+    # Final verification after all chaos
+    - name: final-verification
+      templateType: Task
+      deadline: 5m
+      task:
+        container:
+          name: final-check
+          image: ghcr.io/chaos-mesh/chaosctl:latest
+          command:
+            - chaosctl
+            - verify
+            - health
+          args:
+            - '--namespace=tradepulse-staging'
+            - '--selector=app.kubernetes.io/name=tradepulse-api'
+            - '--min-healthy-pods=2'
+            - '--timeout=5m'
+
   historyLimit: 5
+  # Conditionally continue on failure for specific scenarios
+  conditionalBranches:
+    - target: verify-observability
+      expression: "tasks.inject-latency.status == 'succeeded'"

@@ -1,7 +1,62 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Prometheus scrape configuration for TradePulse metrics
+# This configuration can be used standalone or integrated into existing Prometheus deployments
+
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'tradepulse'
+    environment: 'development'
+
+# Scrape configurations
 scrape_configs:
+  # TradePulse API metrics
+  - job_name: 'tradepulse-api'
+    metrics_path: '/metrics'
+    scheme: http
+    static_configs:
+      - targets: ['tradepulse-api:8001']
+        labels:
+          service: 'tradepulse-api'
+          component: 'api'
+    
+    # Kubernetes service discovery (uncomment when running in K8s)
+    # kubernetes_sd_configs:
+    #   - role: endpoints
+    #     namespaces:
+    #       names:
+    #         - tradepulse-staging
+    #         - tradepulse-production
+    # relabel_configs:
+    #   - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+    #     regex: tradepulse-api
+    #     action: keep
+    #   - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_part_of]
+    #     regex: tradepulse
+    #     action: keep
+    #   - source_labels: [__meta_kubernetes_namespace]
+    #     target_label: namespace
+    #   - source_labels: [__meta_kubernetes_pod_name]
+    #     target_label: pod
+
+  # NFPro metrics (legacy name, same as tradepulse-api)
   - job_name: 'nfpro'
+    metrics_path: '/metrics'
+    scheme: http
     static_configs:
       - targets: ['tradepulse:8001']
+        labels:
+          service: 'nfpro'
+          component: 'api'
+
+# Alerting rules (optional)
+# rule_files:
+#   - '/etc/prometheus/rules/*.yml'
+
+# Alert manager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
