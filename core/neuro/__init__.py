@@ -1,6 +1,6 @@
 """Neuroscience-inspired modules for TradePulse."""
 
-from .amm import AdaptiveMarketMind, AMMConfig
+from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
 from .advanced import (
     AgencyControlNetwork,
     CandidateGenerator,
@@ -11,13 +11,13 @@ from .advanced import (
     MarketContext,
     NeuroAdvancedConfig,
     NeuroDecisionIntegrator,
+    NeuroplasticReinforcementEngine,
     NeuroRiskManager,
     NeuroStateMonitor,
-    NeuroplasticReinforcementEngine,
     TradeOutcome,
     TradeResult,
 )
-from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from .amm import AdaptiveMarketMind, AMMConfig
 from .ecs_regulator import ECSInspiredRegulator, ECSMetrics
 from .fractal_regulator import EEPFractalRegulator, RegulatorMetrics
 from .motivation import (

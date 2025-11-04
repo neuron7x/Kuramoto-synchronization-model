@@ -7,8 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from application.api.system_access import create_system_app
-from application.settings import ApiRateLimitSettings, RateLimitPolicy
 from application.security.rbac import AuthorizationGateway, build_authorization_gateway
+from application.settings import ApiRateLimitSettings, RateLimitPolicy
 from application.system import (
     ExchangeAdapterConfig,
     TradePulseSystem,

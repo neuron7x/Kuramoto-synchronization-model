@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass, replace as dataclass_replace
+from dataclasses import dataclass
+from dataclasses import replace as dataclass_replace
 from datetime import datetime, timezone
 from typing import Optional
 

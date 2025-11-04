@@ -102,7 +102,7 @@ class FinBERTSentimentModel:
     the heavy model artefacts lazily.
     """
 
-    def __init__(self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None) -> None:
+    def __init__(self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None, revision: str = "main") -> None:
         try:  # pragma: no cover - guarded import
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
         except ImportError as exc:  # pragma: no cover - import-time guard
@@ -118,8 +118,8 @@ class FinBERTSentimentModel:
                 "FinBERTSentimentModel requires PyTorch. Install `torch` for your platform."
             ) from exc
 
-        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_name, revision=revision)
 
         if device is None:
             if torch.cuda.is_available():  # pragma: no cover - environment dependent

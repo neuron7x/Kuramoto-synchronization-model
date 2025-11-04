@@ -75,25 +75,25 @@ else:
     st.sidebar.write(f"Welcome *{name}*")
 
     st.title("TradePulse — Real-time Indicators Dashboard")
-    
+
     st.sidebar.header("Configuration")
     window_size = st.sidebar.slider("Analysis Window", min_value=50, max_value=500, value=200, step=50)
-    
+
     # Tabs for different sections
     tab1, tab2, tab3 = st.tabs(["📈 Data Upload", "📊 Indicators", "ℹ️ Info"])
-    
+
     with tab1:
         st.header("Data Upload & Preview")
         uploaded = st.file_uploader(
             "Upload CSV with columns: ts, price, volume", type=["csv"]
         )
-        
+
         if uploaded:
             df = pd.read_csv(uploaded)
             st.write("### Data Preview")
             st.dataframe(df.head(10), use_container_width=True)
             st.write(f"**Total rows:** {len(df)}")
-            
+
             # Validate required columns
             required_cols = ["price"]
             missing_cols = [col for col in required_cols if col not in df.columns]
@@ -101,54 +101,54 @@ else:
                 st.error(f"Missing required columns: {', '.join(missing_cols)}")
             else:
                 st.success("Data validated successfully!")
-    
+
     with tab2:
         st.header("Indicator Analysis")
         if uploaded and 'price' in df.columns:
             # Compute indicators
             prices = df["price"].to_numpy()
-            
+
             if len(prices) < window_size:
                 st.warning(f"Data has {len(prices)} rows but window size is {window_size}. Using all available data.")
                 analysis_window = len(prices)
             else:
                 analysis_window = window_size
-            
+
             # Calculate indicators
             phases = compute_phase(prices)
             R = kuramoto_order(phases[-analysis_window:])
             H = entropy(prices[-analysis_window:])
             dH = delta_entropy(prices, window=analysis_window)
-            
+
             # Display metrics in columns
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric(
-                    "Kuramoto Order (R)", 
+                    "Kuramoto Order (R)",
                     f"{R:.4f}",
                     help="Measures phase synchronization. Higher values indicate stronger coherence."
                 )
             with col2:
                 st.metric(
-                    f"Entropy H({analysis_window})", 
+                    f"Entropy H({analysis_window})",
                     f"{H:.4f}",
                     help="Shannon entropy of price distribution. Higher values indicate more uncertainty."
                 )
             with col3:
                 st.metric(
-                    f"Delta Entropy ΔH({analysis_window})", 
+                    f"Delta Entropy ΔH({analysis_window})",
                     f"{dH:.4f}",
                     help="Change in entropy over the window. Indicates shifting market dynamics."
                 )
-            
+
             # Visualization
             st.write("### Price Series")
             st.line_chart(df["price"], use_container_width=True)
-            
+
             if "volume" in df.columns:
                 st.write("### Volume")
                 st.bar_chart(df["volume"], use_container_width=True)
-            
+
             # Market regime interpretation
             st.write("### Market Regime Analysis")
             if R > 0.7:
@@ -158,10 +158,10 @@ else:
             else:
                 regime = "🔴 Low Coherence - Noisy or random behavior"
             st.info(regime)
-            
+
         else:
             st.info("Upload data in the 'Data Upload' tab to see indicator analysis.")
-    
+
     with tab3:
         st.header("About TradePulse Indicators")
         st.markdown("""
@@ -185,7 +185,7 @@ else:
         **TradePulse** combines geometric indicators with traditional technical analysis
         for robust market regime detection and signal generation.
         """)
-        
+
         st.write("### Quick Tips")
         st.markdown("""
         1. **Upload** your price/volume CSV data

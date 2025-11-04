@@ -3,7 +3,8 @@ import importlib
 import inspect
 import pkgutil
 import re
-from typing import Dict, Any, Set
+from typing import Any, Dict, Set
+
 import pytest
 
 ADAPTERS_PKG = "execution.adapters"

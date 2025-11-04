@@ -6,11 +6,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+import yaml
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
 from starlette.requests import Request as StarletteRequest
-
-import yaml
 
 from execution.risk import RiskLimits, RiskManager
 from src.admin.remote_control import (

@@ -16,10 +16,6 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 import numpy as np
 
 from backtest.engine import walk_forward
-from observability.incidents import IncidentManager, IncidentRecord
-from observability.notifications import NotificationDispatcher
-from scripts.nightly.config import BaselineStore, MetricEvaluation
-from scripts.runtime import ArtifactManager
 from core.pipelines.smoke_e2e import (
     build_signal_function,
     ingest_prices,
@@ -30,6 +26,10 @@ from core.pipelines.smoke_e2e import (
 from core.pipelines.smoke_e2e import (
     run_backtest as run_smoke_backtest,
 )
+from observability.incidents import IncidentManager, IncidentRecord
+from observability.notifications import NotificationDispatcher
+from scripts.nightly.config import BaselineStore, MetricEvaluation
+from scripts.runtime import ArtifactManager
 
 LOGGER = logging.getLogger(__name__)
 _DEFAULT_HISTORY_PATH = Path("reports/nightly/regressions/history.jsonl")

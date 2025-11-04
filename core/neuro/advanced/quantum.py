@@ -36,7 +36,6 @@ from typing import Iterable
 
 import numpy as np
 
-
 _EPSILON = 1e-12
 
 

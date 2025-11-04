@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
-from collections.abc import Iterable
 import math
 import random
+from collections.abc import Iterable
 from secrets import SystemRandom
 from typing import Dict, List, Sequence
-
 
 Arm = str
 

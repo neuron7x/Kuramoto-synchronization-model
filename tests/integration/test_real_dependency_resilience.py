@@ -26,7 +26,12 @@ from libs.db.repository import KillSwitchStateRepository
 from libs.db.session import SessionManager
 from src.audit.audit_logger import AuditLogger, SiemAuditSink
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagRecord, LagReport
+from src.data.kafka_ingestion import (
+    KafkaIngestionConfig,
+    KafkaIngestionService,
+    LagRecord,
+    LagReport,
+)
 from src.data.pipeline import (
     CacheRoute,
     StaticTickRoutingStrategy,

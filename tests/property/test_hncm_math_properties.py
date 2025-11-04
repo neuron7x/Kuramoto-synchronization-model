@@ -7,7 +7,8 @@ import math
 import pytest
 
 try:  # pragma: no cover - optional dependency
-    from hypothesis import given, settings, strategies as st
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
 except ImportError:  # pragma: no cover - executed when Hypothesis missing
     pytest.skip("hypothesis not installed", allow_module_level=True)
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -11,9 +13,6 @@ from typing import Any, Callable, Mapping, MutableMapping
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
-
-import logging
-import os
 
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-tests-placeholder")
 
@@ -31,7 +30,6 @@ from application.api.service import (
 from core.data.models import InstrumentType
 from core.messaging.event_bus import EventTopic
 from domain import Signal, SignalAction
-
 
 StrategyCallable = Callable[[np.ndarray], np.ndarray]
 

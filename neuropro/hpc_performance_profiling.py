@@ -11,11 +11,12 @@ Profiles:
 Uses torch.profiler for detailed analysis.
 """
 
-import torch
-import torch.nn as nn
-from torch.profiler import profile, record_function, ProfilerActivity
-import numpy as np
 import time
+
+import numpy as np
+import torch
+from torch.profiler import ProfilerActivity, profile, record_function
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 
@@ -31,26 +32,26 @@ def estimate_flops_forward(model, input_size=(1, 10)):
     """Estimate FLOPs for forward pass (rough approximation)."""
     # For Transformer: ~4 * d_model^2 * seq_len per layer
     # For GRU: ~3 * hidden_dim^2 * seq_len per layer
-    
+
     state_dim = model.state_dim
     hidden_dim = 256  # From model architecture
     seq_len = 10  # Mock sequence length used in HPC forward
-    
+
     # Input embedding
     flops_embed = input_size[1] * state_dim
-    
+
     # Transformer encoder (3 layers, 8 heads)
     flops_transformer = 3 * (4 * state_dim**2 * seq_len)
-    
+
     # HPC GRU layers (3 levels, bidirectional)
     flops_gru = 3 * (3 * (hidden_dim * 2)**2 * seq_len)
-    
+
     # Residual skips
     flops_residual = 3 * (state_dim * hidden_dim * 2)
-    
+
     # Error layers
     flops_error = 3 * ((hidden_dim * 2 + state_dim) * state_dim)
-    
+
     total_flops = flops_embed + flops_transformer + flops_gru + flops_residual + flops_error
     return total_flops
 
@@ -58,12 +59,12 @@ def estimate_flops_forward(model, input_size=(1, 10)):
 def profile_forward_pass(model, data, num_runs=100):
     """Profile forward pass latency."""
     model.eval()
-    
+
     # Warmup
     with torch.no_grad():
         for _ in range(10):
             _ = model.afferent_synthesis(data)
-    
+
     # Measure
     latencies = []
     with torch.no_grad():
@@ -73,7 +74,7 @@ def profile_forward_pass(model, data, num_runs=100):
             pred, pwpe = model.hpc_forward(state)
             end = time.perf_counter()
             latencies.append((end - start) * 1000)  # Convert to ms
-    
+
     return {
         'mean_ms': np.mean(latencies),
         'std_ms': np.std(latencies),
@@ -88,26 +89,26 @@ def profile_forward_pass(model, data, num_runs=100):
 def profile_training_step(model, data, num_runs=50):
     """Profile training step latency."""
     model.train()
-    
+
     # Warmup
     for _ in range(5):
         state = model.afferent_synthesis(data)
         action = torch.tensor([1])
         reward = 1.0
         model.sr_drl_step(state, action, reward, state, 0.15)
-    
+
     # Measure
     latencies = []
     for _ in range(num_runs):
         state = model.afferent_synthesis(data)
         action = torch.tensor([np.random.randint(0, 3)])
         reward = np.random.uniform(-1, 1)
-        
+
         start = time.perf_counter()
         model.sr_drl_step(state, action, reward, state, 0.15)
         end = time.perf_counter()
         latencies.append((end - start) * 1000)
-    
+
     return {
         'mean_ms': np.mean(latencies),
         'std_ms': np.std(latencies),
@@ -122,7 +123,7 @@ def profile_training_step(model, data, num_runs=50):
 def profile_components(model, data):
     """Profile individual components using torch.profiler."""
     model.eval()
-    
+
     with profile(
         activities=[ProfilerActivity.CPU],
         record_shapes=True,
@@ -155,16 +156,16 @@ def profile_memory(model, data):
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
         torch.cuda.empty_cache()
-        
+
         # Run forward and backward
         state = model.afferent_synthesis(data)
         pred, pwpe = model.hpc_forward(state)
         loss = pwpe
         loss.backward()
-        
+
         memory_allocated = torch.cuda.max_memory_allocated() / 1024**2  # MB
         memory_reserved = torch.cuda.max_memory_reserved() / 1024**2
-        
+
         return {
             'allocated_mb': memory_allocated,
             'reserved_mb': memory_reserved,
@@ -174,10 +175,10 @@ def profile_memory(model, data):
         total_params = sum(p.numel() for p in model.parameters())
         # Assume float32 (4 bytes per param)
         param_memory = total_params * 4 / 1024**2
-        
+
         # Estimate activations (very rough)
         activation_memory = param_memory * 2  # Rule of thumb
-        
+
         return {
             'param_mb': param_memory,
             'estimated_total_mb': param_memory + activation_memory,
@@ -189,7 +190,7 @@ def run_comprehensive_profile():
     print("="*80)
     print("HPC-AI v4 Performance Profiling")
     print("="*80)
-    
+
     # Create model
     model = HPCActiveInferenceModuleV4(
         input_dim=10,
@@ -198,10 +199,10 @@ def run_comprehensive_profile():
         hidden_dim=256,
         hpc_levels=3,
     )
-    
+
     # Generate data
     data = generate_synthetic_data(n_days=100, seed=42)
-    
+
     # 1. Model size
     print("\n1. Model Size")
     print("-"*80)
@@ -209,14 +210,14 @@ def run_comprehensive_profile():
     print(f"Total parameters: {total_params:,}")
     print(f"Trainable parameters: {trainable_params:,}")
     print(f"Model size (MB): {total_params * 4 / 1024**2:.2f}")
-    
+
     # 2. FLOPs estimation
     print("\n2. FLOPs Estimation")
     print("-"*80)
     estimated_flops = estimate_flops_forward(model, input_size=(1, 10))
     print(f"Estimated FLOPs per forward pass: {estimated_flops:,}")
     print(f"Estimated GFLOPs: {estimated_flops / 1e9:.4f}")
-    
+
     # 3. Forward pass profiling
     print("\n3. Forward Pass Latency")
     print("-"*80)
@@ -228,14 +229,14 @@ def run_comprehensive_profile():
     print(f"P50:  {forward_stats['p50_ms']:.2f} ms")
     print(f"P95:  {forward_stats['p95_ms']:.2f} ms")
     print(f"P99:  {forward_stats['p99_ms']:.2f} ms")
-    
+
     # Check if meets <1ms target
     if forward_stats['mean_ms'] < 1.0:
-        print(f"✓ Meets <1ms target for forward pass")
+        print("✓ Meets <1ms target for forward pass")
     else:
         print(f"⚠ Forward pass ({forward_stats['mean_ms']:.2f}ms) exceeds 1ms target")
-        print(f"  Consider: FlashAttention, quantization, or model pruning")
-    
+        print("  Consider: FlashAttention, quantization, or model pruning")
+
     # 4. Training step profiling
     print("\n4. Training Step Latency")
     print("-"*80)
@@ -259,7 +260,7 @@ def run_comprehensive_profile():
     mem_stats = profile_memory(model, data)
     for key, value in mem_stats.items():
         print(f"{key}: {value:.2f} MB")
-    
+
     # 7. Throughput estimation
     print("\n7. Throughput Estimation")
     print("-"*80)
@@ -267,7 +268,7 @@ def run_comprehensive_profile():
     throughput_train = 1000.0 / train_stats['mean_ms']  # training steps/second
     print(f"Forward pass throughput: {throughput_forward:.2f} decisions/second")
     print(f"Training throughput: {throughput_train:.2f} steps/second")
-    
+
     # 8. Optimization recommendations
     print("\n8. Optimization Recommendations")
     print("-"*80)
@@ -276,21 +277,21 @@ def run_comprehensive_profile():
         print("  - Consider FlashAttention for TransformerEncoder")
         print("  - Try int8 quantization for inference")
         print("  - Profile with CUDA/GPU for better performance")
-    
+
     if train_stats['mean_ms'] > 100.0:
         print("⚠ Training step > 100ms:")
         print("  - Consider gradient accumulation")
         print("  - Use mixed precision training (fp16)")
-    
+
     if mem_stats.get('estimated_total_mb', 0) > 500:
         print("⚠ High memory usage:")
         print("  - Consider model pruning")
         print("  - Use gradient checkpointing")
-    
+
     print("\n" + "="*80)
     print("Profiling Complete")
     print("="*80)
-    
+
     return {
         'forward': forward_stats,
         'training': train_stats,

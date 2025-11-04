@@ -27,7 +27,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 
-
 ROOT = Path(__file__).resolve().parents[1]
 GENERATED_TEST_PATH = ROOT / "tests" / "generated" / "test_neuro_calibration_autogen.py"
 

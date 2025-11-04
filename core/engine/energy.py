@@ -31,12 +31,11 @@ testability in mind.
 
 from __future__ import annotations
 
+import math
+import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Iterable, Mapping
-
-import math
-import time
 
 import networkx as nx
 import numpy as np

@@ -5,10 +5,22 @@ from __future__ import annotations
 import argparse
 import sys
 import tomllib
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping
+
+try:
+    import defusedxml.ElementTree as ET
+except ImportError:
+    # Fallback to standard library with defused parsing
+    import warnings
+    import xml.etree.ElementTree as ET
+    warnings.warn(
+        "defusedxml not available, using standard xml.etree.ElementTree. "
+        "Install defusedxml for better security when parsing untrusted XML.",
+        category=ImportWarning,
+        stacklevel=2
+    )
 
 
 @dataclass(frozen=True)

@@ -21,12 +21,12 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    ValidationInfo,
     HttpUrl,
     PositiveFloat,
     PositiveInt,
     PostgresDsn,
     SecretStr,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -234,7 +234,6 @@ class ApiServerTLSSettings(BaseModel):
     def resolved_minimum_version(self) -> "ssl.TLSVersion":
         """Return the negotiated minimum TLS version."""
 
-        import ssl  # Local import to avoid module level dependency.
 
         return parse_tls_version(self.minimum_version)
 

@@ -9,8 +9,11 @@ from typing import Any
 
 import yaml
 
-from core.security import DEFAULT_HTTP_ALPN_PROTOCOLS, DEFAULT_MODERN_CIPHER_SUITES, parse_tls_version
-
+from core.security import (
+    DEFAULT_HTTP_ALPN_PROTOCOLS,
+    DEFAULT_MODERN_CIPHER_SUITES,
+    parse_tls_version,
+)
 
 CONFIG_ENV_PREFIX = "CORTEX__"
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "service.yaml"

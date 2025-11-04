@@ -235,7 +235,7 @@ sensitive_query = ["timestamp", "signature", "recvWindow"]
 sensitive_body_keys = ["apiKey", "secret", "signature", "passphrase"]
 
 def scrub_request(request):
-    from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
     u = urlsplit(request.uri)
     q = []
     for k, v in parse_qsl(u.query, keep_blank_values=True):
@@ -276,7 +276,7 @@ def _vcr_adapter_tests(request):
             import vcr
         except ImportError:
             pytest.skip("vcrpy is required for adapter tests")
-        
+
         vcr_default = vcr.VCR(
             cassette_library_dir="tests/fixtures/recordings",
             record_mode=os.getenv("VCR_RECORD", "once"),
@@ -285,7 +285,7 @@ def _vcr_adapter_tests(request):
             before_record_response=scrub_response,
             decode_compressed_response=True,
         )
-        
+
         cassette_name = request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
         with vcr_default.use_cassette(cassette_name):
             yield

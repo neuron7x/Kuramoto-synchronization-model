@@ -144,7 +144,15 @@ class AdaptiveRecoveryAgent:
 
     def load_q_table(self, path: str) -> None:
         import pickle
+        import warnings
 
+        # Warn about security implications of unpickling untrusted data
+        warnings.warn(
+            f"Loading Q-table from {path} using pickle. "
+            "Ensure the file is from a trusted source as pickle can execute arbitrary code.",
+            category=UserWarning,
+            stacklevel=2
+        )
         with open(path, "rb") as fh:
             data = pickle.load(fh)
         self.Q = defaultdict(float, data)

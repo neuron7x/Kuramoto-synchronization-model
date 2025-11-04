@@ -8,8 +8,6 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
 
-from typing_extensions import Literal
-
 import numpy as np
 import pandas as pd
 from pydantic import (
@@ -23,6 +21,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Literal
 
 from core.data.validation import (
     TimeSeriesValidationConfig,

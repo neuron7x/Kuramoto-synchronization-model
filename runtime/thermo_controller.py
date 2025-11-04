@@ -16,27 +16,26 @@ import numpy as np
 import pandas as pd
 import torch
 
-from evolution import bond_evolver
 from core.energy import (
-    BondType,
     ENERGY_SCALE,
+    BondType,
     bond_internal_energy,
     delta_free_energy,
     system_free_energy,
 )
+from evolution import bond_evolver
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
-from runtime.link_activator import LinkActivator
-from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
-from runtime.filters.vlpo_core_filter import VLPOCoreFilter
-from runtime.cns_stabilizer import CNSStabilizer
 from runtime.behavior_contract import (
     ActionClass,
-    SystemState,
     get_current_state,
     tacl_gate,
 )
+from runtime.cns_stabilizer import CNSStabilizer
 from runtime.dual_approval import DualApprovalManager
+from runtime.filters.vlpo_core_filter import VLPOCoreFilter
 from runtime.kill_switch import is_kill_switch_active
+from runtime.link_activator import LinkActivator
+from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
@@ -310,7 +309,7 @@ class ThermoController:
 
     def _init_homeostasis_metrics(self) -> None:
         try:
-            from prometheus_client import Counter, Gauge, Histogram, REGISTRY
+            from prometheus_client import REGISTRY, Counter, Gauge, Histogram
         except Exception:  # pragma: no cover - optional dependency not installed
             noop = _NoopMetric()
             self.integrity_ratio = noop
@@ -1014,7 +1013,7 @@ class ThermoController:
         return self.bottleneck_edge
 
     def get_topology_id(self) -> str:
-        digest = hashlib.sha1()
+        digest = hashlib.sha256()
         for src, dst, bond in sorted(self.current_topology):
             digest.update(f"{src}->{dst}:{bond}".encode())
         return digest.hexdigest()

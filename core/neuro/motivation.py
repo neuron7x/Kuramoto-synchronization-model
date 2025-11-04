@@ -8,9 +8,9 @@ real-time strategy routing.
 
 from __future__ import annotations
 
+import math
 from collections import Counter, defaultdict, deque
 from dataclasses import dataclass
-import math
 from typing import Mapping, MutableMapping, Sequence
 
 import numpy as np

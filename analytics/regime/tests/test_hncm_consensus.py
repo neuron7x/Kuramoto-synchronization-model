@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
-from pathlib import Path
 import json
 import math
+from pathlib import Path
 
 import pytest
 
@@ -14,6 +14,7 @@ from analytics.regime.src.consensus.hncm_adapter import (
 )
 from application.microservices.hncm_consensus import build_signal_with_consensus
 from domain.signals import SignalAction
+
 
 class DummyEWS:
     def __init__(self, probability: float | None = None, ews_score: float | None = None):

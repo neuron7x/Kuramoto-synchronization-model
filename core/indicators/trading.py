@@ -7,10 +7,10 @@ from typing import Iterable, Literal
 
 import numpy as np
 
-from .hurst import hurst_exponent
-from .kuramoto import compute_phase
 from ..utils.logging import get_logger
 from ..utils.metrics import get_metrics_collector
+from .hurst import hurst_exponent
+from .kuramoto import compute_phase
 
 try:  # pragma: no cover - optional GPU dependency
     import cupy as cp  # type: ignore

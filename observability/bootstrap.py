@@ -28,10 +28,8 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from core.utils.slo import AutoRollbackGuard, SLOBurnRateRule, SLOConfig
-
 from observability.logging import StructuredLogFormatter, configure_logging
 from observability.tracing import TracingConfig, configure_tracing
-
 from tools.observability.builder import (
     MetricDefinition,
     build_bundle,

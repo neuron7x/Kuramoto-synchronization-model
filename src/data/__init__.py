@@ -7,12 +7,6 @@ from src.data.backlog_watermark import (
     WatermarkBacklog,
     WatermarkProgress,
 )
-from src.data.experiment_registry import (
-    ArtifactRecord,
-    ExperimentRegistry,
-    ExperimentRunRecord,
-    HyperparameterAuditEntry,
-)
 from src.data.event_bus import (
     BrokerMessage,
     FunctionalMessageBroker,
@@ -29,6 +23,12 @@ from src.data.events import (
     build_tick_event,
     default_tick_header_factory,
 )
+from src.data.experiment_registry import (
+    ArtifactRecord,
+    ExperimentRegistry,
+    ExperimentRunRecord,
+    HyperparameterAuditEntry,
+)
 from src.data.ingestion_service import CacheEntrySnapshot, DataIngestionCacheService
 from src.data.kafka_ingestion import (
     HotSymbolCache,
@@ -37,15 +37,6 @@ from src.data.kafka_ingestion import (
     KafkaIngestionService,
     LagRecord,
     LagReport,
-)
-from src.data.macro import (
-    MacroDataClient,
-    MacroFeatureBuilder,
-    MacroFeatureConfig,
-    MacroIndicatorConfig,
-    MacroSignalPipeline,
-    MacrosynergyClient,
-    integrate_macro_features,
 )
 from src.data.knowledge import (
     AnswerCache,
@@ -72,6 +63,15 @@ from src.data.knowledge import (
     SegmentationConfig,
     ShardManager,
     SourcePrioritizer,
+)
+from src.data.macro import (
+    MacroDataClient,
+    MacroFeatureBuilder,
+    MacroFeatureConfig,
+    MacroIndicatorConfig,
+    MacroSignalPipeline,
+    MacrosynergyClient,
+    integrate_macro_features,
 )
 from src.data.pipeline import (
     CacheRoute,

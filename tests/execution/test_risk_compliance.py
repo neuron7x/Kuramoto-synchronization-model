@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
-import pytest
-
 from domain import Order, OrderSide
-from execution.compliance import RiskCompliance, RiskConfig, RiskDecision
+from execution.compliance import RiskCompliance, RiskConfig
 
 
 class TestRiskCompliance:

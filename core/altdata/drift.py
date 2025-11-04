@@ -9,7 +9,6 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-
 _logger = logging.getLogger(__name__)
 
 try:

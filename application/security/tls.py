@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import ssl
 
-from core.security import create_server_ssl_context, parse_tls_version
-
 from application.settings import ApiServerTLSSettings
+from core.security import create_server_ssl_context, parse_tls_version
 
 
 def build_api_server_ssl_context(settings: ApiServerTLSSettings) -> ssl.SSLContext:

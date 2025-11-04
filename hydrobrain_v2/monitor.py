@@ -9,8 +9,8 @@ import numpy as np
 import torch
 
 from .model import HydroBrainV2
-from .validator import GBStandardValidator
 from .utils import AnomalyDetector, DataImputer, preprocess_window
+from .validator import GBStandardValidator
 
 
 class RealTimeMonitor:
@@ -25,7 +25,7 @@ class RealTimeMonitor:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model = HydroBrainV2(cfg, A_tensor).to(self.device).eval()
         if weights_path:
-            obj = torch.load(weights_path, map_location=self.device)
+            obj = torch.load(weights_path, map_location=self.device, weights_only=True)
             self.model.load_state_dict(obj["model"] if "model" in obj else obj, strict=False)
             logging.info("Weights loaded from %s", weights_path)
         self.validator = GBStandardValidator()

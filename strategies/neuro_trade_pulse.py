@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 
 from core.indicators.kuramoto_ricci_composite import (
-    TradePulseCompositeEngine,
     CompositeSignal,
+    TradePulseCompositeEngine,
 )
 from core.neuro import FractalMotivationEngine
 

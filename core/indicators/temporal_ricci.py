@@ -22,7 +22,6 @@ import pandas as pd
 from ..utils.logging import get_logger
 from ..utils.metrics import get_metrics_collector
 
-
 _logger = get_logger(__name__)
 _metrics = get_metrics_collector()
 _VOLUME_MODES = {"none", "linear", "sqrt", "log"}

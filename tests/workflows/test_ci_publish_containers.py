@@ -7,7 +7,6 @@ from urllib.parse import urlsplit
 
 import yaml
 
-
 WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
 
 

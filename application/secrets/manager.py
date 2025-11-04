@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from contextlib import contextmanager
 from collections.abc import Iterable
+from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path

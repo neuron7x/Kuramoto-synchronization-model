@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import os
 import time
+
 import pytest
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from tests.util.exchanges import (
-    load_adapter_or_http_client,
-    get_server_time,
-    get_exchange_info_or_symbols,
     get_authenticated_balance,
+    get_exchange_info_or_symbols,
+    get_server_time,
+    load_adapter_or_http_client,
 )
 
 EXCHANGE = os.getenv("EXCHANGE", "").lower()

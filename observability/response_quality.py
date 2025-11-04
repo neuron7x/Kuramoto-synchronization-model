@@ -8,13 +8,13 @@ used to enforce quality gates for TradePulse inference workloads.
 
 from __future__ import annotations
 
+import logging
+import statistics
+import time
 from collections import Counter, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-import logging
-import statistics
-import time
 from typing import (
     Callable,
     Deque,

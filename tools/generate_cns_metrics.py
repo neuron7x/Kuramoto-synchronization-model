@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List
@@ -9,14 +10,11 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-import sys
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from runtime.cns_stabilizer import CNSStabilizer
-
 
 np.random.seed(42)
 

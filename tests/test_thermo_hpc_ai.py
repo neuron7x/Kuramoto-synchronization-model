@@ -2,11 +2,12 @@
 Tests for ThermoController HPC-AI integration.
 """
 
-import pytest
 import networkx as nx
 import pandas as pd
-from runtime.thermo_controller import ThermoController
+import pytest
+
 from neuropro.hpc_validation import generate_synthetic_data
+from runtime.thermo_controller import ThermoController
 
 
 @pytest.fixture
@@ -16,10 +17,10 @@ def simple_graph():
     G.add_edge("A", "B", type="covalent", latency_norm=0.1, coherency=0.8)
     G.add_edge("B", "C", type="ionic", latency_norm=0.2, coherency=0.7)
     G.add_edge("C", "A", type="vdw", latency_norm=0.15, coherency=0.75)
-    
+
     for node in G.nodes():
         G.nodes[node]["cpu_norm"] = 0.3
-    
+
     return G
 
 
@@ -50,7 +51,7 @@ class TestThermoControllerHPCAI:
     def test_hpc_ai_control_step_not_initialized(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step without initialization."""
         controller = ThermoController(simple_graph)
-        
+
         result = controller.hpc_ai_control_step(synthetic_market_data)
 
         assert "error" in result
@@ -100,10 +101,10 @@ class TestThermoControllerHPCAI:
 
         # Check all steps completed
         assert len(results) == 5
-        
+
         # Check prev_pwpe is updated
         assert controller.prev_pwpe > 0.0
-        
+
         # Check actions are valid
         actions = [r["action"] for r in results]
         assert all(a in [0, 1, 2] for a in actions)
@@ -132,7 +133,7 @@ class TestThermoControllerHPCAI:
 
         # Regular control step should still work
         controller.control_step()
-        
+
         assert controller.controller_state is not None
         assert controller.previous_F is not None
 
@@ -146,7 +147,7 @@ class TestHPCAIEdgeCases:
         controller.init_hpc_ai(state_dim=64)
 
         empty_df = pd.DataFrame()
-        
+
         # Should handle gracefully
         try:
             result = controller.hpc_ai_control_step(empty_df)
