@@ -31,11 +31,13 @@ jobs:
       - name: Verify Terraform version
         run: terraform version
 
-      - name: Download Go modules
+      - name: Download Go modules for terraform tests
+        working-directory: infra/terraform/tests
         run: go mod download
 
       - name: Run Terraform-related Go tests
+        working-directory: infra/terraform/tests
         env:
           CI: true
         run: |
-          go test ./infra/terraform/tests/... -v
+          go test -v .
