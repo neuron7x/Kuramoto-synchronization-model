@@ -18,6 +18,7 @@ from .advanced import (
     TradeResult,
 )
 from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from .ecs_regulator import ECSInspiredRegulator, ECSMetrics
 from .fractal_regulator import EEPFractalRegulator, RegulatorMetrics
 from .motivation import (
     FractalMotivationController,
@@ -50,6 +51,8 @@ __all__ = [
     "CandidateGenerator",
     "DopaminePredictionNetwork",
     "ECANeuroTradingAdapter",
+    "ECSInspiredRegulator",
+    "ECSMetrics",
     "EEPFractalRegulator",
     "EnhancedFractalNeuroeconomicCore",
     "IntegratedNeuroTradingSystem",
