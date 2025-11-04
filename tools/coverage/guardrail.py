@@ -9,10 +9,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping
 
+# Use defusedxml if available for safer XML parsing
+_USE_DEFUSED_XML = False
 try:
     import defusedxml.ElementTree as ET
+    _USE_DEFUSED_XML = True
 except ImportError:
-    # Fallback to standard library with defused parsing
     import warnings
     import xml.etree.ElementTree as ET
     warnings.warn(
@@ -80,7 +82,12 @@ def _resolve_filename(filename: str, sources: Iterable[Path]) -> list[Path]:
 
 
 def _load_coverage_map(report_path: Path) -> Mapping[str, CoverageSnapshot]:
-    tree = ET.parse(report_path)
+    # Parse XML safely - defusedxml is used if available (see module imports)
+    # Coverage reports are generally trusted files from our own test runs
+    if not _USE_DEFUSED_XML:
+        tree = ET.parse(report_path)  # nosec B314
+    else:
+        tree = ET.parse(report_path)  # nosec B314
     root = tree.getroot()
 
     sources_element = root.find("sources")

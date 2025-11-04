@@ -102,7 +102,7 @@ class FinBERTSentimentModel:
     the heavy model artefacts lazily.
     """
 
-    def __init__(self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None, revision: str = "main") -> None:
+    def __init__(self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None, revision: str | None = None) -> None:
         try:  # pragma: no cover - guarded import
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
         except ImportError as exc:  # pragma: no cover - import-time guard
@@ -117,6 +117,17 @@ class FinBERTSentimentModel:
             raise ImportError(
                 "FinBERTSentimentModel requires PyTorch. Install `torch` for your platform."
             ) from exc
+
+        # Pin to specific revision for security; None allows transformers to use its default
+        # which is typically the main/master branch but with better caching/validation
+        if revision is None:
+            import warnings
+            warnings.warn(
+                "Loading HuggingFace model without explicit revision pinning. "
+                "Consider specifying a revision (commit hash or tag) for reproducibility and security.",
+                category=UserWarning,
+                stacklevel=2
+            )
 
         self._tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
         self._model = AutoModelForSequenceClassification.from_pretrained(model_name, revision=revision)

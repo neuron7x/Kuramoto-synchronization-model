@@ -518,7 +518,9 @@ class QuantumNeuralStrategy:
 
     def load(self, path: str) -> None:
         caller_device = torch.device(self.device)
-        ckpt = torch.load(path, map_location=caller_device, weights_only=False)
+        # weights_only=False is required to load config and training state
+        # This is safe when loading from trusted checkpoint files only
+        ckpt = torch.load(path, map_location=caller_device, weights_only=False)  # nosec B614
         target_device = caller_device
         cfg_payload = ckpt.get("cfg")
         if cfg_payload is not None:

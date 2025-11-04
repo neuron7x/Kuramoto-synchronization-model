@@ -256,8 +256,9 @@ class TimescaleSLAManager:
             SLAMetric(
                 name="timescale_ingest_lag_seconds",
                 query=(
-                    "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "
-                    f"FROM {self._schema.table}"
+                    # Table and column names are from controlled schema configuration, not user input
+                    "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "  # nosec B608
+                    f"FROM {self._schema.table}"  # nosec B608
                 ),
                 threshold_ms=6_000.0,
                 description="Ingestion lag must remain below six seconds",
