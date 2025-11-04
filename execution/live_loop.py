@@ -13,7 +13,7 @@ from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping, Sequence
+from typing import Any, Callable, Dict, Iterable, Mapping, Sequence
 from time import monotonic
 
 from core.utils.metrics import get_metrics_collector
@@ -22,7 +22,7 @@ from domain import Order, OrderStatus
 from .connectors import ExecutionConnector, OrderError, TransientOrderError
 from .oms import OMSConfig, OrderManagementSystem
 from .order_ledger import OrderLedger
-from .order_lifecycle import IdempotentSubmitter, OMSState, make_idempotency_key
+from .order_lifecycle import IdempotentSubmitter, OMSState
 from .risk import RiskManager
 from .session_snapshot import (
     ExecutionMode,

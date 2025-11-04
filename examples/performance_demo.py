@@ -183,11 +183,11 @@ def benchmark_preprocessing():
 
         # scale_series
         start = time.time()
-        _scaled64 = scale_series(data, method="zscore")
+        _ = scale_series(data, method="zscore")
         time_64 = time.time() - start
 
         start = time.time()
-        _scaled32 = scale_series(data, method="zscore", use_float32=True)
+        _ = scale_series(data, method="zscore", use_float32=True)
         time_32 = time.time() - start
 
         speedup = time_64 / time_32

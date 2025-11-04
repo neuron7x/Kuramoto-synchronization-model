@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 
 try:
     from scipy import stats as _SCIPY_STATS  # type: ignore
-except Exception as exc:  # pragma: no cover - handled via fallback logic
+except Exception:  # pragma: no cover - handled via fallback logic
     _logger.warning(
         "SciPy stats module unavailable for drift monitoring; using NumPy fallback",
         exc_info=_logger.isEnabledFor(logging.DEBUG),
@@ -78,7 +78,7 @@ class DistributionDriftMonitor:
         if _SCIPY_STATS is not None:
             try:
                 statistic, pvalue = _SCIPY_STATS.ks_2samp(ref_values, cur_values)
-            except Exception as exc:  # pragma: no cover - exercised in tests
+            except Exception:  # pragma: no cover - exercised in tests
                 _logger.warning(
                     "SciPy ks_2samp failed; falling back to NumPy implementation",
                     exc_info=_logger.isEnabledFor(logging.DEBUG),

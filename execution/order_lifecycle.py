@@ -44,7 +44,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterator,
     Mapping,
     MutableMapping,
     Sequence,
@@ -56,7 +55,7 @@ from domain import OrderStatus
 from libs.db import DataAccessLayer
 
 if TYPE_CHECKING:
-    from domain import Order as OrderType
+    pass
 
 __all__ = [
     "OrderEvent",

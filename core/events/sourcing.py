@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import logging
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, ClassVar, Dict, Iterable, Iterator, Mapping, MutableMapping, Protocol
 from uuid import UUID, uuid4

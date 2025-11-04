@@ -79,9 +79,8 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
     cum_returns = np.cumprod(1 + returns_array)
     running_max = np.maximum.accumulate(cum_returns)
     drawdowns = (running_max - cum_returns) / (running_max + 1e-10)
-    
+
     # Trading loop with integrated decision-making
-    actions = []
     ecs_actions = []
     combined_actions = []
     prev_fe = None
@@ -203,15 +202,14 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
         phase_counts[phase] = count
         print(f"  {phase.capitalize():12s} phases: {count:3d} ({count/n_steps*100:.1f}%)")
     print()
-    
+
     # Stress analysis
-    trace = ecs_reg.get_trace()
     stress_events = [h for h in ecs_reg.history if h['type'] == 'Stress update']
     high_stress_count = sum(
         1 for event in stress_events
         if event['details']['stress'] > ecs_reg.stress_threshold
     )
-    
+
     print(f"Stress Analysis:")
     print(f"  High stress events: {high_stress_count}/{len(stress_events)} "
           f"({high_stress_count/len(stress_events)*100:.1f}%)")

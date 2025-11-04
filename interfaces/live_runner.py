@@ -400,7 +400,7 @@ class LiveTradingRunner:
             aws_config = AWSSecretsManagerBackendConfig.from_environment()
         except SecretBackendConfigurationError as exc:
             LOGGER.warning(
-                "AWS Secrets Manager backend is misconfigured", 
+                "AWS Secrets Manager backend is misconfigured",
                 extra={
                     "event": "live_runner.secret_backend",
                     "backend": "aws-secrets-manager",
