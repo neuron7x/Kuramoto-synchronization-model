@@ -111,7 +111,7 @@ class MetricsCollector:
 
             if multiprocess_dir:
                 try:
-                    from prometheus_client import multiprocess  # type: ignore
+                    from prometheus_client import multiprocess  # type: ignore  # noqa: F401
                 except ImportError:
                     # Multiprocess collector isn't available; fall back to defaults.
                     pass
@@ -122,6 +122,7 @@ class MetricsCollector:
                     # metrics as the default collectors. Registering both would raise
                     # ``ValueError: Duplicated timeseries`` so we skip registering the
                     # defaults in that case.
+                    # The import is used to check availability.
                     should_register_defaults = False
 
             if should_register_defaults:

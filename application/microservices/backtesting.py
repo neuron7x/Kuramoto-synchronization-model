@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from application.microservices.market_data import MarketDataService
 
 from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import (
