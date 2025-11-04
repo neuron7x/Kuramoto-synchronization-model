@@ -404,7 +404,7 @@ rate(http_requests_total{service="...",status=~"5.."}[5m])
 / rate(http_requests_total{service="..."}[5m])
 
 # P99 latency
-histogram_quantile(0.99, 
+histogram_quantile(0.99,
   rate(http_request_duration_seconds_bucket{service="..."}[5m]))
 
 # Availability
