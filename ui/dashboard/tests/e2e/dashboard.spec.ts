@@ -165,22 +165,34 @@ test.describe('@L7 dashboard signals experience', () => {
     });
 
     // Load baseline embedding if it exists
-    const path = await import('path');
-    const fs = await import('fs');
-    const baselinePath = path.join(__dirname, 'fixtures', 'clip-baseline.json');
+    const path = await import('node:path');
+    const fs = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    
+    const currentFile = fileURLToPath(import.meta.url);
+    const currentDir = path.dirname(currentFile);
+    const baselinePath = path.join(currentDir, 'fixtures', 'clip-baseline.json');
     
     let baselineEmbedding: number[] | null = null;
     try {
       const baselineJson = fs.readFileSync(baselinePath, 'utf-8');
       baselineEmbedding = JSON.parse(baselineJson);
     } catch (error) {
-      // No baseline exists yet - store current embedding as baseline
-      fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
-      fs.writeFileSync(baselinePath, JSON.stringify(embeddingData, null, 2));
-      test.info().annotations.push({
-        type: 'info',
-        description: 'Created new CLIP baseline embedding',
-      });
+      // No baseline exists yet - store current embedding as baseline for future comparison
+      try {
+        fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
+        fs.writeFileSync(baselinePath, JSON.stringify(embeddingData, null, 2));
+        test.info().annotations.push({
+          type: 'info',
+          description: 'Created new CLIP baseline embedding',
+        });
+      } catch (writeError) {
+        // In read-only CI environments, skip baseline creation
+        test.info().annotations.push({
+          type: 'warning',
+          description: 'Could not create baseline in read-only environment',
+        });
+      }
       return;
     }
 
