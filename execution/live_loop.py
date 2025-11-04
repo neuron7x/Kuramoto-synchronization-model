@@ -385,7 +385,9 @@ class LiveExecutionLoop:
                 # Replay ledger from last_offset to catch up
                 for record in self._order_ledger.replay_from(last_offset + 1):
                     evt = record.event if hasattr(record, 'event') else record.get("event") or {}
-                    self._oms_state.apply(evt)
+                    # Pass sequence number to track ledger offset
+                    seq = record.sequence if hasattr(record, 'sequence') else None
+                    self._oms_state.apply(evt, sequence=seq)
                 
                 self._logger.info(
                     f"Replayed ledger from offset {last_offset}",
@@ -411,14 +413,18 @@ class LiveExecutionLoop:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
             
+            # Get current ledger offset
+            current_ledger_offset = 0
+            latest_event = self._order_ledger.latest_event(verify=False) if self._order_ledger else None
+            if latest_event:
+                current_ledger_offset = latest_event.sequence
+                # Sync OMS state's ledger offset with the actual ledger
+                self._oms_state.set_ledger_offset(current_ledger_offset)
+            
             payload = {
                 "mode": "live",
                 "ts": now,
-                "ledger_offset": (
-                    self._order_ledger.latest_event(verify=False).sequence
-                    if self._order_ledger and self._order_ledger.latest_event(verify=False)
-                    else 0
-                ),
+                "ledger_offset": current_ledger_offset,
                 "oms": self._oms_state.snapshot(),
             }
             

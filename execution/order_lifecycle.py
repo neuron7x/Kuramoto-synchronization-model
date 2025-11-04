@@ -616,12 +616,13 @@ class OMSState:
         """Return the last processed ledger offset."""
         return int(self._last_ledger_offset)
     
-    def apply(self, event: Mapping[str, Any]) -> None:
+    def apply(self, event: Mapping[str, Any], *, sequence: int | None = None) -> None:
         """
         Apply an order lifecycle event to the state.
         
         Args:
             event: Event dict with keys: type, venue, order, ts
+            sequence: Optional ledger sequence number to track
         """
         etype = str(event.get("type", ""))
         venue = str(event.get("venue", ""))
@@ -658,6 +659,10 @@ class OMSState:
             else:
                 entry.status = status
                 entry.last_update = ts
+            
+            # Update ledger offset if sequence is provided
+            if sequence is not None and sequence > self._last_ledger_offset:
+                self._last_ledger_offset = int(sequence)
     
     def outstanding(self, venue: str) -> Sequence[Any]:
         """
