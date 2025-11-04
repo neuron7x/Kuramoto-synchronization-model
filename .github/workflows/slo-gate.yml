@@ -17,6 +17,9 @@ jobs:
   evaluate-slo:
     name: Evaluate Canary SLO
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     
     outputs:
@@ -183,6 +186,9 @@ jobs:
     name: Auto-Rollback on SLO Violation
     needs: evaluate-slo
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     if: ${{ needs.evaluate-slo.outputs.slo_passed == 'false' }}
     
     steps:
@@ -240,6 +246,9 @@ jobs:
     name: Promote Canary to Production
     needs: evaluate-slo
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     if: ${{ needs.evaluate-slo.outputs.slo_passed == 'true' }}
     
     steps:

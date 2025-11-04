@@ -10,6 +10,8 @@ jobs:
   version-check:
     name: Verify Version Matches Git Tag
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository

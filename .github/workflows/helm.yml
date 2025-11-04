@@ -18,6 +18,8 @@ jobs:
   lint:
     name: Lint Helm Charts
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -39,6 +41,8 @@ jobs:
   template:
     name: Template and Validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -82,6 +86,8 @@ jobs:
   kind-smoke-test:
     name: Kind Smoke Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -170,6 +176,9 @@ jobs:
   kubescape-scan:
     name: Kubescape Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     
     steps:
       - name: Checkout repository
@@ -205,6 +214,8 @@ jobs:
   polaris-scan:
     name: Polaris Best Practices
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
