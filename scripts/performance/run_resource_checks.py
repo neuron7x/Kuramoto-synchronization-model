@@ -27,17 +27,21 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backtest.engine import walk_forward
-from core.agent.strategy import Strategy
-from core.data.preprocess import normalize_df, scale_series
-from core.indicators.entropy import EntropyFeature
-from core.indicators.hierarchical_features import (
+from backtest.engine import walk_forward  # noqa: E402
+from core.agent.strategy import Strategy  # noqa: E402
+from core.data.preprocess import normalize_df, scale_series  # noqa: E402
+from core.indicators.entropy import EntropyFeature  # noqa: E402
+from core.indicators.hierarchical_features import (  # noqa: E402
     FeatureBufferCache,
     compute_hierarchical_features,
 )
-from core.indicators.hurst import HurstFeature
-from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase, kuramoto_order
-from core.indicators.pipeline import IndicatorPipeline
+from core.indicators.hurst import HurstFeature  # noqa: E402
+from core.indicators.kuramoto import (  # noqa: E402
+    KuramotoOrderFeature,
+    compute_phase,
+    kuramoto_order,
+)
+from core.indicators.pipeline import IndicatorPipeline  # noqa: E402
 
 Category = Literal["memory", "cpu", "response"]
 

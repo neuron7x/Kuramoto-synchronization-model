@@ -15,8 +15,8 @@ Consumer = pactman.Consumer
 Provider = pactman.Provider
 mock_server = mock_module.mock_server
 
-from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.adapters.base import RESTWebSocketConnector
+from domain import Order, OrderSide, OrderStatus, OrderType  # noqa: E402
+from execution.adapters.base import RESTWebSocketConnector  # noqa: E402
 
 
 def _allocate_port() -> int:

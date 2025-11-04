@@ -25,10 +25,10 @@ warnings.filterwarnings(
     message="SciPy unavailable; using discrete Wasserstein approximation",
 )
 
-from core.indicators.entropy import delta_entropy, entropy
-from core.indicators.kuramoto import compute_phase, kuramoto_order
-from core.indicators.ricci import build_price_graph, mean_ricci
-from observability.profiling import ProfileCollector
+from core.indicators.entropy import delta_entropy, entropy  # noqa: E402
+from core.indicators.kuramoto import compute_phase, kuramoto_order  # noqa: E402
+from core.indicators.ricci import build_price_graph, mean_ricci  # noqa: E402
+from observability.profiling import ProfileCollector  # noqa: E402
 
 
 def _default_dataset_path() -> Path:

@@ -24,9 +24,9 @@ def test_indicator_observability_pipeline() -> None:
     collector = metrics_module.get_metrics_collector(registry)
 
     # Ensure indicator modules reuse the fresh collector.
-    from core.indicators import kuramoto as kuramoto_module  # noqa: WPS433
-    from core.indicators import temporal_ricci as ricci_module  # noqa: WPS433
-    from core.indicators import trading as trading_module  # noqa: WPS433
+    from core.indicators import kuramoto as kuramoto_module  # noqa: E402
+    from core.indicators import temporal_ricci as ricci_module  # noqa: E402
+    from core.indicators import trading as trading_module  # noqa: E402
 
     trading_module._metrics = collector  # type: ignore[attr-defined]
     kuramoto_module._metrics = collector  # type: ignore[attr-defined]

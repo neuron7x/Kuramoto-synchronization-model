@@ -35,7 +35,7 @@ _WARNING_FILTERS: tuple[dict[str, object], ...] = (
 for filter_kwargs in _WARNING_FILTERS:
     warnings.filterwarnings("ignore", **filter_kwargs)
 
-from application.settings import BackendRuntimeSettings
+from application.settings import BackendRuntimeSettings  # noqa: E402
 
 DEFAULT_REPORT_PATH = Path("reports/security/dast_report.json")
 

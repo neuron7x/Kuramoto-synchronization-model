@@ -6,12 +6,12 @@ from decimal import Decimal
 import pytest
 
 hypothesis = pytest.importorskip("hypothesis")
-from hypothesis import given, settings
-from hypothesis import strategies as st
+from hypothesis import given, settings  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
 
-import src.data.kafka_ingestion as kafka_ingestion
-from core.data.models import InstrumentType, PriceTick
-from src.data.kafka_ingestion import HotSymbolCache
+import src.data.kafka_ingestion as kafka_ingestion  # noqa: E402
+from core.data.models import InstrumentType, PriceTick  # noqa: E402
+from src.data.kafka_ingestion import HotSymbolCache  # noqa: E402
 
 BASE_TS = datetime(2024, 1, 1, tzinfo=UTC)
 
