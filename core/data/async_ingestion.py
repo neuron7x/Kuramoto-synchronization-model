@@ -574,9 +574,8 @@ class AsyncWebSocketStream:
         if self._connection is None:
             raise RuntimeError("WebSocket connection has not been initialised")
 
-        await self._send_subscription_if_needed(self._connection)
-
         try:
+            await self._send_subscription_if_needed(self._connection)
             while self._running:
                 try:
                     message = await self._connection.recv()  # type: ignore[call-arg]
