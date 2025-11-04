@@ -1,3 +1,18 @@
+# CycloneDX SBOM Generation and Signing
+# 
+# This workflow generates Software Bill of Materials (SBOM) in CycloneDX format,
+# signs them with Sigstore cosign (keyless), and verifies the signatures.
+#
+# Required Secrets:
+#   COSIGN_CERTIFICATE_IDENTITY - The certificate identity for keyless verification
+#     Example for GitHub Actions: "https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@refs/heads/main"
+#   
+#   COSIGN_CERTIFICATE_OIDC_ISSUER - The OIDC issuer for keyless verification
+#     Example for GitHub Actions: "https://token.actions.githubusercontent.com"
+#
+#   Note: For GitHub Actions keyless signing, the certificate identity should match
+#         the workflow file path, and the issuer should be the GitHub OIDC endpoint.
+#
 name: CycloneDX SBOM
 
 on:
@@ -105,7 +120,7 @@ jobs:
           PY
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v3.8.0
 
       - name: Sign SBOM with cosign
         if: github.event_name != 'pull_request'
@@ -123,13 +138,36 @@ jobs:
 
       - name: Verify SBOM signatures
         if: github.event_name != 'pull_request'
+        env:
+          COSIGN_CERT_IDENTITY: ${{ secrets.COSIGN_CERTIFICATE_IDENTITY }}
+          COSIGN_CERT_OIDC_ISSUER: ${{ secrets.COSIGN_CERTIFICATE_OIDC_ISSUER }}
         run: |
-          # Verify the signatures
+          # Verify the secrets are set
+          if [ -z "${COSIGN_CERT_IDENTITY}" ] || [ -z "${COSIGN_CERT_OIDC_ISSUER}" ]; then
+            echo "❌ ERROR: Required repository secrets are not set."
+            echo ""
+            echo "The following secrets must be configured:"
+            echo "  - COSIGN_CERTIFICATE_IDENTITY: The expected certificate identity from keyless signing"
+            echo "  - COSIGN_CERTIFICATE_OIDC_ISSUER: The OIDC issuer URL"
+            echo ""
+            echo "Example values for GitHub Actions keyless signing:"
+            echo "  COSIGN_CERTIFICATE_IDENTITY: https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@refs/heads/main"
+            echo "  COSIGN_CERTIFICATE_OIDC_ISSUER: https://token.actions.githubusercontent.com"
+            echo ""
+            echo "For more information, see: https://docs.sigstore.dev/cosign/verify/"
+            exit 1
+          fi
+          
+          # Verify the signatures with certificate identity and OIDC issuer
           cosign verify-blob \
+            --certificate-identity "${COSIGN_CERT_IDENTITY}" \
+            --certificate-oidc-issuer "${COSIGN_CERT_OIDC_ISSUER}" \
             --bundle sbom/cyclonedx-sbom.json.bundle \
             sbom/cyclonedx-sbom.json
           
           cosign verify-blob \
+            --certificate-identity "${COSIGN_CERT_IDENTITY}" \
+            --certificate-oidc-issuer "${COSIGN_CERT_OIDC_ISSUER}" \
             --bundle sbom/cyclonedx-sbom.xml.bundle \
             sbom/cyclonedx-sbom.xml
           
