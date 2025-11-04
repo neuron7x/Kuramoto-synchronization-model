@@ -1,0 +1,12 @@
+dependencies:
+- name: sandbox
+  repository: file://./charts/sandbox
+  version: 0.1.0
+- name: admin
+  repository: file://./charts/admin
+  version: 0.1.0
+- name: observability
+  repository: file://./charts/observability
+  version: 0.1.0
+digest: sha256:e1815ffc78042ee553ecf1fb7474404a1402409ed19f29e85b003602a87cdc68
+generated: "2025-11-04T18:05:50.351256858Z"

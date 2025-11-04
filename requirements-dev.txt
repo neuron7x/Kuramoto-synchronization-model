@@ -46,3 +46,4 @@ pip-tools==7.5.1
 maturin>=1.9.6,<2.0
 cibuildwheel>=3.2.1
 towncrier==25.8.0
+setuptools-scm>=8.0.0

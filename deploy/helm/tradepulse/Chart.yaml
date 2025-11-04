@@ -1,0 +1,26 @@
+apiVersion: v2
+name: tradepulse
+description: TradePulse - Advanced algorithmic trading platform umbrella chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - trading
+  - algorithmic
+  - finance
+maintainers:
+  - name: TradePulse Contributors
+    email: maintainers@tradepulse.io
+dependencies:
+  - name: sandbox
+    version: "0.1.0"
+    repository: "file://./charts/sandbox"
+    condition: sandbox.enabled
+  - name: admin
+    version: "0.1.0"
+    repository: "file://./charts/admin"
+    condition: admin.enabled
+  - name: observability
+    version: "0.1.0"
+    repository: "file://./charts/observability"
+    condition: observability.enabled

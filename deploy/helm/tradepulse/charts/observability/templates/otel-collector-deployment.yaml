@@ -1,0 +1,52 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "observability.fullname" . }}-otel-collector
+  labels:
+    {{- include "observability.labels" . | nindent 4 }}
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "observability.selectorLabels" . | nindent 6 }}
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        {{- include "observability.selectorLabels" . | nindent 8 }}
+        app: otel-collector
+    spec:
+      securityContext:
+        {{- toYaml .Values.global.securityContext | nindent 8 }}
+      containers:
+      - name: otel-collector
+        securityContext:
+          {{- toYaml .Values.global.containerSecurityContext | nindent 10 }}
+        image: "{{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: otlp-grpc
+          containerPort: 4317
+          protocol: TCP
+        - name: otlp-http
+          containerPort: 4318
+          protocol: TCP
+        - name: metrics
+          containerPort: 8888
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.otelCollector.resources | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/otelcol
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "observability.fullname" . }}-otel-config
+      - name: tmp
+        emptyDir: {}
+{{- end }}

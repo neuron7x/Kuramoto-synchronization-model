@@ -103,6 +103,55 @@ jobs:
           print('CycloneDX validation succeeded for all artifacts.')
           PY
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign SBOM with cosign
+        if: github.event_name != 'pull_request'
+        run: |
+          # Sign SBOM artifacts with keyless signing
+          cosign sign-blob --yes \
+            --bundle sbom/cyclonedx-sbom.json.bundle \
+            sbom/cyclonedx-sbom.json
+          
+          cosign sign-blob --yes \
+            --bundle sbom/cyclonedx-sbom.xml.bundle \
+            sbom/cyclonedx-sbom.xml
+          
+          echo "✓ SBOM artifacts signed successfully"
+
+      - name: Verify SBOM signatures
+        if: github.event_name != 'pull_request'
+        run: |
+          # Verify the signatures
+          cosign verify-blob \
+            --bundle sbom/cyclonedx-sbom.json.bundle \
+            sbom/cyclonedx-sbom.json
+          
+          cosign verify-blob \
+            --bundle sbom/cyclonedx-sbom.xml.bundle \
+            sbom/cyclonedx-sbom.xml
+          
+          echo "✓ SBOM signatures verified successfully"
+
+      - name: Check SBOM age
+        run: |
+          # Verify SBOM is less than 24 hours old
+          SBOM_FILE="sbom/cyclonedx-sbom.json"
+          if [ -f "$SBOM_FILE" ]; then
+            SBOM_AGE=$(( $(date +%s) - $(stat -c %Y "$SBOM_FILE") ))
+            SBOM_AGE_HOURS=$(( SBOM_AGE / 3600 ))
+            
+            echo "SBOM age: ${SBOM_AGE_HOURS} hours"
+            
+            if [ $SBOM_AGE_HOURS -ge 24 ]; then
+              echo "❌ ERROR: SBOM is older than 24 hours"
+              exit 1
+            fi
+            
+            echo "✓ SBOM is fresh (less than 24 hours old)"
+          fi
+
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
@@ -110,3 +159,5 @@ jobs:
           path: |
             sbom/cyclonedx-sbom.json
             sbom/cyclonedx-sbom.xml
+            sbom/cyclonedx-sbom.json.bundle
+            sbom/cyclonedx-sbom.xml.bundle
