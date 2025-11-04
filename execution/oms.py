@@ -60,7 +60,9 @@ class OMSConfig:
         if ledger_path is not None and not isinstance(ledger_path, Path):
             ledger_path = Path(ledger_path)
         if ledger_path == DEFAULT_LEDGER_PATH:
-            ledger_path = self.state_path.parent / f"{self.state_path.stem}_ledger.jsonl"
+            ledger_path = (
+                self.state_path.parent / f"{self.state_path.stem}_ledger.jsonl"
+            )
         if ledger_path is not None:
             ledger_path.parent.mkdir(parents=True, exist_ok=True)
         object.__setattr__(self, "ledger_path", ledger_path)
@@ -199,7 +201,9 @@ class OrderManagementSystem:
         else:
             self._lifecycle_sequences = {}
         self._active_orders = {
-            order_id: order for order_id, order in self._orders.items() if order.is_active
+            order_id: order
+            for order_id, order in self._orders.items()
+            if order.is_active
         }
         self._active_cache = tuple(self._active_orders.values())
         self._active_cache_dirty = False
@@ -224,7 +228,10 @@ class OrderManagementSystem:
             except Exception:  # pragma: no cover - defensive guard
                 history = []
             for transition in history:
-                if transition.event not in (OrderEvent.FILL_PARTIAL, OrderEvent.FILL_FINAL):
+                if transition.event not in (
+                    OrderEvent.FILL_PARTIAL,
+                    OrderEvent.FILL_FINAL,
+                ):
                     continue
                 parts = transition.correlation_id.rsplit(":", 1)
                 if len(parts) != 2:
@@ -295,17 +302,13 @@ class OrderManagementSystem:
             "price": None if order.price is None else float(order.price),
             "stop_price": None if order.stop_price is None else float(order.stop_price),
             "iceberg_visible": (
-                None
-                if order.iceberg_visible is None
-                else float(order.iceberg_visible)
+                None if order.iceberg_visible is None else float(order.iceberg_visible)
             ),
         }
         metadata = getattr(order, "metadata", None)
         if metadata is not None:
             payload["metadata"] = metadata
-        return json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
 
     @staticmethod
     def _serialize_order(order: Order) -> dict:
@@ -372,9 +375,7 @@ class OrderManagementSystem:
         fingerprint = self._fingerprint(order)
         existing_fp = self._fingerprints.get(correlation_id)
         if existing_fp is not None and existing_fp != fingerprint:
-            raise ValueError(
-                "Correlation ID reused with a different order payload"
-            )
+            raise ValueError("Correlation ID reused with a different order payload")
         if correlation_id in self._processed:
             order_id = self._processed[correlation_id]
             stored = self._orders[order_id]
@@ -407,9 +408,7 @@ class OrderManagementSystem:
                         order=order,
                         correlation_id=correlation_id,
                         metadata={
-                            "violations": []
-                            if report is None
-                            else report.violations,
+                            "violations": [] if report is None else report.violations,
                             "error": str(exc),
                         },
                     )
@@ -454,7 +453,9 @@ class OrderManagementSystem:
                             "ttl_seconds": ttl,
                         },
                     )
-                    self._emit_risk_audit(order, correlation_id, reason, {"ttl_seconds": ttl})
+                    self._emit_risk_audit(
+                        order, correlation_id, reason, {"ttl_seconds": ttl}
+                    )
                     raise ComplianceViolation(reason)
 
             if self._risk_compliance is not None:
@@ -608,9 +609,7 @@ class OrderManagementSystem:
     def _place_order_with_timeout(self, order: Order, correlation_id: str) -> Order:
         timeout = self.config.request_timeout
         if not timeout:
-            return self.connector.place_order(
-                order, idempotency_key=correlation_id
-            )
+            return self.connector.place_order(order, idempotency_key=correlation_id)
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(
                 self.connector.place_order,
@@ -887,7 +886,10 @@ class OrderManagementSystem:
             self._broker_lookup[stored.broker_order_id] = stored.order_id
 
         base_correlation = self._correlations.get(order.order_id)
-        if stored.status is OrderStatus.CANCELLED and previous_status is not OrderStatus.CANCELLED:
+        if (
+            stored.status is OrderStatus.CANCELLED
+            and previous_status is not OrderStatus.CANCELLED
+        ):
             self._record_lifecycle_event(
                 stored,
                 OrderEvent.CANCEL,
@@ -895,7 +897,10 @@ class OrderManagementSystem:
                 metadata={"source": "sync_remote_state"},
             )
             self._lifecycle_sequences.pop(order.order_id, None)
-        elif stored.status is OrderStatus.REJECTED and previous_status is not OrderStatus.REJECTED:
+        elif (
+            stored.status is OrderStatus.REJECTED
+            and previous_status is not OrderStatus.REJECTED
+        ):
             metadata: Dict[str, object] = {"source": "sync_remote_state"}
             if stored.rejection_reason:
                 metadata["reason"] = stored.rejection_reason
@@ -927,7 +932,9 @@ class OrderManagementSystem:
                     metadata = {
                         "source": "sync_remote_state",
                         "cumulative_filled": float(stored.filled_quantity),
-                        "delta_filled": float(max(0.0, stored.filled_quantity - previous_filled)),
+                        "delta_filled": float(
+                            max(0.0, stored.filled_quantity - previous_filled)
+                        ),
                     }
                     if price_reference is not None:
                         metadata["reference_price"] = float(price_reference)
@@ -1123,6 +1130,21 @@ class OrderManagementSystem:
             self._active_cache = tuple(self._active_orders.values())
             self._active_cache_dirty = False
         return self._active_cache
+
+    def latest_ledger_sequence(self) -> int | None:
+        """Return the latest ledger event sequence number, or None if no ledger."""
+        if self._ledger is None:
+            return None
+        latest = self._ledger.latest_event(verify=False)
+        return latest.sequence if latest else 0
+
+    def replay_ledger_from(
+        self, sequence: int, *, verify: bool = True
+    ) -> Iterable[Any]:  # Returns OrderLedgerEvent
+        """Replay ledger events starting from given sequence, or empty if no ledger."""
+        if self._ledger is None:
+            return iter([])
+        return self._ledger.replay_from(sequence, verify=verify)
 
     def _update_active_order(self, order_id: str | None, order: Order | None) -> None:
         if order_id is None:

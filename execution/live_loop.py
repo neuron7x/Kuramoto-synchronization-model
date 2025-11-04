@@ -35,14 +35,14 @@ from .watchdog import Watchdog
 def _full_jitter_backoff(base: float, attempt: int, cap: float) -> float:
     """
     Calculate exponential backoff with full jitter.
-    
+
     Returns a random delay between 0 and min(cap, base * 2^attempt).
-    
+
     Args:
         base: Base delay in seconds
         attempt: Attempt number (0-indexed)
         cap: Maximum delay cap
-        
+
     Returns:
         Delay in seconds with full jitter
     """
@@ -168,9 +168,7 @@ class LiveExecutionLoop:
         self._market_state: Dict[str, Dict[str, Any]] = defaultdict(dict)
 
         # NEW: Production-hardening lifecycle components
-        self._order_ledger = OrderLedger(
-            config.ledger_dir / "order_ledger.jsonl"
-        )
+        self._order_ledger = OrderLedger(config.ledger_dir / "order_ledger.jsonl")
         self._oms_state = OMSState()
         self._idempotent_submitter = IdempotentSubmitter()
         self._last_snapshot_ts = 0.0
@@ -355,38 +353,51 @@ class LiveExecutionLoop:
     def _restore_snapshot_if_present(self) -> None:
         """
         Restore the last OMS snapshot if available; otherwise start with empty state.
-        
+
         On restore, replays the ledger from the last offset to catch up with any
         events that occurred after the snapshot was taken.
         """
         try:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
-            
+
             files = sorted(snapshot_dir.glob("*.json"))
             if not files:
                 self._logger.info("No OMS snapshot found; starting with empty state")
                 return
-            
+
             last_snapshot = files[-1]
             self._logger.info(
                 f"Restoring OMS snapshot from {last_snapshot.name}",
-                extra={"event": "live_loop.snapshot_restore", "path": str(last_snapshot)},
+                extra={
+                    "event": "live_loop.snapshot_restore",
+                    "path": str(last_snapshot),
+                },
             )
-            
+
             payload = json.loads(last_snapshot.read_text(encoding="utf-8"))
             oms_data = payload.get("oms")
             if oms_data:
                 self._oms_state = OMSState.restore(oms_data)
-            
+
             last_offset = int(payload.get("ledger_offset", 0))
             if last_offset:
                 self._oms_state.set_ledger_offset(last_offset)
                 # Replay ledger from last_offset to catch up
-                for record in self._order_ledger.replay_from(last_offset + 1):
-                    evt = record.event if hasattr(record, 'event') else record.get("event") or {}
-                    self._oms_state.apply(evt)
-                
+                # Aggregate replay from all venue OMS ledgers
+                for context in self._contexts.values():
+                    for record in context.oms.replay_ledger_from(
+                        last_offset + 1, verify=False
+                    ):
+                        evt = (
+                            record.event
+                            if hasattr(record, "event")
+                            else record.get("event") or {}
+                        )
+                        # Pass sequence number to track ledger offset
+                        seq = record.sequence if hasattr(record, "sequence") else None
+                        self._oms_state.apply(evt, sequence=seq)
+
                 self._logger.info(
                     f"Replayed ledger from offset {last_offset}",
                     extra={"event": "live_loop.ledger_replay", "offset": last_offset},
@@ -396,50 +407,57 @@ class LiveExecutionLoop:
                 f"Failed to restore snapshot: {exc}",
                 extra={"event": "live_loop.snapshot_restore_failed", "error": str(exc)},
             )
-    
+
     def _persist_oms_snapshot_if_needed(self) -> None:
         """
         Periodically persist an OMS snapshot with ledger offset.
-        
+
         Snapshots include the ledger offset, OMS state, and a checksum for integrity.
         """
         now = time.time()
         if now - self._last_snapshot_ts < self._config.snapshot_interval:
             return
-        
+
         try:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
-            
+
+            # Get current ledger offset from venue OMS ledgers
+            # Use the maximum sequence across all venue ledgers
+            current_ledger_offset = 0
+            for context in self._contexts.values():
+                latest_seq = context.oms.latest_ledger_sequence()
+                if latest_seq and latest_seq > current_ledger_offset:
+                    current_ledger_offset = latest_seq
+
+            # Sync OMS state's ledger offset
+            if current_ledger_offset > 0:
+                self._oms_state.set_ledger_offset(current_ledger_offset)
+
             payload = {
                 "mode": "live",
                 "ts": now,
-                "ledger_offset": (
-                    self._order_ledger.latest_event(verify=False).sequence
-                    if self._order_ledger and self._order_ledger.latest_event(verify=False)
-                    else 0
-                ),
+                "ledger_offset": current_ledger_offset,
                 "oms": self._oms_state.snapshot(),
             }
-            
+
             # Optional: add checksum
             checksum = hashlib.sha256(
                 json.dumps(payload, sort_keys=True).encode("utf-8")
             ).hexdigest()
             payload["checksum"] = f"sha256:{checksum}"
-            
+
             fname = snapshot_dir / f"oms_snapshot_{int(now)}.json"
             fname.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2),
-                encoding="utf-8"
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-            
+
             self._last_snapshot_ts = now
             self._logger.debug(
                 f"Persisted OMS snapshot to {fname.name}",
                 extra={"event": "live_loop.snapshot_persisted", "path": str(fname)},
             )
-            
+
             # Clean up old snapshots (keep last 5)
             all_snapshots = sorted(snapshot_dir.glob("oms_snapshot_*.json"))
             for old_snapshot in all_snapshots[:-5]:
@@ -452,11 +470,11 @@ class LiveExecutionLoop:
                 f"Snapshot persistence failed: {exc}",
                 extra={"event": "live_loop.snapshot_persist_failed", "error": str(exc)},
             )
-    
+
     def _reconcile_open_orders(self, context: _VenueContext) -> None:
         """
         Reconcile venue-open orders with OMS state by adopting unknown orders.
-        
+
         This is called on restart/reconnect to ensure all venue-open orders are
         tracked in the local OMS state.
         """
@@ -468,14 +486,14 @@ class LiveExecutionLoop:
                 extra={
                     "event": "live_loop.reconcile_open_failed",
                     "venue": context.name,
-                    "error": str(exc)
+                    "error": str(exc),
                 },
             )
             return
-        
+
         # Adopt orders into OMS state
         self._oms_state.adopt(context.name, open_orders)
-        
+
         if open_orders:
             self._logger.info(
                 f"Adopted {len(open_orders)} open orders from {context.name}",
@@ -511,7 +529,7 @@ class LiveExecutionLoop:
         credentials = None
         if self._config.credentials is not None:
             credentials = self._config.credentials.get(context.name)
-        
+
         attempt = 0
         while not self._stop.is_set():
             try:
@@ -530,7 +548,7 @@ class LiveExecutionLoop:
                 delay = _full_jitter_backoff(
                     self._config.heartbeat_interval,
                     attempt - 1,
-                    self._config.max_backoff
+                    self._config.max_backoff,
                 )
                 self._logger.warning(
                     "Connector initialisation failed",
@@ -556,7 +574,7 @@ class LiveExecutionLoop:
     def _reconcile_state(self, context: _VenueContext) -> None:
         # First, reconcile open orders with OMS state
         self._reconcile_open_orders(context)
-        
+
         try:
             venue_orders = {
                 order.order_id: order
@@ -610,6 +628,15 @@ class LiveExecutionLoop:
             context.oms.adopt_open_order(order, correlation_id=correlation)
             self._order_connector[order_id] = context.name
             self._last_reported_fill[order_id] = order.filled_quantity
+            # Sync with global OMS state
+            self._oms_state.apply(
+                {
+                    "type": "adopt",
+                    "venue": context.name,
+                    "order": {"order_id": order_id, "_obj": order},
+                    "ts": time.time(),
+                }
+            )
             self._logger.warning(
                 "Adopted orphan order from venue",
                 extra={
@@ -630,9 +657,7 @@ class LiveExecutionLoop:
         }
         if not connectors:
             raise SessionSnapshotError("no connectors configured for snapshot")
-        preloaded: dict[
-            str, tuple[Sequence[Mapping[str, object]], Sequence[str]]
-        ] = {}
+        preloaded: dict[str, tuple[Sequence[Mapping[str, object]], Sequence[str]]] = {}
         for name in connectors:
             positions = self._pre_session_positions.get(name, ())
             issues = self._pre_session_position_issues.get(name, ())
@@ -705,9 +730,7 @@ class LiveExecutionLoop:
             sources += 1
             positions_list = list(positions)
             normalised_positions = [
-                payload
-                for payload in positions_list
-                if isinstance(payload, Mapping)
+                payload for payload in positions_list if isinstance(payload, Mapping)
             ]
             if normalised_positions:
                 raw_positions[context.name] = normalised_positions
@@ -734,7 +757,9 @@ class LiveExecutionLoop:
                     if abs(quantity) > 1e-12 and notional > 0.0
                     else None
                 )
-                price_candidates = [p for p in (existing_price, new_price) if p is not None]
+                price_candidates = [
+                    p for p in (existing_price, new_price) if p is not None
+                ]
                 if price_candidates:
                     combined_notional = max(
                         combined_notional,
@@ -997,7 +1022,9 @@ class LiveExecutionLoop:
             return True
         return False
 
-    def _handle_stream_event(self, context: _VenueContext, event: Mapping[str, Any]) -> None:
+    def _handle_stream_event(
+        self, context: _VenueContext, event: Mapping[str, Any]
+    ) -> None:
         event_type = str(event.get("type") or "").lower()
         if not event_type:
             return
@@ -1053,7 +1080,9 @@ class LiveExecutionLoop:
             )
             status = self._map_stream_status(event.get("status"))
             if status is not None or cumulative is not None or avg_price is not None:
-                self._apply_stream_status(context, order_id, status, cumulative, avg_price)
+                self._apply_stream_status(
+                    context, order_id, status, cumulative, avg_price
+                )
             return
 
         if event_type in {"balance", "account"}:
@@ -1065,10 +1094,7 @@ class LiveExecutionLoop:
 
         if event_type in {"book", "order_book", "ticker"}:
             symbol = str(
-                event.get("symbol")
-                or event.get("product_id")
-                or event.get("s")
-                or ""
+                event.get("symbol") or event.get("product_id") or event.get("s") or ""
             ).upper()
             if symbol:
                 venue_state = self._market_state.setdefault(context.name, {})
@@ -1095,10 +1121,7 @@ class LiveExecutionLoop:
 
         if event_type in {"trade", "last_trade"}:
             symbol = str(
-                event.get("symbol")
-                or event.get("product_id")
-                or event.get("s")
-                or ""
+                event.get("symbol") or event.get("product_id") or event.get("s") or ""
             ).upper()
             price = self._coerce_float(event.get("price") or event.get("trade_price"))
             quantity = self._coerce_float(event.get("quantity") or event.get("size"))
@@ -1176,19 +1199,29 @@ class LiveExecutionLoop:
         for entry in items:
             if not isinstance(entry, Mapping):
                 continue
-            asset = str(
-                entry.get("asset")
-                or entry.get("currency")
-                or entry.get("symbol")
-                or entry.get("code")
-                or entry.get("a")
-                or ""
-            ).strip().upper()
+            asset = (
+                str(
+                    entry.get("asset")
+                    or entry.get("currency")
+                    or entry.get("symbol")
+                    or entry.get("code")
+                    or entry.get("a")
+                    or ""
+                )
+                .strip()
+                .upper()
+            )
             if not asset:
                 continue
-            free = self._extract_balance_value(entry, "free", "available", "available_balance")
-            locked = self._extract_balance_value(entry, "locked", "hold", "locked_balance")
-            delta = self._extract_balance_value(entry, "delta", "change", "balance_delta")
+            free = self._extract_balance_value(
+                entry, "free", "available", "available_balance"
+            )
+            locked = self._extract_balance_value(
+                entry, "locked", "hold", "locked_balance"
+            )
+            delta = self._extract_balance_value(
+                entry, "delta", "change", "balance_delta"
+            )
             payload: dict[str, float] = {}
             if free is not None:
                 payload["free"] = free
@@ -1205,7 +1238,9 @@ class LiveExecutionLoop:
                 result[asset] = payload
         return result
 
-    def _extract_balance_value(self, entry: Mapping[str, Any], *keys: str) -> float | None:
+    def _extract_balance_value(
+        self, entry: Mapping[str, Any], *keys: str
+    ) -> float | None:
         for key in keys:
             value = entry.get(key)
             if isinstance(value, Mapping):
@@ -1230,7 +1265,7 @@ class LiveExecutionLoop:
         while not self._stop.is_set():
             # Periodically persist OMS snapshot
             self._persist_oms_snapshot_if_needed()
-            
+
             if (
                 self._risk_manager.kill_switch.is_triggered()
                 and not self._kill_notified
@@ -1258,7 +1293,7 @@ class LiveExecutionLoop:
                     delay = _full_jitter_backoff(
                         self._config.heartbeat_interval,
                         attempt - 1,
-                        self._config.max_backoff
+                        self._config.max_backoff,
                     )
                     self._logger.warning(
                         "Heartbeat failure",
