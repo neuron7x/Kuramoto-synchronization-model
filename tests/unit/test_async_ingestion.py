@@ -2,6 +2,8 @@
 
 import asyncio
 import csv
+import json
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncIterator, Iterable, List
@@ -12,6 +14,7 @@ from core.data.adapters.base import IngestionAdapter
 from core.data.async_ingestion import AsyncDataIngestor, Ticker, merge_streams
 from core.data.connectors.market import BaseMarketDataConnector
 from core.data.models import InstrumentType
+from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL
 
 
 class DummyAdapter(IngestionAdapter):
@@ -370,21 +373,107 @@ class TestMergeStreams:
 
 
 class TestAsyncWebSocketStream:
-    """Test WebSocket stream base class."""
+    """Tests for the WebSocket helper."""
 
     @pytest.mark.asyncio
-    async def test_websocket_not_implemented(self) -> None:
-        """Test that base WebSocket methods raise NotImplementedError."""
-
+    async def test_stream_subscribes_and_decodes_messages(self) -> None:
         from core.data.async_ingestion import AsyncWebSocketStream
 
-        stream = AsyncWebSocketStream("ws://test", "BTC")
+        class _StubWebSocket:
+            def __init__(self, *messages: str) -> None:
+                self._messages = deque(messages)
+                self.sent: list[object] = []
+                self.closed = False
 
-        with pytest.raises(NotImplementedError):
-            await stream.connect()
+            async def send(self, message: object) -> None:
+                self.sent.append(message)
 
-        with pytest.raises(NotImplementedError):
-            await stream.disconnect()
+            async def recv(self) -> str | None:
+                await asyncio.sleep(0)
+                if not self._messages:
+                    return None
+                return self._messages.popleft()
 
-        with pytest.raises(NotImplementedError):
-            await stream.subscribe()
+            async def close(self) -> None:
+                self.closed = True
+
+        first = json.dumps(
+            {
+                "symbol": "BTCUSD",
+                "venue": "BINANCE",
+                "price": "100.5",
+                "timestamp": 1_719_878_400,
+                "volume": 1.25,
+            }
+        )
+        second = json.dumps(
+            {
+                "symbol": "BTCUSD",
+                "venue": "BINANCE",
+                "price": "101.0",
+                "timestamp": 1_719_878_460,
+                "volume": 2.0,
+            }
+        )
+        connection = _StubWebSocket(first, second)
+
+        stream = AsyncWebSocketStream(
+            "ws://example",
+            "BTCUSD",
+            connection_factory=lambda _: connection,
+            subscription_message=lambda symbol: {"type": "subscribe", "symbol": symbol},
+        )
+
+        ticks: list[Ticker] = []
+        async for tick in stream.subscribe():
+            ticks.append(tick)
+
+        assert len(ticks) == 2
+        assert connection.closed is True
+        assert connection.sent == ['{"type":"subscribe","symbol":"BTCUSD"}']
+        assert ticks[0].symbol.replace("/", "") == "BTCUSD"
+        assert float(ticks[0].price) == pytest.approx(100.5, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
+        assert float(ticks[1].price) == pytest.approx(101.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
+
+    @pytest.mark.asyncio
+    async def test_stream_skips_malformed_payloads(self, caplog: pytest.LogCaptureFixture) -> None:
+        from core.data.async_ingestion import AsyncWebSocketStream
+
+        class _StubWebSocket:
+            def __init__(self, *messages: str) -> None:
+                self._messages = deque(messages)
+
+            async def send(self, message: object) -> None:
+                pass
+
+            async def recv(self) -> str | None:
+                await asyncio.sleep(0)
+                if not self._messages:
+                    return None
+                return self._messages.popleft()
+
+            async def close(self) -> None:
+                return None
+
+        good = json.dumps(
+            {
+                "symbol": "ETHUSD",
+                "venue": "BINANCE",
+                "price": "2500.0",
+                "timestamp": 1_719_878_520,
+            }
+        )
+        connection = _StubWebSocket("not-json", good)
+
+        stream = AsyncWebSocketStream(
+            "ws://example",
+            "ETHUSD",
+            connection_factory=lambda _: connection,
+        )
+
+        caplog.set_level("DEBUG")
+        ticks = [tick async for tick in stream.subscribe()]
+
+        assert len(ticks) == 1
+        assert ticks[0].symbol.replace("/", "") == "ETHUSD"
+        assert any("Discarding malformed WebSocket payload" in record.message for record in caplog.records)

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import inspect
+import json
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -13,6 +15,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AsyncIterator,
+    Awaitable,
     Callable,
     Iterable,
     Mapping,
@@ -487,34 +490,196 @@ class AsyncDataIngestor(AsyncDataIngestionService):
 
 
 class AsyncWebSocketStream:
-    """Async WebSocket stream handler (base class for exchange-specific implementations)."""
+    """Generic async WebSocket client with pluggable decoding logic."""
 
-    def __init__(self, url: str, symbol: str):
-        """Initialize WebSocket stream.
+    def __init__(
+        self,
+        url: str,
+        symbol: str,
+        *,
+        connection_factory: Callable[[str], Awaitable[Any] | Any] | None = None,
+        subscription_message: (
+            str | bytes | Mapping[str, Any] | Callable[[str], str | bytes | Mapping[str, Any]]
+        ) | None = None,
+        message_decoder: Callable[[Any, str], Ticker | None] | None = None,
+    ) -> None:
+        """Create a WebSocket stream wrapper.
 
-        Args:
-            url: WebSocket URL
-            symbol: Trading symbol to subscribe to
+        Parameters
+        ----------
+        url:
+            Target WebSocket endpoint.
+        symbol:
+            Trading symbol associated with the stream. Used as a fallback when
+            the incoming payload does not include a symbol field.
+        connection_factory:
+            Optional callable returning a connected WebSocket client. When not
+            supplied the default factory uses the :mod:`websockets` package.
+        subscription_message:
+            Optional static payload or callable returning the message to send
+            immediately after connecting (for example subscription commands).
+        message_decoder:
+            Optional callable that converts incoming WebSocket payloads into
+            :class:`~core.data.models.PriceTick` instances. When omitted a
+            JSON-based decoder is used.
         """
+
         self.url = url
         self.symbol = symbol
+        self._connection_factory = connection_factory
+        self._subscription_message = subscription_message
+        self._message_decoder = message_decoder
+        self._connection: Any | None = None
         self._running = False
+        self._subscription_sent = False
 
     async def connect(self) -> None:
-        """Connect to WebSocket (to be implemented by subclasses)."""
-        raise NotImplementedError
+        """Establish a WebSocket connection if one is not already active."""
+
+        if self._running:
+            return
+
+        factory = self._connection_factory or self._default_connection_factory
+        connection = factory(self.url)
+        if inspect.isawaitable(connection):
+            connection = await connection  # type: ignore[assignment]
+        self._connection = connection
+        self._running = True
+        self._subscription_sent = False
 
     async def disconnect(self) -> None:
-        """Disconnect from WebSocket (to be implemented by subclasses)."""
-        raise NotImplementedError
+        """Tear down the WebSocket connection if it is active."""
+
+        if not self._running:
+            return
+
+        self._running = False
+        connection = self._connection
+        self._connection = None
+        self._subscription_sent = False
+
+        if connection is None:
+            return
+
+        close = getattr(connection, "close", None)
+        if callable(close):
+            result = close()
+            if inspect.isawaitable(result):
+                await result
 
     async def subscribe(self) -> AsyncIterator[Ticker]:
-        """Subscribe to tick updates (to be implemented by subclasses).
+        """Yield decoded ticks from the WebSocket connection."""
 
-        Yields:
-            Ticker objects from WebSocket
-        """
-        raise NotImplementedError
+        await self.connect()
+        if self._connection is None:
+            raise RuntimeError("WebSocket connection has not been initialised")
+
+        await self._send_subscription_if_needed(self._connection)
+
+        try:
+            while self._running:
+                try:
+                    message = await self._connection.recv()  # type: ignore[call-arg]
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # pragma: no cover - defensive guard
+                    logger.warning(
+                        "WebSocket receive failed", url=self.url, error=str(exc), exc_info=exc
+                    )
+                    break
+
+                if message is None:
+                    break
+
+                try:
+                    tick = self._decode_message(message)
+                except Exception as exc:  # pragma: no cover - decoding guard
+                    logger.debug(
+                        "Discarding malformed WebSocket payload",
+                        url=self.url,
+                        error=str(exc),
+                    )
+                    continue
+
+                if tick is None:
+                    continue
+
+                yield tick
+        finally:
+            await self.disconnect()
+
+    async def _send_subscription_if_needed(self, connection: Any) -> None:
+        if self._subscription_sent:
+            return
+        payload = self._subscription_message
+        if payload is None:
+            return
+
+        message = payload(self.symbol) if callable(payload) else payload
+        if isinstance(message, (dict, list)):
+            message_to_send: str | bytes = json.dumps(message, separators=(",", ":"))
+        else:
+            message_to_send = message
+
+        send = getattr(connection, "send", None)
+        if not callable(send):
+            raise RuntimeError("WebSocket connection does not expose a send() coroutine")
+
+        result = send(message_to_send)
+        if inspect.isawaitable(result):
+            await result
+        self._subscription_sent = True
+
+    def _decode_message(self, message: Any) -> Ticker | None:
+        decoder = self._message_decoder or self._default_decoder
+        return decoder(message, self.symbol)
+
+    async def _default_connection_factory(self, url: str) -> Any:  # pragma: no cover - optional dependency
+        try:
+            import websockets
+        except Exception as exc:  # pragma: no cover - dependency guard
+            raise RuntimeError(
+                "The default WebSocket implementation requires the 'websockets' package"
+            ) from exc
+
+        return await websockets.connect(url, max_queue=None)
+
+    def _default_decoder(self, message: Any, fallback_symbol: str) -> Ticker:
+        payload: Mapping[str, Any]
+        if isinstance(message, (bytes, bytearray, memoryview)):
+            payload = json.loads(bytes(message).decode("utf-8"))
+        elif isinstance(message, str):
+            payload = json.loads(message)
+        elif isinstance(message, Mapping):
+            payload = message
+        else:
+            raise TypeError(f"Unsupported WebSocket payload type: {type(message)!r}")
+
+        symbol = str(payload.get("symbol") or fallback_symbol)
+        venue = str(payload.get("venue") or payload.get("exchange") or "WEBSOCKET")
+        price = payload["price"]
+        timestamp_value = payload.get("timestamp") or datetime.now(timezone.utc)
+        market = payload.get("market")
+        volume = payload.get("volume", 0.0)
+        instrument = payload.get("instrument_type")
+
+        if isinstance(instrument, InstrumentType):
+            instrument_type = instrument
+        else:
+            try:
+                instrument_type = InstrumentType(instrument) if instrument is not None else InstrumentType.SPOT
+            except Exception:
+                instrument_type = InstrumentType.SPOT
+
+        timestamp = normalize_timestamp(timestamp_value, market=market)
+        return Ticker.create(
+            symbol=symbol,
+            venue=venue,
+            price=price,
+            timestamp=timestamp,
+            volume=volume,
+            instrument_type=instrument_type,
+        )
 
 
 async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker]:
