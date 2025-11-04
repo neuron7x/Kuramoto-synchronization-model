@@ -14,3 +14,5 @@ resources:
   - service.yaml
   - pdb.yaml
   - hpa.yaml
+  - networkpolicy.yaml
+  - ingress.yaml

@@ -1,0 +1,89 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tradepulse-api-ingress
+  labels:
+    app.kubernetes.io/name: tradepulse-api
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: tradepulse-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow Prometheus to scrape metrics
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 8001
+    # Allow internal service communication
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: tradepulse
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8001
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow HTTPS to external APIs (exchanges, data providers)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8443
+    # Allow database connections
+    - to:
+        - podSelector:
+            matchLabels:
+              app: timescaledb
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow connections to internal services
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: tradepulse
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+  labels:
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

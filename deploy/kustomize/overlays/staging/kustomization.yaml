@@ -16,3 +16,4 @@ images:
 patches:
   - path: patches/deployment-resources.yaml
   - path: patches/hpa-limits.yaml
+  - path: patches/ingress.yaml

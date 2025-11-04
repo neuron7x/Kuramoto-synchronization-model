@@ -10,24 +10,10 @@ resources:
 configMapGenerator:
   - name: tradepulse-filebeat-config
     files:
-      - filebeat.yml=../../../../observability/logging/filebeat.kubernetes.yml
+      - filebeat.yml=config/filebeat.yml
   - name: tradepulse-logstash-pipeline
     files:
-      - logstash.conf=../../../../observability/logstash/pipeline/logstash.conf
+      - logstash.conf=config/logstash.conf
 
 generatorOptions:
   disableNameSuffixHash: true
-
-replacements:
-  - source:
-      kind: ServiceAccount
-      name: filebeat
-      fieldPath: metadata.namespace
-    targets:
-      - select:
-          kind: ClusterRoleBinding
-          name: tradepulse-filebeat
-        fieldPaths:
-          - subjects.0.namespace
-        options:
-          create: true

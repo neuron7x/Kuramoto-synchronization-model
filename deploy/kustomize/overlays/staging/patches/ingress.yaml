@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tradepulse-api
+  annotations:
+    # Staging-specific rate limits (more lenient for testing)
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/limit-connections: "25"
+spec:
+  tls:
+    - hosts:
+        - api-staging.tradepulse.example.com
+      secretName: tradepulse-api-staging-tls
+  rules:
+    - host: api-staging.tradepulse.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tradepulse-api
+                port:
+                  name: http

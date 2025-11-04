@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: tradepulse-production
-  labels:
-    environment: production
-    app.kubernetes.io/part-of: tradepulse

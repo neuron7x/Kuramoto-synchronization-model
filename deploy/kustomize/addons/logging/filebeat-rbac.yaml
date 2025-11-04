@@ -31,7 +31,8 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: filebeat
-    namespace: default
+    # namespace will be set by kustomize overlay
+    namespace: tradepulse-staging
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
