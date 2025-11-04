@@ -5,13 +5,13 @@
 #
 # Required Secrets:
 #   COSIGN_CERTIFICATE_IDENTITY - The certificate identity for keyless verification
-#     Example for GitHub Actions: "https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@refs/heads/main"
+#     Example: "https://github.com/OWNER/REPO/.github/workflows/sbom.yml@refs/heads/main"
 #   
 #   COSIGN_CERTIFICATE_OIDC_ISSUER - The OIDC issuer for keyless verification
 #     Example for GitHub Actions: "https://token.actions.githubusercontent.com"
 #
 #   Note: For GitHub Actions keyless signing, the certificate identity should match
-#         the workflow file path, and the issuer should be the GitHub OIDC endpoint.
+#         the workflow file path (use your actual repository owner/name).
 #
 name: CycloneDX SBOM
 
@@ -151,7 +151,7 @@ jobs:
             echo "  - COSIGN_CERTIFICATE_OIDC_ISSUER: The OIDC issuer URL"
             echo ""
             echo "Example values for GitHub Actions keyless signing:"
-            echo "  COSIGN_CERTIFICATE_IDENTITY: https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@refs/heads/main"
+            echo "  COSIGN_CERTIFICATE_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/sbom.yml@refs/heads/main"
             echo "  COSIGN_CERTIFICATE_OIDC_ISSUER: https://token.actions.githubusercontent.com"
             echo ""
             echo "For more information, see: https://docs.sigstore.dev/cosign/verify/"
