@@ -66,7 +66,7 @@ export function SignInForm() {
         setSubmitting(false)
       }
     },
-    [form.email, form.password, signIn],
+    [form.email, form.password, signIn]
   )
 
   return (
@@ -110,4 +110,3 @@ export function SignInForm() {
     </Card>
   )
 }
-

@@ -16,4 +16,3 @@ export async function POST() {
 
   return NextResponse.json({ accessToken, expiresAt })
 }
-

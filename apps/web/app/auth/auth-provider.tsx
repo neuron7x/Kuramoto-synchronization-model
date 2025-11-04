@@ -142,7 +142,10 @@ async function setRefreshCookie(session: AuthSession): Promise<void> {
     },
     credentials: 'same-origin',
     cache: 'no-store',
-    body: JSON.stringify({ refreshToken: session.refreshToken, expiresAt: session.refreshTokenExpiresAt }),
+    body: JSON.stringify({
+      refreshToken: session.refreshToken,
+      expiresAt: session.refreshTokenExpiresAt,
+    }),
   })
 
   if (!response.ok) {
@@ -270,6 +273,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [status, pathname, router, searchParams])
 
+  const refresh = useCallback(async () => {
+    try {
+      const updated = await requestRefresh()
+      await persistAccessToken(updated)
+      setStatus('authenticated')
+      setAccessToken(updated.accessToken)
+      setExpiresAt(updated.expiresAt)
+      broadcastRef.current?.postMessage({ type: 'refresh', payload: updated })
+    } catch (error) {
+      console.error('Refresh failed. Clearing the session.', error)
+      await clearAccessToken()
+      setStatus('unauthenticated')
+      setAccessToken(null)
+      setExpiresAt(null)
+      broadcastRef.current?.postMessage({ type: 'sign-out' })
+    }
+  }, [])
+
   useEffect(() => {
     if (refreshTimerRef.current !== null) {
       window.clearTimeout(refreshTimerRef.current)
@@ -291,25 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshTimerRef.current = null
       }
     }
-  }, [expiresAt, status])
-
-  const refresh = useCallback(async () => {
-    try {
-      const updated = await requestRefresh()
-      await persistAccessToken(updated)
-      setStatus('authenticated')
-      setAccessToken(updated.accessToken)
-      setExpiresAt(updated.expiresAt)
-      broadcastRef.current?.postMessage({ type: 'refresh', payload: updated })
-    } catch (error) {
-      console.error('Refresh failed. Clearing the session.', error)
-      await clearAccessToken()
-      setStatus('unauthenticated')
-      setAccessToken(null)
-      setExpiresAt(null)
-      broadcastRef.current?.postMessage({ type: 'sign-out' })
-    }
-  }, [])
+  }, [expiresAt, status, refresh])
 
   const signIn = useCallback(
     async (session: AuthSession) => {
@@ -326,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const redirectTarget = searchParams?.get('redirect') || '/'
       router.replace(redirectTarget)
     },
-    [router, searchParams],
+    [router, searchParams]
   )
 
   const signOut = useCallback(async () => {
@@ -346,7 +349,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(
     () => ({ status, accessToken, expiresAt, signIn, signOut, refresh }),
-    [accessToken, expiresAt, refresh, signIn, signOut, status],
+    [accessToken, expiresAt, refresh, signIn, signOut, status]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -359,4 +362,3 @@ export function useAuth(): AuthContextValue {
   }
   return context
 }
-
