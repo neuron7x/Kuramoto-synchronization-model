@@ -257,6 +257,7 @@ class TimescaleSLAManager:
                 name="timescale_ingest_lag_seconds",
                 query=(
                     # Table and column names are from controlled schema configuration, not user input
+                    # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                     "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "  # nosec B608
                     f"FROM {self._schema.table}"  # nosec B608
                 ),

@@ -84,6 +84,7 @@ def _resolve_filename(filename: str, sources: Iterable[Path]) -> list[Path]:
 def _load_coverage_map(report_path: Path) -> Mapping[str, CoverageSnapshot]:
     # Parse XML safely - defusedxml is used if available (see module imports)
     # Coverage reports are generally trusted files from our own test runs
+    # nosemgrep: python.lang.security.audit.avoid-elementtree-parse.avoid-elementtree-parse
     if not _USE_DEFUSED_XML:
         tree = ET.parse(report_path)  # nosec B314
     else:

@@ -51,6 +51,7 @@ def load_checkpoint(
 ) -> dict:
     # weights_only=False is required here to load optimizer and scheduler state
     # This is safe when loading from trusted checkpoint files only
+    # nosemgrep: python.lang.security.audit.dangerous-pickle-use
     obj = torch.load(path, map_location="cpu", weights_only=False)  # nosec B614
     if model:
         model.load_state_dict(obj["model"], strict=False)

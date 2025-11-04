@@ -311,6 +311,7 @@ class ClickHouseSLAManager:
                 name="ingest_lag_seconds",
                 query=(
                     # Table name is from controlled schema configuration, not user input
+                    # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                     "SELECT max(toUnixTimestamp(now64(6)) - toUnixTimestamp(timestamp)) AS ingest_lag "
                     f"FROM {self._schema.fully_qualified_name}"  # nosec B608
                 ),
