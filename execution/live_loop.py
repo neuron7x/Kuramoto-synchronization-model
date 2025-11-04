@@ -383,11 +383,14 @@ class LiveExecutionLoop:
             if last_offset:
                 self._oms_state.set_ledger_offset(last_offset)
                 # Replay ledger from last_offset to catch up
-                for record in self._order_ledger.replay_from(last_offset + 1):
-                    evt = record.event if hasattr(record, 'event') else record.get("event") or {}
-                    # Pass sequence number to track ledger offset
-                    seq = record.sequence if hasattr(record, 'sequence') else None
-                    self._oms_state.apply(evt, sequence=seq)
+                # Aggregate replay from all venue OMS ledgers
+                for context in self._contexts.values():
+                    if hasattr(context.oms, '_ledger') and context.oms._ledger:
+                        for record in context.oms._ledger.replay_from(last_offset + 1):
+                            evt = record.event if hasattr(record, 'event') else record.get("event") or {}
+                            # Pass sequence number to track ledger offset
+                            seq = record.sequence if hasattr(record, 'sequence') else None
+                            self._oms_state.apply(evt, sequence=seq)
                 
                 self._logger.info(
                     f"Replayed ledger from offset {last_offset}",
@@ -413,12 +416,17 @@ class LiveExecutionLoop:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
             
-            # Get current ledger offset
+            # Get current ledger offset from venue OMS ledgers
+            # Use the maximum sequence across all venue ledgers
             current_ledger_offset = 0
-            latest_event = self._order_ledger.latest_event(verify=False) if self._order_ledger else None
-            if latest_event:
-                current_ledger_offset = latest_event.sequence
-                # Sync OMS state's ledger offset with the actual ledger
+            for context in self._contexts.values():
+                if hasattr(context.oms, '_ledger') and context.oms._ledger:
+                    latest = context.oms._ledger.latest_event(verify=False)
+                    if latest and latest.sequence > current_ledger_offset:
+                        current_ledger_offset = latest.sequence
+            
+            # Sync OMS state's ledger offset
+            if current_ledger_offset > 0:
                 self._oms_state.set_ledger_offset(current_ledger_offset)
             
             payload = {
@@ -616,6 +624,13 @@ class LiveExecutionLoop:
             context.oms.adopt_open_order(order, correlation_id=correlation)
             self._order_connector[order_id] = context.name
             self._last_reported_fill[order_id] = order.filled_quantity
+            # Sync with global OMS state
+            self._oms_state.apply({
+                "type": "adopt",
+                "venue": context.name,
+                "order": {"order_id": order_id, "_obj": order},
+                "ts": time.time(),
+            })
             self._logger.warning(
                 "Adopted orphan order from venue",
                 extra={
