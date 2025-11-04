@@ -196,12 +196,17 @@ jobs:
             --output-dir /tmp/helm-output
       
       - name: Run Kubescape scan
-        uses: kubescape/github-action@v3
-        with:
-          files: "/tmp/helm-output/**/*.yaml"
-          frameworks: "nsa,mitre"
-          failedThreshold: 30
-          severityThreshold: high
+        run: |
+          # Install kubescape CLI
+          curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
+          
+          # Run scan on templated manifests
+          kubescape scan framework nsa,mitre \
+            /tmp/helm-output \
+            --format json \
+            --output results.json \
+            --fail-threshold 30 \
+            --severity-threshold high || true
         continue-on-error: true
       
       - name: Upload Kubescape results
