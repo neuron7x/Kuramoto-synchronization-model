@@ -161,6 +161,7 @@ jobs:
           
           cat > Dockerfile.test << 'DOCKEREOF'
           FROM python:3.11-slim
+          RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
           RUN useradd -m -u 1000 appuser
           WORKDIR /app
           RUN mkdir -p /tmp /app/cache && chown -R appuser:appuser /tmp /app
