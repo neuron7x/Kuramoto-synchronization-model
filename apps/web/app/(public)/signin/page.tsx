@@ -51,11 +51,20 @@ export const metadata: Metadata = {
 
 export default function SignInPage() {
   return (
-    <Box component="main" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', py: 8 }}>
+    <Box
+      component="main"
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        py: { xs: 4, md: 8 },
+        bgcolor: 'background.default',
+      }}
+    >
       <Container maxWidth="sm">
-        <Stack spacing={4}>
-          <Stack spacing={1.5}>
-            <Typography component="h1" variant="h4">
+        <Stack spacing={{ xs: 3, md: 4 }}>
+          <Stack spacing={2} textAlign="center">
+            <Typography component="h1" variant="h3" fontWeight={700}>
               Welcome back
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -66,7 +75,9 @@ export default function SignInPage() {
           <SignInForm />
           <Typography variant="body2" color="text.secondary" textAlign="center">
             Need access?{' '}
-            <Link href="mailto:support@tradepulse.ai">Contact the TradePulse team</Link>
+            <Link href="mailto:support@tradepulse.ai" style={{ fontWeight: 600 }}>
+              Contact the TradePulse team
+            </Link>
           </Typography>
         </Stack>
       </Container>

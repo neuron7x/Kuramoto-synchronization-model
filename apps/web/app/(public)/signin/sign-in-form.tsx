@@ -70,8 +70,8 @@ export function SignInForm() {
   )
 
   return (
-    <Card component="section" variant="outlined">
-      <CardContent>
+    <Card component="section" variant="outlined" sx={{ boxShadow: 1 }}>
+      <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
         <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
           <TextField
             label="Work email"
@@ -82,6 +82,11 @@ export function SignInForm() {
             onChange={handleChange('email')}
             disabled={isDisabled}
             required
+            fullWidth
+            helperText="Enter your TradePulse work email address"
+            inputProps={{
+              'aria-label': 'Work email',
+            }}
           />
           <TextField
             label="Password"
@@ -92,8 +97,17 @@ export function SignInForm() {
             onChange={handleChange('password')}
             disabled={isDisabled}
             required
+            fullWidth
+            helperText="Enter your account password"
+            inputProps={{
+              'aria-label': 'Password',
+            }}
           />
-          {error ? <Alert severity="error">{error}</Alert> : null}
+          {error ? (
+            <Alert severity="error" role="alert" aria-live="polite">
+              {error}
+            </Alert>
+          ) : null}
           <Box>
             <LoadingButton
               type="submit"
@@ -101,6 +115,8 @@ export function SignInForm() {
               fullWidth
               loading={submitting}
               disabled={isDisabled}
+              size="large"
+              aria-label={submitting ? 'Signing in...' : 'Sign in to TradePulse'}
             >
               Continue
             </LoadingButton>
