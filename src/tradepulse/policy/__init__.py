@@ -1,3 +1,5 @@
 """TradePulse policy module - decision making."""
 
-__all__ = []
+from .basal_ganglia import BasalGangliaPolicy, PolicyResult
+
+__all__ = ["BasalGangliaPolicy", "PolicyResult"]
