@@ -207,8 +207,20 @@ class WML:
                     s.last_apply_ts = now
                     s.control_failures = 0
                 applied = True
-            except Exception:
+            except Exception as e:
                 s.control_failures += 1
+                # Log the specific error for debugging
+                if self.audit:
+                    self.audit.log(
+                        "WML_APPLY_ERROR",
+                        {
+                            "path": path,
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                            "failures": s.control_failures,
+                        },
+                    )
+
                 # AUTO-FREEZE: After repeated control failures, stop trying
                 if s.control_failures >= self.config.auto_freeze_fails:
                     if self.audit:

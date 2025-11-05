@@ -66,8 +66,35 @@ class WMLConfig:
         return cfg
 
     def validate(self) -> None:
-        """Validate configuration parameters."""
-        assert 0.0 <= self.bounds.get("m_min", 0.0) <= self.bounds.get("m_max", 1.0)
-        assert self.mfe_margin >= 0.0
-        assert 0.0 <= self.eps_rel < 1.0
-        assert self.gamma_is >= 0.0
+        """Validate configuration parameters.
+
+        Raises:
+            ValueError: If configuration parameters are invalid
+        """
+        m_min = self.bounds.get("m_min", 0.0)
+        m_max = self.bounds.get("m_max", 1.0)
+
+        if not 0.0 <= m_min <= m_max <= 1.0:
+            raise ValueError(
+                f"Invalid myelin bounds: m_min={m_min}, m_max={m_max}. "
+                f"Must satisfy 0 <= m_min <= m_max <= 1"
+            )
+
+        if self.mfe_margin < 0.0:
+            raise ValueError(f"mfe_margin must be non-negative, got {self.mfe_margin}")
+
+        if not 0.0 <= self.eps_rel < 1.0:
+            raise ValueError(f"eps_rel must be in range [0, 1), got {self.eps_rel}")
+
+        if self.gamma_is < 0.0:
+            raise ValueError(f"gamma_is must be non-negative, got {self.gamma_is}")
+
+        if self.min_apply_interval_s < 0.0:
+            raise ValueError(
+                f"min_apply_interval_s must be non-negative, got {self.min_apply_interval_s}"
+            )
+
+        if self.auto_freeze_fails < 1:
+            raise ValueError(
+                f"auto_freeze_fails must be at least 1, got {self.auto_freeze_fails}"
+            )

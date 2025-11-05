@@ -38,10 +38,10 @@ def test_wml_config_validation():
     cfg = WMLConfig()
     cfg.validate()  # Should not raise
 
-    # Test invalid bounds
+    # Test invalid bounds - now raises ValueError instead of AssertionError
     cfg_invalid = WMLConfig()
     cfg_invalid.bounds = {"m_min": 1.5, "m_max": 1.0}
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         cfg_invalid.validate()
 
 

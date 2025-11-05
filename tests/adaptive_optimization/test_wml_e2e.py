@@ -68,7 +68,7 @@ def test_end_to_end_optimization_cycle():
 
     # Scenario 1: CALM market, good performance
     t_calm = Telemetry([12, 14, 16, 18], 1.0, 0.1, 0.2, is_bp=5.0)
-    result = wml.step("feature_pipe", t_calm, probe)
+    _ = wml.step("feature_pipe", t_calm, probe)
 
     # First step establishes baseline, may or may not optimize
     # (myelin starts at 0, usefulness starts at 0)
@@ -77,7 +77,7 @@ def test_end_to_end_optimization_cycle():
 
     # Scenario 2: Continue in CALM with positive PnL
     t_calm2 = Telemetry([12, 14, 16, 18], 1.0, 0.2, 0.2, is_bp=5.0)
-    result2 = wml.step("feature_pipe", t_calm2, probe)
+    _ = wml.step("feature_pipe", t_calm2, probe)
 
     # After positive delta, usefulness increases and myelin can grow
     state = wml.get_state("feature_pipe")
@@ -157,7 +157,9 @@ def test_multi_path_optimization():
 
     # Optimize each path
     for path in paths:
-        t = Telemetry([12, 14, 16, 18], 1.0, 0.1, 0.4, is_bp=5.0 if "execute" in path else 0.0)
+        t = Telemetry(
+            [12, 14, 16, 18], 1.0, 0.1, 0.4, is_bp=5.0 if "execute" in path else 0.0
+        )
         wml.step(path, t, probe)
 
     # Verify each path has state
@@ -185,8 +187,7 @@ def test_plasticity_schedule_affects_learning():
     t_shock = Telemetry([25, 30, 35, 40], 2.0, 0.2, 0.5, is_bp=15.0)
     wml_shock.step("test", t_shock, probe)
 
-    # CALM should learn faster
-    state_calm = wml_calm.get_state("test")
+    # CALM should learn faster (but we don't assert exact values due to test simplicity)
     state_shock = wml_shock.get_state("test")
 
     # In SHOCK, myelin should not increase (eta=0.00)
@@ -199,10 +200,12 @@ def test_free_energy_with_implementation_shortfall():
     cfg_low_gamma = WMLConfig(gamma_is=0.01, eps_rel=0.02)  # Low IS penalty
 
     wml_high = WML(
-        cfg_high_gamma, RegimeDetector(cfg_high_gamma.regime_thresholds, cfg_high_gamma.hysteresis_vol)
+        cfg_high_gamma,
+        RegimeDetector(cfg_high_gamma.regime_thresholds, cfg_high_gamma.hysteresis_vol),
     )
     wml_low = WML(
-        cfg_low_gamma, RegimeDetector(cfg_low_gamma.regime_thresholds, cfg_low_gamma.hysteresis_vol)
+        cfg_low_gamma,
+        RegimeDetector(cfg_low_gamma.regime_thresholds, cfg_low_gamma.hysteresis_vol),
     )
 
     probe = RealisticProbe()
@@ -210,8 +213,8 @@ def test_free_energy_with_implementation_shortfall():
     # High IS should matter more with high gamma
     t = Telemetry([12, 14, 16, 18], 1.0, 0.0, 0.4, is_bp=20.0)  # High IS
 
-    result_high = wml_high.step("order_execute", t, probe)
-    result_low = wml_low.step("order_execute", t, probe)
+    _ = wml_high.step("order_execute", t, probe)
+    _ = wml_low.step("order_execute", t, probe)
 
     # With high gamma, high IS should prevent optimization more often
     # (or accept it less often compared to low gamma)
