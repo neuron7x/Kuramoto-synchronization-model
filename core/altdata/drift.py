@@ -12,13 +12,13 @@ import pandas as pd
 _logger = logging.getLogger(__name__)
 
 try:
-    from scipy import stats as _SCIPY_STATS  # type: ignore
+    from scipy import stats as _SCIPY_STATS
 except Exception:  # pragma: no cover - handled via fallback logic
     _logger.warning(
         "SciPy stats module unavailable for drift monitoring; using NumPy fallback",
         exc_info=_logger.isEnabledFor(logging.DEBUG),
     )
-    _SCIPY_STATS = None  # type: ignore[assignment]
+    _SCIPY_STATS = None
 
 
 @dataclass(frozen=True)

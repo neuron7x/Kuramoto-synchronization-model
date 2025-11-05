@@ -27,7 +27,7 @@ try:  # pragma: no cover - optional dependency import guarded at runtime
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanProcessor
-    from opentelemetry.sdk.trace.sampling import (  # type: ignore[attr-defined]
+    from opentelemetry.sdk.trace.sampling import (
         Sampler,
         SamplingResult,
         TraceIdRatioBased,
@@ -312,14 +312,14 @@ def pipeline_span(stage: str, **attributes: Any) -> Iterator[Any]:
         return
 
     tracer = get_tracer()
-    with tracer.start_as_current_span(stage) as span:  # type: ignore[assignment]
+    with tracer.start_as_current_span(stage) as span:
         if attributes:
-            span.set_attributes(attributes)  # type: ignore[call-arg]
+            span.set_attributes(attributes)
         try:
             yield span
         except Exception as exc:  # pragma: no cover - exercised via integration
-            span.record_exception(exc)  # type: ignore[call-arg]
-            span.set_status(Status(StatusCode.ERROR, str(exc)))  # type: ignore[call-arg]
+            span.record_exception(exc)
+            span.set_status(Status(StatusCode.ERROR, str(exc)))
             raise
 
 
@@ -460,12 +460,12 @@ if _TRACE_AVAILABLE:
         def on_end(self, span: Any) -> None:
             if not getattr(span, "attributes", None):
                 return
-            attributes = list(span.attributes.items())  # type: ignore[assignment]
+            attributes = list(span.attributes.items())
             for key, _ in attributes:
                 if self._matches(key):
-                    span.set_attribute(key, self._redaction)  # type: ignore[call-arg]
+                    span.set_attribute(key, self._redaction)
             if getattr(span, "events", None):
-                for event in span.events:  # type: ignore[attr-defined]
+                for event in span.events:
                     if not getattr(event, "attributes", None):
                         continue
                     for key in list(event.attributes.keys()):
@@ -482,11 +482,11 @@ if _TRACE_AVAILABLE:
 
 else:  # pragma: no cover - optional dependency missing
 
-    class SelectiveSampler:  # type: ignore[empty-body]
+    class SelectiveSampler:
         def __init__(self, **_: Any) -> None:
             return
 
-    class PIIFilterSpanProcessor:  # type: ignore[empty-body]
+    class PIIFilterSpanProcessor:
         def __init__(self, **_: Any) -> None:
             return
 

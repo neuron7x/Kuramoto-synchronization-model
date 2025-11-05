@@ -668,18 +668,18 @@ class IntegratedNeuroTradingSystem:
                 payload = json.load(file)
             if "dpa" in payload:
                 dopamine_state = payload["dpa"]
-                self._core.dopamine._expected = dopamine_state.get("expected_rewards", {})  # type: ignore[attr-defined]
-                self._core.dopamine._dopamine_levels = dopamine_state.get("dopamine_levels", {})  # type: ignore[attr-defined]
+                self._core.dopamine._expected = dopamine_state.get("expected_rewards", {})
+                self._core.dopamine._dopamine_levels = dopamine_state.get("dopamine_levels", {})
             if "aic" in payload:
                 agency_state = payload["aic"]
-                self._core.agency._confidence = agency_state.get("control_confidence", 0.7)  # type: ignore[attr-defined]
-                self._core.agency._insula_activation = agency_state.get("insula_activation", 0.0)  # type: ignore[attr-defined]
+                self._core.agency._confidence = agency_state.get("control_confidence", 0.7)
+                self._core.agency._insula_activation = agency_state.get("insula_activation", 0.0)
             if "nre" in payload:
                 nre_state = payload["nre"]
-                self._core.neuroplasticity._weights = defaultdict(  # type: ignore[attr-defined]
+                self._core.neuroplasticity._weights = defaultdict(
                     lambda: 0.5, nre_state.get("strategy_weights", {})
                 )
-                self._core.neuroplasticity._success_rate = defaultdict(  # type: ignore[attr-defined]
+                self._core.neuroplasticity._success_rate = defaultdict(
                     lambda: 0.5, nre_state.get("success_rates", {})
                 )
             return True

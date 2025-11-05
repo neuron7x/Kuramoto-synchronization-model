@@ -54,7 +54,7 @@ class JSONFormatter(logging.Formatter):
         if _TRACE_LOG_CORRELATION and get_current_span is not None:
             span = get_current_span()
             try:
-                context = span.get_span_context()  # type: ignore[assignment]
+                context = span.get_span_context()
             except AttributeError:  # pragma: no cover - defensive guard
                 context = None
             if context:

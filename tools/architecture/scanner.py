@@ -315,7 +315,7 @@ class ArchitectureScanner:
 
             temp_mark.add(node)
             stack.append(node)
-            for neighbor in dependencies.get(node, ()):  # type: ignore[arg-type]
+            for neighbor in dependencies.get(node, ()):
                 visit(neighbor)
             temp_mark.remove(node)
             perm_mark.add(node)

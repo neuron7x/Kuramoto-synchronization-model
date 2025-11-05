@@ -796,9 +796,9 @@ def _normalise_payload(payload: Mapping[str, object] | object) -> Mapping[str, o
     if isinstance(payload, Mapping):
         return dict(payload)
     if hasattr(payload, "model_dump"):
-        return dict(payload.model_dump())  # type: ignore[attr-defined]
+        return dict(payload.model_dump())
     if hasattr(payload, "dict"):
-        return dict(payload.dict())  # type: ignore[call-arg]
+        return dict(payload.dict())
     raise TypeError("Payload must be a mapping or provide model_dump()/dict()")
 
 

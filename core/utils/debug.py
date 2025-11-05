@@ -52,7 +52,7 @@ class VariableInspector:
             try:
                 value = provider()
                 if inspect.isawaitable(value):
-                    value = await value  # type: ignore[assignment]
+                    value = await value
             except Exception as exc:  # pragma: no cover - defensive fallback
                 snapshot[name] = {"error": repr(exc)}
                 continue

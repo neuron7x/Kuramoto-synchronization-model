@@ -92,9 +92,9 @@ def compute_code_digest(target: Any) -> str:
         return hashlib.sha256(path.read_bytes()).hexdigest()
 
     try:
-        source = inspect.getsource(target)  # type: ignore[arg-type]
+        source = inspect.getsource(target)
     except (OSError, TypeError):
-        source_path = inspect.getsourcefile(target)  # type: ignore[arg-type]
+        source_path = inspect.getsourcefile(target)
         if not source_path:
             raise TypeError(f"Cannot determine source for object: {target!r}")
         return hashlib.sha256(Path(source_path).read_bytes()).hexdigest()

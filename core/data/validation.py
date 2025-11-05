@@ -41,7 +41,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight t
     class SchemaError(ValueError):
         """Lightweight substitute for ``pandera.errors.SchemaError``."""
 
-    class Check:  # type: ignore[override]
+    class Check:
         def __init__(self, func, error: str | None = None):
             self.func = func
             self.error = error or "pandera check failed"
@@ -52,7 +52,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight t
                 result = bool(result.all())
             return bool(result)
 
-    class Column:  # type: ignore[override]
+    class Column:
         def __init__(
             self, dtype, nullable: bool = False, unique: bool = False, checks=None
         ):
@@ -61,7 +61,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight t
             self.unique = unique
             self.checks = [c for c in (checks or []) if c is not None]
 
-    class DataFrameSchema:  # type: ignore[override]
+    class DataFrameSchema:
         def __init__(self, columns: dict[str, "Column"], strict: bool = False):
             self.columns = columns
             self.strict = strict

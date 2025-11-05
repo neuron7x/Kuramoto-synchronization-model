@@ -96,16 +96,16 @@ def _suppress_audit_logging() -> Any:
 
     original_class = audit_module.AuditLogger
 
-    class _SilentAuditLogger(audit_module.AuditLogger):  # type: ignore[misc]
+    class _SilentAuditLogger(audit_module.AuditLogger):
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             kwargs.setdefault("logger", _build_silent_logger())
             super().__init__(*args, **kwargs)
 
-    audit_module.AuditLogger = _SilentAuditLogger  # type: ignore[assignment]
+    audit_module.AuditLogger = _SilentAuditLogger
     try:
         yield
     finally:
-        audit_module.AuditLogger = original_class  # type: ignore[assignment]
+        audit_module.AuditLogger = original_class
 
 
 def _create_app() -> Any:

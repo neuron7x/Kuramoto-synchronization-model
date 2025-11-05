@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, MutableMapping
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 
 class TransactionCostModel:

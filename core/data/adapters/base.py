@@ -49,11 +49,11 @@ def _default_retry_exceptions() -> tuple[type[BaseException], ...]:
         httpx_exceptions = (httpx.HTTPError,)
 
     try:  # ``ccxt`` may not always be installed in lightweight environments.
-        import ccxt  # type: ignore # pragma: no cover - optional import guard
+        import ccxt  # pragma: no cover - optional import guard
     except Exception:
         ccxt_exceptions: tuple[type[BaseException], ...] = tuple()
     else:
-        ccxt_exceptions = (ccxt.BaseError,)  # type: ignore[attr-defined]
+        ccxt_exceptions = (ccxt.BaseError,)
 
     return exceptions + httpx_exceptions + ccxt_exceptions
 

@@ -5,4 +5,22 @@
 html,
 body {
   height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth scroll behavior and prevent layout shift on scrollbar */
+html {
+  scroll-behavior: smooth;
+  overflow-y: scroll;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }

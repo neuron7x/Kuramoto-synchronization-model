@@ -1419,7 +1419,7 @@ class IdempotentRetryExecutor:
                 result = func(attempt)
                 self._results[key] = result
                 return result
-            except retry_exceptions as exc:  # type: ignore[misc]
+            except retry_exceptions as exc:
                 last_error = exc
                 if attempt >= retries:
                     raise

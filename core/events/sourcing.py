@@ -810,7 +810,7 @@ class PostgresEventStore:
         envelopes: list[EventEnvelope] = []
         for row in rows:
             payload = self._hydrate_event(row.payload, row.event_type)
-            payload.stream_version = row.version  # type: ignore[attr-defined]
+            payload.stream_version = row.version
             envelopes.append(
                 EventEnvelope(
                     aggregate_id=row.aggregate_id,
@@ -844,7 +844,7 @@ class PostgresEventStore:
                 envelopes: list[EventEnvelope] = []
                 for row in rows:
                     payload = self._hydrate_event(row.payload, row.event_type)
-                    payload.stream_version = row.version  # type: ignore[attr-defined]
+                    payload.stream_version = row.version
                     envelopes.append(
                         EventEnvelope(
                             aggregate_id=row.aggregate_id,

@@ -15,7 +15,7 @@ from core.utils.metrics import MetricsCollector
 try:  # pragma: no cover - psutil is optional in certain environments
     import psutil
 except Exception:  # pragma: no cover - defensive fallback when psutil missing
-    psutil = None  # type: ignore[assignment]
+    psutil = None
 
 try:  # pragma: no cover - resource is POSIX-only
     import resource

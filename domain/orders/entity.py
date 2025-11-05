@@ -146,18 +146,22 @@ class Order:
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the order into a transport-friendly representation."""
-
+        # Types are converted in __post_init__, but mypy sees the union types
+        side_value = self.side.value if isinstance(self.side, OrderSide) else self.side
+        order_type_value = self.order_type.value if isinstance(self.order_type, OrderType) else self.order_type
+        status_value = self.status.value if isinstance(self.status, OrderStatus) else self.status
+        
         return {
             "symbol": self.symbol,
-            "side": self.side.value,
+            "side": side_value,
             "quantity": self.quantity,
             "price": self.price,
-            "order_type": self.order_type.value,
+            "order_type": order_type_value,
             "stop_price": self.stop_price,
             "iceberg_visible": self.iceberg_visible,
             "order_id": self.order_id,
             "broker_order_id": self.broker_order_id,
-            "status": self.status.value,
+            "status": status_value,
             "filled_quantity": self.filled_quantity,
             "average_price": self.average_price,
             "rejection_reason": self.rejection_reason,

@@ -501,7 +501,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             raise CredentialError("Connector is not connected")
         return self._credentials
 
-    def connect(self, credentials: Mapping[str, str] | None = None) -> None:  # type: ignore[override]
+    def connect(self, credentials: Mapping[str, str] | None = None) -> None:
         if credentials is not None:
             self._credentials = self._credential_provider.rotate(credentials)
         else:
@@ -520,7 +520,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         if self._ws_enabled:
             self._start_streaming()
 
-    def disconnect(self) -> None:  # type: ignore[override]
+    def disconnect(self) -> None:
         self._ws_stop.set()
         if self._ws_thread and self._ws_thread.is_alive():
             self._ws_thread.join(timeout=2.0)
@@ -739,7 +739,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         if not url:
             raise RuntimeError("Websocket URL is not configured")
         try:
-            from websockets.sync.client import connect  # type: ignore
+            from websockets.sync.client import connect
         except Exception as exc:  # pragma: no cover - optional dependency guard
             raise RuntimeError(
                 "websockets library is required for streaming support"

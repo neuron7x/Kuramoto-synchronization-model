@@ -547,7 +547,7 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
         try:
             while True:
                 try:
-                    tick = await asyncio.shield(anext(stream))  # type: ignore[arg-type]
+                    tick = await asyncio.shield(anext(stream))
                 except StopAsyncIteration:
                     break
                 except Exception as exc:

@@ -137,7 +137,7 @@ class ReleaseGateEvaluator:
 
         missing: list[str] = []
         total = 0
-        for item in items:  # type: ignore[assignment]
+        for item in items:
             if not isinstance(item, Mapping):
                 return ReleaseGateResult(name, False, "malformed checklist item")
             total += 1

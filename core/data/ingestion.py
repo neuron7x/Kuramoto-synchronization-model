@@ -10,7 +10,7 @@ from typing import Callable, Iterable, Optional
 try:
     from binance.websocket.spot.websocket_client import SpotWebsocketClient as BinanceWS
 except Exception:  # pragma: no cover - optional dependency
-    BinanceWS = None  # type: ignore[assignment]
+    BinanceWS = None
 
 from core.data.models import InstrumentType
 from core.data.models import PriceTick as Ticker
@@ -25,7 +25,7 @@ __all__ = ["Ticker", "DataIngestor", "BinanceStreamHandle"]
 
 
 class BinanceStreamHandle:
-    def __init__(self, ws: BinanceWS) -> None:  # type: ignore[name-defined]
+    def __init__(self, ws: BinanceWS) -> None:
         self._ws = ws
         self._active = False
 
@@ -132,7 +132,7 @@ class DataIngestor(DataIngestionService):
         if BinanceWS is None:
             raise RuntimeError("python-binance is not installed")
 
-        ws = BinanceWS()  # type: ignore[operator]
+        ws = BinanceWS()
         handle = BinanceStreamHandle(ws)
 
         def _callback(message: dict) -> None:

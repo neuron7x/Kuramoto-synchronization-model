@@ -630,27 +630,43 @@ export function ScenarioStudio() {
     <Box
       component="main"
       data-testid="scenario-main"
-      sx={{ minHeight: '100vh', py: { xs: 4, md: 6 } }}
+      sx={{
+        minHeight: 'calc(100vh - 64px)',
+        py: { xs: 3, md: 5 },
+        bgcolor: 'background.default',
+      }}
     >
       <Container maxWidth="xl" data-testid="scenario-container">
-        <Stack spacing={{ xs: 5, md: 6 }}>
-          <Stack spacing={1.5} data-testid="onboarding-hero">
-            <Typography variant="h3" component="h1">
+        <Stack spacing={{ xs: 4, md: 5 }}>
+          <Stack spacing={2} data-testid="onboarding-hero">
+            <Typography variant="h3" component="h1" fontWeight={700}>
               Scenario Studio
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Sanity-check strategy inputs before pushing them into execution. Select a template,
-              adjust the levers, and review automatic hints about risk concentration and timeframe
-              hygiene.
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800 }}>
+              Configure and validate trading strategy templates with real-time risk assessment.
+              Select a template, adjust parameters, and receive instant feedback on risk
+              concentration and operational hygiene before deployment.
             </Typography>
           </Stack>
 
-          <Grid container spacing={4}>
+          <Grid container spacing={{ xs: 3, md: 4 }}>
             <Grid item xs={12} lg={7}>
-              <Card component="section" variant="outlined" data-testid="scenario-template-panel">
+              <Card
+                component="section"
+                variant="outlined"
+                data-testid="scenario-template-panel"
+                sx={{
+                  height: '100%',
+                  boxShadow: 1,
+                  transition: 'box-shadow 0.3s ease',
+                  '&:hover': { boxShadow: 3 },
+                }}
+              >
                 <CardHeader
-                  title="Strategy configuration"
-                  subheader="Choose a template, calibrate risk settings, and export a JSON blueprint when validation passes."
+                  title="Strategy Configuration"
+                  titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+                  subheader="Choose a template and configure risk parameters to generate a validated strategy blueprint."
+                  subheaderTypographyProps={{ sx: { mt: 0.5 } }}
                 />
                 <CardContent>
                   <Stack spacing={4}>
@@ -789,31 +805,86 @@ export function ScenarioStudio() {
 
             <Grid item xs={12} lg={5}>
               <Stack spacing={3}>
-                <Card component="section" variant="outlined" data-testid="scenario-health-card">
+                <Card
+                  component="section"
+                  variant="outlined"
+                  data-testid="scenario-health-card"
+                  sx={{
+                    boxShadow: 1,
+                    transition: 'box-shadow 0.3s ease',
+                    '&:hover': { boxShadow: 3 },
+                  }}
+                >
                   <CardHeader
-                    title="Scenario health snapshot"
-                    subheader="An automated review of concentration, leverage and timeframe hygiene."
+                    title="Health Snapshot"
+                    titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+                    subheader="Real-time assessment of risk concentration, leverage, and operational hygiene."
+                    subheaderTypographyProps={{ sx: { mt: 0.5 } }}
                   />
                   <CardContent>
                     <Stack spacing={3}>
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Chip
-                          icon={<StatusIcon />}
-                          label={scenarioHealth.status}
-                          color={statusChipColor}
-                          variant="outlined"
-                          data-testid="health-status"
-                        />
-                        <Typography variant="h4" component="p" data-testid="health-score">
-                          {scenarioHealth.score} / 100
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={scenarioHealth.score}
-                        aria-label="Scenario health score"
-                        data-testid="health-meter"
-                      />
+                      <Box
+                        sx={{
+                          p: 3,
+                          borderRadius: 2,
+                          bgcolor:
+                            scenarioHealth.status === 'Production-ready'
+                              ? 'success.lighter'
+                              : scenarioHealth.status === 'Needs review'
+                                ? 'warning.lighter'
+                                : 'error.lighter',
+                          border: 1,
+                          borderColor:
+                            scenarioHealth.status === 'Production-ready'
+                              ? 'success.main'
+                              : scenarioHealth.status === 'Needs review'
+                                ? 'warning.main'
+                                : 'error.main',
+                        }}
+                      >
+                        <Stack spacing={2}>
+                          <Stack direction="row" alignItems="center" spacing={2}>
+                            <Chip
+                              icon={<StatusIcon />}
+                              label={scenarioHealth.status}
+                              color={statusChipColor}
+                              size="medium"
+                              data-testid="health-status"
+                              sx={{ fontWeight: 600 }}
+                            />
+                          </Stack>
+                          <Stack direction="row" alignItems="baseline" spacing={1}>
+                            <Typography
+                              variant="h4"
+                              component="p"
+                              data-testid="health-score"
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: { xs: '3rem', sm: '3.5rem' },
+                              }}
+                            >
+                              {scenarioHealth.score}
+                            </Typography>
+                            <Typography
+                              variant="h5"
+                              color="text.secondary"
+                              sx={{ fontSize: '1.5rem' }}
+                            >
+                              / 100
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={scenarioHealth.score}
+                            aria-label="Scenario health score"
+                            data-testid="health-meter"
+                            sx={{
+                              height: 8,
+                              borderRadius: 4,
+                            }}
+                          />
+                        </Stack>
+                      </Box>
                       <Typography
                         variant="body2"
                         color="text.secondary"
@@ -856,10 +927,21 @@ export function ScenarioStudio() {
                   </CardContent>
                 </Card>
 
-                <Card component="section" variant="outlined" data-testid="scenario-timeframe-card">
+                <Card
+                  component="section"
+                  variant="outlined"
+                  data-testid="scenario-timeframe-card"
+                  sx={{
+                    boxShadow: 1,
+                    transition: 'box-shadow 0.3s ease',
+                    '&:hover': { boxShadow: 3 },
+                  }}
+                >
                   <CardHeader
-                    title="Timeframe insights"
-                    subheader="Understand the operational cadence implied by the execution interval."
+                    title="Timeframe Insights"
+                    titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+                    subheader="Operational considerations based on your execution interval."
+                    subheaderTypographyProps={{ sx: { mt: 0.5 } }}
                   />
                   <CardContent>
                     {timeframeInsights.length === 0 ? (
@@ -889,23 +971,29 @@ export function ScenarioStudio() {
                   variant="outlined"
                   component="section"
                   data-testid="scenario-preview"
+                  sx={{
+                    boxShadow: 1,
+                    transition: 'box-shadow 0.3s ease',
+                    '&:hover': { boxShadow: 3 },
+                  }}
                 >
                   <Box
                     sx={{
                       borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
                       px: 3,
-                      py: 2,
+                      py: 2.5,
+                      bgcolor: 'grey.50',
                     }}
                   >
-                    <Typography variant="subtitle1" component="h2">
-                      Scenario JSON preview
+                    <Typography variant="h6" component="h2" fontWeight={600}>
+                      JSON Preview
                     </Typography>
                   </Box>
-                  <Box sx={{ px: 3, py: 2 }}>
+                  <Box sx={{ px: 3, py: 2.5 }}>
                     <Stack spacing={2}>
                       <Typography variant="body2" color="text.secondary">
-                        Review the JSON payload before exporting. This mirrors the structure sent to
-                        the deployment pipeline.
+                        This JSON payload matches the structure sent to the deployment pipeline.
+                        Export when validation passes.
                       </Typography>
                       <Paper
                         variant="outlined"
@@ -913,10 +1001,19 @@ export function ScenarioStudio() {
                           maxHeight: 320,
                           overflow: 'auto',
                           bgcolor: (theme) => theme.palette.grey[50],
-                          borderColor: (theme) => theme.palette.grey[200],
+                          borderColor: (theme) => theme.palette.grey[300],
                         }}
                       >
-                        <Box component="pre" sx={{ m: 0, p: 2, fontSize: '0.9rem' }}>
+                        <Box
+                          component="pre"
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            fontSize: '0.875rem',
+                            fontFamily: 'monospace',
+                            lineHeight: 1.6,
+                          }}
+                        >
                           <code data-testid="scenario-json-preview">{preview}</code>
                         </Box>
                       </Paper>

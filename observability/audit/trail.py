@@ -43,7 +43,7 @@ def _redact_sensitive_values(payload: Mapping[str, object]) -> dict[str, object]
             return "[REDACTED]"
         return value
 
-    return _transform(dict(payload))  # type: ignore[arg-type]
+    return _transform(dict(payload))
 
 
 def _utc_now() -> datetime:

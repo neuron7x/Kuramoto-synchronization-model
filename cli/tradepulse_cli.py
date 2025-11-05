@@ -214,7 +214,7 @@ def _load_callable(entrypoint: str) -> Callable[..., Any]:
         target = getattr(target, part)
     if not callable(target):
         raise ConfigError(f"Entrypoint '{entrypoint}' does not reference a callable")
-    return target  # type: ignore[return-value]
+    return target
 
 
 def _ensure_manager(ctx: click.Context, templates_dir: Path) -> ConfigTemplateManager:

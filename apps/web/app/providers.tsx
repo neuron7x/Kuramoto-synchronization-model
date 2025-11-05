@@ -16,8 +16,23 @@ const baseTheme = responsiveFontSizes(
         main: '#0ea5e9',
         contrastText: '#ffffff',
       },
+      success: {
+        main: '#10b981',
+        light: '#34d399',
+        lighter: '#d1fae5',
+      },
+      warning: {
+        main: '#f59e0b',
+        light: '#fbbf24',
+        lighter: '#fef3c7',
+      },
+      error: {
+        main: '#ef4444',
+        light: '#f87171',
+        lighter: '#fee2e2',
+      },
       background: {
-        default: '#f5f7fb',
+        default: '#f8fafc',
         paper: '#ffffff',
       },
       text: {
@@ -26,24 +41,30 @@ const baseTheme = responsiveFontSizes(
       },
     },
     shape: {
-      borderRadius: 14,
+      borderRadius: 12,
     },
     typography: {
       fontFamily: "'Inter', 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif",
       fontWeightRegular: 500,
       h3: {
         fontWeight: 700,
-        letterSpacing: '-0.01em',
+        letterSpacing: '-0.02em',
       },
       h4: {
         fontWeight: 700,
+      },
+      h5: {
+        fontWeight: 600,
+      },
+      h6: {
+        fontWeight: 600,
       },
     },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            backgroundColor: '#f5f7fb',
+            backgroundColor: '#f8fafc',
           },
           pre: {
             margin: 0,
@@ -59,9 +80,9 @@ const baseTheme = responsiveFontSizes(
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 18,
-            boxShadow:
-              '0 24px 48px -24px rgba(15, 23, 42, 0.18), 0 12px 24px -18px rgba(15, 23, 42, 0.12)',
+            borderRadius: 16,
+            border: '1px solid',
+            borderColor: '#e2e8f0',
           },
         },
       },
@@ -71,9 +92,17 @@ const baseTheme = responsiveFontSizes(
         },
         styleOverrides: {
           root: {
-            borderRadius: 999,
+            borderRadius: 8,
             fontWeight: 600,
             textTransform: 'none',
+            paddingTop: 10,
+            paddingBottom: 10,
+          },
+          contained: {
+            boxShadow: 'none',
+            '&:hover': {
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
+            },
           },
         },
       },
@@ -88,7 +117,14 @@ const baseTheme = responsiveFontSizes(
         styleOverrides: {
           root: {
             fontWeight: 600,
-            letterSpacing: 0.2,
+            letterSpacing: 0.3,
+          },
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            borderRadius: 4,
           },
         },
       },
