@@ -69,16 +69,17 @@ class GABAInhibitionGate(nn.Module):
         self.register_buffer("t_ms", torch.zeros(1, dtype=torch.float32, device=self.device))
 
         # precompute decay factors per step
-        decay_fast_val = torch.exp(
-            torch.tensor(-self.p.dt_ms / self.p.tau_gaba_a_ms, device=self.device)
-        )
-        self.register_buffer("decay_fast", decay_fast_val)
-        decay_slow_val = torch.exp(
-            torch.tensor(-self.p.dt_ms / self.p.tau_gaba_b_ms, device=self.device)
-        )
-        self.register_buffer("decay_slow", decay_slow_val)
+        self.register_buffer("decay_fast", self._compute_decay(self.p.tau_gaba_a_ms))
+        self.register_buffer("decay_slow", self._compute_decay(self.p.tau_gaba_b_ms))
+        
+        # precompute dt tensor for efficiency
+        self.register_buffer("dt_tensor", torch.tensor(self.p.dt_ms, device=self.device))
 
     # --- helpers -----------------------------------------------------------
+    def _compute_decay(self, tau_ms: float) -> torch.Tensor:
+        """Compute exponential decay factor for given time constant."""
+        return torch.exp(torch.tensor(-self.p.dt_ms / tau_ms, device=self.device))
+    
     def _norm_vol(self, vix: torch.Tensor) -> torch.Tensor:
         # Normalize VIX-like to ~[0,1.5]; robust to outliers.
         return torch.clamp(vix / 40.0, 0.0, 1.5)
@@ -116,11 +117,13 @@ class GABAInhibitionGate(nn.Module):
         inhibition = torch.clamp(inhibition, 0.0, 0.95)
 
         # 3) Cycle modulation (gamma/theta)
-        self.t_ms = self.t_ms + torch.tensor(self.p.dt_ms, device=self.device)
+        self.t_ms = self.t_ms + self.dt_tensor
         cyc = self._cycles(self.t_ms)
 
         # 4) Plasticity (STDP + LTP/LTD)
-        if (delta_t_ms > 0).item():
+        # Ensure delta_t_ms is scalar for conditional
+        delta_t_scalar = delta_t_ms.squeeze()
+        if (delta_t_scalar > 0).item():
             dw = (
                 self.p.stdp_a_plus
                 * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms)
