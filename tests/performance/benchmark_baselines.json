@@ -2,8 +2,8 @@
   "kuramoto.compute_phase[128k]": 0.009304,
   "kuramoto.order[4096x12]": 0.00235,
   "hierarchical.features[3x2048]": 0.0090,
-  "wml.step": 0.000006,
-  "wml.percentile[10k]": 0.001065,
-  "wml.telemetry_creation[1k]": 0.000130,
-  "wml.regime_detection": 0.000003
+  "wml.step": 0.000020,
+  "wml.percentile[10k]": 0.001100,
+  "wml.telemetry_creation[1k]": 0.000135,
+  "wml.regime_detection": 0.000004
 }
