@@ -360,7 +360,7 @@ class FileSystemIndicatorCache:
                 "types",
             }
 
-            def find_class(self, module: str, name: str) -> Any:  # type: ignore[override]
+            def find_class(self, module: str, name: str) -> Any:
                 if module == "builtins" and name in self._SAFE_BUILTINS:
                     return getattr(builtins, name)
                 if module in self._SAFE_MODULES:

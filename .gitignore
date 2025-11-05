@@ -8,6 +8,7 @@ __pycache__/
 dist/
 build/
 .eggs/
+src/_version.py
 
 # Testing
 .coverage

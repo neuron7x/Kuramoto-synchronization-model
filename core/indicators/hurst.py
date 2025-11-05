@@ -46,9 +46,9 @@ _PREFERRED_BACKENDS = {"numba", "cuda", "gpu"}
 try:  # pragma: no cover - optional acceleration
     from numba import cuda, njit, prange
 except Exception:  # pragma: no cover - dependency missing
-    cuda = None  # type: ignore[assignment]
-    njit = None  # type: ignore[assignment]
-    prange = range  # type: ignore[assignment]
+    cuda = None
+    njit = None
+    prange = range
 
 
 def _numba_available() -> bool:

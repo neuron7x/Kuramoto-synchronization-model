@@ -19,7 +19,7 @@ __all__ = ["CCXTIngestionAdapter"]
 
 def _load_exchange_factory(exchange_id: str) -> Callable[[dict[str, Any]], Any]:
     try:
-        import ccxt.async_support as ccxt_async  # type: ignore
+        import ccxt.async_support as ccxt_async
     except ImportError as exc:  # pragma: no cover - defensive guard
         raise RuntimeError(
             "ccxt must be installed to use the CCXTIngestionAdapter"

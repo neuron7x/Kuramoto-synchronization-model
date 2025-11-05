@@ -98,7 +98,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             "POST /api/v3/order/cancelReplace": 1,
         }
 
-    def connect(self, credentials: Mapping[str, str] | None = None) -> None:  # type: ignore[override]
+    def connect(self, credentials: Mapping[str, str] | None = None) -> None:
         super().connect(credentials)
         try:
             self._synchronize_time(force=True)
@@ -421,7 +421,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         new_order: Order,
         *,
         idempotency_key: str | None = None,
-    ) -> Order:  # type: ignore[override]
+    ) -> Order:
         payload = self._build_place_payload(new_order, idempotency_key)
         symbol = payload.get("symbol") or self._lookup_symbol(order_id)
         payload["symbol"] = symbol
@@ -499,7 +499,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         self._ws_stop.clear()
         self._start_stream(url)
 
-    def disconnect(self) -> None:  # type: ignore[override]
+    def disconnect(self) -> None:
         self._listen_key_stop.set()
         if self._listen_key_thread is not None:
             self._listen_key_thread.join(timeout=5.0)

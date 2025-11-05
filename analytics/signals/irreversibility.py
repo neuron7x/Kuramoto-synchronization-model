@@ -46,7 +46,7 @@ import numpy as np
 import pandas as pd
 
 try:
-    import prometheus_client  # type: ignore
+    import prometheus_client
 except Exception:
     prometheus_client = None
 

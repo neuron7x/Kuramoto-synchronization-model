@@ -45,7 +45,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover
         raise
 
     @dataclass(slots=True)
-    class MetricsSnapshot:  # type: ignore[override]
+    class MetricsSnapshot:
         latencies: Dict[Tuple[str, str], float]
         coherency: Dict[Tuple[str, str], float]
         resource_usage: float

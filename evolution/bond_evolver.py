@@ -10,9 +10,9 @@ from typing import Dict, Tuple
 import networkx as nx
 
 try:  # pragma: no cover - exercised indirectly in tests
-    from deap import algorithms, base, creator, tools  # type: ignore
+    from deap import algorithms, base, creator, tools
 except ModuleNotFoundError:  # pragma: no cover - import guard
-    algorithms = base = creator = tools = None  # type: ignore[assignment]
+    algorithms = base = creator = tools = None
     _DEAP_AVAILABLE = False
 else:  # pragma: no cover - exercised when optional dependency is present
     _DEAP_AVAILABLE = True
@@ -106,7 +106,7 @@ def evolve_bonds(
 
     toolbox = base.Toolbox()
 
-    def init_individual() -> creator.Individual:  # type: ignore[name-defined]
+    def init_individual() -> creator.Individual:
         graph = base_graph.copy()
         mutate_bond_type(graph)
         individual = creator.Individual()

@@ -260,8 +260,8 @@ class EndpointValidator:
         for check in self.checks:
             try:
                 request = urllib.request.Request(check.url, method="GET")
-                with urllib.request.urlopen(request, timeout=check.timeout) as resp:  # type: ignore[call-arg]
-                    status = int(resp.status)  # type: ignore[attr-defined]
+                with urllib.request.urlopen(request, timeout=check.timeout) as resp:
+                    status = int(resp.status)
                     body = resp.read()
             except urllib.error.HTTPError as exc:
                 results.append(

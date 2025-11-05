@@ -116,9 +116,9 @@ class StrategyOrchestrator:
         if evaluator_factory is None:
             self._factory: Callable[[], _Evaluator] = StrategyBatchEvaluator
         elif callable(evaluator_factory):
-            self._factory = evaluator_factory  # type: ignore[assignment]
+            self._factory = evaluator_factory
         elif hasattr(evaluator_factory, "evaluate"):
-            self._factory = lambda: evaluator_factory  # type: ignore[assignment]
+            self._factory = lambda: evaluator_factory
         else:  # pragma: no cover - defensive branch
             raise TypeError(
                 "evaluator_factory must be callable or expose an 'evaluate' method"

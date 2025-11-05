@@ -6,12 +6,12 @@ from typing import Deque
 
 
 class RollingBuffer:
-    def __init__(self, size: int):
+    def __init__(self, size: int) -> None:
         self.size = size
         self.buf: Deque[float] = collections.deque(maxlen=size)
 
-    def push(self, v: float):
+    def push(self, v: float) -> None:
         self.buf.append(v)
 
-    def values(self):
+    def values(self) -> list[float]:
         return list(self.buf)

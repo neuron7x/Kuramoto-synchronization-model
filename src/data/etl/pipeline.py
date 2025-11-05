@@ -38,7 +38,7 @@ LOGGER = logging.getLogger(__name__)
 
 async def _maybe_await(obj: Awaitable[Any] | Any) -> Any:
     if asyncio.iscoroutine(obj) or isinstance(obj, Awaitable):
-        return await obj  # type: ignore[return-value]
+        return await obj
     return obj
 
 

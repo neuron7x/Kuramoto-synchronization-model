@@ -50,7 +50,7 @@ def _pyarrow_available() -> bool:
 
 @lru_cache(maxsize=1)
 def _load_polars() -> object:
-    import polars as pl  # type: ignore
+    import polars as pl
 
     return pl
 

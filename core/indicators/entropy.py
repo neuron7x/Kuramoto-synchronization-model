@@ -44,14 +44,14 @@ _GPU_MEMORY_MARGIN = 1.4
 _LAST_ENTROPY_BACKEND = "cpu"
 
 try:  # pragma: no cover - optional dependency
-    import cupy as cp  # type: ignore
+    import cupy as cp
 except Exception:  # pragma: no cover - fallback when CuPy missing
-    cp = None  # type: ignore
+    cp = None
 
 try:  # pragma: no cover - optional dependency
     from numba import cuda
 except Exception:  # pragma: no cover - fallback when Numba missing
-    cuda = None  # type: ignore
+    cuda = None
 
 if cuda is not None:  # pragma: no cover - compiled at import time
     import math
@@ -265,7 +265,7 @@ def _gpu_memory_info() -> tuple[int, int] | None:
     if cp is None or not hasattr(cp, "cuda"):
         return None
     try:  # pragma: no cover - interacts with GPU driver
-        device = cp.cuda.Device()  # type: ignore[attr-defined]
+        device = cp.cuda.Device()
         free_mem, total_mem = device.mem_info
         return int(free_mem), int(total_mem)
     except Exception:

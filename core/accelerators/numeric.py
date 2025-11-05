@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover - optional acceleration module
     if _NUMPY_AVAILABLE:
-        from tradepulse_accel import (  # type: ignore
+        from tradepulse_accel import (
             convolve as _rust_convolve,
         )
         from tradepulse_accel import (
@@ -32,9 +32,9 @@ try:  # pragma: no cover - optional acceleration module
     else:
         raise ImportError("Rust accelerators require numpy")
 except Exception:  # pragma: no cover - rust extension not built or numpy missing
-    _rust_convolve = None  # type: ignore[assignment]
-    _rust_quantiles = None  # type: ignore[assignment]
-    _rust_sliding_windows = None  # type: ignore[assignment]
+    _rust_convolve = None
+    _rust_quantiles = None
+    _rust_sliding_windows = None
     _RUST_ACCEL_AVAILABLE = False
 
 

@@ -143,7 +143,7 @@ class _BaseTimeSplit:
         frame[time_col] = pd.to_datetime(frame[time_col], utc=True, errors="coerce")
         if frame[time_col].isna().any():
             raise ValueError("All time values must be convertible to datetime.")
-        self._resolved_time_col = time_col  # type: ignore[attr-defined]
+        self._resolved_time_col = time_col
         if self.label_end_col:
             if self.label_end_col not in frame.columns:
                 raise KeyError(
@@ -163,7 +163,7 @@ class _BaseTimeSplit:
     ) -> np.ndarray:
         if not self.label_end_col:
             return train_mask
-        time_col = self._resolved_time_col  # type: ignore[attr-defined]
+        time_col = self._resolved_time_col
         test_start = frame.loc[test_mask, time_col].min()
         test_end = frame.loc[test_mask, self.label_end_col].max()
         if pd.isna(test_end):
@@ -239,7 +239,7 @@ class WalkForwardSplitter(_BaseTimeSplit):
 
     def split(self, data: pd.DataFrame) -> Iterator[Tuple[np.ndarray, np.ndarray]]:
         frame = self._prepare_frame(data)
-        time_col = self._resolved_time_col  # type: ignore[attr-defined]
+        time_col = self._resolved_time_col
         min_time = frame[time_col].min()
         max_time = frame[time_col].max()
         test_start = (

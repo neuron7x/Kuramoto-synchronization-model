@@ -222,7 +222,7 @@ class SlidingWindowRateLimiter:
         if not isinstance(records, dict) or lock is None:
             return
 
-        async with lock:  # type: ignore[func-returns-value]
+        async with lock:
             for storage_key, threshold in cleanup_thresholds.items():
                 bucket = records.get(storage_key)
                 if not isinstance(bucket, deque):

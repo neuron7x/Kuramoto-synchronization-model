@@ -155,6 +155,9 @@ include = [
 ]
 exclude = ["tests", "tests.*", "docs", "docs.*"]
 
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
 [tool.mutmut]
 paths_to_mutate = [
     "core",

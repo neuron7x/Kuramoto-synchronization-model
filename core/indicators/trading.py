@@ -13,16 +13,16 @@ from ..utils.logging import get_logger
 from ..utils.metrics import get_metrics_collector
 
 try:  # pragma: no cover - optional GPU dependency
-    import cupy as cp  # type: ignore
+    import cupy as cp
 except Exception:  # pragma: no cover - executed on CPU-only environments
-    cp = None  # type: ignore[assignment]
+    cp = None
 
 try:  # pragma: no cover - optional acceleration
     from numba import cuda, njit, prange
 except Exception:  # pragma: no cover - executed when numba missing
-    cuda = None  # type: ignore[assignment]
-    njit = None  # type: ignore[assignment]
-    prange = range  # type: ignore[assignment]
+    cuda = None
+    njit = None
+    prange = range
 
 
 _GPU_ROLLING_THRESHOLD = 32_768

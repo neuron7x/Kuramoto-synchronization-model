@@ -61,7 +61,7 @@ class AdapterContract:
     capabilities: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:  # type: ignore[override]
+    def __post_init__(self) -> None:
         if not self.identifier:
             raise ValueError("AdapterContract.identifier must be non-empty")
         if "." not in self.identifier:
@@ -86,7 +86,7 @@ class AdapterCheckResult:
     status: str
     detail: Optional[str] = None
 
-    def __post_init__(self) -> None:  # type: ignore[override]
+    def __post_init__(self) -> None:
         allowed = {"passed", "failed", "skipped"}
         if self.status not in allowed:
             raise ValueError(f"Unsupported check status '{self.status}'")
@@ -107,7 +107,7 @@ class AdapterDiagnostic:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:  # type: ignore[override]
+    def __post_init__(self) -> None:
         if not self.adapter_id:
             raise ValueError("AdapterDiagnostic.adapter_id must be non-empty")
         object.__setattr__(self, "checks", tuple(self.checks))

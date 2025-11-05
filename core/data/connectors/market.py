@@ -183,7 +183,7 @@ class BaseMarketDataConnector:
             await asyncio.sleep(min(2**attempt, 60))
             return
         try:
-            await self._adapter._sleep_backoff(attempt)  # type: ignore[attr-defined]
+            await self._adapter._sleep_backoff(attempt)
         except AttributeError:  # pragma: no cover - defensive fallback
             await asyncio.sleep(min(2**attempt, 60))
 

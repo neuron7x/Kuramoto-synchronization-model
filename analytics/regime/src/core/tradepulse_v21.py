@@ -64,7 +64,7 @@ try:  # pragma: no cover - optional dependency, exercised in integration tests
 
     _HAS_STATSMODELS = True
 except Exception:  # pragma: no cover - dependency intentionally optional
-    sm = None  # type: ignore[assignment]
+    sm = None
     _HAS_STATSMODELS = False
 
 __all__ = [
@@ -248,7 +248,7 @@ class StrictCausalFeatureBuilder:
                     continue
                 try:
                     series = np.column_stack([past_returns[:, target], past_returns[:, driver]])
-                    tests = sm.tsa.stattools.grangercausalitytests(  # type: ignore[attr-defined]
+                    tests = sm.tsa.stattools.grangercausalitytests(
                         series,
                         maxlag=maxlag,
                         verbose=False,

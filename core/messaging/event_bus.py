@@ -381,7 +381,7 @@ class NATSEventBus(BaseEventBus):
             raise RuntimeError("NATSEventBus.start() must be called before subscribe()")
         await self._ensure_stream(topic)
 
-        async def _callback(msg) -> None:  # type: ignore[no-untyped-def]
+        async def _callback(msg) -> None:
             envelope = _envelope_from_nats_message(msg)
             if self.idempotency_store.was_processed(envelope.event_id):
                 await msg.ack()

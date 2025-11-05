@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 try:  # Python 3.11+
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - fallback for older interpreters
-    import tomli as tomllib  # type: ignore[assignment]
+    import tomli as tomllib
 
 from core.utils.metrics import PROMETHEUS_AVAILABLE, start_metrics_server
 from execution.connectors import ExecutionConnector
@@ -491,7 +491,7 @@ class LiveTradingRunner:
             connector = self._connectors.get(settings.name)
             if connector is not None and hasattr(connector, "set_credential_provider"):
                 try:
-                    connector.set_credential_provider(provider)  # type: ignore[attr-defined]
+                    connector.set_credential_provider(provider)
                 except Exception as exc:  # pragma: no cover - defensive guard
                     LOGGER.debug(
                         "Connector did not accept injected credential provider",

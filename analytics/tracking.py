@@ -28,7 +28,7 @@ if markdown is None:  # pragma: no cover - fallback for environments without mar
         return "<pre>" + source.replace("<", "&lt;").replace(">", "&gt;") + "</pre>"
 else:  # pragma: no cover - executed when markdown package is available
     def _markdown_to_html(source: str) -> str:
-        return markdown.markdown(source, extensions=["tables", "fenced_code"])  # type: ignore[attr-defined]
+        return markdown.markdown(source, extensions=["tables", "fenced_code"])
 
 
 @dataclass(slots=True)

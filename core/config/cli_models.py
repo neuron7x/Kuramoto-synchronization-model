@@ -324,7 +324,7 @@ class FeatureParitySpecConfig(BaseModel):
         if isinstance(value, str) and value.strip().lower() in {"", "none"}:
             return None
         try:
-            return pd.Timedelta(value)  # type: ignore[arg-type]
+            return pd.Timedelta(value)
         except (ValueError, TypeError) as exc:  # pragma: no cover - defensive
             raise ValueError("timedelta fields must be pandas-compatible strings") from exc
 

@@ -296,10 +296,10 @@ class RedisOnlineFeatureStore:
         ttl_seconds = self._retention.ttl_seconds()
         if ttl_seconds is not None:
             if hasattr(self._client, "setex"):
-                self._client.setex(feature_view, ttl_seconds, payload)  # type: ignore[misc]
+                self._client.setex(feature_view, ttl_seconds, payload)
                 return
             if hasattr(self._client, "set_with_ttl"):
-                self._client.set_with_ttl(feature_view, payload, ttl_seconds)  # type: ignore[misc]
+                self._client.set_with_ttl(feature_view, payload, ttl_seconds)
                 return
         self._client.set(feature_view, payload)
 

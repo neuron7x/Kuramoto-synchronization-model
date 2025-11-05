@@ -18,7 +18,7 @@ try:  # pragma: no cover - optional dependency may not be available
 
     _PSUTIL_AVAILABLE = True
 except Exception:  # pragma: no cover - psutil is optional at runtime
-    psutil = None  # type: ignore[assignment]
+    psutil = None
     _PSUTIL_AVAILABLE = False
 
 from core.utils.metrics import get_metrics_collector
@@ -253,7 +253,7 @@ class ModelObservabilityOrchestrator:
         self._incident_library: Dict[str, IncidentRecord] = {}
         self._last_resource_snapshot: ResourceSnapshot | None = None
 
-        self._process = psutil.Process() if _PSUTIL_AVAILABLE else None  # type: ignore[assignment]
+        self._process = psutil.Process() if _PSUTIL_AVAILABLE else None
         if self._process is not None:  # pragma: no cover - defensive priming
             try:
                 self._process.cpu_percent(interval=None)
@@ -297,7 +297,7 @@ class ModelObservabilityOrchestrator:
             finally:
                 if ctx.span_attributes and active_span is not None:
                     try:
-                        active_span.set_attributes(ctx.span_attributes)  # type: ignore[call-arg]
+                        active_span.set_attributes(ctx.span_attributes)
                     except Exception:  # pragma: no cover - tracing defensive path
                         LOGGER.debug("Failed to set span attributes", exc_info=True)
 
