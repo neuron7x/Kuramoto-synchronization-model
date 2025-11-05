@@ -197,14 +197,15 @@ class PriceTimeOrderBook:
     # ------------------------------------------------------------------
     def add_limit_order(self, order: Order) -> None:
         """Insert a new limit order respecting price-time priority."""
-
-        key = (order.side, order.price)
+        # order.side is converted to Side in Order.__post_init__
+        side = order.side if isinstance(order.side, Side) else Side(order.side)
+        key = (side, order.price)
         level = self._levels.get(key)
         if level is None:
-            level = _Level(price=order.price, side=order.side)
+            level = _Level(price=order.price, side=side)
             self._levels[key] = level
-            heap = self._price_heaps[order.side]
-            price = order.price if order.side is Side.SELL else -order.price
+            heap = self._price_heaps[side]
+            price = order.price if side is Side.SELL else -order.price
             heapq.heappush(heap, price)
         level.append(order)
         self._order_index[order.order_id] = key
@@ -342,8 +343,8 @@ class PriceTimeOrderBook:
         heap[idx] = heap[-1]
         heap.pop()
         if idx < len(heap):
-            heapq._siftup(heap, idx)
-            heapq._siftdown(heap, 0, idx)
+            heapq._siftup(heap, idx)  # type: ignore[attr-defined]
+            heapq._siftdown(heap, 0, idx)  # type: ignore[attr-defined]
 
 
 __all__ = [

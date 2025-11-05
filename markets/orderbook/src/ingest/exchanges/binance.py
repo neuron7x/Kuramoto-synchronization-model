@@ -19,14 +19,22 @@ def parse_snapshot(
     ts_arrival: datetime,
     source: str = "binance",
 ) -> OrderBookSnapshot:
-    last_update_id = int(payload["lastUpdateId"])
-    bids = _levels(payload.get("bids", []))
-    asks = _levels(payload.get("asks", []))
+    last_update_id_raw = payload["lastUpdateId"]
+    if not isinstance(last_update_id_raw, int):
+        last_update_id = int(last_update_id_raw)  # type: ignore[arg-type]
+    else:
+        last_update_id = last_update_id_raw
+    
+    bids_raw = payload.get("bids", [])
+    asks_raw = payload.get("asks", [])
+    bids = _levels(bids_raw)  # type: ignore[arg-type]
+    asks = _levels(asks_raw)  # type: ignore[arg-type]
+    
     raw_event = payload.get("E")
     if raw_event is None:
         ts_event = ts_arrival
     else:
-        event_value = float(raw_event)
+        event_value = float(raw_event)  # type: ignore[arg-type]
         if event_value > 1e12:  # millisecond precision
             event_value /= 1_000
         ts_event = datetime.fromtimestamp(event_value, tz=timezone.utc)
