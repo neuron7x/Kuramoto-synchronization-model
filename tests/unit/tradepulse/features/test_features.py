@@ -1,12 +1,41 @@
 """Tests for Ricci curvature and topological features."""
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from src.tradepulse.features.causal import CausalGuard
-from src.tradepulse.features.ricci import RicciCurvatureGraph
-from src.tradepulse.features.topo import TopoSentinel
+# Import directly from module files to avoid package __init__
+import importlib.util
+
+# Import RicciCurvatureGraph
+spec = importlib.util.spec_from_file_location(
+    "ricci",
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/ricci.py"
+)
+ricci_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ricci_module)
+RicciCurvatureGraph = ricci_module.RicciCurvatureGraph
+
+# Import TopoSentinel
+spec = importlib.util.spec_from_file_location(
+    "topo",
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/topo.py"
+)
+topo_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(topo_module)
+TopoSentinel = topo_module.TopoSentinel
+
+# Import CausalGuard
+spec = importlib.util.spec_from_file_location(
+    "causal",
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/causal.py"
+)
+causal_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(causal_module)
+CausalGuard = causal_module.CausalGuard
 
 
 class TestRicciCurvature:

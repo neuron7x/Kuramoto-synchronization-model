@@ -1,7 +1,18 @@
 """Tests for EWS aggregator."""
 
+import sys
+from pathlib import Path
 
-from src.tradepulse.regime.ews import EWSAggregator, EWSConfig
+# Import directly from module file to avoid package __init__
+import importlib.util
+spec = importlib.util.spec_from_file_location(
+    "ews",
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/regime/ews.py"
+)
+ews_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ews_module)
+EWSAggregator = ews_module.EWSAggregator
+EWSConfig = ews_module.EWSConfig
 
 
 class TestEWSAggregator:

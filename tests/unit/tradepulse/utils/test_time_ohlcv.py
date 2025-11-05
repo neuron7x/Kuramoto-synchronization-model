@@ -1,10 +1,24 @@
 """Tests for OHLCV resampling utilities."""
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from src.tradepulse.utils.time import resample_ohlcv
+# Add src to path and import module directly
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
+
+# Import directly from module file to avoid package __init__
+import importlib.util
+spec = importlib.util.spec_from_file_location(
+    "time_utils", 
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/utils/time.py"
+)
+time_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(time_utils)
+resample_ohlcv = time_utils.resample_ohlcv
 
 
 class TestResampleOHLCV:
