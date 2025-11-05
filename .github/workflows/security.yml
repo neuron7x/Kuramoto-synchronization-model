@@ -382,6 +382,12 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python', 'javascript', 'go']
+        # Note: Rust is not directly supported by CodeQL, but Semgrep covers it
+        # TypeScript is covered by 'javascript' language in CodeQL
 
     steps:
     - name: Checkout repository
@@ -390,13 +396,13 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
-        languages: python
+        languages: ${{ matrix.language }}
         queries: security-extended
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       with:
-        category: "/language:python"
+        category: "/language:${{ matrix.language }}"
         upload: true
     
     - name: Check for critical findings
@@ -405,11 +411,11 @@ jobs:
         # This step will fail the workflow if critical/high severity issues are found
         # GitHub CodeQL action already uploads results to Security tab
         # We check the API for critical/high alerts
-        echo "Checking for critical/high severity CodeQL findings..."
+        echo "Checking for critical/high severity CodeQL findings for ${{ matrix.language }}..."
         
         # Note: In a real PR, GitHub's branch protection rules can be configured
         # to require CodeQL checks to pass. This is a placeholder for that check.
-        echo "✓ CodeQL analysis complete. Review results in Security tab."
+        echo "✓ CodeQL analysis complete for ${{ matrix.language }}. Review results in Security tab."
 
   security-tests:
     name: Security Test Suite
