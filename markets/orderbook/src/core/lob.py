@@ -340,11 +340,12 @@ class PriceTimeOrderBook:
             idx = heap.index(token)
         except ValueError:
             return
+        # Remove element and restore heap property using public API
         heap[idx] = heap[-1]
         heap.pop()
         if idx < len(heap):
-            heapq._siftup(heap, idx)  # type: ignore[attr-defined]
-            heapq._siftdown(heap, 0, idx)  # type: ignore[attr-defined]
+            # Re-heapify: simpler and more maintainable than using private methods
+            heapq.heapify(heap)
 
 
 __all__ = [

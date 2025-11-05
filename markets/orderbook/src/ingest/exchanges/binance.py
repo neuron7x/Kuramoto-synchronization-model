@@ -19,25 +19,42 @@ def parse_snapshot(
     ts_arrival: datetime,
     source: str = "binance",
 ) -> OrderBookSnapshot:
+    # Type narrowing for lastUpdateId
     last_update_id_raw = payload["lastUpdateId"]
-    if not isinstance(last_update_id_raw, int):
-        last_update_id = int(last_update_id_raw)  # type: ignore[arg-type]
-    else:
+    if isinstance(last_update_id_raw, int):
         last_update_id = last_update_id_raw
+    else:
+        # Convert string or float to int
+        last_update_id = int(str(last_update_id_raw))
     
+    # Type narrowing for bids/asks arrays
     bids_raw = payload.get("bids", [])
     asks_raw = payload.get("asks", [])
-    bids = _levels(bids_raw)  # type: ignore[arg-type]
-    asks = _levels(asks_raw)  # type: ignore[arg-type]
     
+    # Validate structure before passing to _levels
+    if not isinstance(bids_raw, (list, tuple)):
+        raise ValueError(f"Expected bids to be a list, got {type(bids_raw)}")
+    if not isinstance(asks_raw, (list, tuple)):
+        raise ValueError(f"Expected asks to be a list, got {type(asks_raw)}")
+    
+    bids = _levels(bids_raw)  # type: ignore[arg-type]  # Complex nested structure
+    asks = _levels(asks_raw)  # type: ignore[arg-type]  # Complex nested structure
+    
+    # Type narrowing for event timestamp
     raw_event = payload.get("E")
     if raw_event is None:
         ts_event = ts_arrival
     else:
-        event_value = float(raw_event)  # type: ignore[arg-type]
+        # Convert to float, handling multiple input types
+        if isinstance(raw_event, (int, float)):
+            event_value = float(raw_event)
+        else:
+            event_value = float(str(raw_event))
+        
         if event_value > 1e12:  # millisecond precision
             event_value /= 1_000
         ts_event = datetime.fromtimestamp(event_value, tz=timezone.utc)
+    
     if ts_arrival.tzinfo is None:
         raise ValueError("ts_arrival must be timezone aware")
     return OrderBookSnapshot(
