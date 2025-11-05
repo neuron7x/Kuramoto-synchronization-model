@@ -37,8 +37,9 @@ def parse_snapshot(
     if not isinstance(asks_raw, (list, tuple)):
         raise ValueError(f"Expected asks to be a list, got {type(asks_raw)}")
     
-    bids = _levels(bids_raw)  # type: ignore[arg-type]  # Complex nested structure
-    asks = _levels(asks_raw)  # type: ignore[arg-type]  # Complex nested structure
+    # Runtime validation above ensures correct structure for _levels
+    bids = _levels(bids_raw)
+    asks = _levels(asks_raw)
     
     # Type narrowing for event timestamp
     raw_event = payload.get("E")
