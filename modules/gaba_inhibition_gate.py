@@ -1,7 +1,8 @@
 # Copyright (c) 2025 TradePulse
 # SPDX-License-Identifier: Apache-2.0
 # Biophysical gate mapping GABAergic inhibition to risk-aware action modulation.
-# Primary sources: Buzsáki & Wang (2012); Bliss & Collingridge (1993); Bi & Poo (1998); Bowery et al. (2002)
+# Primary sources: Buzsáki & Wang (2012); Bliss & Collingridge (1993);
+# Bi & Poo (1998); Bowery et al. (2002)
 
 from __future__ import annotations
 import math
@@ -68,8 +69,14 @@ class GABAInhibitionGate(nn.Module):
         self.register_buffer("t_ms", torch.zeros(1, dtype=torch.float32, device=self.device))
 
         # precompute decay factors per step
-        self.register_buffer("decay_fast", torch.exp(torch.tensor(-self.p.dt_ms / self.p.tau_gaba_a_ms, device=self.device)))
-        self.register_buffer("decay_slow", torch.exp(torch.tensor(-self.p.dt_ms / self.p.tau_gaba_b_ms, device=self.device)))
+        decay_fast_val = torch.exp(
+            torch.tensor(-self.p.dt_ms / self.p.tau_gaba_a_ms, device=self.device)
+        )
+        self.register_buffer("decay_fast", decay_fast_val)
+        decay_slow_val = torch.exp(
+            torch.tensor(-self.p.dt_ms / self.p.tau_gaba_b_ms, device=self.device)
+        )
+        self.register_buffer("decay_slow", decay_slow_val)
 
     # --- helpers -----------------------------------------------------------
     def _norm_vol(self, vix: torch.Tensor) -> torch.Tensor:
@@ -85,7 +92,9 @@ class GABAInhibitionGate(nn.Module):
 
     # --- public API --------------------------------------------------------
     @torch.no_grad()
-    def forward(self, market_state: Dict[str, torch.Tensor], action: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, float]]:
+    def forward(
+        self, market_state: Dict[str, torch.Tensor], action: torch.Tensor
+    ) -> Tuple[torch.Tensor, Dict[str, float]]:
         # Ensure device/shape
         action = action.to(self.device)
         vix = market_state['vix'].to(self.device).reshape(1)
@@ -112,9 +121,17 @@ class GABAInhibitionGate(nn.Module):
 
         # 4) Plasticity (STDP + LTP/LTD)
         if (delta_t_ms > 0).item():
-            dw = self.p.stdp_a_plus * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms) * gaba_level
+            dw = (
+                self.p.stdp_a_plus
+                * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms)
+                * gaba_level
+            )
         else:
-            dw = -self.p.stdp_a_minus * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms) * gaba_level
+            dw = (
+                -self.p.stdp_a_minus
+                * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms)
+                * gaba_level
+            )
         # LTP/LTD gated by vol*ret (pre*post)
         pre_post = vol * ret
         if (pre_post > self.p.ltp_theta).item():
