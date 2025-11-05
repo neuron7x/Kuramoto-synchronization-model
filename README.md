@@ -151,8 +151,8 @@ pip install tradepulse
 pip install "tradepulse[connectors,feature_store,gpu]"
 
 # From source
-git clone https://github.com/your-org/tradepulse.git
-cd tradepulse
+git clone https://github.com/neuron7x/TradePulse.git
+cd TradePulse
 pip install -e ".[dev]"
 ```
 
@@ -414,8 +414,8 @@ guidelines.
 
 ```bash
 # Setup development environment
-git clone https://github.com/your-org/tradepulse.git
-cd tradepulse
+git clone https://github.com/neuron7x/TradePulse.git
+cd TradePulse
 pip install -e ".[dev]"
 
 # Run quality checks
@@ -476,58 +476,8 @@ in paper trading before risking real capital.
   [QuantLib](https://www.quantlib.org/)
 - Geometric indicators based on research from leading quantitative finance journals
 - Special thanks to all
-  [contributors](https://github.com/your-org/tradepulse/graphs/contributors)
+  [contributors](https://github.com/neuron7x/TradePulse/graphs/contributors)
 
 ---
 
 **[⬆ back to top](#-tradepulse)** · Made with ❤️ by the TradePulse community
-
----
-
-## NeuroTrade PRO v1.2 — Integrated Neuro–AI Stack + SABRE Conformal Action Layer
-
-> **Note:** All performance metrics below stem from internal synthetic
-> benchmarks and are not comparable to published external studies.
-
-**Що всередині:**
-- Режими ринку (волатильнісні біни) → режимно-чутливе рішення
-- Квантильні моделі (L/M/U) → **Conformal (CQR) з експон. вагами + динамічна α**
-- **SABRE CAL**: дія лише коли нижня (або верхня) межа після витрат > 0
-- Execution: fee, half-spread, **impact (linear / quadratic / square_root)**, базовий queue-fill
-- Мікроструктура: spread, eff/realized spread, OFI (short-horizon), signed vol, Kyle λ, vol-of-vol, VWAP-dist, fracdiff
-- Risk guardrails: DD ліміт, cooldown, vola-throttle, exposure cap
-- CV: Purged & Embargoed K-Fold; Labeling: triple-barrier (приклад)
-- Оцінка (internal synthetic benchmark): Sharpe, Deflated Sharpe (approx),
-  tail free-energy mean 95%
-- Моніторинг: **Logger** (MLflow/W&B якщо доступно), інакше no-op
-- **Walk-Forward** (серійний/паралельний), **Validate** (порівняння з baseline, coverage, capacity)
-
-### Швидкий старт
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-python scripts/make_synth.py
-python scripts/run_backtest.py --config configs/demo.yaml
-python scripts/run_walkforward.py --config configs/wf.yaml
-
-# Повна валідація
-python scripts/validate.py --config configs/demo.yaml
-```
-
-### Примітки
-
-* Демонстраційний датасет `neuropro/data/sim_ticks.csv` більше не зберігається в репозиторії.
-  Він автоматично генерується при першому виклику `neuropro.data.read_ticks_csv` або
-  окремо через `python scripts/make_synth.py` (доступні опції `--n`, `--seed`, `--path`).
-* Для моніторингу:
-  * MLflow: `export MLFLOW_TRACKING_URI=file:./mlruns` та (опц.) `MLFLOW_EXPERIMENT_NAME=neurotrade_v12`
-  * W&B: `export WANDB_API_KEY=...` і `WANDB_PROJECT=neurotrade_v12`
-* **Не плутати** CAL із самою альфою: CAL — *safety layer* над будь-якою моделлю.
-
-### Нове: Fractal Motivation Engine
-
-* **Фрактальна мотивація** — модуль `core.neuro.motivation` поєднує інформаційний приріст, когерентність контексту та рожевий шум для побудови мотиваційного сигналу.
-* **Allostasis-aware control** — `FractalMotivationController` використовує регулятор алостазу, щоб знижувати ризик при високому навантаженні, та обирає стратегії через Thompson sampling.
-* **Інтеграція з NeuroTrade** — `EnhancedFractalNeuroeconomicCore` тепер модулює кандидатів через мотиваційний стан, додає телеметрію (`motivation_state`) і автоматично викликає режим `pause_and_audit`, якщо guardrails порушено.
-* **Моніторинг** — в реальному часі відстежується mean/std сигналу, ентропія дій і середній intrinsic reward; метрики доступні через `motivation_state.monitor_metrics`.
