@@ -10,7 +10,6 @@ import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -174,6 +173,6 @@ class TopoSentinel:
         topo_score = float(pr_normalized * (1.0 + corr_std))
 
         # Clip to reasonable range
-        topo_score = np.clip(topo_score, 0.0, 1.0)
+        topo_score = float(np.clip(topo_score, 0.0, 1.0))
 
         return topo_score

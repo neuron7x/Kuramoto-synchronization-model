@@ -1,6 +1,5 @@
 """Tests for EWS aggregator."""
 
-import pytest
 
 from src.tradepulse.regime.ews import EWSAggregator, EWSConfig
 

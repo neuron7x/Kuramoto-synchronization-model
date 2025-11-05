@@ -156,8 +156,7 @@ class CausalGuard:
         target_t_1_binned = self._discretize(target_t_1)
         source_t_1_binned = self._discretize(source_t_1)
 
-        # Compute entropies
-        H_Y_t = self._entropy(target_t_binned)
+        # Compute conditional entropies for TE
         H_Y_t_Y_t_1 = self._conditional_entropy(target_t_binned, target_t_1_binned)
         H_Y_t_Y_t_1_X_t_1 = self._conditional_entropy_2(
             target_t_binned, target_t_1_binned, source_t_1_binned

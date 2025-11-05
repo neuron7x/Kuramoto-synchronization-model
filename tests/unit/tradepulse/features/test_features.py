@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src.tradepulse.features.causal import CausalGuard
 from src.tradepulse.features.ricci import RicciCurvatureGraph
 from src.tradepulse.features.topo import TopoSentinel
-from src.tradepulse.features.causal import CausalGuard
 
 
 class TestRicciCurvature:
