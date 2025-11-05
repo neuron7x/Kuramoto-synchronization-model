@@ -1,6 +1,6 @@
 """Event bus for WML state changes."""
 
-from typing import Dict, Any, Callable, List
+from typing import Dict, Any, Callable, List, Tuple
 
 
 class EventBus:
@@ -30,7 +30,7 @@ class RecordingEventBus(EventBus):
 
     def __init__(self) -> None:
         """Initialize recording event bus."""
-        self._events: List[tuple[str, Dict[str, Any]]] = []
+        self._events: List[Tuple[str, Dict[str, Any]]] = []
         self._handlers: Dict[str, List[Callable[[Dict[str, Any]], None]]] = {}
 
     def emit(self, event: str, data: Dict[str, Any]) -> None:
@@ -45,7 +45,7 @@ class RecordingEventBus(EventBus):
             self._handlers[event] = []
         self._handlers[event].append(handler)
 
-    def get_events(self) -> List[tuple[str, Dict[str, Any]]]:
+    def get_events(self) -> List[Tuple[str, Dict[str, Any]]]:
         """Get all recorded events.
 
         Returns:
