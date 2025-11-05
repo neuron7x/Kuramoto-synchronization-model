@@ -34,6 +34,8 @@ Thumbs.db
 *.log
 .env
 .env.local
+.venv/
+venv/
 apps/web/node_modules/
 apps/web/.next/
 apps/web/playwright-report/
