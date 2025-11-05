@@ -1,3 +1,5 @@
 """TradePulse regime detection module."""
 
-__all__ = []
+from .ews import EWSAggregator, EWSConfig, EWSResult
+
+__all__ = ["EWSAggregator", "EWSConfig", "EWSResult"]
