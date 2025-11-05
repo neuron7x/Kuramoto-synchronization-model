@@ -97,7 +97,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
             "POST /orders/edit": 1,
         }
 
-    def connect(self, credentials: Mapping[str, str] | None = None) -> None:  # type: ignore[override]
+    def connect(self, credentials: Mapping[str, str] | None = None) -> None:
         super().connect(credentials)
         try:
             self._synchronize_time(force=True)
@@ -205,7 +205,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
             raise ValueError(f"Unsupported order type: {order.order_type}")
         return payload
 
-    def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:  # type: ignore[override]
+    def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:
         if idempotency_key and idempotency_key in self._idempotency_cache:
             return self._idempotency_cache[idempotency_key]
         payload = self._build_place_payload(order, idempotency_key)
@@ -379,7 +379,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         new_order: Order,
         *,
         idempotency_key: str | None = None,
-    ) -> Order:  # type: ignore[override]
+    ) -> Order:
         payload = self._build_place_payload(new_order, idempotency_key)
         client_order_id = payload.get("client_order_id") or idempotency_key or order_id
         request_body = {

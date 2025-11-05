@@ -46,7 +46,7 @@ def _coerce_fill(
     if isinstance(fill, FillSample):
         return fill
 
-    if isinstance(fill, Mapping):  # type: ignore[redundant-expr]
+    if isinstance(fill, Mapping):
         qty_key = "quantity" if "quantity" in fill else "qty"
         price_key = "price"
         fees_key = "fees" if "fees" in fill else None

@@ -13,8 +13,8 @@ try:  # pragma: no cover - optional dependency guard
     from torch.distributions import Normal
     from torch.nn import functional as F
 except Exception as exc:  # pragma: no cover - optional dependency guard
-    torch = None  # type: ignore[assignment]
-    nn = Normal = F = None  # type: ignore[assignment]
+    torch = None
+    nn = Normal = F = None
     _IMPORT_ERROR = exc
 else:
     _IMPORT_ERROR = None
@@ -46,22 +46,22 @@ if nn is not None and torch is not None and Normal is not None and F is not None
     class _ShockPolicy(nn.Module):  # type: ignore[misc]
         def __init__(self, feature_dim: int) -> None:
             super().__init__()
-            self._backbone = nn.Sequential(  # type: ignore[operator]
-                nn.Linear(feature_dim, feature_dim * 2),  # type: ignore[operator]
-                nn.ReLU(),  # type: ignore[operator]
-                nn.Linear(feature_dim * 2, feature_dim),  # type: ignore[operator]
+            self._backbone = nn.Sequential(
+                nn.Linear(feature_dim, feature_dim * 2),
+                nn.ReLU(),
+                nn.Linear(feature_dim * 2, feature_dim),
             )
-            self._log_std = nn.Parameter(torch.zeros(feature_dim))  # type: ignore[operator]
+            self._log_std = nn.Parameter(torch.zeros(feature_dim))
 
-        def forward(self, state: torch.Tensor) -> Normal:  # type: ignore[override]
+        def forward(self, state: torch.Tensor) -> Normal:
             mean = self._backbone(state)
-            std = torch.clamp(F.softplus(self._log_std), min=1e-3)  # type: ignore[operator]
+            std = torch.clamp(F.softplus(self._log_std), min=1e-3)
             return Normal(mean, std)
 
 
 else:
 
-    class _ShockPolicy:  # type: ignore[too-many-ancestors]
+    class _ShockPolicy:
         def __init__(self, feature_dim: int) -> None:  # noqa: D401 - simple guard
             raise ModuleNotFoundError(
                 "PyTorch is required for ShockScenarioGenerator",
@@ -136,7 +136,7 @@ class ShockScenarioGenerator:
                 self._capture_best(scenario[best_index], metrics, best_index)
 
                 if span is not None:
-                    span.set_attributes(  # type: ignore[call-arg]
+                    span.set_attributes(
                         {
                             "chaos.reward.mean": float(reward.mean().item()),
                             "chaos.drawdown.max": float(metrics["drawdown"].max().item()),
@@ -162,7 +162,7 @@ class ShockScenarioGenerator:
                 _, metrics = self._evaluate(state, sample)
                 scenarios.append(self._build_scenario(sample[0], metrics, 0))
             if span is not None:
-                span.set_attributes(  # type: ignore[call-arg]
+                span.set_attributes(
                     {
                         "chaos.generated": len(scenarios),
                         "chaos.drawdown.max": max(s.predicted_drawdown for s in scenarios),

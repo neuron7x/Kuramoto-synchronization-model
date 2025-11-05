@@ -172,7 +172,7 @@ def _slice_time_series(data: Any, n_splits: int) -> list[Any]:
         return [data]
 
     if hasattr(data, "__len__"):
-        length = len(data)  # type: ignore[arg-type]
+        length = len(data)
     else:
         data = list(data)
         length = len(data)

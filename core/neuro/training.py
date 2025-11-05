@@ -413,7 +413,7 @@ class AsyncDataLoader:
         if self._priority_key is None:
             queue_cls: type[queue.Queue] = queue.Queue
         else:
-            queue_cls = queue.PriorityQueue  # type: ignore[assignment]
+            queue_cls = queue.PriorityQueue
 
         max_queue_items = self._prefetch_batches * max(1, self._batch_size)
         batch_queue: queue.Queue[Any] = queue_cls(maxsize=max_queue_items or 0)

@@ -15,9 +15,9 @@ from interfaces.secrets.manager import VaultResolver
 try:  # pragma: no cover - boto3 is optional at runtime
     from botocore.exceptions import BotoCoreError, ClientError
 except Exception:  # pragma: no cover - provide lightweight fallbacks for tests
-    BotoCoreError = ClientError = Exception  # type: ignore[assignment]
+    BotoCoreError = ClientError = Exception
 
-from application.secrets.hashicorp import (  # type: ignore[attr-defined]
+from application.secrets.hashicorp import (
     StaticTokenAuthenticator,
     VaultClient,
     VaultClientConfig,

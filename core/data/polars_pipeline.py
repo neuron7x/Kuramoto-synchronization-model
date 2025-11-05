@@ -13,18 +13,18 @@ import numpy as np
 from ..utils.logging import get_logger
 
 try:  # pragma: no cover - optional dependency
-    import polars as pl  # type: ignore
+    import polars as pl
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
-    pl = None  # type: ignore[assignment]
+    pl = None
 
 try:  # pragma: no cover - optional dependency
-    import pyarrow as pa  # type: ignore
+    import pyarrow as pa
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
-    pa = None  # type: ignore[assignment]
+    pa = None
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers
-    from polars import DataFrame, LazyFrame  # type: ignore
-    from pyarrow import MemoryPool  # type: ignore
+    from polars import DataFrame, LazyFrame
+    from pyarrow import MemoryPool
 
 
 _logger = get_logger(__name__)

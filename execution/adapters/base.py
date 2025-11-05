@@ -220,7 +220,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
 
     # ------------------------------------------------------------------
     # Public interface
-    def connect(self, credentials: Mapping[str, str] | None = None) -> None:  # type: ignore[override]
+    def connect(self, credentials: Mapping[str, str] | None = None) -> None:
         if self._connected:
             return
         resolved = self._resolve_credentials(credentials)
@@ -234,7 +234,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         if stream_url:
             self._start_stream(stream_url)
 
-    def disconnect(self) -> None:  # type: ignore[override]
+    def disconnect(self) -> None:
         self._ws_stop.set()
         thread = self._ws_thread
         if thread is not None:
@@ -311,7 +311,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
 
     # ------------------------------------------------------------------
     # ExecutionConnector API
-    def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:  # type: ignore[override]
+    def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:
         if idempotency_key and idempotency_key in self._idempotency_cache:
             return self._idempotency_cache[idempotency_key]
         payload = self._build_place_payload(order, idempotency_key)
@@ -325,7 +325,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 self._idempotency_cache[idempotency_key] = submitted
         return submitted
 
-    def cancel_order(self, order_id: str) -> bool:  # type: ignore[override]
+    def cancel_order(self, order_id: str) -> bool:
         path, payload = self._cancel_endpoint(order_id)
         self._request("DELETE", path, params=payload, signed=True)
         with self._lock:
@@ -333,7 +333,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 self._orders[order_id].cancel()
         return True
 
-    def fetch_order(self, order_id: str) -> Order:  # type: ignore[override]
+    def fetch_order(self, order_id: str) -> Order:
         path, payload = self._fetch_endpoint(order_id)
         response = self._request("GET", path, params=payload, signed=True)
         order = self._parse_order(response)
@@ -341,7 +341,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
             self._orders[order.order_id or order_id] = order
         return order
 
-    def open_orders(self) -> list[Order]:  # type: ignore[override]
+    def open_orders(self) -> list[Order]:
         path, payload = self._open_orders_endpoint()
         response = self._request("GET", path, params=payload, signed=True)
         orders_payload = response.get("orders") if "orders" in response else response
@@ -360,7 +360,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                     self._orders[order.order_id] = order
         return orders
 
-    def get_positions(self) -> list[dict]:  # type: ignore[override]
+    def get_positions(self) -> list[dict]:
         path, payload = self._positions_endpoint()
         response = self._request("GET", path, params=payload, signed=True)
         return self._parse_positions(response)
@@ -371,7 +371,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         new_order: Order,
         *,
         idempotency_key: str | None = None,
-    ) -> Order:  # type: ignore[override]
+    ) -> Order:
         raise OrderError("Cancel/replace is not supported by this connector")
 
     # ------------------------------------------------------------------
@@ -420,7 +420,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         attempt = 0
         while not self._ws_stop.is_set():
             try:
-                async with self._ws_factory(url) as websocket:  # type: ignore[misc]
+                async with self._ws_factory(url) as websocket:
                     attempt = 0
                     backoff = 1.0
                     while not self._ws_stop.is_set():

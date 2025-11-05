@@ -79,10 +79,10 @@ class YahooFinanceDataFetcher:
         downloader = self._downloader
         if downloader is None:
             try:
-                import yfinance as yf  # type: ignore
+                import yfinance as yf
             except ImportError as exc:  # pragma: no cover - exercised in tests via stub
                 raise RuntimeError("yfinance must be installed to use the default downloader") from exc
-            downloader = yf.download  # type: ignore[attr-defined]
+            downloader = yf.download
 
         frame = downloader(symbol, start=start, end=end, progress=False)
         if frame.empty:
@@ -149,7 +149,7 @@ class BinanceRESTFetcher:
             factory = _factory
 
         session_ctx = factory()
-        async with session_ctx as session:  # type: ignore[func-returns-value]
+        async with session_ctx as session:
             get = getattr(session, "get")
             async with get(
                 f"{self._base_url}/klines",

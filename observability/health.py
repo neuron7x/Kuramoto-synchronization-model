@@ -95,7 +95,7 @@ class HealthServer:
                     return
                 self._write(404, {"status": "unknown", **snapshot})
 
-            def log_message(self, *args, **kwargs):  # type: ignore[override]
+            def log_message(self, *args, **kwargs):
                 return  # suppress noisy default logging
 
         return Handler

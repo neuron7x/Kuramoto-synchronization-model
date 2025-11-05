@@ -204,7 +204,7 @@ class RealTimeFeatureStore:
         async with self._registry_lock:
             if self._registry_ready.is_set():
                 return
-            async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+            async with self._db_pool.acquire() as conn:
                 await conn.execute(
                     """
                     CREATE TABLE IF NOT EXISTS feature_registry (
@@ -248,7 +248,7 @@ class RealTimeFeatureStore:
         if existing is not None and existing == descriptor:
             return
         ttl_ms = descriptor.ttl_milliseconds
-        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+        async with self._db_pool.acquire() as conn:
             await conn.execute(
                 """
                 INSERT INTO feature_registry (feature_name, feature_version, entity, ttl_ms, schema, description)
@@ -325,14 +325,14 @@ class RealTimeFeatureStore:
         stream_key = descriptor.stream_key
         cache_key = descriptor.cache_key(entity_id)
         payload_json = json.dumps(payload, separators=(",", ":"))
-        async with self._redis.pipeline(transaction=False) as pipe:  # type: ignore[attr-defined]
+        async with self._redis.pipeline(transaction=False) as pipe:
             pipe.xadd(stream_key, payload, maxlen=self._stream_maxlen, approximate=True)
             pipe.set(cache_key, payload_json, px=ttl_ms)
             await pipe.execute()
 
     async def _write_to_timescale(self, record: FeatureRecord) -> bool:
         lineage_json = json.dumps(record.lineage.asdict()) if record.lineage else None
-        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+        async with self._db_pool.acquire() as conn:
             command_tag = await conn.execute(
                 """
                 INSERT INTO feature_values (feature_name, feature_version, entity_id, event_ts, value, lineage)
@@ -353,7 +353,7 @@ class RealTimeFeatureStore:
             return command_tag.endswith("1")
 
     async def _delete_from_timescale(self, record: FeatureRecord) -> None:
-        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+        async with self._db_pool.acquire() as conn:
             await conn.execute(
                 """
                 DELETE FROM feature_values
@@ -400,12 +400,12 @@ class RealTimeFeatureStore:
         if cached is not None:
             return cached
 
-        payload_json = await self._redis.get(cache_key)  # type: ignore[attr-defined]
+        payload_json = await self._redis.get(cache_key)
         if payload_json:
             if isinstance(payload_json, (bytes, bytearray, memoryview)):
                 payload_text = bytes(payload_json).decode("utf-8")
             else:
-                payload_text = payload_json  # type: ignore[assignment]
+                payload_text = payload_json
             payload = json.loads(payload_text)
             record = FeatureRecord.from_redis_payload(descriptor, payload)
             ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
@@ -413,7 +413,7 @@ class RealTimeFeatureStore:
             return record
 
         # Fallback to TimescaleDB when cache misses occur.
-        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+        async with self._db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
                 SELECT value, event_ts, lineage
@@ -457,7 +457,7 @@ class RealTimeFeatureStore:
         """Retrieve the feature as of a particular timestamp for backtesting."""
 
         as_of = as_of.astimezone(timezone.utc)
-        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+        async with self._db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
                 SELECT value, event_ts, lineage
@@ -501,7 +501,7 @@ class RealTimeFeatureStore:
         """Sync offline records into Redis cache to guarantee parity."""
 
         cutoff = (cutoff or datetime.now(timezone.utc)).astimezone(timezone.utc)
-        async with self._db_pool.acquire() as conn:  # type: ignore[union-attr]
+        async with self._db_pool.acquire() as conn:
             for batch in _chunked(tuple(entity_ids), chunk_size):
                 rows = await conn.fetch(
                     """
@@ -579,7 +579,7 @@ class RealTimeFeatureStore:
         """Read incremental updates from Redis Streams for downstream consumers."""
 
         stream_key = descriptor.stream_key
-        response = await self._redis.xread(  # type: ignore[attr-defined]
+        response = await self._redis.xread(
             streams={stream_key: last_id},
             count=count,
             block=block_ms,

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
-from mutmut.__main__ import (  # type: ignore[import-untyped]
+from mutmut.__main__ import (
     SourceFileMutationData,
     ensure_config_loaded,
     status_by_exit_code,

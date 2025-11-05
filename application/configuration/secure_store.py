@@ -240,7 +240,7 @@ class CentralConfigurationStore:
             include_metadata=include_metadata,
         )
         if include_metadata:
-            raw_value, metadata = raw  # type: ignore[assignment]
+            raw_value, metadata = raw
             return json.loads(raw_value), metadata
         return json.loads(raw)  # type: ignore[arg-type]
 

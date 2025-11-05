@@ -26,7 +26,7 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._collector = collector or get_metrics_collector()
 
-    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+    async def dispatch(self, request: Request, call_next):
         if not self._collector.enabled:
             return await call_next(request)
 

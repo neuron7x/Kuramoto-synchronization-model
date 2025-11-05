@@ -559,7 +559,7 @@ class KafkaIngestionService:
             self._hot_cache.update(tick)
 
     async def _build_consumer(self) -> Any:
-        from aiokafka import AIOKafkaConsumer  # type: ignore
+        from aiokafka import AIOKafkaConsumer
 
         kwargs = {
             "bootstrap_servers": self._config.bootstrap_servers,
@@ -577,7 +577,7 @@ class KafkaIngestionService:
         return consumer
 
     async def _build_producer(self) -> Any:
-        from aiokafka import AIOKafkaProducer  # type: ignore
+        from aiokafka import AIOKafkaProducer
 
         kwargs = {
             "bootstrap_servers": self._config.bootstrap_servers,

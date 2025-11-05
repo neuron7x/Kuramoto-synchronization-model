@@ -164,7 +164,7 @@ except Exception:  # pragma: no cover - fallback for lightweight environments
     class _NXModule:  # pragma: no cover
         Graph = _SimpleGraph
 
-    nx = _NXModule()  # type: ignore[assignment]
+    nx = _NXModule()
 
 try:  # pragma: no cover - SciPy optional
     from scipy.spatial.distance import wasserstein_distance as W1

@@ -1205,7 +1205,7 @@ class PayloadGuardMiddleware(BaseHTTPMiddleware):
                             status_code=status.HTTP_400_BAD_REQUEST,
                             content={"detail": "Suspicious payload rejected."},
                         )
-                request._body = body  # type: ignore[attr-defined]
+                request._body = body
 
         return await call_next(request)
 
@@ -1390,7 +1390,7 @@ def configure_openapi(app: FastAPI) -> None:
         app.openapi_schema = schema
         return schema
 
-    app.openapi = custom_openapi  # type: ignore[assignment]
+    app.openapi = custom_openapi
 
 
 def create_app(
@@ -1596,7 +1596,7 @@ def create_app(
 
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
-        from prometheus_client import REGISTRY as prometheus_registry  # type: ignore
+        from prometheus_client import REGISTRY as prometheus_registry
         from prometheus_client import (
             ProcessCollector,
         )

@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 try:  # pragma: no cover - optional dependency
     import mlflow
 except Exception:  # pragma: no cover - fallback when MLflow is absent
-    mlflow = None  # type: ignore[assignment]
+    mlflow = None
 
 try:  # pragma: no cover - optional dependency
     import optuna

@@ -197,7 +197,7 @@ class ValuePredictor(nn.Module):
         nn.init.xavier_uniform_(self.fc2.weight)
         nn.init.zeros_(self.fc2.bias)
 
-    def forward(self, state: np.ndarray) -> float:  # type: ignore[override]
+    def forward(self, state: np.ndarray) -> float:
         tensor = torch.as_tensor(state, dtype=torch.float32)
         if tensor.ndim == 1:
             tensor = tensor.unsqueeze(0)

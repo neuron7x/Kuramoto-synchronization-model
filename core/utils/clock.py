@@ -29,7 +29,7 @@ def freeze_time(target: FrozenTimeInput) -> Iterator[datetime]:
     frozen_epoch = frozen.timestamp()
     frozen_naive = frozen.astimezone(timezone.utc).replace(tzinfo=None)
 
-    class FrozenDateTime(datetime):  # type: ignore[misc]
+    class FrozenDateTime(datetime):
         @classmethod
         def now(cls, tz: timezone | None = None) -> datetime:
             if tz is None:
@@ -40,7 +40,7 @@ def freeze_time(target: FrozenTimeInput) -> Iterator[datetime]:
         def utcnow(cls) -> datetime:
             return frozen_naive
 
-    class FrozenDate(date):  # type: ignore[misc]
+    class FrozenDate(date):
         @classmethod
         def today(cls) -> date:
             return frozen.date()

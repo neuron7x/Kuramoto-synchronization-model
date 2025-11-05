@@ -46,13 +46,13 @@ except Exception as exc:  # pragma: no cover - the dependencies are optional
     otel_context = None  # type: ignore[assignment]
     trace = None  # type: ignore[assignment]
     otel_baggage = None  # type: ignore[assignment]
-    JaegerExporter = None  # type: ignore[assignment]
+    JaegerExporter = None
     Resource = TracerProvider = BatchSpanProcessor = None  # type: ignore[assignment]
     TraceIdRatioBased = None  # type: ignore[assignment]
     Span = SpanKind = None  # type: ignore[assignment]
     TraceContextTextMapPropagator = None  # type: ignore[assignment]
-    CompositeTextMapPropagator = None  # type: ignore[assignment]
-    BaggagePropagator = None  # type: ignore[assignment]
+    CompositeTextMapPropagator = None
+    BaggagePropagator = None
     get_global_textmap = set_global_textmap = None  # type: ignore[assignment]
     _TRACE_AVAILABLE = False
 
@@ -111,8 +111,8 @@ if _TRACE_AVAILABLE:
 else:  # pragma: no cover - tracing stack unavailable
     _DICT_SETTER = _DICT_GETTER = None  # type: ignore[assignment]
     _W3C_PROPAGATOR = None  # type: ignore[assignment]
-    _BAGGAGE_PROPAGATOR = None  # type: ignore[assignment]
-    _GLOBAL_PROPAGATOR = None  # type: ignore[assignment]
+    _BAGGAGE_PROPAGATOR = None
+    _GLOBAL_PROPAGATOR = None
 
 
 @dataclass(frozen=True)

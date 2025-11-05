@@ -284,7 +284,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
 
     # ------------------------------------------------------------------
     # Overrides to align with Kraken API semantics
-    def cancel_order(self, order_id: str) -> bool:  # type: ignore[override]
+    def cancel_order(self, order_id: str) -> bool:
         path, payload = self._cancel_endpoint(order_id)
         response = self._request("POST", path, params=payload, signed=True)
         result = response.get("result") if isinstance(response, Mapping) else {}
@@ -295,7 +295,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
                 self._orders[order_id].cancel()
         return True
 
-    def fetch_order(self, order_id: str) -> Order:  # type: ignore[override]
+    def fetch_order(self, order_id: str) -> Order:
         path, payload = self._fetch_endpoint(order_id)
         response = self._request("POST", path, params=payload, signed=True)
         parsed = self._parse_order(response, original=self._orders.get(order_id))
@@ -303,7 +303,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             self._orders[parsed.order_id or order_id] = parsed
         return parsed
 
-    def open_orders(self) -> list[Order]:  # type: ignore[override]
+    def open_orders(self) -> list[Order]:
         path, payload = self._open_orders_endpoint()
         response = self._request("POST", path, params=payload, signed=True)
         result = response.get("result") if isinstance(response, Mapping) else {}
@@ -326,7 +326,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
                     self._orders[order.order_id] = order
         return orders
 
-    def get_positions(self) -> list[dict]:  # type: ignore[override]
+    def get_positions(self) -> list[dict]:
         path, payload = self._positions_endpoint()
         response = self._request("POST", path, params=payload, signed=True)
         return self._parse_positions(response)

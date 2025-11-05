@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 from fastapi import HTTPException, Request, status
 
 from src.admin.remote_control import AdminIdentity

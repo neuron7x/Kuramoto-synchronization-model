@@ -158,7 +158,7 @@ def _to_json_string(content: Mapping[str, float | Mapping[str, float]]) -> str:
     import json
 
     class NpEncoder(json.JSONEncoder):
-        def default(self, obj):  # type: ignore[override]
+        def default(self, obj):
             if isinstance(obj, np.floating):
                 return float(obj)
             if isinstance(obj, np.integer):

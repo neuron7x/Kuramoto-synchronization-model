@@ -75,7 +75,7 @@ class BinanceExecutionConnector(AuthenticatedRESTExecutionConnector):
     # Lifecycle
     # ------------------------------------------------------------------
 
-    def connect(self, credentials: Mapping[str, str] | None = None) -> None:  # type: ignore[override]
+    def connect(self, credentials: Mapping[str, str] | None = None) -> None:
         super().connect(credentials=credentials)
         if self._stream_requested:
             self._initialise_stream()

@@ -111,7 +111,7 @@ class MetricsCollector:
 
             if multiprocess_dir:
                 try:
-                    from prometheus_client import multiprocess  # type: ignore
+                    from prometheus_client import multiprocess
                 except ImportError:
                     # Multiprocess collector isn't available; fall back to defaults.
                     pass

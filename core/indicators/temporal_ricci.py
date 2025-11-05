@@ -157,14 +157,14 @@ class OllivierRicciCurvatureLite:
     def _shortest_path_length(self, G: LightGraph, source: int, target: int) -> int:
         if hasattr(G, "shortest_path_length"):
             try:
-                length = G.shortest_path_length(source, target)  # type: ignore[attr-defined]
+                length = G.shortest_path_length(source, target)
                 return int(length)
             except TypeError:
                 # networkx exposes the function as module-level helper
                 pass
 
         try:  # pragma: no cover - optional dependency
-            import networkx as nx  # type: ignore
+            import networkx as nx
         except Exception:
             visited = {source}
             queue: Deque[Tuple[int, int]] = deque([(source, 0)])

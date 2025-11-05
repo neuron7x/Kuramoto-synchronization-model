@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
 from sqlalchemy.exc import DBAPIError, DisconnectionError, InterfaceError, OperationalError
-from tenacity import (  # type: ignore[import-not-found]
+from tenacity import (
     Retrying,
     before_sleep_log,
     retry_if_exception,

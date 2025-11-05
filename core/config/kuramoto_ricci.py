@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pydantic
-import yaml  # type: ignore[import-untyped]
+import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -40,7 +40,7 @@ if (
             if not normalized:
                 msg = "AliasChoices requires at least one non-empty alias"
                 raise ValueError(msg)
-            return super().__new__(cls, normalized)  # type: ignore[misc]
+            return super().__new__(cls, normalized)
 
         def __repr__(self) -> str:  # pragma: no cover - debug helper
             joined = ", ".join(self)

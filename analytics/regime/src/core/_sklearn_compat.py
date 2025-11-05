@@ -221,7 +221,7 @@ class TimeSeriesSplit:
 
 def check_random_state(seed: np.random.RandomState | int | None) -> np.random.RandomState:
     if seed is None or seed is np.random:
-        return np.random.mtrand._rand  # type: ignore[attr-defined]
+        return np.random.mtrand._rand
     if isinstance(seed, (int, np.integer)):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):

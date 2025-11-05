@@ -17,8 +17,8 @@ try:  # pragma: no cover - optional dependency guard
     from torch import Tensor, nn
     from torch.distributions import Categorical
 except Exception as exc:  # pragma: no cover - optional dependency guard
-    torch = None  # type: ignore[assignment]
-    Tensor = nn = Categorical = None  # type: ignore[assignment]
+    torch = None
+    Tensor = nn = Categorical = None
     _IMPORT_ERROR = exc
 else:
     _IMPORT_ERROR = None
@@ -62,7 +62,7 @@ if torch is not None and nn is not None:
             self._propagator = nn.Linear(hidden_dim, hidden_dim)
             self._activation = nn.Tanh()
 
-        def forward(self, features: Tensor) -> Tensor:  # type: ignore[override]
+        def forward(self, features: Tensor) -> Tensor:
             if features.ndim != 2 or features.size(1) != 1:
                 raise ValueError("features must be of shape [num_nodes, 1]")
             if features.size(0) != self._adjacency.size(0):
@@ -112,12 +112,12 @@ if torch is not None and nn is not None:
             self._device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
             adjacency_tensor = adjacency_tensor.to(self._device)
             self._graph = _NeuroGraphEncoder(adjacency_tensor, hidden_dim).to(self._device)
-            self._actor = nn.Sequential(  # type: ignore[operator]
+            self._actor = nn.Sequential(
                 nn.Linear(1, hidden_dim),
                 nn.Tanh(),
                 nn.Linear(hidden_dim, 1),
             ).to(self._device)
-            self._critic = nn.Sequential(  # type: ignore[operator]
+            self._critic = nn.Sequential(
                 nn.Linear(hidden_dim, hidden_dim),
                 nn.Tanh(),
                 nn.Linear(hidden_dim, 1),
@@ -145,7 +145,7 @@ if torch is not None and nn is not None:
                 raise ValueError("adjacency must be a square matrix")
             return tensor
 
-        def forward(self, features: Tensor) -> Tensor:  # type: ignore[override]
+        def forward(self, features: Tensor) -> Tensor:
             return self._graph(features)
 
         def _coerce_state(self, state: float | int) -> float:
@@ -303,7 +303,7 @@ if torch is not None and nn is not None:
 
 else:
 
-    class AdvancedNeuroEconCore:  # type: ignore[too-many-ancestors]
+    class AdvancedNeuroEconCore:
         """Fallback that raises a descriptive error when PyTorch is unavailable."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:  # noqa: D401 - simple guard

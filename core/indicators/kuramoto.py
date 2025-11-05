@@ -42,11 +42,11 @@ def _log_debug_enabled() -> bool:
 
 
 try:
-    from scipy import fft as _scipy_fft  # type: ignore
+    from scipy import fft as _scipy_fft
 
     _scipy_fft.set_workers(1)  # pragma: no cover - optional tuning
 except Exception:  # fallback if SciPy not installed
-    _scipy_fft = None  # type: ignore[assignment]
+    _scipy_fft = None
 
 try:
     from scipy.signal import hilbert
@@ -366,7 +366,7 @@ def multi_asset_kuramoto(
 
 # Optional GPU acceleration via CuPy (if available)
 try:
-    import cupy as cp  # type: ignore
+    import cupy as cp
 except Exception:
     cp = None
 

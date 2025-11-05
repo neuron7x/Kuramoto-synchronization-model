@@ -75,7 +75,7 @@ def _redact_sensitive_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
             return _REDACTED_VALUE
         return value
 
-    return _redact(dict(payload))  # type: ignore[arg-type]
+    return _redact(dict(payload))
 
 
 class AuditRecord(BaseModel):
