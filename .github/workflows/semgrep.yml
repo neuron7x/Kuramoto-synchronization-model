@@ -10,7 +10,7 @@ on:
 
 jobs:
   semgrep:
-    name: Semgrep Scan
+    name: Semgrep Scan (Python/TS/Rust/Go)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,6 +27,7 @@ jobs:
       
       - name: Run Semgrep
         run: |
+          # Semgrep auto config covers Python, TypeScript, Rust, Go and more
           semgrep scan \
             --config auto \
             --sarif \
