@@ -34,10 +34,9 @@ def calculate_position_size(
         ValueError: If balance is negative or price is non-positive.
     """
 
-    if balance < 0:
-        raise ValueError("balance must be non-negative")
-    
-    if price <= 0:
+    if balance < 0 or price <= 0:
+        if balance < 0:
+            raise ValueError("balance must be non-negative")
         raise ValueError("price must be positive")
 
     clipped_risk = max(0.0, min(risk, 1.0))
