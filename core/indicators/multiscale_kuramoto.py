@@ -13,6 +13,7 @@ try:  # SciPy is optional in lightweight environments
 except Exception:  # pragma: no cover - executed when SciPy unavailable
     _signal = None
 
+from . import fractal_gcl as _fractal_gcl
 from .base import BaseFeature, FeatureResult
 from .cache import FileSystemIndicatorCache, hash_input_data
 
@@ -661,6 +662,29 @@ class MultiScaleKuramotoFeature(BaseFeature):
         return feature
 
 
+def multiscale_kuramoto(phases: np.ndarray, K: float = 1.0) -> float:
+    """Return the Kuramoto order parameter for a batch of phase observations."""
+
+    if K <= 0:
+        raise ValueError("K must be positive")
+    phase_array = np.asarray(phases, dtype=float)
+    if phase_array.size == 0:
+        return 0.0
+    order = np.exp(1j * phase_array)
+    order_parameter = np.abs(np.mean(order))
+    return float(order_parameter)
+
+
+def fractal_gcl_novelty(
+    graph: nx.Graph,
+    embeddings_i: np.ndarray,
+    embeddings_j: np.ndarray,
+) -> tuple[float, float]:
+    """Convenience wrapper exposing fractal novelty estimates to FHMC."""
+
+    return _fractal_gcl.fractal_gcl_novelty(graph, embeddings_i, embeddings_j)
+
+
 __all__ = [
     "MultiScaleKuramoto",
     "MultiScaleKuramotoFeature",
@@ -669,6 +693,8 @@ __all__ = [
     "TimeFrame",
     "WaveletWindowSelector",
     "FractalResampler",
+    "multiscale_kuramoto",
+    "fractal_gcl_novelty",
 ]
 
 
