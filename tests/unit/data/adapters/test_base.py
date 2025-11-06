@@ -45,7 +45,8 @@ def test_retry_config_compute_backoff_applies_jitter(
         calls.append((low, high))
         return high  # return the max jitter so the result is deterministic
 
-    monkeypatch.setattr(base.random, "uniform", fake_uniform)
+    # Patch the SystemRandom instance's uniform method
+    monkeypatch.setattr(config._rng, "uniform", fake_uniform)
 
     delay = config.compute_backoff(attempt_number=2)
     assert math.isclose(delay, 3.0, rel_tol=1e-9)
@@ -61,7 +62,8 @@ def test_retry_config_compute_backoff_respects_max_backoff(
         # Use the maximum jitter to attempt to exceed max_backoff.
         return high
 
-    monkeypatch.setattr(base.random, "uniform", fake_uniform)
+    # Patch the SystemRandom instance's uniform method
+    monkeypatch.setattr(config._rng, "uniform", fake_uniform)
 
     delay = config.compute_backoff(attempt_number=3)
     assert delay == pytest.approx(config.max_backoff)
