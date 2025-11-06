@@ -1,5 +1,9 @@
 name: Version Gate
 
+concurrency:
+  group: version-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
