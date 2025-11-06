@@ -15,8 +15,26 @@ def test_toy_market_step_shapes():
     assert expected_keys <= info.keys()
 
 
+def test_toy_market_deterministic_rng():
+    seed = 42
+    env_a = ToyMarketEnv(dim_state=8, dim_action=2, rng=np.random.default_rng(seed))
+    env_b = ToyMarketEnv(dim_state=8, dim_action=2, rng=np.random.default_rng(seed))
+    action = np.zeros(2, dtype=np.float32)
+    env_a.reset()
+    env_b.reset()
+
+    for _ in range(5):
+        reward_a, state_a, info_a = env_a.step(action)
+        reward_b, state_b, info_b = env_b.step(action)
+        assert reward_a == reward_b
+        np.testing.assert_allclose(state_a, state_b)
+        assert info_a.keys() == info_b.keys()
+        for key in info_a:
+            assert np.isclose(info_a[key], info_b[key])
+
+
 def test_regime_shift_switching():
-    env = RegimeShiftEnv(dim_state=8, dim_action=2, T=100)
+    env = RegimeShiftEnv(dim_state=8, dim_action=2, T=100, rng=np.random.default_rng(7))
     env.reset()
     rewards = []
     for _ in range(10):

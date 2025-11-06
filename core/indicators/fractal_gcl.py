@@ -45,9 +45,13 @@ def fd_one_shot(graph: nx.Graph, boxes: Sequence[Sequence[int]]) -> float:
     lengths = np.maximum(np.array([len(box) for box in boxes], dtype=float), 1.0)
     counts = float(len(boxes))
     x = np.log(lengths + 1e-8)
+    if np.allclose(x, x[0]):
+        return 0.0
+
     y = np.log(np.full_like(lengths, fill_value=counts))
-    coeffs = np.polyfit(x, y, deg=1)
-    return float(abs(coeffs[0]))
+    design = np.column_stack([x, np.ones_like(x)])
+    slope, _intercept = np.linalg.lstsq(design, y, rcond=None)[0]
+    return float(abs(slope))
 
 
 def contrastive_loss_fractal(
