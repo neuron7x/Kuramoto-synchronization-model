@@ -9,6 +9,19 @@ from core.indicators.multiscale_kuramoto import multiscale_kuramoto, fractal_gcl
 from utils.change_point import cusum_score, vol_shock
 
 
+def _max_drawdown(returns: np.ndarray) -> float:
+    """Return the maximum drawdown of ``returns`` as a positive scalar."""
+
+    values = np.asarray(returns, dtype=float)
+    if values.size == 0:
+        return 0.0
+
+    cumulative = np.cumsum(values)
+    peaks = np.maximum.accumulate(np.concatenate(([0.0], cumulative)))
+    drawdowns = peaks[1:] - cumulative
+    return float(np.max(drawdowns))
+
+
 class ToyMarketEnv:
     def __init__(
         self,
@@ -41,10 +54,7 @@ class ToyMarketEnv:
         self.latent = 0.95 * self.latent + 0.05 * reward * 100.0
         state = self._rng.standard_normal(self.dim_state).astype(np.float32)
 
-        cumulative = np.cumsum(self.returns)
-        peak = np.maximum.accumulate(np.append(0.0, cumulative))
-        drawdowns = cumulative - peak[1:]
-        max_drawdown = float(min(0.0, drawdowns.min())) if drawdowns.size else 0.0
+        max_drawdown = _max_drawdown(np.array(self.returns, dtype=float))
 
         volshock = vol_shock(np.array(self.returns), window=min(60, len(self.returns)))
         cp = cusum_score(np.array(self.returns[-300:])) if len(self.returns) > 100 else 0.0
@@ -61,7 +71,7 @@ class ToyMarketEnv:
 
         info = {
             "latent": float(self.latent),
-            "maxdd": abs(max_drawdown),
+            "maxdd": float(max_drawdown),
             "volshock": float(volshock),
             "cp": float(cp),
             "exp_ret": float(reward),
@@ -103,10 +113,7 @@ class RegimeShiftEnv(ToyMarketEnv):
         self.latent = 0.9 * self.latent + 0.1 * reward * 100.0
         state = self._rng.standard_normal(self.dim_state).astype(np.float32)
 
-        cumulative = np.cumsum(self.returns)
-        peak = np.maximum.accumulate(np.append(0.0, cumulative))
-        drawdowns = cumulative - peak[1:]
-        max_drawdown = float(min(0.0, drawdowns.min())) if drawdowns.size else 0.0
+        max_drawdown = _max_drawdown(np.array(self.returns, dtype=float))
 
         volshock = vol_shock(np.array(self.returns), window=min(60, len(self.returns)))
         cp = cusum_score(np.array(self.returns[-300:])) if len(self.returns) > 100 else 0.0
@@ -123,7 +130,7 @@ class RegimeShiftEnv(ToyMarketEnv):
 
         info = {
             "latent": float(self.latent),
-            "maxdd": abs(max_drawdown),
+            "maxdd": float(max_drawdown),
             "volshock": float(volshock),
             "cp": float(cp),
             "exp_ret": float(reward),
