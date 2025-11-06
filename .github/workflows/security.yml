@@ -62,7 +62,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-    
+
     - name: Run TruffleHog
       uses: trufflesecurity/trufflehog@main
       with:
@@ -421,7 +421,7 @@ jobs:
       with:
         category: "/language:${{ matrix.language }}"
         upload: true
-    
+
     - name: Check for critical findings
       if: always()
       run: |
@@ -429,7 +429,7 @@ jobs:
         # GitHub CodeQL action already uploads results to Security tab
         # We check the API for critical/high alerts
         echo "Checking for critical/high severity CodeQL findings for ${{ matrix.language }}..."
-        
+
         # Note: In a real PR, GitHub's branch protection rules can be configured
         # to require CodeQL checks to pass. This is a placeholder for that check.
         echo "✓ CodeQL analysis complete for ${{ matrix.language }}. Review results in Security tab."
