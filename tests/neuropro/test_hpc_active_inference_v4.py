@@ -4,8 +4,10 @@ Tests for HPC-AI v4 module.
 
 import pytest
 import torch
+import torch.nn as nn
 import pandas as pd
 import numpy as np
+from typing import Tuple
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
     generate_synthetic_data,
@@ -119,12 +121,82 @@ class TestHPCActiveInferenceModule:
         assert sample_soft.shape == (1, 3)
         assert torch.allclose(sample_soft.sum(), torch.tensor(1.0), atol=1e-5)
 
+        # Deterministic sampling without noise
+        uniform_logits = torch.zeros(1, 3)
+        sample_deterministic = hpc_ai_model.gumbel_softmax_sample(
+            uniform_logits, temperature=0.1, hard=False, add_noise=False
+        )
+        assert torch.allclose(
+            sample_deterministic,
+            torch.full((1, 3), 1.0 / 3.0),
+            atol=1e-5,
+        )
+
     def test_decide_action(self, hpc_ai_model, synthetic_data):
         """Test action decision."""
         action = hpc_ai_model.decide_action(synthetic_data, prev_pwpe=0.0)
 
         assert isinstance(action, int)
         assert action in [0, 1, 2]  # Hold, Buy, Sell
+
+    def test_decide_action_low_pwpe_deterministic(self, hpc_ai_model):
+        """Identical logits with low PWPE should yield deterministic actions."""
+
+        class ConstantActor(nn.Module):
+            def __init__(self, logits: torch.Tensor):
+                super().__init__()
+                self.register_buffer("base_logits", logits)
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                return self.base_logits.unsqueeze(0).expand(x.size(0), -1)
+
+        constant_logits = torch.zeros(3, device=hpc_ai_model.device)
+        hpc_ai_model.actor = ConstantActor(constant_logits).to(hpc_ai_model.device)
+        hpc_ai_model.afferent_synthesis = lambda data: torch.zeros(
+            1, hpc_ai_model.state_dim, device=hpc_ai_model.device
+        )
+
+        def low_pwpe_forward(state: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+            return state, torch.tensor(0.05, device=hpc_ai_model.device)
+
+        hpc_ai_model.hpc_forward = low_pwpe_forward
+        hpc_ai_model.metastable_transition_gate = lambda pwpe, d: False
+
+        dummy_data = pd.DataFrame({"close": [1.0], "volume": [1.0]})
+        actions = [hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0) for _ in range(5)]
+
+        assert len(set(actions)) == 1
+
+    def test_decide_action_high_pwpe_explores(self, hpc_ai_model):
+        """High PWPE should promote exploratory, diverse actions."""
+
+        class ConstantActor(nn.Module):
+            def __init__(self, logits: torch.Tensor):
+                super().__init__()
+                self.register_buffer("base_logits", logits)
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                return self.base_logits.unsqueeze(0).expand(x.size(0), -1)
+
+        constant_logits = torch.zeros(3, device=hpc_ai_model.device)
+        hpc_ai_model.actor = ConstantActor(constant_logits).to(hpc_ai_model.device)
+        hpc_ai_model.afferent_synthesis = lambda data: torch.zeros(
+            1, hpc_ai_model.state_dim, device=hpc_ai_model.device
+        )
+
+        def high_pwpe_forward(state: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+            return state, torch.tensor(0.5, device=hpc_ai_model.device)
+
+        hpc_ai_model.hpc_forward = high_pwpe_forward
+        hpc_ai_model.metastable_transition_gate = lambda pwpe, d: False
+
+        dummy_data = pd.DataFrame({"close": [1.0], "volume": [1.0]})
+        actions = {
+            hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0)
+            for _ in range(20)
+        }
+
+        assert len(actions) > 1
 
     def test_get_state_representation(self, hpc_ai_model, synthetic_data):
         """Test getting state representation."""
