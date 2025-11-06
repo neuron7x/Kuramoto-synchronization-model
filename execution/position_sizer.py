@@ -1,4 +1,19 @@
-"""Shared utilities for position sizing across execution components."""
+"""Shared utilities for position sizing across execution components.
+
+This module provides the core position sizing calculation used throughout
+TradePulse for determining trade quantities based on risk budgets and
+leverage constraints. The implementation ensures:
+
+1. Risk-based capital allocation (fractional kelly)
+2. Leverage limit enforcement
+3. Floating-point precision safety
+4. Input validation for security
+
+Performance considerations:
+- Optimized for hot path usage in backtesting and live trading
+- Minimal branching for common case (valid inputs)
+- Early exit for zero positions
+"""
 
 from __future__ import annotations
 

@@ -302,15 +302,26 @@ def validate_timeseries_gaps(
         
     Raises:
         GapDetectionError: If unacceptable gaps are detected.
-        ValueError: If timestamp column is missing or invalid.
+        ValueError: If timestamp column is missing, invalid, or DataFrame is empty.
     """
+    # Validate DataFrame is not empty
+    if df.empty:
+        raise ValueError("DataFrame is empty, cannot validate gaps")
+    
     if timestamp_column not in df.columns:
         raise ValueError(
-            f"Timestamp column '{timestamp_column}' not found in DataFrame"
+            f"Timestamp column '{timestamp_column}' not found in DataFrame. "
+            f"Available columns: {', '.join(df.columns)}"
         )
     
     # Convert to DatetimeIndex if needed
-    timestamps = pd.to_datetime(df[timestamp_column])
+    try:
+        timestamps = pd.to_datetime(df[timestamp_column])
+    except Exception as e:
+        raise ValueError(
+            f"Failed to convert column '{timestamp_column}' to datetime: {e}"
+        ) from e
+    
     if not isinstance(timestamps, pd.DatetimeIndex):
         timestamps = pd.DatetimeIndex(timestamps)
     
@@ -324,9 +335,43 @@ def validate_timeseries_gaps(
     validator.validate_and_raise(timestamps)
 
 
+def quick_validate(
+    index: pd.DatetimeIndex,
+    frequency: str,
+    *,
+    strict: bool = True,
+) -> bool:
+    """Quick validation check for time series continuity.
+    
+    Convenience function for fast validation without raising exceptions.
+    Useful for conditional logic where you want to check validity without
+    exception handling overhead.
+    
+    Args:
+        index: DatetimeIndex to validate.
+        frequency: Expected sampling frequency (e.g., '1min', '1h').
+        strict: If True, any gap causes validation to fail.
+            If False, allows small gaps up to 2x the frequency.
+    
+    Returns:
+        bool: True if valid (no gaps or acceptable gaps), False otherwise.
+    
+    Example:
+        >>> if quick_validate(data.index, '1min'):
+        ...     process_data(data)
+        ... else:
+        ...     log_warning("Data has gaps, skipping")
+    """
+    max_gap = None if strict else f"{2 * pd.Timedelta(frequency).total_seconds()}s"
+    validator = GapValidator(frequency=frequency, max_gap_duration=max_gap)
+    is_valid, _ = validator.validate(index)
+    return is_valid
+
+
 __all__ = [
     "GapDetectionError",
     "GapValidator",
     "GapValidatorConfig",
     "validate_timeseries_gaps",
+    "quick_validate",
 ]
