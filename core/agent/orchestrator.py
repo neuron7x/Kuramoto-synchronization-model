@@ -70,6 +70,7 @@ class StrategyOrchestrationError(RuntimeError):
     ) -> None:
         self.errors: Dict[str, BaseException] = dict(errors)
         self.results: Dict[str, Sequence[EvaluationResult]] = dict(results)
+
         def _format_error(name: str, error: BaseException) -> str:
             detail = str(error)
             if not detail:
