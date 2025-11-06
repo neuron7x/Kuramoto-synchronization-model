@@ -2,6 +2,8 @@
 
 """Expose metric utilities for external consumers."""
 
+from .aperiodic import aperiodic_slope
+from .dfa import dfa_alpha
 from .microstructure import (
     MicrostructureReport,
     build_symbol_microstructure_report,
@@ -30,4 +32,6 @@ __all__ = [
     "r2_score",
     "root_mean_squared_error",
     "symmetric_mean_absolute_percentage_error",
+    "dfa_alpha",
+    "aperiodic_slope",
 ]
