@@ -1,4 +1,26 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Strategy memory and adaptive learning infrastructure.
+
+This module implements a memory system for trading agents that learn from past
+performance and adapt their behavior over time:
+
+- **StrategySignature**: Multi-dimensional fingerprint of market conditions
+  (Ricci flow, Hurst exponent, curvature, entropy, instability)
+- **StrategyRecord**: Performance records linking signatures to outcomes
+- **StrategyMemory**: Episodic memory for caching successful strategies
+- **AdaptiveLearning**: Context-aware strategy selection based on similarity
+
+The memory system enables agents to recognize market regimes similar to those
+they've seen before and apply strategies that worked well in those conditions,
+implementing a form of case-based reasoning for trading.
+
+Example:
+    >>> from core.agent.memory import StrategyMemory, StrategySignature
+    >>> memory = StrategyMemory(capacity=1000)
+    >>> sig = StrategySignature(R=0.95, delta_H=0.05, kappa_mean=0.3, 
+    ...                         entropy=2.1, instability=0.1)
+    >>> memory.store("momentum_strategy", sig, score=0.85)
+"""
 from __future__ import annotations
 
 import math
