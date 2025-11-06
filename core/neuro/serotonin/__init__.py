@@ -1,3 +1,7 @@
-from .serotonin_controller import SerotoninController
+from .serotonin_controller import (
+    SerotoninConfig,
+    SerotoninController,
+    _generate_config_table,
+)
 
-__all__ = ["SerotoninController"]
+__all__ = ["SerotoninController", "SerotoninConfig", "_generate_config_table"]

@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import json
 import logging
 import math
+from time import perf_counter
+
 import numpy as np
 import pytest
 import yaml
+from typing import Mapping
 
-from core.neuro.serotonin.serotonin_controller import SerotoninController
+from core.neuro.serotonin.serotonin_controller import (
+    SerotoninController,
+    _generate_config_table,
+    SerotoninConfig,
+)
 
 
 @pytest.fixture
@@ -33,11 +41,11 @@ def config_dict():
         "mod_t_max": 4.0,
         "mod_t_half": 24.0,
         "mod_k": 0.7,
-        "tau_5ht_ms": 0.0,
-        "step_ms": 0.0,
         "tick_hours": 1.0,
         "phase_kappa": 0.08,
         "desens_gain": 0.12,
+        "gate_veto": 0.9,
+        "phasic_veto": 1.0,
     }
 
 
@@ -106,6 +114,13 @@ def test_desens_counter_cap(controller):
     assert controller.desens_counter == 1000
 
 
+def test_desens_gain_controls_floor(controller):
+    controller.config["desens_gain"] = 2.0
+    for _ in range(150):
+        controller.compute_serotonin_signal(5.0)
+    assert controller.sensitivity == pytest.approx(0.1, rel=1e-6)
+
+
 def test_modulate_action_prob(controller):
     ser = 0.6
     prob = controller.modulate_action_prob(
@@ -149,6 +164,12 @@ def test_check_cooldown(controller):
     assert controller.check_cooldown(0.6) is False
 
 
+def test_gate_veto_configurable(controller):
+    controller.config["gate_veto"] = 0.5
+    controller.gate_level = 0.6
+    assert controller.check_cooldown(0.3) is True
+
+
 def test_meta_adapt_increases_weights_on_deep_drawdown(controller):
     cfg_before = controller.config.copy()
     controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
@@ -169,6 +190,20 @@ def test_meta_adapt_guard_reverts(controller):
     cfg_before = controller.config.copy()
     controller.meta_adapt({"drawdown": -0.1, "sharpe": 0.5})
     assert controller.config == cfg_before
+
+
+def test_meta_adapt_guard_payload(controller):
+    captured = {}
+
+    def guard(name: str, payload: Mapping[str, float]) -> bool:
+        captured["name"] = name
+        captured["payload"] = dict(payload)
+        return True
+
+    controller.set_tacl_guard(guard)
+    controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
+    assert captured["name"] == "serotonin_meta_adapt"
+    assert "modulation" in captured["payload"]
 
 
 def test_update_metrics(caplog, controller):
@@ -196,6 +231,115 @@ def test_save_and_to_dict(controller, tmp_path):
     assert "phasic_level" in state
     assert "gate_level" in state
     assert "decay_rate" in state
+
+
+def test_audit_file_created(controller, tmp_path):
+    out_path = tmp_path / "serotonin.yaml"
+    controller.save_config_to_yaml(str(out_path))
+    audit_dir = out_path.parent / "audit"
+    assert audit_dir.exists()
+    audits = list(audit_dir.glob("serotonin_*.yaml"))
+    assert audits, "expected audit snapshot"
+
+
+def test_phase_kappa_required(tmp_path, config_dict):
+    cfg = dict(config_dict)
+    cfg.pop("phase_kappa")
+    cfg_path = tmp_path / "serotonin.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(cfg, f)
+    with pytest.raises(ValueError):
+        SerotoninController(str(cfg_path))
+
+
+def test_env_config_dir_fallback(tmp_path, config_dict, monkeypatch):
+    env_dir = tmp_path / "envcfg"
+    env_dir.mkdir()
+    cfg_path = env_dir / "serotonin.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f)
+    monkeypatch.setenv("TRADEPULSE_CONFIG_DIR", str(env_dir))
+    controller = SerotoninController("missing.yaml")
+    assert controller.config_path == str(cfg_path)
+
+
+def test_tick_hours_modulation_effect(tmp_path, config_dict):
+    fast_cfg = dict(config_dict)
+    slow_cfg = dict(config_dict)
+    fast_cfg["tick_hours"] = 0.25
+    slow_cfg["tick_hours"] = 4.0
+    fast_path = tmp_path / "fast.yaml"
+    slow_path = tmp_path / "slow.yaml"
+    for path, cfg in ((fast_path, fast_cfg), (slow_path, slow_cfg)):
+        with open(path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(cfg, f)
+    fast = SerotoninController(str(fast_path))
+    slow = SerotoninController(str(slow_path))
+    fast.meta_adapt({"drawdown": -0.1, "sharpe": 1.5})
+    slow.meta_adapt({"drawdown": -0.1, "sharpe": 1.5})
+    assert fast.config["alpha"] != slow.config["alpha"]
+
+
+def test_rho_loss_clamping(controller):
+    base = controller.estimate_aversive_state(1.0, 0.5, 0.2, 10.0)
+    clamped = controller.estimate_aversive_state(1.0, 0.5, 0.2, 1.0)
+    assert base == clamped
+    neg = controller.estimate_aversive_state(1.0, 0.5, 0.2, -10.0)
+    lower = controller.estimate_aversive_state(1.0, 0.5, 0.2, -1.0)
+    assert neg == lower
+
+
+def test_serotonin_monotonicity(controller):
+    responses = [controller.compute_serotonin_signal(val) for val in np.linspace(0, 3, 15)]
+    assert responses == sorted(responses)
+    assert all(0.0 <= r <= 1.0 for r in responses)
+
+
+def test_config_schema_and_table(controller):
+    schema = controller.config_schema()
+    assert "properties" in schema
+    table = _generate_config_table(schema)
+    assert "phase_kappa" in table
+    json.dumps(schema)
+
+
+def test_to_dict_snapshot(controller):
+    controller.compute_serotonin_signal(1.2)
+    controller.compute_serotonin_signal(0.6)
+    snapshot = controller.to_dict()
+    assert json.dumps(snapshot, sort_keys=True)
+    assert snapshot["gate_level"] == controller.gate_level
+
+
+def test_compute_serotonin_signal_performance(controller):
+    start = perf_counter()
+    for _ in range(100_000):
+        controller.compute_serotonin_signal(0.8)
+    duration = perf_counter() - start
+    assert duration < 1.5
+
+
+def test_missing_probability_raises(controller):
+    with pytest.raises(ValueError):
+        controller.modulate_action_prob(1.5)
+
+
+def test_serialisation_after_guard_rejection(tmp_path, config_dict):
+    cfg_path = tmp_path / "serotonin.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f)
+    controller = SerotoninController(str(cfg_path))
+    controller.set_tacl_guard(lambda name, payload: False)
+    controller.meta_adapt({"drawdown": -0.2, "sharpe": 0.5})
+    out = controller.to_dict()
+    assert out["alpha"] == pytest.approx(config_dict["alpha"], rel=1e-6)
+
+
+def test_config_table_matches_schema():
+    schema = SerotoninConfig.model_json_schema()
+    table = _generate_config_table(schema)
+    for key in SerotoninConfig.model_json_schema()["properties"].keys():
+        assert key in table
 
 
 def test_tau_to_decay_derivation(tmp_path, config_dict):

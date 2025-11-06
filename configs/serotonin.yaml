@@ -24,3 +24,5 @@ tau_5ht_ms: 150.0
 step_ms: 1000.0
 tick_hours: 1.0
 phase_kappa: 0.08
+gate_veto: 0.9
+phasic_veto: 1.0

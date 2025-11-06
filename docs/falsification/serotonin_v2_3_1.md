@@ -17,5 +17,6 @@
 
 ## Reporting
 - Track telemetry: `serotonin_tonic_level`, `serotonin_phasic_level`, `serotonin_gate_level`, `serotonin_sensitivity`, `serotonin_level`, `serotonin_alpha_drift`, `serotonin_beta_drift`, `serotonin_gamma_drift`.
+- Record guard decisions via `serotonin_cooldown_guard{controller_version="v2.3.1"}` and `serotonin_meta_adapt_guard{controller_version="v2.3.1"}`.
 - Archive replay manifests, seeds, and statistical summaries in `reports/neuro/serotonin/v2_3_1/`.
 - If any null hypothesis cannot be rejected, regress to v2.2 parameters or iterate with revised gating/desensitisation constants before production rollout.
