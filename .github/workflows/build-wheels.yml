@@ -10,13 +10,11 @@ on:
       - '**.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
-      - '.github/workflows/**'
   pull_request:
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
-      - '.github/workflows/**'
 
 concurrency:
   group: build-wheels-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
