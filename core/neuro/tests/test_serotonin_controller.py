@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import numpy as np
 import pytest
 import yaml
@@ -25,17 +26,18 @@ def config_dict():
         "target_dd": -0.05,
         "target_sharpe": 1.0,
         "beta_temper": 0.12,
+        "max_desens_counter": 1000,
     }
 
 
 @pytest.fixture
 def controller(tmp_path, config_dict):
     cfg_path = tmp_path / "serotonin.yaml"
-    with open(cfg_path, "w") as f:
+    with open(cfg_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(config_dict, f)
 
     def stub_logger(name: str, value: float) -> None:
-        return None
+        logging.getLogger(__name__).info("%s: %s", name, value)
 
     return SerotoninController(str(cfg_path), logger=stub_logger)
 
@@ -49,6 +51,11 @@ def test_aversive_state(controller):
     )
     expected = 0.42 * 1.0 + 0.28 * 0.5 + 0.32 * 0.2 + 0.18 * (1 - (-0.90))
     assert s == pytest.approx(expected, rel=1e-3)
+
+
+def test_aversive_state_validation(controller):
+    with pytest.raises(ValueError):
+        controller.estimate_aversive_state(-1.0, 0.5, 0.2, -0.90)
 
 
 def test_serotonin_signal_updates_tonic_and_sensitivity(controller):
@@ -66,17 +73,28 @@ def test_serotonin_signal_updates_tonic_and_sensitivity(controller):
     assert controller.serotonin_level == pytest.approx(ser2, rel=1e-6)
 
 
+def test_serotonin_signal_validation(controller):
+    with pytest.raises(ValueError):
+        controller.compute_serotonin_signal(-1.0)
+
+
 def test_desensitization_and_recovery(controller):
     for _ in range(150):
         controller.compute_serotonin_signal(2.0)
     assert controller.sensitivity < 1.0
-    assert controller.sensitivity <= 0.6
+    assert controller.sensitivity == 0.1
 
     sens_before = controller.sensitivity
     for _ in range(50):
         controller.compute_serotonin_signal(0.1)
-    assert controller.sensitivity >= sens_before
+    assert controller.sensitivity > sens_before
     assert controller.sensitivity <= 1.0
+
+
+def test_desens_counter_cap(controller):
+    for _ in range(2000):
+        controller.compute_serotonin_signal(2.0)
+    assert controller.desens_counter == 1000
 
 
 def test_modulate_action_prob(controller):
@@ -91,6 +109,11 @@ def test_modulate_action_prob(controller):
     assert prob == pytest.approx(expected, rel=1e-3)
 
 
+def test_modulate_action_prob_validation(controller):
+    with pytest.raises(ValueError):
+        controller.modulate_action_prob(-0.1)
+
+
 def test_apply_internal_shift(controller):
     ser = controller.compute_serotonin_signal(1.5)
     grad = 2.0
@@ -101,6 +124,11 @@ def test_apply_internal_shift(controller):
     )
     expected = grad * (1 - 0.12 * ser)
     assert shifted == pytest.approx(expected, rel=1e-3)
+
+
+def test_apply_internal_shift_validation(controller):
+    with pytest.raises(ValueError):
+        controller.apply_internal_shift(-1.0)
 
 
 def test_check_cooldown(controller):
@@ -115,12 +143,20 @@ def test_meta_adapt_increases_weights_on_deep_drawdown(controller):
     assert controller.config["gamma"] == pytest.approx(cfg_before["gamma"] * 1.01, rel=1e-3)
 
 
+def test_update_metrics(caplog, controller):
+    caplog.set_level(logging.INFO)
+    controller.update_metrics()
+    assert "serotonin_level" in caplog.text
+    assert "serotonin_tonic_level" in caplog.text
+    assert "serotonin_sensitivity" in caplog.text
+
+
 def test_save_and_to_dict(controller, tmp_path):
     controller.config["alpha"] *= 1.05
     out_path = tmp_path / "out_serotonin.yaml"
     controller.save_config_to_yaml(str(out_path))
     assert out_path.exists()
-    with open(out_path, "r") as f:
+    with open(out_path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     assert cfg["alpha"] == pytest.approx(controller.config["alpha"], rel=1e-6)
     state = controller.to_dict()

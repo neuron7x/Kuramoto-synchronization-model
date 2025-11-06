@@ -13,3 +13,4 @@ desens_rate: 0.01
 target_dd: -0.05
 target_sharpe: 1.0
 beta_temper: 0.12
+max_desens_counter: 1000
