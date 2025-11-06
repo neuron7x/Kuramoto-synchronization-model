@@ -1169,7 +1169,12 @@ class FHMC:
                 window_size=2000,
                 alpha_target=tuple(root_cfg.get("alpha_target", [0.8, 1.0])),
             )
-        except ImportError:
+        except ImportError as e:
+            import logging
+            logging.warning(
+                f"Online biomarker monitoring unavailable: {e}. "
+                "Install required dependencies or check core.metrics.online_biomarkers module."
+            )
             self._online_monitor = None
 
     @classmethod

@@ -43,6 +43,9 @@ class ContinualLearningEvaluator:
         
         Measures quality of experience replay in continual learning.
         Lower is better (0 = identical distributions).
+        
+        Note: Uses simplified FID without matrix square root for numerical stability.
+        For production use, consider scipy.linalg.sqrtm for exact FID.
         """
         real = np.asarray(real_embeddings, dtype=float).reshape(-1, self.task_dimension)
         generated = np.asarray(generated_embeddings, dtype=float).reshape(-1, self.task_dimension)
@@ -61,12 +64,16 @@ class ContinualLearningEvaluator:
         cov_real += np.eye(cov_real.shape[0]) * 1e-6
         cov_gen += np.eye(cov_gen.shape[0]) * 1e-6
         
-        # Compute FID
+        # Compute simplified FID (mean difference + trace terms)
         mu_diff = mu_real - mu_gen
         
-        # Simplified FID (without matrix sqrt for stability)
-        trace_term = np.trace(cov_real + cov_gen - 2 * np.sqrt(cov_real @ cov_gen))
-        fid = float(np.sum(mu_diff ** 2) + trace_term)
+        # Simplified version without matrix sqrt for stability
+        # Full FID would use: trace(cov_real + cov_gen - 2*sqrt(cov_real @ cov_gen))
+        # This approximation uses: trace(cov_real + cov_gen) - 2*trace(sqrt(diag(cov_real)*diag(cov_gen)))
+        trace_term = np.trace(cov_real) + np.trace(cov_gen)
+        cross_term = 2 * np.sum(np.sqrt(np.maximum(np.diag(cov_real) * np.diag(cov_gen), 0)))
+        
+        fid = float(np.sum(mu_diff ** 2) + trace_term - cross_term)
         
         return max(0.0, fid)
 

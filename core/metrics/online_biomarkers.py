@@ -159,10 +159,18 @@ class OnlineBiomarkerMonitor:
         """Detect non-fractal regime (white noise) when α → 0.5.
         
         Addresses audit weakness: "відсутність fallback для нефрактальних режимів"
+        
+        Args:
+            alpha: The DFA-α value to check
+            threshold: Maximum distance from 0.5 to consider white noise (default: 0.55)
+        
+        Returns:
+            True if alpha indicates white noise (close to 0.5)
         """
         if alpha is None:
             return True
-        return abs(alpha - 0.5) < threshold - 0.5
+        # White noise has α ≈ 0.5, so check if alpha is within a small range
+        return abs(alpha - 0.5) < (threshold - 0.5)
 
     def get_state(self) -> BiomarkerState:
         """Return current biomarker state for monitoring."""
