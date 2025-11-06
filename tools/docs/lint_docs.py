@@ -64,6 +64,9 @@ class HeadingFirstRule:
                 continue
             if not stripped:
                 continue
+            # Skip HTML comments (e.g., <!-- AUTO-GENERATED FILE. DO NOT EDIT. -->)
+            if stripped.startswith("<!--") and stripped.endswith("-->"):
+                continue
             if stripped.startswith("# "):
                 return []
             return [
