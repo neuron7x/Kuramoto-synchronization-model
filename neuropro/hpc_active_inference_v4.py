@@ -18,8 +18,19 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 from torch.optim import Adam
-from typing import Tuple
+from typing import Tuple, Optional
+from dataclasses import dataclass
 import warnings
+
+
+@dataclass
+class MetastableGateThresholds:
+    """Configurable thresholds governing the metastable transition gate."""
+
+    pwpe_lower: float = 0.08
+    pwpe_upper: float = 0.25
+    slope_lower: float = -0.02
+    slope_upper: float = 0.05
 
 
 class HPCActiveInferenceModuleV4(nn.Module):
@@ -37,6 +48,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
         hpc_levels: int = 3,
         reward_metrics: int = 3,
         learning_rate: float = 1e-4,
+        metastable_thresholds: Optional[MetastableGateThresholds] = None,
     ):
         """
         Initialize HPC-AI Module.
@@ -110,8 +122,12 @@ class HPCActiveInferenceModuleV4(nn.Module):
         self.pwpe_threshold_base = nn.Parameter(torch.tensor(0.2))
         self.k_uncertainty = 0.1
         self.l1_lambda = 0.01
-        self.dropout = nn.Dropout(0.1)
         self.gumbel_temp = 1.0
+
+        # Metastable gating thresholds
+        self.metastable_thresholds = (
+            metastable_thresholds or MetastableGateThresholds()
+        )
 
         # Move to device
         self.to(self.device)
@@ -348,12 +364,22 @@ class HPCActiveInferenceModuleV4(nn.Module):
         Returns:
             True if metastable transition detected (should hold)
         """
-        gate_input = torch.tensor([pwpe, d_pwpe_dt], dtype=torch.float32).to(
-            self.device
+        thresholds = self.metastable_thresholds
+        abs_pwpe = abs(pwpe)
+        slope = d_pwpe_dt
+
+        high_pwpe = abs_pwpe >= thresholds.pwpe_upper
+        fast_rise = slope >= thresholds.slope_upper
+        deeply_stable = (
+            abs_pwpe <= thresholds.pwpe_lower and slope <= thresholds.slope_lower
         )
-        gate_input = self.dropout(gate_input)
-        gate_value = torch.sigmoid(self.pwpe_threshold_base * gate_input.mean())
-        return gate_value.item() > 0.5
+
+        if high_pwpe or fast_rise:
+            return True
+        if deeply_stable:
+            return False
+
+        return abs_pwpe > thresholds.pwpe_lower and slope > 0.0
 
     def gumbel_softmax_sample(
         self, logits: torch.Tensor, temperature: float = 1.0, hard: bool = True

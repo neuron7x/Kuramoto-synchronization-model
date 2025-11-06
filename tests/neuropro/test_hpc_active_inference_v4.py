@@ -96,14 +96,18 @@ class TestHPCActiveInferenceModule:
 
     def test_metastable_transition_gate(self, hpc_ai_model):
         """Test metastable transition gate."""
-        # Low PWPE, low change -> should not trigger
-        gate1 = hpc_ai_model.metastable_transition_gate(0.1, 0.01)
-        
-        # High PWPE, high change -> may trigger
-        gate2 = hpc_ai_model.metastable_transition_gate(0.5, 0.3)
+        # Low PWPE with a mild negative slope should not hold
+        gate_low = hpc_ai_model.metastable_transition_gate(0.04, -0.01)
 
-        assert isinstance(gate1, bool)
-        assert isinstance(gate2, bool)
+        # Elevated PWPE should force a hold
+        gate_high = hpc_ai_model.metastable_transition_gate(0.4, 0.0)
+
+        # Sharply rising PWPE should also force a hold even if magnitude is moderate
+        gate_rising = hpc_ai_model.metastable_transition_gate(0.09, 0.08)
+
+        assert gate_low is False
+        assert gate_high is True
+        assert gate_rising is True
 
     def test_gumbel_softmax_sample(self, hpc_ai_model):
         """Test Gumbel-Softmax sampling."""
