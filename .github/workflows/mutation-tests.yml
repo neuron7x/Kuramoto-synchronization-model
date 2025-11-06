@@ -1,5 +1,9 @@
 name: Mutation Tests
 
+concurrency:
+  group: mutation-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 on:
   workflow_dispatch:
   schedule:

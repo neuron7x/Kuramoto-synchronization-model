@@ -1,12 +1,12 @@
 # CycloneDX SBOM Generation and Signing
-# 
+#
 # This workflow generates Software Bill of Materials (SBOM) in CycloneDX format,
 # signs them with Sigstore cosign (keyless), and verifies the signatures.
 #
 # Required Secrets:
 #   COSIGN_CERTIFICATE_IDENTITY - The certificate identity for keyless verification
 #     Example: "https://github.com/OWNER/REPO/.github/workflows/sbom.yml@refs/heads/main"
-#   
+#
 #   COSIGN_CERTIFICATE_OIDC_ISSUER - The OIDC issuer for keyless verification
 #     Example for GitHub Actions: "https://token.actions.githubusercontent.com"
 #
@@ -14,6 +14,10 @@
 #         the workflow file path (use your actual repository owner/name).
 #
 name: CycloneDX SBOM
+
+concurrency:
+  group: sbom-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -134,11 +138,11 @@ jobs:
           cosign sign-blob --yes \
             --bundle sbom/cyclonedx-sbom.json.bundle \
             sbom/cyclonedx-sbom.json
-          
+
           cosign sign-blob --yes \
             --bundle sbom/cyclonedx-sbom.xml.bundle \
             sbom/cyclonedx-sbom.xml
-          
+
           echo "✓ SBOM artifacts signed successfully"
 
       - name: Verify the secrets are set and run cosign verification
@@ -153,20 +157,20 @@ jobs:
             echo "❌ ERROR: Required repository secrets are not set."
             exit 1
           fi
-          
+
           # Verify the signatures with certificate identity and OIDC issuer
           cosign verify-blob \
             --certificate-identity "${COSIGN_CERT_IDENTITY}" \
             --certificate-oidc-issuer "${COSIGN_CERT_OIDC_ISSUER}" \
             --bundle sbom/cyclonedx-sbom.json.bundle \
             sbom/cyclonedx-sbom.json
-          
+
           cosign verify-blob \
             --certificate-identity "${COSIGN_CERT_IDENTITY}" \
             --certificate-oidc-issuer "${COSIGN_CERT_OIDC_ISSUER}" \
             --bundle sbom/cyclonedx-sbom.xml.bundle \
             sbom/cyclonedx-sbom.xml
-          
+
           echo "✓ SBOM signatures verified successfully"
 
       - name: Skip cosign verification (secrets missing)
@@ -185,14 +189,14 @@ jobs:
           if [ -f "$SBOM_FILE" ]; then
             SBOM_AGE=$(( $(date +%s) - $(stat -c %Y "$SBOM_FILE") ))
             SBOM_AGE_HOURS=$(( SBOM_AGE / 3600 ))
-            
+
             echo "SBOM age: ${SBOM_AGE_HOURS} hours"
-            
+
             if [ $SBOM_AGE_HOURS -ge 24 ]; then
               echo "❌ ERROR: SBOM is older than 24 hours"
               exit 1
             fi
-            
+
             echo "✓ SBOM is fresh (less than 24 hours old)"
           fi
 
