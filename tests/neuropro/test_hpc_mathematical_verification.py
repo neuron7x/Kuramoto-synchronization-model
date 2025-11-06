@@ -252,9 +252,17 @@ class TestSelfRewardFormulation:
         for _ in range(50):
             state = small_model.afferent_synthesis(data)
             action = torch.tensor([np.random.randint(0, 3)])
-            reward = np.random.uniform(-1, 1)
-            
-            small_model.sr_drl_step(state, action, reward, state, 0.15)
+            expert_metrics = torch.tensor(
+                [
+                    np.random.uniform(-1, 1),
+                    np.random.uniform(0, 0.5),
+                    np.random.uniform(-0.5, 0.5),
+                ],
+                dtype=torch.float32,
+            )
+            reward = small_model.compute_self_reward(expert_metrics, pwpe=0.15)
+
+            small_model.sr_drl_step(state, action, reward, expert_metrics, state, 0.15)
         
         # Alpha should remain in [0, 1] due to L1 regularization
         final_alpha = small_model.blending_alpha.item()
@@ -387,9 +395,17 @@ class TestNumericalStability:
         for _ in range(20):
             state = small_model.afferent_synthesis(data)
             action = torch.tensor([np.random.randint(0, 3)])
-            reward = np.random.uniform(-1, 1)
-            
-            small_model.sr_drl_step(state, action, reward, state, 0.15)
+            expert_metrics = torch.tensor(
+                [
+                    np.random.uniform(-1, 1),
+                    np.random.uniform(0, 0.5),
+                    np.random.uniform(-0.5, 0.5),
+                ],
+                dtype=torch.float32,
+            )
+            reward = small_model.compute_self_reward(expert_metrics, pwpe=0.15)
+
+            small_model.sr_drl_step(state, action, reward, expert_metrics, state, 0.15)
         
         # Precision weights should remain positive (they're initialized positive)
         for weight in small_model.precision_weights:

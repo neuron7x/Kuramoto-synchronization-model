@@ -272,6 +272,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
         state: torch.Tensor,
         action: torch.Tensor,
         reward: float,
+        expert_metrics: torch.Tensor,
         next_state: torch.Tensor,
         pwpe: float,
     ) -> float:
@@ -282,12 +283,20 @@ class HPCActiveInferenceModuleV4(nn.Module):
             state: Current state
             action: Action taken
             reward: Observed reward
+            expert_metrics: Expert performance metrics corresponding to reward
             next_state: Next state
             pwpe: Current PWPE
 
         Returns:
             TD error
         """
+        if expert_metrics is None:
+            raise ValueError("expert_metrics must be provided for SR-DRL updates")
+
+        expert_metrics_tensor = expert_metrics.to(self.device)
+        if expert_metrics_tensor.dim() == 1:
+            expert_metrics_tensor = expert_metrics_tensor.unsqueeze(0)
+
         # Compute TD error
         current_v = self.critic(state)
         next_v = self.critic(next_state)
@@ -296,16 +305,16 @@ class HPCActiveInferenceModuleV4(nn.Module):
         # Actor loss with perturbation rectification
         perturbation = torch.randn_like(state) * self.perturbation_scale
         perturbed_state = state + perturbation
-        
+
         action_logits = self.actor(state)
         perturbed_logits = self.actor(perturbed_state)
-        
+
         action_probs = F.softmax(action_logits, dim=-1)
         perturbed_probs = F.softmax(perturbed_logits, dim=-1)
-        
+
         selected_prob = action_probs.gather(1, action.unsqueeze(1).long()).squeeze()
         perturbed_selected = perturbed_probs.gather(1, action.unsqueeze(1).long()).squeeze()
-        
+
         actor_loss = (
             -torch.log(selected_prob + 1e-8) * td_error.detach()
             + 0.5 * (selected_prob - perturbed_selected).pow(2).mean()
@@ -315,11 +324,9 @@ class HPCActiveInferenceModuleV4(nn.Module):
         critic_loss = td_error.pow(2).mean()
 
         # Reward prediction loss
-        expert_reward = torch.tensor([[reward]], dtype=torch.float32).to(self.device)
-        reward_input = torch.tensor([[reward, 0.0, 0.0]], dtype=torch.float32).to(
-            self.device
-        )
-        reward_loss = F.mse_loss(self.reward_predictor(reward_input), expert_reward)
+        expert_reward = torch.tensor([[reward]], dtype=torch.float32, device=self.device)
+        predicted_reward = self.reward_predictor(expert_metrics_tensor)
+        reward_loss = F.mse_loss(predicted_reward, expert_reward)
 
         # L1 regularization on blending alpha
         l1_reg = self.l1_lambda * torch.abs(self.blending_alpha)

@@ -119,6 +119,7 @@ g_i = −log(−log U), U ∼ Uniform(0,1)
 ```python
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 import pandas as pd
+import torch
 
 # Initialize model
 model = HPCActiveInferenceModuleV4(
@@ -135,9 +136,17 @@ action = model.decide_action(market_data, prev_pwpe=0.0)
 # Training step
 state = model.afferent_synthesis(market_data)
 pred, pwpe = model.hpc_forward(state)
-reward = compute_reward()  # Your reward function
+expert_metrics = torch.tensor([1.2, 0.08, 0.15])  # Sharpe, drawdown, return
+reward = model.compute_self_reward(expert_metrics, pwpe.item())
 next_state = model.afferent_synthesis(next_market_data)
-td_error = model.sr_drl_step(state, action, reward, next_state, pwpe.item())
+td_error = model.sr_drl_step(
+    state,
+    torch.tensor([action], dtype=torch.int64),
+    reward,
+    expert_metrics,
+    next_state,
+    pwpe.item(),
+)
 ```
 
 ### Integration with ThermoController

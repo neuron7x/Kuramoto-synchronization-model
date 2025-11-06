@@ -4,6 +4,7 @@ Tests for HPC-AI v4 module.
 
 import pytest
 import torch
+import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
@@ -84,15 +85,69 @@ class TestHPCActiveInferenceModule:
         """Test self-rewarding deep RL step."""
         state = hpc_ai_model.afferent_synthesis(synthetic_data)
         action = torch.tensor([1])  # Buy
-        reward = 0.1
         next_state = state
         pwpe = 0.15
+        expert_metrics = torch.tensor([1.5, 0.05, 0.12])
+        reward = hpc_ai_model.compute_self_reward(expert_metrics, pwpe)
 
-        td_error = hpc_ai_model.sr_drl_step(state, action, reward, next_state, pwpe)
+        td_error = hpc_ai_model.sr_drl_step(
+            state,
+            action,
+            reward,
+            expert_metrics,
+            next_state,
+            pwpe,
+        )
 
         assert isinstance(td_error, float)
         assert not np.isnan(td_error)
         assert not np.isinf(td_error)
+
+    def test_reward_predictor_improves_with_metrics(
+        self, hpc_ai_model, synthetic_data
+    ):
+        """Reward predictor loss should decrease when metrics accompany rewards."""
+        action = torch.tensor([1])
+        pwpe = 0.1
+        expert_metrics = torch.tensor([0.8, 0.05, 0.12], dtype=torch.float32)
+        reward = hpc_ai_model.compute_self_reward(expert_metrics, pwpe)
+
+        metrics_tensor = expert_metrics.to(hpc_ai_model.device).unsqueeze(0)
+        target_reward = torch.tensor(
+            [[reward]], dtype=torch.float32, device=hpc_ai_model.device
+        )
+
+        with torch.no_grad():
+            initial_pred = hpc_ai_model.reward_predictor(metrics_tensor)
+            initial_loss = F.mse_loss(initial_pred, target_reward).item()
+
+        for _ in range(5):
+            state = hpc_ai_model.afferent_synthesis(synthetic_data).detach()
+            next_state = state
+            hpc_ai_model.sr_drl_step(
+                state,
+                action,
+                reward,
+                expert_metrics,
+                next_state,
+                pwpe,
+            )
+
+        with torch.no_grad():
+            final_pred = hpc_ai_model.reward_predictor(metrics_tensor)
+            final_loss = F.mse_loss(final_pred, target_reward).item()
+
+        assert final_loss < initial_loss
+
+    def test_sr_drl_step_requires_metrics(self, hpc_ai_model, synthetic_data):
+        """Ensure SR-DRL training fails when expert metrics are omitted."""
+        state = hpc_ai_model.afferent_synthesis(synthetic_data)
+        action = torch.tensor([0])
+        next_state = state
+        pwpe = 0.1
+
+        with pytest.raises(ValueError):
+            hpc_ai_model.sr_drl_step(state, action, 0.1, None, next_state, pwpe)
 
     def test_metastable_transition_gate(self, hpc_ai_model):
         """Test metastable transition gate."""
@@ -255,11 +310,14 @@ class TestIntegration:
         for _ in range(10):
             state = hpc_ai_model.afferent_synthesis(synthetic_data)
             action = torch.tensor([1])
-            reward = 0.1
             next_state = state
             pwpe = 0.15
+            expert_metrics = torch.tensor([0.9, 0.07, 0.11], dtype=torch.float32)
+            reward = hpc_ai_model.compute_self_reward(expert_metrics, pwpe)
 
-            hpc_ai_model.sr_drl_step(state, action, reward, next_state, pwpe)
+            hpc_ai_model.sr_drl_step(
+                state, action, reward, expert_metrics, next_state, pwpe
+            )
 
         final_alpha = hpc_ai_model.blending_alpha.item()
         final_precision = hpc_ai_model.precision_weights[0].item()

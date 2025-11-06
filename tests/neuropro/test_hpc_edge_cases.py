@@ -155,12 +155,19 @@ class TestUnstableModelStates:
         data = generate_synthetic_data(n_days=100, seed=42)
         
         # Multiple training steps with extreme rewards
-        for reward in [1000.0, -1000.0, 10000.0]:
+        for magnitude in [1000.0, -1000.0, 10000.0]:
             state = model.afferent_synthesis(data)
             action = torch.tensor([1])
             next_state = state
-            
-            td_error = model.sr_drl_step(state, action, reward, next_state, 0.15)
+
+            expert_metrics = torch.tensor(
+                [magnitude, magnitude * 0.5, magnitude * 0.1], dtype=torch.float32
+            )
+            reward = model.compute_self_reward(expert_metrics, pwpe=0.15)
+
+            td_error = model.sr_drl_step(
+                state, action, reward, expert_metrics, next_state, 0.15
+            )
             
             # Check parameters are still valid
             for param in model.parameters():
@@ -189,10 +196,14 @@ class TestUnstableModelStates:
         for i in range(100):
             state = model.afferent_synthesis(data)
             action = torch.tensor([i % 3])
-            reward = np.random.uniform(-1, 1)
+            expert_metrics = torch.tensor(
+                [np.random.uniform(-1, 1), np.random.uniform(0, 0.5), np.random.uniform(-0.5, 0.5)],
+                dtype=torch.float32,
+            )
+            reward = model.compute_self_reward(expert_metrics, pwpe=0.15)
             next_state = state
-            
-            model.sr_drl_step(state, action, reward, next_state, 0.15)
+
+            model.sr_drl_step(state, action, reward, expert_metrics, next_state, 0.15)
         
         # Check parameters are still reasonable
         final_alpha = model.blending_alpha.item()
@@ -319,17 +330,20 @@ class TestTDErrorCalculations:
         
         state = model.afferent_synthesis(data)
         next_state = state  # Same state for simplicity
-        reward = 1.0
+        expert_metrics = torch.tensor([1.0, 0.2, 0.5], dtype=torch.float32)
+        reward = model.compute_self_reward(expert_metrics, pwpe=0.15)
         action = torch.tensor([1])
-        
+
         # Manual TD computation
         with torch.no_grad():
             v_s = model.critic(state).item()
             v_s_next = model.critic(next_state).item()
             expected_td = reward + 0.99 * v_s_next - v_s
-        
+
         # Actual TD from model
-        actual_td = model.sr_drl_step(state, action, reward, next_state, 0.15)
+        actual_td = model.sr_drl_step(
+            state, action, reward, expert_metrics, next_state, 0.15
+        )
         
         # Should be approximately equal (within training variance)
         assert abs(actual_td - expected_td) < 2.0  # Loose bound due to training

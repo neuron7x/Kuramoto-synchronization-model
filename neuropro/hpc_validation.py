@@ -161,13 +161,18 @@ def validate_hpc_ai(
             pred, pwpe = model.hpc_forward(state)
             pwpes.append(pwpe.item())
 
-            # Simulate TD update
-            reward = 0.1  # Mock reward
+            # Simulate TD update with consistent expert metrics
+            expert_metrics = torch.tensor(
+                [1.0 + 0.1 * action, 0.05 + 0.01 * action, 0.02 * (action - 1)],
+                dtype=torch.float32,
+            )
+            reward = model.compute_self_reward(expert_metrics, pwpe.item())
             next_state = state
             td_error = model.sr_drl_step(
                 state,
                 torch.tensor([action], dtype=torch.int64),
                 reward,
+                expert_metrics,
                 next_state,
                 pwpe.item(),
             )

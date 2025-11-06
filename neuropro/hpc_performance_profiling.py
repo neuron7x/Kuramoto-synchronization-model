@@ -93,18 +93,27 @@ def profile_training_step(model, data, num_runs=50):
     for _ in range(5):
         state = model.afferent_synthesis(data)
         action = torch.tensor([1])
-        reward = 1.0
-        model.sr_drl_step(state, action, reward, state, 0.15)
+        expert_metrics = torch.tensor([1.0, 0.1, 0.05], dtype=torch.float32)
+        reward = model.compute_self_reward(expert_metrics, pwpe=0.15)
+        model.sr_drl_step(state, action, reward, expert_metrics, state, 0.15)
     
     # Measure
     latencies = []
     for _ in range(num_runs):
         state = model.afferent_synthesis(data)
         action = torch.tensor([np.random.randint(0, 3)])
-        reward = np.random.uniform(-1, 1)
-        
+        expert_metrics = torch.tensor(
+            [
+                np.random.uniform(-1, 1),
+                np.random.uniform(0, 0.5),
+                np.random.uniform(-0.5, 0.5),
+            ],
+            dtype=torch.float32,
+        )
+        reward = model.compute_self_reward(expert_metrics, pwpe=0.15)
+
         start = time.perf_counter()
-        model.sr_drl_step(state, action, reward, state, 0.15)
+        model.sr_drl_step(state, action, reward, expert_metrics, state, 0.15)
         end = time.perf_counter()
         latencies.append((end - start) * 1000)
     

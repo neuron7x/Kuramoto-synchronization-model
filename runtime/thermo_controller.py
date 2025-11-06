@@ -1114,6 +1114,7 @@ class ThermoController:
             state,
             torch.tensor([action], dtype=torch.int64),
             reward,
+            expert_metrics,
             next_state,
             pwpe.item(),
         )
