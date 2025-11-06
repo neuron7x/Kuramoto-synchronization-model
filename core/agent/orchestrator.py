@@ -262,8 +262,10 @@ class StrategyOrchestrator:
                 if flow is self._sentinel:
                     return
 
-                assert isinstance(flow, StrategyFlow)
-                assert isinstance(future, Future)
+                if not isinstance(flow, StrategyFlow):
+                    raise TypeError(f"Expected StrategyFlow, got {type(flow).__name__}")
+                if not isinstance(future, Future):
+                    raise TypeError(f"Expected Future, got {type(future).__name__}")
 
                 with self._lock:
                     self._pending.discard(flow.name)
@@ -335,8 +337,10 @@ class StrategyOrchestrator:
                     self._queue.put((priority, sequence, flow, future))
                     return
 
-                assert isinstance(flow, StrategyFlow)
-                assert isinstance(future, Future)
+                if not isinstance(flow, StrategyFlow):
+                    raise TypeError(f"Expected StrategyFlow, got {type(flow).__name__}")
+                if not isinstance(future, Future):
+                    raise TypeError(f"Expected Future, got {type(future).__name__}")
 
                 future.cancel()
                 with self._lock:
