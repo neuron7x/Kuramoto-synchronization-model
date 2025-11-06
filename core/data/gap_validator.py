@@ -29,6 +29,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+from functools import lru_cache
 from typing import Optional
 
 import pandas as pd
@@ -112,8 +113,12 @@ class GapValidator:
         self._allow_holiday_gaps = allow_holiday_gaps
     
     @staticmethod
+    @lru_cache(maxsize=32)
     def _parse_duration(duration: str | timedelta | None) -> timedelta | None:
-        """Convert duration string to timedelta."""
+        """Convert duration string to timedelta.
+        
+        Cached to avoid repeated parsing of common duration strings.
+        """
         if duration is None:
             return None
         if isinstance(duration, timedelta):
@@ -171,17 +176,25 @@ class GapValidator:
         Returns:
             List of gaps that violate validation rules.
         """
+        # Early exit if no gaps
+        if not gaps:
+            return []
+        
+        # Pre-compute weekend checking logic outside loop
+        check_weekends = self._allow_weekend_gaps
+        check_duration = self._max_gap_duration is not None
+        
         unacceptable = []
         
         for gap in gaps:
-            # Check duration threshold
-            if self._max_gap_duration is not None:
+            # Check duration threshold (most common filter)
+            if check_duration:
                 gap_duration = gap.end - gap.start
                 if gap_duration <= self._max_gap_duration:
                     continue  # Gap is small enough to be acceptable
             
             # Check if gap is during weekend
-            if self._allow_weekend_gaps:
+            if check_weekends:
                 # If both start and end are on weekend, skip
                 if gap.start.weekday() >= 5 and gap.end.weekday() >= 5:
                     continue

@@ -33,21 +33,26 @@ def calculate_position_size(
     Raises:
         ValueError: If balance is negative or price is non-positive.
     """
-
+    # Fast path validation - single condition check
     if balance < 0 or price <= 0:
         if balance < 0:
             raise ValueError("balance must be non-negative")
         raise ValueError("price must be positive")
 
+    # Clip risk to valid range [0, 1]
     clipped_risk = max(0.0, min(risk, 1.0))
     notional = balance * clipped_risk
+    
+    # Early exit for zero notional
     if notional <= 0.0:
         return 0.0
 
+    # Calculate position size with leverage cap
     risk_qty = notional / price
     leverage_cap = (balance * max_leverage) / price
     qty = min(risk_qty, leverage_cap)
 
+    # Ensure quantity doesn't exceed notional due to floating-point precision
     if qty > 0.0 and qty * price > notional:
         qty = math.nextafter(qty, 0.0)
         while qty > 0.0 and qty * price > notional:

@@ -100,21 +100,27 @@ class TestPositionSizingBehavior:
         # Allow tiny floating-point overshoot
         assert cost <= risk_budget * 1.000001, f"Cost {cost} exceeds budget {risk_budget}"
 
-    def test_handles_very_small_prices(self) -> None:
-        """Position sizing should work with very small prices (e.g., altcoins)."""
-        size = calculate_position_size(balance=1000.0, risk=0.1, price=0.0001)
+    @pytest.mark.parametrize(
+        "balance,risk,price,expected_within_budget",
+        [
+            (1000.0, 0.1, 0.0001, True),  # Very small price (altcoins)
+            (1000.0, 0.1, 50000.0, True),  # Very large price (BTC)
+            (10000.0, 0.1, 100.0, True),  # Standard case
+        ],
+    )
+    def test_handles_various_price_ranges(
+        self, balance: float, risk: float, price: float, expected_within_budget: bool
+    ) -> None:
+        """Position sizing should work across various price ranges."""
+        size = calculate_position_size(balance=balance, risk=risk, price=price)
         assert size >= 0.0, "Size should be non-negative"
         assert not math.isinf(size), "Size should not be infinite"
-        cost = size * 0.0001
-        assert cost <= 100.0 * 1.01, "Cost should not exceed risk budget"
-
-    def test_handles_very_large_prices(self) -> None:
-        """Position sizing should work with very large prices (e.g., BTC)."""
-        size = calculate_position_size(balance=1000.0, risk=0.1, price=50000.0)
-        assert size >= 0.0, "Size should be non-negative"
-        assert not math.isinf(size), "Size should not be infinite"
-        cost = size * 50000.0
-        assert cost <= 100.0 * 1.01, "Cost should not exceed risk budget"
+        
+        cost = size * price
+        risk_budget = balance * risk
+        
+        if expected_within_budget:
+            assert cost <= risk_budget * 1.01, f"Cost {cost} exceeds budget {risk_budget}"
 
     def test_zero_size_when_balance_too_small(self) -> None:
         """Should return zero size when balance is too small for minimum position."""
