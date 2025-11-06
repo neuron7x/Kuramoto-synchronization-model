@@ -37,6 +37,8 @@ class HPCActiveInferenceModuleV4(nn.Module):
         hpc_levels: int = 3,
         reward_metrics: int = 3,
         learning_rate: float = 1e-4,
+        exploitation_temperature: float = 0.1,
+        exploration_temperature: float = 2.0,
     ):
         """
         Initialize HPC-AI Module.
@@ -49,6 +51,8 @@ class HPCActiveInferenceModuleV4(nn.Module):
             hpc_levels: Number of hierarchical levels
             reward_metrics: Number of reward metrics (Sharpe, DD, Return)
             learning_rate: Optimizer learning rate
+            exploitation_temperature: Temperature for exploitation (sharper, deterministic)
+            exploration_temperature: Temperature for exploration (softer, stochastic)
         """
         super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -111,7 +115,15 @@ class HPCActiveInferenceModuleV4(nn.Module):
         self.k_uncertainty = 0.1
         self.l1_lambda = 0.01
         self.dropout = nn.Dropout(0.1)
-        self.gumbel_temp = 1.0
+        if exploitation_temperature <= 0.0:
+            raise ValueError("exploitation_temperature must be positive")
+        if exploration_temperature <= 0.0:
+            raise ValueError("exploration_temperature must be positive")
+
+        self.exploitation_temperature = exploitation_temperature
+        self.exploration_temperature = exploration_temperature
+        # Backward compatibility attribute
+        self.gumbel_temp = exploration_temperature
 
         # Move to device
         self.to(self.device)
@@ -356,7 +368,11 @@ class HPCActiveInferenceModuleV4(nn.Module):
         return gate_value.item() > 0.5
 
     def gumbel_softmax_sample(
-        self, logits: torch.Tensor, temperature: float = 1.0, hard: bool = True
+        self,
+        logits: torch.Tensor,
+        temperature: float = 1.0,
+        hard: bool = True,
+        add_noise: bool = True,
     ) -> torch.Tensor:
         """
         Sample from Gumbel-Softmax distribution for differentiable exploration.
@@ -365,12 +381,18 @@ class HPCActiveInferenceModuleV4(nn.Module):
             logits: Action logits
             temperature: Temperature parameter (higher = more exploration)
             hard: Whether to use hard sampling with straight-through estimator
+            add_noise: If False, skip Gumbel noise for deterministic exploitation
 
         Returns:
             Sampled action (one-hot or soft)
         """
-        gumbels = -torch.empty_like(logits).exponential_().log()
-        gumbels = (logits + gumbels) / temperature
+        if add_noise:
+            gumbels = -torch.empty_like(logits).exponential_().log()
+            gumbels = (logits + gumbels) / temperature
+        else:
+            safe_temp = torch.tensor(temperature, device=logits.device)
+            safe_temp = torch.clamp(safe_temp, min=1e-6)
+            gumbels = logits / safe_temp
         y_soft = F.softmax(gumbels, dim=-1)
 
         if hard:
@@ -408,14 +430,20 @@ class HPCActiveInferenceModuleV4(nn.Module):
             action_logits = self.actor(state)
             
             if pwpe.item() > 0.15:
-                # High uncertainty: explore
+                # High uncertainty: explore with higher temperature and stochasticity
                 action_sample = self.gumbel_softmax_sample(
-                    action_logits, self.gumbel_temp, hard=True
+                    action_logits,
+                    temperature=self.exploration_temperature,
+                    hard=True,
+                    add_noise=True,
                 )
             else:
-                # Low uncertainty: exploit
+                # Low uncertainty: exploit deterministically with sharp temperature
                 action_sample = self.gumbel_softmax_sample(
-                    action_logits, temperature=100.0, hard=False
+                    action_logits,
+                    temperature=self.exploitation_temperature,
+                    hard=True,
+                    add_noise=False,
                 )
 
             action = torch.argmax(action_sample, dim=-1).item()
