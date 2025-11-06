@@ -47,6 +47,15 @@ def test_heading_rule_accepts_html_comment(tmp_path: Path) -> None:
     assert issues == []
 
 
+def test_heading_rule_accepts_multiline_html_comment(tmp_path: Path) -> None:
+    document = "<!--\nAUTO-GENERATED FILE.\nDO NOT EDIT.\n-->\n# Title\n\nBody\n"
+    path = _write(tmp_path, "multiline.md", document)
+
+    issues = list(HeadingFirstRule().check(path, document.splitlines()))
+
+    assert issues == []
+
+
 def test_forbidden_phrase_detection(tmp_path: Path) -> None:
     document = "# Title\n\nThis contains a TODO item.\n"
     path = _write(tmp_path, "todo.md", document)
