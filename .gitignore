@@ -36,6 +36,10 @@ Thumbs.db
 .env.local
 .venv/
 venv/
+
+# GitHub Actions local testing (act)
+.github/act/tests.secrets
+.github/act/tests.env
 apps/web/node_modules/
 apps/web/.next/
 apps/web/playwright-report/

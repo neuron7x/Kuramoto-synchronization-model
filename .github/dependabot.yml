@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Python dependencies (production + dev)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -9,18 +10,35 @@ updates:
       - python
     open-pull-requests-limit: 10
     groups:
-      lint-and-test:
+      # Development and testing tools (non-production)
+      dev-tools:
         patterns:
-          - "pytest"
+          - "pytest*"
           - "hypothesis"
           - "ruff"
           - "mypy"
+          - "black"
+          - "bandit"
+          - "pre-commit"
+          - "towncrier"
+          - "detect-secrets"
+      # Core data science libraries (production)
       data-core:
         patterns:
           - "numpy"
           - "scipy"
           - "pandas"
           - "networkx"
+          - "scikit-learn"
+      # Web frameworks and API libraries (production)
+      web-api:
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "pydantic"
+          - "starlette"
+
+  # Python security constraints
   - package-ecosystem: "pip"
     directory: "/constraints"
     schedule:
@@ -28,7 +46,10 @@ updates:
     labels:
       - dependencies
       - python
+      - security
     open-pull-requests-limit: 5
+
+  # Go modules (terraform tests)
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -36,6 +57,75 @@ updates:
     labels:
       - dependencies
       - go
+    open-pull-requests-limit: 5
+
+  # JavaScript/TypeScript (web frontend)
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+    labels:
+      - dependencies
+      - javascript
+      - frontend
+    open-pull-requests-limit: 10
+    groups:
+      # Development tools
+      frontend-dev-tools:
+        patterns:
+          - "eslint*"
+          - "prettier"
+          - "@types/*"
+          - "typescript"
+      # Next.js and React (production)
+      nextjs-react:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+
+  # JavaScript/TypeScript (UI dashboard)
+  - package-ecosystem: "npm"
+    directory: "/ui/dashboard"
+    schedule:
+      interval: "weekly"
+    labels:
+      - dependencies
+      - javascript
+      - ui
+    open-pull-requests-limit: 10
+    groups:
+      # Development tools
+      ui-dev-tools:
+        patterns:
+          - "playwright*"
+          - "@playwright/*"
+          - "eslint*"
+          - "@types/*"
+          - "typescript"
+
+  # Rust dependencies
+  - package-ecosystem: "cargo"
+    directory: "/rust/tradepulse-accel"
+    schedule:
+      interval: "weekly"
+    labels:
+      - dependencies
+      - rust
+    open-pull-requests-limit: 5
+
+  # Terraform infrastructure
+  - package-ecosystem: "terraform"
+    directory: "/infra/terraform/eks"
+    schedule:
+      interval: "weekly"
+    labels:
+      - dependencies
+      - terraform
+      - infrastructure
+    open-pull-requests-limit: 5
+
+  # GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -43,6 +133,9 @@ updates:
     labels:
       - dependencies
       - ci
+    open-pull-requests-limit: 10
+
+  # Docker base images
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -50,3 +143,4 @@ updates:
     labels:
       - dependencies
       - docker
+    open-pull-requests-limit: 5
