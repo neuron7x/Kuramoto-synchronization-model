@@ -152,6 +152,8 @@ include = [
     "src.*",
     "markets",
     "markets.*",
+    "modules",
+    "modules.*",
     "nfpro",
     "nfpro.*",
     "observability",
