@@ -1,3 +1,27 @@
+"""Thermodynamic energy calculations for system optimization.
+
+This module provides thermodynamic energy functions used by the TACL
+(Thermodynamic Autonomic Control Layer) to model and optimize system topology.
+It treats the distributed trading system as a physical system where services
+are nodes connected by "bonds" with different characteristics.
+
+Key Concepts:
+- **Bonds**: Represent communication links between services with types like
+  covalent (low-latency), ionic (high-coherency), metallic (high-stability)
+- **Free Energy**: Combines internal energy, resource costs, and entropy
+- **Thermodynamic Control**: Uses energy descent to optimize system topology
+
+The energy model enables automatic protocol selection, adaptive recovery,
+and crisis-aware reconfiguration while maintaining monotonic energy descent
+constraints for safety.
+
+Example:
+    >>> from core.energy import system_free_energy
+    >>> topology = {...}  # Service topology definition
+    >>> energy = system_free_energy(topology)
+    >>> print(f"System free energy: {energy:.6f}")
+"""
+
 from __future__ import annotations
 
 from typing import Dict, Tuple, Literal, TypedDict

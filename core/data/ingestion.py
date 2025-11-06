@@ -1,4 +1,21 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Data ingestion infrastructure for market data and price feeds.
+
+This module provides the core data ingestion pipeline for TradePulse, handling:
+- Real-time streaming data from exchanges (Binance, Alpaca, etc.)
+- Historical data loading from CSV and other formats
+- Data normalization and timestamp handling
+- Path validation and security controls
+- Robust error handling and retry logic
+
+The ingestion system is designed to be resilient, performant, and type-safe,
+with full observability through OpenTelemetry tracing.
+
+Example:
+    >>> from core.data.ingestion import DataIngestor
+    >>> ingestor = DataIngestor()
+    >>> tickers = ingestor.load_csv("data/BTCUSDT.csv")
+"""
 from __future__ import annotations
 
 import csv
