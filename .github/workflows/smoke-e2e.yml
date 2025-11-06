@@ -1,6 +1,9 @@
 # yamllint disable rule:line-length
 name: Nightly Smoke E2E
 
+permissions:
+  contents: read
+
 on:
   schedule:
     - cron: '0 2 * * *'

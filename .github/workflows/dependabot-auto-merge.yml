@@ -13,7 +13,8 @@ permissions:
 
 jobs:
   enable-auto-merge:
-    if: github.actor == 'dependabot[bot]'
+    # Only run for Dependabot PRs from the same repository (not forks)
+    if: github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Rebase Dependabot PR onto base branch

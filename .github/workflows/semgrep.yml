@@ -1,20 +1,33 @@
 name: Semgrep Security Scan
 
+permissions:
+  contents: read
+  security-events: write
+
 on:
   push:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [ '**' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
   schedule:
     - cron: '0 0 * * 1'  # Weekly on Monday
+
+concurrency:
+  group: semgrep-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   semgrep:
     name: Semgrep Scan (Python/TS/Rust/Go)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
     
     container:
       image: semgrep/semgrep

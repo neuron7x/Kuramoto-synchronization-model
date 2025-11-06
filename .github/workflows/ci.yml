@@ -1,5 +1,8 @@
 name: CI - Test Coverage
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
@@ -7,6 +10,10 @@ on:
       - '**'
   push:
     branches: [main]
+
+concurrency:
+  group: ci-coverage-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-coverage:
