@@ -12,6 +12,10 @@ on:
   schedule:
     - cron: '0 0 * * 1'  # Weekly on Monday
 
+concurrency:
+  group: semgrep-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   semgrep:
     name: Semgrep Scan (Python/TS/Rust/Go)

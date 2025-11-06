@@ -1,13 +1,17 @@
 name: Performance Regression Detection
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
       - '**'
   workflow_dispatch:
 
-permissions:
-  contents: read
+concurrency:
+  group: performance-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   performance-regression:

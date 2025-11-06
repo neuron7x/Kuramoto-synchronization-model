@@ -12,6 +12,10 @@ on:
       # Ensure linting, typing, and tests run for every PR.
       - '**'
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   detect_ui_changes:
     runs-on: ubuntu-latest
@@ -386,7 +390,7 @@ jobs:
             coverage_html
           if-no-files-found: error
       - name: Upload coverage to Codecov (with token)
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
@@ -462,7 +466,7 @@ jobs:
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
       - name: Upload coverage to Codecov (OIDC)
-        if: ${{ secrets.CODECOV_TOKEN == '' }}
+        if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
