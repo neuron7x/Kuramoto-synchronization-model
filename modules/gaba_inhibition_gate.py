@@ -162,8 +162,8 @@ class GABAInhibitionGate(nn.Module):
         vix = market_state['vix'].to(self.device).reshape(1)
         vol = market_state['vol'].to(self.device).reshape(1)
         ret = market_state['ret'].to(self.device).reshape(1)
-        rpe = market_state['rpe'].to(self.device).reshape(1)
-        pos = market_state['pos'].to(self.device).reshape(1)
+        _rpe = market_state['rpe'].to(self.device).reshape(1)  # Reserved for future use
+        _pos = market_state['pos'].to(self.device).reshape(1)  # Reserved for future use
         delta_t_ms = market_state['delta_t_ms'].to(self.device).reshape(1)
 
         # 1) GABA release ~ threat proxy (volatility) with dual time constants
