@@ -20,8 +20,23 @@ def calculate_position_size(
     :class:`execution.order.RiskAwarePositionSizer` and auxiliary utilities.
     ``risk`` is interpreted as a fraction of the available ``balance`` and is
     clipped to the inclusive range ``[0, 1]`` for safety.
+    
+    Args:
+        balance: Available capital in account currency (must be non-negative).
+        risk: Fraction of capital to deploy (will be clipped to [0, 1]).
+        price: Execution price of the instrument (must be positive).
+        max_leverage: Maximum allowable leverage multiplier (default 5.0).
+    
+    Returns:
+        float: Position quantity in base units.
+        
+    Raises:
+        ValueError: If balance is negative or price is non-positive.
     """
 
+    if balance < 0:
+        raise ValueError("balance must be non-negative")
+    
     if price <= 0:
         raise ValueError("price must be positive")
 
