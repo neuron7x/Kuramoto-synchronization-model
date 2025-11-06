@@ -117,13 +117,10 @@ class HPCActiveInferenceModuleV4(nn.Module):
         self.dropout = nn.Dropout(0.1)
         if exploitation_temperature <= 0.0:
             raise ValueError("exploitation_temperature must be positive")
-        if exploration_temperature <= 0.0:
-            raise ValueError("exploration_temperature must be positive")
 
         self.exploitation_temperature = exploitation_temperature
+        # Set through the property to keep legacy attribute in sync
         self.exploration_temperature = exploration_temperature
-        # Backward compatibility attribute
-        self.gumbel_temp = exploration_temperature
 
         # Move to device
         self.to(self.device)
@@ -460,6 +457,31 @@ class HPCActiveInferenceModuleV4(nn.Module):
             state = self.afferent_synthesis(data)
             _, pwpe = self.hpc_forward(state)
             return pwpe.item()
+
+    @property
+    def exploration_temperature(self) -> float:
+        """Exploration temperature used for stochastic action selection."""
+        return self._exploration_temperature
+
+    @exploration_temperature.setter
+    def exploration_temperature(self, value: float) -> None:
+        value = float(value)
+        if value <= 0.0:
+            raise ValueError("exploration_temperature must be positive")
+        # Use __dict__ to avoid recursion with the property
+        self.__dict__["_exploration_temperature"] = value
+        # Keep legacy attribute alias in sync
+        self.__dict__["_gumbel_temp"] = value
+
+    @property
+    def gumbel_temp(self) -> float:
+        """Backward compatible alias for exploration temperature."""
+        return self._exploration_temperature
+
+    @gumbel_temp.setter
+    def gumbel_temp(self, value: float) -> None:
+        # Delegate validation and syncing to the main setter
+        self.exploration_temperature = value
 
 
 __all__ = ["HPCActiveInferenceModuleV4"]
