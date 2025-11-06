@@ -7,12 +7,17 @@ import yaml
 
 
 class DopamineController:
-    """DopamineController v2.1 — appetitive loop implementation.
-
-    Implements TD(0) reward prediction error (RPE) with phasic and tonic
-    dopamine dynamics, modulatory effects on action values and policy
-    temperature, Go/No-Go gating, safe meta-adaptation, and TACL-compliant
-    telemetry hooks.
+    """
+    DopamineController v2.1 — апетитивний контур:
+      • TD(0) RPE: δ = r + γ·V' − V
+      • Фазика: phasic = max(0, RPE)·burst_factor
+      • Тоніка: EMA(appetitive + phasic) з decay_rate
+      • DA: σ(k·(tonic − θ)), насичення логіту
+      • Q' = Q·(1 + delta_gain·(DA − baseline))
+      • T = max(T_min, T_base·exp(−k_T·DA)) із підвищенням при негативному RPE
+      • Go / No-Go: DA > invigoration_threshold / DA < no_go_threshold
+      • Мета-адаптація: дріфт lr/delta_gain/base_temperature за DD/Sharpe
+      • Телеметрія: сумісна з TACL log_metric, безпечні no-op фоли
     """
 
     # ---------- init / logging ----------
@@ -72,7 +77,7 @@ class DopamineController:
         w_m = float(weights.get("w_m", cfg["w_m"]))
         w_v = float(weights.get("w_v", cfg["w_v"]))
 
-        # optional novelty augmentation with |RPE|
+        # опціональна новизна з |RPE|
         novelty_mode = str(cfg.get("novelty_mode", "external")).lower()
         if novelty_mode == "abs_rpe":
             novelty = novelty + float(cfg["c_absrpe"]) * abs(self.last_rpe)
@@ -116,15 +121,14 @@ class DopamineController:
         cfg = self.config
         rpe_val = self.last_rpe if rpe is None else float(rpe)
 
-        # phasic component
+        # phasic
         self.phasic_level = float(max(0.0, rpe_val) * cfg["burst_factor"])
 
-        # tonic component via EMA
+        # tonic (EMA)
         decay = float(cfg["decay_rate"])
-        ema_target = appetitive_state + self.phasic_level
-        self.tonic_level = float((1.0 - decay) * self.tonic_level + decay * ema_target)
+        self.tonic_level = float((1.0 - decay) * self.tonic_level + decay * (appetitive_state + self.phasic_level))
 
-        # bounded logistic activation
+        # bounded logistic
         x = float(cfg["k"]) * (self.tonic_level - float(cfg["theta"]))
         x = max(min(x, 60.0), -60.0)
         sig = 1.0 / (1.0 + math.exp(-x))
@@ -157,7 +161,7 @@ class DopamineController:
 
         temp = base * math.exp(-k_t * da)
 
-        # elevation under negative RPE for rapid exploration shifts
+        # підвищення температури при негативному RPE (швидкий перехід до exploration)
         neg_gain = float(self.config.get("neg_rpe_temp_gain", 0.5))
         max_mul = float(self.config.get("max_temp_multiplier", 3.0))
         if self.last_rpe < 0:
@@ -210,17 +214,17 @@ class DopamineController:
         self._log("dopamine_tonic_level", self.tonic_level)
         self._log("dopamine_phasic_level", self.phasic_level)
         self._log("dopamine_value_estimate", self.value_estimate)
-        temp = self.compute_temperature()
-        self._log("dopamine_temperature", temp)
-        if temp > 0:
-            self._log("dopamine_explore_exploit_ratio", 1.0 / float(temp))
+        t = self.compute_temperature()
+        self._log("dopamine_temperature", t)
+        if t > 0:
+            self._log("dopamine_explore_exploit_ratio", 1.0 / float(t))
 
     def save_config_to_yaml(self, path: Optional[str] = None) -> None:
         target = path or self.config_path
         with open(target, "w", encoding="utf-8") as f:
             yaml.safe_dump(self.config, f)
 
-    def to_dict(self) -> dict[str, float | str]:
+    def to_dict(self) -> dict:
         return {
             "tonic_level": float(self.tonic_level),
             "phasic_level": float(self.phasic_level),
