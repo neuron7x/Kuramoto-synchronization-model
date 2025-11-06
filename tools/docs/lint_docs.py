@@ -53,6 +53,7 @@ class HeadingFirstRule:
 
     def check(self, path: Path, lines: Sequence[str]) -> Iterable[LintIssue]:
         in_front_matter = False
+        in_html_comment = False
         for index, raw_line in enumerate(lines):
             stripped = raw_line.strip()
             if index == 0 and stripped == "---":
@@ -61,6 +62,18 @@ class HeadingFirstRule:
             if in_front_matter:
                 if stripped == "---":
                     in_front_matter = False
+                continue
+            # Handle HTML comments
+            # Check for single-line comment first (e.g., <!-- comment -->)
+            if stripped.startswith("<!--") and stripped.endswith("-->"):
+                continue
+            # Handle multi-line HTML comments
+            if stripped.startswith("<!--"):
+                in_html_comment = True
+                continue
+            if in_html_comment:
+                if stripped.endswith("-->"):
+                    in_html_comment = False
                 continue
             if not stripped:
                 continue
