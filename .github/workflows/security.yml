@@ -1,5 +1,10 @@
 name: Security Scan
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 on:
   push:
     branches: [ main, develop ]

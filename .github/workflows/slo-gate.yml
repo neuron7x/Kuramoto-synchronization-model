@@ -1,5 +1,8 @@
 name: SLO Gate and Auto-Rollback
 
+permissions:
+  contents: read
+
 on:
   workflow_run:
     workflows: ["Canary Deployment"]

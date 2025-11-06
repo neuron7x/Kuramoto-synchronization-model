@@ -1,5 +1,8 @@
 name: Build & Verify Python Wheels
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main, master]

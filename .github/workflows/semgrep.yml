@@ -1,5 +1,9 @@
 name: Semgrep Security Scan
 
+permissions:
+  contents: read
+  security-events: write
+
 on:
   push:
     branches: [ main, develop ]
@@ -12,9 +16,6 @@ jobs:
   semgrep:
     name: Semgrep Scan (Python/TS/Rust/Go)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
     
     container:
       image: semgrep/semgrep

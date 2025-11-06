@@ -1,4 +1,8 @@
 name: Thermodynamic Validation
+
+permissions:
+  contents: read
+
 on:
   push:
     branches: ["main"]
