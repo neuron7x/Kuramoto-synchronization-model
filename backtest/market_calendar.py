@@ -147,7 +147,9 @@ class MarketCalendar:
                 if close_dt <= open_dt:
                     close_dt += timedelta(days=1)
                 if close_dt < start_local:
-                    pass
+                    # Session ends before our start time, skip it
+                    cursor_date += timedelta(days=1)
+                    continue
                 elif open_dt > end_local:
                     break
                 else:

@@ -171,8 +171,8 @@ class QualityGateConfig(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True, strict=True)
 
-    schema: TimeSeriesValidationConfig = Field(
-        ..., description="Underlying schema contract"
+    validation_schema: TimeSeriesValidationConfig = Field(
+        ..., description="Underlying schema contract", alias="schema"
     )
     price_column: StrictStr = Field(
         default="close",
@@ -207,8 +207,8 @@ class QualityGateConfig(BaseModel):
     @model_validator(mode="after")
     def _validate_price_column(self) -> "QualityGateConfig":
         available = {
-            self.schema.timestamp_column,
-            *(col.name for col in self.schema.value_columns),
+            self.validation_schema.timestamp_column,
+            *(col.name for col in self.validation_schema.value_columns),
         }
         if self.price_column not in available:
             raise QualityGateError(
@@ -372,8 +372,8 @@ def summarise_quality(
                 "inclusive_max": bool(check.inclusive_max),
             }
         syntax_detail = (
-            f"Schema enforced on '{gate.schema.timestamp_column}' with"
-            f" {len(gate.schema.value_columns)} value columns"
+            f"Schema enforced on '{gate.validation_schema.timestamp_column}' with"
+            f" {len(gate.validation_schema.value_columns)} value columns"
         )
         validator_outcomes.append(
             ValidatorOutcome(
@@ -442,8 +442,8 @@ def summarise_quality(
         security_detail = f"{duplicate_rows} duplicate rows quarantined"
     if clean_rows:
         timestamp_column = None
-        if gate is not None and gate.schema.timestamp_column in report.clean.columns:
-            timestamp_column = gate.schema.timestamp_column
+        if gate is not None and gate.validation_schema.timestamp_column in report.clean.columns:
+            timestamp_column = gate.validation_schema.timestamp_column
         elif report.clean.columns.size > 0 and report.clean.columns[0] in report.clean.columns:
             timestamp_column = report.clean.columns[0]
         if timestamp_column is not None and report.clean[timestamp_column].duplicated().any():
@@ -610,7 +610,7 @@ def validate_and_quarantine(
 ) -> QualityReport:
     """Validate a DataFrame and quarantine anomalies according to the configured gates."""
 
-    config = gate.schema
+    config = gate.validation_schema
     timestamp_col = config.timestamp_column
     duplicates = frame[frame[timestamp_col].duplicated(keep=False)]
     working = frame.drop_duplicates(subset=timestamp_col, keep="first").copy()
