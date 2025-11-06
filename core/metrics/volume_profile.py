@@ -87,7 +87,7 @@ def imbalance(buys: np.ndarray, sells: np.ndarray) -> float:
     s = float(np.sum(np.asarray(sells, dtype=float)))
     
     total = b + s
-    if total == 0.0 or np.isclose(total, 0.0):
+    if np.isclose(total, 0.0):
         return 0.0
     
     return (b - s) / total
@@ -117,7 +117,7 @@ def order_aggression(buy_mkt: float, sell_mkt: float) -> float:
     """
     total = float(buy_mkt) + float(sell_mkt)
     
-    if total == 0.0 or np.isclose(total, 0.0):
+    if np.isclose(total, 0.0):
         return 0.0
     
     return (float(buy_mkt) - float(sell_mkt)) / total

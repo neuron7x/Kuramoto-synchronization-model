@@ -68,8 +68,20 @@ class RollingBuffer:
         return list(self.buf)
     
     def __len__(self) -> int:
-        """Return the current number of elements in the buffer."""
-        return len(self.buf)
+        """Return the current number of elements in the buffer.
+        
+        Returns:
+            Number of elements currently in the buffer.
+            
+        Raises:
+            RuntimeError: If buffer state is corrupted (should never happen).
+        """
+        length = len(self.buf)
+        if length > self.size:
+            raise RuntimeError(
+                f"Buffer corruption detected: {length} elements exceed max size {self.size}"
+            )
+        return length
     
     def is_full(self) -> bool:
         """Check if the buffer has reached capacity.
