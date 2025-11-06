@@ -81,9 +81,10 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
             self._stream_base = (
                 "wss://advanced-trade-ws-public.sandbox.exchange.coinbase.com"
             )
-        self._api_key: str | None = None
-        self._api_secret: str | None = None
-        self._passphrase: str | None = None
+        # Credentials are loaded separately via authenticate() method, not hardcoded
+        self._api_key: str | None = None  # nosec B105 - not a hardcoded password
+        self._api_secret: str | None = None  # nosec B105 - not a hardcoded password
+        self._passphrase: str | None = None  # nosec B105 - not a hardcoded password
         self._time_offset = 0.0
         self._last_time_sync = 0.0
         self._time_sync_interval = 120.0

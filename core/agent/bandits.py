@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import math
-import random
 from secrets import SystemRandom
 from typing import Dict, List, Sequence
 
@@ -31,7 +30,7 @@ class EpsilonGreedy:
         arms: Iterable[Arm],
         *,
         epsilon: float = 0.1,
-        rng: random.Random | None = None,
+        rng: SystemRandom | None = None,
     ) -> None:
         if not 0.0 <= epsilon <= 1.0:
             raise ValueError("epsilon must be within [0, 1]")

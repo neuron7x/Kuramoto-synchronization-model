@@ -75,8 +75,9 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             ws_factory=ws_factory,
         )
         self._stream_base = stream_base.rstrip("/")
-        self._api_key: str | None = None
-        self._api_secret: str | None = None
+        # Credentials are loaded separately via authenticate() method, not hardcoded
+        self._api_key: str | None = None  # nosec B105 - not a hardcoded password
+        self._api_secret: str | None = None  # nosec B105 - not a hardcoded password
         self._listen_key: str | None = None
         self._time_offset = 0.0
         self._last_time_sync = 0.0

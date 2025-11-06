@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import ssl
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,8 @@ from .idempotency import (
     InMemoryEventIdempotencyStore,
     current_timestamp,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -416,9 +419,13 @@ class NATSEventBus(BaseEventBus):
                         topic.metadata.dlq_topic,
                     ],
                 )
-            except Exception:
-                # Stream likely already exists
-                pass
+            except Exception as exc:
+                # Stream likely already exists; not an error
+                _LOGGER.debug(
+                    "Stream %s may already exist or add_stream failed: %s",
+                    topic.metadata.name,
+                    exc,
+                )
 
     async def _publish_retry_or_dlq(
         self, topic: EventTopic, envelope: EventEnvelope

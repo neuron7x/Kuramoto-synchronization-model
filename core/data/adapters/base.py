@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import random
+from secrets import SystemRandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Awaitable, Callable, Optional, TypeVar
@@ -69,6 +69,7 @@ class RetryConfig:
     exceptions: tuple[type[BaseException], ...] = field(
         default_factory=_default_retry_exceptions
     )
+    _rng: SystemRandom = field(default_factory=SystemRandom, init=False, repr=False)
 
     def compute_backoff(self, attempt_number: int) -> float:
         """Return the exponential backoff for a given retry attempt."""
@@ -78,7 +79,7 @@ class RetryConfig:
         )
         if self.jitter <= 0:
             return base_delay
-        jitter_delta = random.uniform(0, base_delay * self.jitter)
+        jitter_delta = self._rng.uniform(0, base_delay * self.jitter)
         delay = base_delay + jitter_delta
         return min(self.max_backoff, delay)
 
