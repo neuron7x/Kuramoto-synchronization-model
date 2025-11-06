@@ -12,6 +12,20 @@ from typing import Dict, Tuple, Optional
 import torch
 import torch.nn as nn
 
+# Constants for biophysical parameters
+_VIX_NORMALIZATION_FACTOR = 40.0  # VIX baseline for normalization
+_GABA_DRIVE_SCALE = 0.5           # Scale factor for volatility->GABA conversion
+_GABA_SLOW_WEIGHT = 0.5           # Weight of slow GABA_B in total level
+_GABA_MAX_LEVEL = 2.0             # Maximum combined GABA level
+_FIRING_PROXY_MAX = 10.0          # Maximum action magnitude for inhibition
+_GAMMA_CYCLE_AMPLITUDE = 0.2      # Amplitude of gamma oscillation
+_THETA_CYCLE_AMPLITUDE = 0.15     # Amplitude of theta oscillation
+_MS_TO_SECONDS = 1000.0           # Conversion factor
+_LTP_STRENGTH = 0.01              # LTP weight increment
+_LTD_STRENGTH = 0.008             # LTD weight decrement
+_HEDGE_FAST_BOOST = 0.5           # Fast GABA boost factor in hedge
+_HEDGE_SLOW_BOOST = 0.25          # Slow GABA boost factor in hedge
+
 
 @dataclass
 class GateParams:
@@ -81,14 +95,16 @@ class GABAInhibitionGate(nn.Module):
         return torch.exp(torch.tensor(-self.p.dt_ms / tau_ms, device=self.device))
     
     def _norm_vol(self, vix: torch.Tensor) -> torch.Tensor:
-        # Normalize VIX-like to ~[0,1.5]; robust to outliers.
-        return torch.clamp(vix / 40.0, 0.0, 1.5)
+        """Normalize VIX-like to ~[0,1.5]; robust to outliers."""
+        return torch.clamp(vix / _VIX_NORMALIZATION_FACTOR, 0.0, 1.5)
 
     def _cycles(self, t_ms: torch.Tensor) -> torch.Tensor:
+        """Compute gamma/theta cycle modulation."""
         if not self.p.cycle_modulation:
             return torch.tensor(1.0, device=self.device)
-        gamma = 0.2 * torch.sin(2 * math.pi * self.p.gamma_hz * (t_ms / 1000.0))
-        theta = 0.15 * torch.sin(2 * math.pi * self.p.theta_hz * (t_ms / 1000.0))
+        t_seconds = t_ms / _MS_TO_SECONDS
+        gamma = _GAMMA_CYCLE_AMPLITUDE * torch.sin(2 * math.pi * self.p.gamma_hz * t_seconds)
+        theta = _THETA_CYCLE_AMPLITUDE * torch.sin(2 * math.pi * self.p.theta_hz * t_seconds)
         return 1.0 + gamma + theta
 
     # --- public API --------------------------------------------------------
@@ -96,8 +112,38 @@ class GABAInhibitionGate(nn.Module):
     def forward(
         self, market_state: Dict[str, torch.Tensor], action: torch.Tensor
     ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        """Apply GABA inhibition gate to action.
+        
+        Parameters
+        ----------
+        market_state : Dict[str, torch.Tensor]
+            Market state with keys: 'vix', 'vol', 'ret', 'pos', 'rpe', 'delta_t_ms'
+        action : torch.Tensor
+            Proposed action vector
+            
+        Returns
+        -------
+        Tuple[torch.Tensor, Dict[str, float]]
+            Gated action and metrics dict
+            
+        Raises
+        ------
+        KeyError
+            If required keys missing from market_state
+        ValueError
+            If tensors have invalid values (NaN, Inf)
+        """
+        # Validate inputs
+        required_keys = ['vix', 'vol', 'ret', 'pos', 'rpe', 'delta_t_ms']
+        missing_keys = [k for k in required_keys if k not in market_state]
+        if missing_keys:
+            raise KeyError(f"Missing required keys in market_state: {missing_keys}")
+        
         # Ensure device/shape
         action = action.to(self.device)
+        if torch.isnan(action).any() or torch.isinf(action).any():
+            raise ValueError("action contains NaN or Inf values")
+            
         vix = market_state['vix'].to(self.device).reshape(1)
         vol = market_state['vol'].to(self.device).reshape(1)
         ret = market_state['ret'].to(self.device).reshape(1)
@@ -106,13 +152,15 @@ class GABAInhibitionGate(nn.Module):
         delta_t_ms = market_state['delta_t_ms'].to(self.device).reshape(1)
 
         # 1) GABA release ~ threat proxy (volatility) with dual time constants
-        drive = 0.5 * self._norm_vol(vix)
+        drive = _GABA_DRIVE_SCALE * self._norm_vol(vix)
         self.gaba_fast = self.gaba_fast * self.decay_fast + drive * (1 - self.decay_fast)
         self.gaba_slow = self.gaba_slow * self.decay_slow + drive * (1 - self.decay_slow)
-        gaba_level = torch.clamp(self.gaba_fast + 0.5 * self.gaba_slow, 0.0, 2.0)
+        gaba_level = torch.clamp(
+            self.gaba_fast + _GABA_SLOW_WEIGHT * self.gaba_slow, 0.0, _GABA_MAX_LEVEL
+        )
 
         # 2) Inhibition proportional to GABA and action magnitude
-        firing_proxy = torch.clamp(action.norm().unsqueeze(0), 0.0, 10.0)
+        firing_proxy = torch.clamp(action.norm().unsqueeze(0), 0.0, _FIRING_PROXY_MAX)
         inhibition = self.p.k_inhibit * gaba_level * torch.tanh(firing_proxy)
         inhibition = torch.clamp(inhibition, 0.0, 0.95)
 
@@ -138,9 +186,9 @@ class GABAInhibitionGate(nn.Module):
         # LTP/LTD gated by vol*ret (pre*post)
         pre_post = vol * ret
         if (pre_post > self.p.ltp_theta).item():
-            dw = dw + 0.01 * gaba_level
+            dw = dw + _LTP_STRENGTH * gaba_level
         elif (pre_post < self.p.ltd_theta).item():
-            dw = dw - 0.008 * gaba_level
+            dw = dw - _LTD_STRENGTH * gaba_level
         self.risk_weight = torch.clamp(self.risk_weight + dw, self.p.risk_min, self.p.risk_max)
 
         # 5) Apply gating
@@ -153,11 +201,51 @@ class GABAInhibitionGate(nn.Module):
         }
         return gated, metrics
 
-    @torch.no_grad()
-    def apply_hedge(self, strength: float = 1.0, half_life_h: float = 24.0):
-        """Diazepam-analog hedge: transiently boost GABA and reduce sensitivity.
-        strength in [0, 2].
+    def get_state(self) -> GateState:
+        """Get current gate state.
+        
+        Returns
+        -------
+        GateState
+            Current internal state of the gate
         """
+        return GateState(
+            gaba_fast=self.gaba_fast.clone(),
+            gaba_slow=self.gaba_slow.clone(),
+            risk_weight=self.risk_weight.clone(),
+            t_ms=self.t_ms.clone()
+        )
+    
+    def set_state(self, state: GateState) -> None:
+        """Set gate state.
+        
+        Parameters
+        ----------
+        state : GateState
+            State to restore
+        """
+        self.gaba_fast = state.gaba_fast.to(self.device)
+        self.gaba_slow = state.gaba_slow.to(self.device)
+        self.risk_weight = state.risk_weight.to(self.device)
+        self.t_ms = state.t_ms.to(self.device)
+
+    @torch.no_grad()
+    def apply_hedge(self, strength: float = 1.0) -> None:
+        """Diazepam-analog hedge: transiently boost GABA and reduce sensitivity.
+        
+        Parameters
+        ----------
+        strength : float, optional
+            Hedge strength multiplier in [0, 2], by default 1.0
+            Higher values increase GABAergic inhibition.
+        """
+        if not 0.0 <= strength <= 2.0:
+            raise ValueError(f"strength must be in [0, 2], got {strength}")
+        
         boost = torch.tensor(strength, device=self.device)
-        self.gaba_fast = torch.clamp(self.gaba_fast * (1 + 0.5 * boost), 0.0, 2.0)
-        self.gaba_slow = torch.clamp(self.gaba_slow * (1 + 0.25 * boost), 0.0, 2.0)
+        self.gaba_fast = torch.clamp(
+            self.gaba_fast * (1 + _HEDGE_FAST_BOOST * boost), 0.0, _GABA_MAX_LEVEL
+        )
+        self.gaba_slow = torch.clamp(
+            self.gaba_slow * (1 + _HEDGE_SLOW_BOOST * boost), 0.0, _GABA_MAX_LEVEL
+        )

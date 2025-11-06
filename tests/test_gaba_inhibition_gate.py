@@ -1,5 +1,6 @@
+import pytest
 import torch
-from modules.gaba_inhibition_gate import GABAInhibitionGate
+from modules.gaba_inhibition_gate import GABAInhibitionGate, GateParams, GateState
 
 
 def base_state(vix=20.0, vol=0.1, ret=0.01, pos=1.0, rpe=0.0, dt_ms=20.0):
@@ -14,6 +15,7 @@ def base_state(vix=20.0, vol=0.1, ret=0.01, pos=1.0, rpe=0.0, dt_ms=20.0):
 
 
 def test_inhibition_monotonic_with_vol():
+    """Test that inhibition increases with volatility."""
     gate = GABAInhibitionGate()
     a = torch.tensor([1.0])
     _, m1 = gate(base_state(vix=10.0), a)
@@ -22,6 +24,7 @@ def test_inhibition_monotonic_with_vol():
 
 
 def test_risk_weight_bounds():
+    """Test that risk_weight stays within [0.5, 1.5] bounds."""
     gate = GABAInhibitionGate()
     a = torch.tensor([2.0])
     for _ in range(200):
@@ -31,6 +34,7 @@ def test_risk_weight_bounds():
 
 
 def test_cycle_modulation_range():
+    """Test that cycle modulation produces output variation."""
     gate = GABAInhibitionGate()
     a = torch.tensor([1.0])
     outputs = []
@@ -38,3 +42,117 @@ def test_cycle_modulation_range():
         g, _ = gate(base_state(), a)
         outputs.append(g.item())
     assert max(outputs) > min(outputs)  # cycles actually modulate
+
+
+def test_custom_gate_params():
+    """Test gate with custom parameters."""
+    custom_params = GateParams(
+        k_inhibit=0.6,
+        cycle_modulation=False,
+        risk_min=0.3,
+        risk_max=2.0
+    )
+    gate = GABAInhibitionGate(params=custom_params)
+    a = torch.tensor([1.0])
+    gated, metrics = gate(base_state(), a)
+    
+    assert isinstance(gated, torch.Tensor)
+    assert isinstance(metrics, dict)
+    assert 'inhibition' in metrics
+    assert 'gaba_level' in metrics
+    assert 'risk_weight' in metrics
+
+
+def test_device_parameter():
+    """Test gate initialization with explicit device."""
+    gate = GABAInhibitionGate(device='cpu')
+    assert gate.device.type == 'cpu'
+    
+    a = torch.tensor([1.0])
+    gated, _ = gate(base_state(), a)
+    assert gated.device.type == 'cpu'
+
+
+def test_apply_hedge():
+    """Test hedge function modifies GABA levels."""
+    gate = GABAInhibitionGate()
+    
+    # Get initial state
+    _, m1 = gate(base_state(), torch.tensor([1.0]))
+    initial_gaba = m1['gaba_level']
+    
+    # Apply hedge
+    gate.apply_hedge(strength=1.0)
+    
+    # Check GABA increased
+    _, m2 = gate(base_state(), torch.tensor([1.0]))
+    assert m2['gaba_level'] > initial_gaba
+
+
+def test_apply_hedge_invalid_strength():
+    """Test hedge function validates strength parameter."""
+    gate = GABAInhibitionGate()
+    
+    with pytest.raises(ValueError, match="strength must be in"):
+        gate.apply_hedge(strength=3.0)
+    
+    with pytest.raises(ValueError, match="strength must be in"):
+        gate.apply_hedge(strength=-1.0)
+
+
+def test_missing_market_state_keys():
+    """Test forward raises KeyError for missing market_state keys."""
+    gate = GABAInhibitionGate()
+    incomplete_state = {'vix': torch.tensor(20.0)}
+    
+    with pytest.raises(KeyError, match="Missing required keys"):
+        gate(incomplete_state, torch.tensor([1.0]))
+
+
+def test_invalid_action_values():
+    """Test forward raises ValueError for NaN/Inf action values."""
+    gate = GABAInhibitionGate()
+    
+    with pytest.raises(ValueError, match="NaN or Inf"):
+        gate(base_state(), torch.tensor([float('nan')]))
+    
+    with pytest.raises(ValueError, match="NaN or Inf"):
+        gate(base_state(), torch.tensor([float('inf')]))
+
+
+def test_get_set_state():
+    """Test state save/restore functionality."""
+    gate = GABAInhibitionGate()
+    
+    # Run a few steps
+    for _ in range(10):
+        gate(base_state(vix=30.0), torch.tensor([1.0]))
+    
+    # Save state
+    state = gate.get_state()
+    assert isinstance(state, GateState)
+    
+    # Continue running
+    for _ in range(10):
+        gate(base_state(vix=40.0), torch.tensor([1.5]))
+    
+    # Restore state
+    gate.set_state(state)
+    
+    # Verify state restored
+    restored_state = gate.get_state()
+    assert torch.allclose(restored_state.gaba_fast, state.gaba_fast)
+    assert torch.allclose(restored_state.gaba_slow, state.gaba_slow)
+    assert torch.allclose(restored_state.risk_weight, state.risk_weight)
+    assert torch.allclose(restored_state.t_ms, state.t_ms)
+
+
+def test_no_gradient_leak():
+    """Test that forward pass doesn't create gradient graphs."""
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.0], requires_grad=True)
+    
+    gated, _ = gate(base_state(), action)
+    
+    # Should not have gradient tracking
+    assert not gated.requires_grad
