@@ -14,8 +14,9 @@ providing:
 - **Smooth phasic gating** that blends tonic and burst modes without threshold
   discontinuities while exposing HOLD veto triggers across tonic, gate, and
   phasic channels.
-- **Exponential desensitisation** with capped counters to avoid chronic
-  inhibition while ensuring a hard lower bound at sensitivity 0.1.
+- **Exponential desensitisation** with configurable gain and capped counters to
+  avoid chronic inhibition while ensuring a hard lower bound at sensitivity
+  0.1.
 - **Meta-adaptation with TACL guardrails** that nudges release weights based on
   drawdown and Sharpe ratios while enforcing monotonic free-energy descent.
 - **Expanded telemetry** for tonic, phasic, gate, sensitivity, and drift
@@ -36,7 +37,7 @@ Key fields include:
 | `delta`, `za_bias` | Action inhibition gain and aversive bias. |
 | `cooldown_threshold` | HOLD veto activation threshold. |
 | `phase_threshold`, `phase_kappa`, `burst_factor` | Smooth phase gate and burst scaling controls. |
-| `desens_rate`, `desens_threshold_ticks`, `max_desens_counter` | Desensitisation cadence, onset tick, and counter cap. |
+| `desens_rate`, `desens_threshold_ticks`, `max_desens_counter`, `desens_gain` | Desensitisation cadence, onset tick, counter cap, and exponential gain. |
 | `beta_temper` | Gradient tempering coefficient. |
 | `target_dd`, `target_sharpe` | Objectives for the meta-adaptation routine. |
 | `mod_t_half`, `mod_t_max`, `mod_k`, `tick_hours` | Time-scaled modulation parameters for meta-adaptation. |
@@ -48,7 +49,15 @@ import logging
 from core.neuro.serotonin import SerotoninController
 
 logger = logging.getLogger("tradepulse.serotonin")
+
+def tacl_guard(name: str, payload: dict[str, float]) -> bool:
+    """Return ``True`` to accept serotonin proposals (stub for demo)."""
+
+    return payload.get("drawdown", 0.0) <= 0.0
+
+
 controller = SerotoninController("configs/serotonin.yaml", logger.info)
+controller.set_tacl_guard(tacl_guard)
 
 release = controller.estimate_aversive_state(1.0, 0.5, 0.2, -0.90)
 serotonin_signal = controller.compute_serotonin_signal(release)
@@ -59,7 +68,6 @@ if controller.check_cooldown(serotonin_signal):
 
 shifted_gradient = controller.apply_internal_shift(2.0, serotonin_signal)
 controller.update_metrics()
-controller.set_tacl_guard(lambda name, payload: payload["sharpe"] >= 0)
 controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
 state_snapshot = controller.to_dict()
 ```

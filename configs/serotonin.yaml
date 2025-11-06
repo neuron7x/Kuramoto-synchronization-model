@@ -19,6 +19,7 @@ mod_t_max: 4.0
 mod_t_half: 24.0
 mod_k: 0.7
 max_desens_counter: 1000
+desens_gain: 0.12
 tau_5ht_ms: 150.0
 step_ms: 1000.0
 tick_hours: 1.0

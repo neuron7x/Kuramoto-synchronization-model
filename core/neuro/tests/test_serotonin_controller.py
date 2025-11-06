@@ -37,6 +37,7 @@ def config_dict():
         "step_ms": 0.0,
         "tick_hours": 1.0,
         "phase_kappa": 0.08,
+        "desens_gain": 0.12,
     }
 
 
@@ -207,3 +208,63 @@ def test_tau_to_decay_derivation(tmp_path, config_dict):
     controller = SerotoninController(str(cfg_path), logger=lambda *_: None)
     expected = 1.0 - math.exp(-1000.0 / 150.0)
     assert controller.config["decay_rate"] == pytest.approx(expected, rel=1e-6)
+
+
+def test_phase_gate_monotonic_around_threshold(tmp_path, config_dict):
+    cfg_path = tmp_path / "s.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f)
+    below = SerotoninController(str(cfg_path), logger=lambda *_: None)
+    above = SerotoninController(str(cfg_path), logger=lambda *_: None)
+    below.compute_serotonin_signal(config_dict["phase_threshold"] - 0.05)
+    above.compute_serotonin_signal(config_dict["phase_threshold"] + 0.05)
+    assert 0.0 <= below.gate_level <= 1.0
+    assert 0.0 <= above.gate_level <= 1.0
+    assert above.phasic_level > below.phasic_level
+
+
+def test_meta_adapt_tick_hours_scaling(tmp_path, config_dict):
+    slow_cfg = dict(config_dict)
+    fast_cfg = dict(config_dict)
+    slow_cfg["tick_hours"] = 4.0
+    fast_cfg["tick_hours"] = 0.25
+
+    slow_path = tmp_path / "slow.yaml"
+    fast_path = tmp_path / "fast.yaml"
+    with open(slow_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(slow_cfg, f)
+    with open(fast_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(fast_cfg, f)
+
+    slow = SerotoninController(str(slow_path), logger=lambda *_: None)
+    fast = SerotoninController(str(fast_path), logger=lambda *_: None)
+
+    slow.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
+    fast.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
+
+    slow_c = math.exp(-slow.config["tick_hours"] / slow.config["mod_t_half"]) * (
+        1 - math.exp(-slow.config["tick_hours"] / slow.config["mod_t_max"])
+    )
+    fast_c = math.exp(-fast.config["tick_hours"] / fast.config["mod_t_half"]) * (
+        1 - math.exp(-fast.config["tick_hours"] / fast.config["mod_t_max"])
+    )
+    slow_expected = 1 + slow.config["mod_k"] * slow_c
+    fast_expected = 1 + fast.config["mod_k"] * fast_c
+
+    assert slow.config["alpha"] == pytest.approx(0.42 * 1.01 * slow_expected, rel=1e-3)
+    assert fast.config["alpha"] == pytest.approx(0.42 * 1.01 * fast_expected, rel=1e-3)
+    assert slow.config["alpha"] != pytest.approx(fast.config["alpha"], rel=1e-4)
+
+
+def test_estimate_aversive_state_clamps_rho_loss(controller):
+    over = controller.estimate_aversive_state(1.0, 0.5, 0.2, 5.0)
+    under = controller.estimate_aversive_state(1.0, 0.5, 0.2, -5.0)
+    base = controller.estimate_aversive_state(1.0, 0.5, 0.2, 1.0)
+    assert over == pytest.approx(base, rel=1e-6)
+    assert under > base
+
+
+def test_check_cooldown_guard_overrides(controller):
+    controller.compute_serotonin_signal(2.0)
+    controller.set_tacl_guard(lambda name, payload: False)
+    assert controller.check_cooldown() is False

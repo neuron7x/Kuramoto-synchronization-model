@@ -79,6 +79,7 @@ class SerotoninController:
             "mod_t_half",
             "mod_k",
             "max_desens_counter",
+            "desens_gain",
         ]
         missing = [key for key in required if key not in cfg]
         if missing:
@@ -111,6 +112,7 @@ class SerotoninController:
             beta = cfg["beta"]
             gamma = cfg["gamma"]
             delta_rho = cfg["delta_rho"]
+        rho_loss = max(-1.0, min(1.0, rho_loss))
         release = (
             alpha * market_vol
             + beta * free_energy
@@ -143,7 +145,10 @@ class SerotoninController:
         if self.tonic_level > cfg["cooldown_threshold"]:
             self.desens_counter = min(self.desens_counter + 1, max_counter)
             if self.desens_counter > cfg["desens_threshold_ticks"]:
-                self.sensitivity = max(0.1, self.sensitivity * math.exp(-sig / 12.0))
+                self.sensitivity = max(
+                    0.1,
+                    self.sensitivity * math.exp(-cfg["desens_gain"] * sig),
+                )
         else:
             self.desens_counter = 0
             self.sensitivity = min(1.0, self.sensitivity + cfg["desens_rate"] * 0.5)
@@ -175,11 +180,20 @@ class SerotoninController:
 
         if serotonin_signal is None:
             serotonin_signal = self.serotonin_level
-        return (
+        veto = (
             serotonin_signal > self.config["cooldown_threshold"]
             or self.phasic_level > 1.0
             or self.gate_level > 0.9
         )
+        if self._tacl_guard and veto:
+            payload = {
+                "serotonin_signal": float(serotonin_signal),
+                "phasic_level": float(self.phasic_level),
+                "gate_level": float(self.gate_level),
+            }
+            if not self._tacl_guard("serotonin_cooldown", payload):
+                return False
+        return veto
 
     def apply_internal_shift(
         self,
@@ -250,8 +264,16 @@ class SerotoninController:
         """Persist the current configuration to disk."""
 
         target = path or self.config_path
-        with open(target, "w", encoding="utf-8") as f:
+        tmp_target = f"{target}.tmp"
+        with open(tmp_target, "w", encoding="utf-8") as f:
             yaml.safe_dump(self.config, f)
+        try:
+            import os
+
+            os.replace(tmp_target, target)
+        except Exception:
+            os.remove(tmp_target)
+            raise
 
     def to_dict(self) -> dict:
         """Expose serialisable controller state for audits and telemetry."""
