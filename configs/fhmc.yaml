@@ -1,0 +1,39 @@
+fhmc:
+  alpha_target: [0.8, 1.0]
+  mfs:
+    cascade: dyadic
+    base_dt_seconds: 60
+    adapt_alpha: true
+    heavy_tail: 0.5
+  arousal:
+    aperiodic_slope_window_seconds: 300
+    slope_gate: true
+  sync:
+    fractal_barrier: true
+  flipflop:
+    theta_lo: 0.6
+    theta_hi: 0.8
+    omega_lo: 0.4
+    omega_hi: 0.6
+  orexin:
+    k1: 1.0
+    k2: 0.7
+    k3: 0.3
+  threat:
+    w_dd: 0.5
+    w_vol: 0.3
+    w_cp: 0.2
+  sleep:
+    share_min: 0.05
+    share_max: 0.15
+    dgr_ratio: 0.25
+  explore:
+    use_colored_noise_ppo: true
+    ou_theta: 0.15
+    ou_sigma: 0.2
+  habit_head:
+    lambda_h: 0.3
+  fractional_update:
+    eta_f: 0.1
+    levy_alpha: 1.5
+    on_states: ["WAKE"]

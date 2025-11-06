@@ -426,7 +426,7 @@ class DataPipeline:
             )
 
         clean = report.clean
-        clean = clean.drop_duplicates(subset=gate.schema.timestamp_column, keep="last")
+        clean = clean.drop_duplicates(subset=gate.validation_schema.timestamp_column, keep="last")
         summary = report.summarise(gate)
         return DataPipeline._QualityOutcome(
             clean.reset_index(drop=True), quarantined, summary

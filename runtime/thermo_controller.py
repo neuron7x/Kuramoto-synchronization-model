@@ -15,6 +15,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import torch
+import yaml
 
 from evolution import bond_evolver
 from core.energy import (
@@ -37,6 +38,12 @@ from runtime.behavior_contract import (
 )
 from runtime.dual_approval import DualApprovalManager
 from runtime.kill_switch import is_kill_switch_active
+from utils.fractal_cascade import DyadicPMCascade, pink_noise
+from core.metrics.dfa import dfa_alpha
+from core.metrics.aperiodic import aperiodic_slope
+from core.indicators.multiscale_kuramoto import multiscale_kuramoto, fractal_gcl_novelty
+from utils.change_point import cusum_score, vol_shock
+from rl.replay.sleep_engine import SleepReplayEngine
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
@@ -1130,6 +1137,122 @@ class ThermoController:
         }
 
 
+class FHMC:
+    """Fracto-Hypothalamic Meta-Controller."""
+
+    def __init__(self, cfg: Dict[str, Any]) -> None:
+        root_cfg = cfg["fhmc"] if "fhmc" in cfg else cfg
+        self.cfg = root_cfg
+        self.state = "WAKE"
+        self._alpha_hist: list[float] = []
+        self._slope_hist: list[float] = []
+        self.cascade = DyadicPMCascade(
+            depth=int(root_cfg["mfs"].get("depth", 12)),
+            p=float(root_cfg["mfs"].get("p", 0.6)),
+            heavy_tail=float(root_cfg["mfs"].get("heavy_tail", 0.5)),
+            base_dt=float(root_cfg["mfs"].get("base_dt_seconds", 60.0)),
+        )
+        self.sleep_engine = SleepReplayEngine(dgr_ratio=float(root_cfg["sleep"].get("dgr_ratio", 0.25)))
+        self._ox = 0.5
+        self._th = 0.3
+
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> "FHMC":
+        with open(path, "r", encoding="utf-8") as stream:
+            cfg = yaml.safe_load(stream)
+        return cls(cfg)
+
+    def orexin_value(self) -> float:
+        return float(self._ox)
+
+    def threat_value(self) -> float:
+        return float(self._th)
+
+    def update_biomarkers(
+        self,
+        action_scalar_series: Iterable[float],
+        internal_latents: Iterable[float],
+        *,
+        fs_latents: int = 50,
+    ) -> None:
+        actions = list(action_scalar_series)
+        if len(actions) >= 500:
+            tail = np.asarray(actions[-2000:], dtype=float)
+            alpha = dfa_alpha(tail, min_win=50, max_win=min(2000, len(tail) // 2), n_win=12)
+            self._alpha_hist.append(alpha)
+            lo, hi = self.cfg["alpha_target"]
+            if self.cfg["mfs"].get("adapt_alpha", False):
+                if alpha < lo:
+                    self.cascade.adjust_heavy_tail(+0.05)
+                elif alpha > hi:
+                    self.cascade.adjust_heavy_tail(-0.05)
+
+        latents = list(internal_latents)
+        window = fs_latents * 10
+        if len(latents) >= window:
+            tail = np.asarray(latents[-window:], dtype=float)
+            slope = aperiodic_slope(tail, fs=float(fs_latents), f_lo=0.5, f_hi=40.0)
+            self._slope_hist.append(slope)
+            if self.cfg["arousal"].get("slope_gate", False) and slope < -1.5 and self.state == "WAKE":
+                self.state = "SLEEP"
+
+    def compute_orexin(self, exp_return: float, novelty: float, load: float) -> float:
+        orexin_cfg = self.cfg["orexin"]
+        stimulus = (
+            orexin_cfg.get("k1", 1.0) * exp_return
+            + orexin_cfg.get("k2", 0.7) * novelty
+            + orexin_cfg.get("k3", 0.3) * load
+        )
+        self._ox = float(1.0 / (1.0 + np.exp(-stimulus)))
+        return self._ox
+
+    def compute_threat(self, maxdd: float, volshock: float, cp_score: float) -> float:
+        threat_cfg = self.cfg["threat"]
+        weighted = (
+            threat_cfg.get("w_dd", 0.5) * max(0.0, maxdd)
+            + threat_cfg.get("w_vol", 0.3) * max(0.0, volshock)
+            + threat_cfg.get("w_cp", 0.2) * max(0.0, cp_score)
+        )
+        self._th = float(np.tanh(weighted))
+        return self._th
+
+    def flipflop_step(self) -> str:
+        theta_lo = self.cfg["flipflop"].get("theta_lo", 0.6)
+        theta_hi = self.cfg["flipflop"].get("theta_hi", 0.8)
+        omega_lo = self.cfg["flipflop"].get("omega_lo", 0.4)
+        omega_hi = self.cfg["flipflop"].get("omega_hi", 0.6)
+        if self.state == "WAKE":
+            if self._th > theta_hi or self._ox < omega_lo:
+                self.state = "SLEEP"
+        else:
+            if self._th < theta_lo and self._ox > omega_hi:
+                self.state = "WAKE"
+        return self.state
+
+    def next_window_seconds(self) -> float:
+        return float(self.cascade.sample(n=1)[0])
+
+    def novelty_from_embeddings(
+        self,
+        graph: nx.Graph,
+        embeddings_i: np.ndarray,
+        embeddings_j: np.ndarray,
+    ) -> tuple[float, float]:
+        return fractal_gcl_novelty(graph, embeddings_i, embeddings_j)
+
+    def threat_markers(self, returns: Iterable[float]) -> tuple[float, float]:
+        series = list(returns)
+        cp_score = cusum_score(series, drift=0.0, threshold=self.cfg["threat"].get("cp_threshold", 5.0))
+        vs = vol_shock(series, window=int(self.cfg["threat"].get("vol_window", 60)))
+        return vs, cp_score
+
+    def sync_order(self, phases: Iterable[float]) -> float:
+        return multiscale_kuramoto(list(phases))
+
+    def sample_colored_noise(self, n: int, beta: float = 1.0) -> np.ndarray:
+        return pink_noise(n, beta=beta)
+
+
 __all__ = [
     "evolve_bonds",
     "ThermoController",
@@ -1137,4 +1260,5 @@ __all__ = [
     "estimate_entropy",
     "gradient_descent_step",
     "CRITICAL_HALT_STATE",
+    "FHMC",
 ]
