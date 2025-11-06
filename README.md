@@ -279,8 +279,6 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 - `runtime/thermo_controller.py` — orchestrates the loop, enforces the
   monotonic constraint with tolerance windows, and drives LinkActivator
   for hot-swapping protocols.
-- `runtime/thermo_controller.FHMC` — fracto-hypothalamic meta-controller
-  coordinating biomarker-driven RL exploration and crisis-aware replay.
 - `runtime/thermo_api.py` — FastAPI service exposing `/thermo/status`,
   `/thermo/history`, `/thermo/crisis`, `/thermo/activations`, and a
   `/thermo/reset` hook for integration tests.
