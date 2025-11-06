@@ -671,7 +671,8 @@ def multiscale_kuramoto(phases: np.ndarray, K: float = 1.0) -> float:
     if phase_array.size == 0:
         return 0.0
     order = np.exp(1j * phase_array)
-    return float(np.abs(np.mean(order, axis=0)))
+    order_parameter = np.abs(np.mean(order))
+    return float(order_parameter)
 
 
 def fractal_gcl_novelty(

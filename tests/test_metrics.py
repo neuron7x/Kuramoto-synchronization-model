@@ -3,7 +3,7 @@ import numpy as np
 from core.metrics.aperiodic import aperiodic_slope
 from core.metrics.dfa import dfa_alpha
 from core.metrics.fractal_dimension import box_counting_dim
-from utils.fractal_cascade import pink_noise
+from utils.fractal_cascade import DyadicPMCascade, pink_noise
 
 
 def test_metrics_fractal_properties():
@@ -16,3 +16,20 @@ def test_metrics_fractal_properties():
 
     dimension = box_counting_dim(signal)
     assert dimension > 0.5
+
+
+def test_dyadic_cascade_adjustment_bounds():
+    cascade = DyadicPMCascade(depth=4, p=0.55, heavy_tail=0.4, base_dt=30.0)
+    samples = cascade.sample(16)
+    assert samples.shape == (16,)
+    cascade.adjust_heavy_tail(1.0)
+    assert 0.0 <= cascade.heavy_tail <= 1.0
+    cascade.adjust_heavy_tail(-2.0)
+    assert 0.0 <= cascade.heavy_tail <= 1.0
+    with np.testing.assert_raises(ValueError):
+        DyadicPMCascade(depth=-1)
+
+
+def test_pink_noise_invalid_length():
+    with np.testing.assert_raises(ValueError):
+        pink_noise(0)

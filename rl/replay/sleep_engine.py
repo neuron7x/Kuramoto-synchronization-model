@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from collections import deque, namedtuple
-from typing import Deque, List, Sequence
+from typing import Any, Deque, List
 
 import numpy as np
 
-Transition = namedtuple("Transition", "state action reward next_state priority cp_score")
+Transition = namedtuple(
+    "Transition", "state action reward next_state priority cp_score"
+)
 
 
 class SleepReplayEngine:
@@ -42,7 +44,14 @@ class SleepReplayEngine:
         imminence_jump: float = 0.0,
     ) -> float:
         priority = abs(td_error) + self.psi * cp_score + self.phi * imminence_jump
-        transition = Transition(state, action, float(reward), next_state, priority, cp_score)
+        transition = Transition(
+            np.array(state, copy=True),
+            np.array(action, copy=True),
+            float(reward),
+            np.array(next_state, copy=True),
+            float(priority),
+            float(cp_score),
+        )
         self.buffer.append(transition)
         return float(priority)
 
@@ -51,12 +60,20 @@ class SleepReplayEngine:
             raise ValueError("batch_size must be positive")
         if len(self.buffer) < batch_size:
             return []
-        priorities = np.array([transition.priority for transition in self.buffer], dtype=float)
-        probabilities = priorities / (priorities.sum() + 1e-8)
-        indices = np.random.choice(len(self.buffer), size=batch_size, replace=False, p=probabilities)
+        priorities = np.array(
+            [transition.priority for transition in self.buffer], dtype=float
+        )
+        total_priority = float(np.sum(priorities))
+        if not np.isfinite(total_priority) or total_priority <= 0.0:
+            probabilities = np.full(len(self.buffer), 1.0 / len(self.buffer))
+        else:
+            probabilities = priorities / total_priority
+        indices = np.random.choice(
+            len(self.buffer), size=batch_size, replace=False, p=probabilities
+        )
         return [self.buffer[index] for index in indices]
 
-    def dgr_batch(self, generator: Sequence[np.ndarray] | None, m: int) -> List[np.ndarray]:
+    def dgr_batch(self, generator: Any, m: int) -> List[Any]:
         if generator is None or m <= 0:
             return []
         if not hasattr(generator, "sample"):
