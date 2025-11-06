@@ -50,7 +50,7 @@ class ValueNet(nn.Module):
 
 
 class ActorCriticFHMC:
-    """Actor-critic agent informed by FHMC biomarker feedback."""
+    """Actor-critic agent informed by FHMC biomarker feedback with self-rewarding RL."""
 
     def __init__(
         self,
@@ -60,6 +60,7 @@ class ActorCriticFHMC:
         *,
         lr: float = 3e-4,
         device: str = "cpu",
+        enable_self_rewarding: bool = True,
     ) -> None:
         self.fhmc = fhmc
         self.device = torch.device(device)
@@ -76,6 +77,23 @@ class ActorCriticFHMC:
         self.colored = ColoredNoiseAR1(size=action_dim, rho=0.95, sigma=0.05)
         self.beta0 = 1.0
         self.state_dim = state_dim
+        
+        # Self-rewarding RL for dynamic learning rate tuning (audit enhancement)
+        self._enable_srdrl = enable_self_rewarding
+        if self._enable_srdrl:
+            try:
+                from core.validation.continual_learning_metrics import SelfRewardingRL
+                self._srdrl = SelfRewardingRL(
+                    initial_lr=lr,
+                    lr_min=1e-5,
+                    lr_max=1e-3,
+                    reward_window=100,
+                )
+            except ImportError:
+                self._srdrl = None
+                self._enable_srdrl = False
+        else:
+            self._srdrl = None
 
     def reset(self) -> np.ndarray:
         self.ou.reset()
@@ -106,6 +124,22 @@ class ActorCriticFHMC:
         v_next = self.value(s_next).detach()
         gamma = 0.0 if done else 0.99
         delta_r = r + gamma * v_next - v
+        
+        # Self-rewarding RL: Update learning rates dynamically (audit enhancement)
+        if self._enable_srdrl and self._srdrl is not None:
+            # Get convergence rate from FHMC online monitoring
+            convergence_rate = 0.0
+            biomarker_state = self.fhmc.get_online_biomarker_state()
+            if biomarker_state is not None:
+                convergence_rate = biomarker_state.get("convergence_rate", 0.0)
+            
+            # Update learning rate based on reward and convergence
+            new_lr = self._srdrl.update_lr(float(reward), convergence_rate)
+            
+            # Apply new learning rate to all optimizers
+            for optimizer in [self.opt_policy, self.opt_value, self.opt_habit]:
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = new_lr
 
         self.opt_value.zero_grad()
         (-delta_r.detach() * v).mean().backward()
