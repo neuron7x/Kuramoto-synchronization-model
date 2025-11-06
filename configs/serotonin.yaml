@@ -1,0 +1,15 @@
+alpha: 0.42
+beta: 0.28
+gamma: 0.32
+delta_rho: 0.18
+k: 1.0
+theta: 0.5
+delta: 0.8
+za_bias: -0.33
+decay_rate: 0.05
+cooldown_threshold: 0.7
+desens_threshold_ticks: 100
+desens_rate: 0.01
+target_dd: -0.05
+target_sharpe: 1.0
+beta_temper: 0.12
