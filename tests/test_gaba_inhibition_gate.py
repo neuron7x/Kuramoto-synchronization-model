@@ -1,6 +1,11 @@
 import pytest
 import torch
-from modules.gaba_inhibition_gate import GABAInhibitionGate, GateParams, GateState
+from modules.gaba_inhibition_gate import (
+    GABAInhibitionGate,
+    GateParams,
+    GateState,
+    GateMetrics,
+)
 
 
 def base_state(vix=20.0, vol=0.1, ret=0.01, pos=1.0, rpe=0.0, dt_ms=20.0):
@@ -20,7 +25,7 @@ def test_inhibition_monotonic_with_vol():
     a = torch.tensor([1.0])
     _, m1 = gate(base_state(vix=10.0), a)
     _, m2 = gate(base_state(vix=30.0), a)
-    assert m2['inhibition'] > m1['inhibition']
+    assert m2.inhibition > m1.inhibition
 
 
 def test_risk_weight_bounds():
@@ -30,7 +35,7 @@ def test_risk_weight_bounds():
     for _ in range(200):
         gate(base_state(vix=80.0, ret=0.5, dt_ms=10.0), a)
     _, m = gate(base_state(vix=80.0), a)
-    assert 0.5 <= m['risk_weight'] <= 1.5
+    assert 0.5 <= m.risk_weight <= 1.5
 
 
 def test_cycle_modulation_range():
@@ -57,10 +62,10 @@ def test_custom_gate_params():
     gated, metrics = gate(base_state(), a)
     
     assert isinstance(gated, torch.Tensor)
-    assert isinstance(metrics, dict)
-    assert 'inhibition' in metrics
-    assert 'gaba_level' in metrics
-    assert 'risk_weight' in metrics
+    assert isinstance(metrics, GateMetrics)
+    assert hasattr(metrics, 'inhibition')
+    assert hasattr(metrics, 'gaba_level')
+    assert hasattr(metrics, 'risk_weight')
 
 
 def test_device_parameter():
@@ -79,14 +84,14 @@ def test_apply_hedge():
     
     # Get initial state
     _, m1 = gate(base_state(), torch.tensor([1.0]))
-    initial_gaba = m1['gaba_level']
+    initial_gaba = m1.gaba_level
     
     # Apply hedge
     gate.apply_hedge(strength=1.0)
     
     # Check GABA increased
     _, m2 = gate(base_state(), torch.tensor([1.0]))
-    assert m2['gaba_level'] > initial_gaba
+    assert m2.gaba_level > initial_gaba
 
 
 def test_apply_hedge_invalid_strength():
@@ -156,3 +161,103 @@ def test_no_gradient_leak():
     
     # Should not have gradient tracking
     assert not gated.requires_grad
+
+
+def test_market_state_nan_validation():
+    """Test that NaN/Inf in market_state tensors raises ValueError."""
+    gate = GABAInhibitionGate()
+    
+    # Test NaN in vix
+    state_with_nan = base_state()
+    state_with_nan['vix'] = torch.tensor(float('nan'))
+    with pytest.raises(ValueError, match="vix contains NaN or Inf"):
+        gate(state_with_nan, torch.tensor([1.0]))
+    
+    # Test Inf in vol
+    state_with_inf = base_state()
+    state_with_inf['vol'] = torch.tensor(float('inf'))
+    with pytest.raises(ValueError, match="vol contains NaN or Inf"):
+        gate(state_with_inf, torch.tensor([1.0]))
+
+
+def test_cycle_modulation_determinism():
+    """Test that cycle_modulation affects output variance over time."""
+    # Test with cycles enabled - should see oscillations
+    params_cycles = GateParams(cycle_modulation=True)
+    gate_cycles = GABAInhibitionGate(params=params_cycles)
+    
+    a = torch.tensor([1.0])
+    # Run enough steps to see cycle effects (need time to pass)
+    outputs_with_cycles = []
+    for _ in range(200):
+        g, _ = gate_cycles(base_state(), a)
+        outputs_with_cycles.append(g.item())
+    
+    variance_with_cycles = max(outputs_with_cycles) - min(outputs_with_cycles)
+    
+    # Test with cycles disabled - should see less variation from cycles
+    params_no_cycles = GateParams(cycle_modulation=False)
+    gate_no_cycles = GABAInhibitionGate(params=params_no_cycles)
+    
+    outputs_no_cycles = []
+    for _ in range(200):
+        g, _ = gate_no_cycles(base_state(), a)
+        outputs_no_cycles.append(g.item())
+    
+    variance_no_cycles = max(outputs_no_cycles) - min(outputs_no_cycles)
+    
+    # With cycles enabled, we should see oscillatory behavior over time
+    # Both will have GABA dynamics, but cycles adds oscillations
+    # The key test is that with cycles we get meaningful variation
+    assert variance_with_cycles > 0.01, \
+        f"With cycles enabled, should see oscillatory variation: {variance_with_cycles:.6f}"
+    
+    print(f"  Variance with cycles: {variance_with_cycles:.6f}")
+    print(f"  Variance without cycles: {variance_no_cycles:.6f}")
+
+
+def test_mfd_guarantee():
+    """Test that MFD guarantee prevents action amplification under high GABA."""
+    gate = GABAInhibitionGate()
+    
+    # Prime the gate with high volatility to build up GABA
+    high_vol_state = base_state(vix=80.0)
+    a = torch.tensor([1.0])
+    for _ in range(20):
+        gate(high_vol_state, a)
+    
+    # Now test that gated action doesn't exceed input with risk_weight boost
+    test_action = torch.tensor([2.0])
+    gated, metrics = gate(high_vol_state, test_action)
+    
+    # With MFD guarantee, gated action magnitude should not exceed input
+    assert gated.abs().item() <= test_action.abs().item() + 1e-6
+
+
+def test_mfd_guarantee_disabled():
+    """Test that MFD guarantee can be disabled."""
+    params = GateParams(enforce_mfd=False)
+    gate = GABAInhibitionGate(params=params)
+    
+    # Prime with high volatility
+    high_vol_state = base_state(vix=80.0)
+    a = torch.tensor([1.0])
+    for _ in range(20):
+        gate(high_vol_state, a)
+    
+    # With MFD disabled, action could potentially be amplified by risk_weight
+    # Just verify it runs without error
+    test_action = torch.tensor([2.0])
+    gated, metrics = gate(high_vol_state, test_action)
+    assert isinstance(gated, torch.Tensor)
+
+
+def test_gate_metrics_type():
+    """Test that forward returns GateMetrics dataclass."""
+    gate = GABAInhibitionGate()
+    _, metrics = gate(base_state(), torch.tensor([1.0]))
+    
+    assert isinstance(metrics, GateMetrics)
+    assert isinstance(metrics.inhibition, float)
+    assert isinstance(metrics.gaba_level, float)
+    assert isinstance(metrics.risk_weight, float)

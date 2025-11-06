@@ -46,6 +46,7 @@ class GateParams:
     risk_min: float = 0.5             # clamp for risk weight
     risk_max: float = 1.5
     cycle_modulation: bool = True
+    enforce_mfd: bool = True          # MFD guarantee: gated action ≤ input action magnitude
 
 
 @dataclass
@@ -54,6 +55,14 @@ class GateState:
     gaba_slow: torch.Tensor            # slow component (B)
     risk_weight: torch.Tensor          # multiplicative scaler for action
     t_ms: torch.Tensor                 # internal time base (ms)
+
+
+@dataclass
+class GateMetrics:
+    """Metrics returned by GABAInhibitionGate forward pass."""
+    inhibition: float
+    gaba_level: float
+    risk_weight: float
 
 
 class GABAInhibitionGate(nn.Module):
@@ -111,7 +120,7 @@ class GABAInhibitionGate(nn.Module):
     @torch.no_grad()
     def forward(
         self, market_state: Dict[str, torch.Tensor], action: torch.Tensor
-    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+    ) -> Tuple[torch.Tensor, GateMetrics]:
         """Apply GABA inhibition gate to action.
         
         Parameters
@@ -123,8 +132,8 @@ class GABAInhibitionGate(nn.Module):
             
         Returns
         -------
-        Tuple[torch.Tensor, Dict[str, float]]
-            Gated action and metrics dict
+        Tuple[torch.Tensor, GateMetrics]
+            Gated action and metrics
             
         Raises
         ------
@@ -138,6 +147,12 @@ class GABAInhibitionGate(nn.Module):
         missing_keys = [k for k in required_keys if k not in market_state]
         if missing_keys:
             raise KeyError(f"Missing required keys in market_state: {missing_keys}")
+        
+        # Validate market_state tensors for NaN/Inf
+        for k in required_keys:
+            t = market_state[k].to(self.device)
+            if torch.isnan(t).any() or torch.isinf(t).any():
+                raise ValueError(f"{k} contains NaN or Inf values")
         
         # Ensure device/shape
         action = action.to(self.device)
@@ -165,8 +180,11 @@ class GABAInhibitionGate(nn.Module):
         inhibition = torch.clamp(inhibition, 0.0, 0.95)
 
         # 3) Cycle modulation (gamma/theta)
-        self.t_ms = self.t_ms + self.dt_tensor
-        cyc = self._cycles(self.t_ms)
+        if self.p.cycle_modulation:
+            self.t_ms = self.t_ms + self.dt_tensor
+            cyc = self._cycles(self.t_ms)
+        else:
+            cyc = torch.tensor(1.0, device=self.device)
 
         # 4) Plasticity (STDP + LTP/LTD)
         # Ensure delta_t_ms is scalar for conditional
@@ -193,13 +211,16 @@ class GABAInhibitionGate(nn.Module):
 
         # 5) Apply gating
         gated = action * (1 - inhibition) * self.risk_weight * cyc
+        
+        # 6) MFD guarantee: if GABA is elevated, ensure gated action doesn't exceed input
+        if self.p.enforce_mfd and (gaba_level > 0.1).item():
+            gated = torch.where(gated.abs() > action.abs(), action, gated)
 
-        metrics = {
-            'inhibition': float(inhibition.item()),
-            'gaba_level': float(gaba_level.item()),
-            'risk_weight': float(self.risk_weight.item()),
-        }
-        return gated, metrics
+        return gated, GateMetrics(
+            inhibition=float(inhibition.item()),
+            gaba_level=float(gaba_level.item()),
+            risk_weight=float(self.risk_weight.item())
+        )
 
     def get_state(self) -> GateState:
         """Get current gate state.
@@ -224,10 +245,11 @@ class GABAInhibitionGate(nn.Module):
         state : GateState
             State to restore
         """
-        self.gaba_fast = state.gaba_fast.to(self.device)
-        self.gaba_slow = state.gaba_slow.to(self.device)
-        self.risk_weight = state.risk_weight.to(self.device)
-        self.t_ms = state.t_ms.to(self.device)
+        with torch.no_grad():
+            self.gaba_fast.copy_(state.gaba_fast.to(self.device))
+            self.gaba_slow.copy_(state.gaba_slow.to(self.device))
+            self.risk_weight.copy_(state.risk_weight.to(self.device))
+            self.t_ms.copy_(state.t_ms.to(self.device))
 
     @torch.no_grad()
     def apply_hedge(self, strength: float = 1.0) -> None:
