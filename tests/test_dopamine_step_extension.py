@@ -10,9 +10,10 @@ import yaml
 from tradepulse.core.neuro.dopamine import DopamineController, dopamine_step
 
 
-@pytest.fixture()
-def config_dict() -> Dict[str, float]:
+@pytest.fixture
+def config_dict() -> Dict[str, object]:
     return {
+        "version": "2.2.0",
         "discount_gamma": 0.98,
         "learning_rate_v": 0.1,
         "decay_rate": 0.05,
@@ -36,11 +37,30 @@ def config_dict() -> Dict[str, float]:
         "no_go_threshold": 0.25,
         "target_dd": -0.05,
         "target_sharpe": 1.0,
+        "meta_cooldown_ticks": 0,
+        "metric_interval": 1,
+        "meta_adapt_rules": {
+            "good": {
+                "learning_rate_v": 1.01,
+                "delta_gain": 1.01,
+                "base_temperature": 0.99,
+            },
+            "bad": {
+                "learning_rate_v": 0.99,
+                "delta_gain": 0.99,
+                "base_temperature": 1.01,
+            },
+            "neutral": {
+                "learning_rate_v": 1.0,
+                "delta_gain": 1.0,
+                "base_temperature": 1.0,
+            },
+        },
     }
 
 
-@pytest.fixture()
-def controller(tmp_path: Path, config_dict: Dict[str, float]) -> DopamineController:
+@pytest.fixture
+def controller(tmp_path: Path, config_dict: Dict[str, object]) -> DopamineController:
     cfg_path = tmp_path / "dopamine.yaml"
     with cfg_path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(config_dict, f)
@@ -98,7 +118,6 @@ def test_dopamine_step_executes_full_pipeline(controller: DopamineController) ->
     assert result["go"] is (expected_da > cfg_before["invigoration_threshold"])
     assert result["no_go"] is (expected_da < cfg_before["no_go_threshold"])
 
-    # Meta-adapt branch triggered (good performance metrics)
     assert controller.config["learning_rate_v"] == pytest.approx(cfg_before["learning_rate_v"] * 1.01, rel=1e-6)
     assert controller.config["delta_gain"] == pytest.approx(cfg_before["delta_gain"] * 1.01, rel=1e-6)
     assert controller.config["base_temperature"] == pytest.approx(cfg_before["base_temperature"] * 0.99, rel=1e-6)

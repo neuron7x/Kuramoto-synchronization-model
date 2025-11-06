@@ -1,3 +1,6 @@
+# Dopamine controller configuration v2.2
+version: "2.2.0"
+
 # TD / RPE
 discount_gamma: 0.98
 learning_rate_v: 0.1
@@ -38,3 +41,20 @@ no_go_threshold: 0.25
 # targets for meta-adapt
 target_dd: -0.05
 target_sharpe: 1.0
+
+# meta-adapt behaviour
+meta_cooldown_ticks: 5
+metric_interval: 1
+meta_adapt_rules:
+  good:
+    learning_rate_v: 1.01
+    delta_gain: 1.01
+    base_temperature: 0.99
+  bad:
+    learning_rate_v: 0.99
+    delta_gain: 0.99
+    base_temperature: 1.01
+  neutral:
+    learning_rate_v: 1.0
+    delta_gain: 1.0
+    base_temperature: 1.0
