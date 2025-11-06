@@ -12,6 +12,13 @@ Test Coverage:
 - Zero and extreme value handling
 - Leverage limit enforcement
 - Precision and rounding behavior
+
+Test Organization:
+- TestPositionSizingValidation: Input validation tests
+- TestPositionSizingBehavior: Calculation behavior tests
+- TestPositionSizingWrapper: Wrapper function tests
+- TestPositionSizingPrecision: Numerical precision tests
+- TestPositionSizingEdgeCases: Boundary condition tests
 """
 from __future__ import annotations
 
@@ -21,6 +28,19 @@ import pytest
 
 from execution.order import position_sizing
 from execution.position_sizer import calculate_position_size
+
+
+# Test fixtures for common parameters
+@pytest.fixture
+def standard_params():
+    """Standard test parameters for most tests."""
+    return {"balance": 1000.0, "risk": 0.1, "price": 100.0}
+
+
+@pytest.fixture
+def high_leverage_params():
+    """Parameters with high leverage scenario."""
+    return {"balance": 1000.0, "risk": 1.0, "price": 50.0, "max_leverage": 10.0}
 
 
 class TestPositionSizingValidation:
@@ -142,11 +162,10 @@ class TestPositionSizingWrapper:
         with pytest.raises(ValueError, match="price must be positive"):
             position_sizing(balance=1000.0, risk=0.1, price=-100.0)
 
-    def test_wrapper_produces_same_results(self) -> None:
+    def test_wrapper_produces_same_results(self, standard_params) -> None:
         """Wrapper should produce identical results to calculate_position_size."""
-        balance, risk, price = 1000.0, 0.15, 100.0
-        size_direct = calculate_position_size(balance=balance, risk=risk, price=price)
-        size_wrapper = position_sizing(balance=balance, risk=risk, price=price)
+        size_direct = calculate_position_size(**standard_params)
+        size_wrapper = position_sizing(**standard_params)
         assert size_direct == size_wrapper, "Wrapper should produce same result"
 
     def test_wrapper_accepts_leverage_parameter(self) -> None:
