@@ -2,6 +2,10 @@
 
 This document describes the testing strategy, coverage requirements, and instructions for running tests in the TradePulse project.
 
+> **Quick Start**: Run `pytest tests/unit -m "not slow"` for fast feedback during development.
+> 
+> **See Also**: [Test Architecture Guide](docs/TEST_ARCHITECTURE.md) for patterns and best practices.
+
 ## Overview
 
 TradePulse employs a comprehensive testing strategy that includes:

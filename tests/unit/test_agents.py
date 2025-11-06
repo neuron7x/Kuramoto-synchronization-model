@@ -1,4 +1,16 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Unit tests for agent components including bandits, memory, and strategies.
+
+This module validates the multi-armed bandit algorithms, strategy memory system,
+and PI (Predictive Invariance) agent behavior used for adaptive trading strategies.
+
+Test Coverage:
+- EpsilonGreedy bandit: exploration/exploitation balance
+- UCB1 bandit: upper confidence bound selection
+- StrategyMemory: temporal decay and ranking
+- Strategy: mutation and performance simulation
+- PiAgent: market regime adaptation and repair
+"""
 from __future__ import annotations
 
 import math
@@ -13,18 +25,28 @@ from core.agent.strategy import PiAgent, Strategy
 
 
 def test_epsilon_greedy_prefers_best_arm_when_exploit() -> None:
+    """Test that EpsilonGreedy selects the best-performing arm when exploiting.
+    
+    With epsilon=0.0 (pure exploitation), the agent should always select
+    the arm with the highest average reward.
+    """
     agent = EpsilonGreedy(["a", "b"], epsilon=0.0)
     agent.update("a", 0.1)
     agent.update("b", 0.5)
-    assert agent.select() == "b"
+    assert agent.select() == "b", "Should select arm with highest reward"
 
 
 def test_ucb1_selects_unseen_arm_first() -> None:
+    """Test that UCB1 prioritizes arms that haven't been tried yet.
+    
+    Upper Confidence Bound algorithm should explore untried arms first
+    before refining estimates of known arms.
+    """
     agent = UCB1(["x", "y"])
     choice1 = agent.select()
     agent.update(choice1, 0.1)
     choice2 = agent.select()
-    assert {choice1, choice2} == {"x", "y"}
+    assert {choice1, choice2} == {"x", "y"}, "Should try both arms before repeating"
 
 
 def test_epsilon_greedy_explores(monkeypatch: pytest.MonkeyPatch) -> None:
