@@ -5,6 +5,9 @@ fhmc:
     base_dt_seconds: 60
     adapt_alpha: true
     heavy_tail: 0.5
+    depth: 12
+    p: 0.6
+    fallback_enabled: true  # Enable white noise detection fallback
   arousal:
     aperiodic_slope_window_seconds: 300
     slope_gate: true
@@ -23,6 +26,8 @@ fhmc:
     w_dd: 0.5
     w_vol: 0.3
     w_cp: 0.2
+    cp_threshold: 5.0
+    vol_window: 60
   sleep:
     share_min: 0.05
     share_max: 0.15
@@ -37,3 +42,15 @@ fhmc:
     eta_f: 0.1
     levy_alpha: 1.5
     on_states: ["WAKE"]
+  # Online monitoring and validation (2025 audit enhancements)
+  online_monitoring:
+    enabled: true
+    window_size: 2000
+    min_win: 50
+    max_win: 500
+    n_win: 10
+  validation:
+    ab_testing_enabled: true
+    sharpe_improvement_target: 0.05  # 5% improvement
+    drawdown_reduction_target: 0.15  # 15% reduction
+    regime_shift_threshold: 1.5  # vol_shock threshold
