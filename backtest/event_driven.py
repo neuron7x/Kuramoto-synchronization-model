@@ -28,17 +28,59 @@ LOGGER = logging.getLogger(__name__)
 
 
 class MarketDataStream(Iterator[MarketEvent]):
-    """Iterator interface for market data events."""
+    """Iterator interface for market data events.
+    
+    This is a protocol/interface for streaming market data events.
+    Concrete implementations should provide the __next__ method to
+    yield market events sequentially.
+    
+    Example:
+        >>> class MyMarketData(MarketDataStream):
+        ...     def __next__(self) -> MarketEvent:
+        ...         # Return next market event or raise StopIteration
+        ...         return MarketEvent(...)
+    """
 
     def __next__(self) -> MarketEvent:  # pragma: no cover - protocol definition
-        raise NotImplementedError
+        """Return the next market event in the stream.
+        
+        Returns:
+            MarketEvent: The next market event with price, symbol, and timing info.
+            
+        Raises:
+            StopIteration: When no more events are available.
+        """
+        raise NotImplementedError("Subclasses must implement __next__")
 
 
 class MarketDataHandler:
-    """Base class for chunked market data handlers."""
+    """Base class for chunked market data handlers.
+    
+    Market data handlers are responsible for loading and streaming market events
+    in chunks to support memory-efficient backtesting with large datasets.
+    
+    Subclasses must implement the stream() method to provide market events.
+    See ArrayDataHandler and CSVChunkDataHandler for concrete examples.
+    
+    Example:
+        >>> class MyHandler(MarketDataHandler):
+        ...     def stream(self) -> Iterator[Iterable[MarketEvent]]:
+        ...         # Yield chunks of market events
+        ...         yield [MarketEvent(...), MarketEvent(...)]
+    """
 
     def stream(self) -> Iterator[Iterable[MarketEvent]]:
-        raise NotImplementedError
+        """Stream market data in chunks.
+        
+        Yields:
+            Iterator[Iterable[MarketEvent]]: Chunks of market events. Each chunk
+            is an iterable of MarketEvent objects that will be processed together
+            before loading the next chunk.
+            
+        Raises:
+            NotImplementedError: If subclass doesn't implement this method.
+        """
+        raise NotImplementedError("Subclasses must implement stream()")
 
 
 @dataclass(slots=True)
@@ -121,12 +163,40 @@ class CSVChunkDataHandler(MarketDataHandler):
 
 
 class Strategy:
-    """Base strategy interface for event-driven backtests."""
+    """Base strategy interface for event-driven backtests.
+    
+    Strategies process market events and generate trading signals in response.
+    The event-driven architecture allows for realistic simulation of strategy
+    behavior including latency, order execution, and position management.
+    
+    Subclasses must implement on_market_event() to define their trading logic.
+    See VectorisedStrategy for an example implementation.
+    
+    Example:
+        >>> class MyStrategy(Strategy):
+        ...     def on_market_event(self, event: MarketEvent) -> Iterable[SignalEvent]:
+        ...         # Analyze market event and generate signals
+        ...         if should_buy(event):
+        ...             return [SignalEvent(symbol=event.symbol, target_position=1.0)]
+        ...         return []
+    """
 
     def on_market_event(
         self, event: MarketEvent
     ) -> Iterable[SignalEvent]:  # pragma: no cover - interface
-        raise NotImplementedError
+        """Process a market event and generate trading signals.
+        
+        Args:
+            event: Market event containing price, symbol, and timestamp information.
+            
+        Returns:
+            Iterable[SignalEvent]: Zero or more signal events representing desired
+            trading actions. Empty iterable means no action.
+            
+        Raises:
+            NotImplementedError: If subclass doesn't implement this method.
+        """
+        raise NotImplementedError("Subclasses must implement on_market_event()")
 
 
 class VectorisedStrategy(Strategy):
