@@ -13,6 +13,7 @@ import tarfile
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import Iterator
 
 from .models import TaskContext, TaskReport, TaskStatus
 from .utils import format_path, safe_relpath, sha256sum
