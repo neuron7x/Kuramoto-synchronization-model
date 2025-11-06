@@ -63,11 +63,16 @@ class HeadingFirstRule:
                 if stripped == "---":
                     in_front_matter = False
                 continue
+            # Handle HTML comments
+            # Check for single-line comment first (e.g., <!-- comment -->)
+            if stripped.startswith("<!--") and stripped.endswith("-->"):
+                continue
             # Handle multi-line HTML comments
-            if "<!--" in stripped:
+            if stripped.startswith("<!--"):
                 in_html_comment = True
+                continue
             if in_html_comment:
-                if "-->" in stripped:
+                if stripped.endswith("-->"):
                     in_html_comment = False
                 continue
             if not stripped:
