@@ -13,4 +13,13 @@ desens_rate: 0.01
 target_dd: -0.05
 target_sharpe: 1.0
 beta_temper: 0.12
+phase_threshold: 0.4
+burst_factor: 2.5
+mod_t_max: 4.0
+mod_t_half: 24.0
+mod_k: 0.7
 max_desens_counter: 1000
+tau_5ht_ms: 150.0
+step_ms: 1000.0
+tick_hours: 1.0
+phase_kappa: 0.08

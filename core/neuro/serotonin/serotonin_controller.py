@@ -9,16 +9,7 @@ import yaml
 
 
 class SerotoninController:
-    """Deterministic serotonin stabiliser for aversive market regimes.
-
-    The controller implements a prospective value code that filters aversive
-    market signals into a tonic serotonin trace and applies graded inhibition
-    to risk-seeking policies. Parameter defaults originate from validated 2025
-    computational neuroscience studies (e.g. Dabney et al., Nature Neuroscience
-    2025; Cools et al., Neuron 2025) that report outcome sensitivity
-    improvements (F[1,50]=5.73, Cohen's d=0.60) and behavioural inhibition
-    effects (η_p²=0.15).
-    """
+    """SerotoninController v2.3.1 tonic–phasic stabiliser with TACL guardrails."""
 
     def __init__(
         self,
@@ -36,13 +27,17 @@ class SerotoninController:
         self.config_path = config_path
         with open(config_path, "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
+        self._validate_and_derive()
         self.tonic_level: float = 0.0
         self.sensitivity: float = 1.0
         self.desens_counter: int = 0
         self.serotonin_level: float = 0.0
+        self.phasic_level: float = 0.0
+        self.gate_level: float = 0.0
         self._logger: Callable[[str, float], None] = logger or (
             lambda name, value: logging.getLogger(__name__).info("%s: %f", name, value)
         )
+        self._tacl_guard: Optional[Callable[[str, Mapping[str, float]], bool]] = None
 
     def _log(self, name: str, value: float) -> None:
         """Record a telemetry datapoint via the configured logger."""
@@ -52,6 +47,47 @@ class SerotoninController:
         except Exception:
             # Logging must not interfere with control flow.
             pass
+
+    def _validate_and_derive(self) -> None:
+        """Validate configuration keys and derive dependent quantities."""
+
+        cfg = self.config
+        tau_ms = float(cfg.get("tau_5ht_ms", 0.0) or 0.0)
+        step_ms = float(cfg.get("step_ms", 0.0) or 0.0)
+        if tau_ms > 0.0 and step_ms > 0.0:
+            cfg["decay_rate"] = 1.0 - math.exp(-step_ms / tau_ms)
+        self._tick_hours: float = float(cfg.get("tick_hours", 1.0) or 1.0)
+        required = [
+            "alpha",
+            "beta",
+            "gamma",
+            "delta_rho",
+            "k",
+            "theta",
+            "delta",
+            "za_bias",
+            "decay_rate",
+            "cooldown_threshold",
+            "desens_threshold_ticks",
+            "desens_rate",
+            "target_dd",
+            "target_sharpe",
+            "beta_temper",
+            "phase_threshold",
+            "burst_factor",
+            "mod_t_max",
+            "mod_t_half",
+            "mod_k",
+            "max_desens_counter",
+        ]
+        missing = [key for key in required if key not in cfg]
+        if missing:
+            raise KeyError(f"Serotonin configuration is missing keys: {missing}")
+
+    def set_tacl_guard(self, guard_fn: Callable[[str, Mapping[str, float]], bool]) -> None:
+        """Inject a TACL guard to prevent free-energy regressions."""
+
+        self._tacl_guard = guard_fn
 
     def estimate_aversive_state(
         self,
@@ -88,19 +124,26 @@ class SerotoninController:
             raise ValueError("aversive_state must be non-negative")
 
         cfg = self.config
+        kappa = float(cfg.get("phase_kappa", 0.08) or 0.08)
+        gate = 1.0 / (1.0 + math.exp(-(aversive_state - cfg["phase_threshold"]) / kappa))
+        self.gate_level = float(gate)
+        self.phasic_level = float(
+            cfg["burst_factor"] * gate * (aversive_state / (1.0 + aversive_state))
+        )
         decay = cfg["decay_rate"]
-        self.tonic_level = (1.0 - decay) * self.tonic_level + decay * float(aversive_state)
+        self.tonic_level = (1.0 - decay) * self.tonic_level + decay * (
+            float(aversive_state) + self.phasic_level
+        )
         k = cfg["k"]
         theta = cfg["theta"]
         x = k * (self.tonic_level - theta)
         x = max(min(x, 60.0), -60.0)
         sig = 1.0 / (1.0 + math.exp(-x))
-        max_counter = int(cfg.get("max_desens_counter", 1000))
+        max_counter = int(cfg["max_desens_counter"])
         if self.tonic_level > cfg["cooldown_threshold"]:
             self.desens_counter = min(self.desens_counter + 1, max_counter)
-            self.sensitivity = max(0.1, self.sensitivity - cfg["desens_rate"])
             if self.desens_counter > cfg["desens_threshold_ticks"]:
-                self.sensitivity = max(0.1, self.sensitivity - cfg["desens_rate"])
+                self.sensitivity = max(0.1, self.sensitivity * math.exp(-sig / 12.0))
         else:
             self.desens_counter = 0
             self.sensitivity = min(1.0, self.sensitivity + cfg["desens_rate"] * 0.5)
@@ -132,7 +175,11 @@ class SerotoninController:
 
         if serotonin_signal is None:
             serotonin_signal = self.serotonin_level
-        return serotonin_signal > self.config["cooldown_threshold"]
+        return (
+            serotonin_signal > self.config["cooldown_threshold"]
+            or self.phasic_level > 1.0
+            or self.gate_level > 0.9
+        )
 
     def apply_internal_shift(
         self,
@@ -157,6 +204,8 @@ class SerotoninController:
         self._log("serotonin_level", self.serotonin_level)
         self._log("serotonin_tonic_level", self.tonic_level)
         self._log("serotonin_sensitivity", self.sensitivity)
+        self._log("serotonin_phasic_level", self.phasic_level)
+        self._log("serotonin_gate_level", self.gate_level)
 
     def meta_adapt(self, performance_metrics: Mapping[str, float]) -> None:
         """Adapt release weights based on drawdown and Sharpe observations."""
@@ -167,12 +216,31 @@ class SerotoninController:
         old_alpha = cfg["alpha"]
         old_beta = cfg["beta"]
         old_gamma = cfg["gamma"]
+        c = math.exp(-self._tick_hours / cfg["mod_t_half"]) * (
+            1.0 - math.exp(-self._tick_hours / cfg["mod_t_max"])
+        )
+        modulation = 1.0 + cfg["mod_k"] * c
         if drawdown < cfg["target_dd"]:
-            cfg["alpha"] *= 1.01
-            cfg["gamma"] *= 1.01
+            cfg["alpha"] *= 1.01 * modulation
+            cfg["gamma"] *= 1.01 * modulation
         if drawdown > cfg["target_dd"] and sharpe < cfg["target_sharpe"]:
-            cfg["alpha"] *= 0.99
-            cfg["beta"] *= 0.99
+            cfg["alpha"] *= 0.99 / modulation
+            cfg["beta"] *= 0.99 / modulation
+        if self._tacl_guard:
+            proposal = {
+                "alpha": cfg["alpha"],
+                "beta": cfg["beta"],
+                "gamma": cfg["gamma"],
+                "drawdown": drawdown,
+                "sharpe": sharpe,
+                "modulation": modulation,
+                "c": c,
+            }
+            if not self._tacl_guard("serotonin_meta_adapt", proposal):
+                cfg["alpha"] = old_alpha
+                cfg["beta"] = old_beta
+                cfg["gamma"] = old_gamma
+                return
         self._log("serotonin_alpha_drift", cfg["alpha"] - old_alpha)
         self._log("serotonin_beta_drift", cfg["beta"] - old_beta)
         self._log("serotonin_gamma_drift", cfg["gamma"] - old_gamma)
@@ -193,7 +261,10 @@ class SerotoninController:
             "sensitivity": float(self.sensitivity),
             "desens_counter": int(self.desens_counter),
             "serotonin_level": float(self.serotonin_level),
+            "phasic_level": float(self.phasic_level),
+            "gate_level": float(self.gate_level),
             "alpha": float(self.config["alpha"]),
             "beta": float(self.config["beta"]),
             "gamma": float(self.config["gamma"]),
+            "decay_rate": float(self.config["decay_rate"]),
         }

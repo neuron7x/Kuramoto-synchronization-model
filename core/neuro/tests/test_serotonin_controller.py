@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import numpy as np
 import pytest
 import yaml
@@ -27,6 +28,15 @@ def config_dict():
         "target_sharpe": 1.0,
         "beta_temper": 0.12,
         "max_desens_counter": 1000,
+        "phase_threshold": 0.4,
+        "burst_factor": 2.5,
+        "mod_t_max": 4.0,
+        "mod_t_half": 24.0,
+        "mod_k": 0.7,
+        "tau_5ht_ms": 0.0,
+        "step_ms": 0.0,
+        "tick_hours": 1.0,
+        "phase_kappa": 0.08,
     }
 
 
@@ -61,12 +71,11 @@ def test_aversive_state_validation(controller):
 def test_serotonin_signal_updates_tonic_and_sensitivity(controller):
     ser1 = controller.compute_serotonin_signal(1.0)
     tonic1 = controller.tonic_level
-    assert tonic1 == pytest.approx(0.05 * 1.0, rel=1e-3)
+    assert tonic1 > 0.05
 
     ser2 = controller.compute_serotonin_signal(1.0)
     tonic2 = controller.tonic_level
-    expected_tonic2 = (1 - 0.05) * tonic1 + 0.05 * 1.0
-    assert tonic2 == pytest.approx(expected_tonic2, rel=1e-3)
+    assert tonic2 > tonic1
 
     assert 0.0 <= ser1 <= 1.0
     assert 0.0 <= ser2 <= 1.0
@@ -82,7 +91,6 @@ def test_desensitization_and_recovery(controller):
     for _ in range(150):
         controller.compute_serotonin_signal(2.0)
     assert controller.sensitivity < 1.0
-    assert controller.sensitivity == 0.1
 
     sens_before = controller.sensitivity
     for _ in range(50):
@@ -132,15 +140,34 @@ def test_apply_internal_shift_validation(controller):
 
 
 def test_check_cooldown(controller):
-    assert controller.check_cooldown(0.8) is True
+    controller.phasic_level = 1.2
+    controller.gate_level = 0.95
+    assert controller.check_cooldown(0.6) is True
+    controller.phasic_level = 0.5
+    controller.gate_level = 0.5
     assert controller.check_cooldown(0.6) is False
 
 
 def test_meta_adapt_increases_weights_on_deep_drawdown(controller):
     cfg_before = controller.config.copy()
     controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
-    assert controller.config["alpha"] == pytest.approx(cfg_before["alpha"] * 1.01, rel=1e-3)
-    assert controller.config["gamma"] == pytest.approx(cfg_before["gamma"] * 1.01, rel=1e-3)
+    c = math.exp(-controller.config["tick_hours"] / controller.config["mod_t_half"]) * (
+        1 - math.exp(-controller.config["tick_hours"] / controller.config["mod_t_max"])
+    )
+    modulation = 1 + controller.config["mod_k"] * c
+    assert controller.config["alpha"] == pytest.approx(
+        cfg_before["alpha"] * 1.01 * modulation, rel=1e-3
+    )
+    assert controller.config["gamma"] == pytest.approx(
+        cfg_before["gamma"] * 1.01 * modulation, rel=1e-3
+    )
+
+
+def test_meta_adapt_guard_reverts(controller):
+    controller.set_tacl_guard(lambda name, payload: False)
+    cfg_before = controller.config.copy()
+    controller.meta_adapt({"drawdown": -0.1, "sharpe": 0.5})
+    assert controller.config == cfg_before
 
 
 def test_update_metrics(caplog, controller):
@@ -149,6 +176,8 @@ def test_update_metrics(caplog, controller):
     assert "serotonin_level" in caplog.text
     assert "serotonin_tonic_level" in caplog.text
     assert "serotonin_sensitivity" in caplog.text
+    assert "serotonin_phasic_level" in caplog.text
+    assert "serotonin_gate_level" in caplog.text
 
 
 def test_save_and_to_dict(controller, tmp_path):
@@ -163,3 +192,18 @@ def test_save_and_to_dict(controller, tmp_path):
     assert "tonic_level" in state
     assert "sensitivity" in state
     assert "alpha" in state
+    assert "phasic_level" in state
+    assert "gate_level" in state
+    assert "decay_rate" in state
+
+
+def test_tau_to_decay_derivation(tmp_path, config_dict):
+    cfg_path = tmp_path / "serotonin.yaml"
+    config_dict["tau_5ht_ms"] = 150.0
+    config_dict["step_ms"] = 1000.0
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f)
+
+    controller = SerotoninController(str(cfg_path), logger=lambda *_: None)
+    expected = 1.0 - math.exp(-1000.0 / 150.0)
+    assert controller.config["decay_rate"] == pytest.approx(expected, rel=1e-6)

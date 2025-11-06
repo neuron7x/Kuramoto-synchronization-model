@@ -1,19 +1,25 @@
-# Serotonin Stabilizer Module v2.2
+# Serotonin Stabilizer Module v2.3.1
 
 ## Overview
-SerotoninController v2.2 realises a serotonin-inspired inhibitory loop that
+
+SerotoninController v2.3.1 realises a serotonin-inspired inhibitory loop that
 translates aversive market cues into deterministic action modulation. The
 implementation follows 2025 prospective value and aversive learning findings,
 providing:
 
 - **Prospective value coding** that aggregates volatility, free energy and loss
   statistics into a release signal.
-- **Exponential tonic filtering** with a decay constant of 0.05 (≈20 tick time
-  constant) to maintain contextual awareness.
-- **Adaptive desensitisation** with capped counters to avoid chronic
+- **τ-calibrated tonic filtering** that derives the decay rate from
+  physiological time constants and decision step durations.
+- **Smooth phasic gating** that blends tonic and burst modes without threshold
+  discontinuities while exposing HOLD veto triggers across tonic, gate, and
+  phasic channels.
+- **Exponential desensitisation** with capped counters to avoid chronic
   inhibition while ensuring a hard lower bound at sensitivity 0.1.
-- **Meta-adaptation** that nudges release weights based on drawdown and Sharpe
-  ratios, aligning with target risk appetites.
+- **Meta-adaptation with TACL guardrails** that nudges release weights based on
+  drawdown and Sharpe ratios while enforcing monotonic free-energy descent.
+- **Expanded telemetry** for tonic, phasic, gate, sensitivity, and drift
+  metrics.
 - **Action modulation hooks** for the Fractal Motivation Engine and risk
   manager, delivering noise reduction, HOLD veto enforcement and exploitation
   tempering.
@@ -25,13 +31,16 @@ Key fields include:
 | Parameter | Description |
 |-----------|-------------|
 | `alpha`, `beta`, `gamma`, `delta_rho` | Linear weights for the aversive release estimator. |
-| `decay_rate` | Exponential filter rate for the tonic level. |
+| `decay_rate` | Exponential filter rate for the tonic level (derived from `tau_5ht_ms` and `step_ms` when provided). |
 | `k`, `theta` | Logistic transform controls for tonic to serotonin conversion. |
 | `delta`, `za_bias` | Action inhibition gain and aversive bias. |
 | `cooldown_threshold` | HOLD veto activation threshold. |
+| `phase_threshold`, `phase_kappa`, `burst_factor` | Smooth phase gate and burst scaling controls. |
 | `desens_rate`, `desens_threshold_ticks`, `max_desens_counter` | Desensitisation cadence, onset tick, and counter cap. |
 | `beta_temper` | Gradient tempering coefficient. |
 | `target_dd`, `target_sharpe` | Objectives for the meta-adaptation routine. |
+| `mod_t_half`, `mod_t_max`, `mod_k`, `tick_hours` | Time-scaled modulation parameters for meta-adaptation. |
+| `tau_5ht_ms`, `step_ms` | Optional physiological constants to derive the tonic decay rate. |
 
 ## Usage
 ```python
@@ -50,6 +59,7 @@ if controller.check_cooldown(serotonin_signal):
 
 shifted_gradient = controller.apply_internal_shift(2.0, serotonin_signal)
 controller.update_metrics()
+controller.set_tacl_guard(lambda name, payload: payload["sharpe"] >= 0)
 controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
 state_snapshot = controller.to_dict()
 ```
