@@ -78,3 +78,17 @@ dist/
 *.egg-info/
 # <<< SANITY CLEANUP
 
+
+# FHMC integration artifacts
+**pycache__/**
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.pth
+.build/
+dist/
+.env
+.venv
+.ipynb_checkpoints/
+*.egg-info/
