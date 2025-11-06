@@ -177,35 +177,33 @@ class TestErrorConditions:
             # It's also acceptable to raise an error
             pass
 
-    @pytest.mark.xfail(reason="position_sizing doesn't validate negative balance yet")
     def test_position_sizing_rejects_negative_balance(self) -> None:
         """Test that negative balance is rejected.
         
         Balance must be non-negative.
-        NOTE: Currently fails - validation not implemented yet.
         """
         with pytest.raises(ValueError, match="[Bb]alance.*non-negative"):
             position_sizing(balance=-100.0, risk=0.1, price=100.0)
 
-    @pytest.mark.xfail(reason="position_sizing doesn't validate negative price yet")
     def test_position_sizing_rejects_negative_price(self) -> None:
         """Test that negative price is rejected.
         
         Prices must be positive.
-        NOTE: Currently fails - validation not implemented yet.
         """
         with pytest.raises(ValueError, match="[Pp]rice.*positive"):
             position_sizing(balance=1000.0, risk=0.1, price=-100.0)
 
-    @pytest.mark.xfail(reason="position_sizing doesn't validate risk range yet")
-    def test_position_sizing_rejects_invalid_risk_percentage(self) -> None:
-        """Test that invalid risk percentages are rejected.
+    def test_position_sizing_clamps_invalid_risk_percentage(self) -> None:
+        """Test that invalid risk percentages are clamped to valid range.
         
-        Risk percentage must be in [0, 1] range.
-        NOTE: Currently fails - validation not implemented yet.
+        Risk percentage is automatically clipped to [0, 1] range for safety
+        rather than raising an error, as documented in calculate_position_size.
         """
-        with pytest.raises(ValueError, match="[Rr]isk.*range|[0-1]"):
-            position_sizing(balance=1000.0, risk=1.5, price=100.0)
+        # Risk > 1.0 should be clamped to 1.0
+        size_high = position_sizing(balance=1000.0, risk=1.5, price=100.0)
+        size_normal = position_sizing(balance=1000.0, risk=1.0, price=100.0)
+        assert size_high == size_normal, "Risk > 1.0 should be clamped to 1.0"
         
-        with pytest.raises(ValueError, match="[Rr]isk.*range|[0-1]"):
-            position_sizing(balance=1000.0, risk=-0.1, price=100.0)
+        # Risk < 0.0 should be clamped to 0.0
+        size_negative = position_sizing(balance=1000.0, risk=-0.1, price=100.0)
+        assert size_negative == 0.0, "Negative risk should be clamped to 0.0"

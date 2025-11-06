@@ -153,12 +153,29 @@ class CircuitBreaker:
 
 
 class RateLimiter(Protocol):
-    """Protocol for rate limiter implementations."""
+    """Protocol for rate limiter implementations.
+    
+    Rate limiters control the rate of operations by consuming tokens.
+    Implementations should be thread-safe.
+    """
 
     def allow(self, tokens: float = 1.0) -> bool:
+        """Check if the specified number of tokens can be consumed.
+        
+        Args:
+            tokens: Number of tokens to consume (default 1.0).
+            
+        Returns:
+            bool: True if tokens were consumed successfully, False if rate limit exceeded.
+        """
         ...
 
     def get_utilization(self) -> float:
+        """Get current utilization as a fraction of capacity.
+        
+        Returns:
+            float: Utilization in range [0.0, 1.0] where 1.0 means fully utilized.
+        """
         ...
 
 
@@ -270,12 +287,40 @@ class AdaptiveThrottler:
 
 
 class FallbackStrategy(Protocol):
-    """Protocol for fallback implementations."""
+    """Protocol for fallback implementations.
+    
+    Fallback strategies provide alternative behavior when primary operations fail.
+    Implementations should gracefully handle errors and return valid responses or raise
+    appropriate exceptions.
+    """
 
     def can_handle(self, exchange: str, operation: str) -> bool:
+        """Check if this fallback can handle the specified exchange and operation.
+        
+        Args:
+            exchange: Name of the exchange (e.g., 'binance', 'coinbase').
+            operation: Type of operation (e.g., 'fetch_balance', 'place_order').
+            
+        Returns:
+            bool: True if this fallback can handle the request.
+        """
         ...
 
     def execute(self, exchange: str, operation: str, *args, **kwargs):
+        """Execute the fallback logic.
+        
+        Args:
+            exchange: Name of the exchange.
+            operation: Type of operation.
+            *args: Positional arguments passed to the fallback.
+            **kwargs: Keyword arguments passed to the fallback.
+            
+        Returns:
+            Result of the fallback operation.
+            
+        Raises:
+            RuntimeError: If fallback cannot provide a valid response.
+        """
         ...
 
 
