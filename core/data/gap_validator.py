@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -44,7 +44,7 @@ class GapDetectionError(ValueError):
     or financial losses.
     """
     
-    def __init__(self, message: str, gaps: List[Gap] | None = None):
+    def __init__(self, message: str, gaps: list[Gap] | None = None):
         """Initialize with error message and detected gaps.
         
         Args:
@@ -125,7 +125,7 @@ class GapValidator:
         index: pd.DatetimeIndex,
         *,
         full_check: bool = True,
-    ) -> tuple[bool, List[Gap]]:
+    ) -> tuple[bool, list[Gap]]:
         """Check if time series index contains unacceptable gaps.
         
         Args:
@@ -162,7 +162,7 @@ class GapValidator:
         
         return len(unacceptable_gaps) == 0, unacceptable_gaps
     
-    def _filter_acceptable_gaps(self, gaps: List[Gap]) -> List[Gap]:
+    def _filter_acceptable_gaps(self, gaps: list[Gap]) -> list[Gap]:
         """Filter out gaps that are acceptable per configuration.
         
         Args:
@@ -221,7 +221,7 @@ class GapValidator:
             raise GapDetectionError(message, gaps=gaps)
     
     @staticmethod
-    def _format_gap_summary(gaps: List[Gap], max_display: int = 3) -> str:
+    def _format_gap_summary(gaps: list[Gap], max_display: int = 3) -> str:
         """Format gap information for error message.
         
         Args:
