@@ -1,0 +1,4 @@
+mu: 0.5
+alpha: 0.8
+beta: 1.5
+num_steps: 1000

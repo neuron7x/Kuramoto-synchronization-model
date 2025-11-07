@@ -1,7 +1,12 @@
-# MisanthropicAgent v2.0 — Roadmap (2025)
+# MisanthropicAgent Roadmap V2.1
 
-Delivered: Lagrangian-CVaR, PER, EnbPI каркас, OOD-KS, context_id, детермінований seed/device pipeline,
-TACL feedback bridge (ThermoController broadcast) + runtime agent registry.
-Next: Hippocampal pattern separation; повний BOCPD; NHP/MARL середовище; NSGA-II crisis search;
-telemetry-driven capital optimizer.
-Metrics (цілі OOS): PnL +12%↑; CVaR_95 ≤ -0.04; coverage ≥ 0.90; max DD <5%; latency/coverage alarms <2/день.
+## Delivered in V2.1
+
+- EnbPI(HAR) residual conformal monitoring
+- CVaR-Lagrangian control for tail risk
+- PER buffer with breach boost
+- OOD-KS gating and sizing
+- BOCPD hybrid drift detector
+- Ensembles-based uncertainty quantification
+- TACL governance guard and metrics
+- Prometheus instrumentation and CLI utilities

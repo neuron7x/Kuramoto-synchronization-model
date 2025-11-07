@@ -1,0 +1,9 @@
+seed: 42
+episodes: 100
+log_dir: logs
+prometheus:
+  enabled: true
+  port: 9200
+env: hawkes
+agent_config: configs/agent/misanthropic.yaml
+env_config: configs/env/hawkes.yaml

@@ -1,0 +1,40 @@
+gamma: 0.997
+batch_size: 64
+target_soft_tau: 0.005
+risk:
+  alpha_cvar: 0.05
+  c_cvar: -0.05
+  lambda_cvar_init: 0.0
+  lambda_cvar_max: 10.0
+  eta_cvar: 0.001
+per:
+  alpha: 0.6
+  beta: 0.4
+  eps: 0.001
+  breach_boost: 3.0
+enbpi:
+  window: 1000
+  target: 0.9
+  floor: 0.85
+  breach_patience: 5
+har:
+  lags: [1, 5, 22]
+  alpha: 0.05
+ood:
+  alpha: 0.05
+  win: 200
+  hold_threshold: 0.5
+tacl:
+  w_lat: 1.0
+  w_coh: 2.0
+  w_cost: 0.5
+uq:
+  heads: 5
+  lr: 0.001
+  bootstrap: true
+arch:
+  state_dim: 6
+  action_dim: 3
+  quantiles: 51
+  dueling: true
+  noisy_layers: true
