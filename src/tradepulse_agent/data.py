@@ -46,15 +46,25 @@ class AgentDataLoader:
         market.sort_index(inplace=True)
 
         required: Iterable[str] = config.required_fields
+        required_set = set(required)
         missing = [col for col in required if col not in market.columns]
         if missing:
             raise KeyError(f"Missing required columns: {missing}")
 
-        numeric_cols = [col for col in market.columns if market[col].dtype == object]
-        for column in numeric_cols:
-            market[column] = pd.to_numeric(market[column], errors="coerce")
+        numeric_market = market.apply(pd.to_numeric, errors="coerce")
+        all_nan_columns = [col for col in numeric_market.columns if numeric_market[col].isna().all()]
+        if all_nan_columns:
+            problematic_required = [
+                col for col in all_nan_columns if col in required_set or col == config.price_field
+            ]
+            if problematic_required:
+                raise ValueError(
+                    "Required numeric columns contain no valid values: "
+                    f"{sorted(problematic_required)}"
+                )
+            numeric_market = numeric_market.drop(columns=all_nan_columns)
 
-        market = market.astype(float)
+        market = numeric_market.astype(float)
         market.replace([np.inf, -np.inf], np.nan, inplace=True)
         market.dropna(how="any", inplace=True)
         if market.empty:
