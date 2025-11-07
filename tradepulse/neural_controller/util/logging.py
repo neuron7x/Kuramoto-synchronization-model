@@ -69,6 +69,9 @@ def log_decision(event: Dict[str, Any]) -> None:
     """Emit a structured decision record to the controller logger."""
 
     logger = logging.getLogger(f"{_DEFAULT_LOGGER_NAME}.decision")
+    if not logger.isEnabledFor(logging.INFO):
+        return
+
     payload: Dict[str, Any] = dict(_DECISION_DEFAULTS)
     for key, value in event.items():
         if key in _NUMERIC_FIELDS:
