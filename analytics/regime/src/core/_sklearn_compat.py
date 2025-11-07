@@ -39,7 +39,7 @@ available at runtime the real implementations will be used instead.
 
 from __future__ import annotations
 
-from typing import Generator, Iterable
+from typing import Generator, Iterable, Tuple
 
 import numpy as np
 
