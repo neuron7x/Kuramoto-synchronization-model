@@ -148,6 +148,23 @@ class RiskManagerFacade:
         self._risk_manager.update_limits(**filtered)
         return self._risk_manager
 
+    def apply_neural_directive(
+        self,
+        *,
+        action: str,
+        alloc_main: float,
+        alloc_alt: float,
+        alloc_scale: float,
+    ) -> dict[str, float | str]:
+        """Forward neural-controller output to the underlying risk manager."""
+
+        return self._risk_manager.apply_neural_directive(
+            action=action,
+            alloc_main=alloc_main,
+            alloc_alt=alloc_alt,
+            alloc_scale=alloc_scale,
+        )
+
     def _require_permission(
         self,
         action: str,

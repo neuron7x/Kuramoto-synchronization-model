@@ -851,6 +851,7 @@ class RiskManager(RiskController):
         self._realized_pnl = 0.0
         self._unrealized_pnl = 0.0
         self._drawdown_halt_notified = False
+        self._latest_neural_directive: dict[str, float | str] | None = None
         self._restore_risk_state()
 
     def update_limits(self, **updates: object) -> RiskLimits:
@@ -881,6 +882,35 @@ class RiskManager(RiskController):
         )
         self.limits = new_limits
         return self.limits
+
+    def apply_neural_directive(
+        self,
+        *,
+        action: str,
+        alloc_main: float,
+        alloc_alt: float,
+        alloc_scale: float,
+    ) -> dict[str, float | str]:
+        """Persist the latest neural-controller directive for auditability."""
+
+        directive = {
+            "action": action,
+            "alloc_main": float(max(0.0, min(1.0, alloc_main))),
+            "alloc_alt": float(max(0.0, min(1.0, alloc_alt))),
+            "alloc_scale": float(max(0.0, min(1.0, alloc_scale))),
+        }
+        self._latest_neural_directive = directive
+        self._logger.info(  # noqa: TRY400 - structured logging
+            "Neural directive applied",
+            extra={"event": "risk.neural_directive", "payload": directive},
+        )
+        return directive
+
+    @property
+    def latest_neural_directive(self) -> dict[str, float | str] | None:
+        """Return the most recent neural directive if one has been applied."""
+
+        return self._latest_neural_directive
 
     def _canonical_symbol(self, symbol: str) -> str:
         return normalize_symbol(symbol)

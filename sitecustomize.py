@@ -14,6 +14,13 @@ import shutil
 import tarfile
 from typing import TYPE_CHECKING
 
+os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
+# Ensure local and CI test environments have a benign default for the
+# administrative two-factor secret so that importing ``tradepulse.sdk`` (which
+# bootstraps the FastAPI stack) does not raise configuration errors when the
+# sensitive value is not provided via environment variables.
+os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+
 
 def _patch_pip_symlink_extraction() -> None:
     """Mitigate GHSA-4xh5-x5gv-qwph for pip < 25.3.
