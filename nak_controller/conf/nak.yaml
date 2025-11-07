@@ -1,0 +1,72 @@
+nak:
+  # Bounds
+  L_min: 0.0
+  L_max: 1.0
+  E_max: 1.0
+  EI_low: 0.35
+  EI_high: 0.65
+  EI_crit: 0.15
+  EI_hysteresis: 0.05   # must exceed crit + hysteresis to unsuspend
+  I_max: 0.8
+  r_min: 0.2
+  r_max: 1.8
+  f_min: 0.25
+  f_max: 1.50
+  delta_r_limit: 0.20   # max change of risk factor per step
+
+  # Load weights (L update)
+  w_n: 0.15   # trades
+  w_v: 0.25   # local vol
+  w_d: 0.30   # local drawdown
+  w_e: 0.10   # tech errors
+  w_l: 0.10   # latency
+  w_s: 0.10   # slippage
+
+  # Energy gains/losses (E update)
+  a_p: 0.40   # pnl contribution (positive)
+  a_n: 0.25   # negative trades load
+  a_v: 0.25   # volatility drain
+  a_g: 0.20   # glial support (optional)
+  a_da: 0.10  # dopamine energy boost on positive reward error
+
+  # EI composition
+  u_e: 0.55   # from E/Emax
+  u_l: 0.35   # from (1 - L/Lmax)
+  u_p: 0.10   # from normalized pnl
+
+  # PI controller (nonlinear)
+  Kp: 0.6
+  Ki: 0.08
+
+  # Neuromodulators
+  beta_DA: 0.8     # sensitivity to unexpected reward
+  eta_ACh: 0.6     # focus/precision boost
+  da_gain: 0.25    # maps DA deviation to risk delta
+  na_vol_gain: 1.0 # NA from global vol in [0,1]
+  na_scale: 0.6    # scales vol drain by (1 - NA*na_scale)
+  ht_dd_gain: 1.0  # 5-HT from portfolio DD
+
+  # Global modes (thresholds)
+  vol_amber: 0.7
+  vol_red: 0.9
+  dd_amber: 0.4
+  dd_red: 0.7
+
+  # Global mode multipliers
+  risk_mult:
+    GREEN: 1.00
+    AMBER: 0.65
+    RED:   0.00
+  activity_mult:
+    GREEN: 1.20
+    AMBER: 0.90
+    RED:   0.60
+
+  # EI band expansion factors by mode (widen in AMBER/RED)
+  band_expand:
+    GREEN: 1.00
+    AMBER: 1.25
+    RED:   1.50
+
+  # Noise
+  noise_sigma: 0.01   # Gaussian noise scale for L update (times local_vol)
