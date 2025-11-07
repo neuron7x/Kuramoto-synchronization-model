@@ -1,5 +1,7 @@
 defaults:
   - experiment: dev
+  - desensitization: default
+  - nak: default
   - _self_
 
 project:
