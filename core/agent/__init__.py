@@ -15,8 +15,12 @@ from .orchestrator import (
 )
 from .scheduler import StrategyJob, StrategyJobStatus, StrategyScheduler
 from .strategy import PiAgent, Strategy
+from .registry import AgentRegistry, AgentRegistryError, AgentSpec, global_agent_registry
 
 __all__ = [
+    "AgentRegistry",
+    "AgentRegistryError",
+    "AgentSpec",
     "EvaluationResult",
     "StrategyBatchEvaluator",
     "StrategyEvaluationError",
@@ -29,4 +33,5 @@ __all__ = [
     "PiAgent",
     "Strategy",
     "evaluate_strategies",
+    "global_agent_registry",
 ]

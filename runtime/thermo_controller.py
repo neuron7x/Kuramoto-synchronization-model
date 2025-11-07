@@ -7,9 +7,10 @@ import logging
 import os
 import time
 import warnings
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Deque, Dict, Iterable, List, Optional, Protocol, Tuple, runtime_checkable
 
 import networkx as nx
 import numpy as np
@@ -92,6 +93,30 @@ _BOND_TYPES: Tuple[str, ...] = tuple(getattr(BondType, "__args__", ())) or (
     "vdw",
     "hydrogen",
 )
+
+
+@runtime_checkable
+class SupportsThermoFeedback(Protocol):
+    """Protocol describing the risk controls exposed by trading agents."""
+
+    target_coverage: float
+    cvar_floor: float
+
+    def apply_thermo_feedback(
+        self,
+        *,
+        latency_ratio: float,
+        coherency: float,
+        tail_risk: float,
+        coverage_shortfall: float,
+    ) -> None:
+        """Update internal risk budgets using thermodynamic feedback."""
+
+
+@dataclass(slots=True)
+class _AgentBinding:
+    agent: SupportsThermoFeedback
+    metrics: Deque[Dict[str, float]]
 
 
 CRITICAL_HALT_STATE = "CRITICAL_HALT"
@@ -278,6 +303,7 @@ class ThermoController:
         self.dual_approval = DualApprovalManager()
         self._dual_approval_token = os.getenv("THERMO_DUAL_TOKEN", "")
         self.telemetry_history: List[Dict[str, float | str]] = []
+        self._agent_bindings: Dict[str, _AgentBinding] = {}
 
         self.stabilizer = CNSStabilizer(normalize="logret", hybrid_mode=True)
         self.stabilizer.start_circadian()
@@ -314,6 +340,81 @@ class ThermoController:
         )
 
     # Core loop ----------------------------------------------------------
+
+    def bind_agent(
+        self,
+        name: str,
+        agent: SupportsThermoFeedback,
+        *,
+        window: int = 64,
+    ) -> Callable[[Dict[str, float]], None]:
+        """Register an agent and return a telemetry hook for runtime metrics."""
+
+        if not isinstance(agent, SupportsThermoFeedback):  # pragma: no cover - defensive
+            raise TypeError("agent must implement SupportsThermoFeedback")
+        if name in self._agent_bindings:
+            raise ValueError(f"agent '{name}' is already registered")
+
+        binding = _AgentBinding(agent=agent, metrics=deque(maxlen=max(1, window)))
+        self._agent_bindings[name] = binding
+
+        def _hook(metrics: Dict[str, float]) -> None:
+            clean: Dict[str, float] = {}
+            for key, value in metrics.items():
+                if isinstance(value, (int, float)):
+                    clean[key] = float(value)
+            if clean:
+                binding.metrics.append(clean)
+
+        return _hook
+
+    def broadcast_agent_feedback(self, snapshot: MetricsSnapshot) -> None:
+        """Push thermodynamic feedback to all registered agents."""
+
+        if not self._agent_bindings:
+            return
+
+        latency_ratio = self._detect_latency_spike(snapshot)
+        if snapshot.coherency:
+            coherency = float(sum(snapshot.coherency.values()) / len(snapshot.coherency))
+        else:
+            coherency = 0.0
+
+        for binding in self._agent_bindings.values():
+            if not binding.metrics:
+                binding.agent.apply_thermo_feedback(
+                    latency_ratio=latency_ratio,
+                    coherency=coherency,
+                    tail_risk=0.0,
+                    coverage_shortfall=0.0,
+                )
+                continue
+
+            metrics_list = list(binding.metrics)
+            cvar_values = [float(m.get("cvar_hat", 0.0)) for m in metrics_list if "cvar_hat" in m]
+            if cvar_values:
+                avg_cvar = float(np.mean(cvar_values))
+                tail_risk = max(0.0, binding.agent.cvar_floor - avg_cvar)
+            else:
+                tail_risk = 0.0
+
+            coverage_values = [float(m.get("coverage", 1.0)) for m in metrics_list if "coverage" in m]
+            if coverage_values:
+                recent = coverage_values[-3:]
+                coverage_shortfall = max(0.0, binding.agent.target_coverage - float(np.mean(recent)))
+            else:
+                coverage_shortfall = 0.0
+
+            ood_values = [float(m.get("ood_score", 0.0)) for m in metrics_list if "ood_score" in m]
+            if ood_values:
+                tail_risk += max(0.0, float(np.mean(ood_values)) - 0.2) * 0.1
+
+            binding.agent.apply_thermo_feedback(
+                latency_ratio=latency_ratio,
+                coherency=coherency,
+                tail_risk=tail_risk,
+                coverage_shortfall=coverage_shortfall,
+            )
 
     def _init_homeostasis_metrics(self) -> None:
         try:
@@ -472,6 +573,8 @@ class ThermoController:
         snapshot = self.snapshot_metrics(ga_phase="pre_evolve")
         self._latest_snapshot = snapshot
         current_time = time.time()
+
+        self.broadcast_agent_feedback(snapshot)
 
         last_event = self._last_stabilizer_event or {}
         if isinstance(last_event, dict) and last_event.get("data", {}).get("action") == "veto":
