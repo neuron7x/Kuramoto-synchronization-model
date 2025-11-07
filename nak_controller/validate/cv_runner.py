@@ -66,7 +66,7 @@ def run_validation(
 
     for seed in range(seeds):
         env = SimulationEnvironment(seed=seed)
-        hook.reset()
+        hook.reset(seed=seed)
         for _ in range(steps):
             local, global_obs, bases = env.step()
             baseline_samples.append(

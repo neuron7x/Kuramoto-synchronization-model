@@ -1,7 +1,6 @@
-"""Integration surface for embedding the NaK controller into TradePulse."""
-
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, cast
@@ -21,18 +20,32 @@ class LimitBases:
 class NaKHook:
     """Thin adapter around :class:`NaKController` suitable for strategy hooks."""
 
-    def __init__(self, config_path: str | Path) -> None:
-        self._controller = NaKController(config_path)
+    def __init__(self, config_path: str | Path, *, seed: int | None = None) -> None:
         self._config_path = Path(config_path)
+        resolved_seed = seed
+        if resolved_seed is None:
+            env_seed = os.getenv("NAK_SEED")
+            if env_seed is not None:
+                env_seed = env_seed.strip()
+                if env_seed:
+                    try:
+                        resolved_seed = int(env_seed)
+                    except ValueError as exc:
+                        raise ValueError("NAK_SEED must be an integer") from exc
+        self._seed = resolved_seed
+        self._controller = NaKController(self._config_path, seed=resolved_seed)
 
     @property
     def config_path(self) -> Path:
         """Return the resolved configuration path."""
         return self._config_path
 
-    def reset(self) -> None:
+    def reset(self, *, seed: int | None = None) -> None:
         """Reset the controller state."""
-        self._controller.reset()
+        reseed = seed if seed is not None else self._seed
+        if seed is not None:
+            self._seed = seed
+        self._controller.reset(seed=reseed)
 
     def compute_limits(
         self,

@@ -8,7 +8,7 @@ CONFIG_PATH = "nak_controller/conf/nak.yaml"
 
 class TestNaKController(unittest.TestCase):
     def setUp(self) -> None:
-        self.hook = NaKHook(CONFIG_PATH)
+        self.hook = NaKHook(CONFIG_PATH, seed=1337)
 
     def _step(
         self,
@@ -63,7 +63,7 @@ class TestNaKController(unittest.TestCase):
         out_rec = None
         for _ in range(6):
             out_rec = self._step(gv=0.2, pd=0.02, pnl=0.003, trades=0.2, lvol=0.1)
-        assert out_rec is not None
+        self.assertIsNotNone(out_rec)
         self.assertGreaterEqual(cast(float, out_rec["EI"]), 0.15)
 
     def test_rate_limit(self) -> None:

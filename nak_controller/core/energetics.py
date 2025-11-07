@@ -1,5 +1,3 @@
-"""Energetic state transitions for the NaK controller."""
-
 from __future__ import annotations
 
 from typing import Dict
@@ -12,7 +10,12 @@ from .state import StrategyState, clip
 
 
 def update_load(
-    state: StrategyState, params: NaKParams, obs: Dict[str, float], NA: float
+    state: StrategyState,
+    params: NaKParams,
+    obs: Dict[str, float],
+    NA: float,
+    *,
+    rng: np.random.Generator,
 ) -> float:
     """Update the neuronal load component based on local observations."""
     trades = max(0.0, float(obs.get("trades", 0.0)))
@@ -22,7 +25,7 @@ def update_load(
     tech_errors = clip(float(obs.get("tech_errors", 0.0)), 0.0, 1.0)
     latency = clip(float(obs.get("latency", 0.0)), 0.0, 1.0)
     slippage = clip(float(obs.get("slippage", 0.0)), 0.0, 1.0)
-    noise = float(np.random.normal(0.0, params.noise_sigma * max(1e-9, vol_raw)))
+    noise = float(rng.normal(0.0, params.noise_sigma * max(1e-9, vol_raw)))
 
     load_next = (
         state.L
