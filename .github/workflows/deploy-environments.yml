@@ -41,15 +41,29 @@ concurrency:
 permissions:
   contents: read
   id-token: write
+  actions: write
 
 jobs:
   validate-infrastructure:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'deploy'
     name: Validate infrastructure definitions
     runs-on: ubuntu-latest
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Prepare Terraform plugin cache directory
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('infra/terraform/eks/**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -92,6 +106,12 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            constraints/security.txt
+            requirements.txt
+            requirements-dev.txt
+            requirements-dev.lock
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
