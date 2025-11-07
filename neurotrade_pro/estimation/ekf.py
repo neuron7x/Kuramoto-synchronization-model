@@ -60,15 +60,33 @@ class EMHEKF:
         H_jac[2, 3] = 1.0
 
         y_pred = self.h(x_pred, obs)
-        y_obs = self.h(x_pred, obs)
-        y_obs[1] = float(obs.get("m_proxy", y_pred[1]))
+        m_proxy_raw = obs.get("m_proxy")
+        has_measurement = True
 
-        S_cov = H_jac @ P_pred @ H_jac.T + self.cfg.r * np.eye(3)
-        K = P_pred @ H_jac.T @ np.linalg.pinv(S_cov)
-        innov = y_obs - y_pred
+        if m_proxy_raw is None:
+            has_measurement = False
+        else:
+            try:
+                m_proxy_val = float(m_proxy_raw)
+            except (TypeError, ValueError):
+                has_measurement = False
+            else:
+                if np.isnan(m_proxy_val):
+                    has_measurement = False
 
-        x_upd = x_pred + K @ innov
-        P_upd = (np.eye(4) - K @ H_jac) @ P_pred
+        if not has_measurement:
+            x_upd = x_pred
+            P_upd = P_pred
+        else:
+            y_obs = y_pred.copy()
+            y_obs[1] = m_proxy_val
+
+            S_cov = H_jac @ P_pred @ H_jac.T + self.cfg.r * np.eye(3)
+            K = P_pred @ H_jac.T @ np.linalg.pinv(S_cov)
+            innov = y_obs - y_pred
+
+            x_upd = x_pred + K @ innov
+            P_upd = (np.eye(4) - K @ H_jac) @ P_pred
 
         self.x = np.clip(x_upd, 0.0, 1.0)
         self.P = P_upd
