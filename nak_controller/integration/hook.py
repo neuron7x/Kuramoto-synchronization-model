@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Dict
 
+from ..conf import DEFAULT_CONFIG_PATH
 from ..runtime.controller import NaKController
 
-DEFAULT_CONFIG = Path(__file__).resolve().parent.parent / "conf" / "nak.yaml"
+DEFAULT_CONFIG = str(DEFAULT_CONFIG_PATH)
 
 
 @dataclass(slots=True)
 class NaKHook:
     """User-facing wrapper exposing a simple ``compute_limits`` API."""
 
-    config_path: str = str(DEFAULT_CONFIG)
+    config_path: str = field(default_factory=lambda: str(DEFAULT_CONFIG_PATH))
     _controller: NaKController = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -49,4 +49,4 @@ class NaKHook:
         return enriched
 
 
-__all__ = ["NaKHook"]
+__all__ = ["NaKHook", "DEFAULT_CONFIG"]

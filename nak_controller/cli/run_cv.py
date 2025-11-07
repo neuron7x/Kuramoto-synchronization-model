@@ -5,13 +5,13 @@ import argparse
 import json
 from typing import List
 
-from ..integration.hook import DEFAULT_CONFIG
+from ..conf import DEFAULT_CONFIG_PATH
 from ..validate.cv_runner import CVConfig, run_cross_validation
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run NaK cross validation")
-    parser.add_argument("--config", default=str(DEFAULT_CONFIG), help="Path to NaK YAML config")
+    parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to NaK YAML config")
     parser.add_argument("--steps", type=int, default=400, help="Steps per seed")
     parser.add_argument("--seeds", type=int, default=4, help="Number of RNG seeds")
     parser.add_argument("--seed-offset", type=int, default=0, help="Offset for seed sequence")
@@ -33,6 +33,7 @@ def main(argv: List[str] | None = None) -> int:
         base_risk_per_trade=args.base_risk,
         base_max_position=args.base_position,
         base_cooldown_ms=args.base_cooldown,
+        seed_base=1234,
     )
     summary = run_cross_validation(cv_cfg)
     print(json.dumps(summary, indent=2))

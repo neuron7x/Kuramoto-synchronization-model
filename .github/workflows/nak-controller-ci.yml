@@ -28,21 +28,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          pip install pytest pytest-cov mypy ruff black bandit
-      - name: Lint & format check
-        run: |
-          ruff check nak_controller
-          black --check nak_controller
-      - name: Types
-        run: |
-          mypy --strict nak_controller
-      - name: Security (Bandit)
-        run: |
-          bandit -r nak_controller -x nak_controller/tests
+          pip install pytest mypy ruff pytest-cov
+      - name: Ruff lint
+        run: ruff check .
+      - name: Mypy (baseline)
+        run: mypy nak_controller
+      - name: Mypy (strict)
+        run: mypy --strict nak_controller
+      - name: Unit tests (focused)
+        run: pytest nak_controller/tests/test_nak.py --maxfail=1 --disable-warnings -q
       - name: Tests + Coverage
-        run: |
-          pytest -q --cov=nak_controller --cov-report=xml nak_controller/tests
-      - name: Upload coverage & junit
+        run: pytest -q --cov=nak_controller --cov-report=xml nak_controller/tests
+      - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:

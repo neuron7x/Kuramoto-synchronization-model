@@ -21,6 +21,7 @@ class CVConfig:
     base_risk_per_trade: float = 0.002
     base_max_position: float = 1.0
     base_cooldown_ms: float = 2000.0
+    seed_base: int = 1234
 
 
 def run_cross_validation(cfg: CVConfig) -> Dict[str, float]:
@@ -32,7 +33,8 @@ def run_cross_validation(cfg: CVConfig) -> Dict[str, float]:
     controller_health = []
 
     for seed in cfg.seeds:
-        env = SimulatedEnvironment(seed=seed, steps=cfg.steps)
+        env_seed = cfg.seed_base + seed
+        env = SimulatedEnvironment(seed=env_seed, steps=cfg.steps)
         hook.reset()
         for local_obs, global_obs in env.iter_steps():
             out = hook.compute_limits(

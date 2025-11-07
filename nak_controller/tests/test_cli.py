@@ -5,6 +5,8 @@ import json
 import subprocess
 import sys
 
+from nak_controller.conf import DEFAULT_CONFIG_PATH
+
 
 def test_cli_returns_json_and_zero() -> None:
     proc = subprocess.run(
@@ -12,12 +14,12 @@ def test_cli_returns_json_and_zero() -> None:
             sys.executable,
             "-m",
             "nak_controller.cli.run_validate",
-            "--config",
-            "nak_controller/conf/nak.yaml",
             "--steps",
             "10",
             "--seeds",
             "1",
+            "--config",
+            str(DEFAULT_CONFIG_PATH),
         ],
         capture_output=True,
         text=True,

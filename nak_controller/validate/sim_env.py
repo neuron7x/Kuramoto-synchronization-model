@@ -11,8 +11,8 @@ import numpy as np
 class SimulatedEnvironment:
     """Generate deterministic observation streams for validation."""
 
-    seed: int
     steps: int
+    seed: int = 1234
     _rng: np.random.Generator = field(init=False, repr=False)
 
     def __post_init__(self) -> None:

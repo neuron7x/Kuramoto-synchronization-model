@@ -1,10 +1,13 @@
 """Runtime NaK controller implementation."""
 from __future__ import annotations
 
-from typing import Any, Dict
+import os
+from importlib import resources
+from typing import Any, Dict, Mapping, MutableMapping
 
 import yaml  # type: ignore[import-untyped]
 
+from ..conf import DEFAULT_CONFIG_PATH
 from ..control.global_mode import band_expand_for_mode, choose_mode
 from ..control.neuromods import (
     acetylcholine,
@@ -15,21 +18,41 @@ from ..control.neuromods import (
     serotonin,
 )
 from ..control.pi import pi_control, rate_limit
-from ..core.config import load_validated
+from ..core.config import NakConfig, load_validated
 from ..core.energetics import compute_EI, update_energy, update_load
 from ..core.params import NaKParams
 from ..core.state import StrategyState
 
 
+def _load_yaml_config(config_path: str | os.PathLike[str]) -> Mapping[str, Any]:
+    with open(os.fspath(config_path), "r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+    if not isinstance(data, MutableMapping):
+        raise ValueError("NaK configuration must be a mapping")
+    return data
+
+
+def _extract_nak_section(raw_cfg: Mapping[str, Any]) -> NakConfig:
+    if "nak" not in raw_cfg:
+        raise KeyError("NaK configuration missing required 'nak' section")
+    section = raw_cfg["nak"]
+    if not isinstance(section, Mapping):
+        raise ValueError("'nak' section must be a mapping")
+    return load_validated(dict(section))
+
+
 class NaKController:
     """Per-strategy NaK control loop."""
 
-    def __init__(self, config_path: str) -> None:
-        with open(config_path, "r", encoding="utf-8") as handle:
-            raw = yaml.safe_load(handle)
-        cfg = load_validated(raw["nak"])
+    def __init__(self, config_path: str | os.PathLike[str] | None = None) -> None:
+        if config_path is None:
+            with resources.as_file(DEFAULT_CONFIG_PATH) as resolved:
+                raw_cfg = _load_yaml_config(resolved)
+        else:
+            raw_cfg = _load_yaml_config(config_path)
+        cfg = _extract_nak_section(raw_cfg)
 
-        self.params = NaKParams(
+        self.p = NaKParams(
             L_min=cfg.L_min,
             L_max=cfg.L_max,
             E_max=cfg.E_max,
@@ -102,7 +125,7 @@ class NaKController:
         """Advance the controller one step for *strategy_id*."""
 
         state = self.get_state(strategy_id)
-        params = self.params
+        params = self.p
 
         unexpected_reward = float(global_obs.get("unexpected_reward", 0.0))
         dopamine_level = dopamine(unexpected_reward, params.beta_DA)
