@@ -43,10 +43,19 @@ class SyntheticMarketEnv:
         return {"lob_data": lob_data, "price": float(self._price)}
 
 
+@pytest.fixture(name="telemetry_buffer")
+def fixture_telemetry_buffer() -> list[dict[str, float]]:
+    return []
+
+
 @pytest.fixture(name="agent")
-def fixture_agent() -> MisanthropicAgent:
+def fixture_agent(telemetry_buffer: list[dict[str, float]]) -> MisanthropicAgent:
     torch.manual_seed(123)
-    return MisanthropicAgent(rng=np.random.default_rng(7))
+    return MisanthropicAgent(
+        rng=np.random.default_rng(7),
+        telemetry_hook=telemetry_buffer.append,
+        write_metrics=False,
+    )
 
 
 @pytest.fixture(name="env")
@@ -102,3 +111,34 @@ def test_train_updates_metrics(agent: MisanthropicAgent, env: SyntheticMarketEnv
     assert set(metrics) == {"pnl_mean", "cvar_95", "coverage", "r2_ofi"}
     assert np.isfinite(metrics["pnl_mean"])
     assert 0.0 <= metrics["coverage"] <= 1.0
+
+
+def test_telemetry_hook_receives_metrics(
+    agent: MisanthropicAgent, env: SyntheticMarketEnv, telemetry_buffer: list[dict[str, float]]
+) -> None:
+    state = env.reset()
+    agent.step(state["lob_data"], state["price"])
+    assert telemetry_buffer, "telemetry hook must receive metrics"
+    latest = telemetry_buffer[-1]
+    assert {"threat", "lambda_cvar", "coverage"} <= latest.keys()
+
+
+def test_apply_thermo_feedback_adjusts_controls(agent: MisanthropicAgent) -> None:
+    base_capital = agent.capital
+    agent.apply_thermo_feedback(
+        latency_ratio=1.2,
+        coherency=0.3,
+        tail_risk=0.1,
+        coverage_shortfall=0.2,
+    )
+    assert agent.capital < base_capital
+    aggressive_lambda = agent.lambda_cvar
+    assert aggressive_lambda > 0.0
+
+    agent.apply_thermo_feedback(
+        latency_ratio=1.0,
+        coherency=0.9,
+        tail_risk=0.0,
+        coverage_shortfall=0.0,
+    )
+    assert agent.lambda_cvar <= aggressive_lambda

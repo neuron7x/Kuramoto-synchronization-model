@@ -1,1 +1,1 @@
-Add risk-stabilized MisanthropicAgent: Lagrangian-CVaR, PER, EnbPI coverage & OOD checks
+Harden MisanthropicAgent with deterministic seeding, TACL feedback, and registry bridge

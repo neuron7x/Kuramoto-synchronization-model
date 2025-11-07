@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
+import random
 from collections import deque
-from typing import Deque, Dict, Iterable, List, Optional, Tuple
+from pathlib import Path
+from typing import Callable, Deque, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 from numpy.random import Generator, default_rng
@@ -21,6 +25,17 @@ if not logger.handlers:
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
+
+def _seed_all(seed: int) -> None:
+    """Seed Python, NumPy, and torch RNGs for reproducibility."""
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():  # pragma: no cover - GPU not used in tests
+        torch.cuda.manual_seed_all(seed)
+    torch.use_deterministic_algorithms(False)
 
 
 class QRDQN(nn.Module):
@@ -128,18 +143,30 @@ class MisanthropicAgent:
         hazard: float = 1 / 2000,
         target_coverage: float = 0.90,
         rng: Optional[Generator] = None,
+        *,
+        telemetry_hook: Optional[Callable[[Dict[str, float]], None]] = None,
+        metrics_path: Optional[Path] = None,
+        seed: Optional[int] = None,
+        device: Optional[torch.device] = None,
+        min_capital_ratio: float = 0.25,
+        write_metrics: bool = True,
     ) -> None:
         if threat_weights is None:
             threat_weights = [0.5, 0.2, 0.2, 0.1]
+
+        seed_value = seed if seed is not None else int(os.getenv("TP_SEED", "1337"))
+        _seed_all(seed_value)
 
         self.state_size = state_size
         self.action_size = action_size
         self.quantiles = quantiles
 
-        self.model = QRDQN(state_size, action_size, quantiles)
-        self.target_model = QRDQN(state_size, action_size, quantiles)
+        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.model = QRDQN(state_size, action_size, quantiles).to(self.device)
+        self.target_model = QRDQN(state_size, action_size, quantiles).to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = optim.AdamW(self.model.parameters(), lr=1e-3, weight_decay=1e-4)
 
         self.per_alpha = 0.6
         self.per_beta = 0.4
@@ -148,7 +175,8 @@ class MisanthropicAgent:
         self.discount = 0.997
         self.batch_size = 64
 
-        self.capital = capital
+        self.base_capital = float(capital)
+        self.capital = float(capital)
         self.threat_weights = threat_weights
         self.change_point_horizon = change_point_horizon
         self.alpha_cvar = alpha_cvar
@@ -156,6 +184,7 @@ class MisanthropicAgent:
         self.hazard = hazard
         self.target_coverage = target_coverage
         self.coverage_floor = 0.80
+        self.min_capital = float(self.base_capital * min_capital_ratio)
 
         self.lambda_cvar = 0.0
         self.lambda_step = 1e-3
@@ -171,11 +200,22 @@ class MisanthropicAgent:
         self.ood_alpha = 0.05
         self.ood_hold = False
 
-        self.ensemble = [nn.Sequential(nn.Linear(state_size, 32), nn.ReLU(), nn.Linear(32, 1)) for _ in range(5)]
+        self.ensemble = [
+            nn.Sequential(nn.Linear(state_size, 32), nn.ReLU(), nn.Linear(32, 1)).to(self.device)
+            for _ in range(5)
+        ]
         self.ensemble_optimizers = [optim.Adam(model.parameters(), lr=1e-3) for model in self.ensemble]
 
         self.history: Deque[float] = deque(maxlen=5000)
         self.last_state: Optional[np.ndarray] = None
+        self.telemetry_hook = telemetry_hook
+        if not write_metrics:
+            metrics_location: Optional[Path] = None
+        elif metrics_path is not None:
+            metrics_location = Path(metrics_path)
+        else:
+            metrics_location = Path(os.environ.get("TP_AGENT_METRICS_PATH", "logs/misanthropic_agent_metrics.jsonl"))
+        self.metrics_path = metrics_location
 
     # ------------------------------------------------------------------
     # Feature engineering helpers
@@ -211,20 +251,26 @@ class MisanthropicAgent:
         return 0.0
 
     def _update_run_length(self, innovation: float, update: bool) -> int:
-        likelihood = norm.pdf(innovation, loc=0.0, scale=1.0)
-        growth_prob = likelihood * (1 - self.hazard)
-        cp_prob = likelihood * self.hazard
-        denom = growth_prob + cp_prob
-        p_grow = float(growth_prob / denom) if denom > 0 else (1 - self.hazard)
-        new_run_length = self.run_length + 1 if self._rng.random() < p_grow else 0
+        # Lightweight BOCPD-style update that reacts to innovations.
+        variance = 1.0
+        ll = -0.5 * ((innovation) ** 2) / max(variance, 1e-6)
+        growth_score = np.exp(ll) * (1 - self.hazard)
+        cp_score = np.exp(ll) * self.hazard
+        new_run_length = self.run_length + 1 if growth_score >= cp_score else 0
         if update:
             self.run_length = new_run_length
         return new_run_length
 
     def _uncertainty(self, state: np.ndarray) -> float:
         with torch.no_grad():
-            tensor_state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
-            preds = [model(tensor_state).item() for model in self.ensemble]
+            tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+            preds: List[float] = []
+            for model in self.ensemble:
+                was_training = model.training
+                model.eval()
+                preds.append(model(tensor_state).item())
+                if was_training:
+                    model.train()
         return float(np.var(preds))
 
     # ------------------------------------------------------------------
@@ -340,8 +386,10 @@ class MisanthropicAgent:
         if size <= 0.0 or threat > 1.0 or coverage < self.coverage_floor or self.ood_hold:
             return 2, 0.0, 0.0
 
+        prev_training = self.model.training
+        self.model.eval()
         with torch.no_grad():
-            tensor_state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+            tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
             q_dist = self.model(tensor_state)
             means = q_dist.mean(dim=2)
 
@@ -356,6 +404,8 @@ class MisanthropicAgent:
                 action, _, cvar_hat = max(candidates, key=lambda entry: entry[1])
             else:
                 action, cvar_hat = 2, 0.0
+        if prev_training:
+            self.model.train()
 
         # Contra-fade override
         if threat > 0.7 and action != 2:
@@ -366,6 +416,21 @@ class MisanthropicAgent:
 
     def _post_step(self, price: float) -> None:
         self.history.append(price)
+
+    def _emit_metrics(self, payload: Dict[str, float]) -> None:
+        if self.telemetry_hook is not None:
+            self.telemetry_hook(payload)
+
+        if self.metrics_path is None:
+            return
+
+        try:
+            self.metrics_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.metrics_path.open("a", encoding="utf-8") as handle:
+                json.dump(payload, handle)
+                handle.write("\n")
+        except OSError:  # pragma: no cover - telemetry path may be unwritable in tests
+            logger.debug("Telemetry write skipped", exc_info=True)
 
     # ------------------------------------------------------------------
     # Public API
@@ -385,6 +450,20 @@ class MisanthropicAgent:
             meta["ood_score"],
         )
 
+        self._emit_metrics(
+            {
+                "threat": float(meta["threat"]),
+                "uncertainty": float(meta["uncertainty"]),
+                "cvar_hat": float(cvar_hat),
+                "action": float(action),
+                "size": float(size),
+                "coverage": float(meta["coverage"]),
+                "ood_score": float(meta["ood_score"]),
+                "lambda_cvar": float(self.lambda_cvar),
+                "capital": float(self.capital),
+            }
+        )
+
         self._post_step(price)
         return int(action), float(size)
 
@@ -398,16 +477,17 @@ class MisanthropicAgent:
         indices, batch, importance_weights = self.replay.sample(self.batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
 
-        states_tensor = torch.tensor(np.array(states), dtype=torch.float32)
-        next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32)
-        actions_tensor = torch.tensor(actions, dtype=torch.long).unsqueeze(1)
-        rewards_tensor = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1)
-        dones_tensor = torch.tensor(dones, dtype=torch.float32).unsqueeze(1)
-        weights_tensor = torch.tensor(importance_weights, dtype=torch.float32).unsqueeze(1)
+        states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
+        next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
+        actions_tensor = torch.tensor(actions, dtype=torch.long, device=self.device).unsqueeze(1)
+        rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device).unsqueeze(1)
+        dones_tensor = torch.tensor(dones, dtype=torch.float32, device=self.device).unsqueeze(1)
+        weights_tensor = torch.tensor(importance_weights, dtype=torch.float32, device=self.device).unsqueeze(1)
 
         tau = torch.rand(self.batch_size, self.quantiles, device=states_tensor.device)
         tau, _ = tau.sort(dim=1)
 
+        self.model.train()
         all_q = self.model(states_tensor)
         q_dist = all_q.gather(1, actions_tensor.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(1)
 
@@ -415,10 +495,12 @@ class MisanthropicAgent:
             next_all_q = self.target_model(next_states_tensor)
             next_actions = next_all_q.mean(dim=2).argmax(dim=1).unsqueeze(1)
             next_dist = next_all_q.gather(1, next_actions.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(1)
-            target_dist = rewards_tensor.repeat(1, self.quantiles) + (1 - dones_tensor.repeat(1, self.quantiles)) * self.discount * next_dist
+            target_dist = rewards_tensor.repeat(1, self.quantiles) + (
+                1 - dones_tensor.repeat(1, self.quantiles)
+            ) * self.discount * next_dist
 
         elementwise = quantile_huber_elementwise(target_dist, tau, q_dist)
-        per_sample_loss = elementwise.mean(dim=1, keepdim=True)
+        per_sample_loss = elementwise.sum(dim=1, keepdim=True) / self.quantiles
 
         cvar_hat = self._cvar_torch(q_dist, self.alpha_cvar).unsqueeze(1)
         violation = torch.relu(self.cvar_floor - cvar_hat)
@@ -428,22 +510,23 @@ class MisanthropicAgent:
 
         self.optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         self.optimizer.step()
 
         with torch.no_grad():
-            self.lambda_cvar = float(
-                np.clip(self.lambda_cvar + self.lambda_step * violation.mean().item(), 0.0, self.lambda_max)
-            )
+            dual = self.lambda_cvar + self.lambda_step * violation.mean().item()
+            self.lambda_cvar = float(np.clip(dual, 0.0, self.lambda_max))
 
-        td_error = (target_dist - q_dist).abs().mean(dim=1).detach().cpu().numpy()
+        td_error = (target_dist - q_dist).abs().mean(dim=1)
+        td_error = td_error.clamp_min(1e-6).detach().cpu().numpy()
         self.replay.update_priorities(indices, td_error)
 
         for param, target_param in zip(self.model.parameters(), self.target_model.parameters()):
             target_param.data.copy_(0.005 * param.data + (1 - 0.005) * target_param.data)
 
         for ensemble_model, optimizer in zip(self.ensemble, self.ensemble_optimizers):
-            predictions = ensemble_model(states_tensor)
-            ensemble_loss = nn.MSELoss()(predictions, rewards_tensor)
+            predictions = ensemble_model(states_tensor.detach())
+            ensemble_loss = nn.MSELoss()(predictions, rewards_tensor.detach())
             optimizer.zero_grad()
             ensemble_loss.backward()
             optimizer.step()
@@ -475,7 +558,8 @@ class MisanthropicAgent:
                 episode_reward += float(reward)
 
                 with torch.no_grad():
-                    prediction = self.model(torch.tensor(state, dtype=torch.float32).unsqueeze(0)).mean().item()
+                    tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+                    prediction = self.model(tensor_state).mean().item()
                 self.residuals.append(float(reward - prediction))
 
                 if done:
@@ -517,8 +601,14 @@ class MisanthropicAgent:
         if save_artifacts:
             torch.save(self.model.state_dict(), "misanthropic_agent.pth")
             try:
-                dummy_input = torch.randn(1, self.state_size)
-                torch.onnx.export(self.model, dummy_input, "agent.onnx", opset_version=11)
+                current_device = self.device
+                dummy_input = torch.randn(1, self.state_size, device="cpu")
+                model_cpu = self.model.to("cpu")
+                torch.onnx.export(model_cpu, dummy_input, "agent.onnx", opset_version=11)
+                self.model.to(current_device)
+                self.target_model.to(current_device)
+                for ensemble_model in self.ensemble:
+                    ensemble_model.to(current_device)
             except Exception as exc:  # pragma: no cover - export failures should not break training
                 logger.warning("ONNX export skipped: %s", exc)
 
@@ -586,3 +676,37 @@ class MisanthropicAgent:
             "coverage": coverage,
             "r2_ofi": r2,
         }
+
+    # ------------------------------------------------------------------
+    # Thermodynamic controller bridge
+    # ------------------------------------------------------------------
+    def apply_thermo_feedback(
+        self,
+        *,
+        latency_ratio: float,
+        coherency: float,
+        tail_risk: float,
+        coverage_shortfall: float,
+    ) -> None:
+        """Adjust internal risk budgets from thermodynamic feedback."""
+
+        tail_penalty = max(tail_risk, 0.0)
+        latency_penalty = max(latency_ratio - 1.0, 0.0)
+        coherence_bonus = max(coherency, 0.0)
+
+        if tail_penalty > 0.0 or latency_penalty > 0.0 or coverage_shortfall > 0.0:
+            delta_lambda = 0.5 * tail_penalty + 0.2 * latency_penalty + 0.3 * coverage_shortfall
+            self.lambda_cvar = float(np.clip(self.lambda_cvar + delta_lambda, 0.0, self.lambda_max))
+
+            reduction = 0.05 * latency_penalty + 0.1 * tail_penalty + 0.08 * coverage_shortfall
+            self.capital = max(self.min_capital, self.capital * (1.0 - reduction))
+        else:
+            relaxation = 0.05 * coherence_bonus
+            self.lambda_cvar = float(max(0.0, self.lambda_cvar - relaxation))
+            recovery = 0.02 * coherence_bonus
+            self.capital = min(self.base_capital, self.capital * (1.0 + recovery))
+
+    def record_metrics(self, metrics: Dict[str, float]) -> None:
+        """Public helper so external controllers can push telemetry."""
+
+        self._emit_metrics(metrics)
