@@ -1,0 +1,24 @@
+model:
+  alpha: 0.10
+  beta: 0.05
+  gamma: 0.05
+  delta: 0.10
+  theta: 0.00
+  lambd: 0.20
+  mu: 0.05
+  phi: 0.60
+  omega: 0.40
+  kappa: 0.10
+  psi: 1.0
+  eps: 0.7
+  eta: 0.2
+  M0: 0.8
+
+risk:
+  cvar_alpha: 0.95
+  cvar_limit: 0.03
+  lookback: 50
+
+policy:
+  horizon: 5
+  temp: 1.0
