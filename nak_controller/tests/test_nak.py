@@ -14,7 +14,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from hypothesis import given, settings
 from hypothesis import strategies as st
 

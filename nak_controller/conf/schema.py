@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from ..core.params import NaKParams
