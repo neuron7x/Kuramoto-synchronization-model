@@ -44,3 +44,13 @@ class RiskConfig:
 class HomeoConfig:
     M_target: float = 0.8
     k_sigmoid: float = 5.0
+
+
+@dataclass(frozen=True)
+class MarketAdapterConfig:
+    max_drawdown_limit: float = 0.20
+    spread_threshold: float = 0.01
+    regime_threshold: float = 0.05
+    hist_max_vol: float = 1.0
+    risk_free: float = 0.02
+    eps: float = 1e-6

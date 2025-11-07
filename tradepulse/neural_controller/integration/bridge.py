@@ -5,13 +5,21 @@ from __future__ import annotations
 import inspect
 import logging
 import os
+from pathlib import Path
 from typing import Any, Callable, Dict, Mapping
 
 import numpy as np
 import yaml
 
 from ..core.emh_model import EMHSSM
-from ..core.params import EKFConfig, HomeoConfig, Params, PolicyConfig, RiskConfig
+from ..core.params import (
+    EKFConfig,
+    HomeoConfig,
+    MarketAdapterConfig,
+    Params,
+    PolicyConfig,
+    RiskConfig,
+)
 from ..core.state import EMHState
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
@@ -19,6 +27,7 @@ from ..homeostasis.homeo import HomeostaticModule
 from ..policy.controller import BasalGangliaController
 from ..risk.cvar import CVARGate
 from ..telemetry.metrics import DecisionMetricsExporter, MetricsEmitter
+from ..config import load_default_config
 from ..util.logging import log_decision
 
 log = logging.getLogger(__name__)
@@ -151,6 +160,7 @@ class NeuralMarketController:
         policy: PolicyConfig,
         risk: RiskConfig,
         homeo: HomeoConfig,
+        adapter: MarketAdapterConfig | None = None,
     ) -> None:
         self.model = EMHSSM(params, EMHState())
         self.ekf = EMHEKF(params, ekf)
@@ -162,17 +172,23 @@ class NeuralMarketController:
         self.generations = 10
         self.metrics = MetricsEmitter()
         self.metrics_exporter = DecisionMetricsExporter()
+        self.adapter_config = adapter or MarketAdapterConfig()
 
     @classmethod
-    def from_yaml(cls, path: str) -> "NeuralMarketController":
-        with open(path, "r", encoding="utf-8") as stream:
-            cfg = yaml.safe_load(stream)
+    def from_yaml(cls, path: str | None = None) -> "NeuralMarketController":
+        if path is None:
+            cfg = dict(load_default_config())
+        else:
+            yaml_path = Path(path)
+            with yaml_path.open("r", encoding="utf-8") as stream:
+                cfg = yaml.safe_load(stream)
         params = Params(**cfg["model"])
         ekf = EKFConfig(**cfg["ekf"])
         policy = PolicyConfig(**cfg["policy"])
         risk = RiskConfig(**cfg["risk"])
         homeo = HomeoConfig(**cfg["homeostasis"])
-        inst = cls(params, ekf, policy, risk, homeo)
+        adapter_cfg = MarketAdapterConfig(**(cfg.get("market_adapter", {}) or {}))
+        inst = cls(params, ekf, policy, risk, homeo, adapter=adapter_cfg)
         bridge_cfg = cfg.get("tacl_bridge", {}) or {}
         inst.sync_threshold = float(bridge_cfg.get("sync_threshold", inst.sync_threshold))
         inst.generations = int(bridge_cfg.get("generations", inst.generations))
@@ -208,7 +224,6 @@ class NeuralMarketController:
         metrics = self.metrics_exporter.update(decision)
         decision.update(metrics)
         self.metrics.emit(**metrics)
-        log_decision(decision)
         return decision
 
 
@@ -275,4 +290,5 @@ class NeuralTACLBridge:
         decision["alloc_main"] = optim_allocs["main"]
         decision["alloc_alt"] = optim_allocs["alt"]
         decision["tacl_optimized"] = bool(tacl_out.get("optimized", False))
+        log_decision(decision)
         return decision

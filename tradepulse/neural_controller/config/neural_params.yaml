@@ -34,3 +34,11 @@ homeostasis:
 tacl_bridge:
   sync_threshold: 0.3
   generations: 12
+
+market_adapter:
+  max_drawdown_limit: 0.2
+  spread_threshold: 0.01
+  regime_threshold: 0.05
+  hist_max_vol: 1.0
+  risk_free: 0.02
+  eps: 1.0e-06

@@ -9,6 +9,36 @@ import sys
 from typing import Any, Dict
 
 _DEFAULT_LOGGER_NAME = "tradepulse.neural_controller"
+_DECISION_DEFAULTS: Dict[str, Any] = {
+    "mode": "GREEN",
+    "action": "hold",
+    "D": 0.0,
+    "H": 0.0,
+    "M": 0.0,
+    "E": 0.0,
+    "S": 0.0,
+    "RPE": 0.0,
+    "belief": 0.0,
+    "alloc_main": 0.0,
+    "alloc_alt": 0.0,
+    "alloc_scale": 1.0,
+    "temperature": 1.0,
+    "sync_order": 1.0,
+}
+_NUMERIC_FIELDS = {
+    "D",
+    "H",
+    "M",
+    "E",
+    "S",
+    "RPE",
+    "belief",
+    "alloc_main",
+    "alloc_alt",
+    "alloc_scale",
+    "temperature",
+    "sync_order",
+}
 
 
 def setup_logger(level: str = "INFO") -> None:
@@ -39,7 +69,24 @@ def log_decision(event: Dict[str, Any]) -> None:
     """Emit a structured decision record to the controller logger."""
 
     logger = logging.getLogger(f"{_DEFAULT_LOGGER_NAME}.decision")
-    logger.info("controller_decision", extra={"event": "neuro.decision", "payload": event})
+    if not logger.isEnabledFor(logging.INFO):
+        return
+
+    payload: Dict[str, Any] = dict(_DECISION_DEFAULTS)
+    for key, value in event.items():
+        if key in _NUMERIC_FIELDS:
+            try:
+                payload[key] = float(value)
+            except (TypeError, ValueError):
+                continue
+        elif key == "mode":
+            payload[key] = str(value).upper()
+        elif key == "action":
+            payload[key] = str(value)
+        elif key not in payload:
+            payload[key] = value
+    message = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    logger.info(message, extra={"event": "neuro.decision", "payload": payload})
 
 
 
