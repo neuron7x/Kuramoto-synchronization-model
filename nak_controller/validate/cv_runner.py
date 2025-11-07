@@ -96,7 +96,11 @@ def run_cv(
                 )
                 oob_now += int(out["EI"] < 0.35 or out["EI"] > 0.65)
                 susp_now += int(out["is_suspended"])
-                ret_i = local_list[i]["pnl"] * out["risk_per_trade_factor"]
+                ret_i = (
+                    local_list[i]["pnl"]
+                    * bases[i]["rpt"]
+                    * out["risk_per_trade_factor"]
+                )
                 equity_n[i] *= 1.0 + ret_i
                 r_n += ret_i
             r_n /= n_strats

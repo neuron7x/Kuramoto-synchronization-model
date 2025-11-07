@@ -172,6 +172,7 @@ exclude = ["tests", "tests.*", "docs", "docs.*"]
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
 "tradepulse.neural_controller" = ["config/*.yaml"]
+"nak_controller" = ["conf/*.yaml"]
 
 [tool.mutmut]
 paths_to_mutate = [
