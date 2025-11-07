@@ -9,13 +9,13 @@ from pathlib import Path
 from typing import Dict
 
 import numpy as np
-import torch
 from omegaconf import OmegaConf
 
 from core.env.hawkes_env import HawkesConfig, HawkesEnv
 from core.env.nhp_env import NHPConfig, NHPEnv
 from runtime.bootstrap import set_determinism
 from runtime.metrics import init_metrics_server
+from runtime.checkpoint import save_state_dict_safely
 from runtime.misanthropic_agent import MisanthropicAgent, load_agent_config
 
 
@@ -78,8 +78,8 @@ def main() -> None:
         total_rewards.append(pnl)
 
     agent.close()
-    checkpoint_path = log_dir / "checkpoint.pt"
-    torch.save(agent.online.state_dict(), checkpoint_path)
+    checkpoint_path = log_dir / "checkpoint.npz"
+    save_state_dict_safely(agent.online.state_dict(), checkpoint_path)
     result = {
         "episodes": episodes,
         "avg_pnl": float(np.mean(total_rewards)),
@@ -93,7 +93,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    import time
-    import torch
-
     main()

@@ -13,6 +13,7 @@ from omegaconf import OmegaConf
 from core.env.hawkes_env import HawkesConfig, HawkesEnv
 from core.env.nhp_env import NHPConfig, NHPEnv
 from runtime.bootstrap import set_determinism
+from runtime.checkpoint import load_state_dict_safely
 from runtime.misanthropic_agent import MisanthropicAgent, load_agent_config
 
 
@@ -41,7 +42,7 @@ def main() -> None:
     agent_cfg = load_agent_config(Path(cfg_dict["agent_config"]))
     env = _load_env(cfg_dict.get("env", "hawkes"), Path(cfg_dict.get("env_config", "configs/env/hawkes.yaml")))
     agent = MisanthropicAgent(agent_cfg, seed=seed, log_dir=Path(cfg_dict.get("log_dir", "logs")))
-    state_dict = torch.load(args.checkpoint, map_location="cpu")
+    state_dict = load_state_dict_safely(Path(args.checkpoint))
     agent.online.load_state_dict(state_dict)
     agent.target.load_state_dict(state_dict)
     agent.set_training(False)

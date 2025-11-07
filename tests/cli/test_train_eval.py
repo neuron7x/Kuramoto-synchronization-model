@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from cli import train_agent, eval_agent
+from runtime.checkpoint import load_state_dict_safely
 
 
 def _write_config(path: Path, log_dir: Path) -> None:
@@ -30,6 +31,8 @@ def test_train_and_eval_cli(tmp_path, capsys) -> None:
     train_out = json.loads(capsys.readouterr().out.strip())
     checkpoint = Path(train_out["checkpoint"])
     assert checkpoint.exists()
+    state_dict = load_state_dict_safely(checkpoint)
+    assert state_dict
 
     sys.argv = ["eval_agent", "--config", str(train_cfg), "--checkpoint", str(checkpoint), "--episodes", "1"]
     eval_agent.main()

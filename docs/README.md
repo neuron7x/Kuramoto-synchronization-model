@@ -9,7 +9,7 @@ python -m cli.train_agent --config configs/train.yaml --log-dir logs
 ## Evaluation
 
 ```bash
-python -m cli.eval_agent --config configs/train.yaml --checkpoint logs/checkpoint.pt
+python -m cli.eval_agent --config configs/train.yaml --checkpoint logs/checkpoint.npz
 ```
 
 ## Metrics
