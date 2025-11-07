@@ -13,7 +13,11 @@ with:
 
 ```bash
 python -m pip install -e .
-python -m nak_controller.cli.run_validate --config nak_controller/conf/nak.yaml --steps 200 --seeds 2
+python -m nak_controller.cli.run_validate \
+  --config nak_controller/conf/nak.yaml \
+  --steps 200 \
+  --seeds 2 \
+  --seed 1337
 ```
 
 ## Layout
@@ -31,8 +35,9 @@ python -m nak_controller.cli.run_validate --config nak_controller/conf/nak.yaml 
 Run the dedicated test suite via:
 
 ```bash
-pytest nak_controller/tests
+pytest nak_controller/tests --cov=nak_controller --cov-report=term-missing
 ```
 
-The validation CLI emits deterministic JSON summaries to ease automation and
-reporting.
+The validation CLI accepts a `--seed` flag (default `0`) and honours the
+`NAK_SEED` environment variable, ensuring deterministic JSON summaries for
+automation and reporting.

@@ -51,7 +51,11 @@ def _ensure_float(value: object, key: str) -> float:
 
 
 def run_validation(
-    config_path: str, *, steps: int = 200, seeds: int = 3
+    config_path: str,
+    *,
+    steps: int = 200,
+    seeds: int = 3,
+    seed: int | None = None,
 ) -> Dict[str, Dict[str, float]]:
     """Run synthetic validation using ``seeds`` random seeds."""
     if steps <= 0:
@@ -59,14 +63,19 @@ def run_validation(
     if seeds <= 0:
         raise ValueError("seeds must be positive")
 
-    hook = NaKHook(config_path)
+    hook = NaKHook(config_path, seed=seed)
+    if seed is not None:
+        base_seed = seed
+    else:
+        base_seed = hook.seed if hook.seed is not None else 0
 
     baseline_samples: List[Dict[str, float]] = []
     nak_samples: List[Dict[str, float]] = []
 
-    for seed in range(seeds):
-        env = SimulationEnvironment(seed=seed)
-        hook.reset()
+    for offset in range(seeds):
+        iteration_seed = base_seed + offset
+        env = SimulationEnvironment(seed=iteration_seed)
+        hook.reset(seed=iteration_seed)
         for _ in range(steps):
             local, global_obs, bases = env.step()
             baseline_samples.append(

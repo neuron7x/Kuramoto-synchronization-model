@@ -8,7 +8,7 @@ dynamic = ["version", "readme"]
 description = "Advanced algorithmic trading framework with geometric market indicators"
 authors = [{ name = "TradePulse Contributors" }]
 license = { file = "LICENSE" }
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 keywords = ["trading", "quant", "algorithmic", "markets", "analytics"]
 classifiers = [
     "Development Status :: 4 - Beta",

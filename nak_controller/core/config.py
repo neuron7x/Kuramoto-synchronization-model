@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 
 class _BaseTriplet(BaseModel):
@@ -148,6 +154,24 @@ class NakConfig(BaseModel):
         if value < 0.0:
             raise ValueError("noise_sigma must be non-negative")
         return value
+
+    @model_validator(mode="after")
+    def _validate_composites(self) -> "NakConfig":
+        weight_sum = self.w_n + self.w_v + self.w_d + self.w_e + self.w_l + self.w_s
+        if weight_sum > 1.0 + 1e-6:
+            raise ValueError("sum of load weights must not exceed 1.0")
+        recovery_reserve = self.u_e + self.u_l + self.u_p
+        if recovery_reserve <= 0.0:
+            raise ValueError(
+                "u_e + u_l + u_p must be positive to retain recovery reserve"
+            )
+        if self.r_min >= self.r_max:
+            raise ValueError("r_min must be less than r_max")
+        if self.f_min >= self.f_max:
+            raise ValueError("f_min must be less than f_max")
+        if not (self.r_min <= 1.0 <= self.r_max):
+            raise ValueError("risk range must include 1.0")
+        return self
 
 
 __all__ = ["NakConfig", "RiskMult", "ActivityMult", "BandExpand"]

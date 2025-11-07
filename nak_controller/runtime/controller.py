@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+import os
 from pathlib import Path
 from typing import Dict, Mapping
 
+import numpy as np
 import yaml  # type: ignore[import-untyped]
 
 from ..control.global_mode import band_expand_for_mode, choose_mode
@@ -26,10 +29,12 @@ from ..core.state import StrategyState
 class NaKController:
     """Stateful neuro-energetic controller managing per-strategy limits."""
 
-    def __init__(self, config_path: str | Path) -> None:
-        import numpy as np
-
-        np.random.seed(42)
+    def __init__(
+        self,
+        config_path: str | Path,
+        *,
+        seed: int | None = None,
+    ) -> None:
         config_path = Path(config_path)
         with config_path.open("r", encoding="utf-8") as handle:
             raw = yaml.safe_load(handle)
@@ -87,15 +92,34 @@ class NaKController:
             band_RED=cfg.band_expand.RED,
             noise_sigma=cfg.noise_sigma,
         )
+        resolved_seed = seed
+        if resolved_seed is None:
+            env_seed = os.getenv("NAK_SEED")
+            if env_seed is not None:
+                env_seed = env_seed.strip()
+                if env_seed:
+                    try:
+                        resolved_seed = int(env_seed)
+                    except ValueError as exc:
+                        raise ValueError("NAK_SEED must be an integer") from exc
+        self._seed = resolved_seed
+        self._rng = np.random.default_rng(self._seed)
         self._states: Dict[str, StrategyState] = {}
+        self._logger = logging.getLogger("runtime.telemetry.nak")
 
     @property
     def states(self) -> Mapping[str, StrategyState]:
         """Return a read-only view of registered states."""
         return self._states
 
-    def reset(self) -> None:
-        """Clear all strategy state."""
+    def reset(self, *, seed: int | None = None) -> None:
+        """Clear all strategy state and optionally reseed randomness."""
+        if seed is not None:
+            self._seed = seed
+        if self._seed is not None:
+            self._rng = np.random.default_rng(self._seed)
+        else:
+            self._rng = np.random.default_rng()
         self._states.clear()
 
     def _get_state(self, strategy_id: str) -> StrategyState:
@@ -114,21 +138,24 @@ class NaKController:
         state = self._get_state(strategy_id)
         params = self.params
 
-        unexpected_reward = float(global_obs.get("unexpected_reward", 0.0))
-        DA = dopamine(unexpected_reward, params.beta_DA)
-        NA = noradrenaline(float(global_obs.get("global_vol", 0.0)), params.na_vol_gain)
-        HT = serotonin(float(global_obs.get("portfolio_dd", 0.0)), params.ht_dd_gain)
-        ACh = acetylcholine(float(global_obs.get("exposure", 0.0)), params.eta_ACh)
+        local = dict(local_obs)
+        global_view = dict(global_obs)
 
-        update_load(state, params, dict(local_obs), NA)
-        update_energy(
-            state, params, dict(local_obs), NA=NA, DA=DA, da_unexp=unexpected_reward
+        unexpected_reward = float(global_view.get("unexpected_reward", 0.0))
+        DA = dopamine(unexpected_reward, params.beta_DA)
+        NA = noradrenaline(
+            float(global_view.get("global_vol", 0.0)), params.na_vol_gain
         )
-        compute_EI(state, params, dict(local_obs))
+        HT = serotonin(float(global_view.get("portfolio_dd", 0.0)), params.ht_dd_gain)
+        ACh = acetylcholine(float(global_view.get("exposure", 0.0)), params.eta_ACh)
+
+        update_load(state, params, local, NA, rng=self._rng)
+        update_energy(state, params, local, NA=NA, DA=DA, da_unexp=unexpected_reward)
+        compute_EI(state, params, local)
 
         mode = choose_mode(
-            float(global_obs.get("global_vol", 0.0)),
-            float(global_obs.get("portfolio_dd", 0.0)),
+            float(global_view.get("global_vol", 0.0)),
+            float(global_view.get("portfolio_dd", 0.0)),
             vol_amber=params.vol_amber,
             vol_red=params.vol_red,
             dd_amber=params.dd_amber,
@@ -183,6 +210,19 @@ class NaKController:
         risk_factor = limited_rate if not suspended else params.r_min
         max_position_factor = risk_factor
 
+        if not params.r_min <= risk_factor <= params.r_max:
+            raise RuntimeError(
+                f"risk_factor {risk_factor:.4f} outside bounds [{params.r_min}, {params.r_max}]"
+            )
+        if abs(max_position_factor - risk_factor) > 1e-6:
+            raise RuntimeError(
+                "max_position_factor must equal risk_factor for deterministic sizing"
+            )
+        if mode == "RED" and not suspended:
+            raise RuntimeError("RED mode must result in suspension")
+        if cooldown_ms < 1:
+            raise RuntimeError("cooldown must be at least 1 ms")
+
         state.suspended = suspended
         state.last_risk = risk_factor
         state.last = {
@@ -200,6 +240,20 @@ class NaKController:
             "band_exp": band_expansion,
             "f_freq": freq,
         }
+
+        if self._logger.isEnabledFor(logging.INFO):
+            self._logger.info(
+                "nak.step",
+                extra={
+                    "event": "nak.step",
+                    "strategy": strategy_id,
+                    "mode": mode,
+                    "risk_factor": risk_factor,
+                    "EI": state.EI,
+                    "E": state.E,
+                    "L": state.L,
+                },
+            )
 
         result: Dict[str, object] = {
             "strategy_id": strategy_id,

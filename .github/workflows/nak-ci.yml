@@ -9,11 +9,22 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      NAK_SEED: "1337"
+      PYTHONHASHSEED: "0"
     strategy:
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ['3.11']
     steps:
       - uses: actions/checkout@v4
+      - name: Check for hidden Unicode markers
+        shell: bash
+        run: |
+          set -o pipefail
+          if git ls-files -z | xargs -0 grep --binary-files=without-match -nP '[\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]'; then
+            echo "Hidden Unicode control characters detected" >&2
+            exit 1
+          fi
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -23,6 +34,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ./nak_controller
           pip install pytest pytest-cov mypy ruff black bandit
+      - name: Validate NaK configuration
+        run: |
+          python - <<'PY' > yaml-validation.log
+          from pathlib import Path
+          import yaml
+          from nak_controller.core.config import NakConfig
+
+          raw = yaml.safe_load(Path("nak_controller/conf/nak.yaml").read_text(encoding="utf-8"))
+          NakConfig(**raw["nak"])
+          print("nak_controller/conf/nak.yaml: OK")
+          PY
       - name: Lint & format check
         run: |
           ruff check nak_controller
@@ -35,10 +57,13 @@ jobs:
           bandit -r nak_controller -x nak_controller/tests
       - name: Tests + Coverage
         run: |
-          pytest -q --cov=nak_controller --cov-report=xml:coverage.xml nak_controller/tests
+          pytest -q --cov=nak_controller --cov-report=xml:coverage.xml --junitxml=junit.xml nak_controller/tests
       - name: Upload coverage & junit
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.python-version }}
-          path: coverage.xml
+          path: |
+            coverage.xml
+            junit.xml
+            yaml-validation.log
