@@ -158,6 +158,8 @@ include = [
     "modules.*",
     "nfpro",
     "nfpro.*",
+    "nak_controller",
+    "nak_controller.*",
     "neurotrade_pro",
     "neurotrade_pro.*",
     "observability",
