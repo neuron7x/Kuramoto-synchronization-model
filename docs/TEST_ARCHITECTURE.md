@@ -289,7 +289,7 @@ Prefer synthetic data over real data for reproducibility:
 
 ```python
 def generate_price_series(
-    length: int, 
+    length: int,
     start_price: float = 100.0,
     volatility: float = 0.02,
     seed: int = 42
