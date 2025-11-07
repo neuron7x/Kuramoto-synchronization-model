@@ -44,6 +44,7 @@ def main() -> None:
     state_dict = torch.load(args.checkpoint, map_location="cpu")
     agent.online.load_state_dict(state_dict)
     agent.target.load_state_dict(state_dict)
+    agent.set_training(False)
 
     pnl_scores = []
     sharpe_samples = []

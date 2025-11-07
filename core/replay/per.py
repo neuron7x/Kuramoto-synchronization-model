@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections import deque
-from typing import Deque, Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -21,7 +20,7 @@ class PERBuffer:
         self.storage: List[Transition] = []
         self.priorities: List[float] = []
         self.pos = 0
-        self._breach_queue: Deque[int] = deque(maxlen=capacity)
+        self._breach_indices: Set[int] = set()
         self._breach_boost = 1.0
 
     def __len__(self) -> int:
@@ -35,7 +34,7 @@ class PERBuffer:
             return
         total = len(self.storage)
         start = max(total - window, 0)
-        self._breach_queue.extend(range(start, total))
+        self._breach_indices.update(range(start, total))
 
     def add(self, transition: Transition, priority: float | None = None) -> None:
         priority_value = float(abs(priority) + self.eps) if priority is not None else None
@@ -45,6 +44,7 @@ class PERBuffer:
             self.storage.append(transition)
             self.priorities.append(priority_value)
         else:
+            self._breach_indices.discard(self.pos)
             self.storage[self.pos] = transition
             self.priorities[self.pos] = priority_value
             self.pos = (self.pos + 1) % self.capacity
@@ -63,6 +63,7 @@ class PERBuffer:
 
     def update_priorities(self, idxs: list[int], new_p: np.ndarray) -> None:
         for idx, val in zip(idxs, new_p):
-            boost = self._breach_boost if idx in self._breach_queue else 1.0
+            boost = self._breach_boost if idx in self._breach_indices else 1.0
             self.priorities[idx] = float(abs(val) * boost + self.eps)
-        self._breach_queue.clear()
+            if idx in self._breach_indices:
+                self._breach_indices.discard(idx)

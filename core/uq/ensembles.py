@@ -39,6 +39,7 @@ class DeepEnsembles:
         x_tensor = torch.as_tensor(X, dtype=torch.float32)
         y_tensor = torch.as_tensor(y, dtype=torch.float32).view(-1, 1)
         for member in self.members:
+            member.model.train(True)
             member.optimizer.zero_grad(set_to_none=True)
             if self.bootstrap:
                 idx = np.random.choice(len(X), len(X))
@@ -53,7 +54,13 @@ class DeepEnsembles:
 
     def predict_var(self, x: np.ndarray) -> float:
         x_tensor = torch.as_tensor(x, dtype=torch.float32).view(1, -1)
-        preds = [member.model(x_tensor).item() for member in self.members]
+        preds = []
+        for member in self.members:
+            was_training = member.model.training
+            member.model.eval()
+            with torch.no_grad():
+                preds.append(float(member.model(x_tensor).item()))
+            member.model.train(was_training)
         return float(np.var(preds))
 
 

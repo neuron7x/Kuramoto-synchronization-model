@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from threading import Lock
+from typing import Dict, Set
 
 from prometheus_client import Gauge, start_http_server
 
 
 _METRICS: Dict[str, Gauge] = {}
+_STARTED_PORTS: Set[int] = set()
+_LOCK = Lock()
 
 
 def _get_gauge(name: str) -> Gauge:
@@ -19,8 +22,10 @@ def _get_gauge(name: str) -> Gauge:
 def init_metrics_server(port: int = 9200) -> None:
     """Start the Prometheus metrics server if not already running."""
 
-    start_http_server(port)
-    # Ensure gauges exist so acceptance test can scrape them immediately.
+    with _LOCK:
+        if port not in _STARTED_PORTS:
+            start_http_server(port)
+            _STARTED_PORTS.add(port)
     for gauge_name in (
         "tradepulse_coverage",
         "tradepulse_q_enbpi",
@@ -31,7 +36,7 @@ def init_metrics_server(port: int = 9200) -> None:
         "tacl_free_energy",
         "tacl_change_denied_total",
     ):
-        _get_gauge(gauge_name)
+        _get_gauge(gauge_name).set(0.0)
 
 
 def gauge_set(name: str, value: float) -> None:

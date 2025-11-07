@@ -18,15 +18,17 @@ def set_determinism(seed: int = 42, *, omp_threads: Optional[int] = 1, mkl_threa
     mode where supported.
     """
 
-    os.environ.setdefault("PYTHONHASHSEED", str(seed))
+    os.environ["PYTHONHASHSEED"] = str(seed)
     if omp_threads is not None:
-        os.environ.setdefault("OMP_NUM_THREADS", str(omp_threads))
+        os.environ["OMP_NUM_THREADS"] = str(omp_threads)
     if mkl_threads is not None:
-        os.environ.setdefault("MKL_NUM_THREADS", str(mkl_threads))
+        os.environ["MKL_NUM_THREADS"] = str(mkl_threads)
 
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
     torch.use_deterministic_algorithms(True)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True

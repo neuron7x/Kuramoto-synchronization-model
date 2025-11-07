@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -102,20 +103,28 @@ def _make_log_path(log_dir: Path, seed: int) -> Path:
 class NoisyLinear(nn.Linear):
     def __init__(self, in_features: int, out_features: int) -> None:
         super().__init__(in_features, out_features)
+        self.noise_scale = 0.5 / math.sqrt(max(in_features, 1))
         self.register_buffer("weight_noise", torch.zeros(out_features, in_features))
         self.register_buffer("bias_noise", torch.zeros(out_features))
         self.reset_noise()
 
     def reset_noise(self) -> None:
-        epsilon_in = torch.randn(self.in_features, device=self.weight.device)
-        epsilon_out = torch.randn(self.out_features, device=self.weight.device)
-        self.weight_noise = torch.ger(epsilon_out, epsilon_in)
-        self.bias_noise = torch.randn(self.out_features, device=self.weight.device)
+        with torch.no_grad():
+            epsilon_in = torch.randn(
+                self.in_features, device=self.weight.device, dtype=self.weight.dtype
+            )
+            epsilon_out = torch.randn(
+                self.out_features, device=self.weight.device, dtype=self.weight.dtype
+            )
+            noise_matrix = torch.outer(epsilon_out, epsilon_in)
+            self.weight_noise.copy_(noise_matrix * self.noise_scale)
+            self.bias_noise.copy_(epsilon_out * self.noise_scale)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
         if self.training:
-            weight = self.weight + self.weight_noise * 0.017
-            bias = self.bias + self.bias_noise * 0.017
+            self.reset_noise()
+            weight = self.weight + self.weight_noise
+            bias = self.bias + self.bias_noise
         else:
             weight = self.weight
             bias = self.bias
@@ -183,9 +192,13 @@ class MisanthropicAgent:
         self.target = DuelingQuantileNet(config.arch).to(self.device)
         self.target.load_state_dict(self.online.state_dict())
         self.optimizer = torch.optim.Adam(self.online.parameters(), lr=1e-3)
-        self.tau = torch.linspace(0.0, 1.0, config.arch.quantiles + 1)[1:]
+        self.tau = torch.linspace(0.0, 1.0, config.arch.quantiles + 1, dtype=torch.float32, device=self.device)[
+            1:
+        ]
+        self.set_training(True)
         self.lambda_cvar = config.risk.lambda_cvar_init
         self.har_state = fit_har(np.linspace(0.01, 0.02, 30), tuple(config.har.lags))
+        self.har_state["state"].alpha = config.har.alpha
         self.residuals: Deque[float] = deque(maxlen=2000)
         self.coverage_history: Deque[float] = deque(maxlen=100)
         self.enbpi_breach = 0
@@ -207,6 +220,13 @@ class MisanthropicAgent:
         self.latest_F = 0.0
         self.repose_calls = 0
         self.last_repose_denied = False
+
+    def set_training(self, enabled: bool) -> None:
+        """Toggle training updates for the agent."""
+
+        self._training_enabled = bool(enabled)
+        self.online.train(self._training_enabled)
+        self.target.eval()
 
     def _resolve_commit(self) -> str:
         try:
@@ -255,6 +275,8 @@ class MisanthropicAgent:
     def _compute_coverage(self, residual: float) -> Tuple[float, float]:
         self.residuals.append(residual)
         if len(self.residuals) < 20:
+            gauge_set("tradepulse_q_enbpi", 0.0)
+            self.coverage_history.append(1.0)
             return 1.0, 0.0
         abs_res = np.abs(np.array(self.residuals))
         q = float(np.quantile(abs_res, self.config.enbpi.target))
@@ -263,8 +285,18 @@ class MisanthropicAgent:
         gauge_set("tradepulse_q_enbpi", q)
         return coverage, q
 
-    def _update_replay(self, obs: np.ndarray, action: int, reward: float, next_obs: np.ndarray, done: bool) -> None:
+    def _update_replay(
+        self,
+        obs: np.ndarray,
+        action: int,
+        reward: float,
+        next_obs: np.ndarray,
+        done: bool,
+        breach: bool = False,
+    ) -> None:
         self.replay.add((obs, action, reward, next_obs, done))
+        if breach:
+            self.replay.mark_recent(self.config.enbpi.window)
         self.ensemble_buffer.append((obs, reward))
         if len(self.ensemble_buffer) > 1024:
             self.ensemble_buffer.pop(0)
@@ -312,15 +344,16 @@ class MisanthropicAgent:
         return action, size, ood_score, threat, cvar_hat
 
     def repose(self) -> None:
+        self.last_repose_denied = False
         if len(self.replay) < self.batch_size:
             return
         idxs, batch, weights = self.replay.sample(self.batch_size)
-        states = torch.as_tensor(np.stack([b[0] for b in batch]), dtype=torch.float32)
-        actions = torch.as_tensor([b[1] for b in batch], dtype=torch.int64)
-        rewards = torch.as_tensor([b[2] for b in batch], dtype=torch.float32)
-        next_states = torch.as_tensor(np.stack([b[3] for b in batch]), dtype=torch.float32)
-        dones = torch.as_tensor([b[4] for b in batch], dtype=torch.float32)
-        self.online.train()
+        device = self.device
+        states = torch.as_tensor(np.stack([b[0] for b in batch]), dtype=torch.float32, device=device)
+        actions = torch.as_tensor([b[1] for b in batch], dtype=torch.int64, device=device)
+        rewards = torch.as_tensor([b[2] for b in batch], dtype=torch.float32, device=device)
+        next_states = torch.as_tensor(np.stack([b[3] for b in batch]), dtype=torch.float32, device=device)
+        dones = torch.as_tensor([b[4] for b in batch], dtype=torch.float32, device=device)
         self.optimizer.zero_grad(set_to_none=True)
         q_dist = self.online(states)
         chosen = q_dist[torch.arange(self.batch_size), actions]
@@ -330,13 +363,16 @@ class MisanthropicAgent:
             target_dist = self.target(next_states)
             target = target_dist[torch.arange(self.batch_size), next_actions]
             target = rewards.unsqueeze(1) + self.gamma * (1 - dones.unsqueeze(1)) * target
-        tau = self.tau.view(1, -1)
+        tau = self.tau.to(device).view(1, -1)
         loss_elements = quantile_huber_elementwise(target, tau, chosen)
         loss_per_sample = loss_elements.mean(dim=1, keepdim=True)
         cvar_hat = cvar_from_quantiles(chosen, self.config.risk.alpha_cvar).view(-1, 1)
-        violation = torch.relu(torch.tensor(self.config.risk.c_cvar) - cvar_hat)
-        total = (torch.as_tensor(weights).view(-1, 1) * (loss_per_sample + self.lambda_cvar * violation)).mean()
+        threshold = torch.full_like(cvar_hat, self.config.risk.c_cvar)
+        violation = torch.clamp(threshold - cvar_hat, min=0.0)
+        weights_tensor = torch.as_tensor(weights, dtype=torch.float32, device=device).view(-1, 1)
+        total = (weights_tensor * (loss_per_sample + self.lambda_cvar * violation)).mean()
         if not torch.isfinite(total):
+            self.last_repose_denied = True
             return
         total.backward()
         torch.nn.utils.clip_grad_norm_(self.online.parameters(), 1.0)
@@ -348,20 +384,22 @@ class MisanthropicAgent:
                     + (1.0 - self.config.target_soft_tau) * target_param.data
                 )
         lambda_old = self.lambda_cvar
+        violation_mean = float(violation.mean().detach().cpu().item())
         lambda_new = float(
             np.clip(
-                self.lambda_cvar + self.config.risk.eta_cvar * float(violation.mean().item()),
+                self.lambda_cvar + self.config.risk.eta_cvar * violation_mean,
                 0.0,
                 self.config.risk.lambda_cvar_max,
             )
         )
-        delta = lambda_new - lambda_old
+        delta_F = self.config.tacl.w_cost * (lambda_new - lambda_old) * violation_mean
         change_denied = False
-        if self.tacl.approve_change("lambda_cvar", delta, override=False):
+        if self.tacl.approve_change("lambda_cvar", delta_F, override=False):
             self.lambda_cvar = lambda_new
         else:
             change_denied = True
-        self.replay.update_priorities(idxs, loss_per_sample.detach().squeeze(1).numpy())
+        new_priorities = loss_per_sample.detach().squeeze(1).cpu().numpy()
+        self.replay.update_priorities(idxs, new_priorities)
         if self.ensemble_buffer:
             X = np.stack([x for x, _ in self.ensemble_buffer])
             y = np.array([r for _, r in self.ensemble_buffer])
@@ -372,14 +410,15 @@ class MisanthropicAgent:
     def step(self, obs: np.ndarray, reward: float, done: bool, cpu_util: float = 0.2) -> int:
         tic = time.perf_counter()
         self.tacl.begin_step()
-        residual = abs(reward)
-        update_har(self.har_state, residual, self.config.har.alpha)
+        self.last_repose_denied = False
+        rv_t = float(abs(reward))
         predicted = predict_har(self.har_state)
-        residual_delta = residual - predicted
+        residual_delta = rv_t - predicted
+        update_har(self.har_state, rv_t, self.config.har.alpha)
         coverage, q_enbpi = self._compute_coverage(residual_delta)
-        if coverage < self.config.enbpi.floor:
+        coverage_breach = coverage < self.config.enbpi.floor
+        if coverage_breach:
             self.enbpi_breach += 1
-            self.replay.mark_recent(self.config.enbpi.window)
             if self.enbpi_breach >= self.config.enbpi.breach_patience:
                 self.breach_hold = 3
         else:
@@ -387,15 +426,31 @@ class MisanthropicAgent:
         action, q_dist = self._select_action(obs)
         if self.breach_hold > 0:
             action = 1
-        action, size, ood_score, threat, cvar_hat = self._apply_gates(action, obs, q_dist, coverage, q_enbpi, residual_delta)
-        if self.state.prev_obs is not None and self.state.prev_action is not None:
-            self._update_replay(self.state.prev_obs, self.state.prev_action, reward, obs, done)
-        if self.breach_hold > 0:
-            for _ in range(3):
+        action, size, ood_score, threat, cvar_hat = self._apply_gates(
+            action, obs, q_dist, coverage, q_enbpi, residual_delta
+        )
+        if (
+            self._training_enabled
+            and self.state.prev_obs is not None
+            and self.state.prev_action is not None
+        ):
+            self._update_replay(
+                self.state.prev_obs,
+                self.state.prev_action,
+                reward,
+                obs,
+                done,
+                breach=coverage_breach,
+            )
+        if self._training_enabled:
+            if self.breach_hold > 0:
+                for _ in range(3):
+                    self.repose()
+                self.breach_hold -= 1
+            else:
                 self.repose()
+        elif self.breach_hold > 0:
             self.breach_hold -= 1
-        else:
-            self.repose()
         toc = time.perf_counter()
         lat_ms = (toc - tic) * 1000
         F_value = (
@@ -407,7 +462,19 @@ class MisanthropicAgent:
         self.tacl.end_step(lat_ms, coverage, cpu_util)
         gauge_set("tradepulse_lambda_cvar", self.lambda_cvar)
         gauge_set("tradepulse_ood_score", ood_score)
-        self._log_event(action, size, threat, ood_score, coverage, q_enbpi, self.lambda_cvar, max(0.0, self.config.risk.c_cvar - cvar_hat), lat_ms, cpu_util, getattr(self, "last_repose_denied", False))
+        self._log_event(
+            action,
+            size,
+            threat,
+            ood_score,
+            coverage,
+            q_enbpi,
+            self.lambda_cvar,
+            max(0.0, self.config.risk.c_cvar - cvar_hat),
+            lat_ms,
+            cpu_util,
+            self.last_repose_denied,
+        )
         self.state.prev_obs = obs
         self.state.prev_action = action
         self.state.step += 1
