@@ -1,4 +1,5 @@
-"""MisanthropicAgent: risk-sensitive QR-DQN with PER, CVaR constraint, conformal coverage, and OOD checks."""
+"""Risk-sensitive QR-DQN trading agent with CVaR, PER, conformal coverage, and OOD checks."""
+
 from __future__ import annotations
 
 import logging
@@ -6,6 +7,7 @@ from collections import deque
 from typing import Deque, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
+from numpy.random import Generator, default_rng
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -55,7 +57,14 @@ def quantile_huber_elementwise(
 class PERBuffer:
     """Prioritized Experience Replay (proportional) with importance sampling weights."""
 
-    def __init__(self, capacity: int, alpha: float = 0.6, beta: float = 0.4, eps: float = 1e-3) -> None:
+    def __init__(
+        self,
+        capacity: int,
+        alpha: float = 0.6,
+        beta: float = 0.4,
+        eps: float = 1e-3,
+        rng: Optional[Generator] = None,
+    ) -> None:
         self.capacity = capacity
         self.alpha = alpha
         self.beta = beta
@@ -63,6 +72,7 @@ class PERBuffer:
         self.storage: List[Tuple[np.ndarray, int, float, np.ndarray, bool]] = []
         self.priorities: List[float] = []
         self.position = 0
+        self._rng: Generator = rng or default_rng()
 
     def __len__(self) -> int:
         return len(self.storage)
@@ -80,12 +90,18 @@ class PERBuffer:
             self.priorities[self.position] = priority
             self.position = (self.position + 1) % self.capacity
 
-    def sample(self, batch_size: int) -> Tuple[np.ndarray, List[Tuple[np.ndarray, int, float, np.ndarray, bool]], np.ndarray]:
+    def sample(
+        self, batch_size: int
+    ) -> Tuple[np.ndarray, List[Tuple[np.ndarray, int, float, np.ndarray, bool]], np.ndarray]:
         priorities = np.asarray(self.priorities, dtype=np.float64)
         probs = priorities**self.alpha
-        probs /= probs.sum()
+        total = probs.sum()
+        if not np.isfinite(total) or total <= 0:
+            probs = np.full_like(probs, 1.0 / len(self.storage))
+        else:
+            probs /= total
 
-        indices = np.random.choice(len(self.storage), batch_size, p=probs)
+        indices = self._rng.choice(len(self.storage), batch_size, p=probs)
         samples = [self.storage[i] for i in indices]
         weights = (len(self.storage) * probs[indices]) ** (-self.beta)
         weights = (weights / weights.max()).astype(np.float32)
@@ -111,6 +127,7 @@ class MisanthropicAgent:
         cvar_floor: float = -0.05,
         hazard: float = 1 / 2000,
         target_coverage: float = 0.90,
+        rng: Optional[Generator] = None,
     ) -> None:
         if threat_weights is None:
             threat_weights = [0.5, 0.2, 0.2, 0.1]
@@ -126,7 +143,8 @@ class MisanthropicAgent:
 
         self.per_alpha = 0.6
         self.per_beta = 0.4
-        self.replay = PERBuffer(100_000, alpha=self.per_alpha, beta=self.per_beta)
+        self._rng: Generator = rng or default_rng()
+        self.replay = PERBuffer(100_000, alpha=self.per_alpha, beta=self.per_beta, rng=self._rng)
         self.discount = 0.997
         self.batch_size = 64
 
@@ -177,10 +195,20 @@ class MisanthropicAgent:
         history_list = list(self.history)
         prices = np.asarray(history_list[-(span + 1) :], dtype=float)
         diffs = prices[1:] - prices[:-1]
-        if diffs.std() == 0:
+        if diffs.size < 2:
             return 0.0
-        autocorr = float(np.corrcoef(diffs[:-1], diffs[1:])[0, 1])
-        return 1.0 if autocorr > 0 else -1.0
+        std_prev = float(np.std(diffs[:-1]))
+        std_next = float(np.std(diffs[1:]))
+        if std_prev < 1e-8 or std_next < 1e-8:
+            return 0.0
+        covariance = float(np.cov(diffs[:-1], diffs[1:])[0, 1])
+        autocorr = covariance / (std_prev * std_next)
+        autocorr = float(np.clip(autocorr, -1.0, 1.0))
+        if autocorr > 0:
+            return 1.0
+        if autocorr < 0:
+            return -1.0
+        return 0.0
 
     def _update_run_length(self, innovation: float, update: bool) -> int:
         likelihood = norm.pdf(innovation, loc=0.0, scale=1.0)
@@ -188,7 +216,7 @@ class MisanthropicAgent:
         cp_prob = likelihood * self.hazard
         denom = growth_prob + cp_prob
         p_grow = float(growth_prob / denom) if denom > 0 else (1 - self.hazard)
-        new_run_length = self.run_length + 1 if np.random.rand() < p_grow else 0
+        new_run_length = self.run_length + 1 if self._rng.random() < p_grow else 0
         if update:
             self.run_length = new_run_length
         return new_run_length
@@ -224,7 +252,7 @@ class MisanthropicAgent:
         dims = recent.shape[1]
         breaches = 0
         for dim in range(dims):
-            p_value = ks_2samp(recent[:, dim], reference[:, dim]).pvalue
+            p_value = ks_2samp(recent[:, dim], reference[:, dim], method="asymp").pvalue
             if p_value < self.ood_alpha:
                 breaches += 1
         return breaches / dims
@@ -422,7 +450,7 @@ class MisanthropicAgent:
 
         logger.info("repose: loss=%.4f lambda=%.4f", float(loss.item()), self.lambda_cvar)
 
-    def train(self, env, episodes: int = 100) -> None:
+    def train(self, env, episodes: int = 100, *, save_artifacts: bool = True) -> None:
         for episode in range(episodes):
             state_dict = env.reset()
             state, meta = self._prepare_state(state_dict["lob_data"], state_dict["price"], update_trackers=True)
@@ -486,12 +514,13 @@ class MisanthropicAgent:
                 self.lambda_cvar,
             )
 
-        torch.save(self.model.state_dict(), "misanthropic_agent.pth")
-        try:
-            dummy_input = torch.randn(1, self.state_size)
-            torch.onnx.export(self.model, dummy_input, "agent.onnx", opset_version=11)
-        except Exception as exc:  # pragma: no cover - export failures should not break training
-            logger.warning("ONNX export skipped: %s", exc)
+        if save_artifacts:
+            torch.save(self.model.state_dict(), "misanthropic_agent.pth")
+            try:
+                dummy_input = torch.randn(1, self.state_size)
+                torch.onnx.export(self.model, dummy_input, "agent.onnx", opset_version=11)
+            except Exception as exc:  # pragma: no cover - export failures should not break training
+                logger.warning("ONNX export skipped: %s", exc)
 
     # ------------------------------------------------------------------
     # Evaluation
