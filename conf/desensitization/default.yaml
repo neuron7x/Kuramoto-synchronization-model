@@ -1,0 +1,21 @@
+enabled: true
+reward:
+  ewma_alpha: 0.02
+  setpoint: 0.0
+  rpe_gain: 1.0
+  max_abs: 8.0
+  refractory_ticks: 5
+  burst_z: 2.1
+  min_scale: 0.3
+  max_scale: 2.5
+sensory:
+  half_life: 150
+  min_sensitivity: 0.3
+  recovery_hl: 600
+threat:
+  dd_soft: 0.14
+  dd_hard: 0.18
+  vol_ref: 0.028
+  hpa_gain: 1.0
+  reopen_hl: 90
+  min_gate: 0.32
