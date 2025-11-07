@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import random
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -184,6 +185,7 @@ class MisanthropicAgent:
         self.seed = seed
         torch.manual_seed(seed)
         np.random.seed(seed)
+        random.seed(seed)
         self.gamma = config.gamma
         self.batch_size = config.batch_size
         self.replay = PERBuffer(capacity=4096, alpha=config.per.alpha, beta=config.per.beta, eps=config.per.eps)

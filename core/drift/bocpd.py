@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
+
 
 @dataclass
 class BOCPDState:
@@ -27,7 +29,7 @@ class BOCPD:
         st.count += 1
         var = max(st.var, 1e-6)
         z_score = abs(x - st.mean) / (var**0.5)
-        hazard_trigger = self.hazard > 0 and st.run_length > 0 and hazard_event(self.hazard)
+        hazard_trigger = self.hazard > 0 and st.run_length > 0 and _hazard_event(self.hazard)
         if z_score > self.z_limit or hazard_trigger:
             st.run_length = 0
             st.mean = x
@@ -42,10 +44,10 @@ class BOCPD:
         return st.run_length
 
 
-def hazard_event(prob: float) -> bool:
-    from random import random
-
-    return random() < prob
+def _hazard_event(prob: float) -> bool:
+    if prob <= 0.0:
+        return False
+    return float(np.random.random()) < prob
 
 
 __all__ = ["BOCPD"]
