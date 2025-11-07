@@ -12,11 +12,15 @@ def levy_noise_like(param: torch.Tensor, alpha: float = 1.5) -> torch.Tensor:
 
     if alpha <= 0:
         raise ValueError("alpha must be positive")
-    shape = tuple(param.shape)
-    samples = torch.from_numpy(np.random.standard_cauchy(size=shape)).to(param.device)
-    samples = samples.type_as(param)
+
+    samples = torch.from_numpy(
+        np.random.standard_cauchy(size=tuple(param.shape))
+    ).to(param.device)
+    samples = samples.to(dtype=param.dtype)
+
     if alpha < 1.5:
         samples = samples * (1.5 / alpha)
+
     return samples
 
 
@@ -34,16 +38,20 @@ def fractional_update(
 
     if eta < 0:
         raise ValueError("eta must be non-negative")
+    if eta_f < 0:
+        raise ValueError("eta_f must be non-negative")
 
-    if mask_states is not None and current_state not in set(mask_states):
+    allowed_states = set(mask_states) if mask_states is not None else None
+    use_fractional = allowed_states is None or current_state in allowed_states
+
+    with torch.no_grad():
         for param, grad in zip(params, grads):
             if grad is None:
                 continue
-            param.data.add_(eta * grad)
-        return
 
-    for param, grad in zip(params, grads):
-        if grad is None:
-            continue
-        noise = levy_noise_like(param, alpha=alpha)
-        param.data.add_(eta * grad + eta_f * noise)
+            update = -eta * grad.to(dtype=param.dtype, device=param.device)
+            if use_fractional and eta_f > 0:
+                noise = levy_noise_like(param, alpha=alpha)
+                update = update + eta_f * noise
+
+            param.add_(update)
