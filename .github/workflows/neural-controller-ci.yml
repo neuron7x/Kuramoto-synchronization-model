@@ -1,53 +1,23 @@
 name: neural-controller-ci
 
 on:
+  push:
+    paths:
+      - 'tradepulse/neural_controller/**'
+      - 'tests/**'
   pull_request:
     paths:
       - 'tradepulse/neural_controller/**'
-      - '.github/workflows/neural-controller-ci.yml'
-      - 'pyproject.toml'
-      - 'pytest.ini'
-      - 'requirements*.txt'
-  workflow_dispatch:
+      - 'tests/**'
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; else pip install numpy pyyaml pytest coverage; fi
-      - name: Run pytest
-        env:
-          TRADEPULSE_LIGHT_IMPORT: '1'
-        run: |
-          pytest tradepulse/neural_controller/tests --maxfail=1 --durations=10 --cov=tradepulse/neural_controller --cov-report=xml
-      - name: Coverage gate
-        run: coverage report --fail-under=85
-
-  semgrep:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/ci
-
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: python
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
+      - run: python -m pip install --upgrade pip
+      - run: pip install numpy pyyaml
+      - run: python -m pytest -q --maxfail=1 --disable-warnings

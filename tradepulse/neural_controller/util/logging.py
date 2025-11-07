@@ -1,68 +1,27 @@
-"""Structured logging utilities for the neural controller."""
+"""Minimal structured logging helpers for neural decisions."""
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 import sys
-from typing import Any, Dict
-
-_DEFAULT_LOGGER_NAME = "tradepulse.neural_controller"
+from typing import Any
 
 
-def setup_logger(level: str = "INFO") -> None:
-    """Configure root logging with a JSON formatter.
+def setup_json_logger(level: str = "INFO") -> logging.Logger:
+    """Configure a JSON logger for neural controller decisions."""
 
-    The configuration is idempotent to avoid duplicating handlers when unit
-    tests import the package repeatedly. The log level respects both the
-    ``level`` argument and the ``TRADEPULSE_NEURO_LOG_LEVEL`` environment
-    variable (the environment variable wins when provided).
-    """
-
-    env_level = os.environ.get("TRADEPULSE_NEURO_LOG_LEVEL")
-    resolved_level = env_level or level
-    lvl = getattr(logging, (resolved_level or "INFO").upper(), logging.INFO)
-
-    root = logging.getLogger()
-    if root.handlers:
-        root.setLevel(lvl)
-        return
-
-    handler = logging.StreamHandler(stream=sys.stdout)
-    handler.setFormatter(_JsonLogFormatter())
-    root.addHandler(handler)
-    root.setLevel(lvl)
+    log_level = getattr(logging, level.upper(), logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    logger = logging.getLogger("neural_controller")
+    logger.propagate = False
+    logger.handlers = [handler]
+    logger.setLevel(log_level)
+    return logger
 
 
-def log_decision(event: Dict[str, Any]) -> None:
-    """Emit a structured decision record to the controller logger."""
+def log_decision(logger: logging.Logger, **payload: Any) -> None:
+    """Emit a structured JSON decision payload."""
 
-    logger = logging.getLogger(f"{_DEFAULT_LOGGER_NAME}.decision")
-    logger.info("controller_decision", extra={"event": "neuro.decision", "payload": event})
-
-
-
-class _JsonLogFormatter(logging.Formatter):
-    """Format log records as newline-delimited JSON."""
-
-    default_time_format = "%Y-%m-%dT%H:%M:%S"
-    default_msec_format = "%s.%03dZ"
-
-    def format(self, record: logging.LogRecord) -> str:  # noqa: D401 - inherited docstring
-        payload: Dict[str, Any] = {
-            "ts": self.formatTime(record, self.default_time_format),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-
-        if hasattr(record, "event"):
-            payload["event"] = getattr(record, "event")
-        if hasattr(record, "payload"):
-            payload["payload"] = getattr(record, "payload")
-        if record.exc_info:
-            payload["exc_info"] = self.formatException(record.exc_info)
-
-        return json.dumps(payload, ensure_ascii=False)
-
+    logger.info(json.dumps(payload, ensure_ascii=False))

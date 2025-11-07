@@ -1,26 +1,26 @@
 model:
-  alpha: 0.1
+  alpha: 0.10
   beta: 0.05
   gamma: 0.05
-  delta: 0.1
-  theta: 0.0
-  lambd: 0.2
+  delta: 0.10
+  theta: 0.00
+  lambd: 0.20
   mu: 0.05
-  phi: 0.6
-  omega: 0.4
-  kappa: 0.1
+  phi: 0.60
+  omega: 0.40
+  kappa: 0.10
   psi: 1.0
   eps: 0.7
   eta: 0.2
   M0: 0.8
 
 ekf:
-  q: 0.001
-  r: 0.01
+  q: 1e-3
+  r: 1e-2
 
 policy:
   temp: 1.0
-  tau_E_amber: 0.3
+  tau_E_amber: 0.30
 
 risk:
   cvar_alpha: 0.95
@@ -31,6 +31,14 @@ homeostasis:
   M_target: 0.8
   k_sigmoid: 5.0
 
+adapter:
+  max_drawdown_limit: 0.2
+  spread_threshold: 0.01
+  vol_threshold: 0.05
+  historical_max_vol: 1.0
+  risk_free: 0.02
+  eps_vol: 1e-6
+
 tacl_bridge:
-  sync_threshold: 0.3
-  generations: 12
+  generations: 10
+  sync_threshold: 0.30

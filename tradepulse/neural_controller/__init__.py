@@ -1,30 +1,28 @@
-from .core.params import Params, EKFConfig, PolicyConfig, RiskConfig, HomeoConfig
-from .core.state import EMHState
-from .core.emh_model import EMHSSM
-from .estimation.ekf import EMHEKF
+"""Public exports for the neural controller package."""
+
+from .core.emh_engine import EMHSSM, Params, State
+from .estimation.ekf import EMHEKF, EKFConfig
 from .estimation.belief import VolBelief
-from .homeostasis.homeo import HomeostaticModule
-from .policy.controller import BasalGangliaController
-from .risk.cvar import CVARGate
-from .integration.adapter import MarketDataAdapter
-from .integration.bridge import NeuralMarketController, NeuralTACLBridge, TACLSystem, KuramotoSync
+from .policy.controller import BasalGangliaController, PolicyConfig
+from .risk.cvar_gate import CVARGate
+from .risk.homeostatic import HomeostaticModule, HomeoConfig
+from .integration.market_adapter import MarketDataAdapter, AdapterConfig
+from .integration.bridge import NeuralMarketController, NeuralTACLBridge
 
 __all__ = [
-    "Params",
-    "EKFConfig",
-    "PolicyConfig",
-    "RiskConfig",
-    "HomeoConfig",
-    "EMHState",
     "EMHSSM",
+    "Params",
+    "State",
     "EMHEKF",
+    "EKFConfig",
     "VolBelief",
-    "HomeostaticModule",
     "BasalGangliaController",
+    "PolicyConfig",
     "CVARGate",
+    "HomeostaticModule",
+    "HomeoConfig",
     "MarketDataAdapter",
+    "AdapterConfig",
     "NeuralMarketController",
     "NeuralTACLBridge",
-    "TACLSystem",
-    "KuramotoSync",
 ]
