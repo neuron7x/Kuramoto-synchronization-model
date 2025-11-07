@@ -653,17 +653,30 @@ class ModuleOrchestrator:
             )
 
 
+def _coerce_allocation(value: object, *, default: float, field: str) -> float:
+    """Best-effort conversion of allocation hints to floats with guardrails."""
+
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+        raise TypeError(f"Allocation field '{field}' must be numeric, received {value!r}") from exc
+
+
 def apply_neural_decision(decision: Mapping[str, object], risk_manager: "RiskManagerFacade") -> None:
     """Normalise and forward neural-controller output to the risk facade."""
 
     action = str(decision.get("action", "hold"))
-    alloc_main = float(decision.get("alloc_main", 0.0))
-    alloc_alt = float(decision.get("alloc_alt", 0.0))
+    alloc_main = _coerce_allocation(decision.get("alloc_main"), default=0.0, field="alloc_main")
+    alloc_alt = _coerce_allocation(decision.get("alloc_alt"), default=0.0, field="alloc_alt")
     allocs = decision.get("allocs")
     if isinstance(allocs, Mapping):
-        alloc_main = float(allocs.get("main", alloc_main))
-        alloc_alt = float(allocs.get("alt", alloc_alt))
-    alloc_scale = float(decision.get("alloc_scale", 1.0))
+        alloc_main = _coerce_allocation(allocs.get("main"), default=alloc_main, field="allocs.main")
+        alloc_alt = _coerce_allocation(allocs.get("alt"), default=alloc_alt, field="allocs.alt")
+    alloc_scale = _coerce_allocation(
+        decision.get("alloc_scale"), default=1.0, field="alloc_scale"
+    )
     risk_manager.apply_neural_directive(
         action=action,
         alloc_main=alloc_main,
