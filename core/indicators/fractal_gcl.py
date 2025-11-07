@@ -5,8 +5,16 @@ from typing import Sequence
 
 import networkx as nx
 import numpy as np
-import torch
-import torch.nn.functional as F
+
+try:
+    import torch
+    import torch.nn.functional as F
+
+    _TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    _TORCH_AVAILABLE = False
+    torch = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
 
 
 def fractal_boxcover(graph: nx.Graph, max_box: int = 4) -> list[list[int]]:
@@ -55,14 +63,17 @@ def fd_one_shot(graph: nx.Graph, boxes: Sequence[Sequence[int]]) -> float:
 
 
 def contrastive_loss_fractal(
-    z_i: torch.Tensor,
-    z_j: torch.Tensor,
-    fd_i: torch.Tensor,
-    fd_j: torch.Tensor,
+    z_i: "torch.Tensor",
+    z_j: "torch.Tensor",
+    fd_i: "torch.Tensor",
+    fd_j: "torch.Tensor",
     *,
     tau: float = 0.2,
-) -> torch.Tensor:
+) -> "torch.Tensor":
     """Fractal-aware contrastive objective for representation alignment."""
+
+    if not _TORCH_AVAILABLE:
+        raise ImportError("torch is required for contrastive_loss_fractal")
 
     if tau <= 0:
         raise ValueError("tau must be positive")

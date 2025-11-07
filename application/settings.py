@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 if TYPE_CHECKING:
+    import ssl
+
     from application.configuration import CentralConfigurationStore
     from application.secrets.manager import SecretManager
     from application.secrets.rotation import SecretRotator
@@ -206,7 +208,7 @@ class ApiServerTLSSettings(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def _validate_files(self) -> "ApiServerTLSSettings":
+    def _validate_files(self) -> ApiServerTLSSettings:
         for attribute in ("certificate", "private_key"):
             candidate = getattr(self, attribute)
             if not candidate.exists():
@@ -231,11 +233,8 @@ class ApiServerTLSSettings(BaseModel):
             )
         return self
 
-    def resolved_minimum_version(self) -> "ssl.TLSVersion":
+    def resolved_minimum_version(self) -> ssl.TLSVersion:
         """Return the negotiated minimum TLS version."""
-
-        import ssl  # Local import to avoid module level dependency.
-
         return parse_tls_version(self.minimum_version)
 
 

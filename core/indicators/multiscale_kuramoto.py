@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence
 
+import networkx as nx
 import numpy as np
 import pandas as pd
 

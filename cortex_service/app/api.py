@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterable
+from dataclasses import asdict
 from datetime import datetime
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
@@ -15,9 +16,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from .config import CortexSettings, load_settings
-from dataclasses import asdict
 
-from .core.signals import FeatureObservation, Signal, build_signal_ensemble
+from .core.signals import FeatureObservation, build_signal_ensemble
 from .db import Base, configure_session_factory, create_db_engine, session_dependency
 from .ethics.risk import Exposure, RiskAssessment, compute_risk
 from .logger import configure_logging, get_logger
