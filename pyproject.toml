@@ -132,8 +132,6 @@ fallback_version = "0.1.0"
 [tool.setuptools.packages.find]
 where = ["."]
 include = [
-    "nak_controller",
-    "nak_controller.*",
     "analytics",
     "analytics.*",
     "application",
@@ -171,7 +169,6 @@ exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
-"nak_controller" = ["conf/*.yaml"]
 "tradepulse.neural_controller" = ["config/*.yaml"]
 
 [tool.mutmut]

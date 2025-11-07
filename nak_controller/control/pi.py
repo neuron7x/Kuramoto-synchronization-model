@@ -16,7 +16,9 @@ def band_center_width(params: NaKParams, band_expand: float) -> Tuple[float, flo
     return center, half_width
 
 
-def pi_control(state: StrategyState, params: NaKParams, *, band_expand: float) -> Tuple[float, float, float]:
+def pi_control(
+    state: StrategyState, params: NaKParams, *, band_expand: float
+) -> Tuple[float, float, float]:
     """Execute a PI step returning the normalized error, integrator and raw rate."""
     center, half_width = band_center_width(params, band_expand)
     error = (state.EI - center) / half_width
@@ -28,7 +30,9 @@ def pi_control(state: StrategyState, params: NaKParams, *, band_expand: float) -
     return error, state.I, rate_target
 
 
-def rate_limit(previous: Optional[float], target: float, *, limit: float, lo: float, hi: float) -> float:
+def rate_limit(
+    previous: Optional[float], target: float, *, limit: float, lo: float, hi: float
+) -> float:
     """Apply a symmetric rate limit to the target value."""
     limited_target = clip(target, lo, hi)
     if previous is None:

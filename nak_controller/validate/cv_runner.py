@@ -45,10 +45,14 @@ def _aggregate(samples: Iterable[Dict[str, float]]) -> ValidationResult:
 def _ensure_float(value: object, key: str) -> float:
     if isinstance(value, Real):
         return float(value)
-    raise TypeError(f"Expected numeric value for {key!r}, received {type(value).__name__}")
+    raise TypeError(
+        f"Expected numeric value for {key!r}, received {type(value).__name__}"
+    )
 
 
-def run_validation(config_path: str, *, steps: int = 200, seeds: int = 3) -> Dict[str, Dict[str, float]]:
+def run_validation(
+    config_path: str, *, steps: int = 200, seeds: int = 3
+) -> Dict[str, Dict[str, float]]:
     """Run synthetic validation using ``seeds`` random seeds."""
     if steps <= 0:
         raise ValueError("steps must be positive")
@@ -83,8 +87,12 @@ def run_validation(config_path: str, *, steps: int = 200, seeds: int = 3) -> Dic
             )
             nak_samples.append(
                 {
-                    "risk_per_trade": _ensure_float(limits["risk_per_trade"], "risk_per_trade"),
-                    "max_position": _ensure_float(limits["max_position"], "max_position"),
+                    "risk_per_trade": _ensure_float(
+                        limits["risk_per_trade"], "risk_per_trade"
+                    ),
+                    "max_position": _ensure_float(
+                        limits["max_position"], "max_position"
+                    ),
                     "cooldown_ms": _ensure_float(limits["cooldown_ms"], "cooldown_ms"),
                     "health": _ensure_float(limits["health"], "health"),
                 }

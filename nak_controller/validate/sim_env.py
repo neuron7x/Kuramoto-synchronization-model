@@ -41,8 +41,12 @@ class SimulationEnvironment:
         }
 
         global_obs = {
-            "global_vol": float(np.clip(0.4 + 0.4 * seasonal + self._rng.normal(0.0, 0.1), 0.0, 1.0)),
-            "portfolio_dd": float(np.clip(0.2 + 0.5 * seasonal + self._rng.normal(0.0, 0.1), 0.0, 1.0)),
+            "global_vol": float(
+                np.clip(0.4 + 0.4 * seasonal + self._rng.normal(0.0, 0.1), 0.0, 1.0)
+            ),
+            "portfolio_dd": float(
+                np.clip(0.2 + 0.5 * seasonal + self._rng.normal(0.0, 0.1), 0.0, 1.0)
+            ),
             "exposure": float(np.clip(0.5 + 0.3 * seasonal, 0.0, 1.0)),
             "unexpected_reward": float(self._rng.normal(0.0, 0.5)),
         }

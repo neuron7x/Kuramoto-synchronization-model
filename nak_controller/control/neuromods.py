@@ -25,7 +25,9 @@ def acetylcholine(exposure: float, eta_ACh: float) -> float:
     return clip(0.5 + eta_ACh * exposure, 0.0, 1.0)
 
 
-def modulate_risk_da(rate: float, DA: float, da_gain: float, *, r_min: float, r_max: float) -> float:
+def modulate_risk_da(
+    rate: float, DA: float, da_gain: float, *, r_min: float, r_max: float
+) -> float:
     """Adjust the target rate using dopamine."""
     delta = da_gain * (DA - 0.5)
     return clip(rate + delta, r_min, r_max)

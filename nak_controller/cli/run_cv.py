@@ -11,10 +11,18 @@ from ..validate.cv_runner import run_validation
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run NaK controller cross-validation sweep")
-    parser.add_argument("--config", type=Path, required=True, help="Path to configuration YAML")
-    parser.add_argument("--steps", type=int, default=150, help="Simulation steps per fold")
-    parser.add_argument("--folds", type=int, default=5, help="Number of folds (mapped to seeds)")
+    parser = argparse.ArgumentParser(
+        description="Run NaK controller cross-validation sweep"
+    )
+    parser.add_argument(
+        "--config", type=Path, required=True, help="Path to configuration YAML"
+    )
+    parser.add_argument(
+        "--steps", type=int, default=150, help="Simulation steps per fold"
+    )
+    parser.add_argument(
+        "--folds", type=int, default=5, help="Number of folds (mapped to seeds)"
+    )
     return parser
 
 

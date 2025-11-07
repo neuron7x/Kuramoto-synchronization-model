@@ -7,7 +7,7 @@ from typing import Dict, Mapping
 
 import yaml  # type: ignore[import-untyped]
 
-from ..control.global_mode import Mode, band_expand_for_mode, choose_mode
+from ..control.global_mode import band_expand_for_mode, choose_mode
 from ..control.neuromods import (
     acetylcholine,
     dopamine,
@@ -27,6 +27,9 @@ class NaKController:
     """Stateful neuro-energetic controller managing per-strategy limits."""
 
     def __init__(self, config_path: str | Path) -> None:
+        import numpy as np
+
+        np.random.seed(42)
         config_path = Path(config_path)
         with config_path.open("r", encoding="utf-8") as handle:
             raw = yaml.safe_load(handle)
@@ -118,7 +121,9 @@ class NaKController:
         ACh = acetylcholine(float(global_obs.get("exposure", 0.0)), params.eta_ACh)
 
         update_load(state, params, dict(local_obs), NA)
-        update_energy(state, params, dict(local_obs), NA=NA, DA=DA, da_unexp=unexpected_reward)
+        update_energy(
+            state, params, dict(local_obs), NA=NA, DA=DA, da_unexp=unexpected_reward
+        )
         compute_EI(state, params, dict(local_obs))
 
         mode = choose_mode(
@@ -135,9 +140,13 @@ class NaKController:
             band_AMBER=params.band_AMBER,
             band_RED=params.band_RED,
         )
-        error, integrator, rate_raw = pi_control(state, params, band_expand=band_expansion)
+        error, integrator, rate_raw = pi_control(
+            state, params, band_expand=band_expansion
+        )
 
-        rate_local = modulate_risk_da(rate_raw, DA, params.da_gain, r_min=params.r_min, r_max=params.r_max)
+        rate_local = modulate_risk_da(
+            rate_raw, DA, params.da_gain, r_min=params.r_min, r_max=params.r_max
+        )
         risk_multiplier = {
             "GREEN": params.risk_GREEN,
             "AMBER": params.risk_AMBER,

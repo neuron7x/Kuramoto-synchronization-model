@@ -1,5 +1,4 @@
 import unittest
-
 from typing import Dict, cast
 
 from nak_controller.integration.hook import NaKHook
@@ -58,7 +57,9 @@ class TestNaKController(unittest.TestCase):
 
     def test_modes_and_hysteresis(self) -> None:
         out_red = self._step(gv=0.95, pd=0.75, pnl=-0.002, trades=0.9, lvol=0.95)
-        self.assertTrue(bool(out_red["is_suspended"]) or cast(str, out_red["mode"]) == "RED")
+        self.assertTrue(
+            bool(out_red["is_suspended"]) or cast(str, out_red["mode"]) == "RED"
+        )
         out_rec = None
         for _ in range(6):
             out_rec = self._step(gv=0.2, pd=0.02, pnl=0.003, trades=0.2, lvol=0.1)
@@ -69,7 +70,10 @@ class TestNaKController(unittest.TestCase):
         out1 = self._step(pnl=0.005)
         out2 = self._step(pnl=0.005, trades=0.0)
         self.assertLessEqual(
-            abs(cast(float, out2["risk_per_trade_factor"]) - cast(float, out1["risk_per_trade_factor"])),
+            abs(
+                cast(float, out2["risk_per_trade_factor"])
+                - cast(float, out1["risk_per_trade_factor"])
+            ),
             0.20 + 1e-6,
         )
 
@@ -77,6 +81,12 @@ class TestNaKController(unittest.TestCase):
         o1 = self._step(gv=0.3, lvol=0.2)
         o2 = self._step(gv=0.8, lvol=0.8)
         self.assertNotEqual(o1["cooldown_ms"], o2["cooldown_ms"])
+
+    def test_red_mode_forces_suspension(self) -> None:
+        out = self._step(gv=1.0, pd=0.8, pnl=-0.01, trades=1.0, lvol=1.0)
+        self.assertEqual(out["mode"], "RED")
+        self.assertTrue(out["is_suspended"])
+        self.assertAlmostEqual(cast(float, out["risk_per_trade_factor"]), 0.2, places=6)
 
 
 if __name__ == "__main__":

@@ -12,9 +12,15 @@ from ..validate.cv_runner import run_validation
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run NaK controller validation")
-    parser.add_argument("--config", type=Path, required=True, help="Path to configuration YAML")
-    parser.add_argument("--steps", type=int, default=200, help="Number of simulation steps per seed")
-    parser.add_argument("--seeds", type=int, default=3, help="Number of RNG seeds to evaluate")
+    parser.add_argument(
+        "--config", type=Path, required=True, help="Path to configuration YAML"
+    )
+    parser.add_argument(
+        "--steps", type=int, default=200, help="Number of simulation steps per seed"
+    )
+    parser.add_argument(
+        "--seeds", type=int, default=3, help="Number of RNG seeds to evaluate"
+    )
     return parser
 
 

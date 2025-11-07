@@ -22,7 +22,7 @@ class StrategyState:
     L: float = 0.0
     E: float = 0.5
     EI: float = 0.5
-    I: float = 0.0
+    I: float = 0.0  # noqa: E741 - integral accumulator
     suspended: bool = False
     health: float = 0.5
     debt: float = 0.0

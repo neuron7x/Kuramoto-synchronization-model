@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
 
 class _BaseTriplet(BaseModel):
@@ -85,7 +85,7 @@ class NakConfig(BaseModel):
 
     @field_validator("L_max")
     @classmethod
-    def _validate_load_bounds(cls, value: float, info):
+    def _validate_load_bounds(cls, value: float, info: ValidationInfo) -> float:
         if value <= info.data.get("L_min", 0.0):
             raise ValueError("L_max must be greater than L_min")
         return value
@@ -99,7 +99,7 @@ class NakConfig(BaseModel):
 
     @field_validator("EI_high")
     @classmethod
-    def _validate_ei_band(cls, value: float, info):
+    def _validate_ei_band(cls, value: float, info: ValidationInfo) -> float:
         ei_low = info.data.get("EI_low", 0.0)
         if value <= ei_low:
             raise ValueError("EI_high must be greater than EI_low")
@@ -128,7 +128,7 @@ class NakConfig(BaseModel):
 
     @field_validator("vol_red")
     @classmethod
-    def _validate_vol_thresholds(cls, value: float, info):
+    def _validate_vol_thresholds(cls, value: float, info: ValidationInfo) -> float:
         vol_amber = info.data.get("vol_amber")
         if vol_amber is not None and value < vol_amber:
             raise ValueError("vol_red must be greater than or equal to vol_amber")
@@ -136,7 +136,7 @@ class NakConfig(BaseModel):
 
     @field_validator("dd_red")
     @classmethod
-    def _validate_dd_thresholds(cls, value: float, info):
+    def _validate_dd_thresholds(cls, value: float, info: ValidationInfo) -> float:
         dd_amber = info.data.get("dd_amber")
         if dd_amber is not None and value < dd_amber:
             raise ValueError("dd_red must be greater than or equal to dd_amber")

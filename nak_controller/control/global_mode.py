@@ -24,7 +24,9 @@ def choose_mode(
     return "GREEN"
 
 
-def band_expand_for_mode(mode: Mode, *, band_GREEN: float, band_AMBER: float, band_RED: float) -> float:
+def band_expand_for_mode(
+    mode: Mode, *, band_GREEN: float, band_AMBER: float, band_RED: float
+) -> float:
     """Return the band expansion factor for the requested mode."""
     if mode == "GREEN":
         return band_GREEN

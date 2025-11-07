@@ -7,7 +7,9 @@ from typing import Iterable, Sequence
 import numpy as np
 
 
-def conditional_value_at_risk(samples: Sequence[float] | Iterable[float], alpha: float = 0.95) -> float:
+def conditional_value_at_risk(
+    samples: Sequence[float] | Iterable[float], alpha: float = 0.95
+) -> float:
     """Compute the Conditional Value at Risk (CVaR) at level ``alpha``.
 
     Parameters
