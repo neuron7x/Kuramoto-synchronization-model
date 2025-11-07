@@ -143,7 +143,9 @@ class NaKController:
 
         unexpected_reward = float(global_view.get("unexpected_reward", 0.0))
         DA = dopamine(unexpected_reward, params.beta_DA)
-        NA = noradrenaline(float(global_view.get("global_vol", 0.0)), params.na_vol_gain)
+        NA = noradrenaline(
+            float(global_view.get("global_vol", 0.0)), params.na_vol_gain
+        )
         HT = serotonin(float(global_view.get("portfolio_dd", 0.0)), params.ht_dd_gain)
         ACh = acetylcholine(float(global_view.get("exposure", 0.0)), params.eta_ACh)
 
