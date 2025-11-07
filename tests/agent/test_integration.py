@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import deque
 from pathlib import Path
 
+import numpy as np
+
 from domain import Signal
 from tradepulse.sdk import SDKConfig, TradePulseSDK
 from tradepulse_agent import (
