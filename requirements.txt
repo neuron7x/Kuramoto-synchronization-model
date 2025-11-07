@@ -1,8 +1,13 @@
 # Core analytics stack
-numpy>=2.3.3
-scipy>=1.16.2
-pandas>=2.3.3
-networkx>=3.5
+# numpy 2.3.x drops Python 3.10 support, so we cap below 2.3 to keep the CI matrix green
+# while still allowing the latest stable wheels for Python 3.10/3.11.
+numpy>=1.26.4,<2.3.0
+# SciPy 1.16 also targets Python 3.11+, therefore we select the latest series with 3.10 wheels.
+scipy>=1.11.4,<1.16.0
+# Pandas 2.3 requires Python 3.11+, so we cap to the most recent 2.2 release train.
+pandas>=2.2.3,<2.3.0
+# NetworkX 3.2.x is the latest line supporting both Python 3.10 and 3.11 at the moment.
+networkx>=3.2.1,<4.0
 deap>=1.4.1
 torch>=2.1.0
 pytest-benchmark>=4.0.0
