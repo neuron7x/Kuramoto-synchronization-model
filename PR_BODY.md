@@ -1,19 +1,21 @@
-# Hotfix: Unblock CI by testing only on Python 3.11; move 3.12/3.13 to non-blocking canaries
+# Summary
+Production-grade оновлення `MisanthropicAgent`:
+- Lagrangian **CVaR** у QR-DQN update (м'яке обмеження хвоста).
+- **PER** (proportional) + IS-ваги; пріоритезація за |TD|.
+- **EnbPI coverage каркас**: online residuals + тригер адаптації.
+- **OOD** (rolling **KS**) → size-gating/HOLD.
+- **Context slot** (мінімальний провайдер autocorr).
 
-**Context**
-- Baseline support is Python **3.11+** per project policy.
-- Tests currently fail on 3.12/3.13 in CI. To unblock delivery, we standardize on **3.11** for required checks and move newer interpreters to a **non-blocking** weekly canary run.
+# How to
+```python
+from runtime.misanthropic_agent import MisanthropicAgent
+agent = MisanthropicAgent()
+agent.train(env, episodes=100)
+a, size = agent.step(lob_data, price)
+```
 
-**What’s in this PR**
-- `.github/workflows/ci.yml`: drop 3.10, set matrix to **['3.11']** and **install requirements** before running `pytest`.
-- `.github/workflows/tests.yml`: set required test matrix to **['3.11']** to match required checks.
-- `.github/workflows/canaries.yml`: new weekly and manual canary suite for **3.12** and **3.13** with `continue-on-error: true`.
+# Notes
 
-**Why this helps**
-- Keeps main CI green and fast.
-- We still get signal for 3.12/3.13 regressions without blocking merges.
-- Follow-up: add per-Python constraints once we identify root causes for 3.12/3.13.
-
-**Next**
-1. Merge this PR to unblock CI.
-2. Use the canary artifacts/logs to pinpoint failing tests on 3.12/3.13 and introduce minimal pins or code fixes.
+* EnbPI тут — каркас; заміни джерело residuals на твій TS-предиктор.
+* Ансамблі тренуються в `repose()` на батчі (bootstrapped).
+* A/B: hard-CVaR gate (runtime) vs Lagrangian-CVaR (training).
