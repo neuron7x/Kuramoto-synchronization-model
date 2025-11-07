@@ -403,13 +403,16 @@ def test_reconnect_triggers_reconciliation(
     
     loop.start(cold_start=True)
     try:
-        # Wait for initial heartbeat failure and reconnect
-        # With heartbeat_interval=0.05s and max_backoff=0.1s, we need time for:
-        # 1. First heartbeat at t=0.05s (fails)
-        # 2. Backoff with jitter (up to 0.05s with full jitter)
-        # 3. Reconnect and reconciliation
-        # Total: 0.05 + 0.05 + margin = ~0.15s minimum, use 0.3s to be safe
-        time.sleep(0.3)
+        # Wait for initial heartbeat failure and reconnect. The runtime
+        # configuration enforces minimum values for the heartbeat interval and
+        # backoff cap, so derive the expectation from the actual config rather
+        # than hard-coding low millisecond timings. This keeps the test resilient
+        # when production defaults are tuned (e.g. clamped to ≥0.5s for
+        # stability).
+        heartbeat = loop._config.heartbeat_interval
+        backoff_cap = loop._config.max_backoff
+        safety_margin = 0.2
+        time.sleep(heartbeat + backoff_cap + safety_margin)
         
         # After reconnect, stray order should be adopted
         outstanding = loop._oms_state.outstanding("binance")
