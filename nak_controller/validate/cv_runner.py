@@ -1,3 +1,9 @@
+"""Cross-validation harness for the NaK controller.
+
+Copyright (c) 2024 TradePulse Technologies. All rights reserved.
+Licensed under the TradePulse Proprietary License Agreement (TPLA).
+"""
+
 from __future__ import annotations
 
 from typing import Dict, List, TypedDict
@@ -24,11 +30,11 @@ def run_cv(
     results: Dict[str, List[Dict[str, float]]] = {"baseline": [], "nak": []}
 
     for s in range(seeds):
-        hook = NaKHook(config_path)
+        hook = NaKHook(config_path, seed=2024 + s)
         bases: List[StrategyBase] = [
-            dict(rpt=0.0020, maxpos=1.0, cd_ms=2000),
-            dict(rpt=0.0015, maxpos=1.0, cd_ms=2200),
-            dict(rpt=0.0010, maxpos=1.0, cd_ms=2500),
+            {"rpt": 0.0020, "maxpos": 1.0, "cd_ms": 2000},
+            {"rpt": 0.0015, "maxpos": 1.0, "cd_ms": 2200},
+            {"rpt": 0.0010, "maxpos": 1.0, "cd_ms": 2500},
         ]
         equity_b = np.ones(n_strats)
         equity_n = np.ones(n_strats)
@@ -46,20 +52,19 @@ def run_cv(
             for i in range(n_strats):
                 jitter = (i - 1) * 0.0003
                 pnl = obs["ret"] + jitter + 0.5 * obs["ret"] * np.sign(jitter)
-                local = dict(
-                    trades=min(1.0, 0.5 + 5.0 * abs(obs["ret"])),
-                    pnl=pnl,
-                    pnl_scale=0.01,
-                    local_vol=min(1.0, abs(obs["ret"]) * 25),
-                    local_dd=0.0,  # set later
-                    tech_errors=0.0,
-                    latency=min(1.0, 0.3 + abs(obs["ret"]) * 10),
-                    slippage=min(1.0, abs(obs["ret"]) * 5e-3),
-                    glial_support=0.0,
-                )
+                local = {
+                    "trades": min(1.0, 0.5 + 5.0 * abs(obs["ret"])),
+                    "pnl": pnl,
+                    "pnl_scale": 0.01,
+                    "local_vol": min(1.0, abs(obs["ret"]) * 25),
+                    "local_dd": 0.0,
+                    "tech_errors": 0.0,
+                    "latency": min(1.0, 0.3 + abs(obs["ret"]) * 10),
+                    "slippage": min(1.0, abs(obs["ret"]) * 5e-3),
+                    "glial_support": 0.0,
+                }
                 local_list.append(local)
 
-            # baseline step
             r_b = 0.0
             for i in range(n_strats):
                 ret_i = local_list[i]["pnl"] * bases[i]["rpt"]
@@ -68,22 +73,23 @@ def run_cv(
             r_b /= n_strats
             ret_buf_b.append(r_b)
 
-            # NaK step
             port_val_prev = float(np.mean(equity_n))
             port_peak_n = max(port_peak_n, port_val_prev)
             port_dd = 0.0 if port_peak_n == 0 else max(0.0, 1.0 - port_val_prev / port_peak_n)
-            global_obs: Dict[str, float] = dict(
-                global_vol=obs["global_vol"],
-                portfolio_dd=port_dd,
-                exposure=1.0,
-                unexpected_reward=0.0,
-            )
+            global_obs: Dict[str, float] = {
+                "global_vol": obs["global_vol"],
+                "portfolio_dd": port_dd,
+                "exposure": 1.0,
+                "unexpected_reward": 0.0,
+            }
             r_n = 0.0
             susp_now = 0
             oob_now = 0
             for i in range(n_strats):
                 peaks_n[i] = max(peaks_n[i], equity_n[i])
-                local_list[i]["local_dd"] = 0.0 if peaks_n[i] == 0 else max(0.0, 1.0 - equity_n[i] / peaks_n[i])
+                local_list[i]["local_dd"] = (
+                    0.0 if peaks_n[i] == 0 else max(0.0, 1.0 - equity_n[i] / peaks_n[i])
+                )
                 out = hook.compute_limits(
                     strategy_id=f"strat_{i}",
                     local_obs=local_list[i],
@@ -92,9 +98,9 @@ def run_cv(
                     max_position_base=bases[i]["maxpos"],
                     cooldown_ms_base=bases[i]["cd_ms"],
                 )
-                oob_now += int(out["EI"] < 0.35 or out["EI"] > 0.65)
-                susp_now += int(out["is_suspended"])
-                ret_i = local_list[i]["pnl"] * out["risk_per_trade_factor"]
+                oob_now += int(out.EI < 0.35 or out.EI > 0.65)
+                susp_now += int(out.is_suspended)
+                ret_i = local_list[i]["pnl"] * out.risk_per_trade_factor
                 equity_n[i] *= 1.0 + ret_i
                 r_n += ret_i
             r_n /= n_strats
@@ -110,15 +116,15 @@ def run_cv(
         mean_n = float(np.mean(arr_n))
         cvar_b = cvar_es(arr_b, alpha=0.95)
         cvar_n = cvar_es(arr_n, alpha=0.95)
-        results["baseline"].append(dict(mean=mean_b, std=std_b, cvar=cvar_b))
+        results["baseline"].append({"mean": mean_b, "std": std_b, "cvar": cvar_b})
         results["nak"].append(
-            dict(
-                mean=mean_n,
-                std=std_n,
-                cvar=cvar_n,
-                out_of_band=oob_share / steps_count,
-                suspended=susp_share / steps_count,
-            )
+            {
+                "mean": mean_n,
+                "std": std_n,
+                "cvar": cvar_n,
+                "out_of_band": oob_share / steps_count,
+                "suspended": susp_share / steps_count,
+            }
         )
 
     def avg(ds: List[Dict[str, float]]) -> Dict[str, float]:

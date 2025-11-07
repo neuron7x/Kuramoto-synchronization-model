@@ -1,3 +1,13 @@
+"""Normalization helpers for the NaK controller metrics pipeline.
+
+The functions in this module intentionally avoid external dependencies to keep
+tests fast and deterministic while providing saturation logic needed by the
+controller invariants.
+
+Copyright (c) 2024 TradePulse Technologies. All rights reserved.
+Licensed under the TradePulse Proprietary License Agreement (TPLA).
+"""
+
 from __future__ import annotations
 
 from .state import clip

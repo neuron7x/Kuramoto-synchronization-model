@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tradepulse-nak"
+version = "2.0.0"
+description = "TradePulse NaK neuro-energetic controller"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "TradePulse R&D" }]
+dependencies = [
+  "numpy>=1.24",
+  "pyyaml>=6",
+  "pydantic>=2",
+]
+
+[project.scripts]
+nak-cv = "nak_controller.cli.run_cv:main"
+nak-validate = "nak_controller.cli.run_validate:main"
+
+[tool.hatch.build]
+packages = ["nak_controller"]

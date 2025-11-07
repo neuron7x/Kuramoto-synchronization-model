@@ -1,0 +1,58 @@
+name: nak-controller-ci
+
+on:
+  push:
+    paths:
+      - 'nak_controller/**'
+      - '.github/workflows/nak-controller-ci.yml'
+  pull_request:
+    paths:
+      - 'nak_controller/**'
+      - '.github/workflows/nak-controller-ci.yml'
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml', '**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Ruff
+        run: ruff check nak_controller
+      - name: Black
+        run: black --check nak_controller
+      - name: Mypy
+        run: mypy --strict nak_controller
+      - name: Bandit
+        run: bandit -q -r nak_controller
+      - name: Tests with coverage
+        run: |
+          mkdir -p reports
+          pytest -q nak_controller/tests/test_nak.py --cov=nak_controller --cov-report=xml --cov-report=term --cov-fail-under=90 --junitxml=reports/junit.xml
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+      - name: Upload junit
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.python-version }}
+          path: reports/junit.xml

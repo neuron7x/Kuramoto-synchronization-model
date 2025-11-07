@@ -1,3 +1,9 @@
+"""Global mode utilities for the NaK controller.
+
+Copyright (c) 2024 TradePulse Technologies. All rights reserved.
+Licensed under the TradePulse Proprietary License Agreement (TPLA).
+"""
+
 from __future__ import annotations
 
 from ..core.state import Mode

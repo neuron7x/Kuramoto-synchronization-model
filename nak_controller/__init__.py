@@ -1,5 +1,9 @@
-from .version import __version__
-from .runtime.controller import NaKController
-from .integration.hook import NaKHook
+"""Public API for the TradePulse NaK controller package."""
 
-__all__ = ["__version__", "NaKController", "NaKHook"]
+from __future__ import annotations
+
+from .integration.hook import NaKHook
+from .runtime.controller import NaKController, NaKStepOutput
+from .version import __version__
+
+__all__ = ["__version__", "NaKController", "NaKHook", "NaKStepOutput"]

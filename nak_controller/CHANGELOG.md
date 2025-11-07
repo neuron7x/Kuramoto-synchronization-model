@@ -1,7 +1,7 @@
 # Changelog
 
-## 2.1.0
-- Nonlinear PI (tanh), NA scaling of volatility, DA energy boost.
-- Energy debt & recovery, noise injection, hysteresis unsuspend.
-- Rate‑limited risk transitions, mode‑dependent EI band expansion.
-- CI (pytest + mypy), stronger tests and invariants.
+## 2.0.0
+- Nonlinear PI (tanh), NA-scaling та DA-boost енергії.
+- Енергетичний борг, шумова ін’єкція та гістерезис з контролем assert.
+- Rate-limit на ризик, режимні мультиплікатори й розширення EI.
+- Валідована конфігурація (Pydantic), детермінований RNG, посилені тести й CI.
