@@ -3,14 +3,19 @@
 1. Instantiate components:
 
 ```python
-from tradepulse.neural_controller import MarketDataAdapter, NeuralMarketController, NeuralTACLBridge
-from tradepulse.neural_controller import KuramotoSync, TACLSystem
+from tradepulse.neural_controller import (
+    MarketDataAdapter,
+    NeuralMarketController,
+    NeuralTACLBridge,
+    KuramotoSync,
+    TACLSystem,
+)
 
 adapter = MarketDataAdapter()
 neural = NeuralMarketController.from_yaml("tradepulse/neural_controller/config/neural_params.yaml")
-tacl = TACLSystem()        # replace with production implementation
-kuramoto = KuramotoSync()  # replace with production implementation
-bridge = NeuralTACLBridge(neural, tacl, kuramoto, sync_threshold=0.30)
+tacl = TACLSystem()  # wraps runtime ThermoController when available
+kuramoto = KuramotoSync()
+bridge = NeuralTACLBridge(neural, tacl, kuramoto)
 ```
 
 2. Wrap strategy output before risk manager:
@@ -23,14 +28,13 @@ def process_signal(strategy, candles, portfolio):
 
     action = out["action"]
     allocs = out["allocs"]
-    if action == "increase_risk":
-        risk_manager.scale_up(allocs["main"])
-    elif action == "decrease_risk":
-        risk_manager.scale_down(allocs["main"])
-    elif action in ("switch_to_alt", "hedge"):
-        risk_manager.route_alt(allocs["alt"])
-    else:
-        risk_manager.hold()
+
+    risk_manager.apply_neural_directive(
+        action=action,
+        alloc_main=allocs["main"],
+        alloc_alt=allocs["alt"],
+        alloc_scale=out["alloc_scale"],
+    )
 
     metrics.emit(
         emh_mode=out["mode"],
@@ -42,10 +46,14 @@ def process_signal(strategy, candles, portfolio):
         emh_RPE=out["RPE"],
         emh_belief=out["belief"],
         emh_alloc_scale=out["alloc_scale"],
-        emh_action=out["action"],
+        emh_tail_ES95=out["tail_ES95"],
+        emh_prop_RED=out["prop_RED"],
+        emh_prop_increase_risk_in_RED=out["prop_increase_risk_in_RED"],
+        emh_rpe_mean=out["rpe_mean"],
         sync_order=out["sync_order"],
         tacl_temp=out["temperature"],
+        tacl_coupling=out["coupling"],
     )
 ```
 
-3. Instrument dashboards to monitor `emh_mode`, `emh_alloc_scale`, `sync_order`, and CVaR statistics.
+3. Grafana dashboards: `emh_mode`, `alloc_scale`, `tail_ES95`, `gate_blocks` (Go/No-Go veto counts), `sync_order`, `tacl_coupling`.

@@ -14,7 +14,10 @@ import os
 from heapq import heappop, heappush
 from time import perf_counter
 from types import MappingProxyType
-from typing import Callable, Iterable, Mapping, TypeAlias
+from typing import TYPE_CHECKING, Callable, Iterable, Mapping, TypeAlias
+
+if TYPE_CHECKING:  # pragma: no cover
+    from src.risk.risk_manager import RiskManagerFacade
 
 
 ModuleState = Mapping[str, object]
@@ -650,6 +653,25 @@ class ModuleOrchestrator:
             )
 
 
+def apply_neural_decision(decision: Mapping[str, object], risk_manager: "RiskManagerFacade") -> None:
+    """Normalise and forward neural-controller output to the risk facade."""
+
+    action = str(decision.get("action", "hold"))
+    alloc_main = float(decision.get("alloc_main", 0.0))
+    alloc_alt = float(decision.get("alloc_alt", 0.0))
+    allocs = decision.get("allocs")
+    if isinstance(allocs, Mapping):
+        alloc_main = float(allocs.get("main", alloc_main))
+        alloc_alt = float(allocs.get("alt", alloc_alt))
+    alloc_scale = float(decision.get("alloc_scale", 1.0))
+    risk_manager.apply_neural_directive(
+        action=action,
+        alloc_main=alloc_main,
+        alloc_alt=alloc_alt,
+        alloc_scale=alloc_scale,
+    )
+
+
 __all__ = [
     "ModuleDefinition",
     "ModuleExecutionDynamics",
@@ -660,5 +682,6 @@ __all__ = [
     "ModuleRunSummary",
     "ModuleSynchronisationEntry",
     "ModuleTimelineEntry",
+    "apply_neural_decision",
 ]
 

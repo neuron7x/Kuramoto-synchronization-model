@@ -14,6 +14,8 @@ import shutil
 import tarfile
 from typing import TYPE_CHECKING
 
+os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
+
 
 def _patch_pip_symlink_extraction() -> None:
     """Mitigate GHSA-4xh5-x5gv-qwph for pip < 25.3.

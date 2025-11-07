@@ -33,3 +33,4 @@ homeostasis:
 
 tacl_bridge:
   sync_threshold: 0.3
+  generations: 12
