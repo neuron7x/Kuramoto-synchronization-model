@@ -148,7 +148,8 @@ The objectives are to:
 - **Alignment**: Update `docs/dataset_catalog.md` with new datasets and refresh
   cadence.
 - **Automation**: Validate checksums via CI script `scripts/validate_sample_data.py`
-  (to be implemented as part of data pipeline work).
+  (e.g. `python scripts/validate_sample_data.py --repo-root .`) as part of
+  pre-merge checks.
 
 ### API Contracts
 
