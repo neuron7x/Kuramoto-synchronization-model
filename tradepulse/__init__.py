@@ -12,6 +12,14 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 import sys
 
+# Provide a benign default for the admin API two-factor secret so importing the
+# heavyweight ``tradepulse.sdk`` module in developer environments (and within
+# unit tests) does not fail when the sensitive configuration is absent. Real
+# deployments override this via environment variables or configuration files.
+os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "test-secret")
+os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+os.environ.setdefault("TRADEPULSE_BOOTSTRAP_STRATEGY", "lazy")
+
 _MODULE_NAME = "src.tradepulse"
 _LIGHT_EXPORTS = {"neural_controller": "tradepulse.neural_controller"}
 
