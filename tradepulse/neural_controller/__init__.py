@@ -1,4 +1,11 @@
-from .core.params import Params, EKFConfig, PolicyConfig, RiskConfig, HomeoConfig
+from .core.params import (
+    Params,
+    EKFConfig,
+    PolicyConfig,
+    RiskConfig,
+    HomeoConfig,
+    MarketAdapterConfig,
+)
 from .core.state import EMHState
 from .core.emh_model import EMHSSM
 from .estimation.ekf import EMHEKF
@@ -15,6 +22,7 @@ __all__ = [
     "PolicyConfig",
     "RiskConfig",
     "HomeoConfig",
+    "MarketAdapterConfig",
     "EMHState",
     "EMHSSM",
     "EMHEKF",

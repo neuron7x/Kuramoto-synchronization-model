@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import logging
 import os
 import sys
 import time
@@ -17,8 +19,16 @@ if "tradepulse" not in sys.modules:
     pkg.__path__ = [str(Path(__file__).resolve().parents[2])]
     sys.modules["tradepulse"] = pkg
 
+from ..config import load_default_config
 from ..core.emh_model import EMHSSM
-from ..core.params import EKFConfig, HomeoConfig, Params, PolicyConfig, RiskConfig
+from ..core.params import (
+    EKFConfig,
+    HomeoConfig,
+    MarketAdapterConfig,
+    Params,
+    PolicyConfig,
+    RiskConfig,
+)
 from ..core.state import EMHState
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
@@ -27,6 +37,7 @@ from ..integration.bridge import KuramotoSync, NeuralMarketController, NeuralTAC
 from ..policy.controller import BasalGangliaController
 from ..risk.cvar import CVARGate, es_alpha
 from ..telemetry.metrics import DecisionMetricsExporter
+from ..util.logging import setup_logger
 from ..validate.simulate import toy_stream
 
 
@@ -73,25 +84,26 @@ def test_vol_belief_updates() -> None:
 
 def test_go_no_go_red_property() -> None:
     ctrl = BasalGangliaController(temp=0.8, tau_E_amber=0.3)
-    for _ in range(128):
-        action, _ = ctrl.decide({"H": 0.4, "M": 0.2, "E": 0.1, "S": 0.9}, "RED", 0.5)
+    state = {"H": 0.4, "M": 0.2, "E": 0.1, "S": 0.9}
+    for rpe in np.linspace(-1.0, 1.0, num=21):
+        action, details = ctrl.decide(state, "RED", float(rpe))
         assert action != "increase_risk"
+        assert details["action_probs"]["increase_risk"] == 0.0
 
 
 def test_go_no_go_amber_requires_energy() -> None:
     ctrl = BasalGangliaController(temp=0.8, tau_E_amber=0.4)
-    allowed_probs = ctrl.decide({"H": 0.6, "M": 0.7, "E": 0.5, "S": 0.5}, "AMBER", 0.2)[1][
-        "action_probs"
-    ]["increase_risk"]
-    blocked_low_energy = ctrl.decide(
-        {"H": 0.6, "M": 0.7, "E": 0.1, "S": 0.5}, "AMBER", 0.2
-    )[1]["action_probs"]["increase_risk"]
-    blocked_negative_rpe = ctrl.decide(
-        {"H": 0.6, "M": 0.7, "E": 0.6, "S": 0.5}, "AMBER", -0.2
-    )[1]["action_probs"]["increase_risk"]
-    assert allowed_probs > 0.0
-    assert blocked_low_energy == 0.0
-    assert blocked_negative_rpe == 0.0
+    energetic_state = {"H": 0.6, "M": 0.7, "E": 0.5, "S": 0.5}
+    assert ctrl.decide(energetic_state, "AMBER", 0.2)[1]["action_probs"]["increase_risk"] > 0.0
+    for energy in np.linspace(0.0, 0.39, num=8):
+        probs = ctrl.decide({**energetic_state, "E": float(energy)}, "AMBER", 0.2)[1][
+            "action_probs"
+        ]["increase_risk"]
+        assert probs == 0.0
+    assert (
+        ctrl.decide({**energetic_state, "E": 0.6}, "AMBER", -0.2)[1]["action_probs"]["increase_risk"]
+        == 0.0
+    )
 
 
 def test_cvar_monotonic() -> None:
@@ -124,6 +136,8 @@ def test_toy_stream_invariants(controller: NeuralMarketController) -> None:
         decision = bridge.step(obs)
         for key in ("H", "M", "E", "S"):
             assert 0.0 <= decision[key] <= 1.0
+        if decision["mode"] == "RED":
+            assert decision["action"] != "increase_risk"
 
 
 def test_yaml_loader_defaults(tmp_path: Path) -> None:
@@ -132,6 +146,13 @@ def test_yaml_loader_defaults(tmp_path: Path) -> None:
     assert pytest.approx(neural.ctrl.tau_E_amber, rel=1e-6) == 0.3
     assert neural.sync_threshold == pytest.approx(0.3, rel=1e-6)
     assert neural.generations == 12
+    assert neural.adapter_config == MarketAdapterConfig()
+
+
+def test_yaml_resource_loader() -> None:
+    cfg = load_default_config()
+    assert "model" in cfg
+    assert cfg["market_adapter"]["max_drawdown_limit"] == pytest.approx(0.2, rel=1e-6)
 
 
 def test_market_adapter_resilience() -> None:
@@ -139,6 +160,30 @@ def test_market_adapter_resilience() -> None:
     obs = adapter.transform({"bid_ask_spread": "nan"}, {"return": "0.1"})
     assert 0.0 <= obs["dd"] <= 1.0
     assert -1.0 <= obs["reward"] <= 1.0
+
+
+def test_market_adapter_extremes() -> None:
+    adapter = MarketDataAdapter(
+        max_drawdown_limit=0.2,
+        spread_threshold=0.01,
+        regime_threshold=0.05,
+        hist_max_vol=0.4,
+        risk_free=0.01,
+        eps=1e-5,
+    )
+    obs = adapter.transform(
+        {"bid_ask_spread": 10.0, "regime_deviation": 5.0, "realized_vol_20": 0.0},
+        {"current_drawdown": 0.9, "return": 0.08, "loss": 0.06, "VaR_95": 0.05},
+    )
+    assert obs["dd"] == pytest.approx(1.0)
+    assert obs["liq"] == pytest.approx(1.0)
+    assert obs["reg"] == pytest.approx(1.0)
+    assert obs["vol"] == pytest.approx(0.0)
+    assert obs["var_breach"] is True
+    assert -1.0 <= obs["reward"] <= 1.0
+    zero_obs = adapter.transform({}, {})
+    assert zero_obs["dd"] == 0.0
+    assert zero_obs["reward"] == 0.0
 
 
 def test_metrics_exporter_tracks_tail() -> None:
@@ -160,5 +205,35 @@ def test_controller_performance(controller: NeuralMarketController) -> None:
         bridge.step(obs)
     elapsed = time.perf_counter() - start
     assert (elapsed / iterations) < 0.003
+
+
+def test_decision_logging_contains_required_fields(
+    controller: NeuralMarketController, caplog: pytest.LogCaptureFixture
+) -> None:
+    setup_logger()
+    bridge = NeuralTACLBridge(controller, DummyTACL(), DummyKuramoto(), sync_threshold=0.3)
+    obs = dict(dd=0.2, liq=0.3, reg=0.4, vol=0.6, reward=0.01, var_breach=False, m_proxy=0.6)
+    with caplog.at_level(logging.INFO, logger="tradepulse.neural_controller.decision"):
+        bridge.step(obs)
+    records = [record for record in caplog.records if record.name == "tradepulse.neural_controller.decision"]
+    assert records, "expected at least one decision log record"
+    payload = json.loads(records[-1].message)
+    for key in (
+        "mode",
+        "D",
+        "H",
+        "M",
+        "E",
+        "S",
+        "RPE",
+        "belief",
+        "alloc_main",
+        "alloc_alt",
+        "alloc_scale",
+        "temperature",
+        "sync_order",
+    ):
+        assert key in payload
+    assert 0.0 <= payload["sync_order"] <= 1.0
 
 

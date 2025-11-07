@@ -12,9 +12,12 @@ log = logging.getLogger(__name__)
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
     try:
-        return float(value)
+        resolved = float(value)
     except (TypeError, ValueError):
         return float(default)
+    if np.isnan(resolved) or np.isinf(resolved):
+        return float(default)
+    return resolved
 
 
 def _clamp_unit(value: float) -> float:
@@ -31,12 +34,14 @@ class MarketDataAdapter:
         regime_threshold: float = 0.05,
         hist_max_vol: float = 1.0,
         risk_free: float = 0.02,
+        eps: float = 1e-6,
     ) -> None:
         self.max_dd_limit = float(max_drawdown_limit)
         self.spread_thr = float(spread_threshold)
         self.reg_thr = float(regime_threshold)
         self.hist_max_vol = float(hist_max_vol)
         self.risk_free = float(risk_free)
+        self.eps = float(eps)
 
     def transform(
         self, candles: Dict[str, Any], portfolio: Dict[str, Any]
@@ -47,29 +52,30 @@ class MarketDataAdapter:
         liq_raw = _safe_float(candles.get("bid_ask_spread"))
         reg_raw = _safe_float(candles.get("regime_deviation"))
         vol_obs = _safe_float(candles.get("realized_vol_20"))
-        reward_obs = _safe_float(portfolio.get("return"))
+        reward_obs = _safe_float(portfolio.get("return"), default=self.risk_free)
         loss = _safe_float(portfolio.get("loss"))
         var_limit = _safe_float(portfolio.get("VaR_95"), default=0.05)
         m_proxy = _safe_float(portfolio.get("strategy_alpha_estimate"), default=0.5)
 
-        dd_norm = dd_raw / max(self.max_dd_limit, 1e-9)
-        liq_norm = liq_raw / max(self.spread_thr, 1e-9)
-        reg_norm = reg_raw / max(self.reg_thr, 1e-9)
-        vol_norm = vol_obs / max(self.hist_max_vol, 1e-9)
+        dd_norm = dd_raw / max(self.max_dd_limit, self.eps)
+        liq_norm = liq_raw / max(self.spread_thr, self.eps)
+        reg_norm = reg_raw / max(self.reg_thr, self.eps)
+        vol_norm = vol_obs / max(self.hist_max_vol, self.eps)
 
-        vol_eps = max(abs(vol_obs), 1e-6)
-        reward = float(np.tanh((reward_obs - self.risk_free) / vol_eps))
+        reward = float(
+            np.tanh((reward_obs - self.risk_free) / max(abs(vol_obs), self.eps))
+        )
 
         var_breach = bool(loss > var_limit)
 
         payload: Dict[str, float | bool] = {
-            "dd": _clamp_unit(dd_norm),
-            "liq": _clamp_unit(liq_norm),
-            "reg": _clamp_unit(reg_norm),
-            "vol": _clamp_unit(vol_norm),
+            "dd": _clamp_unit(np.nan_to_num(dd_norm, nan=0.0, posinf=1.0, neginf=0.0)),
+            "liq": _clamp_unit(np.nan_to_num(liq_norm, nan=0.0, posinf=1.0, neginf=0.0)),
+            "reg": _clamp_unit(np.nan_to_num(reg_norm, nan=0.0, posinf=1.0, neginf=0.0)),
+            "vol": _clamp_unit(np.nan_to_num(vol_norm, nan=0.0, posinf=1.0, neginf=0.0)),
             "reward": reward,
             "var_breach": var_breach,
-            "m_proxy": _clamp_unit(m_proxy),
+            "m_proxy": _clamp_unit(np.nan_to_num(m_proxy, nan=0.5, posinf=1.0, neginf=0.0)),
         }
 
         numeric_values = [value for value in payload.values() if isinstance(value, float)]
