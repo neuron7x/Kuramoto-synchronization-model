@@ -110,7 +110,10 @@ def _split_front_matter(text: str) -> tuple[Mapping[str, object], str]:
         if line.strip() == "---":
             yaml_text = "\n".join(lines[1:idx])
             body = "\n".join(lines[idx + 1 :])
-            data = yaml.safe_load(yaml_text) or {}
+            try:
+                data = yaml.safe_load(yaml_text) or {}
+            except yaml.YAMLError as exc:
+                raise ValidationError("invalid YAML front matter") from exc
             if not isinstance(data, Mapping):
                 raise ValidationError("front matter must be a mapping")
             return data, body

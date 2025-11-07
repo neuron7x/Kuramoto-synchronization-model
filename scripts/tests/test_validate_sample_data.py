@@ -107,6 +107,18 @@ def test_validate_contract_without_front_matter_fails(tmp_path: Path) -> None:
     assert any("front matter" in error for error in report.errors)
 
 
+def test_validate_contract_invalid_yaml_front_matter_reports_error(tmp_path: Path) -> None:
+    repo_root = tmp_path
+    contract = repo_root / "docs" / "data" / "invalid.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text("---\nowner: [\n---\nbody\n", encoding="utf-8")
+
+    report = validate_sample_data.validate_contract(contract, repo_root=repo_root)
+
+    assert not report.valid()
+    assert any("invalid YAML front matter" in error for error in report.errors)
+
+
 def test_discover_contracts_skips_missing_directories(tmp_path: Path) -> None:
     repo_root = tmp_path
     contracts = validate_sample_data.discover_contracts(repo_root=repo_root)
