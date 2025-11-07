@@ -150,6 +150,8 @@ include = [
     "interfaces.*",
     "src",
     "src.*",
+    "tradepulse_agent",
+    "tradepulse_agent.*",
     "markets",
     "markets.*",
     "modules",

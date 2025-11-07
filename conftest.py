@@ -110,6 +110,10 @@ ROOT = pathlib.Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+SRC = ROOT / "src"
+if SRC.exists() and str(SRC) not in sys.path:
+    sys.path.append(str(SRC))
+
 
 if (
     "exchange_calendars" not in sys.modules
