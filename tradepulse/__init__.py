@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING
+import sys
 
 _MODULE_NAME = "src.tradepulse"
 _LIGHT_EXPORTS = {"neural_controller": "tradepulse.neural_controller"}
@@ -19,7 +20,14 @@ _SRC_PACKAGE = _PACKAGE_ROOT.parent / "src" / "tradepulse"
 
 __path__ = [str(_PACKAGE_ROOT)]  # type: ignore[assignment]
 if _SRC_PACKAGE.exists():
-    __path__.append(str(_SRC_PACKAGE))
+    src_path = str(_SRC_PACKAGE)
+    if src_path not in __path__:
+        __path__.append(src_path)
+    if __spec__ is not None and __spec__.submodule_search_locations is not None:
+        locations = list(__spec__.submodule_search_locations)
+        if src_path not in locations:
+            locations.append(src_path)
+            __spec__.submodule_search_locations = locations
 
 
 def _light_mode_enabled() -> bool:
@@ -44,6 +52,7 @@ def __getattr__(name: str) -> ModuleType:
             module = import_module(f"{_MODULE_NAME}.{name}")
         except ModuleNotFoundError as exc:  # pragma: no cover - mirrors stdlib
             raise AttributeError(name) from exc
+        sys.modules.setdefault(f"{__name__}.{name}", module)
         globals()[name] = module
         return module
     module = import_module(_MODULE_NAME)
