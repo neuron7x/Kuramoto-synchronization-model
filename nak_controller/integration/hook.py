@@ -40,6 +40,11 @@ class NaKHook:
         """Return the resolved configuration path."""
         return self._config_path
 
+    @property
+    def seed(self) -> int | None:
+        """Return the most recent RNG seed."""
+        return self._seed
+
     def reset(self, *, seed: int | None = None) -> None:
         """Reset the controller state."""
         reseed = seed if seed is not None else self._seed

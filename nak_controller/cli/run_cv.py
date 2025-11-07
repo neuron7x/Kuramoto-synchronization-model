@@ -23,13 +23,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--folds", type=int, default=5, help="Number of folds (mapped to seeds)"
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Base RNG seed (defaults to 0 if omitted)",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    results = run_validation(str(args.config), steps=args.steps, seeds=args.folds)
+    results = run_validation(
+        str(args.config), steps=args.steps, seeds=args.folds, seed=args.seed
+    )
     json.dump(results, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
     return 0

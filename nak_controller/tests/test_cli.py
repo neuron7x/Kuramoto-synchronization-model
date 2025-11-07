@@ -20,10 +20,11 @@ def test_cli_returns_json_and_zero() -> None:
         "50",
         "--seeds",
         "1",
+        "--seed",
+        "1337",
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
-    if proc.returncode != 0:
-        raise AssertionError(proc.stderr)
+    assert proc.returncode == 0, proc.stderr
     payload = json.loads(proc.stdout)
-    if "baseline" not in payload or "nak" not in payload:
-        raise AssertionError("expected baseline and nak results")
+    assert set(payload) == {"baseline", "nak"}
+    assert payload["baseline"]["avg_risk_per_trade"] > 0.0
