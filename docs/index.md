@@ -67,6 +67,7 @@
       разом із валідацією та прикладами.</p>
     <div class="card__links">
       <a class="card__link" href="neuroecon/">NeuroEcon Documentation</a>
+      <a class="card__link" href="neurophysiology_overview/">Neurophysiology Formalism</a>
     </div>
   </article>
 </div>
