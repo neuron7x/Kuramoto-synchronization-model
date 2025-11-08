@@ -173,3 +173,94 @@ def test_non_passive_actions_require_forecast() -> None:
 
     with pytest.raises(ValueError, match="Free energy forecast required"):
         governor.evaluate(intent, state=SystemState.DEGRADED)
+
+
+def test_tacl_gate_rejects_negative_energy_values() -> None:
+    gate = TaclGate(max_free_energy=2.0)
+    forecast = FreeEnergyForecast(current=-0.1, projected=0.5)
+
+    with pytest.raises(ValueError, match="Free energy values must be non-negative"):
+        gate.evaluate(forecast)
+
+
+def test_tacl_gate_allows_recovery_path_with_positive_window() -> None:
+    gate = TaclGate(max_free_energy=3.0)
+    forecast = FreeEnergyForecast(
+        current=1.0,
+        projected=1.5,
+        recovery_path="stabilise",
+        recovery_window=2.5,
+        guarantees_descent=True,
+    )
+
+    decision = gate.evaluate(forecast)
+
+    assert decision.allowed is True
+    assert decision.requires_recovery is True
+    assert decision.reason == (
+        "monotonicity temporarily violated but recovery path 'stabilise' guarantees descent"
+    )
+
+
+def test_tacl_gate_rejects_non_positive_recovery_window() -> None:
+    gate = TaclGate()
+    forecast = FreeEnergyForecast(
+        current=1.0,
+        projected=1.2,
+        recovery_path="cooldown",
+        recovery_window=0.0,
+        guarantees_descent=True,
+    )
+
+    decision = gate.evaluate(forecast)
+
+    assert decision.allowed is False
+    assert (
+        decision.reason
+        == "recovery window must be positive when guarantees_descent is true"
+    )
+
+
+def test_mandate_rejects_target_outside_object_scope() -> None:
+    permission = StatePermission(allowed_classes=frozenset({ActionClass.A0}))
+    mandate = Mandate(
+        module="planner",
+        allowed_classes=frozenset({ActionClass.A0}),
+        object_scope=frozenset({"buffers"}),
+        state_permissions={SystemState.NORMAL: permission},
+    )
+    intent = ActionIntent(
+        module="planner",
+        action_class=ActionClass.A0,
+        operation="describe-status",
+        description="describe current state",
+        target="links",
+    )
+
+    decision = mandate.allows(intent, SystemState.NORMAL)
+
+    assert decision.allowed is False
+    assert decision.reason == "target outside module object scope"
+    assert decision.engaged_corridor is False
+
+
+def test_mandate_requires_state_permission() -> None:
+    permission = StatePermission(allowed_classes=frozenset({ActionClass.A0}))
+    mandate = Mandate(
+        module="planner",
+        allowed_classes=frozenset({ActionClass.A0}),
+        object_scope=frozenset(),
+        state_permissions={SystemState.NORMAL: permission},
+    )
+    intent = ActionIntent(
+        module="planner",
+        action_class=ActionClass.A0,
+        operation="describe-status",
+        description="describe current state",
+    )
+
+    decision = mandate.allows(intent, SystemState.CRISIS)
+
+    assert decision.allowed is False
+    assert decision.reason == "state crisis not covered by module mandate"
+    assert decision.engaged_corridor is False
