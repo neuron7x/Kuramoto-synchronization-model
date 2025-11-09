@@ -118,6 +118,47 @@ pytest tests/core/neuro/dopamine/test_dopamine_controller.py \
        tests/core/neuro/dopamine/test_ddm_adapter.py
 ```
 
+## 9. Повна характеристика поведінки
+
+### 9.1. Базові стани
+
+| Режим | Умови | Ознаки | Дії контролера |
+|-------|-------|--------|----------------|
+| **Тонічна стабільність** | `|δ| < tonic_band`, низька дисперсія RPE | `tonic_level` ≈ базовому, `release_gate_open = True` | Температура → `base_temperature`, Go активний, DDM масштабує мінімально. |
+| **Фазична активація** | `δ > burst_threshold` | Високий `phasic_level`, `temperature` зростає в межах `max_temp_multiplier` | Гейт пропускає Go, `ddm_thresholds.temperature_scale` підсилює експлорацію. |
+| **Інгібіція / No-Go** | `δ < 0` та `release_gate_open = False` чи `go_threshold` < `no_go_threshold` | Зростає `no_go` прапорець, `temperature` → `min_temperature` | ActionGate примушує HOLD/No-Go до відновлення варіації. |
+
+### 9.2. Динаміка TD(0) RPE
+
+1. `compute_rpe` оцінює `δ` у межах `[-rpe_clip, rpe_clip]` для запобігання вибухам.
+2. Експоненційне згладжування (`rpe_ema_beta`) відстежує середнє та дисперсію, які керують release gate.
+3. Позитивні `δ` підсилюють фазичну компоненту (`burst_factor`), негативні — знижують температуру через `neg_rpe_temp_gain`.
+4. Стійке відхилення `δ` запускає `meta_adapt_rules` (Sharpe/DD) для корекції `base_temperature`.
+
+### 9.3. Інтеграція з DDM та Go/No-Go
+
+- Drift-diffusion параметри `(v, a, t0)` конвертуються у `DDMThresholds`, що модулюють як температуру, так і граничні значення Go/Hold/No-Go.
+- Якщо `v` зменшується, `temperature_scale` → `ddm_min_temperature_scale`, що знижує активність Go.
+- `ActionGate.evaluate` поєднує `release_gate_open`, `ddm_thresholds` і серотоніновий HOLD, забезпечуючи каскад: `Go → Hold → No-Go`.
+- При конфліктах (`go_threshold < hold_threshold`) спрацьовує нормалізація й усереднення для стабільного рішення.
+
+### 9.4. Крайові сценарії та захисти
+
+- **Variance spike**: якщо `rpe_variance` перевищує `rpe_var_release_threshold`, Go блокується до спадання нижче гістерезису.
+- **Cold-start**: при відсутності історії EMA ініціалізується `temp_adapt_init_var`, температура залишається біля бази до накопичення статистики.
+- **DDM saturation**: `ddm_threshold_gain` обмежений `ddm_max_temperature_scale`; при насиченні температура обрізається до `max_temp_multiplier * base_temperature`.
+- **Telemetry fail-safe**: відсутність телеметрії → використання стандартного логера та дублювання ключових метрик у `extras` для дебагу.
+
+### 9.5. Метрики спостереження
+
+- `dopamine_rpe_mean`, `dopamine_rpe_var` – контроль стабільності TD(0) оновлень.
+- `dopamine_temperature`, `adaptive_base_temperature` – динаміка explore/exploit.
+- `dopamine_gate_state` (Go/Hold/No-Go) – частоти переходів та латентність відновлення після блокувань.
+- `ddm_temperature_scale`, `ddm_go_threshold` – синхронізація з поведінкою DDM.
+- `safety.release_gate_closures` – кількість спрацювань захисту за інтервал.
+
+Регулярний аналіз цих метрик дозволяє профілювати поведінку петлі, виявляти деградації (запізнення реакції, надмірне блокування Go) та адаптувати `meta_adapt_rules` без ризику для торговельних політик.
+
 ## Release gate & TACL
 
 - `rpe_variance` оцінюється через EMA (`rpe_ema_beta`). При перевищенні `rpe_var_release_threshold` Go/Hold переводиться у HOLD (`release_gate_open = False`).
