@@ -3,17 +3,19 @@
 ## Overview
 
 SerotoninController v2.3.1 realises a serotonin-inspired inhibitory loop that
-translates aversive market cues into deterministic action modulation. The
-implementation follows 2025 prospective value and aversive learning findings,
-providing:
+translates stress, drawdown and novelty cues into deterministic action
+modulation. The implementation follows 2025 prospective value and aversive
+learning findings, providing:
 
 - **Prospective value coding** that aggregates volatility, free energy and loss
   statistics into a release signal.
 - **τ-calibrated tonic filtering** that derives the decay rate from
   physiological time constants and decision step durations.
-- **Smooth phasic gating** that blends tonic and burst modes without threshold
-  discontinuities while exposing HOLD veto triggers across tonic, gate, and
-  phasic channels.
+- **Smooth tonic/phasic gating** that blends tonic and burst modes without
+  threshold discontinuities while exposing HOLD veto triggers across tonic,
+  gate and phasic channels.
+- **Dedicated HOLD/cooldown loop** driven by the `step` API with configurable
+  hysteresis, cooldown timer and TACL guardrails to prevent prolonged holds.
 - **Exponential desensitisation** with configurable gain and capped counters to
   avoid chronic inhibition while ensuring a hard lower bound at sensitivity
   0.1.
@@ -34,10 +36,11 @@ The public interface is intentionally small and stable:
 
 | Method | Contract |
 |--------|----------|
+| `step(stress, drawdown, novelty)` | Advances the controller one tick and returns `(hold, veto, cooldown_seconds, level)`. Clamps stress/novelty to ≥0 and interprets negative drawdown as loss magnitude. |
 | `estimate_aversive_state(market_vol, free_energy, cum_losses, rho_loss, override_weights=None)` | Returns a non-negative float release signal. Inputs must be ≥0 except `rho_loss`, which is clamped to [-1, 1]. |
-| `compute_serotonin_signal(aversive_state)` | Updates the internal tonic/phasic state and returns the serotonin level in [0, 1]. Input must be ≥0. Thread-safe. |
+| `compute_serotonin_signal(aversive_state)` | Updates the tonic/phasic state using a scalar drive (legacy helper). Input must be ≥0 and invokes HOLD/cooldown logic. |
 | `modulate_action_prob(original_prob, serotonin_signal=None, za_bias=None)` | Applies inhibition and bias, returning a probability in [0, 1]. Raises `ValueError` when `original_prob` is outside [0, 1]. |
-| `check_cooldown(serotonin_signal=None)` | Returns `True` when any veto channel (tonic, phasic, gate) exceeds configured thresholds. Consults the optional TACL guard before final approval. |
+| `check_cooldown(serotonin_signal=None)` | Returns `True` while HOLD or the cooldown timer is active. Consults the optional TACL guard before final approval. |
 | `apply_internal_shift(exploitation_gradient, serotonin_signal=None, beta_temper=None)` | Returns a tempered gradient. Raises `ValueError` for negative gradients. |
 | `meta_adapt(performance_metrics)` | Mutates release weights according to drawdown/Sharpe metrics, guarded by TACL. Persists the config atomically and writes an audit snapshot. |
 | `to_dict()` | Serialises the controller state for auditing. |
@@ -68,14 +71,20 @@ PY
 | beta | number | minimum=0.0; required | Weight for free energy term |
 | gamma | number | minimum=0.0; required | Weight for cumulative losses |
 | delta_rho | number | minimum=0.0; maximum=5.0; required | Weight for rho-loss complement |
+| stress_gain | number | minimum=0.0 | Scaling applied to stress input in tonic drive |
+| drawdown_gain | number | minimum=0.0 | Scaling applied to drawdown magnitude in tonic drive |
+| novelty_gain | number | minimum=0.0 | Scaling applied to novelty input for phasic drive |
 | k | number | exclusiveMinimum=0.0; required | Logistic steepness parameter |
 | theta | number | minimum=-5.0; maximum=5.0; required | Logistic mid-point for tonic level |
 | delta | number | minimum=0.0; maximum=5.0; required | Inhibition multiplier |
 | za_bias | number | minimum=-1.0; maximum=1.0; required | Zero-action bias applied post inhibition |
 | decay_rate | float | — | Tonic decay rate per decision step |
-| cooldown_threshold | number | minimum=0.0; maximum=1.0; required | Serotonin signal threshold for veto |
+| phasic_decay | number | minimum=0.0; maximum=1.0 | Decay rate for phasic component blending |
+| hold_threshold | number | minimum=0.0; maximum=1.0 | Signal threshold that activates HOLD |
+| release_threshold | number | minimum=0.0; maximum=1.0 | Signal threshold below which HOLD can be released |
 | desens_threshold_ticks | integer | minimum=0; required | Ticks above threshold before desensitisation |
 | desens_rate | number | minimum=0.0; maximum=1.0; required | Recovery rate when below threshold |
+| sensitivity_floor | number | minimum=0.0; maximum=1.0 | Lower bound for serotonin sensitivity during desensitisation |
 | target_dd | number | required | Target drawdown for meta-adapt |
 | target_sharpe | number | exclusiveMinimum=0.0; required | Target Sharpe for meta-adapt |
 | beta_temper | number | minimum=0.0; maximum=1.0; required | Gradient tempering coefficient |
@@ -87,8 +96,13 @@ PY
 | mod_k | number | minimum=-5.0; maximum=5.0; required | Modulation gain |
 | max_desens_counter | integer | minimum=1; required | Maximum desensitisation counter |
 | desens_gain | number | exclusiveMinimum=0.0; required | Gain applied during desensitisation |
+| cooldown_base_ticks | integer | minimum=0 | Baseline number of ticks to hold the cooldown veto |
+| cooldown_growth | number | minimum=0.0 | Additional cooldown ticks per unit level above hold threshold |
+| cooldown_max_ticks | integer | minimum=1 | Maximum cooldown ticks regardless of stress level |
 | gate_veto | number | minimum=0.0; maximum=1.0 | Gate level above which cooldown veto triggers |
 | phasic_veto | number | minimum=0.0 | Phasic level above which cooldown veto triggers |
+| hold_guard_ticks | integer | minimum=0 | Number of consecutive hold ticks before guard approval is required |
+| stress_desens_threshold | number | minimum=0.0 | Minimum tonic drive considered prolonged stress for desensitisation |
 | temperature_floor_min | number | minimum=0.0; maximum=1.0 | Lower bound for the serotonin-governed temperature floor |
 | temperature_floor_max | number | minimum=0.0; maximum=1.0 | Upper bound for the serotonin-governed temperature floor |
 | tau_5ht_ms | float | — | Tonic decay time constant in milliseconds |
@@ -116,14 +130,13 @@ def tacl_guard(name: str, payload: dict[str, float]) -> bool:
 controller = SerotoninController("configs/serotonin.yaml", logger.info)
 controller.set_tacl_guard(tacl_guard)
 
-release = controller.estimate_aversive_state(1.0, 0.5, 0.2, -0.90)
-serotonin_signal = controller.compute_serotonin_signal(release)
-modulated_prob = controller.modulate_action_prob(0.85, serotonin_signal)
-if controller.check_cooldown(serotonin_signal):
-    # Trigger HOLD veto in the risk manager
+hold, veto, cooldown_s, level = controller.step(stress=0.9, drawdown=-0.04, novelty=0.6)
+if hold:
+    # Trigger HOLD veto in the risk manager while cooldown is active
     ...
 
-shifted_gradient = controller.apply_internal_shift(2.0, serotonin_signal)
+modulated_prob = controller.modulate_action_prob(0.85, level)
+shifted_gradient = controller.apply_internal_shift(2.0, level)
 controller.update_metrics()
 controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
 state_snapshot = controller.to_dict()

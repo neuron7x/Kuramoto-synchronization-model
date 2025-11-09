@@ -14,6 +14,10 @@ class SerotoninLike(Protocol):
     def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
         ...
 
+    @property
+    def hold_signal(self) -> bool:
+        ...
+
 @dataclass(frozen=True)
 class GateEvaluation:
     """Outcome of the action gate evaluation."""
@@ -67,7 +71,16 @@ class ActionGate:
         hold = not release_gate or da < hold_threshold
 
         if self._serotonin is not None:
-            hold = hold or bool(self._serotonin.check_cooldown(serotonin_signal))
+            serotonin_hold = bool(getattr(self._serotonin, "hold_signal", False))
+            if serotonin_signal is not None:
+                serotonin_hold = serotonin_hold or bool(
+                    self._serotonin.check_cooldown(serotonin_signal)
+                )
+            else:
+                serotonin_hold = serotonin_hold or bool(
+                    self._serotonin.check_cooldown(None)
+                )
+            hold = hold or serotonin_hold
 
         go = da > go_threshold and not hold
         no_go = hold or da < no_go_threshold
