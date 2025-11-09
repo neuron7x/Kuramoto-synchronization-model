@@ -264,11 +264,20 @@ def kuramoto_order(
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
     mask = np.isfinite(phase_matrix)
-    # Use complex exponentials to maintain translation invariance even for
-    # extremely large phase offsets while preserving numerical stability.
     phase_matrix_safe = np.where(mask, phase_matrix, 0.0)
-    complex_phases = np.zeros(phase_matrix.shape, dtype=np.complex128)
-    np.exp(1j * phase_matrix_safe, out=complex_phases)
+
+    # Reduce valid phases to a compact interval before projecting onto the unit
+    # circle. This preserves translation invariance for arbitrarily large phase
+    # shifts without incurring the allocation overhead of complex exponentials.
+    two_pi = 2.0 * np.pi
+    reduced = np.zeros_like(phase_matrix_safe, dtype=np.float64)
+    np.remainder(phase_matrix_safe + np.pi, two_pi, out=reduced)
+    reduced -= np.pi
+
+    cos_vals = np.zeros_like(reduced, dtype=np.float64)
+    sin_vals = np.zeros_like(reduced, dtype=np.float64)
+    np.cos(reduced, out=cos_vals, where=mask)
+    np.sin(reduced, out=sin_vals, where=mask)
 
     machine_eps = np.finfo(np.float64).eps
 
@@ -279,10 +288,12 @@ def kuramoto_order(
             values = np.zeros(phase_matrix.shape[1], dtype=float)
         else:
             safe_weights = np.where(valid, weight_matrix, 0.0)
-            weighted = complex_phases * safe_weights
-            sum_complex = np.add.reduce(weighted, axis=0, dtype=np.complex128)
+            weighted_cos = cos_vals * safe_weights
+            weighted_sin = sin_vals * safe_weights
+            sum_real = np.add.reduce(weighted_cos, axis=0, dtype=np.float64)
+            sum_imag = np.add.reduce(weighted_sin, axis=0, dtype=np.float64)
             totals = np.add.reduce(safe_weights, axis=0, dtype=np.float64)
-            magnitude = np.abs(sum_complex)
+            magnitude = np.hypot(sum_real, sum_imag)
             zero_tolerance = machine_eps * np.maximum(totals, 1.0)
             values = np.divide(
                 magnitude,
@@ -296,8 +307,9 @@ def kuramoto_order(
         if not np.any(valid_counts):
             values = np.zeros(phase_matrix.shape[1], dtype=float)
         else:
-            sum_complex = np.add.reduce(complex_phases, axis=0, dtype=np.complex128)
-            magnitude = np.abs(sum_complex)
+            sum_real = np.add.reduce(cos_vals, axis=0, dtype=np.float64)
+            sum_imag = np.add.reduce(sin_vals, axis=0, dtype=np.float64)
+            magnitude = np.hypot(sum_real, sum_imag)
             zero_tolerance = machine_eps * np.maximum(valid_counts, 1.0)
             values = np.divide(
                 magnitude,
