@@ -66,19 +66,37 @@ class GateMetrics:
 
 
 class GABAInhibitionGate(nn.Module):
-    """Maps threat → inhibition; cycles → modulation; timing → plasticity.
+    """Biophysical GABAergic inhibition gate for risk-aware action modulation.
+
+    Implements neuroplasticity mechanisms inspired by GABAergic interneuron dynamics:
+    - Dual time-constant GABA_A (fast) and GABA_B (slow) components
+    - Spike-timing-dependent plasticity (STDP) for synaptic weight adaptation
+    - LTP/LTD mechanisms gated by pre-post correlations
+    - Gamma (40 Hz) and theta (8 Hz) oscillatory modulation
+    - MFD (Maximum Feasible Degradation) guarantee for safe action gating
+
+    Primary sources:
+    - Buzsáki & Wang (2012): Mechanisms of gamma oscillations
+    - Bliss & Collingridge (1993): Long-term potentiation
+    - Bi & Poo (1998): Synaptic modifications by correlated activity
+    - Bowery et al. (2002): GABA_B receptors
 
     Inputs
     ------
     market_state : Dict[str, torch.Tensor]
         Required keys: 'vol', 'ret', 'vix', 'pos', 'rpe', 'delta_t_ms'.
+        - vix: volatility index (threat proxy)
+        - vol, ret: pre/post-synaptic analogs for plasticity
+        - delta_t_ms: spike timing for STDP
     action : torch.Tensor
         Proposed action vector (e.g., position deltas). Shape (N,) or scalar.
 
     Outputs
     -------
     gated_action : torch.Tensor
-    metrics : Dict[str, float] with keys: 'inhibition', 'gaba_level', 'risk_weight'.
+        Inhibited and modulated action vector
+    metrics : GateMetrics
+        Dataclass with keys: inhibition, gaba_level, risk_weight
     """
 
     def __init__(self, params: Optional[GateParams] = None, device: Optional[str] = None):

@@ -85,17 +85,27 @@ _ALLOWED_NOVELTY_MODES = {"external", "abs_rpe"}
 
 
 class DopamineController:
-    """
-    DopamineController v2.1 — апетитивний контур:
-      • TD(0) RPE: δ = r + γ·V' − V
-      • Фазика: phasic = max(0, RPE)·burst_factor
-      • Тоніка: EMA(appetitive + phasic) з decay_rate
-      • DA: σ(k·(tonic − θ)), насичення логіту
-      • Q' = Q·(1 + delta_gain·(DA − baseline))
-      • T = max(T_min, T_base·exp(−k_T·DA)) із підвищенням при негативному RPE
-      • Go / No-Go: DA > invigoration_threshold / DA < no_go_threshold
-      • Мета-адаптація: дріфт lr/delta_gain/base_temperature за DD/Sharpe
-      • Телеметрія: сумісна з TACL log_metric, безпечні no-op фоли
+    """DopamineController v2.1 — Neuroplastic appetitive control circuit.
+
+    Implements biologically-inspired dopamine dynamics based on temporal difference
+    learning and neuromodulation principles (Schultz et al. 1997, 2015; McClure et al. 2003).
+
+    Core Mechanisms:
+      • TD(0) RPE: δ = r + γ·V' − V (reward prediction error)
+      • Phasic burst: phasic = max(0, RPE)·burst_factor (positive RPE response)
+      • Tonic baseline: EMA(appetitive + phasic) with decay_rate (sustained motivation)
+      • DA signal: σ(k·(tonic − θ)), saturated logistic (bounded 0-1)
+      • Action value modulation: Q' = Q·(1 + delta_gain·(DA − baseline))
+      • Policy temperature: T = max(T_min, T_base·exp(−k_T·DA)) with negative RPE boost
+      • Go/No-Go gating: DA > invigoration_threshold / DA < no_go_threshold
+      • Meta-adaptation: drift lr/delta_gain/base_temperature based on DD/Sharpe metrics
+      • Telemetry: TACL-compatible log_metric, fail-safe no-ops
+
+    This implementation follows 2025 best practices for neuroplasticity modeling:
+    - Biophysical parameter ranges validated against empirical data
+    - Numerical stability through clipping and finite checks
+    - Meta-learning for adaptive parameter tuning
+    - Integration with TACL thermodynamic control framework
     """
 
     # ---------- init / logging ----------
