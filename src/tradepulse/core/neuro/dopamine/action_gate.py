@@ -71,15 +71,10 @@ class ActionGate:
         hold = not release_gate or da < hold_threshold
 
         if self._serotonin is not None:
-            serotonin_hold = bool(getattr(self._serotonin, "hold_signal", False))
             if serotonin_signal is not None:
-                serotonin_hold = serotonin_hold or bool(
-                    self._serotonin.check_cooldown(serotonin_signal)
-                )
+                serotonin_hold = bool(self._serotonin.check_cooldown(serotonin_signal))
             else:
-                serotonin_hold = serotonin_hold or bool(
-                    self._serotonin.check_cooldown(None)
-                )
+                serotonin_hold = bool(self._serotonin.check_cooldown(None))
             hold = hold or serotonin_hold
 
         go = da > go_threshold and not hold
