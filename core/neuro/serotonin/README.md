@@ -240,6 +240,96 @@ with SerotoninController("configs/serotonin.yaml") as controller:
   Use the optional
   `SerotoninController.prometheus_logger` helper to forward to your collector.
 
+
+## Behavioral Profiling
+
+The serotonin controller includes a comprehensive behavioral profiler for characterizing
+tonic/phasic dynamics and veto/cooldown patterns under various stress scenarios.
+
+### Profiler Features
+
+- **Complete Behavioral Characterization**: Tonic/phasic dynamics, veto/cooldown patterns
+- **Multiple Profiling Modes**: Stress response, ramping stress, stress pulses
+- **Performance Analytics**: Rise/decay times, burst frequencies, hysteresis analysis
+- **Visualization**: Automated plotting of behavioral profiles
+- **Export/Import**: JSON serialization for profile comparison
+
+### Usage Example
+
+```python
+from core.neuro.serotonin import SerotoninController
+from core.neuro.serotonin.profiler import SerotoninProfiler
+
+# Create controller and profiler
+controller = SerotoninController("configs/serotonin.yaml")
+profiler = SerotoninProfiler(controller)
+
+# Profile stress response
+profile = profiler.profile_stress_ramp(
+    stress_min=0.0,
+    stress_max=3.0,
+    total_steps=500
+)
+
+# Analyze characteristics
+print(f"Tonic baseline: {profile.tonic_phasic.tonic_baseline:.3f}")
+print(f"Veto threshold: {profile.veto_cooldown.veto_threshold:.3f}")
+print(f"Veto rate: {profile.statistics.veto_rate:.2%}")
+
+# Generate report
+print(profile.generate_report())
+
+# Save profile
+profile.save("profiles/serotonin_profile.json")
+
+# Generate plots
+profiler.plot_profile(profile, output_path="profiles/serotonin_plot.png")
+```
+
+### CLI Tool
+
+```bash
+# Profile with ramping stress
+python -m core.neuro.serotonin.profiler.cli \
+    --config configs/serotonin.yaml \
+    --mode ramp \
+    --steps 500 \
+    --output profile.json \
+    --plot \
+    --report
+
+# Profile stress pulses
+python -m core.neuro.serotonin.profiler.cli \
+    --config configs/serotonin.yaml \
+    --mode pulse \
+    --plot
+
+# Profile discrete stress levels
+python -m core.neuro.serotonin.profiler.cli \
+    --config configs/serotonin.yaml \
+    --mode response \
+    --stress-levels 0.5,1.0,1.5,2.0,2.5 \
+    --report
+```
+
+### Profile Characteristics
+
+**Tonic/Phasic Metrics:**
+- Tonic baseline, peak, rise/decay times
+- Phasic activation threshold, peak amplitude, burst frequency
+- Sensitivity floor, recovery rate, desensitization onset
+
+**Veto/Cooldown Metrics:**
+- Veto threshold, activation/deactivation latency
+- Cooldown mean/max duration, frequency
+- Hysteresis width, recovery threshold
+- Veto contribution breakdown (gate/phasic/tonic)
+
+**Statistical Summary:**
+- Total steps, veto count, veto rate
+- Stress/serotonin mean, std, max
+- Component level averages
+
 ## Migration Notes (v2.3.1)
 
 - `gate_veto` and `phasic_veto` replace hard-coded thresholds for HOLD vetoes.
