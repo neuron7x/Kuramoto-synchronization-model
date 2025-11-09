@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .dopamine_controller import DopamineController
 from .action_gate import ActionGate, GateEvaluation
-from .ddm_adapter import DDMAdjustment, adapt_ddm_parameters
+from .ddm_adapter import DDMAdjustment, DDMThresholds, adapt_ddm_parameters, ddm_thresholds
 
 try:  # pragma: no cover - optional helper
     from .dopamine_step_extension import StepResult, dopamine_step
@@ -19,5 +19,7 @@ __all__ = [
     "ActionGate",
     "GateEvaluation",
     "DDMAdjustment",
+    "DDMThresholds",
     "adapt_ddm_parameters",
+    "ddm_thresholds",
 ]
