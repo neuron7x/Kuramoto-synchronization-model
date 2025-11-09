@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Mapping, MutableMapping, Optional, Protocol, Sequence
@@ -206,8 +206,54 @@ class NewsSentimentPipeline:
                 ]
             )
 
-        prepared: list[tuple[NewsArticle, str]] = []
+        unique_articles: dict[str, NewsArticle] = {}
         for article in articles:
+            article_id = (article.article_id or "").strip()
+            if not article_id:
+                _LOGGER.warning(
+                    "Skipping article with missing identifier", extra={"source": article.source}
+                )
+                continue
+
+            try:
+                published_at = ensure_utc_timestamp(article.published_at)
+            except Exception as exc:  # pragma: no cover - defensive guard
+                _LOGGER.warning(
+                    "Skipping article with invalid timestamp",
+                    extra={"article_id": article_id, "error": str(exc)},
+                )
+                continue
+
+            normalised = article
+            if article.published_at != published_at:
+                normalised = replace(article, published_at=published_at)
+
+            existing = unique_articles.get(article_id)
+            if existing is None or published_at >= existing.published_at:
+                unique_articles[article_id] = normalised
+
+        deduplicated_articles = sorted(unique_articles.values(), key=lambda item: item.published_at)
+        if not deduplicated_articles:
+            _LOGGER.info(
+                "No valid news articles available after deduplication",
+                extra={"since": since_utc, "collected": len(articles)},
+            )
+            return pd.DataFrame(
+                columns=[
+                    "article_id",
+                    "symbol",
+                    "published_at",
+                    "source",
+                    "label",
+                    "sentiment_score",
+                    "prob_negative",
+                    "prob_neutral",
+                    "prob_positive",
+                ]
+            )
+
+        prepared: list[tuple[NewsArticle, str]] = []
+        for article in deduplicated_articles:
             text = normalize_text(article.title, article.body)
             if len(text) < self.min_characters:
                 continue
@@ -312,7 +358,18 @@ def aggregate_sentiment(
     if frame.empty:
         return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
 
-    frame["published_at"] = pd.to_datetime(frame["published_at"], utc=True)
+    frame["published_at"] = pd.to_datetime(frame["published_at"], utc=True, errors="coerce")
+    frame = frame.dropna(subset=["published_at"])
+    if frame.empty:
+        return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
+
+    if "article_id" in frame.columns:
+        frame = frame.dropna(subset=["article_id"])
+        if frame.empty:
+            return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
+        frame = frame.sort_values(["article_id", "symbol", "published_at"])
+        frame = frame.drop_duplicates(subset=["article_id", "symbol"], keep="last")
+
     frame["direction"] = frame["label"].map(direction_from_label)
     frame["weighted_score"] = frame["direction"] * frame["sentiment_score"]
 
