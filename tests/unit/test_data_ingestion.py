@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-import core.data.ingestion as ingestion
-from core.data.ingestion import BinanceStreamHandle, DataIngestor, Ticker
+import tradepulse.core.data.ingestion as ingestion
+from tradepulse.core.data.ingestion import BinanceStreamHandle, DataIngestor, Ticker
 
 
 def test_historical_csv_reads_rows(tmp_path: Path) -> None:

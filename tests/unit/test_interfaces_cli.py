@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.indicators.entropy import delta_entropy, entropy
-from core.indicators.kuramoto import compute_phase, kuramoto_order
-from core.indicators.ricci import build_price_graph, mean_ricci
-from core.phase.detector import composite_transition
+from tradepulse.core.indicators.entropy import delta_entropy, entropy
+from tradepulse.core.indicators.kuramoto import compute_phase, kuramoto_order
+from tradepulse.core.indicators.ricci import build_price_graph, mean_ricci
+from tradepulse.core.phase.detector import composite_transition
 from interfaces.cli import signal_from_indicators
 
 

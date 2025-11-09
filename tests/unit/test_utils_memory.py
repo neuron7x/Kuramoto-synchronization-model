@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.utils.memory import ArrayPool
+from tradepulse.core.utils.memory import ArrayPool
 
 
 def test_acquire_and_release_reuses_same_instance() -> None:

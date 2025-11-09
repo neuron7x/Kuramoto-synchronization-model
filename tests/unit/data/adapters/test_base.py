@@ -7,7 +7,7 @@ import types
 
 import pytest
 
-from core.data.adapters import base
+from tradepulse.core.data.adapters import base
 
 
 def test_default_retry_exceptions_include_optional_modules(

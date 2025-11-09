@@ -12,7 +12,7 @@ from typing import Iterable, Sequence
 import pytest
 import yaml
 
-from observability.audit.trail import (
+from tradepulse.observability.audit.trail import (
     get_access_audit_trail,
     get_system_audit_trail,
 )

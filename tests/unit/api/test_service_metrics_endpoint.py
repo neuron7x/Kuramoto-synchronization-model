@@ -8,7 +8,7 @@ def test_metrics_endpoint_exposes_prometheus_payload(monkeypatch):
         "fedcba9876543210fedcba9876543210",
     )
 
-    from application.api.service import create_app
+    from tradepulse.application.api.service import create_app
 
     app = create_app()
     client = TestClient(app)

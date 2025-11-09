@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from core.data.models import InstrumentType, PriceTick
+from tradepulse.core.data.models import InstrumentType, PriceTick
 
 from src.data.event_bus import BrokerMessage
 from src.data.ingestion_service import DataIngestionCacheService

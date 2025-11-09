@@ -4,8 +4,8 @@ from typing import Mapping
 
 import pytest
 
-from execution.canary import CanaryDecision
-from execution.rollout import (
+from tradepulse.execution.canary import CanaryDecision
+from tradepulse.execution.rollout import (
     BlueGreenRolloutOrchestrator,
     RolloutAbortedError,
     RolloutStep,

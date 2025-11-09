@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from core.config import (
+from tradepulse.core.config import (
     ConfigError,
     KuramotoRicciIntegrationConfig,
     TradePulseSettings,
@@ -17,8 +17,8 @@ from core.config import (
     load_kuramoto_ricci_config,
     parse_cli_overrides,
 )
-from core.config.kuramoto_ricci import SettingsError
-from core.indicators.multiscale_kuramoto import TimeFrame
+from tradepulse.core.config.kuramoto_ricci import SettingsError
+from tradepulse.core.indicators.multiscale_kuramoto import TimeFrame
 
 
 def test_loader_returns_defaults_when_file_missing() -> None:

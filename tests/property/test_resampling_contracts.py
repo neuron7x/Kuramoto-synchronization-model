@@ -14,7 +14,7 @@ try:  # pragma: no cover - optional dependency boundary
 except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from core.data import resampling
+from tradepulse.core.data import resampling
 
 from .utils import property_seed, property_settings, regression_note
 

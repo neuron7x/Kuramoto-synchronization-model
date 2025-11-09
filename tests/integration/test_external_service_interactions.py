@@ -8,9 +8,9 @@ from typing import Any
 import httpx
 import pytest
 
-from core.data.adapters.polygon import PolygonIngestionAdapter
-from core.data.models import InstrumentType, PriceTick
-from core.features.realtime_store import (
+from tradepulse.core.data.adapters.polygon import PolygonIngestionAdapter
+from tradepulse.core.data.models import InstrumentType, PriceTick
+from tradepulse.core.features.realtime_store import (
     FeatureDescriptor,
     FeatureLineage,
     RealTimeFeatureStore,

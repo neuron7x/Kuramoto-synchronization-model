@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from core.config.cli_models import VersioningConfig
-from core.data.versioning import DataVersionManager, VersioningError
+from tradepulse.core.config.cli_models import VersioningConfig
+from tradepulse.core.data.versioning import DataVersionManager, VersioningError
 
 
 def _git_available() -> bool:

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from core.utils.slo import AutoRollbackGuard, SLOBurnRateRule, SLOConfig
+from tradepulse.core.utils.slo import AutoRollbackGuard, SLOBurnRateRule, SLOConfig
 
 
 def _ts(offset_seconds: float) -> datetime:

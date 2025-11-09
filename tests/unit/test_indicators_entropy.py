@@ -20,7 +20,7 @@ import asyncio
 import numpy as np
 import pytest
 
-from core.indicators.entropy import (
+from tradepulse.core.indicators.entropy import (
     DeltaEntropyFeature,
     EntropyFeature,
     delta_entropy,

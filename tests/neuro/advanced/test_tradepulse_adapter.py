@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.neuro.adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from tradepulse.core.neuro.adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
 
 
 @pytest.mark.asyncio

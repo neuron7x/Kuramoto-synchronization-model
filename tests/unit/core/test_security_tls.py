@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
-from core.security import create_server_ssl_context, parse_tls_version
+from tradepulse.core.security import create_server_ssl_context, parse_tls_version
 
 
 def _write_certificate_bundle(tmp_path: Path) -> tuple[Path, Path, Path]:

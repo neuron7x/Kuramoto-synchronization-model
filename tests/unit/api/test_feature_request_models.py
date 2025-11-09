@@ -8,7 +8,7 @@ import pandas as pd
 os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-token")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-secret-value")
 
-from application.api.service import FeatureRequest, MarketBar
+from tradepulse.application.api.service import FeatureRequest, MarketBar
 
 
 def test_market_bar_normalises_naive_timestamp_and_alias_fields() -> None:

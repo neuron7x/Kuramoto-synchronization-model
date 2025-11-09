@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.indicators.hurst import hurst_exponent
-from core.indicators.kuramoto import compute_phase, compute_phase_gpu, kuramoto_order
-from core.indicators.ricci import build_price_graph, mean_ricci
+from tradepulse.core.indicators.hurst import hurst_exponent
+from tradepulse.core.indicators.kuramoto import compute_phase, compute_phase_gpu, kuramoto_order
+from tradepulse.core.indicators.ricci import build_price_graph, mean_ricci
 
 
 @pytest.mark.arm

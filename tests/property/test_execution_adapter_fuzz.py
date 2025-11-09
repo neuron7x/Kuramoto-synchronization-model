@@ -11,9 +11,9 @@ except ImportError:  # pragma: no cover - executed when hypothesis missing
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
 from domain import Order
-from execution.adapters.binance import BinanceRESTConnector
-from execution.adapters.coinbase import CoinbaseRESTConnector
-from execution.adapters.kraken import KrakenRESTConnector
+from tradepulse.execution.adapters.binance import BinanceRESTConnector
+from tradepulse.execution.adapters.coinbase import CoinbaseRESTConnector
+from tradepulse.execution.adapters.kraken import KrakenRESTConnector
 
 _FLOATS = st.floats(min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False)
 _INTS = st.integers(min_value=-1_000_000_000, max_value=1_000_000_000)

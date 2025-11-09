@@ -5,11 +5,11 @@ from collections import deque
 import pytest
 
 from domain import Order, OrderSide, OrderType
-from execution.connectors import (
+from tradepulse.execution.connectors import (
     SimulatedExchangeConnector,
     TransientOrderError,
 )
-from execution.normalization import SymbolSpecification
+from tradepulse.execution.normalization import SymbolSpecification
 
 
 class DummyConnector(SimulatedExchangeConnector):

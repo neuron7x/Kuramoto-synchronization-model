@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.accelerators import convolve, quantiles, sliding_windows
-from core.accelerators.numeric import (
+from tradepulse.core.accelerators import convolve, quantiles, sliding_windows
+from tradepulse.core.accelerators.numeric import (
     convolve_numpy_backend,
     convolve_python_backend,
     numpy_available,

@@ -8,14 +8,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from application.system import (
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from application.system_orchestrator import MarketDataSource
-from core.data.models import InstrumentType, PriceTick
-from execution.connectors import SimulatedExchangeConnector
+from tradepulse.application.system_orchestrator import MarketDataSource
+from tradepulse.core.data.models import InstrumentType, PriceTick
+from tradepulse.execution.connectors import SimulatedExchangeConnector
 
 from src.audit.audit_logger import AuditLogger
 from src.data.ingestion_service import DataIngestionCacheService

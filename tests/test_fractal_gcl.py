@@ -3,7 +3,7 @@ import warnings
 import networkx as nx
 import numpy as np
 
-from core.indicators.fractal_gcl import fractal_boxcover, fd_one_shot
+from tradepulse.core.indicators.fractal_gcl import fractal_boxcover, fd_one_shot
 
 
 def test_fd_one_shot_stable_no_warning():

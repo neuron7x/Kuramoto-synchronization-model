@@ -2,7 +2,7 @@ from datetime import UTC
 
 import pandas as pd
 
-from core.data.backfill import CacheKey, CacheRegistry, GapFillPlanner, normalise_index
+from tradepulse.core.data.backfill import CacheKey, CacheRegistry, GapFillPlanner, normalise_index
 
 
 def _make_frame(start: str, periods: int) -> pd.DataFrame:

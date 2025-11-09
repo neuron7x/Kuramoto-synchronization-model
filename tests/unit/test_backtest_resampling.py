@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from backtest.resampling import (
+from tradepulse.backtest.resampling import (
     bayesian_mcmc_performance_metrics,
     bootstrap_performance_metrics,
 )

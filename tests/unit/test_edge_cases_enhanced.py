@@ -21,9 +21,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.indicators.kuramoto import kuramoto_order
-from execution.order import position_sizing
-from execution.risk import portfolio_heat
+from tradepulse.core.indicators.kuramoto import kuramoto_order
+from tradepulse.execution.order import position_sizing
+from tradepulse.execution.risk import portfolio_heat
 
 
 class TestNumericalEdgeCases:

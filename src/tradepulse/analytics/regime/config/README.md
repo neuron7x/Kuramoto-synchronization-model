@@ -1,0 +1,1 @@
+Use environment variables. See .env.example

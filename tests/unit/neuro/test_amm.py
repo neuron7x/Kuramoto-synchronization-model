@@ -5,7 +5,7 @@ import asyncio
 import numpy as np
 import pytest
 
-from core.neuro.amm import AdaptiveMarketMind, AMMConfig
+from tradepulse.core.neuro.amm import AdaptiveMarketMind, AMMConfig
 
 
 def test_precision_penalized_by_entropy_and_desync() -> None:

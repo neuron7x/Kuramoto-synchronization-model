@@ -13,13 +13,13 @@ from hydra import compose
 from hydra import initialize_config_dir as hydra_initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 
-from analytics.runner import (
+from tradepulse.analytics.runner import (
     apply_reproducibility_settings,
     collect_run_metadata,
     run_pipeline,
     set_random_seeds,
 )
-from core.config.hydra_profiles import (
+from tradepulse.core.config.hydra_profiles import (
     ExperimentProfileError,
     available_experiment_profiles,
     validate_experiment_profile,

@@ -7,8 +7,8 @@ from typing import AsyncIterator, Deque, Iterable
 
 import pytest
 
-from core.data.async_ingestion import AsyncDataIngestor, Ticker, merge_streams
-from core.data.models import InstrumentType
+from tradepulse.core.data.async_ingestion import AsyncDataIngestor, Ticker, merge_streams
+from tradepulse.core.data.models import InstrumentType
 
 
 @pytest.mark.asyncio

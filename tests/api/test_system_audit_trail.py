@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 import logging
 
-from application.api.system_access import SystemAccess
-from observability.audit.trail import AuditTrail
+from tradepulse.application.api.system_access import SystemAccess
+from tradepulse.observability.audit.trail import AuditTrail
 from src.admin.remote_control import AdminIdentity
 
 

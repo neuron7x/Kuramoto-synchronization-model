@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from core.utils.determinism import THREAD_BOUND_ENV_VARS as _THREAD_BOUND_ENV_VARS
+from tradepulse.core.utils.determinism import THREAD_BOUND_ENV_VARS as _THREAD_BOUND_ENV_VARS
 
 # Threading environment variables that should be pinned to a single worker
 # when running tests to maximise reproducibility across BLAS backends and

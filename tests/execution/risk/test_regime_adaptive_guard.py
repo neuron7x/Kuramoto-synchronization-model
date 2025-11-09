@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from execution.risk.advanced import (
+from tradepulse.execution.risk.advanced import (
     AdvancedRiskController,
     CorrelationLimitGuard,
     DrawdownBreaker,

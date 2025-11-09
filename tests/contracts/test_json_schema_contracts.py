@@ -15,7 +15,7 @@ from pydantic import ValidationError as PydanticValidationError
 os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "import-admin-token")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "import-audit-secret")
 
-from application.api.service import (  # noqa: E402  - environment variables must be set before import
+from tradepulse.application.api.service import (  # noqa: E402  - environment variables must be set before import
     FeatureRequest,
     FeatureResponse,
     PredictionRequest,

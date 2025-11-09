@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from execution.risk import (
+from tradepulse.execution.risk import (
     DataQualityError,
     KillSwitch,
     PostgresKillSwitchStateStore,

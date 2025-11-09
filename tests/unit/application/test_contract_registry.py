@@ -1,4 +1,4 @@
-from application.microservices.contracts import (
+from tradepulse.application.microservices.contracts import (
     ApiContract,
     EventContract,
     IntegrationContractRegistry,
@@ -6,7 +6,7 @@ from application.microservices.contracts import (
     ServiceInteractionContract,
     default_contract_registry,
 )
-from core.messaging.event_bus import EventTopic
+from tradepulse.core.messaging.event_bus import EventTopic
 
 FEATURE_REQUEST_DIGEST = "ca6a9ddd3a27c500c16a9ab3dcbb5912208bbd7b28f7b8d3aff8f481ccb551a1"
 FEATURE_RESPONSE_DIGEST = "7b7d8c3e934b22485996261183f3fe0b0462bf5b635252b2864bcc5940c41206"

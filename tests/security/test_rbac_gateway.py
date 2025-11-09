@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi import HTTPException
 
-from application.security.rbac import AuthorizationGateway, load_rbac_configuration
+from tradepulse.application.security.rbac import AuthorizationGateway, load_rbac_configuration
 from src.admin.remote_control import AdminIdentity
 from src.audit.audit_logger import AuditLogger
 

@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from core.agent.sandbox import SandboxLimits, StrategySandbox, StrategySandboxError
-from core.agent.strategy import Strategy
+from tradepulse.core.agent.sandbox import SandboxLimits, StrategySandbox, StrategySandboxError
+from tradepulse.core.agent.strategy import Strategy
 
 
 class _MarkingStrategy(Strategy):

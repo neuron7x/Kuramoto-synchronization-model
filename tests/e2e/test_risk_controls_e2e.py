@@ -10,11 +10,11 @@ from unittest.mock import Mock
 import pytest
 
 from domain import Order, OrderSide, OrderStatus
-from execution.audit import ExecutionAuditLogger
-from execution.compliance import ComplianceViolation, RiskCompliance, RiskConfig
-from execution.connectors import ExecutionConnector
-from execution.oms import OMSConfig, OrderManagementSystem
-from execution.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
+from tradepulse.execution.audit import ExecutionAuditLogger
+from tradepulse.execution.compliance import ComplianceViolation, RiskCompliance, RiskConfig
+from tradepulse.execution.connectors import ExecutionConnector
+from tradepulse.execution.oms import OMSConfig, OrderManagementSystem
+from tradepulse.execution.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 from interfaces.execution import RiskController
 
 
@@ -295,7 +295,7 @@ class TestE2ERiskControls:
 
     def test_metrics_integration(self, oms):
         """Test that metrics are recorded for risk events."""
-        from execution.metrics import get_risk_metrics
+        from tradepulse.execution.metrics import get_risk_metrics
 
         metrics = get_risk_metrics()
 

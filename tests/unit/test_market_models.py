@@ -7,7 +7,7 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from core.data.models import (
+from tradepulse.core.data.models import (
     AggregateMetric,
     DataKind,
     InstrumentType,

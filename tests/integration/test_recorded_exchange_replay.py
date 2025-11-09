@@ -13,7 +13,7 @@ from execution import (
     SymbolNormalizer,
     SymbolSpecification,
 )
-from observability.release_gates import ReleaseGateEvaluator
+from tradepulse.observability.release_gates import ReleaseGateEvaluator
 
 
 DATASET = (

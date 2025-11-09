@@ -11,10 +11,10 @@ from typing import Any, Mapping
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.connectors import ExecutionConnector
-from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.order_lifecycle import IdempotentSubmitter
-from execution.risk import RiskLimits, RiskManager
+from tradepulse.execution.connectors import ExecutionConnector
+from tradepulse.execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from tradepulse.execution.order_lifecycle import IdempotentSubmitter
+from tradepulse.execution.risk import RiskLimits, RiskManager
 
 
 class FlakyConnector(ExecutionConnector):

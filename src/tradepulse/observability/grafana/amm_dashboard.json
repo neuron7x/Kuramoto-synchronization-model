@@ -1,0 +1,53 @@
+{
+  "title": "TradePulse AMM",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "AMM Pulse (S_t)",
+      "targets": [
+        {
+          "expr": "amm_pulse{symbol=~\"$symbol\",tf=~\"$tf\"}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Precision (\u03c0_t)",
+      "targets": [
+        {
+          "expr": "amm_precision{symbol=~\"$symbol\",tf=~\"$tf\"}"
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Bursts (24h)",
+      "targets": [
+        {
+          "expr": "increase(amm_bursts_total{symbol=~\"$symbol\",tf=~\"$tf\"}[24h])"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Update Latency p95 (s)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(amm_update_seconds_bucket[5m])) by (le))"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "symbol",
+        "query": "label_values(amm_pulse, symbol)"
+      },
+      {
+        "name": "tf",
+        "query": "label_values(amm_pulse, tf)"
+      }
+    ]
+  }
+}

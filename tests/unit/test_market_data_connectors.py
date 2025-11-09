@@ -9,14 +9,14 @@ from typing import Any, AsyncIterator, List
 import pytest
 from packaging.version import Version
 
-from core.data.adapters.base import IngestionAdapter, RetryConfig
-from core.data.connectors import (
+from tradepulse.core.data.adapters.base import IngestionAdapter, RetryConfig
+from tradepulse.core.data.connectors import (
     BinanceMarketDataConnector,
     CoinbaseMarketDataConnector,
     DeadLetterQueue,
     PolygonMarketDataConnector,
 )
-from core.data.models import InstrumentType, MarketMetadata, PriceTick
+from tradepulse.core.data.models import InstrumentType, MarketMetadata, PriceTick
 
 
 class DummyAdapter(IngestionAdapter):

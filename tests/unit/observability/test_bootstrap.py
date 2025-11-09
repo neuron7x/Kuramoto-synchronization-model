@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from observability.bootstrap import (
+from tradepulse.observability.bootstrap import (
     AlertNoiseGuard,
     EndpointCheck,
     EndpointValidator,

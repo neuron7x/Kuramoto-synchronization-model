@@ -130,53 +130,17 @@ version_file = "src/_version.py"
 fallback_version = "0.1.0"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = [
-    "analytics",
-    "analytics.*",
-    "application",
-    "application.*",
-    "backtest",
-    "backtest.*",
-    "core",
-    "core.*",
-    "domain",
-    "domain.*",
-    "sandbox",
-    "sandbox.*",
-    "execution",
-    "execution.*",
-    "interfaces",
-    "interfaces.*",
-    "src",
-    "src.*",
-    "tradepulse_agent",
-    "tradepulse_agent.*",
-    "markets",
-    "markets.*",
-    "modules",
-    "modules.*",
-    "nfpro",
-    "nfpro.*",
-    "neurotrade_pro",
-    "neurotrade_pro.*",
-    "observability",
-    "observability.*",
-    "tools",
-    "tools.*",
-]
+where = ["src"]
+include = ["tradepulse*"]
 exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]
-"*" = ["py.typed"]
+"tradepulse" = ["py.typed"]
 "tradepulse.neural_controller" = ["config/*.yaml"]
 
 [tool.mutmut]
 paths_to_mutate = [
-    "core",
-    "backtest",
-    "execution",
-    "src",
+    "src/tradepulse",
 ]
 tests_dir = "tests"
 runner = "python -m pytest tests/unit tests/integration tests/property -q"
@@ -185,10 +149,11 @@ use_coverage = true
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["core", "backtest", "execution", "analytics", "src"]
+source = ["src/tradepulse"]
+omit = ["tests/**", "**/__init__.py"]
 
 [tool.coverage.report]
-fail_under = 90
+fail_under = 92
 show_missing = true
 skip_covered = false
 

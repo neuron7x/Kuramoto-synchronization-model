@@ -12,7 +12,7 @@ import pytest
 from click.testing import CliRunner
 
 from cli.tradepulse_cli import cli
-from core.config.template_manager import ConfigTemplateManager
+from tradepulse.core.config.template_manager import ConfigTemplateManager
 
 SNAPSHOT_DIR = Path(__file__).parent / "__snapshots__"
 SNAPSHOT_DIR.mkdir(exist_ok=True)

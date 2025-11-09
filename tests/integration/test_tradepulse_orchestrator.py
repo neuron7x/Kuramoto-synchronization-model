@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 
-from application.system import LiveLoopSettings
-from application.system_orchestrator import (
+from tradepulse.application.system import LiveLoopSettings
+from tradepulse.application.system_orchestrator import (
     ExecutionRequest,
     MarketDataSource,
     TradePulseOrchestrator,

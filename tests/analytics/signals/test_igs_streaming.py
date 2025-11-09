@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analytics.signals.irreversibility import IGSConfig, StreamingIGS
+from tradepulse.analytics.signals.irreversibility import IGSConfig, StreamingIGS
 
 
 def test_streaming_igs_resets_on_non_monotonic_timestamp():
@@ -47,7 +47,7 @@ def test_streaming_igs_resets_on_timezone_mismatch():
 
 
 def test_streaming_igs_updates_prometheus_gauges_inline(monkeypatch):
-    from analytics.signals import irreversibility as irr
+    from tradepulse.analytics.signals import irreversibility as irr
 
     recorded: dict[str, dict[str, float | str]] = {}
 

@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.oms import OMSConfig, OrderManagementSystem
-from execution.order_ledger import OrderLedger, OrderLedgerConfig
+from tradepulse.execution.oms import OMSConfig, OrderManagementSystem
+from tradepulse.execution.order_ledger import OrderLedger, OrderLedgerConfig
 
 
 class DummyConnector:

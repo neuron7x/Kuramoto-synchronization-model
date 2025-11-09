@@ -4,10 +4,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.indicators.base import BaseFeature, FeatureResult, ParallelFeatureBlock
-from core.indicators.entropy import entropy
-from core.indicators.pipeline import IndicatorPipeline
-from core.indicators.ricci import MeanRicciFeature, build_price_graph, mean_ricci
+from tradepulse.core.indicators.base import BaseFeature, FeatureResult, ParallelFeatureBlock
+from tradepulse.core.indicators.entropy import entropy
+from tradepulse.core.indicators.pipeline import IndicatorPipeline
+from tradepulse.core.indicators.ricci import MeanRicciFeature, build_price_graph, mean_ricci
 from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL
 
 

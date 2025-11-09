@@ -12,10 +12,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest.engine import walk_forward
+from tradepulse.backtest.engine import walk_forward
 from domain import Order, OrderSide, OrderType
-from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.risk import LimitViolation, RiskLimits, RiskManager
+from tradepulse.execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from tradepulse.execution.risk import LimitViolation, RiskLimits, RiskManager
 from interfaces.cli import signal_from_indicators
 from tests.fixtures.fake_exchange import FakeExchangeAdapter
 

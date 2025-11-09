@@ -11,7 +11,7 @@ try:  # pragma: no cover - optional dependency boundary
 except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from execution.order import (
+from tradepulse.execution.order import (
     ConstrainedPositionSizer,
     PortfolioState,
     PositionSizingConstraints,

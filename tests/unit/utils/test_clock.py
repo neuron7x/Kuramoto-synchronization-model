@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 import time
 
-from core.utils.clock import freeze_time
+from tradepulse.core.utils.clock import freeze_time
 
 
 def test_freeze_time_freezes_multiple_sources() -> None:

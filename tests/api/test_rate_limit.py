@@ -5,12 +5,12 @@ from typing import Any
 import pytest
 from fastapi import HTTPException
 
-from application.api.rate_limit import (
+from tradepulse.application.api.rate_limit import (
     InMemorySlidingWindowBackend,
     RedisSlidingWindowBackend,
     SlidingWindowRateLimiter,
 )
-from application.settings import ApiRateLimitSettings, RateLimitPolicy
+from tradepulse.application.settings import ApiRateLimitSettings, RateLimitPolicy
 
 
 class _FakePipeline:

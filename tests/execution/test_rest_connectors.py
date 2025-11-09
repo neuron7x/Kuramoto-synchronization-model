@@ -16,7 +16,7 @@ import httpx
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.adapters import (
+from tradepulse.execution.adapters import (
     BinanceRESTConnector,
     CoinbaseRESTConnector,
     KrakenRESTConnector,

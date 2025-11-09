@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.indicators.multiscale_kuramoto as kuramoto_mod
-from core.indicators.multiscale_kuramoto import (
+import tradepulse.core.indicators.multiscale_kuramoto as kuramoto_mod
+from tradepulse.core.indicators.multiscale_kuramoto import (
     FractalResampler,
     KuramotoResult,
     MultiScaleKuramoto,

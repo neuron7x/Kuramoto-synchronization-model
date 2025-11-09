@@ -5,12 +5,12 @@ from decimal import Decimal
 
 import pytest
 
-from execution.arbitrage.inventory import (
+from tradepulse.execution.arbitrage.inventory import (
     InventoryError,
     InventoryManager,
     InventoryTarget,
 )
-from execution.arbitrage.liquidity import LiquidityError, LiquidityLedger
+from tradepulse.execution.arbitrage.liquidity import LiquidityError, LiquidityLedger
 
 
 def _build_ledger() -> LiquidityLedger:

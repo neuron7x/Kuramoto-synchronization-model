@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from prometheus_client import CollectorRegistry
 
-from core.utils.metrics import MetricsCollector
+from tradepulse.core.utils.metrics import MetricsCollector
 
 
 def _sample_value(

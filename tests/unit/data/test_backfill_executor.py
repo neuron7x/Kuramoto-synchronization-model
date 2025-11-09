@@ -6,7 +6,7 @@ from datetime import UTC
 
 import pandas as pd
 
-from core.data.backfill import (
+from tradepulse.core.data.backfill import (
     BackfillPayload,
     BackfillPlanner,
     CacheKey,

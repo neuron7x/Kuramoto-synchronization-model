@@ -3,7 +3,7 @@ from typing import Optional
 
 import pytest
 
-from backtest.execution_simulation import (
+from tradepulse.backtest.execution_simulation import (
     HaltMode,
     MarketHalt,
     MatchingEngine,

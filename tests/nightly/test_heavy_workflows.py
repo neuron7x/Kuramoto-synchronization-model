@@ -8,10 +8,10 @@ from typing import Iterable
 import numpy as np
 import pytest
 
-from backtest.engine import walk_forward
-from core.indicators.entropy import delta_entropy, entropy
-from core.indicators.kuramoto import compute_phase, kuramoto_order, multi_asset_kuramoto
-from core.indicators.ricci import build_price_graph, mean_ricci
+from tradepulse.backtest.engine import walk_forward
+from tradepulse.core.indicators.entropy import delta_entropy, entropy
+from tradepulse.core.indicators.kuramoto import compute_phase, kuramoto_order, multi_asset_kuramoto
+from tradepulse.core.indicators.ricci import build_price_graph, mean_ricci
 
 try:  # Optional dependency during lightweight installs
     from hypothesis import HealthCheck, given, settings

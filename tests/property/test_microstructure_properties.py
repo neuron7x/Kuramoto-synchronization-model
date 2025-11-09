@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.metrics.microstructure import hasbrouck_information_impulse
+from tradepulse.core.metrics.microstructure import hasbrouck_information_impulse
 
 
 @pytest.mark.parametrize("seed", [0, 1, 2])

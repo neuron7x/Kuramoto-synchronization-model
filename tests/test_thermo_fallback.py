@@ -3,7 +3,7 @@ from __future__ import annotations
 import networkx as nx
 import pytest
 
-import runtime.thermo_controller as thermo
+import tradepulse.runtime.thermo_controller as thermo
 
 
 @pytest.mark.skipif(

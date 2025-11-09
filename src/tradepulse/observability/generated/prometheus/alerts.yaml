@@ -1,0 +1,93 @@
+groups:
+  -
+    name: tradepulse.execution
+    interval: 1m
+    rules:
+      -
+        alert: TradePulseOrderErrorRate
+        expr: sum(rate(tradepulse_orders_placed_total{status="error"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: trade-ops
+        annotations:
+          summary: High order error rate detected
+          description: More than 5% of orders failed in the last 5 minutes
+      -
+        alert: TradePulseOrderLatency
+        expr: histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: trade-ops
+        annotations:
+          summary: Order placement latency above 2 seconds
+          description: P95 order placement latency exceeded the target for 10 minutes
+      -
+        alert: TradePulseOrderAckLatency
+        expr: tradepulse_order_ack_latency_quantiles_seconds{quantile="0.95"} > 0.4
+        for: 5m
+        labels:
+          severity: warning
+          team: trade-ops
+        annotations:
+          summary: Signal → ack latency breaching 400 ms
+          description: p95 signal to acknowledgement latency exceeded 400 ms for 5 minutes
+      -
+        alert: TradePulseSignalToFillLatency
+        expr: tradepulse_signal_to_fill_latency_quantiles_seconds{quantile="0.99"} > 0.65
+        for: 5m
+        labels:
+          severity: critical
+          team: trade-ops
+        annotations:
+          summary: Signal → fill latency breaching 650 ms
+          description: p99 signal to fill latency exceeded 650 ms for 5 minutes
+  -
+    name: tradepulse.data
+    interval: 2m
+    rules:
+      -
+        alert: TradePulseDataIngestionFailures
+        expr: increase(tradepulse_data_ingestion_total{status="error"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: data-pipeline
+        annotations:
+          summary: Data ingestion failure detected
+          description: At least one ingestion job reported errors in the last 10 minutes
+      -
+        alert: TradePulseDataFreshness
+        expr: max(time() - tradepulse_data_ingestion_duration_seconds_sum / tradepulse_data_ingestion_duration_seconds_count) > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: data-pipeline
+        annotations:
+          summary: Data ingestion freshness degraded
+          description: Average ingestion lag exceeded five minutes
+  -
+    name: tradepulse.strategy
+    interval: 1m
+    rules:
+      -
+        alert: TradePulseBacktestFailures
+        expr: increase(tradepulse_backtest_total{status="error"}[30m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          team: research
+        annotations:
+          summary: Backtest run failed
+          description: At least one strategy backtest ended with an error in the last 30 minutes
+      -
+        alert: TradePulseOptimizationSlow
+        expr: avg(rate(tradepulse_optimization_duration_seconds_sum[30m]) / rate(tradepulse_optimization_duration_seconds_count[30m])) > 120
+        for: 30m
+        labels:
+          severity: info
+          team: research
+        annotations:
+          summary: Strategy optimisation running slowly
+          description: Average optimisation duration exceeded two minutes

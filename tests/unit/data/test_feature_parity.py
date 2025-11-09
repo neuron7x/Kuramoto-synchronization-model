@@ -3,8 +3,8 @@ from datetime import UTC
 import pandas as pd
 import pytest
 
-from core.data.feature_store import OnlineFeatureStore
-from core.data.parity import (
+from tradepulse.core.data.feature_store import OnlineFeatureStore
+from tradepulse.core.data.parity import (
     FeatureParityCoordinator,
     FeatureParityReport,
     FeatureParitySpec,

@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from application.secrets.manager import ManagedSecret, ManagedSecretConfig
+from tradepulse.application.secrets.manager import ManagedSecret, ManagedSecretConfig
 from src.audit.audit_logger import AuditLogger, AuditRecord, HttpAuditSink
 
 

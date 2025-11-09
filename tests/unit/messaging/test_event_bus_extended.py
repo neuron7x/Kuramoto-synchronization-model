@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import pytest
 
-from core.messaging.event_bus import (
+from tradepulse.core.messaging.event_bus import (
     EventBusBackend,
     EventBusConfig,
     EventEnvelope,
@@ -17,7 +17,7 @@ from core.messaging.event_bus import (
     _envelope_from_kafka_message,
     _envelope_from_nats_message,
 )
-from core.messaging.idempotency import InMemoryEventIdempotencyStore
+from tradepulse.core.messaging.idempotency import InMemoryEventIdempotencyStore
 
 
 @pytest.fixture(autouse=True)

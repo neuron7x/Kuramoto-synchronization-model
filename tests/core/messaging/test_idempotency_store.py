@@ -4,8 +4,8 @@ from typing import Callable
 
 import pytest
 
-from core.messaging import idempotency
-from core.messaging.idempotency import InMemoryEventIdempotencyStore
+from tradepulse.core.messaging import idempotency
+from tradepulse.core.messaging.idempotency import InMemoryEventIdempotencyStore
 
 
 @pytest.fixture()

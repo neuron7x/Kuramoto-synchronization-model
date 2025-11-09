@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.neuro.advanced import (
+from tradepulse.core.neuro.advanced import (
     DivergenceConfig,
     compute_divergence_convergence_phi,
     granger_causality,

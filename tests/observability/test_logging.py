@@ -5,7 +5,7 @@ from typing import Callable
 
 import pytest
 
-from observability.logging import configure_logging
+from tradepulse.observability.logging import configure_logging
 
 
 @pytest.fixture()

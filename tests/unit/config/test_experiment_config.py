@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from core.config.cli_models import ExperimentConfig
+from tradepulse.core.config.cli_models import ExperimentConfig
 
 
 def _base_payload(tmp_path: Path) -> dict[str, object]:

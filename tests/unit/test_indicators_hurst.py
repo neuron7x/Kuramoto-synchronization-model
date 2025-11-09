@@ -18,7 +18,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.indicators.hurst import HurstFeature, hurst_exponent
+from tradepulse.core.indicators.hurst import HurstFeature, hurst_exponent
 
 
 def test_hurst_exponent_of_brownian_motion_near_half(

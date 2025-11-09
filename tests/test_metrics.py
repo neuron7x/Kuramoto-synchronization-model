@@ -1,8 +1,8 @@
 import numpy as np
 
-from core.metrics.aperiodic import aperiodic_slope
-from core.metrics.dfa import dfa_alpha
-from core.metrics.fractal_dimension import box_counting_dim
+from tradepulse.core.metrics.aperiodic import aperiodic_slope
+from tradepulse.core.metrics.dfa import dfa_alpha
+from tradepulse.core.metrics.fractal_dimension import box_counting_dim
 from utils.fractal_cascade import DyadicPMCascade, pink_noise
 
 

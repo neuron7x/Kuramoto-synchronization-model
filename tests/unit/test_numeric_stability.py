@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-from core.indicators.kuramoto import compute_phase, kuramoto_order
+from tradepulse.core.indicators.kuramoto import compute_phase, kuramoto_order
 from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL
 
 

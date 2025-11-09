@@ -6,7 +6,7 @@ from typing import List
 
 import pytest
 
-from core.utils.slo import (
+from tradepulse.core.utils.slo import (
     AutoRollbackGuard,
     RequestSample,
     SLOBurnRateRule,

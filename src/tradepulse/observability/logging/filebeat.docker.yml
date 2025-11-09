@@ -1,0 +1,39 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: false
+      templates:
+        - condition:
+            equals:
+              docker.labels.co.elastic.logs/enabled: "true"
+          config:
+            - type: filestream
+              id: ${data.docker.container.labels.co.elastic.logs/module:tradepulse}-container-logs
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              parsers:
+                - ndjson:
+                    overwrite_keys: true
+                    add_error_key: true
+              processors:
+                - decode_json_fields:
+                    when:
+                      has_fields: ["message"]
+                    fields: ["message"]
+                    target: ""
+                    overwrite_keys: true
+                    add_error_key: true
+                - drop_fields:
+                    fields: ["input", "agent"]
+              fields:
+                service.name: ${data.docker.container.labels.co.elastic.logs/module:tradepulse}
+                environment: ${FILEBEAT_ENVIRONMENT:local}
+              fields_under_root: true
+              ignore_older: 72h
+
+processors:
+  - add_host_metadata: ~
+  - add_process_metadata: ~
+
+output.logstash:
+  hosts: ["logstash:5044"]

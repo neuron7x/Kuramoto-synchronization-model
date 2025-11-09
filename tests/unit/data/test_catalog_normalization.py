@@ -5,7 +5,7 @@ from enum import Enum
 
 import pytest
 
-from core.data.catalog import normalize_symbol, normalize_venue
+from tradepulse.core.data.catalog import normalize_symbol, normalize_venue
 
 
 class InstrumentHint(Enum):

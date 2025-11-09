@@ -5,7 +5,7 @@ from datetime import UTC
 import pandas as pd
 import pytest
 
-from core.data.feature_store import (
+from tradepulse.core.data.feature_store import (
     DeltaLakeSource,
     FeatureStoreIntegrityError,
     IntegrityReport,
@@ -16,7 +16,7 @@ from core.data.feature_store import (
     SQLiteEncryptionConfig,
     SQLiteOnlineFeatureStore,
 )
-from core.utils.dataframe_io import write_dataframe
+from tradepulse.core.utils.dataframe_io import write_dataframe
 
 
 class _MutableClock:

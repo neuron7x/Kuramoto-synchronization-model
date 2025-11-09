@@ -1,7 +1,7 @@
 import pytest
 
-from execution.compliance import ComplianceMonitor, ComplianceViolation
-from execution.normalization import SymbolNormalizer, SymbolSpecification
+from tradepulse.execution.compliance import ComplianceMonitor, ComplianceViolation
+from tradepulse.execution.normalization import SymbolNormalizer, SymbolSpecification
 
 
 @pytest.fixture

@@ -3,8 +3,8 @@ from __future__ import annotations
 import threading
 import time
 
-from execution.watchdog import Watchdog
-from observability.health import HealthServer
+from tradepulse.execution.watchdog import Watchdog
+from tradepulse.observability.health import HealthServer
 
 
 def _wait_for(predicate, timeout: float = 2.0) -> bool:

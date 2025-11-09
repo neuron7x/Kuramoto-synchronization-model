@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from analytics.signals.pipeline import FeaturePipelineConfig, SignalFeaturePipeline
+from tradepulse.analytics.signals.pipeline import FeaturePipelineConfig, SignalFeaturePipeline
 
 
 def test_volume_z_constant_volume_zero_variance() -> None:

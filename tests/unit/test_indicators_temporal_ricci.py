@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.temporal_ricci import (
+from tradepulse.core.indicators.temporal_ricci import (
     LightGraph,
     PriceLevelGraph,
     PriceLevelGraphBuilder,

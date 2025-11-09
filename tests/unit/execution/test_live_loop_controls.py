@@ -8,10 +8,10 @@ from typing import Tuple
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.connectors import BinanceConnector
-from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.session_snapshot import SessionSnapshotError
-from execution.risk import RiskLimits, RiskManager
+from tradepulse.execution.connectors import BinanceConnector
+from tradepulse.execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from tradepulse.execution.session_snapshot import SessionSnapshotError
+from tradepulse.execution.risk import RiskLimits, RiskManager
 
 
 @pytest.fixture()

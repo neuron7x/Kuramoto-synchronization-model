@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from exchange_calendars import always_open, errors
 
-from core.data.timeutils import (
+from tradepulse.core.data.timeutils import (
     MarketCalendar,
     MarketCalendarRegistry,
     convert_timestamp,
@@ -276,7 +276,7 @@ def test_exchange_aliases_are_supported() -> None:
 def test_load_exchange_calendar_falls_back_to_name(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from core.data import timeutils as tu
+    from tradepulse.core.data import timeutils as tu
 
     def fake_resolve(name: str) -> str:
         raise errors.InvalidCalendarName()
@@ -304,7 +304,7 @@ def test_market_calendar_is_open_with_overnight_session() -> None:
         weekend_closure=(),
     )
 
-    from core.data import timeutils as tu
+    from tradepulse.core.data import timeutils as tu
 
     tu._registry.register(overnight)
 
@@ -327,7 +327,7 @@ def test_market_calendar_manual_session_holidays_and_weekends() -> None:
         holidays=[date(2024, 1, 1)],
     )
 
-    from core.data import timeutils as tu
+    from tradepulse.core.data import timeutils as tu
 
     tu._registry.register(manual)
 
@@ -462,7 +462,7 @@ def test_validate_bar_alignment_with_manual_calendar() -> None:
     custom = MarketCalendar(market="CUSTOM", timezone="UTC")
     _ = get_market_calendar("BINANCE")  # ensure registry initialised
     # Registering custom calendar on module-level registry
-    from core.data import timeutils as tu
+    from tradepulse.core.data import timeutils as tu
 
     tu._registry.register(custom)
 
@@ -475,7 +475,7 @@ def test_validate_bar_alignment_with_manual_calendar() -> None:
 
 def test_validate_bar_alignment_with_manual_calendar_mismatch() -> None:
     custom = MarketCalendar(market="CUSTOM_MISMATCH", timezone="UTC")
-    from core.data import timeutils as tu
+    from tradepulse.core.data import timeutils as tu
 
     tu._registry.register(custom)
 
@@ -488,7 +488,7 @@ def test_validate_bar_alignment_with_manual_calendar_mismatch() -> None:
 
 
 def test_as_utc_index_handles_naive_values() -> None:
-    from core.data import timeutils as tu
+    from tradepulse.core.data import timeutils as tu
 
     index = tu._as_utc_index([datetime(2024, 1, 1, 0, 0), datetime(2024, 1, 1, 0, 1)])
     assert str(index.tz) == "UTC"

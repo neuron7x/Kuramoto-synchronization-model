@@ -16,7 +16,7 @@ Provider = pactman.Provider
 mock_server = mock_module.mock_server
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.adapters.base import RESTWebSocketConnector
+from tradepulse.execution.adapters.base import RESTWebSocketConnector
 
 
 def _allocate_port() -> int:

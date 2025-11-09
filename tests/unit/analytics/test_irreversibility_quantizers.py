@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analytics.signals.irreversibility import (
+from tradepulse.analytics.signals.irreversibility import (
     IGSConfig,
     RollingRankQuantizer,
     StreamingIGS,

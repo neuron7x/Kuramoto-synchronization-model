@@ -18,8 +18,8 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import OperationalError as SAOperationalError
 from sqlalchemy.orm import Session
 
-from core.data.models import InstrumentType
-from execution.risk import KillSwitch, PostgresKillSwitchStateStore
+from tradepulse.core.data.models import InstrumentType
+from tradepulse.execution.risk import KillSwitch, PostgresKillSwitchStateStore
 from libs.db import RetryPolicy
 from libs.db.models import KillSwitchState
 from libs.db.repository import KillSwitchStateRepository

@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from execution.capital_optimizer import (
+from tradepulse.execution.capital_optimizer import (
     AllocationConstraints,
     CapitalAllocationOptimizer,
     PipelineMetrics,

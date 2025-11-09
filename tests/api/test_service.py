@@ -23,22 +23,22 @@ os.environ.setdefault(
 )
 os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "test-rbac-secret")
 
-from application.api import security as security_module
-from application.api import service as service_module
-from application.api.rate_limit import (
+from tradepulse.application.api import security as security_module
+from tradepulse.application.api import service as service_module
+from tradepulse.application.api.rate_limit import (
     InMemorySlidingWindowBackend,
     SlidingWindowRateLimiter,
 )
-from application.api.service import DependencyProbeResult, create_app
-from application.settings import (
+from tradepulse.application.api.service import DependencyProbeResult, create_app
+from tradepulse.application.settings import (
     AdminApiSettings,
     ApiRateLimitSettings,
     ApiSecuritySettings,
     KillSwitchPostgresSettings,
     RateLimitPolicy,
 )
-from application.security.two_factor import generate_totp_code
-from core.config.cli_models import PostgresTLSConfig
+from tradepulse.application.security.two_factor import generate_totp_code
+from tradepulse.core.config.cli_models import PostgresTLSConfig
 
 
 API_V1_PREFIX = "/api/v1"

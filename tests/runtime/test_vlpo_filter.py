@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from runtime.filters.vlpo_core_filter import VLPOCoreFilter
+from tradepulse.runtime.filters.vlpo_core_filter import VLPOCoreFilter
 
 
 def _build_dataframe() -> pd.DataFrame:

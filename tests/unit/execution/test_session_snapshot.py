@@ -5,9 +5,9 @@ import json
 
 import pytest
 
-from execution.connectors import ExecutionConnector
-from execution.session_snapshot import ExecutionMode, SessionSnapshotter
-from execution.risk import RiskLimits, RiskManager
+from tradepulse.execution.connectors import ExecutionConnector
+from tradepulse.execution.session_snapshot import ExecutionMode, SessionSnapshotter
+from tradepulse.execution.risk import RiskLimits, RiskManager
 
 
 class StaticConnector(ExecutionConnector):

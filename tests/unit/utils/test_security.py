@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from core.utils.security import SecretDetector, check_for_hardcoded_secrets
+from tradepulse.core.utils.security import SecretDetector, check_for_hardcoded_secrets
 
 
 def test_secret_detector_masks_findings() -> None:

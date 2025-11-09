@@ -14,7 +14,7 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from core.agent.strategy import PiAgent, Strategy
+from tradepulse.core.agent.strategy import PiAgent, Strategy
 
 
 class TestStrategyProperties:

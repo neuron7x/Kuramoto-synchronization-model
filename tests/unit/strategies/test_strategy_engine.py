@@ -6,8 +6,8 @@ from typing import Iterable, Mapping
 
 import pytest
 
-from core.events.models import SignalDirection
-from core.strategies.engine import (
+from tradepulse.core.events.models import SignalDirection
+from tradepulse.core.strategies.engine import (
     IOContract,
     InvalidModeTransition,
     RiskAdviceLevel,

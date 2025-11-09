@@ -9,22 +9,22 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from backtest.engine import (
+from tradepulse.backtest.engine import (
     LatencyConfig,
     OrderBookConfig,
     SlippageConfig,
     WalkForwardEngine,
 )
-from backtest.event_driven import (
+from tradepulse.backtest.event_driven import (
     CSVChunkDataHandler,
     EventDrivenBacktestEngine,
     Portfolio,
     SimulatedExecutionHandler,
     Strategy,
 )
-from backtest.events import FillEvent, MarketEvent, OrderEvent, SignalEvent
-from backtest.market_calendar import MarketCalendar, SessionHours
-from backtest.transaction_costs import (
+from tradepulse.backtest.events import FillEvent, MarketEvent, OrderEvent, SignalEvent
+from tradepulse.backtest.market_calendar import MarketCalendar, SessionHours
+from tradepulse.backtest.transaction_costs import (
     BorrowFinancing,
     CompositeTransactionCostModel,
     FixedSlippage,

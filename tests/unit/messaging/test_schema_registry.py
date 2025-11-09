@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from core.messaging.schema_registry import (
+from tradepulse.core.messaging.schema_registry import (
     EventSchemaRegistry,
     SchemaCompatibilityError,
     SchemaFormat,

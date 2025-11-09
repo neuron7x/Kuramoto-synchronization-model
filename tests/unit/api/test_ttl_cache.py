@@ -6,8 +6,8 @@ import pytest
 os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-token")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-secret-value")
 
-from application.api import service
-from application.api.service import FeatureResponse, TTLCache
+from tradepulse.application.api import service
+from tradepulse.application.api.service import FeatureResponse, TTLCache
 
 pytestmark = pytest.mark.asyncio
 

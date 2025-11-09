@@ -6,17 +6,17 @@ import networkx as nx
 import pytest
 from typing import Tuple
 
-import runtime.thermo_controller as thermo_module
-from core.energy import (
+import tradepulse.runtime.thermo_controller as thermo_module
+from tradepulse.core.energy import (
     BondType,
     ENERGY_SCALE,
     bond_internal_energy,
     delta_free_energy,
     system_free_energy,
 )
-from runtime.recovery_agent import RecoveryAction
-from runtime.dual_approval import DualApprovalManager
-from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
+from tradepulse.runtime.recovery_agent import RecoveryAction
+from tradepulse.runtime.dual_approval import DualApprovalManager
+from tradepulse.runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
 pytestmark = pytest.mark.stability
 

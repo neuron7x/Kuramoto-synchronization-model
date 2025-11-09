@@ -9,15 +9,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from application.system import (
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from core.data.models import InstrumentType, PriceTick
+from tradepulse.core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
-from execution.connectors import BinanceConnector
+from tradepulse.execution.connectors import BinanceConnector
 from src.security import AccessController, AccessDeniedError, AccessPolicy
 import yaml
 

@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from core.config.cli_models import PostgresTLSConfig
+from tradepulse.core.config.cli_models import PostgresTLSConfig
 from libs.db.postgres import create_postgres_connection
 
 

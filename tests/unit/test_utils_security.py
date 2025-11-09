@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.utils.security import SecretDetector, check_for_hardcoded_secrets
+from tradepulse.core.utils.security import SecretDetector, check_for_hardcoded_secrets
 
 API_KEY_LABEL = "".join(("a", "p", "i", "_", "k", "e", "y"))
 PASSWORD_LABEL = "".join(("p", "a", "s", "s", "w", "o", "r", "d"))

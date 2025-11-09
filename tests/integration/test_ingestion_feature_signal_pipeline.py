@@ -7,15 +7,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analytics.signals.pipeline import (
+from tradepulse.analytics.signals.pipeline import (
     FeaturePipelineConfig,
     LeakageGate,
     SignalModelSelector,
     build_supervised_learning_frame,
     make_default_candidates,
 )
-from backtest.time_splits import WalkForwardSplitter
-from core.data.ingestion import DataIngestor
+from tradepulse.backtest.time_splits import WalkForwardSplitter
+from tradepulse.core.data.ingestion import DataIngestor
 
 
 def _write_synthetic_csv(path: Path, *, periods: int = 80) -> None:

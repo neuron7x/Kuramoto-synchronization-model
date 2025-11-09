@@ -11,7 +11,7 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from backtest.engine import Result, walk_forward
+from tradepulse.backtest.engine import Result, walk_forward
 
 
 class TestBacktestEngineProperties:

@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from runtime.cns_stabilizer import CNSStabilizer
-from runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
+from tradepulse.runtime.cns_stabilizer import CNSStabilizer
+from tradepulse.runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
 
 
 np.random.seed(42)

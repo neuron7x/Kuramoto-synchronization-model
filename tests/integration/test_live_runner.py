@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 
 from domain import Order, OrderSide, OrderType
-from execution.connectors import BinanceConnector
+from tradepulse.execution.connectors import BinanceConnector
 from interfaces.live_runner import LiveTradingRunner
 
 

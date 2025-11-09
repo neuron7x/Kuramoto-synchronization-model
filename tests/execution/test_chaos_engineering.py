@@ -14,7 +14,7 @@ from interfaces.execution.common import (
     HMACSigner,
     HTTPBackoffController,
 )
-from observability.tracing import chaos_span
+from tradepulse.observability.tracing import chaos_span
 
 
 @dataclass(slots=True)

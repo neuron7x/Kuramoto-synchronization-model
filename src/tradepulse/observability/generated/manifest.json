@@ -1,0 +1,355 @@
+{
+  "alerts": [
+    {
+      "interval": "1m",
+      "name": "tradepulse.execution",
+      "rules": [
+        {
+          "alert": "TradePulseOrderErrorRate",
+          "annotations": {
+            "description": "More than 5% of orders failed in the last 5 minutes",
+            "summary": "High order error rate detected"
+          },
+          "expr": "sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m])) > 0.05",
+          "for": "5m",
+          "labels": {
+            "severity": "critical",
+            "team": "trade-ops"
+          }
+        },
+        {
+          "alert": "TradePulseOrderLatency",
+          "annotations": {
+            "description": "P95 order placement latency exceeded the target for 10 minutes",
+            "summary": "Order placement latency above 2 seconds"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le)) > 2",
+          "for": "10m",
+          "labels": {
+            "severity": "warning",
+            "team": "trade-ops"
+          }
+        }
+      ]
+    },
+    {
+      "interval": "2m",
+      "name": "tradepulse.data",
+      "rules": [
+        {
+          "alert": "TradePulseDataIngestionFailures",
+          "annotations": {
+            "description": "At least one ingestion job reported errors in the last 10 minutes",
+            "summary": "Data ingestion failure detected"
+          },
+          "expr": "increase(tradepulse_data_ingestion_total{status=\"error\"}[10m]) > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "critical",
+            "team": "data-pipeline"
+          }
+        },
+        {
+          "alert": "TradePulseDataFreshness",
+          "annotations": {
+            "description": "Average ingestion lag exceeded five minutes",
+            "summary": "Data ingestion freshness degraded"
+          },
+          "expr": "max(time() - tradepulse_data_ingestion_duration_seconds_sum / tradepulse_data_ingestion_duration_seconds_count) > 300",
+          "for": "5m",
+          "labels": {
+            "severity": "warning",
+            "team": "data-pipeline"
+          }
+        }
+      ]
+    },
+    {
+      "interval": "1m",
+      "name": "tradepulse.strategy",
+      "rules": [
+        {
+          "alert": "TradePulseBacktestFailures",
+          "annotations": {
+            "description": "At least one strategy backtest ended with an error in the last 30 minutes",
+            "summary": "Backtest run failed"
+          },
+          "expr": "increase(tradepulse_backtest_total{status=\"error\"}[30m]) > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "warning",
+            "team": "research"
+          }
+        },
+        {
+          "alert": "TradePulseOptimizationSlow",
+          "annotations": {
+            "description": "Average optimisation duration exceeded two minutes",
+            "summary": "Strategy optimisation running slowly"
+          },
+          "expr": "avg(rate(tradepulse_optimization_duration_seconds_sum[30m]) / rate(tradepulse_optimization_duration_seconds_count[30m])) > 120",
+          "for": "30m",
+          "labels": {
+            "severity": "info",
+            "team": "research"
+          }
+        }
+      ]
+    }
+  ],
+  "dashboards": [
+    "tradepulse-overview",
+    "tp-pipeline"
+  ],
+  "metrics": [
+    {
+      "description": "Time spent computing feature transformations.",
+      "labels": [
+        "feature_name",
+        "feature_type"
+      ],
+      "name": "tradepulse_feature_transform_duration_seconds",
+      "subsystem": "features",
+      "type": "histogram"
+    },
+    {
+      "description": "Total number of feature transformations executed.",
+      "labels": [
+        "feature_name",
+        "feature_type",
+        "status"
+      ],
+      "name": "tradepulse_feature_transform_total",
+      "subsystem": "features",
+      "type": "counter"
+    },
+    {
+      "description": "Latest computed value for a feature.",
+      "labels": [
+        "feature_name"
+      ],
+      "name": "tradepulse_feature_value",
+      "subsystem": "features",
+      "type": "gauge"
+    },
+    {
+      "description": "Wall-clock time required to execute backtests.",
+      "labels": [
+        "strategy"
+      ],
+      "name": "tradepulse_backtest_duration_seconds",
+      "subsystem": "backtest",
+      "type": "histogram"
+    },
+    {
+      "description": "Total number of backtests executed.",
+      "labels": [
+        "strategy",
+        "status"
+      ],
+      "name": "tradepulse_backtest_total",
+      "subsystem": "backtest",
+      "type": "counter"
+    },
+    {
+      "description": "Latest profit and loss recorded for a strategy backtest.",
+      "labels": [
+        "strategy"
+      ],
+      "name": "tradepulse_backtest_pnl",
+      "subsystem": "backtest",
+      "type": "gauge"
+    },
+    {
+      "description": "Maximum observed drawdown for a backtest run.",
+      "labels": [
+        "strategy"
+      ],
+      "name": "tradepulse_backtest_max_drawdown",
+      "subsystem": "backtest",
+      "type": "gauge"
+    },
+    {
+      "description": "Number of trades executed within a backtest run.",
+      "labels": [
+        "strategy"
+      ],
+      "name": "tradepulse_backtest_trades",
+      "subsystem": "backtest",
+      "type": "gauge"
+    },
+    {
+      "description": "Duration of data ingestion operations.",
+      "labels": [
+        "source",
+        "symbol"
+      ],
+      "name": "tradepulse_data_ingestion_duration_seconds",
+      "subsystem": "data",
+      "type": "histogram"
+    },
+    {
+      "description": "Total number of data ingestion tasks executed.",
+      "labels": [
+        "source",
+        "symbol",
+        "status"
+      ],
+      "name": "tradepulse_data_ingestion_total",
+      "subsystem": "data",
+      "type": "counter"
+    },
+    {
+      "description": "P50/P95/P99 latency of ingestion callbacks.",
+      "labels": [
+        "source",
+        "symbol",
+        "quantile"
+      ],
+      "name": "tradepulse_data_ingestion_latency_quantiles_seconds",
+      "subsystem": "data",
+      "type": "gauge"
+    },
+    {
+      "description": "Ticks processed for each data source and symbol.",
+      "labels": [
+        "source",
+        "symbol"
+      ],
+      "name": "tradepulse_ticks_processed_total",
+      "subsystem": "data",
+      "type": "counter"
+    },
+    {
+      "description": "Latency of order placement requests.",
+      "labels": [
+        "exchange",
+        "symbol"
+      ],
+      "name": "tradepulse_order_placement_duration_seconds",
+      "subsystem": "execution",
+      "type": "histogram"
+    },
+    {
+      "description": "Total orders submitted to an exchange.",
+      "labels": [
+        "exchange",
+        "symbol",
+        "order_type",
+        "status"
+      ],
+      "name": "tradepulse_orders_placed_total",
+      "subsystem": "execution",
+      "type": "counter"
+    },
+    {
+      "description": "Latency quantiles for simulated order submissions.",
+      "labels": [
+        "exchange",
+        "symbol",
+        "quantile"
+      ],
+      "name": "tradepulse_order_submission_latency_quantiles_seconds",
+      "subsystem": "execution",
+      "type": "gauge"
+    },
+    {
+      "description": "Latency quantiles between exchange submission and broker acknowledgement.",
+      "labels": [
+        "exchange",
+        "symbol",
+        "quantile"
+      ],
+      "name": "tradepulse_order_ack_latency_quantiles_seconds",
+      "subsystem": "execution",
+      "type": "gauge"
+    },
+    {
+      "description": "Latency quantiles between order ready time and fill.",
+      "labels": [
+        "exchange",
+        "symbol",
+        "quantile"
+      ],
+      "name": "tradepulse_order_fill_latency_quantiles_seconds",
+      "subsystem": "execution",
+      "type": "gauge"
+    },
+    {
+      "description": "Currently open positions tracked per exchange and symbol.",
+      "labels": [
+        "exchange",
+        "symbol"
+      ],
+      "name": "tradepulse_open_positions",
+      "subsystem": "execution",
+      "type": "gauge"
+    },
+    {
+      "description": "Latency quantiles for signal generation routines.",
+      "labels": [
+        "strategy",
+        "quantile"
+      ],
+      "name": "tradepulse_signal_generation_latency_quantiles_seconds",
+      "subsystem": "signals",
+      "type": "gauge"
+    },
+    {
+      "description": "Aggregate latency quantiles from signal emission to final fill.",
+      "labels": [
+        "strategy",
+        "exchange",
+        "symbol",
+        "quantile"
+      ],
+      "name": "tradepulse_signal_to_fill_latency_quantiles_seconds",
+      "subsystem": "execution",
+      "type": "gauge"
+    },
+    {
+      "description": "Total number of signal generation invocations.",
+      "labels": [
+        "strategy",
+        "status"
+      ],
+      "name": "tradepulse_signal_generation_total",
+      "subsystem": "signals",
+      "type": "counter"
+    },
+    {
+      "description": "Composite score for a strategy's live performance.",
+      "labels": [
+        "strategy_name"
+      ],
+      "name": "tradepulse_strategy_score",
+      "subsystem": "strategy",
+      "type": "gauge"
+    },
+    {
+      "description": "Count of strategies loaded in memory.",
+      "labels": [],
+      "name": "tradepulse_strategy_memory_size",
+      "subsystem": "strategy",
+      "type": "gauge"
+    },
+    {
+      "description": "Duration of strategy optimisation runs.",
+      "labels": [
+        "optimizer_type"
+      ],
+      "name": "tradepulse_optimization_duration_seconds",
+      "subsystem": "optimization",
+      "type": "histogram"
+    },
+    {
+      "description": "Iterations completed by the optimisation engine.",
+      "labels": [
+        "optimizer_type"
+      ],
+      "name": "tradepulse_optimization_iterations_total",
+      "subsystem": "optimization",
+      "type": "counter"
+    }
+  ]
+}

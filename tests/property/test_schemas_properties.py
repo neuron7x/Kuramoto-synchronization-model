@@ -13,7 +13,7 @@ try:
 except Exception:  # pragma: no cover - hypothesis optional in runtime envs
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from core.utils.schemas import dataclass_to_json_schema, validate_against_schema
+from tradepulse.core.utils.schemas import dataclass_to_json_schema, validate_against_schema
 
 
 @dataclass

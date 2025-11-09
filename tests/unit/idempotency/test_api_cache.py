@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from application.api.idempotency import (
+from tradepulse.application.api.idempotency import (
     IdempotencyCache,
     IdempotencyConflictError,
 )

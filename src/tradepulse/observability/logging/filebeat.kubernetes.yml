@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Filebeat configuration for collecting TradePulse backend logs on Kubernetes.
+filebeat.inputs:
+  - type: filestream
+    id: tradepulse-kubernetes-logs
+    paths:
+      - /var/log/containers/*.log
+    parsers:
+      - ndjson:
+          overwrite_keys: true
+          add_error_key: true
+    prospector:
+      scanner:
+        fingerprint.enabled: true
+        symlinks: true
+    file_identity.fingerprint: ~
+    processors:
+      - add_kubernetes_metadata:
+          host: ${NODE_NAME}
+          matchers:
+            - logs_path:
+                logs_path: "/var/log/containers/"
+      - drop_event:
+          when:
+            not:
+              equals:
+                'kubernetes.labels.app_kubernetes_io/part-of': tradepulse
+      - copy_fields:
+          fields:
+            - from: kubernetes.labels.app_kubernetes_io/name
+              to: service.name
+          ignore_missing: true
+      - add_fields:
+          target: tradepulse
+          fields:
+            environment: ${TRADEPULSE_ENVIRONMENT:unknown}
+      - drop_fields:
+          fields: [input, agent]
+          ignore_missing: true
+    fields_under_root: true
+    ignore_older: 72h
+
+processors:
+  - add_host_metadata: ~
+  - add_process_metadata: ~
+
+output.logstash:
+  hosts: ["${LOGSTASH_HOSTS:logstash:5044}"]
+  ssl.enabled: ${LOGSTASH_SSL_ENABLED:false}
+  ssl.verification_mode: ${LOGSTASH_SSL_VERIFICATION:full}

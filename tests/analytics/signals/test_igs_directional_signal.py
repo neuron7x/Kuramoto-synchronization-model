@@ -1,6 +1,6 @@
 import pandas as pd
 
-from analytics.signals.irreversibility import IGSConfig, igs_directional_signal
+from tradepulse.analytics.signals.irreversibility import IGSConfig, igs_directional_signal
 
 
 def _make_features() -> pd.DataFrame:

@@ -23,14 +23,14 @@ os.environ.setdefault(
     "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
 )
 
-from application.api.security import (
+from tradepulse.application.api.security import (
     get_api_security_settings,
     require_two_factor,
     verify_request_identity,
 )
-from application.settings import ApiSecuritySettings
-from application.secrets.manager import SecretManagerError
-from application.security.two_factor import generate_totp_code
+from tradepulse.application.settings import ApiSecuritySettings
+from tradepulse.application.secrets.manager import SecretManagerError
+from tradepulse.application.security.two_factor import generate_totp_code
 from src.admin.remote_control import AdminIdentity
 
 

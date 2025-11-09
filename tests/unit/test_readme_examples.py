@@ -7,7 +7,7 @@ import pytest
 
 def test_readme_composite_engine_example() -> None:
     """Validate the main README example with TradePulseCompositeEngine."""
-    from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+    from tradepulse.core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
 
     # Build a synthetic intraday data set
     np.random.seed(42)
@@ -31,8 +31,8 @@ def test_readme_composite_engine_example() -> None:
 
 def test_readme_kuramoto_strategy_example() -> None:
     """Validate the backtest example from README."""
-    from backtest.event_driven import EventDrivenBacktestEngine
-    from core.indicators import KuramotoIndicator
+    from tradepulse.backtest.event_driven import EventDrivenBacktestEngine
+    from tradepulse.core.indicators import KuramotoIndicator
 
     # Generate a synthetic closing price series
     rng = np.random.default_rng(seed=42)
@@ -65,7 +65,7 @@ def test_readme_kuramoto_strategy_example() -> None:
 
 def test_readme_streaming_buffer_example() -> None:
     """Validate the streaming buffer example from docstring."""
-    from core.data.streaming import RollingBuffer
+    from tradepulse.core.data.streaming import RollingBuffer
 
     buffer = RollingBuffer(size=100)
     buffer.push(42.5)
@@ -78,7 +78,7 @@ def test_readme_streaming_buffer_example() -> None:
 
 def test_readme_volume_metrics_example() -> None:
     """Validate volume profile examples from docstring."""
-    from core.metrics.volume_profile import cumulative_volume_delta, imbalance
+    from tradepulse.core.metrics.volume_profile import cumulative_volume_delta, imbalance
 
     buys = np.array([100, 150, 200])
     sells = np.array([80, 120, 180])

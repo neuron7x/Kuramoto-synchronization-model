@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from backtest.engine import PortfolioConstraints, WalkForwardEngine, walk_forward
-from backtest.transaction_costs import (
+from tradepulse.backtest.engine import PortfolioConstraints, WalkForwardEngine, walk_forward
+from tradepulse.backtest.transaction_costs import (
     BorrowFinancing,
     BpsSpread,
     CompositeTransactionCostModel,

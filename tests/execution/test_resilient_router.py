@@ -6,13 +6,13 @@ from __future__ import annotations
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.connectors import ExecutionConnector, OrderError, TransientOrderError
-from execution.router import (
+from tradepulse.execution.connectors import ExecutionConnector, OrderError, TransientOrderError
+from tradepulse.execution.router import (
     ExecutionRoute,
     ResilientExecutionRouter,
     SlippageModel,
 )
-from execution.resilience.circuit_breaker import (
+from tradepulse.execution.resilience.circuit_breaker import (
     AdaptiveThrottler,
     Bulkhead,
     CircuitBreaker,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.indicators import (
+from tradepulse.core.indicators import (
     DivergenceClass,
     DivergenceKind,
     PivotDivergenceSignal,

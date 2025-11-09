@@ -1,7 +1,7 @@
 """Tests for the adaptive recovery agent."""
 import numpy as np
 
-from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryAction, RecoveryState
+from tradepulse.runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryAction, RecoveryState
 
 
 def test_agent_initialises_with_defaults() -> None:

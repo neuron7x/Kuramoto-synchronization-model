@@ -7,7 +7,7 @@ from typing import Mapping
 import pytest
 from packaging.version import Version
 
-from core.config.registry import (
+from tradepulse.core.config.registry import (
     ConfigApprovalError,
     ConfigCompatibilityError,
     ConfigPublicationError,

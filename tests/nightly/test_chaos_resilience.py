@@ -22,19 +22,19 @@ import httpx
 import pytest
 from fastapi import HTTPException, status
 
-from application.api.idempotency import (
+from tradepulse.application.api.idempotency import (
     IdempotencyCache,
     IdempotencyConflictError,
 )
-from application.api.rate_limit import (
+from tradepulse.application.api.rate_limit import (
     InMemorySlidingWindowBackend,
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
 )
-from application.settings import ApiRateLimitSettings, RateLimitPolicy
-from core.agent.evaluator import EvaluationResult
-from core.agent.orchestrator import StrategyFlow, StrategyOrchestrator
-from core.agent.strategy import Strategy
+from tradepulse.application.settings import ApiRateLimitSettings, RateLimitPolicy
+from tradepulse.core.agent.evaluator import EvaluationResult
+from tradepulse.core.agent.orchestrator import StrategyFlow, StrategyOrchestrator
+from tradepulse.core.agent.strategy import Strategy
 from interfaces.execution.common import (
     AuthenticatedRESTExecutionConnector,
     CircuitBreaker,

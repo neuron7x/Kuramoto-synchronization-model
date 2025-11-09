@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from core.indicators.multiscale_kuramoto import analyze_simple
+from tradepulse.core.indicators.multiscale_kuramoto import analyze_simple
 
 
 def test_basic():

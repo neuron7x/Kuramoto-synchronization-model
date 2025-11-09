@@ -1,7 +1,7 @@
 import itertools
 
-from execution.canary import CanaryConfig, CanaryController, MetricThreshold
-from execution.risk import KillSwitch
+from tradepulse.execution.canary import CanaryConfig, CanaryController, MetricThreshold
+from tradepulse.execution.risk import KillSwitch
 
 
 def test_canary_controller_triggers_on_drawdown():

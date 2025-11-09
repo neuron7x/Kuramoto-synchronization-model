@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pandas.tseries.offsets import Minute
 
-from core.data.models import InstrumentType, PriceTick
+from tradepulse.core.data.models import InstrumentType, PriceTick
 from src.data import DataIngestionCacheService, TickStreamAggregator
 
 BASE_TS = datetime(2024, 1, 1, tzinfo=UTC)

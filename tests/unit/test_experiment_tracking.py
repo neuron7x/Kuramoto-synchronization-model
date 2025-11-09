@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from omegaconf import OmegaConf
 
-from analytics.runner import RunMetadata
-from analytics.tracking import ExperimentDeviationError, ExperimentTracker
-from core.config.cli_models import ExperimentConfig
+from tradepulse.analytics.runner import RunMetadata
+from tradepulse.analytics.tracking import ExperimentDeviationError, ExperimentTracker
+from tradepulse.core.config.cli_models import ExperimentConfig
 
 
 @pytest.fixture(name="experiment_cfg")

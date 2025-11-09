@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.neuro.sizing import SizerConfig, position_size
+from tradepulse.core.neuro.sizing import SizerConfig, position_size
 
 
 def test_size_zeros_when_no_signal():

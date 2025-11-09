@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from backtest.performance import (
+from tradepulse.backtest.performance import (
     PerformanceReport,
     compute_performance_metrics,
     export_performance_report,

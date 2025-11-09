@@ -1,4 +1,4 @@
-from core.utils.determinism import THREAD_BOUND_ENV_VARS, apply_thread_determinism
+from tradepulse.core.utils.determinism import THREAD_BOUND_ENV_VARS, apply_thread_determinism
 
 
 class TestApplyThreadDeterminism:

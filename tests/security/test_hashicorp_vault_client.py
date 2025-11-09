@@ -6,7 +6,7 @@ from typing import Any, Callable, cast
 import httpx
 import pytest
 
-from application.secrets.hashicorp import (
+from tradepulse.application.secrets.hashicorp import (
     DynamicCredentialManager,
     JWTOIDCAuthenticator,
     StaticTokenAuthenticator,

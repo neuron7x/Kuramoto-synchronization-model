@@ -8,8 +8,8 @@ import networkx as nx
 import numpy as np
 import pytest
 
-from runtime.dual_approval import DualApprovalManager
-from runtime.thermo_controller import MetricsSnapshot, ThermoController
+from tradepulse.runtime.dual_approval import DualApprovalManager
+from tradepulse.runtime.thermo_controller import MetricsSnapshot, ThermoController
 
 
 def _issue_token() -> str:

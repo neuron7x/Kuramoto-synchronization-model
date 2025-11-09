@@ -13,10 +13,10 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from core.indicators.hurst import hurst_exponent
-from core.indicators.kuramoto import kuramoto_order, multi_asset_kuramoto
-from core.indicators.ricci import build_price_graph, mean_ricci
-from core.indicators.temporal_ricci import TemporalRicciAnalyzer
+from tradepulse.core.indicators.hurst import hurst_exponent
+from tradepulse.core.indicators.kuramoto import kuramoto_order, multi_asset_kuramoto
+from tradepulse.core.indicators.ricci import build_price_graph, mean_ricci
+from tradepulse.core.indicators.temporal_ricci import TemporalRicciAnalyzer
 
 finite_floats = st.floats(
     allow_nan=True,

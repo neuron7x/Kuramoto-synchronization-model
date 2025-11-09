@@ -19,9 +19,9 @@ import time
 
 import pytest
 
-from core.agent.bandits import UCB1, EpsilonGreedy
-from core.agent.memory import StrategyMemory, StrategyRecord
-from core.agent.strategy import PiAgent, Strategy
+from tradepulse.core.agent.bandits import UCB1, EpsilonGreedy
+from tradepulse.core.agent.memory import StrategyMemory, StrategyRecord
+from tradepulse.core.agent.strategy import PiAgent, Strategy
 
 
 def test_epsilon_greedy_prefers_best_arm_when_exploit() -> None:

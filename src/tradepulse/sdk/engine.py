@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Mapping, MutableMapping
 
-from application.system import TradePulseSystem
+from tradepulse.application.system import TradePulseSystem
 from domain import Order, OrderSide, OrderType, Signal, SignalAction
 
 from .contracts import (

@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from backtest.engine import (
+from tradepulse.backtest.engine import (
     LatencyConfig,
     OrderBookConfig,
     SlippageConfig,

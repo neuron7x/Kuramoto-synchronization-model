@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.indicators.kuramoto import compute_phase, kuramoto_order
-from core.indicators.trading import (
+from tradepulse.core.indicators.kuramoto import compute_phase, kuramoto_order
+from tradepulse.core.indicators.trading import (
     HurstIndicator,
     KuramotoIndicator,
     VPINIndicator,

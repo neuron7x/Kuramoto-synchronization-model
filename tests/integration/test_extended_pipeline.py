@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest.engine import Result, walk_forward
-from core.agent.strategy import PiAgent, Strategy
-from core.data.ingestion import DataIngestor, Ticker
+from tradepulse.backtest.engine import Result, walk_forward
+from tradepulse.core.agent.strategy import PiAgent, Strategy
+from tradepulse.core.data.ingestion import DataIngestor, Ticker
 
 
 class TestEndToEndPipeline:

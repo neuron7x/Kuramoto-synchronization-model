@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from core.data.resampling import resample_order_book
-from core.indicators.hierarchical_features import (
+from tradepulse.core.data.resampling import resample_order_book
+from tradepulse.core.indicators.hierarchical_features import (
     FeatureBufferCache,
     HierarchicalFeatureResult,
     _shannon_entropy,

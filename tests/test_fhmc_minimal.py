@@ -1,7 +1,7 @@
 import yaml
 
-from core.metrics.dfa import dfa_alpha
-from runtime.thermo_controller import FHMC
+from tradepulse.core.metrics.dfa import dfa_alpha
+from tradepulse.runtime.thermo_controller import FHMC
 from utils.fractal_cascade import pink_noise
 
 

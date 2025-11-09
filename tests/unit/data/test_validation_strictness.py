@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from core.data.validation import (
+from tradepulse.core.data.validation import (
     TimeSeriesValidationConfig,
     TimeSeriesValidationError,
     ValueColumnConfig,

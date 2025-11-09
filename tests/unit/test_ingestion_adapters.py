@@ -11,7 +11,7 @@ import httpx
 import pandas as pd
 import pytest
 
-from core.data.adapters import (
+from tradepulse.core.data.adapters import (
     AlpacaIngestionAdapter,
     CCXTIngestionAdapter,
     CSVIngestionAdapter,
@@ -19,10 +19,10 @@ from core.data.adapters import (
     PolygonIngestionAdapter,
     RetryConfig,
 )
-from core.data.adapters import ccxt as ccxt_module
-from core.data.adapters.base import IngestionAdapter
-from core.data.models import PriceTick as Ticker
-from core.utils.dataframe_io import MissingParquetDependencyError, write_dataframe
+from tradepulse.core.data.adapters import ccxt as ccxt_module
+from tradepulse.core.data.adapters.base import IngestionAdapter
+from tradepulse.core.data.models import PriceTick as Ticker
+from tradepulse.core.utils.dataframe_io import MissingParquetDependencyError, write_dataframe
 from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL
 
 POLYGON_TEST_KEY = "".join(

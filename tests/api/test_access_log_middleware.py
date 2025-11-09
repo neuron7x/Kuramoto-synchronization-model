@@ -5,8 +5,8 @@ import json
 from fastapi import FastAPI
 from starlette.testclient import TestClient
 
-from application.api.middleware import AccessLogMiddleware
-from observability.audit.trail import AuditTrail
+from tradepulse.application.api.middleware import AccessLogMiddleware
+from tradepulse.observability.audit.trail import AuditTrail
 
 
 def test_access_log_middleware_records_request(tmp_path) -> None:

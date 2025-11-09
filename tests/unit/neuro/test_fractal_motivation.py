@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 
-from core.neuro.motivation import (
+from tradepulse.core.neuro.motivation import (
     FractalMotivationController,
     FractalMotivationEngine,
     RealTimeMotivationMonitor,

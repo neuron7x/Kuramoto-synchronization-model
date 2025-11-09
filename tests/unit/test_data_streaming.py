@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
-from core.data.streaming import RollingBuffer
+from tradepulse.core.data.streaming import RollingBuffer
 
 
 def test_rolling_buffer_retains_last_elements() -> None:

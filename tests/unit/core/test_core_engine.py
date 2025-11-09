@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 
-from core.engine import (
+from tradepulse.core.engine import (
     CoreEngine,
     CoreEngineConfig,
     EngineContext,

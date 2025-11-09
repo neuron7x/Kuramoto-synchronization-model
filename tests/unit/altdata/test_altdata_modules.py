@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.altdata import (
+from tradepulse.core.altdata import (
     AltDataComplianceChecker,
     AltDataFusionEngine,
     DistributionDriftMonitor,
@@ -143,7 +143,7 @@ def test_ks_fallback_small_sample_matches_scipy() -> None:
     reference = np.array([0.1257, -0.1321, 0.6404, 0.1049, -0.5357])
     current = np.array([0.5339, 1.6648, 1.2365, -0.7445, -1.4185])
 
-    from core.altdata.drift import _ks_2samp_fallback
+    from tradepulse.core.altdata.drift import _ks_2samp_fallback
 
     statistic, fallback_pvalue = _ks_2samp_fallback(reference, current)
 

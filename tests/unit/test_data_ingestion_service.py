@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.data.backfill import CacheKey, CacheRegistry
-from core.data.ingestion import DataIngestor
-from core.data.models import InstrumentType
-from core.data.models import PriceTick as Ticker
+from tradepulse.core.data.backfill import CacheKey, CacheRegistry
+from tradepulse.core.data.ingestion import DataIngestor
+from tradepulse.core.data.models import InstrumentType
+from tradepulse.core.data.models import PriceTick as Ticker
 from src.data.ingestion_service import (
     CacheEntrySnapshot,
     DataIngestionCacheService,

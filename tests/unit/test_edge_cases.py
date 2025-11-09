@@ -6,11 +6,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.agent.memory import StrategyMemory, StrategyRecord
-from core.agent.strategy import PiAgent, Strategy
-from core.data.preprocess import normalize_df, scale_series
-from core.indicators.entropy import delta_entropy, entropy
-from core.phase.detector import composite_transition, phase_flags
+from tradepulse.core.agent.memory import StrategyMemory, StrategyRecord
+from tradepulse.core.agent.strategy import PiAgent, Strategy
+from tradepulse.core.data.preprocess import normalize_df, scale_series
+from tradepulse.core.indicators.entropy import delta_entropy, entropy
+from tradepulse.core.phase.detector import composite_transition, phase_flags
 
 
 class TestMemoryEdgeCases:

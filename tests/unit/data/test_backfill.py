@@ -5,7 +5,7 @@ from datetime import UTC
 import pandas as pd
 import pytest
 
-from core.data.backfill import (
+from tradepulse.core.data.backfill import (
     CacheKey,
     CacheRegistry,
     Gap,

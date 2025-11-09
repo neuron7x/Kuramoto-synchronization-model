@@ -5,8 +5,8 @@ import networkx as nx
 import pytest
 from fastapi.testclient import TestClient
 
-from runtime.dual_approval import DualApprovalManager
-from runtime.thermo_controller import CRITICAL_HALT_STATE, CrisisMode, ThermoController
+from tradepulse.runtime.dual_approval import DualApprovalManager
+from tradepulse.runtime.thermo_controller import CRITICAL_HALT_STATE, CrisisMode, ThermoController
 from runtime import thermo_api
 
 

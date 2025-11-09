@@ -6,15 +6,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from application.system import (
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
 from domain import Order, OrderSide, SignalAction
-from execution.connectors import BinanceConnector
-from execution.risk import RiskLimits
+from tradepulse.execution.connectors import BinanceConnector
+from tradepulse.execution.risk import RiskLimits
 from tradepulse.sdk import (
     MarketState,
     SDKConfig,

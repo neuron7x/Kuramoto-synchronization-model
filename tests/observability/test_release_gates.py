@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from execution.compliance import ComplianceReport
-from observability.release_gates import ReleaseGateEvaluator, ReleaseGateResult
+from tradepulse.execution.compliance import ComplianceReport
+from tradepulse.observability.release_gates import ReleaseGateEvaluator, ReleaseGateResult
 
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "recordings"

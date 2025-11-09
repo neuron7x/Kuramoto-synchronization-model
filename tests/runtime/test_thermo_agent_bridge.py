@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import networkx as nx
 
-from runtime.misanthropic_agent import MisanthropicAgent
-from runtime.thermo_controller import ThermoController
+from tradepulse.runtime.misanthropic_agent import MisanthropicAgent
+from tradepulse.runtime.thermo_controller import ThermoController
 
 
 def _build_graph() -> nx.DiGraph:

@@ -10,7 +10,7 @@ from pydantic import ValidationError
 os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-admin-token")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
 
-from application.api.service import MarketBar, PredictionRequest
+from tradepulse.application.api.service import MarketBar, PredictionRequest
 
 
 def _sample_bars() -> list[MarketBar]:

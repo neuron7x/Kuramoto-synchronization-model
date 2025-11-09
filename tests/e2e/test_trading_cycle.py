@@ -8,14 +8,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from application.system import (
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
 from domain import OrderSide, OrderStatus, SignalAction
-from execution.connectors import BinanceConnector
+from tradepulse.execution.connectors import BinanceConnector
 
 
 @pytest.mark.slow

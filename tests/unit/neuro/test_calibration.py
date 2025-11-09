@@ -4,8 +4,8 @@ import warnings
 
 import numpy as np
 
-from core.neuro.amm import AMMConfig
-from core.neuro.calibration import CalibConfig, CalibResult, calibrate_random
+from tradepulse.core.neuro.amm import AMMConfig
+from tradepulse.core.neuro.calibration import CalibConfig, CalibResult, calibrate_random
 
 
 def test_calibrate_random_respects_bounds() -> None:

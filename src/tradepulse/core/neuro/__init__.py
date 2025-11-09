@@ -1,5 +1,86 @@
-"""Neuro-inspired adaptive controllers for core decision loops."""
+"""Neuroscience-inspired modules for TradePulse."""
 
-from . import dopamine, desensitization, nak
+from .amm import AdaptiveMarketMind, AMMConfig
+from .advanced import (
+    AgencyControlNetwork,
+    CandidateGenerator,
+    DopaminePredictionNetwork,
+    ECANeuroTradingAdapter,
+    EnhancedFractalNeuroeconomicCore,
+    IntegratedNeuroTradingSystem,
+    MarketContext,
+    NeuroAdvancedConfig,
+    NeuroDecisionIntegrator,
+    NeuroRiskManager,
+    NeuroStateMonitor,
+    NeuroplasticReinforcementEngine,
+    TradeOutcome,
+    TradeResult,
+)
+from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from .ecs_regulator import ECSInspiredRegulator, ECSMetrics
+from .fractal_regulator import EEPFractalRegulator, RegulatorMetrics
+from .motivation import (
+    FractalMotivationController,
+    FractalMotivationEngine,
+    MotivationDecision,
+    RealTimeMotivationMonitor,
+)
+from .shocks import ShockScenario, ShockScenarioGenerator
+from .training import (
+    AsyncDataLoader,
+    CheckpointManager,
+    MixedPrecisionContext,
+    ProfileSnapshot,
+    TrainingBatch,
+    TrainingComponent,
+    TrainingConfig,
+    TrainingEngine,
+    TrainingProfiler,
+    TrainingSample,
+    TrainingStepResult,
+    TrainingSummary,
+)
 
-__all__ = ["dopamine", "desensitization", "nak"]
+__all__ = [
+    "AMMConfig",
+    "AdaptiveMarketMind",
+    "AgencyControlNetwork",
+    "AsyncDataLoader",
+    "CheckpointManager",
+    "CandidateGenerator",
+    "DopaminePredictionNetwork",
+    "ECANeuroTradingAdapter",
+    "ECSInspiredRegulator",
+    "ECSMetrics",
+    "EEPFractalRegulator",
+    "EnhancedFractalNeuroeconomicCore",
+    "IntegratedNeuroTradingSystem",
+    "MarketContext",
+    "MixedPrecisionContext",
+    "MarketPulse",
+    "ProfileSnapshot",
+    "RegulatorMetrics",
+    "TrainingBatch",
+    "TrainingComponent",
+    "TrainingConfig",
+    "TrainingEngine",
+    "TrainingProfiler",
+    "TrainingSample",
+    "TrainingStepResult",
+    "TrainingSummary",
+    "TradeOutcome",
+    "TradePulseNeuroAdapter",
+    "TradeResult",
+    "NeuroAdvancedConfig",
+    "NeuroDecisionIntegrator",
+    "NeuroRiskManager",
+    "NeuroStateMonitor",
+    "NeuroplasticReinforcementEngine",
+    "ShockScenario",
+    "ShockScenarioGenerator",
+    "FractalMotivationController",
+    "FractalMotivationEngine",
+    "MotivationDecision",
+    "RealTimeMotivationMonitor",
+]

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from core.data.quality_control import (
+from tradepulse.core.data.quality_control import (
     QualityGateConfig,
     QualityGateError,
     QualityReport,
@@ -14,7 +14,7 @@ from core.data.quality_control import (
     summarise_quality,
     validate_and_quarantine,
 )
-from core.data.validation import TimeSeriesValidationConfig, ValueColumnConfig
+from tradepulse.core.data.validation import TimeSeriesValidationConfig, ValueColumnConfig
 
 
 def _frame() -> pd.DataFrame:

@@ -4,13 +4,13 @@ import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
-from application.api.authorization import (
+from tradepulse.application.api.authorization import (
     _normalise_roles,
     _resolve_audit_secret,
     require_permission,
     require_roles,
 )
-from application.security.rbac import AuthorizationGateway
+from tradepulse.application.security.rbac import AuthorizationGateway
 from src.admin.remote_control import AdminIdentity
 
 

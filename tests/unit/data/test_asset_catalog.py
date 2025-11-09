@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from core.data.asset_catalog import AssetCatalog, AssetStatus
-from core.data.models import InstrumentType
+from tradepulse.core.data.asset_catalog import AssetCatalog, AssetStatus
+from tradepulse.core.data.models import InstrumentType
 
 
 def test_asset_catalog_register_and_resolve() -> None:

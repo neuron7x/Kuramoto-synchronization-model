@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from core.strategies.objectives import sharpe_ratio
+from tradepulse.core.strategies.objectives import sharpe_ratio
 
 
 def test_sharpe_ratio_positive_returns_with_risk_free_offset():

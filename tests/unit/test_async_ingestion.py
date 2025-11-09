@@ -8,10 +8,10 @@ from typing import AsyncIterator, Iterable, List
 
 import pytest
 
-from core.data.adapters.base import IngestionAdapter
-from core.data.async_ingestion import AsyncDataIngestor, Ticker, merge_streams
-from core.data.connectors.market import BaseMarketDataConnector
-from core.data.models import InstrumentType
+from tradepulse.core.data.adapters.base import IngestionAdapter
+from tradepulse.core.data.async_ingestion import AsyncDataIngestor, Ticker, merge_streams
+from tradepulse.core.data.connectors.market import BaseMarketDataConnector
+from tradepulse.core.data.models import InstrumentType
 
 
 class DummyAdapter(IngestionAdapter):
@@ -376,7 +376,7 @@ class TestAsyncWebSocketStream:
     async def test_websocket_not_implemented(self) -> None:
         """Test that base WebSocket methods raise NotImplementedError."""
 
-        from core.data.async_ingestion import AsyncWebSocketStream
+        from tradepulse.core.data.async_ingestion import AsyncWebSocketStream
 
         stream = AsyncWebSocketStream("ws://test", "BTC")
 

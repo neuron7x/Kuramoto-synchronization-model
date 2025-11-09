@@ -14,10 +14,10 @@ import warnings
 import numpy as np
 import pytest
 
-from core.indicators import entropy as entropy_module
-from core.indicators import hurst as hurst_module
-from core.indicators import kuramoto as kuramoto_module
-from core.indicators import ricci as ricci_module
+from tradepulse.core.indicators import entropy as entropy_module
+from tradepulse.core.indicators import hurst as hurst_module
+from tradepulse.core.indicators import kuramoto as kuramoto_module
+from tradepulse.core.indicators import ricci as ricci_module
 
 
 def test_kuramoto_order_is_zero_for_uniform_phase_distribution() -> None:

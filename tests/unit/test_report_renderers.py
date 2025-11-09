@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from core.config.cli_models import ReportConfig
-from core.reporting import (
+from tradepulse.core.config.cli_models import ReportConfig
+from tradepulse.core.reporting import (
     generate_markdown_report,
     render_markdown_to_html,
     render_markdown_to_pdf,

@@ -7,7 +7,7 @@ from typing import Sequence
 
 import pytest
 
-from core.neuro.advanced.neuroecon import AdvancedNeuroEconCore, DecisionOption
+from tradepulse.core.neuro.advanced.neuroecon import AdvancedNeuroEconCore, DecisionOption
 
 try:
     import torch

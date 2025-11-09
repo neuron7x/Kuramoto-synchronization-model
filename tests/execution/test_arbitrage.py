@@ -7,7 +7,7 @@ from typing import AsyncIterator, Sequence
 
 import pytest
 
-from execution.arbitrage import (
+from tradepulse.execution.arbitrage import (
     ArbitrageOpportunity,
     AtomicCapitalMover,
     CapitalTransferPlan,
@@ -16,7 +16,7 @@ from execution.arbitrage import (
     LiquidityLedger,
     Quote,
 )
-from execution.arbitrage.capital import SettlementGateway
+from tradepulse.execution.arbitrage.capital import SettlementGateway
 
 
 class InMemoryGateway(SettlementGateway):

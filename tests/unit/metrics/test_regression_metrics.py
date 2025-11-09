@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from core.metrics import (
+from tradepulse.core.metrics import (
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,

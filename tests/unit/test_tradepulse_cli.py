@@ -10,11 +10,11 @@ import yaml
 from click.testing import CliRunner
 
 from cli.tradepulse_cli import cli
-from core.config.cli_models import IngestConfig, VersioningConfig
-from core.config.template_manager import ConfigTemplateManager
-from core.data.feature_catalog import FeatureCatalog
-from core.data.feature_store import OnlineFeatureStore
-from core.data.versioning import DataVersionManager
+from tradepulse.core.config.cli_models import IngestConfig, VersioningConfig
+from tradepulse.core.config.template_manager import ConfigTemplateManager
+from tradepulse.core.data.feature_catalog import FeatureCatalog
+from tradepulse.core.data.feature_store import OnlineFeatureStore
+from tradepulse.core.data.versioning import DataVersionManager
 
 
 @pytest.fixture()

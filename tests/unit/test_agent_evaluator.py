@@ -8,14 +8,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.agent.evaluator import (
+from tradepulse.core.agent.evaluator import (
     EvaluationResult,
     StrategyBatchEvaluator,
     StrategyEvaluationError,
     evaluate_strategies,
 )
-from core.agent.sandbox import SandboxResult
-from core.agent.strategy import Strategy
+from tradepulse.core.agent.sandbox import SandboxResult
+from tradepulse.core.agent.strategy import Strategy
 
 
 class _SleepyStrategy(Strategy):

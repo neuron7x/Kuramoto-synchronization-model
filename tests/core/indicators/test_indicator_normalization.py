@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.indicators import (
+from tradepulse.core.indicators import (
     IndicatorNormalizationConfig,
     NormalizationMode,
     normalize_indicator_series,

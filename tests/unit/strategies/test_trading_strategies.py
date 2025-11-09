@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.trading import HurstIndicator, KuramotoIndicator, VPINIndicator
-from core.strategies.trading import HurstVPINStrategy, KuramotoStrategy
+from tradepulse.core.indicators.trading import HurstIndicator, KuramotoIndicator, VPINIndicator
+from tradepulse.core.strategies.trading import HurstVPINStrategy, KuramotoStrategy
 
 
 def _frame_from_closes(values: list[float]) -> pd.DataFrame:

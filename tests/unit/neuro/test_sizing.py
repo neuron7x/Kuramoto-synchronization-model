@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from core.neuro.sizing import SizerConfig, position_size, precision_weight, pulse_weight
+from tradepulse.core.neuro.sizing import SizerConfig, position_size, precision_weight, pulse_weight
 
 
 def test_pulse_weight_clamps_between_zero_and_one() -> None:

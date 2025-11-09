@@ -5,7 +5,7 @@ from typing import Any, Mapping
 
 import pytest
 
-from observability.notifications import (
+from tradepulse.observability.notifications import (
     EmailSender,
     NotificationDispatcher,
     SlackNotifier,

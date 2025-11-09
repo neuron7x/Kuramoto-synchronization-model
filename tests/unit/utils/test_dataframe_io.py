@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from core.utils import dataframe_io
+from tradepulse.core.utils import dataframe_io
 
 
 @pytest.fixture(autouse=True)

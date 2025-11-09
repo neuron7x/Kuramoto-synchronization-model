@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analytics.signals import (
+from tradepulse.analytics.signals import (
     FeaturePipelineConfig,
     LeakageGate,
     SignalFeaturePipeline,
@@ -17,7 +17,7 @@ from analytics.signals import (
     build_supervised_learning_frame,
     make_default_candidates,
 )
-from backtest.time_splits import WalkForwardSplitter
+from tradepulse.backtest.time_splits import WalkForwardSplitter
 
 
 def _sample_market_frame(rows: int = 300) -> pd.DataFrame:

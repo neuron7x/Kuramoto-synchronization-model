@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from observability.finops import (
+from tradepulse.observability.finops import (
     Budget,
     CostOptimisationPlan,
     FinOpsAlert,

@@ -4,9 +4,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.metrics.direction_index import direction_index, skewness
-from core.metrics.ism import ism
-from core.metrics.volume_profile import (
+from tradepulse.core.metrics.direction_index import direction_index, skewness
+from tradepulse.core.metrics.ism import ism
+from tradepulse.core.metrics.volume_profile import (
     cumulative_volume_delta,
     imbalance,
     order_aggression,

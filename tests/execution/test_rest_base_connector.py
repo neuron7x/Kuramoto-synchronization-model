@@ -6,8 +6,8 @@ import httpx
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.adapters.base import RESTWebSocketConnector, SlidingWindowRateLimiter
-from execution.connectors import OrderError, TransientOrderError
+from tradepulse.execution.adapters.base import RESTWebSocketConnector, SlidingWindowRateLimiter
+from tradepulse.execution.connectors import OrderError, TransientOrderError
 
 
 class DummyRESTConnector(RESTWebSocketConnector):

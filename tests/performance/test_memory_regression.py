@@ -9,14 +9,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.entropy import EntropyFeature
-from core.indicators.hierarchical_features import (
+from tradepulse.core.indicators.entropy import EntropyFeature
+from tradepulse.core.indicators.hierarchical_features import (
     FeatureBufferCache,
     compute_hierarchical_features,
 )
-from core.indicators.hurst import HurstFeature
-from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase
-from core.indicators.pipeline import IndicatorPipeline
+from tradepulse.core.indicators.hurst import HurstFeature
+from tradepulse.core.indicators.kuramoto import KuramotoOrderFeature, compute_phase
+from tradepulse.core.indicators.pipeline import IndicatorPipeline
 
 pytestmark = [pytest.mark.slow]
 

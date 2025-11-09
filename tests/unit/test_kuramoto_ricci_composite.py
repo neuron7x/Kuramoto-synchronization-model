@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - optional dependency
 else:  # pragma: no branch
     HYPOTHESIS_AVAILABLE = True
 
-from core.indicators import (
+from tradepulse.core.indicators import (
     KuramotoRicciComposite,
     MarketPhase,
     MultiScaleKuramoto,
@@ -26,8 +26,8 @@ from core.indicators import (
     TradePulseCompositeEngine,
     WaveletWindowSelector,
 )
-from core.indicators.kuramoto_ricci_composite import CompositeSignal
-from core.indicators.temporal_ricci import (
+from tradepulse.core.indicators.kuramoto_ricci_composite import CompositeSignal
+from tradepulse.core.indicators.temporal_ricci import (
     GraphSnapshot,
     LightGraph,
     OllivierRicciCurvature,

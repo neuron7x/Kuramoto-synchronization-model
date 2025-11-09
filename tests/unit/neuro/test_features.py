@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.neuro.features import EWEntropy, EWEntropyConfig, ema_update, ewvar_update
+from tradepulse.core.neuro.features import EWEntropy, EWEntropyConfig, ema_update, ewvar_update
 
 
 def test_ema_update_tracks_recent_values() -> None:

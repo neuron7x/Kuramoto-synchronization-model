@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import contextlib
 
-from core.compliance.regulatory import RegulatoryComplianceValidator
-from observability.tracing import chaos_span
+from tradepulse.core.compliance.regulatory import RegulatoryComplianceValidator
+from tradepulse.observability.tracing import chaos_span
 
 
 def test_regulatory_validator_surfaces_black_swan_gaps(monkeypatch):

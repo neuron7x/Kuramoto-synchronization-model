@@ -4,9 +4,9 @@ from pathlib import Path
 import httpx
 import pytest
 
-from core.data.adapters.polygon import PolygonIngestionAdapter
-from core.data.catalog import normalize_symbol
-from core.data.connectors.market import BaseMarketDataConnector
+from tradepulse.core.data.adapters.polygon import PolygonIngestionAdapter
+from tradepulse.core.data.catalog import normalize_symbol
+from tradepulse.core.data.connectors.market import BaseMarketDataConnector
 
 
 @pytest.mark.asyncio

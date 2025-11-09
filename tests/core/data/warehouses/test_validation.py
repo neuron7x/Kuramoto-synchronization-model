@@ -5,9 +5,9 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from core.data.warehouses._validators import ensure_identifier, ensure_timezone, literal
-from core.data.warehouses.clickhouse import ClickHouseConfig, ClickHouseWarehouse
-from core.data.warehouses.timescale import TimescaleConfig
+from tradepulse.core.data.warehouses._validators import ensure_identifier, ensure_timezone, literal
+from tradepulse.core.data.warehouses.clickhouse import ClickHouseConfig, ClickHouseWarehouse
+from tradepulse.core.data.warehouses.timescale import TimescaleConfig
 
 
 def test_ensure_identifier_accepts_valid_names() -> None:

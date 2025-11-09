@@ -7,8 +7,8 @@ from typing import Mapping
 import pytest
 from prometheus_client import CollectorRegistry
 
-from core.utils import metrics as metrics_module
-from observability.response_quality import (
+from tradepulse.core.utils import metrics as metrics_module
+from tradepulse.observability.response_quality import (
     GoldenDataset,
     GoldenRecord,
     QualityContract,

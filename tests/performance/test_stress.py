@@ -8,11 +8,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest.engine import walk_forward
-from backtest.time_splits import PurgedKFoldTimeSeriesSplit, WalkForwardSplitter
-from core.agent.strategy import Strategy
-from core.data.preprocess import normalize_df, scale_series
-from core.indicators.entropy import entropy
+from tradepulse.backtest.engine import walk_forward
+from tradepulse.backtest.time_splits import PurgedKFoldTimeSeriesSplit, WalkForwardSplitter
+from tradepulse.core.agent.strategy import Strategy
+from tradepulse.core.data.preprocess import normalize_df, scale_series
+from tradepulse.core.indicators.entropy import entropy
 
 # Mark these tests as slow so they can be skipped during normal development
 pytestmark = pytest.mark.slow

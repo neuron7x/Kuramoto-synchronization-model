@@ -6,7 +6,7 @@ from __future__ import annotations
 import pytest
 
 from domain import OrderSide
-from execution.portfolio import PortfolioAccounting
+from tradepulse.execution.portfolio import PortfolioAccounting
 
 
 def test_apply_fill_and_realised_pnl() -> None:

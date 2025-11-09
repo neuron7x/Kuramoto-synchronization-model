@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from application.secrets.manager import (
+from tradepulse.application.secrets.manager import (
     SecretManager,
     managed_secret_from_vault,
     secret_caller_context,
 )
-from application.secrets.rotation import SecretRotationPolicy, SecretRotator
-from application.secrets.secure_channel import SecureChannel
-from application.secrets.vault import SecretAccessPolicy, SecretVault, SecretVaultError
+from tradepulse.application.secrets.rotation import SecretRotationPolicy, SecretRotator
+from tradepulse.application.secrets.secure_channel import SecureChannel
+from tradepulse.application.secrets.vault import SecretAccessPolicy, SecretVault, SecretVaultError
 
 
 @dataclass(slots=True)

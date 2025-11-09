@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from analytics.signals.irreversibility_adapter import IGSFeatureProvider
+from tradepulse.analytics.signals.irreversibility_adapter import IGSFeatureProvider
 
 
 def test_provider_compute_from_frame() -> None:

@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from runtime.dual_approval import DualApprovalManager
-from runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
-from runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
+from tradepulse.runtime.dual_approval import DualApprovalManager
+from tradepulse.runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
+from tradepulse.runtime.thermo_controller import CRITICAL_HALT_STATE, ThermoController
 
 
 @pytest.fixture(autouse=True)

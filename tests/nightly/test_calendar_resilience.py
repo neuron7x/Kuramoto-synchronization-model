@@ -9,12 +9,12 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from backtest.market_calendar import MarketCalendar, SessionHours
-from core.data.adapters.base import IngestionAdapter, RetryConfig
-from core.data.connectors.market import DEFAULT_SCHEMA_ROOT, BaseMarketDataConnector
-from core.data.models import DataKind, InstrumentType, MarketMetadata
-from core.data.models import PriceTick as Ticker
-from core.messaging.schema_registry import EventSchemaRegistry
+from tradepulse.backtest.market_calendar import MarketCalendar, SessionHours
+from tradepulse.core.data.adapters.base import IngestionAdapter, RetryConfig
+from tradepulse.core.data.connectors.market import DEFAULT_SCHEMA_ROOT, BaseMarketDataConnector
+from tradepulse.core.data.models import DataKind, InstrumentType, MarketMetadata
+from tradepulse.core.data.models import PriceTick as Ticker
+from tradepulse.core.messaging.schema_registry import EventSchemaRegistry
 
 pytestmark = [pytest.mark.nightly, pytest.mark.slow]
 

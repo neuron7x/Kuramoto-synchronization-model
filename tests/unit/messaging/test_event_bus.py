@@ -4,14 +4,14 @@ from typing import Any, Dict
 
 import pytest
 
-from core.messaging.event_bus import (
+from tradepulse.core.messaging.event_bus import (
     EventBusBackend,
     EventBusConfig,
     EventEnvelope,
     EventTopic,
     KafkaEventBus,
 )
-from core.messaging.idempotency import InMemoryEventIdempotencyStore
+from tradepulse.core.messaging.idempotency import InMemoryEventIdempotencyStore
 
 
 class DummyProducer:

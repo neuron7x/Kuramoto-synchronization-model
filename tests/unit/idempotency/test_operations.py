@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from core.idempotency import (
+from tradepulse.core.idempotency import (
     IdempotencyConflictError,
     IdempotencyCoordinator,
     IdempotencyInputError,

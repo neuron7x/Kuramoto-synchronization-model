@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import pytest
 
 from domain import Order, OrderSide
-from execution.compliance import RiskCompliance, RiskConfig, RiskDecision
+from tradepulse.execution.compliance import RiskCompliance, RiskConfig, RiskDecision
 
 
 class TestRiskCompliance:

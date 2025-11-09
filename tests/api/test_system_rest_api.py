@@ -6,16 +6,16 @@ from typing import Any, Awaitable, Callable, Mapping
 import pytest
 from fastapi.testclient import TestClient
 
-from application.api.system_access import create_system_app
-from application.settings import ApiRateLimitSettings, RateLimitPolicy
-from application.security.rbac import AuthorizationGateway, build_authorization_gateway
-from application.system import (
+from tradepulse.application.api.system_access import create_system_app
+from tradepulse.application.settings import ApiRateLimitSettings, RateLimitPolicy
+from tradepulse.application.security.rbac import AuthorizationGateway, build_authorization_gateway
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
 from domain import Order
-from execution.connectors import SimulatedExchangeConnector
+from tradepulse.execution.connectors import SimulatedExchangeConnector
 from src.admin.remote_control import AdminIdentity
 from src.audit.audit_logger import AuditLogger
 

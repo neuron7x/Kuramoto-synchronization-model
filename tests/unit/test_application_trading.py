@@ -1,4 +1,4 @@
-from application.trading import (
+from tradepulse.application.trading import (
     dto_to_signal,
     order_to_dto,
     position_to_dto,

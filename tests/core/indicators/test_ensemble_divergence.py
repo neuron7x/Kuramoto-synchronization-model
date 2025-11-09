@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from core.indicators import (
+from tradepulse.core.indicators import (
     DivergenceKind,
     EnsembleDivergenceResult,
     IndicatorDivergenceSignal,

@@ -14,8 +14,8 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from core.data.adapters import CSVIngestionAdapter, ParquetIngestionAdapter
-from core.utils.dataframe_io import MissingParquetDependencyError, write_dataframe
+from tradepulse.core.data.adapters import CSVIngestionAdapter, ParquetIngestionAdapter
+from tradepulse.core.utils.dataframe_io import MissingParquetDependencyError, write_dataframe
 from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL, TIMESTAMP_ABS_TOL
 
 

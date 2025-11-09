@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from typing import Any, Dict, List, Tuple
 
 from domain import Order
-from execution.connectors import ExecutionConnector, TransientOrderError
+from tradepulse.execution.connectors import ExecutionConnector, TransientOrderError
 
 
 class FakeExchangeAdapter(ExecutionConnector):

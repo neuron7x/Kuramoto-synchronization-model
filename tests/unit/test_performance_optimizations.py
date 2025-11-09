@@ -28,15 +28,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.data.preprocess import normalize_df, scale_series
-from core.indicators.entropy import EntropyFeature, entropy
-from core.indicators.hurst import HurstFeature, hurst_exponent
-from core.indicators.kuramoto import (
+from tradepulse.core.data.preprocess import normalize_df, scale_series
+from tradepulse.core.indicators.entropy import EntropyFeature, entropy
+from tradepulse.core.indicators.hurst import HurstFeature, hurst_exponent
+from tradepulse.core.indicators.kuramoto import (
     KuramotoOrderFeature,
     compute_phase,
     compute_phase_gpu,
 )
-from core.indicators.ricci import MeanRicciFeature, build_price_graph, mean_ricci
+from tradepulse.core.indicators.ricci import MeanRicciFeature, build_price_graph, mean_ricci
 
 
 class TestFloat32Support:

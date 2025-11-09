@@ -3,8 +3,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from core.data.feature_store import FeatureStoreIntegrityError, OnlineFeatureStore
-from core.utils import dataframe_io
+from tradepulse.core.data.feature_store import FeatureStoreIntegrityError, OnlineFeatureStore
+from tradepulse.core.utils import dataframe_io
 
 
 def _frame(values: list[int]) -> pd.DataFrame:

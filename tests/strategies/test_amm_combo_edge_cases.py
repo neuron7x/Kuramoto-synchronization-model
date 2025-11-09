@@ -5,7 +5,7 @@ from typing import Callable
 
 import pytest
 
-from backtest.strategies.amm_combo import AMMComboStrategy, AMMStrategyConfig
+from tradepulse.backtest.strategies.amm_combo import AMMComboStrategy, AMMStrategyConfig
 
 
 class DummyAMM:

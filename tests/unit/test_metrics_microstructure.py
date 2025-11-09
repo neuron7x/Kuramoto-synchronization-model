@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.metrics.microstructure import (
+from tradepulse.core.metrics.microstructure import (
     MicrostructureReport,
     build_symbol_microstructure_report,
     hasbrouck_information_impulse,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from prometheus_client import CollectorRegistry
 
-from observability.health_monitor import (
+from tradepulse.observability.health_monitor import (
     HealthCheck,
     HealthCheckResult,
     PeriodicHealthMonitor,
@@ -30,7 +30,7 @@ class _StubHealthServer:
 def test_periodic_health_monitor_records_metrics(monkeypatch) -> None:
     registry = CollectorRegistry()
 
-    from core.utils.metrics import MetricsCollector
+    from tradepulse.core.utils.metrics import MetricsCollector
 
     collector = MetricsCollector(registry)
     monkeypatch.setattr(

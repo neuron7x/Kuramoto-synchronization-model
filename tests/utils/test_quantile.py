@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.neuro.quantile import P2Quantile
+from tradepulse.core.neuro.quantile import P2Quantile
 
 
 def test_p2_quantile_converges_uniform():

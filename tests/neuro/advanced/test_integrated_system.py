@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from core.neuro.advanced import IntegratedNeuroTradingSystem, NeuroAdvancedConfig
+from tradepulse.core.neuro.advanced import IntegratedNeuroTradingSystem, NeuroAdvancedConfig
 
 
 @pytest.mark.asyncio

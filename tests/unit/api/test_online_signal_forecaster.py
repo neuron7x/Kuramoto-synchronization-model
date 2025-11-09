@@ -14,8 +14,8 @@ from fastapi import HTTPException
 os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-admin-token")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
 
-from application.api.service import OnlineSignalForecaster, PredictionResponse
-from application.trading import signal_to_dto
+from tradepulse.application.api.service import OnlineSignalForecaster, PredictionResponse
+from tradepulse.application.trading import signal_to_dto
 from domain.signal import SignalAction
 
 pytestmark = pytest.mark.filterwarnings(

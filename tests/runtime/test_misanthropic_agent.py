@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import torch
 
-from runtime.misanthropic_agent import MisanthropicAgent
+from tradepulse.runtime.misanthropic_agent import MisanthropicAgent
 
 
 class SyntheticMarketEnv:

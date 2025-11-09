@@ -12,7 +12,7 @@ from starlette.requests import Request as StarletteRequest
 
 import yaml
 
-from execution.risk import RiskLimits, RiskManager
+from tradepulse.execution.risk import RiskLimits, RiskManager
 from src.admin.remote_control import (
     AdminIdentity,
     AdminRateLimiter,

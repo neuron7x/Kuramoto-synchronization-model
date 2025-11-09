@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 
-from core.neuro.advanced import FractalMotivationController
+from tradepulse.core.neuro.advanced import FractalMotivationController
 
 
 def test_guardrail_violation_triggers_pause_and_audit() -> None:

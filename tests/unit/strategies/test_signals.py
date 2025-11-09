@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from core.strategies.signals import moving_average_signal, threshold_signal
+from tradepulse.core.strategies.signals import moving_average_signal, threshold_signal
 
 
 def test_moving_average_signal_default_window_produces_expected_signs():

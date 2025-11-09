@@ -6,13 +6,13 @@ from typing import Any, Sequence
 
 import pytest
 
-from core.agent.evaluator import EvaluationResult
-from core.agent.orchestrator import (
+from tradepulse.core.agent.evaluator import EvaluationResult
+from tradepulse.core.agent.orchestrator import (
     StrategyFlow,
     StrategyOrchestrationError,
     StrategyOrchestrator,
 )
-from core.agent.strategy import Strategy
+from tradepulse.core.agent.strategy import Strategy
 
 
 class RecordingEvaluator:

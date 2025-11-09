@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from backtest.market_calendar import (
+from tradepulse.backtest.market_calendar import (
     MarketCalendar,
     MarketCalendarCoordinator,
     SessionHours,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from execution.amm_runner import AMMRunner
+from tradepulse.execution.amm_runner import AMMRunner
 
 
 class DummyTimer:

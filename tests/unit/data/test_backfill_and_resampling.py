@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from core.data.backfill import CacheKey, GapFillPlanner, LayerCache, detect_gaps
-from core.data.resampling import (
+from tradepulse.core.data.backfill import CacheKey, GapFillPlanner, LayerCache, detect_gaps
+from tradepulse.core.data.resampling import (
     align_timeframes,
     resample_l1_to_ohlcv,
     resample_ticks_to_l1,

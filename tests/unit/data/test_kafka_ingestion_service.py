@@ -8,7 +8,7 @@ from typing import Any, Iterable
 
 import pytest
 
-from core.data.models import InstrumentType
+from tradepulse.core.data.models import InstrumentType
 from src.data.kafka_ingestion import (
     KafkaIngestionConfig,
     KafkaIngestionService,

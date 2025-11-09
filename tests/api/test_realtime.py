@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import BaseModel
 
-from application.api.realtime import AnalyticsStore
+from tradepulse.application.api.realtime import AnalyticsStore
 
 
 class _FeatureSnapshot(BaseModel):

@@ -16,8 +16,8 @@ os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "contract-import-token")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-import-secret")
 os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "contract-rbac-secret")
 
-from application.api.service import FeatureResponse, PredictionResponse, create_app
-from application.settings import AdminApiSettings
+from tradepulse.application.api.service import FeatureResponse, PredictionResponse, create_app
+from tradepulse.application.settings import AdminApiSettings
 from domain import Signal, SignalAction
 from src.admin.remote_control import AdminIdentity
 

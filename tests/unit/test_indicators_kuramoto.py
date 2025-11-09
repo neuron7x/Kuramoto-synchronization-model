@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.kuramoto import (
+from tradepulse.core.indicators.kuramoto import (
     KuramotoOrderFeature,
     MultiAssetKuramotoFeature,
     compute_phase,
@@ -17,7 +17,7 @@ from core.indicators.kuramoto import (
     kuramoto_order,
     multi_asset_kuramoto,
 )
-from core.indicators.multiscale_kuramoto import (
+from tradepulse.core.indicators.multiscale_kuramoto import (
     KuramotoResult,
     MultiScaleKuramoto,
     MultiScaleKuramotoFeature,

@@ -9,8 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from admin.api import create_admin_app
-from execution.compliance import RiskCompliance, RiskConfig
-from execution.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
+from tradepulse.execution.compliance import RiskCompliance, RiskConfig
+from tradepulse.execution.resilience.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from core.data.path_guard import DataPathGuard
+from tradepulse.core.data.path_guard import DataPathGuard
 
 
 @pytest.fixture

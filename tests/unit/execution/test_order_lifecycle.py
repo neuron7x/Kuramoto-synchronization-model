@@ -6,7 +6,7 @@ from datetime import datetime
 import pytest
 
 from domain import OrderStatus
-from execution.order_lifecycle import (
+from tradepulse.execution.order_lifecycle import (
     OrderEvent,
     OrderLifecycle,
     OrderLifecycleStore,

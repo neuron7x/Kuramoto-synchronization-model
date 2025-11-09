@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from core.data.dead_letter import (
+from tradepulse.core.data.dead_letter import (
     DeadLetterItem,
     DeadLetterQueue,
     DeadLetterReason,

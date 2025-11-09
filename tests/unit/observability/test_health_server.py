@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import httpx
 
-from observability.health import HealthServer
+from tradepulse.observability.health import HealthServer
 
 
 def test_health_endpoints_expose_liveness_and_readiness() -> None:

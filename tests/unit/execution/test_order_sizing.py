@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from execution.order import (
+from tradepulse.execution.order import (
     ConstrainedPositionSizer,
     PortfolioState,
     PositionSizingConstraints,
@@ -12,7 +12,7 @@ from execution.order import (
     RiskAwarePositionSizer,
     position_sizing,
 )
-from execution.position_sizer import calculate_position_size
+from tradepulse.execution.position_sizer import calculate_position_size
 
 
 @pytest.mark.parametrize(

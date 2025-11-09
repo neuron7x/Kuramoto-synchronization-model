@@ -15,7 +15,7 @@ try:
 except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from core.data.ingestion import DataIngestor, Ticker
+from tradepulse.core.data.ingestion import DataIngestor, Ticker
 from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL
 
 

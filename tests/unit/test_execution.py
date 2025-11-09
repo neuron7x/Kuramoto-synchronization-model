@@ -22,9 +22,9 @@ import json
 import pytest
 
 from domain import Order, OrderType
-from execution.audit import ExecutionAuditLogger
-from execution.order import position_sizing
-from execution.risk import (
+from tradepulse.execution.audit import ExecutionAuditLogger
+from tradepulse.execution.order import position_sizing
+from tradepulse.execution.risk import (
     IdempotentRetryExecutor,
     LimitViolation,
     OrderRateExceeded,

@@ -22,8 +22,8 @@ from typing import Any, Coroutine
 import numpy as np
 import pytest
 
-import core.indicators.ricci as ricci_module
-from core.indicators.ricci import (
+import tradepulse.core.indicators.ricci as ricci_module
+from tradepulse.core.indicators.ricci import (
     MeanRicciFeature,
     build_price_graph,
     compute_node_distributions,

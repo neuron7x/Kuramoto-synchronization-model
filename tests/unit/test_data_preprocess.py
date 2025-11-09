@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.data.preprocess import normalize_df, scale_series
+from tradepulse.core.data.preprocess import normalize_df, scale_series
 
 
 def test_normalize_df_orders_and_interpolates() -> None:

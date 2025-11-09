@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from analytics.staging.flash_crash_replay import (
+from tradepulse.analytics.staging.flash_crash_replay import (
     generate_staging_report,
     simulate_flash_crash_replay,
     write_staging_metrics,

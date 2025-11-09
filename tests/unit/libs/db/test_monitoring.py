@@ -6,8 +6,8 @@ import pytest
 from prometheus_client import CollectorRegistry
 from sqlalchemy import create_engine, text
 
-from core.utils import metrics as metrics_module
-from core.utils.metrics import MetricsCollector
+from tradepulse.core.utils import metrics as metrics_module
+from tradepulse.core.utils.metrics import MetricsCollector
 
 _MODULE_PATH = Path(__file__).resolve().parents[4] / "libs" / "db" / "monitoring.py"
 _SPEC = importlib.util.spec_from_file_location("tradepulse.test.db_monitoring", _MODULE_PATH)

@@ -8,13 +8,13 @@ from uuid import uuid4
 
 import pytest
 
-from application.configuration import (
+from tradepulse.application.configuration import (
     CentralConfigurationStore,
     ConfigurationStoreError,
     NamespaceDefinition,
 )
-from application.secrets.vault import SecretVault
-from core.config.template_manager import ConfigTemplateManager
+from tradepulse.application.secrets.vault import SecretVault
+from tradepulse.core.config.template_manager import ConfigTemplateManager
 from src.audit.audit_logger import AuditLogger
 
 

@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 
-from observability.auto_triage import (
+from tradepulse.observability.auto_triage import (
     AutoTriageConfig,
     AutoTriageOrchestrator,
     MetricThreshold,

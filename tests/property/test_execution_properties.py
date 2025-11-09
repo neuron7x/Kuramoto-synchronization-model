@@ -10,8 +10,8 @@ except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
 from domain import Order, OrderSide, OrderType
-from execution.order import position_sizing
-from execution.risk import portfolio_heat
+from tradepulse.execution.order import position_sizing
+from tradepulse.execution.risk import portfolio_heat
 
 
 class TestPositionSizingProperties:

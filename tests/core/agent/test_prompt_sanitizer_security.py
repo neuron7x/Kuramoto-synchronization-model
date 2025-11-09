@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.agent.prompting import PromptInjectionDetected, PromptSanitizer
+from tradepulse.core.agent.prompting import PromptInjectionDetected, PromptSanitizer
 
 
 @pytest.fixture()

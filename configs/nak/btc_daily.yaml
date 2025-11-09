@@ -1,0 +1,8 @@
+EI_crit: 0.26
+sigma_target: 0.18
+sens_half_life: 150
+burst_z: 2.1
+dd_soft_base: 0.14
+vol_ref_base: 0.028
+reopen_hl: 90
+min_gate: 0.32

@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from domain.signal import Signal, SignalAction
-from execution.shadow import (
+from tradepulse.execution.shadow import (
     ShadowArchiveRecord,
     ShadowDecision,
     ShadowDeploymentConfig,

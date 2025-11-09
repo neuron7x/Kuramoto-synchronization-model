@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.events.models import (
+from tradepulse.core.events.models import (
     BarEvent,
     FillEvent,
     FillLiquidity,

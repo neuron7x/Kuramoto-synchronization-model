@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.phase.detector import PhaseThresholds, composite_transition, phase_flags
+from tradepulse.core.phase.detector import PhaseThresholds, composite_transition, phase_flags
 
 
 def test_phase_flags_detects_proto_state() -> None:

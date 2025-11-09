@@ -7,7 +7,7 @@ from typing import Awaitable, Callable
 
 import pytest
 
-from core.messaging.event_bus import (
+from tradepulse.core.messaging.event_bus import (
     BaseEventBus,
     EventBusBackend,
     EventBusConfig,

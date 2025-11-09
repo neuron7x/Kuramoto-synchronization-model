@@ -1,6 +1,6 @@
 import numpy as np
 
-from runtime.thermo_controller import FHMC
+from tradepulse.runtime.thermo_controller import FHMC
 from rl.core.actor_critic import ActorCriticFHMC
 
 

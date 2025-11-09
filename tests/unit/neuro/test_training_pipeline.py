@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pytest
 
-from core.neuro.training import (
+from tradepulse.core.neuro.training import (
     AsyncDataLoader,
     TrainingBatch,
     TrainingComponent,

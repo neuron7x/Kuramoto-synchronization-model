@@ -8,7 +8,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from core.indicators import kuramoto
+from tradepulse.core.indicators import kuramoto
 
 
 @pytest.fixture()

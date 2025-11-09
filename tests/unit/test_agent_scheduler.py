@@ -9,9 +9,9 @@ from typing import Any, Sequence
 
 import pytest
 
-from core.agent.evaluator import EvaluationResult
-from core.agent.scheduler import SlaMissedError, StrategyJob, StrategyScheduler
-from core.agent.strategy import Strategy
+from tradepulse.core.agent.evaluator import EvaluationResult
+from tradepulse.core.agent.scheduler import SlaMissedError, StrategyJob, StrategyScheduler
+from tradepulse.core.agent.strategy import Strategy
 
 
 class FakeClock:

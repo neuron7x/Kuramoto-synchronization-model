@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from observability.cache_warmup import (
+from tradepulse.observability.cache_warmup import (
     CacheWarmupController,
     CacheWarmupSpec,
 )

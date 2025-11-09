@@ -7,7 +7,7 @@ from dataclasses import replace
 
 import pytest
 
-from core.orchestrator import (
+from tradepulse.core.orchestrator import (
     DelayBudget,
     GuardBand,
     GuardConfig,

@@ -13,7 +13,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from core.data.feature_store import (
+from tradepulse.core.data.feature_store import (
     _ENVELOPE_PREFIX,
     DeltaLakeSource,
     FeatureStoreConfigurationError,
@@ -36,7 +36,7 @@ from core.data.feature_store import (
     _SQLiteEncryptionEnvelope,
     reencrypt_sqlite_payloads,
 )
-from core.utils.dataframe_io import write_dataframe
+from tradepulse.core.utils.dataframe_io import write_dataframe
 
 
 class _SetWithTTLClient:

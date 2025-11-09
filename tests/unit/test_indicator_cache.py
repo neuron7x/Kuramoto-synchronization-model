@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.cache import (
+from tradepulse.core.indicators.cache import (
     FileSystemIndicatorCache,
     cache_indicator,
     hash_input_data,
     make_fingerprint,
 )
-from core.indicators.multiscale_kuramoto import (
+from tradepulse.core.indicators.multiscale_kuramoto import (
     MultiScaleKuramoto,
     MultiScaleKuramotoFeature,
     TimeFrame,

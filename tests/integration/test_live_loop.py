@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 
 from domain import Order, OrderSide, OrderType
-from execution.connectors import BinanceConnector
-from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.risk import JsonRiskStateStore, LimitViolation, RiskLimits, RiskManager
+from tradepulse.execution.connectors import BinanceConnector
+from tradepulse.execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from tradepulse.execution.risk import JsonRiskStateStore, LimitViolation, RiskLimits, RiskManager
 
 
 class RecoveryConnector(BinanceConnector):

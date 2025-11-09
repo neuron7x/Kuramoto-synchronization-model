@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from core.agent import AgentRegistry, AgentRegistryError, AgentSpec, global_agent_registry
-from runtime.misanthropic_agent import MisanthropicAgent
+from tradepulse.core.agent import AgentRegistry, AgentRegistryError, AgentSpec, global_agent_registry
+from tradepulse.runtime.misanthropic_agent import MisanthropicAgent
 
 
 def test_global_registry_contains_misanthropic() -> None:

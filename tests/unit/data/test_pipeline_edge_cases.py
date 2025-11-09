@@ -7,20 +7,20 @@ from typing import Any, Iterable, List
 import pandas as pd
 import pytest
 
-from core.data.backfill import (
+from tradepulse.core.data.backfill import (
     CacheEntry,
     CacheKey,
     GapFillPlanner,
     LayerCache,
     _resolve_cadence,
 )
-from core.data.catalog import normalize_symbol
-from core.data.materialization import (
+from tradepulse.core.data.catalog import normalize_symbol
+from tradepulse.core.data.materialization import (
     InMemoryCheckpointStore,
     StreamMaterializer,
 )
-from core.data.path_guard import DataPathGuard
-from core.data.resampling import (
+from tradepulse.core.data.path_guard import DataPathGuard
+from tradepulse.core.data.resampling import (
     _ensure_datetime_index,
     align_timeframes,
     resample_order_book,

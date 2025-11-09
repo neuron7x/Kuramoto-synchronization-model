@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from core.indicators.base import (
+from tradepulse.core.indicators.base import (
     BaseFeature,
     BlockFeature,
     FeatureBlock,

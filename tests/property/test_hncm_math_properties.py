@@ -11,7 +11,7 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - executed when Hypothesis missing
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
-from analytics.regime.src.consensus.hncm_adapter import clamp, ema
+from tradepulse.analytics.regime.src.consensus.hncm_adapter import clamp, ema
 from tests.property.utils import property_settings, regression_note
 
 # Hypothesis struggles with NaN/Inf comparisons for these helpers, so we

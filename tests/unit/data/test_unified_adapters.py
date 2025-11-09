@@ -4,7 +4,7 @@ import itertools
 
 import pytest
 
-from core.data.adapters.unified import (
+from tradepulse.core.data.adapters.unified import (
     BackoffPolicy,
     RateLimiter,
     RateLimitRule,

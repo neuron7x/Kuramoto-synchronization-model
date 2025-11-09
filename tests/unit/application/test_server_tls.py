@@ -11,8 +11,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from pydantic import ValidationError
 
-from application.security.tls import build_api_server_ssl_context
-from application.settings import ApiServerSettings, ApiServerTLSSettings
+from tradepulse.application.security.tls import build_api_server_ssl_context
+from tradepulse.application.settings import ApiServerSettings, ApiServerTLSSettings
 
 
 def _generate_server_material(tmp_path: Path) -> tuple[Path, Path, Path]:

@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+include LICENSE
+include README.md
+include CHANGELOG.md
+recursive-include src/tradepulse *.py
+recursive-include src/tradepulse *.typed
+recursive-include src/tradepulse *.yaml
+recursive-include src/tradepulse *.json
+recursive-include schemas *.json *.avsc
+recursive-include configs *.yaml *.json

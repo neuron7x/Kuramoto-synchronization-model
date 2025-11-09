@@ -8,7 +8,7 @@ import logging
 
 import pytest
 
-from core.utils.logging import JSONFormatter, StructuredLogger, configure_logging
+from tradepulse.core.utils.logging import JSONFormatter, StructuredLogger, configure_logging
 
 
 def _make_record(**extra: object) -> logging.LogRecord:

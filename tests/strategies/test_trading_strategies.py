@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.trading import KuramotoIndicator
-from core.strategies import HurstVPINStrategy, KuramotoStrategy
+from tradepulse.core.indicators.trading import KuramotoIndicator
+from tradepulse.core.strategies import HurstVPINStrategy, KuramotoStrategy
 
 
 @pytest.fixture

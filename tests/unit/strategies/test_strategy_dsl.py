@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from core.strategies.dsl import StrategyDSLLoader, StrategyPresetRegistry
+from tradepulse.core.strategies.dsl import StrategyDSLLoader, StrategyPresetRegistry
 from tests.unit.strategies.sample_components import DummyStrategy
 
 

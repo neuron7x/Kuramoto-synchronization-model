@@ -9,9 +9,9 @@ from datetime import datetime, timezone
 import pytest
 
 from domain import Order, OrderSide, OrderType
-from execution.connectors import ExecutionConnector
-from execution.oms import OMSConfig, OrderManagementSystem
-from execution.order_lifecycle import OrderEvent, OrderLifecycle, OrderLifecycleStore
+from tradepulse.execution.connectors import ExecutionConnector
+from tradepulse.execution.oms import OMSConfig, OrderManagementSystem
+from tradepulse.execution.order_lifecycle import OrderEvent, OrderLifecycle, OrderLifecycleStore
 from interfaces.execution import RiskController
 from libs.db import DataAccessLayer
 

@@ -8,7 +8,7 @@ from typing import Optional
 
 import pytest
 
-from core.utils import schemas
+from tradepulse.core.utils import schemas
 
 
 @dataclass

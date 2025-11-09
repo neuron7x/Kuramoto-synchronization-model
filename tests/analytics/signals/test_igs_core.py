@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import analytics.signals.irreversibility as igs
-from analytics.signals.irreversibility import (
+import tradepulse.analytics.signals.irreversibility as igs
+from tradepulse.analytics.signals.irreversibility import (
     IGSConfig,
     StreamingIGS,
     _entropy_production,

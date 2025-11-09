@@ -1,5 +1,5 @@
 """Tests for the link activator."""
-from runtime.link_activator import LinkActivator, ProtocolType
+from tradepulse.runtime.link_activator import LinkActivator, ProtocolType
 
 
 def test_metallic_bond_prefers_crdt() -> None:

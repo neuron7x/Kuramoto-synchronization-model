@@ -10,7 +10,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 import src.data.kafka_ingestion as kafka_ingestion
-from core.data.models import InstrumentType, PriceTick
+from tradepulse.core.data.models import InstrumentType, PriceTick
 from src.data.kafka_ingestion import HotSymbolCache
 
 BASE_TS = datetime(2024, 1, 1, tzinfo=UTC)

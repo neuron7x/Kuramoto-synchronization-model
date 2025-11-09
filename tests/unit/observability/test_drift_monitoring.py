@@ -5,7 +5,7 @@ import datetime as dt
 
 import numpy as np
 
-from observability.drift import (
+from tradepulse.observability.drift import (
     DriftDetector,
     DriftMonitoringService,
     FeatureChangeLog,

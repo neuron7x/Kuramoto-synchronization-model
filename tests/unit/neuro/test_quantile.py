@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 
-from core.neuro.quantile import P2Quantile
+from tradepulse.core.neuro.quantile import P2Quantile
 
 
 def test_quantile_monotonic_updates() -> None:

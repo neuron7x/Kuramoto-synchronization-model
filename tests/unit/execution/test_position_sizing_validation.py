@@ -26,8 +26,8 @@ import math
 
 import pytest
 
-from execution.order import position_sizing
-from execution.position_sizer import calculate_position_size
+from tradepulse.execution.order import position_sizing
+from tradepulse.execution.position_sizer import calculate_position_size
 
 
 # Test fixtures for common parameters

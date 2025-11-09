@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
 from domain import Order, OrderSide, OrderType
-from execution.connectors import BinanceConnector, KrakenConnector
+from tradepulse.execution.connectors import BinanceConnector, KrakenConnector
 from tests.tolerances import FLOAT_ABS_TOL, FLOAT_REL_TOL
 
 

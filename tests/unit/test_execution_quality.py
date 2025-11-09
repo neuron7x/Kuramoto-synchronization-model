@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from analytics.execution_quality import (
+from tradepulse.analytics.execution_quality import (
     CancelReplaceSample,
     FillSample,
     cancel_replace_latency,

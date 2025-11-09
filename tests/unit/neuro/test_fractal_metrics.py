@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.neuro.fractal import (
+from tradepulse.core.neuro.fractal import (
     fractal_dimension_from_hurst,
     hurst_exponent,
     summarise_fractal_properties,

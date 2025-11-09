@@ -5,7 +5,7 @@ from collections import OrderedDict
 import numpy as np
 import pytest
 
-from backtest.synthetic import (
+from tradepulse.backtest.synthetic import (
     LiquidityShock,
     StructuralBreak,
     SyntheticScenarioConfig,

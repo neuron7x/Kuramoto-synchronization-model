@@ -5,9 +5,9 @@ import types
 import networkx as nx
 import pytest
 
-from runtime.dual_approval import DualApprovalManager
-from runtime.recovery_agent import RecoveryState
-from runtime.thermo_controller import CrisisComputation, ThermoController, ToleranceCheck
+from tradepulse.runtime.dual_approval import DualApprovalManager
+from tradepulse.runtime.recovery_agent import RecoveryState
+from tradepulse.runtime.thermo_controller import CrisisComputation, ThermoController, ToleranceCheck
 
 
 def _build_simple_graph() -> nx.DiGraph:

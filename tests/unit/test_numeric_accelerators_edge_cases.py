@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pytest
 
-from core.accelerators import convolve, quantiles, sliding_windows
+from tradepulse.core.accelerators import convolve, quantiles, sliding_windows
 
 
 def test_sliding_windows_validates_arguments() -> None:

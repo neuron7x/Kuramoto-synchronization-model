@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "metrics": [
+    {
+      "name": "tradepulse_feature_transform_duration_seconds",
+      "type": "histogram",
+      "description": "Time spent computing feature transformations.",
+      "labels": ["feature_name", "feature_type"],
+      "subsystem": "features"
+    },
+    {
+      "name": "tradepulse_feature_transform_total",
+      "type": "counter",
+      "description": "Total number of feature transformations executed.",
+      "labels": ["feature_name", "feature_type", "status"],
+      "subsystem": "features"
+    },
+    {
+      "name": "tradepulse_feature_value",
+      "type": "gauge",
+      "description": "Latest computed value for a feature.",
+      "labels": ["feature_name"],
+      "subsystem": "features"
+    },
+    {
+      "name": "tradepulse_indicator_compute_duration_seconds",
+      "type": "histogram",
+      "description": "Latency distribution for indicator computations.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_compute_total",
+      "type": "counter",
+      "description": "Total number of indicator computations executed.",
+      "labels": ["indicator_name", "status"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_value",
+      "type": "gauge",
+      "description": "Latest computed value for an indicator.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_sample_size",
+      "type": "gauge",
+      "description": "Number of samples processed during the most recent indicator computation.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_window_size",
+      "type": "gauge",
+      "description": "Effective sliding window or bucket span configured for indicator evaluation.",
+      "labels": ["indicator_name"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_indicator_quality_ratio",
+      "type": "gauge",
+      "description": "Indicator quality ratios (finite input share, valid coverage, saturation).",
+      "labels": ["indicator_name", "metric"],
+      "subsystem": "indicators"
+    },
+    {
+      "name": "tradepulse_backtest_duration_seconds",
+      "type": "histogram",
+      "description": "Wall-clock time required to execute backtests.",
+      "labels": ["strategy"],
+      "subsystem": "backtest"
+    },
+    {
+      "name": "tradepulse_backtest_total",
+      "type": "counter",
+      "description": "Total number of backtests executed.",
+      "labels": ["strategy", "status"],
+      "subsystem": "backtest"
+    },
+    {
+      "name": "tradepulse_backtest_pnl",
+      "type": "gauge",
+      "description": "Latest profit and loss recorded for a strategy backtest.",
+      "labels": ["strategy"],
+      "subsystem": "backtest"
+    },
+    {
+      "name": "tradepulse_backtest_max_drawdown",
+      "type": "gauge",
+      "description": "Maximum observed drawdown for a backtest run.",
+      "labels": ["strategy"],
+      "subsystem": "backtest"
+    },
+    {
+      "name": "tradepulse_backtest_trades",
+      "type": "gauge",
+      "description": "Number of trades executed within a backtest run.",
+      "labels": ["strategy"],
+      "subsystem": "backtest"
+    },
+    {
+      "name": "tradepulse_data_ingestion_duration_seconds",
+      "type": "histogram",
+      "description": "Duration of data ingestion operations.",
+      "labels": ["source", "symbol"],
+      "subsystem": "data"
+    },
+    {
+      "name": "tradepulse_data_ingestion_total",
+      "type": "counter",
+      "description": "Total number of data ingestion tasks executed.",
+      "labels": ["source", "symbol", "status"],
+      "subsystem": "data"
+    },
+    {
+      "name": "tradepulse_data_ingestion_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "P50/P95/P99 latency of ingestion callbacks.",
+      "labels": ["source", "symbol", "quantile"],
+      "subsystem": "data"
+    },
+    {
+      "name": "tradepulse_data_ingestion_throughput_ticks_per_second",
+      "type": "gauge",
+      "description": "Instantaneous ingestion throughput expressed as ticks per second.",
+      "labels": ["source", "symbol"],
+      "subsystem": "data"
+    },
+    {
+      "name": "tradepulse_ticks_processed_total",
+      "type": "counter",
+      "description": "Ticks processed for each data source and symbol.",
+      "labels": ["source", "symbol"],
+      "subsystem": "data"
+    },
+    {
+      "name": "tradepulse_order_placement_duration_seconds",
+      "type": "histogram",
+      "description": "Latency of order placement requests.",
+      "labels": ["exchange", "symbol"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_orders_placed_total",
+      "type": "counter",
+      "description": "Total orders submitted to an exchange.",
+      "labels": ["exchange", "symbol", "order_type", "status"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_order_submission_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "Latency quantiles for simulated order submissions.",
+      "labels": ["exchange", "symbol", "quantile"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_order_ack_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "Latency quantiles between exchange submission and broker acknowledgement.",
+      "labels": ["exchange", "symbol", "quantile"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_order_fill_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "Latency quantiles between order ready time and fill.",
+      "labels": ["exchange", "symbol", "quantile"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_open_positions",
+      "type": "gauge",
+      "description": "Currently open positions tracked per exchange and symbol.",
+      "labels": ["exchange", "symbol"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_signal_generation_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "Latency quantiles for signal generation routines.",
+      "labels": ["strategy", "quantile"],
+      "subsystem": "signals"
+    },
+    {
+      "name": "tradepulse_signal_to_fill_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "Aggregate latency quantiles from signal emission to final fill.",
+      "labels": ["strategy", "exchange", "symbol", "quantile"],
+      "subsystem": "execution"
+    },
+    {
+      "name": "tradepulse_signal_generation_total",
+      "type": "counter",
+      "description": "Total number of signal generation invocations.",
+      "labels": ["strategy", "status"],
+      "subsystem": "signals"
+    },
+    {
+      "name": "tradepulse_model_inference_latency_seconds",
+      "type": "histogram",
+      "description": "Latency observed for model inference requests.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_latency_quantiles_seconds",
+      "type": "gauge",
+      "description": "P50/P95/P99 latency quantiles for model inference requests.",
+      "labels": ["model_name", "deployment", "quantile"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_total",
+      "type": "counter",
+      "description": "Total number of model inference requests grouped by outcome.",
+      "labels": ["model_name", "deployment", "status"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_throughput_per_second",
+      "type": "gauge",
+      "description": "Rolling throughput of model inference requests (requests/second).",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_inference_error_ratio",
+      "type": "gauge",
+      "description": "Observed error ratio for model inference requests.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_saturation",
+      "type": "gauge",
+      "description": "Saturation level of the model serving infrastructure (0-1).",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cpu_percent",
+      "type": "gauge",
+      "description": "Process CPU utilisation percent for model serving components.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_gpu_percent",
+      "type": "gauge",
+      "description": "GPU utilisation percent attributed to model serving workloads.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_memory_bytes",
+      "type": "gauge",
+      "description": "Resident memory footprint of the model serving process (bytes).",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_memory_percent",
+      "type": "gauge",
+      "description": "Process memory utilisation percent for model serving workloads.",
+      "labels": ["model_name", "deployment"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cache_hit_ratio",
+      "type": "gauge",
+      "description": "Hit ratio observed for model-specific caches.",
+      "labels": ["model_name", "deployment", "cache_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cache_entries",
+      "type": "gauge",
+      "description": "Number of entries currently stored in model caches.",
+      "labels": ["model_name", "deployment", "cache_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_cache_evictions_total",
+      "type": "counter",
+      "description": "Total cache eviction events observed for model caches.",
+      "labels": ["model_name", "deployment", "cache_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_lower",
+      "type": "gauge",
+      "description": "Lower bound of the quality metric confidence interval.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_upper",
+      "type": "gauge",
+      "description": "Upper bound of the quality metric confidence interval.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_mean",
+      "type": "gauge",
+      "description": "Mean value used to derive the quality metric confidence interval.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_interval_width",
+      "type": "gauge",
+      "description": "Width of the confidence interval for the model quality metric.",
+      "labels": ["model_name", "deployment", "metric", "confidence"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_quality_degradation_events_total",
+      "type": "counter",
+      "description": "Total number of model quality degradation events emitted.",
+      "labels": ["model_name", "deployment", "metric", "reason"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_triage_total",
+      "type": "counter",
+      "description": "Automated triage workflows launched for model degradations.",
+      "labels": ["model_name", "deployment", "metric", "reason"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_model_metric_correlation",
+      "type": "gauge",
+      "description": "Correlation coefficient between pairs of model metrics.",
+      "labels": ["model_name", "deployment", "metric_a", "metric_b"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_health_check_latency_seconds",
+      "type": "histogram",
+      "description": "Latency of periodic system health probes.",
+      "labels": ["check_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_health_check_status",
+      "type": "gauge",
+      "description": "Outcome of the latest health probe (1=healthy, 0=unhealthy).",
+      "labels": ["check_name"],
+      "subsystem": "observability"
+    },
+    {
+      "name": "tradepulse_database_size_bytes",
+      "type": "gauge",
+      "description": "Current size of the database in bytes.",
+      "labels": ["database", "host"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_database_size_growth_bytes",
+      "type": "gauge",
+      "description": "Growth in database size since the previous measurement.",
+      "labels": ["database", "host"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_database_query_latency_seconds",
+      "type": "histogram",
+      "description": "Latency observed for database queries.",
+      "labels": ["database", "host", "statement_type", "status"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_database_query_total",
+      "type": "counter",
+      "description": "Total database queries executed grouped by outcome.",
+      "labels": ["database", "host", "statement_type", "status"],
+      "subsystem": "database"
+    },
+    {
+      "name": "tradepulse_strategy_score",
+      "type": "gauge",
+      "description": "Composite score for a strategy's live performance.",
+      "labels": ["strategy_name"],
+      "subsystem": "strategy"
+    },
+    {
+      "name": "tradepulse_strategy_memory_size",
+      "type": "gauge",
+      "description": "Count of strategies loaded in memory.",
+      "labels": [],
+      "subsystem": "strategy"
+    },
+    {
+      "name": "tradepulse_optimization_duration_seconds",
+      "type": "histogram",
+      "description": "Duration of strategy optimisation runs.",
+      "labels": ["optimizer_type"],
+      "subsystem": "optimization"
+    },
+    {
+      "name": "tradepulse_optimization_iterations_total",
+      "type": "counter",
+      "description": "Iterations completed by the optimisation engine.",
+      "labels": ["optimizer_type"],
+      "subsystem": "optimization"
+    }
+  ]
+}

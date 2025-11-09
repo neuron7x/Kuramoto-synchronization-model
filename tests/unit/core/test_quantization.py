@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.ml.quantization import QuantizationConfig, UniformAffineQuantizer
+from tradepulse.core.ml.quantization import QuantizationConfig, UniformAffineQuantizer
 
 
 def test_post_training_int8_quantization_high_fidelity() -> None:

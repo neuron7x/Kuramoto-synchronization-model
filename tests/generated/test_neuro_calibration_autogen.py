@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.neuro.calibration import (
+from tradepulse.core.neuro.calibration import (
     AMMConfig,
     CalibConfig,
     Float,

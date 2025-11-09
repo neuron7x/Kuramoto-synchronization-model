@@ -1,7 +1,7 @@
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
-from backtest.market_calendar import MarketCalendar, SessionHours
+from tradepulse.backtest.market_calendar import MarketCalendar, SessionHours
 
 
 def _calendar() -> MarketCalendar:

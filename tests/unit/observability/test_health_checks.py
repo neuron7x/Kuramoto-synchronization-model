@@ -5,14 +5,14 @@ from pathlib import Path
 
 import numpy as np
 
-from application.system import (
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from execution.connectors import BinanceConnector
-from observability.health_checks import (
+from tradepulse.execution.connectors import BinanceConnector
+from tradepulse.observability.health_checks import (
     build_default_health_checks,
     evaluate_data_pipeline_health,
     evaluate_execution_health,

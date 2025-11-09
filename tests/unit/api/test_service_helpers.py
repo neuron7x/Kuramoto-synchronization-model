@@ -9,7 +9,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 from starlette.testclient import TestClient
 
-from application.api.service import (
+from tradepulse.application.api.service import (
     PayloadGuardMiddleware,
     _filter_feature_frame,
     _filter_feature_values,

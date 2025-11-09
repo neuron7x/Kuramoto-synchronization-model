@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from execution.risk import RiskLimits, RiskManager
+from tradepulse.execution.risk import RiskLimits, RiskManager
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
 from src.security import AccessController, AccessDeniedError, AccessPolicy
 

@@ -5,14 +5,14 @@ from pathlib import Path
 
 import numpy as np
 
-from backtest.engine import Result
-from core.data.models import InstrumentType
-from core.pipelines.smoke_e2e import (
+from tradepulse.backtest.engine import Result
+from tradepulse.core.data.models import InstrumentType
+from tradepulse.core.pipelines.smoke_e2e import (
     SmokeE2EConfig,
     SmokeE2EPipeline,
     write_summary,
 )
-from core.data.ingestion import Ticker
+from tradepulse.core.data.ingestion import Ticker
 
 
 def _make_tick(price: float) -> Ticker:

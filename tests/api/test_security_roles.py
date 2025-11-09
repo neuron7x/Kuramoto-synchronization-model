@@ -1,4 +1,4 @@
-from application.api.security import _extract_roles
+from tradepulse.application.api.security import _extract_roles
 
 
 def test_extract_roles_normalises_and_deduplicates_roles():

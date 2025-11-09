@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.neuro.amm import AdaptiveMarketMind, AMMConfig
-from core.neuro.calibration import CalibConfig, calibrate_random
+from tradepulse.core.neuro.amm import AdaptiveMarketMind, AMMConfig
+from tradepulse.core.neuro.calibration import CalibConfig, calibrate_random
 
 
 def _toy_series(n=2000, seed=0):

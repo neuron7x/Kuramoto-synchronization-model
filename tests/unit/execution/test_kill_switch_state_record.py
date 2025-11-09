@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from execution.risk import KillSwitchStateRecord
+from tradepulse.execution.risk import KillSwitchStateRecord
 
 
 def test_tuple_payload_is_normalised_to_utc_and_stripped_reason() -> None:

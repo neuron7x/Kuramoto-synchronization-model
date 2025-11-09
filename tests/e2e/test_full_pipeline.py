@@ -14,7 +14,7 @@ from cli.tradepulse_cli import (
     _run_backtest,
     _write_frame,
 )
-from core.config.cli_models import (
+from tradepulse.core.config.cli_models import (
     BacktestConfig,
     DataSourceConfig,
     ExecConfig,
@@ -23,7 +23,7 @@ from core.config.cli_models import (
     ReportConfig,
     StrategyConfig,
 )
-from core.reporting import (
+from tradepulse.core.reporting import (
     generate_markdown_report,
     render_markdown_to_html,
     render_markdown_to_pdf,

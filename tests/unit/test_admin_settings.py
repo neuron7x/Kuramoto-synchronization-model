@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from application.configuration import ConfigurationStoreError
-from application.secrets.manager import secret_caller_context
-from application.secrets.vault import SecretVault
-from application.settings import AdminApiSettings, ConfigNamespaceSettings
+from tradepulse.application.configuration import ConfigurationStoreError
+from tradepulse.application.secrets.manager import secret_caller_context
+from tradepulse.application.secrets.vault import SecretVault
+from tradepulse.application.settings import AdminApiSettings, ConfigNamespaceSettings
 from src.audit.audit_logger import AuditLogger
 
 

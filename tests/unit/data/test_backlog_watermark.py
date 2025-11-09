@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 
-from core.data.resampling import align_timeframes, resample_ticks_to_l1
+from tradepulse.core.data.resampling import align_timeframes, resample_ticks_to_l1
 from src.data.backlog_watermark import WatermarkBacklog
 
 

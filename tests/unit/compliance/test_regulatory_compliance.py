@@ -1,7 +1,7 @@
 import pytest
 
-from core.compliance import ComplianceIssue, RegulatoryComplianceValidator
-from core.compliance import regulatory as reg
+from tradepulse.core.compliance import ComplianceIssue, RegulatoryComplianceValidator
+from tradepulse.core.compliance import regulatory as reg
 
 
 @pytest.fixture()

@@ -5,9 +5,9 @@ from typing import List
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.connectors import SimulatedExchangeConnector
-from execution.normalization import SymbolSpecification
-from execution.paper_trading import (
+from tradepulse.execution.connectors import SimulatedExchangeConnector
+from tradepulse.execution.normalization import SymbolSpecification
+from tradepulse.execution.paper_trading import (
     DeterministicLatencyModel,
     PaperTradingEngine,
     TelemetryEvent,

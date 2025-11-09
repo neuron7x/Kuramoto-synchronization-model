@@ -5,7 +5,7 @@ Tests for ThermoController HPC-AI integration.
 import pytest
 import networkx as nx
 import pandas as pd
-from runtime.thermo_controller import ThermoController
+from tradepulse.runtime.thermo_controller import ThermoController
 from neuropro.hpc_validation import generate_synthetic_data
 
 

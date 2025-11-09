@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 
-from backtest.monte_carlo import (
+from tradepulse.backtest.monte_carlo import (
     MonteCarloConfig,
     evaluate_scenarios,
     generate_monte_carlo_scenarios,

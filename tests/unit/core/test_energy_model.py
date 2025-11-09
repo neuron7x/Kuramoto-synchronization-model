@@ -7,7 +7,7 @@ import math
 import networkx as nx
 import pytest
 
-from core.engine.energy import (
+from tradepulse.core.engine.energy import (
     MIN_DISTANCE,
     PulseBuffer,
     ThermodynamicSystem,

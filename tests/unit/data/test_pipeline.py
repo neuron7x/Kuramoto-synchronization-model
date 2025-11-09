@@ -7,15 +7,15 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from core.data.backfill import (
+from tradepulse.core.data.backfill import (
     BackfillPlan,
     BackfillProgressSnapshot,
     BackfillResult,
     CacheKey,
 )
-from core.data.dead_letter import DeadLetterQueue, DeadLetterReason
-from core.data.feature_store import OnlineFeatureStore
-from core.data.pipeline import (
+from tradepulse.core.data.dead_letter import DeadLetterQueue, DeadLetterReason
+from tradepulse.core.data.feature_store import OnlineFeatureStore
+from tradepulse.core.data.pipeline import (
     AnonymizationRule,
     BalanceConfig,
     DataPipeline,
@@ -29,9 +29,9 @@ from core.data.pipeline import (
     ToxicityFilterConfig,
     build_online_writer,
 )
-from core.data.quality_control import QualityGateConfig, RangeCheck
-from core.data.validation import TimeSeriesValidationConfig, ValueColumnConfig
-from observability.drift import DriftDetector
+from tradepulse.core.data.quality_control import QualityGateConfig, RangeCheck
+from tradepulse.core.data.validation import TimeSeriesValidationConfig, ValueColumnConfig
+from tradepulse.observability.drift import DriftDetector
 
 
 def _primary_source_factory(frame: pd.DataFrame) -> SourceOfTruthSpec:

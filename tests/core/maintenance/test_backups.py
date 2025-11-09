@@ -8,7 +8,7 @@ import tarfile
 
 import pytest
 
-from core.maintenance.backups import BackupConfig, DatabaseBackupManager
+from tradepulse.core.maintenance.backups import BackupConfig, DatabaseBackupManager
 
 
 class _Recorder:

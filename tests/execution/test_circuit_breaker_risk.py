@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from execution.resilience.circuit_breaker import (
+from tradepulse.execution.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitBreakerState,

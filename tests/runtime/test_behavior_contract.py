@@ -1,12 +1,12 @@
 import pytest
 
-from runtime.behavior_contract import (
+from tradepulse.runtime.behavior_contract import (
     ActionClass,
     SystemState,
     tacl_gate,
 )
-from runtime.dual_approval import DualApprovalManager
-from runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
+from tradepulse.runtime.dual_approval import DualApprovalManager
+from tradepulse.runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
 
 
 @pytest.fixture(autouse=True)

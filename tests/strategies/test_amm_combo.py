@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backtest.strategies.amm_combo import AMMComboStrategy, AMMStrategyConfig
+from tradepulse.backtest.strategies.amm_combo import AMMComboStrategy, AMMStrategyConfig
 
 
 def test_strategy_generates_actions_and_sizes():

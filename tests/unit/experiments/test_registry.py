@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from core.experiments import ArtifactSpec, ModelRegistry
+from tradepulse.core.experiments import ArtifactSpec, ModelRegistry
 
 
 def test_register_run_persists_artifacts_and_metadata(tmp_path: Path) -> None:

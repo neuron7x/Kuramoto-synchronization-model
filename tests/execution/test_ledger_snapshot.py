@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.order_ledger import OrderLedger
-from execution.order_lifecycle import OMSState, make_idempotency_key
+from tradepulse.execution.order_ledger import OrderLedger
+from tradepulse.execution.order_lifecycle import OMSState, make_idempotency_key
 
 
 @pytest.fixture

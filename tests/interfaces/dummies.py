@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Mapping
 
-from execution.connectors import ExecutionConnector
+from tradepulse.execution.connectors import ExecutionConnector
 
 
 class DummyConnector(ExecutionConnector):

@@ -6,13 +6,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from application.system import (
+from tradepulse.application.system import (
     ExchangeAdapterConfig,
     LiveLoopSettings,
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from execution.connectors import BinanceConnector
+from tradepulse.execution.connectors import BinanceConnector
 
 
 def write_sample_ohlc(path: Path, *, periods: int = 128) -> None:

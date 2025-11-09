@@ -8,7 +8,7 @@ from typing import Mapping
 
 import pytest
 
-from execution.adapters import (
+from tradepulse.execution.adapters import (
     AdapterCheckResult,
     AdapterContract,
     AdapterDiagnostic,
@@ -20,7 +20,7 @@ from execution.adapters import (
     get_adapter_class,
     load_adapter,
 )
-from execution.connectors import ExecutionConnector
+from tradepulse.execution.connectors import ExecutionConnector
 
 adapter_plugin_module = import_module("execution.adapters.plugin")
 

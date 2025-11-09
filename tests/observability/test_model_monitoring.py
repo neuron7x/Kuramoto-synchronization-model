@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from prometheus_client import CollectorRegistry
 
-from core.utils import metrics as metrics_module
-from observability.model_monitoring import (
+from tradepulse.core.utils import metrics as metrics_module
+from tradepulse.observability.model_monitoring import (
     ModelObservabilityConfig,
     ModelObservabilityOrchestrator,
     ResourceSnapshot,
