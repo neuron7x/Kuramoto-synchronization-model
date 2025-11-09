@@ -284,6 +284,7 @@ def test_coverage_report_includes_branch_coverage() -> None:
                     if "pytest" in run_cmd:
                         # Should include --cov-branch or coverage config should enable it
                         # This is optional check since it might be in config file
+                        pass
 
 
 def test_coverage_job_publishes_summary() -> None:
