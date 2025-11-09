@@ -497,9 +497,10 @@ entropy_feat = EntropyFeature(bins=30, use_float32=True)
 hurst_feat = HurstFeature(use_float32=True)
 
 # Or for preprocessing
-from core.data.preprocess import scale_series, normalize_df
+from core.data.preprocess import scale_series, normalize_df, normalize_numeric_columns
 scaled = scale_series(data, use_float32=True)
 df_opt = normalize_df(df, use_float32=True)
+scaled_frame = normalize_numeric_columns(df, exclude=["ts"], use_float32=True)
 ```
 
 2. **Process data in chunks** (NEW):

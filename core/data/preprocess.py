@@ -6,6 +6,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 
 from ..utils.logging import get_logger
 
@@ -13,6 +14,9 @@ _logger = get_logger(__name__)
 
 
 ArrayLike = Union[np.ndarray, pd.Series, Sequence[float], Iterable[float]]
+
+
+__all__ = ["normalize_df", "scale_series", "normalize_numeric_columns"]
 
 
 def normalize_df(
@@ -130,3 +134,88 @@ def scale_series(
             return (values - data_min) / data_range
 
         raise ValueError(f"Unsupported scaling method: {method!r}")
+
+
+def normalize_numeric_columns(
+    df: pd.DataFrame,
+    method: str = "zscore",
+    *,
+    columns: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
+    use_float32: bool = False,
+) -> pd.DataFrame:
+    """Return a copy of ``df`` with numeric columns scaled to a common range.
+
+    The helper applies :func:`scale_series` column-wise to the selected numeric
+    columns while preserving non-numeric data and ``NaN`` sentinels.  By
+    default, all numeric columns are scaled; the ``columns`` and ``exclude``
+    parameters provide fine-grained control when certain fields (e.g.
+    timestamps) must be left untouched.
+
+    Parameters
+    ----------
+    df:
+        Input dataframe.  The original dataframe is never mutated in-place.
+    method:
+        Scaling method passed to :func:`scale_series` (``"zscore"`` by default).
+    columns:
+        Optional explicit list of column names to scale.  When omitted all
+        numeric columns are considered.
+    exclude:
+        Optional list of column names to ignore even if they appear in
+        ``columns`` or are detected as numeric.
+    use_float32:
+        Emit ``float32`` values instead of the default ``float64`` to reduce
+        memory footprint.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of the original dataframe with selected numeric columns scaled.
+    """
+
+    exclude_set = set(exclude or ())
+
+    with _logger.operation(
+        "normalize_numeric_columns",
+        method=method,
+        use_float32=use_float32,
+        columns="explicit" if columns is not None else "auto",
+        exclude_count=len(exclude_set),
+    ):
+        normalized = df.copy()
+
+        if columns is None:
+            candidate_columns = list(normalized.select_dtypes(include=["number"]).columns)
+        else:
+            candidate_columns = list(columns)
+
+        target_columns = [
+            column for column in candidate_columns if column not in exclude_set
+        ]
+
+        for column in target_columns:
+            if column not in normalized.columns:
+                raise KeyError(f"Column {column!r} not found in dataframe")
+
+            series = normalized[column]
+            if not is_numeric_dtype(series.dtype):
+                raise TypeError(
+                    f"Column {column!r} has non-numeric dtype {series.dtype}"
+                )
+
+            values = series.to_numpy(dtype=np.float32 if use_float32 else float, copy=True)
+
+            if values.size == 0:
+                continue
+
+            nan_mask = np.isnan(values)
+            if nan_mask.all():
+                normalized[column] = values
+                continue
+
+            scaled = scale_series(values[~nan_mask], method=method, use_float32=use_float32)
+            values[~nan_mask] = scaled
+            normalized[column] = values
+
+        return normalized
