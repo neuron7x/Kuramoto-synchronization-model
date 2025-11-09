@@ -43,6 +43,12 @@ The public interface is intentionally small and stable:
 | `meta_adapt(performance_metrics)` | Mutates release weights according to drawdown/Sharpe metrics, guarded by TACL. Persists the config atomically and writes an audit snapshot. |
 | `to_dict()` | Serialises the controller state for auditing, including hold_state and cooldown_s. |
 | `set_tacl_guard(guard_fn)` | Registers a callable `(event_name, payload) -> bool` invoked for cooldown and meta-adapt actions. |
+| **`save_state(path)`** | **NEW**: Saves controller state to JSON for recovery or analysis. Includes metadata (timestamp, step count, veto metrics). |
+| **`load_state(path)`** | **NEW**: Loads controller state from JSON file. Validates and restores core state and performance metrics. |
+| **`reset()`** | **NEW**: Resets controller to initial state while preserving configuration. Useful for testing or recovery. |
+| **`health_check()`** | **NEW**: Returns diagnostic dict with health status, issues, warnings, and current state. Detects stuck HOLD, low sensitivity, invalid config. |
+| **`get_performance_metrics()`** | **NEW**: Returns performance statistics: step_count, veto_count, veto_rate, cooldown durations. |
+| **`diagnose()`** | **NEW**: Generates formatted diagnostic report for troubleshooting. Includes state, thresholds, metrics, and health status. |
 
 Internally-scoped helpers are prefixed with `_` and are not part of the compatibility surface.
 
@@ -149,6 +155,72 @@ if controller.check_cooldown(serotonin_signal):
 
 shifted_gradient = controller.apply_internal_shift(2.0, serotonin_signal)
 state_snapshot = controller.to_dict()
+```
+
+### Production Usage Patterns
+
+**State Persistence and Recovery**
+```python
+# Save state periodically for recovery
+controller.save_state("checkpoints/serotonin_state.json")
+
+# Recover from crash or restart
+try:
+    controller.load_state("checkpoints/serotonin_state.json")
+    logger.info("Restored from checkpoint")
+except FileNotFoundError:
+    logger.info("Starting fresh")
+```
+
+**Health Monitoring**
+```python
+# Regular health checks
+health = controller.health_check()
+if not health["healthy"]:
+    logger.error(f"Controller issues: {health['issues']}")
+    # Alert ops team or trigger recovery
+    controller.reset()
+
+# Log warnings
+for warning in health["warnings"]:
+    logger.warning(f"Serotonin: {warning}")
+```
+
+**Performance Monitoring**
+```python
+# Track performance metrics
+metrics = controller.get_performance_metrics()
+logger.info(f"Veto rate: {metrics['veto_rate']:.2%}")
+logger.info(f"Avg cooldown: {metrics['average_cooldown_duration']:.1f}s")
+
+# Alert on high veto rate
+if metrics["veto_rate"] > 0.5 and metrics["step_count"] > 100:
+    logger.warning("High veto rate detected")
+```
+
+**Diagnostic Troubleshooting**
+```python
+# Generate diagnostic report
+if trading_errors_detected:
+    report = controller.diagnose()
+    logger.info(report)
+    # Save to incident logs
+    with open(f"incidents/{timestamp}_serotonin.txt", "w") as f:
+        f.write(report)
+```
+
+**Context Manager for Resource Management**
+```python
+# Use as context manager for automatic cleanup
+with SerotoninController("configs/serotonin.yaml") as controller:
+    for tick in trading_session:
+        hold, veto, cooldown_s, level = controller.step(
+            stress=tick.volatility,
+            drawdown=tick.drawdown,
+            novelty=tick.regime_uncertainty
+        )
+        if hold:
+            skip_trading_tick()
 ```
 
 ### Integration Notes
