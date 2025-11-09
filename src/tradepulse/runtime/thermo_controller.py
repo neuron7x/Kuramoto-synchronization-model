@@ -553,6 +553,7 @@ class ThermoController:
             topology_changes=[],
         )
     def control_step(self) -> None:
+        # MFD Guard: Kill switch check (hard stop)
         if is_kill_switch_active():
             current_F = float(self.previous_F)
             self.circuit_breaker_active = True

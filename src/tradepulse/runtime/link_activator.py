@@ -14,7 +14,21 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from tradepulse.runtime.behavior_contract import (
+    ActionClass,
+    SystemState,
+    get_current_state,
+    tacl_gate,
+)
+from tradepulse.observability.audit.trail import AuditTrail
+
 logger = logging.getLogger(__name__)
+
+# Initialize audit trail for MFD violations
+try:
+    audit_trail = AuditTrail("logs/audit/link_activator.jsonl")
+except Exception:
+    audit_trail = None
 
 
 class ProtocolType(Enum):
@@ -64,10 +78,20 @@ class LinkActivator:
         ProtocolType.LOCAL_LEDGER: 50.0,
     }
 
-    def __init__(self, *, enable_rdma: bool = True, enable_crdt: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        enable_rdma: bool = True,
+        enable_crdt: bool = True,
+        F_baseline: float = 1.0,
+        epsilon: float = 0.01,
+    ) -> None:
         self.enable_rdma = enable_rdma
         self.enable_crdt = enable_crdt
         self._activation_history: List[Dict[str, Any]] = []
+        self.F_baseline = F_baseline
+        self.epsilon = epsilon
+        self.F_current = F_baseline
         logger.debug(
             "LinkActivator initialised with RDMA=%s, CRDT=%s", enable_rdma, enable_crdt
         )
@@ -92,6 +116,60 @@ class LinkActivator:
             Optional diagnostic metadata that will be included in the activation
             history for observability.
         """
+        
+        # MFD Guard: Check free energy before execution
+        system_state = get_current_state(self.F_current, self.F_baseline)
+        
+        # Estimate F_next based on protocol cost
+        protocol_cost_estimate = self.PROTOCOL_COSTS.get(
+            ProtocolType.GRPC, 1e-3
+        )  # Conservative estimate
+        F_next = self.F_current + protocol_cost_estimate
+        
+        # TACL gate check for MFD guarantee
+        decision = tacl_gate(
+            module_name="link_activator",
+            action_class=ActionClass.A1_LOCAL_CORRECTION,
+            system_state=system_state,
+            F_now=self.F_current,
+            F_next=F_next,
+            epsilon=self.epsilon,
+            recovery_path=False,
+            dual_approved=False,
+        )
+        
+        if not decision.allowed:
+            # Hard stop + audit record
+            if audit_trail:
+                audit_trail.record(
+                    event="MFD_VIOLATION",
+                    severity="critical",
+                    details={
+                        "module": "link_activator",
+                        "bond_type": bond_type,
+                        "src": src,
+                        "dst": dst,
+                        "F_current": self.F_current,
+                        "F_next": F_next,
+                        "reason": decision.reason,
+                    },
+                )
+            logger.error(
+                "MFD guard blocked link activation: %s->%s (%s), reason: %s",
+                src,
+                dst,
+                bond_type,
+                decision.reason,
+            )
+            result = ActivationResult(
+                success=False,
+                protocol_used=None,
+                cost=0.0,
+                latency_estimate_us=0.0,
+                error=f"MFD_VIOLATION: {decision.reason}",
+            )
+            self._record_history(bond_type, src, dst, result, metadata)
+            return result
 
         handler_map = {
             "metallic": self._activate_metallic,
@@ -125,6 +203,10 @@ class LinkActivator:
                 latency_estimate_us=float("inf"),
                 error=str(exc),
             )
+
+        # Update F_current after successful activation
+        if result.success:
+            self.F_current += result.cost
 
         self._record_history(bond_type, src, dst, result, metadata)
         return result
