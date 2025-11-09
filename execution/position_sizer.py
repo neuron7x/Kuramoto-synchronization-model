@@ -57,7 +57,7 @@ def calculate_position_size(
     # Clip risk to valid range [0, 1]
     clipped_risk = max(0.0, min(risk, 1.0))
     notional = balance * clipped_risk
-    
+
     # Early exit for zero notional
     if notional <= 0.0:
         return 0.0

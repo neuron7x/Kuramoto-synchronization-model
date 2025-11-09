@@ -466,12 +466,13 @@ class AutoTriageOrchestrator:
         copied: list[Path] = []
         missing: list[str] = []
         for log_path in self._config.log_paths:
-            if log_path.exists():
-                destination = logs_dir / log_path.name
-                shutil.copy2(log_path, destination)
+            log_path_obj = Path(log_path)
+            if log_path_obj.exists():
+                destination = logs_dir / log_path_obj.name
+                shutil.copy2(log_path_obj, destination)
                 copied.append(destination)
             else:
-                missing.append(str(log_path))
+                missing.append(str(log_path_obj))
 
         details: dict[str, Any] = {"copied": [str(path) for path in copied]}
         if missing:

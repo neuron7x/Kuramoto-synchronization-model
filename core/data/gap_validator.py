@@ -44,7 +44,7 @@ class GapDetectionError(ValueError):
     from operating on incomplete data that could lead to incorrect signals
     or financial losses.
     """
-    
+
     def __init__(self, message: str, gaps: list[Gap] | None = None):
         """Initialize with error message and detected gaps.
         
@@ -68,7 +68,7 @@ class GapValidatorConfig:
             (useful for equity markets).
         allow_holiday_gaps: If True, gaps during holidays are permitted.
     """
-    
+
     frequency: str
     max_gap_duration: str | timedelta | None = None
     allow_weekend_gaps: bool = False
@@ -90,7 +90,7 @@ class GapValidator:
         >>> validator.validate_and_raise(good_index)  # passes
         >>> validator.validate_and_raise(bad_index)   # raises GapDetectionError
     """
-    
+
     def __init__(
         self,
         frequency: str,
@@ -111,7 +111,7 @@ class GapValidator:
         self._max_gap_duration = self._parse_duration(max_gap_duration)
         self._allow_weekend_gaps = allow_weekend_gaps
         self._allow_holiday_gaps = allow_holiday_gaps
-    
+
     @staticmethod
     @lru_cache(maxsize=32)
     def _parse_duration(duration: str | timedelta | None) -> timedelta | None:
@@ -124,7 +124,7 @@ class GapValidator:
         if isinstance(duration, timedelta):
             return duration
         return pd.Timedelta(duration).to_pytimedelta()
-    
+
     def validate(
         self,
         index: pd.DatetimeIndex,
@@ -144,7 +144,7 @@ class GapValidator:
         """
         if index.empty:
             return True, []
-        
+
         # Generate expected index
         if full_check:
             expected_index = pd.date_range(
@@ -155,18 +155,18 @@ class GapValidator:
         else:
             # Quick check - just verify consecutive timestamps
             expected_index = index
-        
+
         # Detect gaps
         gaps = detect_gaps(expected_index, index, frequency=self._frequency)
-        
+
         if not gaps:
             return True, []
-        
+
         # Filter gaps based on configuration
         unacceptable_gaps = self._filter_acceptable_gaps(gaps)
-        
+
         return len(unacceptable_gaps) == 0, unacceptable_gaps
-    
+
     def _filter_acceptable_gaps(self, gaps: list[Gap]) -> list[Gap]:
         """Filter out gaps that are acceptable per configuration.
         
@@ -179,31 +179,31 @@ class GapValidator:
         # Early exit if no gaps
         if not gaps:
             return []
-        
+
         # Pre-compute weekend checking logic outside loop
         check_weekends = self._allow_weekend_gaps
         check_duration = self._max_gap_duration is not None
-        
+
         unacceptable = []
-        
+
         for gap in gaps:
             # Check duration threshold (most common filter)
             if check_duration:
                 gap_duration = gap.end - gap.start
                 if gap_duration <= self._max_gap_duration:
                     continue  # Gap is small enough to be acceptable
-            
+
             # Check if gap is during weekend
             if check_weekends:
                 # If both start and end are on weekend, skip
                 if gap.start.weekday() >= 5 and gap.end.weekday() >= 5:
                     continue
-            
+
             # If we get here, gap is unacceptable
             unacceptable.append(gap)
-        
+
         return unacceptable
-    
+
     def validate_and_raise(
         self,
         index: pd.DatetimeIndex,
@@ -224,7 +224,7 @@ class GapValidator:
             GapDetectionError: If unacceptable gaps are detected.
         """
         is_valid, gaps = self.validate(index, full_check=full_check)
-        
+
         if not is_valid:
             gap_summary = self._format_gap_summary(gaps)
             message = (
@@ -232,7 +232,7 @@ class GapValidator:
                 f"Expected frequency: {self._frequency}. {gap_summary}"
             )
             raise GapDetectionError(message, gaps=gaps)
-    
+
     @staticmethod
     def _format_gap_summary(gaps: list[Gap], max_display: int = 3) -> str:
         """Format gap information for error message.
@@ -246,21 +246,21 @@ class GapValidator:
         """
         if not gaps:
             return "No gaps detected."
-        
+
         display_gaps = gaps[:max_display]
         lines = ["Gaps found:"]
-        
+
         for i, gap in enumerate(display_gaps, 1):
             duration = gap.end - gap.start
             lines.append(
                 f"  {i}. {gap.start} to {gap.end} (duration: {duration})"
             )
-        
+
         if len(gaps) > max_display:
             lines.append(f"  ... and {len(gaps) - max_display} more gap(s)")
-        
+
         return " ".join(lines)
-    
+
     @classmethod
     def from_config(cls, config: GapValidatorConfig) -> GapValidator:
         """Create validator from configuration object.
@@ -307,13 +307,13 @@ def validate_timeseries_gaps(
     # Validate DataFrame is not empty
     if df.empty:
         raise ValueError("DataFrame is empty, cannot validate gaps")
-    
+
     if timestamp_column not in df.columns:
         raise ValueError(
             f"Timestamp column '{timestamp_column}' not found in DataFrame. "
             f"Available columns: {', '.join(df.columns)}"
         )
-    
+
     # Convert to DatetimeIndex if needed
     try:
         timestamps = pd.to_datetime(df[timestamp_column])
@@ -321,17 +321,17 @@ def validate_timeseries_gaps(
         raise ValueError(
             f"Failed to convert column '{timestamp_column}' to datetime: {e}"
         ) from e
-    
+
     if not isinstance(timestamps, pd.DatetimeIndex):
         timestamps = pd.DatetimeIndex(timestamps)
-    
+
     # Create validator and check for gaps
     validator = GapValidator(
         frequency=frequency,
         max_gap_duration=max_gap_duration,
         allow_weekend_gaps=allow_weekend_gaps,
     )
-    
+
     validator.validate_and_raise(timestamps)
 
 

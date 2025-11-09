@@ -42,7 +42,7 @@ class RollingBuffer:
         >>> buffer.values()
         [2.0, 3.0, 4.0]
     """
-    
+
     def __init__(self, size: int) -> None:
         if not isinstance(size, int) or size <= 0:
             raise ValueError(f"Buffer size must be a positive integer, got {size}")
@@ -66,7 +66,7 @@ class RollingBuffer:
             List of values from oldest to newest.
         """
         return list(self.buf)
-    
+
     def __len__(self) -> int:
         """Return the current number of elements in the buffer.
         
@@ -82,7 +82,7 @@ class RollingBuffer:
                 f"Buffer corruption detected: {length} elements exceed max size {self.size}"
             )
         return length
-    
+
     def is_full(self) -> bool:
         """Check if the buffer has reached capacity.
         
@@ -90,7 +90,7 @@ class RollingBuffer:
             True if the buffer contains `size` elements, False otherwise.
         """
         return len(self.buf) == self.size
-    
+
     def clear(self) -> None:
         """Remove all elements from the buffer."""
         self.buf.clear()
