@@ -33,7 +33,6 @@ from runtime.filters.vlpo_core_filter import VLPOCoreFilter
 from runtime.cns_stabilizer import CNSStabilizer
 from runtime.behavior_contract import (
     ActionClass,
-    SystemState,
     get_current_state,
     tacl_gate,
 )
@@ -552,6 +551,7 @@ class ThermoController:
             action="cns_veto",
             topology_changes=[],
         )
+
     def control_step(self) -> None:
         if is_kill_switch_active():
             current_F = float(self.previous_F)
