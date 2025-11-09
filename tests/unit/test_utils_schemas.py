@@ -85,6 +85,33 @@ def test_validate_against_schema_detects_type_mismatch() -> None:
         schemas.validate_against_schema(payload, schema)
 
 
+def test_validate_against_schema_detects_optional_type_mismatch() -> None:
+    schema = schemas.dataclass_to_json_schema(SampleSchema)
+    payload = {
+        "identifier": 1,
+        "name": "alpha",
+        "weight": 10.5,
+        "tags": [],
+        "description": 123,
+    }
+
+    with pytest.raises(ValueError, match="should be null or string"):
+        schemas.validate_against_schema(payload, schema)
+
+
+def test_validate_against_schema_allows_optional_null_value() -> None:
+    schema = schemas.dataclass_to_json_schema(SampleSchema)
+    payload = {
+        "identifier": 1,
+        "name": "alpha",
+        "weight": 10.5,
+        "tags": [],
+        "description": None,
+    }
+
+    assert schemas.validate_against_schema(payload, schema)
+
+
 def test_generate_all_schemas_includes_expected_keys() -> None:
     generated = schemas.generate_all_schemas()
     assert {"FeatureResult", "BacktestResult", "Ticker"} <= set(generated.keys())

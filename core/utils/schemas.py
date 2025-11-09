@@ -278,22 +278,74 @@ def validate_against_schema(data: Dict[str, Any], schema: Dict[str, Any]) -> boo
                 continue
 
             prop_schema = schema["properties"][key]
-            expected_type = prop_schema.get("type")
+            expected_types = _extract_expected_types(prop_schema)
 
-            if expected_type == "integer" and not isinstance(value, int):
-                raise ValueError(f"Field {key} should be integer, got {type(value)}")
-            elif expected_type == "number" and not isinstance(value, (int, float)):
-                raise ValueError(f"Field {key} should be number, got {type(value)}")
-            elif expected_type == "string" and not isinstance(value, str):
-                raise ValueError(f"Field {key} should be string, got {type(value)}")
-            elif expected_type == "boolean" and not isinstance(value, bool):
-                raise ValueError(f"Field {key} should be boolean, got {type(value)}")
-            elif expected_type == "array" and not isinstance(value, list):
-                raise ValueError(f"Field {key} should be array, got {type(value)}")
-            elif expected_type == "object" and not isinstance(value, dict):
-                raise ValueError(f"Field {key} should be object, got {type(value)}")
+            if not expected_types:
+                continue
+
+            if not any(_value_matches_type(value, expected_type) for expected_type in expected_types):
+                expected_description = _format_expected_types(expected_types)
+                raise ValueError(
+                    f"Field {key} should be {expected_description}, got {type(value)}"
+                )
 
     return True
+
+
+def _extract_expected_types(prop_schema: Dict[str, Any]) -> set[str]:
+    """Return the set of JSON schema type names expected for a property."""
+
+    types: set[str] = set()
+
+    raw_type = prop_schema.get("type")
+    if isinstance(raw_type, str):
+        types.add(raw_type)
+    elif isinstance(raw_type, list):
+        for type_name in raw_type:
+            if isinstance(type_name, str):
+                types.add(type_name)
+
+    for keyword in ("anyOf", "oneOf"):
+        for option in prop_schema.get(keyword, []):
+            if isinstance(option, dict):
+                types.update(_extract_expected_types(option))
+
+    return types
+
+
+def _value_matches_type(value: Any, schema_type: str) -> bool:
+    """Return whether a value conforms to the provided schema type."""
+
+    if schema_type == "null":
+        return value is None
+    if schema_type == "integer":
+        return isinstance(value, int)
+    if schema_type == "number":
+        return isinstance(value, (int, float))
+    if schema_type == "string":
+        return isinstance(value, str)
+    if schema_type == "boolean":
+        return isinstance(value, bool)
+    if schema_type == "array":
+        return isinstance(value, list)
+    if schema_type == "object":
+        return isinstance(value, dict)
+
+    # Unknown type specifiers fall back to permissive validation
+    return True
+
+
+def _format_expected_types(expected_types: set[str]) -> str:
+    """Return a human-readable description of the expected types."""
+
+    types = sorted(expected_types)
+
+    if not types:
+        return "valid type"
+    if len(types) == 1:
+        return types[0]
+
+    return ", ".join(types[:-1]) + f" or {types[-1]}"
 
 
 def model_to_json_schema(cls: Type[Any], title: str | None = None) -> Dict[str, Any]:
