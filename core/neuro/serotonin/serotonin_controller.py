@@ -173,6 +173,8 @@ class SerotoninController:
         self._tacl_guard: Optional[Callable[[str, Mapping[str, float]], bool]] = None
         self._lock = RLock()
         self._file_lock_path = Path(self.config_path).with_suffix(".lock")
+        self._cooldown_start_time: Optional[float] = None
+        self._hold_state: bool = False
 
     @staticmethod
     def noop_logger(name: str, value: float) -> None:
@@ -231,6 +233,94 @@ class SerotoninController:
         """Inject a TACL guard to prevent free-energy regressions."""
 
         self._tacl_guard = guard_fn
+
+    def step(
+        self,
+        stress: float,
+        drawdown: float,
+        novelty: float,
+        market_vol: Optional[float] = None,
+        free_energy: Optional[float] = None,
+        cum_losses: Optional[float] = None,
+        rho_loss: Optional[float] = None,
+    ) -> tuple[bool, bool, float, float]:
+        """Execute one serotonin control step and return decision signals.
+
+        This is the primary API for risk/fatigue control integration. It consolidates
+        the aversive state estimation, serotonin signal computation, and cooldown
+        decision into a single call.
+
+        Args:
+            stress: Current stress level (0.0 to unbounded, typically 0-3).
+            drawdown: Current drawdown (negative value, e.g., -0.05 for 5% drawdown).
+            novelty: Novelty/uncertainty measure (0.0 to unbounded, typically 0-2).
+            market_vol: Optional market volatility override. If None, uses stress.
+            free_energy: Optional free energy override. If None, uses novelty.
+            cum_losses: Optional cumulative losses override. If None, uses abs(drawdown).
+            rho_loss: Optional rho-loss complement. If None, defaults to 0.0.
+
+        Returns:
+            A tuple of (hold, veto, cooldown_s, level):
+            - hold (bool): True if the controller recommends HOLD (no new positions).
+            - veto (bool): True if the controller triggers a veto (same as hold, for clarity).
+            - cooldown_s (float): Time in seconds since cooldown started, or 0.0 if not in cooldown.
+            - level (float): Current serotonin level in [0, 1].
+
+        Raises:
+            ValueError: If stress, drawdown magnitude, or novelty are negative.
+
+        Example:
+            >>> controller = SerotoninController()
+            >>> hold, veto, cooldown_s, level = controller.step(
+            ...     stress=1.2, drawdown=-0.03, novelty=0.8
+            ... )
+            >>> if hold:
+            ...     print(f"HOLD triggered: level={level:.3f}, cooldown={cooldown_s:.1f}s")
+        """
+        if stress < 0:
+            raise ValueError("stress must be non-negative")
+        if drawdown > 0:
+            raise ValueError("drawdown should be negative or zero (e.g., -0.05 for 5% loss)")
+        if novelty < 0:
+            raise ValueError("novelty must be non-negative")
+
+        with self._lock:
+            # Map high-level inputs to aversive state estimation
+            vol = market_vol if market_vol is not None else stress
+            fe = free_energy if free_energy is not None else novelty
+            losses = cum_losses if cum_losses is not None else abs(drawdown)
+            rho = rho_loss if rho_loss is not None else 0.0
+
+            # Compute aversive state and serotonin signal
+            aversive = self.estimate_aversive_state(vol, fe, losses, rho)
+            level = self.compute_serotonin_signal(aversive)
+
+            # Check cooldown and track hold state
+            veto = self.check_cooldown(level)
+            hold = veto
+
+            # Track cooldown timer
+            current_time = time()
+            if hold and not self._hold_state:
+                # Entering cooldown
+                self._cooldown_start_time = current_time
+                self._hold_state = True
+            elif not hold and self._hold_state:
+                # Exiting cooldown
+                self._hold_state = False
+                self._cooldown_start_time = None
+
+            # Calculate cooldown duration
+            cooldown_s = 0.0
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_s = current_time - self._cooldown_start_time
+
+            # Emit TACL telemetry
+            self._log("tacl.5ht.level", level)
+            self._log("tacl.5ht.hold", float(hold))
+            self._log("tacl.5ht.cooldown", cooldown_s)
+
+            return hold, veto, cooldown_s, level
 
     @staticmethod
     def _resolve_config_path(config_path: str) -> Path:
@@ -408,6 +498,13 @@ class SerotoninController:
             self._log(f"serotonin_gate_level{tag}", self.gate_level)
             self._log(f"serotonin_decay_rate{tag}", self.config["decay_rate"])
             self._log(f"serotonin_temperature_floor{tag}", self.temperature_floor)
+            # TACL telemetry
+            self._log("tacl.5ht.level", self.serotonin_level)
+            self._log("tacl.5ht.hold", float(self._hold_state))
+            cooldown_s = 0.0
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_s = time() - self._cooldown_start_time
+            self._log("tacl.5ht.cooldown", cooldown_s)
 
     def meta_adapt(self, performance_metrics: Mapping[str, float]) -> None:
         """Adapt release weights based on drawdown and Sharpe observations."""
@@ -485,6 +582,9 @@ class SerotoninController:
         """Expose serialisable controller state for audits and telemetry."""
 
         with self._lock:
+            cooldown_s = 0.0
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_s = time() - self._cooldown_start_time
             return {
                 "tonic_level": float(self.tonic_level),
                 "sensitivity": float(self.sensitivity),
@@ -497,6 +597,8 @@ class SerotoninController:
                 "beta": float(self.config["beta"]),
                 "gamma": float(self.config["gamma"]),
                 "decay_rate": float(self.config["decay_rate"]),
+                "hold_state": bool(self._hold_state),
+                "cooldown_s": float(cooldown_s),
             }
 
     def _with_file_lock(self, action: Callable[[], None]) -> None:

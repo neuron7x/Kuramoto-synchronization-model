@@ -34,13 +34,14 @@ The public interface is intentionally small and stable:
 
 | Method | Contract |
 |--------|----------|
+| `step(stress, drawdown, novelty, **kwargs)` | **Primary API**: Consolidated control step returning `(hold, veto, cooldown_s, level)`. Accepts high-level inputs (stress, drawdown, novelty) and optional overrides for market_vol, free_energy, cum_losses, rho_loss. Emits TACL telemetry. Thread-safe. |
 | `estimate_aversive_state(market_vol, free_energy, cum_losses, rho_loss, override_weights=None)` | Returns a non-negative float release signal. Inputs must be ≥0 except `rho_loss`, which is clamped to [-1, 1]. |
 | `compute_serotonin_signal(aversive_state)` | Updates the internal tonic/phasic state and returns the serotonin level in [0, 1]. Input must be ≥0. Thread-safe. |
 | `modulate_action_prob(original_prob, serotonin_signal=None, za_bias=None)` | Applies inhibition and bias, returning a probability in [0, 1]. Raises `ValueError` when `original_prob` is outside [0, 1]. |
 | `check_cooldown(serotonin_signal=None)` | Returns `True` when any veto channel (tonic, phasic, gate) exceeds configured thresholds. Consults the optional TACL guard before final approval. |
 | `apply_internal_shift(exploitation_gradient, serotonin_signal=None, beta_temper=None)` | Returns a tempered gradient. Raises `ValueError` for negative gradients. |
 | `meta_adapt(performance_metrics)` | Mutates release weights according to drawdown/Sharpe metrics, guarded by TACL. Persists the config atomically and writes an audit snapshot. |
-| `to_dict()` | Serialises the controller state for auditing. |
+| `to_dict()` | Serialises the controller state for auditing, including hold_state and cooldown_s. |
 | `set_tacl_guard(guard_fn)` | Registers a callable `(event_name, payload) -> bool` invoked for cooldown and meta-adapt actions. |
 
 Internally-scoped helpers are prefixed with `_` and are not part of the compatibility surface.
@@ -101,6 +102,8 @@ provided, `decay_rate` is derived as `1 - exp(-step_ms/tau_5ht_ms)` and logged
 for traceability.
 
 ## Usage
+
+### Primary API: step() method
 ```python
 import logging
 from core.neuro.serotonin import SerotoninController
@@ -109,13 +112,34 @@ logger = logging.getLogger("tradepulse.serotonin")
 
 def tacl_guard(name: str, payload: dict[str, float]) -> bool:
     """Return ``True`` to accept serotonin proposals (stub for demo)."""
-
     return payload.get("drawdown", 0.0) <= 0.0
-
 
 controller = SerotoninController("configs/serotonin.yaml", logger.info)
 controller.set_tacl_guard(tacl_guard)
 
+# Primary API: single step() call handles everything
+hold, veto, cooldown_s, level = controller.step(
+    stress=1.2,      # Current market stress
+    drawdown=-0.03,  # 3% drawdown
+    novelty=0.8      # Uncertainty measure
+)
+
+if hold:
+    print(f"HOLD triggered: level={level:.3f}, cooldown={cooldown_s:.1f}s")
+    # Risk manager vetoes new positions
+else:
+    print(f"Trading allowed: level={level:.3f}")
+
+# Update telemetry periodically
+controller.update_metrics()
+
+# Meta-adaptation based on performance
+controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
+```
+
+### Advanced Usage: granular control
+```python
+# For fine-grained control, use individual methods
 release = controller.estimate_aversive_state(1.0, 0.5, 0.2, -0.90)
 serotonin_signal = controller.compute_serotonin_signal(release)
 modulated_prob = controller.modulate_action_prob(0.85, serotonin_signal)
@@ -124,8 +148,6 @@ if controller.check_cooldown(serotonin_signal):
     ...
 
 shifted_gradient = controller.apply_internal_shift(2.0, serotonin_signal)
-controller.update_metrics()
-controller.meta_adapt({"drawdown": -0.06, "sharpe": 1.2})
 state_snapshot = controller.to_dict()
 ```
 

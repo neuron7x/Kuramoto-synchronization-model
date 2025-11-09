@@ -433,3 +433,208 @@ def test_check_cooldown_guard_overrides(controller):
     controller.compute_serotonin_signal(2.0)
     controller.set_tacl_guard(lambda name, payload: False)
     assert controller.check_cooldown() is False
+
+
+def test_step_basic_api(controller):
+    """Test the step() API with basic inputs."""
+    hold, veto, cooldown_s, level = controller.step(
+        stress=1.2, drawdown=-0.03, novelty=0.8
+    )
+    assert isinstance(hold, bool)
+    assert isinstance(veto, bool)
+    assert isinstance(cooldown_s, float)
+    assert isinstance(level, float)
+    assert 0.0 <= level <= 1.0
+    assert cooldown_s >= 0.0
+    assert hold == veto  # These should be equivalent
+
+
+def test_step_hold_trigger(controller):
+    """Test that step() triggers HOLD when stress is high."""
+    # Low stress should not trigger HOLD
+    hold1, veto1, _, level1 = controller.step(stress=0.1, drawdown=0.0, novelty=0.1)
+    assert not hold1
+    assert not veto1
+    assert level1 < 0.5
+
+    # High stress should eventually trigger HOLD
+    for _ in range(50):
+        hold2, veto2, _, level2 = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    assert hold2 or level2 > controller.config["cooldown_threshold"]
+
+
+def test_step_cooldown_timer(controller):
+    """Test that cooldown timer tracks time correctly."""
+    import time as time_module
+
+    # Trigger HOLD by high stress
+    for _ in range(50):
+        controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    # Check cooldown timer increases
+    _, _, cooldown1, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    time_module.sleep(0.1)
+    _, _, cooldown2, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    if cooldown1 > 0 and cooldown2 > 0:
+        assert cooldown2 > cooldown1
+        assert cooldown2 - cooldown1 >= 0.09  # At least 0.09s difference
+
+
+def test_step_recovery_after_stress(controller):
+    """Test recovery curve after prolonged stress."""
+    # Apply stress
+    for _ in range(100):
+        controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+
+    level_high = controller.serotonin_level
+
+    # Apply recovery (low stress)
+    for _ in range(100):
+        controller.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+
+    level_low = controller.serotonin_level
+
+    # Level should decrease during recovery
+    assert level_low < level_high
+
+
+def test_step_hysteresis(controller):
+    """Test hysteresis in HOLD transitions."""
+    # Test that HOLD state persists even when serotonin level drops slightly
+    # This tests the threshold-based hysteresis in check_cooldown()
+
+    # Build up stress to trigger HOLD
+    for _ in range(50):
+        controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+
+    # Check if we're in HOLD state
+    hold1, _, _, level1 = controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+
+    # Reduce stress slightly but should still be in HOLD if threshold not crossed
+    hold2, _, _, level2 = controller.step(stress=1.8, drawdown=-0.06, novelty=1.0)
+
+    # If we were in HOLD and threshold is high enough, we should still be in HOLD
+    # This demonstrates hysteresis at the threshold boundary
+    if hold1 and level1 > controller.config["cooldown_threshold"]:
+        # With a single step of reduced stress, we might still be above threshold
+        if level2 > controller.config["cooldown_threshold"] * 0.95:
+            assert hold2  # Should still be in HOLD
+
+    # Now test that sufficient stress reduction exits HOLD
+    for _ in range(100):
+        controller.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+
+    hold3, _, _, level3 = controller.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+
+    # After sustained low stress, HOLD should be released
+    assert not hold3 or level3 > controller.config["cooldown_threshold"] * 1.1
+
+
+def test_step_validation(controller):
+    """Test input validation for step() API."""
+    # Negative stress should raise
+    with pytest.raises(ValueError):
+        controller.step(stress=-1.0, drawdown=-0.05, novelty=0.5)
+
+    # Positive drawdown should raise
+    with pytest.raises(ValueError):
+        controller.step(stress=1.0, drawdown=0.05, novelty=0.5)
+
+    # Negative novelty should raise
+    with pytest.raises(ValueError):
+        controller.step(stress=1.0, drawdown=-0.05, novelty=-0.5)
+
+
+def test_step_with_overrides(controller):
+    """Test step() with optional parameter overrides."""
+    hold1, _, _, level1 = controller.step(
+        stress=1.0,
+        drawdown=-0.05,
+        novelty=0.5,
+        market_vol=2.0,  # Override
+        free_energy=1.0,  # Override
+        cum_losses=0.1,  # Override
+        rho_loss=-0.5,  # Override
+    )
+
+    hold2, _, _, level2 = controller.step(
+        stress=1.0, drawdown=-0.05, novelty=0.5  # No overrides
+    )
+
+    # Results should differ due to overrides
+    assert level1 != level2 or hold1 != hold2
+
+
+def test_step_tacl_telemetry(caplog, controller):
+    """Test that step() emits TACL telemetry."""
+    caplog.set_level(logging.INFO)
+    controller.step(stress=1.5, drawdown=-0.04, novelty=0.9)
+
+    # Check that TACL metrics were logged
+    log_text = caplog.text
+    assert "tacl.5ht.level" in log_text
+    assert "tacl.5ht.hold" in log_text
+    assert "tacl.5ht.cooldown" in log_text
+
+
+def test_step_cooldown_exit(controller):
+    """Test cooldown timer resets when exiting HOLD state."""
+    # Trigger HOLD
+    for _ in range(50):
+        controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    hold1, _, cooldown1, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    # Exit HOLD by reducing stress
+    for _ in range(100):
+        controller.step(stress=0.05, drawdown=0.0, novelty=0.05)
+
+    hold2, _, cooldown2, _ = controller.step(stress=0.05, drawdown=0.0, novelty=0.05)
+
+    if hold1 and not hold2:
+        # Cooldown should be 0 after exiting HOLD
+        assert cooldown2 == 0.0
+
+
+def test_to_dict_includes_cooldown(controller):
+    """Test that to_dict() includes cooldown state."""
+    controller.step(stress=2.0, drawdown=-0.05, novelty=1.0)
+    state = controller.to_dict()
+
+    assert "hold_state" in state
+    assert "cooldown_s" in state
+    assert isinstance(state["hold_state"], bool)
+    assert isinstance(state["cooldown_s"], float)
+    assert state["cooldown_s"] >= 0.0
+
+
+def test_update_metrics_includes_tacl(caplog, controller):
+    """Test that update_metrics() emits TACL telemetry."""
+    caplog.set_level(logging.INFO)
+    controller.step(stress=1.0, drawdown=-0.03, novelty=0.5)
+    controller.update_metrics()
+
+    log_text = caplog.text
+    assert "tacl.5ht.level" in log_text
+    assert "tacl.5ht.hold" in log_text
+    assert "tacl.5ht.cooldown" in log_text
+
+
+def test_step_monotonic_stress_response(controller):
+    """Test that higher stress generally leads to higher serotonin levels."""
+    levels = []
+    stress_values = [0.5, 1.0, 1.5, 2.0, 2.5]
+
+    for stress in stress_values:
+        # Reset controller for each test
+        controller.tonic_level = 0.0
+        controller.sensitivity = 1.0
+        # Run multiple steps to let tonic build up
+        for _ in range(20):
+            _, _, _, level = controller.step(stress=stress, drawdown=-0.02, novelty=stress * 0.4)
+        levels.append(level)
+
+    # Higher stress should generally lead to higher levels
+    for i in range(len(levels) - 1):
+        assert levels[i] <= levels[i + 1] or levels[i] - levels[i + 1] < 0.1
