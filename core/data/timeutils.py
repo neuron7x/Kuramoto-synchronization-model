@@ -61,7 +61,7 @@ class MarketCalendar:
     timezone: str | None = None
     open_time: time = time(0, 0)
     close_time: time = time(23, 59, 59)
-    weekend_closure: Iterable[int] | None = field(default_factory=lambda: {5, 6})
+    weekend_closure: Iterable[int] | None = None
     holidays: Iterable[date] | None = None
     calendar_name: str | None = None
     _calendar: ExchangeCalendar | None = field(
