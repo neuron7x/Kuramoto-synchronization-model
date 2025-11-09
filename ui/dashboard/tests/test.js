@@ -1,5 +1,7 @@
 import assert from 'node:assert';
 import './accessibility.test.js';
+import './precision.test.js';
+import './aggregators.test.js';
 
 const TEST_LEVEL = 'L7';
 console.info(`[${TEST_LEVEL}] ui/dashboard functional regression suite`);
