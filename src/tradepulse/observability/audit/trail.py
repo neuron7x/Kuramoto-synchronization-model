@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
+import os
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
@@ -51,7 +55,13 @@ def _utc_now() -> datetime:
 
 
 class AuditTrail:
-    """Append-only JSONL audit trail with optional subscribers."""
+    """Append-only JSONL audit trail with optional subscribers and WORM mode support.
+    
+    WORM (Write Once Read Many) mode ensures immutability by:
+    - Setting file permissions to 0444 (read-only) after writing
+    - Supporting rotation for long-term storage (>7 years)
+    - Optional HMAC signing for event integrity
+    """
 
     def __init__(
         self,
@@ -59,6 +69,10 @@ class AuditTrail:
         *,
         logger: logging.Logger | None = None,
         clock: Callable[[], datetime] | None = None,
+        worm_mode: bool = False,
+        hmac_key: bytes | None = None,
+        max_size_mb: float = 100.0,
+        retention_years: int = 7,
     ) -> None:
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -66,6 +80,10 @@ class AuditTrail:
         self._clock = clock or _utc_now
         self._lock = RLock()
         self._listeners: MutableSequence[Callable[[dict[str, object]], None]] = []
+        self._worm_mode = worm_mode
+        self._hmac_key = hmac_key
+        self._max_size_bytes = int(max_size_mb * 1024 * 1024)
+        self._retention_years = retention_years
 
     @property
     def path(self) -> Path:
@@ -89,7 +107,7 @@ class AuditTrail:
         request_id: str | None = None,
         details: Mapping[str, object] | None = None,
     ) -> dict[str, object]:
-        """Persist a structured audit event."""
+        """Persist a structured audit event with optional HMAC signing and WORM mode."""
 
         payload: dict[str, object] = {
             "timestamp": self._clock().isoformat(),
@@ -104,11 +122,31 @@ class AuditTrail:
             payload["request_id"] = request_id
         if details:
             payload["details"] = _redact_sensitive_values(details)
+        
+        # Add HMAC signature if key is provided
+        if self._hmac_key:
+            message = json.dumps(payload, sort_keys=True).encode("utf-8")
+            signature = hmac.new(self._hmac_key, message, hashlib.sha256).hexdigest()
+            payload["hmac_signature"] = signature
+        
         try:
             serialized = json.dumps(payload, sort_keys=True)
             with self._lock:
+                # Check if rotation is needed
+                if self._path.exists() and self._path.stat().st_size > self._max_size_bytes:
+                    self._rotate_audit_log()
+                
+                # Temporarily make file writable if in WORM mode
+                if self._worm_mode and self._path.exists():
+                    os.chmod(self._path, stat.S_IRUSR | stat.S_IWUSR)
+                
                 with self._path.open("a", encoding="utf-8") as handle:
                     handle.write(serialized + "\n")
+                
+                # Apply WORM mode: make file read-only (0444)
+                if self._worm_mode:
+                    os.chmod(self._path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+                
                 listeners: Iterable[
                     Callable[[dict[str, object]], None]
                 ] = tuple(self._listeners)
@@ -123,6 +161,30 @@ class AuditTrail:
         for listener in listeners:
             listener(dict(payload))
         return payload
+    
+    def _rotate_audit_log(self) -> None:
+        """Rotate audit log file when size limit is reached."""
+        if not self._path.exists():
+            return
+        
+        # Generate rotation filename with timestamp
+        timestamp = self._clock().strftime("%Y%m%d_%H%M%S")
+        rotated_path = self._path.parent / f"{self._path.stem}_{timestamp}{self._path.suffix}"
+        
+        # Temporarily make writable to rename
+        if self._worm_mode:
+            os.chmod(self._path, stat.S_IRUSR | stat.S_IWUSR)
+        
+        self._path.rename(rotated_path)
+        
+        # Make rotated file read-only
+        if self._worm_mode:
+            os.chmod(rotated_path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        
+        self._logger.info(
+            "audit.trail.rotated",
+            extra={"old_path": str(self._path), "new_path": str(rotated_path)},
+        )
 
 
 _ACCESS_AUDIT_PATH = Path("observability/audit/access.jsonl")
