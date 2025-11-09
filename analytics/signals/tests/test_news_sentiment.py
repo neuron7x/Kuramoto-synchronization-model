@@ -168,3 +168,82 @@ def test_aggregate_sentiment_minimum_articles_filter() -> None:
 
     assert aggregated.empty
 
+
+def test_pipeline_deduplicates_articles_by_identifier() -> None:
+    base_time = pd.Timestamp("2025-10-03T10:00:00Z")
+    articles = [
+        NewsArticle(
+            article_id="dup-1",
+            title="Company outlook improves",
+            body="Revenue expected to climb",
+            source="Reuters",
+            published_at=base_time,
+            tickers=("AAPL",),
+        ),
+        NewsArticle(
+            article_id="dup-1",
+            title="Company warns about losses",
+            body="Loss anticipated due to recall",
+            source="Reuters",
+            published_at=base_time + pd.Timedelta(minutes=5),
+            tickers=("AAPL",),
+        ),
+    ]
+
+    pipeline = NewsSentimentPipeline(collector=DummyCollector(articles), model=DummyModel(), batch_size=4)
+    scored = pipeline.run(since=datetime(2025, 10, 3, 9, 0, tzinfo=timezone.utc))
+
+    assert len(scored) == 1
+    row = scored.iloc[0]
+    assert row["article_id"] == "dup-1"
+    assert row["label"] == SentimentLabel.NEGATIVE.value
+    assert row["sentiment_score"] == pytest.approx(0.8)
+
+
+def test_aggregate_sentiment_deduplicates_duplicate_articles() -> None:
+    scored = pd.DataFrame(
+        [
+            {
+                "article_id": "dup-1",
+                "symbol": "AAPL",
+                "published_at": pd.Timestamp("2025-10-04T10:00:00Z"),
+                "source": "Reuters",
+                "label": "positive",
+                "sentiment_score": 0.6,
+                "prob_negative": 0.1,
+                "prob_neutral": 0.3,
+                "prob_positive": 0.6,
+            },
+            {
+                "article_id": "dup-1",
+                "symbol": "AAPL",
+                "published_at": pd.Timestamp("2025-10-04T10:10:00Z"),
+                "source": "Reuters",
+                "label": "negative",
+                "sentiment_score": 0.4,
+                "prob_negative": 0.7,
+                "prob_neutral": 0.2,
+                "prob_positive": 0.1,
+            },
+            {
+                "article_id": "unique-1",
+                "symbol": "AAPL",
+                "published_at": pd.Timestamp("2025-10-04T12:00:00Z"),
+                "source": "Bloomberg",
+                "label": "positive",
+                "sentiment_score": 0.5,
+                "prob_negative": 0.2,
+                "prob_neutral": 0.2,
+                "prob_positive": 0.6,
+            },
+        ]
+    )
+
+    aggregated = aggregate_sentiment(scored, freq="1D", min_articles=1)
+
+    assert len(aggregated) == 1
+    row = aggregated.iloc[0]
+    expected_signal = (-0.4 + 0.5) / 2
+    assert row["sentiment_signal"] == pytest.approx(expected_signal)
+    assert row["article_count"] == 2
+
