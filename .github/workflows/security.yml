@@ -32,6 +32,7 @@ jobs:
   secret-scan:
     name: Scan for Secrets
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - uses: actions/checkout@v5
@@ -86,6 +87,7 @@ jobs:
   dependency-scan:
     name: Scan Dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
     - uses: actions/checkout@v5

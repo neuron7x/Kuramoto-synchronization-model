@@ -1,0 +1,90 @@
+name: Workflow Health Check
+
+# 2025 Best Practice: Monitor workflow efficiency and reliability
+# This workflow provides insights into CI/CD performance
+
+permissions:
+  actions: read
+  contents: read
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze-workflow-metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Analyze Workflow Performance
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Analyze workflow runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            // Get workflow runs from the last 7 days
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            
+            const workflows = ['tests.yml', 'ci.yml', 'security.yml'];
+            const metrics = {};
+            
+            for (const workflow of workflows) {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: workflow,
+                created: `>=${sevenDaysAgo}`,
+                per_page: 100
+              });
+              
+              const successCount = runs.data.workflow_runs.filter(r => r.conclusion === 'success').length;
+              const failureCount = runs.data.workflow_runs.filter(r => r.conclusion === 'failure').length;
+              const totalRuns = runs.data.workflow_runs.length;
+              const avgDuration = runs.data.workflow_runs.reduce((sum, r) => {
+                const duration = new Date(r.updated_at) - new Date(r.created_at);
+                return sum + duration;
+              }, 0) / totalRuns / 1000 / 60; // Convert to minutes
+              
+              metrics[workflow] = {
+                total: totalRuns,
+                success: successCount,
+                failure: failureCount,
+                successRate: totalRuns > 0 ? (successCount / totalRuns * 100).toFixed(2) : 0,
+                avgDuration: avgDuration.toFixed(2)
+              };
+            }
+            
+            // Create summary
+            let summary = '## Workflow Health Report (Last 7 Days)\n\n';
+            summary += '| Workflow | Total Runs | Success | Failure | Success Rate | Avg Duration (min) |\n';
+            summary += '|----------|-----------|---------|---------|--------------|-------------------|\n';
+            
+            for (const [workflow, data] of Object.entries(metrics)) {
+              summary += `| ${workflow} | ${data.total} | ${data.success} | ${data.failure} | ${data.successRate}% | ${data.avgDuration} |\n`;
+            }
+            
+            core.summary.addRaw(summary);
+            await core.summary.write();
+            
+            // Alert if success rate is below threshold
+            for (const [workflow, data] of Object.entries(metrics)) {
+              if (data.successRate < 90 && data.total > 5) {
+                core.warning(`⚠️ ${workflow} has a low success rate: ${data.successRate}%`);
+              }
+              if (data.avgDuration > 30) {
+                core.warning(`⏱️ ${workflow} has high average duration: ${data.avgDuration} minutes`);
+              }
+            }

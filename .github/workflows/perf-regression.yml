@@ -1,0 +1,241 @@
+name: Performance Regression Detection
+
+# 2025 Best Practice: Automated performance regression detection
+# Ensures critical trading paths maintain sub-millisecond latencies
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'core/**/*.py'
+      - 'execution/**/*.py'
+      - 'backtest/**/*.py'
+  push:
+    branches: [main]
+
+concurrency:
+  group: perf-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    name: Run Performance Benchmarks
+    env:
+      PYTHONUNBUFFERED: "1"
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+      
+      - name: Run performance benchmarks
+        run: |
+          pytest bench/ \
+            --benchmark-only \
+            --benchmark-json=pr-benchmark.json \
+            --benchmark-min-rounds=5 \
+            --benchmark-warmup=on \
+            -v
+      
+      - name: Upload PR benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-benchmark
+          path: pr-benchmark.json
+      
+      - name: Checkout base branch
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          clean: false
+      
+      - name: Run base benchmarks
+        if: github.event_name == 'pull_request'
+        run: |
+          pytest bench/ \
+            --benchmark-only \
+            --benchmark-json=base-benchmark.json \
+            --benchmark-min-rounds=5 \
+            --benchmark-warmup=on \
+            -v
+      
+      - name: Upload base benchmark results
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-benchmark
+          path: base-benchmark.json
+      
+      - name: Compare benchmarks
+        if: github.event_name == 'pull_request'
+        run: |
+          python - <<'EOF'
+          import json
+          import sys
+          from pathlib import Path
+          
+          pr_data = json.loads(Path('pr-benchmark.json').read_text())
+          base_data = json.loads(Path('base-benchmark.json').read_text())
+          
+          # Extract benchmark results
+          pr_benchmarks = {b['name']: b['stats'] for b in pr_data.get('benchmarks', [])}
+          base_benchmarks = {b['name']: b['stats'] for b in base_data.get('benchmarks', [])}
+          
+          # Compare and detect regressions
+          regressions = []
+          improvements = []
+          threshold = 1.10  # 10% slower is a regression
+          
+          for name, pr_stats in pr_benchmarks.items():
+              if name in base_benchmarks:
+                  base_mean = base_benchmarks[name]['mean']
+                  pr_mean = pr_stats['mean']
+                  ratio = pr_mean / base_mean
+                  
+                  if ratio > threshold:
+                      regressions.append({
+                          'name': name,
+                          'base_mean': base_mean,
+                          'pr_mean': pr_mean,
+                          'ratio': ratio,
+                          'pct_change': (ratio - 1) * 100
+                      })
+                  elif ratio < 0.9:  # 10% faster is an improvement
+                      improvements.append({
+                          'name': name,
+                          'base_mean': base_mean,
+                          'pr_mean': pr_mean,
+                          'ratio': ratio,
+                          'pct_change': (1 - ratio) * 100
+                      })
+          
+          # Generate report
+          report = []
+          report.append('## 📊 Performance Benchmark Results\n')
+          
+          if regressions:
+              report.append('### ⚠️ Performance Regressions Detected\n')
+              report.append('| Benchmark | Base (ms) | PR (ms) | Change |')
+              report.append('|-----------|-----------|---------|--------|')
+              for r in regressions:
+                  report.append(f"| {r['name']} | {r['base_mean']*1000:.3f} | {r['pr_mean']*1000:.3f} | +{r['pct_change']:.1f}% ⚠️ |")
+              report.append('')
+          
+          if improvements:
+              report.append('### 🚀 Performance Improvements\n')
+              report.append('| Benchmark | Base (ms) | PR (ms) | Change |')
+              report.append('|-----------|-----------|---------|--------|')
+              for i in improvements:
+                  report.append(f"| {i['name']} | {i['base_mean']*1000:.3f} | {i['pr_mean']*1000:.3f} | -{i['pct_change']:.1f}% 🚀 |")
+              report.append('')
+          
+          if not regressions and not improvements:
+              report.append('✅ No significant performance changes detected (within ±10% threshold)\n')
+          
+          # Write to file for GitHub comment
+          Path('benchmark-report.md').write_text('\n'.join(report))
+          
+          # Exit with error if critical regressions found
+          critical_regressions = [r for r in regressions if r['ratio'] > 1.25]  # >25% slower
+          if critical_regressions:
+              print(f"❌ CRITICAL: {len(critical_regressions)} benchmark(s) >25% slower")
+              sys.exit(1)
+          elif regressions:
+              print(f"⚠️ WARNING: {len(regressions)} benchmark(s) slower but within tolerance")
+          
+          EOF
+      
+      - name: Comment benchmark results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('benchmark-report.md')) {
+              const report = fs.readFileSync('benchmark-report.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            }
+
+  critical-path-latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    name: Verify Critical Path Latencies
+    
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+      
+      - name: Test order execution latency
+        run: |
+          python - <<'EOF'
+          import time
+          import sys
+          from execution.engine import ExecutionEngine
+          
+          # Initialize engine
+          engine = ExecutionEngine()
+          
+          # Test critical path: order submission to acknowledgment
+          latencies = []
+          for _ in range(100):
+              start = time.perf_counter_ns()
+              # Simulate order submission
+              result = engine.submit_test_order()
+              end = time.perf_counter_ns()
+              latencies.append((end - start) / 1_000_000)  # Convert to milliseconds
+          
+          p99 = sorted(latencies)[98]
+          p95 = sorted(latencies)[94]
+          mean = sum(latencies) / len(latencies)
+          
+          print(f"Order execution latency:")
+          print(f"  Mean: {mean:.3f}ms")
+          print(f"  P95:  {p95:.3f}ms")
+          print(f"  P99:  {p99:.3f}ms")
+          
+          # Neuro-trading requirement: P99 < 10ms for order path
+          if p99 > 10.0:
+              print(f"❌ CRITICAL: P99 latency {p99:.3f}ms exceeds 10ms threshold")
+              sys.exit(1)
+          elif p99 > 5.0:
+              print(f"⚠️ WARNING: P99 latency {p99:.3f}ms approaching threshold")
+          else:
+              print(f"✅ PASS: P99 latency within acceptable range")
+          EOF

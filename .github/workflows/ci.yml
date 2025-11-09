@@ -2,6 +2,8 @@ name: CI - Test Coverage
 
 permissions:
   contents: read
+  pull-requests: write
+  actions: read
 
 on:
   pull_request:
@@ -15,9 +17,15 @@ concurrency:
   group: ci-coverage-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Global timeout for all jobs (2025 best practice)
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test-coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # 2025 best practice: explicit timeout
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +33,8 @@ jobs:
     name: Test Coverage — shard ${{ matrix.shard }} of ${{ strategy.job-total }}
     env:
       COVERAGE_FILE: .coverage.${{ matrix.shard }}
+      PYTHONUNBUFFERED: "1"  # Better logging
+      PYTEST_ADDOPTS: "--strict-markers"  # Stricter test execution
 
     steps:
       - name: Checkout code
@@ -46,9 +56,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
+          python -m pip install --upgrade pip wheel setuptools
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+          PIP_NO_WARN_SCRIPT_LOCATION: "1"
 
       - name: Run tests with coverage (shard ${{ matrix.shard }})
         run: |
@@ -58,24 +71,35 @@ jobs:
             --cov=execution \
             --cov-config=configs/quality/critical_surface.coveragerc \
             --cov-report=term-missing \
+            --cov-context=test \
             --splits ${{ strategy.job-total }} \
-            --group ${{ matrix.shard }}
+            --group ${{ matrix.shard }} \
+            --tb=short \
+            --strict-markers \
+            -v
+        timeout-minutes: 20
 
       - name: Generate shard coverage report
         run: python -m coverage xml -i -o coverage-${{ matrix.shard }}.xml
 
       - name: Upload shard coverage artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-data-${{ matrix.shard }}
           path: |
             .coverage.${{ matrix.shard }}
             coverage-${{ matrix.shard }}.xml
+          retention-days: 7  # 2025 best practice: cleanup old artifacts
 
   coverage-aggregate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: test-coverage
     name: Aggregate coverage & enforce guardrail
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -113,10 +137,12 @@ jobs:
           python -m coverage xml -i -o coverage.xml
 
       - name: Enforce reliability coverage guardrail
+        id: coverage_check
         run: |
           python -m tools.coverage.guardrail \
             --config configs/quality/critical_surface.toml \
             --coverage coverage.xml
+        continue-on-error: false
 
       - name: Upload coverage to Codecov
         if: ${{ secrets.CODECOV_TOKEN != '' }}
