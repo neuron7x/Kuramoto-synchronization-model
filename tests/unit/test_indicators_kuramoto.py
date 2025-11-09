@@ -61,6 +61,14 @@ def test_kuramoto_order_clips_roundoff_to_unit_circle() -> None:
     assert 0.0 <= result <= 1.0
 
 
+def test_kuramoto_order_translation_invariant_for_large_phases() -> None:
+    phases = np.array([0.0, np.pi / 3, -2.0 * np.pi / 5, np.pi / 7])
+    inflated = phases + 1.2e6
+    base = kuramoto_order(phases)
+    shifted = kuramoto_order(inflated)
+    assert shifted == pytest.approx(base, rel=1e-10, abs=1e-10)
+
+
 def test_kuramoto_order_handles_matrix_input() -> None:
     phases = np.vstack([np.zeros(16), np.pi * np.ones(16)])
     result = kuramoto_order(phases)
