@@ -2,18 +2,18 @@ import { localeMetadata, defaultLocale, fallbackLocale, getFallbackChain, suppor
 import { detectLocale } from './detector.js';
 import { recordLocaleAdopted, recordLocaleFallback, recordMissingTranslation } from '../core/telemetry.js';
 
-import enUS from './locales/en-US.json' assert { type: 'json' };
-import ukUA from './locales/uk-UA.json' assert { type: 'json' };
-import deDE from './locales/de-DE.json' assert { type: 'json' };
-import jaJP from './locales/ja-JP.json' assert { type: 'json' };
-import esES from './locales/es-ES.json' assert { type: 'json' };
-import frFR from './locales/fr-FR.json' assert { type: 'json' };
-import ptBR from './locales/pt-BR.json' assert { type: 'json' };
-import zhCN from './locales/zh-CN.json' assert { type: 'json' };
-import itIT from './locales/it-IT.json' assert { type: 'json' };
-import hiIN from './locales/hi-IN.json' assert { type: 'json' };
-import plPL from './locales/pl-PL.json' assert { type: 'json' };
-import arSA from './locales/ar-SA.json' assert { type: 'json' };
+import enUS from './locales/en-US.json' with { type: 'json' };
+import ukUA from './locales/uk-UA.json' with { type: 'json' };
+import deDE from './locales/de-DE.json' with { type: 'json' };
+import jaJP from './locales/ja-JP.json' with { type: 'json' };
+import esES from './locales/es-ES.json' with { type: 'json' };
+import frFR from './locales/fr-FR.json' with { type: 'json' };
+import ptBR from './locales/pt-BR.json' with { type: 'json' };
+import zhCN from './locales/zh-CN.json' with { type: 'json' };
+import itIT from './locales/it-IT.json' with { type: 'json' };
+import hiIN from './locales/hi-IN.json' with { type: 'json' };
+import plPL from './locales/pl-PL.json' with { type: 'json' };
+import arSA from './locales/ar-SA.json' with { type: 'json' };
 
 const catalog = {
   'en-US': enUS,
