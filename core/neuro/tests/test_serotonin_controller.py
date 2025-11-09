@@ -46,6 +46,8 @@ def config_dict():
         "desens_gain": 0.12,
         "gate_veto": 0.9,
         "phasic_veto": 1.0,
+        "temperature_floor_min": 0.05,
+        "temperature_floor_max": 0.4,
     }
 
 
@@ -89,6 +91,22 @@ def test_serotonin_signal_updates_tonic_and_sensitivity(controller):
     assert 0.0 <= ser1 <= 1.0
     assert 0.0 <= ser2 <= 1.0
     assert controller.serotonin_level == pytest.approx(ser2, rel=1e-6)
+
+
+def test_temperature_floor_tracks_serotonin(controller):
+    cfg = controller.config
+    floor_min = cfg["temperature_floor_min"]
+    floor_max = cfg["temperature_floor_max"]
+    first = controller.temperature_floor
+    assert floor_min <= first <= floor_max
+    controller.compute_serotonin_signal(0.5)
+    mid = controller.temperature_floor
+    controller.compute_serotonin_signal(2.0)
+    high = controller.temperature_floor
+    assert floor_min <= mid <= floor_max
+    assert floor_min <= high <= floor_max
+    assert mid >= first
+    assert high >= mid
 
 
 def test_serotonin_signal_validation(controller):
@@ -214,6 +232,7 @@ def test_update_metrics(caplog, controller):
     assert "serotonin_sensitivity" in caplog.text
     assert "serotonin_phasic_level" in caplog.text
     assert "serotonin_gate_level" in caplog.text
+    assert "serotonin_temperature_floor" in caplog.text
 
 
 def test_save_and_to_dict(controller, tmp_path):
@@ -231,6 +250,7 @@ def test_save_and_to_dict(controller, tmp_path):
     assert "phasic_level" in state
     assert "gate_level" in state
     assert "decay_rate" in state
+    assert "temperature_floor" in state
 
 
 def test_audit_file_created(controller, tmp_path):
@@ -309,6 +329,7 @@ def test_to_dict_snapshot(controller):
     snapshot = controller.to_dict()
     assert json.dumps(snapshot, sort_keys=True)
     assert snapshot["gate_level"] == controller.gate_level
+    assert snapshot["temperature_floor"] == controller.temperature_floor
 
 
 def test_compute_serotonin_signal_performance(controller):

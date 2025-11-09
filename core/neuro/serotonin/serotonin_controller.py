@@ -86,6 +86,18 @@ class SerotoninConfig(BaseModel):
         ge=0.0,
         description="Phasic level above which cooldown veto triggers",
     )
+    temperature_floor_min: float = Field(
+        0.05,
+        ge=0.0,
+        le=1.0,
+        description="Lower bound for the serotonin-governed temperature floor",
+    )
+    temperature_floor_max: float = Field(
+        0.6,
+        ge=0.0,
+        le=1.0,
+        description="Upper bound for the serotonin-governed temperature floor",
+    )
     tau_5ht_ms: Optional[float] = Field(
         None, gt=0.0, description="Tonic decay time constant in milliseconds"
     )
@@ -154,6 +166,7 @@ class SerotoninController:
         self.serotonin_level: float = 0.0
         self.phasic_level: float = 0.0
         self.gate_level: float = 0.0
+        self.temperature_floor: float = float(self.config["temperature_floor_min"])
         self._logger: Callable[[str, float], None] = logger or (
             lambda name, value: logging.getLogger(__name__).info("%s: %f", name, value)
         )
@@ -202,6 +215,12 @@ class SerotoninController:
             )
         if cfg.get("decay_rate") is None:
             raise KeyError("decay_rate must be provided when tau_5ht_ms/step_ms are absent")
+        floor_min = cfg["temperature_floor_min"]
+        floor_max = cfg["temperature_floor_max"]
+        if floor_min > floor_max:
+            raise ValueError(
+                "temperature_floor_min must be less than or equal to temperature_floor_max"
+            )
         self._tick_hours = float(cfg.get("tick_hours", 1.0))
         logger.debug(
             "SerotoninController tick_hours=%.3f implies logistic saturation bounds (0,1)",
@@ -308,6 +327,11 @@ class SerotoninController:
                     1.0, self.sensitivity + cfg["desens_rate"] * 0.5
                 )
             self.serotonin_level = float(sig * self.sensitivity)
+            floor_min = cfg["temperature_floor_min"]
+            floor_max = cfg["temperature_floor_max"]
+            self.temperature_floor = float(
+                floor_min + (floor_max - floor_min) * self.serotonin_level
+            )
             return self.serotonin_level
 
     def modulate_action_prob(
@@ -383,6 +407,7 @@ class SerotoninController:
             self._log(f"serotonin_phasic_level{tag}", self.phasic_level)
             self._log(f"serotonin_gate_level{tag}", self.gate_level)
             self._log(f"serotonin_decay_rate{tag}", self.config["decay_rate"])
+            self._log(f"serotonin_temperature_floor{tag}", self.temperature_floor)
 
     def meta_adapt(self, performance_metrics: Mapping[str, float]) -> None:
         """Adapt release weights based on drawdown and Sharpe observations."""
@@ -467,6 +492,7 @@ class SerotoninController:
                 "serotonin_level": float(self.serotonin_level),
                 "phasic_level": float(self.phasic_level),
                 "gate_level": float(self.gate_level),
+                "temperature_floor": float(self.temperature_floor),
                 "alpha": float(self.config["alpha"]),
                 "beta": float(self.config["beta"]),
                 "gamma": float(self.config["gamma"]),
