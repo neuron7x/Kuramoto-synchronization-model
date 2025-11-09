@@ -18,7 +18,7 @@ def _seed_rng() -> None:
 @pytest.fixture
 def config_dict() -> Dict[str, object]:
     return {
-        "version": "2.2.0",
+        "version": "2.3.0",
         "discount_gamma": 0.98,
         "learning_rate_v": 0.1,
         "decay_rate": 0.05,
@@ -235,11 +235,11 @@ def test_save_and_to_dict(controller: DopamineController, tmp_path) -> None:
 
     with open(out_path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
-    assert cfg["version"] == "2.2.0"
+    assert cfg["version"] == "2.3.0"
     assert set(cfg["meta_adapt_rules"].keys()) == {"good", "bad", "neutral"}
 
     snapshot = controller.to_dict()
-    assert snapshot["version"] == "2.2.0"
+    assert snapshot["version"] == "2.3.0"
     for key in ("tonic_level", "phasic_level", "dopamine_level", "value_estimate", "last_rpe"):
         assert key in snapshot
 

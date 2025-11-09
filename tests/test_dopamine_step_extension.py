@@ -13,7 +13,7 @@ from tradepulse.core.neuro.dopamine import DopamineController, dopamine_step
 @pytest.fixture
 def config_dict() -> Dict[str, object]:
     return {
-        "version": "2.2.0",
+        "version": "2.3.0",
         "discount_gamma": 0.98,
         "learning_rate_v": 0.1,
         "decay_rate": 0.05,
