@@ -1,20 +1,33 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import logging
 import math
+import sys
+from pathlib import Path
 from time import perf_counter
+from typing import Mapping
 
 import numpy as np
 import pytest
 import yaml
-from typing import Mapping
 
-from core.neuro.serotonin.serotonin_controller import (
-    SerotoninController,
-    _generate_config_table,
-    SerotoninConfig,
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+# Direct import to avoid dependency issues in tests
+spec = importlib.util.spec_from_file_location(
+    "serotonin_controller",
+    Path(__file__).parent.parent / "serotonin" / "serotonin_controller.py"
 )
+serotonin_module = importlib.util.module_from_spec(spec)
+sys.modules["serotonin_controller"] = serotonin_module
+spec.loader.exec_module(serotonin_module)
+
+SerotoninController = serotonin_module.SerotoninController
+SerotoninConfig = serotonin_module.SerotoninConfig
+_generate_config_table = serotonin_module._generate_config_table
 
 pytestmark = pytest.mark.L1
 

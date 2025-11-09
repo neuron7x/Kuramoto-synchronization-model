@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib.util
 import math
+import sys
 from pathlib import Path
 
 import pytest
@@ -80,7 +82,15 @@ def test_gate_balances_hold_and_go(controller: DopamineController) -> None:
 
 def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_path: Path) -> None:
     """Test ActionGate integration with SerotoninController.step() API."""
-    from core.neuro.serotonin.serotonin_controller import SerotoninController
+    # Direct import to avoid dependency issues in tests
+    serotonin_spec = importlib.util.spec_from_file_location(
+        "serotonin_controller",
+        Path(__file__).parent.parent.parent.parent / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
+    )
+    serotonin_module = importlib.util.module_from_spec(serotonin_spec)
+    sys.modules["serotonin_controller_test"] = serotonin_module
+    serotonin_spec.loader.exec_module(serotonin_module)
+    SerotoninController = serotonin_module.SerotoninController
 
     # Create a serotonin controller with test config
     sero_cfg = tmp_path / "serotonin.yaml"
