@@ -38,6 +38,10 @@ def test_dataclass_to_json_schema_generates_expected_properties() -> None:
     assert schema["properties"]["identifier"]["type"] == "integer"
     assert schema["properties"]["tags"]["type"] == "array"
     assert schema["properties"]["metadata"]["type"] == "object"
+    description_schema = schema["properties"]["description"]
+    assert "anyOf" in description_schema
+    assert {"type": "null"} in description_schema["anyOf"]
+    assert {"type": "string"} in description_schema["anyOf"]
 
 
 def test_dataclass_to_json_schema_requires_dataclass_type() -> None:

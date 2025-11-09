@@ -94,9 +94,23 @@ def _type_to_schema(typ: Any) -> Dict[str, Any]:
 
     # Handle Union types (including Optional)
     if origin is Union:
-        schemas = [_type_to_schema(arg) for arg in args if arg is not type(None)]
+        allow_null = False
+        schemas = []
+        for arg in args:
+            if arg is type(None):
+                allow_null = True
+                continue
+            schemas.append(_type_to_schema(arg))
+
+        if not schemas and allow_null:
+            return {"type": "null"}
+
+        if allow_null:
+            schemas.append({"type": "null"})
+
         if len(schemas) == 1:
             return schemas[0]
+
         return {"anyOf": schemas}
 
     # Handle typing.Any explicitly
