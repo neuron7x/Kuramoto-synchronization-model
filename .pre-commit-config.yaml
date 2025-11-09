@@ -36,8 +36,8 @@ repos:
   - repo: local
     hooks:
       - id: slotscheck
-        name: slotscheck (core packages)
-        entry: python -m slotscheck --module core --module backtest --module execution
+        name: slotscheck (tradepulse package)
+        entry: python -m slotscheck --module tradepulse.core --module tradepulse.backtest --module tradepulse.execution
         language: python
         additional_dependencies:
           - slotscheck==0.19.1
@@ -56,3 +56,20 @@ repos:
     rev: v8.22.1
     hooks:
       - id: gitleaks
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: ["--ignore-words-list", "crate,nd,mis"]
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.21
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-black
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ["-d", "{extends: default, rules: {line-length: {max: 120}}}"]
