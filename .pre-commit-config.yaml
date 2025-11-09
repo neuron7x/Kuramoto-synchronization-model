@@ -47,6 +47,14 @@ repos:
         entry: npm run lint --prefix ui/dashboard
         language: system
         pass_filenames: false
+      - id: validate-workflows
+        name: Validate GitHub Actions workflows
+        entry: python scripts/validate_workflows.py
+        language: python
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+        additional_dependencies:
+          - pyyaml>=6.0
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:

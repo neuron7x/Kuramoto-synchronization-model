@@ -1,0 +1,84 @@
+name: 'Setup Python Environment'
+description: 'Reusable action to set up Python with dependencies and caching (2025 best practice)'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.11'
+  install-dev-deps:
+    description: 'Install development dependencies'
+    required: false
+    default: 'false'
+  cache-key-prefix:
+    description: 'Custom cache key prefix'
+    required: false
+    default: 'pip'
+
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache-pip.outputs.cache-hit }}
+  python-version:
+    description: 'Actual Python version installed'
+    value: ${{ steps.setup-python.outputs.python-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      id: setup-python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.txt
+          requirements.lock
+          requirements-dev.txt
+          requirements-dev.lock
+          constraints/security.txt
+    
+    - name: Cache pip packages
+      id: cache-pip
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          .venv
+        key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles('requirements*.txt', 'constraints/**/*.txt') }}
+        restore-keys: |
+          ${{ inputs.cache-key-prefix }}-${{ runner.os }}-py${{ inputs.python-version }}-
+    
+    - name: Upgrade pip and core tools
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip wheel setuptools
+      env:
+        PIP_DISABLE_PIP_VERSION_CHECK: '1'
+        PIP_NO_WARN_SCRIPT_LOCATION: '1'
+    
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip install -c constraints/security.txt -r requirements.txt
+        if [ "${{ inputs.install-dev-deps }}" = "true" ]; then
+          pip install -c constraints/security.txt -r requirements-dev.txt
+        fi
+      env:
+        PIP_DISABLE_PIP_VERSION_CHECK: '1'
+        PIP_NO_WARN_SCRIPT_LOCATION: '1'
+    
+    - name: Display installed packages
+      shell: bash
+      run: |
+        echo "::group::Installed packages"
+        pip list
+        echo "::endgroup::"
+    
+    - name: Verify installation
+      shell: bash
+      run: |
+        python --version
+        pip --version
+        python -c "import sys; print(f'Python: {sys.version}')"
