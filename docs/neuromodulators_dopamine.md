@@ -1,4 +1,4 @@
-# DopamineController v2.2
+# DopamineController v2.3
 
 Нейроінспірований контур, що моделює апетитивну дофамінову петлю під TD(0):
 
@@ -9,7 +9,9 @@
 - Метапараметричні дріфти з охолодженням (`meta_cooldown_ticks`) та табличними правилами (`meta_adapt_rules`).
 - DDM-адаптер `adapt_ddm_parameters` → перетворює `dopamine_level` у дрейф/межу.
 - Повна валідація YAML-конфігу (`version`, діапазони, невідомі ключі → помилка).
-- Телеметрія з префіксом `dopamine_*`, частотний ред’юсер `metric_interval`.
+- Телеметрія з префіксом `dopamine_*`, включно з новою метрикою співвідношення `tonic_to_phasic_ratio`; частотний ред’юсер `metric_interval`.
+- ActionGate тепер повертає DDM-адаптацію і діагностику HOLD/Go на основі серотоніну.
+- `GateEvaluation` містить `hold_reason`, `tonic_to_phasic_ratio` та серотонінові екстри для синхронізації з GABA/5-HT.
 
 ## Приклад використання
 
@@ -27,8 +29,13 @@ app = da.estimate_appetitive_state(r_proxy, novelty, momentum, value_gap)
 DA = da.compute_dopamine_signal(app, rpe)
 Q_mod = da.modulate_action_value(Q)
 gate = ActionGate(da, serotonin_ctrl)
-gate_eval = gate.evaluate(DA)
-ddm = adapt_ddm_parameters(gate_eval.dopamine_level, base_drift, base_boundary)
+gate_eval = gate.evaluate(
+    DA,
+    ddm_base_drift=base_drift,
+    ddm_base_boundary=base_boundary,
+    ddm_kwargs={"serotonin_hold": serotonin_ctrl.serotonin_level},
+)
+ddm = gate_eval.ddm_adjustment
 da.update_metrics()
 ```
 
@@ -39,6 +46,7 @@ da.update_metrics()
 - `temp_k > 0`, `min_temperature > 0`, `burst_factor ≥ 0`.
 - `meta_adapt_rules` задають мультиплікативні коефіцієнти для станів `good|bad|neutral`.
 - `metric_interval` визначає частоту логування (`1` → кожен крок).
+- `tonic_to_phasic_ratio` автоматично клампується до `[0, 100]` та доступний через `to_dict()`.
 
 ## Meta-adapt
 

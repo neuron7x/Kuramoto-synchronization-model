@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import pytest
 import torch
 from modules.gaba_inhibition_gate import (
@@ -261,3 +263,15 @@ def test_gate_metrics_type():
     assert isinstance(metrics.inhibition, float)
     assert isinstance(metrics.gaba_level, float)
     assert isinstance(metrics.risk_weight, float)
+
+
+def test_telemetry_logger_invoked():
+    calls: List[Tuple[str, float]] = []
+
+    def logger(name: str, value: float) -> None:
+        calls.append((name, value))
+
+    gate = GABAInhibitionGate(telemetry_logger=logger)
+    gate(base_state(), torch.tensor([1.0]))
+    names = {name for name, _ in calls}
+    assert {"gaba_inhibition", "gaba_level", "gaba_risk_weight"}.issubset(names)

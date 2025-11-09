@@ -7,7 +7,7 @@
 from __future__ import annotations
 import math
 from dataclasses import dataclass
-from typing import Dict, Tuple, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -81,7 +81,12 @@ class GABAInhibitionGate(nn.Module):
     metrics : Dict[str, float] with keys: 'inhibition', 'gaba_level', 'risk_weight'.
     """
 
-    def __init__(self, params: Optional[GateParams] = None, device: Optional[str] = None):
+    def __init__(
+        self,
+        params: Optional[GateParams] = None,
+        device: Optional[str] = None,
+        telemetry_logger: Optional[Callable[[str, float], None]] = None,
+    ):
         super().__init__()
         self.p = params or GateParams()
         dev = device if device is not None else ("cuda" if torch.cuda.is_available() else "cpu")
@@ -97,6 +102,7 @@ class GABAInhibitionGate(nn.Module):
         
         # precompute dt tensor for efficiency
         self.register_buffer("dt_tensor", torch.tensor(self.p.dt_ms, device=self.device))
+        self._telemetry_logger = telemetry_logger
 
     # --- helpers -----------------------------------------------------------
     def _compute_decay(self, tau_ms: float) -> torch.Tensor:
@@ -216,11 +222,20 @@ class GABAInhibitionGate(nn.Module):
         if self.p.enforce_mfd and (gaba_level > 0.1).item():
             gated = torch.where(gated.abs() > action.abs(), action, gated)
 
-        return gated, GateMetrics(
+        metrics = GateMetrics(
             inhibition=float(inhibition.item()),
             gaba_level=float(gaba_level.item()),
-            risk_weight=float(self.risk_weight.item())
+            risk_weight=float(self.risk_weight.item()),
         )
+        if self._telemetry_logger is not None:
+            try:
+                self._telemetry_logger("gaba_inhibition", metrics.inhibition)
+                self._telemetry_logger("gaba_level", metrics.gaba_level)
+                self._telemetry_logger("gaba_risk_weight", metrics.risk_weight)
+            except Exception:  # pragma: no cover - defensive logging
+                pass
+
+        return gated, metrics
 
     def get_state(self) -> GateState:
         """Get current gate state.

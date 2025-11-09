@@ -1,5 +1,5 @@
-# Dopamine controller configuration v2.2
-version: "2.2.0"
+# Dopamine controller configuration v2.3
+version: "2.3.0"
 
 # TD / RPE
 discount_gamma: 0.98

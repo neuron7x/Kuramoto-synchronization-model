@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from ..core.state import clip
 
 
@@ -38,6 +40,41 @@ def modulate_activity_ach(activity_mult: float, ACh: float) -> float:
     return clip(activity_mult * (0.5 + ACh), 0.25, 1.5)
 
 
+@dataclass(frozen=True)
+class ArousalAttentionResult:
+    """Combined noradrenaline/acetylcholine modulation diagnostics."""
+
+    risk_rate: float
+    activity_multiplier: float
+    noradrenaline_level: float
+    acetylcholine_level: float
+
+
+def apply_arousal_attention_hooks(
+    rate: float,
+    activity_mult: float,
+    *,
+    noradrenaline_level: float,
+    acetylcholine_level: float,
+    r_min: float,
+    r_max: float,
+    na_scale: float,
+    ach_focus_gain: float = 0.2,
+) -> ArousalAttentionResult:
+    """Adjust risk and activity envelopes using NA/ACh arousal heuristics."""
+
+    na_bias = (noradrenaline_level - 0.5) * 2.0
+    rate_adjusted = clip(rate * (1.0 + na_scale * na_bias), r_min, r_max)
+    ach_bias = (acetylcholine_level - 0.5) * 2.0
+    activity_adjusted = clip(activity_mult * (1.0 + ach_focus_gain * ach_bias), 0.1, 2.0)
+    return ArousalAttentionResult(
+        risk_rate=rate_adjusted,
+        activity_multiplier=activity_adjusted,
+        noradrenaline_level=noradrenaline_level,
+        acetylcholine_level=acetylcholine_level,
+    )
+
+
 __all__ = [
     "dopamine",
     "noradrenaline",
@@ -45,4 +82,6 @@ __all__ = [
     "acetylcholine",
     "modulate_risk_da",
     "modulate_activity_ach",
+    "ArousalAttentionResult",
+    "apply_arousal_attention_hooks",
 ]

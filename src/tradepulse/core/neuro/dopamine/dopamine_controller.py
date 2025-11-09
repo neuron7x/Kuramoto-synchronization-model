@@ -120,6 +120,7 @@ class DopamineController:
         self.tonic_level: float = 0.0
         self.phasic_level: float = 0.0
         self.dopamine_level: float = 0.0
+        self.tonic_to_phasic_ratio: float = 0.0
         self.value_estimate: float = 0.0
         self.last_rpe: float = 0.0
         self._meta_cooldown: int = int(self.config["meta_cooldown_ticks"])
@@ -383,6 +384,13 @@ class DopamineController:
         self.tonic_level = float((1.0 - decay) * self.tonic_level + decay * (appetitive_state + self.phasic_level))
         self._ensure_finite("tonic_level", self.tonic_level)
 
+        # tonic/phasic balance
+        denom = max(1e-6, abs(self.phasic_level))
+        ratio = self.tonic_level / denom
+        # clamp to reasonable range to avoid telemetry blow ups
+        ratio = max(0.0, min(ratio, 100.0))
+        self.tonic_to_phasic_ratio = float(ratio)
+
         # bounded logistic
         x = float(cfg["k"]) * (self.tonic_level - float(cfg["theta"]))
         x = max(min(x, 60.0), -60.0)
@@ -392,6 +400,7 @@ class DopamineController:
         self._log("dopamine_tonic_level", self.tonic_level)
         self._log("dopamine_phasic_level", self.phasic_level)
         self._log("dopamine_level", self.dopamine_level)
+        self._log("dopamine_tonic_to_phasic_ratio", self.tonic_to_phasic_ratio)
         return self.dopamine_level
 
     # ---------- policy/value modulation ----------
@@ -467,6 +476,12 @@ class DopamineController:
         for key, factor in rules.items():
             old_value = float(cfg[key])
             new_value = float(old_value * factor)
+            if key == "learning_rate_v":
+                new_value = min(max(new_value, 1e-6), 1.0)
+            elif key == "delta_gain":
+                new_value = min(max(new_value, 0.0), 1.0)
+            elif key == "base_temperature":
+                new_value = max(float(cfg["min_temperature"]), new_value)
             cfg[key] = new_value
             self._log(f"dopamine_meta_{key}", new_value - old_value)
 
@@ -509,6 +524,7 @@ class DopamineController:
             "dopamine_level": float(self.dopamine_level),
             "value_estimate": float(self.value_estimate),
             "last_rpe": float(self.last_rpe),
+            "tonic_to_phasic_ratio": float(self.tonic_to_phasic_ratio),
             "discount_gamma": float(self.config["discount_gamma"]),
             "learning_rate_v": float(self.config["learning_rate_v"]),
             "delta_gain": float(self.config["delta_gain"]),
@@ -524,6 +540,7 @@ class DopamineController:
         self.dopamine_level = 0.0
         self.value_estimate = 0.0
         self.last_rpe = 0.0
+        self.tonic_to_phasic_ratio = 0.0
 
     def dump_state(self) -> Mapping[str, float]:
         return {
@@ -532,6 +549,7 @@ class DopamineController:
             "dopamine_level": self.dopamine_level,
             "value_estimate": self.value_estimate,
             "last_rpe": self.last_rpe,
+            "tonic_to_phasic_ratio": self.tonic_to_phasic_ratio,
         }
 
     def load_state(self, state: Mapping[str, float]) -> None:
@@ -547,3 +565,9 @@ class DopamineController:
         )
         self.value_estimate = self._ensure_finite("value_estimate", float(state["value_estimate"]))
         self.last_rpe = self._ensure_finite("last_rpe", float(state["last_rpe"]))
+        if "tonic_to_phasic_ratio" in state:
+            ratio = float(state["tonic_to_phasic_ratio"])
+            self.tonic_to_phasic_ratio = max(0.0, min(float(ratio), 100.0))
+        else:
+            denom = max(1e-6, abs(self.phasic_level))
+            self.tonic_to_phasic_ratio = float(max(0.0, min(self.tonic_level / denom, 100.0)))

@@ -6,22 +6,39 @@ from typing import Dict, Optional
 import pytest
 import yaml
 
+from core.neuro.serotonin.serotonin_controller import CooldownStatus
 from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
+from tradepulse.core.neuro.dopamine.ddm_adapter import DDMAdjustment
 
 
 @dataclass
 class SerotoninStub:
     hold: bool
     temperature_floor: float = 0.2
+    serotonin_level: float = 0.5
+    tonic_trigger: bool = True
+    gate_trigger: bool = False
+    phasic_trigger: bool = False
+    accepted: bool = True
 
-    def check_cooldown(self, _: Optional[float] = None) -> bool:
+    def check_cooldown(self, _: Optional[float] = None) -> bool:  # pragma: no cover - legacy path
         return self.hold
+
+    def cooldown_status(self, serotonin_signal: Optional[float] = None) -> CooldownStatus:
+        return CooldownStatus(
+            hold=self.hold,
+            tonic_trigger=self.tonic_trigger,
+            gate_trigger=self.gate_trigger,
+            phasic_trigger=self.phasic_trigger,
+            accepted=self.accepted,
+            serotonin_level=self.serotonin_level if serotonin_signal is None else float(serotonin_signal),
+        )
 
 
 @pytest.fixture
 def config_dict() -> Dict[str, object]:
     return {
-        "version": "2.2.0",
+        "version": "2.3.0",
         "discount_gamma": 0.98,
         "learning_rate_v": 0.1,
         "decay_rate": 0.05,
@@ -83,6 +100,7 @@ def test_high_dopamine_with_high_serotonin(controller: DopamineController) -> No
     assert eval_result.hold is True
     assert eval_result.no_go is True
     assert eval_result.temperature >= 0.4
+    assert eval_result.hold_reason == "tonic"
 
 
 def test_high_dopamine_low_serotonin(controller: DopamineController) -> None:
@@ -92,6 +110,7 @@ def test_high_dopamine_low_serotonin(controller: DopamineController) -> None:
     assert eval_result.go is True
     assert eval_result.hold is False
     assert eval_result.no_go is False
+    assert eval_result.ddm_adjustment is None
 
 
 def test_low_dopamine_high_serotonin(controller: DopamineController) -> None:
@@ -100,3 +119,23 @@ def test_low_dopamine_high_serotonin(controller: DopamineController) -> None:
     eval_result = gate.evaluate()
     assert eval_result.go is False
     assert eval_result.no_go is True
+    assert eval_result.hold_reason == "tonic"
+
+
+def test_ddm_adjustment_includes_serotonin_hold(controller: DopamineController) -> None:
+    controller.dopamine_level = 0.75
+    gate = ActionGate(controller, SerotoninStub(hold=True, temperature_floor=0.2, serotonin_level=0.8))
+    result = gate.evaluate(ddm_base_drift=0.5, ddm_base_boundary=1.2, ddm_kwargs={"drift_gain": 0.2})
+    assert isinstance(result.ddm_adjustment, DDMAdjustment)
+    assert result.ddm_adjustment.drift < 0.5
+    assert result.ddm_adjustment.boundary > 1.2
+
+
+def test_gate_extras_include_tonic_ratio(controller: DopamineController) -> None:
+    controller.compute_rpe(0.2, 0.0, 0.0)
+    controller.compute_dopamine_signal(0.6, controller.last_rpe)
+    gate = ActionGate(controller, None)
+    result = gate.evaluate(ddm_base_drift=0.4, ddm_base_boundary=1.0)
+    assert result.extras is not None
+    assert "tonic_to_phasic_ratio" in result.extras
+    assert isinstance(result.ddm_adjustment, DDMAdjustment)

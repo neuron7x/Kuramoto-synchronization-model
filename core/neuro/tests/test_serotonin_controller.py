@@ -11,9 +11,10 @@ import yaml
 from typing import Mapping
 
 from core.neuro.serotonin.serotonin_controller import (
+    CooldownStatus,
+    SerotoninConfig,
     SerotoninController,
     _generate_config_table,
-    SerotoninConfig,
 )
 
 
@@ -182,6 +183,15 @@ def test_check_cooldown(controller):
     assert controller.check_cooldown(0.6) is False
 
 
+def test_cooldown_status_details(controller):
+    controller.compute_serotonin_signal(1.2)
+    status = controller.cooldown_status()
+    assert isinstance(status, CooldownStatus)
+    assert status.hold is True
+    assert status.tonic_trigger or status.gate_trigger or status.phasic_trigger
+    assert status.serotonin_level == pytest.approx(controller.serotonin_level, rel=1e-6)
+
+
 def test_gate_veto_configurable(controller):
     controller.config["gate_veto"] = 0.5
     controller.gate_level = 0.6
@@ -233,6 +243,9 @@ def test_update_metrics(caplog, controller):
     assert "serotonin_phasic_level" in caplog.text
     assert "serotonin_gate_level" in caplog.text
     assert "serotonin_temperature_floor" in caplog.text
+    assert "serotonin_cooldown_tonic" in caplog.text
+    assert "serotonin_cooldown_gate" in caplog.text
+    assert "serotonin_cooldown_phasic" in caplog.text
 
 
 def test_save_and_to_dict(controller, tmp_path):
@@ -330,6 +343,9 @@ def test_to_dict_snapshot(controller):
     assert json.dumps(snapshot, sort_keys=True)
     assert snapshot["gate_level"] == controller.gate_level
     assert snapshot["temperature_floor"] == controller.temperature_floor
+    assert "cooldown_tonic_trigger" in snapshot
+    assert "cooldown_gate_trigger" in snapshot
+    assert "cooldown_phasic_trigger" in snapshot
 
 
 def test_compute_serotonin_signal_performance(controller):

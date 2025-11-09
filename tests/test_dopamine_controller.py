@@ -133,6 +133,8 @@ def test_dopamine_signal_clamped_and_stable(controller: DopamineController) -> N
     controller.compute_rpe(-1e6, 0.0, 0.0)
     low = controller.compute_dopamine_signal(0.0, controller.last_rpe)
     assert 0.0 <= low <= 1.0
+    assert controller.tonic_to_phasic_ratio >= 0.0
+    assert "tonic_to_phasic_ratio" in controller.dump_state()
 
 
 def test_temperature_monotonic_decrease(controller: DopamineController) -> None:
@@ -182,6 +184,23 @@ def test_meta_adapt_respects_cooldown(controller: DopamineController) -> None:
     assert controller.config["learning_rate_v"] < cfg_snapshot["learning_rate_v"]
 
 
+def test_meta_adapt_clamps_ranges(controller: DopamineController) -> None:
+    controller.config["min_temperature"] = 0.2
+    controller.config["base_temperature"] = 0.21
+    controller.config["learning_rate_v"] = 0.0001
+    controller.config["delta_gain"] = 0.001
+    rules = {
+        "good": {"learning_rate_v": 10.0, "delta_gain": 10.0, "base_temperature": 0.1},
+        "bad": {"learning_rate_v": 0.1, "delta_gain": 0.1, "base_temperature": 10.0},
+        "neutral": {"learning_rate_v": 1.0, "delta_gain": 1.0, "base_temperature": 1.0},
+    }
+    controller.config["meta_adapt_rules"] = rules
+    controller.meta_adapt({"drawdown": -0.03, "sharpe": 1.5})
+    assert 1e-6 <= controller.config["learning_rate_v"] <= 1.0
+    assert 0.0 <= controller.config["delta_gain"] <= 1.0
+    assert controller.config["base_temperature"] >= controller.config["min_temperature"]
+
+
 def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
     controller.compute_rpe(0.2, 0.1, 0.3)
     controller.update_value_estimate()
@@ -194,6 +213,7 @@ def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
         "dopamine_level": 0.0,
         "value_estimate": 0.0,
         "last_rpe": 0.0,
+        "tonic_to_phasic_ratio": 0.0,
     }
     controller.load_state(state)
     assert controller.dump_state() == state

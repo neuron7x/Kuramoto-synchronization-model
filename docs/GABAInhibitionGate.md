@@ -10,7 +10,7 @@
 - All updates under @torch.no_grad() to avoid gradient leaks into policy.
 
 **TACL hooks**
-- Emit metrics: inhibition, gaba_level, risk_weight.
+- Emit metrics: inhibition, gaba_level, risk_weight (configurable `telemetry_logger`).
 - MFD policy: if `ΔF > 0` after enabling gate (latency + incoherence), auto-fallback to pass-through and alert.
 
 **Falsification tests** (Popper):

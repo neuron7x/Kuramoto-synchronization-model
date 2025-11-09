@@ -6,7 +6,8 @@ produce dynamic risk, position and frequency limits. The implementation ships
 with:
 
 - Deterministic energy/load dynamics suitable for offline validation.
-- Dopamine / noradrenaline inspired neuromodulator hooks for adaptive behaviour.
+- Dopamine / noradrenaline inspired neuromodulator hooks for adaptive behaviour,
+  including NA/ACh arousal-attention scaling for risk/activity envelopes.
 - Synthetic validation utilities and CLI wrappers for continuous verification.
 
 ## Quick start

@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
 from time import time
@@ -13,6 +14,18 @@ import fcntl
 import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+
+@dataclass(frozen=True)
+class CooldownStatus:
+    """Structured summary of HOLD veto diagnostics."""
+
+    hold: bool
+    tonic_trigger: bool
+    gate_trigger: bool
+    phasic_trigger: bool
+    accepted: bool
+    serotonin_level: float
 
 
 class SerotoninConfig(BaseModel):
@@ -355,28 +368,40 @@ class SerotoninController:
             biased = inhibited * (1.0 + za_bias)
             return float(np.clip(biased, 0.0, 1.0))
 
-    def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
-        """Return ``True`` when the serotonin veto threshold is exceeded."""
+    def cooldown_status(self, serotonin_signal: Optional[float] = None) -> CooldownStatus:
+        """Return detailed HOLD diagnostics for coordination with dopamine gates."""
 
         with self._lock:
-            if serotonin_signal is None:
-                serotonin_signal = self.serotonin_level
-            veto = (
-                serotonin_signal > self.config["cooldown_threshold"]
-                or self.phasic_level > self.config["phasic_veto"]
-                or self.gate_level > self.config["gate_veto"]
-            )
-            if self._tacl_guard and veto:
+            signal = self.serotonin_level if serotonin_signal is None else float(serotonin_signal)
+            tonic = bool(signal > self.config["cooldown_threshold"])
+            gate = bool(self.gate_level > self.config["gate_veto"])
+            phasic = bool(self.phasic_level > self.config["phasic_veto"])
+            hold = tonic or gate or phasic
+            accepted = True
+            if self._tacl_guard and hold:
                 payload = {
-                    "serotonin_signal": float(serotonin_signal),
+                    "serotonin_signal": float(signal),
                     "phasic_level": float(self.phasic_level),
                     "gate_level": float(self.gate_level),
                 }
-                accepted = self._tacl_guard("serotonin_cooldown", payload)
+                accepted = bool(self._tacl_guard("serotonin_cooldown", payload))
                 self._log("serotonin_cooldown_guard", float(accepted))
                 if not accepted:
-                    return False
-            return veto
+                    hold = False
+            return CooldownStatus(
+                hold=hold,
+                tonic_trigger=tonic,
+                gate_trigger=gate,
+                phasic_trigger=phasic,
+                accepted=accepted,
+                serotonin_level=float(signal),
+            )
+
+    def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
+        """Return ``True`` when the serotonin veto threshold is exceeded."""
+
+        status = self.cooldown_status(serotonin_signal)
+        return status.hold
 
     def apply_internal_shift(
         self,
@@ -408,6 +433,10 @@ class SerotoninController:
             self._log(f"serotonin_gate_level{tag}", self.gate_level)
             self._log(f"serotonin_decay_rate{tag}", self.config["decay_rate"])
             self._log(f"serotonin_temperature_floor{tag}", self.temperature_floor)
+            status = self.cooldown_status()
+            self._log(f"serotonin_cooldown_tonic{tag}", float(status.tonic_trigger))
+            self._log(f"serotonin_cooldown_gate{tag}", float(status.gate_trigger))
+            self._log(f"serotonin_cooldown_phasic{tag}", float(status.phasic_trigger))
 
     def meta_adapt(self, performance_metrics: Mapping[str, float]) -> None:
         """Adapt release weights based on drawdown and Sharpe observations."""
@@ -485,6 +514,7 @@ class SerotoninController:
         """Expose serialisable controller state for audits and telemetry."""
 
         with self._lock:
+            status = self.cooldown_status()
             return {
                 "tonic_level": float(self.tonic_level),
                 "sensitivity": float(self.sensitivity),
@@ -493,6 +523,9 @@ class SerotoninController:
                 "phasic_level": float(self.phasic_level),
                 "gate_level": float(self.gate_level),
                 "temperature_floor": float(self.temperature_floor),
+                "cooldown_tonic_trigger": float(status.tonic_trigger),
+                "cooldown_gate_trigger": float(status.gate_trigger),
+                "cooldown_phasic_trigger": float(status.phasic_trigger),
                 "alpha": float(self.config["alpha"]),
                 "beta": float(self.config["beta"]),
                 "gamma": float(self.config["gamma"]),

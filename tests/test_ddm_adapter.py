@@ -17,6 +17,20 @@ def test_ddm_adapter_handles_low_dopamine() -> None:
     assert adjustment.boundary > 0.7
 
 
+def test_ddm_adapter_serotonin_hold_expands_boundary() -> None:
+    baseline = adapt_ddm_parameters(0.6, base_drift=0.5, base_boundary=1.0)
+    held = adapt_ddm_parameters(
+        0.6,
+        base_drift=0.5,
+        base_boundary=1.0,
+        serotonin_hold=0.9,
+        hold_boundary_gain=0.8,
+        hold_drift_suppression=0.6,
+    )
+    assert held.boundary > baseline.boundary
+    assert held.drift < baseline.drift
+
+
 def test_ddm_adapter_validation() -> None:
     with pytest.raises(ValueError):
         adapt_ddm_parameters(float("nan"), 0.5, 1.0)

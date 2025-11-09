@@ -13,6 +13,7 @@ import yaml  # type: ignore[import-untyped]
 from ..control.global_mode import band_expand_for_mode, choose_mode
 from ..control.neuromods import (
     acetylcholine,
+    apply_arousal_attention_hooks,
     dopamine,
     modulate_activity_ach,
     modulate_risk_da,
@@ -186,15 +187,24 @@ class NaKController:
         }[mode]
 
         rate_after_mode = rate_local * risk_multiplier
+        arousal = apply_arousal_attention_hooks(
+            rate_after_mode,
+            activity_multiplier,
+            noradrenaline_level=NA,
+            acetylcholine_level=ACh,
+            r_min=params.r_min,
+            r_max=params.r_max,
+            na_scale=params.na_scale,
+        )
         limited_rate = rate_limit(
             state.last_risk,
-            rate_after_mode,
+            arousal.risk_rate,
             limit=params.delta_r_limit,
             lo=params.r_min,
             hi=params.r_max,
         )
 
-        activity = modulate_activity_ach(activity_multiplier, ACh)
+        activity = modulate_activity_ach(arousal.activity_multiplier, ACh)
 
         engagement = state.EI
         freq = max(params.f_min, min(params.f_max, engagement * activity))
@@ -239,6 +249,8 @@ class NaKController:
             "activity": activity,
             "band_exp": band_expansion,
             "f_freq": freq,
+            "arousal_rate": arousal.risk_rate,
+            "arousal_activity": arousal.activity_multiplier,
         }
 
         if self._logger.isEnabledFor(logging.INFO):

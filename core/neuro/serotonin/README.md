@@ -37,10 +37,11 @@ The public interface is intentionally small and stable:
 | `estimate_aversive_state(market_vol, free_energy, cum_losses, rho_loss, override_weights=None)` | Returns a non-negative float release signal. Inputs must be ≥0 except `rho_loss`, which is clamped to [-1, 1]. |
 | `compute_serotonin_signal(aversive_state)` | Updates the internal tonic/phasic state and returns the serotonin level in [0, 1]. Input must be ≥0. Thread-safe. |
 | `modulate_action_prob(original_prob, serotonin_signal=None, za_bias=None)` | Applies inhibition and bias, returning a probability in [0, 1]. Raises `ValueError` when `original_prob` is outside [0, 1]. |
-| `check_cooldown(serotonin_signal=None)` | Returns `True` when any veto channel (tonic, phasic, gate) exceeds configured thresholds. Consults the optional TACL guard before final approval. |
+| `cooldown_status(serotonin_signal=None)` | Returns a `CooldownStatus` dataclass identifying which channels fired and whether the optional TACL guard accepted the HOLD. |
+| `check_cooldown(serotonin_signal=None)` | Convenience wrapper returning `True` when any veto channel (tonic, phasic, gate) exceeds configured thresholds and the guard approves. |
 | `apply_internal_shift(exploitation_gradient, serotonin_signal=None, beta_temper=None)` | Returns a tempered gradient. Raises `ValueError` for negative gradients. |
 | `meta_adapt(performance_metrics)` | Mutates release weights according to drawdown/Sharpe metrics, guarded by TACL. Persists the config atomically and writes an audit snapshot. |
-| `to_dict()` | Serialises the controller state for auditing. |
+| `to_dict()` | Serialises the controller state for auditing, including cooldown channel diagnostics. |
 | `set_tacl_guard(guard_fn)` | Registers a callable `(event_name, payload) -> bool` invoked for cooldown and meta-adapt actions. |
 
 Internally-scoped helpers are prefixed with `_` and are not part of the compatibility surface.
@@ -142,7 +143,8 @@ state_snapshot = controller.to_dict()
   `apply_internal_shift` to avoid over-aggressive updates during aversive
   regimes.
 - **Telemetry:** all metrics are emitted with the Prometheus-compatible tag
-  `controller_version="v2.3.1"`, including the adaptive `serotonin_temperature_floor`.
+  `controller_version="v2.3.1"`, including the adaptive `serotonin_temperature_floor`
+  and boolean `serotonin_cooldown_*` channel diagnostics for dopamine coordination.
   Use the optional
   `SerotoninController.prometheus_logger` helper to forward to your collector.
 
