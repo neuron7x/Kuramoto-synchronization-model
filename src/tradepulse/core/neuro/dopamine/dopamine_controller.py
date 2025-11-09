@@ -102,7 +102,7 @@ class DopamineController:
 
     def __init__(
         self,
-        config_path: str = "config/dopamine.yaml",
+        config_path: str = "configs/dopamine.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
     ) -> None:
         self.config_path = config_path

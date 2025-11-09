@@ -1,6 +1,6 @@
 import pytest
 import torch
-from modules.gaba_inhibition_gate import (
+from tradepulse.core.neuro.gaba.inhibition_gate import (
     GABAInhibitionGate,
     GateParams,
     GateState,
