@@ -46,15 +46,34 @@ export function escapeHtml(value) {
 
 /**
  * Check if a URL is safe
+ * Prevents XSS attacks through malicious URLs
  */
 function isSafeUrl(url) {
   if (!url || typeof url !== 'string') {
     return false;
   }
   
-  // Block javascript: and data: URLs
+  // Normalize and check for dangerous protocols
   const trimmed = url.trim().toLowerCase();
-  if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:')) {
+  
+  // Block dangerous pseudo-protocols that can execute scripts
+  const dangerousProtocols = [
+    'javascript:',
+    'data:',
+    'vbscript:',
+    'file:',
+    'about:',
+  ];
+  
+  for (const protocol of dangerousProtocols) {
+    if (trimmed.startsWith(protocol)) {
+      return false;
+    }
+  }
+  
+  // Additional check for URL-encoded variations
+  if (trimmed.includes('%6a%61%76%61%73%63%72%69%70%74') || // javascript
+      trimmed.includes('%64%61%74%61')) { // data
     return false;
   }
   
@@ -63,7 +82,11 @@ function isSafeUrl(url) {
     const parsed = new URL(url, 'http://localhost');
     return ALLOWED_PROTOCOLS.has(parsed.protocol);
   } catch {
-    // Relative URL, consider safe
+    // If URL parsing fails but it looks like a relative path, allow it
+    // Reject anything that looks like it might be trying to bypass checks
+    if (trimmed.includes(':')) {
+      return false;
+    }
     return true;
   }
 }
@@ -71,6 +94,10 @@ function isSafeUrl(url) {
 /**
  * Sanitize HTML with whitelist
  * Note: This is a basic implementation. For production, consider using DOMPurify
+ * 
+ * SECURITY NOTE: This implementation uses simple regex-based sanitization which
+ * is NOT as robust as a proper HTML parser. It's provided as a starting point
+ * but should be replaced with DOMPurify or similar library for production use.
  */
 export function sanitizeHtml(html, options = {}) {
   // Note: allowedTags and allowedAttributes will be used when full implementation is added
@@ -81,28 +108,12 @@ export function sanitizeHtml(html, options = {}) {
     return '';
   }
   
-  // For now, use a simple tag stripper
+  // For security, we use stripHtml for now which is simpler and safer
   // In production, this should be replaced with a proper HTML parser like DOMPurify
-  let result = html;
+  // that properly parses the DOM tree and applies whitelist-based sanitization
   
-  // Remove script tags and their content
-  // eslint-disable-next-line security/detect-unsafe-regex -- Simplified pattern, to be replaced with DOMPurify
-  result = result.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-  
-  // Remove style tags and their content
-  // eslint-disable-next-line security/detect-unsafe-regex -- Simplified pattern, to be replaced with DOMPurify
-  result = result.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-  
-  // Remove event handlers
-  result = result.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
-  result = result.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
-  
-  // Sanitize href attributes
-  result = result.replace(/href\s*=\s*["']([^"']*)["']/gi, (match, url) => {
-    return isSafeUrl(url) ? match : '';
-  });
-  
-  return result;
+  // For now, just escape all HTML to prevent XSS
+  return escapeHtml(html);
 }
 
 /**

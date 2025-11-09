@@ -26,13 +26,12 @@ function randomHex(bytes) {
     return randomBytes(bytes).toString('hex');
   }
   
-  // Fallback to Math.random if crypto is unavailable
-  // Note: This is NOT cryptographically secure and should only be used as a last resort
-  const buffer = new Array(bytes);
-  for (let i = 0; i < bytes; i++) {
-    buffer[i] = Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
-  }
-  return buffer.join('');
+  // If no secure random is available, throw an error rather than using insecure Math.random()
+  // This is safer than silently falling back to a weak random number generator
+  throw new Error(
+    'No cryptographically secure random number generator available. ' +
+    'Ensure either window.crypto.getRandomValues (browser) or node:crypto (Node.js) is available.'
+  );
 }
 
 function emit(event) {
