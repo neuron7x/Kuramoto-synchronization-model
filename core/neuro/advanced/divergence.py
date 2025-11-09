@@ -221,4 +221,3 @@ __all__ = [
     "DivergenceOutput",
     "compute_divergence_convergence_phi",
 ]
-

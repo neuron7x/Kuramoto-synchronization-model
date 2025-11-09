@@ -13,6 +13,7 @@ class SerotoninLike(Protocol):
     def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
         ...
 
+
 @dataclass(frozen=True)
 class GateEvaluation:
     """Outcome of the action gate evaluation."""

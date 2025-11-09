@@ -78,4 +78,3 @@ __all__ = [
     "FractalMotivationController",
     "FractalSignalTracker",
 ]
-

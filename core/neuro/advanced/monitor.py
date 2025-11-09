@@ -39,4 +39,3 @@ class NeuroStateMonitor:
             stats["count"] += 1
             stats["min"] = min(stats["min"], float(value))
             stats["max"] = max(stats["max"], float(value))
-

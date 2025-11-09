@@ -118,8 +118,14 @@ class MultiscaleFractalAnalyzer:
             raise ValueError("Cannot aggregate empty feature mapping")
 
         items = list(features.items())
-        volatilities = np.asarray([max(1e-12, item[1]["volatility"]) for item in items], dtype=float)
-        weights = volatilities / volatilities.sum() if float(volatilities.sum()) > 0 else np.full_like(volatilities, 1.0 / len(items))
+        volatilities = np.asarray(
+            [max(1e-12, item[1]["volatility"]) for item in items], dtype=float
+        )
+        vol_sum = float(volatilities.sum())
+        weights = (
+            volatilities / vol_sum if vol_sum > 0
+            else np.full_like(volatilities, 1.0 / len(items))
+        )
 
         def _weighted(field: str) -> float:
             values = np.asarray([item[1][field] for item in items], dtype=float)
@@ -297,9 +303,16 @@ class NeuroRiskManager:
         if asset_context:
             context.update(asset_context)
 
-        scaling = float(context.get("fractal_scaling", market_context.get("fractal_scaling", 0.5)))
-        stability = float(np.clip(context.get("fractal_stability", market_context.get("fractal_stability", 0.5)), 0.0, 1.0))
-        dimension = float(context.get("fractal_dim", market_context.get("fractal_dim", 1.5)))
+        scaling = float(
+            context.get("fractal_scaling", market_context.get("fractal_scaling", 0.5))
+        )
+        stability_raw = context.get(
+            "fractal_stability", market_context.get("fractal_stability", 0.5)
+        )
+        stability = float(np.clip(stability_raw, 0.0, 1.0))
+        dimension = float(
+            context.get("fractal_dim", market_context.get("fractal_dim", 1.5))
+        )
 
         persistence = float(np.clip(1.0 + (scaling - 0.5) * 1.4, 0.6, 1.4))
         stability_factor = 0.6 + 0.4 * stability
@@ -398,9 +411,15 @@ class EnhancedFractalNeuroeconomicCore:
         dynamics = fractal.get("dynamics", {})
         asset_contexts = {
             asset: {
-                "fractal_scaling": data.get("dynamics", {}).get("scaling_exponent", fractal.get("fractal_scaling", 0.5)),
-                "fractal_stability": data.get("dynamics", {}).get("stability", fractal.get("fractal_stability", 0.5)),
-                "fractal_dim": data.get("fractal_dim", fractal.get("fractal_dim", 1.5)),
+                "fractal_scaling": data.get("dynamics", {}).get(
+                    "scaling_exponent", fractal.get("fractal_scaling", 0.5)
+                ),
+                "fractal_stability": data.get("dynamics", {}).get(
+                    "stability", fractal.get("fractal_stability", 0.5)
+                ),
+                "fractal_dim": data.get(
+                    "fractal_dim", fractal.get("fractal_dim", 1.5)
+                ),
                 "volatility": data.get("volatility", fractal.get("volatility", 0.0)),
                 "trend_strength": data.get("trend_strength", fractal.get("trend_strength", 0.0)),
                 "regime": data.get("regime", fractal.get("regime", "normal")),
@@ -804,4 +823,3 @@ __all__ = [
     "TradeOutcome",
     "TradeResult",
 ]
-

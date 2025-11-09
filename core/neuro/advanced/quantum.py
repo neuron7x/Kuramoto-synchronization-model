@@ -179,4 +179,3 @@ __all__ = [
     "to_density_matrix",
     "von_neumann_entropy",
 ]
-
