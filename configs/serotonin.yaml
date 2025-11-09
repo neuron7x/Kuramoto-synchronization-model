@@ -26,3 +26,5 @@ tick_hours: 1.0
 phase_kappa: 0.08
 gate_veto: 0.9
 phasic_veto: 1.0
+temperature_floor_min: 0.05
+temperature_floor_max: 0.4

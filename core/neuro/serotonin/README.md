@@ -24,6 +24,9 @@ providing:
 - **Action modulation hooks** for the Fractal Motivation Engine and risk
   manager, delivering noise reduction, HOLD veto enforcement and exploitation
   tempering.
+- **Dynamic temperature floor synthesis** that linearly expands the dopamine
+  temperature floor bounds as serotonin inhibition grows, keeping exploration
+  temperatures above configurable minima during stress periods.
 
 ## Public API
 
@@ -86,6 +89,8 @@ PY
 | desens_gain | number | exclusiveMinimum=0.0; required | Gain applied during desensitisation |
 | gate_veto | number | minimum=0.0; maximum=1.0 | Gate level above which cooldown veto triggers |
 | phasic_veto | number | minimum=0.0 | Phasic level above which cooldown veto triggers |
+| temperature_floor_min | number | minimum=0.0; maximum=1.0 | Lower bound for the serotonin-governed temperature floor |
+| temperature_floor_max | number | minimum=0.0; maximum=1.0 | Upper bound for the serotonin-governed temperature floor |
 | tau_5ht_ms | float | — | Tonic decay time constant in milliseconds |
 | step_ms | float | — | Decision step duration in milliseconds |
 | tick_hours | number | exclusiveMinimum=0.0 | Wall-clock hours represented by a controller tick |
@@ -137,7 +142,8 @@ state_snapshot = controller.to_dict()
   `apply_internal_shift` to avoid over-aggressive updates during aversive
   regimes.
 - **Telemetry:** all metrics are emitted with the Prometheus-compatible tag
-  `controller_version="v2.3.1"`. Use the optional
+  `controller_version="v2.3.1"`, including the adaptive `serotonin_temperature_floor`.
+  Use the optional
   `SerotoninController.prometheus_logger` helper to forward to your collector.
 
 ## Migration Notes (v2.3.1)
