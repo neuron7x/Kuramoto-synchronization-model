@@ -114,13 +114,32 @@ export function exportReport(summary, options = {}) {
   }
 
   if (format === 'markdown') {
-    const lines = ['| Strategy | Score |', '| --- | --- |'];
-    (payload.ranking || []).forEach((entry) => {
-      const score = Number.isFinite(entry.score) ? entry.score.toFixed(precision) : 'n/a';
-      lines.push(
-        `| ${sanitizeReportValue(entry.strategy)} | ${sanitizeReportValue(score)} |`,
-      );
+    const ranking = payload.ranking || [];
+    
+    // Determine available metric columns from first entry
+    const sampleEntry = ranking[0];
+    const metricKeys = sampleEntry?.metrics ? Object.keys(sampleEntry.metrics) : [];
+    
+    // Build header row
+    const headers = ['ID', 'Strategy', 'Score', ...metricKeys.map((k) => k.charAt(0).toUpperCase() + k.slice(1))];
+    const lines = [
+      `| ${headers.join(' | ')} |`,
+      `| ${headers.map(() => '---').join(' | ')} |`,
+    ];
+    
+    // Build data rows with proper alignment
+    ranking.forEach((entry) => {
+      const id = sanitizeReportValue(entry.id || 'n/a');
+      const strategy = sanitizeReportValue(entry.strategy || 'unknown');
+      const score = Number.isFinite(entry.score) ? sanitizeReportValue(entry.score.toFixed(precision)) : 'n/a';
+      const metricValues = metricKeys.map((key) => {
+        const value = entry.metrics?.[key];
+        return Number.isFinite(value) ? sanitizeReportValue(value.toFixed(precision)) : 'n/a';
+      });
+      
+      lines.push(`| ${[id, strategy, score, ...metricValues].join(' | ')} |`);
     });
+    
     return lines.join('\n');
   }
 

@@ -1,11 +1,38 @@
-import { randomBytes } from 'crypto';
-
 const TRACE_HEADER = 'traceparent';
 const TELEMETRY_EVENT = 'tradepulse:telemetry';
 const listeners = new Set();
 
+// Conditionally import crypto for Node.js environments
+let randomBytes = null;
+if (typeof window === 'undefined') {
+  try {
+    const crypto = await import('node:crypto');
+    randomBytes = crypto.randomBytes;
+  } catch {
+    // Crypto module not available
+  }
+}
+
 function randomHex(bytes) {
-  return randomBytes(bytes).toString('hex');
+  // Browser-compatible crypto (preferred for browser environments)
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const buffer = new Uint8Array(bytes);
+    window.crypto.getRandomValues(buffer);
+    return Array.from(buffer, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+  
+  // Node.js environment with crypto module
+  if (randomBytes) {
+    return randomBytes(bytes).toString('hex');
+  }
+  
+  // Fallback to Math.random if crypto is unavailable
+  // Note: This is NOT cryptographically secure and should only be used as a last resort
+  const buffer = new Array(bytes);
+  for (let i = 0; i < bytes; i++) {
+    buffer[i] = Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+  }
+  return buffer.join('');
 }
 
 function emit(event) {
@@ -19,7 +46,7 @@ function emit(event) {
       }
     }
   });
-  const target = typeof globalThis !== 'undefined' ? globalThis : null;
+  const target = typeof global !== 'undefined' ? global : (typeof window !== 'undefined' ? window : null);
   if (target && typeof target.dispatchEvent === 'function') {
     try {
       const Custom = typeof target.CustomEvent === 'function' ? target.CustomEvent : null;

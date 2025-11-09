@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+// eslint-disable-next-line import/no-named-as-default -- AxeBuilder is the correct default export
 import AxeBuilder from '@axe-core/playwright';
 import { renderSignalsView } from '../../src/views/signals.js';
 

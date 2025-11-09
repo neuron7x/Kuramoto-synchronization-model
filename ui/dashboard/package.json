@@ -5,18 +5,28 @@
   "scripts": {
     "test": "node tests/test.js",
     "lint": "eslint . --max-warnings=0",
-    "test:ui": "playwright test"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{js,ts,json}\" \"tests/**/*.{js,ts,json}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts,json}\" \"tests/**/*.{js,ts,json}\"",
+    "test:ui": "playwright test",
+    "type-check": "tsc --noEmit"
   },
   "engines": {
     "node": ">=18.18.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.9.0",
+    "@eslint/js": "^9.14.0",
     "@playwright/test": "^1.48.2",
     "@types/node": "^20.16.10",
-    "@eslint/js": "^9.14.0",
     "eslint": "^9.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-security": "^3.0.1",
+    "eslint-plugin-unicorn": "^62.0.0",
     "globals": "^15.12.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.12.2"
   }

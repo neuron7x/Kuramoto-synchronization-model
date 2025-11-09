@@ -51,8 +51,8 @@ function safeExternalUrl(url) {
   return '#';
 }
 
-const SAFE_COLOR_PATTERN =
-  /^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\(\s*(?:\d{1,3}\s*,\s*){2}\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)|hsla?\(\s*\d{1,3}(?:\.\d+)?\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(?:,\s*(?:0|1|0?\.\d+))?\s*\)|[a-zA-Z]{1,20})$/;
+// Simplified safe color pattern to avoid ReDoS vulnerabilities
+const SAFE_COLOR_PATTERN = /^(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-zA-Z]{1,20})$/;
 
 function sanitizeCssColor(value, fallback = '#38bdf8') {
   if (typeof value !== 'string') {

@@ -1,4 +1,5 @@
 const RISKY_LEADING_CHAR_PATTERN = /^[=+\-@]/;
+// eslint-disable-next-line security/detect-non-literal-regexp -- Safe: template literal is constant
 const MARKDOWN_META_CHAR_PATTERN = new RegExp(
   String.raw`[\\\`*_{}\[\]()#+!|>]`,
   'g',

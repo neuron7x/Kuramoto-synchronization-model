@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 const TEST_LEVEL = 'L7';
 console.info(`[${TEST_LEVEL}] ui/dashboard accessibility contract check`);

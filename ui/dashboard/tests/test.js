@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 import './accessibility.test.js';
 
 const TEST_LEVEL = 'L7';
