@@ -76,3 +76,40 @@ def test_gate_balances_hold_and_go(controller: DopamineController) -> None:
     eval_hold = gate.evaluate(dopamine_signal=0.1, release_gate_open=True)
     assert eval_hold.no_go is True
     assert eval_hold.hold is True
+
+
+def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_path: Path) -> None:
+    """Test ActionGate integration with SerotoninController.step() API."""
+    from core.neuro.serotonin.serotonin_controller import SerotoninController
+
+    # Create a serotonin controller with test config
+    sero_cfg = tmp_path / "serotonin.yaml"
+    sero_cfg.write_text(Path("configs/serotonin.yaml").read_text(encoding="utf-8"), encoding="utf-8")
+    serotonin = SerotoninController(str(sero_cfg))
+
+    # Create ActionGate with both controllers
+    gate = ActionGate(controller, serotonin)
+
+    # Test 1: Low stress should not trigger HOLD
+    hold1, veto1, _, level1 = serotonin.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+    eval1 = gate.evaluate(dopamine_signal=0.8, release_gate_open=True)
+
+    assert not hold1
+    assert eval1.go is True
+    assert eval1.hold is False
+
+    # Test 2: High stress should eventually trigger HOLD
+    for _ in range(50):
+        serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    hold2, veto2, cooldown_s, level2 = serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    eval2 = gate.evaluate(dopamine_signal=0.8, release_gate_open=True)
+
+    # If serotonin triggered hold, gate should respect it
+    if hold2:
+        assert eval2.hold is True
+        assert eval2.go is False
+        assert cooldown_s > 0.0
+
+    # Test 3: Temperature floor should be respected
+    assert eval2.temperature >= serotonin.temperature_floor

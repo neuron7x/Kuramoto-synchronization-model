@@ -466,7 +466,7 @@ class SerotoninController:
                 self._log("serotonin_cooldown_guard", float(accepted))
                 if not accepted:
                     return False
-            return veto
+            return bool(veto)
 
     def apply_internal_shift(
         self,

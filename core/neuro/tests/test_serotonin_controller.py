@@ -16,6 +16,8 @@ from core.neuro.serotonin.serotonin_controller import (
     SerotoninConfig,
 )
 
+pytestmark = pytest.mark.L1
+
 
 @pytest.fixture
 def config_dict():
