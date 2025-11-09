@@ -138,9 +138,9 @@ def test_hot_symbol_cache_expires_stale_entries(deterministic_clock: _Determinis
     expected_last_seen = datetime.fromtimestamp(first_seen, tz=UTC)
     assert stale_snapshot.last_seen == expected_last_seen
 
+    # After eviction, the entry is completely removed from the cache
     btc_snapshot = cache.snapshot("BTC/USDT", "BINANCE")
-    assert btc_snapshot is not None
-    assert btc_snapshot.ticks == ()
+    assert btc_snapshot is None
 
 
 def test_hot_symbol_cache_retains_new_symbol_after_expiring_stale_entry(
