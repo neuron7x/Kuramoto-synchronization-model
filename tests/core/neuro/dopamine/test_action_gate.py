@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pytest
 
 from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
-from tradepulse.core.neuro.dopamine.ddm_adapter import ddm_thresholds
+from tradepulse.core.neuro.dopamine.ddm_adapter import DDMThresholds, ddm_thresholds
 
 
 class DummySerotonin:
@@ -59,3 +60,19 @@ def test_gate_temperature_scaling(controller: DopamineController) -> None:
     assert eval_scaled.temperature <= controller.temperature_bounds()[1]
     assert eval_scaled.temperature <= base_temp + 1e-8
     assert eval_scaled.temperature >= controller.temperature_bounds()[0]
+    assert isinstance(thresholds, DDMThresholds)
+
+
+def test_gate_balances_hold_and_go(controller: DopamineController) -> None:
+    serotonin = DummySerotonin(hold=False)
+    gate = ActionGate(controller, serotonin)
+    eval_decision = gate.evaluate(dopamine_signal=0.9, release_gate_open=True)
+
+    assert eval_decision.go is True
+    assert eval_decision.hold is False
+    assert eval_decision.no_go is False
+    assert math.isfinite(eval_decision.temperature)
+
+    eval_hold = gate.evaluate(dopamine_signal=0.1, release_gate_open=True)
+    assert eval_hold.no_go is True
+    assert eval_hold.hold is True
