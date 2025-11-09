@@ -169,12 +169,29 @@ class DriftReport:
     drifted: bool
 
 
+@dataclass(slots=True)
+class DriftCalibration:
+    """Details returned when calibrating the drift detector sensitivity."""
+
+    threshold: float
+    quantile: float
+    iterations: int
+    sample_size: int | None
+    divergences: dict[str, tuple[float, ...]]
+
+
 class DriftDetector:
     """Detect significant dataset drift using Jensen-Shannon divergence."""
 
     def __init__(self, *, threshold: float = 0.15, bins: int = 30) -> None:
         self._threshold = threshold
         self._bins = bins
+
+    @property
+    def threshold(self) -> float:
+        """Current divergence threshold used to flag drift."""
+
+        return self._threshold
 
     def compare(self, baseline: pd.DataFrame, candidate: pd.DataFrame) -> list[DriftReport]:
         reports: list[DriftReport] = []
@@ -202,6 +219,79 @@ class DriftDetector:
                 )
             )
         return reports
+
+    def calibrate(
+        self,
+        baseline: pd.DataFrame,
+        *,
+        quantile: float = 0.95,
+        iterations: int = 32,
+        sample_size: int | None = None,
+        random_state: np.random.Generator | int | None = None,
+        apply: bool = True,
+    ) -> DriftCalibration:
+        """Estimate a threshold from baseline variability to tune sensitivity."""
+
+        if not 0.0 < quantile < 1.0:
+            raise ValueError("quantile must lie strictly between 0 and 1")
+        if iterations <= 0:
+            raise ValueError("iterations must be a positive integer")
+        if sample_size is not None and sample_size < 2:
+            raise ValueError("sample_size must be at least 2 when provided")
+
+        if isinstance(random_state, np.random.Generator):
+            rng = random_state
+        else:
+            rng = np.random.default_rng(random_state)
+
+        divergences: dict[str, tuple[float, ...]] = {}
+        aggregated: list[float] = []
+
+        numeric_columns = baseline.select_dtypes(include=[np.number]).columns
+        for column in numeric_columns:
+            series = baseline[column].to_numpy(dtype=float, copy=False)
+            series = series[np.isfinite(series)]
+            if series.size < 2:
+                divergences[column] = tuple()
+                continue
+
+            target_sample = int(sample_size or min(series.size, 512))
+            replace = series.size < target_sample
+            column_scores: list[float] = []
+            for _ in range(iterations):
+                sample_a = rng.choice(series, size=target_sample, replace=replace)
+                sample_b = rng.choice(series, size=target_sample, replace=replace)
+                min_val = float(min(sample_a.min(), sample_b.min()))
+                max_val = float(max(sample_a.max(), sample_b.max()))
+                if not np.isfinite(min_val) or not np.isfinite(max_val):
+                    continue
+                if min_val == max_val:
+                    column_scores.append(0.0)
+                    continue
+                hist_range = (min_val, max_val)
+                hist_a, _ = np.histogram(sample_a, bins=self._bins, range=hist_range, density=True)
+                hist_b, _ = np.histogram(sample_b, bins=self._bins, range=hist_range, density=True)
+                divergence = float(jensenshannon(hist_a + 1e-12, hist_b + 1e-12))
+                column_scores.append(divergence)
+
+            divergences[column] = tuple(column_scores)
+            aggregated.extend(value for value in column_scores if np.isfinite(value))
+
+        if aggregated:
+            new_threshold = float(np.quantile(np.asarray(aggregated), quantile))
+        else:
+            new_threshold = self._threshold
+
+        if apply:
+            self._threshold = new_threshold
+
+        return DriftCalibration(
+            threshold=new_threshold,
+            quantile=quantile,
+            iterations=iterations,
+            sample_size=sample_size,
+            divergences=divergences,
+        )
 
 
 class SLAMonitor:
