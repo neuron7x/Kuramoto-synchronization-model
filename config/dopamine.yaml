@@ -58,3 +58,28 @@ meta_adapt_rules:
     learning_rate_v: 1.0
     delta_gain: 1.0
     base_temperature: 1.0
+
+# variance-driven temperature meta-adaptation
+rpe_ema_beta: 0.2
+temp_adapt_target_var: 0.12
+temp_adapt_lr: 0.05
+temp_adapt_beta1: 0.9
+temp_adapt_beta2: 0.999
+temp_adapt_epsilon: 1.0e-8
+temp_adapt_min_base: 0.2
+temp_adapt_max_base: 2.5
+rpe_var_release_threshold: 0.35
+rpe_var_release_hysteresis: 0.05
+
+# DDM coupling
+ddm_temp_gain: 0.4
+ddm_threshold_gain: 0.3
+ddm_hold_gain: 0.6
+ddm_min_temperature_scale: 0.5
+ddm_max_temperature_scale: 2.0
+ddm_baseline_a: 1.0
+ddm_baseline_t0: 0.2
+ddm_eps: 1.0e-6
+
+# gating alignment with serotonin HOLD
+hold_threshold: 0.4
