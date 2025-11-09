@@ -51,13 +51,13 @@ def cumulative_volume_delta(buys: np.ndarray, sells: np.ndarray) -> np.ndarray:
     """
     buys_arr = np.asarray(buys, dtype=float)
     sells_arr = np.asarray(sells, dtype=float)
-    
+
     if buys_arr.shape != sells_arr.shape:
         raise ValueError(
             f"Buy and sell arrays must have the same shape: "
             f"buys {buys_arr.shape} vs sells {sells_arr.shape}"
         )
-    
+
     return np.cumsum(buys_arr - sells_arr)
 
 
@@ -85,11 +85,11 @@ def imbalance(buys: np.ndarray, sells: np.ndarray) -> float:
     """
     b = float(np.sum(np.asarray(buys, dtype=float)))
     s = float(np.sum(np.asarray(sells, dtype=float)))
-    
+
     total = b + s
     if np.isclose(total, 0.0):
         return 0.0
-    
+
     return (b - s) / total
 
 
@@ -116,9 +116,9 @@ def order_aggression(buy_mkt: float, sell_mkt: float) -> float:
         0.2
     """
     total = float(buy_mkt) + float(sell_mkt)
-    
+
     if np.isclose(total, 0.0):
         return 0.0
-    
+
     return (float(buy_mkt) - float(sell_mkt)) / total
 

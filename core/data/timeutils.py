@@ -85,7 +85,7 @@ class MarketCalendar:
             if tz_normalized in {None, "UTC", "ETC/UTC"} and override is not None:
                 tz_value = override
             object.__setattr__(self, "timezone", tz_value)
-            default_weekend = tuple()
+            default_weekend: tuple[int, ...] = tuple()
         else:
             if not self.timezone:
                 raise ValueError("timezone must be a non-empty string")
