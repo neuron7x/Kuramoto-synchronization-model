@@ -480,10 +480,21 @@ class PostmortemTemplateBuilder:
             return self.template_path
 
         lines = ["# Postmortem Template", ""]
+        guidance: dict[str, str] = {
+            "Summary": "- Capture a concise description of the incident, affected systems, and customer impact.",
+            "Timeline": "- List the key timestamps from detection through resolution with responsible owners.",
+            "Impact": "- Quantify user-facing impact, financial exposure, and any regulatory considerations.",
+            "Detection": "- Explain how the issue was detected and where monitoring succeeded or failed.",
+            "Root Cause": "- Document the technical and organizational contributors that allowed the issue to occur.",
+            "Mitigations": "- Outline containment actions taken during the incident and their effectiveness.",
+            "Follow-up Actions": "- Define remediation tasks with owners and due dates to prevent recurrence.",
+            "Lessons Learned": "- Summarize key takeaways to improve processes, tooling, and communication.",
+        }
+        default_note = "- Record the most relevant facts, decisions, and outstanding questions."
         for section in self.sections:
             lines.append(f"## {section}")
             lines.append("")
-            lines.append("- TBD")
+            lines.append(guidance.get(section, default_note))
             lines.append("")
 
         self.template_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
