@@ -80,23 +80,55 @@ class TopoSentinel:
         dict
             Dictionary with key 'topo_score': float
         """
-        if len(returns) < self.window:
-            logger.warning(
-                f"Insufficient data for TopoSentinel: got {len(returns)}, "
-                f"need {self.window}. Returning topo_score=0.0"
-            )
-            return {"topo_score": 0.0}
-
-        numeric = returns.select_dtypes(include=[np.number])
+        numeric = returns.select_dtypes(include=[np.number]).copy()
         if numeric.empty:
             logger.warning("TopoSentinel received no numeric columns; returning 0.0")
             return {"topo_score": 0.0}
 
+        numeric.replace([np.inf, -np.inf], np.nan, inplace=True)
+        numeric.dropna(axis=1, how="all", inplace=True)
+        numeric.dropna(axis=0, how="all", inplace=True)
+
+        if numeric.empty:
+            logger.warning(
+                "TopoSentinel found no usable data after removing empty rows/columns; "
+                "returning 0.0"
+            )
+            return {"topo_score": 0.0}
+
+        usable_counts = numeric.count()
+        numeric = numeric.loc[:, usable_counts >= 2]
+
+        if numeric.shape[1] < 2:
+            logger.warning(
+                "TopoSentinel requires at least two assets with sufficient observations; "
+                "returning 0.0"
+            )
+            return {"topo_score": 0.0}
+
+        variances = numeric.var(skipna=True)
+        numeric = numeric.loc[:, (variances > 0.0) & variances.notna()]
+
+        if numeric.shape[1] < 2:
+            logger.warning(
+                "TopoSentinel found fewer than two assets with non-zero variance; "
+                "returning 0.0"
+            )
+            return {"topo_score": 0.0}
+
+        effective_rows = numeric.dropna(how="all")
+        if len(effective_rows) < self.window:
+            logger.warning(
+                "Insufficient usable data for TopoSentinel after cleaning: "
+                f"got {len(effective_rows)}, need {self.window}. Returning topo_score=0.0"
+            )
+            return {"topo_score": 0.0}
+
         if HAS_GUDHI:
-            topo_score = self._compute_tda_score(numeric)
+            topo_score = self._compute_tda_score(effective_rows)
         else:
             # Fallback to graph-based proxy
-            topo_score = self._compute_proxy_score(numeric)
+            topo_score = self._compute_proxy_score(effective_rows)
 
         return {"topo_score": topo_score}
 

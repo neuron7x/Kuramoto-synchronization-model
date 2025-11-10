@@ -118,7 +118,7 @@ class TestTopoSentinel:
         assert result["topo_score"] == 0.0
 
     def test_handles_constant_and_nan_columns(self):
-        """Constant or NaN-only columns should not produce NaN scores."""
+        """Constant or NaN-only columns should return neutral score after filtering."""
         np.random.seed(0)
         dates = pd.date_range("2024-01-01", periods=120, freq="1h")
         returns = pd.DataFrame(
@@ -133,8 +133,7 @@ class TestTopoSentinel:
         detector = TopoSentinel(window=60)
         result = detector.fit_transform(returns)
 
-        assert result["topo_score"] >= 0.0
-        assert result["topo_score"] <= 1.0
+        assert result["topo_score"] == 0.0
 
     def test_returns_zero_when_no_numeric_data(self):
         """Non-numeric frames should short-circuit to zero score."""
@@ -142,6 +141,42 @@ class TestTopoSentinel:
         returns = pd.DataFrame({"category": ["A"] * 60}, index=dates)
 
         detector = TopoSentinel(window=20)
+        result = detector.fit_transform(returns)
+
+        assert result["topo_score"] == 0.0
+
+    def test_ignores_infinite_values(self):
+        """Infinite values should be treated as missing data without breaking output."""
+        np.random.seed(1)
+        dates = pd.date_range("2024-01-01", periods=80, freq="1h")
+        returns = pd.DataFrame(
+            {
+                "asset1": np.random.randn(80) * 0.02,
+                "asset2": np.random.randn(80) * 0.02,
+            },
+            index=dates,
+        )
+        returns.loc[returns.index[10:15], "asset1"] = np.inf
+        returns.loc[returns.index[20:25], "asset2"] = -np.inf
+
+        detector = TopoSentinel(window=40)
+        result = detector.fit_transform(returns)
+
+        assert 0.0 <= result["topo_score"] <= 1.0
+
+    def test_requires_two_assets_with_variance(self):
+        """Less than two informative assets should yield zero topo score."""
+        dates = pd.date_range("2024-01-01", periods=80, freq="1h")
+        returns = pd.DataFrame(
+            {
+                "asset1": np.random.randn(80) * 0.02,
+                "asset2": np.nan,
+                "asset3": 0.0,
+            },
+            index=dates,
+        )
+
+        detector = TopoSentinel(window=40)
         result = detector.fit_transform(returns)
 
         assert result["topo_score"] == 0.0
