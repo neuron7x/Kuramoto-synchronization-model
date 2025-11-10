@@ -1,6 +1,6 @@
 import numpy as np
 
-from rl.replay.sleep_engine import SleepReplayEngine
+from rl.replay.sleep_engine import SleepReplayEngine, Transition
 
 
 def test_sleep_replay_priority_and_sampling():
@@ -56,3 +56,20 @@ def test_sleep_replay_generator_contract():
     batch = engine.dgr_batch(generator, 3)
     assert len(batch) == 3
     assert generator.calls == 1
+
+
+def test_sleep_replay_sample_allows_small_buffers():
+    engine = SleepReplayEngine()
+    for i in range(3):
+        engine.observe_transition(
+            np.full(2, i, dtype=float),
+            np.zeros(1),
+            reward=0.0,
+            next_state=np.full(2, i + 1, dtype=float),
+            td_error=0.1,
+        )
+
+    batch = engine.sample(batch_size=5)
+    assert len(batch) == 5
+    for transition in batch:
+        assert isinstance(transition, Transition)
