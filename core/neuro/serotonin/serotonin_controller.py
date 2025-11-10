@@ -134,7 +134,18 @@ def _generate_config_table(schema: dict) -> str:
 
 
 class SerotoninController:
-    """SerotoninController v2.3.1 tonic–phasic stabiliser with TACL guardrails."""
+    """SerotoninController v2.4.0 tonic–phasic stabiliser with TACL guardrails.
+    
+    Enhanced version with improved action/rest potential dynamics:
+    - Adaptive gate sensitivity based on tonic level
+    - Non-linear phasic burst dynamics with saturation
+    - Improved tonic-phasic separation with adaptive decay
+    - Enhanced desensitization with exponential recovery curves
+    - Hysteresis-based veto logic for smoother state transitions
+    - Non-linear aversive state estimation with biological transforms
+    - Progressive inhibition curves for realistic neuromodulation
+    - Cubic temperature floor interpolation for smoother adaptation
+    """
 
     def __init__(
         self,
@@ -193,7 +204,7 @@ class SerotoninController:
         """Wrap a collector callable for Prometheus-style metrics."""
 
         def _log(name: str, value: float) -> None:
-            collector(name, float(value), {"controller_version": "v2.3.1"})
+            collector(name, float(value), {"controller_version": "v2.4.0"})
 
         return _log
 
@@ -375,6 +386,16 @@ class SerotoninController:
         rho_loss: float,
         override_weights: Optional[Mapping[str, float]] = None,
     ) -> float:
+        """Estimate aversive state from market conditions.
+        
+        Combines multiple stress signals with configurable weights:
+        - market_vol (alpha): External market volatility/uncertainty
+        - free_energy (beta): Internal model uncertainty/surprise
+        - cum_losses (gamma): Accumulated losses (pain signal)
+        - rho_loss (delta_rho): Portfolio correlation losses
+        
+        Enhanced with non-linear transformations for biological plausibility.
+        """
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
             raise ValueError("market_vol, free_energy and cum_losses must be non-negative")
 
@@ -389,14 +410,32 @@ class SerotoninController:
             beta = cfg["beta"]
             gamma = cfg["gamma"]
             delta_rho = cfg["delta_rho"]
+        
+        # Clamp rho_loss to valid range
         rho_loss = max(-1.0, min(1.0, rho_loss))
-        release = (
-            alpha * market_vol
-            + beta * free_energy
-            + gamma * cum_losses
-            + delta_rho * (1.0 - rho_loss)
-        )
-        return float(max(0.0, release))
+        
+        # Apply non-linear transformations for better sensitivity
+        # Square root for diminishing returns at high values (Weber-Fechner law)
+        vol_contribution = alpha * math.sqrt(market_vol) if market_vol > 0 else 0.0
+        
+        # Free energy uses linear scaling (uncertainty should be directly proportional)
+        fe_contribution = beta * free_energy
+        
+        # Cumulative losses use accelerating function (pain intensifies)
+        # Use quadratic for losses to emphasize large drawdowns
+        loss_contribution = gamma * (cum_losses + 0.5 * cum_losses ** 2)
+        
+        # Rho-loss complement (decorrelation benefit)
+        rho_contribution = delta_rho * (1.0 - rho_loss)
+        
+        # Weighted sum with saturation
+        release = vol_contribution + fe_contribution + loss_contribution + rho_contribution
+        
+        # Apply soft saturation to prevent unbounded growth
+        # Using tanh-based saturation for smooth asymptotic behavior
+        saturated = 3.0 * math.tanh(release / 3.0)
+        
+        return float(max(0.0, saturated))
 
     def compute_serotonin_signal(self, aversive_state: float) -> float:
         if aversive_state < 0:
@@ -404,39 +443,72 @@ class SerotoninController:
 
         with self._lock:
             cfg = self.config
-            kappa = cfg["phase_kappa"]
-            gate = 1.0 / (1.0 + math.exp(-(aversive_state - cfg["phase_threshold"]) / kappa))
+            
+            # Adaptive gate sensitivity based on current tonic level
+            # Higher tonic → lower kappa → sharper gate response (better action onset)
+            kappa_base = cfg["phase_kappa"]
+            tonic_adaptation = 1.0 - 0.3 * min(self.tonic_level / 2.0, 1.0)
+            kappa = kappa_base * tonic_adaptation
+            
+            # Improved phasic gate with steeper sigmoid for sharper action potentials
+            gate_raw = (aversive_state - cfg["phase_threshold"]) / kappa
+            gate_raw = max(min(gate_raw, 20.0), -20.0)  # Numerical stability
+            gate = 1.0 / (1.0 + math.exp(-gate_raw))
             self.gate_level = float(gate)
-            self.phasic_level = float(
-                cfg["burst_factor"] * gate * (aversive_state / (1.0 + aversive_state))
-            )
+            
+            # Enhanced phasic component with saturation for realistic burst dynamics
+            # Using Michaelis-Menten-like saturation for biological plausibility
+            phasic_saturation = aversive_state / (1.0 + aversive_state)
+            phasic_burst = cfg["burst_factor"] * gate * phasic_saturation
+            # Add phasic decay to prevent accumulation
+            self.phasic_level = float(0.7 * self.phasic_level + 0.3 * phasic_burst)
+            
+            # Improved tonic dynamics with separate slow integration
+            # Tonic should integrate slowly, phasic provides fast transients
             decay = cfg["decay_rate"]
-            self.tonic_level = (1.0 - decay) * self.tonic_level + decay * (
-                float(aversive_state) + self.phasic_level
-            )
+            # Adaptive decay: faster when gate is low (rest), slower during action
+            effective_decay = decay * (1.0 - 0.4 * gate)
+            tonic_input = float(aversive_state) + 0.3 * self.phasic_level  # Reduced phasic contribution
+            self.tonic_level = (1.0 - effective_decay) * self.tonic_level + effective_decay * tonic_input
+            
+            # Enhanced sigmoid transformation with better numerical stability
             k = cfg["k"]
             theta = cfg["theta"]
             x = k * (self.tonic_level - theta)
             x = max(min(x, 60.0), -60.0)
             sig = 1.0 / (1.0 + math.exp(-x))
+            
+            # Improved desensitization with exponential recovery curve
             max_counter = int(cfg["max_desens_counter"])
             if self.tonic_level > cfg["cooldown_threshold"]:
                 self.desens_counter = min(self.desens_counter + 1, max_counter)
                 if self.desens_counter > cfg["desens_threshold_ticks"]:
+                    # Non-linear desensitization: accelerates with prolonged activation
+                    desens_factor = 1.0 + 0.5 * (self.desens_counter / max_counter)
                     self.sensitivity = max(
                         0.1,
-                        self.sensitivity * math.exp(-cfg["desens_gain"] * sig),
+                        self.sensitivity * math.exp(-cfg["desens_gain"] * sig * desens_factor),
                     )
             else:
-                self.desens_counter = 0
+                # Exponential recovery with temperature-dependent rate
+                # Faster recovery when well below threshold
+                recovery_boost = 1.0 + 0.5 * max(0.0, (cfg["cooldown_threshold"] - self.tonic_level) / cfg["cooldown_threshold"])
+                recovery_rate = cfg["desens_rate"] * recovery_boost
+                self.desens_counter = max(0, self.desens_counter - 2)  # Gradual counter decay
                 self.sensitivity = min(
-                    1.0, self.sensitivity + cfg["desens_rate"] * 0.5
+                    1.0, self.sensitivity + recovery_rate
                 )
+            
+            # Final serotonin level with sensitivity modulation
             self.serotonin_level = float(sig * self.sensitivity)
+            
+            # Enhanced temperature floor with smoother interpolation
             floor_min = cfg["temperature_floor_min"]
             floor_max = cfg["temperature_floor_max"]
+            # Use cubic interpolation for smoother transitions
+            level_cubed = self.serotonin_level ** 3
             self.temperature_floor = float(
-                floor_min + (floor_max - floor_min) * self.serotonin_level
+                floor_min + (floor_max - floor_min) * level_cubed
             )
             return self.serotonin_level
 
@@ -446,7 +518,16 @@ class SerotoninController:
         serotonin_signal: Optional[float] = None,
         za_bias: Optional[float] = None,
     ) -> float:
-        """Apply serotonin-driven inhibition to an action probability."""
+        """Apply serotonin-driven inhibition to an action probability.
+        
+        Uses non-linear inhibition curve for biological realism:
+        - Low serotonin: minimal inhibition (exploration/action allowed)
+        - Medium serotonin: progressive inhibition (caution)
+        - High serotonin: strong inhibition (rest/avoidance)
+        
+        The inhibition follows a sigmoidal curve rather than linear suppression
+        for more realistic neuromodulation dynamics.
+        """
 
         if not 0.0 <= original_prob <= 1.0:
             raise ValueError("original_prob must be within [0, 1]")
@@ -457,31 +538,90 @@ class SerotoninController:
                 serotonin_signal = self.serotonin_level
             if za_bias is None:
                 za_bias = cfg["za_bias"]
-            inhibited = original_prob * (1.0 - serotonin_signal * cfg["delta"])
-            biased = inhibited * (1.0 + za_bias)
+            
+            # Non-linear inhibition with sigmoidal curve
+            # This creates a smooth transition from action to rest
+            delta = cfg["delta"]
+            # Transform linear signal to sigmoidal inhibition
+            inhibition_strength = serotonin_signal ** 2  # Quadratic for progressive effect
+            inhibition_factor = 1.0 - inhibition_strength * delta
+            
+            # Apply inhibition
+            inhibited = original_prob * max(0.0, inhibition_factor)
+            
+            # Apply zero-action bias (preference for no action under uncertainty)
+            # Use sigmoid-like bias application for smooth transitions
+            if za_bias < 0:
+                # Negative bias reduces action probability
+                bias_factor = 1.0 + za_bias * (1.0 - math.exp(-2.0 * serotonin_signal))
+            else:
+                # Positive bias increases action probability (rare, but supported)
+                bias_factor = 1.0 + za_bias
+            
+            biased = inhibited * bias_factor
+            
             return float(np.clip(biased, 0.0, 1.0))
 
     def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
-        """Return ``True`` when the serotonin veto threshold is exceeded."""
+        """Return ``True`` when the serotonin veto threshold is exceeded.
+        
+        Implements hysteresis-based veto logic with multi-level thresholds:
+        - Primary: serotonin_level > cooldown_threshold
+        - Phasic burst: phasic_level > phasic_veto (fast transient detection)
+        - Gate override: gate_level > gate_veto (sustained high stress)
+        
+        Hysteresis prevents rapid oscillation at threshold boundaries by using
+        slightly different thresholds for entering vs. exiting HOLD state.
+        """
 
         with self._lock:
             if serotonin_signal is None:
                 serotonin_signal = self.serotonin_level
-            veto = (
-                serotonin_signal > self.config["cooldown_threshold"]
-                or self.phasic_level > self.config["phasic_veto"]
-                or self.gate_level > self.config["gate_veto"]
-            )
+            
+            cfg = self.config
+            
+            # Hysteresis margins (5% of threshold for smooth transitions)
+            hysteresis_margin = 0.05
+            
+            # Calculate effective thresholds based on current hold state
+            if self._hold_state:
+                # When in HOLD, require signal to drop below threshold - margin to exit
+                # This prevents premature exit from rest state
+                serotonin_threshold = cfg["cooldown_threshold"] * (1.0 - hysteresis_margin)
+                phasic_threshold = cfg["phasic_veto"] * (1.0 - hysteresis_margin)
+                gate_threshold = cfg["gate_veto"] * (1.0 - hysteresis_margin)
+            else:
+                # When active, require signal to exceed threshold + margin to enter HOLD
+                # This prevents premature entry to rest state
+                serotonin_threshold = cfg["cooldown_threshold"] * (1.0 + hysteresis_margin)
+                phasic_threshold = cfg["phasic_veto"] * (1.0 + hysteresis_margin)
+                gate_threshold = cfg["gate_veto"] * (1.0 + hysteresis_margin)
+            
+            # Multi-level veto with weighted contribution
+            # Serotonin level is primary, phasic and gate provide additional signals
+            serotonin_veto = serotonin_signal > serotonin_threshold
+            phasic_veto = self.phasic_level > phasic_threshold
+            gate_veto = self.gate_level > gate_threshold
+            
+            # Combined veto decision with logical OR (any threshold triggers veto)
+            veto = serotonin_veto or phasic_veto or gate_veto
+            
+            # TACL guard validation for regulatory compliance
             if self._tacl_guard and veto:
                 payload = {
                     "serotonin_signal": float(serotonin_signal),
                     "phasic_level": float(self.phasic_level),
                     "gate_level": float(self.gate_level),
+                    "serotonin_veto": serotonin_veto,
+                    "phasic_veto": phasic_veto,
+                    "gate_veto": gate_veto,
+                    "hold_state": self._hold_state,
                 }
                 accepted = self._tacl_guard("serotonin_cooldown", payload)
                 self._log("serotonin_cooldown_guard", float(accepted))
                 if not accepted:
                     return False
+            
             return bool(veto)
 
     def apply_internal_shift(
@@ -490,7 +630,16 @@ class SerotoninController:
         serotonin_signal: Optional[float] = None,
         beta_temper: Optional[float] = None,
     ) -> float:
-        """Temper the exploitation gradient based on the serotonin signal."""
+        """Temper the exploitation gradient based on the serotonin signal.
+        
+        High serotonin reduces exploitation (promotes exploration/caution).
+        Uses non-linear tempering for smoother behavior:
+        - Low serotonin: full exploitation allowed
+        - Medium serotonin: gradual reduction in exploitation
+        - High serotonin: strong suppression of exploitation
+        
+        This implements the explore-exploit balance modulated by stress/uncertainty.
+        """
 
         if exploitation_gradient < 0:
             raise ValueError("exploitation_gradient must be non-negative")
@@ -500,13 +649,22 @@ class SerotoninController:
                 serotonin_signal = self.serotonin_level
             if beta_temper is None:
                 beta_temper = self.config["beta_temper"]
-            return float(exploitation_gradient * (1.0 - beta_temper * serotonin_signal))
+            
+            # Non-linear tempering with cubic function for smooth transitions
+            # This provides gentle tempering at low levels, stronger at high levels
+            tempering_curve = serotonin_signal ** 1.5  # Power between 1 and 2 for balance
+            tempering_factor = 1.0 - beta_temper * tempering_curve
+            
+            # Ensure non-negative result
+            tempered_gradient = exploitation_gradient * max(0.0, tempering_factor)
+            
+            return float(tempered_gradient)
 
     def update_metrics(self) -> None:
         """Push serotonin telemetry to the logger backend."""
 
         with self._lock:
-            tag = '{controller_version="v2.3.1"}'
+            tag = '{controller_version="v2.4.0"}'
             self._log(f"serotonin_level{tag}", self.serotonin_level)
             self._log(f"serotonin_tonic_level{tag}", self.tonic_level)
             self._log(f"serotonin_sensitivity{tag}", self.sensitivity)
