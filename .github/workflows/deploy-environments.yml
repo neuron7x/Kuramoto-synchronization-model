@@ -71,7 +71,9 @@ jobs:
           terraform_version: 1.6.6
 
       - name: Terraform init (backend disabled)
-        run: terraform -chdir=infra/terraform/eks init -backend=false -input=false
+        run: |
+          cd infra/terraform/eks
+          terraform init -backend=false -input=false
 
       - name: Terraform fmt
         run: terraform -chdir=infra/terraform/eks fmt -check -recursive
