@@ -7,7 +7,7 @@ import logging
 import os
 import time
 import warnings
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Deque, Dict, Iterable, List, Optional, Protocol, Tuple, runtime_checkable
@@ -191,19 +191,23 @@ class _NoopMetric:
 def estimate_entropy(graph: nx.DiGraph) -> float:
     import math
 
-    counts: Dict[str, int] = {}
-    for _, _, data in graph.edges(data=True):
-        bond_type = data.get("type", "vdw")
-        counts[bond_type] = counts.get(bond_type, 0) + 1
+    counts = Counter(data.get("type", "vdw") for _, _, data in graph.edges(data=True))
+    total = sum(counts.values())
+    if total == 0:
+        return 0.0
 
-    total = sum(counts.values()) or 1
     entropy = 0.0
     for count in counts.values():
         p = count / total
-        entropy -= p * math.log(p + 1e-12)
+        if p > 0:
+            entropy -= p * math.log(p)
 
-    max_entropy = math.log(len(counts) + 1e-12)
-    return entropy / max_entropy if max_entropy > 0 else 0.0
+    max_entropy = math.log(max(len(_BOND_TYPES), 1))
+    if max_entropy == 0:
+        return 0.0
+
+    normalised = entropy / max_entropy
+    return max(0.0, min(1.0, normalised))
 
 
 def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 0.02) -> bool:

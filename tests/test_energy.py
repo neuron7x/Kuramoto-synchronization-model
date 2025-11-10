@@ -26,6 +26,23 @@ def _token() -> str:
     return manager.issue_service_token(action_id="thermo_topology")
 
 
+def test_estimate_entropy_handles_degenerate_graphs() -> None:
+    empty_graph = nx.DiGraph()
+    assert thermo_module.estimate_entropy(empty_graph) == 0.0
+
+    single_bond = nx.DiGraph()
+    single_bond.add_edge("a", "b", type="covalent")
+    assert thermo_module.estimate_entropy(single_bond) == pytest.approx(0.0)
+
+    mixed_bonds = nx.DiGraph()
+    mixed_bonds.add_edge("a", "b", type="covalent")
+    mixed_bonds.add_edge("b", "c", type="ionic")
+    mixed_bonds.add_edge("c", "a", type="metallic")
+
+    entropy = thermo_module.estimate_entropy(mixed_bonds)
+    assert 0.0 <= entropy <= 1.0
+
+
 def test_dFdt_is_small_under_controller():
     graph = nx.DiGraph()
     graph.add_node("ingest", cpu_norm=0.4)
