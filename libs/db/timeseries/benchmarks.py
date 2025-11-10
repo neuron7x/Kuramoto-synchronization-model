@@ -31,6 +31,8 @@ class BenchmarkMetrics:
     query_p50_ms: float
     query_p95_ms: float
     rows_ingested: int
+    ingest_throughput_rows_s: float
+    query_throughput_qps: float
 
 
 class BenchmarkRunner:
@@ -71,12 +73,29 @@ class BenchmarkRunner:
 
         ingest_sorted = sorted(ingest_latencies)
         query_sorted = sorted(query_latencies)
+        total_ingest_ms = sum(ingest_sorted)
+        total_query_ms = sum(query_sorted)
+        ingest_throughput = (
+            (total_rows / total_ingest_ms) * 1_000 if total_ingest_ms > 0 else 0.0
+        )
+        query_throughput = (
+            (
+                workload.query_iterations / total_query_ms
+                if workload.query_iterations > 0
+                else 0.0
+            )
+            * 1_000
+            if total_query_ms > 0
+            else 0.0
+        )
         return BenchmarkMetrics(
             ingest_p50_ms=median(ingest_sorted),
             ingest_p99_ms=_percentile(ingest_sorted, 99.0),
             query_p50_ms=median(query_sorted),
             query_p95_ms=_percentile(query_sorted, 95.0),
             rows_ingested=total_rows,
+            ingest_throughput_rows_s=ingest_throughput,
+            query_throughput_qps=query_throughput,
         )
 
     def _generate_batch(
