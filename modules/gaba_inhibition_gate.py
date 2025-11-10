@@ -59,10 +59,14 @@ class GateState:
 
 @dataclass
 class GateMetrics:
-    """Metrics returned by GABAInhibitionGate forward pass."""
+    """Metrics returned by :class:`GABAInhibitionGate` forward pass."""
+
     inhibition: float
     gaba_level: float
     risk_weight: float
+    cycle_multiplier: float
+    stdp_delta: float
+    ltp_ltd_delta: float
 
 
 class GABAInhibitionGate(nn.Module):
@@ -185,28 +189,31 @@ class GABAInhibitionGate(nn.Module):
             cyc = self._cycles(self.t_ms)
         else:
             cyc = torch.tensor(1.0, device=self.device)
+        cycle_multiplier = float(cyc.item())
 
         # 4) Plasticity (STDP + LTP/LTD)
         # Ensure delta_t_ms is scalar for conditional
         delta_t_scalar = delta_t_ms.squeeze()
         if (delta_t_scalar > 0).item():
-            dw = (
+            stdp_component = (
                 self.p.stdp_a_plus
                 * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms)
                 * gaba_level
             )
         else:
-            dw = (
+            stdp_component = (
                 -self.p.stdp_a_minus
                 * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms)
                 * gaba_level
             )
         # LTP/LTD gated by vol*ret (pre*post)
         pre_post = vol * ret
+        ltp_ltd_component = torch.zeros_like(stdp_component)
         if (pre_post > self.p.ltp_theta).item():
-            dw = dw + _LTP_STRENGTH * gaba_level
+            ltp_ltd_component = _LTP_STRENGTH * gaba_level
         elif (pre_post < self.p.ltd_theta).item():
-            dw = dw - _LTD_STRENGTH * gaba_level
+            ltp_ltd_component = -_LTD_STRENGTH * gaba_level
+        dw = stdp_component + ltp_ltd_component
         self.risk_weight = torch.clamp(self.risk_weight + dw, self.p.risk_min, self.p.risk_max)
 
         # 5) Apply gating
@@ -219,7 +226,10 @@ class GABAInhibitionGate(nn.Module):
         return gated, GateMetrics(
             inhibition=float(inhibition.item()),
             gaba_level=float(gaba_level.item()),
-            risk_weight=float(self.risk_weight.item())
+            risk_weight=float(self.risk_weight.item()),
+            cycle_multiplier=cycle_multiplier,
+            stdp_delta=float(stdp_component.item()),
+            ltp_ltd_delta=float(ltp_ltd_component.item())
         )
 
     def get_state(self) -> GateState:
@@ -239,7 +249,7 @@ class GABAInhibitionGate(nn.Module):
     
     def set_state(self, state: GateState) -> None:
         """Set gate state.
-        
+
         Parameters
         ----------
         state : GateState
@@ -252,9 +262,18 @@ class GABAInhibitionGate(nn.Module):
             self.t_ms.copy_(state.t_ms.to(self.device))
 
     @torch.no_grad()
+    def reset_state(self) -> None:
+        """Reset gate state to initial equilibrium values."""
+
+        self.gaba_fast.zero_()
+        self.gaba_slow.zero_()
+        self.risk_weight.fill_(1.0)
+        self.t_ms.zero_()
+
+    @torch.no_grad()
     def apply_hedge(self, strength: float = 1.0) -> None:
         """Diazepam-analog hedge: transiently boost GABA and reduce sensitivity.
-        
+
         Parameters
         ----------
         strength : float, optional

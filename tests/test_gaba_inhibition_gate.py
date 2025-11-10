@@ -66,6 +66,9 @@ def test_custom_gate_params():
     assert hasattr(metrics, 'inhibition')
     assert hasattr(metrics, 'gaba_level')
     assert hasattr(metrics, 'risk_weight')
+    assert hasattr(metrics, 'cycle_multiplier')
+    assert hasattr(metrics, 'stdp_delta')
+    assert hasattr(metrics, 'ltp_ltd_delta')
 
 
 def test_device_parameter():
@@ -152,11 +155,37 @@ def test_get_set_state():
     assert torch.allclose(restored_state.t_ms, state.t_ms)
 
 
+def test_reset_state():
+    """Resetting the gate should clear inhibition memory and restore defaults."""
+
+    gate = GABAInhibitionGate()
+    a = torch.tensor([1.0])
+
+    # Build up state
+    for _ in range(50):
+        gate(base_state(vix=60.0, ret=0.2, dt_ms=5.0), a)
+
+    # Ensure we have non-zero state prior to reset
+    populated = gate.get_state()
+    assert populated.gaba_fast.item() > 0
+    assert populated.gaba_slow.item() > 0
+    assert populated.risk_weight.item() != 1.0
+    assert populated.t_ms.item() > 0
+
+    gate.reset_state()
+
+    reset = gate.get_state()
+    assert pytest.approx(reset.gaba_fast.item(), abs=1e-6) == 0.0
+    assert pytest.approx(reset.gaba_slow.item(), abs=1e-6) == 0.0
+    assert pytest.approx(reset.risk_weight.item(), abs=1e-6) == 1.0
+    assert pytest.approx(reset.t_ms.item(), abs=1e-6) == 0.0
+
+
 def test_no_gradient_leak():
     """Test that forward pass doesn't create gradient graphs."""
     gate = GABAInhibitionGate()
     action = torch.tensor([1.0], requires_grad=True)
-    
+
     gated, _ = gate(base_state(), action)
     
     # Should not have gradient tracking
@@ -256,8 +285,34 @@ def test_gate_metrics_type():
     """Test that forward returns GateMetrics dataclass."""
     gate = GABAInhibitionGate()
     _, metrics = gate(base_state(), torch.tensor([1.0]))
-    
+
     assert isinstance(metrics, GateMetrics)
     assert isinstance(metrics.inhibition, float)
     assert isinstance(metrics.gaba_level, float)
     assert isinstance(metrics.risk_weight, float)
+    assert isinstance(metrics.cycle_multiplier, float)
+    assert isinstance(metrics.stdp_delta, float)
+    assert isinstance(metrics.ltp_ltd_delta, float)
+
+
+def test_plasticity_metric_direction():
+    """STDP/LTP-LTD metrics should reflect timing and co-activity polarity."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.0])
+
+    # Positive timing and cooperative activity => potentiation
+    state_potentiate = base_state(vix=45.0, vol=0.9, ret=0.5, dt_ms=5.0)
+    state_potentiate['delta_t_ms'] = torch.tensor(5.0)
+    _, metrics_potentiate = gate(state_potentiate, action)
+
+    assert metrics_potentiate.stdp_delta > 0
+    assert metrics_potentiate.ltp_ltd_delta > 0
+
+    # Negative timing and anti-correlated returns => depression
+    state_depress = base_state(vix=45.0, vol=0.9, ret=-0.5, dt_ms=-5.0)
+    state_depress['delta_t_ms'] = torch.tensor(-5.0)
+    _, metrics_depress = gate(state_depress, action)
+
+    assert metrics_depress.stdp_delta < 0
+    assert metrics_depress.ltp_ltd_delta < 0
