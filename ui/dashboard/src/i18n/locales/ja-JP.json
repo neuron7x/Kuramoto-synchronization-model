@@ -28,7 +28,8 @@
       "orders": "注文",
       "pnl": "PnLと気配値",
       "signals": "シグナル",
-      "community": "コミュニティ"
+      "community": "コミュニティ",
+      "monitoring": "モニタリング"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "cta": "プロフィールを見る",
         "contributions": "{count}件のマージ済み貢献",
         "fallbackTitle": "チャンピオン"
+      }
+    },
+    "monitoring": {
+      "title": "リスクモニタリング",
+      "heading": "リスクコントロールセンター",
+      "subtitle": "キルスイッチ、回路遮断、リミット負荷をひとつのビューで追跡します。",
+      "labels": {
+        "environment": "環境",
+        "killSwitch": "キルスイッチ",
+        "circuitBreaker": "回路遮断"
+      },
+      "cards": {
+        "exposure": {
+          "title": "総エクスポージャー",
+          "limit": "リミット {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "日次ドローダウン",
+          "limit": "ガードレール {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "オーダーフロー状況",
+          "open": "{count} 件のオープン注文",
+          "rejections": "{rate} 拒否率",
+          "trips": "{count} 回の作動 ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "セーフティコントロール",
+          "killSwitch": {
+            "title": "キルスイッチ",
+            "status": {
+              "enabled": "有効",
+              "disabled": "無効"
+            },
+            "changed": "更新 {time}",
+            "actor": "{actor} が実行",
+            "reason": "理由: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "回路遮断",
+            "status": {
+              "open": "オープン",
+              "half_open": "ハーフオープン",
+              "closed": "クローズ"
+            },
+            "trigger": "最新の作動 {time}",
+            "cooldown": "クールダウン {value}",
+            "reason": "理由: {reason}"
+          }
+        },
+        "trends": {
+          "title": "トレンドテレメトリ",
+          "exposure": {
+            "title": "エクスポージャータイムライン",
+            "empty": "エクスポージャーデータなし"
+          },
+          "drawdown": {
+            "title": "ドローダウンタイムライン",
+            "empty": "ドローダウンデータなし"
+          }
+        },
+        "alerts": {
+          "title": "アラートとオーバーライド",
+          "empty": "アクティブなアラートはありません",
+          "columns": {
+            "timestamp": "タイムスタンプ",
+            "severity": "重大度",
+            "message": "メッセージ"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "情報",
+          "warning": "警告",
+          "critical": "重大"
+        }
       }
     }
   },

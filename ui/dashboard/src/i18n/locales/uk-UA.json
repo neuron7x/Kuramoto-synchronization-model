@@ -28,7 +28,8 @@
       "orders": "Заявки",
       "pnl": "PnL та котирування",
       "signals": "Сигнали",
-      "community": "Спільнота"
+      "community": "Спільнота",
+      "monitoring": "Моніторинг"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "Пріоритетні напрями, які шукають нових учасників.",
         "fallbackTitle": "Можливість",
         "cta": "Подати заявку"
+      }
+    },
+    "monitoring": {
+      "title": "Моніторинг ризиків",
+      "heading": "Центр контролю ризиків",
+      "subtitle": "Відстежуйте стан аварійного вимикача, запобіжників та навантаження лімітів в єдиному вікні.",
+      "labels": {
+        "environment": "Середовище",
+        "killSwitch": "Аварійний вимикач",
+        "circuitBreaker": "Запобіжник"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Валова експозиція",
+          "limit": "Ліміт {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Денна просадка",
+          "limit": "Граничне значення {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Стан потоків ордерів",
+          "open": "{count} відкритих ордерів",
+          "rejections": "{rate} відхилень",
+          "trips": "{count} спрацювань ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Захисні механізми",
+          "killSwitch": {
+            "title": "Аварійний вимикач",
+            "status": {
+              "enabled": "Увімкнено",
+              "disabled": "Вимкнено"
+            },
+            "changed": "Оновлено {time}",
+            "actor": "Виконав(ла) {actor}",
+            "reason": "Причина: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Запобіжник",
+            "status": {
+              "open": "Відкрито",
+              "half_open": "Напіввідкрито",
+              "closed": "Закрито"
+            },
+            "trigger": "Останнє спрацювання {time}",
+            "cooldown": "Відновлення {value}",
+            "reason": "Причина: {reason}"
+          }
+        },
+        "trends": {
+          "title": "Трендова телеметрія",
+          "exposure": {
+            "title": "Таймлайн експозиції",
+            "empty": "Немає вибірок експозиції"
+          },
+          "drawdown": {
+            "title": "Таймлайн просадки",
+            "empty": "Немає вибірок просадки"
+          }
+        },
+        "alerts": {
+          "title": "Сповіщення та ручні втручання",
+          "empty": "Активних сповіщень немає",
+          "columns": {
+            "timestamp": "Мітка часу",
+            "severity": "Рівень",
+            "message": "Повідомлення"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Інфо",
+          "warning": "Попередження",
+          "critical": "Критично"
+        }
       }
     }
   },

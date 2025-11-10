@@ -28,7 +28,8 @@
       "orders": "Zlecenia",
       "pnl": "PnL i notowania",
       "signals": "Sygnały",
-      "community": "Społeczność"
+      "community": "Społeczność",
+      "monitoring": "Monitoring"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "Priorytetowe inicjatywy poszukujące nowych uczestników.",
         "fallbackTitle": "Możliwość",
         "cta": "Zgłoś chęć udziału"
+      }
+    },
+    "monitoring": {
+      "title": "Monitoring ryzyka",
+      "heading": "Centrum kontroli ryzyka",
+      "subtitle": "Śledź kill switch, wyłączniki i obciążenie limitów w jednym widoku.",
+      "labels": {
+        "environment": "Środowisko",
+        "killSwitch": "Kill switch",
+        "circuitBreaker": "Wyłącznik"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Ekspozycja brutto",
+          "limit": "Limit {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Dzienne obsunięcie",
+          "limit": "Próg {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Stan przepływu zleceń",
+          "open": "{count} otwartych zleceń",
+          "rejections": "{rate} współczynnik odrzuceń",
+          "trips": "{count} wyzwolenia ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Mechanizmy bezpieczeństwa",
+          "killSwitch": {
+            "title": "Kill switch",
+            "status": {
+              "enabled": "Aktywny",
+              "disabled": "Wyłączony"
+            },
+            "changed": "Zaktualizowano {time}",
+            "actor": "Przez {actor}",
+            "reason": "Powód: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Wyłącznik",
+            "status": {
+              "open": "Otwarte",
+              "half_open": "Półotwarte",
+              "closed": "Zamknięte"
+            },
+            "trigger": "Ostatnie wyzwolenie {time}",
+            "cooldown": "Schładzanie {value}",
+            "reason": "Powód: {reason}"
+          }
+        },
+        "trends": {
+          "title": "Telemetria trendów",
+          "exposure": {
+            "title": "Oś czasu ekspozycji",
+            "empty": "Brak próbek ekspozycji"
+          },
+          "drawdown": {
+            "title": "Oś czasu obsunięcia",
+            "empty": "Brak próbek obsunięcia"
+          }
+        },
+        "alerts": {
+          "title": "Alerty i nadpisania",
+          "empty": "Brak aktywnych alertów",
+          "columns": {
+            "timestamp": "Znacznik czasu",
+            "severity": "Poziom",
+            "message": "Komunikat"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Informacja",
+          "warning": "Ostrzeżenie",
+          "critical": "Krytyczny"
+        }
       }
     }
   },

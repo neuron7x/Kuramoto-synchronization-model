@@ -28,7 +28,8 @@
       "orders": "Orders",
       "pnl": "PnL & Quotes",
       "signals": "Signals",
-      "community": "Community"
+      "community": "Community",
+      "monitoring": "Monitoring"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -441,6 +443,87 @@
         "subtitle": "High-impact efforts currently seeking new contributors.",
         "fallbackTitle": "Opportunity",
         "cta": "Express interest"
+      }
+    },
+    "monitoring": {
+      "title": "Risk Monitoring",
+      "heading": "Risk Control Center",
+      "subtitle": "Track kill switch readiness, circuit breakers, and limit pressure in one view.",
+      "labels": {
+        "environment": "Environment",
+        "killSwitch": "Kill switch",
+        "circuitBreaker": "Circuit"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Gross exposure",
+          "limit": "Limit {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Daily drawdown",
+          "limit": "Guardrail {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Order flow health",
+          "open": "{count} open orders",
+          "rejections": "{rate} rejection rate",
+          "trips": "{count} trips ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Safety controls",
+          "killSwitch": {
+            "title": "Kill switch",
+            "status": {
+              "enabled": "Enabled",
+              "disabled": "Disabled"
+            },
+            "changed": "Updated {time}",
+            "actor": "By {actor}",
+            "reason": "Reason: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Circuit breaker",
+            "status": {
+              "open": "Open",
+              "half_open": "Half-open",
+              "closed": "Closed"
+            },
+            "trigger": "Last trip {time}",
+            "cooldown": "Cooldown {value}",
+            "reason": "Reason: {reason}"
+          }
+        },
+        "trends": {
+          "title": "Trend telemetry",
+          "exposure": {
+            "title": "Exposure timeline",
+            "empty": "No exposure samples"
+          },
+          "drawdown": {
+            "title": "Drawdown timeline",
+            "empty": "No drawdown samples"
+          }
+        },
+        "alerts": {
+          "title": "Alerts & overrides",
+          "empty": "No active alerts",
+          "columns": {
+            "timestamp": "Timestamp",
+            "severity": "Severity",
+            "message": "Message"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Info",
+          "warning": "Warning",
+          "critical": "Critical"
+        }
       }
     }
   },

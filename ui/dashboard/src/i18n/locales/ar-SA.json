@@ -28,7 +28,8 @@
       "orders": "الطلبات",
       "pnl": "الأرباح والخسائر والأسعار",
       "signals": "الإشارات",
-      "community": "المجتمع"
+      "community": "المجتمع",
+      "monitoring": "المراقبة"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "مبادرات عالية التأثير تبحث عن مساهمين جدد.",
         "fallbackTitle": "فرصة",
         "cta": "تسجيل الاهتمام"
+      }
+    },
+    "monitoring": {
+      "title": "مراقبة المخاطر",
+      "heading": "مركز التحكم في المخاطر",
+      "subtitle": "تابع حالة مفتاح الإيقاف، وقواطع الدائرة، وضغط الحدود في واجهة واحدة.",
+      "labels": {
+        "environment": "البيئة",
+        "killSwitch": "مفتاح الإيقاف",
+        "circuitBreaker": "قاطع الدائرة"
+      },
+      "cards": {
+        "exposure": {
+          "title": "التعرّض الإجمالي",
+          "limit": "الحد {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "التراجع اليومي",
+          "limit": "حد الحماية {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "صحة تدفق الأوامر",
+          "open": "{count} أوامر مفتوحة",
+          "rejections": "{rate} معدل الرفض",
+          "trips": "{count} عمليات فصل ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "ضوابط الأمان",
+          "killSwitch": {
+            "title": "مفتاح الإيقاف",
+            "status": {
+              "enabled": "مفعل",
+              "disabled": "معطل"
+            },
+            "changed": "تم التحديث {time}",
+            "actor": "بواسطة {actor}",
+            "reason": "السبب: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "قاطع الدائرة",
+            "status": {
+              "open": "مفتوح",
+              "half_open": "نصف مفتوح",
+              "closed": "مغلق"
+            },
+            "trigger": "آخر فصل {time}",
+            "cooldown": "مدة التعافي {value}",
+            "reason": "السبب: {reason}"
+          }
+        },
+        "trends": {
+          "title": "قياسات الاتجاه",
+          "exposure": {
+            "title": "الخط الزمني للتعرّض",
+            "empty": "لا توجد بيانات تعرّض"
+          },
+          "drawdown": {
+            "title": "الخط الزمني للتراجع",
+            "empty": "لا توجد بيانات تراجع"
+          }
+        },
+        "alerts": {
+          "title": "التنبيهات والتجاوزات",
+          "empty": "لا توجد تنبيهات نشطة",
+          "columns": {
+            "timestamp": "الطابع الزمني",
+            "severity": "الحدة",
+            "message": "الرسالة"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "معلومة",
+          "warning": "تحذير",
+          "critical": "حرج"
+        }
       }
     }
   },
