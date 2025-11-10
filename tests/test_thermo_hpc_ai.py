@@ -33,7 +33,11 @@ class TestThermoControllerHPCAI:
     """Test ThermoController HPC-AI integration."""
 
     def test_init_hpc_ai(self, simple_graph):
-        """Test HPC-AI initialization in ThermoController."""
+        """Test HPC-AI initialization in ThermoController.
+        
+        Validates that the ThermoController can initialize HPC-AI components
+        with custom parameters and that all required attributes are created.
+        """
         controller = ThermoController(simple_graph)
         controller.init_hpc_ai(
             input_dim=10,
@@ -42,40 +46,70 @@ class TestThermoControllerHPCAI:
             learning_rate=1e-4,
         )
 
-        assert hasattr(controller, "hpc_ai")
-        assert hasattr(controller, "prev_pwpe")
-        assert controller._hpc_ai_enabled is True
-        assert controller.prev_pwpe == 0.0
+        assert hasattr(controller, "hpc_ai"), (
+            "Controller should have hpc_ai attribute after initialization"
+        )
+        assert hasattr(controller, "prev_pwpe"), (
+            "Controller should have prev_pwpe attribute after initialization"
+        )
+        assert controller._hpc_ai_enabled is True, (
+            "HPC-AI should be enabled after successful initialization"
+        )
+        assert controller.prev_pwpe == 0.0, (
+            f"Initial prev_pwpe should be 0.0, got {controller.prev_pwpe}"
+        )
 
     def test_hpc_ai_control_step_not_initialized(self, simple_graph, synthetic_market_data):
-        """Test HPC-AI control step without initialization."""
+        """Test HPC-AI control step returns error when not initialized.
+        
+        When HPC-AI is not initialized, the control step should gracefully
+        return an error result with safe defaults rather than raising an exception.
+        """
         controller = ThermoController(simple_graph)
         
         result = controller.hpc_ai_control_step(synthetic_market_data)
 
-        assert "error" in result
-        assert result["action"] == 0
-        assert result["td_error"] == 0.0
+        assert "error" in result, "Result should contain error message"
+        assert result["action"] == 0, (
+            f"Default action should be 0 when not initialized, got {result['action']}"
+        )
+        assert result["td_error"] == 0.0, (
+            f"Default TD error should be 0.0 when not initialized, got {result['td_error']}"
+        )
 
     def test_hpc_ai_control_step(self, simple_graph, synthetic_market_data):
-        """Test HPC-AI control step with initialization."""
+        """Test HPC-AI control step returns complete result after initialization.
+        
+        Validates that a properly initialized HPC-AI controller returns all
+        required metrics and that values are within expected ranges.
+        """
         controller = ThermoController(simple_graph)
         controller.init_hpc_ai(state_dim=64)
 
         result = controller.hpc_ai_control_step(synthetic_market_data)
 
-        assert "action" in result
-        assert "td_error" in result
-        assert "pwpe" in result
-        assert "reward" in result
-        assert "state_norm" in result
+        # Check all required keys are present
+        required_keys = ["action", "td_error", "pwpe", "reward", "state_norm"]
+        for key in required_keys:
+            assert key in result, f"Result should contain '{key}' key"
 
-        assert result["action"] in [0, 1, 2]
-        assert isinstance(result["td_error"], float)
-        assert result["pwpe"] >= 0.0
+        # Validate action is valid (0=maintain, 1=increase, 2=decrease)
+        assert result["action"] in [0, 1, 2], (
+            f"Action should be 0, 1, or 2, got {result['action']}"
+        )
+        assert isinstance(result["td_error"], float), (
+            f"TD error should be float, got {type(result['td_error'])}"
+        )
+        assert result["pwpe"] >= 0.0, (
+            f"PWPE should be non-negative, got {result['pwpe']}"
+        )
 
     def test_hpc_ai_control_step_with_execution(self, simple_graph, synthetic_market_data):
-        """Test HPC-AI control step with action execution flag."""
+        """Test HPC-AI control step with action execution enabled.
+        
+        When execute_action=True, the controller should not only compute
+        the action but also apply it to the system state.
+        """
         controller = ThermoController(simple_graph)
         controller.init_hpc_ai(state_dim=64)
 
@@ -84,11 +118,17 @@ class TestThermoControllerHPCAI:
             execute_action=True,
         )
 
-        assert "action" in result
-        assert result["action"] in [0, 1, 2]
+        assert "action" in result, "Result should contain action"
+        assert result["action"] in [0, 1, 2], (
+            f"Action should be valid (0-2), got {result['action']}"
+        )
 
     def test_multiple_control_steps(self, simple_graph, synthetic_market_data):
-        """Test multiple HPC-AI control steps."""
+        """Test sequential HPC-AI control steps with state persistence.
+        
+        Validates that the controller can handle multiple sequential control
+        steps and properly maintains internal state (prev_pwpe) between steps.
+        """
         controller = ThermoController(simple_graph)
         controller.init_hpc_ai(state_dim=64)
 
@@ -99,14 +139,20 @@ class TestThermoControllerHPCAI:
             results.append(result)
 
         # Check all steps completed
-        assert len(results) == 5
+        assert len(results) == 5, (
+            f"Expected 5 control step results, got {len(results)}"
+        )
         
-        # Check prev_pwpe is updated
-        assert controller.prev_pwpe > 0.0
+        # Check prev_pwpe is updated after multiple steps
+        assert controller.prev_pwpe > 0.0, (
+            "prev_pwpe should be updated after control steps"
+        )
         
-        # Check actions are valid
+        # Check all actions are valid
         actions = [r["action"] for r in results]
-        assert all(a in [0, 1, 2] for a in actions)
+        assert all(a in [0, 1, 2] for a in actions), (
+            f"All actions should be 0-2, got {actions}"
+        )
 
     def test_pwpe_tracking(self, simple_graph, synthetic_market_data):
         """Test that PWPE is tracked across steps."""
