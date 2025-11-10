@@ -29,7 +29,7 @@ tonic_adaptation = 1.0 - 0.3 * min(self.tonic_level / 2.0, 1.0)
 kappa = kappa_base * tonic_adaptation
 ```
 
-**Benefit**: 
+**Benefit**:
 - Sharper action potentials when the system is already stressed (primed state)
 - Gradual response when at rest (prevents false triggers)
 - Biologically plausible: mirrors neuron membrane depolarization
@@ -187,21 +187,21 @@ self.temperature_floor = floor_min + (floor_max - floor_min) * level_cubed
 ## Backward Compatibility
 
 ### API Compatibility
-✓ All method signatures unchanged  
-✓ Configuration format preserved  
-✓ Return types consistent  
+✓ All method signatures unchanged
+✓ Configuration format preserved
+✓ Return types consistent
 ✓ Exception handling unchanged
 
 ### Configuration
-✓ All existing config parameters supported  
-✓ No new required parameters  
-✓ Default values compatible  
+✓ All existing config parameters supported
+✓ No new required parameters
+✓ Default values compatible
 ✓ Validation rules preserved
 
 ### Metrics
-✓ Prometheus labels compatible  
-✓ TACL telemetry unchanged  
-✓ Logger interface preserved  
+✓ Prometheus labels compatible
+✓ TACL telemetry unchanged
+✓ Logger interface preserved
 ✓ State serialization compatible
 
 ## Migration Guide
