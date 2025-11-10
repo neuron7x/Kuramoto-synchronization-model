@@ -8,6 +8,7 @@ all reachable states.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pytest
@@ -59,8 +60,9 @@ class TestStateInvariants:
         # Run 100 steps with extreme stress
         for _ in range(100):
             result = controller.step("stress", local_obs, global_obs, bases)
-            assert result["E"] >= 0.0, "Energy went negative!"
-            assert result["E"] <= params.E_max, "Energy exceeded E_max!"
+            energy = cast(float, result["E"])
+            assert energy >= 0.0, "Energy went negative!"
+            assert energy <= params.E_max, "Energy exceeded E_max!"
 
     def test_load_bounded(self) -> None:
         """Load (L) must remain in [L_min, L_max] under all conditions."""
@@ -89,8 +91,9 @@ class TestStateInvariants:
 
         for _ in range(100):
             result = controller.step("load_test", local_obs, global_obs, bases)
-            assert result["L"] >= params.L_min, "Load below L_min!"
-            assert result["L"] <= params.L_max, "Load above L_max!"
+            load = cast(float, result["L"])
+            assert load >= params.L_min, "Load below L_min!"
+            assert load <= params.L_max, "Load above L_max!"
 
     def test_ei_bounded(self) -> None:
         """Engagement Index (EI) must remain in [0, 1]."""
@@ -119,7 +122,8 @@ class TestStateInvariants:
             bases = {"cooldown_ms_base": 2000.0}
 
             result = controller.step("ei_test", local_obs, global_obs, bases)
-            assert 0.0 <= result["EI"] <= 1.0, f"EI out of bounds: {result['EI']}"
+            ei = cast(float, result["EI"])
+            assert 0.0 <= ei <= 1.0, f"EI out of bounds: {ei}"
 
 
 class TestOutputInvariants:
@@ -152,7 +156,7 @@ class TestOutputInvariants:
             bases = {"cooldown_ms_base": 1500.0}
 
             result = controller.step("risk_test", local_obs, global_obs, bases)
-            risk = result["risk_per_trade_factor"]
+            risk = cast(float, result["risk_per_trade_factor"])
             assert params.r_min <= risk <= params.r_max, f"Risk out of bounds: {risk}"
 
     def test_cooldown_positive(self) -> None:
@@ -182,7 +186,8 @@ class TestOutputInvariants:
 
         for _ in range(20):
             result = controller.step("cooldown_test", local_obs, global_obs, bases)
-            assert result["cooldown_ms"] >= 1, "Cooldown below 1 ms!"
+            cooldown = cast(int, result["cooldown_ms"])
+            assert cooldown >= 1, "Cooldown below 1 ms!"
 
 
 class TestMonotonicityProperties:
@@ -247,7 +252,7 @@ class TestMonotonicityProperties:
             if not result["is_suspended"]:
                 unsuspended = True
                 # Verify EI is above threshold
-                ei = result["EI"]
+                ei = cast(float, result["EI"])
                 assert ei >= params.EI_crit + params.EI_hysteresis, (
                     f"Unsuspended but EI={ei:.3f} < "
                     f"{params.EI_crit + params.EI_hysteresis:.3f}"
