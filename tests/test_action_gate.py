@@ -1,21 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict
 
 import pytest
 import yaml
 
 from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
-
-
-@dataclass
-class SerotoninStub:
-    hold: bool
-    temperature_floor: float = 0.2
-
-    def check_cooldown(self, _: Optional[float] = None) -> bool:
-        return self.hold
+from tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot, SerotoninSnapshot
 
 
 @pytest.fixture
@@ -43,6 +34,7 @@ def config_dict() -> Dict[str, object]:
         "max_temp_multiplier": 3.0,
         "invigoration_threshold": 0.6,
         "no_go_threshold": 0.3,
+        "hold_threshold": 0.4,
         "target_dd": -0.05,
         "target_sharpe": 1.0,
         "meta_cooldown_ticks": 0,
@@ -75,10 +67,26 @@ def controller(tmp_path, config_dict: Dict[str, object]) -> DopamineController:
     return DopamineController(str(cfg_path))
 
 
+def _dopamine_snapshot(controller: DopamineController, level: float) -> DopamineSnapshot:
+    controller.dopamine_level = level
+    temperature = controller.compute_temperature(level)
+    return DopamineSnapshot(
+        level=float(level),
+        temperature=float(temperature),
+        go_threshold=float(controller.config["invigoration_threshold"]),
+        hold_threshold=float(controller.config["hold_threshold"]),
+        no_go_threshold=float(controller.config["no_go_threshold"]),
+        release_gate_open=True,
+    )
+
+
 def test_high_dopamine_with_high_serotonin(controller: DopamineController) -> None:
-    controller.dopamine_level = 0.9
-    gate = ActionGate(controller, SerotoninStub(hold=True, temperature_floor=0.4))
-    eval_result = gate.evaluate()
+    gate = ActionGate(controller)
+    serotonin = SerotoninSnapshot(level=0.8, hold=True, temperature_floor=0.4)
+    eval_result = gate.evaluate(
+        dopamine=_dopamine_snapshot(controller, 0.9),
+        serotonin=serotonin,
+    )
     assert eval_result.go is False
     assert eval_result.hold is True
     assert eval_result.no_go is True
@@ -86,17 +94,23 @@ def test_high_dopamine_with_high_serotonin(controller: DopamineController) -> No
 
 
 def test_high_dopamine_low_serotonin(controller: DopamineController) -> None:
-    controller.dopamine_level = 0.9
-    gate = ActionGate(controller, SerotoninStub(hold=False, temperature_floor=0.1))
-    eval_result = gate.evaluate()
+    gate = ActionGate(controller)
+    serotonin = SerotoninSnapshot(level=0.1, hold=False, temperature_floor=0.1)
+    eval_result = gate.evaluate(
+        dopamine=_dopamine_snapshot(controller, 0.9),
+        serotonin=serotonin,
+    )
     assert eval_result.go is True
     assert eval_result.hold is False
     assert eval_result.no_go is False
 
 
 def test_low_dopamine_high_serotonin(controller: DopamineController) -> None:
-    controller.dopamine_level = 0.2
-    gate = ActionGate(controller, SerotoninStub(hold=True, temperature_floor=0.3))
-    eval_result = gate.evaluate()
+    gate = ActionGate(controller)
+    serotonin = SerotoninSnapshot(level=0.7, hold=True, temperature_floor=0.3)
+    eval_result = gate.evaluate(
+        dopamine=_dopamine_snapshot(controller, 0.2),
+        serotonin=serotonin,
+    )
     assert eval_result.go is False
     assert eval_result.no_go is True
