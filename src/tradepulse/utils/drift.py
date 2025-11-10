@@ -138,33 +138,57 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
     arr1 = _as_array(data1, name="data1")
     arr2 = _as_array(data2, name="data2")
 
-    if arr1.shape != arr2.shape:
-        raise ValueError("data1 and data2 must have the same length for JSD computation")
-
-    # ``jensenshannon`` cannot handle NaN payloads.  The helper above guarantees
-    # that the arrays only contain finite values or NaNs, so we can safely drop
-    # the missing entries here using a shared mask.  This mirrors the behaviour
-    # of ``compute_ks_test`` where non-finite values are ignored instead of
-    # poisoning the metric with ``nan``.  Real-world market data frequently
-    # contains gaps due to exchange halts or backfill delays, therefore treating
-    # NaNs as "no data" is the pragmatic choice.
-    mask1 = np.isfinite(arr1)
-    mask2 = np.isfinite(arr2)
-    mask = mask1 & mask2
-    if not mask.all():
-        dropped1 = int((~mask1).sum())
-        dropped2 = int((~mask2).sum())
-        arr1 = arr1[mask]
-        arr2 = arr2[mask]
-        logger.debug(
-            "Dropped NaN values before JSD computation: data1=%d data2=%d",
-            dropped1,
-            dropped2,
-        )
+    # Treat NaNs independently for each sample array.  In practice the baseline
+    # and current datasets rarely have the same number of observations, so we
+    # must not assume positional alignment.
+    arr1 = arr1[np.isfinite(arr1)]
+    arr2 = arr2[np.isfinite(arr2)]
 
     if arr1.size == 0 or arr2.size == 0:
         return float("nan")
-    distance = jensenshannon(arr1, arr2)
+
+    def _looks_like_probability_mass(array: np.ndarray) -> bool:
+        """Best-effort detection of already-normalised probability vectors."""
+
+        if array.size == 0:
+            return False
+        if np.any(array < 0):
+            return False
+        total = array.sum()
+        return np.isfinite(total) and np.isclose(total, 1.0, rtol=1e-3, atol=1e-6)
+
+    if arr1.shape == arr2.shape and _looks_like_probability_mass(arr1) and _looks_like_probability_mass(arr2):
+        prob1 = arr1
+        prob2 = arr2
+    else:
+        combined = np.concatenate([arr1, arr2])
+        # Degenerate case: both arrays collapse to a single constant value.
+        if np.allclose(combined.min(), combined.max()):
+            return 0.0
+
+        bin_edges = np.histogram_bin_edges(combined, bins="auto")
+        if bin_edges.size < 2:
+            # ``np.histogram_bin_edges`` can return a single edge when ``combined``
+            # contains identical values due to floating point rounding.  Fallback
+            # to two edges spanning the observed range.
+            unique = np.unique(combined)
+            if unique.size == 1:
+                return 0.0
+            span = unique[[0, -1]]
+            bin_edges = np.linspace(span[0], span[1], 2)
+
+        hist1, _ = np.histogram(arr1, bins=bin_edges, density=False)
+        hist2, _ = np.histogram(arr2, bins=bin_edges, density=False)
+
+        total1 = hist1.sum()
+        total2 = hist2.sum()
+        if total1 == 0 or total2 == 0:
+            return float("nan")
+
+        prob1 = hist1 / total1
+        prob2 = hist2 / total2
+
+    distance = jensenshannon(prob1, prob2)
     divergence = float(distance ** 2)
     logger.debug("Computed JSD divergence: %s", divergence)
     return divergence
