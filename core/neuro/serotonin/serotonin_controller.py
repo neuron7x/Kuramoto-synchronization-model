@@ -467,8 +467,10 @@ class SerotoninController:
             # Tonic should integrate slowly, phasic provides fast transients
             decay = cfg["decay_rate"]
             # Adaptive decay: faster when gate is low (rest), slower during action
-            effective_decay = decay * (1.0 - 0.4 * gate)
-            tonic_input = float(aversive_state) + 0.3 * self.phasic_level  # Reduced phasic contribution
+            effective_decay = decay * (1.0 - 0.3 * gate)  # Reduced from 0.4 to 0.3 for better integration
+            # Balance between direct aversive input and phasic contribution
+            # Use 0.5 instead of 0.3 to maintain adequate tonic build-up
+            tonic_input = float(aversive_state) + 0.5 * phasic_burst  # Use burst not level for proper scaling
             self.tonic_level = (1.0 - effective_decay) * self.tonic_level + effective_decay * tonic_input
             
             # Enhanced sigmoid transformation with better numerical stability
