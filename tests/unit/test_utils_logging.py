@@ -97,6 +97,50 @@ def test_structured_logger_operation_failure_logs_error(
     assert error_record.extra_fields["portfolio"] == "alpha"
 
 
+def test_structured_logger_operation_can_disable_success_logging(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO)
+
+    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-quiet")
+    with logger.operation(
+        "fast_path",
+        level=logging.DEBUG,
+        emit_start=False,
+        emit_success=False,
+        window="5m",
+    ):
+        pass
+
+    assert caplog.records == []
+
+
+def test_structured_logger_operation_failure_still_logs_when_suppressed(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.ERROR)
+
+    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-error")
+
+    with pytest.raises(ValueError):
+        with logger.operation(
+            "fast_path",
+            level=logging.DEBUG,
+            emit_start=False,
+            emit_success=False,
+        ):
+            raise ValueError("boom")
+
+    (error_record,) = caplog.records
+
+    assert error_record.levelno == logging.ERROR
+    assert error_record.message == "Failed operation: fast_path"
+    assert error_record.extra_fields["status"] == "failure"
+    assert error_record.extra_fields["error_type"] == "ValueError"
+    assert error_record.extra_fields["error_message"] == "boom"
+    assert error_record.extra_fields["operation"] == "fast_path"
+
+
 def test_structured_logger_preserves_exc_info(caplog: pytest.LogCaptureFixture) -> None:
     """Structured logger should forward exc_info instead of serialising it."""
 
