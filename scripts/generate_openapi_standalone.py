@@ -14,8 +14,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 # Set all required environment variables to prevent validation errors
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "openapi-generation-secret")
-os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "openapi-2fa-secret")
+# These are placeholder values for OpenAPI generation only, not real secrets
+os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "openapi-generation-secret")  # pragma: allowlist secret
+os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "openapi-2fa-secret")  # pragma: allowlist secret
 os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://openapi.tradepulse.local")
 os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
 os.environ.setdefault("TRADEPULSE_OAUTH2_JWKS_URI", "https://openapi.tradepulse.local/jwks")

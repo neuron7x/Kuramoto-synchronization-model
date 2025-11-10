@@ -51,7 +51,7 @@ The TradePulse API uses OAuth 2.0 for authentication. All requests must include 
 ```http
 GET /api/v1/features HTTP/1.1
 Host: api.tradepulse.example.com
-Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
 ```
 
 #### Token Validation
@@ -239,8 +239,9 @@ Admin endpoints require enhanced security measures.
 
 **Example Request:**
 ```bash
+# Note: Replace ADMIN_TOKEN with your actual admin token
 curl --cert client.pem --key client-key.pem \
-  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -H "X-TradePulse-2FA: 123456" \
   https://api.tradepulse.example.com/admin/kill-switch
 ```
@@ -265,8 +266,9 @@ curl --cert client.pem --key client-key.pem \
 ```python
 import pyotp
 
-# Administrator receives secret securely
-secret = "BASE32ENCODEDSECRET"
+# Administrator receives secret securely from admin
+# Example only - replace with actual secret from secure channel
+secret = "JBSWY3DPEHPK3PXP"  # Example TOTP secret (base32)
 totp = pyotp.TOTP(secret)
 
 # Generate current code
@@ -317,8 +319,8 @@ async def engage_kill_switch(
 
 **❌ Don't Do This:**
 ```python
-# NEVER hardcode tokens
-API_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+# NEVER hardcode tokens - this is an example of what NOT to do
+API_TOKEN = "your-secret-token-here"  # BAD: hardcoded token
 ```
 
 **✅ Do This:**

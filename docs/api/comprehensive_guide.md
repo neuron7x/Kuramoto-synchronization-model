@@ -65,7 +65,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 
 **Example:**
 ```bash
-curl -H "Authorization: Bearer eyJhbGc..." \
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   https://api.tradepulse.example.com/api/v1/features
 ```
 

@@ -959,7 +959,9 @@ def verify_signature(payload: Dict[str, Any], signature: str, secret: str) -> bo
 
 # Usage
 payload = {'symbol': 'BTC-USD', 'bars': [...]}
-signature = sign_request(payload, SECRET_KEY)
+# Use your actual secret from environment variables
+signing_secret = os.environ.get('TRADEPULSE_SIGNING_SECRET')
+signature = sign_request(payload, signing_secret)
 
 headers = {
     'X-Signature': signature,
