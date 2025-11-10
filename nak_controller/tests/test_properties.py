@@ -323,19 +323,34 @@ class TestGlobalModeConsistency:
     def test_mode_ordering(self) -> None:
         """Mode should escalate with increasing stress."""
         # GREEN conditions
-        assert choose_mode(0.5, 0.2, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7) == "GREEN"
+        assert (
+            choose_mode(0.5, 0.2, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7)
+            == "GREEN"
+        )
 
         # AMBER volatility
-        assert choose_mode(0.75, 0.2, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7) == "AMBER"
+        assert (
+            choose_mode(0.75, 0.2, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7)
+            == "AMBER"
+        )
 
         # AMBER drawdown
-        assert choose_mode(0.5, 0.5, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7) == "AMBER"
+        assert (
+            choose_mode(0.5, 0.5, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7)
+            == "AMBER"
+        )
 
         # RED volatility
-        assert choose_mode(0.95, 0.3, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7) == "RED"
+        assert (
+            choose_mode(0.95, 0.3, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7)
+            == "RED"
+        )
 
         # RED drawdown
-        assert choose_mode(0.5, 0.8, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7) == "RED"
+        assert (
+            choose_mode(0.5, 0.8, vol_amber=0.7, vol_red=0.9, dd_amber=0.4, dd_red=0.7)
+            == "RED"
+        )
 
 
 class TestRateLimiting:
@@ -387,9 +402,7 @@ class TestDopamineModulation:
         """DA-modulated risk must remain in [r_min, r_max]."""
         for da in [0.0, 0.25, 0.5, 0.75, 1.0]:
             for rate in [0.5, 1.0, 1.5]:
-                result = modulate_risk_da(
-                    rate, da, da_gain=0.25, r_min=0.2, r_max=1.8
-                )
+                result = modulate_risk_da(rate, da, da_gain=0.25, r_min=0.2, r_max=1.8)
                 assert 0.2 <= result <= 1.8, f"DA modulation out of bounds: {result}"
 
 
