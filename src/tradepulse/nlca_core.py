@@ -1,5 +1,6 @@
 import time
 import logging
+from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
@@ -98,6 +99,8 @@ class BinanceFeed:
         self.symbol = symbol.lower()
         self.tick_queue = tick_queue if tick_queue is not None else queue.Queue()
         self.running = False
+        self.depth_key: str | None = None
+        self.trade_key: str | None = None
 
         if Client is None or BinanceSocketManager is None:
             logging.warning("Binance SDK не доступний у цьому середовищі")
@@ -184,27 +187,45 @@ class BinanceFeed:
 
     def stop(self):
         if self.bm is not None:
+            for key, label in ((self.depth_key, "depth"), (self.trade_key, "trade")):
+                if key is None:
+                    continue
+                try:
+                    self.bm.stop_socket(key)
+                except Exception:
+                    logging.exception(
+                        "Failed to stop Binance %s socket for %s", label, self.symbol
+                    )
             try:
-                self.bm.stop_socket(self.depth_key)
-                self.bm.stop_socket(self.trade_key)
                 self.bm.close()
             except Exception:
-                pass
+                logging.exception("Failed to close Binance socket manager for %s", self.symbol)
         if self.client is not None:
-            try:
-                self.client.close_connection()
-            except Exception:
-                pass
+            close_conn = getattr(self.client, "close_connection", None)
+            if callable(close_conn):
+                try:
+                    close_conn()
+                except Exception:
+                    logging.exception(
+                        "Failed to close Binance REST client for %s", self.symbol
+                    )
         self.running = False
+        self.depth_key = None
+        self.trade_key = None
         logging.info("Binance WebSocket stopped")
 
 
 class MarketRecorder:
-    def __init__(self, dataset_path: str = None, enabled: bool = False, flush_every: int = 1000):
+    def __init__(
+        self,
+        dataset_path: str | Path | None = None,
+        enabled: bool = False,
+        flush_every: int = 1000,
+    ):
         self.enabled = enabled
-        self.dataset_path = dataset_path
+        self.dataset_path = Path(dataset_path) if dataset_path else None
         self.flush_every = flush_every
-        self.buffer = []
+        self.buffer: list[dict] = []
 
     def record_tick(self, tick: dict, decision: dict, metrics: dict):
         if not self.enabled:
@@ -229,14 +250,28 @@ class MarketRecorder:
     def flush(self):
         if not self.enabled or not self.buffer or self.dataset_path is None:
             return
+        try:
+            self.dataset_path.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            logging.exception(
+                "Failed to prepare dataset directory %s", self.dataset_path
+            )
+            return
+
         df = pd.DataFrame(self.buffer)
-        table = pa.Table.from_pandas(df)
-        pq.write_to_dataset(
-            table,
-            root_path=self.dataset_path,
-            partition_cols=['date']
-        )
-        self.buffer = []
+        try:
+            table = pa.Table.from_pandas(df, preserve_index=False)
+            pq.write_to_dataset(
+                table,
+                root_path=str(self.dataset_path),
+                partition_cols=['date']
+            )
+        except Exception:
+            logging.exception(
+                "Failed to persist market data batch to %s", self.dataset_path
+            )
+            return
+        self.buffer.clear()
 
 
 class NLCA:

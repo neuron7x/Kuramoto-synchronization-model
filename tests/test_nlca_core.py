@@ -1,4 +1,6 @@
 import time
+from pathlib import Path
+
 import numpy as np
 
 from tradepulse.nlca_core import NLCA, StateSimulator, MarketRecorder
@@ -89,3 +91,27 @@ def test_state_simulator_runs():
     assert 'final_state' in summary
     assert isinstance(summary['results'], list)
     assert len(summary['results']) == 10
+
+
+def test_market_recorder_flush_persists_dataset(tmp_path):
+    dataset_dir = tmp_path / "market_ds"
+    recorder = MarketRecorder(dataset_path=dataset_dir, enabled=True, flush_every=1)
+
+    tick = {'timestamp': time.time()}
+    decision = {'state': 'S0', 'action': 'HOLD'}
+    metrics = {
+        'S': 0.1,
+        'D': 1.0,
+        'OFI': 0.0,
+        'lambda': 0.0,
+        'SVI': 0.0,
+        'BRHL': 0.0,
+        'OTR': 0.0,
+    }
+
+    recorder.record_tick(tick, decision, metrics)
+    recorder.flush()
+
+    assert recorder.buffer == []
+    parquet_files = list(Path(dataset_dir).rglob('*.parquet'))
+    assert parquet_files, "Expected at least one parquet file to be written"
