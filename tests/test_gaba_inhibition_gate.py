@@ -69,6 +69,7 @@ def test_custom_gate_params():
     assert hasattr(metrics, 'cycle_multiplier')
     assert hasattr(metrics, 'stdp_delta')
     assert hasattr(metrics, 'ltp_ltd_delta')
+    assert hasattr(metrics, 'adaptive_delta')
 
 
 def test_device_parameter():
@@ -84,17 +85,19 @@ def test_device_parameter():
 def test_apply_hedge():
     """Test hedge function modifies GABA levels."""
     gate = GABAInhibitionGate()
-    
+
     # Get initial state
     _, m1 = gate(base_state(), torch.tensor([1.0]))
     initial_gaba = m1.gaba_level
-    
+    initial_risk = m1.risk_weight
+
     # Apply hedge
     gate.apply_hedge(strength=1.0)
-    
+
     # Check GABA increased
     _, m2 = gate(base_state(), torch.tensor([1.0]))
     assert m2.gaba_level > initial_gaba
+    assert m2.risk_weight < initial_risk
 
 
 def test_apply_hedge_invalid_strength():
@@ -293,6 +296,7 @@ def test_gate_metrics_type():
     assert isinstance(metrics.cycle_multiplier, float)
     assert isinstance(metrics.stdp_delta, float)
     assert isinstance(metrics.ltp_ltd_delta, float)
+    assert isinstance(metrics.adaptive_delta, float)
 
 
 def test_plasticity_metric_direction():
@@ -366,3 +370,73 @@ def test_gate_config_round_trip():
     rebuilt = GABAInhibitionGate.from_config(config)
     assert pytest.approx(rebuilt.p.k_inhibit, rel=1e-6) == 0.55
     assert pytest.approx(rebuilt.p.gamma_cycle_amplitude, rel=1e-6) == 0.05
+
+
+def test_dynamic_dt_modulates_decay():
+    """Large dt should produce stronger decay than small dt."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.0])
+
+    gate.reset_state()
+    gate(base_state(dt_ms=1.0, vix=60.0), action)
+    decay_small = gate.decay_fast.clone()
+
+    gate.reset_state()
+    gate(base_state(dt_ms=200.0, vix=60.0), action)
+    decay_large = gate.decay_fast.clone()
+
+    assert decay_large.item() < decay_small.item()
+
+
+def test_risk_weight_relaxes_to_baseline():
+    """Risk weight should relax back toward baseline when threat subsides."""
+
+    params = GateParams(risk_decay_tau_ms=50.0)
+    gate = GABAInhibitionGate(params=params)
+    action = torch.tensor([1.0])
+
+    # build up potentiation
+    high_state = base_state(vix=80.0, ret=0.6, vol=1.0, dt_ms=5.0)
+    for _ in range(20):
+        gate(high_state, action)
+    _, metrics_peak = gate(high_state, action)
+
+    # low threat should relax weight downward
+    low_state = base_state(vix=10.0, ret=0.0, vol=0.05, dt_ms=50.0)
+    for _ in range(40):
+        gate(low_state, action)
+    _, metrics_relaxed = gate(low_state, action)
+
+    assert metrics_relaxed.risk_weight < metrics_peak.risk_weight
+    assert metrics_relaxed.risk_weight > 0.9  # not collapsed
+
+
+def test_rpe_and_position_adaptive_plasticity():
+    """RPE and exposure should modulate adaptive plasticity term."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.0])
+
+    positive_state = base_state(vix=50.0, vol=0.6, ret=0.4, rpe=0.9, pos=0.2, dt_ms=10.0)
+    _, metrics_positive = gate(positive_state, action)
+
+    negative_state = base_state(vix=50.0, vol=0.6, ret=0.4, rpe=-0.9, pos=3.0, dt_ms=10.0)
+    _, metrics_negative = gate(negative_state, action)
+
+    assert metrics_positive.adaptive_delta > metrics_negative.adaptive_delta
+
+
+def test_apply_hedge_dampens_risk():
+    """Hedge should immediately dampen accumulated risk sensitivity."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.0])
+    for _ in range(10):
+        gate(base_state(vix=60.0, ret=0.5, vol=0.8, dt_ms=10.0), action)
+
+    _, before = gate(base_state(vix=60.0, dt_ms=10.0), action)
+    gate.apply_hedge(strength=1.5)
+    _, after = gate(base_state(vix=60.0, dt_ms=10.0), action)
+
+    assert after.risk_weight < before.risk_weight

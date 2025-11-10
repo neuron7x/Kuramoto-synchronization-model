@@ -30,7 +30,9 @@ class GateParams:
     stdp_tau_minus_ms: float = 33.7
     ltp_theta: float = 0.3
     ltd_theta: float = 0.1
-    dt_ms: float = 0.1                # simulation step in milliseconds
+    dt_ms: float = 0.1                # default simulation step in milliseconds
+    min_dt_ms: float = 1e-3           # minimum allowed dt for stability
+    max_dt_ms: float = 250.0          # cap dt to avoid numerical blowups
     risk_min: float = 0.5             # clamp for risk weight
     risk_max: float = 1.5
     cycle_modulation: bool = True
@@ -48,6 +50,10 @@ class GateParams:
     max_inhibition: float = 0.95      # Upper bound for inhibition factor
     hedge_fast_boost: float = 0.5     # Fast GABA boost factor in hedge
     hedge_slow_boost: float = 0.25    # Slow GABA boost factor in hedge
+    hedge_risk_damp: float = 0.25     # Risk-weight damping factor during hedge
+    risk_decay_tau_ms: float = 500.0  # Relax risk weight back to baseline
+    rpe_sensitivity: float = 0.05     # Reward prediction error effect on plasticity
+    position_sensitivity: float = 0.02  # Exposure-based dampener
 
     def __post_init__(self) -> None:
         self.validate()
@@ -89,6 +95,20 @@ class GateParams:
             raise ValueError("max_inhibition must be in (0, 1)")
         if self.hedge_fast_boost < 0 or self.hedge_slow_boost < 0:
             raise ValueError("hedge boost factors must be non-negative")
+        if self.hedge_risk_damp < 0:
+            raise ValueError("hedge_risk_damp must be non-negative")
+        if self.risk_decay_tau_ms <= 0:
+            raise ValueError("risk_decay_tau_ms must be positive")
+        if self.min_dt_ms <= 0:
+            raise ValueError("min_dt_ms must be positive")
+        if self.max_dt_ms <= 0:
+            raise ValueError("max_dt_ms must be positive")
+        if self.min_dt_ms > self.max_dt_ms:
+            raise ValueError("min_dt_ms must be <= max_dt_ms")
+        if self.rpe_sensitivity < 0:
+            raise ValueError("rpe_sensitivity must be non-negative")
+        if self.position_sensitivity < 0:
+            raise ValueError("position_sensitivity must be non-negative")
 
     def as_dict(self) -> Dict[str, Any]:
         """Return a configuration dictionary for serialization."""
@@ -129,6 +149,7 @@ class GateMetrics:
     cycle_multiplier: float
     stdp_delta: float
     ltp_ltd_delta: float
+    adaptive_delta: float
 
 
 class GABAInhibitionGate(nn.Module):
@@ -144,7 +165,8 @@ class GABAInhibitionGate(nn.Module):
     Outputs
     -------
     gated_action : torch.Tensor
-    metrics : Dict[str, float] with keys: 'inhibition', 'gaba_level', 'risk_weight'.
+    metrics : Dict[str, float] with keys: 'inhibition', 'gaba_level', 'risk_weight',
+        'cycle_multiplier', 'stdp_delta', 'ltp_ltd_delta', 'adaptive_delta'.
     """
 
     def __init__(self, params: Optional[GateParams] = None, device: Optional[str] = None):
@@ -157,20 +179,21 @@ class GABAInhibitionGate(nn.Module):
         self.register_buffer("risk_weight", torch.ones(1, dtype=torch.float32, device=self.device))
         self.register_buffer("t_ms", torch.zeros(1, dtype=torch.float32, device=self.device))
 
-        # precompute decay factors per step
+        # buffers reflect the latest decay factors (useful for inspection/tests)
         self.register_buffer("decay_fast", torch.zeros(1, dtype=torch.float32, device=self.device))
         self.register_buffer("decay_slow", torch.zeros(1, dtype=torch.float32, device=self.device))
-
-        # precompute dt tensor for efficiency
-        self.register_buffer("dt_tensor", torch.zeros(1, dtype=torch.float32, device=self.device))
         self._refresh_precomputed_buffers()
 
     # --- helpers -----------------------------------------------------------
-    def _compute_decay(self, tau_ms: float) -> torch.Tensor:
-        """Compute exponential decay factor for given time constant."""
-        return torch.exp(
-            torch.tensor(-self.p.dt_ms / tau_ms, device=self.device, dtype=torch.float32)
-        )
+    def _compute_decay(self, dt_ms: torch.Tensor, tau_ms: float) -> torch.Tensor:
+        """Compute exponential decay factor for the provided time constant and dt."""
+        return torch.exp(-dt_ms / tau_ms)
+
+    def _clamp_dt(self, delta_t_ms: torch.Tensor) -> torch.Tensor:
+        """Clamp the spike-timing delta to a numerically stable integration dt."""
+        dt = delta_t_ms.abs()
+        dt = torch.clamp(dt, self.p.min_dt_ms, self.p.max_dt_ms)
+        return dt.to(device=self.device, dtype=torch.float32)
 
     def _norm_vol(self, vix: torch.Tensor) -> torch.Tensor:
         """Normalize VIX-like to ~[0,1.5]; robust to outliers."""
@@ -193,9 +216,9 @@ class GABAInhibitionGate(nn.Module):
         """Recompute decay coefficients and cached time step when params change."""
 
         with torch.no_grad():
-            self.decay_fast.copy_(self._compute_decay(self.p.tau_gaba_a_ms))
-            self.decay_slow.copy_(self._compute_decay(self.p.tau_gaba_b_ms))
-            self.dt_tensor.fill_(self.p.dt_ms)
+            base_dt = torch.tensor(self.p.dt_ms, device=self.device, dtype=torch.float32)
+            self.decay_fast.copy_(self._compute_decay(base_dt, self.p.tau_gaba_a_ms))
+            self.decay_slow.copy_(self._compute_decay(base_dt, self.p.tau_gaba_b_ms))
 
     # --- public API --------------------------------------------------------
     @torch.no_grad()
@@ -243,14 +266,19 @@ class GABAInhibitionGate(nn.Module):
         vix = market_state['vix'].to(self.device).reshape(1)
         vol = market_state['vol'].to(self.device).reshape(1)
         ret = market_state['ret'].to(self.device).reshape(1)
-        _rpe = market_state['rpe'].to(self.device).reshape(1)  # Reserved for future use
-        _pos = market_state['pos'].to(self.device).reshape(1)  # Reserved for future use
+        rpe = market_state['rpe'].to(self.device).reshape(1)
+        pos = market_state['pos'].to(self.device).reshape(1)
         delta_t_ms = market_state['delta_t_ms'].to(self.device).reshape(1)
+        dt_ms = self._clamp_dt(delta_t_ms)
 
         # 1) GABA release ~ threat proxy (volatility) with dual time constants
         drive = self.p.gaba_drive_scale * self._norm_vol(vix)
-        new_gaba_fast = self.gaba_fast * self.decay_fast + drive * (1 - self.decay_fast)
-        new_gaba_slow = self.gaba_slow * self.decay_slow + drive * (1 - self.decay_slow)
+        decay_fast = self._compute_decay(dt_ms, self.p.tau_gaba_a_ms)
+        decay_slow = self._compute_decay(dt_ms, self.p.tau_gaba_b_ms)
+        self.decay_fast.copy_(decay_fast)
+        self.decay_slow.copy_(decay_slow)
+        new_gaba_fast = self.gaba_fast * decay_fast + drive * (1 - decay_fast)
+        new_gaba_slow = self.gaba_slow * decay_slow + drive * (1 - decay_slow)
         self.gaba_fast.copy_(new_gaba_fast)
         self.gaba_slow.copy_(new_gaba_slow)
         gaba_level = torch.clamp(
@@ -266,7 +294,7 @@ class GABAInhibitionGate(nn.Module):
 
         # 3) Cycle modulation (gamma/theta)
         if self.p.cycle_modulation:
-            self.t_ms.add_(self.dt_tensor)
+            self.t_ms.add_(dt_ms)
             cyc = self._cycles(self.t_ms)
         else:
             cyc = torch.tensor(1.0, device=self.device)
@@ -294,8 +322,15 @@ class GABAInhibitionGate(nn.Module):
             ltp_ltd_component = self.p.ltp_strength * gaba_level
         elif (pre_post < self.p.ltd_theta).item():
             ltp_ltd_component = -self.p.ltd_strength * gaba_level
-        dw = stdp_component + ltp_ltd_component
-        new_risk_weight = torch.clamp(self.risk_weight + dw, self.p.risk_min, self.p.risk_max)
+        rpe_term = self.p.rpe_sensitivity * torch.tanh(rpe)
+        exposure_term = self.p.position_sensitivity * torch.tanh(pos.abs())
+        adaptive_term = (rpe_term - exposure_term) * gaba_level
+        dw = stdp_component + ltp_ltd_component + adaptive_term
+        baseline = torch.tensor(1.0, device=self.device)
+        relax = self._compute_decay(dt_ms, self.p.risk_decay_tau_ms)
+        relaxed_weight = baseline + (self.risk_weight - baseline) * relax
+        new_risk_weight = relaxed_weight + dw
+        new_risk_weight = torch.clamp(new_risk_weight, self.p.risk_min, self.p.risk_max)
         self.risk_weight.copy_(new_risk_weight)
 
         # 5) Apply gating
@@ -311,7 +346,8 @@ class GABAInhibitionGate(nn.Module):
             risk_weight=float(self.risk_weight.item()),
             cycle_multiplier=cycle_multiplier,
             stdp_delta=float(stdp_component.item()),
-            ltp_ltd_delta=float(ltp_ltd_component.item())
+            ltp_ltd_delta=float(ltp_ltd_component.item()),
+            adaptive_delta=float(adaptive_term.item()),
         )
 
     def get_state(self) -> GateState:
@@ -378,6 +414,9 @@ class GABAInhibitionGate(nn.Module):
         )
         self.gaba_fast.copy_(boosted_fast)
         self.gaba_slow.copy_(boosted_slow)
+        damp = 1.0 / (1 + self.p.hedge_risk_damp * boost)
+        new_weight = torch.clamp(self.risk_weight * damp, self.p.risk_min, self.p.risk_max)
+        self.risk_weight.copy_(new_weight)
 
     def configure(self, params: Optional[GateParams] = None, **overrides: Any) -> None:
         """Update gate parameters at runtime and refresh cached buffers.
