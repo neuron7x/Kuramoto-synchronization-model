@@ -69,6 +69,17 @@
       <a class="card__link" href="neuroecon/">NeuroEcon Documentation</a>
     </div>
   </article>
+  <article class="card" data-animate="pop">
+    <h3 class="card__title">Нейронаукова візія</h3>
+    <p class="card__meta">Мотивація, інгібіція та гомеостаз TradePulse</p>
+    <p>Дізнайтеся, як дофамінові, серотонінові та ендоканабіноїдні контури
+      поєднуються з геометричними індикаторами, TACL і risk manager.
+      Охоплено повний стек — від HPC досліджень до мікросервісного
+      консенсусу.</p>
+    <div class="card__links">
+      <a class="card__link" href="neuroscience_overview/">Neuroscience Overview</a>
+    </div>
+  </article>
 </div>
 
 <div class="section-header" data-animate="fade-up">

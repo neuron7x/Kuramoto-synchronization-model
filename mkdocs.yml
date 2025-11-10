@@ -58,6 +58,7 @@ nav:
       - Execution: execution.md
       - FPM-A Framework: FPM-A.md
       - NeuroEcon Package: neuroecon.md
+      - Neuroscience Overview: neuroscience_overview.md
   - Developer Guides:
       - Extending TradePulse: extending.md
       - Integration API: integration-api.md
