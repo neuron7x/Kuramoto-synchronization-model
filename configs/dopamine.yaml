@@ -1,0 +1,58 @@
+version: "3.0"
+discount_gamma: 0.98
+learning_rate_v: 0.1
+decay_rate: 0.05
+burst_factor: 2.5
+k: 1.1
+theta: 0.5
+w_r: 0.60
+w_n: 0.20
+w_m: 0.15
+w_v: 0.15
+novelty_mode: "abs_rpe"
+c_absrpe: 0.10
+baseline: 0.5
+delta_gain: 0.5
+base_temperature: 1.0
+min_temperature: 0.05
+temp_k: 1.2
+neg_rpe_temp_gain: 0.5
+max_temp_multiplier: 3.0
+invigoration_threshold: 0.75
+no_go_threshold: 0.25
+target_dd: -0.05
+target_sharpe: 1.0
+meta_cooldown_ticks: 5
+metric_interval: 1
+meta_adapt_rules:
+  good:
+    learning_rate_v: 1.01
+    delta_gain: 1.01
+    base_temperature: 0.99
+  bad:
+    learning_rate_v: 0.99
+    delta_gain: 0.99
+    base_temperature: 1.01
+  neutral:
+    learning_rate_v: 1.0
+    delta_gain: 1.0
+    base_temperature: 1.0
+rpe_ema_beta: 0.2
+temp_adapt_target_var: 0.12
+temp_adapt_lr: 0.05
+temp_adapt_beta1: 0.9
+temp_adapt_beta2: 0.999
+temp_adapt_epsilon: 1.0e-8
+temp_adapt_min_base: 0.2
+temp_adapt_max_base: 2.5
+rpe_var_release_threshold: 0.35
+rpe_var_release_hysteresis: 0.05
+ddm_temp_gain: 0.4
+ddm_threshold_gain: 0.3
+ddm_hold_gain: 0.6
+ddm_min_temperature_scale: 0.5
+ddm_max_temperature_scale: 2.0
+ddm_baseline_a: 1.0
+ddm_baseline_t0: 0.2
+ddm_eps: 1.0e-6
+hold_threshold: 0.4

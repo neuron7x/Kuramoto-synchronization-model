@@ -1,0 +1,10 @@
+impulse_decay: 0.2
+impulse_threshold: 0.4
+inhibition_gain: 1.2
+stress_gain: 0.4
+max_inhibition: 0.9
+stdp_lr: 0.05
+stdp_min: 0.5
+stdp_max: 1.5
+rpe_beta: 0.1
+plasticity: true

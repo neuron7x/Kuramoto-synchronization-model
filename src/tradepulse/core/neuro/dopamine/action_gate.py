@@ -1,23 +1,47 @@
+"""Aggregate neuromodulator signals into a Go/No-Go/Hold decision."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Protocol, runtime_checkable
+from typing import Callable, Optional
 
 from .dopamine_controller import DopamineController
-from .ddm_adapter import DDMThresholds
 
 
-@runtime_checkable
-class SerotoninLike(Protocol):
-    """Protocol describing the serotonin interface required by the gate."""
+@dataclass(frozen=True)
+class DopamineSnapshot:
+    level: float
+    temperature: float
+    go_threshold: float
+    hold_threshold: float
+    no_go_threshold: float
+    release_gate_open: bool
 
-    def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
-        ...
+
+@dataclass(frozen=True)
+class SerotoninSnapshot:
+    level: float
+    hold: bool
+    temperature_floor: float
+
+
+@dataclass(frozen=True)
+class GABASnapshot:
+    inhibition: float
+    stdp_dw: float
+
+
+@dataclass(frozen=True)
+class NAACHSnapshot:
+    arousal: float
+    attention: float
+    risk_multiplier: float
+    temperature_scale: float
+
 
 @dataclass(frozen=True)
 class GateEvaluation:
-    """Outcome of the action gate evaluation."""
-
+    decision: str
+    score: float
     go: bool
     hold: bool
     no_go: bool
@@ -26,64 +50,97 @@ class GateEvaluation:
 
 
 class ActionGate:
-    """Coordinate dopamine Go/Hold/No-Go signals with serotonin vetoes and DDM thresholds."""
+    """Fuse dopamine, serotonin, GABA, and NA/ACh modulators."""
 
     def __init__(
         self,
         dopamine_ctrl: DopamineController,
-        serotonin_ctrl: Optional[SerotoninLike] = None,
+        *,
+        logger: Optional[Callable[[str, float], None]] = None,
     ) -> None:
         self._dopamine = dopamine_ctrl
-        self._serotonin = serotonin_ctrl
+        if logger is None:
+            logger = getattr(dopamine_ctrl, "_log", None)
+        self._logger = logger or (lambda name, value: None)
+
+    def _log(self, name: str, value: float) -> None:
+        try:
+            self._logger(name, float(value))
+        except Exception:  # pragma: no cover - defensive
+            pass
 
     def evaluate(
         self,
-        dopamine_signal: Optional[float] = None,
-        serotonin_signal: Optional[float] = None,
+        dopamine: DopamineSnapshot,
         *,
-        thresholds: Optional[DDMThresholds] = None,
-        release_gate_open: Optional[bool] = None,
+        serotonin: Optional[SerotoninSnapshot] = None,
+        gaba: Optional[GABASnapshot] = None,
+        na_ach: Optional[NAACHSnapshot] = None,
     ) -> GateEvaluation:
-        """Return Go/Hold/No-Go decision given dopamine, serotonin and optional DDM thresholds."""
-        da = self._dopamine.dopamine_level if dopamine_signal is None else float(dopamine_signal)
-        da = min(1.0, max(0.0, da))
+        da = float(min(1.0, max(0.0, dopamine.level)))
+        temperature = float(max(1e-6, dopamine.temperature))
+        go_threshold = min(1.0, max(0.0, dopamine.go_threshold))
+        no_go_threshold = min(1.0, max(0.0, dopamine.no_go_threshold))
+        hold_threshold = min(1.0, max(0.0, dopamine.hold_threshold))
 
-        cfg = self._dopamine.config
-        go_threshold = float(cfg["invigoration_threshold"])
-        no_go_threshold = float(cfg["no_go_threshold"])
-        hold_threshold = float(cfg.get("hold_threshold", 0.5))
-        temperature_scale = 1.0
-        if thresholds is not None:
-            go_threshold = thresholds.go_threshold
-            no_go_threshold = thresholds.no_go_threshold
-            hold_threshold = thresholds.hold_threshold
-            temperature_scale = thresholds.temperature_scale
+        hold = not dopamine.release_gate_open or da < hold_threshold
+        serotonin_floor = 0.0
+        if serotonin is not None:
+            hold = hold or serotonin.hold
+            serotonin_floor = float(max(0.0, serotonin.temperature_floor))
 
-        go_threshold = min(1.0, max(0.0, go_threshold))
-        no_go_threshold = min(1.0, max(0.0, no_go_threshold))
-        hold_threshold = min(1.0, max(0.0, hold_threshold))
+        inhibition = 0.0
+        stdp_dw = 0.0
+        if gaba is not None:
+            inhibition = min(0.99, max(0.0, gaba.inhibition))
+            stdp_dw = float(gaba.stdp_dw)
+            if inhibition >= 0.8:
+                hold = True
 
-        release_gate = True if release_gate_open is None else bool(release_gate_open)
-        hold = not release_gate or da < hold_threshold
+        attention = 1.0
+        temp_scale = 1.0
+        if na_ach is not None:
+            attention = min(2.0, max(0.2, na_ach.attention))
+            temp_scale = min(3.0, max(0.2, na_ach.temperature_scale))
 
-        if self._serotonin is not None:
-            hold = hold or bool(self._serotonin.check_cooldown(serotonin_signal))
+        score = da * (1.0 - inhibition)
+        score *= attention
+        score = min(1.0, max(0.0, score))
 
-        go = da > go_threshold and not hold
-        no_go = hold or da < no_go_threshold
+        go = score > go_threshold and not hold
+        no_go = hold or score < no_go_threshold
+        decision = "HOLD"
+        if go:
+            decision = "GO"
+        elif no_go:
+            decision = "NO_GO"
 
-        temperature = self._dopamine.compute_temperature(da)
-        temperature *= temperature_scale
-        t_min, t_max = self._dopamine.temperature_bounds()
-        temperature = min(t_max, max(t_min, temperature))
-        floor = getattr(self._serotonin, "temperature_floor", None)
-        if floor is not None:
-            temperature = max(temperature, float(floor))
+        temperature *= temp_scale
+        if serotonin_floor > 0.0:
+            temperature = max(temperature, serotonin_floor)
+        t_bounds = self._dopamine.temperature_bounds()
+        temperature = min(t_bounds[1], max(t_bounds[0], temperature))
+
+        self._log("tacl.bg.score", score)
+        self._log("tacl.bg.route", 1.0 if go else 0.0)
+        self._log(
+            "tacl.ag.decision",
+            {
+                "GO": 2.0,
+                "HOLD": 1.0,
+                "NO_GO": 0.0,
+            }[decision],
+        )
+        if gaba is not None:
+            self._log("tacl.gaba.stdp_dw", stdp_dw)
 
         return GateEvaluation(
+            decision=decision,
+            score=score,
             go=go,
             hold=hold,
             no_go=no_go,
             temperature=temperature,
             dopamine_level=da,
         )
+

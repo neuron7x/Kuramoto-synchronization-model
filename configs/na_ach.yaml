@@ -1,0 +1,11 @@
+arousal_baseline: 0.5
+arousal_gain: 0.4
+arousal_min: 0.2
+arousal_max: 1.2
+risk_min: 0.5
+risk_max: 1.5
+attention_baseline: 0.6
+attention_gain: 0.5
+attention_min: 0.3
+attention_max: 1.6
+temp_gain: 0.6
