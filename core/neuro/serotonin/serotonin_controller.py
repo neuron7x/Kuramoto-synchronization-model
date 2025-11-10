@@ -111,6 +111,9 @@ class SerotoninConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+SerotoninConfig.model_rebuild()
+
+
 def _generate_config_table(schema: dict) -> str:
     """Render the configuration schema into a Markdown table."""
 
