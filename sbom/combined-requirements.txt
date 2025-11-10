@@ -112,7 +112,7 @@ more-itertools==10.8.0
 msgpack==1.1.2
 mutmut==3.3.1
 mypy==1.18.2
-nh3==0.3.1
+nh3==0.3.2
 nvidia-ml-py==13.580.82
 packageurl-python==0.17.5
 patchelf==0.17.2.4
