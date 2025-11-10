@@ -30,15 +30,25 @@ def controller(tmp_path: Path) -> DopamineController:
 
 
 def test_gate_respects_release_and_hold(controller: DopamineController) -> None:
-    serotonin = DummySerotonin(hold=True)
-    gate = ActionGate(controller, serotonin)
-    eval_hold = gate.evaluate(dopamine_signal=0.8, release_gate_open=False)
+    from tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot, SerotoninSnapshot
+    gate = ActionGate(controller)
+    dopamine_snap = DopamineSnapshot(
+        level=0.8,
+        temperature=1.0,
+        go_threshold=0.7,
+        hold_threshold=0.3,
+        no_go_threshold=0.2,
+        release_gate_open=False
+    )
+    serotonin_snap = SerotoninSnapshot(level=0.5, hold=True, temperature_floor=0.0)
+    eval_hold = gate.evaluate(dopamine_snap, serotonin=serotonin_snap)
     assert eval_hold.hold is True
     assert eval_hold.go is False
     assert eval_hold.no_go is True
 
 
 def test_gate_temperature_scaling(controller: DopamineController) -> None:
+    from tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot, SerotoninSnapshot
     thresholds = ddm_thresholds(
         1.2,
         controller.config["ddm_baseline_a"],
@@ -52,13 +62,18 @@ def test_gate_temperature_scaling(controller: DopamineController) -> None:
         baseline_t0=controller.config["ddm_baseline_t0"],
         eps=controller.config["ddm_eps"],
     )
-    gate = ActionGate(controller, DummySerotonin(floor=0.02))
+    gate = ActionGate(controller)
     base_temp = controller.compute_temperature(0.6)
-    eval_scaled = gate.evaluate(
-        dopamine_signal=0.6,
-        thresholds=thresholds,
-        release_gate_open=True,
+    dopamine_snap = DopamineSnapshot(
+        level=0.6,
+        temperature=base_temp,
+        go_threshold=0.7,
+        hold_threshold=0.3,
+        no_go_threshold=0.2,
+        release_gate_open=True
     )
+    serotonin_snap = SerotoninSnapshot(level=0.5, hold=False, temperature_floor=0.02)
+    eval_scaled = gate.evaluate(dopamine_snap, serotonin=serotonin_snap)
     assert eval_scaled.temperature <= controller.temperature_bounds()[1]
     assert eval_scaled.temperature <= base_temp + 1e-8
     assert eval_scaled.temperature >= controller.temperature_bounds()[0]
@@ -66,22 +81,40 @@ def test_gate_temperature_scaling(controller: DopamineController) -> None:
 
 
 def test_gate_balances_hold_and_go(controller: DopamineController) -> None:
-    serotonin = DummySerotonin(hold=False)
-    gate = ActionGate(controller, serotonin)
-    eval_decision = gate.evaluate(dopamine_signal=0.9, release_gate_open=True)
+    from tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot, SerotoninSnapshot
+    gate = ActionGate(controller)
+    dopamine_snap_high = DopamineSnapshot(
+        level=0.9,
+        temperature=1.0,
+        go_threshold=0.7,
+        hold_threshold=0.3,
+        no_go_threshold=0.2,
+        release_gate_open=True
+    )
+    serotonin_snap = SerotoninSnapshot(level=0.5, hold=False, temperature_floor=0.0)
+    eval_decision = gate.evaluate(dopamine_snap_high, serotonin=serotonin_snap)
 
     assert eval_decision.go is True
     assert eval_decision.hold is False
     assert eval_decision.no_go is False
     assert math.isfinite(eval_decision.temperature)
 
-    eval_hold = gate.evaluate(dopamine_signal=0.1, release_gate_open=True)
+    dopamine_snap_low = DopamineSnapshot(
+        level=0.1,
+        temperature=1.0,
+        go_threshold=0.7,
+        hold_threshold=0.3,
+        no_go_threshold=0.2,
+        release_gate_open=True
+    )
+    eval_hold = gate.evaluate(dopamine_snap_low, serotonin=serotonin_snap)
     assert eval_hold.no_go is True
     assert eval_hold.hold is True
 
 
 def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_path: Path) -> None:
     """Test ActionGate integration with SerotoninController.step() API."""
+    from tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot, SerotoninSnapshot
     # Direct import to avoid dependency issues in tests
     serotonin_spec = importlib.util.spec_from_file_location(
         "serotonin_controller",
@@ -97,12 +130,21 @@ def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_p
     sero_cfg.write_text(Path("configs/serotonin.yaml").read_text(encoding="utf-8"), encoding="utf-8")
     serotonin = SerotoninController(str(sero_cfg))
 
-    # Create ActionGate with both controllers
-    gate = ActionGate(controller, serotonin)
+    # Create ActionGate with dopamine controller
+    gate = ActionGate(controller)
 
     # Test 1: Low stress should not trigger HOLD
     hold1, veto1, _, level1 = serotonin.step(stress=0.1, drawdown=-0.01, novelty=0.1)
-    eval1 = gate.evaluate(dopamine_signal=0.8, release_gate_open=True)
+    dopamine_snap1 = DopamineSnapshot(
+        level=0.8,
+        temperature=1.0,
+        go_threshold=0.7,
+        hold_threshold=0.3,
+        no_go_threshold=0.2,
+        release_gate_open=True
+    )
+    serotonin_snap1 = SerotoninSnapshot(level=level1, hold=hold1, temperature_floor=serotonin.temperature_floor)
+    eval1 = gate.evaluate(dopamine_snap1, serotonin=serotonin_snap1)
 
     assert not hold1
     assert eval1.go is True
@@ -113,7 +155,16 @@ def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_p
         serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
 
     hold2, veto2, cooldown_s, level2 = serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
-    eval2 = gate.evaluate(dopamine_signal=0.8, release_gate_open=True)
+    dopamine_snap2 = DopamineSnapshot(
+        level=0.8,
+        temperature=1.0,
+        go_threshold=0.7,
+        hold_threshold=0.3,
+        no_go_threshold=0.2,
+        release_gate_open=True
+    )
+    serotonin_snap2 = SerotoninSnapshot(level=level2, hold=hold2, temperature_floor=serotonin.temperature_floor)
+    eval2 = gate.evaluate(dopamine_snap2, serotonin=serotonin_snap2)
 
     # If serotonin triggered hold, gate should respect it
     if hold2:
