@@ -729,7 +729,7 @@ jobs:
         working-directory: apps/web
         env:
           CI: 'true'
-        run: npx playwright test --config=playwright.config.ts --reporter=list
+        run: npx playwright test --config=playwright.config.ts --reporter=list --project="Desktop Chrome"
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
