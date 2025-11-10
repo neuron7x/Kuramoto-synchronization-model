@@ -268,7 +268,7 @@ import pyotp
 
 # Administrator receives secret securely from admin
 # Example only - replace with actual secret from secure channel
-secret = "JBSWY3DPEHPK3PXP"  # Example TOTP secret (base32)
+secret = "JBSWY3DPEHPK3PXP"  # Example TOTP secret (base32) # pragma: allowlist secret
 totp = pyotp.TOTP(secret)
 
 # Generate current code

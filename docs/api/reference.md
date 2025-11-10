@@ -838,7 +838,7 @@ X-Idempotent-Replay: true  # If replayed
 ### Cache Headers
 
 ```http
-ETag: "abc123def456"
+ETag: "abc123def456"  # Example ETag value
 X-Cache-Status: hit | miss
 Cache-Control: private, max-age=30
 ```
@@ -847,7 +847,7 @@ Cache-Control: private, max-age=30
 
 ```http
 GET /api/v1/features
-If-None-Match: "abc123def456"
+If-None-Match: "abc123def456"  # pragma: allowlist secret
 ```
 
 Returns `304 Not Modified` if unchanged.
