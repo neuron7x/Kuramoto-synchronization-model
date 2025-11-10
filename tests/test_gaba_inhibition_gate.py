@@ -316,3 +316,53 @@ def test_plasticity_metric_direction():
 
     assert metrics_depress.stdp_delta < 0
     assert metrics_depress.ltp_ltd_delta < 0
+
+
+def test_gate_params_validation():
+    """Invalid parameter settings should raise informative errors."""
+
+    with pytest.raises(ValueError):
+        GateParams(dt_ms=0.0)
+
+    with pytest.raises(ValueError):
+        GateParams(max_inhibition=1.5)
+
+
+def test_gate_params_from_dict_partial():
+    """from_dict should ignore unknown keys while applying overrides."""
+
+    params = GateParams.from_dict({'k_inhibit': 0.75, 'nonexistent': 5})
+    assert pytest.approx(params.k_inhibit, rel=1e-6) == 0.75
+
+
+def test_gate_configure_runtime_updates():
+    """configure should allow safe runtime parameter updates."""
+
+    gate = GABAInhibitionGate()
+    original_decay = gate.decay_fast.clone()
+
+    gate.configure(dt_ms=0.2, tau_gaba_a_ms=5.0)
+
+    assert pytest.approx(gate.p.dt_ms, rel=1e-6) == 0.2
+    assert pytest.approx(gate.p.tau_gaba_a_ms, rel=1e-6) == 5.0
+    assert not torch.allclose(original_decay, gate.decay_fast)
+
+
+def test_gate_configure_conflict_check():
+    """configure should reject mixing full params with overrides."""
+
+    gate = GABAInhibitionGate()
+    with pytest.raises(ValueError):
+        gate.configure(GateParams(), k_inhibit=0.5)
+
+
+def test_gate_config_round_trip():
+    """Configuration dict round-trip should preserve overrides."""
+
+    gate = GABAInhibitionGate()
+    gate.configure(k_inhibit=0.55, gamma_cycle_amplitude=0.05)
+    config = gate.to_config()
+
+    rebuilt = GABAInhibitionGate.from_config(config)
+    assert pytest.approx(rebuilt.p.k_inhibit, rel=1e-6) == 0.55
+    assert pytest.approx(rebuilt.p.gamma_cycle_amplitude, rel=1e-6) == 0.05
