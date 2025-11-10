@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -17,37 +15,27 @@ from tradepulse.core.neuro.dopamine.action_gate import (
     SerotoninSnapshot,
 )
 from tradepulse.core.neuro.dopamine.ddm_adapter import DDMThresholds, ddm_thresholds
+from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 
 SEROTONIN_TEST_CONFIG = {
-    "alpha": 0.42,
-    "beta": 0.28,
-    "gamma": 0.32,
-    "delta_rho": 0.18,
-    "k": 1.0,
-    "theta": 0.5,
-    "delta": 0.8,
-    "za_bias": -0.33,
-    "decay_rate": 0.05,
-    "cooldown_threshold": 0.7,
-    "desens_threshold_ticks": 100,
-    "desens_rate": 0.01,
-    "target_dd": -0.05,
-    "target_sharpe": 1.0,
-    "beta_temper": 0.12,
-    "max_desens_counter": 1000,
-    "phase_threshold": 0.4,
-    "burst_factor": 2.5,
-    "mod_t_max": 4.0,
-    "mod_t_half": 24.0,
-    "mod_k": 0.7,
-    "tick_hours": 1.0,
-    "phase_kappa": 0.08,
-    "desens_gain": 0.12,
-    "gate_veto": 0.9,
-    "phasic_veto": 1.0,
-    "temperature_floor_min": 0.05,
-    "temperature_floor_max": 0.4,
+    "tonic_beta": 0.15,
+    "phasic_beta": 0.35,
+    "stress_gain": 1.0,
+    "drawdown_gain": 1.2,
+    "novelty_gain": 0.6,
+    "stress_threshold": 0.7,
+    "release_threshold": 0.4,
+    "hysteresis": 0.1,
+    "cooldown_ticks": 3,
+    "chronic_window": 6,
+    "desensitization_rate": 0.05,
+    "desensitization_decay": 0.05,
+    "max_desensitization": 0.6,
+    "floor_min": 0.1,
+    "floor_max": 0.6,
+    "floor_gain": 0.8,
+    "cooldown_extension": 2,
 }
 
 
@@ -202,15 +190,6 @@ def test_gate_produces_hold_window(controller: DopamineController) -> None:
 
 def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_path: Path) -> None:
     """Test ActionGate integration with SerotoninController.step() API."""
-    serotonin_spec = importlib.util.spec_from_file_location(
-        "serotonin_controller",
-        Path(__file__).resolve().parents[4] / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
-    )
-    serotonin_module = importlib.util.module_from_spec(serotonin_spec)
-    sys.modules["serotonin_controller_test"] = serotonin_module
-    serotonin_spec.loader.exec_module(serotonin_module)
-    SerotoninController = serotonin_module.SerotoninController
-
     sero_cfg = tmp_path / "serotonin.yaml"
     sero_cfg.write_text(yaml.safe_dump(SEROTONIN_TEST_CONFIG), encoding="utf-8")
     serotonin = SerotoninController(str(sero_cfg))
@@ -218,10 +197,12 @@ def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_p
     gate = ActionGate(controller)
     dopamine = _make_dopamine_snapshot(controller, 0.8, release_gate_open=True)
 
-    hold1, veto1, cooldown1, level1 = serotonin.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+    step1 = serotonin.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+    level1 = float(step1["level"])
+    hold1 = bool(step1["hold"])
     sero_snapshot1 = SerotoninSnapshot(
-        level=float(level1),
-        hold=bool(hold1),
+        level=level1,
+        hold=hold1,
         temperature_floor=float(serotonin.temperature_floor),
     )
     eval1 = gate.evaluate(dopamine=dopamine, serotonin=sero_snapshot1)
@@ -233,10 +214,13 @@ def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_p
     for _ in range(50):
         serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
 
-    hold2, veto2, cooldown2, level2 = serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    step2 = serotonin.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    level2 = float(step2["level"])
+    hold2 = bool(step2["hold"])
+    cooldown2 = float(step2["cooldown"])
     sero_snapshot2 = SerotoninSnapshot(
-        level=float(level2),
-        hold=bool(hold2),
+        level=level2,
+        hold=hold2,
         temperature_floor=float(serotonin.temperature_floor),
     )
     eval2 = gate.evaluate(dopamine=dopamine, serotonin=sero_snapshot2)
