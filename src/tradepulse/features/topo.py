@@ -80,18 +80,55 @@ class TopoSentinel:
         dict
             Dictionary with key 'topo_score': float
         """
-        if len(returns) < self.window:
+        numeric = returns.select_dtypes(include=[np.number]).copy()
+        if numeric.empty:
+            logger.warning("TopoSentinel received no numeric columns; returning 0.0")
+            return {"topo_score": 0.0}
+
+        numeric.replace([np.inf, -np.inf], np.nan, inplace=True)
+        numeric.dropna(axis=1, how="all", inplace=True)
+        numeric.dropna(axis=0, how="all", inplace=True)
+
+        if numeric.empty:
             logger.warning(
-                f"Insufficient data for TopoSentinel: got {len(returns)}, "
-                f"need {self.window}. Returning topo_score=0.0"
+                "TopoSentinel found no usable data after removing empty rows/columns; "
+                "returning 0.0"
+            )
+            return {"topo_score": 0.0}
+
+        usable_counts = numeric.count()
+        numeric = numeric.loc[:, usable_counts >= 2]
+
+        if numeric.shape[1] < 2:
+            logger.warning(
+                "TopoSentinel requires at least two assets with sufficient observations; "
+                "returning 0.0"
+            )
+            return {"topo_score": 0.0}
+
+        variances = numeric.var(skipna=True)
+        numeric = numeric.loc[:, (variances > 0.0) & variances.notna()]
+
+        if numeric.shape[1] < 2:
+            logger.warning(
+                "TopoSentinel found fewer than two assets with non-zero variance; "
+                "returning 0.0"
+            )
+            return {"topo_score": 0.0}
+
+        effective_rows = numeric.dropna(how="all")
+        if len(effective_rows) < self.window:
+            logger.warning(
+                "Insufficient usable data for TopoSentinel after cleaning: "
+                f"got {len(effective_rows)}, need {self.window}. Returning topo_score=0.0"
             )
             return {"topo_score": 0.0}
 
         if HAS_GUDHI:
-            topo_score = self._compute_tda_score(returns)
+            topo_score = self._compute_tda_score(effective_rows)
         else:
             # Fallback to graph-based proxy
-            topo_score = self._compute_proxy_score(returns)
+            topo_score = self._compute_proxy_score(effective_rows)
 
         return {"topo_score": topo_score}
 
@@ -105,6 +142,7 @@ class TopoSentinel:
 
         # Compute correlation matrix
         corr = recent.corr()
+        corr = self._clean_correlation_matrix(corr)
 
         # Convert to distance matrix (1 - |correlation|)
         dist_matrix = 1.0 - np.abs(corr.values)
@@ -151,14 +189,23 @@ class TopoSentinel:
 
         # Compute correlation matrix
         corr = recent.corr()
+        corr = self._clean_correlation_matrix(corr)
 
         # Compute eigenvalue spectrum
         eigenvalues = np.linalg.eigvalsh(corr.values)
+        eigenvalues_sum = float(np.sum(eigenvalues))
+        if not np.isfinite(eigenvalues_sum) or eigenvalues_sum <= 0:
+            logger.warning("Correlation matrix produced invalid eigenvalue sum; returning 0.0")
+            return 0.0
 
         # Participation ratio (inverse of normalized eigenvalue variance)
         # High PR = uniform eigenvalues = complex topology
-        eigenvalues_norm = eigenvalues / eigenvalues.sum()
-        participation_ratio = 1.0 / (eigenvalues_norm**2).sum()
+        eigenvalues_norm = eigenvalues / eigenvalues_sum
+        denom = float(np.sum(eigenvalues_norm**2))
+        if not np.isfinite(denom) or denom <= 0:
+            logger.warning("Eigenvalue spectrum is degenerate; returning 0.0")
+            return 0.0
+        participation_ratio = 1.0 / denom
 
         # Normalize by number of assets
         n_assets = len(recent.columns)
@@ -167,7 +214,11 @@ class TopoSentinel:
         # Compute clustering coefficient proxy from correlation structure
         # High correlations in small groups = low score
         # Uniform correlations = high score
-        corr_std = np.std(np.abs(corr.values[np.triu_indices_from(corr.values, k=1)]))
+        upper_triangle = np.abs(corr.values[np.triu_indices_from(corr.values, k=1)])
+        if upper_triangle.size == 0:
+            corr_std = 0.0
+        else:
+            corr_std = float(np.nanstd(upper_triangle))
 
         # Combine metrics
         topo_score = float(pr_normalized * (1.0 + corr_std))
@@ -175,4 +226,18 @@ class TopoSentinel:
         # Clip to reasonable range
         topo_score = float(np.clip(topo_score, 0.0, 1.0))
 
+        if not np.isfinite(topo_score):
+            return 0.0
+
         return topo_score
+
+    def _clean_correlation_matrix(self, corr: DataFrame) -> DataFrame:
+        """Return a numeric correlation matrix with NaNs replaced by safe defaults."""
+
+        if corr.empty:
+            return corr
+
+        cleaned = corr.fillna(0.0)
+        np.fill_diagonal(cleaned.values, 1.0)
+        cleaned = (cleaned + cleaned.T) / 2.0
+        return cleaned
