@@ -138,15 +138,38 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
     arr1 = _as_array(data1, name="data1")
     arr2 = _as_array(data2, name="data2")
 
-    if arr1.shape != arr2.shape:
-        raise ValueError("data1 and data2 must be of equal length")
-
-    # Apply a shared mask so NaNs are removed in lockstep.  Historical callers
-    # rely on the positional alignment between the baseline and candidate
-    # samples as the inputs typically originate from paired records.
-    mask = np.isfinite(arr1) & np.isfinite(arr2)
-    arr1 = arr1[mask]
-    arr2 = arr2[mask]
+    if arr1.shape == arr2.shape:
+        # Apply a shared mask so NaNs are removed in lockstep.  Historical
+        # callers rely on positional alignment when both distributions are
+        # provided explicitly as probability vectors.
+        mask = np.isfinite(arr1) & np.isfinite(arr2)
+        arr1 = arr1[mask]
+        arr2 = arr2[mask]
+        if arr1.size == 0 or arr2.size == 0:
+            return float("nan")
+        total1 = arr1.sum()
+        total2 = arr2.sum()
+        if total1 > 0:
+            arr1 = arr1 / total1
+        if total2 > 0:
+            arr2 = arr2 / total2
+    else:
+        # When samples have different lengths treat them as empirical
+        # observations and build discrete probability distributions over the
+        # shared support.  Missing categories are assigned probability zero.
+        arr1 = arr1[np.isfinite(arr1)]
+        arr2 = arr2[np.isfinite(arr2)]
+        if arr1.size == 0 or arr2.size == 0:
+            return float("nan")
+        support = np.union1d(arr1, arr2)
+        probs1 = np.zeros_like(support, dtype=float)
+        probs2 = np.zeros_like(support, dtype=float)
+        values1, counts1 = np.unique(arr1, return_counts=True)
+        values2, counts2 = np.unique(arr2, return_counts=True)
+        probs1[np.searchsorted(support, values1)] = counts1 / arr1.size
+        probs2[np.searchsorted(support, values2)] = counts2 / arr2.size
+        arr1 = probs1
+        arr2 = probs2
 
     if arr1.size == 0 or arr2.size == 0:
         return float("nan")
