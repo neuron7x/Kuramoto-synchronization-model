@@ -62,6 +62,19 @@ def test_js_divergence_empty_inputs():
         f"Expected NaN for empty inputs, but got {result}"
     )
 
+def test_js_divergence_different_lengths_samples():
+    """JS divergence should handle sample arrays with different lengths."""
+
+    baseline = np.array([0.0, 0.0, 1.0, 1.0])
+    current = np.array([0.0, 1.0, 1.0])
+
+    result = compute_js_divergence(baseline, current)
+
+    assert np.isfinite(result), "Expected finite JS divergence for sample arrays"
+    assert result >= 0.0, "Divergence must be non-negative"
+    assert pytest.approx(result, rel=1e-3, abs=1e-6) == 0.014362591564146746
+
+
 
 @pytest.mark.parametrize(
     "data1,data2,drifted",

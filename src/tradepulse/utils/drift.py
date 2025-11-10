@@ -139,31 +139,18 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
     arr2 = _as_array(data2, name="data2")
 
     if arr1.shape != arr2.shape:
-        raise ValueError("data1 and data2 must have the same length for JSD computation")
+        raise ValueError("data1 and data2 must be of equal length")
 
-    # ``jensenshannon`` cannot handle NaN payloads.  The helper above guarantees
-    # that the arrays only contain finite values or NaNs, so we can safely drop
-    # the missing entries here using a shared mask.  This mirrors the behaviour
-    # of ``compute_ks_test`` where non-finite values are ignored instead of
-    # poisoning the metric with ``nan``.  Real-world market data frequently
-    # contains gaps due to exchange halts or backfill delays, therefore treating
-    # NaNs as "no data" is the pragmatic choice.
-    mask1 = np.isfinite(arr1)
-    mask2 = np.isfinite(arr2)
-    mask = mask1 & mask2
-    if not mask.all():
-        dropped1 = int((~mask1).sum())
-        dropped2 = int((~mask2).sum())
-        arr1 = arr1[mask]
-        arr2 = arr2[mask]
-        logger.debug(
-            "Dropped NaN values before JSD computation: data1=%d data2=%d",
-            dropped1,
-            dropped2,
-        )
+    # Apply a shared mask so NaNs are removed in lockstep.  Historical callers
+    # rely on the positional alignment between the baseline and candidate
+    # samples as the inputs typically originate from paired records.
+    mask = np.isfinite(arr1) & np.isfinite(arr2)
+    arr1 = arr1[mask]
+    arr2 = arr2[mask]
 
     if arr1.size == 0 or arr2.size == 0:
         return float("nan")
+
     distance = jensenshannon(arr1, arr2)
     divergence = float(distance ** 2)
     logger.debug("Computed JSD divergence: %s", divergence)
