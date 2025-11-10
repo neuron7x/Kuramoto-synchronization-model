@@ -252,3 +252,5 @@ def test_benchmark_runner(schema: TimeSeriesSchema) -> None:
     assert len(queries) == workload.warmup_iterations + workload.query_iterations
     assert metrics.ingest_p50_ms > 0
     assert metrics.query_p95_ms > 0
+    assert metrics.ingest_throughput_rows_s > 0
+    assert metrics.query_throughput_qps > 0

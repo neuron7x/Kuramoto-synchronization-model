@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import base64
 import hashlib
 import hmac
 import json
 import time
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import urlencode
 
 import httpx
@@ -20,7 +21,9 @@ from execution.adapters import (
     BinanceRESTConnector,
     CoinbaseRESTConnector,
     KrakenRESTConnector,
+    RESTWebSocketConnector,
 )
+from execution.connectors import TransientOrderError
 
 
 class QueueWebSocketFactory:
@@ -56,6 +59,61 @@ class QueueWebSocketFactory:
                 raise asyncio.CancelledError  # pragma: no cover - safety
 
         return _QueueWebSocket()
+
+
+class _FailingClient:
+    def __init__(self, exc: Exception) -> None:
+        self._exc = exc
+
+    def request(self, *args, **kwargs):  # pragma: no cover - exercised in tests
+        raise self._exc
+
+    def close(self) -> None:  # pragma: no cover - compatibility shim
+        pass
+
+
+class _TestRESTConnector(RESTWebSocketConnector):
+    def __init__(self, client: Any) -> None:
+        super().__init__(
+            name="test",
+            base_url="https://example.com",
+            sandbox=True,
+            http_client=client,
+            ws_factory=lambda url: contextlib.nullcontext(),
+        )
+
+    def _resolve_credentials(self, credentials):
+        return {}
+
+    def _sign_request(self, method, path, *, params, json_payload, headers):
+        return params, json_payload, headers, None
+
+    def _order_endpoint(self):
+        return "/orders"
+
+    def _build_place_payload(self, order, idempotency_key):
+        return {}
+
+    def _parse_order(self, payload, *, original=None):
+        raise NotImplementedError
+
+    def _cancel_endpoint(self, order_id):
+        return "/orders", {}
+
+    def _fetch_endpoint(self, order_id):
+        return "/orders", {}
+
+    def _open_orders_endpoint(self):
+        return "/orders", {}
+
+    def _positions_endpoint(self):
+        return "/positions", {}
+
+    def _parse_positions(self, payload):
+        return []
+
+    def _handle_stream_message(self, payload):
+        return None
 
 
 @pytest.fixture()
@@ -221,6 +279,23 @@ def test_binance_rest_connector_signs_and_streams(
 
     connector.disconnect()
     client.close()
+
+
+@pytest.mark.parametrize(
+    "exception_factory",
+    [
+        lambda request: httpx.ConnectTimeout("boom", request=request),
+        lambda request: httpx.NetworkError("reset", request=request),
+    ],
+)
+def test_rest_connector_translates_httpx_errors(exception_factory) -> None:
+    request = httpx.Request("GET", "https://example.com/orders")
+    exc = exception_factory(request)
+    client = _FailingClient(exc)
+    connector = _TestRESTConnector(client)
+    connector._connected = True  # type: ignore[attr-defined]
+    with pytest.raises(TransientOrderError):
+        connector._request("GET", "/orders")
 
 
 def test_binance_cancel_replace(

@@ -285,14 +285,22 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 json_payload=request_json,
                 headers=headers,
             )
-        response = self._http_client.request(
-            method,
-            path,
-            params=request_params,
-            json=request_json,
-            data=data_payload,
-            headers=headers,
-        )
+        try:
+            response = self._http_client.request(
+                method,
+                path,
+                params=request_params,
+                json=request_json,
+                data=data_payload,
+                headers=headers,
+            )
+        except httpx.TimeoutException as exc:
+            raise TransientOrderError("HTTP request timed out") from exc
+        except httpx.RequestError as exc:
+            message = str(exc)
+            if not message:
+                message = exc.__class__.__name__
+            raise TransientOrderError(f"HTTP request failed: {message}") from exc
         if response.status_code == 429:
             raise TransientOrderError("HTTP 429: rate limited")
         if 500 <= response.status_code < 600:
