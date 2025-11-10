@@ -1,8 +1,7 @@
 """Basal ganglia inspired decision stack orchestrating neuromodulators."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Mapping, MutableMapping, Optional, Sequence
+from typing import Mapping, MutableMapping, NamedTuple, Optional, Sequence
 
 from tradepulse.core.neuro.dopamine.action_gate import (
     ActionGate,
@@ -17,8 +16,9 @@ from tradepulse.core.neuro.na_ach.neuromods import NAACHNeuromodulator
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 
-@dataclass
-class DecisionResult:
+class DecisionResult(NamedTuple):
+    """Immutable decision container returned by the neuromodulator stack."""
+
     decision: str
     score: float
     extras: Mapping[str, object]
