@@ -15,6 +15,9 @@
     "badges": {
       "live": "У реальному часі"
     },
+    "accessibility": {
+      "skipLink": "Перейти до основного вмісту"
+    },
     "controls": {
       "toggle": {
         "label": "Меню",

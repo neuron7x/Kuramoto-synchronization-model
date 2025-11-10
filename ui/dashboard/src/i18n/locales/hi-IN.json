@@ -15,6 +15,9 @@
     "badges": {
       "live": "लाइव"
     },
+    "accessibility": {
+      "skipLink": "मुख्य सामग्री पर जाएँ"
+    },
     "controls": {
       "toggle": {
         "label": "मेनू",

@@ -15,6 +15,9 @@
     "badges": {
       "live": "实时"
     },
+    "accessibility": {
+      "skipLink": "跳转到主要内容"
+    },
     "controls": {
       "toggle": {
         "label": "菜单",
