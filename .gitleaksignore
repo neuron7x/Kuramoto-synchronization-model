@@ -1,0 +1,8 @@
+# Gitleaks ignore file - exclude documentation with example tokens
+docs/api/comprehensive_guide.md
+docs/api/integration_guide.md
+docs/api/quick_start.md
+docs/api/reference.md
+docs/api/security.md
+docs/api/INDEX.md
+docs/api/README.md
