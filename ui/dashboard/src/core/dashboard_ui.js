@@ -5,6 +5,7 @@ import { renderPnlQuotesView } from '../views/pnl_quotes.js';
 import { renderPositionsView } from '../views/positions.js';
 import { renderSignalsView } from '../views/signals.js';
 import { renderCommunityView } from '../views/community.js';
+import { renderMonitoringView } from '../views/monitoring.js';
 import { escapeHtml, serializeForScript } from './formatters.js';
 import { BASE_STYLES } from '../styles/base.css.js';
 import { TABLE_STYLES } from '../styles/table.css.js';
@@ -27,7 +28,7 @@ const FALLBACK_MENU_GROUPS = [
     id: 'intelligence',
     label: 'Market intelligence',
     description: 'Monitor performance, profitability, and open risk.',
-    items: ['overview', 'pnl', 'positions'],
+    items: ['overview', 'monitoring', 'pnl', 'positions'],
   },
   {
     id: 'execution',
@@ -1132,6 +1133,7 @@ function renderNavigation(router, currentRoute, currentLocale) {
 /**
  * @param {{
  *   overview?: DashboardOverviewPayload;
+ *   monitoring?: import('../types/api').DashboardMonitoringPayload;
  *   positions?: unknown;
  *   orders?: unknown;
  *   pnl?: unknown;
@@ -1139,11 +1141,12 @@ function renderNavigation(router, currentRoute, currentLocale) {
  *   community?: DashboardCommunityPayload;
  * }} config
  */
-function createDashboardRouter({ overview, positions, orders, pnl, signals, community }) {
+function createDashboardRouter({ overview, monitoring, positions, orders, pnl, signals, community }) {
   return createRouter({
     defaultRoute: 'overview',
     routes: {
       overview: () => renderOverviewView(overview),
+      monitoring: () => renderMonitoringView(monitoring),
       pnl: () => renderPnlQuotesView(pnl),
       positions: () => renderPositionsView(positions),
       orders: () => renderOrdersView(orders),
@@ -1160,6 +1163,7 @@ export function renderDashboard(options = {}) {
   const {
     route = 'overview',
     overview = {},
+    monitoring = {},
     positions = {},
     orders = {},
     pnl = {},
@@ -1169,7 +1173,7 @@ export function renderDashboard(options = {}) {
     onboarding: onboardingConfig = {},
   } = options;
 
-  const router = createDashboardRouter({ overview, positions, orders, pnl, signals, community });
+  const router = createDashboardRouter({ overview, monitoring, positions, orders, pnl, signals, community });
   const { name: currentRoute, view } = router.navigate(route);
   const locale = getLocale();
   const navigation = renderNavigation(router, currentRoute, locale);

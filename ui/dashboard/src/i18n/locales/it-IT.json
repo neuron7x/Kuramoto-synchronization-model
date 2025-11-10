@@ -28,7 +28,8 @@
       "orders": "Ordini",
       "pnl": "PnL e Quotazioni",
       "signals": "Segnali",
-      "community": "Comunità"
+      "community": "Comunità",
+      "monitoring": "Monitoraggio"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "Iniziative ad alto impatto che cercano nuovi contributor.",
         "fallbackTitle": "Opportunità",
         "cta": "Manifesta interesse"
+      }
+    },
+    "monitoring": {
+      "title": "Monitoraggio del rischio",
+      "heading": "Centro di controllo del rischio",
+      "subtitle": "Tieni sotto controllo kill switch, interruttori e stress dei limiti in un’unica vista.",
+      "labels": {
+        "environment": "Ambiente",
+        "killSwitch": "Kill switch",
+        "circuitBreaker": "Interruttore"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Esposizione lorda",
+          "limit": "Limite {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Drawdown giornaliero",
+          "limit": "Soglia {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Salute del flusso ordini",
+          "open": "{count} ordini aperti",
+          "rejections": "{rate} tasso di rifiuto",
+          "trips": "{count} interventi ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Controlli di sicurezza",
+          "killSwitch": {
+            "title": "Kill switch",
+            "status": {
+              "enabled": "Attivo",
+              "disabled": "Disattivato"
+            },
+            "changed": "Aggiornato {time}",
+            "actor": "Da {actor}",
+            "reason": "Motivo: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Interruttore",
+            "status": {
+              "open": "Aperto",
+              "half_open": "Semiaperto",
+              "closed": "Chiuso"
+            },
+            "trigger": "Ultimo intervento {time}",
+            "cooldown": "Raffreddamento {value}",
+            "reason": "Motivo: {reason}"
+          }
+        },
+        "trends": {
+          "title": "Telemetria delle tendenze",
+          "exposure": {
+            "title": "Cronologia esposizione",
+            "empty": "Nessun campione di esposizione"
+          },
+          "drawdown": {
+            "title": "Cronologia drawdown",
+            "empty": "Nessun campione di drawdown"
+          }
+        },
+        "alerts": {
+          "title": "Avvisi e override",
+          "empty": "Nessun avviso attivo",
+          "columns": {
+            "timestamp": "Timestamp",
+            "severity": "Gravità",
+            "message": "Messaggio"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Info",
+          "warning": "Avviso",
+          "critical": "Critico"
+        }
       }
     }
   },

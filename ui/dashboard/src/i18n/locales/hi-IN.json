@@ -28,7 +28,8 @@
       "orders": "ऑर्डर",
       "pnl": "PnL एवं कोट्स",
       "signals": "सिग्नल",
-      "community": "समुदाय"
+      "community": "समुदाय",
+      "monitoring": "मॉनिटरिंग"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "उच्च प्रभाव वाले कार्यक्षेत्र जिन्हें नए योगदानकर्ताओं की आवश्यकता है।",
         "fallbackTitle": "अवसर",
         "cta": "रुचि दर्ज करें"
+      }
+    },
+    "monitoring": {
+      "title": "जोखिम मॉनिटरिंग",
+      "heading": "जोखिम नियंत्रण केंद्र",
+      "subtitle": "एक ही दृश्य में किल स्विच, सर्किट ब्रेकर और सीमा दबाव पर नज़र रखें।",
+      "labels": {
+        "environment": "पर्यावरण",
+        "killSwitch": "किल स्विच",
+        "circuitBreaker": "सर्किट ब्रेकर"
+      },
+      "cards": {
+        "exposure": {
+          "title": "सकल जोखिम एक्सपोज़र",
+          "limit": "सीमा {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "दैनिक ड्रॉडाउन",
+          "limit": "गार्डरेल {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "ऑर्डर फ्लो की स्थिति",
+          "open": "{count} खुले ऑर्डर",
+          "rejections": "{rate} अस्वीकृति दर",
+          "trips": "{count} ट्रिप ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "सुरक्षा नियंत्रण",
+          "killSwitch": {
+            "title": "किल स्विच",
+            "status": {
+              "enabled": "सक्रिय",
+              "disabled": "निष्क्रिय"
+            },
+            "changed": "अद्यतन {time}",
+            "actor": "{actor} द्वारा",
+            "reason": "कारण: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "सर्किट ब्रेकर",
+            "status": {
+              "open": "खुला",
+              "half_open": "आधा खुला",
+              "closed": "बंद"
+            },
+            "trigger": "आखिरी ट्रिप {time}",
+            "cooldown": "कूलडाउन {value}",
+            "reason": "कारण: {reason}"
+          }
+        },
+        "trends": {
+          "title": "रुझान टेलीमेट्री",
+          "exposure": {
+            "title": "एक्सपोज़र टाइमलाइन",
+            "empty": "एक्सपोज़र डेटा उपलब्ध नहीं"
+          },
+          "drawdown": {
+            "title": "ड्रॉडाउन टाइमलाइन",
+            "empty": "ड्रॉडाउन डेटा उपलब्ध नहीं"
+          }
+        },
+        "alerts": {
+          "title": "अलर्ट और ओवरराइड",
+          "empty": "कोई सक्रिय अलर्ट नहीं",
+          "columns": {
+            "timestamp": "समय-मुहर",
+            "severity": "गंभीरता",
+            "message": "संदेश"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "जानकारी",
+          "warning": "चेतावनी",
+          "critical": "गंभीर"
+        }
       }
     }
   },

@@ -26,6 +26,7 @@ import { renderPositionsView } from '../src/views/positions.js';
 import { renderOrdersView } from '../src/views/orders.js';
 import { renderPnlQuotesView } from '../src/views/pnl_quotes.js';
 import { renderSignalsView } from '../src/views/signals.js';
+import { renderMonitoringView } from '../src/views/monitoring.js';
 import { renderAreaChart } from '../src/components/area_chart.js';
 import { createLiveTable, LiveTable } from '../src/components/live_table.js';
 import { escapeHtml, formatNumber, formatTimestamp } from '../src/core/formatters.js';
@@ -452,6 +453,60 @@ const signalEvents = [
   },
 ];
 
+const monitoringTelemetry = {
+  environment: 'prod',
+  currency: 'USD',
+  controls: {
+    killSwitch: {
+      enabled: false,
+      changedAt: now - 120000,
+      changedBy: 'ops@tradepulse.ai',
+      reason: 'Quarterly drill reset',
+    },
+    circuitBreaker: {
+      state: 'closed',
+      triggeredAt: now - 720000,
+      reason: 'PnL recovered within guardrail',
+      cooldownSeconds: 900,
+    },
+  },
+  metrics: {
+    grossExposure: { value: 1250000, limit: 1500000 },
+    drawdown: { value: -0.038, limit: -0.1 },
+    openOrders: { value: 18, limit: 40 },
+    rejectionRate: { value: 0.012, threshold: 0.05, window: '1h' },
+    circuitTrips: { value: 1, threshold: 3, window: '1h' },
+  },
+  timeSeries: {
+    exposure: [
+      { timestamp: now - 3600000, value: 980000 },
+      { timestamp: now - 1800000, value: 1120000 },
+      { timestamp: now - 600000, value: 1195000 },
+      { timestamp: now, value: 1250000 },
+    ],
+    drawdown: [
+      { timestamp: now - 3600000, value: -0.045 },
+      { timestamp: now - 1800000, value: -0.041 },
+      { timestamp: now - 600000, value: -0.036 },
+      { timestamp: now, value: -0.038 },
+    ],
+  },
+  alerts: [
+    {
+      id: 'alert-1',
+      severity: 'warning',
+      message: 'PnL drawdown breached warning threshold at -4%',
+      timestamp: now - 900000,
+    },
+    {
+      id: 'alert-2',
+      severity: 'critical',
+      message: 'Manual override executed by ops<script>alert("x")</script>',
+      timestamp: now - 300000,
+    },
+  ],
+};
+
 // --- Live table component -------------------------------------------------------------------
 
 const table = createLiveTable({
@@ -514,6 +569,26 @@ assert.ok(emptyChart.html.includes('Chart data is not available'), 'empty charts
 
 console.log('area chart tests passed');
 
+const monitoringView = renderMonitoringView(monitoringTelemetry);
+assert.strictEqual(monitoringView.route, 'monitoring', 'monitoring view should expose monitoring route identifier');
+assert.ok(monitoringView.html.includes('Risk Control Center'), 'monitoring view should include headline');
+assert.ok(monitoringView.html.includes('tp-pill'), 'monitoring view should surface status pills for controls');
+assert.ok(monitoringView.charts.exposure.points.length >= 1, 'monitoring view should expose exposure chart points');
+assert.ok(
+  monitoringView.html.includes('tp-live-table__table'),
+  'monitoring view should render alerts table markup',
+);
+assert.ok(
+  !monitoringView.html.includes('<script>alert("x")</script>'),
+  'monitoring view should escape alert messages to prevent script injection',
+);
+assert.ok(
+  monitoringView.html.includes('data-role="view-meta"'),
+  'monitoring view should embed metadata payload for hydration',
+);
+
+console.log('monitoring view tests passed');
+
 // --- Dashboard shell + views ----------------------------------------------------------------
 
 const dashboardView = renderDashboard({
@@ -524,6 +599,7 @@ const dashboardView = renderDashboard({
     tags: ['derivatives', 'equities'],
   },
   overview: { github: githubOverview },
+  monitoring: monitoringTelemetry,
   positions: { fills: fillEvents, orders: orderEvents, ticks },
   orders: { orders: orderEvents, fills: fillEvents },
   pnl: { pnlPoints, quotes },
@@ -538,8 +614,9 @@ assert.strictEqual(dashboardView.styles, DASHBOARD_STYLES, 'render should expose
 assert.strictEqual(dashboardView.route, 'positions');
 
 const navigationLinks = (dashboardView.html.match(/<a class="tp-nav__link/g) || []).length;
-assert.strictEqual(navigationLinks, 6, 'dashboard should render all navigation links');
+assert.strictEqual(navigationLinks, 7, 'dashboard should render all navigation links');
 assert.ok(dashboardView.html.includes('Signals'), 'navigation should expose signals route');
+assert.ok(dashboardView.html.includes('Monitoring'), 'navigation should expose monitoring route');
 assert.ok(dashboardView.html.includes('Community'), 'navigation should expose community route');
 assert.ok(dashboardView.html.includes('Overview'), 'navigation should surface overview route');
 
@@ -584,6 +661,7 @@ assert.strictEqual(overviewView.github, githubOverview);
 
 const overviewDashboard = renderDashboard({
   overview: { github: githubOverview },
+  monitoring: monitoringTelemetry,
   positions: { fills: fillEvents, orders: orderEvents, ticks },
   orders: { orders: orderEvents, fills: fillEvents },
   pnl: { pnlPoints, quotes },

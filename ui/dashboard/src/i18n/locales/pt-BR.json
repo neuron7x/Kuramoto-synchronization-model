@@ -28,7 +28,8 @@
       "orders": "Ordens",
       "pnl": "PnL e cotações",
       "signals": "Sinais",
-      "community": "Comunidade"
+      "community": "Comunidade",
+      "monitoring": "Monitoramento"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "Iniciativas de alto impacto em busca de novos participantes.",
         "fallbackTitle": "Oportunidade",
         "cta": "Registrar interesse"
+      }
+    },
+    "monitoring": {
+      "title": "Monitoramento de risco",
+      "heading": "Centro de controle de riscos",
+      "subtitle": "Acompanhe o kill switch, os disjuntores e a pressão de limites em uma única visualização.",
+      "labels": {
+        "environment": "Ambiente",
+        "killSwitch": "Kill switch",
+        "circuitBreaker": "Disjuntor"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Exposição bruta",
+          "limit": "Limite {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Drawdown diário",
+          "limit": "Limite de segurança {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Saúde do fluxo de ordens",
+          "open": "{count} ordens abertas",
+          "rejections": "{rate} taxa de rejeição",
+          "trips": "{count} disparos ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Controles de segurança",
+          "killSwitch": {
+            "title": "Kill switch",
+            "status": {
+              "enabled": "Ativado",
+              "disabled": "Desativado"
+            },
+            "changed": "Atualizado {time}",
+            "actor": "Por {actor}",
+            "reason": "Motivo: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Disjuntor",
+            "status": {
+              "open": "Aberto",
+              "half_open": "Semiaberto",
+              "closed": "Fechado"
+            },
+            "trigger": "Último disparo {time}",
+            "cooldown": "Rearme em {value}",
+            "reason": "Motivo: {reason}"
+          }
+        },
+        "trends": {
+          "title": "Telemetria de tendências",
+          "exposure": {
+            "title": "Linha do tempo de exposição",
+            "empty": "Sem amostras de exposição"
+          },
+          "drawdown": {
+            "title": "Linha do tempo de drawdown",
+            "empty": "Sem amostras de drawdown"
+          }
+        },
+        "alerts": {
+          "title": "Alertas e overrides",
+          "empty": "Nenhum alerta ativo",
+          "columns": {
+            "timestamp": "Carimbo de tempo",
+            "severity": "Severidade",
+            "message": "Mensagem"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Info",
+          "warning": "Aviso",
+          "critical": "Crítico"
+        }
       }
     }
   },

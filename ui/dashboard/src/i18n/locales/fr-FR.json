@@ -28,7 +28,8 @@
       "orders": "Ordres",
       "pnl": "PnL & Cotations",
       "signals": "Signaux",
-      "community": "Communauté"
+      "community": "Communauté",
+      "monitoring": "Supervision"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "Initiatives prioritaires actuellement en recherche de nouveaux contributeurs.",
         "fallbackTitle": "Opportunité",
         "cta": "Exprimer son intérêt"
+      }
+    },
+    "monitoring": {
+      "title": "Surveillance des risques",
+      "heading": "Centre de contrôle des risques",
+      "subtitle": "Suivez le kill switch, les coupe-circuits et la pression sur les limites dans une seule vue.",
+      "labels": {
+        "environment": "Environnement",
+        "killSwitch": "Kill switch",
+        "circuitBreaker": "Coupe-circuit"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Exposition brute",
+          "limit": "Limite {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Drawdown quotidien",
+          "limit": "Garde-fou {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Santé du flux d’ordres",
+          "open": "{count} ordres ouverts",
+          "rejections": "{rate} taux de rejet",
+          "trips": "{count} déclenchements ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Contrôles de sécurité",
+          "killSwitch": {
+            "title": "Kill switch",
+            "status": {
+              "enabled": "Activé",
+              "disabled": "Désactivé"
+            },
+            "changed": "Mis à jour {time}",
+            "actor": "Par {actor}",
+            "reason": "Raison : {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Coupe-circuit",
+            "status": {
+              "open": "Ouvert",
+              "half_open": "Semi-ouvert",
+              "closed": "Fermé"
+            },
+            "trigger": "Dernier déclenchement {time}",
+            "cooldown": "Temps de reprise {value}",
+            "reason": "Raison : {reason}"
+          }
+        },
+        "trends": {
+          "title": "Télémétrie des tendances",
+          "exposure": {
+            "title": "Chronologie de l’exposition",
+            "empty": "Aucune donnée d’exposition"
+          },
+          "drawdown": {
+            "title": "Chronologie du drawdown",
+            "empty": "Aucune donnée de drawdown"
+          }
+        },
+        "alerts": {
+          "title": "Alertes et contournements",
+          "empty": "Aucune alerte active",
+          "columns": {
+            "timestamp": "Horodatage",
+            "severity": "Gravité",
+            "message": "Message"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Info",
+          "warning": "Alerte",
+          "critical": "Critique"
+        }
       }
     }
   },

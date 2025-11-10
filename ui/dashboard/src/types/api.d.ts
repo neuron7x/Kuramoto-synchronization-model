@@ -304,9 +304,85 @@ export interface DashboardCommunityPayload {
   github?: GithubOverview | null;
 }
 
+export interface DashboardMonitoringControls {
+  killSwitch?: {
+    enabled?: boolean | number | string | null;
+    state?: string | null;
+    status?: string | null;
+    changedAt?: number | string | null;
+    updatedAt?: number | string | null;
+    changedBy?: string | null;
+    actor?: string | null;
+    reason?: string | null;
+  } | null;
+  circuitBreaker?: {
+    state?: string | null;
+    status?: string | null;
+    triggeredAt?: number | string | null;
+    lastTripAt?: number | string | null;
+    reason?: string | null;
+    lastReason?: string | null;
+    cooldownSeconds?: number | string | null;
+    cooldown?: number | string | null;
+  } | null;
+}
+
+export interface DashboardMonitoringMetrics {
+  grossExposure?: {
+    value?: number | string | null;
+    limit?: number | string | null;
+    change?: number | string | null;
+  } | null;
+  drawdown?: {
+    value?: number | string | null;
+    limit?: number | string | null;
+    mode?: string | null;
+  } | null;
+  openOrders?: {
+    value?: number | string | null;
+    limit?: number | string | null;
+  } | null;
+  rejectionRate?: {
+    value?: number | string | null;
+    threshold?: number | string | null;
+    window?: string | null;
+  } | null;
+  circuitTrips?: {
+    value?: number | string | null;
+    threshold?: number | string | null;
+    window?: string | null;
+  } | null;
+}
+
+export interface DashboardMonitoringSeriesPoint {
+  timestamp: number | string;
+  value: number | string;
+  label?: string | null;
+}
+
+export interface DashboardMonitoringAlert {
+  id?: string | null;
+  severity?: string | null;
+  message?: string | null;
+  timestamp?: number | string | null;
+}
+
+export interface DashboardMonitoringPayload {
+  environment?: string | null;
+  currency?: string | null;
+  controls?: DashboardMonitoringControls | null;
+  metrics?: DashboardMonitoringMetrics | null;
+  timeSeries?: {
+    exposure?: DashboardMonitoringSeriesPoint[] | null;
+    drawdown?: DashboardMonitoringSeriesPoint[] | null;
+  } | null;
+  alerts?: DashboardMonitoringAlert[] | null;
+}
+
 export interface DashboardData {
   route?: string;
   overview?: DashboardOverviewPayload;
+  monitoring?: DashboardMonitoringPayload;
   positions?: {
     fills?: FillEvent[];
     orders?: OrderEvent[];

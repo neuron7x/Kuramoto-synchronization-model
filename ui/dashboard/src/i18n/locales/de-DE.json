@@ -28,7 +28,8 @@
       "orders": "Aufträge",
       "pnl": "PnL & Kurse",
       "signals": "Signale",
-      "community": "Community"
+      "community": "Community",
+      "monitoring": "Monitoring"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "Priorisierte Initiativen, die aktiv Verstärkung suchen.",
         "fallbackTitle": "Initiative",
         "cta": "Interesse bekunden"
+      }
+    },
+    "monitoring": {
+      "title": "Risikomonitoring",
+      "heading": "Risiko-Kontrollzentrum",
+      "subtitle": "Überwachen Sie Kill Switch, Schutzschalter und Grenzbelastung in einer Ansicht.",
+      "labels": {
+        "environment": "Umgebung",
+        "killSwitch": "Not-Aus",
+        "circuitBreaker": "Schutzschalter"
+      },
+      "cards": {
+        "exposure": {
+          "title": "Brutto-Exposure",
+          "limit": "Limit {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "Täglicher Drawdown",
+          "limit": "Schutzschwelle {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "Order-Flow-Gesundheit",
+          "open": "{count} offene Orders",
+          "rejections": "{rate} Ablehnungsrate",
+          "trips": "{count} Auslösungen ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "Sicherheitskontrollen",
+          "killSwitch": {
+            "title": "Not-Aus",
+            "status": {
+              "enabled": "Aktiv",
+              "disabled": "Deaktiviert"
+            },
+            "changed": "Aktualisiert {time}",
+            "actor": "Durch {actor}",
+            "reason": "Grund: {reason}"
+          },
+          "circuitBreaker": {
+            "title": "Schutzschalter",
+            "status": {
+              "open": "Offen",
+              "half_open": "Halboffen",
+              "closed": "Geschlossen"
+            },
+            "trigger": "Letzte Auslösung {time}",
+            "cooldown": "Abkühlzeit {value}",
+            "reason": "Grund: {reason}"
+          }
+        },
+        "trends": {
+          "title": "Trend-Telemetrie",
+          "exposure": {
+            "title": "Exposure-Zeitreihe",
+            "empty": "Keine Exposure-Daten"
+          },
+          "drawdown": {
+            "title": "Drawdown-Zeitreihe",
+            "empty": "Keine Drawdown-Daten"
+          }
+        },
+        "alerts": {
+          "title": "Alarme & Overrides",
+          "empty": "Keine aktiven Alarme",
+          "columns": {
+            "timestamp": "Zeitstempel",
+            "severity": "Schweregrad",
+            "message": "Nachricht"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "Info",
+          "warning": "Warnung",
+          "critical": "Kritisch"
+        }
       }
     }
   },

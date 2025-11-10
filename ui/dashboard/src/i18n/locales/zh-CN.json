@@ -28,7 +28,8 @@
       "orders": "订单",
       "pnl": "盈亏与行情",
       "signals": "信号",
-      "community": "社区"
+      "community": "社区",
+      "monitoring": "监控"
     },
     "menu": {
       "title": "Navigation menu",
@@ -39,6 +40,7 @@
           "description": "Monitor profitability, risk, and top-level telemetry.",
           "items": [
             "overview",
+            "monitoring",
             "pnl",
             "positions"
           ]
@@ -417,6 +419,87 @@
         "subtitle": "当前急需新贡献者的高影响项目。",
         "fallbackTitle": "机会",
         "cta": "提交意向"
+      }
+    },
+    "monitoring": {
+      "title": "风险监控",
+      "heading": "风险控制中心",
+      "subtitle": "在单一视图中跟踪紧急开关、断路器和限额压力。",
+      "labels": {
+        "environment": "环境",
+        "killSwitch": "紧急开关",
+        "circuitBreaker": "断路器"
+      },
+      "cards": {
+        "exposure": {
+          "title": "总风险敞口",
+          "limit": "限额 {value}",
+          "trend": "Δ {value}"
+        },
+        "drawdown": {
+          "title": "当日回撤",
+          "limit": "防护线 {value}",
+          "trend": "Δ {value}"
+        },
+        "orders": {
+          "title": "订单流健康",
+          "open": "{count} 个未结订单",
+          "rejections": "{rate} 拒单率",
+          "trips": "{count} 次触发 ({window})"
+        }
+      },
+      "sections": {
+        "controls": {
+          "title": "安全控制",
+          "killSwitch": {
+            "title": "紧急开关",
+            "status": {
+              "enabled": "已启用",
+              "disabled": "已停用"
+            },
+            "changed": "更新于 {time}",
+            "actor": "执行人 {actor}",
+            "reason": "原因：{reason}"
+          },
+          "circuitBreaker": {
+            "title": "断路器",
+            "status": {
+              "open": "打开",
+              "half_open": "半开",
+              "closed": "关闭"
+            },
+            "trigger": "上次触发 {time}",
+            "cooldown": "冷却 {value}",
+            "reason": "原因：{reason}"
+          }
+        },
+        "trends": {
+          "title": "趋势遥测",
+          "exposure": {
+            "title": "敞口时间线",
+            "empty": "无敞口数据"
+          },
+          "drawdown": {
+            "title": "回撤时间线",
+            "empty": "无回撤数据"
+          }
+        },
+        "alerts": {
+          "title": "告警与覆盖",
+          "empty": "暂无活动告警",
+          "columns": {
+            "timestamp": "时间戳",
+            "severity": "严重性",
+            "message": "消息"
+          }
+        }
+      },
+      "badges": {
+        "severity": {
+          "info": "信息",
+          "warning": "警告",
+          "critical": "严重"
+        }
       }
     }
   },
