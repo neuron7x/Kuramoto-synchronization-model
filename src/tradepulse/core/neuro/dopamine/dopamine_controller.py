@@ -124,6 +124,32 @@ _DEFAULT_META_RULES: Dict[str, Mapping[str, float]] = {
 _ALLOWED_NOVELTY_MODES = {"external", "abs_rpe"}
 
 
+# Defaults for optional configuration keys. These mirror the canonical
+# ``config/dopamine.yaml`` file but are inlined here so that lightweight test
+# configurations can omit advanced meta-adaptation parameters.
+_OPTIONAL_DEFAULTS: Dict[str, float] = {
+    "rpe_ema_beta": 0.2,
+    "temp_adapt_target_var": 0.12,
+    "temp_adapt_lr": 0.05,
+    "temp_adapt_beta1": 0.9,
+    "temp_adapt_beta2": 0.999,
+    "temp_adapt_epsilon": 1.0e-8,
+    "temp_adapt_min_base": 0.2,
+    "temp_adapt_max_base": 2.5,
+    "rpe_var_release_threshold": 0.35,
+    "rpe_var_release_hysteresis": 0.05,
+    "ddm_temp_gain": 0.4,
+    "ddm_threshold_gain": 0.3,
+    "ddm_hold_gain": 0.6,
+    "ddm_min_temperature_scale": 0.5,
+    "ddm_max_temperature_scale": 2.0,
+    "ddm_baseline_a": 1.0,
+    "ddm_baseline_t0": 0.2,
+    "ddm_eps": 1.0e-6,
+    "hold_threshold": 0.4,
+}
+
+
 class DopamineController:
     """
     DopamineController v2.3 — апетитивний контур:
@@ -215,9 +241,11 @@ class DopamineController:
             raise ValueError(f"Unknown dopamine config keys: {sorted(unknown_keys)}")
 
         def _require(key: str) -> object:
-            if key not in raw_cfg:
-                raise ValueError(f"Missing required dopamine config key: {key}")
-            return raw_cfg[key]
+            if key in raw_cfg:
+                return raw_cfg[key]
+            if key in _OPTIONAL_DEFAULTS:
+                return _OPTIONAL_DEFAULTS[key]
+            raise ValueError(f"Missing required dopamine config key: {key}")
 
         version = str(_require("version"))
         discount_gamma = float(_require("discount_gamma"))
