@@ -1,20 +1,35 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import logging
 import math
-from time import perf_counter
+import sys
+from pathlib import Path
+from time import perf_counter, time
+from typing import Mapping
 
 import numpy as np
 import pytest
 import yaml
-from typing import Mapping
 
-from core.neuro.serotonin.serotonin_controller import (
-    SerotoninController,
-    _generate_config_table,
-    SerotoninConfig,
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+# Direct import to avoid dependency issues in tests
+spec = importlib.util.spec_from_file_location(
+    "serotonin_controller",
+    Path(__file__).parent.parent / "serotonin" / "serotonin_controller.py"
 )
+serotonin_module = importlib.util.module_from_spec(spec)
+sys.modules["serotonin_controller"] = serotonin_module
+spec.loader.exec_module(serotonin_module)
+
+SerotoninController = serotonin_module.SerotoninController
+SerotoninConfig = serotonin_module.SerotoninConfig
+_generate_config_table = serotonin_module._generate_config_table
+
+pytestmark = pytest.mark.L1
 
 
 @pytest.fixture
@@ -433,3 +448,424 @@ def test_check_cooldown_guard_overrides(controller):
     controller.compute_serotonin_signal(2.0)
     controller.set_tacl_guard(lambda name, payload: False)
     assert controller.check_cooldown() is False
+
+
+def test_step_basic_api(controller):
+    """Test the step() API with basic inputs."""
+    hold, veto, cooldown_s, level = controller.step(
+        stress=1.2, drawdown=-0.03, novelty=0.8
+    )
+    assert isinstance(hold, bool)
+    assert isinstance(veto, bool)
+    assert isinstance(cooldown_s, float)
+    assert isinstance(level, float)
+    assert 0.0 <= level <= 1.0
+    assert cooldown_s >= 0.0
+    assert hold == veto  # These should be equivalent
+
+
+def test_step_hold_trigger(controller):
+    """Test that step() triggers HOLD when stress is high."""
+    # Low stress should not trigger HOLD
+    hold1, veto1, _, level1 = controller.step(stress=0.1, drawdown=0.0, novelty=0.1)
+    assert not hold1
+    assert not veto1
+    assert level1 < 0.5
+
+    # High stress should eventually trigger HOLD
+    for _ in range(50):
+        hold2, veto2, _, level2 = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    assert hold2 or level2 > controller.config["cooldown_threshold"]
+
+
+def test_step_cooldown_timer(controller):
+    """Test that cooldown timer tracks time correctly."""
+    import time as time_module
+
+    # Trigger HOLD by high stress
+    for _ in range(50):
+        controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    # Check cooldown timer increases
+    _, _, cooldown1, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    time_module.sleep(0.1)
+    _, _, cooldown2, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    if cooldown1 > 0 and cooldown2 > 0:
+        assert cooldown2 > cooldown1
+        assert cooldown2 - cooldown1 >= 0.09  # At least 0.09s difference
+
+
+def test_step_recovery_after_stress(controller):
+    """Test recovery curve after prolonged stress."""
+    # Apply stress
+    for _ in range(100):
+        controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+
+    level_high = controller.serotonin_level
+
+    # Apply recovery (low stress)
+    for _ in range(100):
+        controller.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+
+    level_low = controller.serotonin_level
+
+    # Level should decrease during recovery
+    assert level_low < level_high
+
+
+def test_step_hysteresis(controller):
+    """Test hysteresis in HOLD transitions."""
+    # Test that HOLD state persists even when serotonin level drops slightly
+    # This tests the threshold-based hysteresis in check_cooldown()
+
+    # Build up stress to trigger HOLD
+    for _ in range(50):
+        controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+
+    # Check if we're in HOLD state
+    hold1, _, _, level1 = controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+
+    # Reduce stress slightly but should still be in HOLD if threshold not crossed
+    hold2, _, _, level2 = controller.step(stress=1.8, drawdown=-0.06, novelty=1.0)
+
+    # If we were in HOLD and threshold is high enough, we should still be in HOLD
+    # This demonstrates hysteresis at the threshold boundary
+    if hold1 and level1 > controller.config["cooldown_threshold"]:
+        # With a single step of reduced stress, we might still be above threshold
+        if level2 > controller.config["cooldown_threshold"] * 0.95:
+            assert hold2  # Should still be in HOLD
+
+    # Now test that sufficient stress reduction exits HOLD
+    for _ in range(100):
+        controller.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+
+    hold3, _, _, level3 = controller.step(stress=0.1, drawdown=-0.01, novelty=0.1)
+
+    # After sustained low stress, HOLD should be released
+    assert not hold3 or level3 > controller.config["cooldown_threshold"] * 1.1
+
+
+def test_step_validation(controller):
+    """Test input validation for step() API."""
+    # Negative stress should raise
+    with pytest.raises(ValueError):
+        controller.step(stress=-1.0, drawdown=-0.05, novelty=0.5)
+
+    # Positive drawdown should raise
+    with pytest.raises(ValueError):
+        controller.step(stress=1.0, drawdown=0.05, novelty=0.5)
+
+    # Negative novelty should raise
+    with pytest.raises(ValueError):
+        controller.step(stress=1.0, drawdown=-0.05, novelty=-0.5)
+
+
+def test_step_with_overrides(controller):
+    """Test step() with optional parameter overrides."""
+    hold1, _, _, level1 = controller.step(
+        stress=1.0,
+        drawdown=-0.05,
+        novelty=0.5,
+        market_vol=2.0,  # Override
+        free_energy=1.0,  # Override
+        cum_losses=0.1,  # Override
+        rho_loss=-0.5,  # Override
+    )
+
+    hold2, _, _, level2 = controller.step(
+        stress=1.0, drawdown=-0.05, novelty=0.5  # No overrides
+    )
+
+    # Results should differ due to overrides
+    assert level1 != level2 or hold1 != hold2
+
+
+def test_step_tacl_telemetry(caplog, controller):
+    """Test that step() emits TACL telemetry."""
+    caplog.set_level(logging.INFO)
+    controller.step(stress=1.5, drawdown=-0.04, novelty=0.9)
+
+    # Check that TACL metrics were logged
+    log_text = caplog.text
+    assert "tacl.5ht.level" in log_text
+    assert "tacl.5ht.hold" in log_text
+    assert "tacl.5ht.cooldown" in log_text
+
+
+def test_step_cooldown_exit(controller):
+    """Test cooldown timer resets when exiting HOLD state."""
+    # Trigger HOLD
+    for _ in range(50):
+        controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    hold1, _, cooldown1, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+
+    # Exit HOLD by reducing stress
+    for _ in range(100):
+        controller.step(stress=0.05, drawdown=0.0, novelty=0.05)
+
+    hold2, _, cooldown2, _ = controller.step(stress=0.05, drawdown=0.0, novelty=0.05)
+
+    if hold1 and not hold2:
+        # Cooldown should be 0 after exiting HOLD
+        assert cooldown2 == 0.0
+
+
+def test_to_dict_includes_cooldown(controller):
+    """Test that to_dict() includes cooldown state."""
+    controller.step(stress=2.0, drawdown=-0.05, novelty=1.0)
+    state = controller.to_dict()
+
+    assert "hold_state" in state
+    assert "cooldown_s" in state
+    assert isinstance(state["hold_state"], bool)
+    assert isinstance(state["cooldown_s"], float)
+    assert state["cooldown_s"] >= 0.0
+
+
+def test_update_metrics_includes_tacl(caplog, controller):
+    """Test that update_metrics() emits TACL telemetry."""
+    caplog.set_level(logging.INFO)
+    controller.step(stress=1.0, drawdown=-0.03, novelty=0.5)
+    controller.update_metrics()
+
+    log_text = caplog.text
+    assert "tacl.5ht.level" in log_text
+    assert "tacl.5ht.hold" in log_text
+    assert "tacl.5ht.cooldown" in log_text
+
+
+def test_step_monotonic_stress_response(controller):
+    """Test that higher stress generally leads to higher serotonin levels."""
+    levels = []
+    stress_values = [0.5, 1.0, 1.5, 2.0, 2.5]
+
+    for stress in stress_values:
+        # Reset controller for each test
+        controller.tonic_level = 0.0
+        controller.sensitivity = 1.0
+        # Run multiple steps to let tonic build up
+        for _ in range(20):
+            _, _, _, level = controller.step(stress=stress, drawdown=-0.02, novelty=stress * 0.4)
+        levels.append(level)
+
+    # Higher stress should generally lead to higher levels
+    for i in range(len(levels) - 1):
+        assert levels[i] <= levels[i + 1] or levels[i] - levels[i + 1] < 0.1
+
+
+def test_save_and_load_state(controller, tmp_path):
+    """Test state persistence and recovery."""
+    # Build up some state
+    for _ in range(30):
+        controller.step(stress=2.0, drawdown=-0.05, novelty=1.0)
+    
+    original_state = controller.to_dict()
+    state_file = tmp_path / "serotonin_state.json"
+    
+    # Save state
+    controller.save_state(str(state_file))
+    assert state_file.exists()
+    
+    # Reset controller
+    controller.reset()
+    assert controller.serotonin_level == 0.0
+    assert controller.tonic_level == 0.0
+    
+    # Load state
+    controller.load_state(str(state_file))
+    restored_state = controller.to_dict()
+    
+    # Verify key state is restored
+    assert abs(restored_state["serotonin_level"] - original_state["serotonin_level"]) < 0.01
+    assert abs(restored_state["tonic_level"] - original_state["tonic_level"]) < 0.01
+    assert abs(restored_state["sensitivity"] - original_state["sensitivity"]) < 0.01
+
+
+def test_load_state_file_not_found(controller):
+    """Test load_state raises FileNotFoundError for missing file."""
+    with pytest.raises(FileNotFoundError):
+        controller.load_state("/nonexistent/path/state.json")
+
+
+def test_reset_state(controller):
+    """Test reset() restores initial state."""
+    # Build up state
+    for _ in range(50):
+        controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
+    
+    # State should be non-zero
+    assert controller.serotonin_level > 0.0
+    assert controller.tonic_level > 0.0
+    
+    # Reset
+    controller.reset()
+    
+    # All state should be zeroed
+    assert controller.serotonin_level == 0.0
+    assert controller.tonic_level == 0.0
+    assert controller.sensitivity == 1.0
+    assert controller.desens_counter == 0
+    assert controller._hold_state is False
+    assert controller._step_count == 0
+
+
+def test_health_check_normal(controller):
+    """Test health_check returns healthy status under normal conditions."""
+    # Run a few normal steps
+    for _ in range(10):
+        controller.step(stress=1.0, drawdown=-0.02, novelty=0.5)
+    
+    health = controller.health_check()
+    assert "healthy" in health
+    assert "issues" in health
+    assert "warnings" in health
+    assert "state" in health
+    assert "metrics" in health
+
+
+def test_health_check_detects_stuck_hold(controller, tmp_path):
+    """Test health_check detects stuck HOLD state."""
+    # Manually set stuck state (simulate long HOLD)
+    controller._hold_state = True
+    controller._cooldown_start_time = time() - 3700  # Over 1 hour ago
+    
+    health = controller.health_check()
+    assert not health["healthy"]
+    assert len(health["issues"]) > 0
+    assert any("Stuck in HOLD" in issue for issue in health["issues"])
+
+
+def test_health_check_warns_low_sensitivity(controller):
+    """Test health_check warns about low sensitivity."""
+    # Force low sensitivity
+    controller.sensitivity = 0.15
+    
+    health = controller.health_check()
+    assert len(health["warnings"]) > 0
+    assert any("Low sensitivity" in warning for warning in health["warnings"])
+
+
+def test_get_performance_metrics(controller):
+    """Test performance metrics tracking."""
+    # No steps yet
+    metrics = controller.get_performance_metrics()
+    assert metrics["step_count"] == 0
+    assert metrics["veto_count"] == 0
+    assert metrics["veto_rate"] == 0.0
+    
+    # Run some steps
+    for _ in range(20):
+        controller.step(stress=1.0, drawdown=-0.02, novelty=0.5)
+    
+    # Trigger HOLD
+    for _ in range(30):
+        controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    
+    metrics = controller.get_performance_metrics()
+    assert metrics["step_count"] == 50
+    assert metrics["veto_count"] > 0
+    assert 0.0 <= metrics["veto_rate"] <= 1.0
+
+
+def test_diagnose_output(controller):
+    """Test diagnose() generates useful output."""
+    # Build some state
+    for _ in range(20):
+        controller.step(stress=1.5, drawdown=-0.04, novelty=0.8)
+    
+    report = controller.diagnose()
+    
+    # Check report contains key information
+    assert "SerotoninController Diagnostic Report" in report
+    assert "Serotonin Level:" in report
+    assert "HOLD State:" in report
+    assert "Performance Metrics:" in report
+    assert "Health:" in report
+
+
+def test_context_manager(controller):
+    """Test controller works as context manager."""
+    with controller as ctrl:
+        assert ctrl is controller
+        ctrl.step(stress=1.0, drawdown=-0.02, novelty=0.5)
+    
+    # Context manager should not affect state
+    assert controller.serotonin_level >= 0.0
+
+
+def test_repr(controller):
+    """Test __repr__ provides useful debug info."""
+    repr_str = repr(controller)
+    assert "SerotoninController" in repr_str
+    assert "level=" in repr_str
+    assert "hold=" in repr_str
+    assert "steps=" in repr_str
+
+
+def test_performance_tracking_accuracy(controller):
+    """Test performance tracking is accurate."""
+    # Run exactly 10 steps
+    for i in range(10):
+        controller.step(stress=0.5, drawdown=-0.01, novelty=0.3)
+    
+    metrics = controller.get_performance_metrics()
+    assert metrics["step_count"] == 10
+    
+    # Now trigger HOLD
+    for i in range(40):
+        controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+    
+    metrics = controller.get_performance_metrics()
+    assert metrics["step_count"] == 50
+    
+    # Check veto tracking
+    if metrics["veto_count"] > 0:
+        assert metrics["veto_rate"] == metrics["veto_count"] / metrics["step_count"]
+
+
+def test_state_persistence_includes_metadata(controller, tmp_path):
+    """Test saved state includes metadata."""
+    # Run some steps
+    for _ in range(25):
+        controller.step(stress=1.5, drawdown=-0.03, novelty=0.7)
+    
+    state_file = tmp_path / "state_with_metadata.json"
+    controller.save_state(str(state_file))
+    
+    # Load raw JSON to check metadata
+    import json
+    with open(state_file, "r") as f:
+        state = json.load(f)
+    
+    assert "_metadata" in state
+    assert "timestamp" in state["_metadata"]
+    assert "config_path" in state["_metadata"]
+    assert "step_count" in state["_metadata"]
+    assert state["_metadata"]["step_count"] == 25
+
+
+def test_reset_preserves_config(controller):
+    """Test reset() preserves configuration."""
+    original_alpha = controller.config["alpha"]
+    original_threshold = controller.config["cooldown_threshold"]
+    
+    # Build state and reset
+    for _ in range(20):
+        controller.step(stress=2.0, drawdown=-0.05, novelty=1.0)
+    controller.reset()
+    
+    # Config should be unchanged
+    assert controller.config["alpha"] == original_alpha
+    assert controller.config["cooldown_threshold"] == original_threshold
+
+
+def test_health_check_detects_config_issues(controller):
+    """Test health_check detects invalid config state."""
+    # Manually corrupt config
+    controller.config["decay_rate"] = 1.5  # Invalid (should be ≤1.0)
+    
+    health = controller.health_check()
+    assert not health["healthy"]
+    assert any("decay_rate" in issue for issue in health["issues"])

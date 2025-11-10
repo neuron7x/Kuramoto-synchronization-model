@@ -173,6 +173,14 @@ class SerotoninController:
         self._tacl_guard: Optional[Callable[[str, Mapping[str, float]], bool]] = None
         self._lock = RLock()
         self._file_lock_path = Path(self.config_path).with_suffix(".lock")
+        self._cooldown_start_time: Optional[float] = None
+        self._hold_state: bool = False
+        
+        # Performance tracking
+        self._step_count: int = 0
+        self._total_cooldown_time: float = 0.0
+        self._veto_count: int = 0
+        self._last_step_time: Optional[float] = None
 
     @staticmethod
     def noop_logger(name: str, value: float) -> None:
@@ -231,6 +239,104 @@ class SerotoninController:
         """Inject a TACL guard to prevent free-energy regressions."""
 
         self._tacl_guard = guard_fn
+
+    def step(
+        self,
+        stress: float,
+        drawdown: float,
+        novelty: float,
+        market_vol: Optional[float] = None,
+        free_energy: Optional[float] = None,
+        cum_losses: Optional[float] = None,
+        rho_loss: Optional[float] = None,
+    ) -> tuple[bool, bool, float, float]:
+        """Execute one serotonin control step and return decision signals.
+
+        This is the primary API for risk/fatigue control integration. It consolidates
+        the aversive state estimation, serotonin signal computation, and cooldown
+        decision into a single call.
+
+        Args:
+            stress: Current stress level (0.0 to unbounded, typically 0-3).
+            drawdown: Current drawdown (negative value, e.g., -0.05 for 5% drawdown).
+            novelty: Novelty/uncertainty measure (0.0 to unbounded, typically 0-2).
+            market_vol: Optional market volatility override. If None, uses stress.
+            free_energy: Optional free energy override. If None, uses novelty.
+            cum_losses: Optional cumulative losses override. If None, uses abs(drawdown).
+            rho_loss: Optional rho-loss complement. If None, defaults to 0.0.
+
+        Returns:
+            A tuple of (hold, veto, cooldown_s, level):
+            - hold (bool): True if the controller recommends HOLD (no new positions).
+            - veto (bool): True if the controller triggers a veto (same as hold, for clarity).
+            - cooldown_s (float): Time in seconds since cooldown started, or 0.0 if not in cooldown.
+            - level (float): Current serotonin level in [0, 1].
+
+        Raises:
+            ValueError: If stress, drawdown magnitude, or novelty are negative.
+
+        Example:
+            >>> controller = SerotoninController()
+            >>> hold, veto, cooldown_s, level = controller.step(
+            ...     stress=1.2, drawdown=-0.03, novelty=0.8
+            ... )
+            >>> if hold:
+            ...     print(f"HOLD triggered: level={level:.3f}, cooldown={cooldown_s:.1f}s")
+        """
+        if stress < 0:
+            raise ValueError("stress must be non-negative")
+        if drawdown > 0:
+            raise ValueError("drawdown should be negative or zero (e.g., -0.05 for 5% loss)")
+        if novelty < 0:
+            raise ValueError("novelty must be non-negative")
+
+        with self._lock:
+            # Map high-level inputs to aversive state estimation
+            vol = market_vol if market_vol is not None else stress
+            fe = free_energy if free_energy is not None else novelty
+            losses = cum_losses if cum_losses is not None else abs(drawdown)
+            rho = rho_loss if rho_loss is not None else 0.0
+
+            # Compute aversive state and serotonin signal
+            aversive = self.estimate_aversive_state(vol, fe, losses, rho)
+            level = self.compute_serotonin_signal(aversive)
+
+            # Check cooldown and track hold state
+            veto = self.check_cooldown(level)
+            hold = veto
+
+            # Track cooldown timer
+            current_time = time()
+            if hold and not self._hold_state:
+                # Entering cooldown
+                self._cooldown_start_time = current_time
+                self._hold_state = True
+            elif not hold and self._hold_state:
+                # Exiting cooldown
+                self._hold_state = False
+                self._cooldown_start_time = None
+
+            # Calculate cooldown duration
+            cooldown_s = 0.0
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_s = current_time - self._cooldown_start_time
+
+            # Track performance metrics
+            self._step_count += 1
+            if hold:
+                self._veto_count += 1
+                if cooldown_s > 0:
+                    self._total_cooldown_time += (
+                        current_time - (self._last_step_time or current_time)
+                    )
+            self._last_step_time = current_time
+
+            # Emit TACL telemetry
+            self._log("tacl.5ht.level", level)
+            self._log("tacl.5ht.hold", float(hold))
+            self._log("tacl.5ht.cooldown", cooldown_s)
+
+            return hold, veto, cooldown_s, level
 
     @staticmethod
     def _resolve_config_path(config_path: str) -> Path:
@@ -376,7 +482,7 @@ class SerotoninController:
                 self._log("serotonin_cooldown_guard", float(accepted))
                 if not accepted:
                     return False
-            return veto
+            return bool(veto)
 
     def apply_internal_shift(
         self,
@@ -408,6 +514,13 @@ class SerotoninController:
             self._log(f"serotonin_gate_level{tag}", self.gate_level)
             self._log(f"serotonin_decay_rate{tag}", self.config["decay_rate"])
             self._log(f"serotonin_temperature_floor{tag}", self.temperature_floor)
+            # TACL telemetry
+            self._log("tacl.5ht.level", self.serotonin_level)
+            self._log("tacl.5ht.hold", float(self._hold_state))
+            cooldown_s = 0.0
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_s = time() - self._cooldown_start_time
+            self._log("tacl.5ht.cooldown", cooldown_s)
 
     def meta_adapt(self, performance_metrics: Mapping[str, float]) -> None:
         """Adapt release weights based on drawdown and Sharpe observations."""
@@ -485,6 +598,9 @@ class SerotoninController:
         """Expose serialisable controller state for audits and telemetry."""
 
         with self._lock:
+            cooldown_s = 0.0
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_s = time() - self._cooldown_start_time
             return {
                 "tonic_level": float(self.tonic_level),
                 "sensitivity": float(self.sensitivity),
@@ -497,6 +613,8 @@ class SerotoninController:
                 "beta": float(self.config["beta"]),
                 "gamma": float(self.config["gamma"]),
                 "decay_rate": float(self.config["decay_rate"]),
+                "hold_state": bool(self._hold_state),
+                "cooldown_s": float(cooldown_s),
             }
 
     def _with_file_lock(self, action: Callable[[], None]) -> None:
@@ -509,6 +627,258 @@ class SerotoninController:
                 action()
             finally:
                 fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+    def save_state(self, path: str) -> None:
+        """Save controller state to a JSON file for recovery or analysis.
+        
+        Args:
+            path: Path to save the state file.
+            
+        Example:
+            >>> controller.save_state("state/serotonin_checkpoint.json")
+        """
+        with self._lock:
+            state = self.to_dict()
+            state["_metadata"] = {
+                "timestamp": time(),
+                "config_path": self.config_path,
+                "step_count": self._step_count,
+                "total_cooldown_time": self._total_cooldown_time,
+                "veto_count": self._veto_count,
+            }
+            target = Path(path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = f"{path}.tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=2, sort_keys=True)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, path)
+            logging.getLogger(__name__).info("Saved state to %s", path)
+
+    def load_state(self, path: str) -> None:
+        """Load controller state from a JSON file.
+        
+        Args:
+            path: Path to the state file.
+            
+        Raises:
+            FileNotFoundError: If the state file does not exist.
+            ValueError: If the state file is invalid or incompatible.
+            
+        Example:
+            >>> controller.load_state("state/serotonin_checkpoint.json")
+        """
+        with self._lock:
+            target = Path(path)
+            if not target.exists():
+                raise FileNotFoundError(f"State file not found: {path}")
+            
+            with open(target, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            
+            # Restore core state
+            self.tonic_level = float(state.get("tonic_level", 0.0))
+            self.sensitivity = float(state.get("sensitivity", 1.0))
+            self.desens_counter = int(state.get("desens_counter", 0))
+            self.serotonin_level = float(state.get("serotonin_level", 0.0))
+            self.phasic_level = float(state.get("phasic_level", 0.0))
+            self.gate_level = float(state.get("gate_level", 0.0))
+            self.temperature_floor = float(state.get("temperature_floor", self.config["temperature_floor_min"]))
+            self._hold_state = bool(state.get("hold_state", False))
+            
+            # Restore metadata if available
+            metadata = state.get("_metadata", {})
+            self._step_count = int(metadata.get("step_count", 0))
+            self._total_cooldown_time = float(metadata.get("total_cooldown_time", 0.0))
+            self._veto_count = int(metadata.get("veto_count", 0))
+            
+            # Reset cooldown start time (don't persist absolute time)
+            if self._hold_state:
+                self._cooldown_start_time = time()
+            else:
+                self._cooldown_start_time = None
+            
+            logging.getLogger(__name__).info("Loaded state from %s", path)
+
+    def reset(self) -> None:
+        """Reset controller state to initial conditions.
+        
+        Useful for testing, recovery after errors, or starting a new trading session.
+        Config parameters are preserved.
+        
+        Example:
+            >>> controller.reset()
+            >>> assert controller.serotonin_level == 0.0
+        """
+        with self._lock:
+            self.tonic_level = 0.0
+            self.sensitivity = 1.0
+            self.desens_counter = 0
+            self.serotonin_level = 0.0
+            self.phasic_level = 0.0
+            self.gate_level = 0.0
+            self.temperature_floor = float(self.config["temperature_floor_min"])
+            self._cooldown_start_time = None
+            self._hold_state = False
+            self._step_count = 0
+            self._total_cooldown_time = 0.0
+            self._veto_count = 0
+            self._last_step_time = None
+            logging.getLogger(__name__).info("Controller state reset")
+
+    def health_check(self) -> dict:
+        """Perform a health check and return diagnostic information.
+        
+        Returns:
+            Dictionary with health status and diagnostics.
+            
+        Example:
+            >>> health = controller.health_check()
+            >>> if not health["healthy"]:
+            ...     print(f"Issues: {health['issues']}")
+        """
+        with self._lock:
+            issues = []
+            warnings = []
+            
+            # Check for stuck in HOLD state
+            if self._hold_state and self._cooldown_start_time is not None:
+                cooldown_duration = time() - self._cooldown_start_time
+                if cooldown_duration > 3600:  # 1 hour
+                    issues.append(f"Stuck in HOLD for {cooldown_duration:.0f}s")
+                elif cooldown_duration > 600:  # 10 minutes
+                    warnings.append(f"Extended HOLD duration: {cooldown_duration:.0f}s")
+            
+            # Check sensitivity
+            if self.sensitivity < 0.2:
+                warnings.append(f"Low sensitivity: {self.sensitivity:.3f}")
+            
+            # Check desensitization counter
+            if self.desens_counter > 0.8 * self.config["max_desens_counter"]:
+                warnings.append(f"High desens counter: {self.desens_counter}/{self.config['max_desens_counter']}")
+            
+            # Check serotonin level
+            if self.serotonin_level > 0.95:
+                warnings.append(f"Very high serotonin level: {self.serotonin_level:.3f}")
+            
+            # Check config validity
+            if self.config["decay_rate"] <= 0 or self.config["decay_rate"] > 1:
+                issues.append(f"Invalid decay_rate: {self.config['decay_rate']}")
+            
+            return {
+                "healthy": len(issues) == 0,
+                "issues": issues,
+                "warnings": warnings,
+                "state": {
+                    "serotonin_level": self.serotonin_level,
+                    "sensitivity": self.sensitivity,
+                    "hold_state": self._hold_state,
+                    "desens_counter": self.desens_counter,
+                },
+                "metrics": self.get_performance_metrics(),
+            }
+
+    def get_performance_metrics(self) -> dict:
+        """Get performance and usage statistics.
+        
+        Returns:
+            Dictionary with performance metrics.
+            
+        Example:
+            >>> metrics = controller.get_performance_metrics()
+            >>> print(f"Total steps: {metrics['step_count']}")
+        """
+        with self._lock:
+            avg_cooldown = 0.0
+            if self._veto_count > 0:
+                avg_cooldown = self._total_cooldown_time / self._veto_count
+            
+            veto_rate = 0.0
+            if self._step_count > 0:
+                veto_rate = self._veto_count / self._step_count
+            
+            return {
+                "step_count": self._step_count,
+                "veto_count": self._veto_count,
+                "veto_rate": veto_rate,
+                "total_cooldown_time": self._total_cooldown_time,
+                "average_cooldown_duration": avg_cooldown,
+                "current_hold_state": self._hold_state,
+            }
+
+    def diagnose(self) -> str:
+        """Generate a diagnostic report for troubleshooting.
+        
+        Returns:
+            Formatted diagnostic string.
+            
+        Example:
+            >>> print(controller.diagnose())
+        """
+        with self._lock:
+            lines = [
+                "=== SerotoninController Diagnostic Report ===",
+                f"Config: {self.config_path}",
+                "",
+                "State:",
+                f"  Serotonin Level: {self.serotonin_level:.4f}",
+                f"  Tonic Level: {self.tonic_level:.4f}",
+                f"  Phasic Level: {self.phasic_level:.4f}",
+                f"  Gate Level: {self.gate_level:.4f}",
+                f"  Sensitivity: {self.sensitivity:.4f}",
+                f"  Temperature Floor: {self.temperature_floor:.4f}",
+                f"  HOLD State: {self._hold_state}",
+                f"  Desens Counter: {self.desens_counter}/{self.config['max_desens_counter']}",
+                "",
+                "Thresholds:",
+                f"  Cooldown Threshold: {self.config['cooldown_threshold']:.4f}",
+                f"  Gate Veto: {self.config['gate_veto']:.4f}",
+                f"  Phasic Veto: {self.config['phasic_veto']:.4f}",
+                "",
+                "Performance Metrics:",
+            ]
+            
+            metrics = self.get_performance_metrics()
+            for key, value in metrics.items():
+                if isinstance(value, float):
+                    lines.append(f"  {key}: {value:.4f}")
+                else:
+                    lines.append(f"  {key}: {value}")
+            
+            lines.append("")
+            health = self.health_check()
+            lines.append(f"Health: {'OK' if health['healthy'] else 'ISSUES DETECTED'}")
+            if health['issues']:
+                lines.append("Issues:")
+                for issue in health['issues']:
+                    lines.append(f"  - {issue}")
+            if health['warnings']:
+                lines.append("Warnings:")
+                for warning in health['warnings']:
+                    lines.append(f"  - {warning}")
+            
+            return "\n".join(lines)
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - save config if modified."""
+        if exc_type is None:
+            # Normal exit - no action needed
+            pass
+        return False  # Don't suppress exceptions
+
+    def __repr__(self) -> str:
+        """String representation for debugging."""
+        return (
+            f"SerotoninController(config='{self.config_path}', "
+            f"level={self.serotonin_level:.3f}, "
+            f"hold={self._hold_state}, "
+            f"steps={self._step_count})"
+        )
 
 
 if __name__ == "__main__":  # pragma: no cover - utility for documentation
