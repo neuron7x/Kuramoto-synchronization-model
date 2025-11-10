@@ -23,6 +23,7 @@ from core.engine import (
     CoreEngine,
     CoreEngineConfig,
     CoreEngineError,
+    CycleMetrics,
     DataFeed,
     EngineContext,
     EngineCycle,
@@ -33,6 +34,7 @@ from core.engine import (
     MarketData,
     RiskDecision,
     RiskManager,
+    StageDurations,
     Signal,
     SignalGenerator,
 )
@@ -55,6 +57,17 @@ engine enforces the following contract:
   downstream systems.
 - Log sinks **must** persist or forward the structured `LogEntry` instances they
   receive.
+
+### Cycle metrics and observability
+
+`EngineCycle.metrics` exposes a `CycleMetrics` instance with timing and
+throughput counters for the processed datum. Each metrics object captures the
+sequential position of the cycle, per-stage latency breakdowns via
+`StageDurations`, and the number of emitted log entries in addition to the
+aggregate counts for received, approved, rejected, and dispatched signals as
+well as execution attempts. These values are mirrored in the structured log
+emitted at the end of each cycle, enabling downstream monitoring pipelines to
+reason about performance trends without reprocessing the artefacts themselves.
 
 ### Configuration
 

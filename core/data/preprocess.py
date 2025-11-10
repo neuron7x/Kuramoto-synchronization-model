@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Sequence
 from typing import Union
 
@@ -101,7 +102,14 @@ def scale_series(
     np.ndarray
         Scaled array with the same shape as input.
     """
-    with _logger.operation("scale_series", method=method, use_float32=use_float32):
+    with _logger.operation(
+        "scale_series",
+        method=method,
+        use_float32=use_float32,
+        level=logging.DEBUG,
+        emit_start=False,
+        emit_success=False,
+    ):
         dtype = np.float32 if use_float32 else float
 
         if isinstance(x, (np.ndarray, pd.Series)):

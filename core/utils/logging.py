@@ -161,12 +161,26 @@ class StructuredLogger:
 
     @contextmanager
     def operation(
-        self, operation_name: str, **context: Any
+        self,
+        operation_name: str,
+        *,
+        level: int = logging.INFO,
+        success_level: int | None = None,
+        failure_level: int = logging.ERROR,
+        emit_start: bool = True,
+        emit_success: bool = True,
+        **context: Any,
     ) -> Iterator[Dict[str, Any]]:
         """Context manager for tracking operation timing and status.
 
         Args:
             operation_name: Name of the operation being tracked
+            level: Logging level for the start message (defaults to ``INFO``)
+            success_level: Optional explicit logging level for the success message.
+                When omitted the ``level`` argument is reused.
+            failure_level: Logging level for failure messages (defaults to ``ERROR``)
+            emit_start: Whether to emit the "Starting operation" log entry.
+            emit_success: Whether to emit the "Completed operation" log entry.
             **context: Additional context fields to log
 
         Yields:
@@ -178,31 +192,39 @@ class StructuredLogger:
             ...     result = compute_rsi(prices)
             ...     op["result_value"] = result
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         op_context: Dict[str, Any] = {"operation": operation_name, **context}
 
-        self.info(f"Starting operation: {operation_name}", **op_context)
+        if emit_start and self.logger.isEnabledFor(level):
+            self._log(level, f"Starting operation: {operation_name}", **op_context)
 
         try:
             yield op_context
-            duration = time.time() - start_time
-            self.info(
-                f"Completed operation: {operation_name}",
-                duration_seconds=duration,
-                status="success",
-                **op_context,
-            )
         except Exception as e:
-            duration = time.time() - start_time
-            self.error(
-                f"Failed operation: {operation_name}",
-                duration_seconds=duration,
-                status="failure",
-                error_type=type(e).__name__,
-                error_message=str(e),
-                **op_context,
-            )
+            duration = time.perf_counter() - start_time
+            if self.logger.isEnabledFor(failure_level):
+                self._log(
+                    failure_level,
+                    f"Failed operation: {operation_name}",
+                    duration_seconds=duration,
+                    status="failure",
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    **op_context,
+                )
             raise
+        else:
+            duration = time.perf_counter() - start_time
+            if emit_success:
+                resolved_success_level = success_level if success_level is not None else level
+                if self.logger.isEnabledFor(resolved_success_level):
+                    self._log(
+                        resolved_success_level,
+                        f"Completed operation: {operation_name}",
+                        duration_seconds=duration,
+                        status="success",
+                        **op_context,
+                    )
 
 
 def configure_logging(
