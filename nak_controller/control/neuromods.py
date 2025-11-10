@@ -6,11 +6,11 @@ normalized modulator levels in [0, 1] that adjust controller behavior.
 
 **Neurophysiological Basis:**
 
-1. **Dopamine (DA)**: Reward prediction error (RPE) signal. In the brain, 
+1. **Dopamine (DA)**: Reward prediction error (RPE) signal. In the brain,
    phasic dopamine encodes unexpected rewards/punishments (Schultz et al., 1997).
    Here: DA = 0.5 + β_DA · δ, where δ is the unexpected reward signal.
 
-2. **Noradrenaline (NA)**: Arousal and stress response. NA increases with 
+2. **Noradrenaline (NA)**: Arousal and stress response. NA increases with
    environmental uncertainty/volatility (Aston-Jones & Cohen, 2005).
    Here: NA = γ_NA · σ_global, where σ_global is global volatility.
 

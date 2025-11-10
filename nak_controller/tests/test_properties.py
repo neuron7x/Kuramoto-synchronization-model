@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import cast
 
 import numpy as np
-import pytest
 
 from nak_controller.control.global_mode import choose_mode
 from nak_controller.control.neuromods import (
