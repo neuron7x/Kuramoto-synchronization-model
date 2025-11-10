@@ -12,7 +12,7 @@ from application.system import (
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from domain import Order, OrderSide, SignalAction
+from domain import Order, OrderSide, Signal, SignalAction
 from execution.connectors import BinanceConnector
 from execution.risk import RiskLimits
 from tradepulse.sdk import (
@@ -150,4 +150,47 @@ def test_propose_trade_requires_context(tmp_path: Path) -> None:
     with pytest.raises(LookupError):
         signal = type("_S", (), {"symbol": "BTCUSDT", "action": SignalAction.BUY, "confidence": 0.5})()
         sdk.propose_trade(signal)  # type: ignore[arg-type]
+
+
+def test_exit_short_position_requests_buy_order(tmp_path: Path, monkeypatch) -> None:
+    system = _build_system(tmp_path)
+    market = _load_market_frame(system)
+    config = SDKConfig(
+        default_venue="binance",
+        signal_strategy=_strategy,
+        position_sizer=_position_sizer,
+    )
+    sdk = TradePulseSDK(system, config)
+
+    state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
+    sdk.get_signal(state)
+
+    monkeypatch.setattr(system.risk_manager, "current_position", lambda symbol: -0.75)
+
+    exit_signal = Signal(symbol="BTCUSDT", action=SignalAction.EXIT, confidence=1.0)
+    proposal = sdk.propose_trade(exit_signal)
+
+    assert proposal.order.side is OrderSide.BUY
+    assert proposal.order.quantity > 0
+
+
+def test_exit_flat_position_raises(tmp_path: Path, monkeypatch) -> None:
+    system = _build_system(tmp_path)
+    market = _load_market_frame(system)
+    config = SDKConfig(
+        default_venue="binance",
+        signal_strategy=_strategy,
+        position_sizer=_position_sizer,
+    )
+    sdk = TradePulseSDK(system, config)
+
+    state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
+    sdk.get_signal(state)
+
+    monkeypatch.setattr(system.risk_manager, "current_position", lambda symbol: 0.0)
+
+    exit_signal = Signal(symbol="BTCUSDT", action=SignalAction.EXIT, confidence=1.0)
+
+    with pytest.raises(ValueError):
+        sdk.propose_trade(exit_signal)
 

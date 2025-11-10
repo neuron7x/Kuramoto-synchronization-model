@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isclose, isnan
 from typing import Mapping, MutableMapping
 
 from application.system import TradePulseSystem
@@ -81,13 +82,30 @@ class TradePulseSDK:
         if signal.action in {SignalAction.HOLD}:
             raise ValueError("Cannot propose trade for HOLD signals")
 
-        quantity = float(self._config.position_sizer(signal))
-        if quantity <= 0:
-            raise ValueError("Position sizer must return a positive quantity")
+        raw_quantity = float(self._config.position_sizer(signal))
+        quantity = abs(raw_quantity)
+        if quantity == 0:
+            raise ValueError("Position sizer must return a non-zero quantity")
 
-        side = OrderSide.SELL if signal.action is SignalAction.SELL else OrderSide.BUY
+        try:
+            current_position = float(
+                self._system.risk_manager.current_position(signal.symbol)
+            )
+        except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+            raise ValueError(
+                f"Risk manager returned invalid position for symbol {signal.symbol!r}"
+            ) from exc
+
         if signal.action is SignalAction.EXIT:
+            if isnan(current_position) or isclose(current_position, 0.0, abs_tol=1e-9):
+                raise ValueError(
+                    f"Cannot exit flat position for symbol {signal.symbol!r}"
+                )
+            side = OrderSide.SELL if current_position > 0 else OrderSide.BUY
+        elif signal.action is SignalAction.SELL:
             side = OrderSide.SELL
+        else:
+            side = OrderSide.BUY
 
         price = context.last_price
         order_type = OrderType.MARKET if price is None else OrderType.LIMIT
