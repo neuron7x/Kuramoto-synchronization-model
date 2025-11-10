@@ -172,8 +172,10 @@ class GABAInhibitionGate(nn.Module):
 
         # 1) GABA release ~ threat proxy (volatility) with dual time constants
         drive = _GABA_DRIVE_SCALE * self._norm_vol(vix)
-        self.gaba_fast = self.gaba_fast * self.decay_fast + drive * (1 - self.decay_fast)
-        self.gaba_slow = self.gaba_slow * self.decay_slow + drive * (1 - self.decay_slow)
+        new_gaba_fast = self.gaba_fast * self.decay_fast + drive * (1 - self.decay_fast)
+        new_gaba_slow = self.gaba_slow * self.decay_slow + drive * (1 - self.decay_slow)
+        self.gaba_fast.copy_(new_gaba_fast)
+        self.gaba_slow.copy_(new_gaba_slow)
         gaba_level = torch.clamp(
             self.gaba_fast + _GABA_SLOW_WEIGHT * self.gaba_slow, 0.0, _GABA_MAX_LEVEL
         )
@@ -185,7 +187,7 @@ class GABAInhibitionGate(nn.Module):
 
         # 3) Cycle modulation (gamma/theta)
         if self.p.cycle_modulation:
-            self.t_ms = self.t_ms + self.dt_tensor
+            self.t_ms.add_(self.dt_tensor)
             cyc = self._cycles(self.t_ms)
         else:
             cyc = torch.tensor(1.0, device=self.device)
@@ -214,7 +216,8 @@ class GABAInhibitionGate(nn.Module):
         elif (pre_post < self.p.ltd_theta).item():
             ltp_ltd_component = -_LTD_STRENGTH * gaba_level
         dw = stdp_component + ltp_ltd_component
-        self.risk_weight = torch.clamp(self.risk_weight + dw, self.p.risk_min, self.p.risk_max)
+        new_risk_weight = torch.clamp(self.risk_weight + dw, self.p.risk_min, self.p.risk_max)
+        self.risk_weight.copy_(new_risk_weight)
 
         # 5) Apply gating
         gated = action * (1 - inhibition) * self.risk_weight * cyc
@@ -284,9 +287,11 @@ class GABAInhibitionGate(nn.Module):
             raise ValueError(f"strength must be in [0, 2], got {strength}")
         
         boost = torch.tensor(strength, device=self.device)
-        self.gaba_fast = torch.clamp(
+        boosted_fast = torch.clamp(
             self.gaba_fast * (1 + _HEDGE_FAST_BOOST * boost), 0.0, _GABA_MAX_LEVEL
         )
-        self.gaba_slow = torch.clamp(
+        boosted_slow = torch.clamp(
             self.gaba_slow * (1 + _HEDGE_SLOW_BOOST * boost), 0.0, _GABA_MAX_LEVEL
         )
+        self.gaba_fast.copy_(boosted_fast)
+        self.gaba_slow.copy_(boosted_slow)
