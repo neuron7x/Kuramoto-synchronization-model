@@ -345,6 +345,32 @@ class TestNeuroOrchestrator:
         assert output.parameters["learning_rate"] == 0.025
         assert output.parameters["temperature"] == 2.0
 
+    def test_custom_parameters_nested_merge(self):
+        """Custom overrides should merge nested dictionaries rather than replace them."""
+        scenario = TradingScenario(
+            market="BTC/USDT",
+            timeframe="1h",
+            risk_profile="moderate",
+        )
+        custom_params = {
+            "dopamine": {"burst_factor": 2.25},
+            "tacl": {"epsilon_tolerance": 0.02},
+        }
+
+        orchestrator = NeuroOrchestrator()
+        output = orchestrator.orchestrate(scenario, custom_parameters=custom_params)
+
+        # Existing nested fields should still be present after applying overrides.
+        dopamine = output.parameters["dopamine"]
+        assert dopamine["burst_factor"] == 2.25
+        assert dopamine["decay_rate"] == 0.95
+        assert dopamine["invigoration_threshold"] == 0.6
+
+        tacl = output.parameters["tacl"]
+        assert tacl["epsilon_tolerance"] == 0.02
+        assert tacl["monotonic_descent"] is True
+        assert tacl["crisis_detection"] is True
+
     def test_free_energy_validation(self):
         """Test TACL free-energy validation."""
         scenario = TradingScenario(

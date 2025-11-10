@@ -413,11 +413,50 @@ class NeuroOrchestrator:
             },
         }
         
-        # Apply custom overrides
+        # Apply custom overrides using a deep merge so nested dictionaries are
+        # preserved rather than replaced wholesale.
         if custom_parameters:
-            params.update(custom_parameters)
-        
+            params = self._deep_merge_dicts(params, custom_parameters)
+
         return params
+
+    def _deep_merge_dicts(
+        self, base: Dict[str, Any], overrides: Mapping[str, Any]
+    ) -> Dict[str, Any]:
+        """Recursively merge ``overrides`` into ``base``.
+
+        The default ``dict.update`` implementation replaces nested dictionaries
+        entirely which is undesirable for configuration structures where the
+        caller might wish to tweak a single field.  This helper performs a
+        depth-aware merge so that nested keys are updated in place while the
+        rest of the defaults remain intact.
+
+        Parameters
+        ----------
+        base : Dict[str, Any]
+            Dictionary containing the default values. The dictionary is mutated
+            in place and also returned for convenience.
+        overrides : Mapping[str, Any]
+            Mapping containing user supplied overrides. Nested mappings are
+            merged recursively.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The merged dictionary reference (identical to ``base``).
+        """
+
+        for key, value in overrides.items():
+            if isinstance(value, Mapping):
+                existing = base.get(key)
+                if isinstance(existing, dict):
+                    base[key] = self._deep_merge_dicts(existing, value)
+                else:
+                    base[key] = self._deep_merge_dicts({}, value)
+            else:
+                base[key] = value
+
+        return base
     
     def _build_risk_contour(
         self,
