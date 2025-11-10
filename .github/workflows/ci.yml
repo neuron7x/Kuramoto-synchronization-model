@@ -52,7 +52,7 @@ jobs:
 
       - name: Run tests with coverage (shard ${{ matrix.shard }})
         run: |
-          pytest \
+          pytest tests/ \
             --cov=core \
             --cov=backtest \
             --cov=execution \

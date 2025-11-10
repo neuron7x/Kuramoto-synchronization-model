@@ -30,9 +30,12 @@ class LocaleCoverage:
   extra: Set[str]
 
   @property
-  def coverage(self) -> float:
-    expected = len(self.missing) + len(self.extra)
-    return 1.0 if expected == 0 and not self.missing else None
+  def coverage(self) -> float | None:
+    # Note: This property is not currently used. Coverage is calculated directly
+    # in the main() function using the formula on line 199.
+    if len(self.missing) == 0 and len(self.extra) == 0:
+      return 1.0
+    return None
 
 
 def parse_args(argv: Iterable[str]) -> argparse.Namespace:
