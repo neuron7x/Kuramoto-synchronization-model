@@ -259,8 +259,17 @@ def aggregate_signals(
         flow_grad = flow_grad + weight * signal.snapshot.flow_gradient
         divergence += np.abs(weight) * signal.snapshot.divergence
 
-    theta = compute_theta(price_grad, flow_grad)
-    kappa = compute_kappa(price_grad, flow_grad)
+    price_norm = float(np.linalg.norm(price_grad))
+    flow_norm = float(np.linalg.norm(flow_grad))
+    if price_norm < _EPS and flow_norm < _EPS:
+        theta = 0.0
+        kappa = 1.0
+    elif price_norm < _EPS or flow_norm < _EPS:
+        theta = float(np.pi / 2)
+        kappa = 0.0
+    else:
+        theta = compute_theta(price_grad, flow_grad)
+        kappa = compute_kappa(price_grad, flow_grad)
     return DivConvSnapshot(
         price_gradient=price_grad,
         flow_gradient=flow_grad,

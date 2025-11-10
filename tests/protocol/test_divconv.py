@@ -228,3 +228,50 @@ def test_aggregate_signals_accepts_pre_normalised_weights():
     assert np.allclose(aggregated.price_gradient, np.array([0.6, 0.4]))
     assert np.allclose(aggregated.flow_gradient, np.array([0.4, 0.6]))
     assert math.isclose(aggregated.divergence, 1.4)
+
+
+def test_aggregate_signals_handles_balanced_exposures():
+    snapshot = DivConvSnapshot(
+        price_gradient=np.array([1.0, 0.0]),
+        flow_gradient=np.array([1.0, 0.0]),
+        theta=compute_theta([1.0, 0.0], [1.0, 0.0]),
+        kappa=compute_kappa([1.0, 0.0], [1.0, 0.0]),
+        divergence=0.5,
+    )
+    signals = [
+        DivConvSignal(asset_id="LONG", snapshot=snapshot, risk_weight=1.0, exposure=1.0),
+        DivConvSignal(asset_id="SHORT", snapshot=snapshot, risk_weight=-1.0, exposure=1.0),
+    ]
+
+    aggregated = aggregate_signals(signals)
+    assert np.allclose(aggregated.price_gradient, np.zeros(2))
+    assert np.allclose(aggregated.flow_gradient, np.zeros(2))
+    assert math.isclose(aggregated.theta, 0.0)
+    assert math.isclose(aggregated.kappa, 1.0)
+
+
+def test_aggregate_signals_handles_degenerate_direction():
+    snapshot_long = DivConvSnapshot(
+        price_gradient=np.array([1.0, 0.0]),
+        flow_gradient=np.array([1.0, 0.0]),
+        theta=compute_theta([1.0, 0.0], [1.0, 0.0]),
+        kappa=compute_kappa([1.0, 0.0], [1.0, 0.0]),
+        divergence=0.3,
+    )
+    snapshot_short = DivConvSnapshot(
+        price_gradient=np.array([-1.0, 0.0]),
+        flow_gradient=np.array([1.0, 0.0]),
+        theta=compute_theta([-1.0, 0.0], [1.0, 0.0]),
+        kappa=compute_kappa([-1.0, 0.0], [1.0, 0.0]),
+        divergence=0.7,
+    )
+    signals = [
+        DivConvSignal(asset_id="L", snapshot=snapshot_long, risk_weight=1.0, exposure=1.0),
+        DivConvSignal(asset_id="S", snapshot=snapshot_short, risk_weight=1.0, exposure=1.0),
+    ]
+
+    aggregated = aggregate_signals(signals)
+    assert np.allclose(aggregated.price_gradient, np.zeros(2))
+    assert np.allclose(aggregated.flow_gradient, np.array([1.0, 0.0]))
+    assert math.isclose(aggregated.theta, math.pi / 2)
+    assert math.isclose(aggregated.kappa, 0.0)
