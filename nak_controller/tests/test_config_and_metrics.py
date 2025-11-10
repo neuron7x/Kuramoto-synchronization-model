@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Mapping
 
 import pytest
-import yaml  # type: ignore[import-untyped]
+import yaml
 from pydantic import ValidationError
 
 from nak_controller.core.config import NakConfig

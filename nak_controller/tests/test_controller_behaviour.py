@@ -7,7 +7,7 @@ from typing import Dict, cast
 
 import numpy as np
 import pytest
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 from nak_controller.control.pi import rate_limit
 from nak_controller.core.energetics import update_energy, update_load
@@ -310,3 +310,42 @@ def test_step_raises_when_red_mode_not_suspended(tmp_path: Path) -> None:
 
     with pytest.raises(RuntimeError, match="RED mode must result in suspension"):
         controller.step("red", bullish_local, stressed_global, bases)
+
+
+def test_export_tacl_metrics_returns_all_state() -> None:
+    controller = NaKController(CONFIG_PATH, seed=99)
+    local, global_obs, bases = _default_inputs()
+    controller.step("tacl_test", local, global_obs, bases)
+
+    metrics = controller.export_tacl_metrics("tacl_test")
+    expected_keys = {
+        "tacl.nak.energy",
+        "tacl.nak.load",
+        "tacl.nak.engagement_index",
+        "tacl.nak.debt",
+        "tacl.nak.integrator",
+        "tacl.nak.pi_error",
+        "tacl.nak.rate_raw",
+        "tacl.nak.rate_modulated",
+        "tacl.nak.rate_final",
+        "tacl.nak.dopamine",
+        "tacl.nak.noradrenaline",
+        "tacl.nak.serotonin",
+        "tacl.nak.acetylcholine",
+        "tacl.nak.risk_multiplier",
+        "tacl.nak.activity_multiplier",
+        "tacl.nak.band_expansion",
+        "tacl.nak.frequency",
+        "tacl.nak.suspended",
+    }
+    assert set(metrics.keys()) == expected_keys
+    assert all(isinstance(v, float) for v in metrics.values())
+    assert 0.0 <= metrics["tacl.nak.energy"] <= 1.0
+    assert 0.0 <= metrics["tacl.nak.load"] <= 1.0
+    assert 0.0 <= metrics["tacl.nak.engagement_index"] <= 1.0
+
+
+def test_export_tacl_metrics_returns_empty_for_unknown_strategy() -> None:
+    controller = NaKController(CONFIG_PATH, seed=100)
+    metrics = controller.export_tacl_metrics("nonexistent")
+    assert metrics == {}
