@@ -349,3 +349,38 @@ def test_export_tacl_metrics_returns_empty_for_unknown_strategy() -> None:
     controller = NaKController(CONFIG_PATH, seed=100)
     metrics = controller.export_tacl_metrics("nonexistent")
     assert metrics == {}
+
+
+def test_controller_empty_nak_seed_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that empty NAK_SEED environment variable results in None seed."""
+    monkeypatch.setenv("NAK_SEED", "")
+    controller = NaKController(CONFIG_PATH)
+    assert controller._seed is None
+
+
+def test_hook_empty_nak_seed_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that empty NAK_SEED in NaKHook results in None seed."""
+    monkeypatch.setenv("NAK_SEED", "")
+    hook = NaKHook(CONFIG_PATH)
+    assert hook.seed is None
+
+
+def test_hook_whitespace_nak_seed_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that whitespace-only NAK_SEED in NaKHook results in None seed."""
+    monkeypatch.setenv("NAK_SEED", "   ")
+    hook = NaKHook(CONFIG_PATH)
+    assert hook.seed is None
+
+
+def test_hook_reset_without_seed_param() -> None:
+    """Test NaKHook reset without seed parameter uses current seed."""
+    hook = NaKHook(CONFIG_PATH, seed=123)
+    assert hook.seed == 123
+    local, global_obs, bases = _default_inputs()
+    result1 = hook.compute_limits("test", local, global_obs, 0.01, 5.0, 1500.0)
+    # Reset without seed should keep seed=123
+    hook.reset()
+    assert hook.seed == 123
+    result2 = hook.compute_limits("test", local, global_obs, 0.01, 5.0, 1500.0)
+    # Results should be identical since using same seed
+    assert result1["risk_per_trade"] == pytest.approx(result2["risk_per_trade"])

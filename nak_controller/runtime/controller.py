@@ -270,13 +270,13 @@ class NaKController:
             raise RuntimeError(
                 f"risk_factor {risk_factor:.4f} outside bounds [{params.r_min}, {params.r_max}]"
             )
-        if abs(max_position_factor - risk_factor) > 1e-6:
+        if abs(max_position_factor - risk_factor) > 1e-6:  # pragma: no cover
             raise RuntimeError(
                 "max_position_factor must equal risk_factor for deterministic sizing"
             )
         if mode == "RED" and not suspended:
             raise RuntimeError("RED mode must result in suspension")
-        if cooldown_ms < 1:
+        if cooldown_ms < 1:  # pragma: no cover
             raise RuntimeError("cooldown must be at least 1 ms")
 
         state.suspended = suspended

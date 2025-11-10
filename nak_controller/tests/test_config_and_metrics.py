@@ -69,6 +69,30 @@ def test_scalar_field_validations(field: str, value: float) -> None:
         NakConfig(**config)
 
 
+def test_risk_mult_rejects_negative_values() -> None:
+    """Test that negative values in risk_mult are rejected."""
+    config = _make_config()
+    config["risk_mult"]["GREEN"] = -0.1
+    with pytest.raises(ValidationError, match="multipliers must be non-negative"):
+        NakConfig(**config)
+
+
+def test_activity_mult_rejects_negative_values() -> None:
+    """Test that negative values in activity_mult are rejected."""
+    config = _make_config()
+    config["activity_mult"]["AMBER"] = -0.5
+    with pytest.raises(ValidationError, match="multipliers must be non-negative"):
+        NakConfig(**config)
+
+
+def test_band_expand_rejects_negative_values() -> None:
+    """Test that negative values in band_expand are rejected."""
+    config = _make_config()
+    config["band_expand"]["RED"] = -1.0
+    with pytest.raises(ValidationError, match="multipliers must be non-negative"):
+        NakConfig(**config)
+
+
 def test_weight_sum_must_not_exceed_one() -> None:
     config = _make_config(w_n=0.3, w_v=0.3, w_d=0.3, w_e=0.2, w_l=0.1, w_s=0.1)
     with pytest.raises(ValidationError):
