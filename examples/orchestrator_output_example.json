@@ -1,0 +1,125 @@
+{
+  "module_sequence": [
+    {
+      "module_name": "data_ingestion",
+      "operation": "ingest",
+      "parameters": {
+        "symbol": "BTC/USDT",
+        "timeframe": "1h",
+        "buffer_size": 1000
+      },
+      "priority": 0
+    },
+    {
+      "module_name": "feature_extraction",
+      "operation": "extract",
+      "parameters": {
+        "indicators": [
+          "kuramoto",
+          "ricci_flow",
+          "entropy"
+        ],
+        "lookback": 100
+      },
+      "priority": 1
+    },
+    {
+      "module_name": "risk_assessment",
+      "operation": "evaluate",
+      "parameters": {
+        "method": "var_es",
+        "confidence": 0.5,
+        "window": 50
+      },
+      "priority": 2
+    },
+    {
+      "module_name": "action_selector",
+      "operation": "select",
+      "parameters": {
+        "algorithm": "basal_ganglia",
+        "temperature": 1.0,
+        "neuromodulators": [
+          "dopamine",
+          "serotonin",
+          "gaba",
+          "na_ach"
+        ]
+      },
+      "priority": 3
+    },
+    {
+      "module_name": "learning_loop",
+      "operation": "update",
+      "parameters": {
+        "algorithm": "TD(0)",
+        "learning_rate": 0.01,
+        "discount_gamma": 0.99
+      },
+      "priority": 4
+    },
+    {
+      "module_name": "tacl_monitor",
+      "operation": "validate",
+      "parameters": {
+        "free_energy_threshold": 1.4,
+        "monotonic_descent": true,
+        "protocol_hot_swap": true
+      },
+      "priority": 5
+    }
+  ],
+  "parameters": {
+    "capital": 100000.0,
+    "max_position_size": 0.2,
+    "learning_rate": 0.01,
+    "discount_gamma": 0.99,
+    "exposure_limit": 0.5,
+    "free_energy_threshold": 1.4,
+    "temperature": 1.0,
+    "dopamine": {
+      "burst_factor": 1.5,
+      "decay_rate": 0.95,
+      "invigoration_threshold": 0.6
+    },
+    "serotonin": {
+      "stress_threshold": 0.15,
+      "hold_temperature_floor": 0.3
+    },
+    "gaba": {
+      "inhibition_decay": 0.9,
+      "impulse_threshold": 0.5
+    },
+    "na_ach": {
+      "arousal_sensitivity": 1.2,
+      "attention_gain": 1.0
+    },
+    "tacl": {
+      "monotonic_descent": true,
+      "epsilon_tolerance": 0.01,
+      "crisis_detection": true,
+      "protocol_options": [
+        "CRDT",
+        "RDMA",
+        "gRPC",
+        "shared_memory"
+      ]
+    }
+  },
+  "risk_contour": {
+    "mode": "normal",
+    "threat_threshold": 0.5,
+    "exposure_limit": 0.5,
+    "drawdown_limit": 0.1,
+    "var_confidence": 0.975,
+    "kelly_fraction_cap": 0.75
+  },
+  "learning_loop": {
+    "algorithm": "TD(0)",
+    "discount_gamma": 0.99,
+    "learning_rate": 0.01,
+    "prediction_window": 1,
+    "error_metric": "absolute",
+    "update_rule": "delta = reward + gamma * V_next - V_current; V_current += learning_rate * delta"
+  }
+}
