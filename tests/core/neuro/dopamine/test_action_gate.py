@@ -85,7 +85,7 @@ def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_p
     # Direct import to avoid dependency issues in tests
     serotonin_spec = importlib.util.spec_from_file_location(
         "serotonin_controller",
-        Path(__file__).parent.parent.parent.parent / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
+        Path(__file__).resolve().parents[4] / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
     )
     serotonin_module = importlib.util.module_from_spec(serotonin_spec)
     sys.modules["serotonin_controller_test"] = serotonin_module
