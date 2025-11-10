@@ -117,6 +117,35 @@ class TestTopoSentinel:
 
         assert result["topo_score"] == 0.0
 
+    def test_handles_constant_and_nan_columns(self):
+        """Constant or NaN-only columns should not produce NaN scores."""
+        np.random.seed(0)
+        dates = pd.date_range("2024-01-01", periods=120, freq="1h")
+        returns = pd.DataFrame(
+            {
+                "asset1": np.random.randn(120) * 0.01,
+                "asset2": np.zeros(120),
+                "asset3": np.nan,
+            },
+            index=dates,
+        )
+
+        detector = TopoSentinel(window=60)
+        result = detector.fit_transform(returns)
+
+        assert result["topo_score"] >= 0.0
+        assert result["topo_score"] <= 1.0
+
+    def test_returns_zero_when_no_numeric_data(self):
+        """Non-numeric frames should short-circuit to zero score."""
+        dates = pd.date_range("2024-01-01", periods=60, freq="1h")
+        returns = pd.DataFrame({"category": ["A"] * 60}, index=dates)
+
+        detector = TopoSentinel(window=20)
+        result = detector.fit_transform(returns)
+
+        assert result["topo_score"] == 0.0
+
 
 class TestCausalGuard:
     """Test causal guard."""
