@@ -85,7 +85,16 @@ def test_aversive_state(controller):
         cum_losses=0.2,
         rho_loss=-0.90,
     )
-    expected = 0.42 * 1.0 + 0.28 * 0.5 + 0.32 * 0.2 + 0.18 * (1 - (-0.90))
+    # v2.4.0 uses non-linear transforms:
+    # - sqrt for market_vol (Weber-Fechner)
+    # - quadratic for cum_losses (pain amplification)
+    # - tanh saturation
+    vol_contribution = 0.42 * math.sqrt(1.0)
+    fe_contribution = 0.28 * 0.5
+    loss_contribution = 0.32 * (0.2 + 0.5 * 0.2 ** 2)
+    rho_contribution = 0.18 * (1 - (-0.90))
+    release = vol_contribution + fe_contribution + loss_contribution + rho_contribution
+    expected = 3.0 * math.tanh(release / 3.0)
     assert s == pytest.approx(expected, rel=1e-3)
 
 
@@ -161,8 +170,13 @@ def test_modulate_action_prob(controller):
         serotonin_signal=ser,
         za_bias=-0.33,
     )
-    expected = 0.9 * (1 - 0.6 * 0.8) * (1 + (-0.33))
-    expected = float(np.clip(expected, 0.0, 1.0))
+    # v2.4.0 uses quadratic inhibition for progressive effect
+    inhibition_strength = ser ** 2
+    inhibition_factor = 1.0 - inhibition_strength * 0.8
+    inhibited = 0.9 * max(0.0, inhibition_factor)
+    # Negative bias with sigmoid-like application
+    bias_factor = 1.0 + (-0.33) * (1.0 - math.exp(-2.0 * ser))
+    expected = float(np.clip(inhibited * bias_factor, 0.0, 1.0))
     assert prob == pytest.approx(expected, rel=1e-3)
 
 
@@ -179,7 +193,10 @@ def test_apply_internal_shift(controller):
         serotonin_signal=ser,
         beta_temper=0.12,
     )
-    expected = grad * (1 - 0.12 * ser)
+    # v2.4.0 uses power-law tempering (power 1.5) for smoother transitions
+    tempering_curve = ser ** 1.5
+    tempering_factor = 1.0 - 0.12 * tempering_curve
+    expected = grad * max(0.0, tempering_factor)
     assert shifted == pytest.approx(expected, rel=1e-3)
 
 
