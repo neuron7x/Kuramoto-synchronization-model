@@ -7,6 +7,18 @@ on:
   pull_request:
     branches:
       - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '*.txt'
+      - 'LICENSE'
+      - 'NOTICE'
+      - 'PATENTS.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.gitattributes'
   workflow_dispatch:
 
 concurrency:
