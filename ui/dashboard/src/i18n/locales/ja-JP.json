@@ -15,6 +15,9 @@
     "badges": {
       "live": "ライブ"
     },
+    "accessibility": {
+      "skipLink": "メインコンテンツへスキップ"
+    },
     "controls": {
       "toggle": {
         "label": "メニュー",

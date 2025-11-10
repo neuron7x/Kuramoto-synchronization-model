@@ -15,6 +15,9 @@
     "badges": {
       "live": "En vivo"
     },
+    "accessibility": {
+      "skipLink": "Saltar al contenido principal"
+    },
     "controls": {
       "toggle": {
         "label": "Menú",
