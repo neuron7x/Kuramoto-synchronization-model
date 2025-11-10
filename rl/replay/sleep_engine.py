@@ -58,7 +58,7 @@ class SleepReplayEngine:
     def sample(self, batch_size: int = 64) -> List[Transition]:
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
-        if len(self.buffer) < batch_size:
+        if not self.buffer:
             return []
         priorities = np.array(
             [transition.priority for transition in self.buffer], dtype=float
@@ -68,8 +68,9 @@ class SleepReplayEngine:
             probabilities = np.full(len(self.buffer), 1.0 / len(self.buffer))
         else:
             probabilities = priorities / total_priority
+        replace = len(self.buffer) < batch_size
         indices = np.random.choice(
-            len(self.buffer), size=batch_size, replace=False, p=probabilities
+            len(self.buffer), size=batch_size, replace=replace, p=probabilities
         )
         return [self.buffer[index] for index in indices]
 
