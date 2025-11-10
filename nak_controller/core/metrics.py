@@ -10,7 +10,7 @@ _EPSILON = 1e-12
 
 def pnl_norm(pnl: float, scale: float = 0.01) -> float:
     """Return a normalized profit-and-loss signal in the range [0, 1].
-    
+
     Uses a saturating linear transform: maps [-scale, +scale] to [0, 1],
     with improved numerical stability via epsilon regularization.
     """
@@ -22,7 +22,7 @@ def pnl_norm(pnl: float, scale: float = 0.01) -> float:
 
 def dd_norm(drawdown: float, max_dd: float = 0.2) -> float:
     """Normalize drawdown magnitude into [0, 1].
-    
+
     Uses epsilon regularization for numerical stability in division.
     """
     if max_dd <= 0.0:
@@ -32,7 +32,7 @@ def dd_norm(drawdown: float, max_dd: float = 0.2) -> float:
 
 def vol_norm(volatility: float, max_vol: float = 1.0) -> float:
     """Normalize realized volatility into [0, 1].
-    
+
     Uses epsilon regularization for numerical stability in division.
     """
     if max_vol <= 0.0:
@@ -42,7 +42,7 @@ def vol_norm(volatility: float, max_vol: float = 1.0) -> float:
 
 def lat_norm(latency_ms: float, p95_ms: float = 50.0) -> float:
     """Normalize latency to [0, 1] based on a P95 target.
-    
+
     Uses epsilon regularization for numerical stability in division.
     """
     if p95_ms <= 0.0:
@@ -52,7 +52,7 @@ def lat_norm(latency_ms: float, p95_ms: float = 50.0) -> float:
 
 def slippage_norm(slippage: float, threshold: float = 0.001) -> float:
     """Normalize slippage magnitude to [0, 1].
-    
+
     Uses epsilon regularization for numerical stability in division.
     """
     if threshold <= 0.0:

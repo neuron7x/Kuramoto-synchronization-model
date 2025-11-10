@@ -32,18 +32,18 @@ def update_load(
     rng: np.random.Generator,
 ) -> float:
     """Update the neuronal load component based on local observations.
-    
+
     The load represents cumulative stress from trading activity, volatility,
     drawdown, technical errors, latency, and slippage. Noradrenaline (NA)
     modulates volatility sensitivity, implementing an adaptive stress response.
-    
+
     Args:
         state: Current strategy state containing load L
         params: Controller parameters with weight coefficients
         obs: Local observations dictionary
         NA: Noradrenaline activation level [0, 1]
         rng: NumPy random generator for stochastic noise
-        
+
     Returns:
         Updated load value clamped to [L_min, L_max]
     """
@@ -80,11 +80,11 @@ def update_energy(
     da_unexp: float,
 ) -> float:
     """Update the metabolic energy reserves given observations and modulators.
-    
+
     Energy represents the capacity to continue trading operations. Profits
     replenish energy while trading costs and volatility deplete it. When
     energy goes negative, debt accumulates and must be recovered.
-    
+
     Args:
         state: Current strategy state with energy E and debt
         params: Controller parameters with energy coefficients
@@ -92,7 +92,7 @@ def update_energy(
         NA: Noradrenaline activation level [0, 1]
         DA: Dopamine activation level [0, 1] (not directly used here)
         da_unexp: Unexpected dopamine component for reward prediction
-        
+
     Returns:
         Updated energy value clamped to [0, E_max]
     """
@@ -130,18 +130,18 @@ def update_energy(
 
 def compute_EI(state: StrategyState, params: NaKParams, obs: Dict[str, float]) -> float:
     """Compute the engagement index (EI) from energy, load and profitability.
-    
+
     The engagement index represents the overall health and readiness of the
     trading strategy. It combines:
     - Energy level (metabolic capacity)
     - Inverse load (1 - stress level)
     - Recent profitability
-    
+
     Args:
         state: Current strategy state with energy E and load L
         params: Controller parameters with EI weight coefficients
         obs: Local observations dictionary with PnL data
-        
+
     Returns:
         Engagement index in [0, 1], also stored in state.EI and state.health
     """
