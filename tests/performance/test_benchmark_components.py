@@ -305,3 +305,83 @@ class TestIntegration:
         
         assert len(timings) > 0
         assert all(t > 0 for t in timings)
+    
+    def test_run_benchmarks(self, tmp_path: Path):
+        """Test the full benchmark runner."""
+        from scripts.performance.benchmark_components import run_benchmarks
+        
+        config_path = tmp_path / "test_config.yaml"
+        config_path.write_text("""
+components:
+  order_router:
+    percentiles:
+      p50_ms: 100.0
+      p95_ms: 200.0
+      p99_ms: 300.0
+    stability:
+      max_variance: 0.5
+  link_activator:
+    percentiles:
+      p50_ms: 100.0
+      p95_ms: 200.0
+      p99_ms: 300.0
+    stability:
+      max_variance: 0.5
+  thermo_validator:
+    percentiles:
+      p50_ms: 100.0
+      p95_ms: 200.0
+      p99_ms: 300.0
+    stability:
+      max_variance: 0.5
+""")
+        
+        output_path = tmp_path / "results.json"
+        results = run_benchmarks(config_path, output_path)
+        
+        assert len(results) == 3
+        assert "order_router" in results
+        assert "link_activator" in results
+        assert "thermo_validator" in results
+        
+        # Check output file was created
+        assert output_path.exists()
+        
+        # Verify JSON structure
+        with open(output_path) as f:
+            data = json.load(f)
+        
+        assert len(data) == 3
+        for component in ["order_router", "link_activator", "thermo_validator"]:
+            assert component in data
+            assert "metrics" in data[component]
+            assert "passed" in data[component]
+    
+    def test_run_benchmarks_without_output(self, tmp_path: Path):
+        """Test benchmark runner without output file."""
+        from scripts.performance.benchmark_components import run_benchmarks
+        
+        config_path = tmp_path / "test_config.yaml"
+        config_path.write_text("""
+components:
+  order_router:
+    percentiles:
+      p50_ms: 100.0
+      p95_ms: 200.0
+      p99_ms: 300.0
+  link_activator:
+    percentiles:
+      p50_ms: 100.0
+      p95_ms: 200.0
+      p99_ms: 300.0
+  thermo_validator:
+    percentiles:
+      p50_ms: 100.0
+      p95_ms: 200.0
+      p99_ms: 300.0
+""")
+        
+        results = run_benchmarks(config_path)
+        
+        assert len(results) == 3
+        assert all(results[c].passed for c in results)
