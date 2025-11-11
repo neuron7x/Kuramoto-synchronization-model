@@ -64,10 +64,23 @@ def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[
     coverage_observed = float(coverage_cfg.get("observed", 0.0))
     coverage_required = float(coverage_cfg.get("required", 1.0))
     coverage_passed = coverage_observed >= coverage_required
+    coverage_reason: str | None = None
+    if not coverage_passed:
+        coverage_reason = (
+            f"coverage {coverage_observed:.3f} below required {coverage_required:.3f}"
+        )
 
     perf_path = Path(config.get("perf_budgets_file", "configs/perf_budgets.yaml"))
     perf_budgets = _load_perf_budgets(perf_path)
     perf_passed = all(budget.passed() for budget in perf_budgets)
+    perf_reason: str | None = None
+    if not perf_passed:
+        failing_components = [
+            budget.component for budget in perf_budgets if not budget.passed()
+        ]
+        perf_reason = "performance budget regression: " + ", ".join(
+            sorted(failing_components)
+        )
 
     validator = EnergyValidator()
     scenarios = load_scenarios(Path(config.get("scenario_file", "")) if config.get("scenario_file") else None)
@@ -93,13 +106,84 @@ def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[
             degradations_outcome[scenario_name] = {"passed": True}
             negative_failures += 1
 
+    mutation_cfg = config.get("mutation_testing") or {}
+    mutation_summary: dict[str, object]
+    mutation_passed = True
+    mutation_reason: str | None = None
+    if mutation_cfg:
+        summary_path = Path(
+            mutation_cfg.get("summary_file", "reports/mutmut/summary.json")
+        )
+        required_kill_rate = float(
+            mutation_cfg.get("kill_rate_required", mutation_cfg.get("required", 0.9))
+        )
+        kill_rate = 0.0
+        counted_mutants = 0
+        killed_mutants = 0
+        try:
+            payload = json.loads(summary_path.read_text(encoding="utf-8"))
+            kill_rate = float(payload.get("kill_rate", 0.0))
+            counted_mutants = int(
+                payload.get("counted_mutants", payload.get("counted", 0))
+            )
+            killed_mutants = int(
+                payload.get("killed_mutants", payload.get("killed", 0))
+            )
+        except FileNotFoundError:
+            mutation_passed = False
+            mutation_reason = f"mutation summary '{summary_path}' not found"
+        except json.JSONDecodeError:
+            mutation_passed = False
+            mutation_reason = f"mutation summary '{summary_path}' is invalid"
+        else:
+            if kill_rate + 1e-9 < required_kill_rate:
+                mutation_passed = False
+                mutation_reason = (
+                    f"kill rate {kill_rate:.3f} below required {required_kill_rate:.3f}"
+                )
+        mutation_summary = {
+            "passed": mutation_passed,
+            "kill_rate": round(kill_rate, 6),
+            "required": round(required_kill_rate, 6),
+            "counted_mutants": counted_mutants,
+            "killed_mutants": killed_mutants,
+        }
+        if mutation_reason:
+            mutation_summary["reason"] = mutation_reason
+    else:
+        mutation_summary = {"passed": True}
+
     passed = (
         latency_result.passed
         and coverage_passed
         and perf_passed
         and energy_result.passed
         and negative_failures == 0
+        and mutation_passed
     )
+    failure_reasons: list[str] = []
+    if not latency_result.passed and latency_result.reason:
+        failure_reasons.append(latency_result.reason)
+    if not coverage_passed and coverage_reason:
+        failure_reasons.append(coverage_reason)
+    if not perf_passed and perf_reason:
+        failure_reasons.append(perf_reason)
+    if not energy_result.passed and energy_result.reason:
+        failure_reasons.append(energy_result.reason)
+    if mutation_reason:
+        failure_reasons.append(mutation_reason)
+    if negative_failures:
+        failure_reasons.append(
+            "negative energy scenarios unexpectedly passed: "
+            + ", ".join(
+                sorted(
+                    name
+                    for name, outcome in degradations_outcome.items()
+                    if outcome.get("passed")
+                )
+            )
+        )
+
     summary: dict[str, object] = {
         "latency": {
             "passed": latency_result.passed,
@@ -110,6 +194,7 @@ def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[
             "passed": coverage_passed,
             "observed": coverage_observed,
             "required": coverage_required,
+            "reason": coverage_reason,
         },
         "performance": {
             "passed": perf_passed,
@@ -122,15 +207,20 @@ def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[
                 }
                 for budget in perf_budgets
             ],
+            "reason": perf_reason,
         },
         "energy": {
             "passed": energy_result.passed,
             "free_energy": round(energy_result.free_energy, 6),
             "entropy": round(energy_result.entropy, 6),
+            "reason": energy_result.reason,
         },
+        "mutation_testing": mutation_summary,
         "negative_tests": degradations_outcome,
         "passed": passed,
     }
+    if failure_reasons:
+        summary["reason"] = "; ".join(failure_reasons)
     return passed, summary
 
 

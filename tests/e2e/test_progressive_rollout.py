@@ -12,6 +12,17 @@ from tacl.release_gates import evaluate_release_gates
 from tacl.validate import ARTIFACTS_DIR, load_scenarios
 
 
+def _write_mutation_summary(path: Path, *, kill_rate: float, counted: int = 100) -> None:
+    killed = int(round(counted * kill_rate))
+    payload = {
+        "kill_rate": kill_rate,
+        "counted_mutants": counted,
+        "killed_mutants": killed,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
 class ProgressiveRolloutController:
     """Toy orchestration layer mirroring the rollout workflow."""
 
@@ -103,6 +114,10 @@ def test_progressive_rollout_succeeds_nominal(
 ) -> None:
     workspace = Path(tmp_path_factory.mktemp("rollout-nominal"))
     monkeypatch.chdir(workspace)
+    summary_path = workspace / "reports" / "mutmut" / "summary.json"
+    gate_config.setdefault("mutation_testing", {})
+    gate_config["mutation_testing"]["summary_file"] = str(summary_path)
+    _write_mutation_summary(summary_path, kill_rate=0.95)
     controller = ProgressiveRolloutController(gate_config=gate_config)
     assert controller.run("nominal") is True
     stages = [entry["stage"] for entry in controller.audit_log]
@@ -123,8 +138,33 @@ def test_progressive_rollout_triggers_rollback_on_degradation(
 ) -> None:
     workspace = Path(tmp_path_factory.mktemp("rollout-degraded"))
     monkeypatch.chdir(workspace)
+    summary_path = workspace / "reports" / "mutmut" / "summary.json"
+    gate_config.setdefault("mutation_testing", {})
+    gate_config["mutation_testing"]["summary_file"] = str(summary_path)
+    _write_mutation_summary(summary_path, kill_rate=0.95)
     controller = ProgressiveRolloutController(gate_config=gate_config)
     assert controller.run("degraded_packet_loss") is False
     assert controller.audit_log[-1]["stage"] == "automated-rollback"
     failure_reasons = [entry.get("reason") for entry in controller.audit_log if entry["stage"] == "validate-energy"]
     assert any("free energy" in (reason or "") for reason in failure_reasons)
+
+
+def test_progressive_rollout_blocks_on_mutation_regression(
+    tmp_path_factory: pytest.TempPathFactory,
+    gate_config: dict[str, object],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = Path(tmp_path_factory.mktemp("rollout-mutation"))
+    monkeypatch.chdir(workspace)
+    summary_path = workspace / "reports" / "mutmut" / "summary.json"
+    gate_config.setdefault("mutation_testing", {})
+    gate_config["mutation_testing"]["summary_file"] = str(summary_path)
+    _write_mutation_summary(summary_path, kill_rate=0.72)
+    controller = ProgressiveRolloutController(gate_config=gate_config)
+    assert controller.run("nominal") is False
+    gate_entry = controller.audit_log[1]
+    assert gate_entry["stage"] == "quality-gates"
+    assert gate_entry["status"] == "failed"
+    mutation_summary = gate_entry["summary"]["mutation_testing"]
+    assert mutation_summary["passed"] is False
+    assert "kill rate" in mutation_summary["reason"]

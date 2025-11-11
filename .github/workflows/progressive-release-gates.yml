@@ -39,12 +39,201 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run release gates evaluation
-        run: python -m tacl.release_gates --config ci/release_gates.yml
+        id: release_gates
+        continue-on-error: true
+        run: |
+          set +e
+          python -m tacl.release_gates --config ci/release_gates.yml
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
 
       - name: Upload release gate artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: release-gates-report
           path: |
             .ci_artifacts/release_gates.json
             .ci_artifacts/release_gates.md
+
+      - name: Publish PR release gate summary
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.ci_artifacts/release_gates.json';
+            let summary = null;
+            if (fs.existsSync(path)) {
+              try {
+                summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+              } catch (error) {
+                core.warning(`Failed to parse ${path}: ${error}`);
+              }
+            }
+
+            const passed = summary ? Boolean(summary.passed) : false;
+            const icon = (value) => (value ? '✅' : '❌');
+            const fixed = (value, digits = 2) =>
+              typeof value === 'number' && Number.isFinite(value)
+                ? value.toFixed(digits)
+                : 'n/a';
+            const percent = (value, digits = 2) =>
+              typeof value === 'number' && Number.isFinite(value)
+                ? `${(value * 100).toFixed(digits)}%`
+                : 'n/a';
+
+            const lines = ['<!-- release-gates-summary -->', `${icon(passed)} **Release Gates Summary**`, ''];
+
+            if (!summary) {
+              lines.push('⚠️ Release gate summary is unavailable. Inspect workflow logs.');
+            } else {
+              const latency = summary.latency || {};
+              const latencyMetrics = latency.metrics || {};
+              lines.push(
+                `- **Latency**: ${icon(latency.passed)} median ${fixed(latencyMetrics.median_ms)}ms, ` +
+                `p95 ${fixed(latencyMetrics.p95_ms)}ms, max ${fixed(latencyMetrics.max_ms)}ms`
+              );
+              if (latency.reason) {
+                lines.push(`  - ${latency.reason}`);
+              }
+
+              const coverage = summary.coverage || {};
+              lines.push(
+                `- **Coverage**: ${icon(coverage.passed)} observed ${percent(coverage.observed)}, ` +
+                `required ${percent(coverage.required)}`
+              );
+              if (coverage.reason) {
+                lines.push(`  - ${coverage.reason}`);
+              }
+
+              const performance = summary.performance || {};
+              const budgets = Array.isArray(performance.budgets) ? performance.budgets : [];
+              const failingBudgets = budgets
+                .filter((budget) => budget && budget.passed === false)
+                .map((budget) =>
+                  `${budget.component} (${fixed(budget.observed_ms)}ms / ${fixed(budget.budget_ms)}ms)`
+                );
+              let perfLine = `- **Performance Budgets**: ${icon(performance.passed)}`;
+              if (failingBudgets.length) {
+                perfLine += ` failing: ${failingBudgets.join(', ')}`;
+              }
+              lines.push(perfLine);
+              if (performance.reason) {
+                lines.push(`  - ${performance.reason}`);
+              }
+
+              const energy = summary.energy || {};
+              lines.push(
+                `- **Energy Model**: ${icon(energy.passed)} free energy ${fixed(energy.free_energy)} / entropy ${fixed(energy.entropy)}`
+              );
+              if (energy.reason) {
+                lines.push(`  - ${energy.reason}`);
+              }
+
+              const mutation = summary.mutation_testing || {};
+              lines.push(
+                `- **Mutation Kill Rate**: ${icon(mutation.passed)} ${percent(mutation.kill_rate)} (required ${percent(mutation.required)})`
+              );
+              if (mutation.reason) {
+                lines.push(`  - ${mutation.reason}`);
+              }
+
+              const negative = summary.negative_tests || {};
+              const unexpected = Object.entries(negative)
+                .filter(([, data]) => data && data.passed === true)
+                .map(([name]) => name);
+              const negativePassed = unexpected.length === 0;
+              let negativeLine = `- **Negative Energy Scenarios**: ${icon(negativePassed)}`;
+              if (!negativePassed) {
+                negativeLine += ` unexpected pass: ${unexpected.join(', ')}`;
+              }
+              lines.push(negativeLine);
+
+              if (!passed && summary.reason) {
+                lines.push('', `**Blocking reason:** ${summary.reason}`);
+              }
+            }
+
+            lines.push('', '> Release gate artifacts: `release-gates-report`');
+
+            const body = lines.join('\n');
+
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const marker = '<!-- release-gates-summary -->';
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: pull_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body,
+              });
+            }
+
+            const labelsToEnsure = [
+              { name: 'risk:release-blocker', color: 'b60205', description: 'Release gates failing – do not merge.' },
+              { name: 'risk:stable', color: '0e8a16', description: 'Release gates passing the critical thresholds.' },
+            ];
+            for (const definition of labelsToEnsure) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: definition.name });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, ...definition });
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            const applyLabel = async (name) => {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: pull_number, labels: [name] });
+            };
+
+            const removeLabel = async (name) => {
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: pull_number, name });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+            };
+
+            if (passed) {
+              await applyLabel('risk:stable');
+              await removeLabel('risk:release-blocker');
+            } else {
+              await applyLabel('risk:release-blocker');
+              await removeLabel('risk:stable');
+            }
+
+            core.setOutput('commented', true);
+
+      - name: Enforce gate failure
+        if: ${{ steps.release_gates.outputs.passed != 'true' }}
+        run: |
+          echo "Release gates failed. Blocking merge until addressed." >&2
+          exit 1

@@ -4,8 +4,11 @@ latency:
   p95_target_ms: 85.0
   max_target_ms: 120.0
 coverage:
-  observed: 0.937
-  required: 0.92
+  observed: 0.991
+  required: 0.98
+mutation_testing:
+  summary_file: reports/mutmut/summary.json
+  kill_rate_required: 0.9
 perf_budgets_file: configs/perf_budgets.yaml
 scenario_file: tacl/link_activator_test_scenarios.yaml
 energy_scenario: nominal
