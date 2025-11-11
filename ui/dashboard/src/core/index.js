@@ -127,13 +127,23 @@ export function exportReport(summary, options = {}) {
   throw new Error(`Unsupported export format: ${format}`);
 }
 
-export { renderDashboard, DASHBOARD_STYLES } from './dashboard_ui.js';
+export {
+  renderDashboard,
+  DASHBOARD_STYLES,
+  renderDashboardMain,
+  renderToolbar,
+  renderBreadcrumbs,
+  renderHeader,
+  createDashboardRouter,
+} from './dashboard_ui.js';
 export { sanitizeReportValue, formatCurrency, formatPercent } from './formatters.js';
 export { createRouter, Router } from '../router/index.js';
 export { renderSignalsView } from '../views/signals.js';
 export { renderOverviewView } from '../views/overview.js';
 export { renderCommunityView } from '../views/community.js';
 export { renderMonitoringView } from '../views/monitoring.js';
+export { default as DashboardDataClient } from '../client/data_client.js';
+export { default as DashboardApp } from '../client/dashboard_app.js';
 
 export class DashboardState {
   constructor({ strategies = [], backtests = [] } = {}) {

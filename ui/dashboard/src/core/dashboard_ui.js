@@ -537,6 +537,15 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
           return Promise.resolve(false);
         }
         if (action === 'refresh') {
+          try {
+            if (window.tpDashboardApp && typeof window.tpDashboardApp.refresh === 'function') {
+              return Promise.resolve(window.tpDashboardApp.refresh()).catch(function (error) {
+                return Promise.reject(error);
+              });
+            }
+          } catch (error) {
+            return Promise.reject(error);
+          }
           return new Promise(function (resolve) {
             window.setTimeout(function () {
               resolve(true);
@@ -575,49 +584,81 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       nav.setAttribute('data-enhanced', 'true');
       nav.addEventListener('keydown', handleFocusTrap);
 
-      if (toolbar) {
-        toolbar.addEventListener('click', function (event) {
-          var button = event.target.closest('[data-action="toolbar-action"]');
-          if (!button || button.disabled) {
-            return;
-          }
-          var action = button.getAttribute('data-id');
-          if (!action) {
-            return;
-          }
+      function handleToolbarClick(event) {
+        var button = event.target.closest('[data-action="toolbar-action"]');
+        if (!button || button.disabled) {
+          return;
+        }
+        var action = button.getAttribute('data-id');
+        if (!action) {
+          return;
+        }
+        try {
           event.preventDefault();
-          var successLabel = button.getAttribute('data-success-label') || '';
-          var completeLabel = button.getAttribute('data-complete-label') || '';
-          var errorLabel = button.getAttribute('data-error-label') || '';
-          setToolbarButtonState(button, 'busy');
-          if (successLabel) {
-            setToolbarFeedback(button, successLabel, { persistent: true });
-          } else {
+        } catch (error) {}
+        var successLabel = button.getAttribute('data-success-label') || '';
+        var completeLabel = button.getAttribute('data-complete-label') || '';
+        var errorLabel = button.getAttribute('data-error-label') || '';
+        setToolbarButtonState(button, 'busy');
+        if (successLabel) {
+          setToolbarFeedback(button, successLabel, { persistent: true });
+        } else {
+          setToolbarFeedback(button, '');
+        }
+        handleToolbarAction(action)
+          .then(function (result) {
+            setToolbarButtonState(button, '');
             setToolbarFeedback(button, '');
-          }
-          handleToolbarAction(action)
-            .then(function (result) {
-              setToolbarButtonState(button, '');
-              setToolbarFeedback(button, '');
-              var message = completeLabel || (result ? successLabel : '');
-              if (!message && result) {
-                message = 'Done';
-              }
-              if (message) {
-                setToolbarFeedback(button, message);
-              }
-            })
-            .catch(function (error) {
-              setToolbarButtonState(button, '');
-              setToolbarFeedback(button, '');
-              var message = errorLabel || 'Failed';
-              setToolbarFeedback(button, message, { duration: 3200 });
-              if (typeof console !== 'undefined' && console.warn) {
-                console.warn('Toolbar action failed', action, error);
-              }
-            });
-        });
+            var message = completeLabel || (result ? successLabel : '');
+            if (!message && result) {
+              message = 'Done';
+            }
+            if (message) {
+              setToolbarFeedback(button, message);
+            }
+          })
+          .catch(function (error) {
+            setToolbarButtonState(button, '');
+            setToolbarFeedback(button, '');
+            var message = errorLabel || 'Failed';
+            setToolbarFeedback(button, message, { duration: 3200 });
+            if (typeof console !== 'undefined' && console.warn) {
+              console.warn('Toolbar action failed', action, error);
+            }
+          });
       }
+
+      function bindToolbar(target) {
+        if (!target) {
+          return;
+        }
+        if (target.getAttribute('data-bound') === 'true') {
+          return;
+        }
+        target.addEventListener('click', handleToolbarClick);
+        target.setAttribute('data-bound', 'true');
+      }
+
+      bindToolbar(toolbar);
+
+      window.addEventListener('tp:view-updated', function (event) {
+        toolbar = document.querySelector('[data-role="toolbar"]');
+        toolbarTimers = typeof WeakMap === 'function' ? new WeakMap() : null;
+        if (toolbar) {
+          toolbar.removeAttribute('data-bound');
+          bindToolbar(toolbar);
+        }
+        bindResourceFilters();
+        if (event && event.detail && event.detail.route) {
+          setActiveRoute(event.detail.route);
+        }
+      });
+
+      if (!window.tpDashboardRuntime) {
+        window.tpDashboardRuntime = {};
+      }
+      window.tpDashboardRuntime.setActiveRoute = setActiveRoute;
+      window.tpDashboardRuntime.bindDynamicContent = bindResourceFilters;
 
       function updateLayoutFromQuery(event) {
         if (event && typeof event.matches === 'boolean') {
@@ -666,9 +707,23 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       });
 
       links.forEach(function (link) {
-        link.addEventListener('click', function () {
+        link.addEventListener('click', function (event) {
+          var route = link.getAttribute('data-route');
+          var handled = false;
+          if (window.tpDashboardApp && typeof window.tpDashboardApp.navigate === 'function' && route) {
+            try {
+              event.preventDefault();
+            } catch (error) {}
+            handled = true;
+            window.tpDashboardApp.navigate(route);
+          }
           if (mobileLayout) {
             setState(false, { focusTarget: mainContent });
+          }
+          if (!handled && route && typeof window !== 'undefined' && window.location) {
+            try {
+              window.location.hash = '#' + route;
+            } catch (error) {}
           }
         });
       });
@@ -680,6 +735,31 @@ const NAVIGATION_ENHANCEMENT_SCRIPT = `
       });
 
       bindResourceFilters();
+
+      function setActiveRoute(route) {
+        if (!route) {
+          return;
+        }
+        nav.setAttribute('data-current-route', route);
+        links.forEach(function (link) {
+          var linkRoute = link.getAttribute('data-route');
+          var isActive = linkRoute === route;
+          if (isActive) {
+            link.setAttribute('data-state', 'active');
+            link.classList.add('tp-nav__link--active');
+            link.setAttribute('aria-current', 'page');
+          } else {
+            link.setAttribute('data-state', 'inactive');
+            link.classList.remove('tp-nav__link--active');
+            link.removeAttribute('aria-current');
+          }
+        });
+        var currentToolbar = document.querySelector('[data-role="toolbar"]');
+        if (currentToolbar) {
+          currentToolbar.setAttribute('data-route', route);
+        }
+      }
+
 
       if (localeSelect) {
         localeSelect.addEventListener('change', function (event) {
@@ -864,7 +944,7 @@ function renderNavLink(route, sections, liveBadge, currentRoute) {
     `;
 }
 
-function renderBreadcrumbs(route, meta = {}) {
+export function renderBreadcrumbs(route, meta = {}) {
   if (!route) {
     return '';
   }
@@ -889,7 +969,7 @@ function renderBreadcrumbs(route, meta = {}) {
   `;
 }
 
-function renderToolbar({ route, routeLabel }) {
+export function renderToolbar({ route, routeLabel }) {
   const toolbar = normaliseToolbarDefinition();
   if (!toolbar.actions.length) {
     return { html: '', actions: [] };
@@ -948,7 +1028,7 @@ function resolveHeaderDefaults({ title, subtitle, tags }) {
   };
 }
 
-function renderHeader({ title, subtitle, tags } = {}) {
+export function renderHeader({ title, subtitle, tags } = {}) {
   const resolved = resolveHeaderDefaults({ title, subtitle, tags });
   const tagMarkup = Array.isArray(resolved.tags)
     ? resolved.tags
@@ -1141,7 +1221,7 @@ function renderNavigation(router, currentRoute, currentLocale) {
  *   community?: DashboardCommunityPayload;
  * }} config
  */
-function createDashboardRouter({ overview, monitoring, positions, orders, pnl, signals, community }) {
+export function createDashboardRouter({ overview, monitoring, positions, orders, pnl, signals, community }) {
   return createRouter({
     defaultRoute: 'overview',
     routes: {
@@ -1154,6 +1234,20 @@ function createDashboardRouter({ overview, monitoring, positions, orders, pnl, s
       community: () => renderCommunityView(community),
     },
   });
+}
+
+export function renderDashboardMain({ route, view, routeLabel, navigationMeta = {}, header }) {
+  const breadcrumbsHtml = renderBreadcrumbs(route, navigationMeta);
+  const toolbar = renderToolbar({ route, routeLabel });
+  const headerHtml = renderHeader(header);
+  const html = `${breadcrumbsHtml}${toolbar.html}${headerHtml}${view.html}`;
+  return {
+    html,
+    breadcrumbs: breadcrumbsHtml,
+    toolbar,
+    header: headerHtml,
+    view,
+  };
 }
 
 /**
@@ -1171,6 +1265,7 @@ export function renderDashboard(options = {}) {
     community = {},
     header = {},
     onboarding: onboardingConfig = {},
+    dataSource = null,
   } = options;
 
   const router = createDashboardRouter({ overview, monitoring, positions, orders, pnl, signals, community });
@@ -1178,9 +1273,13 @@ export function renderDashboard(options = {}) {
   const locale = getLocale();
   const navigation = renderNavigation(router, currentRoute, locale);
   const routeLabel = navigation.meta ? navigation.meta.routeLabel : currentRoute;
-  const breadcrumbsHtml = renderBreadcrumbs(currentRoute, navigation.meta);
-  const toolbar = renderToolbar({ route: currentRoute, routeLabel });
-  const headerHtml = renderHeader(header);
+  const main = renderDashboardMain({
+    route: currentRoute,
+    view,
+    routeLabel,
+    navigationMeta: navigation.meta,
+    header,
+  });
   const localeConfig = getLocaleConfig(locale) || {};
   const direction = localeConfig.direction || 'ltr';
   const skipLinkLabel = getMessage('nav.accessibility.skipLink') || 'Skip to main content';
@@ -1190,19 +1289,32 @@ export function renderDashboard(options = {}) {
     locales: navigation.locales,
   };
 
+  const dataSourceScript = dataSource
+    ? `<script type="application/json" data-role="dashboard-source">${serializeForScript(dataSource)}</script>`
+    : '';
+
+  const appAttributes = [`class="tp-app"`, `data-locale="${escapeHtml(locale)}"`, `dir="${escapeHtml(direction)}"`];
+  if (dataSource && dataSource.baseUrl) {
+    appAttributes.push(`data-api-base="${escapeHtml(String(dataSource.baseUrl))}"`);
+  }
+  if (dataSource && dataSource.streamUrl) {
+    appAttributes.push(`data-stream-url="${escapeHtml(String(dataSource.streamUrl))}"`);
+  }
+  if (dataSource && dataSource.route) {
+    appAttributes.push(`data-initial-route="${escapeHtml(String(dataSource.route))}"`);
+  }
+
   const html = `
-    <div class="tp-app" data-locale="${escapeHtml(locale)}" dir="${escapeHtml(direction)}">
+    <div ${appAttributes.join(' ')}>
       <a class="tp-skip-link" href="#tp-main-content">${escapeHtml(String(skipLinkLabel))}</a>
       ${navigation.markup}
       <main id="tp-main-content" class="tp-shell" tabindex="-1" data-role="main-content">
-        ${breadcrumbsHtml}
-        ${toolbar.html}
-        ${headerHtml}
-        ${view.html}
+        ${main.html}
       </main>
       ${(onboardingUi.markup ?? '')}
     </div>
     <script type="application/json" data-role="locale-config">${serializeForScript(localePayload)}</script>
+    ${dataSourceScript}
     ${NAVIGATION_ENHANCEMENT_SCRIPT}
     ${(onboardingUi.script ?? '')}
   `;
@@ -1212,5 +1324,6 @@ export function renderDashboard(options = {}) {
     styles: DASHBOARD_STYLES,
     route: currentRoute,
     view,
+    main,
   };
 }
