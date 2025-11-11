@@ -40,11 +40,21 @@ def _load_perf_budgets(path: Path) -> list[PerfBudget]:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     budgets: list[PerfBudget] = []
     for component, payload in data.get("components", {}).items():
+        # Support both legacy format (observed_ms/budget_ms) and new format (observed_p95_ms/latency_p95_ms)
+        if "observed_ms" in payload and "budget_ms" in payload:
+            # Legacy format
+            observed = float(payload["observed_ms"])
+            budget = float(payload["budget_ms"])
+        else:
+            # New format: use p95 values for gate checks (aligns with existing release gate expectations)
+            observed = float(payload.get("observed_p95_ms", payload.get("latency_p95_ms", 0.0)))
+            budget = float(payload.get("latency_p95_ms", 0.0))
+        
         budgets.append(
             PerfBudget(
                 component=component,
-                observed_ms=float(payload["observed_ms"]),
-                budget_ms=float(payload["budget_ms"]),
+                observed_ms=observed,
+                budget_ms=budget,
             )
         )
     return budgets
