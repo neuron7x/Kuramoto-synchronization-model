@@ -1,4 +1,4 @@
-"""Fairness metric helpers for Responsible AI governance workflows."""
+"""Fairness metrics used for compliance reporting and guardrail enforcement."""
 
 from __future__ import annotations
 
@@ -7,6 +7,20 @@ from pathlib import Path
 from typing import Iterable, Mapping
 
 import numpy as np
+
+__all__ = [
+    "FairnessEvaluation",
+    "FairnessMetricError",
+    "demographic_parity_difference",
+    "equal_opportunity_difference",
+    "evaluate_fairness",
+    "write_fairness_report",
+]
+
+DEFAULT_THRESHOLDS: Mapping[str, float] = {
+    "demographic_parity": 0.1,
+    "equal_opportunity": 0.1,
+}
 
 
 class FairnessMetricError(ValueError):
@@ -26,12 +40,17 @@ def _validate_lengths(*arrays: np.ndarray) -> None:
         raise FairnessMetricError("All inputs must contain the same number of elements")
 
 
-def _group_indices(groups: Iterable[str | int], expected_length: int | None = None) -> dict[str, np.ndarray]:
+def _group_indices(
+    groups: Iterable[str | int],
+    expected_length: int | None = None,
+) -> dict[str, np.ndarray]:
     labels = np.asarray(list(groups))
     if labels.ndim != 1:
         raise FairnessMetricError("Group labels must be one-dimensional")
     if expected_length is not None and labels.size != expected_length:
-        raise FairnessMetricError("Group labels must be the same length as predictions/targets")
+        raise FairnessMetricError(
+            "Group labels must be the same length as predictions/targets"
+        )
     unique_labels = np.unique(labels)
     group_indices: dict[str, np.ndarray] = {}
     for label in unique_labels:
@@ -85,7 +104,9 @@ def equal_opportunity_difference(
     tprs = []
     for indices in groups.values():
         positive_truth = truths[indices] == positive_label
-        true_positive_count = np.count_nonzero(positive_truth & (predictions[indices] == positive_label))
+        true_positive_count = np.count_nonzero(
+            positive_truth & (predictions[indices] == positive_label)
+        )
         positives = np.count_nonzero(positive_truth)
         if positives == 0:
             tprs.append(0.0)
@@ -97,6 +118,8 @@ def equal_opportunity_difference(
 
 @dataclass(slots=True)
 class FairnessEvaluation:
+    """Container for fairness metrics and the thresholds they must satisfy."""
+
     demographic_parity: float
     equal_opportunity: float
     thresholds: Mapping[str, float]
@@ -121,6 +144,19 @@ class FairnessEvaluation:
             )
 
 
+def _normalise_thresholds(
+    thresholds: Mapping[str, float] | None,
+) -> dict[str, float]:
+    base = dict(DEFAULT_THRESHOLDS)
+    if thresholds is None:
+        return base
+    for key, value in thresholds.items():
+        if key not in base:
+            raise FairnessMetricError(f"Unknown fairness threshold: {key}")
+        base[key] = float(value)
+    return base
+
+
 def evaluate_fairness(
     y_true: Iterable[int | float],
     y_pred: Iterable[int | float],
@@ -131,10 +167,14 @@ def evaluate_fairness(
 ) -> FairnessEvaluation:
     """Calculate fairness metrics and optionally enforce provided thresholds."""
 
-    thresholds = thresholds or {"demographic_parity": 0.1, "equal_opportunity": 0.1}
-    demographic = demographic_parity_difference(y_pred, group, positive_label=positive_label)
-    opportunity = equal_opportunity_difference(y_true, y_pred, group, positive_label=positive_label)
-    return FairnessEvaluation(demographic, opportunity, thresholds)
+    normalised_thresholds = _normalise_thresholds(thresholds)
+    demographic = demographic_parity_difference(
+        y_pred, group, positive_label=positive_label
+    )
+    opportunity = equal_opportunity_difference(
+        y_true, y_pred, group, positive_label=positive_label
+    )
+    return FairnessEvaluation(demographic, opportunity, normalised_thresholds)
 
 
 def write_fairness_report(
@@ -142,11 +182,14 @@ def write_fairness_report(
     *,
     output_path: Path,
 ) -> None:
-    """Persist fairness metrics as a JSON document."""
+    """Persist fairness metrics as a JSON document and compressed arrays."""
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     content = evaluation.to_dict()
-    np.savez_compressed(output_path.with_suffix(".npz"), **{k: np.asarray(v) for k, v in content.items() if k != "thresholds"})
+    np.savez_compressed(
+        output_path.with_suffix(".npz"),
+        **{k: np.asarray(v) for k, v in content.items() if k != "thresholds"},
+    )
     # JSON representation keeps compatibility with dashboards and analytics tooling
     output_path.write_text(
         _to_json_string(content),
@@ -158,7 +201,7 @@ def _to_json_string(content: Mapping[str, float | Mapping[str, float]]) -> str:
     import json
 
     class NpEncoder(json.JSONEncoder):
-        def default(self, obj):
+        def default(self, obj):  # type: ignore[override]
             if isinstance(obj, np.floating):
                 return float(obj)
             if isinstance(obj, np.integer):
