@@ -107,6 +107,7 @@ def check_monotonic_thresholds(
     """Ensure thresholds follow go >= hold >= no_go invariant.
     
     If the invariant is violated, adjusts thresholds to the nearest valid configuration.
+    This implements a fail-shut mode: inconsistent thresholds are made consistent.
     
     Args:
         go: Go threshold
@@ -121,25 +122,14 @@ def check_monotonic_thresholds(
     hold = clamp(hold, 0.0, 1.0)
     no_go = clamp(no_go, 0.0, 1.0)
     
-    # Enforce go >= hold
-    if go < hold:
-        mid = (go + hold) / 2.0
-        go = mid
-        hold = mid
+    # Sort to enforce monotonic order: go >= hold >= no_go
+    # This is the most straightforward way to ensure all constraints
+    values = sorted([go, hold, no_go], reverse=True)
+    go_out = values[0]
+    hold_out = values[1]
+    no_go_out = values[2]
     
-    # Enforce hold >= no_go
-    if hold < no_go:
-        mid = (hold + no_go) / 2.0
-        hold = mid
-        no_go = mid
-    
-    # Re-check go >= hold (may have been affected by hold adjustment)
-    if go < hold:
-        mid = (go + hold) / 2.0
-        go = mid
-        hold = mid
-        
-    return go, hold, no_go
+    return go_out, hold_out, no_go_out
 
 
 def rate_limited_change(
