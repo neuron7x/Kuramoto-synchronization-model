@@ -2,9 +2,33 @@ components:
   order_router:
     observed_ms: 92.0
     budget_ms: 110.0
+    percentiles:
+      p50_ms: 85.0
+      p95_ms: 120.0
+      p99_ms: 150.0
+    stability:
+      max_variance: 0.15  # 15% variance allowed
+      min_sample_size: 100
+      outlier_threshold: 3.0  # 3 standard deviations
   link_activator:
     observed_ms: 68.0
     budget_ms: 85.0
+    percentiles:
+      p50_ms: 65.0
+      p95_ms: 90.0
+      p99_ms: 110.0
+    stability:
+      max_variance: 0.12
+      min_sample_size: 100
+      outlier_threshold: 3.0
   thermo_validator:
     observed_ms: 41.0
     budget_ms: 60.0
+    percentiles:
+      p50_ms: 40.0
+      p95_ms: 65.0
+      p99_ms: 80.0
+    stability:
+      max_variance: 0.10
+      min_sample_size: 100
+      outlier_threshold: 3.0
