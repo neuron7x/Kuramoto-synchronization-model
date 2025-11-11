@@ -3,6 +3,12 @@
 These playbooks codify our response to the highest-impact production incidents
 for TradePulse: execution lag, rejected orders, and data gaps. Each scenario
 includes telemetry hooks, mitigation steps, and on-call simulation drills.
+The production dashboard described in
+[`docs/production_dashboard.md`](production_dashboard.md) surfaces the alerts
+referenced here and links to the SLA catalogue in
+[`docs/sla_alert_playbooks.md`](sla_alert_playbooks.md). Follow the
+[`incident_response_lifecycle.md`](incident_response_lifecycle.md) process for
+every declared incident.
 
 ## Execution Lag
 

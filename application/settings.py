@@ -900,6 +900,14 @@ class BackendRuntimeSettings(BaseSettings):
             "Emit a debug snapshot at startup when debug mode is enabled."
         ),
     )
+    production_dashboard_snapshot: Path | None = Field(
+        Path("reports/telemetry/production_dashboard_snapshot.json"),
+        description=(
+            "Optional JSON snapshot used to hydrate the production dashboard "
+            "on startup. When the path is missing an empty in-memory store is "
+            "used."
+        ),
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="TRADEPULSE_BACKEND_", extra="ignore"

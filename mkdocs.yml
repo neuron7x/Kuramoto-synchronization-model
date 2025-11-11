@@ -78,6 +78,9 @@ nav:
       - Accessibility Playbook: accessibility.md
       - What-If Exploration Mode: ui_what_if.md
   - Operations:
+      - Production Dashboard Operations: production_dashboard.md
+      - SLA & Alert Playbooks: sla_alert_playbooks.md
+      - Incident Response Lifecycle: incident_response_lifecycle.md
       - Monitoring: monitoring.md
       - Scaling: scaling.md
       - Chaos Testing (GameDay): resilience.md

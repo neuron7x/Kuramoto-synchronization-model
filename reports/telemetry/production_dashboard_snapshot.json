@@ -1,0 +1,74 @@
+{
+  "environment": "prod",
+  "currency": "USD",
+  "controls": {
+    "kill_switch": [
+      {
+        "timestamp": "2025-02-20T06:45:00Z",
+        "enabled": true,
+        "actor": "ops.auto",
+        "reason": "Scheduled failover validation"
+      },
+      {
+        "timestamp": "2025-02-20T07:05:00Z",
+        "enabled": false,
+        "actor": "ops.duty",
+        "reason": "Validation completed"
+      }
+    ],
+    "circuit_breaker": [
+      {
+        "timestamp": "2025-02-20T05:58:00Z",
+        "state": "open",
+        "reason": "Latency spike above guardrail",
+        "cooldown_seconds": 600
+      },
+      {
+        "timestamp": "2025-02-20T06:18:00Z",
+        "state": "half_open",
+        "reason": "Probe order batch",
+        "cooldown_seconds": 300
+      },
+      {
+        "timestamp": "2025-02-20T06:28:00Z",
+        "state": "closed",
+        "reason": "Latency recovered",
+        "cooldown_seconds": 0
+      }
+    ]
+  },
+  "metrics": {
+    "exposure": [
+      { "timestamp": "2025-02-20T06:30:00Z", "value": 1180000.0, "limit": 1500000.0 },
+      { "timestamp": "2025-02-20T06:45:00Z", "value": 1210000.0, "limit": 1500000.0 },
+      { "timestamp": "2025-02-20T07:00:00Z", "value": 1255000.0, "limit": 1500000.0 },
+      { "timestamp": "2025-02-20T07:15:00Z", "value": 1287500.0, "limit": 1500000.0 }
+    ],
+    "drawdown": [
+      { "timestamp": "2025-02-20T06:30:00Z", "value": -0.031, "limit": -0.08 },
+      { "timestamp": "2025-02-20T06:45:00Z", "value": -0.034, "limit": -0.08 },
+      { "timestamp": "2025-02-20T07:00:00Z", "value": -0.036, "limit": -0.08 },
+      { "timestamp": "2025-02-20T07:15:00Z", "value": -0.033, "limit": -0.08 }
+    ],
+    "orders": [
+      { "timestamp": "2025-02-20T06:30:00Z", "open": 148, "rejection_rate": 0.0031, "circuit_trips": 2, "window": "1h" },
+      { "timestamp": "2025-02-20T06:45:00Z", "open": 142, "rejection_rate": 0.0024, "circuit_trips": 1, "window": "1h" },
+      { "timestamp": "2025-02-20T07:00:00Z", "open": 137, "rejection_rate": 0.0018, "circuit_trips": 0, "window": "1h" },
+      { "timestamp": "2025-02-20T07:15:00Z", "open": 133, "rejection_rate": 0.0016, "circuit_trips": 0, "window": "1h" }
+    ]
+  },
+  "alerts": [
+    {
+      "timestamp": "2025-02-20T06:18:00Z",
+      "severity": "warning",
+      "message": "Circuit breaker entered half-open for venue XNAS",
+      "id": "cb-half-open"
+    },
+    {
+      "timestamp": "2025-02-20T06:05:00Z",
+      "severity": "critical",
+      "message": "Kill switch engaged automatically during latency drill",
+      "id": "kill-switch-drill"
+    }
+  ]
+}

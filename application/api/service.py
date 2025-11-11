@@ -86,6 +86,10 @@ from execution.risk import (
     SQLiteKillSwitchStateStore,
 )
 from observability.audit.trail import get_access_audit_trail
+from observability.dashboard import (
+    ProductionDashboardBuilder,
+    ProductionTelemetryStore,
+)
 from observability.health import HealthServer
 from observability.logging import configure_logging
 from src.admin.remote_control import (
@@ -196,6 +200,109 @@ class HealthResponse(BaseModel):
     status: Literal["ready", "degraded", "failed"]
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     components: dict[str, ComponentHealth]
+
+
+class DashboardSeriesPoint(BaseModel):
+    """Time-series sample returned by the production dashboard."""
+
+    timestamp: int
+    value: float | None = None
+    limit: float | None = None
+
+
+class DashboardKillSwitchPrevious(BaseModel):
+    """Historical kill-switch state used for comparison."""
+
+    enabled: bool | None = None
+    timestamp: int | None = None
+
+
+class DashboardKillSwitchState(BaseModel):
+    """Payload describing the kill-switch control."""
+
+    enabled: bool | None = None
+    changedAt: int | None = None
+    changedBy: str | None = None
+    reason: str | None = None
+    previous: DashboardKillSwitchPrevious | None = None
+
+
+class DashboardCircuitState(BaseModel):
+    """Payload describing the circuit breaker control."""
+
+    state: str
+    triggeredAt: int | None = None
+    reason: str | None = None
+    cooldownSeconds: int | None = None
+
+
+class DashboardControls(BaseModel):
+    """Wrapper for the dashboard control states."""
+
+    killSwitch: DashboardKillSwitchState
+    circuitBreaker: DashboardCircuitState
+
+
+class DashboardExposureMetric(BaseModel):
+    """Metric describing exposure or drawdown."""
+
+    value: float | None = None
+    limit: float | None = None
+    trend: float | None = None
+
+
+class DashboardOrdersMetric(BaseModel):
+    """Order health statistics surfaced on the dashboard."""
+
+    open: int | None = None
+    rejectionRate: float | None = None
+    circuitTrips: int | None = None
+    window: str | None = None
+    timestamp: int | None = None
+
+
+class DashboardPnlMetric(BaseModel):
+    """PnL context attached to the monitoring view."""
+
+    realized: float | None = None
+    unrealized: float | None = None
+    drawdown: float | None = None
+
+
+class DashboardMetrics(BaseModel):
+    """Metrics section surfaced on the monitoring dashboard."""
+
+    grossExposure: DashboardExposureMetric
+    drawdown: DashboardExposureMetric
+    orders: DashboardOrdersMetric
+    pnl: DashboardPnlMetric
+
+
+class DashboardTimeSeries(BaseModel):
+    """Time-series payload for the monitoring dashboard."""
+
+    exposure: list[DashboardSeriesPoint]
+    drawdown: list[DashboardSeriesPoint]
+
+
+class DashboardAlert(BaseModel):
+    """Alert entry returned alongside monitoring data."""
+
+    id: str
+    severity: str
+    message: str
+    timestamp: int | None = None
+
+
+class ProductionDashboardResponse(BaseModel):
+    """Response envelope returned by the production dashboard endpoint."""
+
+    environment: str
+    currency: str
+    controls: DashboardControls
+    metrics: DashboardMetrics
+    timeSeries: DashboardTimeSeries
+    alerts: list[DashboardAlert]
 
 
 DependencyProbe = Callable[
@@ -1735,6 +1842,24 @@ def create_app(
             "registry_attached": metrics_registry is not None,
         },
     )
+    dashboard_store = ProductionTelemetryStore.from_path(
+        runtime_settings.production_dashboard_snapshot
+    )
+    dashboard_builder = ProductionDashboardBuilder(
+        risk_manager=risk_manager_facade.risk_manager,
+        telemetry_store=dashboard_store,
+        default_environment=resolved_settings.admin_environment,
+        default_currency="USD",
+    )
+    app.state.production_dashboard_store = dashboard_store
+    app.state.production_dashboard_builder = dashboard_builder
+    inspector.register(
+        "production_dashboard",
+        lambda: {
+            "snapshot": dashboard_store.snapshot(),
+            "environment": dashboard_builder.build().environment,
+        },
+    )
     metrics_sampler = MetricsSampler(metrics_collector)
     app.state.metrics_sampler = metrics_sampler
     inspector.register(
@@ -1860,6 +1985,35 @@ def create_app(
                     "message": "Idempotency-Key already used with a different payload.",
                 },
             ) from exc
+
+    @v1_router.get(
+        "/dashboard/production",
+        response_model=ProductionDashboardResponse,
+        tags=["dashboard"],
+        summary="Production dashboard telemetry",
+    )
+    async def get_production_dashboard_v1() -> ProductionDashboardResponse:
+        builder: ProductionDashboardBuilder | None = getattr(
+            app.state, "production_dashboard_builder", None
+        )
+        if builder is None:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "code": "dashboard_unavailable",
+                    "message": "Production dashboard telemetry is not initialised.",
+                },
+            )
+        payload = builder.build()
+        response_payload = {
+            "environment": payload.environment,
+            "currency": payload.currency,
+            "controls": payload.controls,
+            "metrics": payload.metrics,
+            "timeSeries": payload.time_series,
+            "alerts": list(payload.alerts),
+        }
+        return ProductionDashboardResponse.model_validate(response_payload)
 
     @app.middleware("http")
     async def add_cache_headers(

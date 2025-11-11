@@ -12,6 +12,10 @@ This runbook explains how to triage failures in the thermodynamic validation
 3. Cross-reference the metric with production dashboards for corroborating data.
 4. File an incident if the degradation also appears in production telemetry.
 
+See [`production_dashboard.md`](production_dashboard.md) for the unified
+dashboard contract and [`sla_alert_playbooks.md`](sla_alert_playbooks.md) for
+alert-to-runbook mappings used during triage.
+
 ## Restoring Service Without Downtime
 
 - Deploy the latest healthy build to the **Blue** slice while the **Green**

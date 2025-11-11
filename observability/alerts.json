@@ -15,7 +15,8 @@
           },
           "annotations": {
             "summary": "High order error rate detected",
-            "description": "More than 5% of orders failed in the last 5 minutes"
+            "description": "More than 5% of orders failed in the last 5 minutes",
+            "runbook": "docs/sla_alert_playbooks.md#order-health"
           }
         },
         {
@@ -28,7 +29,8 @@
           },
           "annotations": {
             "summary": "Order placement latency above 2 seconds",
-            "description": "P95 order placement latency exceeded the target for 10 minutes"
+            "description": "P95 order placement latency exceeded the target for 10 minutes",
+            "runbook": "docs/sla_alert_playbooks.md#latency-and-availability"
           }
         },
         {
@@ -41,7 +43,8 @@
           },
           "annotations": {
             "summary": "Signal → ack latency breaching 400 ms",
-            "description": "p95 signal to acknowledgement latency exceeded 400 ms for 5 minutes"
+            "description": "p95 signal to acknowledgement latency exceeded 400 ms for 5 minutes",
+            "runbook": "docs/sla_alert_playbooks.md#latency-and-availability"
           }
         },
         {
@@ -54,7 +57,8 @@
           },
           "annotations": {
             "summary": "Signal → fill latency breaching 650 ms",
-            "description": "p99 signal to fill latency exceeded 650 ms for 5 minutes"
+            "description": "p99 signal to fill latency exceeded 650 ms for 5 minutes",
+            "runbook": "docs/sla_alert_playbooks.md#latency-and-availability"
           }
         }
       ]
@@ -73,7 +77,8 @@
           },
           "annotations": {
             "summary": "Data ingestion failure detected",
-            "description": "At least one ingestion job reported errors in the last 10 minutes"
+            "description": "At least one ingestion job reported errors in the last 10 minutes",
+            "runbook": "docs/sla_alert_playbooks.md#data-quality-and-ingestion"
           }
         },
         {
@@ -86,7 +91,8 @@
           },
           "annotations": {
             "summary": "Data ingestion freshness degraded",
-            "description": "Average ingestion lag exceeded five minutes"
+            "description": "Average ingestion lag exceeded five minutes",
+            "runbook": "docs/sla_alert_playbooks.md#data-quality-and-ingestion"
           }
         }
       ]

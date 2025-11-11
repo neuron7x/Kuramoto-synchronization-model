@@ -1,0 +1,30 @@
+{
+  "controls": {
+    "kill_switch": [
+      {"timestamp": "2025-02-20T06:10:00Z", "enabled": true, "actor": "ops.auto", "reason": "Latency drill"},
+      {"timestamp": "2025-02-20T06:20:00Z", "enabled": false, "actor": "ops.duty", "reason": "Drill completed"}
+    ],
+    "circuit_breaker": [
+      {"timestamp": "2025-02-20T06:05:00Z", "state": "open", "reason": "Latency > 400ms", "cooldown_seconds": 600},
+      {"timestamp": "2025-02-20T06:25:00Z", "state": "closed", "reason": "Latency recovered", "cooldown_seconds": 0}
+    ]
+  },
+  "metrics": {
+    "exposure": [
+      {"timestamp": "2025-02-20T06:00:00Z", "value": 1120000.0, "limit": 1500000.0},
+      {"timestamp": "2025-02-20T06:15:00Z", "value": 1185000.0, "limit": 1500000.0},
+      {"timestamp": "2025-02-20T06:30:00Z", "value": 1230000.0, "limit": 1500000.0}
+    ],
+    "drawdown": [
+      {"timestamp": "2025-02-20T06:00:00Z", "value": -0.028, "limit": -0.08},
+      {"timestamp": "2025-02-20T06:15:00Z", "value": -0.032, "limit": -0.08},
+      {"timestamp": "2025-02-20T06:30:00Z", "value": -0.030, "limit": -0.08}
+    ],
+    "orders": [
+      {"timestamp": "2025-02-20T06:30:00Z", "open": 135, "rejection_rate": 0.0021, "circuit_trips": 1, "window": "1h"}
+    ]
+  },
+  "alerts": [
+    {"timestamp": "2025-02-20T06:05:00Z", "severity": "warning", "message": "Circuit breaker opened", "id": "cb-open"}
+  ]
+}

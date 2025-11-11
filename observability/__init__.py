@@ -70,6 +70,10 @@ from .finops import (  # noqa: F401
     ResourceProfile,
     ResourceUsageSample,
 )
+from .dashboard import (  # noqa: F401
+    ProductionDashboardBuilder,
+    ProductionTelemetryStore,
+)
 from .health import HealthServer  # noqa: F401
 from .incidents import IncidentManager, IncidentRecord  # noqa: F401
 from .logging import StructuredLogFormatter, configure_logging  # noqa: F401
@@ -152,6 +156,8 @@ __all__ = [
     "SyntheticSuite",
     "TracingSetup",
     "build_default_bootstrapper",
+    "ProductionDashboardBuilder",
+    "ProductionTelemetryStore",
     "HealthServer",
     "IncidentManager",
     "IncidentRecord",
