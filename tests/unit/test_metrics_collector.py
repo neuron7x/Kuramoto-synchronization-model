@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 from prometheus_client import CollectorRegistry
 
-from core.utils.metrics import MetricsCollector
+from analytics.environment_parity import MetricDeviation
+from core.utils.metrics import MetricsCollector, get_metrics_collector
 
 
 def _sample_value(
@@ -676,3 +677,161 @@ def test_queue_metrics_record_depth_and_latency() -> None:
 
     assert depth_value == 7.0
     assert latency_count == 1.0
+
+
+def test_incident_and_lifecycle_metrics() -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    collector.set_open_incidents("critical", 2)
+    collector.observe_incident_ack_latency("critical", 45.3)
+    collector.observe_incident_resolution_latency("critical", 120.0)
+    collector.record_runbook_execution("runbook_live_trading", "success")
+    collector.record_runbook_execution("runbook_live_trading", "failed", count=2)
+    collector.set_lifecycle_phase_state("active_operations", "active")
+    collector.set_lifecycle_checkpoint_status("daily-risk-review", "passed")
+    collector.record_lifecycle_transition("startup", "active_operations", outcome="success")
+
+    open_incidents = _sample_value(
+        registry,
+        "tradepulse_incidents_open",
+        {"severity": "critical"},
+    )
+    ack_count = _sample_value(
+        registry,
+        "tradepulse_incident_ack_latency_seconds_count",
+        {"severity": "critical"},
+    )
+    ack_sum = _sample_value(
+        registry,
+        "tradepulse_incident_ack_latency_seconds_sum",
+        {"severity": "critical"},
+    )
+    resolution_count = _sample_value(
+        registry,
+        "tradepulse_incident_resolution_latency_seconds_count",
+        {"severity": "critical"},
+    )
+    lifecycle_active = _sample_value(
+        registry,
+        "tradepulse_lifecycle_phase_state",
+        {"phase": "active_operations", "state": "active"},
+    )
+    lifecycle_standby = _sample_value(
+        registry,
+        "tradepulse_lifecycle_phase_state",
+        {"phase": "active_operations", "state": "standby"},
+    )
+    checkpoint_passed = _sample_value(
+        registry,
+        "tradepulse_lifecycle_checkpoint_status",
+        {"checkpoint": "daily-risk-review", "status": "passed"},
+    )
+    checkpoint_blocked = _sample_value(
+        registry,
+        "tradepulse_lifecycle_checkpoint_status",
+        {"checkpoint": "daily-risk-review", "status": "blocked"},
+    )
+    runbook_success = _sample_value(
+        registry,
+        "tradepulse_runbook_executions_total",
+        {"runbook": "runbook_live_trading", "outcome": "success"},
+    )
+    runbook_failed = _sample_value(
+        registry,
+        "tradepulse_runbook_executions_total",
+        {"runbook": "runbook_live_trading", "outcome": "failed"},
+    )
+    lifecycle_transition = _sample_value(
+        registry,
+        "tradepulse_lifecycle_transition_total",
+        {"from_phase": "startup", "to_phase": "active_operations", "outcome": "success"},
+    )
+
+    assert open_incidents == 2.0
+    assert ack_count == 1.0
+    assert ack_sum == pytest.approx(45.3)
+    assert resolution_count == 1.0
+    assert lifecycle_active == 1.0
+    assert lifecycle_standby == 0.0
+    assert checkpoint_passed == 1.0
+    assert checkpoint_blocked == 0.0
+    assert runbook_success == 1.0
+    assert runbook_failed == 2.0
+    assert lifecycle_transition == 1.0
+
+
+def test_environment_parity_metrics_capture_deviations() -> None:
+    registry = CollectorRegistry()
+    collector = MetricsCollector(registry)
+
+    deviation = MetricDeviation(
+        metric="pnl",
+        baseline_environment="backtest",
+        comparison_environment="live",
+        baseline_value=100.0,
+        comparison_value=95.0,
+        absolute_difference=5.0,
+        relative_difference=0.05,
+    )
+
+    collector.record_environment_parity(
+        strategy="alpha",
+        status="failed",
+        deviations=[deviation],
+    )
+
+    parity_total = _sample_value(
+        registry,
+        "tradepulse_environment_parity_checks_total",
+        {"strategy": "alpha", "status": "failed"},
+    )
+    deviation_value = _sample_value(
+        registry,
+        "tradepulse_environment_parity_metric_deviation",
+        {
+            "strategy": "alpha",
+            "metric": "pnl",
+            "baseline": "backtest",
+            "comparison": "live",
+        },
+    )
+
+    assert parity_total == 1.0
+    assert deviation_value == pytest.approx(5.0)
+
+
+def test_render_prometheus_appends_cpu_metric_when_missing(monkeypatch) -> None:
+    registry = CollectorRegistry()
+
+    def _raise_value_error(*_args: object, **_kwargs: object) -> None:
+        raise ValueError("skip default collector registration")
+
+    monkeypatch.setattr(
+        "prometheus_client.ProcessCollector",
+        _raise_value_error,
+    )
+    monkeypatch.setattr(
+        "prometheus_client.PlatformCollector",
+        _raise_value_error,
+    )
+    monkeypatch.setattr(
+        "prometheus_client.GCCollector",
+        _raise_value_error,
+    )
+
+    collector = MetricsCollector(registry)
+    payload = collector.render_prometheus()
+
+    assert "process_cpu_seconds_total" in payload
+
+
+def test_get_metrics_collector_returns_singleton(monkeypatch) -> None:
+    monkeypatch.setattr("core.utils.metrics._collector", None, raising=False)
+
+    registry = CollectorRegistry()
+    first = get_metrics_collector(registry)
+    second = get_metrics_collector()
+
+    assert isinstance(first, MetricsCollector)
+    assert first is second

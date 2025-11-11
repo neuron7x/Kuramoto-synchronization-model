@@ -14,6 +14,10 @@ This document provides comprehensive response procedures for every alert defined
 | TradePulseDataFreshness | Warning | Medium | < 15 min | [Data Freshness](#data-freshness-alert) |
 | TradePulseBacktestFailures | Warning | Low | < 30 min | [Backtest Failures](#backtest-failures-alert) |
 | TradePulseOptimizationSlow | Info | Low | < 1 hour | [Optimization Slow](#optimization-slow-alert) |
+| TradePulseCriticalIncidentOpen | Critical | High | Immediate | [Critical Incident Open](#critical-incident-open-alert) |
+| TradePulseIncidentAckSLA | Warning | Medium | < 10 min | [Incident Acknowledgement SLA](#incident-acknowledgement-sla-alert) |
+| TradePulseLifecycleCheckpointBlocked | Critical | High | < 5 min | [Lifecycle Checkpoint Blocked](#lifecycle-checkpoint-blocked-alert) |
+| TradePulseRunbookFailures | Warning | Medium | < 15 min | [Runbook Execution Failures](#runbook-execution-failures-alert) |
 
 ## SLA Definitions
 
@@ -40,6 +44,22 @@ This document provides comprehensive response procedures for every alert defined
 - **Burn Rate Thresholds**:
   - Rapid burn: 8.0x over 15 minutes → Page on-call immediately
   - Slow burn: 3.0x over 6 hours → Create incident ticket
+
+### Incident Acknowledgement SLA
+- **Target**: Median acknowledgement < 5 minutes
+- **Error Budget**: 2% of incidents exceeding 5 minutes over 30 days
+- **Measurement**: 5-minute rolling window on `tradepulse_incident_ack_latency_seconds` histogram
+- **Burn Rate Thresholds**:
+  - Rapid burn: Median acknowledgement > 5 minutes for 10 minutes → Page platform on-call
+  - Slow burn: Median acknowledgement > 4 minutes for 1 hour → Escalate to incident commander
+
+### Incident Resolution SLA
+- **Target**: Median resolution < 30 minutes for Sev1/Sev2 incidents
+- **Error Budget**: 5% of incidents exceeding 30 minutes over 30 days
+- **Measurement**: 15-minute rolling window on `tradepulse_incident_resolution_latency_seconds` histogram
+- **Burn Rate Thresholds**:
+  - Rapid burn: Median resolution > 45 minutes for 15 minutes → Page duty manager
+  - Slow burn: Median resolution > 35 minutes for 2 hours → Trigger problem management review
 
 ---
 
@@ -371,7 +391,350 @@ This document provides comprehensive response procedures for every alert defined
 
 ---
 
+### Critical Incident Open Alert
+
+**Alert Definition**: `TradePulseCriticalIncidentOpen` fires when `tradepulse_incidents_open{severity="critical"}` is non-zero, indicating at least one unresolved Sev1 incident.
+
+**SLA Impact**: Blocks API, data, and lifecycle SLAs until the incident is resolved.
+
+**Immediate Response (Immediate)**:
+1. **Acknowledge** the incident page in PagerDuty and assume Incident Commander role.
+2. **Open** the incident bridge (`#inc-critical-<timestamp>`) and invite on-call SRE, service owner, and communications lead.
+3. **Review** the Production Operations Dashboard panels: `System Health Status`, `Open Incidents by Severity`, and `Incident Response Durations`.
+4. **Pull** the latest incident list:
+   ```bash
+   tradepulse-cli incidents list --severity critical --status open --since 1h
+   ```
+
+**Diagnostics (0-10 minutes)**:
+- Confirm incident scope and affected services in [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md).
+- Verify mitigation owners and current tasks in the incident timeline.
+- Check for correlated alerts (order latency, ingestion failures) to identify cascading impact.
+- Validate that lifecycle checkpoints are not blocked in the dashboard.
+
+**Mitigation Steps**:
+1. **Assign** technical lead and communications lead per coordination procedures.
+2. **Execute** the appropriate playbook (e.g. [`docs/runbook_live_trading.md`](runbook_live_trading.md) for trading outages).
+3. **If multiple incidents**: triage by customer impact and delegate to additional commanders as required.
+4. **Ensure** all mitigation actions are recorded in the incident timeline.
+
+**Communication**:
+- **Internal**: Post updates every 15 minutes in the incident channel, including mitigation status and next review time.
+- **External**: Update status page when customer-facing impact is confirmed.
+- **Escalation**: Notify VP Engineering if the incident persists beyond 30 minutes or if customer funds are at risk.
+
+**Resolution**:
+- Confirm `tradepulse_incidents_open{severity="critical"}` returns to zero.
+- Capture post-incident actions and transition to postmortem workflow.
+- Update lifecycle checkpoint `production-restoration` to `passed` in [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md).
+
+**Related Documents**:
+- [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
+
+---
+
+### Incident Acknowledgement SLA Alert
+
+**Alert Definition**: `TradePulseIncidentAckSLA` triggers when the median acknowledgement time exceeds 5 minutes (`tradepulse_incident_ack_latency_seconds`).
+
+**SLA Impact**: Consumes incident response error budget and risks breaching regulatory response targets.
+
+**Immediate Response (< 10 minutes)**:
+1. **Acknowledge** alert and verify incident queue ownership.
+2. **Inspect** the Production Operations Dashboard `Incident Response Durations` panel for p50/p90 trends.
+3. **Ensure** the on-call engineer is reachable; escalate if acknowledgement remains pending.
+4. **Audit** recent pages:
+   ```bash
+   tradepulse-cli incidents audit --window 15m --fields severity,ack_time,responder
+   ```
+
+**Diagnostics (10-20 minutes)**:
+- Determine if paging integration (PagerDuty, Slack) is degraded.
+- Review on-call rota for gaps or outdated escalation paths.
+- Check for alert storms causing responder overload.
+- Validate that incident severity mappings are correct (no false criticals).
+
+**Mitigation Steps**:
+1. **Trigger** backup on-call rotation if primary responder is unavailable.
+2. **Throttle** noisy alerts by applying maintenance windows or disabling non-actionable alerts.
+3. **Escalate** to platform lead to redistribute incidents if workload exceeds capacity.
+4. **Update** routing rules to ensure redundant notification channels are active.
+
+**Communication**:
+- Notify `#platform-ops` on acknowledgement delays and mitigation status.
+- Provide ETA for restoration of paging health.
+- Escalate to Duty Manager if SLA breach lasts beyond 30 minutes.
+
+**Resolution**:
+- Restore median acknowledgement below 5 minutes for at least 30 minutes.
+- Validate alert by firing synthetic page to confirm end-to-end delivery.
+- Document paging gap in incident review backlog.
+
+**Related Documents**:
+- [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
+- [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+
+---
+
+### Lifecycle Checkpoint Blocked Alert
+
+**Alert Definition**: `TradePulseLifecycleCheckpointBlocked` fires when `tradepulse_lifecycle_checkpoint_status{status="blocked"}` equals 1 for any checkpoint.
+
+**SLA Impact**: Prevents lifecycle progression (startup, settlement, maintenance) and risks operational gaps.
+
+**Immediate Response (< 5 minutes)**:
+1. **Review** the `Lifecycle Checkpoint Status` table on the Production Operations Dashboard to identify the blocked checkpoint.
+2. **Reference** [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md) for the blocked checkpoint procedure.
+3. **Notify** the owning team in `#platform-ops` and assign an owner to clear the block.
+
+**Diagnostics (5-15 minutes)**:
+- Confirm prerequisite tasks (e.g. backups, compliance sign-off) are complete.
+- Validate automation logs for failures or approvals waiting in workflow systems.
+- Check runbook execution history for partial failures related to the checkpoint.
+- Review change calendar for conflicting maintenance events.
+
+**Mitigation Steps**:
+1. **Execute** the corrective runbook for the checkpoint (e.g. [`docs/runbook_release_validation.md`](runbook_release_validation.md) for release gating).
+2. **Re-run** failed automation tasks after addressing root cause.
+3. **Request** manual approval if automation cannot recover within SLA.
+4. **Document** temporary workarounds and ensure revalidation post-resolution.
+
+**Communication**:
+- Provide checkpoint status updates every 15 minutes until cleared.
+- Escalate to platform lead if block persists beyond planned window.
+- Notify dependent teams (trading, data) when checkpoint transitions resume.
+
+**Resolution**:
+- Confirm checkpoint status transitions to `passed` and automation completes successfully.
+- Update lifecycle dashboard annotation with remediation summary.
+- Capture preventive actions in lifecycle operations backlog.
+
+**Related Documents**:
+- [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
+- [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+
+---
+
+### Runbook Execution Failures Alert
+
+**Alert Definition**: `TradePulseRunbookFailures` fires when `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m]) > 0`.
+
+**SLA Impact**: Signals degraded automation, risking delayed recovery or lifecycle tasks.
+
+**Immediate Response (< 15 minutes)**:
+1. **Inspect** the `Runbook Execution Outcomes` panel for failing runbooks and outcomes.
+2. **Retrieve** detailed execution logs:
+   ```bash
+   tradepulse-cli runbooks history --runbook <name> --since 30m
+   ```
+3. **Contact** the runbook owner (see [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md) for ownership).
+
+**Diagnostics (15-30 minutes)**:
+- Determine if failures correlate with incident timelines.
+- Check infrastructure dependencies (Kubernetes jobs, serverless functions).
+- Validate credential access for automation accounts.
+- Review recent code changes to runbook scripts.
+
+**Mitigation Steps**:
+1. **Execute** manual fallback procedure if automation cannot succeed.
+2. **Patch** runbook configuration or revert recent changes causing failures.
+3. **Create** hotfix branch for automation if code defect identified.
+4. **Schedule** follow-up test run after fixes deployed.
+
+**Communication**:
+- Update `#platform-ops` with failing runbook, owner, and workaround plan.
+- Escalate to platform lead if failure blocks critical lifecycle checkpoint.
+- Notify incident commander if failure is tied to active incident mitigation.
+
+**Resolution**:
+- Confirm successful rerun of affected runbooks and corresponding metrics drop to zero failures.
+- Document remediation steps and preventive fixes in automation backlog.
+- Add regression tests or monitors for runbook reliability if absent.
+
+**Related Documents**:
+- [`docs/runbook_live_trading.md`](runbook_live_trading.md)
+- [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+
+---
+
+### Critical Incident Open Alert
+
+**Alert Definition**: `TradePulseCriticalIncidentOpen` fires when `tradepulse_incidents_open{severity="critical"}` is non-zero, indicating at least one unresolved Sev1 incident.
+
+**SLA Impact**: Blocks API, data, and lifecycle SLAs until the incident is resolved.
+
+**Immediate Response (Immediate)**:
+1. **Acknowledge** the incident page in PagerDuty and assume Incident Commander role.
+2. **Open** the incident bridge (`#inc-critical-<timestamp>`) and invite on-call SRE, service owner, and communications lead.
+3. **Review** the Production Operations Dashboard panels: `System Health Status`, `Open Incidents by Severity`, and `Incident Response Durations`.
+4. **Pull** the latest incident list:
+   ```bash
+   tradepulse-cli incidents list --severity critical --status open --since 1h
+   ```
+
+**Diagnostics (0-10 minutes)**:
+- Confirm incident scope and affected services in [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md).
+- Verify mitigation owners and current tasks in the incident timeline.
+- Check for correlated alerts (order latency, ingestion failures) to identify cascading impact.
+- Validate that lifecycle checkpoints are not blocked in the dashboard.
+
+**Mitigation Steps**:
+1. **Assign** technical lead and communications lead per coordination procedures.
+2. **Execute** the appropriate playbook (e.g. [`docs/runbook_live_trading.md`](runbook_live_trading.md) for trading outages).
+3. **If multiple incidents**: triage by customer impact and delegate to additional commanders as required.
+4. **Ensure** all mitigation actions are recorded in the incident timeline.
+
+**Communication**:
+- **Internal**: Post updates every 15 minutes in the incident channel, including mitigation status and next review time.
+- **External**: Update status page when customer-facing impact is confirmed.
+- **Escalation**: Notify VP Engineering if the incident persists beyond 30 minutes or if customer funds are at risk.
+
+**Resolution**:
+- Confirm `tradepulse_incidents_open{severity="critical"}` returns to zero.
+- Capture post-incident actions and transition to postmortem workflow.
+- Update lifecycle checkpoint `production-restoration` to `passed` in [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md).
+
+**Related Documents**:
+- [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
+
+---
+
+### Incident Acknowledgement SLA Alert
+
+**Alert Definition**: `TradePulseIncidentAckSLA` triggers when the median acknowledgement time exceeds 5 minutes (`tradepulse_incident_ack_latency_seconds`).
+
+**SLA Impact**: Consumes incident response error budget and risks breaching regulatory response targets.
+
+**Immediate Response (< 10 minutes)**:
+1. **Acknowledge** alert and verify incident queue ownership.
+2. **Inspect** the Production Operations Dashboard `Incident Response Durations` panel for p50/p90 trends.
+3. **Ensure** the on-call engineer is reachable; escalate if acknowledgement remains pending.
+4. **Audit** recent pages:
+   ```bash
+   tradepulse-cli incidents audit --window 15m --fields severity,ack_time,responder
+   ```
+
+**Diagnostics (10-20 minutes)**:
+- Determine if paging integration (PagerDuty, Slack) is degraded.
+- Review on-call rota for gaps or outdated escalation paths.
+- Check for alert storms causing responder overload.
+- Validate that incident severity mappings are correct (no false criticals).
+
+**Mitigation Steps**:
+1. **Trigger** backup on-call rotation if primary responder is unavailable.
+2. **Throttle** noisy alerts by applying maintenance windows or disabling non-actionable alerts.
+3. **Escalate** to platform lead to redistribute incidents if workload exceeds capacity.
+4. **Update** routing rules to ensure redundant notification channels are active.
+
+**Communication**:
+- Notify `#platform-ops` on acknowledgement delays and mitigation status.
+- Provide ETA for restoration of paging health.
+- Escalate to Duty Manager if SLA breach lasts beyond 30 minutes.
+
+**Resolution**:
+- Restore median acknowledgement below 5 minutes for at least 30 minutes.
+- Validate alert by firing synthetic page to confirm end-to-end delivery.
+- Document paging gap in incident review backlog.
+
+**Related Documents**:
+- [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
+- [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+
+---
+
+### Lifecycle Checkpoint Blocked Alert
+
+**Alert Definition**: `TradePulseLifecycleCheckpointBlocked` fires when `tradepulse_lifecycle_checkpoint_status{status="blocked"}` equals 1 for any checkpoint.
+
+**SLA Impact**: Prevents lifecycle progression (startup, settlement, maintenance) and risks operational gaps.
+
+**Immediate Response (< 5 minutes)**:
+1. **Review** the `Lifecycle Checkpoint Status` table on the Production Operations Dashboard to identify the blocked checkpoint.
+2. **Reference** [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md) for the blocked checkpoint procedure.
+3. **Notify** the owning team in `#platform-ops` and assign an owner to clear the block.
+
+**Diagnostics (5-15 minutes)**:
+- Confirm prerequisite tasks (e.g. backups, compliance sign-off) are complete.
+- Validate automation logs for failures or approvals waiting in workflow systems.
+- Check runbook execution history for partial failures related to the checkpoint.
+- Review change calendar for conflicting maintenance events.
+
+**Mitigation Steps**:
+1. **Execute** the corrective runbook for the checkpoint (e.g. [`docs/runbook_release_validation.md`](runbook_release_validation.md) for release gating).
+2. **Re-run** failed automation tasks after addressing root cause.
+3. **Request** manual approval if automation cannot recover within SLA.
+4. **Document** temporary workarounds and ensure revalidation post-resolution.
+
+**Communication**:
+- Provide checkpoint status updates every 15 minutes until cleared.
+- Escalate to platform lead if block persists beyond planned window.
+- Notify dependent teams (trading, data) when checkpoint transitions resume.
+
+**Resolution**:
+- Confirm checkpoint status transitions to `passed` and automation completes successfully.
+- Update lifecycle dashboard annotation with remediation summary.
+- Capture preventive actions in lifecycle operations backlog.
+
+**Related Documents**:
+- [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
+- [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+
+---
+
+### Runbook Execution Failures Alert
+
+**Alert Definition**: `TradePulseRunbookFailures` fires when `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m]) > 0`.
+
+**SLA Impact**: Signals degraded automation, risking delayed recovery or lifecycle tasks.
+
+**Immediate Response (< 15 minutes)**:
+1. **Inspect** the `Runbook Execution Outcomes` panel for failing runbooks and outcomes.
+2. **Retrieve** detailed execution logs:
+   ```bash
+   tradepulse-cli runbooks history --runbook <name> --since 30m
+   ```
+3. **Contact** the runbook owner (see [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md) for ownership).
+
+**Diagnostics (15-30 minutes)**:
+- Determine if failures correlate with incident timelines.
+- Check infrastructure dependencies (Kubernetes jobs, serverless functions).
+- Validate credential access for automation accounts.
+- Review recent code changes to runbook scripts.
+
+**Mitigation Steps**:
+1. **Execute** manual fallback procedure if automation cannot succeed.
+2. **Patch** runbook configuration or revert recent changes causing failures.
+3. **Create** hotfix branch for automation if code defect identified.
+4. **Schedule** follow-up test run after fixes deployed.
+
+**Communication**:
+- Update `#platform-ops` with failing runbook, owner, and workaround plan.
+- Escalate to platform lead if failure blocks critical lifecycle checkpoint.
+- Notify incident commander if failure is tied to active incident mitigation.
+
+**Resolution**:
+- Confirm successful rerun of affected runbooks and corresponding metrics drop to zero failures.
+- Document remediation steps and preventive fixes in automation backlog.
+- Add regression tests or monitors for runbook reliability if absent.
+
+**Related Documents**:
+- [`docs/runbook_live_trading.md`](runbook_live_trading.md)
+- [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
+- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+
+---
+
 ## Escalation Matrix
+
 
 ### Severity: Critical
 - **Response Time**: < 5 minutes
@@ -475,6 +838,6 @@ This playbook should be reviewed and updated:
 - When new alerts are added
 - When SLAs are modified
 
-Last Updated: 2025-11-10
-Version: 1.0
+Last Updated: 2025-11-11
+Version: 1.1
 Owner: SRE Team
