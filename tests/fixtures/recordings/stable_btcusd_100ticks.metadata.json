@@ -1,0 +1,14 @@
+{
+  "symbol": "BTCUSD",
+  "venue": "synthetic",
+  "start_time": "2024-01-01T00:00:00.008644+00:00",
+  "end_time": "2024-01-01T00:00:09.684453+00:00",
+  "record_count": 100,
+  "version": "1.0.0",
+  "description": "Stable market, 100 ticks, for basic dopamine tests",
+  "tags": [
+    "synthetic",
+    "stable",
+    "seed_42"
+  ]
+}
