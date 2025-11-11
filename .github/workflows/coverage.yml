@@ -31,7 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
           pip install pytest pytest-cov
-      - name: Run tests with coverage
+      - name: Run tests with coverage (98% required)
         run: |
           pytest tests/ \
             --cov=core --cov=backtest --cov=execution \

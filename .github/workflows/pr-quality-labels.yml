@@ -27,6 +27,11 @@ jobs:
             const labelDefinitions = [
               { name: 'test-needed', color: 'b60205', description: 'Tests must be added or updated before merge.' },
               { name: 'missing-coverage', color: 'd93f0b', description: 'Coverage must meet repository thresholds.' },
+              { name: 'risk: low', color: '0e8a16', description: 'Low risk change - standard review process' },
+              { name: 'risk: medium', color: 'fbca04', description: 'Medium risk - requires careful review' },
+              { name: 'risk: high', color: 'd93f0b', description: 'High risk - requires senior review and extensive testing' },
+              { name: 'quality-gate-failed', color: 'b60205', description: 'Quality gates not met - blocking merge' },
+              { name: 'needs-mutation-testing', color: 'd93f0b', description: 'Mutation testing required' },
             ];
 
             const ensureLabelExists = async ({ name, color, description }) => {
