@@ -148,8 +148,8 @@ def create_app(settings: CortexSettings | None = None, engine: Engine | None = N
             synchrony = kuramoto_order_parameter(raw_signals)
             for signal in raw_signals:
                 SIGNAL_STRENGTH.observe(signal.strength)
-            payload = [SignalPayload(**asdict(signal)) for signal in raw_signals]
-            return SignalsResponse(signals=payload, ensemble_strength=ensemble_strength, synchrony=synchrony)
+            signal_payloads = [SignalPayload(**asdict(signal)) for signal in raw_signals]
+            return SignalsResponse(signals=signal_payloads, ensemble_strength=ensemble_strength, synchrony=synchrony)
         finally:
             _instrument_latency("/signals", "POST", status.HTTP_200_OK, start)
 
