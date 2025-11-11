@@ -10,6 +10,8 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'observability/dashboards/**'
+      - 'observability/README.md'
       - '*.txt'
       - 'LICENSE'
       - 'NOTICE'

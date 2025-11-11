@@ -413,11 +413,144 @@ class NeuroOrchestrator:
             },
         }
         
-        # Apply custom overrides
+        # Apply custom overrides using a deep merge so nested dictionaries are
+        # preserved rather than replaced wholesale.
         if custom_parameters:
-            params.update(custom_parameters)
-        
+            normalised_overrides = self._normalise_custom_parameters(custom_parameters)
+            params = self._deep_merge_dicts(params, normalised_overrides)
+
         return params
+
+    def _normalise_custom_parameters(
+        self, custom_parameters: Mapping[str, Any]
+    ) -> Dict[str, Any]:
+        """Expand dotted-path overrides into nested dictionaries.
+
+        ``custom_parameters`` can contain keys using dot notation (e.g.
+        ``"dopamine.burst_factor"``) to target nested configuration entries
+        without having to provide the entire hierarchy. This helper expands
+        those keys into proper nested dictionaries so they can be merged by
+        :meth:`_deep_merge_dicts` alongside traditional mapping overrides.
+
+        Parameters
+        ----------
+        custom_parameters : Mapping[str, Any]
+            Mapping containing user supplied overrides. Nested mappings are
+            copied to avoid mutating caller-provided objects.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Normalised dictionary ready for deep merging.
+
+        Raises
+        ------
+        ValueError
+            If a dotted path collides with a non-mapping value in the override
+            payload, making the desired target ambiguous.
+        """
+
+        normalised: Dict[str, Any] = {}
+
+        for raw_key, raw_value in custom_parameters.items():
+            prepared_value = self._prepare_override_value(raw_value)
+            if "." in raw_key:
+                self._assign_override_path(normalised, raw_key.split("."), prepared_value)
+            else:
+                if raw_key in normalised:
+                    normalised[raw_key] = self._combine_override_values(
+                        normalised[raw_key], prepared_value, raw_key
+                    )
+                else:
+                    normalised[raw_key] = prepared_value
+
+        return normalised
+
+    def _prepare_override_value(self, value: Any) -> Any:
+        """Create a merge-ready copy of ``value``."""
+
+        if isinstance(value, Mapping):
+            return {key: self._prepare_override_value(val) for key, val in value.items()}
+        return value
+
+    def _assign_override_path(
+        self, target: Dict[str, Any], path: List[str], value: Any
+    ) -> None:
+        """Assign ``value`` to ``target`` following ``path`` segments."""
+
+        current: Dict[str, Any] = target
+        for segment in path[:-1]:
+            existing = current.get(segment)
+            if existing is None:
+                next_level: Dict[str, Any] = {}
+                current[segment] = next_level
+                current = next_level
+                continue
+
+            if not isinstance(existing, dict):
+                joined = ".".join(path)
+                raise ValueError(
+                    "Custom parameter override for '%s' collides with a non-mapping value." % joined
+                )
+
+            current = existing
+
+        leaf = path[-1]
+        if leaf in current:
+            current[leaf] = self._combine_override_values(current[leaf], value, ".".join(path))
+        else:
+            current[leaf] = value
+
+    def _combine_override_values(self, existing: Any, incoming: Any, key: str) -> Any:
+        """Resolve collisions when normalising override values."""
+
+        if isinstance(existing, dict) and isinstance(incoming, dict):
+            return self._deep_merge_dicts(existing, incoming)
+
+        if isinstance(existing, dict) != isinstance(incoming, dict):
+            raise ValueError(
+                "Custom parameter override for '%s' mixes structured and scalar values." % key
+            )
+
+        return incoming
+
+    def _deep_merge_dicts(
+        self, base: Dict[str, Any], overrides: Mapping[str, Any]
+    ) -> Dict[str, Any]:
+        """Recursively merge ``overrides`` into ``base``.
+
+        The default ``dict.update`` implementation replaces nested dictionaries
+        entirely which is undesirable for configuration structures where the
+        caller might wish to tweak a single field.  This helper performs a
+        depth-aware merge so that nested keys are updated in place while the
+        rest of the defaults remain intact.
+
+        Parameters
+        ----------
+        base : Dict[str, Any]
+            Dictionary containing the default values. The dictionary is mutated
+            in place and also returned for convenience.
+        overrides : Mapping[str, Any]
+            Mapping containing user supplied overrides. Nested mappings are
+            merged recursively.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The merged dictionary reference (identical to ``base``).
+        """
+
+        for key, value in overrides.items():
+            if isinstance(value, Mapping):
+                existing = base.get(key)
+                if isinstance(existing, dict):
+                    base[key] = self._deep_merge_dicts(existing, value)
+                else:
+                    base[key] = self._deep_merge_dicts({}, value)
+            else:
+                base[key] = value
+
+        return base
     
     def _build_risk_contour(
         self,

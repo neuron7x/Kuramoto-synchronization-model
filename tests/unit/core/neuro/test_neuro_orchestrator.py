@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 
 import pytest
@@ -344,6 +345,89 @@ class TestNeuroOrchestrator:
 
         assert output.parameters["learning_rate"] == 0.025
         assert output.parameters["temperature"] == 2.0
+
+    def test_custom_parameters_nested_merge(self):
+        """Custom overrides should merge nested dictionaries rather than replace them."""
+        scenario = TradingScenario(
+            market="BTC/USDT",
+            timeframe="1h",
+            risk_profile="moderate",
+        )
+        custom_params = {
+            "dopamine": {"burst_factor": 2.25},
+            "tacl": {"epsilon_tolerance": 0.02},
+        }
+
+        orchestrator = NeuroOrchestrator()
+        output = orchestrator.orchestrate(scenario, custom_parameters=custom_params)
+
+        # Existing nested fields should still be present after applying overrides.
+        dopamine = output.parameters["dopamine"]
+        assert dopamine["burst_factor"] == 2.25
+        assert dopamine["decay_rate"] == 0.95
+        assert dopamine["invigoration_threshold"] == 0.6
+
+        tacl = output.parameters["tacl"]
+        assert tacl["epsilon_tolerance"] == 0.02
+        assert tacl["monotonic_descent"] is True
+        assert tacl["crisis_detection"] is True
+
+    def test_custom_parameters_dot_path_override(self):
+        """Dot notation keys should target nested configuration fields."""
+        scenario = TradingScenario(
+            market="BTC/USDT",
+            timeframe="1h",
+            risk_profile="moderate",
+        )
+        custom_params = {
+            "dopamine": {"decay_rate": 0.92},
+            "dopamine.burst_factor": 2.5,
+            "tacl.protocol_options": ["CRDT", "gRPC"],
+        }
+
+        orchestrator = NeuroOrchestrator()
+        output = orchestrator.orchestrate(scenario, custom_parameters=custom_params)
+
+        dopamine = output.parameters["dopamine"]
+        assert dopamine["decay_rate"] == 0.92
+        assert dopamine["burst_factor"] == 2.5
+
+        tacl = output.parameters["tacl"]
+        assert tacl["protocol_options"] == ["CRDT", "gRPC"]
+
+    def test_custom_parameters_dot_path_conflict(self):
+        """Conflicting dot-path overrides should raise a helpful error."""
+        scenario = TradingScenario(
+            market="BTC/USDT",
+            timeframe="1h",
+            risk_profile="moderate",
+        )
+        custom_params = {
+            "dopamine": 0.8,
+            "dopamine.burst_factor": 2.0,
+        }
+
+        orchestrator = NeuroOrchestrator()
+
+        with pytest.raises(ValueError, match="dopamine"):
+            orchestrator.orchestrate(scenario, custom_parameters=custom_params)
+
+    def test_custom_parameters_not_mutated(self):
+        """User-supplied override mappings should remain unchanged."""
+        scenario = TradingScenario(
+            market="BTC/USDT",
+            timeframe="1h",
+            risk_profile="moderate",
+        )
+        custom_params = {
+            "dopamine": {"burst_factor": 2.25},
+        }
+        original_snapshot = copy.deepcopy(custom_params)
+
+        orchestrator = NeuroOrchestrator()
+        orchestrator.orchestrate(scenario, custom_parameters=custom_params)
+
+        assert custom_params == original_snapshot
 
     def test_free_energy_validation(self):
         """Test TACL free-energy validation."""
