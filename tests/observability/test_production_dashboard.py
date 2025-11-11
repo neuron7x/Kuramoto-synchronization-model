@@ -25,9 +25,21 @@ class _DummyKillSwitch:
 class _DummyRiskManager:
     def __init__(self) -> None:
         self.kill_switch = _DummyKillSwitch(enabled=False, reason="")
-        self.realized_pnl = 12_500.5
-        self.unrealized_pnl = -320.75
-        self.current_drawdown = 0.031
+        self._realized_pnl = 12_500.5
+        self._unrealized_pnl = -320.75
+        self._current_drawdown = 0.031
+
+    @property
+    def realized_pnl(self) -> float:
+        return self._realized_pnl
+
+    @property
+    def unrealized_pnl(self) -> float:
+        return self._unrealized_pnl
+
+    @property
+    def current_drawdown(self) -> float:
+        return self._current_drawdown
 
 
 def _load_store() -> ProductionTelemetryStore:

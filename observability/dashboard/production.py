@@ -4,9 +4,35 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable, Mapping
+from typing import TYPE_CHECKING, Iterable, Mapping, Protocol, runtime_checkable
 
-from execution.risk import RiskManager
+
+@runtime_checkable
+class KillSwitchLike(Protocol):
+    def is_triggered(self) -> bool: ...
+
+    @property
+    def reason(self) -> str | None: ...
+
+
+@runtime_checkable
+class RiskManagerLike(Protocol):
+    """Structural type for the risk manager to avoid circular imports."""
+
+    kill_switch: KillSwitchLike | None
+
+    @property
+    def realized_pnl(self) -> float: ...
+
+    @property
+    def unrealized_pnl(self) -> float: ...
+
+    @property
+    def current_drawdown(self) -> float: ...
+
+
+if TYPE_CHECKING:  # pragma: no cover - import only for type checking to avoid cycles
+    from execution.risk import RiskManager as RiskManagerLike  # type: ignore[no-redef]
 
 from .store import (
     AlertRecord,
@@ -45,7 +71,7 @@ class ProductionDashboardBuilder:
     def __init__(
         self,
         *,
-        risk_manager: RiskManager | None,
+        risk_manager: RiskManagerLike | None,
         telemetry_store: ProductionTelemetryStore,
         default_environment: str = "prod",
         default_currency: str = "USD",
