@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from .budget_loader import BudgetLoader
 from .multi_exchange_replay import (
-    PerformanceBudget,
     check_regression,
     compute_performance_metrics,
     discover_recordings,
@@ -26,33 +26,8 @@ from .performance_artifacts import (
 )
 
 
-# Performance budgets for different exchange types
-BUDGETS = {
-    "coinbase": PerformanceBudget(
-        latency_median_ms=50.0,
-        latency_p95_ms=90.0,
-        latency_max_ms=150.0,
-        throughput_min_tps=5.0,
-        slippage_median_bps=3.0,
-        slippage_p95_bps=10.0,
-    ),
-    "synthetic": PerformanceBudget(
-        latency_median_ms=60.0,
-        latency_p95_ms=100.0,
-        latency_max_ms=200.0,
-        throughput_min_tps=5.0,  # Synthetic data has lower throughput
-        slippage_median_bps=10.0,
-        slippage_p95_bps=30.0,
-    ),
-    "default": PerformanceBudget(
-        latency_median_ms=60.0,
-        latency_p95_ms=100.0,
-        latency_max_ms=200.0,
-        throughput_min_tps=5.0,
-        slippage_median_bps=5.0,
-        slippage_p95_bps=15.0,
-    ),
-}
+# Load budgets from configuration
+_budget_loader = BudgetLoader()
 
 
 @pytest.fixture
@@ -110,7 +85,7 @@ def test_coinbase_btcusd_replay_meets_budget(recordings_dir: Path) -> None:
     metrics = compute_performance_metrics(ticks)
     
     # Validate against budget
-    budget = BUDGETS["coinbase"]
+    budget = _budget_loader.get_exchange_budget("coinbase")
     result = check_regression(metrics, budget)
     
     # Assert budgets are met
@@ -152,7 +127,7 @@ def test_all_recordings_regression_suite(
             metrics = compute_performance_metrics(ticks)
             
             # Check against budget
-            budget = BUDGETS.get(exchange_name, BUDGETS["default"])
+            budget = _budget_loader.get_budget(exchange=exchange_name)
             regression_result = check_regression(metrics, budget)
             
             # Create run record
@@ -238,7 +213,7 @@ def test_individual_recording_regression(
     
     ticks, metadata = load_replay_recording(recording_path, exchange=exchange)
     metrics = compute_performance_metrics(ticks)
-    budget = BUDGETS[budget_key]
+    budget = _budget_loader.get_budget(exchange=exchange)
     result = check_regression(metrics, budget)
     
     # Soft assertion - log violations but don't fail

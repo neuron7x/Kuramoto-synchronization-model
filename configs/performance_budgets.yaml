@@ -1,0 +1,145 @@
+# Performance budgets for multi-exchange replay regression testing
+#
+# This configuration defines performance thresholds for different exchanges
+# and test scenarios. Budgets are used to detect performance regressions.
+
+version: "1.0.0"
+
+# Default budget applied when no specific budget is defined
+default:
+  latency_median_ms: 60.0
+  latency_p95_ms: 100.0
+  latency_max_ms: 200.0
+  throughput_min_tps: 5.0
+  slippage_median_bps: 5.0
+  slippage_p95_bps: 15.0
+
+# Exchange-specific budgets
+exchanges:
+  coinbase:
+    description: "Coinbase Pro WebSocket feed"
+    latency_median_ms: 50.0
+    latency_p95_ms: 90.0
+    latency_max_ms: 150.0
+    throughput_min_tps: 5.0
+    slippage_median_bps: 3.0
+    slippage_p95_bps: 10.0
+  
+  binance:
+    description: "Binance WebSocket feed"
+    latency_median_ms: 45.0
+    latency_p95_ms: 80.0
+    latency_max_ms: 120.0
+    throughput_min_tps: 10.0
+    slippage_median_bps: 2.0
+    slippage_p95_bps: 8.0
+  
+  kraken:
+    description: "Kraken WebSocket feed"
+    latency_median_ms: 55.0
+    latency_p95_ms: 95.0
+    latency_max_ms: 160.0
+    throughput_min_tps: 8.0
+    slippage_median_bps: 4.0
+    slippage_p95_bps: 12.0
+  
+  synthetic:
+    description: "Synthetic test data"
+    latency_median_ms: 60.0
+    latency_p95_ms: 100.0
+    latency_max_ms: 200.0
+    throughput_min_tps: 5.0
+    slippage_median_bps: 10.0
+    slippage_p95_bps: 30.0
+
+# Scenario-specific budgets (override exchange budgets)
+scenarios:
+  flash_crash:
+    description: "Flash crash scenarios with extreme volatility"
+    latency_median_ms: 80.0
+    latency_p95_ms: 150.0
+    latency_max_ms: 300.0
+    throughput_min_tps: 3.0
+    slippage_median_bps: 20.0
+    slippage_p95_bps: 100.0
+  
+  stable_market:
+    description: "Stable market conditions"
+    latency_median_ms: 40.0
+    latency_p95_ms: 70.0
+    latency_max_ms: 120.0
+    throughput_min_tps: 10.0
+    slippage_median_bps: 2.0
+    slippage_p95_bps: 5.0
+  
+  high_volatility:
+    description: "High volatility scenarios"
+    latency_median_ms: 70.0
+    latency_p95_ms: 120.0
+    latency_max_ms: 250.0
+    throughput_min_tps: 4.0
+    slippage_median_bps: 15.0
+    slippage_p95_bps: 50.0
+
+# CI/CD environment budgets (stricter for production readiness)
+environments:
+  production:
+    description: "Production-grade performance requirements"
+    latency_median_ms: 40.0
+    latency_p95_ms: 80.0
+    latency_max_ms: 150.0
+    throughput_min_tps: 15.0
+    slippage_median_bps: 3.0
+    slippage_p95_bps: 10.0
+  
+  staging:
+    description: "Staging environment (relaxed)"
+    latency_median_ms: 60.0
+    latency_p95_ms: 100.0
+    latency_max_ms: 200.0
+    throughput_min_tps: 8.0
+    slippage_median_bps: 5.0
+    slippage_p95_bps: 15.0
+  
+  development:
+    description: "Development environment (very relaxed)"
+    latency_median_ms: 100.0
+    latency_p95_ms: 200.0
+    latency_max_ms: 500.0
+    throughput_min_tps: 1.0
+    slippage_median_bps: 20.0
+    slippage_p95_bps: 100.0
+
+# Component-specific budgets for tracking regressions by component
+components:
+  ingestion:
+    description: "Data ingestion pipeline"
+    latency_median_ms: 30.0
+    latency_p95_ms: 60.0
+    latency_max_ms: 100.0
+    throughput_min_tps: 20.0
+  
+  normalization:
+    description: "Data normalization and validation"
+    latency_median_ms: 10.0
+    latency_p95_ms: 20.0
+    latency_max_ms: 50.0
+    throughput_min_tps: 50.0
+  
+  execution:
+    description: "Order execution simulation"
+    latency_median_ms: 5.0
+    latency_p95_ms: 15.0
+    latency_max_ms: 30.0
+    throughput_min_tps: 100.0
+    slippage_median_bps: 1.0
+    slippage_p95_bps: 5.0
+  
+  backtest:
+    description: "Backtesting engine"
+    latency_median_ms: 50.0
+    latency_p95_ms: 100.0
+    latency_max_ms: 200.0
+    throughput_min_tps: 10.0
+    slippage_median_bps: 5.0
+    slippage_p95_bps: 20.0
