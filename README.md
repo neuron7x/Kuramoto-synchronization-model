@@ -324,6 +324,7 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 | [Deployment Guide](docs/deployment.md) | Production rollouts |
 | [Architecture Overview](docs/ARCHITECTURE.md) | System design deep dive |
 | [**Security Framework**](SECURITY_FRAMEWORK_SUMMARY.md) | **Comprehensive security documentation** |
+| [**Operational Artifacts**](docs/OPERATIONAL_ARTIFACTS_INDEX.md) | **Production operations, SLA/alerts, incident management** |
 
 ### 🔐 Security Documentation
 
@@ -347,6 +348,29 @@ TradePulse implements a comprehensive security framework covering all critical a
 - ✅ Real-time threat detection with ML
 - ✅ Incident response with < 4 hour MTTR
 - ✅ Automated security scanning in CI/CD
+
+### 🚀 Operational Readiness Documentation
+
+TradePulse provides complete operational lifecycle documentation for production deployment:
+
+| Document | Description |
+|----------|-------------|
+| [Operational Artifacts Index](docs/OPERATIONAL_ARTIFACTS_INDEX.md) | Master index of all operational documentation |
+| [Production Operations Dashboard](observability/dashboards/tradepulse-production-operations.json) | Real-time monitoring and SLO tracking |
+| [SLA/Alert Playbooks](docs/sla_alert_playbooks.md) | Alert response procedures and escalation |
+| [Incident Coordination](docs/incident_coordination_procedures.md) | Complete incident management framework |
+| [System Lifecycle Operations](docs/system_lifecycle_operations.md) | Daily/weekly/monthly operational procedures |
+| [Operational Summary (UA)](OPERATIONAL_COMPLETION_SUMMARY_UA.md) | Ukrainian summary of operational readiness |
+
+**Operational Highlights**:
+- ✅ Complete lifecycle coverage (pre-production → active ops → shutdown)
+- ✅ Response procedures for all 8 alert types
+- ✅ 4-tier incident severity classification
+- ✅ Production dashboard with system health, SLOs, and active alerts
+- ✅ Daily, weekly, monthly, quarterly operational schedules
+- ✅ Integration with 35+ operational artifacts
+- ✅ Communication templates and escalation paths
+- ✅ Backup/recovery and capacity planning procedures
 
 ## 🎯 Use Cases
 
