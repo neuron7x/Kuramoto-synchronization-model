@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradePulse Dashboard - Design Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+        }
+
+        :root {
+            color-scheme: dark;
+            --tp-surface-900: rgba(10, 15, 30, 0.95);
+            --tp-surface-800: rgba(15, 23, 42, 0.85);
+            --tp-surface-700: rgba(20, 30, 55, 0.75);
+            --tp-border-strong: rgba(99, 179, 237, 0.4);
+            --tp-border-soft: rgba(99, 179, 237, 0.15);
+            --tp-text-muted: rgba(240, 249, 255, 0.95);
+            --tp-text-subtle: rgba(226, 232, 240, 0.92);
+            --tp-accent: #06b6d4;
+            --tp-accent-strong: #0891b2;
+            --tp-accent-vibrant: #22d3ee;
+            --tp-positive: #10b981;
+            --tp-positive-glow: #34d399;
+            --tp-negative: #ef4444;
+            --tp-negative-glow: #f87171;
+            --tp-warning: #f59e0b;
+            --tp-focus-ring: #06b6d4;
+            --tp-focus-ring-subtle: rgba(6, 182, 212, 0.35);
+            --tp-gradient-primary: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+            --tp-gradient-accent: linear-gradient(120deg, #22d3ee 0%, #0891b2 100%);
+            --tp-gradient-warm: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            --tp-gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+
+        @keyframes tpAurora {
+            0% {
+                transform: translate3d(-15%, -25%, 0) scale(1.05) rotate(0deg);
+                opacity: 0.4;
+            }
+            50% {
+                transform: translate3d(10%, -10%, 0) scale(1.15) rotate(12deg);
+                opacity: 0.6;
+            }
+            100% {
+                transform: translate3d(-5%, 0%, 0) scale(1.08) rotate(-4deg);
+                opacity: 0.4;
+            }
+        }
+
+        @keyframes tpFloat {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes tpGradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .tp-app {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            min-height: 100vh;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                linear-gradient(135deg, #020617 0%, #0a0f1e 50%, #020617 100%);
+            color: #f8fafc;
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        .tp-app::before {
+            content: '';
+            position: fixed;
+            inset: -40%;
+            background: conic-gradient(
+                from 180deg at 50% 50%, 
+                rgba(6, 182, 212, 0.2), 
+                rgba(59, 130, 246, 0.15),
+                rgba(139, 92, 246, 0.18), 
+                rgba(6, 182, 212, 0.2)
+            );
+            filter: blur(140px);
+            pointer-events: none;
+            animation: tpAurora 30s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        .tp-app::after {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px, 70px 70px;
+            pointer-events: none;
+            z-index: 0;
+            animation: tpFloat 20s ease-in-out infinite;
+        }
+
+        .tp-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .tp-hero {
+            position: relative;
+            display: grid;
+            gap: 2rem;
+            padding: 3rem;
+            border-radius: 28px;
+            overflow: hidden;
+            background: 
+                linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.2) 50%, rgba(139, 92, 246, 0.15)),
+                rgba(10, 15, 30, 0.8);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            box-shadow: 
+                0 32px 80px -40px rgba(6, 182, 212, 0.6),
+                0 0 0 1px rgba(6, 182, 212, 0.15),
+                inset 0 2px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+        }
+
+        .tp-hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+            background: var(--tp-gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(6, 182, 212, 0.4));
+        }
+
+        .tp-hero p {
+            font-size: 1.25rem;
+            color: rgba(240, 249, 255, 0.9);
+            max-width: 600px;
+        }
+
+        .tp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tp-card {
+            position: relative;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(99, 179, 237, 0.25);
+            border-radius: 20px;
+            padding: 1.75rem;
+            display: grid;
+            gap: 1.25rem;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: 
+                0 10px 40px -20px rgba(6, 182, 212, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .tp-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 
+                0 32px 70px -38px rgba(6, 182, 212, 0.6),
+                0 0 0 1px rgba(6, 182, 212, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .tp-card h3 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--tp-accent-vibrant);
+        }
+
+        .tp-card p {
+            color: var(--tp-text-subtle);
+            margin: 0;
+        }
+
+        .tp-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            background: rgba(99, 179, 237, 0.2);
+            color: rgba(240, 249, 255, 0.95);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(99, 179, 237, 0.3);
+            box-shadow: 0 2px 8px -4px rgba(6, 182, 212, 0.4);
+        }
+
+        .tp-pill--positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--tp-positive-glow);
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 2px 8px -4px rgba(16, 185, 129, 0.5);
+        }
+
+        .tp-pill--negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--tp-negative-glow);
+            border-color: rgba(239, 68, 68, 0.4);
+            box-shadow: 0 2px 8px -4px rgba(239, 68, 68, 0.5);
+        }
+
+        .tp-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1.5rem;
+            border-radius: 999px;
+            background: var(--tp-gradient-accent);
+            color: #020617;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 
+                0 16px 40px -20px rgba(6, 182, 212, 0.8),
+                0 0 0 1px rgba(6, 182, 212, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .tp-button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 20px 50px -22px rgba(6, 182, 212, 1),
+                0 0 0 1px rgba(6, 182, 212, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .tp-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .tp-stat {
+            padding: 1.5rem;
+            background: rgba(20, 30, 55, 0.6);
+            border: 1px solid rgba(99, 179, 237, 0.25);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+        }
+
+        .tp-stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--tp-text-subtle);
+            margin-bottom: 0.5rem;
+        }
+
+        .tp-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--tp-gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tp-progress {
+            position: relative;
+            background: rgba(10, 15, 30, 0.7);
+            border-radius: 999px;
+            overflow: hidden;
+            height: 0.85rem;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 0 0 1px rgba(99, 179, 237, 0.25);
+            border: 1px solid rgba(99, 179, 237, 0.2);
+        }
+
+        .tp-progress__bar {
+            height: 100%;
+            background: var(--tp-gradient-primary);
+            background-size: 200% 100%;
+            animation: tpGradientShift 3s ease infinite;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
+            border-radius: 999px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tp-app">
+        <div class="tp-content">
+            <div class="tp-hero">
+                <h1>TradePulse Dashboard</h1>
+                <p>Premium Trading Intelligence Platform with World-Class Design</p>
+                <div>
+                    <button class="tp-button">Get Started →</button>
+                </div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <span class="tp-pill">Real-time Data</span>
+                    <span class="tp-pill tp-pill--positive">+12.5% Performance</span>
+                    <span class="tp-pill tp-pill--negative">High Volatility</span>
+                </div>
+            </div>
+
+            <div class="tp-stats">
+                <div class="tp-stat">
+                    <div class="tp-stat-label">Total Volume</div>
+                    <div class="tp-stat-value">$2.4M</div>
+                </div>
+                <div class="tp-stat">
+                    <div class="tp-stat-label">Active Signals</div>
+                    <div class="tp-stat-value">127</div>
+                </div>
+                <div class="tp-stat">
+                    <div class="tp-stat-label">Success Rate</div>
+                    <div class="tp-stat-value">94%</div>
+                </div>
+            </div>
+
+            <div class="tp-grid">
+                <div class="tp-card">
+                    <h3>Market Intelligence</h3>
+                    <p>Real-time analysis of market trends and trading opportunities across multiple exchanges.</p>
+                    <div class="tp-progress">
+                        <div class="tp-progress__bar" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <div class="tp-card">
+                    <h3>Signal Processing</h3>
+                    <p>Advanced algorithms detecting high-probability trading signals with precision.</p>
+                    <div class="tp-progress">
+                        <div class="tp-progress__bar" style="width: 88%"></div>
+                    </div>
+                </div>
+
+                <div class="tp-card">
+                    <h3>Risk Management</h3>
+                    <p>Comprehensive risk analysis and portfolio protection strategies in real-time.</p>
+                    <div class="tp-progress">
+                        <div class="tp-progress__bar" style="width: 92%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tp-card">
+                <h3>Performance Overview</h3>
+                <p>Track your trading performance with detailed analytics and insights.</p>
+                <div class="tp-stats">
+                    <div class="tp-stat">
+                        <div class="tp-stat-label">Daily P&L</div>
+                        <div class="tp-stat-value">+$8.2K</div>
+                    </div>
+                    <div class="tp-stat">
+                        <div class="tp-stat-label">Win Rate</div>
+                        <div class="tp-stat-value">87%</div>
+                    </div>
+                    <div class="tp-stat">
+                        <div class="tp-stat-label">Avg Trade</div>
+                        <div class="tp-stat-value">$342</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
