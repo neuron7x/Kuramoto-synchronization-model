@@ -12,6 +12,9 @@ This document provides comprehensive response procedures for every alert defined
 | TradePulseSignalToFillLatency | Critical | High | < 5 min | [Signal to Fill Latency](#signal-to-fill-latency-alert) |
 | TradePulseDataIngestionFailures | Critical | High | < 5 min | [Data Ingestion Failures](#data-ingestion-failures-alert) |
 | TradePulseDataFreshness | Warning | Medium | < 15 min | [Data Freshness](#data-freshness-alert) |
+| TradePulseVenueDivergence | Critical | High | < 5 min | [Venue Divergence](#venue-divergence-alert) |
+| TradePulseFeatureStoreLag | Warning | Medium | < 15 min | [Feature Store Lag](#feature-store-lag-alert) |
+| TradePulseReconciliationDrift | Critical | High | < 10 min | [Reconciliation Drift](#reconciliation-drift-alert) |
 | TradePulseBacktestFailures | Warning | Low | < 30 min | [Backtest Failures](#backtest-failures-alert) |
 | TradePulseOptimizationSlow | Info | Low | < 1 hour | [Optimization Slow](#optimization-slow-alert) |
 | TradePulseCriticalIncidentOpen | Critical | High | Immediate | [Critical Incident Open](#critical-incident-open-alert) |
@@ -44,6 +47,30 @@ This document provides comprehensive response procedures for every alert defined
 - **Burn Rate Thresholds**:
   - Rapid burn: 8.0x over 15 minutes → Page on-call immediately
   - Slow burn: 3.0x over 6 hours → Create incident ticket
+
+### Market Data Delivery SLA
+- **Target**: Venue freshness skew < 45 seconds between primary and secondary feeds
+- **Error Budget**: 1% of intervals breaching target over 30 days
+- **Measurement**: 1-minute rolling window using `tradepulse_market_data_freshness_seconds`
+- **Burn Rate Thresholds**:
+  - Rapid burn: Max freshness > 90 seconds for 3 consecutive minutes → Page data steward and SRE on-call
+  - Slow burn: Median freshness > 60 seconds for 20 minutes → Create incident and initiate venue drill
+
+### Feature Store Synchronisation SLA
+- **Target**: Derived feature batches land within 4 minutes of raw ingestion
+- **Error Budget**: 3% of batches exceeding 4 minutes over 30 days
+- **Measurement**: 5-minute rolling window using `tradepulse_feature_store_sync_delay_seconds`
+- **Burn Rate Thresholds**:
+  - Rapid burn: P90 delay > 8 minutes for 10 minutes → Page platform on-call
+  - Slow burn: P75 delay > 6 minutes for 30 minutes → Notify data engineering lead
+
+### Portfolio Reconciliation SLA
+- **Target**: Absolute drift between broker and internal positions < 0.35%
+- **Error Budget**: 0.5% of reconciliation windows breaching threshold over 30 days
+- **Measurement**: 15-minute rolling window using `tradepulse_position_drift_ratio`
+- **Burn Rate Thresholds**:
+  - Rapid burn: Drift > 1% for 5 minutes → Trigger reconciliation drill and page risk officer
+  - Slow burn: Drift > 0.6% for 45 minutes → Escalate to duty manager and schedule near-term retro
 
 ### Incident Acknowledgement SLA
 - **Target**: Median acknowledgement < 5 minutes
@@ -320,6 +347,121 @@ This document provides comprehensive response procedures for every alert defined
 **Resolution**:
 - Verify data lag < 2 minutes for 15 minutes
 - Tune ingestion parameters if needed
+
+---
+
+### Venue Divergence Alert
+
+**Alert Definition**: Delta between primary and secondary venue mid-prices exceeds 15 bps for 2 minutes
+
+**SLA Impact**: Consumes Market Data Delivery SLA error budget
+
+**Immediate Response (< 5 minutes)**:
+1. **Acknowledge** the alert and create incident stub `INC-VENUE-<timestamp>`
+2. **Query** divergence metrics:
+
+   ```bash
+   tradepulse-cli metrics query 'tradepulse_market_data_divergence_bps{pair="BTC-USD"}'
+   ```
+
+3. **Check** network telemetry for packet loss towards the affected venue using the NOC portal
+
+**Diagnostics (5-15 minutes)**:
+- Review ticker parity via `tradepulse-cli market compare --venues primary,secondary --since 10m`
+- Confirm price bands with broker reference feed
+- Inspect ingestion logs under `observability/logs/ingestion/*.log`
+
+**Mitigation Steps**:
+1. Disable the drifting venue via the feature flag API (`ingestion.<venue>.enabled=false`)
+2. Trigger the clean-room rebuild of the last 15 minutes of features
+3. Re-route strategies configured for dual venue to backup venue using `tradepulse-cli strategy reroute`
+
+**Communication**:
+- Update `#inc-trading` every 10 minutes and include divergence graph
+- Notify compliance if divergence persists > 30 minutes
+
+**Resolution**:
+- Divergence < 5 bps for 20 consecutive minutes across venues
+- Data stewardship review logged in `reports/live/<date>/sla_incidents.md`
+
+**Related Documents**:
+- [`docs/OPERATIONS.md`](OPERATIONS.md#scenario-dual-venue-market-data-degradation)
+- [`docs/runbook_data_incident.md`](runbook_data_incident.md)
+
+---
+
+### Feature Store Lag Alert
+
+**Alert Definition**: `tradepulse_feature_store_sync_delay_seconds` p95 > 8 minutes for 3 windows
+
+**SLA Impact**: Consumes Feature Store Synchronisation SLA error budget
+
+**Immediate Response (< 15 minutes)**:
+1. Acknowledge the alert in PagerDuty
+2. Inspect the orchestrator job queue length via `tradepulse-cli feature-store status`
+3. Check the latest Spark/Flake logs stored in `observability/logs/feature-store/`
+
+**Diagnostics (15-30 minutes)**:
+- Validate upstream ingestion backlog
+- Inspect schema evolution events for conflicting migrations
+- Confirm there is sufficient executor capacity in the compute pool
+
+**Mitigation Steps**:
+1. Scale the transformation workers with `tradepulse-cli feature-store scale --replicas +3`
+2. Re-run the stuck batch `tradepulse-cli feature-store replay --batch <id>`
+3. Pause low-priority backfills until lag recovers
+
+**Communication**:
+- Post status in `#data-ops` and inform affected strategy owners
+
+**Resolution**:
+- P95 delay < 4 minutes for 3 consecutive windows
+- Incident ticket updated with root cause and preventive action
+
+**Related Documents**:
+- [`docs/OPERATIONS.md`](OPERATIONS.md#scenario-dual-venue-market-data-degradation)
+- [`docs/operational_handbook.md`](operational_handbook.md)
+
+---
+
+### Reconciliation Drift Alert
+
+**Alert Definition**: `tradepulse_position_drift_ratio` exceeds 0.8% for 2 consecutive windows
+
+**SLA Impact**: Consumes Portfolio Reconciliation SLA error budget
+
+**Immediate Response (< 10 minutes)**:
+1. Acknowledge the alert and page the duty risk officer
+2. Pull the latest reconciliation diff:
+
+   ```bash
+   tradepulse-cli reconciliation diff --window 5m --output /tmp/recon.json
+   jq '.summary' /tmp/recon.json
+   ```
+
+3. Verify order state with `tradepulse-cli orders list --since 10m --status open`
+
+**Diagnostics (10-20 minutes)**:
+- Check for stale fills in broker API logs
+- Ensure settlement jobs completed (`tradepulse-cli settlements status`)
+- Confirm corporate action feeds did not adjust quantities unexpectedly
+
+**Mitigation Steps**:
+1. Initiate manual position sync following `docs/runbook_live_trading.md`
+2. If broker missing fills, contact broker NOC and freeze strategy fan-out to 25%
+3. Adjust hedge orders to neutralise delta while reconciliation completes
+
+**Communication**:
+- Update `#risk-ops` every 15 minutes
+- Notify executive bridge if drift > 1.5% for 15 minutes
+
+**Resolution**:
+- Drift < 0.3% for 30 minutes and reconciliation diff clean
+- Post-mortem entry created in `reports/live/<date>/postmortem.md`
+
+**Related Documents**:
+- [`docs/OPERATIONS.md`](OPERATIONS.md#scenario-cross-exchange-failover-rehearsal)
+- [`docs/runbook_live_trading.md`](runbook_live_trading.md)
 
 ---
 
