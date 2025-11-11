@@ -64,6 +64,7 @@ Each component is benchmarked with:
 - 100 measurement iterations
 - Percentile calculation from timing samples
 - Validation against budgets
+- **Smart stability checks**: Stability violations (high variance) only trigger failures when performance is within 80% of budget limits. This prevents false positives from fast-running benchmarks with high relative variance but excellent absolute performance
 
 ### 2. **Flamegraph Generation**
 ```bash

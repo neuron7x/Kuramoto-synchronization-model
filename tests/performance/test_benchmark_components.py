@@ -214,13 +214,13 @@ class TestValidation:
         assert "exceeds budget" in violations_text
     
     def test_validate_stability_violation(self):
-        """Test validation with high variance."""
+        """Test validation with high variance when performance is near budget."""
         metrics = PercentileMetrics(
-            p50=0.050,
-            p95=0.080,
-            p99=0.100,
+            p50=0.050,  # 50ms
+            p95=0.080,  # 80ms
+            p99=0.100,  # 100ms
             mean=0.050,
-            std=0.025,  # High std dev relative to mean
+            std=0.025,  # High std dev relative to mean (CoV = 0.5)
             min=0.010,
             max=0.150,
             samples=100,
@@ -228,7 +228,7 @@ class TestValidation:
         
         budget = {
             "percentiles": {
-                "p50_ms": 60.0,
+                "p50_ms": 55.0,  # Close to actual (50ms / 55ms = 0.91 > 0.8)
                 "p95_ms": 90.0,
                 "p99_ms": 120.0,
             },
@@ -240,8 +240,40 @@ class TestValidation:
         result = validate_against_budget("test", metrics, budget)
         
         # CoV = 0.025 / 0.050 = 0.5, which exceeds 0.10
+        # Should fail because performance is > 80% of budget (50/55 = 0.91)
         assert result.passed is False
         assert any("Stability" in v for v in result.violations)
+    
+    def test_validate_stability_ok_when_far_from_budget(self):
+        """Test that stability violations are ignored when performance is good."""
+        metrics = PercentileMetrics(
+            p50=0.010,  # 10ms - far from budget
+            p95=0.015,  # 15ms
+            p99=0.020,  # 20ms
+            mean=0.010,
+            std=0.005,  # High CoV = 0.5
+            min=0.005,
+            max=0.030,
+            samples=100,
+        )
+        
+        budget = {
+            "percentiles": {
+                "p50_ms": 100.0,  # Far from actual (10ms / 100ms = 0.1 < 0.8)
+                "p95_ms": 150.0,
+                "p99_ms": 200.0,
+            },
+            "stability": {
+                "max_variance": 0.10,  # Would fail if checked
+            },
+        }
+        
+        result = validate_against_budget("test", metrics, budget)
+        
+        # Should PASS because performance is well within budget
+        # even though CoV (0.5) exceeds threshold (0.10)
+        assert result.passed is True
+        assert len(result.violations) == 0
 
 
 class TestIntegration:

@@ -240,11 +240,21 @@ def validate_against_budget(
             f"(+{(p99_ms - budget_p99):.2f}ms, {((p99_ms / budget_p99 - 1) * 100):.1f}%)"
         )
     
-    # Check stability
+    # Check stability - only enforce if performance is concerning
+    # (i.e., within 80% of any budget limit OR already violating budgets)
     max_variance = stability.get("max_variance", 1.0)
     if metrics.samples > 1:
         coefficient_of_variation = metrics.std / metrics.mean if metrics.mean > 0 else 0
-        if coefficient_of_variation > max_variance:
+        
+        # Only check stability if we're close to or exceeding budgets
+        performance_ratio = max(
+            p50_ms / budget_p50 if budget_p50 > 0 else 0,
+            p95_ms / budget_p95 if budget_p95 > 0 else 0,
+            p99_ms / budget_p99 if budget_p99 > 0 else 0,
+        )
+        
+        # Enforce stability check only if performance is > 80% of budget
+        if performance_ratio > 0.8 and coefficient_of_variation > max_variance:
             violations.append(
                 f"Stability: coefficient of variation {coefficient_of_variation:.3f} "
                 f"exceeds threshold {max_variance:.3f}"
