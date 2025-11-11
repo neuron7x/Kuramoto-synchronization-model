@@ -1,0 +1,14 @@
+{
+  "symbol": "BTCUSD",
+  "venue": "synthetic",
+  "start_time": "2024-01-01T00:00:00.018815+00:00",
+  "end_time": "2024-01-01T00:00:27.950949+00:00",
+  "record_count": 300,
+  "version": "1.0.0",
+  "description": "Regime transitions: stable -> trending_up -> volatile -> trending_down",
+  "tags": [
+    "synthetic",
+    "regime_transition",
+    "seed_999"
+  ]
+}

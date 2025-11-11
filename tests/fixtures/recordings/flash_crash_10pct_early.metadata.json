@@ -1,0 +1,14 @@
+{
+  "symbol": "BTCUSD",
+  "venue": "synthetic",
+  "start_time": "2024-01-01T00:00:00.005343+00:00",
+  "end_time": "2024-01-01T00:00:15.572693+00:00",
+  "record_count": 150,
+  "version": "1.0.0",
+  "description": "Flash crash at position 0.3, magnitude 0.1",
+  "tags": [
+    "synthetic",
+    "flash_crash",
+    "seed_43"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "symbol": "BTCUSD",
+  "venue": "synthetic",
+  "start_time": "2024-01-01T00:00:00.121757+00:00",
+  "end_time": "2024-01-01T00:00:26.236566+00:00",
+  "record_count": 250,
+  "version": "1.0.0",
+  "description": "Mean-reverting market, 250 ticks, for DDM adaptation tests",
+  "tags": [
+    "synthetic",
+    "mean_reverting",
+    "seed_321"
+  ]
+}

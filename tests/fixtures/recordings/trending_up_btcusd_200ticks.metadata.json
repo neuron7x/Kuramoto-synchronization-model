@@ -1,0 +1,14 @@
+{
+  "symbol": "BTCUSD",
+  "venue": "synthetic",
+  "start_time": "2024-01-01T00:00:00.009180+00:00",
+  "end_time": "2024-01-01T00:00:22.698742+00:00",
+  "record_count": 200,
+  "version": "1.0.0",
+  "description": "Uptrending market, 200 ticks, for positive RPE tests",
+  "tags": [
+    "synthetic",
+    "trending_up",
+    "seed_123"
+  ]
+}
