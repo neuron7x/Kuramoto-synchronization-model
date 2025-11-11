@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from dataclasses import dataclass, replace as dataclass_replace
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Callable, Iterable, Mapping, Optional
 
 from domain import Order, OrderSide
 
 from .normalization import NormalizationError, SymbolNormalizer
+from .metrics import RiskMetrics, get_risk_metrics
+
+LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "ComplianceViolation",
@@ -156,7 +160,12 @@ class RiskConfig:
 class RiskCompliance:
     """Pre-trade and post-trade risk compliance checks with configurable limits."""
 
-    def __init__(self, config: RiskConfig) -> None:
+    def __init__(
+        self,
+        config: RiskConfig,
+        *,
+        metrics: RiskMetrics | None = None,
+    ) -> None:
         self._config = config
         self._lock = threading.RLock()
         self._last_trip_reason: Optional[str] = None
@@ -164,6 +173,10 @@ class RiskCompliance:
         self._daily_high_equity: float = 0.0
         self._daily_reset_time: Optional[datetime] = None
         self._open_orders_count: int = 0
+        self._metrics: RiskMetrics | None = metrics or get_risk_metrics()
+
+        self._record_metric(lambda collector: collector.record_kill_switch(config.kill_switch))
+        self._record_open_orders_metric()
 
     def set_kill_switch(self, enabled: bool) -> None:
         """Enable or disable the global kill switch."""
@@ -172,6 +185,25 @@ class RiskCompliance:
             if enabled:
                 self._last_trip_reason = "kill_switch_enabled"
                 self._last_trip_time = datetime.now(timezone.utc)
+            self._record_metric(lambda collector: collector.record_kill_switch(enabled))
+
+    def update_config(self, **updates: object) -> RiskConfig:
+        """Apply partial updates to the risk configuration."""
+
+        if not updates:
+            return self._config
+
+        valid_fields = set(RiskConfig.__dataclass_fields__)
+        unknown = set(updates) - valid_fields
+        if unknown:
+            raise ValueError(f"Unknown risk configuration keys: {sorted(unknown)}")
+
+        with self._lock:
+            self._config = dataclass_replace(self._config, **updates)
+            self._record_metric(
+                lambda collector: collector.record_kill_switch(self._config.kill_switch)
+            )
+            return self._config
 
     def check_order(
         self,
@@ -199,6 +231,7 @@ class RiskCompliance:
                 breached["kill_switch"] = 1.0
                 self._last_trip_reason = "kill_switch"
                 self._last_trip_time = datetime.now(timezone.utc)
+                self._record_rejections(breached, reasons)
                 return RiskDecision(
                     allowed=False,
                     reasons=tuple(reasons),
@@ -250,21 +283,27 @@ class RiskCompliance:
                         breached["per_symbol_position_cap_notional"] = new_notional
 
             gross_exposure = float(portfolio_state.get("gross_exposure", 0.0))
+            position_notional_before = abs(current_position * price)
+            position_notional_after = abs(new_position * price)
+            projected_gross = (
+                gross_exposure + position_notional_after - position_notional_before
+            )
             if self._config.max_gross_exposure > 0:
-                position_notional_before = abs(current_position * price)
-                position_notional_after = abs(new_position * price)
-                gross_change = position_notional_after - position_notional_before
-                projected_gross = gross_exposure + gross_change
-
                 if projected_gross > self._config.max_gross_exposure:
                     reasons.append(
                         f"Gross exposure {projected_gross:.2f} would exceed limit {self._config.max_gross_exposure:.2f}"
                     )
                     breached["max_gross_exposure"] = projected_gross
 
+            self._record_metric(
+                lambda collector, exposure=projected_gross: collector.record_gross_exposure(exposure)
+            )
+
             if self._config.daily_max_drawdown_threshold > 0:
                 equity = float(portfolio_state.get("equity", 0.0))
                 peak_equity = float(portfolio_state.get("peak_equity", equity))
+                drawdown_metric_value: float | None = None
+                drawdown_metric_mode = self._config.daily_max_drawdown_mode
 
                 now = datetime.now(timezone.utc)
                 if self._daily_reset_time is None or self._should_reset_daily(now):
@@ -285,6 +324,7 @@ class RiskCompliance:
                                 f"Daily drawdown {drawdown*100:.2f}% exceeds threshold {self._config.daily_max_drawdown_threshold*100:.2f}%"
                             )
                             breached["daily_max_drawdown"] = drawdown
+                        drawdown_metric_value = drawdown
                     else:
                         dd_notional = self._daily_high_equity - equity
                         if dd_notional > self._config.daily_max_drawdown_threshold:
@@ -292,6 +332,12 @@ class RiskCompliance:
                                 f"Daily drawdown ${dd_notional:.2f} exceeds threshold ${self._config.daily_max_drawdown_threshold:.2f}"
                             )
                             breached["daily_max_drawdown_notional"] = dd_notional
+                        drawdown_metric_value = dd_notional
+
+                    if drawdown_metric_value is not None:
+                        self._record_metric(
+                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(value, mode=mode)
+                        )
 
             if self._config.max_open_orders_per_account > 0:
                 if self._open_orders_count >= self._config.max_open_orders_per_account:
@@ -303,6 +349,7 @@ class RiskCompliance:
             if reasons:
                 self._last_trip_reason = "; ".join(reasons)
                 self._last_trip_time = datetime.now(timezone.utc)
+                self._record_rejections(breached, reasons)
 
             return RiskDecision(
                 allowed=len(reasons) == 0,
@@ -315,12 +362,14 @@ class RiskCompliance:
         """Register that an order has been opened."""
         with self._lock:
             self._open_orders_count += 1
+            self._record_open_orders_metric()
 
     def register_order_close(self) -> None:
         """Register that an order has been closed."""
         with self._lock:
             if self._open_orders_count > 0:
                 self._open_orders_count -= 1
+            self._record_open_orders_metric()
 
     def get_state(self) -> dict:
         """Get current risk compliance state.
@@ -341,6 +390,47 @@ class RiskCompliance:
                 "open_orders_count": self._open_orders_count,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
+
+    def _record_metric(self, callback: Callable[[RiskMetrics], None]) -> None:
+        metrics = self._metrics
+        if metrics is None:
+            return
+        try:
+            callback(metrics)
+        except Exception:  # pragma: no cover - defensive guardrail
+            LOGGER.exception("Failed to record risk compliance metric")
+
+    def _record_open_orders_metric(self) -> None:
+        self._record_metric(
+            lambda collector, count=self._open_orders_count: collector.record_open_orders(count)
+        )
+
+    def _record_rejections(
+        self, breached: Mapping[str, float], reasons: Iterable[str]
+    ) -> None:
+        labels = list(breached.keys())
+        if not labels:
+            reason_text = "; ".join(reasons)
+            normalised = self._normalise_rejection_reason(reason_text)
+            if normalised:
+                labels = [normalised]
+        for label in labels:
+            self._record_metric(
+                lambda collector, reason=label: collector.record_rejection(reason)
+            )
+
+    @staticmethod
+    def _normalise_rejection_reason(reason: str) -> str:
+        if not reason:
+            return "unspecified"
+        cleaned = [
+            ch.lower() if ch.isalnum() else "_"
+            for ch in reason
+        ]
+        normalised = "".join(cleaned).strip("_")
+        while "__" in normalised:
+            normalised = normalised.replace("__", "_")
+        return normalised or "unspecified"
 
     def _should_reset_daily(self, now: datetime) -> bool:
         """Check if daily metrics should be reset."""
