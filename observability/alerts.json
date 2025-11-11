@@ -40,7 +40,7 @@
             "team": "trade-ops"
           },
           "annotations": {
-            "summary": "Signal → ack latency breaching 400 ms",
+            "summary": "Signal \u2192 ack latency breaching 400 ms",
             "description": "p95 signal to acknowledgement latency exceeded 400 ms for 5 minutes"
           }
         },
@@ -53,7 +53,7 @@
             "team": "trade-ops"
           },
           "annotations": {
-            "summary": "Signal → fill latency breaching 650 ms",
+            "summary": "Signal \u2192 fill latency breaching 650 ms",
             "description": "p99 signal to fill latency exceeded 650 ms for 5 minutes"
           }
         }
@@ -119,6 +119,64 @@
           "annotations": {
             "summary": "Strategy optimisation running slowly",
             "description": "Average optimisation duration exceeded two minutes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "tradepulse.operations",
+      "interval": "1m",
+      "rules": [
+        {
+          "alert": "TradePulseCriticalIncidentOpen",
+          "expr": "tradepulse_incidents_open{severity=\"critical\"} > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "critical",
+            "team": "platform-ops"
+          },
+          "annotations": {
+            "summary": "Critical incident requires response",
+            "description": "At least one critical incident is open and unmitigated"
+          }
+        },
+        {
+          "alert": "TradePulseIncidentAckSLA",
+          "expr": "histogram_quantile(0.5, sum(rate(tradepulse_incident_ack_latency_seconds_bucket[5m])) by (le, severity)) > 300",
+          "for": "10m",
+          "labels": {
+            "severity": "warning",
+            "team": "platform-ops"
+          },
+          "annotations": {
+            "summary": "Median incident acknowledgement breached 5 minutes",
+            "description": "Incident acknowledgement time exceeded the 5 minute SLA"
+          }
+        },
+        {
+          "alert": "TradePulseLifecycleCheckpointBlocked",
+          "expr": "max by (checkpoint) (tradepulse_lifecycle_checkpoint_status{status=\"blocked\"}) == 1",
+          "for": "5m",
+          "labels": {
+            "severity": "critical",
+            "team": "platform-ops"
+          },
+          "annotations": {
+            "summary": "Lifecycle checkpoint blocked",
+            "description": "A lifecycle checkpoint is blocked for more than five minutes"
+          }
+        },
+        {
+          "alert": "TradePulseRunbookFailures",
+          "expr": "increase(tradepulse_runbook_executions_total{outcome=\"failed\"}[15m]) > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "warning",
+            "team": "platform-ops"
+          },
+          "annotations": {
+            "summary": "Runbook execution failed",
+            "description": "At least one production runbook failed in the last 15 minutes"
           }
         }
       ]

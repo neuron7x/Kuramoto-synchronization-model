@@ -34,6 +34,15 @@ Detection → Declaration → Triage → Mitigation → Resolution → Postmorte
 | Mitigation to Resolution | < 30 min | < 2 hours | < 1 day | < 1 week |
 | Resolution to Postmortem | < 24 hours | < 48 hours | < 5 days | < 2 weeks |
 
+### Telemetry Anchors for Lifecycle Phases
+- **Open Incident Count**: `tradepulse_incidents_open` on the Production Operations Dashboard highlights unresolved incidents by severity.
+- **Acknowledgement SLA**: `tradepulse_incident_ack_latency_seconds` histogram quantiles (p50/p90) surface paging delays and responder saturation.
+- **Resolution SLA**: `tradepulse_incident_resolution_latency_seconds` exposes elongated mitigation efforts that require executive visibility.
+- **Lifecycle Checkpoints**: `tradepulse_lifecycle_checkpoint_status` identifies blocked prerequisites during startup, trading, settlement, or maintenance windows.
+- **Automation Reliability**: `tradepulse_runbook_executions_total` tracks runbook failures and manual fallbacks that may prolong incidents.
+
+These signals are summarised in [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json) and must be reviewed during every phase transition.
+
 ---
 
 ## Roles and Responsibilities
@@ -515,6 +524,30 @@ Avoid:
 - ❌ Skipping the "what went well" section
 
 ---
+
+## Operational Telemetry Integration
+
+### Production Operations Dashboard
+- **Location**: [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- **Executive Summary**: `System Health Status` and `SLA Error Budget Burn` convey cross-service posture at a glance.
+- **Incident Response**: `Open Incidents by Severity` and `Incident Response Durations` panels validate acknowledgement/resolution SLAs in real time.
+- **Lifecycle Governance**: `Lifecycle Phase State` and `Lifecycle Checkpoint Status` surfaces blocked transitions that must be cleared before advancing phases.
+- **Automation Quality**: `Runbook Execution Outcomes` tracks automation failures that demand manual intervention.
+
+### Metric-to-Action Matrix
+| Signal | Metric | Primary Owner | Required Action |
+|--------|--------|---------------|-----------------|
+| Critical incident active | `tradepulse_incidents_open{severity="critical"}` | Incident Commander | Convene bridge, follow critical incident playbook |
+| Ack SLA breach | `histogram_quantile(0.5, tradepulse_incident_ack_latency_seconds)` | On-call SRE | Trigger backup rota, audit paging integrations |
+| Resolution SLA breach | `histogram_quantile(0.5, tradepulse_incident_resolution_latency_seconds)` | Duty Manager | Escalate mitigation resources, update executives |
+| Lifecycle checkpoint blocked | `tradepulse_lifecycle_checkpoint_status{status="blocked"}` | Phase owner | Execute checkpoint runbook, clear dependency |
+| Runbook failures | `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m])` | Automation owner | Apply manual fallback, remediate automation |
+
+### Automation Feedback Loop
+1. **Observe** failure via `Runbook Execution Outcomes` or alert `TradePulseRunbookFailures`.
+2. **Escalate** to automation owner and record manual steps in incident log.
+3. **Patch** automation and confirm success metrics reset to zero.
+4. **Retrofit** lessons into [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md) and associated runbooks.
 
 ## Integration with Existing Playbooks
 

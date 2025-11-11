@@ -750,12 +750,24 @@ tradepulse-cli security cert-rotate --auto-renew
 **Primary Dashboard**: Production Operations Dashboard
 - Location: `observability/dashboards/tradepulse-production-operations.json`
 - Refresh: 10 seconds
-- Coverage: System health, alerts, SLO, latency, data pipeline
+- Key Panels:
+  - `System Health Status`: Combined trading/data/incident readiness signal.
+  - `SLA Error Budget Burn`: Aggregated burn rate across order, acknowledgement, and resolution SLAs.
+  - `Open Incidents by Severity`: Real-time view of `tradepulse_incidents_open`.
+  - `Lifecycle Phase/Checkpoint`: Tracks `tradepulse_lifecycle_phase_state` and `tradepulse_lifecycle_checkpoint_status` progress.
+  - `Incident Response Durations`: Monitors `tradepulse_incident_ack_latency_seconds` and `tradepulse_incident_resolution_latency_seconds`.
+  - `Runbook Execution Outcomes`: Surfaces `tradepulse_runbook_executions_total` failures requiring manual follow-up.
 
 **Alert Routing**:
 - Critical alerts → PagerDuty → On-call SRE
 - Warning alerts → Slack → #trading-ops
 - Info alerts → Slack → #monitoring
+
+### Incident Response Telemetry
+- **Acknowledgement SLA**: Investigate when `histogram_quantile(0.5, tradepulse_incident_ack_latency_seconds)` > 300 seconds.
+- **Resolution SLA**: Escalate if `histogram_quantile(0.5, tradepulse_incident_resolution_latency_seconds)` > 1800 seconds.
+- **Automation Reliability**: Review `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m])` for failing runbooks.
+- **Lifecycle Blocks**: Clear any `tradepulse_lifecycle_checkpoint_status{status="blocked"} == 1` entries prior to phase transitions.
 
 **Health Check Endpoints**:
 ```bash
