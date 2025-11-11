@@ -9,15 +9,25 @@ from typing import Any
 
 import yaml
 
-from core.security import DEFAULT_HTTP_ALPN_PROTOCOLS, DEFAULT_MODERN_CIPHER_SUITES, parse_tls_version
+from core.security import (
+    DEFAULT_HTTP_ALPN_PROTOCOLS,
+    DEFAULT_MODERN_CIPHER_SUITES,
+    parse_tls_version,
+)
 
+from .errors import ConfigurationError as CortexConfigurationError
 
 CONFIG_ENV_PREFIX = "CORTEX__"
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "service.yaml"
 
 
-class ConfigurationError(RuntimeError):
+# Keep alias for backward compatibility
+class ConfigurationError(CortexConfigurationError):
     """Raised when configuration cannot be loaded or validated."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize configuration error without details."""
+        super().__init__(message, details={})
 
 
 def _ensure_file(path: Path, *, description: str) -> Path:
@@ -50,6 +60,7 @@ class ServiceTLSSettings:
     alpn_protocols: tuple[str, ...] = DEFAULT_HTTP_ALPN_PROTOCOLS
 
     def __post_init__(self) -> None:
+        """Validate TLS configuration after initialization."""
         self.cert_file = _ensure_file(Path(self.cert_file), description="TLS certificate")
         self.key_file = _ensure_file(Path(self.key_file), description="TLS private key")
         if self.client_ca_file is not None:
@@ -63,7 +74,23 @@ class ServiceTLSSettings:
             )
         self.cipher_suites = _normalise_sequence(self.cipher_suites)
         self.alpn_protocols = _normalise_sequence(self.alpn_protocols)
+
+        # Validate cipher suites not empty
+        if not self.cipher_suites:
+            raise ConfigurationError("TLS cipher suites list cannot be empty")
+
+        # Validate minimum TLS version
         parse_tls_version(self.minimum_version)
+
+        # Warn on deprecated protocols
+        if self.minimum_version in {"TLSv1.0", "TLSv1.1", "SSLv3"}:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Deprecated TLS version '%s' configured. Consider upgrading to TLSv1.2 or TLSv1.3",
+                self.minimum_version,
+            )
+
         if self.require_client_certificate and self.client_ca_file is None:
             raise ConfigurationError(
                 "Client certificate authentication requires a trusted CA bundle"
@@ -126,6 +153,32 @@ class RiskSettings:
     max_absolute_exposure: float = 2.0
     var_confidence: float = 0.95
     stress_scenarios: tuple[float, ...] = (0.85, 0.5)
+
+    def __post_init__(self) -> None:
+        """Validate risk settings after initialization."""
+        # Validate stress scenarios are unique and valid
+        if not self.stress_scenarios:
+            raise ConfigurationError("stress_scenarios cannot be empty")
+
+        # Check for uniqueness
+        unique_scenarios = set(self.stress_scenarios)
+        if len(unique_scenarios) != len(self.stress_scenarios):
+            raise ConfigurationError(
+                f"stress_scenarios must contain unique values, got: {self.stress_scenarios}"
+            )
+
+        # Validate all scenarios are positive
+        for scenario in self.stress_scenarios:
+            if scenario <= 0:
+                raise ConfigurationError(
+                    f"All stress_scenarios must be positive, got: {self.stress_scenarios}"
+                )
+
+        # Validate var_confidence is in valid range
+        if not 0 < self.var_confidence < 1:
+            raise ConfigurationError(
+                f"var_confidence must be between 0 and 1 (exclusive), got: {self.var_confidence}"
+            )
 
 
 @dataclass(slots=True)

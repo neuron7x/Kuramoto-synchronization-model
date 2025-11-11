@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 import os
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -12,7 +12,14 @@ os.environ.setdefault("CORTEX__DATABASE__POOL_SIZE", "1")
 os.environ.setdefault("CORTEX__DATABASE__POOL_TIMEOUT", "30")
 
 from cortex_service.app.api import create_app
-from cortex_service.app.config import CortexSettings, DatabaseSettings, RegimeSettings, RiskSettings, ServiceMeta, SignalSettings
+from cortex_service.app.config import (
+    CortexSettings,
+    DatabaseSettings,
+    RegimeSettings,
+    RiskSettings,
+    ServiceMeta,
+    SignalSettings,
+)
 
 
 def _test_settings() -> CortexSettings:
