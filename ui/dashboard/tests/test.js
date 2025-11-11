@@ -1,6 +1,7 @@
 import assert from 'assert';
 import './accessibility.test.js';
 import './data_client.test.js';
+import './sanitizer.test.js';
 
 const TEST_LEVEL = 'L7';
 console.info(`[${TEST_LEVEL}] ui/dashboard functional regression suite`);

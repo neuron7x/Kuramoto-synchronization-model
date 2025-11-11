@@ -6,6 +6,7 @@ import { renderOrdersView } from '../views/orders.js';
 import { renderSignalsView } from '../views/signals.js';
 import { renderCommunityView } from '../views/community.js';
 import { renderBreadcrumbs, renderToolbar, renderHeader } from '../core/dashboard_ui.js';
+import { injectSafeHtml } from '../core/sanitizer.js';
 import DashboardDataClient from './data_client.js';
 
 const VIEW_RENDERERS = {
@@ -195,7 +196,7 @@ export class DashboardApp {
     const toolbar = renderToolbar({ route, routeLabel });
     const headerHtml = renderHeader(this.state.header);
     const html = `${breadcrumbsHtml}${toolbar.html}${headerHtml}${view.html}`;
-    this.main.innerHTML = html;
+    injectSafeHtml(this.main, html);
     this.main.setAttribute('data-route', route);
 
     if (window.tpDashboardRuntime && typeof window.tpDashboardRuntime.setActiveRoute === 'function') {
