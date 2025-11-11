@@ -1,0 +1,328 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tradepulse.io/schemas/dopamine.schema.json",
+  "title": "Dopamine Controller Configuration Schema",
+  "description": "Schema for validating dopamine neuromodulator configuration",
+  "type": "object",
+  "required": [
+    "version",
+    "discount_gamma",
+    "learning_rate_v",
+    "decay_rate",
+    "burst_factor",
+    "k",
+    "theta",
+    "w_r",
+    "w_n",
+    "w_m",
+    "w_v",
+    "novelty_mode",
+    "c_absrpe",
+    "baseline",
+    "delta_gain",
+    "base_temperature",
+    "min_temperature",
+    "temp_k",
+    "neg_rpe_temp_gain",
+    "max_temp_multiplier",
+    "invigoration_threshold",
+    "no_go_threshold",
+    "target_dd",
+    "target_sharpe",
+    "meta_cooldown_ticks",
+    "metric_interval"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+      "description": "Configuration version"
+    },
+    "discount_gamma": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 1.0,
+      "description": "TD discount factor γ ∈ (0, 1]"
+    },
+    "learning_rate_v": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 1.0,
+      "description": "Value estimate learning rate ∈ (0, 1]"
+    },
+    "decay_rate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Tonic DA decay rate ∈ [0, 1]"
+    },
+    "burst_factor": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Phasic burst amplification factor ≥ 0"
+    },
+    "k": {
+      "type": "number",
+      "not": {
+        "const": 0
+      },
+      "description": "Sigmoid steepness parameter (non-zero)"
+    },
+    "theta": {
+      "type": "number",
+      "description": "Sigmoid threshold/midpoint"
+    },
+    "w_r": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Reward weight ≥ 0"
+    },
+    "w_n": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Novelty weight ≥ 0"
+    },
+    "w_m": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Momentum weight ≥ 0"
+    },
+    "w_v": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Value gap weight ≥ 0"
+    },
+    "novelty_mode": {
+      "type": "string",
+      "enum": ["external", "abs_rpe"],
+      "description": "Novelty calculation mode"
+    },
+    "c_absrpe": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Absolute RPE novelty coefficient ≥ 0"
+    },
+    "baseline": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "DA baseline for action modulation ∈ [0, 1]"
+    },
+    "delta_gain": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Action-value modulation gain ∈ [0, 1]"
+    },
+    "base_temperature": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Base exploration temperature > 0"
+    },
+    "min_temperature": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Minimum temperature > 0"
+    },
+    "temp_k": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Temperature decay coefficient > 0"
+    },
+    "neg_rpe_temp_gain": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Temperature boost on negative RPE ≥ 0"
+    },
+    "max_temp_multiplier": {
+      "type": "number",
+      "minimum": 1.0,
+      "description": "Maximum temperature multiplier ≥ 1"
+    },
+    "invigoration_threshold": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "GO threshold ∈ [0, 1]"
+    },
+    "no_go_threshold": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "NO-GO threshold ∈ [0, 1]"
+    },
+    "hold_threshold": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "HOLD threshold ∈ [0, 1]"
+    },
+    "target_dd": {
+      "type": "number",
+      "description": "Target drawdown for meta-adaptation"
+    },
+    "target_sharpe": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Target Sharpe ratio > 0"
+    },
+    "meta_cooldown_ticks": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Meta-adaptation cooldown period ≥ 0"
+    },
+    "metric_interval": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Metric logging interval ≥ 1"
+    },
+    "meta_adapt_rules": {
+      "type": "object",
+      "description": "Meta-adaptation rules by performance state",
+      "properties": {
+        "good": {
+          "$ref": "#/definitions/meta_rule"
+        },
+        "bad": {
+          "$ref": "#/definitions/meta_rule"
+        },
+        "neutral": {
+          "$ref": "#/definitions/meta_rule"
+        }
+      }
+    },
+    "rpe_ema_beta": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 1.0,
+      "description": "RPE EMA smoothing factor ∈ (0, 1]"
+    },
+    "temp_adapt_target_var": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Target RPE variance for temperature adaptation ≥ 0"
+    },
+    "temp_adapt_lr": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Temperature adaptation learning rate > 0"
+    },
+    "temp_adapt_beta1": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 1.0,
+      "exclusiveMaximum": 1.0,
+      "description": "Adam β₁ for temperature ∈ (0, 1)"
+    },
+    "temp_adapt_beta2": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 1.0,
+      "exclusiveMaximum": 1.0,
+      "description": "Adam β₂ for temperature ∈ (0, 1)"
+    },
+    "temp_adapt_epsilon": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Adam epsilon for temperature > 0"
+    },
+    "temp_adapt_min_base": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Minimum adaptive base temperature > 0"
+    },
+    "temp_adapt_max_base": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Maximum adaptive base temperature > 0"
+    },
+    "rpe_var_release_threshold": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "RPE variance threshold for release gate ≥ 0"
+    },
+    "rpe_var_release_hysteresis": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Release gate hysteresis ≥ 0"
+    },
+    "ddm_temp_gain": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "DDM temperature gain ≥ 0"
+    },
+    "ddm_threshold_gain": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "DDM threshold gain ≥ 0"
+    },
+    "ddm_hold_gain": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "DDM hold gain ≥ 0"
+    },
+    "ddm_min_temperature_scale": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Minimum DDM temperature scale > 0"
+    },
+    "ddm_max_temperature_scale": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "Maximum DDM temperature scale > 0"
+    },
+    "ddm_baseline_a": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "DDM baseline boundary > 0"
+    },
+    "ddm_baseline_t0": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "DDM baseline non-decision time ≥ 0"
+    },
+    "ddm_eps": {
+      "type": "number",
+      "minimum": 0.0,
+      "exclusiveMinimum": 0.0,
+      "description": "DDM epsilon for numerical stability > 0"
+    }
+  },
+  "definitions": {
+    "meta_rule": {
+      "type": "object",
+      "required": ["learning_rate_v", "delta_gain", "base_temperature"],
+      "properties": {
+        "learning_rate_v": {
+          "type": "number",
+          "description": "Learning rate multiplier"
+        },
+        "delta_gain": {
+          "type": "number",
+          "description": "Delta gain multiplier"
+        },
+        "base_temperature": {
+          "type": "number",
+          "description": "Base temperature multiplier"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

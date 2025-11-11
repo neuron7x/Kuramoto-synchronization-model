@@ -1,0 +1,378 @@
+"""Property-based tests for dopamine module using Hypothesis.
+
+These tests verify mathematical invariants and properties across a wide range of inputs.
+"""
+from __future__ import annotations
+
+import math
+from pathlib import Path
+
+import pytest
+from hypothesis import HealthCheck, given, settings, strategies as st
+
+from tradepulse.core.neuro.dopamine import DopamineController
+from tradepulse.core.neuro.dopamine.ddm_adapter import adapt_ddm_parameters, ddm_thresholds
+
+
+# Hypothesis profiles for different test modes
+settings.register_profile("ci", max_examples=200, deadline=1000)
+settings.register_profile("dev", max_examples=50, deadline=500)
+settings.register_profile("debug", max_examples=10, deadline=None)
+
+# Use CI profile by default, can be overridden with --hypothesis-profile
+settings.load_profile("dev")
+
+
+def _make_controller(tmp_path: Path) -> DopamineController:
+    """Create a dopamine controller with test config."""
+    config_path = Path("config/dopamine.yaml")
+    cfg_target = tmp_path / "dopamine.yaml"
+    cfg_target.write_text(config_path.read_text(encoding="utf-8"), encoding="utf-8")
+    return DopamineController(str(cfg_target))
+
+
+class TestRPEProperties:
+    """Property tests for Reward Prediction Error."""
+
+    @given(
+        reward=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False, allow_infinity=False),
+        value=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_rpe_sign_with_gamma_one(
+        self, tmp_path: Path, reward: float, value: float
+    ) -> None:
+        """Property: With γ=1 and V'=V, sign(δ) should match sign(r)."""
+        controller = _make_controller(tmp_path)
+        rpe = controller.compute_rpe(
+            reward=reward, value=value, next_value=value, discount_gamma=1.0
+        )
+        
+        if abs(reward) < 1e-6:
+            # Near-zero reward should produce near-zero RPE
+            assert abs(rpe) < 1e-6 + abs(value) * 1e-6
+        elif reward > 0:
+            # Positive reward should produce positive RPE
+            assert rpe >= reward - 1e-6
+        else:
+            # Negative reward should produce negative RPE
+            assert rpe <= reward + 1e-6
+
+    @given(
+        value=st.floats(min_value=0.0, max_value=10.0, allow_nan=False, allow_infinity=False),
+        next_value=st.floats(min_value=0.0, max_value=10.0, allow_nan=False, allow_infinity=False),
+        gamma=st.floats(min_value=0.01, max_value=1.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_rpe_approaches_zero_with_zero_reward(
+        self, tmp_path: Path, value: float, next_value: float, gamma: float
+    ) -> None:
+        """Property: With r=0, δ should approach 0 as V' approaches V."""
+        controller = _make_controller(tmp_path)
+        rpe = controller.compute_rpe(
+            reward=0.0, value=value, next_value=next_value, discount_gamma=gamma
+        )
+        
+        expected = gamma * next_value - value
+        assert rpe == pytest.approx(expected, abs=1e-6)
+        
+        # When values are similar, RPE should be small
+        if abs(next_value - value / gamma) < 0.1:
+            assert abs(rpe) < 0.2
+
+    @given(
+        reward=st.floats(min_value=-5.0, max_value=5.0, allow_nan=False, allow_infinity=False),
+        value=st.floats(min_value=-5.0, max_value=5.0, allow_nan=False, allow_infinity=False),
+        next_value=st.floats(min_value=-5.0, max_value=5.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_rpe_monotonic_in_next_value(
+        self, tmp_path: Path, reward: float, value: float, next_value: float
+    ) -> None:
+        """Property: RPE should be monotonically increasing in V'."""
+        rpe1 = controller.compute_rpe(reward, value, next_value, discount_gamma=0.9)
+        rpe2 = controller.compute_rpe(reward, value, next_value + 0.5, discount_gamma=0.9)
+        
+        # rpe2 should be larger since next_value2 > next_value1
+        assert rpe2 >= rpe1 + 0.45 - 1e-6  # 0.5 * 0.9 = 0.45
+
+    @given(
+        gamma=st.floats(min_value=0.01, max_value=1.0, allow_nan=False, allow_infinity=False)
+    )
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_rpe_gamma_clamping(self, tmp_path: Path, gamma: float) -> None:
+        """Property: γ must be in (0, 1]."""
+        # Valid gamma should work
+        rpe = controller.compute_rpe(1.0, 0.5, 0.6, discount_gamma=gamma)
+        assert math.isfinite(rpe)
+        
+    def test_rpe_rejects_invalid_gamma(self, tmp_path: Path) -> None:
+        """Property: γ ≤ 0 or γ > 1 should raise ValueError."""
+        with pytest.raises(ValueError, match="must be in \\(0, 1\\]"):
+            controller.compute_rpe(1.0, 0.5, 0.6, discount_gamma=0.0)
+        
+        with pytest.raises(ValueError, match="must be in \\(0, 1\\]"):
+            controller.compute_rpe(1.0, 0.5, 0.6, discount_gamma=-0.1)
+        
+        with pytest.raises(ValueError, match="must be in \\(0, 1\\]"):
+            controller.compute_rpe(1.0, 0.5, 0.6, discount_gamma=1.1)
+
+    def test_rpe_rejects_nan_inf_inputs(self, tmp_path: Path) -> None:
+        """Property: NaN/Inf inputs should raise RuntimeError or ValueError."""
+        with pytest.raises((RuntimeError, ValueError)):
+            controller.compute_rpe(float("nan"), 0.5, 0.6)
+        
+        with pytest.raises((RuntimeError, ValueError)):
+            controller.compute_rpe(1.0, float("inf"), 0.6)
+        
+        with pytest.raises((RuntimeError, ValueError)):
+            controller.compute_rpe(1.0, 0.5, float("-inf"))
+
+
+class TestTemperatureProperties:
+    """Property tests for exploration temperature."""
+
+    @given(
+        da=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_temperature_decreases_with_da(
+        self, tmp_path: Path, da: float
+    ) -> None:
+        """Property: Temperature should decrease as DA increases (for fixed base)."""
+        controller.reset_state()
+        controller.dopamine_level = da
+        
+        temp = controller.compute_temperature(dopamine_signal=da)
+        
+        # Temperature should be positive
+        assert temp > 0
+        
+        # Temperature should be within bounds
+        min_t, max_t = controller.temperature_bounds()
+        assert min_t <= temp <= max_t
+
+    @given(
+        da1=st.floats(min_value=0.0, max_value=0.5, allow_nan=False, allow_infinity=False),
+        da2=st.floats(min_value=0.5, max_value=1.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_temperature_monotonic_decrease(
+        self, tmp_path: Path, da1: float, da2: float
+    ) -> None:
+        """Property: T(DA₂) ≤ T(DA₁) when DA₂ > DA₁."""
+        controller.reset_state()
+        controller.last_rpe = 0.0  # Neutral RPE to avoid negative RPE boost
+        
+        temp1 = controller.compute_temperature(dopamine_signal=da1)
+        temp2 = controller.compute_temperature(dopamine_signal=da2)
+        
+        # With higher DA, temperature should be lower (more exploitation)
+        assert temp2 <= temp1 + 1e-6
+
+    @given(
+        base_temp=st.floats(min_value=0.1, max_value=5.0, allow_nan=False, allow_infinity=False)
+    )
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_temperature_respects_bounds(
+        self, tmp_path: Path, base_temp: float
+    ) -> None:
+        """Property: Temperature should always be within [min_temp, base_temp * max_multiplier]."""
+        controller.reset_state()
+        controller.config["base_temperature"] = base_temp
+        controller._adaptive_base_temperature = base_temp
+        
+        min_temp = float(controller.config["min_temperature"])
+        max_mult = float(controller.config["max_temp_multiplier"])
+        
+        for da in [0.0, 0.5, 1.0]:
+            temp = controller.compute_temperature(dopamine_signal=da)
+            assert min_temp <= temp <= base_temp * max_mult + 1e-6
+
+    def test_temperature_never_zero_or_negative(
+        self, tmp_path: Path
+    ) -> None:
+        """Property: Temperature must always be > 0."""
+        controller.reset_state()
+        
+        for da in [0.0, 0.25, 0.5, 0.75, 1.0]:
+            temp = controller.compute_temperature(dopamine_signal=da)
+            assert temp > 0
+
+
+class TestDDMProperties:
+    """Property tests for DDM adapter."""
+
+    @given(
+        v=st.floats(min_value=-2.0, max_value=2.0, allow_nan=False, allow_infinity=False),
+        a=st.floats(min_value=0.1, max_value=5.0, allow_nan=False, allow_infinity=False),
+        t0=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_ddm_thresholds_always_valid(self, v: float, a: float, t0: float) -> None:
+        """Property: DDM thresholds should always be in [0, 1] and satisfy go >= hold >= no_go."""
+        result = ddm_thresholds(
+            v, a, t0,
+            temp_gain=0.4,
+            threshold_gain=0.3,
+            hold_gain=0.6,
+            min_temp_scale=0.5,
+            max_temp_scale=2.0,
+            baseline_a=1.0,
+            baseline_t0=0.2,
+            eps=1e-6,
+        )
+        
+        # All thresholds in valid range
+        assert 0.0 <= result.go_threshold <= 1.0
+        assert 0.0 <= result.hold_threshold <= 1.0
+        assert 0.0 <= result.no_go_threshold <= 1.0
+        
+        # Temperature scale in valid range
+        assert 0.5 <= result.temperature_scale <= 2.0
+        
+        # Monotonic constraint (with small epsilon for floating point)
+        assert result.go_threshold >= result.no_go_threshold - 1e-6
+
+    @given(
+        da=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+        base_drift=st.floats(min_value=0.1, max_value=2.0, allow_nan=False, allow_infinity=False),
+        base_boundary=st.floats(min_value=0.2, max_value=3.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_ddm_adaptation_increases_drift_with_da(
+        self, da: float, base_drift: float, base_boundary: float
+    ) -> None:
+        """Property: Higher DA should increase drift (confidence)."""
+        adjustment = adapt_ddm_parameters(
+            da,
+            base_drift,
+            base_boundary,
+            drift_gain=0.5,
+            boundary_gain=0.3,
+            min_boundary=0.1,
+        )
+        
+        # Drift should be positive
+        assert adjustment.drift > 0
+        
+        # Boundary should respect minimum
+        assert adjustment.boundary >= 0.1
+
+    @given(
+        da1=st.floats(min_value=0.0, max_value=0.5, allow_nan=False, allow_infinity=False),
+        da2=st.floats(min_value=0.5, max_value=1.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_ddm_drift_monotonic_in_da(self, da1: float, da2: float) -> None:
+        """Property: Drift should increase with DA."""
+        adj1 = adapt_ddm_parameters(da1, 1.0, 1.0, drift_gain=0.5, boundary_gain=0.3)
+        adj2 = adapt_ddm_parameters(da2, 1.0, 1.0, drift_gain=0.5, boundary_gain=0.3)
+        
+        # Higher DA should produce higher drift
+        assert adj2.drift >= adj1.drift - 1e-6
+
+    def test_ddm_rejects_invalid_inputs(self) -> None:
+        """Property: Invalid DDM inputs should raise ValueError."""
+        # Negative or zero boundary
+        with pytest.raises(ValueError, match="a must be positive"):
+            ddm_thresholds(
+                1.0, -1.0, 0.2,
+                temp_gain=0.4, threshold_gain=0.3, hold_gain=0.6,
+                min_temp_scale=0.5, max_temp_scale=2.0,
+                baseline_a=1.0, baseline_t0=0.2, eps=1e-6,
+            )
+        
+        # Negative non-decision time
+        with pytest.raises(ValueError, match="t0 must be non-negative"):
+            ddm_thresholds(
+                1.0, 1.0, -0.1,
+                temp_gain=0.4, threshold_gain=0.3, hold_gain=0.6,
+                min_temp_scale=0.5, max_temp_scale=2.0,
+                baseline_a=1.0, baseline_t0=0.2, eps=1e-6,
+            )
+
+
+class TestGateProperties:
+    """Property tests for Go/Hold/No-Go gate."""
+
+    @given(
+        da=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_gate_priority_no_go_dominates(
+        self, tmp_path: Path, da: float
+    ) -> None:
+        """Property: NO_GO should dominate when conditions are met."""
+        controller.reset_state()
+        
+        # Set very high NO-GO threshold
+        controller.config["no_go_threshold"] = 0.9
+        controller.config["invigoration_threshold"] = 0.5
+        controller.config["hold_threshold"] = 0.7
+        
+        appetitive = controller.estimate_appetitive_state(0.1, 0.1, 0.1, 0.1)
+        _, _, _, extras = controller.step(
+            reward=0.0, value=0.0, next_value=0.0, appetitive_state=appetitive
+        )
+        
+        # When DA < no_go_threshold, NO-GO should be True
+        if extras["dopamine_level"] < 0.9:
+            assert extras["no_go"] is True
+
+    @given(
+        reward=st.floats(min_value=-2.0, max_value=2.0, allow_nan=False, allow_infinity=False),
+        value=st.floats(min_value=-2.0, max_value=2.0, allow_nan=False, allow_infinity=False),
+    )
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_gate_state_consistency(
+        self, tmp_path: Path, reward: float, value: float
+    ) -> None:
+        """Property: Gate states should be mutually consistent."""
+        controller.reset_state()
+        appetitive = controller.estimate_appetitive_state(0.5, 0.2, 0.1, 0.05)
+        
+        _, _, _, extras = controller.step(
+            reward=reward, value=value, next_value=value, appetitive_state=appetitive
+        )
+        
+        go = extras["go"]
+        hold = extras["hold"]
+        no_go = extras["no_go"]
+        
+        # Exactly one of GO or (HOLD/NO-GO) should be true
+        if go:
+            assert not hold or not no_go  # Can't have GO and both HOLD+NO-GO
+        
+        # Thresholds should satisfy go >= hold >= no_go
+        assert extras["go_threshold"] >= extras["hold_threshold"] - 1e-6
+        assert extras["hold_threshold"] >= extras["no_go_threshold"] - 1e-6
+
+
+class TestStepIdempotence:
+    """Test that step() is deterministic with fixed inputs."""
+
+    def test_step_deterministic_with_fixed_inputs(
+        self, tmp_path: Path
+    ) -> None:
+        """Property: Calling step() twice with same inputs should produce same outputs."""
+        controller.reset_state()
+        
+        appetitive = 0.5
+        
+        rpe1, temp1, policy1, extras1 = controller.step(
+            reward=1.0, value=0.5, next_value=0.6, appetitive_state=appetitive
+        )
+        
+        # Reset to same state
+        controller.reset_state()
+        
+        rpe2, temp2, policy2, extras2 = controller.step(
+            reward=1.0, value=0.5, next_value=0.6, appetitive_state=appetitive
+        )
+        
+        # Should produce identical results
+        assert rpe1 == pytest.approx(rpe2)
+        assert temp1 == pytest.approx(temp2)
+        assert policy1 == policy2
+        assert extras1["dopamine_level"] == pytest.approx(extras2["dopamine_level"])

@@ -26,6 +26,7 @@ def _kwargs() -> dict[str, float]:
     }
 
 
+@pytest.mark.monotonic
 def test_thresholds_respect_monotonicity() -> None:
     fast = ddm_thresholds(1.5, CONFIG["ddm_baseline_a"], CONFIG["ddm_baseline_t0"], **_kwargs())
     slow = ddm_thresholds(0.2, CONFIG["ddm_baseline_a"], CONFIG["ddm_baseline_t0"], **_kwargs())

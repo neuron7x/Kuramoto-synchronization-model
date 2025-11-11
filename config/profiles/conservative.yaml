@@ -1,0 +1,84 @@
+# Conservative dopamine profile - prioritizes safety and stability
+# Trade-offs: Lower exploration, slower adaptation, stricter NO-GO gates
+version: "1.0.0"
+
+# TD / RPE - conservative learning
+discount_gamma: 0.95  # Lower discount for more cautious value estimates
+learning_rate_v: 0.05  # Slower value learning
+
+# DA dynamics - damped response
+decay_rate: 0.08  # Faster tonic decay
+burst_factor: 1.5  # Lower phasic amplification
+
+# sigmoid DA
+k: 0.8  # Gentler sigmoid slope
+theta: 0.6  # Higher threshold for DA activation
+
+# appetitive weights - conservative reward focus
+w_r: 0.70
+w_n: 0.10  # Lower novelty seeking
+w_m: 0.10
+w_v: 0.10
+
+# novelty options
+novelty_mode: "abs_rpe"
+c_absrpe: 0.05  # Lower novelty from RPE
+
+# action-value gain - minimal modulation
+baseline: 0.5
+delta_gain: 0.3  # Lower action modulation
+
+# policy temperature - lower exploration
+base_temperature: 0.8
+min_temperature: 0.1
+temp_k: 1.5  # Faster temperature decay with DA
+neg_rpe_temp_gain: 0.3  # Lower exploration boost on losses
+max_temp_multiplier: 2.0  # Lower max exploration
+
+# Go / No-Go - stricter gating
+invigoration_threshold: 0.80  # Higher GO threshold
+no_go_threshold: 0.30  # Higher NO-GO threshold (easier to block)
+hold_threshold: 0.50
+
+# targets for meta-adapt
+target_dd: -0.03  # Tighter drawdown target
+target_sharpe: 1.2  # Higher Sharpe target
+
+# meta-adapt behaviour - slower adaptation
+meta_cooldown_ticks: 10  # Longer cooldown
+metric_interval: 1
+meta_adapt_rules:
+  good:
+    learning_rate_v: 1.005  # Minimal adaptation
+    delta_gain: 1.005
+    base_temperature: 0.995
+  bad:
+    learning_rate_v: 0.995
+    delta_gain: 0.995
+    base_temperature: 1.005
+  neutral:
+    learning_rate_v: 1.0
+    delta_gain: 1.0
+    base_temperature: 1.0
+
+# variance-driven temperature meta-adaptation
+rpe_ema_beta: 0.15  # Slower variance tracking
+temp_adapt_target_var: 0.08  # Lower target variance
+temp_adapt_lr: 0.03  # Slower adaptation
+temp_adapt_beta1: 0.95
+temp_adapt_beta2: 0.999
+temp_adapt_epsilon: 1.0e-8
+temp_adapt_min_base: 0.3
+temp_adapt_max_base: 1.5
+rpe_var_release_threshold: 0.25  # Stricter release gate
+rpe_var_release_hysteresis: 0.08
+
+# DDM coupling - conservative thresholds
+ddm_temp_gain: 0.3
+ddm_threshold_gain: 0.4  # Stronger threshold separation
+ddm_hold_gain: 0.7  # Stronger hold bias
+ddm_min_temperature_scale: 0.6
+ddm_max_temperature_scale: 1.5
+ddm_baseline_a: 1.2
+ddm_baseline_t0: 0.25
+ddm_eps: 1.0e-6

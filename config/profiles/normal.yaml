@@ -1,4 +1,5 @@
-# Dopamine controller configuration v1
+# Normal dopamine profile - balanced exploration/exploitation
+# Trade-offs: Standard exploration, moderate adaptation, balanced gating
 version: "1.0.0"
 
 # TD / RPE
@@ -20,7 +21,7 @@ w_m: 0.15
 w_v: 0.20
 
 # novelty options
-novelty_mode: "abs_rpe"   # "external" | "abs_rpe"
+novelty_mode: "abs_rpe"
 c_absrpe: 0.10
 
 # action-value gain
@@ -37,6 +38,7 @@ max_temp_multiplier: 3.0
 # Go / No-Go
 invigoration_threshold: 0.75
 no_go_threshold: 0.25
+hold_threshold: 0.4
 
 # targets for meta-adapt
 target_dd: -0.05
@@ -80,6 +82,3 @@ ddm_max_temperature_scale: 2.0
 ddm_baseline_a: 1.0
 ddm_baseline_t0: 0.2
 ddm_eps: 1.0e-6
-
-# gating alignment with serotonin HOLD
-hold_threshold: 0.4

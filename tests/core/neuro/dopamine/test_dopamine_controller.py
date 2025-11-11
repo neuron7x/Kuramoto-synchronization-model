@@ -57,12 +57,14 @@ def test_step_extras_structure(controller: DopamineController) -> None:
         policy_logits=_policy_logits(),
     )
 
+    # Updated field names as per v1.0 spec
     expected_keys = {
         "dopamine_level",
-        "tonic_level",
-        "phasic_level",
+        "da_tonic",  # renamed from tonic_level
+        "da_phasic",  # renamed from phasic_level
         "value_estimate",
-        "rpe_variance",
+        "rpe_var",  # renamed from rpe_variance
+        "rpe",  # added in v1.0
         "release_gate_open",
         "go",
         "hold",
