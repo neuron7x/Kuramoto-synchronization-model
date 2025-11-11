@@ -45,3 +45,74 @@ with the failing gate reasons.  To manually confirm the fix:
    - `progressive-rollout-blue-green.yml` (if a custom workflow exists)
 4. Verify the canary ramp-up in the deployment dashboard and ensure the audit
    log contains the automatic rollback entry for regression tests.
+
+## Scenario: Dual-Venue Market Data Degradation
+
+When upstream venues diverge or a regional POP experiences packet loss, TradePulse
+must continue to produce signals without contaminating the shared feature store.
+Follow this scenario end-to-end before promoting any emergency patch:
+
+1. **Detect** the degradation using the multi-venue freshness tiles in
+   [`observability/dashboards/tradepulse-overview.json`](../observability/dashboards/tradepulse-overview.json).
+   Trigger the synthetic heartbeat drill by running:
+
+   ```bash
+   tradepulse-cli metrics query 'max by (venue) (tradepulse_market_data_freshness_seconds{venue=~"(CBOE|NASDAQ)"})'
+   ```
+
+2. **Contain** the issue by isolating the affected venue. Flip the
+   `ingestion.<venue>.enabled=false` feature flag via the control plane API and
+   confirm the change propagated with `tradepulse-cli ingestion status`.
+3. **Protect** downstream consumers by executing the quarantine workflow in
+   [`docs/runbook_data_incident.md`](runbook_data_incident.md), ensuring the
+   golden dataset buckets are tagged and backfills are paused.
+4. **Stabilise** calculations by forcing the feature store to rescan the last
+   30 minutes of uncorrupted data:
+
+   ```bash
+   tradepulse-cli feature-store repair --dataset market_data --window 30m --mode append
+   ```
+
+5. **Validate** signals by running the short-horizon replay against the clean
+   venue and diffing the signal envelope:
+
+   ```bash
+   tradepulse-cli replay --strategy <id> --venues NASDAQ --since 45m \
+     --compare --baseline reports/live/$(date +%Y-%m-%d)/signals_baseline.json
+   ```
+
+6. **Document** the mitigation in `reports/live/<date>/sla_incidents.md` and
+   attach the metric snapshots plus the updated feature flag audit log. Escalate
+   to the incident commander if the clean venue cannot maintain
+   `tradepulse_market_data_freshness_seconds < 60` for 10 consecutive minutes.
+
+## Scenario: Cross-Exchange Failover Rehearsal
+
+Exercise this scenario weekly to ensure the playbooks, credentials, and SLA
+alerts remain deployable without manual heroics:
+
+1. **Prepare** sandbox orders by scheduling the `failover-sim` workflow in
+   GitHub Actions (`.github/workflows/failover-sim.yml`). The workflow provisions
+   dry-run orders against the backup exchange adapter.
+2. **Execute** a controlled cutover using the live trading runbook but swap the
+   adapter with `--exchange backup-1` and preload the approved credential bundle
+   from `secrets/exchange/backup-1.json`.
+3. **Monitor** the SLA packet:
+   - `tradepulse_order_fill_latency_seconds` (p95 < 180ms)
+   - `tradepulse_exchange_reject_ratio` (< 0.75%)
+   - `tradepulse_position_drift_ratio` (< 0.5%)
+
+   Use the canned dashboard `observability/dashboards/failover-drill.json` to
+   visualise adherence.
+4. **Reconcile** the reconciliation stream by invoking:
+
+   ```bash
+   tradepulse-cli reconciliation diff --exchange backup-1 --window 15m --output reports/live/$(date +%Y-%m-%d)/recon.json
+   ```
+
+   Investigate any non-zero drift with the risk officer before concluding the
+   drill.
+5. **Restore** the primary exchange by re-enabling the original adapter and
+   confirming both venues show healthy heartbeats for 15 minutes. Attach the
+   reconciliation report, Grafana screenshots, and credential rotation receipts
+   to the change ticket.
