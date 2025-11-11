@@ -14,6 +14,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+# Ensure current directory is in sys.path for imports
+if "." not in sys.path:
+    sys.path.insert(0, ".")
+
 import yaml
 
 
@@ -176,17 +180,24 @@ def benchmark_thermo_validator() -> List[float]:
     """Benchmark thermo_validator component."""
     from core.energy import bond_internal_energy, delta_free_energy, BondType
     
+    # Setup test data
+    latencies = {("node_a", "node_b"): 0.001, ("node_b", "node_c"): 0.002}
+    coherency = {("node_a", "node_b"): 0.95, ("node_b", "node_c"): 0.90}
+    
     def workload():
         """Representative workload for thermodynamic validation."""
         # Simulate bond energy calculations
         for bond_type in ["covalent", "ionic", "metallic"]:
-            _ = bond_internal_energy(bond_type, strength=0.5)
+            _ = bond_internal_energy(
+                src="node_a",
+                dst="node_b",
+                kind=bond_type,
+                latencies=latencies,
+                coherency=coherency,
+            )
         
         # Simulate free energy delta
-        _ = delta_free_energy(
-            bond_counts_before={"covalent": 10, "ionic": 5},
-            bond_counts_after={"covalent": 9, "ionic": 6},
-        )
+        _ = delta_free_energy(F_prev=1.0, F_now=0.95, dt_seconds=0.001)
     
     return benchmark_function(workload, iterations=100, warmup=10)
 

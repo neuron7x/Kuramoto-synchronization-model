@@ -10,7 +10,7 @@ import json
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -59,7 +59,7 @@ class PerformanceHistory:
     ) -> None:
         """Add new benchmark result to history."""
         entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "commit_sha": commit_sha,
             "branch": branch,
             "component": component,
@@ -184,7 +184,7 @@ def generate_trend_report(
     report_lines = [
         "# Performance Trend Report",
         "",
-        f"Generated: {datetime.utcnow().isoformat()}Z",
+        f"Generated: {datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
         f"Lookback: {lookback} data points",
         "",
         "## Component Trends",
