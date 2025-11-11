@@ -658,6 +658,56 @@ class MetricsCollector:
             registry=registry,
         )
 
+        # Incident and lifecycle metrics
+        self.incidents_open = Gauge(
+            "tradepulse_incidents_open",
+            "Number of open incidents grouped by severity",
+            ["severity"],
+            registry=registry,
+        )
+
+        self.incident_ack_latency = Histogram(
+            "tradepulse_incident_ack_latency_seconds",
+            "Time between alert trigger and acknowledgement",
+            ["severity"],
+            registry=registry,
+        )
+
+        self.incident_resolution_latency = Histogram(
+            "tradepulse_incident_resolution_latency_seconds",
+            "Time between incident declaration and resolution",
+            ["severity"],
+            registry=registry,
+        )
+
+        self.runbook_executions_total = Counter(
+            "tradepulse_runbook_executions_total",
+            "Runbook executions grouped by outcome",
+            ["runbook", "outcome"],
+            registry=registry,
+        )
+
+        self.lifecycle_phase_state = Gauge(
+            "tradepulse_lifecycle_phase_state",
+            "Lifecycle phase state (1 when phase is in the given state)",
+            ["phase", "state"],
+            registry=registry,
+        )
+
+        self.lifecycle_checkpoint_status = Gauge(
+            "tradepulse_lifecycle_checkpoint_status",
+            "Lifecycle checkpoint status (1 when checkpoint is in the given status)",
+            ["checkpoint", "status"],
+            registry=registry,
+        )
+
+        self.lifecycle_transition_total = Counter(
+            "tradepulse_lifecycle_transition_total",
+            "Lifecycle transitions grouped by from/to phase and outcome",
+            ["from_phase", "to_phase", "outcome"],
+            registry=registry,
+        )
+
         # Strategy metrics
         self.strategy_score = Gauge(
             "tradepulse_strategy_score",
@@ -1693,6 +1743,98 @@ class MetricsCollector:
         if not self._enabled:
             return
         self.open_positions.labels(exchange=exchange, symbol=symbol).set(positions)
+
+    def set_open_incidents(self, severity: str, count: float) -> None:
+        """Update the gauge tracking open incidents by severity."""
+
+        if not self._enabled:
+            return
+
+        severity_label = self._normalise_label(severity, default="unknown")
+        bounded_count = max(0.0, float(count))
+        self.incidents_open.labels(severity=severity_label).set(bounded_count)
+
+    def observe_incident_ack_latency(self, severity: str, duration: float) -> None:
+        """Observe the acknowledgement latency for an incident."""
+
+        if not self._enabled:
+            return
+
+        severity_label = self._normalise_label(severity, default="unknown")
+        bounded_duration = max(0.0, float(duration))
+        self.incident_ack_latency.labels(severity=severity_label).observe(bounded_duration)
+
+    def observe_incident_resolution_latency(self, severity: str, duration: float) -> None:
+        """Observe the resolution latency for an incident."""
+
+        if not self._enabled:
+            return
+
+        severity_label = self._normalise_label(severity, default="unknown")
+        bounded_duration = max(0.0, float(duration))
+        self.incident_resolution_latency.labels(severity=severity_label).observe(bounded_duration)
+
+    def record_runbook_execution(self, runbook: str, outcome: str, count: float = 1.0) -> None:
+        """Record the execution of a production runbook."""
+
+        if not self._enabled:
+            return
+
+        if count <= 0:
+            return
+
+        runbook_label = self._normalise_label(runbook, default="unknown")
+        outcome_label = self._normalise_label(outcome, default="unknown")
+        self.runbook_executions_total.labels(runbook=runbook_label, outcome=outcome_label).inc(float(count))
+
+    def set_lifecycle_phase_state(self, phase: str, state: str) -> None:
+        """Update lifecycle phase state gauges."""
+
+        if not self._enabled:
+            return
+
+        phase_label = self._normalise_label(phase, default="unknown")
+        state_label = self._normalise_label(state, default="unknown")
+        known_states = ("active", "standby", "maintenance", "degraded", "completed", "offline")
+        for candidate in known_states:
+            value = 1.0 if candidate == state_label else 0.0
+            self.lifecycle_phase_state.labels(phase=phase_label, state=candidate).set(value)
+        if state_label not in known_states:
+            self.lifecycle_phase_state.labels(phase=phase_label, state=state_label).set(1.0)
+
+    def set_lifecycle_checkpoint_status(self, checkpoint: str, status: str) -> None:
+        """Update lifecycle checkpoint status gauges."""
+
+        if not self._enabled:
+            return
+
+        checkpoint_label = self._normalise_label(checkpoint, default="unknown")
+        status_label = self._normalise_label(status, default="pending")
+        known_statuses = ("pending", "in_progress", "passed", "blocked")
+        for candidate in known_statuses:
+            value = 1.0 if candidate == status_label else 0.0
+            self.lifecycle_checkpoint_status.labels(
+                checkpoint=checkpoint_label, status=candidate
+            ).set(value)
+        if status_label not in known_statuses:
+            self.lifecycle_checkpoint_status.labels(
+                checkpoint=checkpoint_label, status=status_label
+            ).set(1.0)
+
+    def record_lifecycle_transition(
+        self, from_phase: str, to_phase: str, outcome: str = "success"
+    ) -> None:
+        """Record a lifecycle transition event."""
+
+        if not self._enabled:
+            return
+
+        from_label = self._normalise_label(from_phase, default="unknown")
+        to_label = self._normalise_label(to_phase, default="unknown")
+        outcome_label = self._normalise_label(outcome, default="success")
+        self.lifecycle_transition_total.labels(
+            from_phase=from_label, to_phase=to_label, outcome=outcome_label
+        ).inc()
 
     def record_order_fill_latency(
         self, exchange: str, symbol: str, duration: float

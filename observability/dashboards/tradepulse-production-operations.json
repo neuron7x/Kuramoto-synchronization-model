@@ -49,7 +49,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Overall system health status based on critical metrics and SLO compliance",
+      "description": "Unified production health indicator covering trading, data, incidents, and lifecycle gates.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -95,7 +95,8 @@
             ]
           },
           "unit": "none"
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 6,
@@ -107,7 +108,9 @@
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -115,10 +118,9 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "(\n  (rate(tradepulse_orders_placed_total{status=\"error\"}[5m]) / rate(tradepulse_orders_placed_total[5m]) < 0.015) and\n  (histogram_quantile(0.95, rate(tradepulse_order_placement_duration_seconds_bucket[5m])) < 0.35) and\n  (rate(tradepulse_data_ingestion_total{status=\"error\"}[10m]) == 0)\n) * 2 + (\n  (rate(tradepulse_orders_placed_total{status=\"error\"}[5m]) / rate(tradepulse_orders_placed_total[5m]) < 0.05) or\n  (histogram_quantile(0.95, rate(tradepulse_order_placement_duration_seconds_bucket[5m])) < 0.5)\n)",
+          "expr": "(\n  (sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m])) < 0.015) and\n  (histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le)) < 0.35) and\n  (increase(tradepulse_data_ingestion_total{status=\"error\"}[10m]) == 0) and\n  (max(tradepulse_incidents_open{severity=\"critical\"}) == 0) and\n  (max(tradepulse_lifecycle_checkpoint_status{status=\"blocked\"}) == 0)\n) * 2 + (\n  (sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m])) < 0.05) or\n  (histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le)) < 0.5) or\n  (max(tradepulse_incidents_open) <= 1)\n)",
           "legendFormat": "System Health",
           "refId": "A"
         }
@@ -131,11 +133,75 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Active alerts requiring immediate attention",
+      "description": "SLA burn rate across trading, acknowledgement, and resolution objectives.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "max((sum(rate(tradepulse_orders_placed_total{status=\"error\"}[30m])) / sum(rate(tradepulse_orders_placed_total[30m])) / 0.015) * 100, (histogram_quantile(0.5, sum(rate(tradepulse_incident_ack_latency_seconds_bucket[30m])) by (le)) / 300) * 100, (histogram_quantile(0.5, sum(rate(tradepulse_incident_resolution_latency_seconds_bucket[30m])) by (le)) / 1800) * 100)",
+          "legendFormat": "Burn %",
+          "refId": "A"
+        }
+      ],
+      "title": "SLA Error Budget Burn",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Open incident volume by severity class.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
           "mappings": [],
           "thresholds": {
@@ -154,75 +220,10 @@
                 "value": 3
               }
             ]
-          }
-        }
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
+          },
+          "unit": "none"
         },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "text": {}
-      },
-      "pluginVersion": "9.0.0",
-      "targets": [
-        {
-          "expr": "count(ALERTS{alertstate=\"firing\", severity=~\"critical|warning\"})",
-          "legendFormat": "Active Alerts",
-          "refId": "A"
-        }
-      ],
-      "title": "Active Alerts",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "SLO error budget consumption rate",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 50
-              },
-              {
-                "color": "orange",
-                "value": 75
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        }
+        "overrides": []
       },
       "gridPos": {
         "h": 6,
@@ -232,75 +233,54 @@
       },
       "id": 3,
       "options": {
-        "orientation": "auto",
+        "displayMode": "gradient",
+        "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "text": {}
+        "showThresholdMarkers": true
       },
-      "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "(sum(rate(tradepulse_orders_placed_total{status=\"error\"}[30d])) / sum(rate(tradepulse_orders_placed_total[30d])) / 0.015) * 100",
-          "legendFormat": "Error Budget Burn",
+          "expr": "tradepulse_incidents_open",
+          "legendFormat": "{{severity}}",
           "refId": "A"
         }
       ],
-      "title": "SLO Error Budget (30d)",
-      "type": "gauge"
+      "title": "Open Incidents by Severity",
+      "type": "bargauge"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Current system operational mode",
+      "description": "Live view of alerts firing across the platform.",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "HALTED"
-                },
-                "1": {
-                  "color": "yellow",
-                  "index": 1,
-                  "text": "WARMUP"
-                },
-                "2": {
-                  "color": "green",
-                  "index": 2,
-                  "text": "ACTIVE"
-                },
-                "3": {
-                  "color": "blue",
-                  "index": 3,
-                  "text": "SHUTDOWN"
-                }
-              },
-              "type": "value"
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
             }
-          ],
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
+                "color": "green",
                 "value": null
               }
             ]
           }
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 6,
@@ -310,418 +290,16 @@
       },
       "id": 4,
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "text": {},
-        "textMode": "value"
-      },
-      "pluginVersion": "9.0.0",
-      "targets": [
-        {
-          "expr": "tradepulse_system_mode",
-          "legendFormat": "Mode",
-          "refId": "A"
-        }
-      ],
-      "title": "System Operational Mode",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Order placement rate and error rate over time",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 0.05
-              }
-            ]
-          },
-          "unit": "ops"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "error_rate"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "percentunit"
-              },
-              {
-                "id": "custom.axisPlacement",
-                "value": "right"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(tradepulse_orders_placed_total[5m]))",
-          "legendFormat": "order_rate",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m]))",
-          "legendFormat": "error_rate",
-          "refId": "B"
-        }
-      ],
-      "title": "Order Execution Metrics",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Key latency metrics with SLA thresholds",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 0.25
-              }
-            ]
-          },
-          "unit": "s"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "p95"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le))",
-          "legendFormat": "p95_order_placement",
-          "refId": "A"
-        },
-        {
-          "expr": "tradepulse_order_ack_latency_quantiles_seconds{quantile=\"0.95\"}",
-          "legendFormat": "p95_ack_latency",
-          "refId": "B"
-        },
-        {
-          "expr": "tradepulse_signal_to_fill_latency_quantiles_seconds{quantile=\"0.95\"}",
-          "legendFormat": "p95_signal_to_fill",
-          "refId": "C"
-        }
-      ],
-      "title": "Latency SLA Tracking",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Data ingestion health and freshness",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "data_lag"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "s"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(tradepulse_data_ingestion_total[5m]))",
-          "legendFormat": "ingestion_rate",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(tradepulse_data_ingestion_total{status=\"error\"}[5m]))",
-          "legendFormat": "ingestion_errors",
-          "refId": "B"
-        },
-        {
-          "expr": "time() - (tradepulse_data_ingestion_duration_seconds_sum / tradepulse_data_ingestion_duration_seconds_count)",
-          "legendFormat": "data_lag",
-          "refId": "C"
-        }
-      ],
-      "title": "Data Pipeline Health",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Current firing alerts with severity and team",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto",
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "severity"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "critical": {
-                        "color": "red",
-                        "index": 0
-                      },
-                      "warning": {
-                        "color": "orange",
-                        "index": 1
-                      },
-                      "info": {
-                        "color": "blue",
-                        "index": 2
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "id": 8,
-      "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "9.0.0",
       "targets": [
         {
           "expr": "ALERTS{alertstate=\"firing\"}",
@@ -760,7 +338,181 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Strategy backtest and optimization metrics",
+      "description": "Lifecycle phase activation matrix showing the current operating mode.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "expr": "tradepulse_lifecycle_phase_state",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Lifecycle Phase State",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterThan",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "phase": "Phase",
+              "state": "State",
+              "Value": "Active"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Lifecycle checkpoints highlighting pending or blocked tasks across the operational runbook.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 6,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "expr": "tradepulse_lifecycle_checkpoint_status",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Lifecycle Checkpoint Status",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterThan",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "checkpoint": "Checkpoint",
+              "status": "Status",
+              "Value": "Active"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Order placement throughput, rejection rates, and latency SLOs.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -774,13 +526,13 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             },
             "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
+            "lineWidth": 2,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -805,20 +557,215 @@
             ]
           },
           "unit": "short"
-        }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error Rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 14
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tradepulse_orders_placed_total[5m]))",
+          "legendFormat": "Orders/sec",
+          "refId": "A"
+        },
+        {
+          "expr": "100 * sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m]))",
+          "legendFormat": "Error Rate",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95 Latency",
+          "refId": "C"
+        }
+      ],
+      "title": "Order Execution Metrics",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Ingestion throughput, error spikes, and freshness lag.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error Count"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Freshness Lag"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tradepulse_data_ingestion_total{status=\"success\"}[5m]))",
+          "legendFormat": "Jobs/sec",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(tradepulse_data_ingestion_total{status=\"error\"}[5m]))",
+          "legendFormat": "Error Count",
+          "refId": "B"
+        },
+        {
+          "expr": "max(time() - tradepulse_data_ingestion_duration_seconds_sum / tradepulse_data_ingestion_duration_seconds_count)",
+          "legendFormat": "Freshness Lag",
+          "refId": "C"
+        }
+      ],
+      "title": "Data Pipeline Health",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Incident acknowledgement and resolution performance against SLAs.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 3,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 23
       },
       "id": 9,
       "options": {
         "legend": {
-          "calcs": ["mean"],
+          "calcs": [],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
@@ -828,18 +775,95 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(tradepulse_backtest_total[30m]))",
-          "legendFormat": "backtest_rate",
+          "expr": "histogram_quantile(0.5, sum(rate(tradepulse_incident_ack_latency_seconds_bucket[$__rate_interval])) by (le))",
+          "legendFormat": "Ack p50",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(tradepulse_backtest_total{status=\"error\"}[30m]))",
-          "legendFormat": "backtest_errors",
+          "expr": "histogram_quantile(0.9, sum(rate(tradepulse_incident_ack_latency_seconds_bucket[$__rate_interval])) by (le))",
+          "legendFormat": "Ack p90",
           "refId": "B"
         },
         {
-          "expr": "avg(rate(tradepulse_optimization_duration_seconds_sum[30m]) / rate(tradepulse_optimization_duration_seconds_count[30m]))",
-          "legendFormat": "avg_optimization_duration",
+          "expr": "histogram_quantile(0.5, sum(rate(tradepulse_incident_resolution_latency_seconds_bucket[$__rate_interval])) by (le))",
+          "legendFormat": "Resolution p50",
+          "refId": "C"
+        },
+        {
+          "expr": "histogram_quantile(0.9, sum(rate(tradepulse_incident_resolution_latency_seconds_bucket[$__rate_interval])) by (le))",
+          "legendFormat": "Resolution p90",
+          "refId": "D"
+        }
+      ],
+      "title": "Incident Response Durations",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Strategy backtesting and optimisation cadence in production.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 3,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tradepulse_backtest_total{status=\"success\"}[$__rate_interval]))",
+          "legendFormat": "Backtests/sec",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(tradepulse_backtest_total{status=\"error\"}[$__rate_interval]))",
+          "legendFormat": "Backtest Errors",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(rate(tradepulse_optimization_duration_seconds_sum[$__rate_interval]) / rate(tradepulse_optimization_duration_seconds_count[$__rate_interval]))",
+          "legendFormat": "Optimisation Duration",
           "refId": "C"
         }
       ],
@@ -851,92 +875,138 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "System resource utilization tracking",
+      "description": "Operational runbook executions over the last six hours.",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
             }
           },
           "mappings": [],
-          "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 11,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "expr": "increase(tradepulse_runbook_executions_total[6h])",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Runbook Execution Outcomes",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "runbook": "Runbook",
+              "outcome": "Outcome",
+              "Value": "Executions"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Infrastructure resource utilisation across CPU, memory, and disk.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 3,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
               {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": null
               }
             ]
           },
           "unit": "percent"
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 32
       },
-      "id": 10,
+      "id": 12,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "multi",
+          "mode": "single",
           "sort": "none"
         }
       },
       "targets": [
         {
           "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "cpu_usage",
+          "legendFormat": "CPU",
           "refId": "A"
         },
         {
           "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-          "legendFormat": "memory_usage",
+          "legendFormat": "Memory",
           "refId": "B"
         },
         {
           "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100",
-          "legendFormat": "disk_usage",
+          "legendFormat": "Disk",
           "refId": "C"
         }
       ],
@@ -945,9 +1015,14 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 36,
+  "schemaVersion": 38,
   "style": "dark",
-  "tags": ["tradepulse", "production", "operations", "sla"],
+  "tags": [
+    "tradepulse",
+    "production",
+    "operations",
+    "sla"
+  ],
   "templating": {
     "list": []
   },
@@ -959,6 +1034,6 @@
   "timezone": "UTC",
   "title": "TradePulse Production Operations",
   "uid": "tradepulse-production-ops",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
