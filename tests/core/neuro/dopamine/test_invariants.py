@@ -153,6 +153,7 @@ class TestValidatePositive:
             validate_positive("x", -0.1, allow_zero=True)
 
 
+@pytest.mark.monotonic
 class TestCheckMonotonicThresholds:
     """Tests for monotonic threshold enforcement."""
 
