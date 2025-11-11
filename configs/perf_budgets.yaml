@@ -1,10 +1,91 @@
+# Performance budgets with percentile-based thresholds
+# Used for gate checks and performance regression detection
+version: "2.0.0"
+
 components:
   order_router:
-    observed_ms: 92.0
-    budget_ms: 110.0
+    description: "Resilient execution routing across multiple exchanges"
+    # Latency budgets (milliseconds)
+    latency_p50_ms: 85.0
+    latency_p95_ms: 110.0
+    latency_p99_ms: 145.0
+    latency_max_ms: 200.0
+    # Historical observed baseline
+    observed_p50_ms: 82.0
+    observed_p95_ms: 92.0
+    observed_p99_ms: 120.0
+    # Throughput budgets
+    throughput_min_tps: 50.0
+    # Stability metrics
+    stability_coefficient_max: 0.15  # Max coefficient of variation
+    error_rate_max_percent: 2.0
+    
   link_activator:
-    observed_ms: 68.0
-    budget_ms: 85.0
+    description: "Runtime link activator for protocol selection"
+    # Latency budgets (milliseconds)
+    latency_p50_ms: 60.0
+    latency_p95_ms: 85.0
+    latency_p99_ms: 110.0
+    latency_max_ms: 150.0
+    # Historical observed baseline
+    observed_p50_ms: 58.0
+    observed_p95_ms: 68.0
+    observed_p99_ms: 88.0
+    # Throughput budgets
+    throughput_min_tps: 100.0
+    # Stability metrics
+    stability_coefficient_max: 0.12
+    error_rate_max_percent: 1.0
+    
   thermo_validator:
-    observed_ms: 41.0
-    budget_ms: 60.0
+    description: "Thermodynamic state validation and constraint checking"
+    # Latency budgets (milliseconds)
+    latency_p50_ms: 35.0
+    latency_p95_ms: 60.0
+    latency_p99_ms: 80.0
+    latency_max_ms: 120.0
+    # Historical observed baseline
+    observed_p50_ms: 32.0
+    observed_p95_ms: 41.0
+    observed_p99_ms: 55.0
+    # Throughput budgets
+    throughput_min_tps: 150.0
+    # Stability metrics
+    stability_coefficient_max: 0.10
+    error_rate_max_percent: 0.5
+
+# Global performance gate thresholds
+gate_thresholds:
+  # Regression detection threshold (percentage increase allowed)
+  regression_threshold_percent: 10.0
+  # Minimum sample size for statistical validity
+  min_sample_size: 100
+  # Confidence level for statistical tests
+  confidence_level: 0.95
+  # Maximum allowed variance increase
+  variance_increase_threshold_percent: 20.0
+  
+# Historical trend tracking configuration
+trend_tracking:
+  # Number of historical runs to keep
+  history_window: 50
+  # Enable automatic baseline updates
+  auto_baseline_update: false
+  # Baseline update threshold (runs without violations)
+  baseline_update_threshold: 10
+  
+# Flamegraph collection settings
+flamegraph:
+  enabled: true
+  sample_frequency_hz: 99
+  duration_seconds: 30
+  output_format: "svg"
+  storage_path: "reports/performance/flamegraphs"
+  
+# Performance report configuration  
+reporting:
+  enabled: true
+  output_path: "reports/performance"
+  include_historical: true
+  chart_format: "png"
+  summary_format: "markdown"

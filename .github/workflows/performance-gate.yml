@@ -1,0 +1,153 @@
+name: Performance Budget Gate
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+on:
+  pull_request:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'NOTICE'
+      - '.gitignore'
+  workflow_dispatch:
+
+concurrency:
+  group: perf-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  performance-budget-validation:
+    name: Validate Performance Budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-perf-gate-${{ hashFiles('requirements*.txt', 'requirements*.lock') }}
+
+      - name: Create virtual environment
+        run: uv venv --python 3.11
+
+      - name: Install dependencies
+        run: |
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
+          uv pip install py-spy pytest-benchmark
+
+      - name: Create performance directories
+        run: |
+          mkdir -p reports/performance/{flamegraphs,benchmarks,trends}
+
+      - name: Run order_router benchmarks with profiling
+        run: |
+          .venv/bin/py-spy record -o reports/performance/flamegraphs/order_router.svg \
+            --format speedscope --subprocesses \
+            -- .venv/bin/python -m pytest tests/execution/test_resilient_router.py \
+            --benchmark-json=reports/performance/order_router_bench.json -v || true
+
+      - name: Run link_activator benchmarks with profiling
+        run: |
+          .venv/bin/py-spy record -o reports/performance/flamegraphs/link_activator.svg \
+            --format speedscope --subprocesses \
+            -- .venv/bin/python -m pytest tests/test_link_activator.py \
+            --benchmark-json=reports/performance/link_activator_bench.json -v || true
+
+      - name: Run thermo_validator benchmarks with profiling
+        run: |
+          .venv/bin/py-spy record -o reports/performance/flamegraphs/thermo_validator.svg \
+            --format speedscope --subprocesses \
+            -- .venv/bin/python -m pytest tests/test_thermo_violations.py \
+            --benchmark-json=reports/performance/thermo_validator_bench.json -v || true
+
+      - name: Validate performance budgets
+        id: budget_check
+        run: |
+          .venv/bin/python scripts/performance/validate_budgets.py \
+            --config configs/perf_budgets.yaml \
+            --benchmarks reports/performance/ \
+            --output reports/performance/budget_validation.json \
+            --strict
+        continue-on-error: true
+
+      - name: Generate performance report with trends
+        run: |
+          .venv/bin/python scripts/performance/generate_performance_report.py \
+            --config configs/perf_budgets.yaml \
+            --validation reports/performance/budget_validation.json \
+            --output reports/performance/performance_report.md \
+            --include-trends \
+            --include-flamegraphs
+
+      - name: Upload flamegraphs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-flamegraphs-${{ github.event.pull_request.number || github.sha }}
+          path: reports/performance/flamegraphs/
+          retention-days: 30
+
+      - name: Upload performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-benchmarks-${{ github.event.pull_request.number || github.sha }}
+          path: |
+            reports/performance/*.json
+            reports/performance/*.md
+          retention-days: 30
+
+      - name: Comment PR with performance summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'reports/performance/performance_report.md';
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 📊 Performance Budget Validation\n\n${report}`
+              });
+            }
+
+      - name: Publish to step summary
+        if: always()
+        run: |
+          if [ -f reports/performance/performance_report.md ]; then
+            {
+              echo '## 🎯 Performance Budget Gate Results'
+              cat reports/performance/performance_report.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Fail on budget violations
+        if: steps.budget_check.outcome == 'failure'
+        run: |
+          echo "❌ Performance budget violations detected!"
+          echo "Review the performance report for details."
+          exit 1
