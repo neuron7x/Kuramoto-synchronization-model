@@ -90,6 +90,24 @@ export const BASE_STYLES = `
     }
   }
 
+  @keyframes tpScanLine {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes tpPulseGlow {
+    0%, 100% {
+      filter: brightness(1) drop-shadow(0 0 10px rgba(6, 182, 212, 0.4));
+    }
+    50% {
+      filter: brightness(1.2) drop-shadow(0 0 20px rgba(6, 182, 212, 0.8));
+    }
+  }
+
   @keyframes tpGlowSweep {
     0% {
       transform: translateX(-100%);
@@ -899,6 +917,7 @@ export const BASE_STYLES = `
   }
 
   .tp-hero__stats {
+    position: relative;
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -906,8 +925,22 @@ export const BASE_STYLES = `
     padding: 1.1rem 1.25rem;
     border-radius: 18px;
     background: rgba(15, 23, 42, 0.45);
-    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.22);
+    box-shadow: 
+      inset 0 0 0 1px rgba(6, 182, 212, 0.25),
+      0 4px 20px -8px rgba(6, 182, 212, 0.3);
     backdrop-filter: blur(16px);
+    overflow: hidden;
+  }
+
+  .tp-hero__stats::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.8), transparent);
+    animation: tpScanLine 3s ease-in-out infinite;
   }
 
   .tp-hero__stat {
@@ -1205,20 +1238,31 @@ export const BASE_STYLES = `
     gap: 1rem;
     padding: 1rem 1.25rem;
     border-radius: 18px;
-    background: rgba(15, 23, 42, 0.55);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(99, 179, 237, 0.3);
+    box-shadow: 
+      inset 0 0 0 1px rgba(6, 182, 212, 0.15),
+      0 4px 20px -10px rgba(6, 182, 212, 0.3);
     overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .tp-github-badge::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(56, 189, 248, 0.2), transparent 60%);
+    background: linear-gradient(120deg, rgba(6, 182, 212, 0.2), transparent 60%);
     mix-blend-mode: screen;
     opacity: 0;
     transition: opacity 0.4s ease;
+  }
+
+  .tp-github-badge:hover {
+    border-color: rgba(6, 182, 212, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 
+      inset 0 0 0 1px rgba(6, 182, 212, 0.2),
+      0 8px 30px -12px rgba(6, 182, 212, 0.5);
   }
 
   .tp-github-badge:hover::after {
@@ -1232,9 +1276,16 @@ export const BASE_STYLES = `
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 18px;
-    background: rgba(56, 189, 248, 0.16);
-    color: rgba(56, 189, 248, 0.95);
-    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.35);
+    background: rgba(6, 182, 212, 0.18);
+    color: rgba(6, 182, 212, 0.95);
+    box-shadow: 
+      inset 0 0 0 1px rgba(6, 182, 212, 0.4),
+      0 0 20px rgba(6, 182, 212, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .tp-github-badge:hover .tp-github-badge__icon {
+    animation: tpPulseGlow 1.5s ease-in-out infinite;
   }
 
   .tp-github-badge__icon svg {
