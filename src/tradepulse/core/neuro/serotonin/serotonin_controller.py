@@ -179,12 +179,26 @@ class SerotoninController:
     # ------------------------------------------------------------------- state
     @property
     def hold(self) -> bool:
+        # Hold is True if in active hold state OR in cooldown period after exiting hold
         return self._hold or self._cooldown > 0
 
     def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
         if serotonin_signal is not None:
             self.level = float(max(0.0, min(1.5, serotonin_signal)))
-            self._hold = self.level >= self._config.stress_threshold
+            cfg = self._config
+            threshold = cfg.stress_threshold
+            # Apply hysteresis to check_cooldown as well
+            if self._hold:
+                # Use release threshold minus hysteresis to exit
+                exit_threshold = max(0.0, cfg.release_threshold) - cfg.hysteresis / 2.0
+                if self.level <= exit_threshold:
+                    self._hold = False
+                    self._cooldown = cfg.cooldown_ticks
+            else:
+                # Use stress threshold plus hysteresis to enter
+                entry_threshold = threshold + cfg.hysteresis / 2.0
+                if self.level >= entry_threshold:
+                    self._hold = True
         return self.hold
 
     # ------------------------------------------------------------------- update
@@ -204,9 +218,12 @@ class SerotoninController:
 
         cfg = self._config
         # EMA dynamics for tonic and phasic components
+        # Tonic: slow integration of chronic stress
         tonic_alpha = 1.0 - (1.0 - cfg.tonic_beta) ** dt
-        phasic_alpha = 1.0 - (1.0 - cfg.phasic_beta) ** dt
         self.tonic_level += tonic_alpha * (cfg.stress_gain * stress - self.tonic_level)
+        
+        # Phasic: fast response to acute transients (drawdown and novelty events)
+        phasic_alpha = 1.0 - (1.0 - cfg.phasic_beta) ** dt
         phasic_drive = max(0.0, cfg.drawdown_gain * drawdown + cfg.novelty_gain * novelty)
         self.phasic_level += phasic_alpha * (phasic_drive - self.phasic_level)
 
@@ -230,18 +247,30 @@ class SerotoninController:
         # hysteretic hold logic with cooldown extension under acute spikes
         threshold = cfg.stress_threshold
         release = max(0.0, cfg.release_threshold)
+        
+        # Apply hysteresis: higher threshold to enter, lower threshold to exit
         if self._hold:
-            if self.level <= release:
+            # Exit hold when level drops below release threshold minus hysteresis margin
+            exit_threshold = release - cfg.hysteresis / 2.0
+            if self.level <= exit_threshold:
                 self._hold = False
+                # Initialize cooldown when EXITING hold state
+                self._cooldown = cfg.cooldown_ticks
+                # Extend cooldown if level is still elevated near threshold
+                if self.level >= threshold:
+                    self._cooldown = cfg.cooldown_ticks + cfg.cooldown_extension
         else:
-            if self.level >= threshold:
+            # Enter hold when level exceeds threshold plus hysteresis margin
+            entry_threshold = threshold + cfg.hysteresis / 2.0
+            if self.level >= entry_threshold:
                 self._hold = True
-                self._cooldown = max(self._cooldown, cfg.cooldown_ticks)
+            # If level spikes well above threshold while not in hold, prepare extended cooldown
+            elif self.level >= threshold + cfg.hysteresis and self._cooldown == 0:
+                # Pre-set cooldown for when/if we enter hold
+                pass  # Will be handled when entering hold
 
-        if self.level >= threshold + cfg.hysteresis:
-            self._cooldown = max(self._cooldown, cfg.cooldown_ticks + cfg.cooldown_extension)
-
-        if self._cooldown > 0:
+        # Cooldown only decrements when NOT in active hold state
+        if not self._hold and self._cooldown > 0:
             self._cooldown = max(0, self._cooldown - int(max(1, round(dt))))
 
         floor_span = max(0.0, cfg.floor_max - cfg.floor_min)
