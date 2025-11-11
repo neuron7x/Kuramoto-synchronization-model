@@ -1,0 +1,374 @@
+name: PR Release Gate - Quality & Risk Assessment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  quality-assessment:
+    runs-on: ubuntu-latest
+    name: Quality Assessment & Risk Labeling
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
+
+      - name: Fetch base branch for diff analysis
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Run tests with coverage
+        id: coverage
+        run: |
+          pytest tests/ \
+            --cov=core --cov=backtest --cov=execution \
+            --cov-report=xml --cov-report=term-missing \
+            --cov-fail-under=98 || echo "COVERAGE_FAILED=true" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Extract coverage metrics
+        id: coverage_metrics
+        run: |
+          if [ -f coverage.xml ]; then
+            COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); print(f\"{float(tree.getroot().get('line-rate', 0)) * 100:.2f}\")")
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+            echo "Coverage: $COVERAGE%"
+          else
+            echo "coverage=0.00" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run mutation testing (sample)
+        id: mutation
+        run: |
+          # Run mutation testing on changed files only for faster feedback
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -E '\.(py)$' | grep -E '^(core|backtest|execution)/' || echo "")
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Running mutation testing on changed files..."
+            # For PR gate, we do a quick sample; full run happens in mutation-testing.yml
+            mutmut run --paths-to-mutate=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//' | sed 's/\.py//g') --tests-dir=tests || true
+            python -m tools.mutation.kill_rate_guard --threshold=0.9 --summary=mutation_summary.json || echo "MUTATION_FAILED=true" >> $GITHUB_OUTPUT
+          else
+            echo "No relevant Python files changed"
+            echo "{\"kill_rate\": 1.0, \"total_mutants\": 0}" > mutation_summary.json
+          fi
+        continue-on-error: true
+
+      - name: Assess risk level
+        id: risk_assessment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            // Calculate risk score
+            let riskScore = 0;
+            let riskFactors = [];
+            
+            // Coverage risk
+            const coverage = parseFloat('${{ steps.coverage_metrics.outputs.coverage }}') || 0;
+            if (coverage < 98) {
+              const coverageGap = 98 - coverage;
+              riskScore += Math.min(coverageGap * 2, 40);
+              riskFactors.push(`Coverage: ${coverage.toFixed(2)}% (target: 98%)`);
+            }
+            
+            // Mutation testing risk
+            let mutationKillRate = 100;
+            try {
+              const mutationData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
+              mutationKillRate = (mutationData.kill_rate * 100).toFixed(2);
+              if (mutationData.kill_rate < 0.9) {
+                const mutationGap = 0.9 - mutationData.kill_rate;
+                riskScore += Math.min(mutationGap * 100, 40);
+                riskFactors.push(`Mutation kill rate: ${mutationKillRate}% (target: 90%)`);
+              }
+            } catch (error) {
+              console.log('No mutation data available');
+            }
+            
+            // Changed files risk
+            const files = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number,
+            });
+            
+            const criticalFiles = files.data.filter(f => 
+              f.filename.includes('core/') || 
+              f.filename.includes('execution/') ||
+              f.filename.includes('security')
+            );
+            
+            if (criticalFiles.length > 0) {
+              riskScore += Math.min(criticalFiles.length * 5, 20);
+              riskFactors.push(`${criticalFiles.length} critical files modified`);
+            }
+            
+            // Large PR risk
+            const totalChanges = files.data.reduce((sum, f) => sum + f.changes, 0);
+            if (totalChanges > 500) {
+              riskScore += 10;
+              riskFactors.push(`Large PR: ${totalChanges} lines changed`);
+            }
+            
+            // Determine risk level
+            let riskLevel = 'low';
+            let riskLabel = 'risk: low';
+            let riskEmoji = '🟢';
+            
+            if (riskScore >= 50) {
+              riskLevel = 'high';
+              riskLabel = 'risk: high';
+              riskEmoji = '🔴';
+            } else if (riskScore >= 25) {
+              riskLevel = 'medium';
+              riskLabel = 'risk: medium';
+              riskEmoji = '🟡';
+            }
+            
+            console.log(`Risk Assessment: ${riskLevel} (score: ${riskScore})`);
+            core.setOutput('risk_level', riskLevel);
+            core.setOutput('risk_score', riskScore);
+            core.setOutput('risk_label', riskLabel);
+            core.setOutput('risk_emoji', riskEmoji);
+            core.setOutput('risk_factors', JSON.stringify(riskFactors));
+            
+            return { riskLevel, riskScore, riskFactors };
+
+      - name: Apply risk label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const newLabel = '${{ steps.risk_assessment.outputs.risk_label }}';
+            
+            // Define all risk labels
+            const riskLabels = ['risk: low', 'risk: medium', 'risk: high'];
+            const labelDefinitions = [
+              { name: 'risk: low', color: '0e8a16', description: 'Low risk change - standard review process' },
+              { name: 'risk: medium', color: 'fbca04', description: 'Medium risk - requires careful review' },
+              { name: 'risk: high', color: 'd93f0b', description: 'High risk - requires senior review and extensive testing' },
+              { name: 'quality-gate-failed', color: 'b60205', description: 'Quality gates not met - blocking merge' },
+              { name: 'needs-mutation-testing', color: 'd93f0b', description: 'Mutation testing required' },
+            ];
+            
+            // Ensure labels exist
+            for (const labelDef of labelDefinitions) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: labelDef.name });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, ...labelDef });
+                }
+              }
+            }
+            
+            // Get current labels
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+            
+            const currentLabelNames = currentLabels.map(l => l.name);
+            
+            // Remove old risk labels
+            for (const oldLabel of riskLabels) {
+              if (oldLabel !== newLabel && currentLabelNames.includes(oldLabel)) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: pull_number,
+                  name: oldLabel,
+                });
+              }
+            }
+            
+            // Add new risk label if not already present
+            if (!currentLabelNames.includes(newLabel)) {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pull_number,
+                labels: [newLabel],
+              });
+            }
+            
+            // Add quality gate failed label if needed
+            const coverageFailed = '${{ steps.coverage.outputs.COVERAGE_FAILED }}' === 'true';
+            const mutationFailed = '${{ steps.mutation.outputs.MUTATION_FAILED }}' === 'true';
+            
+            if (coverageFailed || mutationFailed) {
+              if (!currentLabelNames.includes('quality-gate-failed')) {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: pull_number,
+                  labels: ['quality-gate-failed'],
+                });
+              }
+            } else {
+              // Remove quality-gate-failed label if it exists
+              if (currentLabelNames.includes('quality-gate-failed')) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: pull_number,
+                  name: 'quality-gate-failed',
+                });
+              }
+            }
+
+      - name: Post comprehensive quality report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            const riskEmoji = '${{ steps.risk_assessment.outputs.risk_emoji }}';
+            const riskLevel = '${{ steps.risk_assessment.outputs.risk_level }}';
+            const riskScore = '${{ steps.risk_assessment.outputs.risk_score }}';
+            const coverage = '${{ steps.coverage_metrics.outputs.coverage }}';
+            const riskFactors = JSON.parse('${{ steps.risk_assessment.outputs.risk_factors }}');
+            
+            let mutationSummary = 'No mutation data available';
+            try {
+              const mutationData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
+              const killRate = (mutationData.kill_rate * 100).toFixed(2);
+              mutationSummary = [
+                `**Kill Rate:** ${killRate}% (threshold: 90%)`,
+                `**Killed:** ${mutationData.killed_mutants}/${mutationData.counted_mutants} mutants`
+              ].join('\n');
+            } catch (error) {
+              console.log('Could not read mutation summary');
+            }
+            
+            const coveragePassed = parseFloat(coverage) >= 98;
+            const coverageEmoji = coveragePassed ? '✅' : '❌';
+            
+            const riskFactorsText = riskFactors.length > 0 ? 
+              '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') : 
+              'No significant risk factors identified';
+            
+            const statusText = coveragePassed ? 
+              '**All quality gates passed!** This PR meets the release criteria.' : 
+              '**Quality gates not met.** Please address the issues above before merging.';
+            
+            const body = [
+              `## ${riskEmoji} Release Gate Assessment`,
+              '',
+              '### Quality Metrics',
+              '',
+              `#### ${coverageEmoji} Code Coverage`,
+              `**Coverage:** ${coverage}% (target: 98%)`,
+              coveragePassed ? '✅ Coverage requirement met' : '❌ Coverage below threshold',
+              '',
+              '#### Mutation Testing',
+              mutationSummary,
+              '',
+              '### Risk Assessment',
+              `**Risk Level:** ${riskLevel.toUpperCase()} (Score: ${riskScore})`,
+              '',
+              riskFactorsText,
+              '',
+              '---',
+              '',
+              `### ${coveragePassed ? '✅' : '⚠️'} Release Gate Status`,
+              '',
+              statusText,
+              '',
+              '<details>',
+              '<summary>📋 Release Gate Requirements</summary>',
+              '',
+              '- ✅ Code coverage ≥ 98%',
+              '- ✅ Mutation kill rate ≥ 90%',
+              '- ✅ All tests passing',
+              '- ✅ No critical security vulnerabilities',
+              '- ✅ Code review approved',
+              '',
+              '</details>',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`,
+              '*Workflow: Release Gate Quality Assessment*'
+            ].join('\n');
+            
+            // Find and update or create comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Release Gate Assessment')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body
+              });
+            }
+
+      - name: Upload quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gate-reports
+          path: |
+            coverage.xml
+            mutation_summary.json
+          if-no-files-found: warn
+
+      - name: Fail if quality gates not met
+        if: steps.coverage.outputs.COVERAGE_FAILED == 'true' || steps.mutation.outputs.MUTATION_FAILED == 'true'
+        run: |
+          echo "❌ Quality gates not met. Please fix the issues and push again."
+          echo "Coverage requirement: 98%"
+          echo "Mutation kill rate requirement: 90%"
+          exit 1
