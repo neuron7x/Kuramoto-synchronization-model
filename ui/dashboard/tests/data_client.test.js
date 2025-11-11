@@ -1,7 +1,7 @@
 import assert from 'assert';
 import http from 'http';
 
-import { DashboardDataClient } from '../src/core/index.js';
+import { DashboardDataClient, DashboardApp } from '../src/core/index.js';
 
 const SAMPLE_SNAPSHOT = {
   route: 'overview',
@@ -14,6 +14,37 @@ const SAMPLE_SNAPSHOT = {
   signals: { signals: [] },
   community: { community: { metrics: {} } },
 };
+
+function createTestRoot() {
+  const mainAttributes = {};
+  const main = {
+    attributes: mainAttributes,
+    setAttribute(name, value) {
+      mainAttributes[name] = value;
+    },
+    getAttribute(name) {
+      return mainAttributes[name] || null;
+    },
+    textContent: '',
+  };
+  const rootAttributes = {};
+  const root = {
+    attributes: rootAttributes,
+    setAttribute(name, value) {
+      rootAttributes[name] = value;
+    },
+    getAttribute(name) {
+      return rootAttributes[name] || null;
+    },
+    querySelector(selector) {
+      if (selector === '[data-role="main-content"]') {
+        return main;
+      }
+      return null;
+    },
+  };
+  return { root, main };
+}
 
 class FakeWebSocket {
   constructor(url) {
@@ -123,3 +154,31 @@ assert.strictEqual(received.length, 1);
 assert.strictEqual(received[0].orders[0].order_id, 'stream-1');
 
 subscription.close();
+
+{
+  const { root, main } = createTestRoot();
+  class FailingClient {
+    async fetchSnapshot() {
+      throw new Error('network down');
+    }
+    fetchRoute() {
+      throw new Error('not implemented');
+    }
+  }
+
+  const app = new DashboardApp({ root, client: new FailingClient(), initialRoute: 'overview' });
+  let capturedError;
+  try {
+    await app.start();
+  } catch (error) {
+    capturedError = error;
+  }
+  assert.ok(capturedError instanceof Error, 'start should propagate initialization failures');
+  assert.strictEqual(capturedError.message, 'network down');
+  assert.ok(
+    (main.textContent || '').includes('Unable to load dashboard data'),
+    'DashboardApp should surface an error message when bootstrap fails',
+  );
+  assert.strictEqual(main.attributes['data-state'], 'error');
+  app.destroy();
+}

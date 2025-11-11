@@ -85,6 +85,10 @@ function parseConfigPayload(node) {
   return {};
 }
 
+function isPromise(value) {
+  return value && typeof value.then === 'function';
+}
+
 export class DashboardApp {
   constructor({ root, client, initialRoute, header } = {}) {
     const resolvedRoot = root || (typeof document !== 'undefined' ? document.querySelector('.tp-app') : null);
@@ -120,19 +124,31 @@ export class DashboardApp {
   }
 
   async start() {
-    const snapshot = await this.client.fetchSnapshot();
-    this._applySnapshot(snapshot);
-    await this.renderRoute(this.state.route, { emitEvent: false });
-    this._subscribe();
-    return this;
+    try {
+      const snapshot = await this.client.fetchSnapshot();
+      this._applySnapshot(snapshot);
+      await this.renderRoute(this.state.route, { emitEvent: false });
+      this._subscribe();
+      return this;
+    } catch (error) {
+      this._handleRenderError(error);
+      this._renderError(error);
+      throw error;
+    }
   }
 
   async refresh(route = this.state.route) {
-    const response = await this.client.fetchRoute(route);
-    const payload = response?.payload ?? response;
-    this.state.routes[route] = payload;
-    await this.renderRoute(route);
-    return true;
+    try {
+      const response = await this.client.fetchRoute(route);
+      const payload = response?.payload ?? response;
+      this.state.routes[route] = payload;
+      await this.renderRoute(route);
+      return true;
+    } catch (error) {
+      this._handleRenderError(error);
+      this._renderError(error);
+      throw error;
+    }
   }
 
   async navigate(route) {
@@ -198,6 +214,10 @@ export class DashboardApp {
     const html = `${breadcrumbsHtml}${toolbar.html}${headerHtml}${view.html}`;
     injectSafeHtml(this.main, html);
     this.main.setAttribute('data-route', route);
+    this.main.setAttribute('data-state', 'ready');
+    if (this.root && typeof this.root.setAttribute === 'function') {
+      this.root.setAttribute('data-state', 'ready');
+    }
 
     if (window.tpDashboardRuntime && typeof window.tpDashboardRuntime.setActiveRoute === 'function') {
       window.tpDashboardRuntime.setActiveRoute(route);
@@ -219,7 +239,7 @@ export class DashboardApp {
     this.subscription = this.client.subscribe({
       snapshot: (payload) => {
         this._applySnapshot(payload);
-        this.renderRoute(this.state.route, { emitEvent: true });
+        this._invokeRender(() => this.renderRoute(this.state.route, { emitEvent: true }));
       },
       orders: (payload) => this._handleRouteUpdate('orders', payload),
       positions: (payload) => this._handleRouteUpdate('positions', payload),
@@ -232,7 +252,47 @@ export class DashboardApp {
   _handleRouteUpdate(route, payload) {
     this.state.routes[route] = payload;
     if (this.state.route === route) {
-      this.renderRoute(route, { payload, emitEvent: true });
+      this._invokeRender(() => this.renderRoute(route, { payload, emitEvent: true }));
+    }
+  }
+
+  _invokeRender(operation) {
+    try {
+      const result = operation();
+      if (isPromise(result)) {
+        result.catch((error) => {
+          this._handleRenderError(error);
+        });
+      }
+    } catch (error) {
+      this._handleRenderError(error);
+    }
+  }
+
+  _renderError(error) {
+    if (!this.main) {
+      return;
+    }
+    const message =
+      typeof error?.message === 'string' && error.message.trim() ? error.message.trim() : 'An unexpected error occurred.';
+    const detailMarkup = message ? `<p class="tp-error__message">${message}</p>` : '';
+    const markup = `
+      <section class="tp-error" data-role="dashboard-error" role="alert">
+        <h2 class="tp-error__title">Unable to load dashboard data</h2>
+        ${detailMarkup}
+        <p class="tp-error__hint">Please retry or contact support if the problem persists.</p>
+      </section>
+    `;
+    injectSafeHtml(this.main, markup);
+    this.main.setAttribute('data-state', 'error');
+    if (this.root && typeof this.root.setAttribute === 'function') {
+      this.root.setAttribute('data-state', 'error');
+    }
+  }
+
+  _handleRenderError(error) {
+    if (typeof console !== 'undefined' && console.error) {
+      console.error('Dashboard render failed', error);
     }
   }
 

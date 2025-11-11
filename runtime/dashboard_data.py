@@ -21,6 +21,10 @@ class _BaseSnapshot:
         now = datetime.now(timezone.utc)
         epoch_ms = lambda delta: int((now + delta).timestamp() * 1000)
 
+        header_copy = deepcopy(self.header)
+        overview_community_profile = deepcopy(self.community_profile)
+        community_profile = deepcopy(self.community_profile)
+
         github_overview = {
             "organization": "TradePulse",
             "repository": "TradePulse",
@@ -68,7 +72,7 @@ class _BaseSnapshot:
                 "status": "Operational",
                 "last_audit": (now - timedelta(days=18)).isoformat(),
             },
-            "community": self.community_profile,
+            "community": overview_community_profile,
         }
 
         base_timestamp = now - timedelta(minutes=2)
@@ -278,14 +282,14 @@ class _BaseSnapshot:
 
         return {
             "route": "overview",
-            "header": self.header,
+            "header": header_copy,
             "overview": {"github": github_overview},
             "monitoring": monitoring,
             "positions": {"fills": fill_events, "orders": order_events, "ticks": tick_events},
             "orders": {"orders": order_events, "fills": fill_events},
             "pnl": {"pnlPoints": pnl_points, "quotes": quotes, "currency": "USD"},
             "signals": {"signals": signal_events},
-            "community": {"community": self.community_profile, "github": github_overview},
+            "community": {"community": community_profile, "github": deepcopy(github_overview)},
         }
 
 
