@@ -278,3 +278,188 @@ def test_save_state_persists_json(monkeypatch, serotonin_module, serotonin_contr
     data = json.loads(target.read_text(encoding="utf-8"))
     assert data["_metadata"]["config_path"] == ctrl.config_path
     assert "serotonin_level" in data
+
+
+def test_config_ignores_extra_fields(serotonin_cls, tmp_path: Path):
+    """Test that SerotoninConfig properly ignores extra fields for backward compatibility."""
+    config_with_extra = tmp_path / "config_extra.yaml"
+    
+    # Create a config with both required fields and extra legacy fields
+    config_content = """
+# Required v2.4.0 fields
+alpha: 0.5
+beta: 0.3
+gamma: 0.4
+delta_rho: 0.2
+k: 1.5
+theta: 0.0
+delta: 0.5
+za_bias: 0.0
+decay_rate: 0.01
+cooldown_threshold: 0.7
+desens_threshold_ticks: 3
+desens_rate: 0.05
+target_dd: 0.15
+target_sharpe: 1.5
+beta_temper: 0.5
+phase_threshold: 0.7
+phase_kappa: 2.0
+burst_factor: 0.35
+mod_t_max: 10.0
+mod_t_half: 5.0
+mod_k: 0.5
+max_desens_counter: 10
+desens_gain: 0.8
+
+# Extra legacy fields (should be ignored, not cause validation errors)
+tonic_beta: 0.35
+phasic_beta: 0.55
+stress_gain: 1.0
+drawdown_gain: 1.2
+novelty_gain: 0.6
+stress_threshold: 0.7
+release_threshold: 0.4
+hysteresis: 0.1
+cooldown_ticks: 3
+chronic_window: 6
+desensitization_rate: 0.05
+desensitization_decay: 0.05
+max_desensitization: 0.6
+floor_min: 0.1
+floor_max: 0.6
+floor_gain: 0.8
+cooldown_extension: 2
+"""
+    config_with_extra.write_text(config_content, encoding="utf-8")
+    
+    # Should not raise validation error despite extra fields
+    ctrl = serotonin_cls(str(config_with_extra))
+    
+    # Verify controller was initialized successfully
+    assert ctrl.config is not None
+    assert ctrl.config["alpha"] == 0.5
+    assert ctrl.config["beta"] == 0.3
+    # Extra fields should not appear in the validated config
+    assert "tonic_beta" not in ctrl.config
+    assert "phasic_beta" not in ctrl.config
+
+
+def test_config_validates_required_fields(serotonin_cls, tmp_path: Path):
+    """Test that SerotoninConfig still requires all necessary fields."""
+    incomplete_config = tmp_path / "incomplete.yaml"
+    
+    # Config missing required fields
+    incomplete_content = """
+alpha: 0.5
+beta: 0.3
+# Missing many required fields
+"""
+    incomplete_config.write_text(incomplete_content, encoding="utf-8")
+    
+    # Should raise ValueError due to missing required fields
+    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+        serotonin_cls(str(incomplete_config))
+
+
+def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_config_path):
+    """Test that the dual-compatibility config (with both legacy and v2.4.0 fields) loads correctly."""
+    # The fixture provides the actual serotonin.yaml with both field sets
+    ctrl = serotonin_cls(str(serotonin_config_path))
+    
+    # Verify all required v2.4.0 fields are present and loaded
+    assert "alpha" in ctrl.config
+    assert "beta" in ctrl.config
+    assert "gamma" in ctrl.config
+    assert "delta_rho" in ctrl.config
+    assert "k" in ctrl.config
+    assert "theta" in ctrl.config
+    assert "delta" in ctrl.config
+    assert "za_bias" in ctrl.config
+    
+    # Verify controller is functional
+    assert ctrl.tonic_level == 0.0
+    assert ctrl.sensitivity == 1.0
+    
+    # Test basic functionality
+    result = ctrl.estimate_aversive_state(
+        market_vol=2.0,
+        free_energy=0.3,
+        losses=0.5,
+        rho=0.2
+    )
+    assert isinstance(result, float)
+    assert result >= 0.0
+
+
+def test_config_field_types_are_validated(serotonin_cls, tmp_path: Path):
+    """Test that config field types are properly validated by Pydantic."""
+    invalid_config = tmp_path / "invalid_types.yaml"
+    
+    # Config with invalid type for numeric field
+    invalid_content = """
+alpha: "not_a_number"
+beta: 0.3
+gamma: 0.4
+delta_rho: 0.2
+k: 1.5
+theta: 0.0
+delta: 0.5
+za_bias: 0.0
+decay_rate: 0.01
+cooldown_threshold: 0.7
+desens_threshold_ticks: 3
+desens_rate: 0.05
+target_dd: 0.15
+target_sharpe: 1.5
+beta_temper: 0.5
+phase_threshold: 0.7
+phase_kappa: 2.0
+burst_factor: 0.35
+mod_t_max: 10.0
+mod_t_half: 5.0
+mod_k: 0.5
+max_desens_counter: 10
+desens_gain: 0.8
+"""
+    invalid_config.write_text(invalid_content, encoding="utf-8")
+    
+    # Should raise ValueError due to type validation error
+    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+        serotonin_cls(str(invalid_config))
+
+
+def test_config_constraints_are_enforced(serotonin_cls, tmp_path: Path):
+    """Test that config field constraints (ge, le, gt) are enforced."""
+    invalid_config = tmp_path / "invalid_constraints.yaml"
+    
+    # Config with value outside allowed range (alpha should be >= 0.0)
+    invalid_content = """
+alpha: -1.0
+beta: 0.3
+gamma: 0.4
+delta_rho: 0.2
+k: 1.5
+theta: 0.0
+delta: 0.5
+za_bias: 0.0
+decay_rate: 0.01
+cooldown_threshold: 0.7
+desens_threshold_ticks: 3
+desens_rate: 0.05
+target_dd: 0.15
+target_sharpe: 1.5
+beta_temper: 0.5
+phase_threshold: 0.7
+phase_kappa: 2.0
+burst_factor: 0.35
+mod_t_max: 10.0
+mod_t_half: 5.0
+mod_k: 0.5
+max_desens_counter: 10
+desens_gain: 0.8
+"""
+    invalid_config.write_text(invalid_content, encoding="utf-8")
+    
+    # Should raise ValueError due to constraint violation
+    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+        serotonin_cls(str(invalid_config))

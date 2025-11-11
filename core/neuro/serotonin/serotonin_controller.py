@@ -108,7 +108,7 @@ class SerotoninConfig(BaseModel):
         1.0, gt=0.0, description="Wall-clock hours represented by a controller tick"
     )
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
 
 SerotoninConfig.model_rebuild()
