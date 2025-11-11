@@ -147,19 +147,22 @@ export const BASE_STYLES = `
     top: 1rem;
     left: 1.5rem;
     transform: translateY(-200%);
-    padding: 0.65rem 1.25rem;
-    border-radius: 10px;
-    background: var(--tp-accent-strong);
-    color: #f8fafc;
-    font-weight: 600;
+    padding: 0.75rem 1.35rem;
+    border-radius: 999px;
+    background: var(--tp-gradient-accent);
+    color: #020617;
+    font-weight: 700;
     letter-spacing: 0.02em;
     transition: transform 0.2s ease;
     z-index: 30;
+    box-shadow: 0 4px 12px -4px rgba(6, 182, 212, 0.6);
   }
 
   .tp-skip-link:focus-visible {
     transform: translateY(0);
-    box-shadow: 0 0 0 4px rgba(2, 6, 23, 0.45);
+    box-shadow: 
+      0 8px 24px -6px rgba(6, 182, 212, 0.8),
+      0 0 0 4px rgba(6, 182, 212, 0.3);
   }
 
   .tp-app::before {
@@ -931,6 +934,11 @@ export const BASE_STYLES = `
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: -0.015em;
+    background: var(--tp-gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.3));
   }
 
   .tp-hero__stat-unit {
@@ -1251,6 +1259,10 @@ export const BASE_STYLES = `
     margin: 0;
     font-size: 1.6rem;
     font-weight: 700;
+    background: var(--tp-gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .tp-github-badge__hint {
@@ -1583,6 +1595,10 @@ export const BASE_STYLES = `
     font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: -0.015em;
+    background: var(--tp-gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .tp-community__metric-caption {
