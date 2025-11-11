@@ -6,6 +6,7 @@ from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
+from ._invariants import assert_no_nan_inf, check_monotonic_thresholds, clamp
 from .ddm_adapter import DDMThresholds, ddm_thresholds
 
 
@@ -496,6 +497,21 @@ class DopamineController:
         next_value: float,
         discount_gamma: Optional[float] = None,
     ) -> float:
+        """Compute TD(0) reward prediction error: δ = r + γ·V' − V.
+        
+        Args:
+            reward: Observed reward
+            value: Current state value estimate V
+            next_value: Next state value estimate V'
+            discount_gamma: Optional discount factor override (must be in (0,1])
+            
+        Returns:
+            RPE δ
+            
+        Raises:
+            RuntimeError: If any input or computed value is NaN or ±Inf
+            ValueError: If discount_gamma is not in (0, 1]
+        """
         reward = self._ensure_finite("reward", float(reward))
         value = self._ensure_finite("value", float(value))
         next_value = self._ensure_finite("next_value", float(next_value))
@@ -503,9 +519,38 @@ class DopamineController:
             float(self.config["discount_gamma"]) if discount_gamma is None else float(discount_gamma)
         )
         self._ensure_finite("discount_gamma", gamma)
-        if not (0.0 <= gamma <= 1.0):
-            raise ValueError("discount_gamma must stay within [0, 1]")
-        rpe = float(reward + gamma * next_value - value)
+        
+        # Strict gamma validation as per spec: γ ∈ (0, 1]
+        if not (0.0 < gamma <= 1.0):
+            raise ValueError(f"discount_gamma must be in (0, 1], got {gamma}")
+        
+        # Compute RPE with overflow protection
+        try:
+            rpe = float(reward + gamma * next_value - value)
+        except (OverflowError, FloatingPointError) as e:
+            context = {
+                "reward": reward,
+                "value": value,
+                "next_value": next_value,
+                "gamma": gamma,
+            }
+            raise RuntimeError(
+                f"RPE computation overflow: {e}\nContext: {context}"
+            ) from e
+        
+        # Final NaN/Inf check with context
+        if not math.isfinite(rpe):
+            context = {
+                "reward": reward,
+                "value": value,
+                "next_value": next_value,
+                "gamma": gamma,
+                "rpe": rpe,
+            }
+            raise RuntimeError(
+                f"RPE computation produced non-finite value: {rpe}\nContext: {context}"
+            )
+        
         self.last_rpe = rpe
         return rpe
 
@@ -603,9 +648,11 @@ class DopamineController:
             no_go_threshold = ddm_info.no_go_threshold
             hold_threshold = ddm_info.hold_threshold
 
-        go_threshold = min(1.0, max(0.0, go_threshold))
-        no_go_threshold = min(1.0, max(0.0, no_go_threshold))
-        hold_threshold = min(1.0, max(0.0, hold_threshold))
+        # Ensure monotonic constraint: go >= hold >= no_go
+        # This implements fail-shut: if thresholds are inconsistent, they're adjusted
+        go_threshold, hold_threshold, no_go_threshold = check_monotonic_thresholds(
+            go_threshold, hold_threshold, no_go_threshold
+        )
 
         hold_gate = (not release_gate) or dopamine_signal < hold_threshold
         go_gate = dopamine_signal > go_threshold and not hold_gate
@@ -620,31 +667,50 @@ class DopamineController:
                 for logit in policy_logits
             )
 
+        # Comprehensive extras export as per production spec
         extras: Dict[str, object] = {
+            # Core DA signals
             "dopamine_level": dopamine_signal,
-            "tonic_level": self.tonic_level,
-            "phasic_level": self.phasic_level,
+            "da_tonic": self.tonic_level,
+            "da_phasic": self.phasic_level,
+            # RPE & value
+            "rpe": rpe,
+            "rpe_var": variance,
             "value_estimate": self.value_estimate,
-            "rpe_variance": variance,
-            "release_gate_open": release_gate,
+            # Temperature
+            "temperature": temperature,
+            "adaptive_base_temperature": adaptive_base,
+            # Gate state
             "go": go_gate,
             "hold": hold_gate,
             "no_go": no_go_gate,
+            # Thresholds
             "go_threshold": go_threshold,
-            "no_go_threshold": no_go_threshold,
             "hold_threshold": hold_threshold,
-            "adaptive_base_temperature": adaptive_base,
+            "no_go_threshold": no_go_threshold,
+            # Release gate
+            "release_gate_open": release_gate,
         }
         if ddm_info is not None:
             extras["ddm_thresholds"] = ddm_info
+            extras["ddm_scale"] = ddm_info.temperature_scale
 
+        # TACL telemetry logging
+        self._log("tacl.dopa.level", dopamine_signal)
+        self._log("tacl.dopa.tonic", self.tonic_level)
+        self._log("tacl.dopa.phasic", self.phasic_level)
         self._log("tacl.dopa.rpe", rpe)
+        self._log("tacl.dopa.rpe_var", variance)
         self._log("tacl.dopa.temp", temperature)
+        self._log("tacl.dopa.go", 1.0 if go_gate else 0.0)
+        self._log("tacl.dopa.hold", 1.0 if hold_gate else 0.0)
+        self._log("tacl.dopa.no_go", 1.0 if no_go_gate else 0.0)
         if ddm_info is not None:
-            self._log("tacl.dopa.ddm.bound", ddm_info.go_threshold - ddm_info.no_go_threshold)
+            self._log("tacl.dopa.ddm.scale", ddm_info.temperature_scale)
+            self._log("tacl.dopa.ddm.go", ddm_info.go_threshold)
+            self._log("tacl.dopa.ddm.hold", ddm_info.hold_threshold)
+            self._log("tacl.dopa.ddm.no_go", ddm_info.no_go_threshold)
         self._log("dopamine_release_gate", 1.0 if release_gate else 0.0)
-
-        extras["temperature"] = temperature
 
         return rpe, temperature, scaled_policy, extras
 
