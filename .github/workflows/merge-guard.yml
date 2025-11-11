@@ -141,18 +141,28 @@ jobs:
               message = 'Quality gates passed, but this is a **high-risk** change. Please ensure thorough review before merging.';
             }
             
-            const body = `## ${statusEmoji} Merge Guard Status: ${statusText}
-
-${message}
-
-### Requirements Checklist
-- ${allPassed ? '✅' : '⏳'} Code coverage ≥ 98%
-- ${allPassed ? '✅' : '⏳'} Mutation kill rate ≥ 90%
-- ${!anyWorkflowFailed ? '✅' : '❌'} All quality checks passed
-${highRisk ? '- ⚠️ High-risk change detected - senior review recommended' : ''}
-
----
-*This check is automatically updated when commits are pushed.*`;
+            const highRiskLine = highRisk ? '- ⚠️ High-risk change detected - senior review recommended' : '';
+            
+            const bodyLines = [
+              `## ${statusEmoji} Merge Guard Status: ${statusText}`,
+              '',
+              message,
+              '',
+              '### Requirements Checklist',
+              `- ${allPassed ? '✅' : '⏳'} Code coverage ≥ 98%`,
+              `- ${allPassed ? '✅' : '⏳'} Mutation kill rate ≥ 90%`,
+              `- ${!anyWorkflowFailed ? '✅' : '❌'} All quality checks passed`
+            ];
+            
+            if (highRiskLine) {
+              bodyLines.push(highRiskLine);
+            }
+            
+            bodyLines.push('');
+            bodyLines.push('---');
+            bodyLines.push('*This check is automatically updated when commits are pushed.*');
+            
+            const body = bodyLines.join('\n');
             
             // Find existing comment
             const comments = await github.rest.issues.listComments({

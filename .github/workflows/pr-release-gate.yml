@@ -269,8 +269,10 @@ jobs:
             try {
               const mutationData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
               const killRate = (mutationData.kill_rate * 100).toFixed(2);
-              mutationSummary = `**Kill Rate:** ${killRate}% (threshold: 90%)
-**Killed:** ${mutationData.killed_mutants}/${mutationData.counted_mutants} mutants`;
+              mutationSummary = [
+                `**Kill Rate:** ${killRate}% (threshold: 90%)`,
+                `**Killed:** ${mutationData.killed_mutants}/${mutationData.counted_mutants} mutants`
+              ].join('\n');
             } catch (error) {
               console.log('Could not read mutation summary');
             }
@@ -278,44 +280,52 @@ jobs:
             const coveragePassed = parseFloat(coverage) >= 98;
             const coverageEmoji = coveragePassed ? '✅' : '❌';
             
-            const body = `## ${riskEmoji} Release Gate Assessment
-
-### Quality Metrics
-
-#### ${coverageEmoji} Code Coverage
-**Coverage:** ${coverage}% (target: 98%)
-${coveragePassed ? '✅ Coverage requirement met' : '❌ Coverage below threshold'}
-
-#### Mutation Testing
-${mutationSummary}
-
-### Risk Assessment
-**Risk Level:** ${riskLevel.toUpperCase()} (Score: ${riskScore})
-
-${riskFactors.length > 0 ? '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') : 'No significant risk factors identified'}
-
----
-
-### ${coveragePassed ? '✅' : '⚠️'} Release Gate Status
-
-${coveragePassed ? 
-  '**All quality gates passed!** This PR meets the release criteria.' : 
-  '**Quality gates not met.** Please address the issues above before merging.'}
-
-<details>
-<summary>📋 Release Gate Requirements</summary>
-
-- ✅ Code coverage ≥ 98%
-- ✅ Mutation kill rate ≥ 90%
-- ✅ All tests passing
-- ✅ No critical security vulnerabilities
-- ✅ Code review approved
-
-</details>
-
----
-*Last updated: ${new Date().toISOString()}*
-*Workflow: Release Gate Quality Assessment*`;
+            const riskFactorsText = riskFactors.length > 0 ? 
+              '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') : 
+              'No significant risk factors identified';
+            
+            const statusText = coveragePassed ? 
+              '**All quality gates passed!** This PR meets the release criteria.' : 
+              '**Quality gates not met.** Please address the issues above before merging.';
+            
+            const body = [
+              `## ${riskEmoji} Release Gate Assessment`,
+              '',
+              '### Quality Metrics',
+              '',
+              `#### ${coverageEmoji} Code Coverage`,
+              `**Coverage:** ${coverage}% (target: 98%)`,
+              coveragePassed ? '✅ Coverage requirement met' : '❌ Coverage below threshold',
+              '',
+              '#### Mutation Testing',
+              mutationSummary,
+              '',
+              '### Risk Assessment',
+              `**Risk Level:** ${riskLevel.toUpperCase()} (Score: ${riskScore})`,
+              '',
+              riskFactorsText,
+              '',
+              '---',
+              '',
+              `### ${coveragePassed ? '✅' : '⚠️'} Release Gate Status`,
+              '',
+              statusText,
+              '',
+              '<details>',
+              '<summary>📋 Release Gate Requirements</summary>',
+              '',
+              '- ✅ Code coverage ≥ 98%',
+              '- ✅ Mutation kill rate ≥ 90%',
+              '- ✅ All tests passing',
+              '- ✅ No critical security vulnerabilities',
+              '- ✅ Code review approved',
+              '',
+              '</details>',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`,
+              '*Workflow: Release Gate Quality Assessment*'
+            ].join('\n');
             
             // Find and update or create comment
             const comments = await github.rest.issues.listComments({

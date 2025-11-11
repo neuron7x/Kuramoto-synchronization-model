@@ -101,22 +101,24 @@ jobs:
               const passed = summaryData.kill_rate >= summaryData.threshold;
               const emoji = passed ? '✅' : '❌';
               
-              summaryText = `## ${emoji} Mutation Testing Results
-              
-**Kill Rate:** ${killRate}% (threshold: ${threshold}%)
-**Status:** ${passed ? 'PASSED' : 'FAILED'}
-
-### Statistics:
-- Total mutants: ${summaryData.total_mutants}
-- Counted mutants: ${summaryData.counted_mutants}
-- Killed mutants: ${summaryData.killed_mutants}
-
-### Status Breakdown:
-\`\`\`json
-${JSON.stringify(summaryData.status_counts, null, 2)}
-\`\`\`
-
-${passed ? '✅ Mutation testing passed!' : '❌ Mutation kill rate is below the required threshold. Please improve test coverage.'}`;
+              summaryText = [
+                `## ${emoji} Mutation Testing Results`,
+                '',
+                `**Kill Rate:** ${killRate}% (threshold: ${threshold}%)`,
+                `**Status:** ${passed ? 'PASSED' : 'FAILED'}`,
+                '',
+                '### Statistics:',
+                `- Total mutants: ${summaryData.total_mutants}`,
+                `- Counted mutants: ${summaryData.counted_mutants}`,
+                `- Killed mutants: ${summaryData.killed_mutants}`,
+                '',
+                '### Status Breakdown:',
+                '```json',
+                JSON.stringify(summaryData.status_counts, null, 2),
+                '```',
+                '',
+                passed ? '✅ Mutation testing passed!' : '❌ Mutation kill rate is below the required threshold. Please improve test coverage.'
+              ].join('\n');
             } catch (error) {
               console.log('Could not read mutation summary:', error);
             }

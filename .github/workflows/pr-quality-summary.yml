@@ -105,29 +105,33 @@ jobs:
             const coverageEmoji = parseFloat(coverage) >= 98 ? '✅' : '❌';
             const mutationEmoji = parseFloat(killRate) >= 90 ? '✅' : '❌';
             
-            const body = `## ${conclusionEmoji} Quality Summary - ${workflowName}
-
-**Workflow Status:** ${conclusion.toUpperCase()}
-
-### Metrics
-
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Code Coverage | ${coverage}% | 98% | ${coverageEmoji} |
-| Mutation Kill Rate | ${killRate}% | 90% | ${mutationEmoji} |
-
-### Details
-
-- **Workflow Run:** [#${context.payload.workflow_run.id}](${context.payload.workflow_run.html_url})
-- **Commit:** ${context.payload.workflow_run.head_sha.substring(0, 7)}
-- **Branch:** ${context.payload.workflow_run.head_branch}
-
-${conclusion === 'success' ? 
-  '✅ **All quality gates passed!** This PR is ready for review.' : 
-  '❌ **Quality gates failed.** Please review the workflow logs and fix the issues.'}
-
----
-*Last updated: ${new Date().toISOString()}*`;
+            const statusMessage = conclusion === 'success' ? 
+              '✅ **All quality gates passed!** This PR is ready for review.' : 
+              '❌ **Quality gates failed.** Please review the workflow logs and fix the issues.';
+            
+            const body = [
+              `## ${conclusionEmoji} Quality Summary - ${workflowName}`,
+              '',
+              `**Workflow Status:** ${conclusion.toUpperCase()}`,
+              '',
+              '### Metrics',
+              '',
+              '| Metric | Value | Target | Status |',
+              '|--------|-------|--------|--------|',
+              `| Code Coverage | ${coverage}% | 98% | ${coverageEmoji} |`,
+              `| Mutation Kill Rate | ${killRate}% | 90% | ${mutationEmoji} |`,
+              '',
+              '### Details',
+              '',
+              `- **Workflow Run:** [#${context.payload.workflow_run.id}](${context.payload.workflow_run.html_url})`,
+              `- **Commit:** ${context.payload.workflow_run.head_sha.substring(0, 7)}`,
+              `- **Branch:** ${context.payload.workflow_run.head_branch}`,
+              '',
+              statusMessage,
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`
+            ].join('\n');
             
             const { owner, repo } = context.repo;
             
