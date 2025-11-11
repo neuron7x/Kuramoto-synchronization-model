@@ -11,6 +11,10 @@
 ╚═══════════════════════════════════════════════════════════╝
 ```
 
+[![Tests](https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml)
+[![Coverage Shards](https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml)
+[![Coverage Guard ≥98%](https://img.shields.io/badge/Coverage-%E2%89%A598%25-brightgreen?logo=pytest)](#-testing)
+
 TradePulse is a **production-grade algorithmic trading platform** that marries
 cutting-edge geometric market indicators with enterprise reliability.
 Quantitative researchers, discretionary traders, and financial institutions use
