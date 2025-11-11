@@ -1,4 +1,8 @@
-"""Database utilities for the cortex service."""
+"""Database utilities for the cortex service.
+
+This module provides database engine creation, session management,
+and transactional support for the cortex service.
+"""
 
 from __future__ import annotations
 
@@ -11,19 +15,36 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from .config import ConfigurationError, CortexSettings
+from .config import CortexSettings
+from .errors import ConfigurationError, DatabaseError
 
 
 class Base(DeclarativeBase):
-    """Declarative base shared across cortex models."""
+    """Declarative base shared across cortex models.
+    
+    All SQLAlchemy ORM models in the cortex service should inherit
+    from this base class.
+    """
 
 
 SessionFactory = sessionmaker(expire_on_commit=False, class_=Session)
 
 
 def create_db_engine(settings: CortexSettings) -> Engine:
-    """Create the SQLAlchemy engine using application settings."""
-
+    """Create the SQLAlchemy engine using application settings.
+    
+    Supports both SQLite (for testing) and PostgreSQL (for production).
+    PostgreSQL connections require TLS credentials and strict SSL mode.
+    
+    Args:
+        settings: Application configuration
+        
+    Returns:
+        Configured SQLAlchemy engine
+        
+    Raises:
+        ConfigurationError: If configuration is invalid
+    """
     url = settings.database.url
     if url.startswith("sqlite"):
         return create_engine(
@@ -45,7 +66,9 @@ def create_db_engine(settings: CortexSettings) -> Engine:
         if tls is None:
             raise ConfigurationError("PostgreSQL connections require TLS credentials")
         params = parse_qs(parsed.query, keep_blank_values=True)
-        sslmode = (params.get("sslmode") or [None])[-1]
+        # Fix mypy issue: handle potential None values
+        sslmode_list = params.get("sslmode", [])
+        sslmode = sslmode_list[-1] if sslmode_list else None
         if sslmode not in {"verify-full", "verify-ca"}:
             raise ConfigurationError(
                 "PostgreSQL connections must set sslmode to verify-full or verify-ca"
@@ -60,22 +83,40 @@ def create_db_engine(settings: CortexSettings) -> Engine:
 
 
 def configure_session_factory(engine: Engine) -> None:
-    """Bind the global session factory to the provided engine."""
-
+    """Bind the global session factory to the provided engine.
+    
+    Args:
+        engine: SQLAlchemy engine to bind to the session factory
+    """
     SessionFactory.configure(bind=engine)
 
 
 @contextmanager
 def session_scope() -> Iterator[Session]:
-    """Provide a transactional scope for database operations."""
-
+    """Provide a transactional scope for database operations.
+    
+    This context manager handles session lifecycle:
+    - Creates a new session
+    - Commits on success
+    - Rolls back on exceptions
+    - Always closes the session
+    
+    Yields:
+        Database session
+        
+    Raises:
+        DatabaseError: If database operation fails
+    """
     session = SessionFactory()
     try:
         yield session
         session.commit()
-    except Exception:  # pragma: no cover - exception propagation path
+    except Exception as exc:  # pragma: no cover - exception propagation path
         session.rollback()
-        raise
+        raise DatabaseError(
+            f"Database operation failed: {exc}",
+            code="DatabaseOperationFailed",
+        ) from exc
     finally:
         session.close()
 
@@ -84,8 +125,20 @@ Dependency = Callable[[], Iterator[Session]]
 
 
 def session_dependency() -> Iterator[Session]:
-    """FastAPI dependency that yields a database session."""
-
+    """FastAPI dependency that yields a database session.
+    
+    Use this as a FastAPI dependency to get a database session
+    for request handlers. The session is automatically committed
+    on success and rolled back on failure.
+    
+    Yields:
+        Database session for the request
+        
+    Example:
+        @router.get("/resource")
+        def get_resource(session: Session = Depends(session_dependency)):
+            return session.query(Resource).all()
+    """
     with session_scope() as session:
         yield session
 
