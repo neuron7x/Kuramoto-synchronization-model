@@ -1,0 +1,250 @@
+name: Dependency Review & License Compliance
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'requirements*.txt'
+      - 'requirements*.lock'
+      - 'package*.json'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+
+concurrency:
+  group: dependency-review-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-3.0, AGPL-3.0
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, MPL-2.0
+          comment-summary-in-pr: always
+          retry-on-snapshot-warnings: true
+          warn-only: false
+
+  license-compliance:
+    name: License Compliance Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install license scanning tools
+        run: |
+          pip install pip-licenses licensecheck
+
+      - name: Scan Python dependencies for licenses
+        id: python_licenses
+        run: |
+          pip install -r requirements.txt
+          
+          # Generate license report
+          pip-licenses --format=json --output-file=python-licenses.json
+          pip-licenses --format=markdown --output-file=python-licenses.md
+          
+          # Check for problematic licenses
+          PROBLEMATIC=$(pip-licenses --format=json | jq -r '.[] | select(.License | test("GPL-3|AGPL|SSPL")) | .Name' || echo "")
+          
+          if [ -n "$PROBLEMATIC" ]; then
+            echo "problematic=true" >> $GITHUB_OUTPUT
+            echo "licenses=$PROBLEMATIC" >> $GITHUB_OUTPUT
+            echo "❌ Found problematic licenses: $PROBLEMATIC"
+          else
+            echo "problematic=false" >> $GITHUB_OUTPUT
+            echo "✅ No problematic licenses found"
+          fi
+
+      - name: Scan for dependency confusion vulnerabilities
+        id: confusion_scan
+        run: |
+          # Check if any internal package names could conflict with public PyPI
+          # This helps prevent dependency confusion attacks
+          
+          INTERNAL_PACKAGES="tradepulse,neurotrade_pro,hydrobrain_v2"
+          
+          echo "Checking for dependency confusion risks..."
+          
+          CONFUSION_RISK=false
+          for pkg in $(echo $INTERNAL_PACKAGES | tr ',' '\n'); do
+            # Check if package exists on PyPI
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/$pkg/json")
+            if [ "$STATUS" = "200" ]; then
+              echo "⚠️  WARNING: Internal package '$pkg' exists on public PyPI"
+              CONFUSION_RISK=true
+            else
+              echo "✓ Internal package '$pkg' not found on public PyPI"
+            fi
+          done
+          
+          if [ "$CONFUSION_RISK" = "true" ]; then
+            echo "confusion_risk=true" >> $GITHUB_OUTPUT
+            echo ""
+            echo "❌ DEPENDENCY CONFUSION RISK DETECTED"
+            echo "Some internal package names exist on public PyPI."
+            echo "Ensure you're using --index-url or --extra-index-url correctly."
+          else
+            echo "confusion_risk=false" >> $GITHUB_OUTPUT
+            echo "✅ No dependency confusion risk detected"
+          fi
+
+      - name: Check for known malicious packages
+        run: |
+          # Use pip-audit to check for known malicious packages
+          pip install pip-audit
+          
+          pip-audit --desc --format json -o malicious-packages-report.json || {
+            echo "⚠️  pip-audit scan completed with warnings"
+          }
+          
+          # Filter for malicious packages specifically
+          if [ -f malicious-packages-report.json ]; then
+            MALICIOUS=$(jq '[.dependencies[] // empty | select(.vulns[] | .aliases[]? // empty | test("MAL|MALWARE"))] | length' malicious-packages-report.json 2>/dev/null || echo "0")
+            
+            if [ "$MALICIOUS" -gt 0 ]; then
+              echo "❌ Found $MALICIOUS potentially malicious packages"
+              jq -r '.dependencies[] // empty | select(.vulns[] | .aliases[]? // empty | test("MAL|MALWARE")) | "  - \(.name) \(.version)"' malicious-packages-report.json
+              exit 1
+            else
+              echo "✅ No known malicious packages detected"
+            fi
+          fi
+
+      - name: Upload license reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            python-licenses.*
+            malicious-packages-report.json
+          if-no-files-found: warn
+
+      - name: Post license compliance summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            const problematic = '${{ steps.python_licenses.outputs.problematic }}' === 'true';
+            const confusionRisk = '${{ steps.confusion_scan.outputs.confusion_risk }}' === 'true';
+            const problematicLicenses = '${{ steps.python_licenses.outputs.licenses }}' || 'None';
+            
+            const emoji = !problematic && !confusionRisk ? '✅' : '❌';
+            
+            let licenseTable = '| Package | License | Status |\n|---------|---------|--------|\n';
+            
+            try {
+              const licenseData = JSON.parse(fs.readFileSync('python-licenses.json', 'utf8'));
+              licenseData.slice(0, 10).forEach(pkg => {
+                const isProblematic = /GPL-3|AGPL|SSPL/.test(pkg.License);
+                const status = isProblematic ? '❌' : '✅';
+                licenseTable += `| ${pkg.Name} | ${pkg.License} | ${status} |\n`;
+              });
+            } catch (error) {
+              licenseTable += '*License data not available*\n';
+            }
+            
+            const body = [
+              `## ${emoji} License Compliance & Dependency Security`,
+              '',
+              '### License Compliance Status',
+              problematic 
+                ? `❌ **Problematic licenses detected:** ${problematicLicenses}` 
+                : '✅ **All licenses compliant**',
+              '',
+              '### Dependency Security',
+              confusionRisk 
+                ? '❌ **Dependency confusion risk detected** - internal package names found on public PyPI' 
+                : '✅ **No dependency confusion risk**',
+              '',
+              '### Top Dependencies',
+              licenseTable,
+              '',
+              '### Allowed Licenses',
+              '- ✅ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause',
+              '- ✅ ISC, MPL-2.0',
+              '',
+              '### Prohibited Licenses',
+              '- ❌ GPL-3.0, AGPL-3.0, SSPL',
+              '',
+              '### Recommendations',
+              problematic ? '- Review and replace packages with problematic licenses' : '',
+              confusionRisk ? '- Use `--index-url` to prioritize internal package registry' : '',
+              confusionRisk ? '- Consider renaming internal packages to avoid conflicts' : '',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`
+            ].filter(line => line !== '').join('\n');
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('License Compliance & Dependency Security')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body
+              });
+            }
+
+      - name: Fail on compliance issues
+        if: steps.python_licenses.outputs.problematic == 'true' || steps.confusion_scan.outputs.confusion_risk == 'true'
+        run: |
+          echo "❌ License compliance or dependency security issues detected"
+          echo ""
+          echo "Please address the following:"
+          if [ '${{ steps.python_licenses.outputs.problematic }}' = 'true' ]; then
+            echo "  - Replace packages with problematic licenses"
+          fi
+          if [ '${{ steps.confusion_scan.outputs.confusion_risk }}' = 'true' ]; then
+            echo "  - Address dependency confusion risks"
+          fi
+          exit 1
