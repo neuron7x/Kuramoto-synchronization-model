@@ -45,7 +45,11 @@ class RegimeModulator:
         self._settings = settings
 
     def update(
-        self, previous: RegimeState | None, feedback: float, volatility: float, as_of: datetime
+        self,
+        previous: RegimeState | None,
+        feedback: float,
+        volatility: float,
+        as_of: datetime,
     ) -> RegimeState:
         """Update the regime based on feedback and volatility.
 

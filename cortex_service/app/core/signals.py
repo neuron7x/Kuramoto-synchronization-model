@@ -68,11 +68,15 @@ def _rescale(value: float, settings: SignalSettings) -> float:
     """
     span = settings.rescale_max - settings.rescale_min
     midpoint = settings.rescale_min + span / 2
-    scaled = max(settings.rescale_min, min(settings.rescale_max, midpoint + value * (span / 2)))
+    scaled = max(
+        settings.rescale_min, min(settings.rescale_max, midpoint + value * (span / 2))
+    )
     return scaled
 
 
-def compute_signal(feature_bundle: Sequence[FeatureObservation], settings: SignalSettings) -> Signal:
+def compute_signal(
+    feature_bundle: Sequence[FeatureObservation], settings: SignalSettings
+) -> Signal:
     """Compute a bounded signal for a collection of related features.
 
     Args:
@@ -101,12 +105,20 @@ def compute_signal(feature_bundle: Sequence[FeatureObservation], settings: Signa
 
     mean_weight = sum(weights) if weights else 1.0
     normalized = sum(weighted_values) / mean_weight
-    smoothed = (1 - settings.smoothing_factor) * fmean([f.zscore() for f in feature_bundle]) + settings.smoothing_factor * normalized
+    smoothed = (1 - settings.smoothing_factor) * fmean(
+        [f.zscore() for f in feature_bundle]
+    ) + settings.smoothing_factor * normalized
     strength = _rescale(smoothed, settings)
-    return Signal(instrument=feature_bundle[0].instrument, strength=strength, contributors=tuple(contributors))
+    return Signal(
+        instrument=feature_bundle[0].instrument,
+        strength=strength,
+        contributors=tuple(contributors),
+    )
 
 
-def build_signal_ensemble(features: Iterable[FeatureObservation], settings: SignalSettings) -> list[Signal]:
+def build_signal_ensemble(
+    features: Iterable[FeatureObservation], settings: SignalSettings
+) -> list[Signal]:
     """Group features by instrument and compute their signal.
 
     Args:

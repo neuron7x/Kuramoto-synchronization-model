@@ -4,16 +4,12 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterable
-from contextlib import asynccontextmanager
 from dataclasses import asdict
-from datetime import datetime
-from typing import AsyncIterator
 
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRouter
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -27,12 +23,13 @@ from .ethics.risk import Exposure
 from .logger import configure_logging, get_logger
 from .memory.repository import MemoryRepository
 from .metrics import ERROR_COUNT, REQUEST_INFLIGHT, REQUEST_LATENCY
-from .middleware import REQUEST_ID_HEADER, RequestIDMiddleware, get_request_id
+from .middleware import RequestIDMiddleware, get_request_id
 from .models import PortfolioExposure
 from .schemas import (
     ErrorDetail,
     ErrorResponse,
     ExposurePayload,
+    FeaturePayload,
     HealthResponse,
     MemoryRequest,
     MemoryResponse,
@@ -64,7 +61,9 @@ def _create_error_response(request_id: str, error: CortexError) -> ErrorResponse
     """
     details = None
     if error.details:
-        details = [ErrorDetail(field=k, message=str(v)) for k, v in error.details.items()]
+        details = [
+            ErrorDetail(field=k, message=str(v)) for k, v in error.details.items()
+        ]
 
     return ErrorResponse(
         error=error.code,
@@ -74,7 +73,9 @@ def _create_error_response(request_id: str, error: CortexError) -> ErrorResponse
     )
 
 
-def _instrument_latency(endpoint: str, method: str, status_code: int, start: float) -> None:
+def _instrument_latency(
+    endpoint: str, method: str, status_code: int, start: float
+) -> None:
     """Record request latency metrics.
 
     Args:
@@ -83,12 +84,14 @@ def _instrument_latency(endpoint: str, method: str, status_code: int, start: flo
         status_code: HTTP status code
         start: Start time (from time.perf_counter())
     """
-    REQUEST_LATENCY.labels(endpoint=endpoint, method=method, status=status_code).observe(
-        time.perf_counter() - start
-    )
+    REQUEST_LATENCY.labels(
+        endpoint=endpoint, method=method, status=status_code
+    ).observe(time.perf_counter() - start)
 
 
-def _build_feature_observations(payload: Iterable[ExposurePayload]) -> list[FeatureObservation]:
+def _build_feature_observations(
+    payload: Iterable[FeaturePayload],
+) -> list[FeatureObservation]:
     """Convert API payload to domain models.
 
     Args:
@@ -97,7 +100,6 @@ def _build_feature_observations(payload: Iterable[ExposurePayload]) -> list[Feat
     Returns:
         List of feature observations
     """
-    from .schemas import FeaturePayload as SchemaFeaturePayload
 
     return [
         FeatureObservation(
@@ -112,7 +114,9 @@ def _build_feature_observations(payload: Iterable[ExposurePayload]) -> list[Feat
     ]
 
 
-def create_app(settings: CortexSettings | None = None, engine: Engine | None = None) -> FastAPI:
+def create_app(
+    settings: CortexSettings | None = None, engine: Engine | None = None
+) -> FastAPI:
     """Create and configure the FastAPI application.
 
     Args:
@@ -162,10 +166,14 @@ def create_app(settings: CortexSettings | None = None, engine: Engine | None = N
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_error_handler(request: Request, exc: RequestValidationError) -> Response:
+    async def validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> Response:
         """Handle Pydantic validation errors."""
         ERROR_COUNT.labels(code="VALIDATION_ERROR").inc()
-        error = ValidationError("Request validation failed", details={"errors": str(exc.errors())})
+        error = ValidationError(
+            "Request validation failed", details={"errors": str(exc.errors())}
+        )
         error_response = _create_error_response(get_request_id(), error)
         return Response(
             content=error_response.model_dump_json(),
@@ -174,7 +182,9 @@ def create_app(settings: CortexSettings | None = None, engine: Engine | None = N
         )
 
     @app.exception_handler(SQLAlchemyError)
-    async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError) -> Response:
+    async def sqlalchemy_error_handler(
+        request: Request, exc: SQLAlchemyError
+    ) -> Response:
         """Handle SQLAlchemy errors."""
         ERROR_COUNT.labels(code="DATABASE_ERROR").inc()
         from .errors import DatabaseError
@@ -272,9 +282,11 @@ def create_app(settings: CortexSettings | None = None, engine: Engine | None = N
                 )
                 for item in payload.features
             ]
-            
-            signals, ensemble_strength, synchrony = signal_service.compute_signals(features)
-            
+
+            signals, ensemble_strength, synchrony = signal_service.compute_signals(
+                features
+            )
+
             signal_payloads = [SignalPayload(**asdict(signal)) for signal in signals]
             return SignalsResponse(
                 signals=signal_payloads,
@@ -354,7 +366,9 @@ def create_app(settings: CortexSettings | None = None, engine: Engine | None = N
         tags=["Memory"],
         summary="Persist portfolio exposures",
     )
-    def persist_memory(payload: MemoryRequest, session: Session = Depends(session_dependency)) -> None:
+    def persist_memory(
+        payload: MemoryRequest, session: Session = Depends(session_dependency)
+    ) -> None:
         """Persist portfolio exposures to memory.
 
         Stores or updates exposures for later retrieval.
@@ -386,7 +400,9 @@ def create_app(settings: CortexSettings | None = None, engine: Engine | None = N
         tags=["Memory"],
         summary="Fetch portfolio exposures",
     )
-    def fetch_memory(portfolio_id: str, session: Session = Depends(session_dependency)) -> MemoryResponse:
+    def fetch_memory(
+        portfolio_id: str, session: Session = Depends(session_dependency)
+    ) -> MemoryResponse:
         """Retrieve stored portfolio exposures.
 
         Args:

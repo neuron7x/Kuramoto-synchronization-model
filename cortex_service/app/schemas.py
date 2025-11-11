@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from .constants import DEFAULT_FEATURE_WEIGHT, MAX_EXPOSURE_LIMIT, MIN_WEIGHT
 
@@ -18,19 +18,29 @@ MAX_FEATURE_NAME_LENGTH = 64
 class FeaturePayload(BaseModel):
     """Feature observation for signal computation."""
 
-    instrument: str = Field(..., max_length=MAX_INSTRUMENT_LENGTH, description="Instrument identifier")
-    name: str = Field(..., max_length=MAX_FEATURE_NAME_LENGTH, description="Feature name")
+    instrument: str = Field(
+        ..., max_length=MAX_INSTRUMENT_LENGTH, description="Instrument identifier"
+    )
+    name: str = Field(
+        ..., max_length=MAX_FEATURE_NAME_LENGTH, description="Feature name"
+    )
     value: float = Field(..., description="Feature value")
     mean: float | None = Field(default=None, description="Mean for normalization")
-    std: float | None = Field(default=None, ge=0, description="Standard deviation for normalization")
-    weight: float = Field(default=DEFAULT_FEATURE_WEIGHT, gt=MIN_WEIGHT, description="Feature weight")
+    std: float | None = Field(
+        default=None, ge=0, description="Standard deviation for normalization"
+    )
+    weight: float = Field(
+        default=DEFAULT_FEATURE_WEIGHT, gt=MIN_WEIGHT, description="Feature weight"
+    )
 
 
 class SignalsRequest(BaseModel):
     """Request payload for signal computation."""
 
     as_of: datetime = Field(..., description="Timestamp for this signal computation")
-    features: list[FeaturePayload] = Field(..., min_length=1, description="Feature observations")
+    features: list[FeaturePayload] = Field(
+        ..., min_length=1, description="Feature observations"
+    )
 
 
 class SignalPayload(BaseModel):
@@ -44,7 +54,9 @@ class SignalPayload(BaseModel):
 class SignalsResponse(BaseModel):
     """Response payload for signal computation."""
 
-    signals: list[SignalPayload] = Field(..., description="Computed signals per instrument")
+    signals: list[SignalPayload] = Field(
+        ..., description="Computed signals per instrument"
+    )
     ensemble_strength: float = Field(..., description="Aggregate ensemble strength")
     synchrony: float = Field(..., description="Kuramoto order parameter (synchrony)")
 
@@ -52,19 +64,27 @@ class SignalsResponse(BaseModel):
 class ExposurePayload(BaseModel):
     """Portfolio exposure for a single instrument."""
 
-    portfolio_id: str = Field(..., max_length=MAX_PORTFOLIO_ID_LENGTH, description="Portfolio identifier")
-    instrument: str = Field(..., max_length=MAX_INSTRUMENT_LENGTH, description="Instrument identifier")
+    portfolio_id: str = Field(
+        ..., max_length=MAX_PORTFOLIO_ID_LENGTH, description="Portfolio identifier"
+    )
+    instrument: str = Field(
+        ..., max_length=MAX_INSTRUMENT_LENGTH, description="Instrument identifier"
+    )
     exposure: float = Field(..., description="Position exposure")
     leverage: float = Field(..., description="Leverage factor")
     as_of: datetime = Field(..., description="Timestamp for this exposure")
-    limit: float = Field(default=1.0, gt=0, le=MAX_EXPOSURE_LIMIT, description="Exposure limit")
+    limit: float = Field(
+        default=1.0, gt=0, le=MAX_EXPOSURE_LIMIT, description="Exposure limit"
+    )
     volatility: float = Field(default=0.2, ge=0, description="Expected volatility")
 
 
 class RiskRequest(BaseModel):
     """Request payload for risk assessment."""
 
-    exposures: list[ExposurePayload] = Field(..., description="Portfolio exposures to assess")
+    exposures: list[ExposurePayload] = Field(
+        ..., description="Portfolio exposures to assess"
+    )
 
 
 class RiskResponse(BaseModel):
@@ -72,8 +92,12 @@ class RiskResponse(BaseModel):
 
     score: float = Field(..., description="Aggregate risk score")
     value_at_risk: float = Field(..., description="Portfolio Value at Risk")
-    stressed_var: tuple[float, ...] = Field(..., description="VaR under stress scenarios")
-    breached: tuple[str, ...] = Field(..., description="Instruments that breached limits")
+    stressed_var: tuple[float, ...] = Field(
+        ..., description="VaR under stress scenarios"
+    )
+    breached: tuple[str, ...] = Field(
+        ..., description="Instruments that breached limits"
+    )
 
 
 class RegimeRequest(BaseModel):
@@ -96,7 +120,9 @@ class RegimeResponse(BaseModel):
 class MemoryRequest(BaseModel):
     """Request payload for persisting exposures."""
 
-    exposures: list[ExposurePayload] = Field(..., min_length=1, description="Exposures to persist")
+    exposures: list[ExposurePayload] = Field(
+        ..., min_length=1, description="Exposures to persist"
+    )
 
 
 class MemoryResponse(BaseModel):
@@ -119,7 +145,9 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Error code")
     message: str = Field(..., description="Human-readable error message")
     request_id: str = Field(..., description="Request ID for tracing")
-    details: list[ErrorDetail] | None = Field(default=None, description="Additional error details")
+    details: list[ErrorDetail] | None = Field(
+        default=None, description="Additional error details"
+    )
 
 
 class HealthResponse(BaseModel):

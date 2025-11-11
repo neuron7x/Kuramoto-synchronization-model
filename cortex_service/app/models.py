@@ -15,7 +15,9 @@ class PortfolioExposure(Base):
 
     __tablename__ = "cortex_portfolio_exposures"
     __table_args__ = (
-        UniqueConstraint("portfolio_id", "instrument", "as_of", name="uq_cortex_exposure"),
+        UniqueConstraint(
+            "portfolio_id", "instrument", "as_of", name="uq_cortex_exposure"
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -28,7 +30,10 @@ class PortfolioExposure(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
 

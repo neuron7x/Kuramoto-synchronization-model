@@ -11,7 +11,9 @@ from typing import Any
 class JsonLogFormatter(logging.Formatter):
     """Serialize log records to JSON for ingestion by observability stacks."""
 
-    def format(self, record: logging.LogRecord) -> str:  # noqa: D401 - documented at class level
+    def format(
+        self, record: logging.LogRecord
+    ) -> str:  # noqa: D401 - documented at class level
         payload: dict[str, Any] = {
             "level": record.levelname,
             "message": record.getMessage(),

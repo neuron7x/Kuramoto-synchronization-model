@@ -69,7 +69,9 @@ def _confidence_scale(confidence: float) -> float:
     return quantile
 
 
-def compute_risk(exposures: Iterable[Exposure], settings: RiskSettings) -> RiskAssessment:
+def compute_risk(
+    exposures: Iterable[Exposure], settings: RiskSettings
+) -> RiskAssessment:
     """Compute portfolio risk score and associated metrics.
 
     Args:
@@ -81,7 +83,9 @@ def compute_risk(exposures: Iterable[Exposure], settings: RiskSettings) -> RiskA
     """
     exposures = list(exposures)
     if not exposures:
-        return RiskAssessment(score=0.0, value_at_risk=0.0, stressed_var=(), breached=())
+        return RiskAssessment(
+            score=0.0, value_at_risk=0.0, stressed_var=(), breached=()
+        )
 
     aggregate_var = 0.0
     stress_results: list[float] = []

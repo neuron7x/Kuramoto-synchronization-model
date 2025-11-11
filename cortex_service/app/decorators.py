@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import functools
 import time
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Callable, ParamSpec, TypeVar
 
 from sqlalchemy.exc import DBAPIError, OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from .constants import MAX_RETRY_ATTEMPTS, RETRY_BACKOFF_MULTIPLIER, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY
+from .constants import (
+    MAX_RETRY_ATTEMPTS,
+    RETRY_BACKOFF_MULTIPLIER,
+    RETRY_INITIAL_DELAY,
+    RETRY_MAX_DELAY,
+)
 from .errors import DatabaseError
 from .logger import get_logger
 
@@ -107,13 +112,18 @@ def transactional(func: Callable[P, R]) -> Callable[P, R]:
         # Get session from first argument or kwargs
         session: Session | None = None
         if args:
-            if isinstance(args[0], Session):
-                session = args[0]
+            first_arg: object = args[0]
+            if isinstance(first_arg, Session):
+                session = first_arg
         if session is None and "session" in kwargs:
-            session = kwargs["session"]
+            session_kwarg: object = kwargs["session"]
+            if isinstance(session_kwarg, Session):
+                session = session_kwarg
 
         if session is None:
-            raise TypeError(f"Function {func.__name__} requires a Session as first argument or 'session' kwarg")
+            raise TypeError(
+                f"Function {func.__name__} requires a Session as first argument or 'session' kwarg"
+            )
 
         try:
             result = func(*args, **kwargs)
@@ -122,7 +132,9 @@ def transactional(func: Callable[P, R]) -> Callable[P, R]:
         except SQLAlchemyError as exc:
             session.rollback()
             logger.error("Transaction rolled back due to error", exc_info=True)
-            raise DatabaseError(f"Transaction failed: {exc}", details={"original_error": str(exc)}) from exc
+            raise DatabaseError(
+                f"Transaction failed: {exc}", details={"original_error": str(exc)}
+            ) from exc
         except Exception:
             session.rollback()
             raise

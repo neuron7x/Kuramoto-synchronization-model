@@ -23,7 +23,7 @@ REQUEST_ID_HEADER = "X-Request-ID"
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """Middleware that adds request ID tracking to all requests."""
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:  # type: ignore[override]
         """Process request with request ID tracking.
 
         Args:
@@ -42,7 +42,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
         # Process request
         start_time = time.perf_counter()
-        response = await call_next(request)
+        response: Response = await call_next(request)  # type: ignore[misc]
         duration = time.perf_counter() - start_time
 
         # Add request ID to response headers

@@ -31,7 +31,10 @@ class MemoryRepository:
         ]
         if not payload:
             return
-        dialect = self._session.bind.dialect.name
+        bind = self._session.bind
+        if bind is None:
+            raise RuntimeError("Session has no bound engine")
+        dialect = bind.dialect.name
         if dialect == "postgresql":
             statement = insert(PortfolioExposure).values(payload)
             update_columns = {
@@ -39,11 +42,16 @@ class MemoryRepository:
                 "leverage": statement.excluded.leverage,
                 "as_of": statement.excluded.as_of,
             }
-            self._session.execute(statement.on_conflict_do_update(index_elements=[
-                PortfolioExposure.portfolio_id,
-                PortfolioExposure.instrument,
-                PortfolioExposure.as_of,
-            ], set_=update_columns))
+            self._session.execute(
+                statement.on_conflict_do_update(
+                    index_elements=[
+                        PortfolioExposure.portfolio_id,
+                        PortfolioExposure.instrument,
+                        PortfolioExposure.as_of,
+                    ],
+                    set_=update_columns,
+                )
+            )
         else:
             for row in payload:
                 existing = (
@@ -56,12 +64,16 @@ class MemoryRepository:
                     .one_or_none()
                 )
                 if existing:
-                    existing.exposure = row["exposure"]
-                    existing.leverage = row["leverage"]
+                    exposure_val: float = row["exposure"]  # type: ignore[assignment]
+                    leverage_val: float = row["leverage"]  # type: ignore[assignment]
+                    existing.exposure = exposure_val
+                    existing.leverage = leverage_val
                 else:
                     self._session.add(PortfolioExposure(**row))
 
-    def fetch_exposures(self, portfolio_id: str, limit: int = 50) -> list[PortfolioExposure]:
+    def fetch_exposures(
+        self, portfolio_id: str, limit: int = 50
+    ) -> list[PortfolioExposure]:
         statement = (
             select(PortfolioExposure)
             .where(PortfolioExposure.portfolio_id == portfolio_id)
@@ -70,8 +82,12 @@ class MemoryRepository:
         )
         return list(self._session.scalars(statement))
 
-    def store_regime(self, label: str, valence: float, confidence: float, as_of: datetime) -> MarketRegime:
-        regime = MarketRegime(label=label, valence=valence, confidence=confidence, as_of=as_of)
+    def store_regime(
+        self, label: str, valence: float, confidence: float, as_of: datetime
+    ) -> MarketRegime:
+        regime = MarketRegime(
+            label=label, valence=valence, confidence=confidence, as_of=as_of
+        )
         self._session.add(regime)
         return regime
 

@@ -9,7 +9,13 @@ from typing import Any
 class CortexError(Exception):
     """Base exception for all cortex service errors."""
 
-    def __init__(self, message: str, code: str, status_code: int = HTTPStatus.INTERNAL_SERVER_ERROR, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        code: str,
+        status_code: int = HTTPStatus.INTERNAL_SERVER_ERROR,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         """Initialize the error with structured context.
 
         Args:

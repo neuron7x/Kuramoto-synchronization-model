@@ -92,7 +92,9 @@ class RegimeService:
             ValidationError: If inputs are invalid
         """
         if volatility < 0:
-            raise ValidationError("Volatility must be non-negative", details={"volatility": volatility})
+            raise ValidationError(
+                "Volatility must be non-negative", details={"volatility": volatility}
+            )
 
         repository = MemoryRepository(session)
 
@@ -110,10 +112,14 @@ class RegimeService:
                     confidence=previous.confidence,
                     as_of=previous.as_of,
                 )
-            DB_OPERATION_LATENCY.labels(operation="fetch_regime").observe(time.perf_counter() - start)
+            DB_OPERATION_LATENCY.labels(operation="fetch_regime").observe(
+                time.perf_counter() - start
+            )
 
         # Update regime
-        updated_state = self._modulator.update(previous_state, feedback, volatility, as_of)
+        updated_state = self._modulator.update(
+            previous_state, feedback, volatility, as_of
+        )
 
         # Persist to database
         start = time.perf_counter()
@@ -123,7 +129,9 @@ class RegimeService:
             updated_state.confidence,
             updated_state.as_of,
         )
-        DB_OPERATION_LATENCY.labels(operation="store_regime").observe(time.perf_counter() - start)
+        DB_OPERATION_LATENCY.labels(operation="store_regime").observe(
+            time.perf_counter() - start
+        )
 
         # Update cache
         self._cache.set(updated_state)
@@ -131,7 +139,9 @@ class RegimeService:
         # Record metrics
         REGIME_UPDATES.labels(regime=updated_state.label).inc()
         if previous_state and previous_state.label != updated_state.label:
-            REGIME_TRANSITIONS.labels(from_regime=previous_state.label, to_regime=updated_state.label).inc()
+            REGIME_TRANSITIONS.labels(
+                from_regime=previous_state.label, to_regime=updated_state.label
+            ).inc()
 
         logger.debug(
             "Updated regime",
