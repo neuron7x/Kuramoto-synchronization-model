@@ -13,6 +13,9 @@ from __future__ import annotations
 
 import pytest
 
+# Mark all tests in this module as slow and heavy to exclude from standard test runs
+pytestmark = [pytest.mark.slow, pytest.mark.heavy_math]
+
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import ExecutionConnector
 from execution.router import (
