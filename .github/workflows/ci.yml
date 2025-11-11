@@ -112,11 +112,26 @@ jobs:
           python -m coverage combine
           python -m coverage xml -i -o coverage.xml
 
+      - name: Enforce global coverage threshold
+        run: python -m coverage report --fail-under=98
+
+      - name: Generate HTML coverage report
+        run: python -m coverage html -i -d coverage_html
+
       - name: Enforce reliability coverage guardrail
         run: |
           python -m tools.coverage.guardrail \
             --config configs/quality/critical_surface.toml \
             --coverage coverage.xml
+
+      - name: Upload aggregated coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-coverage
+          path: |
+            coverage.xml
+            coverage_html
+          if-no-files-found: error
 
       - name: Upload coverage to Codecov
         if: ${{ secrets.CODECOV_TOKEN != '' }}

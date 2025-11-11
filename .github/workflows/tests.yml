@@ -254,7 +254,7 @@ jobs:
             --cov=core --cov=backtest --cov=execution \
             --cov-branch \
             --cov-report=xml --cov-report=term-missing --cov-report=html:coverage_html \
-            --cov-fail-under=97 \
+            --cov-fail-under=98 \
             --junitxml=reports/unit-integration-tests.xml \
             --html=reports/unit-integration-report.html --self-contained-html \
             --flaky-report=reports/flaky-tests-skipped.json
@@ -265,6 +265,7 @@ jobs:
             --junitxml=reports/e2e-tests.xml \
             --html=reports/e2e-report.html --self-contained-html
       - name: Publish coverage summary
+        if: ${{ always() }}
         id: coverage_summary
         run: |
           python - <<'PY'
@@ -279,6 +280,19 @@ jobs:
           root = ET.parse(report_path).getroot()
           line_rate = float(root.get("line-rate", 0.0)) * 100
           branch_rate = float(root.get("branch-rate", 0.0)) * 100
+          threshold = 98.0
+          margin = line_rate - threshold
+          margin_display = f"{margin:+.2f}"
+
+          if line_rate + 1e-9 >= threshold + 1.5:
+              risk_level = "Low"
+              risk_reason = f"Coverage exceeds the guardrail by {margin:.2f}% providing a healthy buffer."
+          elif line_rate + 1e-9 >= threshold:
+              risk_level = "Moderate"
+              risk_reason = f"Coverage clears the guardrail by {margin:.2f}% — consider adding tests to widen the buffer."
+          else:
+              risk_level = "High"
+              risk_reason = f"Coverage is below the {threshold:.0f}% guardrail by {abs(margin):.2f}%. Additional tests are required."
 
           summary_lines = [
               "### Coverage summary\n",
@@ -287,6 +301,10 @@ jobs:
               "| --- | --- |",
               f"| Line coverage | {line_rate:.2f}% |",
               f"| Branch coverage | {branch_rate:.2f}% |",
+              f"| Guardrail | {threshold:.2f}% |",
+              f"| Margin vs guardrail | {margin:+.2f}% |",
+              "",
+              f"**Risk level:** {risk_level} — {risk_reason}",
               "",
           ]
 
@@ -300,6 +318,12 @@ jobs:
               with open(github_output, "a", encoding="utf-8") as handle:
                   handle.write(f"line_rate={line_rate:.2f}\n")
                   handle.write(f"branch_rate={branch_rate:.2f}\n")
+                  handle.write(f"coverage_threshold={threshold:.2f}\n")
+                  handle.write(f"coverage_margin={margin_display}\n")
+                  handle.write(f"risk_level={risk_level}\n")
+                  handle.write("risk_reason<<'EOF'\n")
+                  handle.write(risk_reason)
+                  handle.write("\nEOF\n")
 
           if branch_rate < 90.0:
               raise SystemExit(f"Branch coverage {branch_rate:.2f}% is below the required 90% threshold")
@@ -313,12 +337,13 @@ jobs:
             const repo = context.repo.repo;
             const pull_number = context.payload.pull_request.number;
             const label = 'missing-coverage';
-            const threshold = 90;
+            const lineThreshold = 98;
+            const branchThreshold = 90;
             const lineRate = Number("${{ steps.coverage_summary.outputs.line_rate || '0' }}");
             const branchRate = Number("${{ steps.coverage_summary.outputs.branch_rate || '0' }}");
             const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, { owner, repo, issue_number: pull_number });
             const hasLabel = labels.some(item => item.name === label);
-            if (lineRate >= threshold && branchRate >= threshold) {
+            if (lineRate >= lineThreshold && branchRate >= branchThreshold) {
               if (hasLabel) {
                 await github.rest.issues.removeLabel({ owner, repo, issue_number: pull_number, name: label }).catch(() => {});
               }
@@ -358,6 +383,15 @@ jobs:
           body: |
             ### Test & Coverage Summary (Python ${{ matrix.python-version }})
 
+            **Status:** ${{ job.status == 'success' && '✅ Tests completed' || job.status == 'cancelled' && '⚪ Tests cancelled' || '❌ Tests failed' }}
+            **Coverage:** ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% lines (guardrail ≥ ${{ steps.coverage_summary.outputs.coverage_threshold || 'n/a' }}%)  
+            **Risk:** ${{ steps.coverage_summary.outputs.risk_level || 'n/a' }} — ${{ steps.coverage_summary.outputs.risk_reason || 'n/a' }}
+
+            **Key Links**
+            - [Workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - Coverage HTML: download the `coverage-reports-${{ matrix.python-version }}` artifact from the run above.
+            - Test reports: download the `pytest-html-reports-${{ matrix.python-version }}` artifact for full context.
+
             | Metric | Value |
             | --- | --- |
             | Total tests | ${{ steps.test_summary.outputs.total }} |
@@ -366,6 +400,7 @@ jobs:
             | Skipped | ${{ steps.test_summary.outputs.skipped }} |
             | Line coverage | ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% |
             | Branch coverage | ${{ steps.coverage_summary.outputs.branch_rate || 'n/a' }}% |
+            | Margin vs guardrail | ${{ steps.coverage_summary.outputs.coverage_margin || 'n/a' }}% |
 
             _Updated automatically for the latest workflow run._
       - name: Upload JUnit test reports
