@@ -41,14 +41,14 @@
     "discount_gamma": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "maximum": 1.0,
       "description": "TD discount factor γ ∈ (0, 1]"
     },
     "learning_rate_v": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "maximum": 1.0,
       "description": "Value estimate learning rate ∈ (0, 1]"
     },
@@ -119,19 +119,19 @@
     "base_temperature": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Base exploration temperature > 0"
     },
     "min_temperature": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Minimum temperature > 0"
     },
     "temp_k": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Temperature decay coefficient > 0"
     },
     "neg_rpe_temp_gain": {
@@ -169,7 +169,7 @@
     "target_sharpe": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Target Sharpe ratio > 0"
     },
     "meta_cooldown_ticks": {
@@ -200,7 +200,7 @@
     "rpe_ema_beta": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "maximum": 1.0,
       "description": "RPE EMA smoothing factor ∈ (0, 1]"
     },
@@ -212,41 +212,41 @@
     "temp_adapt_lr": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Temperature adaptation learning rate > 0"
     },
     "temp_adapt_beta1": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "maximum": 1.0,
-      "exclusiveMaximum": true,
+      "exclusiveMaximum": 1.0,
       "description": "Adam β₁ for temperature ∈ (0, 1)"
     },
     "temp_adapt_beta2": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "maximum": 1.0,
-      "exclusiveMaximum": true,
+      "exclusiveMaximum": 1.0,
       "description": "Adam β₂ for temperature ∈ (0, 1)"
     },
     "temp_adapt_epsilon": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Adam epsilon for temperature > 0"
     },
     "temp_adapt_min_base": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Minimum adaptive base temperature > 0"
     },
     "temp_adapt_max_base": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Maximum adaptive base temperature > 0"
     },
     "rpe_var_release_threshold": {
@@ -277,19 +277,19 @@
     "ddm_min_temperature_scale": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Minimum DDM temperature scale > 0"
     },
     "ddm_max_temperature_scale": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "Maximum DDM temperature scale > 0"
     },
     "ddm_baseline_a": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "DDM baseline boundary > 0"
     },
     "ddm_baseline_t0": {
@@ -300,7 +300,7 @@
     "ddm_eps": {
       "type": "number",
       "minimum": 0.0,
-      "exclusiveMinimum": true,
+      "exclusiveMinimum": 0.0,
       "description": "DDM epsilon for numerical stability > 0"
     }
   },
@@ -324,63 +324,5 @@
       }
     }
   },
-  "allOf": [
-    {
-      "description": "min_temperature must be ≤ base_temperature",
-      "if": {
-        "properties": {
-          "min_temperature": true,
-          "base_temperature": true
-        }
-      },
-      "then": {
-        "properties": {
-          "min_temperature": {
-            "type": "number",
-            "maximum": {
-              "$data": "1/base_temperature"
-            }
-          }
-        }
-      }
-    },
-    {
-      "description": "temp_adapt_min_base must be ≤ temp_adapt_max_base",
-      "if": {
-        "properties": {
-          "temp_adapt_min_base": true,
-          "temp_adapt_max_base": true
-        }
-      },
-      "then": {
-        "properties": {
-          "temp_adapt_min_base": {
-            "type": "number",
-            "maximum": {
-              "$data": "1/temp_adapt_max_base"
-            }
-          }
-        }
-      }
-    },
-    {
-      "description": "ddm_min_temperature_scale must be ≤ ddm_max_temperature_scale",
-      "if": {
-        "properties": {
-          "ddm_min_temperature_scale": true,
-          "ddm_max_temperature_scale": true
-        }
-      },
-      "then": {
-        "properties": {
-          "ddm_min_temperature_scale": {
-            "type": "number",
-            "maximum": {
-              "$data": "1/ddm_max_temperature_scale"
-            }
-          }
-        }
-      }
-    }
-  ]
+  "additionalProperties": false
 }

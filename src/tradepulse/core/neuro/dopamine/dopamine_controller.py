@@ -205,6 +205,22 @@ class DopamineController:
         self._temp_adam_t: int = 0
         self._release_gate_open: bool = True
         self._last_temperature: float = float(self.config["base_temperature"])
+        
+        # Cache frequently accessed config values for performance
+        self._cache_discount_gamma: float = float(self.config["discount_gamma"])
+        self._cache_learning_rate_v: float = float(self.config["learning_rate_v"])
+        self._cache_decay_rate: float = float(self.config["decay_rate"])
+        self._cache_burst_factor: float = float(self.config["burst_factor"])
+        self._cache_k: float = float(self.config["k"])
+        self._cache_theta: float = float(self.config["theta"])
+        self._cache_min_temperature: float = float(self.config["min_temperature"])
+        self._cache_temp_k: float = float(self.config["temp_k"])
+        self._cache_max_temp_multiplier: float = float(self.config["max_temp_multiplier"])
+        self._cache_neg_rpe_temp_gain: float = float(self.config.get("neg_rpe_temp_gain", 0.5))
+        self._cache_rpe_ema_beta: float = float(self.config["rpe_ema_beta"])
+        self._cache_invigoration_threshold: float = float(self.config["invigoration_threshold"])
+        self._cache_no_go_threshold: float = float(self.config["no_go_threshold"])
+        self._cache_hold_threshold: float = float(self.config["hold_threshold"])
 
     def _default_logger(self, name: str, value: float) -> None:
         try:
@@ -516,7 +532,7 @@ class DopamineController:
         value = self._ensure_finite("value", float(value))
         next_value = self._ensure_finite("next_value", float(next_value))
         gamma = (
-            float(self.config["discount_gamma"]) if discount_gamma is None else float(discount_gamma)
+            self._cache_discount_gamma if discount_gamma is None else float(discount_gamma)
         )
         self._ensure_finite("discount_gamma", gamma)
         
@@ -558,7 +574,7 @@ class DopamineController:
         if rpe is None:
             rpe = self.last_rpe
         rpe = self._ensure_finite("rpe", float(rpe))
-        lr = float(self.config["learning_rate_v"])
+        lr = self._cache_learning_rate_v
         old_v = self.value_estimate
         self.value_estimate = float(old_v + lr * rpe)
         self._log("dopamine_value_drift", self.value_estimate - old_v)
@@ -575,20 +591,18 @@ class DopamineController:
             raise ValueError("appetitive_state must be ≥ 0")
         appetitive_state = self._ensure_finite("appetitive_state", float(appetitive_state))
 
-        cfg = self.config
         rpe_val = self.last_rpe if rpe is None else float(rpe)
         rpe_val = self._ensure_finite("rpe", rpe_val)
 
         # phasic
-        self.phasic_level = float(max(0.0, rpe_val) * cfg["burst_factor"])
+        self.phasic_level = float(max(0.0, rpe_val) * self._cache_burst_factor)
 
         # tonic (EMA)
-        decay = float(cfg["decay_rate"])
-        self.tonic_level = float((1.0 - decay) * self.tonic_level + decay * (appetitive_state + self.phasic_level))
+        self.tonic_level = float((1.0 - self._cache_decay_rate) * self.tonic_level + self._cache_decay_rate * (appetitive_state + self.phasic_level))
         self._ensure_finite("tonic_level", self.tonic_level)
 
         # bounded logistic
-        x = float(cfg["k"]) * (self.tonic_level - float(cfg["theta"]))
+        x = self._cache_k * (self.tonic_level - self._cache_theta)
         x = max(min(x, 60.0), -60.0)
         sig = 1.0 / (1.0 + math.exp(-x))
         self.dopamine_level = float(min(1.0, max(0.0, sig)))
@@ -640,9 +654,9 @@ class DopamineController:
 
         self._last_temperature = temperature
 
-        go_threshold = float(self.config["invigoration_threshold"])
-        no_go_threshold = float(self.config["no_go_threshold"])
-        hold_threshold = float(self.config["hold_threshold"])
+        go_threshold = self._cache_invigoration_threshold
+        no_go_threshold = self._cache_no_go_threshold
+        hold_threshold = self._cache_hold_threshold
         if ddm_info is not None:
             go_threshold = ddm_info.go_threshold
             no_go_threshold = ddm_info.no_go_threshold
@@ -715,7 +729,7 @@ class DopamineController:
         return rpe, temperature, scaled_policy, extras
 
     def _update_rpe_statistics(self, rpe: float) -> float:
-        beta = float(self.config["rpe_ema_beta"])
+        beta = self._cache_rpe_ema_beta
         self._rpe_mean = (1.0 - beta) * self._rpe_mean + beta * rpe
         self._rpe_sq_mean = (1.0 - beta) * self._rpe_sq_mean + beta * (rpe * rpe)
         variance = max(0.0, self._rpe_sq_mean - self._rpe_mean * self._rpe_mean)
@@ -780,19 +794,19 @@ class DopamineController:
         da = self.dopamine_level if dopamine_signal is None else float(dopamine_signal)
         da = self._ensure_finite("dopamine_signal", da)
         base = self._adaptive_base_temperature if base_temperature is None else float(base_temperature)
-        tmin = float(self.config["min_temperature"])
-        k_t = float(self.config["temp_k"])
+        tmin = self._cache_min_temperature
+        k_t = self._cache_temp_k
 
         temp = base * math.exp(-k_t * da)
 
         # підвищення температури при негативному RPE (швидкий перехід до exploration)
-        neg_gain = float(self.config.get("neg_rpe_temp_gain", 0.5))
-        max_mul = float(self.config.get("max_temp_multiplier", 3.0))
+        neg_gain = self._cache_neg_rpe_temp_gain
+        max_mul = self._cache_max_temp_multiplier
         if self.last_rpe < 0:
             temp *= min(max_mul, 1.0 + neg_gain * max(0.0, -self.last_rpe))
 
         temp = max(tmin, temp)
-        temp = min(temp, base * float(self.config["max_temp_multiplier"]))
+        temp = min(temp, base * max_mul)
         if not math.isfinite(temp):
             raise ValueError("Temperature calculation produced a non-finite value")
         self._last_temperature = temp
@@ -802,17 +816,17 @@ class DopamineController:
     def check_invigoration(self, dopamine_signal: Optional[float] = None) -> bool:
         da = self.dopamine_level if dopamine_signal is None else float(dopamine_signal)
         da = min(1.0, max(0.0, da))
-        return bool(da > float(self.config["invigoration_threshold"]))
+        return bool(da > self._cache_invigoration_threshold)
 
     def check_suppress(self, dopamine_signal: Optional[float] = None) -> bool:
         da = self.dopamine_level if dopamine_signal is None else float(dopamine_signal)
         da = min(1.0, max(0.0, da))
-        return bool(da < float(self.config["no_go_threshold"]))
+        return bool(da < self._cache_no_go_threshold)
 
     def temperature_bounds(self) -> Tuple[float, float]:
         base = self._adaptive_base_temperature
-        tmin = float(self.config["min_temperature"])
-        return (tmin, base * float(self.config["max_temp_multiplier"]))
+        tmin = self._cache_min_temperature
+        return (tmin, base * self._cache_max_temp_multiplier)
 
     # ---------- meta-adapt ----------
 
