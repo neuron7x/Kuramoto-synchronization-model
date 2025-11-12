@@ -275,7 +275,7 @@ function clamp(value: number, min: number, max: number): number {
 
 function convertTimeframeToMinutes(timeframe: string): number | null {
   const match = timeframe.match(/^(\d+)([smhdw])$/i)
-  if (!match) {
+  if (!match || !match[1] || !match[2]) {
     return null
   }
   const amount = Number(match[1])
@@ -299,7 +299,7 @@ function convertTimeframeToMinutes(timeframe: string): number | null {
 
 function describeTimeframe(timeframe: string): string | null {
   const match = timeframe.match(/^(\d+)([smhdw])$/i)
-  if (!match) {
+  if (!match || !match[1] || !match[2]) {
     return null
   }
   const amount = Number(match[1])

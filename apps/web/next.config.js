@@ -60,13 +60,63 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
+
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [],
+  },
+
+  // Webpack optimization
+  webpack: (config, { dev, isServer }) => {
+    // Optimize bundle size
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          commons: {
+            name: 'commons',
+            chunks: 'all',
+            minChunks: 2,
+          },
+          lib: {
+            test: /[\\/]node_modules[\\/]/,
+            name(module) {
+              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1]
+              return `npm.${packageName?.replace('@', '')}`
+            },
+          },
+        },
+      }
+    }
+    return config
+  },
+
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: securityHeaders,
       },
+      {
+        source: '/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ]
+  },
+
+  // Environment variables to expose to the client
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || '1.0.0',
   },
 }
 
