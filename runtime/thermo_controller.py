@@ -1124,7 +1124,7 @@ class ThermoController:
         return self.bottleneck_edge
 
     def get_topology_id(self) -> str:
-        digest = hashlib.sha1()
+        digest = hashlib.sha256()
         for src, dst, bond in sorted(self.current_topology):
             digest.update(f"{src}->{dst}:{bond}".encode())
         return digest.hexdigest()

@@ -310,8 +310,9 @@ class ClickHouseSLAManager:
             SLAMetric(
                 name="ingest_lag_seconds",
                 query=(
+                    # Safe: fully_qualified_name is validated via _ensure_identifier in TimeSeriesSchema
                     "SELECT max(toUnixTimestamp(now64(6)) - toUnixTimestamp(timestamp)) AS ingest_lag "
-                    f"FROM {self._schema.fully_qualified_name}"
+                    f"FROM {self._schema.fully_qualified_name}"  # nosec B608 - validated identifier
                 ),
                 threshold_ms=5_000.0,
                 description="Ingestion lag must remain under five seconds",

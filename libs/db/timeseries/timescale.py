@@ -256,8 +256,9 @@ class TimescaleSLAManager:
             SLAMetric(
                 name="timescale_ingest_lag_seconds",
                 query=(
-                    "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "
-                    f"FROM {self._schema.table}"
+                    # Safe: timestamp_column and table are validated via _ensure_identifier in TimeSeriesSchema
+                    "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "  # nosec B608
+                    f"FROM {self._schema.table}"  # nosec B608 - validated identifier
                 ),
                 threshold_ms=6_000.0,
                 description="Ingestion lag must remain below six seconds",

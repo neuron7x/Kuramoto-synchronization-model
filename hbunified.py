@@ -31,7 +31,8 @@ def build_model(cfg: dict, device: str, A_tensor: torch.Tensor) -> HydroBrainV2:
     model = HydroBrainV2(cfg, A_tensor).to(device)
     weights_path = cfg.get("weights")
     if weights_path and os.path.exists(weights_path):
-        obj = torch.load(weights_path, map_location=device)
+        # Use weights_only=True to prevent arbitrary code execution
+        obj = torch.load(weights_path, map_location=device, weights_only=True)
         model.load_state_dict(obj["model"] if "model" in obj else obj, strict=False)
         logging.info("Loaded weights from %s", weights_path)
     return model

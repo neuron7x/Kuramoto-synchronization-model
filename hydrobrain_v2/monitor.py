@@ -25,7 +25,8 @@ class RealTimeMonitor:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model = HydroBrainV2(cfg, A_tensor).to(self.device).eval()
         if weights_path:
-            obj = torch.load(weights_path, map_location=self.device)
+            # Use weights_only=True to prevent arbitrary code execution
+            obj = torch.load(weights_path, map_location=self.device, weights_only=True)
             self.model.load_state_dict(obj["model"] if "model" in obj else obj, strict=False)
             logging.info("Weights loaded from %s", weights_path)
         self.validator = GBStandardValidator()
