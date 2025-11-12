@@ -155,7 +155,7 @@ class QLWEngine:
 
         # Metadata
         from typing import Any
-        
+
         meta: dict[str, Any] = {
             "dt": cfg.dt,
             "dx": cfg.dx,
