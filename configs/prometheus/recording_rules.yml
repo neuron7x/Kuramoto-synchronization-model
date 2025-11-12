@@ -1,0 +1,9 @@
+groups:
+  - name: qlw_recording
+    rules:
+      - record: qlw:phase_rmse:baseline
+        expr: avg_over_time(qlw_phase_rmse[1h])
+      - record: forbidden_ratio_p95
+        expr: quantile_over_time(0.95, forbidden_ratio[10m])
+      - record: solver_ms_per_step_p95
+        expr: histogram_quantile(0.95, rate(solver_ms_per_step_bucket[5m]))

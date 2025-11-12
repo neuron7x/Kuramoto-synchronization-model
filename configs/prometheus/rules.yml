@@ -1,0 +1,33 @@
+groups:
+  - name: tradepulse-qlw
+    rules:
+      - alert: QLWPhaseRMSEHigh
+        expr: avg_over_time(qlw_phase_rmse[10m]) > 1.15 * qlw:phase_rmse:baseline
+        for: 5m
+        labels:
+          severity: warning
+          silence: canary
+        annotations:
+          summary: "Phase RMSE elevated 15%+"
+      - alert: QLWQueueDrops
+        expr: increase(qlw_queue_drops_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ingress queue overflow"
+      - alert: QLWForbiddenSurge
+        expr: avg_over_time(qlw_forbidden_tau[5m]) > 1.3 * avg_over_time(qlw_forbidden_tau[60m])
+        for: 3m
+        labels:
+          severity: warning
+      - alert: QLWForbiddenP95High
+        expr: forbidden_ratio_p95 > 0.35
+        for: 5m
+        labels:
+          severity: warning
+      - alert: QLWSolverLatencyHigh
+        expr: solver_ms_per_step_p95 > 1.0
+        for: 5m
+        labels:
+          severity: critical

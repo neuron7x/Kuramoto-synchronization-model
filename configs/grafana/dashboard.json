@@ -1,0 +1,91 @@
+{
+  "title": "TradePulse QLW Dashboard",
+  "uid": "qlw-dashboard",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Stability Metrics",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(qlw_energy_mean[5m])",
+          "legendFormat": "Energy Mean"
+        },
+        {
+          "expr": "qlw_phase_rmse",
+          "legendFormat": "Phase RMSE"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "title": "Risk Envelope",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "qlw_forbidden_tau",
+          "legendFormat": "Tau Threshold"
+        },
+        {
+          "expr": "quantile_over_time(0.5, forbidden_ratio[10m])",
+          "legendFormat": "p50 Forbidden"
+        },
+        {
+          "expr": "quantile_over_time(0.95, forbidden_ratio[10m])",
+          "legendFormat": "p95 Forbidden"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "title": "Solver Performance",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(solver_ms_per_step_bucket[5m]))",
+          "legendFormat": "p95 Latency"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(solver_ms_per_step_bucket[5m]))",
+          "legendFormat": "p99 Latency"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "title": "Gate Triggers",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(qlw_hard_gate_total[5m])",
+          "legendFormat": "Hard Gates"
+        },
+        {
+          "expr": "qlw_soft_weight_penalty",
+          "legendFormat": "Soft Penalty"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      }
+    }
+  ]
+}
