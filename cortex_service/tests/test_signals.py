@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 import os
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -12,16 +12,34 @@ os.environ.setdefault("CORTEX__DATABASE__POOL_SIZE", "1")
 os.environ.setdefault("CORTEX__DATABASE__POOL_TIMEOUT", "30")
 
 from cortex_service.app.api import create_app
-from cortex_service.app.config import CortexSettings, DatabaseSettings, RegimeSettings, RiskSettings, ServiceMeta, SignalSettings
+from cortex_service.app.config import (
+    CortexSettings,
+    DatabaseSettings,
+    RegimeSettings,
+    RiskSettings,
+    ServiceMeta,
+    SignalSettings,
+)
 
 
 def _test_settings() -> CortexSettings:
     return CortexSettings(
         service=ServiceMeta(),
-        database=DatabaseSettings(url="sqlite+pysqlite:///:memory:", pool_size=1, pool_timeout=30, echo=False),
-        signals=SignalSettings(smoothing_factor=0.2, rescale_min=-1.0, rescale_max=1.0, volatility_floor=1e-6),
-        risk=RiskSettings(max_absolute_exposure=2.0, var_confidence=0.95, stress_scenarios=(0.8, 0.5)),
-        regime=RegimeSettings(decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1),
+        database=DatabaseSettings(
+            url="sqlite+pysqlite:///:memory:", pool_size=1, pool_timeout=30, echo=False
+        ),
+        signals=SignalSettings(
+            smoothing_factor=0.2,
+            rescale_min=-1.0,
+            rescale_max=1.0,
+            volatility_floor=1e-6,
+        ),
+        risk=RiskSettings(
+            max_absolute_exposure=2.0, var_confidence=0.95, stress_scenarios=(0.8, 0.5)
+        ),
+        regime=RegimeSettings(
+            decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1
+        ),
     )
 
 
@@ -45,8 +63,22 @@ def test_signals_endpoint_computes_ensemble() -> None:
         json={
             "as_of": datetime.now(tz=UTC).isoformat(),
             "features": [
-                {"instrument": "AAPL", "name": "momentum", "value": 1.3, "mean": 0.2, "std": 0.5, "weight": 1.5},
-                {"instrument": "AAPL", "name": "volatility", "value": 0.4, "mean": 0.3, "std": 0.2, "weight": 0.7},
+                {
+                    "instrument": "AAPL",
+                    "name": "momentum",
+                    "value": 1.3,
+                    "mean": 0.2,
+                    "std": 0.5,
+                    "weight": 1.5,
+                },
+                {
+                    "instrument": "AAPL",
+                    "name": "volatility",
+                    "value": 0.4,
+                    "mean": 0.3,
+                    "std": 0.2,
+                    "weight": 0.7,
+                },
             ],
         },
     )
@@ -95,13 +127,21 @@ def test_regime_endpoint_persists_state() -> None:
 
     first = client.post(
         "/regime",
-        json={"feedback": 0.4, "volatility": 0.2, "as_of": datetime.now(tz=UTC).isoformat()},
+        json={
+            "feedback": 0.4,
+            "volatility": 0.2,
+            "as_of": datetime.now(tz=UTC).isoformat(),
+        },
     )
     assert first.status_code == 200
 
     second = client.post(
         "/regime",
-        json={"feedback": -0.3, "volatility": 0.1, "as_of": datetime.now(tz=UTC).isoformat()},
+        json={
+            "feedback": -0.3,
+            "volatility": 0.1,
+            "as_of": datetime.now(tz=UTC).isoformat(),
+        },
     )
     assert second.status_code == 200
     assert second.json()["label"] in {"bullish", "bearish", "neutral", "indeterminate"}

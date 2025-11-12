@@ -45,7 +45,8 @@ def create_db_engine(settings: CortexSettings) -> Engine:
         if tls is None:
             raise ConfigurationError("PostgreSQL connections require TLS credentials")
         params = parse_qs(parsed.query, keep_blank_values=True)
-        sslmode = (params.get("sslmode") or [None])[-1]
+        sslmode_list = params.get("sslmode", [])
+        sslmode = sslmode_list[-1] if sslmode_list else None
         if sslmode not in {"verify-full", "verify-ca"}:
             raise ConfigurationError(
                 "PostgreSQL connections must set sslmode to verify-full or verify-ca"

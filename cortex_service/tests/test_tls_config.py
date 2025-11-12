@@ -47,7 +47,9 @@ def test_create_db_engine_requires_tls(tmp_path: Path) -> None:
         create_db_engine(settings)
 
 
-def test_create_db_engine_applies_tls_arguments(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_create_db_engine_applies_tls_arguments(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     tls = _write_tls_files(tmp_path)
     database = DatabaseSettings(
         url="postgresql+psycopg://cortex@cortex-db:5432/cortex?sslmode=verify-full",
