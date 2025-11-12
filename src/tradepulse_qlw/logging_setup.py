@@ -4,7 +4,6 @@ import hashlib
 import logging
 import logging.config
 import os
-from pathlib import Path
 
 try:
     import yaml

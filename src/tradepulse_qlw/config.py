@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
 from typing import Literal
+
+from pydantic import BaseModel, Field
 
 ForbiddenMode = Literal["static", "quantile", "mad", "pid"]
 

@@ -1,20 +1,20 @@
 """FastAPI service for TradePulse-QLW with rate limiting and audit."""
 
 from __future__ import annotations
+
 import hashlib
 import time
-from typing import Any
 
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import ORJSONResponse
-from pydantic import BaseModel
 from prometheus_client import make_asgi_app
+from pydantic import BaseModel
 
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
-    from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
+    from slowapi.util import get_remote_address
 
     SLOWAPI_AVAILABLE = True
 except ImportError:

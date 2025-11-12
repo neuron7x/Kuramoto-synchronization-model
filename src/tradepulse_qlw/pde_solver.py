@@ -1,10 +1,13 @@
 from __future__ import annotations
+
 import numpy as np
 
 try:
-    from numba import jit, cuda
+    from numba import cuda, jit
 except Exception:
-    jit = lambda f: f  # no-op
+
+    def jit(f):  # no-op
+        return f
 
     cuda = None
 

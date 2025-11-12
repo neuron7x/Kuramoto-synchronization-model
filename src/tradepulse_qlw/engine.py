@@ -1,14 +1,15 @@
 """Main QLW engine for market dynamics analysis."""
 
 from __future__ import annotations
+
 import numpy as np
 from scipy.signal import savgol_filter
 
 from .config import QLWConfig
-from .mdfa import hurst_mfdfa, gamma_from_h
+from .mdfa import gamma_from_h, hurst_mfdfa
 from .pde_solver import NewmarkWaveSolver
-from .types import EngineResult
 from .risk.adaptive_tau import PIDTau
+from .types import EngineResult
 
 
 class QLWEngine:
