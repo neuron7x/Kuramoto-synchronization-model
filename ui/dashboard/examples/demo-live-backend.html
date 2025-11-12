@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradePulse Dashboard - Live Backend Demo</title>
+    <style id="dashboard-styles">
+        /* Styles will be injected here */
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        // Import dashboard core
+        import { renderDashboard } from '../src/core/index.js';
+
+        // Configuration
+        const config = {
+            // Parse URL parameters for configuration
+            route: new URLSearchParams(window.location.search).get('route') || 'overview',
+            asyncMode: true,
+            enableWebSocket: true,
+            // Override API endpoints if needed (for testing)
+            apiBaseUrl: new URLSearchParams(window.location.search).get('api') || undefined,
+            apiWsUrl: new URLSearchParams(window.location.search).get('ws') || undefined,
+        };
+
+        // Render dashboard
+        const { html, styles } = renderDashboard(config);
+
+        // Inject styles
+        document.getElementById('dashboard-styles').textContent = styles;
+
+        // Inject HTML
+        document.getElementById('app').innerHTML = html;
+
+        // Log configuration for debugging
+        console.info('[Demo] Dashboard configuration:', config);
+        console.info('[Demo] Dashboard rendered successfully');
+
+        // Add demo controls
+        addDemoControls();
+
+        function addDemoControls() {
+            const controls = document.createElement('div');
+            controls.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: rgba(15, 23, 42, 0.95);
+                border: 1px solid rgba(99, 179, 237, 0.3);
+                border-radius: 8px;
+                padding: 1rem;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(10px);
+                z-index: 9999;
+                max-width: 300px;
+            `;
+
+            controls.innerHTML = `
+                <h3 style="margin: 0 0 0.5rem 0; color: #06b6d4; font-size: 0.875rem;">Demo Controls</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button id="demo-refresh" style="
+                        padding: 0.5rem;
+                        background: #06b6d4;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 0.75rem;
+                    ">Force Refresh Data</button>
+                    <button id="demo-toggle-ws" style="
+                        padding: 0.5rem;
+                        background: #0891b2;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 0.75rem;
+                    ">Toggle WebSocket</button>
+                    <button id="demo-clear-cache" style="
+                        padding: 0.5rem;
+                        background: #f59e0b;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 0.75rem;
+                    ">Clear Cache</button>
+                    <div style="
+                        margin-top: 0.5rem;
+                        padding: 0.5rem;
+                        background: rgba(6, 182, 212, 0.1);
+                        border-radius: 4px;
+                        font-size: 0.75rem;
+                        color: rgba(240, 249, 255, 0.9);
+                    ">
+                        <strong>Status:</strong>
+                        <div id="demo-status">Initializing...</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(controls);
+
+            // Wire up demo controls
+            import { getProgressiveEnhancement, getDataSource } from '../src/core/index.js';
+
+            document.getElementById('demo-refresh').addEventListener('click', async () => {
+                const pe = getProgressiveEnhancement();
+                await pe.loadCurrentView();
+                updateStatus('Data refreshed');
+            });
+
+            document.getElementById('demo-toggle-ws').addEventListener('click', () => {
+                const ds = getDataSource();
+                if (ds.isConnected()) {
+                    ds.disconnect();
+                    updateStatus('WebSocket disconnected');
+                } else {
+                    ds.connectWebSocket().then(() => {
+                        updateStatus('WebSocket connected');
+                    }).catch(() => {
+                        updateStatus('WebSocket connection failed');
+                    });
+                }
+            });
+
+            document.getElementById('demo-clear-cache').addEventListener('click', () => {
+                const pe = getProgressiveEnhancement();
+                pe.stateManager.clearCache();
+                updateStatus('Cache cleared');
+            });
+
+            function updateStatus(message) {
+                const statusEl = document.getElementById('demo-status');
+                if (statusEl) {
+                    statusEl.textContent = message;
+                    setTimeout(() => {
+                        statusEl.textContent = 'Ready';
+                    }, 3000);
+                }
+            }
+
+            // Monitor connection status
+            setInterval(() => {
+                const ds = getDataSource();
+                const statusEl = document.getElementById('demo-status');
+                if (statusEl && ds) {
+                    const connected = ds.isConnected();
+                    if (statusEl.textContent === 'Initializing...' || statusEl.textContent === 'Ready') {
+                        statusEl.textContent = connected ? 'Connected ✓' : 'Disconnected';
+                    }
+                }
+            }, 2000);
+        }
+
+        // Add URL parameter helper info
+        console.info(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TradePulse Dashboard - Live Backend Demo
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+URL Parameters:
+  ?route=overview       - Set initial route
+  ?api=<url>           - Set REST API base URL
+  ?ws=<url>            - Set WebSocket URL
+
+Examples:
+  ?route=positions
+  ?route=orders
+  ?api=https://api.example.com/v1
+  ?ws=wss://api.example.com/v1/ws
+
+Current Configuration:
+  Route: ${config.route}
+  Async Mode: ${config.asyncMode}
+  WebSocket: ${config.enableWebSocket}
+  API Base: ${config.apiBaseUrl || 'auto-detected'}
+  WS URL: ${config.apiWsUrl || 'auto-detected'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `);
+    </script>
+</body>
+</html>
