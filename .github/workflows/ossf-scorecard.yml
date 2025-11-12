@@ -1,0 +1,164 @@
+name: OSSF Scorecard - Supply Chain Security
+
+permissions:
+  security-events: write
+  contents: read
+  actions: read
+  id-token: write
+  issues: write
+  pull-requests: write
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ossf-scorecard-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ossf-scorecard:
+    name: OSSF Scorecard Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Run OSSF Scorecard
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: ossf-scorecard-results.sarif
+          results_format: sarif
+          repo_token: ${{ secrets.SCORECARD_TOKEN || secrets.GITHUB_TOKEN }}
+          publish_results: true
+
+      - name: Upload SARIF results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ossf-scorecard-results.sarif
+
+      - name: Upload scorecard results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ossf-scorecard-results
+          path: ossf-scorecard-results.sarif
+
+      - name: Parse scorecard results and enforce thresholds
+        run: |
+          # Install jq for JSON parsing
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          # Convert SARIF to JSON for easier parsing
+          if [ -f ossf-scorecard-results.sarif ]; then
+            # Count high severity findings
+            HIGH_SEVERITY=$(jq '[.runs[].results[] | select(.level == "error")] | length' ossf-scorecard-results.sarif 2>/dev/null || echo "0")
+            
+            echo "OSSF Scorecard Analysis Complete"
+            echo "=================================="
+            echo "High severity findings: $HIGH_SEVERITY"
+            
+            # Fail if critical security issues found
+            if [ "$HIGH_SEVERITY" -gt 0 ]; then
+              echo ""
+              echo "❌ OSSF Scorecard found $HIGH_SEVERITY high-severity supply chain security issues"
+              echo "Please review the Security tab for details and remediate before merging."
+              echo ""
+              echo "Common issues to check:"
+              echo "  - Branch protection not enabled"
+              echo "  - Missing security policy (SECURITY.md)"
+              echo "  - Dangerous workflow patterns"
+              echo "  - Missing dependency pinning"
+              echo "  - Token permissions too broad"
+              exit 1
+            else
+              echo "✅ No high-severity supply chain security issues found"
+            fi
+          else
+            echo "⚠️  Scorecard results file not found"
+            exit 1
+          fi
+
+      - name: Post scorecard summary to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            let sarifData;
+            try {
+              sarifData = JSON.parse(fs.readFileSync('ossf-scorecard-results.sarif', 'utf8'));
+            } catch (error) {
+              console.log('Could not read SARIF file');
+              return;
+            }
+            
+            const results = sarifData.runs[0].results || [];
+            const criticalCount = results.filter(r => r.level === 'error').length;
+            const warningCount = results.filter(r => r.level === 'warning').length;
+            
+            const emoji = criticalCount === 0 ? '✅' : '❌';
+            
+            const body = [
+              `## ${emoji} OSSF Scorecard - Supply Chain Security`,
+              '',
+              '### Summary',
+              `- **Critical Issues:** ${criticalCount}`,
+              `- **Warnings:** ${warningCount}`,
+              '',
+              criticalCount === 0 
+                ? '✅ **No critical supply chain security issues detected**' 
+                : '❌ **Action Required:** Critical supply chain security issues found. Review Security tab.',
+              '',
+              '### Scorecard Checks',
+              'OSSF Scorecard evaluates:',
+              '- Branch protection configuration',
+              '- Security policy presence',
+              '- Dependency update practices',
+              '- CI/CD security best practices',
+              '- Code review requirements',
+              '- Signed commits and releases',
+              '',
+              '[View full results in Security tab →](https://github.com/' + owner + '/' + repo + '/security/code-scanning)',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`
+            ].join('\n');
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('OSSF Scorecard - Supply Chain Security')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body
+              });
+            }
