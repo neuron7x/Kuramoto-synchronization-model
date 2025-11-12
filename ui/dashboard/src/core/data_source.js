@@ -318,7 +318,9 @@ export class DataSourceClient {
         try {
           callback(data);
         } catch (error) {
-          console.error('Error in WebSocket listener for type:', type, error);
+          // Sanitize type to prevent log injection - only log if it's a string and alphanumeric
+          const sanitizedType = typeof type === 'string' && /^[a-zA-Z0-9_-]+$/.test(type) ? type : '<invalid>';
+          console.error('Error in WebSocket listener for type:', sanitizedType, error);
         }
       });
     }

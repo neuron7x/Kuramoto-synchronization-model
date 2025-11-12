@@ -22,7 +22,8 @@ export function generateHydrationScript(options = {}) {
   };
 
   const configJson = JSON.stringify(config, null, 2);
-  const modulePathEscaped = modulePath.replace(/'/g, "\\'");
+  // Properly escape backslashes first, then single quotes to prevent injection
+  const modulePathEscaped = modulePath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
   return `
     <script type="module">
