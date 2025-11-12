@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -26,6 +28,19 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 LOGGER = logging.getLogger("record_market_data")
+
+
+class ConfigurationError(RuntimeError):
+    """Raised when the runtime configuration is invalid."""
+
+
+def safe_fsync(fd: int) -> None:
+    """Best-effort fsync that tolerates unsupported filesystems."""
+
+    try:
+        os.fsync(fd)
+    except OSError as exc:  # pragma: no cover - platform dependent
+        LOGGER.debug("fsync failed for descriptor %s: %s", fd, exc)
 
 
 def env_float(name: str, default: float) -> float:
@@ -61,8 +76,10 @@ class Config:
     rest_page_size: int = env_int("MARKET_REST_PAGE_SIZE", 500)
     rest_retry_attempts: int = env_int("MARKET_REST_RETRIES", 5)
     rest_retry_base_delay: float = env_float("MARKET_REST_RETRY_BASE_DELAY", 1.0)
+    rest_max_backoff: float = env_float("MARKET_REST_MAX_BACKOFF", 30.0)
     ws_max_retries: int = env_int("MARKET_WS_MAX_RETRIES", 10)
     ws_reconnect_base: float = env_float("MARKET_WS_RECONNECT_BASE", 2.0)
+    ws_max_backoff: float = env_float("MARKET_WS_MAX_BACKOFF", 60.0)
     schema_required_fields: tuple[str, ...] = tuple(
         field.strip()
         for field in os.environ.get("MARKET_SCHEMA_FIELDS", "timestamp,price,volume").split(",")
@@ -81,16 +98,40 @@ class Config:
     def __post_init__(self) -> None:
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        self._normalize()
+        self._validate()
+
+    def _normalize(self) -> None:
+        schema = tuple(dict.fromkeys(self.schema_required_fields))
+        if not schema:
+            schema = (self.timestamp_field, self.price_field, self.volume_field)
+        if self.timestamp_field not in schema:
+            schema = schema + (self.timestamp_field,)
+        self.schema_required_fields = schema
+        if not self.websocket_sign_path.startswith("/"):
+            self.websocket_sign_path = f"/{self.websocket_sign_path.lstrip('/')}"
+
+    def _validate(self) -> None:
+        if not self.api_key or not self.api_secret:
+            raise ConfigurationError("API key and API secret must be provided")
+        if self.rate_limit <= 0:
+            raise ConfigurationError("Rate limit must be positive")
+        if self.rate_period <= 0:
+            raise ConfigurationError("Rate period must be positive")
+        if self.rest_retry_attempts < 0:
+            raise ConfigurationError("REST retry attempts must be non-negative")
+        if self.rest_retry_base_delay <= 0:
+            raise ConfigurationError("REST base delay must be positive")
+        if self.rest_max_backoff <= 0:
+            raise ConfigurationError("REST max backoff must be positive")
+        if self.ws_reconnect_base <= 0:
+            raise ConfigurationError("WebSocket reconnect base must be positive")
+        if self.ws_max_backoff <= 0:
+            raise ConfigurationError("WebSocket max backoff must be positive")
 
 
 class RateLimiter:
     def __init__(self, max_calls: int, period: float) -> None:
-        if max_calls <= 0:
-            LOGGER.warning("Rate limiter max_calls must be positive, defaulting to 1")
-            max_calls = 1
-        if period <= 0:
-            LOGGER.warning("Rate limiter period must be positive, defaulting to 1 second")
-            period = 1.0
         self.max_calls = max_calls
         self.period = period
         self._tokens = max_calls
@@ -104,7 +145,8 @@ class RateLimiter:
                 if self._tokens >= 1:
                     self._tokens -= 1
                     return
-                wait_time = max(self.period / self.max_calls, 0.01)
+                deficit = 1 - self._tokens
+                wait_time = max(deficit * (self.period / self.max_calls), 0.01)
             await asyncio.sleep(wait_time)
 
     def _refill(self) -> None:
@@ -115,7 +157,7 @@ class RateLimiter:
         refill = elapsed * (self.max_calls / self.period)
         if refill > 0:
             self._tokens = min(self.max_calls, self._tokens + refill)
-            self._updated_at = now
+        self._updated_at = now
 
 
 class TimeSynchronizer:
@@ -124,8 +166,12 @@ class TimeSynchronizer:
 
     def set_offset(self, server_ts_ms: int) -> None:
         local_ts_ms = int(time.time() * 1000)
-        self.offset = (server_ts_ms - local_ts_ms) / 1000.0
-        LOGGER.info("Time drift corrected by %.3f seconds", self.offset)
+        drift = (server_ts_ms - local_ts_ms) / 1000.0
+        self.offset = drift
+        if abs(drift) > 5:
+            LOGGER.warning("Large time drift detected (%.3fs)", drift)
+        else:
+            LOGGER.info("Time drift corrected by %.3f seconds", drift)
 
     def now_ms(self) -> int:
         return int((time.time() + self.offset) * 1000)
@@ -187,13 +233,15 @@ class SessionState:
         tmp_path = self.path.with_suffix(".tmp")
         with tmp_path.open("w", encoding="utf-8") as handle:
             json.dump({"last_timestamp": self.last_timestamp}, handle)
+            handle.flush()
+            safe_fsync(handle.fileno())
         tmp_path.replace(self.path)
 
 
 class RecordValidator:
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, initial_timestamp: Optional[float] = None) -> None:
         self.config = config
-        self.last_timestamp: Optional[float] = None
+        self.last_timestamp: Optional[float] = initial_timestamp
 
     def validate(self, record: Dict[str, Any]) -> Dict[str, Any]:
         missing = [field for field in self.config.schema_required_fields if field not in record]
@@ -204,21 +252,31 @@ class RecordValidator:
             timestamp = float(timestamp_value)
         except (ValueError, TypeError) as exc:
             raise ValueError("Timestamp field must be numeric") from exc
+        if timestamp <= 0:
+            raise ValueError("Timestamp must be positive")
         if self.last_timestamp is not None and timestamp < self.last_timestamp:
             raise ValueError(
                 f"Timestamp regression detected: {timestamp} < {self.last_timestamp}"
             )
         price_value = record.get(self.config.price_field)
         volume_value = record.get(self.config.volume_field)
-        for name, value in ((self.config.price_field, price_value), (self.config.volume_field, volume_value)):
+        normalized = dict(record)
+        for name, value in (
+            (self.config.price_field, price_value),
+            (self.config.volume_field, volume_value),
+        ):
             if value is None:
                 continue
             try:
-                float(value)
+                numeric = float(value)
             except (TypeError, ValueError) as exc:
                 raise ValueError(f"Field {name} must be numeric") from exc
+            if numeric < 0:
+                raise ValueError(f"Field {name} must be non-negative")
+            normalized[name] = numeric
+        normalized[self.config.timestamp_field] = timestamp
         self.last_timestamp = timestamp
-        return record
+        return normalized
 
 
 async def fetch_server_time(session: aiohttp.ClientSession, config: Config, rate_limiter: RateLimiter) -> Optional[int]:
@@ -232,16 +290,17 @@ async def fetch_server_time(session: aiohttp.ClientSession, config: Config, rate
             if server_time is None:
                 LOGGER.warning("Server time response missing time field: %s", payload)
                 return None
-            return int(server_time)
+            server_time_int = int(server_time)
+            if server_time_int <= 0:
+                LOGGER.warning("Server time response invalid: %s", server_time)
+                return None
+            return server_time_int
     except Exception as exc:  # pylint: disable=broad-except
         LOGGER.error("Failed to fetch server time: %s", exc)
         return None
 
 
 def sign_request(config: Config, timestamp_ms: int, method: str, path: str, body: str = "") -> str:
-    import hmac
-    import hashlib
-
     message = f"{timestamp_ms}{method.upper()}{path}{body}".encode("utf-8")
     secret = config.api_secret.encode("utf-8")
     signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
@@ -255,58 +314,65 @@ async def signed_get(
     time_sync: TimeSynchronizer,
     path: str,
     params: Optional[Dict[str, Any]] = None,
-    attempt: int = 0,
 ) -> Any:
-    await rate_limiter.acquire()
-    timestamp_ms = time_sync.now_ms()
     query = ""
     if params:
         filtered = {key: value for key, value in params.items() if value is not None}
         query = "&".join(
             f"{key}={quote(str(value), safe='')}" for key, value in sorted(filtered.items())
         )
-    signature = sign_request(config, timestamp_ms, "GET", path, query)
-    headers = {
-        "API-KEY": config.api_key,
-        "API-TIMESTAMP": str(timestamp_ms),
-        "API-SIGNATURE": signature,
-    }
     url = f"{config.rest_url}{path}"
     if query:
         url = f"{url}?{query}"
-    try:
-        async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
-            if response.status == 429:
-                raise aiohttp.ClientResponseError(
-                    response.request_info, response.history, status=response.status, message="Rate limited"
-                )
-            response.raise_for_status()
-            return await response.json()
-    except aiohttp.ClientResponseError as exc:
-        if attempt >= config.rest_retry_attempts:
-            LOGGER.error("GET %s failed after %s attempts: %s", url, attempt + 1, exc)
-            raise
-        delay = backoff_delay(config.rest_retry_base_delay, attempt)
-        LOGGER.warning("GET %s failed (status=%s). Retrying in %.2fs", url, exc.status, delay)
-        await asyncio.sleep(delay)
-        return await signed_get(
-            session, config, rate_limiter, time_sync, path, params, attempt + 1
-        )
-    except Exception as exc:  # pylint: disable=broad-except
-        if attempt >= config.rest_retry_attempts:
-            LOGGER.error("Unexpected error during GET %s: %s", url, exc)
-            raise
-        delay = backoff_delay(config.rest_retry_base_delay, attempt)
-        LOGGER.warning("GET %s raised %s. Retrying in %.2fs", url, exc, delay)
-        await asyncio.sleep(delay)
-        return await signed_get(
-            session, config, rate_limiter, time_sync, path, params, attempt + 1
-        )
+    for attempt in range(config.rest_retry_attempts + 1):
+        await rate_limiter.acquire()
+        timestamp_ms = time_sync.now_ms()
+        signature = sign_request(config, timestamp_ms, "GET", path, query)
+        headers = {
+            "API-KEY": config.api_key,
+            "API-TIMESTAMP": str(timestamp_ms),
+            "API-SIGNATURE": signature,
+        }
+        try:
+            async with session.get(
+                url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)
+            ) as response:
+                if response.status == 429:
+                    raise aiohttp.ClientResponseError(
+                        response.request_info,
+                        response.history,
+                        status=response.status,
+                        message="Rate limited",
+                    )
+                response.raise_for_status()
+                return await response.json()
+        except aiohttp.ClientResponseError as exc:
+            if attempt == config.rest_retry_attempts:
+                LOGGER.error("GET %s failed after %s attempts: %s", url, attempt + 1, exc)
+                raise
+            delay = backoff_delay(
+                config.rest_retry_base_delay, attempt, config.rest_max_backoff
+            )
+            LOGGER.warning(
+                "GET %s failed (status=%s). Retrying in %.2fs", url, exc.status, delay
+            )
+            await asyncio.sleep(delay)
+        except Exception as exc:  # pylint: disable=broad-except
+            if attempt == config.rest_retry_attempts:
+                LOGGER.error("Unexpected error during GET %s: %s", url, exc, exc_info=True)
+                raise
+            delay = backoff_delay(
+                config.rest_retry_base_delay, attempt, config.rest_max_backoff
+            )
+            LOGGER.warning("GET %s raised %s. Retrying in %.2fs", url, exc, delay, exc_info=True)
+            await asyncio.sleep(delay)
+    raise RuntimeError("signed_get exhausted retries without raising")
 
 
-def backoff_delay(base: float, attempt: int) -> float:
+def backoff_delay(base: float, attempt: int, max_delay: float) -> float:
     jitter = random.uniform(0, base)
-    return (2 ** attempt) * base + jitter
+    exponential = (2 ** attempt) * base
+    return min(exponential + jitter, max_delay)
 
 
 async def fetch_historical_data(
@@ -353,7 +419,11 @@ async def fetch_historical_data(
             except ValueError as exc:
                 LOGGER.warning("Skipping invalid historical record: %s", exc)
                 continue
-            await writer.write(validated)
+            try:
+                await writer.write(validated)
+            except OSError as exc:
+                LOGGER.error("Failed to persist historical record: %s", exc)
+                raise
             timestamp_value = float(validated[config.timestamp_field])
             last_ts = timestamp_value
             state.update(timestamp_value)
@@ -366,20 +436,25 @@ async def fetch_historical_data(
 
 
 class JsonlWriter:
-    def __init__(self, path: Path, indent: Optional[int] = None) -> None:
+    def __init__(self, path: Path, indent: Optional[int] = None, sort_keys: bool = True) -> None:
         self.path = path
         self.indent = indent
+        self.sort_keys = sort_keys
+        self._separators = (",", ": ") if indent else (",", ":")
         self._lock = asyncio.Lock()
 
     async def write(self, record: Dict[str, Any]) -> None:
         async with self._lock:
-            if self.indent is not None:
-                pretty = json.dumps(record, ensure_ascii=False, indent=self.indent)
-                line = " ".join(pretty.split())
-            else:
-                line = json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+            line = json.dumps(
+                record,
+                ensure_ascii=False,
+                separators=self._separators,
+                sort_keys=self.sort_keys,
+            )
             with self.path.open("a", encoding="utf-8") as handle:
                 handle.write(f"{line}\n")
+                handle.flush()
+                safe_fsync(handle.fileno())
 
 
 async def websocket_consumer(
@@ -440,12 +515,15 @@ async def websocket_consumer(
             LOGGER.info("WebSocket consumer cancelled")
             raise
         except Exception as exc:  # pylint: disable=broad-except
+            if isinstance(exc, OSError):
+                LOGGER.error("Unrecoverable I/O error: %s", exc)
+                raise
             retry += 1
             if retry > config.ws_max_retries and config.ws_max_retries >= 0:
                 LOGGER.error("Exceeded maximum WebSocket retries: %s", exc)
                 await asyncio.sleep(5)
                 retry = 0
-            delay = min(60, backoff_delay(config.ws_reconnect_base, retry))
+            delay = backoff_delay(config.ws_reconnect_base, retry, config.ws_max_backoff)
             LOGGER.warning("WebSocket error (%s). Reconnecting in %.2fs", exc, delay)
             await asyncio.sleep(delay)
 
@@ -462,7 +540,11 @@ async def process_record(
     except ValueError as exc:
         LOGGER.warning("Skipping invalid realtime record: %s", exc)
         return
-    await writer.write(validated)
+    try:
+        await writer.write(validated)
+    except OSError as exc:
+        LOGGER.error("Failed to persist realtime record: %s", exc)
+        raise
     timestamp_value = float(validated[config.timestamp_field])
     state.update(timestamp_value)
 
@@ -472,9 +554,7 @@ async def run() -> None:
     rate_limiter = RateLimiter(config.rate_limit, config.rate_period)
     time_sync = TimeSynchronizer()
     state = SessionState(config.state_path, config.output_path, config.timestamp_field)
-    validator = RecordValidator(config)
-    if state.last_timestamp is not None:
-        validator.last_timestamp = state.last_timestamp
+    validator = RecordValidator(config, initial_timestamp=state.last_timestamp)
     writer = JsonlWriter(config.output_path, indent=config.json_indent)
 
     stop_event = asyncio.Event()
@@ -511,3 +591,6 @@ if __name__ == "__main__":
         asyncio.run(run())
     except KeyboardInterrupt:
         LOGGER.info("Interrupted by user")
+    except ConfigurationError as exc:
+        LOGGER.error("Configuration error: %s", exc)
+        sys.exit(1)
