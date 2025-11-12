@@ -1205,6 +1205,7 @@ export function renderDashboard(options = {}) {
         enableWebSocket: options.enableWebSocket !== false,
         baseUrl: options.apiBaseUrl,
         wsUrl: options.apiWsUrl,
+        modulePath: options.modulePath,
       })
     : '';
 

@@ -9,10 +9,11 @@
  * @param {boolean} options.enableWebSocket - Enable WebSocket connections
  * @param {string} options.baseUrl - Base API URL
  * @param {string} options.wsUrl - WebSocket URL
+ * @param {string} options.modulePath - Path to the dashboard module (default: './src/core/index.js')
  * @returns {string} Hydration script as HTML
  */
 export function generateHydrationScript(options = {}) {
-  const { enableWebSocket = true, baseUrl = '', wsUrl = '' } = options;
+  const { enableWebSocket = true, baseUrl = '', wsUrl = '', modulePath = './src/core/index.js' } = options;
 
   const config = {
     enableWebSocket,
@@ -21,6 +22,7 @@ export function generateHydrationScript(options = {}) {
   };
 
   const configJson = JSON.stringify(config, null, 2);
+  const modulePathEscaped = modulePath.replace(/'/g, "\\'");
 
   return `
     <script type="module">
@@ -34,7 +36,7 @@ export function generateHydrationScript(options = {}) {
       window.tp.hydrationConfig = hydrationConfig;
 
       // Import and initialize progressive enhancement
-      import { initProgressiveEnhancement, createDataSource } from './src/core/index.js';
+      import { initProgressiveEnhancement, createDataSource } from '${modulePathEscaped}';
       
       async function hydrateViews() {
         try {

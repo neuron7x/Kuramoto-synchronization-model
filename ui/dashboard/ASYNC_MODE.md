@@ -232,6 +232,7 @@ const { html, styles } = renderDashboard({
 | `enableWebSocket` | boolean | true | Enable WebSocket for real-time updates |
 | `apiBaseUrl` | string | auto-detected | Base URL for REST API |
 | `apiWsUrl` | string | auto-detected | WebSocket URL |
+| `modulePath` | string | './src/core/index.js' | Path to dashboard module for client-side imports |
 
 ## Testing
 
