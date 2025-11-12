@@ -134,6 +134,8 @@ export { renderSignalsView } from '../views/signals.js';
 export { renderOverviewView } from '../views/overview.js';
 export { renderCommunityView } from '../views/community.js';
 export { renderMonitoringView } from '../views/monitoring.js';
+export { DataSourceClient, createDataSource, getDataSource, resetDataSource } from './data_source.js';
+export { ProgressiveEnhancement, createProgressiveEnhancement, getProgressiveEnhancement, initProgressiveEnhancement } from './progressive_enhancement.js';
 
 export class DashboardState {
   constructor({ strategies = [], backtests = [] } = {}) {

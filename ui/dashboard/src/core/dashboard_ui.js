@@ -11,6 +11,7 @@ import { BASE_STYLES } from '../styles/base.css.js';
 import { TABLE_STYLES } from '../styles/table.css.js';
 import { CHART_STYLES } from '../styles/chart.css.js';
 import { ONBOARDING_STYLES } from '../styles/onboarding.css.js';
+import { NOTIFICATION_STYLES } from '../styles/notifications.css.js';
 import { getMessage, t, getLocale, getLocaleConfig } from '../i18n/index.js';
 import { renderOnboarding } from './onboarding.js';
 import { supportedLocales, localeMetadata } from '../i18n/config.js';
@@ -21,7 +22,7 @@ import { supportedLocales, localeMetadata } from '../i18n/config.js';
  * @typedef {import('../types/api').DashboardCommunityPayload} DashboardCommunityPayload
  */
 
-export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES, ONBOARDING_STYLES].join('\n');
+export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES, ONBOARDING_STYLES, NOTIFICATION_STYLES].join('\n');
 
 const FALLBACK_MENU_GROUPS = [
   {
@@ -1190,6 +1191,25 @@ export function renderDashboard(options = {}) {
     locales: navigation.locales,
   };
 
+  const progressiveEnhancementScript = options.enableProgressiveEnhancement !== false ? `
+    <script type="module">
+      import { initProgressiveEnhancement } from './src/core/progressive_enhancement.js';
+      
+      // Initialize progressive enhancement when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          initProgressiveEnhancement().catch(error => {
+            console.error('Failed to initialize progressive enhancement:', error);
+          });
+        });
+      } else {
+        initProgressiveEnhancement().catch(error => {
+          console.error('Failed to initialize progressive enhancement:', error);
+        });
+      }
+    </script>
+  ` : '';
+
   const html = `
     <div class="tp-app" data-locale="${escapeHtml(locale)}" dir="${escapeHtml(direction)}">
       <a class="tp-skip-link" href="#tp-main-content">${escapeHtml(String(skipLinkLabel))}</a>
@@ -1205,6 +1225,7 @@ export function renderDashboard(options = {}) {
     <script type="application/json" data-role="locale-config">${serializeForScript(localePayload)}</script>
     ${NAVIGATION_ENHANCEMENT_SCRIPT}
     ${(onboardingUi.script ?? '')}
+    ${progressiveEnhancementScript}
   `;
 
   return {
