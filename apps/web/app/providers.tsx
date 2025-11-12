@@ -1,8 +1,14 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useState, useEffect } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ThemeProvider, createTheme, responsiveFontSizes } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
+import { queryClient } from '@/lib/query-client'
+import { useAuthStore } from '@/stores/auth-store'
+import { isDevelopment } from '@/config/env'
 
 const baseTheme = responsiveFontSizes(
   createTheme({
@@ -133,10 +139,25 @@ const baseTheme = responsiveFontSizes(
 )
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+  const { initialize } = useAuthStore()
+
+  useEffect(() => {
+    setMounted(true)
+    initialize()
+  }, [initialize])
+
+  if (!mounted) {
+    return null
+  }
+
   return (
-    <ThemeProvider theme={baseTheme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={baseTheme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+      {isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   )
 }
