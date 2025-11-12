@@ -50,7 +50,9 @@ jobs:
         run: mypy src/tradepulse_qlw/ --ignore-missing-imports
       
       - name: Run tests
-        run: pytest tests/qlw/ -v --cov=src/tradepulse_qlw --cov-report=xml --cov-report=term
+        run: |
+          cd tests/qlw
+          pytest . -v --cov=../../src/tradepulse_qlw --cov-report=xml:../../coverage.xml --cov-report=term
       
       - name: Upload coverage
         uses: codecov/codecov-action@v4
