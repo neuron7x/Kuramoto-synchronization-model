@@ -8,8 +8,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.performance.budget_loader import BudgetLoader
-
 
 def test_perf_budgets_yaml_valid():
     """Test that perf_budgets.yaml is valid YAML and has required structure."""
