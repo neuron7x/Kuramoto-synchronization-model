@@ -1,0 +1,171 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: tradepulse-qlw
+  namespace: trading
+spec:
+  replicas: 3
+  strategy:
+    canary:
+      canaryService: tradepulse-qlw-canary
+      stableService: tradepulse-qlw-stable
+      trafficRouting:
+        istio:
+          virtualService:
+            name: tradepulse-qlw-vsvc
+            routes:
+              - primary
+      steps:
+        - setWeight: 5
+        - pause:
+            duration: 5m
+        - analysis:
+            templates:
+              - templateName: qlw-analysis
+            args:
+              - name: service-name
+                value: tradepulse-qlw-canary
+        - setWeight: 25
+        - pause:
+            duration: 10m
+        - setWeight: 50
+        - pause:
+            duration: 10m
+        - setWeight: 75
+        - pause:
+            duration: 5m
+        - setWeight: 100
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: tradepulse-qlw
+  template:
+    metadata:
+      labels:
+        app: tradepulse-qlw
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+        - name: qlw
+          image: ghcr.io/neuron7x/tradepulse-qlw:1.1.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          env:
+            - name: UVICORN_WORKERS
+              value: "2"
+          volumeMounts:
+            - name: numba-cache
+              mountPath: /home/app/.numba_cache
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: numba-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tradepulse-qlw-stable
+  namespace: trading
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: tradepulse-qlw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tradepulse-qlw-canary
+  namespace: trading
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: tradepulse-qlw
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: qlw-analysis
+  namespace: trading
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: error-rate
+      interval: 1m
+      successCondition: result < 0.05
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring:9090
+          query: |
+            sum(rate(http_requests_total{service="{{args.service-name}}",status=~"5.."}[5m])) /
+            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))
+    - name: latency-p95
+      interval: 1m
+      successCondition: result < 1.0
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring:9090
+          query: |
+            histogram_quantile(0.95, sum(rate(solver_ms_per_step_bucket{service="{{args.service-name}}"}[5m])) by (le))
+    - name: forbidden-ratio
+      interval: 1m
+      successCondition: result < 0.40
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring:9090
+          query: |
+            avg(forbidden_ratio{service="{{args.service-name}}"})

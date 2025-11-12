@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: tradepulse-qlw-vsvc
+  namespace: trading
+spec:
+  hosts:
+    - tradepulse-qlw.trading.svc.cluster.local
+  http:
+    - name: primary
+      route:
+        - destination:
+            host: tradepulse-qlw-stable
+            port:
+              number: 8000
+          weight: 100
+        - destination:
+            host: tradepulse-qlw-canary
+            port:
+              number: 8000
+          weight: 0
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: tradepulse-qlw-dest
+  namespace: trading
+spec:
+  host: tradepulse-qlw-stable
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
