@@ -122,7 +122,7 @@ export function useCancelAllOrders() {
         `/orders/all${symbol ? `?symbol=${symbol}` : ''}`
       )
     },
-    onSuccess: (result, symbol) => {
+    onSuccess: (result) => {
       logger.info('All orders cancelled', { count: result.cancelled })
       // Invalidate all order-related queries
       queryClient.invalidateQueries({ queryKey: [ORDERS_QUERY_KEY] })
