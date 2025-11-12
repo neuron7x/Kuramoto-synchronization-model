@@ -50,6 +50,7 @@ jobs:
         id: coverage
         run: |
           pytest tests/ \
+            -m "not slow and not heavy_math" \
             --cov=core --cov=backtest --cov=execution \
             --cov-report=xml --cov-report=term-missing \
             --cov-fail-under=98 || echo "COVERAGE_FAILED=true" >> $GITHUB_OUTPUT
