@@ -62,6 +62,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  output: 'standalone',
 
   // Image optimization
   images: {

@@ -123,6 +123,35 @@ services:
     depends_on:
       - logstash
 
+  # UI Service - Next.js Frontend
+  tradepulse-ui:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_APP_ENV: ${NEXT_PUBLIC_APP_ENV:-production}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://tradepulse:8000}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://tradepulse:8000/ws}
+      NEXT_PUBLIC_LOG_LEVEL: ${NEXT_PUBLIC_LOG_LEVEL:-info}
+    ports:
+      - "${TRADEPULSE_UI_PORT:-3000}:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "co.elastic.logs/enabled=true"
+      - "co.elastic.logs/module=tradepulse-ui"
+    depends_on:
+      tradepulse:
+        condition: service_healthy
+    networks:
+      - default
+
 volumes:
   elasticsearch-data:
   cortex-db-data:
