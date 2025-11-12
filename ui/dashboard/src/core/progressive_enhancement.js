@@ -370,7 +370,7 @@ export class ProgressiveEnhancement {
       this.setLoadingState(route, false);
       this.bannerManager.hide();
     } catch (error) {
-      console.error(`Failed to load data for ${route}:`, error);
+      console.error('Failed to load data for route:', route, error);
       this.stateManager.setState(route, 'error', error);
       this.setLoadingState(route, false);
       this.handleLoadError(route, error);

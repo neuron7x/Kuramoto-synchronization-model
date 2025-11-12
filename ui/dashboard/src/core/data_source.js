@@ -318,7 +318,7 @@ export class DataSourceClient {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Error in WebSocket listener for type ${type}:`, error);
+          console.error('Error in WebSocket listener for type:', type, error);
         }
       });
     }
