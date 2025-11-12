@@ -1,12 +1,12 @@
 # 📈 TradePulse
 
-### *Advanced Algorithmic Trading Framework with Geometric Market Indicators*
+### *Neuroscience-Inspired Algorithmic Trading Framework*
 
 ---
 
 ```ascii
 ╔═══════════════════════════════════════════════════════════╗
-║ 🎯 Enterprise-Grade Trading • 🧮 Geometric Indicators       ║
+║ 🧠 Neuroscience-Based Decisions • 🧮 Geometric Indicators  ║
 ║ ⚡ Real-Time Analytics • 🔒 Production-Ready Security       ║
 ╚═══════════════════════════════════════════════════════════╝
 ```
@@ -15,15 +15,31 @@
 [![Coverage Shards](https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml)
 [![Coverage Guard ≥98%](https://img.shields.io/badge/Coverage-%E2%89%A598%25-brightgreen?logo=pytest)](#-testing)
 
-TradePulse is a **production-grade algorithmic trading platform** that marries
-cutting-edge geometric market indicators with enterprise reliability.
-Quantitative researchers, discretionary traders, and financial institutions use
-TradePulse to move from research to live execution with confidence.
+## What Is TradePulse?
+
+TradePulse is a **production-grade algorithmic trading platform** that applies **neuroscience principles** to financial decision-making. Just as the human brain uses neurotransmitters (dopamine, serotonin, GABA) to navigate uncertainty, learn from experience, and manage risk, TradePulse implements these same biological mechanisms as algorithms.
+
+**Core Innovation:** We've translated decades of neuroscience research on reward learning, stress regulation, and impulse control into a robust trading framework that combines:
+- **Dopamine-based reinforcement learning** for adaptive strategy optimization
+- **Serotonin-modulated risk management** for stress-aware position control
+- **GABA-inspired impulse inhibition** for preventing overtrading
+- **Geometric indicators** (Kuramoto oscillators, Ricci flow) for market regime detection
+- **Enterprise-grade infrastructure** with compliance, security, and observability
+
+**Who Uses TradePulse:**
+- Quantitative researchers seeking novel alpha signals beyond traditional indicators
+- Institutional trading desks requiring production-grade risk management and compliance
+- Discretionary traders wanting systematic approaches to reduce emotional decision-making
+- Fintech developers building modern, extensible trading infrastructure
+- Hedge funds and prop trading firms needing high-frequency capabilities with robust backtesting
 
 ## Table of Contents
 
+- [What Is TradePulse?](#what-is-tradepulse)
 - [Why TradePulse?](#-why-tradepulse)
+- [Who Is This For?](#-who-is-this-for)
 - [Feature Highlights](#-feature-highlights)
+- [Neuroscience-Inspired Architecture](#-neuroscience-inspired-architecture)
 - [Project Status](#-project-status)
 - [Quick Start](#-quick-start)
 - [Demo Dashboard](#-demo-dashboard)
@@ -41,6 +57,10 @@ TradePulse to move from research to live execution with confidence.
 - [Acknowledgments](#-acknowledgments)
 
 ## 🎯 Why TradePulse?
+
+TradePulse is a unique trading platform that applies **neuroscience principles** to financial markets. Just as the human brain uses neurotransmitters (dopamine, serotonin, GABA) to make complex decisions under uncertainty, TradePulse uses neuromodulator-inspired algorithms to navigate market volatility, manage risk, and optimize trading decisions.
+
+**Key Innovation:** We've translated decades of neuroscience research on decision-making, reward processing, and stress regulation into a robust algorithmic trading framework.
 
 ```python
 import numpy as np
@@ -62,6 +82,33 @@ snapshot = engine.analyze_market(bars)
 print(f"Phase: {snapshot.phase.value}")
 print(f"Confidence: {snapshot.confidence:.3f}, Entry: {snapshot.entry_signal:.3f}")
 ```
+
+## 👥 Who Is This For?
+
+### Quantitative Researchers
+- **Need:** Advanced indicators beyond traditional technical analysis
+- **Solution:** Geometric indicators (Kuramoto, Ricci Flow), multi-scale fractal analysis, and entropy measures provide novel alpha signals
+- **Benefit:** Research-to-production pipeline with deterministic backtesting and property-based validation
+
+### Institutional Trading Desks
+- **Need:** Production-grade risk management with regulatory compliance
+- **Solution:** Neuroscience-inspired risk controls, comprehensive audit trails, MiFID II compliance
+- **Benefit:** Enterprise security framework with 93 controls, real-time threat detection, and incident response
+
+### Discretionary Traders
+- **Need:** Systematic approach to reduce emotional decision-making
+- **Solution:** Dopamine-based reward prediction, serotonin stress regulation, GABA impulse control
+- **Benefit:** Structured decision framework that mimics optimal human decision-making under uncertainty
+
+### Fintech Developers
+- **Need:** Modern, extensible trading infrastructure
+- **Solution:** Event-driven architecture, FastAPI integration, type-safe contracts (Pydantic/Protocol Buffers)
+- **Benefit:** Hot-reload development, comprehensive testing infrastructure, extensive documentation
+
+### Hedge Funds & Prop Trading Firms
+- **Need:** High-frequency capabilities with robust backtesting
+- **Solution:** GPU acceleration (CUDA/Numba), microsecond latency pipeline, walk-forward optimization
+- **Benefit:** Production-ready execution with multi-exchange support and zero data loss guarantees
 
 
 ## 📊 Project Status
@@ -147,6 +194,200 @@ published in the weekly changelog until the release criteria are satisfied.
 - **Type Safety** — Pydantic models and schema validation
 - **Hydra Config** — flexible configuration management
 - **Hot Reload** — rapid iteration for research teams
+
+## 🧠 Neuroscience-Inspired Architecture
+
+TradePulse is built on a **neurodecision stack** that translates neuroscience principles into algorithmic trading. Our architecture mirrors the brain's decision-making systems, providing robust, adaptive, and biologically-grounded trading strategies.
+
+### Core Neuroscience Components
+
+#### 1. **Dopamine Controller** — Reward Prediction & Learning
+**Neuroscience Basis:** Dopamine neurons in the ventral tegmental area (VTA) encode **temporal difference (TD) reward prediction errors**, driving reinforcement learning.
+
+**Implementation:**
+- **TD(0) RPE Calculation:** `δ = reward + γ·V(next_state) - V(state)`
+- **Phasic/Tonic Dynamics:** Rapid reward bursts vs. sustained motivation levels
+- **Go/No-Go Decision Gate:** Based on basal ganglia direct/indirect pathways
+- **Temperature Control:** Exploration vs. exploitation balance (σ(k·(tonic−θ)))
+- **DDM Adaptation:** Drift-Diffusion Model parameters adapt to dopamine levels
+
+**Trading Application:**
+- Learns from profitable trades (positive RPE) and losses (negative RPE)
+- Increases confidence (lowers decision thresholds) after winning streaks
+- Prevents overtrading through policy temperature modulation
+- Implements "Go" signals for high-confidence opportunities
+
+**Files:** `src/tradepulse/core/neuro/dopamine/`, `config/dopamine.yaml`
+
+#### 2. **Serotonin Controller** — Stress Regulation & Risk Aversion
+**Neuroscience Basis:** Serotonin (5-HT) in the dorsal raphe nucleus modulates **aversive processing, patience, and behavioral inhibition** during stressful conditions.
+
+**Implementation:**
+- **Tonic/Phasic Channels:** Long-term stress tracking vs. acute threat responses
+- **Veto Mechanism:** HOLD signal overrides impulsive dopamine-driven actions
+- **Cooldown Windows:** Prevents rapid trading after stress events
+- **Desensitization:** Chronic stress reduces sensitivity (adaptive tolerance)
+- **Temperature Floor:** Maintains minimum exploration under adversity
+- **τ-Calibrated Filtering:** Biologically realistic time constants (tau_5ht_ms)
+
+**Trading Application:**
+- Detects drawdown stress and portfolio risk accumulation
+- Enforces cooling-off periods after significant losses
+- Prevents panic selling through HOLD vetoes
+- Maintains adaptive risk tolerance based on market conditions
+
+**Files:** `core/neuro/serotonin/serotonin_controller.py`, `configs/serotonin.yaml`
+
+#### 3. **GABA Inhibition Gate** — Impulse Control & Plasticity
+**Neuroscience Basis:** GABAergic interneurons provide **fast inhibition** in cortical circuits, implementing **spike-timing-dependent plasticity (STDP)** for learning.
+
+**Implementation:**
+- **Dual Time Constants:** GABA_A (fast, τ=8ms) and GABA_B (slow, τ=100ms)
+- **Threat-Proportional Inhibition:** Scales with volatility/VIX proxies
+- **STDP Plasticity:** tau_plus=16.8ms, tau_minus=33.7ms for timing-dependent learning
+- **LTP/LTD:** Long-term potentiation/depression based on correlation (vol×ret)
+- **Gamma/Theta Rhythms:** 40Hz and 8Hz oscillatory modulation
+- **Risk Weight Adaptation:** Bounds [0.5, 1.5] for safe operation
+
+**Trading Application:**
+- Inhibits impulsive trades during high volatility
+- Learns optimal inhibition strength through experience
+- Implements "circuit breaker" functionality
+- Provides hedge-like protection (diazepam-analog GABA boost)
+
+**Files:** `modules/gaba_inhibition_gate.py`, `docs/GABAInhibitionGate.md`
+
+#### 4. **NAK Controller** — Arousal & Attention
+**Neuroscience Basis:** **Noradrenaline (NA)** from locus coeruleus drives arousal and vigilance; **Acetylcholine (ACh)** from basal forebrain enhances attention and learning.
+
+**Implementation:**
+- **Noradrenaline:** `NA(t) = σ(volatility · gain)` — arousal scales with market uncertainty
+- **Acetylcholine:** `ACh(t) = σ(exposure · η)` — attention tracks position size
+- **Risk Modulation:** DA-scaled target risk rates
+- **Activity Scaling:** ACh-modulated position sizing
+
+**Trading Application:**
+- Increases attention (position sizing) during volatile markets
+- Modulates risk-taking based on arousal state
+- Enhances learning rate when novel patterns emerge
+- Coordinates with dopamine for risk-adjusted reward seeking
+
+**Files:** `nak_controller/control/neuromods.py`, `nak_controller/README.md`
+
+#### 5. **ECS Regulator** — Stress Adaptation & Homeostasis
+**Neuroscience Basis:** The **endocannabinoid system (ECS)** provides compensatory feedback during stress, differentiating acute vs. chronic stressors.
+
+**Implementation:**
+- **Acute vs. Chronic Stress:** Separate tracking mechanisms
+- **Context-Dependent Normalization:** Adapts to market phase (stable/chaotic/transition)
+- **Compensatory Feedback:** 2-AG-inspired upregulation under prolonged stress
+- **Kalman Filtering:** Predictive coding for prediction error minimization
+- **TACL Alignment:** Free energy monotonic descent enforcement
+
+**Trading Application:**
+- Distinguishes temporary volatility from sustained bear markets
+- Implements adaptive risk thresholds based on stress patterns
+- Provides homeostatic regulation to prevent overreaction
+- Maintains trading activity during extended drawdowns
+
+**Files:** `core/neuro/ecs_regulator.py`, `core/neuro/README_ECS_REGULATOR.md`
+
+#### 6. **FHMC — Orexin-Arousal & Meta-Control**
+**Neuroscience Basis:** **Orexin** neurons in the lateral hypothalamus regulate **sleep-wake transitions, arousal, and energy balance** through flip-flop switching.
+
+**Implementation:**
+- **Flip-Flop State Machine:** WAKE/SLEEP modes with hysteresis
+- **Orexin-Arousal:** `OX(t) = σ(k₁·E[r] + k₂·novelty + k₃·load)`
+- **Threat-Imminence:** Combines drawdown, volatility shock, and crisis scores
+- **Multifractal Cascade:** Hölder field estimation via dyadic p-model
+- **DFA α-Exponent:** Fractal analysis through detrended fluctuation
+- **Aperiodic 1/f Slope:** Pink noise spectral shaping
+
+**Trading Application:**
+- Controls system-wide WAKE (active trading) vs. SLEEP (observation) modes
+- Triggers exploration based on expected returns and novelty
+- Implements threat-driven defensive postures
+- Captures market complexity through multifractal dynamics
+
+**Files:** `runtime/thermo_controller.py`, `docs/spec_fhmc.md`, `configs/fhmc.yaml`
+
+### Geometric & Complexity Indicators
+
+#### **Kuramoto Oscillators** — Synchronization Detection
+**Scientific Basis:** Kuramoto model describes **phase synchronization** in coupled oscillator systems, revealing collective behavior emergence.
+
+**Application:**
+- Detects market regime transitions (order → disorder)
+- Measures synchronization across multiple timeframes
+- Identifies phase-locking between correlated assets
+- Order parameter `r(t) ∈ [0,1]` indicates market coherence
+
+**Files:** `core/indicators/kuramoto.py`, `core/indicators/multiscale_kuramoto.py`
+
+#### **Ricci Flow** — Geometric Curvature
+**Scientific Basis:** Ricci flow from **differential geometry** describes how geometric manifolds evolve by smoothing curvature.
+
+**Application:**
+- Detects curvature changes in price space
+- Identifies geometric instabilities (high curvature = high risk)
+- Temporal evolution tracking for regime shift prediction
+- Composite integration with Kuramoto for multi-scale analysis
+
+**Files:** `core/indicators/ricci.py`, `core/indicators/temporal_ricci.py`, `core/indicators/kuramoto_ricci_composite.py`
+
+### Integration: The Neurodecision Stack
+
+```
+Market Data → Kuramoto/Ricci Indicators
+              ↓
+    ┌─────────────────────────────┐
+    │   Dopamine (TD-Learning)    │──► Reward Prediction Error
+    │   Serotonin (Stress Gate)   │──► HOLD Veto Signal
+    │   GABA (Impulse Control)    │──► Inhibition Coefficient
+    │   NA/ACh (Arousal/Attention)│──► Risk & Activity Scaling
+    │   ECS (Homeostasis)         │──► Stress Adaptation
+    │   FHMC (Meta-Control)       │──► WAKE/SLEEP Mode
+    └─────────────────────────────┘
+              ↓
+        ActionGate Decision
+              ↓
+    GO / NO-GO / HOLD → Execution
+```
+
+**Key Properties:**
+- **Biological Realism:** Time constants, plasticity rules, and dynamics grounded in neuroscience literature
+- **Formal Guarantees:** Monotonic free energy descent (TACL), MFD constraints, safety bounds
+- **Empirical Validation:** Falsification tests, property-based testing, mutation testing
+- **Production Ready:** Full telemetry, audit trails, compliance logging
+
+### Scientific References
+
+Our implementation is based on peer-reviewed research:
+
+1. **Temporal Difference Learning:** Sutton & Barto (2018), *Reinforcement Learning: An Introduction*
+2. **Dopamine RPE:** Schultz et al. (1997), "A Neural Substrate of Prediction and Reward", *Science*
+3. **Serotonin & Aversion:** Dayan & Huys (2009), "Serotonin in Affective Control", *Annual Review of Neuroscience*
+4. **STDP Plasticity:** Bi & Poo (1998), "Synaptic Modifications in Cultured Hippocampal Neurons", *Journal of Neuroscience*
+5. **Go/No-Go Circuits:** Frank (2006), "Hold Your Horses: A Dynamic Computational Role for the Subthalamic Nucleus", *Neural Networks*
+6. **Kuramoto Model:** Kuramoto (1984), *Chemical Oscillations, Waves, and Turbulence*
+7. **Ricci Flow:** Hamilton (1982), "Three-manifolds with positive Ricci curvature", *Journal of Differential Geometry*
+8. **Drift-Diffusion Models:** Ratcliff & McKoon (2008), "The Diffusion Decision Model", *Neural Computation*
+
+### Why Neuroscience for Trading?
+
+**Traditional Approach:**
+- Rule-based indicators (RSI, MACD, Bollinger Bands)
+- Fixed risk parameters
+- Emotion-driven human decisions or rigid algorithms
+
+**Neuroscience Approach:**
+- **Adaptive Learning:** Continuous TD-learning from market feedback
+- **Stress Management:** Serotonin-based risk reduction during drawdowns
+- **Impulse Control:** GABA inhibition prevents overtrading
+- **Context Awareness:** ECS differentiates acute vs. chronic market stress
+- **Meta-Control:** FHMC orchestrates system-wide operational modes
+
+**Result:** A trading system that adapts like a skilled trader but with the consistency of an algorithm, the speed of a computer, and the robustness of biological decision-making refined over millions of years of evolution.
 
 ## 🚀 Quick Start
 
