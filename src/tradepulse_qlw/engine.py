@@ -154,7 +154,9 @@ class QLWEngine:
         hard = soft > 0.9
 
         # Metadata
-        meta = {
+        from typing import Any
+        
+        meta: dict[str, Any] = {
             "dt": cfg.dt,
             "dx": cfg.dx,
             "c": c,

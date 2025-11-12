@@ -53,8 +53,9 @@ class NewmarkWaveSolver:
         return lap
 
     def _accel(self, u: np.ndarray) -> np.ndarray:
-        eta = self.rng.normal(0.0, self.sigma, size=u.shape) if self.sigma > 0 else 0.0
-        return (self.c * self.c) * self._laplacian(u) - self.gamma_x * u + eta
+        eta = self.rng.normal(0.0, self.sigma, size=u.shape) if self.sigma > 0 else np.zeros_like(u)
+        result: np.ndarray = (self.c * self.c) * self._laplacian(u) - self.gamma_x * u + eta
+        return result
 
     def solve(
         self, u0: np.ndarray | None = None, v0: np.ndarray | None = None

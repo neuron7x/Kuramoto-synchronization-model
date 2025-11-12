@@ -44,7 +44,7 @@ def hurst_mfdfa(ts: np.ndarray, q: float = 2.0, scales: np.ndarray | None = None
             continue
 
         # Fit polynomial trends and compute fluctuations
-        fluct = []
+        fluct_list = []
         for v in range(num_segments):
             segment = profile[v * s : (v + 1) * s]
             x = np.arange(s)
@@ -52,17 +52,17 @@ def hurst_mfdfa(ts: np.ndarray, q: float = 2.0, scales: np.ndarray | None = None
             poly_coef = np.polyfit(x, segment, 1)
             trend = np.polyval(poly_coef, x)
             detrended = segment - trend
-            fluct.append(np.mean(detrended**2))
+            fluct_list.append(np.mean(detrended**2))
 
-        if not fluct:
+        if not fluct_list:
             continue
 
         # Compute q-th order fluctuation function
-        fluct = np.array(fluct)
+        fluct = np.array(fluct_list)
         if q != 0:
-            F_q_s = np.mean(fluct ** (q / 2.0)) ** (1.0 / q)
+            F_q_s = float(np.mean(fluct ** (q / 2.0)) ** (1.0 / q))
         else:
-            F_q_s = np.exp(0.5 * np.mean(np.log(fluct + 1e-12)))
+            F_q_s = float(np.exp(0.5 * np.mean(np.log(fluct + 1e-12))))
 
         F_q.append(F_q_s)
 

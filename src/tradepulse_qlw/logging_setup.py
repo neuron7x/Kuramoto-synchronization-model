@@ -6,7 +6,7 @@ import logging.config
 import os
 
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 
     YAML_AVAILABLE = True
 except ImportError:
@@ -35,9 +35,9 @@ def setup_logging(path: str | None = None) -> None:
     path : str, optional
         Path to logging config file (YAML)
     """
-    path = path or os.getenv("QLW_LOG_CFG", "configs/logging.yml")
-    if YAML_AVAILABLE and os.path.exists(path):
-        with open(path, "r") as f:
+    resolved_path: str = path if path is not None else os.getenv("QLW_LOG_CFG", "configs/logging.yml")
+    if YAML_AVAILABLE and os.path.exists(resolved_path):
+        with open(resolved_path, "r") as f:
             cfg = yaml.safe_load(f)
         cfg.setdefault("filters", {})["mask_payload"] = {
             "()": "tradepulse_qlw.logging_setup.MaskFilter"
