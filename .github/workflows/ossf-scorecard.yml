@@ -5,6 +5,8 @@ permissions:
   contents: read
   actions: read
   id-token: write
+  issues: write
+  pull-requests: write
 
 on:
   branch_protection_rule:

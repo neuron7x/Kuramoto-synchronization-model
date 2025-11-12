@@ -5,6 +5,8 @@ permissions:
   security-events: write
   id-token: write
   attestations: write
+  issues: write
+  pull-requests: write
 
 on:
   pull_request:

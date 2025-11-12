@@ -3,6 +3,7 @@ name: PR Complexity & Size Analysis
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 on:
   pull_request:
