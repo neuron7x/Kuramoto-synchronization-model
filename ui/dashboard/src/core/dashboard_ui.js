@@ -12,6 +12,7 @@ import { TABLE_STYLES } from '../styles/table.css.js';
 import { CHART_STYLES } from '../styles/chart.css.js';
 import { ONBOARDING_STYLES } from '../styles/onboarding.css.js';
 import { NOTIFICATION_STYLES } from '../styles/notifications.css.js';
+import { HYDRATION_STYLES, generateHydrationScript } from './hydration.js';
 import { getMessage, t, getLocale, getLocaleConfig } from '../i18n/index.js';
 import { renderOnboarding } from './onboarding.js';
 import { supportedLocales, localeMetadata } from '../i18n/config.js';
@@ -22,7 +23,7 @@ import { supportedLocales, localeMetadata } from '../i18n/config.js';
  * @typedef {import('../types/api').DashboardCommunityPayload} DashboardCommunityPayload
  */
 
-export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES, ONBOARDING_STYLES, NOTIFICATION_STYLES].join('\n');
+export const DASHBOARD_STYLES = [BASE_STYLES, TABLE_STYLES, CHART_STYLES, ONBOARDING_STYLES, NOTIFICATION_STYLES, HYDRATION_STYLES].join('\n');
 
 const FALLBACK_MENU_GROUPS = [
   {
@@ -1172,9 +1173,16 @@ export function renderDashboard(options = {}) {
     community = {},
     header = {},
     onboarding: onboardingConfig = {},
+    asyncMode = false, // New option to enable async data loading
   } = options;
 
-  const router = createDashboardRouter({ overview, monitoring, positions, orders, pnl, signals, community });
+  // In async mode, pass empty objects to views initially
+  // Progressive enhancement will load data asynchronously
+  const viewPayloads = asyncMode
+    ? { overview: {}, monitoring: {}, positions: {}, orders: {}, pnl: {}, signals: {}, community: {} }
+    : { overview, monitoring, positions, orders, pnl, signals, community };
+
+  const router = createDashboardRouter(viewPayloads);
   const { name: currentRoute, view } = router.navigate(route);
   const locale = getLocale();
   const navigation = renderNavigation(router, currentRoute, locale);
@@ -1191,24 +1199,14 @@ export function renderDashboard(options = {}) {
     locales: navigation.locales,
   };
 
-  const progressiveEnhancementScript = options.enableProgressiveEnhancement !== false ? `
-    <script type="module">
-      import { initProgressiveEnhancement } from './src/core/progressive_enhancement.js';
-      
-      // Initialize progressive enhancement when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          initProgressiveEnhancement().catch(error => {
-            console.error('Failed to initialize progressive enhancement:', error);
-          });
-        });
-      } else {
-        initProgressiveEnhancement().catch(error => {
-          console.error('Failed to initialize progressive enhancement:', error);
-        });
-      }
-    </script>
-  ` : '';
+  // Generate hydration script if async mode is enabled
+  const hydrationScript = asyncMode
+    ? generateHydrationScript({
+        enableWebSocket: options.enableWebSocket !== false,
+        baseUrl: options.apiBaseUrl,
+        wsUrl: options.apiWsUrl,
+      })
+    : '';
 
   const html = `
     <div class="tp-app" data-locale="${escapeHtml(locale)}" dir="${escapeHtml(direction)}">
@@ -1225,7 +1223,7 @@ export function renderDashboard(options = {}) {
     <script type="application/json" data-role="locale-config">${serializeForScript(localePayload)}</script>
     ${NAVIGATION_ENHANCEMENT_SCRIPT}
     ${(onboardingUi.script ?? '')}
-    ${progressiveEnhancementScript}
+    ${hydrationScript}
   `;
 
   return {

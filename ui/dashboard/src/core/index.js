@@ -136,6 +136,15 @@ export { renderCommunityView } from '../views/community.js';
 export { renderMonitoringView } from '../views/monitoring.js';
 export { DataSourceClient, createDataSource, getDataSource, resetDataSource } from './data_source.js';
 export { ProgressiveEnhancement, createProgressiveEnhancement, getProgressiveEnhancement, initProgressiveEnhancement } from './progressive_enhancement.js';
+export {
+  generateHydrationScript,
+  attachViewUpdateHandler,
+  markHydrationTarget,
+  updateHydrationState,
+  createLoadingPlaceholder,
+  createErrorPlaceholder,
+  HYDRATION_STYLES,
+} from './hydration.js';
 
 export class DashboardState {
   constructor({ strategies = [], backtests = [] } = {}) {
