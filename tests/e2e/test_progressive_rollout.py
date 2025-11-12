@@ -128,3 +128,28 @@ def test_progressive_rollout_triggers_rollback_on_degradation(
     assert controller.audit_log[-1]["stage"] == "automated-rollback"
     failure_reasons = [entry.get("reason") for entry in controller.audit_log if entry["stage"] == "validate-energy"]
     assert any("free energy" in (reason or "") for reason in failure_reasons)
+
+
+def test_progressive_rollout_marks_quality_gate_failure(
+    tmp_path_factory: pytest.TempPathFactory,
+    gate_config: dict[str, object],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = Path(tmp_path_factory.mktemp("rollout-quality-gate-fail"))
+    monkeypatch.chdir(workspace)
+    failing_config = copy.deepcopy(gate_config)
+    failing_config.setdefault("coverage", {})
+    failing_config["coverage"]["observed"] = 0.1
+    failing_config["coverage"]["required"] = 0.95
+
+    controller = ProgressiveRolloutController(gate_config=failing_config)
+    assert controller.run("nominal") is False
+
+    quality_entry = next(entry for entry in controller.audit_log if entry["stage"] == "quality-gates")
+    assert quality_entry["status"] == "failed"
+    assert quality_entry["summary"]["coverage"]["passed"] is False
+    assert quality_entry["summary"]["passed"] is False
+
+    rollback_entry = controller.audit_log[-1]
+    assert rollback_entry["stage"] == "automated-rollback"
+    assert rollback_entry["reason"] == "quality gate failure"
