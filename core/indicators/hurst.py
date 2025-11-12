@@ -380,7 +380,7 @@ def hurst_exponent(
                 tau = tau_buffer
                 if tau is None or tau.shape[0] != lags.size:
                     tau = np.empty(lags.size, dtype=float)
-                x_float64 = np.asarray(x, dtype=np.float64, copy=False)
+                x_float64 = np.asarray(x, dtype=np.float64)
                 _compute_tau_numba(x_float64, lags_int, tau)
                 _LAST_HURST_BACKEND = "numba"
             else:
@@ -388,9 +388,7 @@ def hurst_exponent(
                 _LAST_HURST_BACKEND = "numpy"
         except Exception as exc:  # pragma: no cover - defensive fallback
             _logger.warning(
-                "Hurst backend '%s' failed (%s); falling back to NumPy.",
-                selected_backend,
-                exc,
+                f"Hurst backend '{selected_backend}' failed ({exc}); falling back to NumPy."
             )
             tau = _compute_tau_numpy(x, lags, scratch, tau_buffer)
             _LAST_HURST_BACKEND = "numpy"

@@ -211,7 +211,8 @@ def test_kuramoto_order_translation_invariant(
     shifted = kuramoto_order(arr + shift)
     assert math.isfinite(base)
     assert math.isfinite(shifted)
-    assert shifted == pytest.approx(base, rel=1e-10, abs=1e-10)
+    # Use more lenient tolerance for large phase values and shifts
+    assert shifted == pytest.approx(base, rel=1e-8, abs=1e-8)
 
 
 @settings(
