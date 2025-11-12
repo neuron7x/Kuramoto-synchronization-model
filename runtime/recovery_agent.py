@@ -147,8 +147,9 @@ class AdaptiveRecoveryAgent:
 
         # WARNING: Only load Q-tables from trusted sources
         # This uses pickle which can execute arbitrary code if malicious
+        # nosemgrep: python.lang.security.audit.dangerous-pickle-use.dangerous-pickle-use
         with open(path, "rb") as fh:
-            data = pickle.load(fh)  # nosec B301 - Internal use only, trusted data
+            data = pickle.load(fh)
         self.Q = defaultdict(float, data)
         logger.info("Loaded Q-table entries=%s path=%s", len(self.Q), path)
 

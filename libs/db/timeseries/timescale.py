@@ -257,8 +257,9 @@ class TimescaleSLAManager:
                 name="timescale_ingest_lag_seconds",
                 query=(
                     # Safe: timestamp_column and table are validated via _ensure_identifier in TimeSeriesSchema
-                    "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "  # nosec B608
-                    f"FROM {self._schema.table}"  # nosec B608 - validated identifier
+                    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
+                    f"SELECT EXTRACT(EPOCH FROM now() - max({self._schema.timestamp_column})) * 1000 AS ingest_lag_ms "
+                    f"FROM {self._schema.table}"
                 ),
                 threshold_ms=6_000.0,
                 description="Ingestion lag must remain below six seconds",
