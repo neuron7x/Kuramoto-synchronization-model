@@ -122,11 +122,7 @@ class TestDopamineTD0RPE:
             FIXTURES_DIR / "trending_down_btcusd_200ticks.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.1,
-            decay_rate=0.95,
-        )
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         rewards = calculate_simple_reward(recording.records)
         
@@ -154,11 +150,7 @@ class TestDDMAdaptation:
             FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.1,
-            decay_rate=0.95,
-        )
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         rewards = calculate_simple_reward(recording.records, window=3)
         
@@ -198,11 +190,7 @@ class TestDDMAdaptation:
             FIXTURES_DIR / "flash_crash_5pct_mid.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.2,  # Higher learning rate for faster adaptation
-            decay_rate=0.9,
-        )
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         rewards = calculate_simple_reward(recording.records, window=3)
         
@@ -238,11 +226,7 @@ class TestGoNoGoDecisions:
             FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.1,
-            decay_rate=0.95,
-        )
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         action_gate = ActionGate(controller)
         
@@ -288,11 +272,7 @@ class TestGoNoGoDecisions:
             FIXTURES_DIR / "regime_transitions_4phases.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.15,
-            decay_rate=0.93,
-        )
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         action_gate = ActionGate(controller)
         
