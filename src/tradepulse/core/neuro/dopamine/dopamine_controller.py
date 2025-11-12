@@ -173,6 +173,9 @@ class DopamineController:
         self,
         config_path: str = "config/dopamine.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
+        base_temperature: Optional[float] = None,
+        learning_rate: Optional[float] = None,
+        decay_rate: Optional[float] = None,
     ) -> None:
         self.config_path = config_path
         with open(config_path, "r", encoding="utf-8") as f:
@@ -185,6 +188,14 @@ class DopamineController:
             state: dict(rules)
             for state, rules in self.config["meta_adapt_rules"].items()
         }
+        
+        # Apply parameter overrides if provided
+        if base_temperature is not None:
+            self.config["base_temperature"] = base_temperature
+        if learning_rate is not None:
+            self.config["learning_rate_v"] = learning_rate
+        if decay_rate is not None:
+            self.config["decay_rate"] = decay_rate
 
         self.tonic_level: float = 0.0
         self.phasic_level: float = 0.0
@@ -727,6 +738,68 @@ class DopamineController:
         self._log("dopamine_release_gate", 1.0 if release_gate else 0.0)
 
         return rpe, temperature, scaled_policy, extras
+
+    def update_td0(
+        self,
+        reward: float,
+        asset: Optional[str] = None,
+        strategy: Optional[str] = None,
+    ) -> Mapping[str, object]:
+        """Simplified TD(0) update for integration testing.
+        
+        This is a convenience wrapper around the full step() method for cases
+        where only reward is known. It uses a simplified TD(0) formula:
+        RPE = reward - value_estimate
+        
+        Args:
+            reward: Observed reward
+            asset: Asset identifier (unused, for API compatibility)
+            strategy: Strategy identifier (unused, for API compatibility)
+            
+        Returns:
+            Dictionary with keys:
+                - dopamine_level: Current dopamine level [0, 1]
+                - temperature: Current temperature
+                - prediction_error: TD(0) RPE
+                - value_estimate: Updated value estimate
+        """
+        # Compute TD(0) RPE: δ = r - V(s)
+        rpe = reward - self.value_estimate
+        
+        # Update value estimate: V(s) ← V(s) + α * δ
+        self.update_value_estimate(rpe)
+        
+        # Update RPE statistics
+        variance = self._update_rpe_statistics(rpe)
+        
+        # Meta-adapt temperature
+        adaptive_base = self._meta_adapt_temperature(variance)
+        
+        # Update release gate
+        release_gate = self._update_release_gate(variance)
+        
+        # Estimate appetitive state (simplified, based on reward sign)
+        appetitive_state = max(0.0, reward)
+        
+        # Compute dopamine signal
+        dopamine_signal = self.compute_dopamine_signal(appetitive_state, rpe)
+        
+        # Compute temperature
+        temperature = self.compute_temperature(dopamine_signal, base_temperature=adaptive_base)
+        
+        # Update cached temperature
+        self._last_temperature = temperature
+        
+        # Return state dictionary
+        return {
+            "dopamine_level": dopamine_signal,
+            "temperature": temperature,
+            "prediction_error": rpe,
+            "value_estimate": self.value_estimate,
+            "release_gate_open": release_gate,
+            "tonic_level": self.tonic_level,
+            "phasic_level": self.phasic_level,
+        }
 
     def _update_rpe_statistics(self, rpe: float) -> float:
         beta = self._cache_rpe_ema_beta

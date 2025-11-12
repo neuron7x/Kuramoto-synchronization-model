@@ -88,16 +88,16 @@ def test_estimate_aversive_state_matches_formula(serotonin_controller):
     cfg = ctrl.config
     market_vol = 4.0
     free_energy = 0.5
-    losses = 0.8
-    rho = 0.1
+    cum_losses = 0.8
+    rho_loss = 0.1
 
-    result = ctrl.estimate_aversive_state(market_vol, free_energy, losses, rho)
+    result = ctrl.estimate_aversive_state(market_vol, free_energy, cum_losses, rho_loss)
 
     expected_release = (
         cfg["alpha"] * math.sqrt(market_vol)
         + cfg["beta"] * free_energy
-        + cfg["gamma"] * (losses + 0.5 * losses ** 2)
-        + cfg["delta_rho"] * (1.0 - rho)
+        + cfg["gamma"] * (cum_losses + 0.5 * cum_losses ** 2)
+        + cfg["delta_rho"] * (1.0 - rho_loss)
     )
     expected = 3.0 * math.tanh(expected_release / 3.0)
 
@@ -109,7 +109,7 @@ def test_estimate_aversive_state_with_override_weights(serotonin_controller):
     overrides = {"alpha": ctrl.config["alpha"] * 2}
 
     baseline = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, 0.0)
-    overridden = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, 0.0, overrides)
+    overridden = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, 0.0, override_weights=overrides)
 
     assert overridden > baseline
 
@@ -384,8 +384,8 @@ def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_c
     result = ctrl.estimate_aversive_state(
         market_vol=2.0,
         free_energy=0.3,
-        losses=0.5,
-        rho=0.2
+        cum_losses=0.5,
+        rho_loss=0.2
     )
     assert isinstance(result, float)
     assert result >= 0.0
