@@ -53,6 +53,38 @@ export class LiveTable {
     return this;
   }
 
+  appendRows(newRows = []) {
+    if (!Array.isArray(newRows)) {
+      throw new Error('appendRows requires an array');
+    }
+    this.rows.push(...newRows);
+    return this;
+  }
+
+  replaceRow(id, row) {
+    const index = this.rows.findIndex((r) => r.id === id);
+    if (index >= 0) {
+      this.rows[index] = { ...row, id };
+    }
+    return this;
+  }
+
+  markUpdated(id) {
+    const row = this.rows.find((r) => r.id === id);
+    if (row) {
+      row._updated = Date.now();
+    }
+    return this;
+  }
+
+  removeRow(id) {
+    const index = this.rows.findIndex((r) => r.id === id);
+    if (index >= 0) {
+      this.rows.splice(index, 1);
+    }
+    return this;
+  }
+
   setSort(columnId, direction = this.sortDirection) {
     if (!this.columns.find((column) => column.id === columnId)) {
       throw new Error(`Unknown column: ${columnId}`);
