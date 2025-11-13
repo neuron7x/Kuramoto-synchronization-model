@@ -82,8 +82,8 @@ jobs:
             
             # Aggregate complexity metrics
             if ls /tmp/radon_*.json 1> /dev/null 2>&1; then
-              AVG_COMPLEXITY=$(jq -s 'map(.[]) | map(select(.complexity != null) | .complexity) | add / length' /tmp/radon_*.json 2>/dev/null | awk '{printf "%.1f", $1}' || echo "0")
-              MAX_COMPLEXITY=$(jq -s 'map(.[]) | map(select(.complexity != null) | .complexity) | max' /tmp/radon_*.json 2>/dev/null | awk '{printf "%.0f", $1}' || echo "0")
+              AVG_COMPLEXITY=$(jq -s 'map(to_entries[]) | map(.value[]) | map(select(.complexity != null) | .complexity) | add / length' /tmp/radon_*.json 2>/dev/null | awk '{printf "%.1f", $1}' || echo "0")
+              MAX_COMPLEXITY=$(jq -s 'map(to_entries[]) | map(.value[]) | map(select(.complexity != null) | .complexity) | max' /tmp/radon_*.json 2>/dev/null | awk '{printf "%.0f", $1}' || echo "0")
             fi
           fi
           
