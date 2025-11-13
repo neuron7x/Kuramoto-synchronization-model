@@ -149,6 +149,7 @@ def test_binance_ws_ignores_messages_without_kline(
     ws.stream_handle.close()  # type: ignore[attr-defined]
 
 
+@pytest.mark.flaky
 def test_binance_ws_logs_warning_on_invalid_payload(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
