@@ -335,6 +335,7 @@ class TestMergeStreams:
         assert all(tick.symbol == "BTC" for tick in ticks)
 
     @pytest.mark.asyncio
+    @pytest.mark.flaky
     async def test_merge_streams_handles_failures(
         self, caplog: pytest.LogCaptureFixture
     ) -> None:

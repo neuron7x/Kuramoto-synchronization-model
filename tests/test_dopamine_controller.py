@@ -354,6 +354,14 @@ def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
         "dopamine_level": 0.0,
         "value_estimate": 0.0,
         "last_rpe": 0.0,
+        "adaptive_base_temperature": 1.0,
+        "rpe_mean": 0.0,
+        "rpe_sq_mean": 0.0,
+        "temp_adam_m": 0.0,
+        "temp_adam_v": 0.0,
+        "temp_adam_t": 0.0,
+        "release_gate_open": 1.0,
+        "last_temperature": 1.0,
     }
     assert reset_state == expected_reset, (
         f"Reset state should be zero: expected {expected_reset}, got {reset_state}"
