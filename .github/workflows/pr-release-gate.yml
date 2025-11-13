@@ -74,7 +74,7 @@ jobs:
           if [ -n "$CHANGED_FILES" ]; then
             echo "Running mutation testing on changed files..."
             # For PR gate, we do a quick sample; full run happens in mutation-testing.yml
-            mutmut run --paths-to-mutate=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//' | sed 's/\.py//g') --tests-dir=tests || true
+            mutmut run --paths-to-mutate=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//') --tests-dir=tests || true
             python -m tools.mutation.kill_rate_guard --threshold=0.9 --summary=mutation_summary.json || echo "MUTATION_FAILED=true" >> $GITHUB_OUTPUT
           else
             echo "No relevant Python files changed"
