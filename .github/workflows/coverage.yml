@@ -10,8 +10,24 @@ permissions:
 on:
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'core/**'
+      - 'backtest/**'
+      - 'execution/**'
+      - 'tests/**'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/coverage.yml'
   push:
     branches: [main, develop]
+    paths:
+      - 'core/**'
+      - 'backtest/**'
+      - 'execution/**'
+      - 'tests/**'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/coverage.yml'
 
 jobs:
   test-coverage:
@@ -26,24 +42,55 @@ jobs:
           cache-dependency-path: |
             requirements*.txt
             requirements*.lock
+      - name: Check for Python changes
+        id: python_changes
+        run: |
+          # On push, check if Python files exist in testable modules
+          # On PR, check if Python files changed in testable modules
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git fetch origin ${{ github.base_ref }}
+            CHANGED_PYTHON=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(py)$' | grep -E '^(core|backtest|execution|tests)/' || echo "")
+          else
+            CHANGED_PYTHON=$(find core backtest execution tests -name "*.py" 2>/dev/null || echo "")
+          fi
+          
+          if [ -n "$CHANGED_PYTHON" ]; then
+            echo "python_changed=true" >> $GITHUB_OUTPUT
+            echo "Python files found/changed, will run coverage tests"
+          else
+            echo "python_changed=false" >> $GITHUB_OUTPUT
+            echo "No Python files found/changed in testable modules, skipping coverage"
+          fi
+      
       - name: Install dependencies
+        if: steps.python_changes.outputs.python_changed == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
           pip install pytest pytest-cov
+      
       - name: Run tests with coverage (98% required)
+        if: steps.python_changes.outputs.python_changed == 'true'
         run: |
           pytest tests/ \
             --cov=core --cov=backtest --cov=execution \
             --cov-report=xml --cov-report=html:coverage_html \
             --cov-fail-under=98
+      
+      - name: Skip coverage for non-Python changes
+        if: steps.python_changes.outputs.python_changed != 'true'
+        run: |
+          echo "✅ Coverage check skipped - no Python changes detected"
+          echo "This workflow only applies to Python files in core/, backtest/, execution/, tests/"
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: steps.python_changes.outputs.python_changed == 'true' && secrets.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }} # Додайте цей секрет у налаштуваннях репозиторію
+      
       - name: Upload coverage artifact
+        if: steps.python_changes.outputs.python_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report

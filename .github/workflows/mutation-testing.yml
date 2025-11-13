@@ -14,6 +14,13 @@ on:
       - 'pyproject.toml'
   push:
     branches: [main, develop]
+    paths:
+      - 'core/**'
+      - 'backtest/**'
+      - 'execution/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
 
 concurrency:
   group: mutation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

@@ -46,8 +46,21 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      - name: Check for Python changes
+        id: python_changes
+        run: |
+          CHANGED_PYTHON=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -E '\.(py)$' | grep -E '^(core|backtest|execution|tests)/' || echo "")
+          if [ -n "$CHANGED_PYTHON" ]; then
+            echo "python_changed=true" >> $GITHUB_OUTPUT
+            echo "Python files changed, will run coverage tests"
+          else
+            echo "python_changed=false" >> $GITHUB_OUTPUT
+            echo "No Python files changed in testable modules, skipping coverage"
+          fi
+
       - name: Run tests with coverage
         id: coverage
+        if: steps.python_changes.outputs.python_changed == 'true'
         run: |
           pytest tests/ \
             --cov=core --cov=backtest --cov=execution \
@@ -58,7 +71,10 @@ jobs:
       - name: Extract coverage metrics
         id: coverage_metrics
         run: |
-          if [ -f coverage.xml ]; then
+          if [ "${{ steps.python_changes.outputs.python_changed }}" != "true" ]; then
+            echo "coverage=N/A" >> $GITHUB_OUTPUT
+            echo "Coverage check skipped - no Python changes"
+          elif [ -f coverage.xml ]; then
             COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); print(f\"{float(tree.getroot().get('line-rate', 0)) * 100:.2f}\")")
             echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
             echo "Coverage: $COVERAGE%"
@@ -96,8 +112,20 @@ jobs:
             let riskFactors = [];
             
             // Coverage risk
-            const coverage = parseFloat('${{ steps.coverage_metrics.outputs.coverage }}') || 0;
-            if (coverage < 98) {
+            const coverageStr = '${{ steps.coverage_metrics.outputs.coverage }}';
+            const pythonChanged = '${{ steps.python_changes.outputs.python_changed }}' === 'true';
+            
+            let coverage = 0;
+            let coverageSkipped = false;
+            
+            if (coverageStr === 'N/A' || !pythonChanged) {
+              coverage = 100; // Don't penalize for skipped coverage
+              coverageSkipped = true;
+            } else {
+              coverage = parseFloat(coverageStr) || 0;
+            }
+            
+            if (!coverageSkipped && coverage < 98) {
               const coverageGap = 98 - coverage;
               riskScore += Math.min(coverageGap * 2, 40);
               riskFactors.push(`Coverage: ${coverage.toFixed(2)}% (target: 98%)`);
@@ -277,8 +305,10 @@ jobs:
               console.log('Could not read mutation summary');
             }
             
-            const coveragePassed = parseFloat(coverage) >= 98;
-            const coverageEmoji = coveragePassed ? '✅' : '❌';
+            const pythonChanged = '${{ steps.python_changes.outputs.python_changed }}' === 'true';
+            const coverageSkipped = coverage === 'N/A' || !pythonChanged;
+            const coveragePassed = coverageSkipped || parseFloat(coverage) >= 98;
+            const coverageEmoji = coverageSkipped ? 'ℹ️' : (coveragePassed ? '✅' : '❌');
             
             const riskFactorsText = riskFactors.length > 0 ? 
               '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') : 
@@ -294,8 +324,12 @@ jobs:
               '### Quality Metrics',
               '',
               `#### ${coverageEmoji} Code Coverage`,
-              `**Coverage:** ${coverage}% (target: 98%)`,
-              coveragePassed ? '✅ Coverage requirement met' : '❌ Coverage below threshold',
+              coverageSkipped ? 
+                '**Status:** Skipped (no Python changes in testable modules)' :
+                `**Coverage:** ${coverage}% (target: 98%)`,
+              coverageSkipped ? 
+                'ℹ️ Coverage check not applicable for this PR' :
+                (coveragePassed ? '✅ Coverage requirement met' : '❌ Coverage below threshold'),
               '',
               '#### Mutation Testing',
               mutationSummary,
@@ -366,9 +400,16 @@ jobs:
           if-no-files-found: warn
 
       - name: Fail if quality gates not met
-        if: steps.coverage.outputs.COVERAGE_FAILED == 'true' || steps.mutation.outputs.MUTATION_FAILED == 'true'
+        if: steps.python_changes.outputs.python_changed == 'true' && (steps.coverage.outputs.COVERAGE_FAILED == 'true' || steps.mutation.outputs.MUTATION_FAILED == 'true')
         run: |
           echo "❌ Quality gates not met. Please fix the issues and push again."
           echo "Coverage requirement: 98%"
           echo "Mutation kill rate requirement: 90%"
           exit 1
+      
+      - name: Skip quality gates for non-Python changes
+        if: steps.python_changes.outputs.python_changed != 'true'
+        run: |
+          echo "✅ Quality gates skipped - no Python changes detected in testable modules"
+          echo "This PR only modifies files outside of core/, backtest/, execution/, tests/"
+          echo "Python coverage and mutation testing requirements do not apply"
