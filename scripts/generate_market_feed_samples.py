@@ -9,7 +9,6 @@ regression tests.
 
 import argparse
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 # Add project root to path
