@@ -205,13 +205,21 @@ def _hurst_reference(ts: np.ndarray, min_lag: int, max_lag: int) -> float:
 def test_kuramoto_order_translation_invariant(
     phases: list[float], shift: float
 ) -> None:
+    """Test that kuramoto order is invariant under phase translation.
+    
+    Translation invariance means adding a constant to all phases should not
+    change the order parameter. Relaxed tolerance to 1e-9 to account for
+    floating point precision with large phase values.
+    """
     arr = np.asarray(phases, dtype=float)
     assume(np.isfinite(arr).all())
     base = kuramoto_order(arr)
     shifted = kuramoto_order(arr + shift)
     assert math.isfinite(base)
     assert math.isfinite(shifted)
-    assert shifted == pytest.approx(base, rel=1e-10, abs=1e-10)
+    # Relaxed tolerance from 1e-10 to 1e-9 to account for floating point precision
+    # with large phase values (e.g., phases near ±1e6)
+    assert shifted == pytest.approx(base, rel=1e-9, abs=1e-9)
 
 
 @settings(
