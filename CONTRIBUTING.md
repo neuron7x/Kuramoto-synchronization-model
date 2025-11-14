@@ -182,6 +182,44 @@ make fpma-check  # Cyclomatic complexity
 python -m scripts lint  # Full lint suite
 ```
 
+#### JavaScript/Node.js Workflow
+
+For JavaScript files and GitHub Actions workflows:
+
+```bash
+# Install dependencies
+npm install
+
+# Run linter
+npm run lint
+
+# Auto-fix linting issues
+npm run lint:fix
+
+# Run tests
+npm test
+
+# Check syntax for all JS files
+for f in $(git ls-files '*.js'); do
+  echo "Checking $f"
+  node -e "require('fs').readFileSync('$f','utf8')"
+done
+
+# Set up pre-commit hooks (one-time setup)
+npx husky install
+
+# Pre-commit will automatically run:
+# - ESLint with auto-fix
+# - BOM removal (strip-bom-cli)
+# - Format YAML files
+```
+
+**Important:** All JavaScript files must:
+- Pass ESLint validation
+- Have no BOM (Byte Order Mark)
+- Use UTF-8 encoding
+- Have LF line endings (enforced by .gitattributes)
+
 ### 6. Create Pull Request
 
 - Write a clear description of the problem and solution

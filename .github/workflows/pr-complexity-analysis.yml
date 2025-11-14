@@ -29,10 +29,34 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      - name: Install dev tools
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install
+          fi
+
+      - name: Lint JS and check syntax
+        run: |
+          node --version
+          if [ -f package.json ]; then
+            npx eslint --ext .js . || echo "ESLint warnings found"
+          fi
+          for f in $(git ls-files '*.js' | grep -E '^(.github|actions|scripts)/' || true); do
+            if [ -f "$f" ]; then
+              echo "Syntax-check $f"
+              node -e "require('fs').readFileSync('$f','utf8')" || echo "Failed: $f"
+            fi
+          done
 
       - name: Install analysis tools
         run: |
@@ -182,6 +206,30 @@ jobs:
             echo "✅ No obvious breaking changes detected"
           fi
 
+      - name: CI Debug - Node & Files
+        run: |
+          node --version
+          echo "Listing candidate JS files"
+          git grep -n "Buffer.from" || true
+          for f in $(git grep -l "Buffer.from" || true); do
+            echo "---- $f ----"
+            head -n 40 "$f"
+          done
+
+      - name: Debug CODEOWNERS file
+        run: |
+          if [ -f CODEOWNERS ]; then
+            echo "CODEOWNERS found in root"
+            file -bi CODEOWNERS || true
+            sed -n '1,200p' CODEOWNERS || true
+          elif [ -f .github/CODEOWNERS ]; then
+            echo "CODEOWNERS found in .github/"
+            file -bi .github/CODEOWNERS || true
+            sed -n '1,200p' .github/CODEOWNERS || true
+          else
+            echo "No CODEOWNERS file present"
+          fi
+
       - name: Check code ownership coverage
         id: ownership_check
         uses: actions/github-script@v7
@@ -197,19 +245,60 @@ jobs:
               pull_number,
             });
             
-            // Check CODEOWNERS file
-            let codeownersContent = '';
-            try {
-              const { data } = await github.rest.repos.getContent({
-                owner,
-                repo,
-                path: 'CODEOWNERS',
-                ref: context.payload.pull_request.base.ref,
-              });
-              codeownersContent = Buffer.from(data.content, 'base64').toString();
-            } catch (error) {
-              console.log('CODEOWNERS file not found');
-              core.setOutput('has_owners', 'false');
+            // Safe function to read and decode CODEOWNERS
+            async function safeReadCodeowners(octokit, owner, repo, ref) {
+              try {
+                const res = await octokit.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: 'CODEOWNERS',
+                  ref
+                });
+                
+                const base64 = (res && res.data && res.data.content) ? res.data.content : null;
+                
+                if (!base64 || typeof base64 !== 'string') {
+                  core.info('CODEOWNERS not present or content invalid');
+                  core.setOutput('has_owners', 'false');
+                  return null;
+                }
+                
+                // Remove line breaks and whitespace for validation
+                const compact = base64.replace(/\r?\n/g, '').trim();
+                
+                // Validate base64 format before decoding
+                if (!/^[A-Za-z0-9+\/=]+$/.test(compact)) {
+                  core.warning('CODEOWNERS content is not valid base64; abort decode.');
+                  core.setOutput('has_owners', 'false');
+                  return null;
+                }
+                
+                let decoded;
+                try {
+                  decoded = Buffer.from(compact, 'base64').toString('utf8');
+                } catch (err) {
+                  core.warning('Failed to decode CODEOWNERS base64: ' + err.message);
+                  core.setOutput('has_owners', 'false');
+                  return null;
+                }
+                
+                // Remove BOM if present
+                decoded = decoded.replace(/^\uFEFF/, '');
+                
+                core.setOutput('has_owners', 'true');
+                core.info(`CODEOWNERS length: ${decoded.length}`);
+                return decoded;
+              } catch (err) {
+                core.info(`Could not read CODEOWNERS: ${err && err.message ? err.message : String(err)}`);
+                core.setOutput('has_owners', 'false');
+                return null;
+              }
+            }
+            
+            // Check CODEOWNERS file using safe function
+            const codeownersContent = await safeReadCodeowners(github, owner, repo, context.payload.pull_request.base.ref);
+            
+            if (!codeownersContent) {
               return { covered: 0, uncovered: files.length };
             }
             

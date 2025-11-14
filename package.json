@@ -1,0 +1,28 @@
+{
+  "name": "tradepulse",
+  "version": "1.0.0",
+  "description": "Advanced Algorithmic Trading Framework",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js .",
+    "lint:fix": "eslint --ext .js . --fix",
+    "test": "jest",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "husky": "^8.0.3",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.0",
+    "strip-bom-cli": "^5.0.0"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "strip-bom-cli"
+    ],
+    "*.{yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

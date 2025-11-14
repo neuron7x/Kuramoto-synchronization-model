@@ -10,3 +10,7 @@
 *.toml text eol=lf
 *.md text eol=lf
 *.json text eol=lf
+
+# JavaScript files with UTF-8 encoding
+*.js text working-tree-encoding=UTF-8 eol=lf
+*.ts text working-tree-encoding=UTF-8 eol=lf
