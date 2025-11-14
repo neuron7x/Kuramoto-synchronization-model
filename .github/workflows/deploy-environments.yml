@@ -123,13 +123,38 @@ jobs:
         run: |
           python -m pytest tests/smoke -m smoke -q
 
-  deploy-staging:
+  check-staging-secrets:
     if: github.repository == 'neuron7x/TradePulse' && ((github.event_name == 'push' && github.ref == 'refs/heads/staging') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' && github.event.inputs.environment == 'staging'))
-    name: Deploy staging
+    name: Check staging deployment readiness
     runs-on: ubuntu-latest
     needs:
       - validate-infrastructure
       - pre-deploy-smoke
+    outputs:
+      can_deploy: ${{ steps.check.outputs.can_deploy }}
+    steps:
+      - name: Check if staging secrets are available
+        id: check
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_STAGING_ROLE_ARN: ${{ secrets.AWS_STAGING_ROLE_ARN }}
+          AWS_STAGING_CLUSTER_NAME: ${{ secrets.AWS_STAGING_CLUSTER_NAME }}
+        run: |
+          if [ -n "${AWS_REGION:-}" ] && [ -n "${AWS_STAGING_ROLE_ARN:-}" ] && [ -n "${AWS_STAGING_CLUSTER_NAME:-}" ]; then
+            echo "can_deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Staging deployment credentials are configured"
+          else
+            echo "can_deploy=false" >> $GITHUB_OUTPUT
+            echo "⚠️  Staging deployment credentials not configured - skipping deployment"
+            echo "This is expected for PRs and repositories without AWS infrastructure configured."
+          fi
+
+  deploy-staging:
+    if: needs.check-staging-secrets.outputs.can_deploy == 'true'
+    name: Deploy staging
+    runs-on: ubuntu-latest
+    needs:
+      - check-staging-secrets
     environment:
       name: staging
     outputs:
@@ -308,13 +333,38 @@ PY
           kubectl rollout undo deployment/tradepulse-api -n tradepulse-staging
           kubectl rollout status deployment/tradepulse-api -n tradepulse-staging --timeout=5m
 
-  deploy-production:
+  check-production-secrets:
     if: github.repository == 'neuron7x/TradePulse' && ((github.event_name == 'push' && github.ref == 'refs/heads/production') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' && github.event.inputs.environment == 'production'))
-    name: Deploy production
+    name: Check production deployment readiness
     runs-on: ubuntu-latest
     needs:
       - validate-infrastructure
       - pre-deploy-smoke
+    outputs:
+      can_deploy: ${{ steps.check.outputs.can_deploy }}
+    steps:
+      - name: Check if production secrets are available
+        id: check
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_PRODUCTION_ROLE_ARN: ${{ secrets.AWS_PRODUCTION_ROLE_ARN }}
+          AWS_PRODUCTION_CLUSTER_NAME: ${{ secrets.AWS_PRODUCTION_CLUSTER_NAME }}
+        run: |
+          if [ -n "${AWS_REGION:-}" ] && [ -n "${AWS_PRODUCTION_ROLE_ARN:-}" ] && [ -n "${AWS_PRODUCTION_CLUSTER_NAME:-}" ]; then
+            echo "can_deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Production deployment credentials are configured"
+          else
+            echo "can_deploy=false" >> $GITHUB_OUTPUT
+            echo "⚠️  Production deployment credentials not configured - skipping deployment"
+            echo "This is expected for PRs and repositories without AWS infrastructure configured."
+          fi
+
+  deploy-production:
+    if: needs.check-production-secrets.outputs.can_deploy == 'true'
+    name: Deploy production
+    runs-on: ubuntu-latest
+    needs:
+      - check-production-secrets
     environment:
       name: production
     env:
@@ -471,10 +521,46 @@ PY
           kubectl rollout undo deployment/tradepulse-api -n tradepulse-production
           kubectl rollout status deployment/tradepulse-api -n tradepulse-production --timeout=10m
 
-  rollback-environment:
+  check-rollback-secrets:
     if: github.repository == 'neuron7x/TradePulse' && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'rollback'
+    name: Check rollback deployment readiness
+    runs-on: ubuntu-latest
+    outputs:
+      can_deploy: ${{ steps.check.outputs.can_deploy }}
+    steps:
+      - name: Check if rollback secrets are available
+        id: check
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_STAGING_ROLE_ARN: ${{ secrets.AWS_STAGING_ROLE_ARN }}
+          AWS_PRODUCTION_ROLE_ARN: ${{ secrets.AWS_PRODUCTION_ROLE_ARN }}
+          AWS_STAGING_CLUSTER_NAME: ${{ secrets.AWS_STAGING_CLUSTER_NAME }}
+          AWS_PRODUCTION_CLUSTER_NAME: ${{ secrets.AWS_PRODUCTION_CLUSTER_NAME }}
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          if [ "${ENVIRONMENT}" = "production" ]; then
+            ROLE_ARN="${AWS_PRODUCTION_ROLE_ARN:-}"
+            CLUSTER_NAME="${AWS_PRODUCTION_CLUSTER_NAME:-}"
+          else
+            ROLE_ARN="${AWS_STAGING_ROLE_ARN:-}"
+            CLUSTER_NAME="${AWS_STAGING_CLUSTER_NAME:-}"
+          fi
+          
+          if [ -n "${AWS_REGION:-}" ] && [ -n "${ROLE_ARN}" ] && [ -n "${CLUSTER_NAME}" ]; then
+            echo "can_deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Rollback deployment credentials are configured for ${ENVIRONMENT}"
+          else
+            echo "can_deploy=false" >> $GITHUB_OUTPUT
+            echo "⚠️  Rollback deployment credentials not configured for ${ENVIRONMENT} - skipping rollback"
+            echo "This is expected for repositories without AWS infrastructure configured."
+          fi
+
+  rollback-environment:
+    if: needs.check-rollback-secrets.outputs.can_deploy == 'true'
     name: Roll back deployment
     runs-on: ubuntu-latest
+    needs:
+      - check-rollback-secrets
     environment:
       name: ${{ github.event.inputs.environment }}
     env:
