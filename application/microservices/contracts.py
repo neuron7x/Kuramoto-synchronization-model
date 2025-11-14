@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -12,16 +14,6 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
-import logging
-import os
-
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-tests-placeholder")
-
-_audit_logger = logging.getLogger("tradepulse.audit")
-if not _audit_logger.handlers:
-    _audit_logger.addHandler(logging.NullHandler())
-_audit_logger.propagate = False
-
 from application.api.service import (
     FeatureRequest,
     FeatureResponse,
@@ -31,6 +23,13 @@ from application.api.service import (
 from core.data.models import InstrumentType
 from core.messaging.event_bus import EventTopic
 from domain import Signal, SignalAction
+
+os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-tests-placeholder")
+
+_audit_logger = logging.getLogger("tradepulse.audit")
+if not _audit_logger.handlers:
+    _audit_logger.addHandler(logging.NullHandler())
+_audit_logger.propagate = False
 
 
 StrategyCallable = Callable[[np.ndarray], np.ndarray]

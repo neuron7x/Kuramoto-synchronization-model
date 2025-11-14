@@ -106,8 +106,8 @@ def main() -> int:
         print(f"Error: Config file not found: {config_path}", file=sys.stderr)
         return 1
     
-    print(f"Dopamine Step Benchmark")
-    print(f"=" * 60)
+    print("Dopamine Step Benchmark")
+    print("=" * 60)
     print(f"Profile: {args.profile}")
     print(f"Config: {config_path}")
     print(f"Iterations: {args.iterations:,}")
@@ -122,8 +122,8 @@ def main() -> int:
     
     # Display results
     print()
-    print(f"Results:")
-    print(f"-" * 60)
+    print("Results:")
+    print("-" * 60)
     print(f"  Total iterations: {results['iterations']:,}")
     print(f"  Elapsed time: {results['elapsed_sec']:.3f} seconds")
     print(f"  Steps per second: {results['steps_per_sec']:,.0f}")
