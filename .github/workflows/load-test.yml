@@ -44,37 +44,84 @@ jobs:
 
       - name: Start FastAPI service
         run: |
-          .venv/bin/uvicorn loadtests.service_app:app --host 127.0.0.1 --port 8000 --log-level warning &
+          echo "Starting FastAPI service on port 8000..."
+          .venv/bin/uvicorn loadtests.service_app:app --host 127.0.0.1 --port 8000 --log-level info > fastapi.log 2>&1 &
           echo $! > fastapi.pid
+          echo "FastAPI service started with PID $(cat fastapi.pid)"
+          sleep 2
 
       - name: Start gRPC service
         run: |
-          .venv/bin/python loadtests/run_grpc_service.py &
+          echo "Starting gRPC service on port 50051..."
+          .venv/bin/python loadtests/run_grpc_service.py > grpc.log 2>&1 &
           echo $! > grpc.pid
+          echo "gRPC service started with PID $(cat grpc.pid)"
+          sleep 2
 
       - name: Wait for services
         run: |
+          echo "Waiting for FastAPI service on http://127.0.0.1:8000..."
+          fastapi_ready=false
           for attempt in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:8000/health >/dev/null; then
-              if .venv/bin/python - <<-'PY'
+            if curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; then
+              echo "✓ FastAPI service is ready (attempt $attempt)"
+              fastapi_ready=true
+              break
+            fi
+            if [ $((attempt % 10)) -eq 0 ]; then
+              echo "  Still waiting for FastAPI... (attempt $attempt/60)"
+            fi
+            sleep 1
+          done
+          
+          if [ "$fastapi_ready" = false ]; then
+            echo "✗ FastAPI service failed to start after 60 seconds" >&2
+            echo "Checking if FastAPI process is running:"
+            ps aux | grep uvicorn || true
+            echo "Checking port 8000:"
+            netstat -tuln | grep 8000 || ss -tuln | grep 8000 || true
+            exit 1
+          fi
+          
+          echo "Waiting for gRPC service on 127.0.0.1:50051..."
+          grpc_ready=false
+          for attempt in $(seq 1 60); do
+            if .venv/bin/python - <<-'PY'
+          	import sys
           	import grpc
           	from loadtests.proto import trading_pb2, trading_pb2_grpc
           	
           	channel = grpc.insecure_channel("127.0.0.1:50051")
           	try:
           	    stub = trading_pb2_grpc.TradingServiceStub(channel)
-          	    stub.GetPositions(trading_pb2.Empty(), timeout=1.0)
+          	    stub.GetPositions(trading_pb2.Empty(), timeout=2.0)
+          	    sys.exit(0)
+          	except Exception as e:
+          	    sys.exit(1)
           	finally:
           	    channel.close()
           	PY
-              then
-                exit 0
-              fi
+            then
+              echo "✓ gRPC service is ready (attempt $attempt)"
+              grpc_ready=true
+              break
+            fi
+            if [ $((attempt % 10)) -eq 0 ]; then
+              echo "  Still waiting for gRPC... (attempt $attempt/60)"
             fi
             sleep 1
           done
-          echo "Services failed to become ready" >&2
-          exit 1
+          
+          if [ "$grpc_ready" = false ]; then
+            echo "✗ gRPC service failed to start after 60 seconds" >&2
+            echo "Checking if gRPC process is running:"
+            ps aux | grep run_grpc_service || true
+            echo "Checking port 50051:"
+            netstat -tuln | grep 50051 || ss -tuln | grep 50051 || true
+            exit 1
+          fi
+          
+          echo "✓ All services are ready!"
 
       - name: Run load tests
         env:
@@ -95,8 +142,26 @@ jobs:
           name: loadtest-results
           path: reports/loadtest
 
+      - name: Upload service logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-logs
+          path: |
+            fastapi.log
+            grpc.log
+          if-no-files-found: ignore
+
       - name: Stop services
         if: always()
         run: |
-          if [ -f fastapi.pid ]; then kill $(cat fastapi.pid) || true; fi
-          if [ -f grpc.pid ]; then kill $(cat grpc.pid) || true; fi
+          echo "Stopping services..."
+          if [ -f fastapi.pid ]; then 
+            echo "Stopping FastAPI (PID $(cat fastapi.pid))..."
+            kill $(cat fastapi.pid) || true
+          fi
+          if [ -f grpc.pid ]; then 
+            echo "Stopping gRPC (PID $(cat grpc.pid))..."
+            kill $(cat grpc.pid) || true
+          fi
+          echo "Services stopped"
