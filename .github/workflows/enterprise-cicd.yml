@@ -516,51 +516,51 @@ jobs:
           kustomize build "$temp_dir/overlay" > "$temp_dir/manifest.yaml"
           python -m pip install --quiet pyyaml
           python <<'PY' "$temp_dir/manifest.yaml" "${IMAGE_REF}"
-import copy
-import sys
-from pathlib import Path
-
-import yaml
-
-manifest_path = Path(sys.argv[1])
-documents = list(yaml.safe_load_all(manifest_path.read_text()))
-output_documents = []
-
-for document in documents:
-    if not isinstance(document, dict):
-        continue
-    output_documents.append(document)
-    if document.get("kind") == "Deployment" and document.get("metadata", {}).get("name") == "tradepulse-api":
-        canary = copy.deepcopy(document)
-        metadata = canary.setdefault("metadata", {})
-        metadata["name"] = f"{metadata.get('name')}-canary"
-        metadata.setdefault("labels", {})
-        metadata["labels"]["app.kubernetes.io/track"] = "canary"
-        metadata["labels"]["app.kubernetes.io/instance"] = "canary"
-        annotations = metadata.setdefault("annotations", {})
-        annotations["tradepulse.io/canary"] = "true"
-        spec = canary.setdefault("spec", {})
-        spec["replicas"] = 1
-        selector = spec.setdefault("selector", {}).setdefault("matchLabels", {})
-        selector["app.kubernetes.io/track"] = "canary"
-        selector["app.kubernetes.io/instance"] = "canary"
-        template = spec.setdefault("template", {})
-        template_metadata = template.setdefault("metadata", {})
-        template_labels = template_metadata.setdefault("labels", {})
-        template_labels["app.kubernetes.io/track"] = "canary"
-        template_labels["app.kubernetes.io/instance"] = "canary"
-        container_specs = template.setdefault("spec", {}).setdefault("containers", [])
-        for container in container_specs:
-            if container.get("name") == "tradepulse-api":
-                container["image"] = sys.argv[2]
-                container.setdefault("env", []).append({
-                    "name": "FEATURE_FLAG_ROLLOUT",
-                    "value": "canary"
-                })
-        output_documents.append(canary)
-
-manifest_path.write_text("---\n".join(yaml.safe_dump(doc, sort_keys=False) for doc in output_documents), encoding="utf-8")
-PY
+          import copy
+          import sys
+          from pathlib import Path
+          
+          import yaml
+          
+          manifest_path = Path(sys.argv[1])
+          documents = list(yaml.safe_load_all(manifest_path.read_text()))
+          output_documents = []
+          
+          for document in documents:
+              if not isinstance(document, dict):
+                  continue
+              output_documents.append(document)
+              if document.get("kind") == "Deployment" and document.get("metadata", {}).get("name") == "tradepulse-api":
+                  canary = copy.deepcopy(document)
+                  metadata = canary.setdefault("metadata", {})
+                  metadata["name"] = f"{metadata.get('name')}-canary"
+                  metadata.setdefault("labels", {})
+                  metadata["labels"]["app.kubernetes.io/track"] = "canary"
+                  metadata["labels"]["app.kubernetes.io/instance"] = "canary"
+                  annotations = metadata.setdefault("annotations", {})
+                  annotations["tradepulse.io/canary"] = "true"
+                  spec = canary.setdefault("spec", {})
+                  spec["replicas"] = 1
+                  selector = spec.setdefault("selector", {}).setdefault("matchLabels", {})
+                  selector["app.kubernetes.io/track"] = "canary"
+                  selector["app.kubernetes.io/instance"] = "canary"
+                  template = spec.setdefault("template", {})
+                  template_metadata = template.setdefault("metadata", {})
+                  template_labels = template_metadata.setdefault("labels", {})
+                  template_labels["app.kubernetes.io/track"] = "canary"
+                  template_labels["app.kubernetes.io/instance"] = "canary"
+                  container_specs = template.setdefault("spec", {}).setdefault("containers", [])
+                  for container in container_specs:
+                      if container.get("name") == "tradepulse-api":
+                          container["image"] = sys.argv[2]
+                          container.setdefault("env", []).append({
+                              "name": "FEATURE_FLAG_ROLLOUT",
+                              "value": "canary"
+                          })
+                  output_documents.append(canary)
+          
+          manifest_path.write_text("---\n".join(yaml.safe_dump(doc, sort_keys=False) for doc in output_documents), encoding="utf-8")
+          PY
           echo "manifest=$temp_dir/manifest.yaml" >>"$GITHUB_OUTPUT"
 
       - name: Apply canary manifest
@@ -717,22 +717,22 @@ PY
         run: |
           mkdir -p audit
           cat <<'REPORT' > audit/summary.md
-# TradePulse CI/CD Audit Summary
-
-- Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-- Commit: ${{ github.sha }}
-- Trigger: ${{ github.event_name }}
-- Environment: ${{ needs.infrastructure-plan.outputs.environment }}
-- Quality gate: ${{ needs.quality-gate.result }}
-- Unit tests: ${{ needs.unit-tests.result }}
-- Integration tests: ${{ needs.integration-tests.result }}
-- Load test: ${{ needs.load-test.result || 'skipped' }}
-- Container build: ${{ needs.build-container.result || 'skipped' }}
-- Vulnerability scan: ${{ needs.vulnerability-scan.result || 'skipped' }}
-- Deployment: ${{ needs.deploy-canary.result || 'skipped' }}
-- Progressive rollout: ${{ needs.progressive-rollout.result || 'skipped' }}
-
-REPORT
+          # TradePulse CI/CD Audit Summary
+          
+          - Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - Commit: ${{ github.sha }}
+          - Trigger: ${{ github.event_name }}
+          - Environment: ${{ needs.infrastructure-plan.outputs.environment }}
+          - Quality gate: ${{ needs.quality-gate.result }}
+          - Unit tests: ${{ needs.unit-tests.result }}
+          - Integration tests: ${{ needs.integration-tests.result }}
+          - Load test: ${{ needs.load-test.result || 'skipped' }}
+          - Container build: ${{ needs.build-container.result || 'skipped' }}
+          - Vulnerability scan: ${{ needs.vulnerability-scan.result || 'skipped' }}
+          - Deployment: ${{ needs.deploy-canary.result || 'skipped' }}
+          - Progressive rollout: ${{ needs.progressive-rollout.result || 'skipped' }}
+          
+          REPORT
 
       - name: Upload audit summary
         uses: actions/upload-artifact@v4
