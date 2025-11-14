@@ -74,9 +74,17 @@ def test_publish_job_runs_only_on_push_events() -> None:
 
 
 def test_publish_job_depends_on_coverage_aggregate() -> None:
+    """Verify publish-containers job depends on coverage and mutation testing gates.
+    
+    The job must wait for both coverage aggregation and mutation testing to complete
+    before publishing container images to ensure quality gates are met.
+    """
     workflow = _load_ci_workflow()
     job = _get_publish_job(workflow)
-    assert job["needs"] == "coverage-aggregate"
+    assert job["needs"] == ["coverage-aggregate", "mutation-testing-gate"], (
+        f"Expected publish-containers to depend on ['coverage-aggregate', 'mutation-testing-gate'], "
+        f"but got {job['needs']}"
+    )
 
 
 def test_publish_job_sets_required_permissions() -> None:

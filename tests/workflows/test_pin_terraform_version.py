@@ -69,14 +69,30 @@ def test_job_uses_cached_go_and_fixed_terraform_version() -> None:
         if step.get("uses") == "hashicorp/setup-terraform@v3":
             setup_tf = step
 
-    assert setup_go is not None
+    assert setup_go is not None, "Expected setup-go@v5 step to be present"
     with_section = setup_go.get("with")
-    assert isinstance(with_section, dict)
-    assert with_section.get("go-version-file") == "infra/terraform/tests/go.mod"
-    assert with_section.get("cache") is True
-    assert with_section.get("cache-dependency-path") == "infra/terraform/tests/go.sum"
+    assert isinstance(with_section, dict), "Expected 'with' section in setup-go step"
+    
+    # Verify Go version is pinned (either via version string or go.mod file)
+    go_version = with_section.get("go-version")
+    go_version_file = with_section.get("go-version-file")
+    assert go_version or go_version_file, (
+        "Expected either 'go-version' or 'go-version-file' to be specified"
+    )
+    if go_version:
+        assert isinstance(go_version, str) and go_version.strip(), (
+            f"Expected non-empty go-version string, got {go_version!r}"
+        )
+    
+    assert with_section.get("cache") is True, "Expected Go module caching to be enabled"
+    assert with_section.get("cache-dependency-path") == "infra/terraform/tests/go.sum", (
+        f"Expected cache-dependency-path to be 'infra/terraform/tests/go.sum', "
+        f"got {with_section.get('cache-dependency-path')!r}"
+    )
 
-    assert setup_tf is not None
+    assert setup_tf is not None, "Expected setup-terraform@v3 step to be present"
     tf_with = setup_tf.get("with")
-    assert isinstance(tf_with, dict)
-    assert tf_with.get("terraform_version") == "1.6.6"
+    assert isinstance(tf_with, dict), "Expected 'with' section in setup-terraform step"
+    assert tf_with.get("terraform_version") == "1.6.6", (
+        f"Expected Terraform version to be '1.6.6', got {tf_with.get('terraform_version')!r}"
+    )

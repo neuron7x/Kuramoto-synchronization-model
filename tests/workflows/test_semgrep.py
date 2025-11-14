@@ -41,14 +41,29 @@ def test_workflow_runs_weekly_scan() -> None:
 
 
 def test_semgrep_job_has_security_permissions() -> None:
-    """Ensure job has permissions to write security events."""
-    workflow = _load_workflow()
-    job = workflow["jobs"]["semgrep"]
+    """Ensure workflow has permissions to write security events.
     
-    permissions = job.get("permissions")
-    assert isinstance(permissions, dict)
-    assert permissions["contents"] == "read"
-    assert permissions["security-events"] == "write"
+    Permissions can be set at workflow level or job level. This test checks
+    for workflow-level permissions which are inherited by the job.
+    """
+    workflow = _load_workflow()
+    
+    # Check for workflow-level permissions first (preferred for shared permissions)
+    permissions = workflow.get("permissions")
+    if permissions is None:
+        # Fall back to job-level permissions if workflow-level not set
+        job = workflow["jobs"]["semgrep"]
+        permissions = job.get("permissions")
+    
+    assert isinstance(permissions, dict), (
+        "Expected permissions to be defined at workflow or job level"
+    )
+    assert permissions["contents"] == "read", (
+        f"Expected contents permission to be 'read', got {permissions.get('contents')!r}"
+    )
+    assert permissions["security-events"] == "write", (
+        f"Expected security-events permission to be 'write', got {permissions.get('security-events')!r}"
+    )
 
 
 def test_semgrep_runs_in_container() -> None:
