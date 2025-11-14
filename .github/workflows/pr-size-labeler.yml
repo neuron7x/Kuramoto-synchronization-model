@@ -116,11 +116,22 @@ jobs:
               );
 
               if (!botComment) {
+                const largeprMessage = [
+                  `⚠️ This PR is quite large (${totalChanges} lines changed).`,
+                  'Consider splitting it into smaller, more focused PRs for easier review and testing.',
+                  '',
+                  '**Benefits of smaller PRs:**',
+                  '- Faster code review',
+                  '- Easier to test',
+                  '- Simpler to revert if needed',
+                  '- Better git history'
+                ].join('\n');
+
                 await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number: pull_number,
-                  body: `⚠️ This PR is quite large (${totalChanges} lines changed). Consider splitting it into smaller, more focused PRs for easier review and testing.\n\n**Benefits of smaller PRs:**\n- Faster code review\n- Easier to test\n- Simpler to revert if needed\n- Better git history`
+                  body: largeprMessage
                 });
               }
             }

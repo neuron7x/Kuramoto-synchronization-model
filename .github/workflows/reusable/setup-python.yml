@@ -52,17 +52,17 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          
+
           if [ "${{ inputs.use-constraints }}" == "true" ]; then
             CONSTRAINT_FLAG="-c constraints/security.txt"
           else
             CONSTRAINT_FLAG=""
           fi
-          
+
           if [ -f requirements.txt ]; then
             pip install $CONSTRAINT_FLAG -r requirements.txt
           fi
-          
+
           if [ "${{ inputs.install-dev-deps }}" == "true" ] && [ -f requirements-dev.txt ]; then
             pip install $CONSTRAINT_FLAG -r requirements-dev.txt
           fi

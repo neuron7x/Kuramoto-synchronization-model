@@ -18,37 +18,37 @@ jobs:
       - uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          
+
           # Stale issue configuration
           stale-issue-message: |
-            This issue has been automatically marked as stale because it has not had recent activity. 
+            This issue has been automatically marked as stale because it has not had recent activity.
             It will be closed in 7 days if no further activity occurs.
-            
+
             If this issue is still relevant, please:
             - Add a comment to keep it open
             - Add the `keep-open` label
             - Link to a PR that addresses it
-            
+
             Thank you for your contributions!
           close-issue-message: |
-            This issue has been automatically closed due to inactivity. 
+            This issue has been automatically closed due to inactivity.
             If you believe this issue should be reopened, please create a new issue with updated context and reference this one.
           stale-issue-label: 'stale'
           days-before-issue-stale: 90
           days-before-issue-close: 7
           exempt-issue-labels: 'keep-open,pinned,security,critical,roadmap,enhancement'
-          
+
           # Stale PR configuration
           stale-pr-message: |
             This pull request has been automatically marked as stale because it has not had recent activity.
             It will be closed in 14 days if no further activity occurs.
-            
+
             If this PR is still relevant, please:
             - Rebase on the latest main branch
             - Resolve merge conflicts
             - Address any review comments
             - Add the `keep-open` label if work is ongoing
-            
+
             Thank you for your contributions!
           close-pr-message: |
             This pull request has been automatically closed due to inactivity.
@@ -56,21 +56,21 @@ jobs:
             1. Reopen this PR (if you have permissions)
             2. Or create a new PR with updated changes
             3. Reference this PR in the new one
-            
+
             Thank you for your contributions!
           stale-pr-label: 'stale'
           days-before-pr-stale: 60
           days-before-pr-close: 14
           exempt-pr-labels: 'keep-open,dependencies,security,work-in-progress,blocked'
           exempt-draft-pr: true
-          
+
           # General settings
           operations-per-run: 100
           remove-stale-when-updated: true
           ascending: false
-          
+
           # Don't mark issues/PRs as stale if they have certain labels
           exempt-all-milestones: false
-          
+
           # Custom messages for different scenarios
           enable-statistics: true

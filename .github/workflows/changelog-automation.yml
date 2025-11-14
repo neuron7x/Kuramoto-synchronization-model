@@ -29,69 +29,71 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             // Get PR labels
             const { data: labels } = await github.rest.issues.listLabelsOnIssue({
               owner,
               repo,
               issue_number: pull_number
             });
-            
+
             const labelNames = labels.map(l => l.name);
-            
+
             // Skip changelog check for certain labels
             const skipLabels = ['dependencies', 'skip-changelog', 'documentation', 'ci'];
             const shouldSkip = skipLabels.some(label => labelNames.includes(label));
-            
+
             if (shouldSkip) {
               console.log('Skipping changelog check due to label');
               return;
             }
-            
+
             // Check if PR has changelog entry in newsfragments/
             const { data: files } = await github.rest.pulls.listFiles({
               owner,
               repo,
               pull_number
             });
-            
-            const hasChangelog = files.some(file => 
-              file.filename.startsWith('newsfragments/') && 
+
+            const hasChangelog = files.some(file =>
+              file.filename.startsWith('newsfragments/') &&
               file.filename.endsWith('.md')
             );
-            
+
             if (!hasChangelog) {
-              const comment = `⚠️ **Changelog Entry Missing**
+              const comment = [
+                '⚠️ **Changelog Entry Missing**',
+                '',
+                'This PR is missing a changelog entry. Please add one by creating a file in `newsfragments/` directory.',
+                '',
+                '**Format:** `newsfragments/<pr_number>.<type>.md`',
+                '',
+                '**Types:**',
+                '- `feature` - New features',
+                '- `bugfix` - Bug fixes',
+                '- `doc` - Documentation improvements',
+                '- `removal` - Deprecations or removals',
+                '- `misc` - Other changes',
+                '',
+                `**Example:** \`newsfragments/${pull_number}.feature.md\``,
+                '',
+                '**Content:** A brief description of the change (1-2 sentences).',
+                '',
+                '**To skip this check:** Add the `skip-changelog` label.'
+              ].join('\n');
 
-This PR is missing a changelog entry. Please add one by creating a file in \`newsfragments/\` directory.
-
-**Format:** \`newsfragments/<pr_number>.<type>.md\`
-
-**Types:**
-- \`feature\` - New features
-- \`bugfix\` - Bug fixes
-- \`doc\` - Documentation improvements
-- \`removal\` - Deprecations or removals
-- \`misc\` - Other changes
-
-**Example:** \`newsfragments/${pull_number}.feature.md\`
-
-**Content:** A brief description of the change (1-2 sentences).
-
-**To skip this check:** Add the \`skip-changelog\` label.`;
-              
               // Check if comment already exists
               const { data: comments } = await github.rest.issues.listComments({
                 owner,
                 repo,
                 issue_number: pull_number
               });
-              
-              const existingComment = comments.find(c => 
-                c.user.type === 'Bot' && 
+
+              const existingComment = comments.find(c =>
+                c.user.type === 'Bot' &&
                 c.body.includes('Changelog Entry Missing')
               );
-              
+
               if (existingComment) {
                 await github.rest.issues.updateComment({
                   owner,
@@ -107,7 +109,7 @@ This PR is missing a changelog entry. Please add one by creating a file in \`new
                   body: comment
                 });
               }
-              
+
               // Add label
               await github.rest.issues.addLabels({
                 owner,
@@ -117,7 +119,7 @@ This PR is missing a changelog entry. Please add one by creating a file in \`new
               });
             } else {
               console.log('✓ Changelog entry found');
-              
+
               // Remove needs-changelog label if exists
               try {
                 await github.rest.issues.removeLabel({
