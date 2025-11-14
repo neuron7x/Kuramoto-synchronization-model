@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable, Mapping, Protocol, Sequence
+from typing import TYPE_CHECKING, Callable, Mapping, Protocol, Sequence
 
 from core.data.models import InstrumentType, PriceTick
+
+if TYPE_CHECKING:
+    from src.data.event_bus import MessageBroker
 
 
 @dataclass(frozen=True, slots=True)
