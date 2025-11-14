@@ -57,16 +57,16 @@ jobs:
           for attempt in $(seq 1 60); do
             if curl -sf http://127.0.0.1:8000/health >/dev/null; then
               if .venv/bin/python - <<'PY'
-import grpc
-from loadtests.proto import trading_pb2, trading_pb2_grpc
-
-channel = grpc.insecure_channel("127.0.0.1:50051")
-try:
-    stub = trading_pb2_grpc.TradingServiceStub(channel)
-    stub.GetPositions(trading_pb2.Empty(), timeout=1.0)
-finally:
-    channel.close()
-PY
+              import grpc
+              from loadtests.proto import trading_pb2, trading_pb2_grpc
+              
+              channel = grpc.insecure_channel("127.0.0.1:50051")
+              try:
+                  stub = trading_pb2_grpc.TradingServiceStub(channel)
+                  stub.GetPositions(trading_pb2.Empty(), timeout=1.0)
+              finally:
+                  channel.close()
+              PY
               then
                 exit 0
               fi
