@@ -229,13 +229,78 @@ mypy
 git push origin your-branch
 ```
 
+## Best Practices for Workflow Development
+
+### Heredoc Syntax in Workflows
+
+When using heredocs (e.g., for inline Python scripts) in GitHub Actions workflows, follow these guidelines to prevent syntax errors:
+
+**✅ Correct: Use `<<-` with tab indentation**
+```yaml
+- name: Run inline script
+  run: |
+    python <<-'PY' "$arg1" "$arg2"
+    	import sys
+    	print(sys.argv[1])
+    	PY
+```
+
+**❌ Incorrect: Using `<<` with space-indented closing marker**
+```yaml
+- name: Run inline script
+  run: |
+    python <<'PY' "$arg1" "$arg2"
+      import sys
+      print(sys.argv[1])
+      PY  # Shell won't recognize this as delimiter!
+```
+
+**Key Rules:**
+1. Use `<<-` operator (not `<<`) to allow indented closing markers
+2. Use **tabs** (not spaces) for indentation within heredoc content when using `<<-`
+3. The closing marker (e.g., `PY`) must be indented with tabs to match the content
+4. This maintains both YAML validity and bash heredoc syntax correctness
+
+**Why This Matters:**
+- `<<` requires closing marker at column 0 (no indentation), which breaks YAML
+- `<<-` allows tab-indented closing markers, working within YAML's structure
+- Spaces don't work with `<<-` - only tabs are stripped
+
+### YAML Validation
+
+Always validate workflow YAML before committing:
+
+```bash
+# Validate single workflow
+python -c "import yaml; yaml.safe_load(open('.github/workflows/your-workflow.yml'))"
+
+# Validate all workflows
+find .github/workflows -name "*.yml" -exec python -c "import yaml; yaml.safe_load(open('{}'))" \; -print
+```
+
+### Testing Workflows Locally
+
+Use [act](https://github.com/nektos/act) to test workflows locally:
+
+```bash
+# Install act
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# Run a specific workflow
+act -W .github/workflows/ci.yml
+
+# Run with specific event
+act pull_request -W .github/workflows/pr-quality-summary.yml
+```
+
 ## References
 
 - [Release Gates Documentation](../../docs/RELEASE_GATES.md)
 - [Operations Guide](../../docs/OPERATIONS.md)
 - [Testing Guide](../../TESTING.md)
+- [Bash Heredoc Documentation](https://tldp.org/LDP/abs/html/here-docs.html)
 
 ---
 
-**Last Updated:** 2025-11-11
-**Version:** 1.0.0
+**Last Updated:** 2025-11-14
+**Version:** 1.1.0
