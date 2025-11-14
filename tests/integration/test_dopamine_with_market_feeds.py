@@ -13,10 +13,41 @@ import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
 from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from src.tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
 
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
+
+
+def calculate_simple_reward(records: List[MarketFeedRecord]) -> List[float]:
+    """Calculate simple rewards from market feed records based on price changes.
+    
+    Args:
+        records: List of market feed records
+        
+    Returns:
+        List of reward values (positive for price increases, negative for decreases)
+    """
+    if not records:
+        return []
+    
+    rewards = []
+    for i in range(len(records)):
+        if i == 0:
+            # First record has no previous price, use 0 reward
+            rewards.append(0.0)
+        else:
+            # Calculate return based on price change (use 'last' field from MarketFeedRecord)
+            prev_price = float(records[i - 1].last)
+            curr_price = float(records[i].last)
+            if prev_price > 0:
+                reward = (curr_price - prev_price) / prev_price
+            else:
+                reward = 0.0
+            rewards.append(reward)
+    
+    return rewards
 
 
 class TestDopamineTD0RPE:
@@ -96,11 +127,8 @@ class TestDopamineTD0RPE:
             FIXTURES_DIR / "trending_down_btcusd_200ticks.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.1,
-            decay_rate=0.95,
-        )
+        # Use default config path (parameters are configured in the YAML file)
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         rewards = calculate_simple_reward(recording.records)
         
@@ -128,13 +156,10 @@ class TestDDMAdaptation:
             FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.1,
-            decay_rate=0.95,
-        )
+        # Use default config path (parameters are configured in the YAML file)
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
-        rewards = calculate_simple_reward(recording.records, window=3)
+        rewards = calculate_simple_reward(recording.records)
         
         ddm_drifts = []
         ddm_boundaries = []
@@ -172,13 +197,10 @@ class TestDDMAdaptation:
             FIXTURES_DIR / "flash_crash_5pct_mid.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.2,  # Higher learning rate for faster adaptation
-            decay_rate=0.9,
-        )
+        # Use default config path (parameters are configured in the YAML file)
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
-        rewards = calculate_simple_reward(recording.records, window=3)
+        rewards = calculate_simple_reward(recording.records)
         
         dopamine_levels = []
         
@@ -212,15 +234,12 @@ class TestGoNoGoDecisions:
             FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.1,
-            decay_rate=0.95,
-        )
+        # Use default config path (parameters are configured in the YAML file)
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         action_gate = ActionGate(controller)
         
-        rewards = calculate_simple_reward(recording.records, window=5)
+        rewards = calculate_simple_reward(recording.records)
         
         decisions = []
         
@@ -262,15 +281,12 @@ class TestGoNoGoDecisions:
             FIXTURES_DIR / "regime_transitions_4phases.jsonl"
         )
         
-        controller = DopamineController(
-            base_temperature=1.0,
-            learning_rate=0.15,
-            decay_rate=0.93,
-        )
+        # Use default config path (parameters are configured in the YAML file)
+        controller = DopamineController(config_path="config/dopamine.yaml")
         
         action_gate = ActionGate(controller)
         
-        rewards = calculate_simple_reward(recording.records, window=10)
+        rewards = calculate_simple_reward(recording.records)
         
         decisions_by_phase = {
             "phase1": [],  # 0-75: stable
