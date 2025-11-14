@@ -19,6 +19,10 @@ permissions:
   id-token: write
   attestations: write
 
+concurrency:
+  group: progressive-release-gates-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-gates:
     runs-on: ubuntu-latest

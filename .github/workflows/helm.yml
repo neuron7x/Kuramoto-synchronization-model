@@ -17,6 +17,10 @@ on:
     paths:
       - 'deploy/helm/**'
 
+concurrency:
+  group: helm-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint Helm Charts
@@ -27,6 +31,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Cache Helm charts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            ~/.local/share/helm
+          key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
+          restore-keys: |
+            helm-${{ runner.os }}-
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -50,6 +64,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Cache Helm charts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            ~/.local/share/helm
+          key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
+          restore-keys: |
+            helm-${{ runner.os }}-
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -98,6 +122,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Cache Helm charts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            ~/.local/share/helm
+          key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
+          restore-keys: |
+            helm-${{ runner.os }}-
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -246,6 +280,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Cache Helm charts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            ~/.local/share/helm
+          key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
+          restore-keys: |
+            helm-${{ runner.os }}-
+
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
@@ -290,6 +334,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Cache Helm charts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            ~/.local/share/helm
+          key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
+          restore-keys: |
+            helm-${{ runner.os }}-
 
       - name: Set up Helm
         uses: azure/setup-helm@v4

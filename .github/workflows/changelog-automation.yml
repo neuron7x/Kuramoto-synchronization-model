@@ -1,0 +1,168 @@
+name: Changelog Automation
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, synchronize]
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: changelog-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-changelog:
+    name: Check Changelog Entry
+    if: github.event.action != 'closed' && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            // Get PR labels
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner,
+              repo,
+              issue_number: pull_number
+            });
+            
+            const labelNames = labels.map(l => l.name);
+            
+            // Skip changelog check for certain labels
+            const skipLabels = ['dependencies', 'skip-changelog', 'documentation', 'ci'];
+            const shouldSkip = skipLabels.some(label => labelNames.includes(label));
+            
+            if (shouldSkip) {
+              console.log('Skipping changelog check due to label');
+              return;
+            }
+            
+            // Check if PR has changelog entry in newsfragments/
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number
+            });
+            
+            const hasChangelog = files.some(file => 
+              file.filename.startsWith('newsfragments/') && 
+              file.filename.endsWith('.md')
+            );
+            
+            if (!hasChangelog) {
+              const comment = `⚠️ **Changelog Entry Missing**
+
+This PR is missing a changelog entry. Please add one by creating a file in \`newsfragments/\` directory.
+
+**Format:** \`newsfragments/<pr_number>.<type>.md\`
+
+**Types:**
+- \`feature\` - New features
+- \`bugfix\` - Bug fixes
+- \`doc\` - Documentation improvements
+- \`removal\` - Deprecations or removals
+- \`misc\` - Other changes
+
+**Example:** \`newsfragments/${pull_number}.feature.md\`
+
+**Content:** A brief description of the change (1-2 sentences).
+
+**To skip this check:** Add the \`skip-changelog\` label.`;
+              
+              // Check if comment already exists
+              const { data: comments } = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pull_number
+              });
+              
+              const existingComment = comments.find(c => 
+                c.user.type === 'Bot' && 
+                c.body.includes('Changelog Entry Missing')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: existingComment.id,
+                  body: comment
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: pull_number,
+                  body: comment
+                });
+              }
+              
+              // Add label
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pull_number,
+                labels: ['needs-changelog']
+              });
+            } else {
+              console.log('✓ Changelog entry found');
+              
+              // Remove needs-changelog label if exists
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: pull_number,
+                  name: 'needs-changelog'
+                });
+              } catch (error) {
+                // Ignore if label doesn't exist
+              }
+            }
+
+  generate-draft-changelog:
+    name: Generate Draft Changelog
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Check for towncrier
+        id: check-towncrier
+        run: |
+          if [ -f requirements-dev.txt ] && grep -q "towncrier" requirements-dev.txt; then
+            echo "has_towncrier=true" >> $GITHUB_OUTPUT
+            pip install towncrier
+          else
+            echo "has_towncrier=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate draft changelog
+        if: steps.check-towncrier.outputs.has_towncrier == 'true'
+        run: |
+          towncrier build --draft --version=unreleased > draft_changelog.md || echo "No changelog entries to process"
+
+      - name: Display draft changelog
+        if: steps.check-towncrier.outputs.has_towncrier == 'true'
+        run: |
+          if [ -f draft_changelog.md ]; then
+            cat draft_changelog.md
+          fi

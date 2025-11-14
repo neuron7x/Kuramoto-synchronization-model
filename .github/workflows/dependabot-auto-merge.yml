@@ -11,6 +11,10 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: dependabot-auto-merge-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   enable-auto-merge:
     # Only run for Dependabot PRs from the same repository (not forks)
@@ -28,18 +32,32 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Wait for required checks to succeed
+        id: checks
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          gh pr checks "$PR_URL" --watch --interval 30 --required
+          gh pr checks "$PR_URL" --watch --interval 30 --required || {
+            echo "checks_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          }
+          echo "checks_failed=false" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      - name: Comment on check failure
+        if: steps.checks.outputs.checks_failed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr comment "$PR_URL" --body "❌ **Automated merge cancelled**: One or more required checks failed. Please review the failures and address them manually."
       - name: Enable auto-merge for safe updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        if: steps.checks.outputs.checks_failed != 'true' && (steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           gh pr merge "$PR_URL" --auto --squash --delete-branch
+          gh pr comment "$PR_URL" --body "✅ **Auto-merge enabled**: This PR will be automatically merged once all required checks pass."
       - name: Comment when manual review is required
         if: steps.metadata.outputs.update-type != 'version-update:semver-patch' && steps.metadata.outputs.update-type != 'version-update:semver-minor'
         env:

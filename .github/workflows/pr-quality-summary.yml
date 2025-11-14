@@ -11,6 +11,10 @@ permissions:
   pull-requests: write
   actions: read
 
+concurrency:
+  group: pr-quality-summary-${{ github.workflow }}-${{ github.event.workflow_run.id }}
+  cancel-in-progress: true
+
 jobs:
   post-summary:
     runs-on: ubuntu-latest

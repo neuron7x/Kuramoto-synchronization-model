@@ -1,0 +1,104 @@
+name: First Time Contributor Welcome
+
+on:
+  pull_request_target:
+    types: [opened]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            
+            // Check if this is a PR or issue
+            const isPR = !!context.payload.pull_request;
+            const number = isPR ? context.payload.pull_request.number : context.payload.issue.number;
+            const author = isPR ? context.payload.pull_request.user.login : context.payload.issue.user.login;
+            
+            // Check if this is the user's first contribution
+            const { data: contributions } = isPR
+              ? await github.rest.pulls.list({ owner, repo, state: 'all', creator: author })
+              : await github.rest.issues.listForRepo({ owner, repo, state: 'all', creator: author });
+            
+            const isFirstContribution = contributions.length === 1;
+            
+            if (!isFirstContribution) {
+              console.log(`Not a first-time contribution for ${author}`);
+              return;
+            }
+            
+            // Welcome message for first-time contributors
+            const welcomeMessage = isPR
+              ? `👋 Welcome to TradePulse, @${author}! Thank you for opening your first pull request!
+
+**What happens next?**
+1. Our automated checks will run to ensure code quality and security
+2. A maintainer will review your changes
+3. We may ask for some changes or improvements
+4. Once approved, your PR will be merged
+
+**Need help?**
+- Read our [Contributing Guide](../CONTRIBUTING.md)
+- Check out our [Code of Conduct](../CODE_OF_CONDUCT.md)
+- Join discussions in the [Issues](../issues) section
+
+We appreciate your contribution! 🎉`
+              : `👋 Welcome to TradePulse, @${author}! Thank you for opening your first issue!
+
+**What happens next?**
+1. Maintainers will review your issue
+2. We may ask for additional information or clarification
+3. If accepted, the issue will be labeled and prioritized
+4. You're welcome to work on this yourself by opening a PR!
+
+**Before you start:**
+- Check if similar issues exist
+- Review our [Contributing Guide](../CONTRIBUTING.md)
+- Read our [Code of Conduct](../CODE_OF_CONDUCT.md)
+
+Thank you for helping improve TradePulse! 🚀`;
+            
+            // Post welcome comment
+            if (isPR) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: welcomeMessage
+              });
+              
+              // Add first-time contributor label
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: number,
+                labels: ['first-time-contributor']
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: welcomeMessage
+              });
+              
+              // Add first-time contributor label
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: number,
+                labels: ['first-time-contributor']
+              });
+            }
+            
+            console.log(`Welcomed first-time contributor: ${author}`);
