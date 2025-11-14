@@ -1,0 +1,77 @@
+name: Smoke Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'loadtests/**'
+      - '.github/workflows/smoke-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Services Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+      
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-smoke-${{ hashFiles('requirements*.txt', 'requirements*.lock') }}
+      
+      - name: Create virtual environment
+        run: uv venv
+      
+      - name: Install dependencies
+        run: |
+          uv pip install -c constraints/security.txt -r requirements.txt
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
+      
+      - name: Start services
+        run: |
+          .venv/bin/uvicorn loadtests.service_app:app --host 127.0.0.1 --port 8000 > fastapi.smoke.log 2>&1 &
+          echo $! > fastapi.smoke.pid
+          .venv/bin/python loadtests/run_grpc_service.py > grpc.smoke.log 2>&1 &
+          echo $! > grpc.smoke.pid
+      
+      - name: Smoke check
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8000/ready >/dev/null; then
+              echo "smoke: ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "smoke failed"
+          tail -n 200 fastapi.smoke.log || true
+          tail -n 200 grpc.smoke.log || true
+          exit 1
+      
+      - name: Stop services
+        if: always()
+        run: |
+          if [ -f fastapi.smoke.pid ]; then kill $(cat fastapi.smoke.pid) || true; fi
+          if [ -f grpc.smoke.pid ]; then kill $(cat grpc.smoke.pid) || true; fi
+      
+      - name: Upload smoke test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-logs
+          path: |
+            fastapi.smoke.log
+            grpc.smoke.log

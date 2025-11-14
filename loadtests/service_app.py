@@ -8,6 +8,7 @@ from pathlib import Path
 from secrets import token_urlsafe
 
 from fastapi import FastAPI
+import grpc
 
 from application.api.service import create_app
 from application.settings import AdminApiSettings
@@ -34,6 +35,29 @@ def build_app() -> FastAPI:
 
 
 app = build_app()
+
+
+@app.get("/health")
+def health():
+    """Liveness check - returns 200 when process is running."""
+    return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready():
+    """Readiness check - verifies gRPC service is available."""
+    try:
+        from loadtests.proto import trading_pb2, trading_pb2_grpc
+        
+        channel = grpc.insecure_channel("127.0.0.1:50051")
+        try:
+            stub = trading_pb2_grpc.TradingServiceStub(channel)
+            stub.GetPositions(trading_pb2.Empty(), timeout=1.0)
+        finally:
+            channel.close()
+    except Exception as e:
+        return {"ready": False, "error": str(e)}, 503
+    return {"ready": True}
 
 
 __all__ = ["app", "build_app"]

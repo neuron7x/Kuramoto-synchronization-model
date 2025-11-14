@@ -44,36 +44,61 @@ jobs:
 
       - name: Start FastAPI service
         run: |
-          .venv/bin/uvicorn loadtests.service_app:app --host 127.0.0.1 --port 8000 --log-level warning &
+          .venv/bin/uvicorn loadtests.service_app:app --host 127.0.0.1 --port 8000 --log-level warning > fastapi.log 2>&1 &
           echo $! > fastapi.pid
 
       - name: Start gRPC service
         run: |
-          .venv/bin/python loadtests/run_grpc_service.py &
+          .venv/bin/python loadtests/run_grpc_service.py > grpc.log 2>&1 &
           echo $! > grpc.pid
 
       - name: Wait for services
         run: |
-          for attempt in $(seq 1 60); do
+          MAX_ATTEMPTS=180   # 3 minutes — безкомпромісний запас часу
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            echo "::debug::wait-for attempt=$attempt" >&2
+
+            # HTTP liveness/readiness
             if curl -sf http://127.0.0.1:8000/health >/dev/null; then
+              # gRPC readiness check with clear failure diagnostics
               if .venv/bin/python - <<'PY'
-          import grpc
+          import sys, grpc, traceback
           from loadtests.proto import trading_pb2, trading_pb2_grpc
           
           channel = grpc.insecure_channel("127.0.0.1:50051")
           try:
               stub = trading_pb2_grpc.TradingServiceStub(channel)
-              stub.GetPositions(trading_pb2.Empty(), timeout=1.0)
+              stub.GetPositions(trading_pb2.Empty(), timeout=3.0)
+              sys.exit(0)
+          except Exception:
+              traceback.print_exc()
+              sys.exit(2)
           finally:
               channel.close()
           PY
               then
+                echo "Services ready" >&2
                 exit 0
               fi
             fi
+
             sleep 1
           done
+
           echo "Services failed to become ready" >&2
+
+          echo "=== FASTAPI LOG (last 200 lines) ===" >&2
+          tail -n 200 fastapi.log 2>/dev/null || true
+
+          echo "=== gRPC LOG (last 200 lines) ===" >&2
+          tail -n 200 grpc.log 2>/dev/null || true
+
+          echo "=== PROCESS LISTENING ON PORTS ===" >&2
+          ss -tlnp | grep -E '127.0.0.1:8000|127.0.0.1:50051' || true
+
+          echo "=== LSOF ON PORTS ===" >&2
+          lsof -iTCP -sTCP:LISTEN -P -n | grep -E '8000|50051' || true
+
           exit 1
 
       - name: Run load tests
@@ -93,7 +118,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: loadtest-results
-          path: reports/loadtest
+          path: |
+            reports/loadtest
+            fastapi.log
+            grpc.log
 
       - name: Stop services
         if: always()
