@@ -111,6 +111,17 @@ jobs:
               --file grype-sbom-report.txt || true
           fi
 
+      - name: Download baseline vulnerability report (if exists)
+        id: download_baseline
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: sbom-generation.yml
+          branch: main
+          name: vulnerability-baseline
+          path: baseline/
+          if_no_artifact_found: warn
+      
       - name: Analyze vulnerability scan results
         id: vuln_analysis
         run: |
@@ -121,30 +132,82 @@ jobs:
             MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' grype-sbom-report.json 2>/dev/null || echo "0")
             LOW=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' grype-sbom-report.json 2>/dev/null || echo "0")
             
-            echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
-            echo "high=$HIGH" >> $GITHUB_OUTPUT
-            echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
-            echo "low=$LOW" >> $GITHUB_OUTPUT
+            echo "current_critical=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "current_high=$HIGH" >> $GITHUB_OUTPUT
+            echo "current_medium=$MEDIUM" >> $GITHUB_OUTPUT
+            echo "current_low=$LOW" >> $GITHUB_OUTPUT
             
-            echo "Vulnerability Summary:"
+            echo "Current Vulnerability Summary:"
             echo "  Critical: $CRITICAL"
             echo "  High: $HIGH"
             echo "  Medium: $MEDIUM"
             echo "  Low: $LOW"
             
-            # Report but don't fail - vulnerabilities should be tracked separately
-            if [ "$CRITICAL" -gt 0 ]; then
-              echo "⚠️  Found $CRITICAL critical vulnerabilities in dependencies"
-              echo "These should be addressed in a separate security-focused PR"
+            # Compare with baseline if it exists
+            if [ -f "baseline/grype-sbom-report.json" ]; then
+              echo ""
+              echo "Comparing with baseline..."
+              
+              BASELINE_CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' baseline/grype-sbom-report.json 2>/dev/null || echo "0")
+              BASELINE_HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' baseline/grype-sbom-report.json 2>/dev/null || echo "0")
+              
+              echo "baseline_critical=$BASELINE_CRITICAL" >> $GITHUB_OUTPUT
+              echo "baseline_high=$BASELINE_HIGH" >> $GITHUB_OUTPUT
+              echo "has_baseline=true" >> $GITHUB_OUTPUT
+              
+              echo "Baseline Vulnerability Summary:"
+              echo "  Critical: $BASELINE_CRITICAL"
+              echo "  High: $BASELINE_HIGH"
+              
+              # Extract NEW Critical/High vulnerabilities (not in baseline)
+              NEW_CRITICAL=$(comm -13 \
+                <(jq -r '.matches[] | select(.vulnerability.severity == "Critical") | .vulnerability.id' baseline/grype-sbom-report.json 2>/dev/null | sort | uniq) \
+                <(jq -r '.matches[] | select(.vulnerability.severity == "Critical") | .vulnerability.id' grype-sbom-report.json 2>/dev/null | sort | uniq) \
+                | wc -l)
+              
+              NEW_HIGH=$(comm -13 \
+                <(jq -r '.matches[] | select(.vulnerability.severity == "High") | .vulnerability.id' baseline/grype-sbom-report.json 2>/dev/null | sort | uniq) \
+                <(jq -r '.matches[] | select(.vulnerability.severity == "High") | .vulnerability.id' grype-sbom-report.json 2>/dev/null | sort | uniq) \
+                | wc -l)
+              
+              echo "new_critical=$NEW_CRITICAL" >> $GITHUB_OUTPUT
+              echo "new_high=$NEW_HIGH" >> $GITHUB_OUTPUT
+              
+              echo ""
+              echo "New Vulnerabilities vs Baseline:"
+              echo "  New Critical: $NEW_CRITICAL"
+              echo "  New High: $NEW_HIGH"
+              
+              if [ "$NEW_CRITICAL" -gt 0 ] || [ "$NEW_HIGH" -gt 0 ]; then
+                echo ""
+                echo "❌ NEW Critical/High vulnerabilities detected!"
+                echo "should_fail=true" >> $GITHUB_OUTPUT
+              else
+                echo ""
+                echo "✅ No new Critical/High vulnerabilities vs baseline"
+                echo "should_fail=false" >> $GITHUB_OUTPUT
+              fi
             else
-              echo "✅ No critical vulnerabilities detected"
+              echo ""
+              echo "No baseline found. This is the initial scan."
+              echo "All vulnerabilities will be considered baseline."
+              echo "has_baseline=false" >> $GITHUB_OUTPUT
+              echo "should_fail=false" >> $GITHUB_OUTPUT
+              
+              if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+                echo ""
+                echo "⚠️  Found $CRITICAL critical and $HIGH high vulnerabilities"
+                echo "These will be tracked in VULNERABILITY_BACKLOG.md"
+              fi
             fi
           else
             echo "⚠️  Vulnerability report not found"
-            echo "critical=0" >> $GITHUB_OUTPUT
-            echo "high=0" >> $GITHUB_OUTPUT
-            echo "medium=0" >> $GITHUB_OUTPUT
-            echo "low=0" >> $GITHUB_OUTPUT
+            echo "current_critical=0" >> $GITHUB_OUTPUT
+            echo "current_high=0" >> $GITHUB_OUTPUT
+            echo "current_medium=0" >> $GITHUB_OUTPUT
+            echo "current_low=0" >> $GITHUB_OUTPUT
+            echo "has_baseline=false" >> $GITHUB_OUTPUT
+            echo "should_fail=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Generate VEX (Vulnerability Exploitability eXchange) document
@@ -219,6 +282,14 @@ jobs:
             grype-sbom-report.*
             vex.json
           if-no-files-found: ignore
+      
+      - name: Update vulnerability baseline
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-baseline
+          path: grype-sbom-report.json
+          retention-days: 90
 
       - name: Post SBOM summary to PR
         if: github.event_name == 'pull_request' && always()
@@ -228,30 +299,74 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
             
-            const critical = '${{ steps.vuln_analysis.outputs.critical }}' || '0';
-            const high = '${{ steps.vuln_analysis.outputs.high }}' || '0';
-            const medium = '${{ steps.vuln_analysis.outputs.medium }}' || '0';
-            const low = '${{ steps.vuln_analysis.outputs.low }}' || '0';
+            const currentCritical = '${{ steps.vuln_analysis.outputs.current_critical }}' || '0';
+            const currentHigh = '${{ steps.vuln_analysis.outputs.current_high }}' || '0';
+            const currentMedium = '${{ steps.vuln_analysis.outputs.current_medium }}' || '0';
+            const currentLow = '${{ steps.vuln_analysis.outputs.current_low }}' || '0';
             
-            const totalVulns = parseInt(critical) + parseInt(high) + parseInt(medium) + parseInt(low);
-            const emoji = parseInt(critical) === 0 ? '✅' : '⚠️';
+            const hasBaseline = '${{ steps.vuln_analysis.outputs.has_baseline }}' === 'true';
+            const baselineCritical = '${{ steps.vuln_analysis.outputs.baseline_critical }}' || '0';
+            const baselineHigh = '${{ steps.vuln_analysis.outputs.baseline_high }}' || '0';
+            const newCritical = '${{ steps.vuln_analysis.outputs.new_critical }}' || '0';
+            const newHigh = '${{ steps.vuln_analysis.outputs.new_high }}' || '0';
+            const shouldFail = '${{ steps.vuln_analysis.outputs.should_fail }}' === 'true';
             
-            const body = [
+            const totalVulns = parseInt(currentCritical) + parseInt(currentHigh) + parseInt(currentMedium) + parseInt(currentLow);
+            const emoji = shouldFail ? '❌' : (parseInt(currentCritical) > 0 || parseInt(currentHigh) > 0 ? '⚠️' : '✅');
+            
+            let body = [
               `## ${emoji} SBOM & Vulnerability Analysis`,
               '',
-              '### Dependency Vulnerabilities',
+              '### Current Vulnerabilities',
               '',
               '| Severity | Count |',
               '|----------|-------|',
-              `| 🔴 Critical | ${critical} |`,
-              `| 🟠 High | ${high} |`,
-              `| 🟡 Medium | ${medium} |`,
-              `| 🟢 Low | ${low} |`,
+              `| 🔴 Critical | ${currentCritical} |`,
+              `| 🟠 High | ${currentHigh} |`,
+              `| 🟡 Medium | ${currentMedium} |`,
+              `| 🟢 Low | ${currentLow} |`,
               `| **Total** | **${totalVulns}** |`,
               '',
-              parseInt(critical) === 0 
-                ? '✅ **No critical vulnerabilities detected in dependencies**' 
-                : '⚠️  **Note:** Vulnerabilities detected and tracked in SBOM. These should be addressed in a dedicated security PR.',
+            ];
+            
+            if (hasBaseline) {
+              body.push('### Baseline Comparison');
+              body.push('');
+              body.push('| Metric | Value |');
+              body.push('|--------|-------|');
+              body.push(`| Baseline Critical | ${baselineCritical} |`);
+              body.push(`| Baseline High | ${baselineHigh} |`);
+              body.push(`| **New Critical** | **${newCritical}** ${parseInt(newCritical) > 0 ? '❌' : '✅'} |`);
+              body.push(`| **New High** | **${newHigh}** ${parseInt(newHigh) > 0 ? '❌' : '✅'} |`);
+              body.push('');
+              
+              if (shouldFail) {
+                body.push('❌ **BLOCKED:** New Critical/High vulnerabilities detected!');
+                body.push('');
+                body.push('**Action Required:**');
+                body.push('- Review the new vulnerabilities in the SBOM report');
+                body.push('- Update dependencies to patched versions');
+                body.push('- Or document as accepted risk in VULNERABILITY_BACKLOG.md');
+              } else {
+                body.push('✅ **No new Critical/High vulnerabilities vs baseline**');
+                body.push('');
+                body.push('Existing vulnerabilities are tracked in [VULNERABILITY_BACKLOG.md](../../VULNERABILITY_BACKLOG.md)');
+              }
+            } else {
+              body.push('### Initial Baseline');
+              body.push('');
+              body.push('**This is the first scan - establishing baseline**');
+              body.push('');
+              if (parseInt(currentCritical) > 0 || parseInt(currentHigh) > 0) {
+                body.push(`⚠️ Found ${currentCritical} Critical and ${currentHigh} High vulnerabilities`);
+                body.push('');
+                body.push('These will be tracked as baseline in [VULNERABILITY_BACKLOG.md](../../VULNERABILITY_BACKLOG.md)');
+              } else {
+                body.push('✅ No Critical or High vulnerabilities in initial scan');
+              }
+            }
+            
+            body.push(
               '',
               '### SBOM Artifacts Generated',
               '- ✅ CycloneDX SBOM (JSON)',
@@ -296,3 +411,21 @@ jobs:
                 body
               });
             }
+
+      - name: Fail on new Critical/High vulnerabilities
+        if: steps.vuln_analysis.outputs.should_fail == 'true'
+        run: |
+          echo "❌ SBOM VULNERABILITY CHECK FAILED"
+          echo ""
+          echo "New Critical or High vulnerabilities detected vs baseline!"
+          echo ""
+          echo "New Critical: ${{ steps.vuln_analysis.outputs.new_critical }}"
+          echo "New High: ${{ steps.vuln_analysis.outputs.new_high }}"
+          echo ""
+          echo "Action required:"
+          echo "  1. Review the vulnerability details in the SBOM artifacts"
+          echo "  2. Update dependencies to patched versions, OR"
+          echo "  3. Document accepted risk in VULNERABILITY_BACKLOG.md with security team approval"
+          echo ""
+          echo "See VULNERABILITY_BACKLOG.md for vulnerability management policy"
+          exit 1

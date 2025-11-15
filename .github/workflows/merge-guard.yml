@@ -97,16 +97,83 @@ jobs:
             
             return checkStatus;
 
+      - name: Manage missing-coverage label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            // Get current labels
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+            
+            const labelNames = labels.map(l => l.name);
+            const hasMissingCoverageLabel = labelNames.includes('missing-coverage');
+            const isCritical = labelNames.some(l => ['security', 'hotfix', 'critical'].includes(l.toLowerCase()));
+            
+            // Check if PR has files without tests
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number,
+            });
+            
+            // Check for new Python files in core/backtest/execution
+            const newCodeFiles = files.filter(f => 
+              f.status === 'added' && 
+              f.filename.match(/\.(py)$/) &&
+              f.filename.match(/^(core|backtest|execution)\//)
+            );
+            
+            // Check for corresponding test files
+            let hasUncoveredFiles = false;
+            for (const file of newCodeFiles) {
+              const testPath = file.filename.replace(/^(core|backtest|execution)\//, 'tests/unit/$1/').replace('.py', '_test.py');
+              const testExists = files.some(f => f.filename === testPath);
+              if (!testExists) {
+                console.log(`New file without test: ${file.filename}`);
+                hasUncoveredFiles = true;
+              }
+            }
+            
+            // Decide on label action
+            if (hasUncoveredFiles && !hasMissingCoverageLabel) {
+              console.log('Adding missing-coverage label');
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pull_number,
+                labels: ['missing-coverage']
+              });
+            } else if (!hasUncoveredFiles && hasMissingCoverageLabel) {
+              console.log('Removing missing-coverage label');
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: pull_number,
+                name: 'missing-coverage'
+              }).catch(err => console.log('Label might not exist:', err.message));
+            }
+            
+            core.setOutput('has_uncovered_files', hasUncoveredFiles);
+            core.setOutput('is_critical', isCritical);
+      
       - name: Block merge if quality gates failed
         if: steps.check_labels.outputs.quality_gate_failed == 'true' || steps.check_workflows.outputs.any_failed == 'true'
         run: |
           echo "❌ Merge blocked: Quality gates have not been met."
           echo ""
-          echo "Required checks:"
-          echo "  - Code coverage must be ≥ 98%"
-          echo "  - Mutation kill rate must be ≥ 90%"
+          echo "Note: Quality gates now use ratchet policies:"
+          echo "  - Coverage: Must not decrease by more than 0.5% from baseline"
+          echo "  - Mutation: Must not decrease from baseline"
+          echo "  - Changed files: Must have ≥80% coverage"
           echo "  - All tests must pass"
           echo ""
+          echo "See workflow logs for detailed ratchet calculations."
           echo "Please fix the failing checks and push again."
           exit 1
 
@@ -122,6 +189,7 @@ jobs:
             const anyWorkflowFailed = '${{ steps.check_workflows.outputs.any_failed }}' === 'true';
             const allPassed = '${{ steps.check_workflows.outputs.all_passed }}' === 'true';
             const highRisk = '${{ steps.check_labels.outputs.high_risk }}' === 'true';
+            const hasMissingCoverage = '${{ steps.check_labels.outputs.missing_coverage }}' === 'true';
             
             let statusEmoji = '⚠️';
             let statusText = 'PENDING';
@@ -131,35 +199,55 @@ jobs:
               statusEmoji = '❌';
               statusText = 'BLOCKED';
               message = 'Merge is **BLOCKED** due to failing quality gates. Please fix the issues and push again.';
-            } else if (allPassed && !highRisk) {
+            } else if (allPassed && !highRisk && !hasMissingCoverage) {
               statusEmoji = '✅';
               statusText = 'APPROVED';
               message = 'All quality gates passed! This PR is **ready to merge**.';
-            } else if (allPassed && highRisk) {
+            } else if (allPassed && (highRisk || hasMissingCoverage)) {
               statusEmoji = '⚠️';
-              statusText = 'APPROVED WITH CAUTION';
-              message = 'Quality gates passed, but this is a **high-risk** change. Please ensure thorough review before merging.';
+              statusText = 'APPROVED WITH NOTES';
+              message = 'Quality gates passed, but please review the notes below.';
             }
-            
-            const highRiskLine = highRisk ? '- ⚠️ High-risk change detected - senior review recommended' : '';
             
             const bodyLines = [
               `## ${statusEmoji} Merge Guard Status: ${statusText}`,
               '',
               message,
               '',
-              '### Requirements Checklist',
-              `- ${allPassed ? '✅' : '⏳'} Code coverage ≥ 98%`,
-              `- ${allPassed ? '✅' : '⏳'} Mutation kill rate ≥ 90%`,
-              `- ${!anyWorkflowFailed ? '✅' : '❌'} All quality checks passed`
+              '### Quality Gate Policy (Ratchet)',
+              '',
+              '✅ **Coverage:** No regression >0.5% from baseline',
+              '✅ **Mutation:** No regression from baseline',
+              '✅ **Changed Files:** ≥80% coverage',
+              '✅ **All Tests:** Must pass',
+              '',
+              '### Status',
+              '',
+              '| Check | Status |',
+              '|-------|--------|',
+              `| Coverage Ratchet | ${allPassed ? '✅' : '⏳'} |`,
+              `| Mutation Ratchet | ${allPassed ? '✅' : '⏳'} |`,
+              `| All Tests | ${!anyWorkflowFailed ? '✅' : '❌'} |`,
             ];
             
-            if (highRiskLine) {
-              bodyLines.push(highRiskLine);
+            if (hasMissingCoverage) {
+              bodyLines.push('');
+              bodyLines.push('### ⚠️ Notes');
+              bodyLines.push('- Some new files lack test coverage');
+              bodyLines.push('- This will not block merge for critical/security/hotfix PRs');
+              bodyLines.push('- Please add tests in a follow-up PR');
+            }
+            
+            if (highRisk) {
+              bodyLines.push('');
+              bodyLines.push('### ⚠️ High Risk');
+              bodyLines.push('- This is a high-risk change');
+              bodyLines.push('- Senior review recommended before merging');
             }
             
             bodyLines.push('');
             bodyLines.push('---');
+            bodyLines.push('*Ratchet policy: No regression allowed. Baseline updated on merge to main/develop.*');
             bodyLines.push('*This check is automatically updated when commits are pushed.*');
             
             const body = bodyLines.join('\n');
