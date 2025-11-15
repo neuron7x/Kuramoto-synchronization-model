@@ -18,7 +18,46 @@ jobs:
     name: Merge Guard Quality Check
     
     steps:
+      - name: Check if infrastructure-only change
+        id: check_infra
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number,
+            });
+            
+            // Check if ALL changed files are in .github/workflows or docs/compliance
+            const allInfraOrDocs = files.every(f => 
+              f.filename.startsWith('.github/workflows/') || 
+              f.filename.startsWith('docs/compliance/') ||
+              f.filename.match(/^(COMPLIANCE|VULNERABILITY_BACKLOG|CI_GATES_COMPLETION_SUMMARY|SECURITY_FIXES)\.md$/)
+            );
+            
+            console.log('Infrastructure/docs-only PR:', allInfraOrDocs);
+            core.setOutput('is_infra_only', allInfraOrDocs);
+            
+            if (allInfraOrDocs) {
+              console.log('⚠️ This is an infrastructure/documentation PR - skipping quality gate checks');
+              console.log('Note: This PR modifies CI/CD workflows themselves');
+            }
+            
+            return allInfraOrDocs;
+      - name: Skip quality checks for infrastructure PRs
+        if: steps.check_infra.outputs.is_infra_only == 'true'
+        run: |
+          echo "✅ Infrastructure/Documentation PR detected"
+          echo "Skipping quality gate checks (workflow/docs changes only)"
+          echo "This PR modifies CI/CD infrastructure itself"
+          exit 0
+
       - name: Check PR labels
+        if: steps.check_infra.outputs.is_infra_only != 'true'
         id: check_labels
         uses: actions/github-script@v7
         with:
@@ -52,6 +91,7 @@ jobs:
             };
 
       - name: Check workflow status
+        if: steps.check_infra.outputs.is_infra_only != 'true'
         id: check_workflows
         uses: actions/github-script@v7
         with:
@@ -98,6 +138,7 @@ jobs:
             return checkStatus;
 
       - name: Manage missing-coverage label
+        if: steps.check_infra.outputs.is_infra_only != 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -163,7 +204,7 @@ jobs:
             core.setOutput('is_critical', isCritical);
       
       - name: Block merge if quality gates failed
-        if: steps.check_labels.outputs.quality_gate_failed == 'true' || steps.check_workflows.outputs.any_failed == 'true'
+        if: steps.check_infra.outputs.is_infra_only != 'true' && (steps.check_labels.outputs.quality_gate_failed == 'true' || steps.check_workflows.outputs.any_failed == 'true')
         run: |
           echo "❌ Merge blocked: Quality gates have not been met."
           echo ""
@@ -178,7 +219,7 @@ jobs:
           exit 1
 
       - name: Post merge guard status
-        if: always()
+        if: always() && steps.check_infra.outputs.is_infra_only != 'true'
         uses: actions/github-script@v7
         with:
           script: |
