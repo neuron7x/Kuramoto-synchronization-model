@@ -205,6 +205,45 @@ All critical packages confirmed working:
 
 ---
 
+## CI/CD Improvements
+
+### GitHub Actions Workflow Fixes
+
+**Issue**: The workflow file `.github/workflows/tests.yml` had "Invalid workflow file" errors due to:
+1. Using `secrets.*` in `if:` conditions (not allowed by GitHub Actions)
+2. Duplicate Codecov upload steps with conflicting conditions
+
+**Fix Applied**:
+1. Removed all `secrets.*` references from `if:` conditions
+2. Consolidated two Codecov steps into one normalized step
+3. Added proper event type guards for all `github.event.pull_request.*` accesses
+
+### Codecov Coverage Upload Policy
+
+Codecov uploads are now triggered for:
+- **Push events** to the `main` branch
+- **Pull requests** from the same repository (not forks)
+
+**Security Rationale**:
+- Fork PRs do not have access to repository secrets (by design)
+- This prevents potential credential leakage from untrusted forks
+- Maintainers can run full pipeline with secrets after code review
+
+**Implementation**:
+```yaml
+if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main')
+       || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) }}
+```
+
+### Workflow Validation
+
+Added `.github/workflows/workflow-lint.yml` to automatically validate all workflow files:
+- Runs `actionlint` on workflow changes
+- Prevents invalid workflow syntax from reaching main branch
+- Catches issues like `secrets.*` in `if:` conditions early
+
+---
+
 ## References
 
 ### CVE/Advisory Links
