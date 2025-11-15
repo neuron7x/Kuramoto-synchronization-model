@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+name: Auto-fix docs whitespace
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday at 3 AM UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit auto-fix
+        run: |
+          pre-commit run trailing-whitespace --all-files || true
+          pre-commit run end-of-file-fixer --all-files || true
+
+      - name: Create Pull Request if changes exist
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(docs): auto-fix trailing whitespace"
+          branch: auto/fix/docs-whitespace
+          delete-branch: true
+          title: "chore(docs): Auto-fix trailing whitespace"
+          body: |
+            ## Auto-fix Documentation Whitespace
+
+            This PR was automatically generated to fix trailing whitespace in documentation files.
+
+            ### Changes
+            - Removed trailing whitespace from documentation files
+            - Fixed end-of-file issues
+
+            ### Review
+            This is an automated fix using pre-commit hooks. Please review the changes and merge if they look correct.
+          labels: |
+            documentation
+            automated
+            chore
