@@ -352,7 +352,7 @@ graph LR
     C --> D[Risk Monitoring]
     D --> E[Risk Reporting]
     E --> A
-    
+
     E --> F[Management Dashboard]
     E --> G[Executive Reports]
     E --> H[Board Briefings]

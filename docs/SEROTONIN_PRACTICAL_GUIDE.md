@@ -94,7 +94,7 @@ if controller.hold:
     print(f"System in hold. Recovery in ~{recovery_ticks} ticks ({recovery_minutes:.1f} min)")
 ```
 
-**Returns:** 
+**Returns:**
 - 0 if not in hold
 - Estimated ticks to recovery if in hold
 - Exact cooldown remaining if in cooldown phase
@@ -226,7 +226,7 @@ def trading_loop(controller, market_data):
             drawdown=tick.current_dd,
             novelty=tick.uncertainty
         )
-        
+
         # Trading decision
         if controller.should_take_action("moderate"):
             size = base_size * controller.get_position_size_multiplier()
@@ -241,16 +241,16 @@ def trading_loop(controller, market_data):
 ```python
 def calculate_position_size(controller, signal_strength, base_size):
     """Calculate position size based on signal and controller state."""
-    
+
     # Controller multiplier (stress-based)
     stress_multiplier = controller.get_position_size_multiplier()
-    
+
     # Signal strength multiplier (0.0 to 1.0)
     signal_multiplier = abs(signal_strength)
-    
+
     # Combined
     final_size = base_size * stress_multiplier * signal_multiplier
-    
+
     return max(final_size, min_trade_size) if final_size > min_trade_size else 0
 ```
 
@@ -259,23 +259,23 @@ def calculate_position_size(controller, signal_strength, base_size):
 ```python
 def backtest(historical_data, controller):
     """Efficient backtesting with batch processing."""
-    
+
     # Extract time series
     stress_series = [d.volatility for d in historical_data]
     drawdown_series = [d.drawdown for d in historical_data]
     novelty_series = [d.uncertainty for d in historical_data]
-    
+
     # Process in batch
     results = controller.step_batch(
         stress_series,
         drawdown_series,
         novelty_series
     )
-    
+
     # Analyze
     trades_taken = sum(1 for r in results if not r['hold'])
     holds = sum(1 for r in results if r['hold'])
-    
+
     return {
         "total_periods": len(results),
         "trades_taken": trades_taken,
@@ -289,17 +289,17 @@ def backtest(historical_data, controller):
 ```python
 def monitor_controller(controller):
     """Monitor controller health and performance."""
-    
+
     # Validate state
     is_valid, issues = controller.validate_state()
     if not is_valid:
         alert_team(f"Controller state issues: {issues}")
-    
+
     # Check performance
     stats = controller.get_performance_stats()
     if stats.get('avg_step_time_ms', 0) > 1.0:
         log_warning(f"Slow performance: {stats['avg_step_time_ms']:.3f} ms/step")
-    
+
     # Log metrics
     metrics_logger.log({
         "serotonin_level": controller.level,

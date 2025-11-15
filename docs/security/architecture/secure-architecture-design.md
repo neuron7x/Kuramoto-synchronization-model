@@ -66,18 +66,18 @@ graph TD
     A --> C[Security Operations Team]
     A --> D[Governance Risk & Compliance Team]
     A --> E[Application Security Team]
-    
+
     B --> B1[Security Architect]
     B --> B2[Infrastructure Security Engineer]
-    
+
     C --> C1[Security Operations Center - SOC]
     C --> C2[Incident Response Team]
     C --> C3[Threat Intelligence Analyst]
-    
+
     D --> D1[Compliance Manager]
     D --> D2[Risk Manager]
     D --> D3[Privacy Officer]
-    
+
     E --> E1[AppSec Engineer]
     E --> E2[Security Champion Program]
 ```
@@ -426,9 +426,9 @@ graph LR
     C -->|TLS| D[Database]
     C -->|TLS| E[Message Queue]
     C -->|TLS| F[Cache]
-    
+
     D -.->|Encrypted| G[Backup Storage]
-    
+
     style A fill:#e1f5ff
     style B fill:#ffe1e1
     style C fill:#e1ffe1
@@ -474,22 +474,22 @@ class DataClassification(Enum):
 class SecureDataAccess:
     def __init__(self, classification: DataClassification):
         self.classification = classification
-    
+
     def get_data(self, user: User) -> bytes:
         """Retrieve data with classification-based controls."""
         if not self._check_access(user):
             raise PermissionError("Insufficient access level")
-        
+
         data = self._fetch_data()
-        
+
         # Apply DLP controls
-        if self.classification in [DataClassification.CONFIDENTIAL, 
+        if self.classification in [DataClassification.CONFIDENTIAL,
                                    DataClassification.RESTRICTED]:
             self._log_access(user, "read")
             self._apply_watermark(data, user)
-        
+
         return data
-    
+
     def _check_access(self, user: User) -> bool:
         """Check if user has required clearance."""
         required_level = self._get_required_level()
@@ -508,7 +508,7 @@ sequenceDiagram
     participant Auth Service
     participant MFA Provider
     participant Token Service
-    
+
     User->>Client: Enter credentials
     Client->>API Gateway: POST /auth/login
     API Gateway->>Auth Service: Validate credentials
@@ -527,27 +527,27 @@ sequenceDiagram
 ```python
 class RBACEngine:
     """Role-Based Access Control enforcement."""
-    
+
     def __init__(self):
         self.roles = self._load_roles()
         self.permissions = self._load_permissions()
-    
-    def check_permission(self, user: User, resource: str, 
+
+    def check_permission(self, user: User, resource: str,
                         action: str) -> bool:
         """Check if user has permission for action on resource."""
         user_roles = self._get_user_roles(user)
-        
+
         for role in user_roles:
             permissions = self.roles[role].permissions
             if self._permission_matches(permissions, resource, action):
                 # Log authorization decision
                 self._audit_log(user, resource, action, granted=True)
                 return True
-        
+
         self._audit_log(user, resource, action, granted=False)
         return False
-    
-    def _permission_matches(self, permissions: List[Permission], 
+
+    def _permission_matches(self, permissions: List[Permission],
                            resource: str, action: str) -> bool:
         """Check if any permission allows the action."""
         for perm in permissions:
@@ -610,8 +610,8 @@ All security-relevant events must be logged:
 ```python
 class SecurityAuditLogger:
     """Centralized security audit logging."""
-    
-    def log_authentication(self, user: str, success: bool, 
+
+    def log_authentication(self, user: str, success: bool,
                           source_ip: str, mfa_used: bool):
         """Log authentication attempts."""
         self._log({
@@ -623,8 +623,8 @@ class SecurityAuditLogger:
             'mfa_used': mfa_used,
             'user_agent': request.headers.get('User-Agent'),
         })
-    
-    def log_authorization(self, user: str, resource: str, 
+
+    def log_authorization(self, user: str, resource: str,
                          action: str, granted: bool):
         """Log authorization decisions."""
         self._log({
@@ -635,8 +635,8 @@ class SecurityAuditLogger:
             'action': action,
             'granted': granted,
         })
-    
-    def log_data_access(self, user: str, data_classification: str, 
+
+    def log_data_access(self, user: str, data_classification: str,
                        operation: str):
         """Log sensitive data access."""
         self._log({

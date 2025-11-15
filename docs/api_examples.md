@@ -126,16 +126,16 @@ from backtest.event_driven import EventDrivenBacktestEngine
 def sma_crossover(prices: np.ndarray, fast: int = 20, slow: int = 50) -> np.ndarray:
     """Generate signals based on SMA crossover"""
     signals = np.zeros(len(prices))
-    
+
     for i in range(slow, len(prices)):
         fast_ma = prices[i-fast:i].mean()
         slow_ma = prices[i-slow:i].mean()
-        
+
         if fast_ma > slow_ma:
             signals[i] = 1.0  # Long
         elif fast_ma < slow_ma:
             signals[i] = -1.0  # Short
-            
+
     return signals
 
 # Run backtest
@@ -158,21 +158,21 @@ print(f"Sharpe Ratio: {result.performance.as_dict()['sharpe_ratio']:.2f}")
 def mean_reversion(prices: np.ndarray, window: int = 20, threshold: float = 2.0) -> np.ndarray:
     """Trade when price deviates significantly from mean"""
     signals = np.zeros(len(prices))
-    
+
     for i in range(window, len(prices)):
         window_data = prices[i-window:i]
         mean = window_data.mean()
         std = window_data.std()
-        
+
         z_score = (prices[i] - mean) / std if std > 0 else 0
-        
+
         if z_score < -threshold:
             signals[i] = 1.0  # Oversold, go long
         elif z_score > threshold:
             signals[i] = -1.0  # Overbought, go short
         else:
             signals[i] = 0.0  # Neutral
-            
+
     return signals
 
 result = engine.run(
@@ -205,17 +205,17 @@ splitter = WalkForwardSplitter(
 for train_idx, test_idx in splitter.split(price_data):
     train_prices = price_data[train_idx]
     test_prices = price_data[test_idx]
-    
+
     # Optimize on training data
     best_params = optimize_parameters(train_prices, param_grid)
-    
+
     # Test on out-of-sample data
     test_result = engine.run(
         prices=test_prices,
         signal_func=lambda p: mean_reversion(p, **best_params),
         initial_capital=100_000
     )
-    
+
     print(f"Test Period Return: {test_result.pnl / 100_000 * 100:.2f}%")
 ```
 
@@ -481,22 +481,22 @@ def regime_switching_strategy(prices: np.ndarray) -> np.ndarray:
     """
     signals = np.zeros(len(prices))
     window = 100
-    
+
     for i in range(window, len(prices)):
         window_prices = prices[i-window:i]
-        
+
         # Detect regime
         phases = compute_phase(window_prices)
         R = kuramoto_order(phases)
         H = hurst_exponent(window_prices)
-        
+
         if R > 0.7 and H > 0.6:  # Strong trending regime
             # Momentum strategy
             if prices[i] > prices[i-20]:
                 signals[i] = 1.0
             else:
                 signals[i] = -1.0
-                
+
         elif R < 0.3 and H < 0.4:  # Mean-reverting regime
             # Contrarian strategy
             mean = window_prices.mean()
@@ -507,7 +507,7 @@ def regime_switching_strategy(prices: np.ndarray) -> np.ndarray:
         else:
             # Uncertain regime - stay flat
             signals[i] = 0.0
-            
+
     return signals
 ```
 
@@ -520,36 +520,36 @@ def multi_timeframe_strategy(
     prices_minute: np.ndarray
 ) -> np.ndarray:
     """Combine signals from multiple timeframes"""
-    
+
     # Helper function to calculate RSI
     def calculate_rsi(prices, period=14):
         """Calculate Relative Strength Index"""
         deltas = np.diff(prices)
         gains = np.where(deltas > 0, deltas, 0)
         losses = np.where(deltas < 0, -deltas, 0)
-        
+
         avg_gain = np.mean(gains[-period:])
         avg_loss = np.mean(losses[-period:])
-        
+
         if avg_loss == 0:
             return 100
         rs = avg_gain / avg_loss
         return 100 - (100 / (1 + rs))
-    
+
     # Daily: Trend direction
     daily_ma = prices_daily[-50:].mean()
     trend = 1 if prices_daily[-1] > daily_ma else -1
-    
+
     # Hourly: Entry timing
     hourly_ma_fast = prices_hourly[-12:].mean()
     hourly_ma_slow = prices_hourly[-26:].mean()
     entry = hourly_ma_fast > hourly_ma_slow
-    
+
     # Minute: Fine-tune entry
     minute_rsi = calculate_rsi(prices_minute, period=14)
     oversold = minute_rsi < 30
     overbought = minute_rsi > 70
-    
+
     # Combine signals
     if trend == 1 and entry and oversold:
         return 1.0  # Strong buy
@@ -567,7 +567,7 @@ import numpy as np
 
 def ml_enhanced_strategy(prices: np.ndarray, train_size: int = 1000) -> np.ndarray:
     """Use ML to predict price direction"""
-    
+
     # Feature engineering
     def extract_features(window_prices):
         return {
@@ -576,7 +576,7 @@ def ml_enhanced_strategy(prices: np.ndarray, train_size: int = 1000) -> np.ndarr
             'volatility': window_prices[-20:].std(),
             'momentum': (window_prices[-1] - window_prices[-20]) / window_prices[-20],
         }
-    
+
     # Prepare training data
     X_train, y_train = [], []
     for i in range(100, train_size):
@@ -584,18 +584,18 @@ def ml_enhanced_strategy(prices: np.ndarray, train_size: int = 1000) -> np.ndarr
         X_train.append(list(features.values()))
         # Label: 1 if price goes up next period, 0 otherwise
         y_train.append(1 if prices[i+1] > prices[i] else 0)
-    
+
     # Train model
     model = RandomForestClassifier(n_estimators=100)
     model.fit(X_train, y_train)
-    
+
     # Generate signals
     signals = np.zeros(len(prices))
     for i in range(train_size, len(prices) - 1):
         features = extract_features(prices[:i])
         prediction = model.predict([list(features.values())])[0]
         signals[i] = 1.0 if prediction == 1 else -1.0
-    
+
     return signals
 ```
 
@@ -636,7 +636,7 @@ def execute_strategy():
         strategy="momentum",
         capital=100_000
     )
-    
+
     try:
         result = run_backtest()
         logger.info(
@@ -663,14 +663,14 @@ from omegaconf import OmegaConf
 # Load configuration
 with initialize(version_base=None, config_path="../conf"):
     cfg = compose(config_name="config")
-    
+
     # Access nested config
     capital = cfg.strategy.capital
     max_drawdown = cfg.risk.max_drawdown_pct
-    
+
     # Override from code
     cfg.strategy.name = "custom_strategy"
-    
+
     # Convert to dict
     config_dict = OmegaConf.to_container(cfg, resolve=True)
 ```

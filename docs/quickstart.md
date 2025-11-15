@@ -172,22 +172,22 @@ from backtest.engine import walk_forward
 def my_signal_function(prices: np.ndarray, window: int = 50) -> np.ndarray:
     """Simple moving average crossover strategy."""
     signals = np.zeros(len(prices))
-    
+
     fast_ma = np.convolve(prices, np.ones(window)//window, mode='valid')
     slow_ma = np.convolve(prices, np.ones(window*2)//(window*2), mode='valid')
-    
+
     # Align arrays
     min_len = min(len(fast_ma), len(slow_ma))
     fast_ma = fast_ma[-min_len:]
     slow_ma = slow_ma[-min_len:]
-    
+
     # Generate signals
     for i in range(1, len(fast_ma)):
         if fast_ma[i] > slow_ma[i] and fast_ma[i-1] <= slow_ma[i-1]:
             signals[-(min_len-i)] = 1  # Buy signal
         elif fast_ma[i] < slow_ma[i] and fast_ma[i-1] >= slow_ma[i-1]:
             signals[-(min_len-i)] = -1  # Sell signal
-    
+
     return signals
 
 # Load data

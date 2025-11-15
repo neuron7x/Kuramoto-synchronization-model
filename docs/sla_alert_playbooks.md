@@ -106,7 +106,7 @@ This document provides comprehensive response procedures for every alert defined
    ```bash
    # Check recent order errors
    tradepulse-cli orders list --status error --since 5m --output jsonl | jq '.rejection_reason' | sort | uniq -c
-   
+
    # Check broker adapter health
    tradepulse-cli health check --service broker-adapter
    ```
@@ -154,7 +154,7 @@ This document provides comprehensive response procedures for every alert defined
    ```bash
    # Check current latency distribution
    tradepulse-cli metrics query 'histogram_quantile(0.95, tradepulse_order_placement_duration_seconds_bucket[5m])'
-   
+
    # Check queue depths
    tradepulse-cli metrics query 'tradepulse_queue_depth{queue="orders"}'
    ```
@@ -231,7 +231,7 @@ This document provides comprehensive response procedures for every alert defined
    ```bash
    # Check end-to-end latency breakdown
    tradepulse-cli trace latency --metric signal_to_fill --window 5m
-   
+
    # Check execution worker status
    tradepulse-cli health check --service execution-worker --verbose
    ```
@@ -275,7 +275,7 @@ This document provides comprehensive response procedures for every alert defined
    ```bash
    # List recent failed ingestions
    tradepulse-cli ingest status --status error --since 10m
-   
+
    # Check specific job logs
    tradepulse-cli logs ingestion-worker --level error --since 10m
    ```

@@ -77,7 +77,7 @@ tests/
 ```python
 def test_position_sizing_never_exceeds_balance() -> None:
     """Test that position sizing respects maximum balance constraints.
-    
+
     Validates:
     - Calculated size doesn't exceed available balance
     - Result is always non-negative
@@ -87,7 +87,7 @@ def test_position_sizing_never_exceeds_balance() -> None:
     risk = 0.1
     price = 50.0
     size = position_sizing(balance, risk, price)
-    
+
     assert size <= balance / price, f"Size {size} exceeds max {balance/price}"
     assert size >= 0.0, "Size must be non-negative"
 ```
@@ -106,7 +106,7 @@ def test_position_sizing_never_exceeds_balance() -> None:
 ```python
 def test_csv_ingestion_to_strategy_evaluation(tmp_path) -> None:
     """Test complete flow from CSV ingestion to strategy evaluation.
-    
+
     Validates end-to-end data pipeline:
     1. CSV parsing and validation
     2. Feature computation
@@ -115,12 +115,12 @@ def test_csv_ingestion_to_strategy_evaluation(tmp_path) -> None:
     """
     csv_file = tmp_path / "market_data.csv"
     write_sample_data(csv_file)
-    
+
     # Ingest and process
     data = ingest_csv(csv_file)
     features = compute_features(data)
     result = evaluate_strategy(features)
-    
+
     assert result.trades > 0, "Strategy should generate trades"
     assert result.sharpe_ratio > 0, "Strategy should have positive Sharpe"
 ```
@@ -150,7 +150,7 @@ def test_fees_reduce_pnl(prices: np.ndarray, fee: float) -> None:
     """Property: Trading fees should always reduce or maintain PnL."""
     result_no_fee = walk_forward(prices, strategy, fee=0.0)
     result_with_fee = walk_forward(prices, strategy, fee=fee)
-    
+
     assert result_with_fee.pnl <= result_no_fee.pnl + 1e-9
 ```
 
@@ -169,14 +169,14 @@ def test_fees_reduce_pnl(prices: np.ndarray, fee: float) -> None:
 @pytest.mark.slow
 def test_kuramoto_indicator_performance(benchmark) -> None:
     """Validate Kuramoto indicator performance stays within budget.
-    
+
     Performance target: < 50ms for 1000 data points
     """
     data = generate_test_series(length=1000)
     indicator = KuramotoIndicator(window=50)
-    
+
     result = benchmark(indicator.compute, data)
-    
+
     assert benchmark.stats['mean'] < 0.050, "Mean time exceeds 50ms budget"
 ```
 
@@ -229,9 +229,9 @@ def temp_database(tmp_path):
     db_path = tmp_path / "test.db"
     engine = create_engine(f"sqlite:///{db_path}")
     Base.metadata.create_all(engine)
-    
+
     yield engine
-    
+
     engine.dispose()
 ```
 
@@ -252,17 +252,17 @@ class TimeStub:
     """Controllable time source for deterministic testing."""
     def __init__(self):
         self._now = 0.0
-    
+
     def advance(self, delta: float):
         self._now += delta
-    
+
     def __call__(self) -> float:
         return self._now
 
 def test_rate_limiter_with_time_control():
     clock = TimeStub()
     limiter = RateLimiter(max_rate=10, interval=1.0, time_source=clock)
-    
+
     # Simulate passage of time
     clock.advance(1.1)
     assert limiter.can_proceed()
@@ -275,9 +275,9 @@ def test_with_mock_exchange(monkeypatch):
     class MockExchange:
         def place_order(self, symbol, side, quantity):
             return {'id': '12345', 'status': 'filled'}
-    
+
     monkeypatch.setattr('execution.exchange', MockExchange())
-    
+
     # Test execution logic without real exchange
 ```
 
@@ -338,12 +338,12 @@ All test functions should have docstrings:
 ```python
 def test_risk_manager_enforces_position_caps() -> None:
     """Test that risk manager prevents positions exceeding configured limits.
-    
+
     Validates:
     - Position limits are enforced on new orders
     - Both long and short positions are checked
     - Limit violations raise appropriate exceptions
-    
+
     Related: test_risk_manager_rate_limiter_blocks_excess_orders
     """
 ```

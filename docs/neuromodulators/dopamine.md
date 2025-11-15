@@ -52,7 +52,7 @@ def step(
     discount_gamma: Optional[float] = None,
 ) -> Tuple[float, float, Tuple[float, ...], Mapping[str, object]]:
     """Execute one dopamine update step.
-    
+
     Returns:
         (rpe, temperature, scaled_policy, extras)
     """

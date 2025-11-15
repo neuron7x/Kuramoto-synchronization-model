@@ -98,31 +98,31 @@ from .base import BaseFeature, FeatureResult
 
 class RSI(BaseFeature):
     """RSI indicator implementation."""
-    
+
     def __init__(self, name: str = "rsi", period: int = 14):
         super().__init__(name, period=period)
         self.period = period
-    
+
     def transform(self, data: np.ndarray) -> FeatureResult:
         """Compute RSI."""
         self.validate_input(data)
-        
+
         if len(data) < self.period + 1:
             raise ValueError(f"Need {self.period + 1} samples")
-        
+
         deltas = np.diff(data)
         gains = np.where(deltas > 0, deltas, 0)
         losses = np.where(deltas < 0, -deltas, 0)
-        
+
         avg_gain = np.mean(gains[-self.period:])
         avg_loss = np.mean(losses[-self.period:])
-        
+
         if avg_loss == 0:
             rsi = 100.0
         else:
             rs = avg_gain / avg_loss
             rsi = 100 - (100 / (1 + rs))
-        
+
         return FeatureResult(
             value=float(rsi),
             metadata={"period": self.period},
@@ -201,7 +201,7 @@ import numpy as np
 
 class MeanReversionStrategy(BaseStrategy):
     """Buy oversold, sell overbought."""
-    
+
     def __init__(self, name: str = "mean_reversion", parameters: dict = None):
         default_params = {
             "rsi_period": 14,
@@ -212,12 +212,12 @@ class MeanReversionStrategy(BaseStrategy):
             default_params.update(parameters)
         super().__init__(name, default_params)
         self.rsi = RSI(period=self.parameters["rsi_period"])
-    
+
     def generate_signal(self, prices: np.ndarray, indicators: dict) -> Signal:
         """Generate trading signal."""
         result = self.rsi.transform(prices)
         rsi_value = result.value
-        
+
         if rsi_value < self.parameters["oversold"]:
             return Signal(
                 action="buy",
@@ -294,12 +294,12 @@ from core.data.ingestion import DataSource, Ticker
 
 class BinanceWebSocketSource(DataSource):
     """Binance WebSocket data source."""
-    
+
     def __init__(self, testnet: bool = True):
         self.testnet = testnet
         self.ws = None
         self.callbacks = {}
-    
+
     def connect(self) -> None:
         url = "wss://testnet.binance.vision/ws" if self.testnet else "wss://stream.binance.com:9443/ws"
         self.ws = websocket.WebSocketApp(
@@ -307,7 +307,7 @@ class BinanceWebSocketSource(DataSource):
             on_message=self._on_message,
             on_error=self._on_error
         )
-    
+
     def subscribe(self, symbol: str, callback):
         self.callbacks[symbol.lower()] = callback
         sub_msg = {
@@ -316,7 +316,7 @@ class BinanceWebSocketSource(DataSource):
             "id": 1
         }
         self.ws.send(json.dumps(sub_msg))
-    
+
     def _on_message(self, ws, message):
         data = json.loads(message)
         if "e" in data and data["e"] == "trade":
@@ -359,14 +359,14 @@ import cbpro
 
 class CoinbaseAdapter(ExecutionAdapter):
     """Coinbase Pro execution adapter."""
-    
+
     def connect(self, credentials: dict):
         self.client = cbpro.AuthenticatedClient(
             credentials["api_key"],
             credentials["api_secret"],
             credentials["passphrase"]
         )
-    
+
     def place_order(self, order: Order) -> Order:
         result = self.client.place_market_order(
             product_id=order.symbol,
@@ -448,10 +448,10 @@ def test_full_pipeline(tmp_path):
     # Create test data
     data_file = tmp_path / "test.csv"
     data_file.write_text("timestamp,close\n2024-01-01,100\n")
-    
+
     # Run analysis
     result = analyze_file(str(data_file))
-    
+
     # Verify results
     assert "indicators" in result
     assert result["status"] == "success"
@@ -538,19 +538,19 @@ python -m memory_profiler script.py
 ```python
 def function(arg1: int, arg2: str) -> bool:
     """Short description.
-    
+
     Longer explanation of what the function does.
-    
+
     Args:
         arg1: Description of arg1
         arg2: Description of arg2
-    
+
     Returns:
         Description of return value
-    
+
     Raises:
         ValueError: When and why
-    
+
     Example:
         >>> result = function(1, "test")
         >>> print(result)

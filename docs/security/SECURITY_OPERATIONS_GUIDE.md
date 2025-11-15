@@ -28,7 +28,7 @@ import splunk_http_event_collector as hec
 class SplunkSecurityLogger:
     def __init__(self, token: str, url: str):
         self.collector = hec.http_event_collector(token, url)
-    
+
     def log_security_event(self, event_type: str, details: dict):
         """Log security event to Splunk."""
         event = {
@@ -65,28 +65,28 @@ import numpy as np
 
 class UserBehaviorAnomalyDetector:
     """Detect anomalous user behavior."""
-    
+
     def __init__(self):
         self.model = IsolationForest(contamination=0.01)
         self.trained = False
-    
+
     def train(self, normal_behavior_data: np.ndarray):
         """Train on normal user behavior."""
         self.model.fit(normal_behavior_data)
         self.trained = True
-    
+
     def detect_anomaly(self, user_activity: dict) -> tuple[bool, float]:
         """Detect if user activity is anomalous."""
         if not self.trained:
             raise ValueError("Model not trained")
-        
+
         features = self._extract_features(user_activity)
         prediction = self.model.predict([features])[0]
         anomaly_score = self.model.score_samples([features])[0]
-        
+
         is_anomaly = prediction == -1
         return is_anomaly, anomaly_score
-    
+
     def _extract_features(self, activity: dict) -> list:
         """Extract features from user activity."""
         return [
@@ -109,7 +109,7 @@ alerts:
     action:
       - notify_soc
       - lock_account
-    
+
   - name: "Unauthorized API Access"
     condition: "http_status = 403 and count > 10 in 1 minute"
     severity: "critical"
@@ -117,7 +117,7 @@ alerts:
       - notify_soc
       - block_ip
       - create_incident
-    
+
   - name: "Abnormal Data Access"
     condition: "data_access_volume > threshold and classification = 'restricted'"
     severity: "critical"
@@ -314,7 +314,7 @@ notifications:
 ```python
 class BackupVerification:
     """Verify backup integrity and recoverability."""
-    
+
     def verify_backup(self, backup_id: str) -> dict:
         """Comprehensive backup verification."""
         results = {
@@ -322,23 +322,23 @@ class BackupVerification:
             'timestamp': datetime.utcnow(),
             'checks': {}
         }
-        
+
         # Check 1: Backup exists and is accessible
         results['checks']['accessibility'] = self._check_accessibility(backup_id)
-        
+
         # Check 2: Backup integrity (checksums)
         results['checks']['integrity'] = self._verify_checksums(backup_id)
-        
+
         # Check 3: Backup completeness
         results['checks']['completeness'] = self._check_completeness(backup_id)
-        
+
         # Check 4: Restore test (sample)
         results['checks']['restorability'] = self._test_restore(backup_id)
-        
+
         results['overall_status'] = all(
             check['passed'] for check in results['checks'].values()
         )
-        
+
         return results
 ```
 
@@ -452,27 +452,27 @@ graph LR
 ```python
 class SecurityImprovementTracker:
     """Track security improvement initiatives."""
-    
+
     def __init__(self):
         self.initiatives = []
-    
+
     def add_initiative(self, initiative: dict):
         """Add security improvement initiative."""
-        required_fields = ['title', 'description', 'owner', 
+        required_fields = ['title', 'description', 'owner',
                           'target_date', 'success_metrics']
         if not all(field in initiative for field in required_fields):
             raise ValueError("Missing required fields")
-        
+
         initiative['status'] = 'planned'
         initiative['created_date'] = datetime.utcnow()
         self.initiatives.append(initiative)
-    
+
     def update_status(self, initiative_id: str, status: str, notes: str):
         """Update initiative status."""
         valid_statuses = ['planned', 'in_progress', 'completed', 'cancelled']
         if status not in valid_statuses:
             raise ValueError(f"Invalid status: {status}")
-        
+
         initiative = self._find_initiative(initiative_id)
         initiative['status'] = status
         initiative['last_updated'] = datetime.utcnow()
@@ -530,32 +530,32 @@ class SecurityImprovementTracker:
 ```python
 class SecurityTrainingTracker:
     """Track employee security training completion."""
-    
+
     def check_compliance(self, employee_id: str) -> dict:
         """Check training compliance for employee."""
         employee = self._get_employee(employee_id)
         required_courses = self._get_required_courses(employee.role)
-        
+
         compliance = {
             'employee_id': employee_id,
             'compliant': True,
             'courses': []
         }
-        
+
         for course in required_courses:
             completion = self._get_completion_status(employee_id, course)
             is_current = self._is_current(completion, course.validity_period)
-            
+
             compliance['courses'].append({
                 'course': course.name,
                 'completed': completion is not None,
                 'current': is_current,
                 'due_date': self._calculate_due_date(completion, course)
             })
-            
+
             if not is_current:
                 compliance['compliant'] = False
-        
+
         return compliance
 ```
 
@@ -689,7 +689,7 @@ mdm_policies:
 ```python
 class GDPRCompliance:
     """GDPR compliance implementation."""
-    
+
     def handle_data_subject_request(self, request_type: str, user_id: str):
         """Handle GDPR data subject rights requests."""
         handlers = {
@@ -700,16 +700,16 @@ class GDPRCompliance:
             'portability': self._right_to_portability,
             'object': self._right_to_object,
         }
-        
+
         if request_type not in handlers:
             raise ValueError(f"Unknown request type: {request_type}")
-        
+
         # Log the request for audit trail
         self._log_dsr(request_type, user_id)
-        
+
         # Execute the request handler
         return handlers[request_type](user_id)
-    
+
     def _right_to_access(self, user_id: str) -> dict:
         """Provide user with all their personal data."""
         return {
@@ -718,17 +718,17 @@ class GDPRCompliance:
             'activity_logs': self._get_user_activity(user_id),
             'consent_records': self._get_consent_records(user_id),
         }
-    
+
     def _right_to_erasure(self, user_id: str):
         """Delete user data (right to be forgotten)."""
         # Check if there are legal obligations to retain
         if self._has_retention_obligation(user_id):
             raise ValueError("Cannot erase: legal retention requirement")
-        
+
         # Anonymize or delete user data
         self._anonymize_user_data(user_id)
         self._delete_user_account(user_id)
-        
+
         # Log the erasure
         self._log_erasure(user_id)
 ```
@@ -802,7 +802,7 @@ class GDPRCompliance:
 ```python
 class RegulatoryChangeAssessment:
     """Assess impact of regulatory changes."""
-    
+
     def assess_impact(self, regulation: dict) -> dict:
         """Assess impact of new regulation on TradePulse."""
         assessment = {
@@ -814,23 +814,23 @@ class RegulatoryChangeAssessment:
             'required_changes': [],
             'compliance_deadline': regulation['effective_date'],
         }
-        
+
         # Analyze impact on different areas
-        areas = ['data_processing', 'trading_operations', 'reporting', 
+        areas = ['data_processing', 'trading_operations', 'reporting',
                 'security', 'infrastructure']
-        
+
         for area in areas:
             impact = self._analyze_area_impact(regulation, area)
             if impact['affected']:
                 assessment['impact_areas'].append(impact)
                 assessment['required_changes'].extend(impact['changes'])
-        
+
         # Calculate implementation timeline
         assessment['implementation_plan'] = self._create_implementation_plan(
             assessment['required_changes'],
             assessment['compliance_deadline']
         )
-        
+
         return assessment
 ```
 
@@ -957,18 +957,18 @@ Total = 1000 × 1.15 × 2 × 1.20 = 2,760 TPS capacity needed
 ```python
 class SecurityDebtTracker:
     """Track and prioritize security debt."""
-    
+
     def prioritize_debt(self, debt_items: List[dict]) -> List[dict]:
         """Prioritize security debt for remediation."""
         for item in debt_items:
             # Calculate priority score
             score = self._calculate_priority_score(item)
             item['priority_score'] = score
-        
+
         # Sort by priority (high to low)
-        return sorted(debt_items, key=lambda x: x['priority_score'], 
+        return sorted(debt_items, key=lambda x: x['priority_score'],
                      reverse=True)
-    
+
     def _calculate_priority_score(self, item: dict) -> float:
         """Calculate priority score based on multiple factors."""
         # Factors: severity, exploitability, exposure, impact

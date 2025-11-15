@@ -125,7 +125,7 @@ class OrderStatus(Enum):
 @dataclass
 class Order:
     """Trading order.
-    
+
     Attributes:
         symbol: Trading symbol
         side: Buy or sell
@@ -137,7 +137,7 @@ class Order:
         status: Current order status
         filled_quantity: Amount filled
         average_price: Average fill price
-        
+
     Example:
         >>> order = Order(
         ...     symbol="BTCUSD",
@@ -165,7 +165,7 @@ class Order:
 @dataclass
 class Position:
     """Trading position.
-    
+
     Attributes:
         symbol: Trading symbol
         quantity: Position size (positive=long, negative=short)
@@ -173,7 +173,7 @@ class Position:
         current_price: Current market price
         unrealized_pnl: Unrealized profit/loss
         realized_pnl: Realized profit/loss
-        
+
     Example:
         >>> position = Position(
         ...     symbol="BTCUSD",
@@ -205,24 +205,24 @@ from typing import Callable
 
 class DataSource(ABC):
     """Base class for data sources.
-    
+
     Subclass this to implement custom data sources.
     """
-    
+
     @abstractmethod
     def connect(self) -> None:
         """Establish connection to data source.
-        
+
         Raises:
             ConnectionError: If connection fails
         """
         pass
-    
+
     @abstractmethod
     def disconnect(self) -> None:
         """Close connection to data source."""
         pass
-    
+
     @abstractmethod
     def subscribe(
         self,
@@ -230,17 +230,17 @@ class DataSource(ABC):
         callback: Callable[[Ticker], None]
     ) -> None:
         """Subscribe to symbol updates.
-        
+
         Args:
             symbol: Trading symbol to subscribe to
             callback: Function called on each tick
         """
         pass
-    
+
     @abstractmethod
     def unsubscribe(self, symbol: str) -> None:
         """Unsubscribe from symbol updates.
-        
+
         Args:
             symbol: Trading symbol to unsubscribe from
         """
@@ -256,20 +256,20 @@ from core.data.ingestion import DataSource, Ticker
 
 class CSVDataSource(DataSource):
     """CSV file data source for backtesting.
-    
+
     Args:
         filepath: Path to CSV file
         time_column: Name of timestamp column (default: "timestamp")
         price_column: Name of price column (default: "close")
         volume_column: Name of volume column (default: "volume")
-    
+
     Example:
         >>> source = CSVDataSource("data.csv")
         >>> source.connect()
         >>> source.subscribe("BTCUSD", lambda tick: print(tick.price))
         >>> source.replay()
     """
-    
+
     def __init__(
         self,
         filepath: str,
@@ -283,22 +283,22 @@ class CSVDataSource(DataSource):
         self.volume_column = volume_column
         self.df = None
         self.callbacks = {}
-    
+
     def connect(self) -> None:
         """Load CSV file."""
         self.df = pd.read_csv(self.filepath)
-        
+
         # Parse timestamps
         if self.time_column in self.df.columns:
             self.df[self.time_column] = pd.to_datetime(
                 self.df[self.time_column]
             )
-    
+
     def disconnect(self) -> None:
         """Clean up resources."""
         self.df = None
         self.callbacks.clear()
-    
+
     def subscribe(
         self,
         symbol: str,
@@ -306,22 +306,22 @@ class CSVDataSource(DataSource):
     ) -> None:
         """Register callback for symbol."""
         self.callbacks[symbol] = callback
-    
+
     def unsubscribe(self, symbol: str) -> None:
         """Remove callback for symbol."""
         self.callbacks.pop(symbol, None)
-    
+
     def replay(self, symbol: str = "SYMBOL") -> None:
         """Replay historical data.
-        
+
         Args:
             symbol: Symbol name for ticks
         """
         if symbol not in self.callbacks:
             raise ValueError(f"No callback registered for {symbol}")
-        
+
         callback = self.callbacks[symbol]
-        
+
         for _, row in self.df.iterrows():
             tick = Ticker.create(
                 symbol=symbol,
@@ -347,76 +347,76 @@ from typing import List, Optional
 
 class ExecutionAdapter(ABC):
     """Base class for execution adapters.
-    
+
     Subclass this to implement exchange connectors.
     """
-    
+
     @abstractmethod
     def connect(self, credentials: dict) -> None:
         """Connect to exchange.
-        
+
         Args:
             credentials: API keys and secrets
         """
         pass
-    
+
     @abstractmethod
     def disconnect(self) -> None:
         """Disconnect from exchange."""
         pass
-    
+
     @abstractmethod
     def place_order(self, order: Order) -> Order:
         """Place an order.
-        
+
         Args:
             order: Order to place
-            
+
         Returns:
             Order with assigned order_id and status
-            
+
         Raises:
             OrderError: If order placement fails
         """
         pass
-    
+
     @abstractmethod
     def cancel_order(self, order_id: str) -> bool:
         """Cancel an order.
-        
+
         Args:
             order_id: Order to cancel
-            
+
         Returns:
             True if cancelled successfully
         """
         pass
-    
+
     @abstractmethod
     def get_order_status(self, order_id: str) -> Order:
         """Get order status.
-        
+
         Args:
             order_id: Order to query
-            
+
         Returns:
             Order with current status
         """
         pass
-    
+
     @abstractmethod
     def get_positions(self) -> List[Position]:
         """Get all open positions.
-        
+
         Returns:
             List of open positions
         """
         pass
-    
+
     @abstractmethod
     def get_balance(self) -> dict:
         """Get account balance.
-        
+
         Returns:
             Dictionary with balance by currency
         """
@@ -432,10 +432,10 @@ from execution.order import ExecutionAdapter, Order, OrderSide, OrderType
 
 class BinanceAdapter(ExecutionAdapter):
     """Binance exchange adapter.
-    
+
     Args:
         testnet: Use testnet instead of production
-    
+
     Example:
         >>> adapter = BinanceAdapter(testnet=True)
         >>> adapter.connect({
@@ -450,11 +450,11 @@ class BinanceAdapter(ExecutionAdapter):
         ... )
         >>> result = adapter.place_order(order)
     """
-    
+
     def __init__(self, testnet: bool = True):
         self.testnet = testnet
         self.client = None
-    
+
     def connect(self, credentials: dict) -> None:
         """Connect to Binance."""
         self.client = Client(
@@ -462,17 +462,17 @@ class BinanceAdapter(ExecutionAdapter):
             credentials["api_secret"],
             testnet=self.testnet
         )
-    
+
     def disconnect(self) -> None:
         """Disconnect from Binance."""
         self.client = None
-    
+
     def place_order(self, order: Order) -> Order:
         """Place order on Binance."""
         try:
             # Convert to Binance format
             side = "BUY" if order.side == OrderSide.BUY else "SELL"
-            
+
             if order.order_type == OrderType.MARKET:
                 result = self.client.create_order(
                     symbol=order.symbol,
@@ -491,16 +491,16 @@ class BinanceAdapter(ExecutionAdapter):
                 )
             else:
                 raise ValueError(f"Unsupported order type: {order.order_type}")
-            
+
             # Update order with result
             order.order_id = str(result["orderId"])
             order.status = OrderStatus.OPEN
-            
+
             return order
-            
+
         except BinanceAPIException as e:
             raise OrderError(f"Binance order failed: {e}")
-    
+
     def cancel_order(self, order_id: str) -> bool:
         """Cancel order on Binance."""
         try:
@@ -508,20 +508,20 @@ class BinanceAdapter(ExecutionAdapter):
             return True
         except BinanceAPIException:
             return False
-    
+
     def get_positions(self) -> List[Position]:
         """Get positions from Binance."""
         account = self.client.get_account()
         positions = []
-        
+
         for balance in account["balances"]:
             if float(balance["free"]) > 0 or float(balance["locked"]) > 0:
                 # Convert balance to position
                 # (simplified - real implementation needs price data)
                 pass
-        
+
         return positions
-    
+
     def get_balance(self) -> dict:
         """Get account balance."""
         account = self.client.get_account()
@@ -547,7 +547,7 @@ import numpy as np
 @dataclass
 class Signal:
     """Trading signal.
-    
+
     Attributes:
         action: 'buy', 'sell', or 'hold'
         confidence: Confidence level (0.0 to 1.0)
@@ -559,7 +559,7 @@ class Signal:
 
 class Strategy(ABC):
     """Base strategy interface."""
-    
+
     @abstractmethod
     def generate_signal(
         self,
@@ -567,11 +567,11 @@ class Strategy(ABC):
         indicators: Dict[str, float]
     ) -> Signal:
         """Generate trading signal.
-        
+
         Args:
             prices: Historical price data
             indicators: Pre-computed indicators
-            
+
         Returns:
             Trading signal with action and confidence
         """
@@ -677,14 +677,14 @@ import json
 async def tradepulse_websocket():
     """Connect to TradePulse WebSocket for real-time updates."""
     uri = "ws://localhost:8080/ws"
-    
+
     async with websockets.connect(uri) as websocket:
         # Subscribe to updates
         await websocket.send(json.dumps({
             "action": "subscribe",
             "channels": ["trades", "positions", "signals"]
         }))
-        
+
         # Receive updates
         async for message in websocket:
             data = json.loads(message)

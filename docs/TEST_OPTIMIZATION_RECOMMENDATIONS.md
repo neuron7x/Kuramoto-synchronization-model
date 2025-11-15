@@ -72,14 +72,14 @@ Related Tests:
 ```python
 def test_feature_behavior() -> None:
     """Test that [component] behaves correctly under [conditions].
-    
+
     [Background context if needed]
-    
+
     Validates:
     - [Specific behavior 1]
     - [Specific behavior 2]
     - [Edge case handling]
-    
+
     Related: [Related test function if applicable]
     """
 ```
@@ -103,7 +103,7 @@ def test_indicator_handles_extreme_values():
     """Test indicators handle near-overflow values."""
     prices = np.array([1e10, 1e10 + 1, 1e10 - 1])
     # Should not overflow or produce inf
-    
+
 def test_indicator_handles_negative_prices():
     """Test indicators reject negative prices."""
     with pytest.raises(ValueError):
@@ -121,7 +121,7 @@ def test_empty_data_handling():
 def test_single_element_handling():
     """Test components handle minimal valid input."""
     result = indicator.compute(np.array([100.0]))
-    
+
 def test_maximum_window_size():
     """Test components handle window size equal to data length."""
     data = np.random.random(100)
@@ -137,7 +137,7 @@ def test_invalid_parameter_combinations():
     """Test that invalid parameters are rejected."""
     with pytest.raises(ValueError, match="window.*positive"):
         KuramotoIndicator(window=-1)
-    
+
 def test_mismatched_dimensions():
     """Test handling of dimension mismatches."""
     with pytest.raises(ValueError, match="dimension"):
@@ -246,7 +246,7 @@ tests/
 @pytest.fixture
 def sample_ohlcv() -> pd.DataFrame:
     """Provide standard OHLCV data for indicator testing.
-    
+
     Returns 100 bars with realistic price movement and volume.
     Suitable for most indicator tests requiring time series data.
     """
@@ -260,7 +260,7 @@ def sample_ohlcv() -> pd.DataFrame:
 @pytest.fixture
 def trending_market() -> pd.DataFrame:
     """Provide upward-trending market data.
-    
+
     Useful for testing trend-following strategies and momentum indicators.
     """
     return generate_synthetic_ohlcv(
@@ -273,7 +273,7 @@ def trending_market() -> pd.DataFrame:
 @pytest.fixture
 def range_bound_market() -> pd.DataFrame:
     """Provide range-bound (sideways) market data.
-    
+
     Useful for testing mean-reversion strategies.
     """
     return generate_synthetic_ohlcv(
@@ -325,7 +325,7 @@ Use for: Trend-following strategies, momentum indicators
 def test_moving_average_is_smooth(prices, window):
     """Property: Moving average should be smoother than input."""
     ma = simple_moving_average(prices, window)
-    
+
     # Variance of MA should be less than variance of prices
     assert np.var(ma[window:]) <= np.var(prices[window:])
 ```
@@ -354,13 +354,13 @@ def test_strategy_roundtrip_serialization(strategy):
 def test_position_size_invariants(balance, risk_pct, price):
     """Property: Position sizing invariants must hold."""
     size = position_sizing(balance, risk_pct, price)
-    
+
     # Invariant 1: Cost never exceeds risk capital
     assert size * price <= balance * risk_pct * 1.01  # Allow rounding
-    
+
     # Invariant 2: Size is non-negative
     assert size >= 0
-    
+
     # Invariant 3: Size is finite
     assert np.isfinite(size)
 ```
@@ -393,7 +393,7 @@ def test_backtest_integration():
     # Runs on 1 year, validates same behavior
     data = load_historical_data(years=1)
     result = run_backtest(data)  # Takes 12 seconds
-    
+
 @pytest.mark.nightly
 def test_full_scale_backtest():
     # Full test runs nightly, not on every PR

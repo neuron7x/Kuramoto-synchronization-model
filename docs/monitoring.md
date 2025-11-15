@@ -284,14 +284,14 @@ def execute_trade(symbol: str, direction: str, strategy: str):
     try:
         # Execute trade logic
         result = _do_execute_trade(symbol, direction)
-        
+
         # Record success
         trades_counter.labels(
             symbol=symbol,
             direction=direction,
             strategy=strategy
         ).inc()
-        
+
         return result
     except Exception as e:
         # Record error
@@ -331,7 +331,7 @@ from datetime import datetime
 
 class JSONFormatter(logging.Formatter):
     """Format logs as JSON."""
-    
+
     def format(self, record):
         log_data = {
             'timestamp': datetime.utcnow().isoformat(),
@@ -342,15 +342,15 @@ class JSONFormatter(logging.Formatter):
             'function': record.funcName,
             'line': record.lineno
         }
-        
+
         # Add exception info if present
         if record.exc_info:
             log_data['exception'] = self.formatException(record.exc_info)
-        
+
         # Add custom fields
         if hasattr(record, 'extra_fields'):
             log_data.update(record.extra_fields)
-        
+
         return json.dumps(log_data)
 
 # Configure logging
@@ -516,7 +516,7 @@ groups:
         annotations:
           summary: "High trade error rate"
           description: "Error rate is {{ $value }} trades/sec"
-      
+
       # Large drawdown
       - alert: LargeDrawdown
         expr: tradepulse_drawdown_percent > 10
@@ -526,7 +526,7 @@ groups:
         annotations:
           summary: "Large drawdown detected"
           description: "Drawdown is {{ $value }}%"
-      
+
       # Service down
       - alert: ServiceDown
         expr: up{job="tradepulse"} == 0
@@ -536,7 +536,7 @@ groups:
         annotations:
           summary: "TradePulse service is down"
           description: "Service {{ $labels.instance }} is down"
-      
+
       # High latency
       - alert: HighOrderLatency
         expr: histogram_quantile(0.95, tradepulse_order_latency_seconds_bucket) > 5
@@ -546,7 +546,7 @@ groups:
         annotations:
           summary: "High order execution latency"
           description: "95th percentile latency is {{ $value }}s"
-      
+
       # Stale data
       - alert: StaleMarketData
         expr: time() - tradepulse_last_data_timestamp > 300

@@ -49,13 +49,13 @@ prices = df['close'].to_numpy()
 def moving_average_crossover(prices: np.ndarray, window: int = 50) -> np.ndarray:
     """Generate signals based on MA crossover."""
     signals = np.zeros(len(prices))
-    
+
     fast = pd.Series(prices).rolling(window).mean()
     slow = pd.Series(prices).rolling(window*2).mean()
-    
+
     signals[fast > slow] = 1  # Buy
     signals[fast < slow] = -1  # Sell
-    
+
     return signals
 
 # Run backtest
@@ -85,7 +85,7 @@ ticks = []
 
 def on_tick(tick: Ticker):
     ticks.append(tick.price)
-    
+
     # Compute indicator every 100 ticks
     if len(ticks) >= 200:
         prices = np.array(ticks[-200:])
@@ -106,20 +106,20 @@ import numpy as np
 
 class SimpleMovingAverage(BaseFeature):
     """Simple moving average indicator."""
-    
+
     def __init__(self, name: str = "sma", period: int = 20):
         super().__init__(name, period=period)
         self.period = period
-    
+
     def transform(self, data: np.ndarray) -> FeatureResult:
         """Compute SMA."""
         self.validate_input(data)
-        
+
         if len(data) < self.period:
             raise ValueError(f"Need at least {self.period} data points")
-        
+
         sma = np.mean(data[-self.period:])
-        
+
         return FeatureResult(
             value=float(sma),
             metadata={"period": self.period, "n_samples": len(data)},
@@ -320,19 +320,19 @@ from execution.risk import position_sizing
 
 class TradingSystem:
     """Complete trading system."""
-    
+
     def __init__(self, balance: float = 10000.0):
         self.balance = balance
         self.positions = []
-    
+
     def analyze(self, prices: np.ndarray) -> dict:
         """Analyze market conditions."""
         phases = compute_phase(prices)
         R = kuramoto_order(phases[-200:])
         H = entropy(prices[-200:])
-        
+
         return {"R": R, "H": H}
-    
+
     def generate_signal(self, analysis: dict) -> str:
         """Generate trading signal."""
         if analysis["R"] > 0.7 and analysis["H"] < 2.0:
@@ -340,7 +340,7 @@ class TradingSystem:
         elif analysis["R"] < 0.3 or analysis["H"] > 3.0:
             return "sell"
         return "hold"
-    
+
     def execute_trade(self, signal: str, price: float):
         """Execute trade with risk management."""
         if signal == "buy":
@@ -354,12 +354,12 @@ class TradingSystem:
         elif signal == "sell" and self.positions:
             # Close positions
             self.positions = []
-    
+
     def run(self, data_file: str):
         """Run complete system."""
         df = pd.read_csv(data_file)
         prices = df['close'].to_numpy()
-        
+
         for i in range(200, len(prices)):
             window = prices[i-200:i]
             analysis = self.analyze(window)

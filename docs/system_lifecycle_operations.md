@@ -457,7 +457,7 @@ tradepulse-cli risk status --all
    === Shift Handoff: [Time UTC] ===
    Outgoing: @[name]
    Incoming: @[name]
-   
+
    System Status: [HEALTHY|DEGRADED|ISSUES]
    Active Issues: [list or "None"]
    Upcoming Events: [list or "None"]

@@ -54,7 +54,7 @@ def test_demographic_parity_balanced_dataset() -> None:
 ```python
 def test_demographic_parity_balanced_dataset() -> None:
     """Test demographic parity difference is zero for balanced predictions.
-    
+
     When both groups have the same positive prediction rate (50%),
     the demographic parity difference should be zero.
     """
@@ -110,10 +110,10 @@ def test_demographic_parity_balanced_dataset() -> None:
 ```python
 def test_meta_adapt_respects_cooldown(controller: DopamineController) -> None:
     """Test that meta-adaptation respects cooldown period.
-    
+
     Meta-adaptation adjusts controller parameters based on performance metrics.
     Cooldown prevents rapid oscillations from consecutive adaptations.
-    
+
     Validates:
     - Good performance increases learning rate
     - Cooldown prevents immediate re-adaptation
@@ -163,9 +163,9 @@ Test Coverage:
 ```python
 def test_feature_behavior() -> None:
     """Test that [component] behaves correctly under [conditions].
-    
+
     [Optional: Additional context or background]
-    
+
     Validates:
     - [Specific behavior 1]
     - [Specific behavior 2]

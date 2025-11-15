@@ -37,20 +37,20 @@ while trading_active:
     stress = calculate_market_stress()  # Your stress metric
     drawdown = portfolio.current_drawdown()  # Negative value
     novelty = calculate_market_novelty()  # Your novelty metric
-    
+
     # Execute serotonin control step
     hold, veto, cooldown_s, level = controller.step(
         stress=stress,
         drawdown=drawdown,
         novelty=novelty
     )
-    
+
     # Apply control decision
     if hold:
         print(f"HOLD triggered: level={level:.3f}, cooldown={cooldown_s:.1f}s")
         # Skip new position entry
         continue
-    
+
     # Normal trading logic
     execute_trading_strategy()
 ```
@@ -231,28 +231,28 @@ class TradingSystem:
     def __init__(self):
         self.controller = SerotoninController()
         self.position = 0
-        
+
     def on_market_update(self, market_data):
         # Calculate risk metrics
         stress = self.calculate_stress(market_data)
         drawdown = self.portfolio.current_drawdown()
         novelty = self.calculate_novelty(market_data)
-        
+
         # Get serotonin control decision
         hold, veto, cooldown_s, level = self.controller.step(
             stress=stress,
             drawdown=drawdown,
             novelty=novelty
         )
-        
+
         # Log state
         self.log_serotonin_state(hold, level, cooldown_s)
-        
+
         # Apply control
         if hold:
             # Don't open new positions
             return
-            
+
         # Normal strategy execution
         signal = self.strategy.generate_signal(market_data)
         if signal:
@@ -265,17 +265,17 @@ class TradingSystem:
 class AdvancedTradingSystem:
     def __init__(self):
         self.controller = SerotoninController()
-        
+
     def execute_with_modulation(self, base_probability):
         # Get current serotonin level
         level = self.controller.serotonin_level
-        
+
         # Modulate action probability
         adjusted_prob = self.controller.modulate_action_prob(
             original_prob=base_probability,
             serotonin_signal=level
         )
-        
+
         # Use adjusted probability for position sizing
         if random.random() < adjusted_prob:
             self.execute_trade()
@@ -288,14 +288,14 @@ class ResilientTradingSystem:
     def __init__(self):
         self.controller = SerotoninController()
         self.state_file = "state/serotonin_checkpoint.json"
-        
+
         # Try to recover previous state
         try:
             self.controller.load_state(self.state_file)
             print("Recovered controller state")
         except FileNotFoundError:
             print("Starting with fresh state")
-    
+
     def shutdown(self):
         # Save state for recovery
         self.controller.save_state(self.state_file)
@@ -308,19 +308,19 @@ class ResilientTradingSystem:
 class MonitoredTradingSystem:
     def __init__(self):
         self.controller = SerotoninController()
-        
+
     def periodic_health_check(self):
         """Run every 5 minutes"""
         health = self.controller.health_check()
-        
+
         if not health["healthy"]:
             # Alert on issues
             self.send_alert(f"Serotonin controller issues: {health['issues']}")
-        
+
         if health["warnings"]:
             # Log warnings
             self.log_warning(f"Serotonin warnings: {health['warnings']}")
-        
+
         # Log metrics
         metrics = self.controller.get_performance_metrics()
         self.log_metrics(metrics)
@@ -344,19 +344,19 @@ class ObservableTradingSystem:
                 serotonin_level_gauge.set(value)
             elif name == "tacl.5ht.hold":
                 hold_state_gauge.set(value)
-        
+
         self.controller = SerotoninController(logger=prometheus_logger)
-    
+
     def on_market_update(self, market_data):
         hold, veto, cooldown_s, level = self.controller.step(
             stress=self.calculate_stress(market_data),
             drawdown=self.portfolio.current_drawdown(),
             novelty=self.calculate_novelty(market_data)
         )
-        
+
         if veto:
             veto_counter.inc()
-        
+
         # Continue with trading logic
 ```
 
@@ -404,7 +404,7 @@ def create_monitoring_dashboard():
     metrics = controller.get_performance_metrics()
     state = controller.to_dict()
     health = controller.health_check()
-    
+
     dashboard = {
         "timestamp": time(),
         "health": {
@@ -426,7 +426,7 @@ def create_monitoring_dashboard():
             "avg_cooldown": metrics["average_cooldown_duration"],
         }
     }
-    
+
     return dashboard
 ```
 
@@ -440,21 +440,21 @@ def create_monitoring_dashboard():
 # Run health check every 5 minutes
 def periodic_health_check(controller):
     health = controller.health_check()
-    
+
     if not health["healthy"]:
         # CRITICAL: Issues detected
         for issue in health["issues"]:
             send_critical_alert(issue)
-        
+
         # Consider emergency shutdown
         if "Invalid decay_rate" in str(health["issues"]):
             emergency_shutdown()
-    
+
     if health["warnings"]:
         # WARNING: Potential issues
         for warning in health["warnings"]:
             send_warning_alert(warning)
-    
+
     # Log health report
     log_health_report(health)
 ```
@@ -469,7 +469,7 @@ print(report)
 # Output:
 # === SerotoninController Diagnostic Report ===
 # Config: configs/serotonin.yaml
-# 
+#
 # State:
 #   Serotonin Level: 0.4521
 #   Tonic Level: 0.3201

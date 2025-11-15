@@ -209,14 +209,14 @@ for reward in rewards:
     # Simulate dopamine level from reward
     import math
     dopamine_level = 1.0 / (1.0 + math.exp(-reward * 5))
-    
+
     # Adapt DDM parameters
     ddm_params = adapt_ddm_parameters(
         dopamine_level=dopamine_level,
         base_drift=0.5,
         base_boundary=1.0,
     )
-    
+
     print(f"Reward: {reward:.3f}, DA: {dopamine_level:.3f}, "
           f"Drift: {ddm_params.drift:.3f}, Boundary: {ddm_params.boundary:.3f}")
 ```

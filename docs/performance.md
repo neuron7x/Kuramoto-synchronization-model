@@ -576,17 +576,17 @@ def process_large_dataset(data):
     """Process large dataset with all optimizations."""
     from core.indicators.entropy import EntropyFeature
     from core.data.preprocess import scale_series
-    
+
     # Scale with float32
     scaled = scale_series(data, method="zscore", use_float32=True)
-    
+
     # Compute entropy with chunking and float32
     feature = EntropyFeature(
         bins=50,
         use_float32=True,
         chunk_size=100_000
     )
-    
+
     result = feature.transform(scaled)
     return result
 ```
@@ -736,14 +736,14 @@ def process_market_data(prices):
         # Compute indicators
         entropy_result = entropy_feat.transform(prices)
         hurst_result = hurst_feat.transform(prices)
-        
+
         # Log results
         logger.info(
             "Indicators computed",
             entropy=entropy_result.value,
             hurst=hurst_result.value
         )
-        
+
         return {
             "entropy": entropy_result.value,
             "hurst": hurst_result.value

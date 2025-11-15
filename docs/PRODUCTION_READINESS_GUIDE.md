@@ -129,12 +129,12 @@ while True:
         memory_mb=get_memory_usage(),
         error_rate=get_error_rate()
     )
-    
+
     # Check for anomalies
     summary = monitor.get_summary()
     if summary['status'] == 'critical':
         trigger_alert("System critical!", summary)
-    
+
     time.sleep(10)  # Monitor every 10 seconds
 ```
 
@@ -152,7 +152,7 @@ for value in metric_stream:
     is_anomaly = detector.add_value(value)
     if is_anomaly:
         logger.warning(f"Anomaly detected: {value}")
-        
+
 # Get statistics
 stats = detector.get_statistics()
 print(f"Mean: {stats['mean']:.2f}, StdDev: {stats['std']:.2f}")
@@ -279,10 +279,10 @@ while True:
     # TACL automatically optimizes topology
     F = controller.get_current_F()
     bottleneck = controller.get_bottleneck_edge()
-    
+
     if F > threshold:
         logger.warning(f"High free energy: {F:.3f}")
-    
+
     time.sleep(60)
 ```
 
@@ -327,18 +327,18 @@ if success:
             avg_latency_ms=45.0,
             p99_latency_ms=120.0
         )
-        
+
         # Check status
         status = manager.get_deployment_status()
         print(f"Phase: {status['phase']}")
         print(f"Traffic: {status['traffic_percentage']}%")
-        
+
         # Advance to next stage
         if status['phase'] != 'complete':
             manager.advance_rollout()
         else:
             break
-        
+
         time.sleep(600)  # Wait 10 minutes per stage
 ```
 
@@ -396,7 +396,7 @@ upstream tradepulse_backend {
 
 server {
     listen 80;
-    
+
     location / {
         proxy_pass http://tradepulse_backend;
         proxy_set_header Host $host;
