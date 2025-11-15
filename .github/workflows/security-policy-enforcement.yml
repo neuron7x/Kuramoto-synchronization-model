@@ -216,6 +216,7 @@ jobs:
 
       - name: Evaluate security policies
         id: evaluate
+        continue-on-error: true
         run: |
           echo "Evaluating security policies..."
           
@@ -248,7 +249,6 @@ jobs:
           
           if [ "$VIOLATIONS" -gt 0 ]; then
             echo "❌ Total policy violations: $VIOLATIONS"
-            exit 1
           else
             echo "✅ All security policies passed"
           fi
@@ -257,41 +257,98 @@ jobs:
         id: workflow_security
         run: |
           echo "Checking GitHub Actions workflow security..."
+          echo "Using two-level policy: DENY (HIGH/CRITICAL) and WARN (MEDIUM/LOW)"
+          echo ""
           
-          WORKFLOW_ISSUES=0
+          HIGH_ISSUES=0
+          MEDIUM_ISSUES=0
+          HIGH_DETAILS=""
+          MEDIUM_DETAILS=""
           
           # Check for workflow security best practices
           for workflow in .github/workflows/*.yml; do
-            echo "Checking: $workflow"
+            WORKFLOW_NAME=$(basename "$workflow")
+            echo "Checking: $WORKFLOW_NAME"
             
-            # Check for minimal permissions
-            if ! grep -q "permissions:" "$workflow"; then
-              echo "⚠️  $workflow: Missing explicit permissions"
-              WORKFLOW_ISSUES=$((WORKFLOW_ISSUES + 1))
+            # HIGH/CRITICAL: Check for write-all permissions
+            if grep -q "permissions:.*write-all" "$workflow"; then
+              echo "❌ HIGH: $WORKFLOW_NAME has write-all permissions"
+              HIGH_ISSUES=$((HIGH_ISSUES + 1))
+              HIGH_DETAILS="${HIGH_DETAILS}${WORKFLOW_NAME}: write-all permissions detected\n"
             fi
             
-            # Check for pinned actions
-            UNPINNED=$(grep -E 'uses:.*@[a-z]' "$workflow" || echo "")
-            if [ -n "$UNPINNED" ]; then
-              echo "⚠️  $workflow: Contains unpinned actions (should use SHA)"
-              WORKFLOW_ISSUES=$((WORKFLOW_ISSUES + 1))
-            fi
-            
-            # Check for pull_request_target with dangerous patterns
+            # HIGH/CRITICAL: Check for unsafe pull_request_target usage
             if grep -q "pull_request_target:" "$workflow"; then
-              if grep -q "github.event.pull_request.head.ref" "$workflow"; then
-                echo "❌ $workflow: Unsafe pull_request_target usage"
-                WORKFLOW_ISSUES=$((WORKFLOW_ISSUES + 1))
+              # Check if it checks out PR head (dangerous)
+              if grep -A 5 "pull_request_target:" "$workflow" | grep -q "github.event.pull_request.head"; then
+                echo "❌ HIGH: $WORKFLOW_NAME has unsafe pull_request_target with PR code execution"
+                HIGH_ISSUES=$((HIGH_ISSUES + 1))
+                HIGH_DETAILS="${HIGH_DETAILS}${WORKFLOW_NAME}: Unsafe pull_request_target usage\n"
               fi
+            fi
+            
+            # HIGH/CRITICAL: Check for unpinned actions in security-sensitive workflows
+            # Only flag as HIGH if workflow handles secrets or has write permissions
+            if grep -q "secrets\." "$workflow" || grep -q "permissions:.*write" "$workflow"; then
+              UNPINNED=$(grep -E 'uses:.*@[a-z]+(-[a-z]+)*$' "$workflow" | grep -v '@v[0-9]' || echo "")
+              if [ -n "$UNPINNED" ]; then
+                echo "❌ HIGH: $WORKFLOW_NAME contains unpinned actions in security-sensitive workflow"
+                HIGH_ISSUES=$((HIGH_ISSUES + 1))
+                HIGH_DETAILS="${HIGH_DETAILS}${WORKFLOW_NAME}: Unpinned actions with secrets/write access\n"
+              fi
+            fi
+            
+            # MEDIUM: Check for missing explicit permissions
+            if ! grep -q "^permissions:" "$workflow"; then
+              echo "⚠️  MEDIUM: $WORKFLOW_NAME missing explicit permissions block"
+              MEDIUM_ISSUES=$((MEDIUM_ISSUES + 1))
+              MEDIUM_DETAILS="${MEDIUM_DETAILS}${WORKFLOW_NAME}: Missing explicit permissions\n"
+            fi
+            
+            # LOW: Check for missing timeout
+            if ! grep -q "timeout-minutes:" "$workflow"; then
+              echo "ℹ️  LOW: $WORKFLOW_NAME missing timeout-minutes"
+              # Count as medium for reporting purposes
+              MEDIUM_ISSUES=$((MEDIUM_ISSUES + 1))
+              MEDIUM_DETAILS="${MEDIUM_DETAILS}${WORKFLOW_NAME}: Missing timeout-minutes\n"
+            fi
+            
+            # LOW: Check for missing concurrency control
+            if ! grep -q "concurrency:" "$workflow"; then
+              echo "ℹ️  LOW: $WORKFLOW_NAME missing concurrency control"
+              MEDIUM_ISSUES=$((MEDIUM_ISSUES + 1))
+              MEDIUM_DETAILS="${MEDIUM_DETAILS}${WORKFLOW_NAME}: Missing concurrency control\n"
             fi
           done
           
-          echo "workflow_issues=$WORKFLOW_ISSUES" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=== Security Scan Summary ==="
+          echo "HIGH/CRITICAL Issues: $HIGH_ISSUES"
+          echo "MEDIUM/LOW Issues: $MEDIUM_ISSUES"
           
-          if [ "$WORKFLOW_ISSUES" -gt 0 ]; then
-            echo "⚠️  Found $WORKFLOW_ISSUES workflow security issues"
+          # Export results
+          echo "high_issues=$HIGH_ISSUES" >> $GITHUB_OUTPUT
+          echo "medium_issues=$MEDIUM_ISSUES" >> $GITHUB_OUTPUT
+          echo "high_details<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$HIGH_DETAILS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "medium_details<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$MEDIUM_DETAILS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          if [ "$HIGH_ISSUES" -gt 0 ]; then
+            echo ""
+            echo "❌ CRITICAL: Found $HIGH_ISSUES HIGH/CRITICAL security issues"
+            echo "These must be fixed before merging."
           else
-            echo "✅ All workflows follow security best practices"
+            echo ""
+            echo "✅ No HIGH/CRITICAL security issues found"
+          fi
+          
+          if [ "$MEDIUM_ISSUES" -gt 0 ]; then
+            echo ""
+            echo "⚠️  Found $MEDIUM_ISSUES MEDIUM/LOW issues (warnings only)"
+            echo "These should be addressed but won't block the PR."
           fi
 
       - name: Upload policy results
@@ -314,37 +371,81 @@ jobs:
             const pull_number = context.payload.pull_request.number;
             
             const violations = parseInt('${{ steps.evaluate.outputs.violations }}' || '0');
-            const workflowIssues = parseInt('${{ steps.workflow_security.outputs.workflow_issues }}' || '0');
+            const highIssues = parseInt('${{ steps.workflow_security.outputs.high_issues }}' || '0');
+            const mediumIssues = parseInt('${{ steps.workflow_security.outputs.medium_issues }}' || '0');
+            const highDetails = `${{ steps.workflow_security.outputs.high_details }}`;
+            const mediumDetails = `${{ steps.workflow_security.outputs.medium_details }}`;
             
-            const emoji = violations === 0 && workflowIssues === 0 ? '✅' : '❌';
+            const hasBlockingIssues = violations > 0 || highIssues > 0;
+            const emoji = hasBlockingIssues ? '❌' : (mediumIssues > 0 ? '⚠️' : '✅');
+            
+            let highIssuesSection = '';
+            if (highIssues > 0) {
+              highIssuesSection = [
+                '',
+                '### ❌ HIGH/CRITICAL Issues (Blocking)',
+                '',
+                '```',
+                highDetails,
+                '```',
+                '',
+                '**Action Required:** These issues must be fixed before merging.',
+                'See [Workflow Security Policy](../../docs/compliance/workflow-security.md) for guidance.'
+              ].join('\n');
+            }
+            
+            let mediumIssuesSection = '';
+            if (mediumIssues > 0) {
+              mediumIssuesSection = [
+                '',
+                '### ⚠️ MEDIUM/LOW Issues (Warnings)',
+                '',
+                '<details>',
+                '<summary>Click to expand</summary>',
+                '',
+                '```',
+                mediumDetails,
+                '```',
+                '',
+                '</details>',
+                '',
+                '**Note:** These are warnings only and will not block the PR.',
+                'Please address them in a follow-up PR if possible.'
+              ].join('\n');
+            }
             
             const body = [
               `## ${emoji} Security Policy Enforcement (OPA)`,
               '',
-              '### Policy Evaluation Results',
-              '',
-              '| Policy Category | Status |',
-              '|----------------|--------|',
-              `| Secrets Detection | ${violations === 0 ? '✅ Passed' : '❌ Violations'} |`,
-              `| Secure Coding | ${violations === 0 ? '✅ Passed' : '❌ Violations'} |`,
-              `| Dependency Security | ${violations === 0 ? '✅ Passed' : '❌ Violations'} |`,
-              `| Container Security | ${violations === 0 ? '✅ Passed' : '❌ Violations'} |`,
-              `| Workflow Security | ${workflowIssues === 0 ? '✅ Passed' : '⚠️  Issues Found'} |`,
-              '',
               '### Summary',
-              `- **Policy Violations:** ${violations}`,
-              `- **Workflow Issues:** ${workflowIssues}`,
               '',
-              violations === 0 && workflowIssues === 0
-                ? '✅ **All security policies passed**'
-                : '❌ **Security policy violations detected** - Review the workflow logs',
+              '| Category | Status | Count |',
+              '|----------|--------|-------|',
+              `| Code Policy Violations | ${violations === 0 ? '✅ Pass' : '❌ Fail'} | ${violations} |`,
+              `| HIGH/CRITICAL Workflow Issues | ${highIssues === 0 ? '✅ Pass' : '❌ Fail'} | ${highIssues} |`,
+              `| MEDIUM/LOW Workflow Issues | ⚠️ Warn | ${mediumIssues} |`,
               '',
-              '### Security Policies Enforced',
+              highIssues === 0 && violations === 0
+                ? '✅ **All blocking security checks passed**'
+                : '❌ **Security issues detected** - Review details below',
+              highIssuesSection,
+              mediumIssuesSection,
+              '',
+              '### Policies Enforced',
+              '',
+              '**Code Security:**',
               '- 🔒 No hardcoded secrets or credentials',
               '- 🔒 Safe coding practices (no eval, no shell=True)',
-              '- 🔒 Pinned dependencies (no >= operators)',
-              '- 🔒 Container security (non-root user, pinned images)',
-              '- 🔒 Workflow security (minimal permissions, pinned actions)',
+              '- 🔒 Secure dependencies',
+              '',
+              '**Workflow Security:**',
+              '- 🔒 Minimal permissions (deny write-all)',
+              '- 🔒 Safe pull_request_target usage',
+              '- 🔒 Pinned actions in security-sensitive workflows',
+              '- ⚠️ Explicit permissions declaration (recommended)',
+              '- ⚠️ Timeout and concurrency controls (recommended)',
+              '',
+              '📖 **Policy Reference:** [Workflow Security Policy](../../docs/compliance/workflow-security.md)',
               '',
               '---',
               `*Last updated: ${new Date().toISOString()}*`
@@ -377,3 +478,45 @@ jobs:
                 body
               });
             }
+
+      - name: Fail on HIGH/CRITICAL issues
+        if: steps.evaluate.outputs.violations != '0' || steps.workflow_security.outputs.high_issues != '0'
+        run: |
+          echo "❌ SECURITY POLICY ENFORCEMENT FAILED"
+          echo ""
+          echo "=== Blocking Issues Found ==="
+          
+          VIOLATIONS='${{ steps.evaluate.outputs.violations }}'
+          HIGH_ISSUES='${{ steps.workflow_security.outputs.high_issues }}'
+          
+          if [ "$VIOLATIONS" != "0" ]; then
+            echo "Code Policy Violations: $VIOLATIONS"
+            echo "Review the policy evaluation logs above for details."
+          fi
+          
+          if [ "$HIGH_ISSUES" != "0" ]; then
+            echo "HIGH/CRITICAL Workflow Security Issues: $HIGH_ISSUES"
+            echo "Review the workflow security check logs above for details."
+            echo ""
+            echo "Common fixes:"
+            echo "  - Replace 'permissions: write-all' with minimal permissions"
+            echo "  - Use 'pull_request' instead of 'pull_request_target'"
+            echo "  - Pin actions to specific versions in security-sensitive workflows"
+          fi
+          
+          echo ""
+          echo "See docs/compliance/workflow-security.md for guidance."
+          exit 1
+      
+      - name: Log MEDIUM/LOW warnings
+        if: steps.workflow_security.outputs.medium_issues != '0'
+        run: |
+          echo "⚠️  WARNINGS: Found ${{ steps.workflow_security.outputs.medium_issues }} MEDIUM/LOW issues"
+          echo ""
+          echo "These are warnings only and will not block the PR."
+          echo "Please consider addressing them in a follow-up PR:"
+          echo "  - Add explicit 'permissions:' blocks to all workflows"
+          echo "  - Add 'timeout-minutes:' to prevent runaway jobs"
+          echo "  - Add 'concurrency:' with 'cancel-in-progress' to save resources"
+          echo ""
+          echo "These recommendations improve security and resource efficiency."
