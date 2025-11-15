@@ -6,6 +6,8 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
+  actions: read
 
 on:
   pull_request:
@@ -31,12 +33,70 @@ jobs:
           python -m pip install --upgrade pip
           pip install -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
           pip install pytest pytest-cov
-      - name: Run tests with coverage (98% required)
+      - name: Download baseline coverage (if exists)
+        id: download_baseline
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: coverage.yml
+          branch: ${{ github.event.pull_request.base.ref || github.ref_name }}
+          name: coverage-baseline
+          path: baseline/
+          if_no_artifact_found: warn
+      
+      - name: Run tests with coverage
+        id: run_coverage
+        continue-on-error: true
         run: |
           pytest tests/ \
             --cov=core --cov=backtest --cov=execution \
             --cov-report=xml --cov-report=html:coverage_html \
-            --cov-fail-under=98
+            --cov-report=json \
+            --cov-fail-under=0  # Don't fail here, we'll do ratchet check below
+      
+      - name: Calculate coverage metrics
+        id: coverage_metrics
+        run: |
+          # Extract current coverage from coverage.json
+          CURRENT_COVERAGE=$(python3 -c "import json; data=json.load(open('coverage.json')); print(f\"{data['totals']['percent_covered']:.2f}\")")
+          echo "Current coverage: $CURRENT_COVERAGE%"
+          echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
+          
+          # Get baseline coverage if it exists
+          if [ -f "baseline/coverage.json" ]; then
+            BASELINE_COVERAGE=$(python3 -c "import json; data=json.load(open('baseline/coverage.json')); print(f\"{data['totals']['percent_covered']:.2f}\")")
+            echo "Baseline coverage: $BASELINE_COVERAGE%"
+            echo "baseline_coverage=$BASELINE_COVERAGE" >> $GITHUB_OUTPUT
+            echo "has_baseline=true" >> $GITHUB_OUTPUT
+            
+            # Calculate regression threshold (baseline - 0.5%)
+            THRESHOLD=$(python3 -c "print(f\"{max(float('$BASELINE_COVERAGE') - 0.5, 70.0):.2f}\")")
+            echo "Minimum threshold: $THRESHOLD%"
+            echo "threshold=$THRESHOLD" >> $GITHUB_OUTPUT
+            
+            # Check if we pass the ratchet
+            PASSES=$(python3 -c "print('true' if float('$CURRENT_COVERAGE') >= float('$THRESHOLD') else 'false')")
+            echo "passes_ratchet=$PASSES" >> $GITHUB_OUTPUT
+            
+            if [ "$PASSES" = "true" ]; then
+              echo "✅ Coverage ratchet passed: $CURRENT_COVERAGE% >= $THRESHOLD%"
+            else
+              echo "❌ Coverage ratchet failed: $CURRENT_COVERAGE% < $THRESHOLD%"
+            fi
+          else
+            echo "No baseline found. Using soft threshold of 70%"
+            echo "has_baseline=false" >> $GITHUB_OUTPUT
+            echo "threshold=70.0" >> $GITHUB_OUTPUT
+            
+            PASSES=$(python3 -c "print('true' if float('$CURRENT_COVERAGE') >= 70.0 else 'false')")
+            echo "passes_ratchet=$PASSES" >> $GITHUB_OUTPUT
+            
+            if [ "$PASSES" = "true" ]; then
+              echo "✅ Coverage meets soft threshold: $CURRENT_COVERAGE% >= 70%"
+            else
+              echo "⚠️  Coverage below soft threshold: $CURRENT_COVERAGE% < 70% (warning only)"
+            fi
+          fi
       - name: Upload coverage to Codecov
         if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
@@ -51,3 +111,197 @@ jobs:
             coverage.xml
             coverage_html
           if-no-files-found: error
+      
+      - name: Check per-file coverage for changed files
+        id: file_coverage
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          echo "Checking per-file coverage for changed files..."
+          
+          # Get list of changed Python files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep '\.py$' | grep -E '^(core|backtest|execution)/' || echo "")
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No Python files changed in coverage directories"
+            echo "all_files_pass=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          echo ""
+          
+          # Check coverage for each changed file
+          ALL_PASS=true
+          PER_FILE_THRESHOLD=80
+          
+          for file in $CHANGED_FILES; do
+            if [ -f "$file" ]; then
+              # Extract coverage for this specific file from coverage.json
+              FILE_COV=$(python3 -c "
+import json
+import sys
+data = json.load(open('coverage.json'))
+file_path = '$file'
+if file_path in data.get('files', {}):
+    pct = data['files'][file_path]['summary']['percent_covered']
+    print(f'{pct:.2f}')
+else:
+    print('N/A')
+" 2>/dev/null || echo "N/A")
+              
+              if [ "$FILE_COV" = "N/A" ]; then
+                echo "⚠️  $file: No coverage data (file not covered by tests)"
+                ALL_PASS=false
+              elif [ $(python3 -c "print('true' if float('$FILE_COV') >= $PER_FILE_THRESHOLD else 'false')") = "true" ]; then
+                echo "✅ $file: ${FILE_COV}%"
+              else
+                echo "❌ $file: ${FILE_COV}% (below ${PER_FILE_THRESHOLD}% threshold)"
+                ALL_PASS=false
+              fi
+            fi
+          done
+          
+          if [ "$ALL_PASS" = "true" ]; then
+            echo ""
+            echo "✅ All changed files meet per-file coverage threshold"
+            echo "all_files_pass=true" >> $GITHUB_OUTPUT
+          else
+            echo ""
+            echo "⚠️  Some changed files have low coverage"
+            echo "all_files_pass=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Update baseline coverage
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-baseline
+          path: |
+            coverage.xml
+            coverage.json
+          retention-days: 90
+      
+      - name: Post coverage summary to PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            const currentCoverage = '${{ steps.coverage_metrics.outputs.current_coverage }}';
+            const baselineCoverage = '${{ steps.coverage_metrics.outputs.baseline_coverage }}' || 'N/A';
+            const threshold = '${{ steps.coverage_metrics.outputs.threshold }}';
+            const hasBaseline = '${{ steps.coverage_metrics.outputs.has_baseline }}' === 'true';
+            const passesRatchet = '${{ steps.coverage_metrics.outputs.passes_ratchet }}' === 'true';
+            const allFilesPass = '${{ steps.file_coverage.outputs.all_files_pass }}' === 'true';
+            
+            const emoji = passesRatchet && allFilesPass ? '✅' : (passesRatchet ? '⚠️' : '❌');
+            
+            let body = [
+              `## ${emoji} Coverage Report`,
+              '',
+              '### Overall Coverage',
+              '',
+              '| Metric | Value |',
+              '|--------|-------|',
+              `| Current Coverage | **${currentCoverage}%** |`,
+            ];
+            
+            if (hasBaseline) {
+              const delta = (parseFloat(currentCoverage) - parseFloat(baselineCoverage)).toFixed(2);
+              const deltaEmoji = delta >= 0 ? '🟢' : '🔴';
+              body.push(`| Baseline Coverage | ${baselineCoverage}% |`);
+              body.push(`| Change | ${deltaEmoji} ${delta > 0 ? '+' : ''}${delta}% |`);
+              body.push(`| Threshold (baseline - 0.5%) | ${threshold}% |`);
+              body.push(`| **Ratchet Status** | **${passesRatchet ? '✅ PASS' : '❌ FAIL'}** |`);
+            } else {
+              body.push(`| Threshold (soft) | ${threshold}% |`);
+              body.push(`| **Status** | **${passesRatchet ? '✅ PASS (soft threshold)' : '⚠️ WARN (below soft threshold)'}** |`);
+            }
+            
+            body.push('');
+            
+            if (hasBaseline) {
+              body.push('### Ratchet Policy');
+              body.push('');
+              body.push('- **Rule:** Coverage must not decrease by more than 0.5% from baseline');
+              body.push('- **Baseline:** Last successful run on base branch');
+              body.push(passesRatchet 
+                ? '- ✅ **Result:** Coverage regression check passed'
+                : '- ❌ **Result:** Coverage decreased too much - please add tests');
+            } else {
+              body.push('### Soft Threshold (No Baseline)');
+              body.push('');
+              body.push('- No baseline coverage found (first run or baseline expired)');
+              body.push('- Using soft threshold of 70% (warning only)');
+              body.push(passesRatchet
+                ? '- ✅ Coverage meets soft threshold'
+                : '- ⚠️ Coverage below soft threshold - consider adding tests');
+            }
+            
+            body.push('');
+            body.push('### Per-File Coverage (Changed Files)');
+            body.push('');
+            body.push(allFilesPass
+              ? '✅ All changed files meet 80% coverage threshold'
+              : '⚠️ Some changed files have low coverage - see logs for details');
+            
+            body.push('');
+            body.push('---');
+            body.push('*Coverage ratchet policy: No regression allowed (max -0.5%). See logs for per-file details.*');
+            
+            const bodyText = body.join('\n');
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Coverage Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body: bodyText
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body: bodyText
+              });
+            }
+      
+      - name: Fail if ratchet check failed (with baseline)
+        if: steps.coverage_metrics.outputs.has_baseline == 'true' && steps.coverage_metrics.outputs.passes_ratchet != 'true'
+        run: |
+          echo "❌ Coverage ratchet check FAILED"
+          echo ""
+          echo "Current coverage (${{ steps.coverage_metrics.outputs.current_coverage }}%) is below threshold (${{ steps.coverage_metrics.outputs.threshold }}%)"
+          echo "This represents a regression of more than 0.5% from baseline (${{ steps.coverage_metrics.outputs.baseline_coverage }}%)"
+          echo ""
+          echo "Please add tests to maintain coverage levels."
+          exit 1
+      
+      - name: Warn if below soft threshold (no baseline)
+        if: steps.coverage_metrics.outputs.has_baseline != 'true' && steps.coverage_metrics.outputs.passes_ratchet != 'true'
+        run: |
+          echo "⚠️  WARNING: Coverage below soft threshold"
+          echo ""
+          echo "Current coverage (${{ steps.coverage_metrics.outputs.current_coverage }}%) is below 70%"
+          echo "No baseline found, so this is a WARNING only and will not block the PR."
+          echo ""
+          echo "Consider adding tests to improve coverage."

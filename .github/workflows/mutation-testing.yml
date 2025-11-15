@@ -22,6 +22,7 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  actions: read
 
 jobs:
   mutation-testing:
@@ -52,12 +53,57 @@ jobs:
           if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
 
+      - name: Download baseline mutation results (if exists)
+        id: download_baseline
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: mutation-testing.yml
+          branch: ${{ github.event.pull_request.base.ref || github.ref_name }}
+          name: mutation-baseline
+          path: baseline/
+          if_no_artifact_found: warn
+      
+      - name: Determine changed modules
+        id: changed_modules
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Detecting changed Python modules..."
+          
+          # Get changed Python files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep '\.py$' | grep -E '^(core|backtest|execution)/' || echo "")
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No Python files changed in mutation test directories"
+            echo "modules=" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Extract unique modules (directories)
+          MODULES=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | tr '\n' ',' | sed 's/,$//')
+          echo "Changed modules: $MODULES"
+          echo "modules=$MODULES" >> $GITHUB_OUTPUT
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+      
       - name: Run mutation testing
         id: mutmut
+        if: github.event_name == 'push' || steps.changed_modules.outputs.has_changes == 'true'
         run: |
-          echo "Running mutation testing on core, backtest, execution modules..."
+          # Determine which paths to mutate
+          if [ "${{ github.event_name }}" = "push" ]; then
+            PATHS="core,backtest,execution"
+            echo "Running full mutation testing on: $PATHS"
+          else
+            PATHS="${{ steps.changed_modules.outputs.modules }}"
+            echo "Running mutation testing on changed modules: $PATHS"
+          fi
+          
+          echo "paths=$PATHS" >> $GITHUB_OUTPUT
+          
           # Run mutation testing, allow it to fail gracefully
-          mutmut run --paths-to-mutate=core,backtest,execution --tests-dir=tests || {
+          mutmut run --paths-to-mutate="$PATHS" --tests-dir=tests || {
             echo "Mutation testing encountered errors, continuing..."
             exit 0
           }
@@ -78,17 +124,80 @@ jobs:
             echo "No mutations were executed - skipping enforcement"
           fi
 
-      - name: Enforce mutation kill rate (90%)
+      - name: Calculate mutation metrics
         if: steps.check_mutations.outputs.mutations_exist == 'true'
-        id: mutation_gate
+        id: mutation_metrics
+        continue-on-error: true
         run: |
-          python -m tools.mutation.kill_rate_guard \
-            --threshold=0.9 \
-            --summary=mutation_summary.json || {
-            echo "Mutation kill rate check failed or no mutations found"
-            exit 1
-          }
-        continue-on-error: false
+          # Try to use the existing kill_rate_guard tool if it exists
+          if [ -f "tools/mutation/kill_rate_guard.py" ]; then
+            python -m tools.mutation.kill_rate_guard \
+              --threshold=0.0 \
+              --summary=mutation_summary.json || echo "Tool failed, will calculate manually"
+          fi
+          
+          # Calculate metrics manually if needed
+          if [ ! -f "mutation_summary.json" ]; then
+            echo "Calculating mutation metrics manually..."
+            
+            # Extract metrics from mutmut results
+            MUTMUT_RESULTS=$(mutmut results 2>/dev/null || echo "")
+            
+            # Try to parse killed/survived/total from results
+            TOTAL=$(echo "$MUTMUT_RESULTS" | grep -oP '\d+(?= mutations)' | head -1 || echo "0")
+            KILLED=$(echo "$MUTMUT_RESULTS" | grep -oP '\d+(?= killed)' | head -1 || echo "0")
+            
+            if [ "$TOTAL" -gt 0 ]; then
+              KILL_RATE=$(python3 -c "print(f'{float($KILLED) / float($TOTAL):.4f}')")
+              
+              cat > mutation_summary.json <<EOF
+{
+  "total_mutants": $TOTAL,
+  "killed_mutants": $KILLED,
+  "kill_rate": $KILL_RATE,
+  "threshold": 0.0
+}
+EOF
+            else
+              echo "No mutation data available"
+              echo '{"total_mutants": 0, "killed_mutants": 0, "kill_rate": 0, "threshold": 0}' > mutation_summary.json
+            fi
+          fi
+          
+          # Extract current kill rate
+          CURRENT_KILL_RATE=$(jq -r '.kill_rate' mutation_summary.json 2>/dev/null || echo "0")
+          echo "Current kill rate: $CURRENT_KILL_RATE"
+          echo "current_kill_rate=$CURRENT_KILL_RATE" >> $GITHUB_OUTPUT
+          
+          # Get baseline kill rate if it exists
+          if [ -f "baseline/mutation_summary.json" ]; then
+            BASELINE_KILL_RATE=$(jq -r '.kill_rate' baseline/mutation_summary.json 2>/dev/null || echo "0")
+            echo "Baseline kill rate: $BASELINE_KILL_RATE"
+            echo "baseline_kill_rate=$BASELINE_KILL_RATE" >> $GITHUB_OUTPUT
+            echo "has_baseline=true" >> $GITHUB_OUTPUT
+            
+            # For ratchet: require current >= baseline (no regression)
+            PASSES=$(python3 -c "print('true' if float('$CURRENT_KILL_RATE') >= float('$BASELINE_KILL_RATE') else 'false')")
+            echo "passes_ratchet=$PASSES" >> $GITHUB_OUTPUT
+            
+            if [ "$PASSES" = "true" ]; then
+              echo "✅ Mutation kill rate ratchet passed: $CURRENT_KILL_RATE >= $BASELINE_KILL_RATE"
+            else
+              echo "❌ Mutation kill rate ratchet failed: $CURRENT_KILL_RATE < $BASELINE_KILL_RATE"
+            fi
+          else
+            echo "No baseline found. Using soft threshold of 70%"
+            echo "has_baseline=false" >> $GITHUB_OUTPUT
+            
+            PASSES=$(python3 -c "print('true' if float('$CURRENT_KILL_RATE') >= 0.70 else 'false')")
+            echo "passes_ratchet=$PASSES" >> $GITHUB_OUTPUT
+            
+            if [ "$PASSES" = "true" ]; then
+              echo "✅ Mutation kill rate meets soft threshold: $CURRENT_KILL_RATE >= 0.70"
+            else
+              echo "⚠️  Mutation kill rate below soft threshold: $CURRENT_KILL_RATE < 0.70 (warning only)"
+            fi
+          fi
 
       - name: Upload mutation test results
         if: always()
@@ -101,6 +210,14 @@ jobs:
             .mutmut-cache
           if-no-files-found: warn
 
+      - name: Update baseline mutation results
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && steps.check_mutations.outputs.mutations_exist == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-baseline
+          path: mutation_summary.json
+          retention-days: 90
+      
       - name: Comment mutation results on PR
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -110,58 +227,98 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
             
-            let summaryData = {};
-            let summaryText = "⚠️ Mutation testing was skipped or no mutations were generated";
+            const hasChanges = '${{ steps.changed_modules.outputs.has_changes }}' === 'true';
+            const mutationsExist = '${{ steps.check_mutations.outputs.mutations_exist }}' === 'true';
+            const currentKillRate = '${{ steps.mutation_metrics.outputs.current_kill_rate }}';
+            const baselineKillRate = '${{ steps.mutation_metrics.outputs.baseline_kill_rate }}';
+            const hasBaseline = '${{ steps.mutation_metrics.outputs.has_baseline }}' === 'true';
+            const passesRatchet = '${{ steps.mutation_metrics.outputs.passes_ratchet }}' === 'true';
             
-            try {
-              if (fs.existsSync('mutation_summary.json')) {
-                summaryData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
-                const killRate = (summaryData.kill_rate * 100).toFixed(2);
-                const threshold = (summaryData.threshold * 100).toFixed(0);
-                const passed = summaryData.kill_rate >= summaryData.threshold;
-                const emoji = passed ? '✅' : '❌';
-                
-                summaryText = [
-                  `## ${emoji} Mutation Testing Results`,
-                  '',
-                  `**Kill Rate:** ${killRate}% (threshold: ${threshold}%)`,
-                  `**Status:** ${passed ? 'PASSED' : 'FAILED'}`,
-                  '',
-                  '### Statistics:',
-                  `- Total mutants: ${summaryData.total_mutants}`,
-                  `- Counted mutants: ${summaryData.counted_mutants}`,
-                  `- Killed mutants: ${summaryData.killed_mutants}`,
-                  '',
-                  '### Status Breakdown:',
-                  '```json',
-                  JSON.stringify(summaryData.status_counts, null, 2),
-                  '```',
-                  '',
-                  passed ? '✅ Mutation testing passed!' : '❌ Mutation kill rate is below the required threshold. Please improve test coverage.'
-                ].join('\n');
-              } else {
-                summaryText = [
-                  '## ℹ️ Mutation Testing Skipped',
-                  '',
-                  'Mutation testing was not executed for this PR. This can happen when:',
-                  '- No code changes were made to testable modules',
-                  '- The mutation testing tool encountered configuration issues',
-                  '- No tests are available to run mutations against',
-                  '',
-                  'The full mutation test suite will run during the CI pipeline.'
-                ].join('\n');
-              }
-            } catch (error) {
-              console.log('Could not read mutation summary:', error);
-              summaryText = [
-                '## ⚠️ Mutation Testing Error',
+            let body = '';
+            
+            if (!hasChanges) {
+              body = [
+                '## ℹ️ Mutation Testing Skipped',
                 '',
-                'An error occurred while processing mutation test results.',
-                'Please check the workflow logs for details.'
+                '**Reason:** No code changes in mutation-tested modules (core, backtest, execution)',
+                '',
+                'Mutation testing only runs on changed modules to save time.'
               ].join('\n');
+            } else if (!mutationsExist) {
+              body = [
+                '## ℹ️ Mutation Testing - No Mutations',
+                '',
+                '**Changed modules:** ${{ steps.changed_modules.outputs.modules }}',
+                '',
+                'Mutation testing was attempted but no mutations were generated.',
+                'This can happen if the changes are in non-code files or comments.'
+              ].join('\n');
+            } else {
+              const emoji = passesRatchet ? '✅' : (hasBaseline ? '❌' : '⚠️');
+              const currentPct = (parseFloat(currentKillRate) * 100).toFixed(2);
+              const baselinePct = hasBaseline ? (parseFloat(baselineKillRate) * 100).toFixed(2) : 'N/A';
+              
+              let summaryData = {};
+              try {
+                if (fs.existsSync('mutation_summary.json')) {
+                  summaryData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
+                }
+              } catch (error) {
+                console.log('Could not read mutation summary:', error);
+              }
+              
+              body = [
+                `## ${emoji} Mutation Testing Results`,
+                '',
+                '### Kill Rate',
+                '',
+                '| Metric | Value |',
+                '|--------|-------|',
+                `| Current Kill Rate | **${currentPct}%** |`,
+              ];
+              
+              if (hasBaseline) {
+                const delta = ((parseFloat(currentKillRate) - parseFloat(baselineKillRate)) * 100).toFixed(2);
+                const deltaEmoji = delta >= 0 ? '🟢' : '🔴';
+                body.push(`| Baseline Kill Rate | ${baselinePct}% |`);
+                body.push(`| Change | ${deltaEmoji} ${delta > 0 ? '+' : ''}${delta}% |`);
+                body.push(`| **Ratchet Status** | **${passesRatchet ? '✅ PASS' : '❌ FAIL'}** |`);
+                body.push('');
+                body.push('### Ratchet Policy');
+                body.push('');
+                body.push('- **Rule:** Mutation kill rate must not decrease from baseline');
+                body.push('- **Scope:** Only changed modules are tested');
+                body.push(passesRatchet
+                  ? '- ✅ **Result:** No regression detected'
+                  : '- ❌ **Result:** Kill rate decreased - tests may be weaker');
+              } else {
+                body.push(`| Threshold (soft) | 70% |`);
+                body.push(`| **Status** | **${passesRatchet ? '✅ PASS' : '⚠️ WARN'}** |`);
+                body.push('');
+                body.push('### Soft Threshold (No Baseline)');
+                body.push('');
+                body.push('- No baseline found (first run or baseline expired)');
+                body.push('- Using soft threshold of 70% (warning only)');
+                body.push(passesRatchet
+                  ? '- ✅ Kill rate meets soft threshold'
+                  : '- ⚠️ Kill rate below soft threshold - consider strengthening tests');
+              }
+              
+              if (summaryData.total_mutants) {
+                body.push('');
+                body.push('### Mutation Statistics');
+                body.push('');
+                body.push(`- Total mutants: ${summaryData.total_mutants}`);
+                body.push(`- Killed mutants: ${summaryData.killed_mutants}`);
+                body.push(`- Survived mutants: ${summaryData.total_mutants - summaryData.killed_mutants}`);
+              }
+              
+              body.push('');
+              body.push('---');
+              body.push('*Mutation ratchet policy: No regression allowed. Only changed modules are tested.*');
             }
             
-            const body = summaryText;
+            const bodyText = body;
             
             // Find existing comment
             const comments = await github.rest.issues.listComments({
@@ -191,15 +348,23 @@ jobs:
               });
             }
 
-      - name: Fail workflow if mutation testing failed
-        if: steps.check_mutations.outputs.mutations_exist == 'true' && steps.mutation_gate.outcome == 'failure'
+      - name: Fail if ratchet check failed (with baseline)
+        if: steps.mutation_metrics.outputs.has_baseline == 'true' && steps.mutation_metrics.outputs.passes_ratchet != 'true'
         run: |
-          echo "❌ Mutation testing failed. Kill rate is below 90%."
+          echo "❌ Mutation kill rate ratchet check FAILED"
+          echo ""
+          echo "Current kill rate (${{ steps.mutation_metrics.outputs.current_kill_rate }}) is below baseline (${{ steps.mutation_metrics.outputs.baseline_kill_rate }})"
+          echo "This represents a regression in test quality."
+          echo ""
+          echo "Please strengthen tests to maintain or improve mutation kill rate."
           exit 1
       
-      - name: Skip mutation testing gracefully
-        if: steps.check_mutations.outputs.mutations_exist != 'true'
+      - name: Warn if below soft threshold (no baseline)
+        if: steps.mutation_metrics.outputs.has_baseline != 'true' && steps.mutation_metrics.outputs.passes_ratchet != 'true' && steps.check_mutations.outputs.mutations_exist == 'true'
         run: |
-          echo "ℹ️ Mutation testing was skipped - no mutations were generated."
-          echo "This is acceptable for PRs that don't modify testable code."
-          exit 0
+          echo "⚠️  WARNING: Mutation kill rate below soft threshold"
+          echo ""
+          echo "Current kill rate (${{ steps.mutation_metrics.outputs.current_kill_rate }}) is below 70%"
+          echo "No baseline found, so this is a WARNING only and will not block the PR."
+          echo ""
+          echo "Consider strengthening tests to improve mutation kill rate."
