@@ -12,11 +12,49 @@ from typing import List
 import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from src.tradepulse.core.neuro.dopamine import (
+    adapt_ddm_parameters,
+    ActionGate,
+    DopamineController,
+)
+from src.tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot
 
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
+
+
+def calculate_simple_reward(
+    records: List[MarketFeedRecord], window: int = 1
+) -> List[float]:
+    """Calculate simple price-based rewards from market feed records.
+    
+    Args:
+        records: List of market feed records
+        window: Lookback window for calculating reward
+        
+    Returns:
+        List of reward values (1 for price increase, -1 for decrease, 0 for no change)
+    """
+    if not records:
+        return []
+    
+    rewards = []
+    for i in range(len(records)):
+        if i < window:
+            rewards.append(0.0)
+        else:
+            prev_price = float(records[i - window].last)
+            curr_price = float(records[i].last)
+            
+            if curr_price > prev_price:
+                rewards.append(1.0)
+            elif curr_price < prev_price:
+                rewards.append(-1.0)
+            else:
+                rewards.append(0.0)
+    
+    return rewards
 
 
 class TestDopamineTD0RPE:
