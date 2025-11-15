@@ -32,10 +32,11 @@ jobs:
               pull_number,
             });
             
-            // Check if ALL changed files are in .github/workflows or docs/compliance
+            // Check if ALL changed files are in .github/workflows or docs/compliance or tests/
             const allInfraOrDocs = files.every(f => 
               f.filename.startsWith('.github/workflows/') || 
               f.filename.startsWith('docs/compliance/') ||
+              f.filename.startsWith('tests/') ||
               f.filename.match(/^(COMPLIANCE|VULNERABILITY_BACKLOG|CI_GATES_COMPLETION_SUMMARY|SECURITY_FIXES)\.md$/)
             );
             
