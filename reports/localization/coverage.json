@@ -1,40 +1,14 @@
 {
   "locales": {
     "ar-SA": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "de-DE": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "en-US": {
       "missing": [],
@@ -42,167 +16,50 @@
       "coverageRatio": 1.0
     },
     "es-ES": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "fr-FR": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "hi-IN": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "it-IT": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "ja-JP": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "pl-PL": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "pt-BR": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "uk-UA": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     },
     "zh-CN": {
-      "missing": [
-        "onboarding.cta.finish",
-        "onboarding.cta.next",
-        "onboarding.cta.previous",
-        "onboarding.cta.skip",
-        "onboarding.progress",
-        "onboarding.steps.insights.description",
-        "onboarding.steps.insights.title",
-        "onboarding.steps.navigation.description",
-        "onboarding.steps.navigation.title",
-        "onboarding.steps.workspace.description",
-        "onboarding.steps.workspace.title",
-        "onboarding.title"
-      ],
+      "missing": [],
       "extra": [],
-      "coverageRatio": 0.9588
+      "coverageRatio": 1.0
     }
   },
-  "generatedAt": "2025-11-15T03:54:56.149245Z"
+  "generatedAt": "2025-11-15T03:57:29.606087Z"
 }

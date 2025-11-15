@@ -121,6 +121,30 @@
       }
     }
   },
+  "onboarding": {
+    "title": "Conheça o painel",
+    "progress": "Passo {current} de {total}",
+    "cta": {
+      "skip": "Pular tour",
+      "next": "Próximo",
+      "finish": "Concluir",
+      "previous": "Voltar"
+    },
+    "steps": {
+      "navigation": {
+        "title": "Navegue pelo seu espaço de trabalho",
+        "description": "Use a navegação principal para se mover entre visão geral, PnL, pedidos, sinais e inteligência da comunidade."
+      },
+      "workspace": {
+        "title": "Entenda cada visualização",
+        "description": "Cada seção abre com um cabeçalho de resumo que destaca o objetivo-chave e as tags para essa fatia de telemetria."
+      },
+      "insights": {
+        "title": "Mergulhe em insights ao vivo",
+        "description": "Role pelos painéis contextuais para explorar métricas, gráficos e tabelas de dados adaptados à rota selecionada."
+      }
+    }
+  },
   "header": {
     "title": "Centro de monitoramento TradePulse",
     "subtitle": "Comando unificado de execução, risco e telemetria.",

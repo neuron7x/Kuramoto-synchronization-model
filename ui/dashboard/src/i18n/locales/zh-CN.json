@@ -121,6 +121,30 @@
       }
     }
   },
+  "onboarding": {
+    "title": "了解仪表板",
+    "progress": "步骤 {current} / {total}",
+    "cta": {
+      "skip": "跳过导览",
+      "next": "下一步",
+      "finish": "完成",
+      "previous": "返回"
+    },
+    "steps": {
+      "navigation": {
+        "title": "导航工作区",
+        "description": "使用主导航在概览、损益、订单、信号和社区智能之间移动。"
+      },
+      "workspace": {
+        "title": "理解每个视图",
+        "description": "每个部分都以摘要标题开始，突出显示该遥测切片的关键目标和标签。"
+      },
+      "insights": {
+        "title": "深入实时洞察",
+        "description": "滚动浏览上下文面板以探索为所选路线量身定制的指标、图表和数据表。"
+      }
+    }
+  },
   "header": {
     "title": "TradePulse 监控中心",
     "subtitle": "统一掌控执行、风险与遥测数据。",
