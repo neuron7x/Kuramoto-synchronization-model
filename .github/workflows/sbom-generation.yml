@@ -55,8 +55,7 @@ jobs:
           
           # Generate from requirements.txt (lightweight, no installation)
           if [ -f requirements.txt ]; then
-            cyclonedx-py requirements \
-              --input-file requirements.txt \
+            cyclonedx-py requirements requirements.txt \
               --output-format json \
               --output-file sbom-python.json || {
               echo "⚠️  Python SBOM generation from requirements.txt failed"
@@ -394,19 +393,21 @@ jobs:
               comment.body.includes('SBOM & Vulnerability Analysis')
             );
             
+            const bodyText = body.join('\n');
+            
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,
                 repo,
                 comment_id: botComment.id,
-                body
+                body: bodyText
               });
             } else {
               await github.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number: pull_number,
-                body
+                body: bodyText
               });
             }
 
