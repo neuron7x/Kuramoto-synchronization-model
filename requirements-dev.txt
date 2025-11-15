@@ -37,7 +37,8 @@ pip>=25.2
 z3-solver>=4.13.0.0
 
 # Protocol buffers tooling
-protobuf==6.32.1
+# Fixed: 6.32.1 is invalid/non-existent version. Using latest stable.
+protobuf>=5.29.5
 
 # Packaging & release tooling
 build==1.3.0

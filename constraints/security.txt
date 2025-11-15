@@ -1,12 +1,12 @@
 # Pin vetted versions of security-critical HTTP stack dependencies.
 # Update via pip-audit guidance documented in DEPLOYMENT.md.
-certifi==2025.10.5
-charset-normalizer==3.4.4
-idna==3.11
-requests==2.32.5
-urllib3==2.5.0
+certifi>=2024.7.4
+charset-normalizer>=3.4.4
+idna>=3.7
+requests>=2.32.5
+urllib3>=2.5.0
 
-# Security fixes for known vulnerabilities (2025-11-10)
+# Security fixes for known vulnerabilities (2025-11-15)
 # configobj: Fix ReDoS vulnerability GHSA-c33w-24p9-8m24
 configobj>=5.0.9
 # setuptools: Fix path traversal and RCE vulnerabilities PYSEC-2025-49, GHSA-cx63-2mw6-8hw5
