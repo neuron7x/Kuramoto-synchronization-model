@@ -121,6 +121,30 @@
       }
     }
   },
+  "onboarding": {
+    "title": "Lernen Sie das Dashboard kennen",
+    "progress": "Schritt {current} von {total}",
+    "cta": {
+      "skip": "Tour überspringen",
+      "next": "Weiter",
+      "finish": "Fertig",
+      "previous": "Zurück"
+    },
+    "steps": {
+      "navigation": {
+        "title": "Navigieren Sie durch Ihren Arbeitsbereich",
+        "description": "Verwenden Sie die Hauptnavigation, um zwischen Übersicht, PnL, Aufträgen, Signalen und Community-Intelligence zu wechseln."
+      },
+      "workspace": {
+        "title": "Verstehen Sie jede Ansicht",
+        "description": "Jeder Abschnitt öffnet sich mit einer Zusammenfassungskopfzeile, die das Hauptziel und die Tags für diesen Teil der Telemetrie hervorhebt."
+      },
+      "insights": {
+        "title": "Tauchen Sie in Live-Einblicke ein",
+        "description": "Scrollen Sie durch die kontextbezogenen Panels, um Metriken, Diagramme und Datentabellen zu erkunden, die auf die ausgewählte Route zugeschnitten sind."
+      }
+    }
+  },
   "header": {
     "title": "TradePulse Monitoring Hub",
     "subtitle": "Zentrale Steuerung von Ausführung, Risiko und Telemetrie.",

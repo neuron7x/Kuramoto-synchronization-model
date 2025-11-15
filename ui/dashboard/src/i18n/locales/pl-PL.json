@@ -121,6 +121,30 @@
       }
     }
   },
+  "onboarding": {
+    "title": "Poznaj panel",
+    "progress": "Krok {current} z {total}",
+    "cta": {
+      "skip": "Pomiń przewodnik",
+      "next": "Dalej",
+      "finish": "Zakończ",
+      "previous": "Wstecz"
+    },
+    "steps": {
+      "navigation": {
+        "title": "Nawiguj po swoim obszarze roboczym",
+        "description": "Użyj głównej nawigacji, aby przechodzić między przeglądem, PnL, zamówieniami, sygnałami i inteligencją społeczności."
+      },
+      "workspace": {
+        "title": "Zrozum każdy widok",
+        "description": "Każda sekcja otwiera się nagłówkiem podsumowania, który wyróżnia kluczowy cel i tagi dla tego fragmentu telemetrii."
+      },
+      "insights": {
+        "title": "Zanurz się w wglądach na żywo",
+        "description": "Przewiń kontekstowe panele, aby zbadać metryki, wykresy i tabele danych dostosowane do wybranej trasy."
+      }
+    }
+  },
   "header": {
     "title": "Centrum monitoringu TradePulse",
     "subtitle": "Zintegrowana kontrola nad wykonaniem, ryzykiem i telemetrią.",

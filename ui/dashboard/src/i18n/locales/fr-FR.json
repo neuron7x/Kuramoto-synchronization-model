@@ -121,6 +121,30 @@
       }
     }
   },
+  "onboarding": {
+    "title": "Découvrez le tableau de bord",
+    "progress": "Étape {current} sur {total}",
+    "cta": {
+      "skip": "Ignorer la visite",
+      "next": "Suivant",
+      "finish": "Terminer",
+      "previous": "Retour"
+    },
+    "steps": {
+      "navigation": {
+        "title": "Naviguez dans votre espace de travail",
+        "description": "Utilisez la navigation principale pour vous déplacer entre la vue d'ensemble, PnL, les commandes, les signaux et l'intelligence communautaire."
+      },
+      "workspace": {
+        "title": "Comprendre chaque vue",
+        "description": "Chaque section s'ouvre avec un en-tête de résumé qui met en évidence l'objectif clé et les balises pour cette tranche de télémétrie."
+      },
+      "insights": {
+        "title": "Plongez dans les insights en direct",
+        "description": "Faites défiler les panneaux contextuels pour explorer les métriques, les graphiques et les tableaux de données adaptés à la route sélectionnée."
+      }
+    }
+  },
   "header": {
     "title": "Centre de supervision TradePulse",
     "subtitle": "Pilotage unifié de l'exécution, du risque et de la télémétrie.",
