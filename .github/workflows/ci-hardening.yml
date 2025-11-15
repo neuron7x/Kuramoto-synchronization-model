@@ -68,7 +68,8 @@ jobs:
           
           # Pattern 1: pull_request_target with code execution
           echo "Checking for unsafe pull_request_target..."
-          UNSAFE_TARGET=$(grep -r "pull_request_target:" .github/workflows/ | grep -l "checkout@" | wc -l)
+          # Only match actual YAML trigger, not comments or strings
+          UNSAFE_TARGET=$(grep -r -E "^[[:space:]]*pull_request_target:" .github/workflows/ | grep -l "checkout@" | wc -l)
           if [ "$UNSAFE_TARGET" -gt 0 ]; then
             echo "⚠️  Found $UNSAFE_TARGET workflow(s) with potentially unsafe pull_request_target"
             ISSUES_FOUND=$((ISSUES_FOUND + 1))
@@ -145,7 +146,8 @@ jobs:
             fi
             
             # Check for overly permissive workflows
-            if grep -q "permissions:.*write-all" "$workflow" || grep -q "permissions: write-all" "$workflow"; then
+            # Only match actual YAML permissions block, not comments or strings  
+            if grep -E "^[[:space:]]*permissions:[[:space:]]*write-all" "$workflow" >/dev/null 2>&1; then
               echo "❌ $workflow: Using write-all permissions"
               OVERLY_PERMISSIVE=$((OVERLY_PERMISSIVE + 1))
             fi

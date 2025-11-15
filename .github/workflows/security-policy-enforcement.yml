@@ -271,16 +271,18 @@ jobs:
             echo "Checking: $WORKFLOW_NAME"
             
             # HIGH/CRITICAL: Check for write-all permissions
-            if grep -q "permissions:.*write-all" "$workflow"; then
+            # Only match actual YAML permissions block, not comments or strings
+            if grep -E "^[[:space:]]*permissions:[[:space:]]*write-all" "$workflow" >/dev/null 2>&1; then
               echo "❌ HIGH: $WORKFLOW_NAME has write-all permissions"
               HIGH_ISSUES=$((HIGH_ISSUES + 1))
               HIGH_DETAILS="${HIGH_DETAILS}${WORKFLOW_NAME}: write-all permissions detected\n"
             fi
             
             # HIGH/CRITICAL: Check for unsafe pull_request_target usage
-            if grep -q "pull_request_target:" "$workflow"; then
+            # Only match actual YAML trigger, not comments or strings
+            if grep -E "^[[:space:]]*pull_request_target:" "$workflow" >/dev/null 2>&1; then
               # Check if it checks out PR head (dangerous)
-              if grep -A 5 "pull_request_target:" "$workflow" | grep -q "github.event.pull_request.head"; then
+              if grep -A 5 -E "^[[:space:]]*pull_request_target:" "$workflow" | grep -q "github.event.pull_request.head"; then
                 echo "❌ HIGH: $WORKFLOW_NAME has unsafe pull_request_target with PR code execution"
                 HIGH_ISSUES=$((HIGH_ISSUES + 1))
                 HIGH_DETAILS="${HIGH_DETAILS}${WORKFLOW_NAME}: Unsafe pull_request_target usage\n"

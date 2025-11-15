@@ -366,8 +366,7 @@ jobs:
               }
             }
             
-            body.push(
-              '',
+            body.push('',
               '### SBOM Artifacts Generated',
               '- ✅ CycloneDX SBOM (JSON)',
               '- ✅ SPDX SBOM (JSON)',
@@ -381,8 +380,7 @@ jobs:
               '- **Standards:** SPDX 2.3, CycloneDX 1.5',
               '',
               '---',
-              `*Last updated: ${new Date().toISOString()}*`
-            ].join('\n');
+              `*Last updated: ${new Date().toISOString()}*`);
             
             // Find existing comment
             const comments = await github.rest.issues.listComments({
