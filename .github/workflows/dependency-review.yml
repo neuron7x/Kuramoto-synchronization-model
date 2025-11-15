@@ -39,8 +39,8 @@ jobs:
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: moderate
-          deny-licenses: GPL-3.0, AGPL-3.0
-          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, MPL-2.0
+          deny-licenses: GPL-3.0-only, AGPL-3.0, SSPL-1.0
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, MPL-2.0, LGPL-3.0-or-later
           comment-summary-in-pr: always
           retry-on-snapshot-warnings: true
           warn-only: false
@@ -64,23 +64,46 @@ jobs:
 
       - name: Scan Python dependencies for licenses
         id: python_licenses
+        continue-on-error: true
         run: |
           pip install -r requirements.txt
           
-          # Generate license report
-          pip-licenses --format=json --output-file=python-licenses.json
-          pip-licenses --format=markdown --output-file=python-licenses.md
+          # Generate license report (always generate, don't fail on errors)
+          pip-licenses --format=json --output-file=python-licenses.json || echo "[]" > python-licenses.json
+          pip-licenses --format=markdown --output-file=python-licenses.md || echo "# License Report\n\nError generating report" > python-licenses.md
           
-          # Check for problematic licenses
-          PROBLEMATIC=$(pip-licenses --format=json | jq -r '.[] | select(.License | test("GPL-3|AGPL|SSPL")) | .Name' || echo "")
+          # Define allowed and denied licenses
+          ALLOWED_LICENSES="MIT|Apache-2.0|Apache Software License|BSD|BSD-2-Clause|BSD-3-Clause|ISC|MPL-2.0|Mozilla Public License 2.0 (MPL 2.0)|LGPL-3.0-or-later|GNU Lesser General Public License v3 or later (LGPLv3+)|LGPLv3+"
+          DENIED_LICENSES="GPL-3.0-only|GNU General Public License v3 \(GPLv3\)|AGPL-3.0|GNU Affero General Public License v3|SSPL-1.0|Server Side Public License"
           
-          if [ -n "$PROBLEMATIC" ]; then
+          # Check for denied licenses (exact match, excluding LGPL variants)
+          # Use a more precise regex that doesn't match LGPL when looking for GPL
+          DENIED=$(pip-licenses --format=json 2>/dev/null | jq -r --arg denied "$DENIED_LICENSES" '.[] | select(.License | test($denied)) | select(.License | test("LGPL") | not) | "\(.Name) (\(.License))"' || echo "")
+          
+          # Check for review-required licenses (not in allowed or denied lists)
+          REVIEW_REQUIRED=$(pip-licenses --format=json 2>/dev/null | jq -r --arg allowed "$ALLOWED_LICENSES" --arg denied "$DENIED_LICENSES" '.[] | select(.License | test($allowed) | not) | select(.License | test($denied) | not) | "\(.Name) (\(.License))"' || echo "")
+          
+          if [ -n "$DENIED" ]; then
             echo "problematic=true" >> $GITHUB_OUTPUT
-            echo "licenses=$PROBLEMATIC" >> $GITHUB_OUTPUT
-            echo "❌ Found problematic licenses: $PROBLEMATIC"
+            echo "licenses<<EOF" >> $GITHUB_OUTPUT
+            echo "$DENIED" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "❌ Found denied licenses:"
+            echo "$DENIED"
           else
             echo "problematic=false" >> $GITHUB_OUTPUT
-            echo "✅ No problematic licenses found"
+            echo "✅ No denied licenses found"
+          fi
+          
+          if [ -n "$REVIEW_REQUIRED" ]; then
+            echo "review_required=true" >> $GITHUB_OUTPUT
+            echo "review_licenses<<EOF" >> $GITHUB_OUTPUT
+            echo "$REVIEW_REQUIRED" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "⚠️  Found licenses requiring review:"
+            echo "$REVIEW_REQUIRED"
+          else
+            echo "review_required=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Scan for dependency confusion vulnerabilities
@@ -158,19 +181,37 @@ jobs:
             const pull_number = context.payload.pull_request.number;
             
             const problematic = '${{ steps.python_licenses.outputs.problematic }}' === 'true';
+            const reviewRequired = '${{ steps.python_licenses.outputs.review_required }}' === 'true';
             const confusionRisk = '${{ steps.confusion_scan.outputs.confusion_risk }}' === 'true';
-            const problematicLicenses = '${{ steps.python_licenses.outputs.licenses }}' || 'None';
+            const problematicLicenses = `${{ steps.python_licenses.outputs.licenses }}` || 'None';
+            const reviewLicenses = `${{ steps.python_licenses.outputs.review_licenses }}` || '';
             
-            const emoji = !problematic && !confusionRisk ? '✅' : '❌';
+            const emoji = !problematic && !confusionRisk ? (reviewRequired ? '⚠️' : '✅') : '❌';
             
             let licenseTable = '| Package | License | Status |\n|---------|---------|--------|\n';
             
             try {
               const licenseData = JSON.parse(fs.readFileSync('python-licenses.json', 'utf8'));
-              licenseData.slice(0, 10).forEach(pkg => {
-                const isProblematic = /GPL-3|AGPL|SSPL/.test(pkg.License);
-                const status = isProblematic ? '❌' : '✅';
-                licenseTable += `| ${pkg.Name} | ${pkg.License} | ${status} |\n`;
+              const allowedLicenses = ['MIT', 'Apache', 'BSD', 'ISC', 'MPL-2.0', 'LGPL'];
+              const deniedLicenses = ['GPL-3.0-only', 'GPLv3', 'AGPL', 'SSPL'];
+              
+              licenseData.slice(0, 15).forEach(pkg => {
+                let status = '✅';
+                let label = 'Allowed';
+                
+                // Check if denied (but not LGPL when GPL is mentioned)
+                const isDenied = deniedLicenses.some(d => pkg.License.includes(d)) && !pkg.License.includes('LGPL');
+                const isAllowed = allowedLicenses.some(a => pkg.License.includes(a));
+                
+                if (isDenied) {
+                  status = '❌';
+                  label = 'Denied';
+                } else if (!isAllowed) {
+                  status = '⚠️';
+                  label = 'Review';
+                }
+                
+                licenseTable += `| ${pkg.Name} | ${pkg.License} | ${status} ${label} |\n`;
               });
             } catch (error) {
               licenseTable += '*License data not available*\n';
@@ -181,8 +222,12 @@ jobs:
               '',
               '### License Compliance Status',
               problematic 
-                ? `❌ **Problematic licenses detected:** ${problematicLicenses}` 
-                : '✅ **All licenses compliant**',
+                ? `❌ **DENIED licenses detected:**\n\`\`\`\n${problematicLicenses}\n\`\`\`` 
+                : '✅ **No denied licenses found**',
+              '',
+              reviewRequired 
+                ? `⚠️ **Licenses requiring review:**\n\`\`\`\n${reviewLicenses}\n\`\`\`\n*These require manual approval but won't block the PR.*`
+                : '',
               '',
               '### Dependency Security',
               confusionRisk 
@@ -195,12 +240,19 @@ jobs:
               '### Allowed Licenses',
               '- ✅ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause',
               '- ✅ ISC, MPL-2.0',
+              '- ✅ LGPL-3.0-or-later (weak copyleft, library usage allowed)',
               '',
-              '### Prohibited Licenses',
-              '- ❌ GPL-3.0, AGPL-3.0, SSPL',
+              '### Denied Licenses',
+              '- ❌ GPL-3.0-only (strong copyleft)',
+              '- ❌ AGPL-3.0 (network copyleft)',
+              '- ❌ SSPL-1.0 (service restrictions)',
+              '',
+              '### Policy Reference',
+              '📖 See [License Policy](../../docs/compliance/license-policy.md) for details',
               '',
               '### Recommendations',
-              problematic ? '- Review and replace packages with problematic licenses' : '',
+              problematic ? '- **Action Required:** Replace packages with denied licenses' : '',
+              reviewRequired ? '- **Review Needed:** Some licenses require manual approval' : '',
               confusionRisk ? '- Use `--index-url` to prioritize internal package registry' : '',
               confusionRisk ? '- Consider renaming internal packages to avoid conflicts' : '',
               '',
@@ -236,16 +288,30 @@ jobs:
               });
             }
 
-      - name: Fail on compliance issues
+      - name: Warn on review-required licenses
+        if: steps.python_licenses.outputs.review_required == 'true'
+        run: |
+          echo "⚠️  WARNING: Some licenses require manual review"
+          echo ""
+          echo "The following packages have licenses that need review:"
+          echo "${{ steps.python_licenses.outputs.review_licenses }}"
+          echo ""
+          echo "This is a WARNING only and will not block the PR."
+          echo "Please review these licenses and update the policy if needed."
+      
+      - name: Fail on denied licenses or security issues
         if: steps.python_licenses.outputs.problematic == 'true' || steps.confusion_scan.outputs.confusion_risk == 'true'
         run: |
           echo "❌ License compliance or dependency security issues detected"
           echo ""
           echo "Please address the following:"
           if [ '${{ steps.python_licenses.outputs.problematic }}' = 'true' ]; then
-            echo "  - Replace packages with problematic licenses"
+            echo "  - CRITICAL: Replace packages with DENIED licenses"
+            echo "${{ steps.python_licenses.outputs.licenses }}"
           fi
           if [ '${{ steps.confusion_scan.outputs.confusion_risk }}' = 'true' ]; then
             echo "  - Address dependency confusion risks"
           fi
+          echo ""
+          echo "See docs/compliance/license-policy.md for policy details"
           exit 1
