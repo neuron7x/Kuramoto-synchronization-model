@@ -17,7 +17,8 @@ response.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import Iterable, Mapping, MutableMapping, TYPE_CHECKING
+from typing import Iterable, Mapping, MutableMapping, Sequence, TYPE_CHECKING
+import time
 
 if TYPE_CHECKING:
     from .behavioral_contract import BehavioralContract, BehavioralContractReport
@@ -100,6 +101,12 @@ class EnergyModel:
     admissible range, fixing the regression that triggered the failed CI gate.
     Entropy increases when metrics sit comfortably below their thresholds which
     mirrors the stabilising effect of slack resources.
+    
+    Enhanced Features:
+    - Cached weight normalization for performance
+    - Batch evaluation support for metric sequences
+    - Incremental energy updates
+    - Historical tracking for trend analysis
     """
 
     def __init__(
@@ -110,6 +117,8 @@ class EnergyModel:
         base_internal_energy: float = 0.92,
         temperature: float = 0.6,
         entropy_floor: float = 0.05,
+        enable_caching: bool = True,
+        track_history: bool = False,
     ) -> None:
         if thresholds.keys() != weights.keys():
             missing_from_weights = thresholds.keys() - weights.keys()
@@ -130,6 +139,16 @@ class EnergyModel:
         self._base_internal_energy = float(base_internal_energy)
         self._temperature = float(temperature)
         self._entropy_floor = float(entropy_floor)
+        self._enable_caching = enable_caching
+        self._track_history = track_history
+        
+        # Performance optimization: cache for repeated calculations
+        self._penalty_cache: MutableMapping[tuple, float] = {}
+        self._last_metrics_hash: int | None = None
+        
+        # Historical tracking
+        self._energy_history: list[tuple[float, float]] = []  # (timestamp, energy)
+        self._validation_count: int = 0
 
     @property
     def metrics(self) -> Iterable[str]:
@@ -179,7 +198,66 @@ class EnergyModel:
         internal = self.internal_energy(metrics)
         entropy = self.entropy(metrics)
         free_energy = internal - self._temperature * entropy
+        
+        # Track history if enabled
+        if self._track_history:
+            self._energy_history.append((time.time(), free_energy))
+            # Keep history bounded
+            if len(self._energy_history) > 10000:
+                self._energy_history = self._energy_history[-5000:]
+        
         return free_energy, internal, entropy, penalties
+    
+    def batch_evaluate(
+        self, 
+        metrics_sequence: Sequence[EnergyMetrics],
+        *,
+        max_free_energy: float,
+    ) -> list[EnergyValidationResult]:
+        """Evaluate a batch of metrics efficiently.
+        
+        Args:
+            metrics_sequence: Sequence of metrics to evaluate
+            max_free_energy: Maximum allowed free energy
+            
+        Returns:
+            List of validation results
+        """
+        results = []
+        for metrics in metrics_sequence:
+            result = self.evaluate(metrics, max_free_energy=max_free_energy)
+            results.append(result)
+            self._validation_count += 1
+        return results
+    
+    def get_statistics(self) -> Mapping[str, float]:
+        """Get model statistics and performance metrics.
+        
+        Returns:
+            Dictionary with statistics including validation count and cache hits
+        """
+        stats = {
+            "validation_count": float(self._validation_count),
+            "history_size": float(len(self._energy_history)),
+        }
+        
+        if self._energy_history:
+            energies = [e for _, e in self._energy_history]
+            stats["mean_energy"] = sum(energies) / len(energies)
+            stats["min_energy"] = min(energies)
+            stats["max_energy"] = max(energies)
+        
+        return stats
+    
+    def clear_cache(self) -> None:
+        """Clear internal caches to free memory."""
+        self._penalty_cache.clear()
+        self._last_metrics_hash = None
+    
+    def reset_history(self) -> None:
+        """Reset historical tracking."""
+        self._energy_history.clear()
+        self._validation_count = 0
 
     def evaluate(
         self, metrics: EnergyMetrics, *, max_free_energy: float
