@@ -129,10 +129,95 @@ function toneToModifier(tone) {
   if (tone === 'negative') {
     return 'tp-pill--negative';
   }
+  if (tone === 'neutral') {
+    return 'tp-pill--neutral';
+  }
   if (tone === 'positive') {
     return 'tp-pill--positive';
   }
   return '';
+}
+
+function toneForEnergyStatus(status) {
+  if (status === 'breach') {
+    return 'negative';
+  }
+  if (status === 'recovery') {
+    return 'neutral';
+  }
+  if (status === 'stable') {
+    return 'positive';
+  }
+  return null;
+}
+
+function formatSignedPercent(value) {
+  if (!Number.isFinite(value)) {
+    return '—';
+  }
+  if (value > 0) {
+    return `+${formatPercent(value)}`;
+  }
+  return formatPercent(value);
+}
+
+function normaliseEnergyMetric(metric = {}) {
+  const value = coerceNumber(metric?.value);
+  const budget = coerceNumber(metric?.budget ?? metric?.limit ?? metric?.target);
+  const drift = coerceNumber(metric?.drift ?? metric?.delta ?? metric?.variance);
+  const toleranceRaw = coerceNumber(
+    metric?.tolerance ?? metric?.maxDrift ?? metric?.guardrail ?? metric?.tolerated,
+  );
+  const tolerance = Number.isFinite(toleranceRaw) ? Math.abs(toleranceRaw) : null;
+  const lastAudit = coerceTimestamp(
+    metric?.lastAudit ?? metric?.last_audit ?? metric?.auditedAt ?? metric?.timestamp,
+  );
+
+  const statusRaw = typeof metric?.status === 'string' ? metric.status.trim().toLowerCase() : '';
+  const status = (() => {
+    if (['stable', 'ok', 'healthy', 'green', 'nominal'].includes(statusRaw)) {
+      return 'stable';
+    }
+    if (['breach', 'critical', 'failed', 'red', 'violation'].includes(statusRaw)) {
+      return 'breach';
+    }
+    if (['recovery', 'recovering', 'warning', 'amber', 'degraded'].includes(statusRaw)) {
+      return 'recovery';
+    }
+    if (Number.isFinite(drift) && Number.isFinite(tolerance)) {
+      return Math.abs(drift) <= tolerance ? 'stable' : 'breach';
+    }
+    if (Number.isFinite(value) && Number.isFinite(budget)) {
+      return value <= budget ? 'stable' : 'breach';
+    }
+    return 'unknown';
+  })();
+
+  return {
+    value,
+    budget,
+    drift,
+    tolerance,
+    status,
+    lastAudit,
+  };
+}
+
+function formatEnergyDelta(value) {
+  if (!Number.isFinite(value)) {
+    return '—';
+  }
+  if (Math.abs(value) <= 1) {
+    return formatSignedPercent(value);
+  }
+  const formatted = formatNumber(Math.abs(value), { maximumFractionDigits: 3 });
+  if (value > 0) {
+    return `+${formatted}`;
+  }
+  if (value < 0) {
+    return `-${formatted}`;
+  }
+  return formatted;
 }
 
 function formatSignedCurrency(value, currency) {
@@ -356,11 +441,19 @@ export function renderMonitoringView({
     ? controls.circuitBreaker.lastReason
     : '';
 
-  const exposureSeries = normaliseSeries(timeSeries?.exposure || [], (value) => formatCurrency(value, currency));
+  const exposureSeries = normaliseSeries(
+    timeSeries?.exposure || [],
+    (value) => formatCurrency(value, currency),
+  );
   const drawdownSeries = normaliseSeries(timeSeries?.drawdown || [], (value) => formatPercent(value));
+  const energySeries = normaliseSeries(
+    timeSeries?.energy || [],
+    (value) => formatNumber(value, { maximumFractionDigits: 3 }),
+  );
 
   const exposureTrend = computeTrend(exposureSeries);
   const drawdownTrend = computeTrend(drawdownSeries);
+  const energyTrend = computeTrend(energySeries);
 
   const exposureValue = coerceNumber(metrics?.grossExposure?.value);
   const exposureLimit = coerceNumber(metrics?.grossExposure?.limit);
@@ -368,6 +461,8 @@ export function renderMonitoringView({
   const drawdownValue = coerceNumber(metrics?.drawdown?.value);
   const drawdownLimitRaw = coerceNumber(metrics?.drawdown?.limit);
   const drawdownLimit = drawdownLimitRaw != null ? Math.abs(drawdownLimitRaw) : null;
+
+  const energyMetric = normaliseEnergyMetric(metrics?.energy || {});
 
   const openOrdersValue = coerceNumber(metrics?.openOrders?.value);
   const rejectionRateValue = coerceNumber(metrics?.rejectionRate?.value);
@@ -380,6 +475,7 @@ export function renderMonitoringView({
 
   const exposureChart = renderAreaChart({ id: 'monitoring-exposure', series: exposureSeries });
   const drawdownChart = renderAreaChart({ id: 'monitoring-drawdown', series: drawdownSeries });
+  const energyChart = renderAreaChart({ id: 'monitoring-energy', series: energySeries });
 
   const exposureLimitLabel = exposureLimit != null
     ? normaliseMetricLabel(
@@ -442,6 +538,51 @@ export function renderMonitoringView({
         count: '—',
         window: circuitWindow,
       });
+
+  const energyStatusKey = energyMetric.status || 'unknown';
+  const energyStatusFallback = {
+    stable: 'Energy within guardrail',
+    recovery: 'Recovering',
+    breach: 'Breach detected',
+    unknown: 'Status unknown',
+  };
+  const energyCardTitle = translate('views.monitoring.cards.energy.title', 'TACL energy budget');
+  const energyStatusLabel = translate(
+    `views.monitoring.cards.energy.status.${energyStatusKey}`,
+    energyStatusFallback[energyStatusKey] || energyStatusFallback.unknown,
+  );
+  const energyTone = toneForEnergyStatus(energyMetric.status);
+  const energyValueDisplay = Number.isFinite(energyMetric.value)
+    ? formatNumber(energyMetric.value, { maximumFractionDigits: 3 })
+    : '—';
+  const energyBudgetDisplay = Number.isFinite(energyMetric.budget)
+    ? formatNumber(energyMetric.budget, { maximumFractionDigits: 3 })
+    : '—';
+  const energyDriftDisplay = formatEnergyDelta(energyMetric.drift);
+  const energyToleranceDisplay = Number.isFinite(energyMetric.tolerance)
+    ? formatPercent(Math.abs(energyMetric.tolerance))
+    : null;
+  const energyAuditDisplay = energyMetric.lastAudit ? formatTimestamp(energyMetric.lastAudit) : null;
+
+  const energyMeta = buildMetaList(
+    [
+      Number.isFinite(energyMetric.value)
+        ? { label: translate('views.monitoring.cards.energy.current', 'Free energy'), value: energyValueDisplay }
+        : null,
+      Number.isFinite(energyMetric.budget)
+        ? { label: translate('views.monitoring.cards.energy.budget', 'Budget'), value: energyBudgetDisplay }
+        : null,
+      energyDriftDisplay !== '—'
+        ? { label: translate('views.monitoring.cards.energy.drift', 'Drift'), value: energyDriftDisplay }
+        : null,
+      energyToleranceDisplay
+        ? { label: translate('views.monitoring.cards.energy.tolerance', 'Tolerance'), value: energyToleranceDisplay }
+        : null,
+      energyAuditDisplay
+        ? { label: translate('views.monitoring.cards.energy.audit', 'Last audit'), value: energyAuditDisplay }
+        : null,
+    ].filter(Boolean),
+  );
 
   const metaChips = buildMetaList([
     environment
@@ -551,6 +692,20 @@ export function renderMonitoringView({
         circuitTrips: circuitTripsValue,
         window: circuitWindow,
       },
+      energy: {
+        value: energyMetric.value,
+        budget: energyMetric.budget,
+        drift: energyMetric.drift,
+        tolerance: energyMetric.tolerance,
+        trend: energyTrend,
+        status: energyMetric.status,
+        lastAudit: energyMetric.lastAudit,
+      },
+    },
+    timeSeries: {
+      exposure: exposureSeries.map((point) => ({ timestamp: point.timestamp, value: point.value })),
+      drawdown: drawdownSeries.map((point) => ({ timestamp: point.timestamp, value: point.value })),
+      energy: energySeries.map((point) => ({ timestamp: point.timestamp, value: point.value })),
     },
     alerts: alertsList.map((alert) => ({ id: alert.id, severity: alert.severity, timestamp: alert.timestamp })),
   });
@@ -630,6 +785,16 @@ export function renderMonitoringView({
             </header>
           </article>
         </section>
+        <section class="tp-card" data-role="energy-card">
+          <header class="tp-card__header">
+            <h3 class="tp-card__title">${escapeHtml(energyCardTitle)}</h3>
+            <div class="tp-card__meta">
+              <span class="tp-pill ${toneToModifier(energyTone)}" data-role="energy-status">${escapeHtml(energyStatusLabel)}</span>
+            </div>
+          </header>
+          ${energyMeta}
+          ${energyChart.html}
+        </section>
         <section class="tp-grid tp-grid--two" aria-label="${escapeHtml(trendsTitle)}">
           <article class="tp-card">
             <header class="tp-card__header">
@@ -656,6 +821,7 @@ export function renderMonitoringView({
     charts: {
       exposure: exposureChart,
       drawdown: drawdownChart,
+      energy: energyChart,
     },
   };
 }

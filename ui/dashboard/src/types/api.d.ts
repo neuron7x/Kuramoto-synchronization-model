@@ -352,6 +352,15 @@ export interface DashboardMonitoringMetrics {
     threshold?: number | string | null;
     window?: string | null;
   } | null;
+  energy?: {
+    value?: number | string | null;
+    budget?: number | string | null;
+    drift?: number | string | null;
+    tolerance?: number | string | null;
+    trend?: number | string | null;
+    status?: string | null;
+    lastAudit?: number | string | null;
+  } | null;
 }
 
 export interface DashboardMonitoringSeriesPoint {
@@ -375,6 +384,7 @@ export interface DashboardMonitoringPayload {
   timeSeries?: {
     exposure?: DashboardMonitoringSeriesPoint[] | null;
     drawdown?: DashboardMonitoringSeriesPoint[] | null;
+    energy?: DashboardMonitoringSeriesPoint[] | null;
   } | null;
   alerts?: DashboardMonitoringAlert[] | null;
 }

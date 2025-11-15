@@ -1,3 +1,5 @@
-"""TradePulse execution module - order execution strategies."""
+"""Execution connectors, order management, and risk tooling."""
 
-__all__ = []
+from .._namespace_bridge import bridge_namespace
+
+__all__ = bridge_namespace(__name__, "execution")

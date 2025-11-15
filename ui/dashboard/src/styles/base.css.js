@@ -2277,6 +2277,17 @@ export const BASE_STYLES = `
     box-shadow: 0 4px 12px -4px rgba(16, 185, 129, 0.7);
   }
 
+  .tp-pill--neutral {
+    background: rgba(245, 158, 11, 0.18);
+    color: rgba(251, 191, 36, 0.95);
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 2px 8px -4px rgba(245, 158, 11, 0.4);
+  }
+
+  .tp-pill--neutral:hover {
+    box-shadow: 0 4px 12px -4px rgba(245, 158, 11, 0.6);
+  }
+
   .tp-pill--negative {
     background: rgba(239, 68, 68, 0.2);
     color: var(--tp-negative-glow);

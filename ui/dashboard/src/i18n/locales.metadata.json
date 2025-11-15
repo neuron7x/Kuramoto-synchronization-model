@@ -112,6 +112,250 @@
         }
       },
       "reviewCadence": "隔月で東京のネイティブ監修チームとレビュー。"
+    },
+    "fr-FR": {
+      "priority": "tier-2",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "# ##0,00 ¤"
+      },
+      "privacyRegimes": [
+        "GDPR",
+        "CNIL"
+      ],
+      "tone": {
+        "voice": "Sobre, analytique et précis.",
+        "guidelines": {
+          "do": [
+            "Souligner la conformité réglementaire et la traçabilité.",
+            "Employer un vocabulaire financier reconnu."
+          ],
+          "dont": [
+            "Éviter les anglicismes inutiles.",
+            "Ne pas employer de superlatifs marketing."
+          ]
+        }
+      },
+      "reviewCadence": "Trimestriel avec le bureau de Paris."
+    },
+    "es-ES": {
+      "priority": "tier-2",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d 'de' MMMM 'de' yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR"
+      ],
+      "tone": {
+        "voice": "Profesional, claro y orientado a la acción.",
+        "guidelines": {
+          "do": [
+            "Explicar implicaciones de riesgo con ejemplos prácticos.",
+            "Mantener formalidad y respeto en todo momento."
+          ],
+          "dont": [
+            "No usar diminutivos coloquiales.",
+            "Evitar giros excesivamente locales que puedan confundir."
+          ]
+        }
+      },
+      "reviewCadence": "Bimensual con el equipo de Madrid."
+    },
+    "pt-BR": {
+      "priority": "tier-2",
+      "defaultCurrency": "BRL",
+      "formats": {
+        "date": "d 'de' MMMM 'de' yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "LGPD"
+      ],
+      "tone": {
+        "voice": "Objetivo, consultivo e informativo.",
+        "guidelines": {
+          "do": [
+            "Enfatizar mitigação de riscos e governança.",
+            "Utilizar termos financeiros reconhecidos pelo BACEN."
+          ],
+          "dont": [
+            "Evitar linguagem coloquial ou promessas garantidas.",
+            "Não utilizar expressões idiomáticas regionais complexas."
+          ]
+        }
+      },
+      "reviewCadence": "Mensal com equipe de São Paulo."
+    },
+    "zh-CN": {
+      "priority": "tier-2",
+      "defaultCurrency": "CNY",
+      "formats": {
+        "date": "yyyy年M月d日",
+        "time": "HH:mm",
+        "number": "#,##0.###",
+        "currency": "¤#,##0.00"
+      },
+      "privacyRegimes": [
+        "PIPL"
+      ],
+      "tone": {
+        "voice": "稳重专业，强调合规与透明。",
+        "guidelines": {
+          "do": [
+            "引用可验证的数据点。",
+            "使用官方监管术语。"
+          ],
+          "dont": [
+            "避免夸张或无法量化的承诺。",
+            "不要使用俚语或网络流行语。"
+          ]
+        }
+      },
+      "reviewCadence": "双月与上海合规语言顾问评审。"
+    },
+    "ko-KR": {
+      "priority": "tier-2",
+      "defaultCurrency": "KRW",
+      "formats": {
+        "date": "yyyy년 M월 d일",
+        "time": "HH:mm",
+        "number": "#,##0.###",
+        "currency": "¤#,##0"
+      },
+      "privacyRegimes": [
+        "PIPA"
+      ],
+      "tone": {
+        "voice": "정확하고 신뢰감 있는 공식 어조.",
+        "guidelines": {
+          "do": [
+            "금융감독원 용어를 준수.",
+            "데이터 근거를 명확히 제시."
+          ],
+          "dont": [
+            "과장된 표현 사용 금지.",
+            "구어체나 유행어 사용 금지."
+          ]
+        }
+      },
+      "reviewCadence": "분기마다 서울 현지 팀과 검수."
+    },
+    "hi-IN": {
+      "priority": "tier-3",
+      "defaultCurrency": "INR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#,##,##0.###",
+        "currency": "¤ #,##,##0.00"
+      },
+      "privacyRegimes": [
+        "DPDP"
+      ],
+      "tone": {
+        "voice": "औपचारिक, स्पष्ट और भरोसेमंद।",
+        "guidelines": {
+          "do": [
+            "जोखिम प्रबंधन के ठोस उदाहरण साझा करें।",
+            "भारतीय वित्तीय नियामक शब्दावली का उपयोग करें।"
+          ],
+          "dont": [
+            "स्लैंग या अत्यधिक बोलचाल की भाषा का प्रयोग न करें।",
+            "अतिशयोक्ति से बचें।"
+          ]
+        }
+      },
+      "reviewCadence": "त्रैमासिक आरबीआई अनुभवी अनुवादकों के साथ समीक्षा।"
+    },
+    "it-IT": {
+      "priority": "tier-3",
+      "defaultCurrency": "EUR",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "¤ #.##0,00"
+      },
+      "privacyRegimes": [
+        "GDPR"
+      ],
+      "tone": {
+        "voice": "Autorevole, equilibrato e orientato alla governance.",
+        "guidelines": {
+          "do": [
+            "Riferirsi alle normative CONSOB e Banca d'Italia.",
+            "Mettere in evidenza la trasparenza dei controlli."
+          ],
+          "dont": [
+            "Evitare anglicismi superflui.",
+            "Non fare promesse implicite sui rendimenti."
+          ]
+        }
+      },
+      "reviewCadence": "Quadrimestrale con consulenti di Milano."
+    },
+    "pl-PL": {
+      "priority": "tier-3",
+      "defaultCurrency": "PLN",
+      "formats": {
+        "date": "d MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#.##0,###",
+        "currency": "#,##0.00 ¤"
+      },
+      "privacyRegimes": [
+        "GDPR"
+      ],
+      "tone": {
+        "voice": "Precyzyjny, profesjonalny i zorientowany na kontrolę.",
+        "guidelines": {
+          "do": [
+            "Podkreślaj zgodność z KNF.",
+            "Używaj formalnego, rzeczowego stylu."
+          ],
+          "dont": [
+            "Unikaj potocznych zwrotów.",
+            "Nie obiecuj gwarantowanych wyników."
+          ]
+        }
+      },
+      "reviewCadence": "Co kwartał z zespołem w Warszawie."
+    },
+    "ar-SA": {
+      "priority": "tier-3",
+      "defaultCurrency": "SAR",
+      "formats": {
+        "date": "dd MMMM yyyy",
+        "time": "HH:mm",
+        "number": "#,##0.###",
+        "currency": "#,##0.00 ¤"
+      },
+      "privacyRegimes": [
+        "PDPL"
+      ],
+      "tone": {
+        "voice": "رسمية، دقيقة، وتؤكد على الامتثال.",
+        "guidelines": {
+          "do": [
+            "استخدام المصطلحات المعتمدة من هيئة السوق المالية.",
+            "توضيح منهجية إدارة المخاطر."
+          ],
+          "dont": [
+            "تجنب العبارات العامية أو غير الرسمية.",
+            "عدم تقديم وعود مطلقة."
+          ]
+        }
+      },
+      "reviewCadence": "نصف سنوي مع مستشارين لغويين في الرياض."
     }
   }
 }

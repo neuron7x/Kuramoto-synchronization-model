@@ -473,6 +473,20 @@
           "open": "{count} open orders",
           "rejections": "{rate} rejection rate",
           "trips": "{count} trips ({window})"
+        },
+        "energy": {
+          "title": "Thermodynamic energy budget",
+          "status": {
+            "stable": "Energy within guardrail",
+            "recovery": "Recovery in progress",
+            "breach": "Breach detected",
+            "unknown": "Status unknown"
+          },
+          "current": "Free energy",
+          "budget": "Budget",
+          "drift": "Drift",
+          "tolerance": "Tolerance",
+          "audit": "Last audit"
         }
       },
       "sections": {

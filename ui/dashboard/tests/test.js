@@ -476,6 +476,7 @@ const monitoringTelemetry = {
     openOrders: { value: 18, limit: 40 },
     rejectionRate: { value: 0.012, threshold: 0.05, window: '1h' },
     circuitTrips: { value: 1, threshold: 3, window: '1h' },
+    energy: { value: 0.82, budget: 1, drift: -0.04, tolerance: 0.08, status: 'stable', lastAudit: now - 540000 },
   },
   timeSeries: {
     exposure: [
@@ -489,6 +490,12 @@ const monitoringTelemetry = {
       { timestamp: now - 1800000, value: -0.041 },
       { timestamp: now - 600000, value: -0.036 },
       { timestamp: now, value: -0.038 },
+    ],
+    energy: [
+      { timestamp: now - 3600000, value: 1.05 },
+      { timestamp: now - 2400000, value: 0.97 },
+      { timestamp: now - 1200000, value: 0.9 },
+      { timestamp: now, value: 0.82 },
     ],
   },
   alerts: [
@@ -574,6 +581,7 @@ assert.strictEqual(monitoringView.route, 'monitoring', 'monitoring view should e
 assert.ok(monitoringView.html.includes('Risk Control Center'), 'monitoring view should include headline');
 assert.ok(monitoringView.html.includes('tp-pill'), 'monitoring view should surface status pills for controls');
 assert.ok(monitoringView.charts.exposure.points.length >= 1, 'monitoring view should expose exposure chart points');
+assert.ok(monitoringView.charts.energy.points.length >= 1, 'monitoring view should expose energy chart points');
 assert.ok(
   monitoringView.html.includes('tp-live-table__table'),
   'monitoring view should render alerts table markup',
@@ -585,6 +593,21 @@ assert.ok(
 assert.ok(
   monitoringView.html.includes('data-role="view-meta"'),
   'monitoring view should embed metadata payload for hydration',
+);
+assert.ok(
+  monitoringView.html.includes('data-role="energy-card"'),
+  'monitoring view should surface energy governance card',
+);
+
+const metaMatch = monitoringView.html.match(/<script type="application\/json" class="tp-view__meta"[^>]*>(.*?)<\/script>/s);
+const monitoringMetadata = metaMatch ? JSON.parse(metaMatch[1]) : null;
+assert.ok(monitoringMetadata, 'monitoring view should serialise metadata payload');
+assert.strictEqual(monitoringMetadata.metrics.energy.status, 'stable');
+assert.strictEqual(monitoringMetadata.metrics.energy.trend <= 0, true, 'energy trend should reflect downward drift');
+assert.ok(Array.isArray(monitoringMetadata.timeSeries.energy), 'metadata should embed energy time-series points');
+assert.ok(
+  monitoringMetadata.timeSeries.energy.every((point) => Object.prototype.hasOwnProperty.call(point, 'timestamp')),
+  'energy metadata points should include timestamps',
 );
 
 console.log('monitoring view tests passed');
