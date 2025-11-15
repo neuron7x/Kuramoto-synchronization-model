@@ -1,5 +1,9 @@
 name: Dopamine Config Validation
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   push:
     paths:

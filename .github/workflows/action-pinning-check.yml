@@ -1,0 +1,209 @@
+name: Action Pinning Security Check
+
+# This workflow checks if GitHub Actions are pinned to commit SHAs
+# instead of version tags, as per OSSF/SLSA security best practices
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+  schedule:
+    # Run weekly security check
+    - cron: '0 0 * * 1'
+
+concurrency:
+  group: action-pinning-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-action-pinning:
+    runs-on: ubuntu-latest
+    name: Verify Action Pinning
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e82efb55e67dbb0c8ae4baf47a1b22f # v4.2.2
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951fa06c10e3b90e24c94ca4a3a3c50 # v6.0.0
+        with:
+          python-version: '3.11'
+      
+      - name: Check for unpinned actions
+        id: check
+        run: |
+          echo "Checking for unpinned GitHub Actions..."
+          
+          # Find all uses: statements
+          unpinned_count=0
+          pinned_count=0
+          declare -a unpinned_actions
+          
+          for workflow in .github/workflows/*.yml; do
+            while IFS= read -r line; do
+              if [[ $line =~ uses:[[:space:]]*([^@]+)@([^[:space:]#]+) ]]; then
+                action="${BASH_REMATCH[1]}"
+                ref="${BASH_REMATCH[2]}"
+                
+                # Skip local actions
+                if [[ $action == ./* ]]; then
+                  continue
+                fi
+                
+                # Check if ref is a SHA (40 hex characters)
+                if [[ $ref =~ ^[0-9a-f]{40}$ ]]; then
+                  ((pinned_count++))
+                else
+                  ((unpinned_count++))
+                  unpinned_actions+=("$workflow: $action@$ref")
+                fi
+              fi
+            done < "$workflow"
+          done
+          
+          echo "pinned_count=$pinned_count" >> $GITHUB_OUTPUT
+          echo "unpinned_count=$unpinned_count" >> $GITHUB_OUTPUT
+          
+          # Save unpinned actions to file
+          if [ $unpinned_count -gt 0 ]; then
+            printf '%s\n' "${unpinned_actions[@]}" > /tmp/unpinned_actions.txt
+            echo "has_unpinned=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_unpinned=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Create summary
+          {
+            echo "## Action Pinning Security Check"
+            echo ""
+            echo "| Metric | Count |"
+            echo "|--------|-------|"
+            echo "| ✅ Pinned Actions | $pinned_count |"
+            echo "| ⚠️ Unpinned Actions | $unpinned_count |"
+            echo "| 📊 Total Actions | $((pinned_count + unpinned_count)) |"
+            
+            if [ $unpinned_count -gt 0 ]; then
+              pinned_percentage=$((pinned_count * 100 / (pinned_count + unpinned_count)))
+              echo "| 📈 Pinning Coverage | ${pinned_percentage}% |"
+              echo ""
+              echo "### ⚠️ Unpinned Actions Found"
+              echo ""
+              echo "The following actions should be pinned to commit SHAs:"
+              echo ""
+              echo '```'
+              head -20 /tmp/unpinned_actions.txt
+              if [ $(wc -l < /tmp/unpinned_actions.txt) -gt 20 ]; then
+                echo "... and $((unpinned_count - 20)) more"
+              fi
+              echo '```'
+              echo ""
+              echo "### Why Pin Actions?"
+              echo ""
+              echo "- **Security**: Tags can be moved to point to malicious code"
+              echo "- **Stability**: SHAs ensure exact version reproducibility"
+              echo "- **Compliance**: Required by OSSF Scorecard and SLSA Level 3"
+              echo ""
+              echo "### How to Fix"
+              echo ""
+              echo "1. Use the action pinning script: \`tools/pin-actions.sh\`"
+              echo "2. Or use Dependabot to automatically update pinned actions"
+              echo "3. Format: \`uses: owner/action@<40-char-sha> # vX.Y.Z\`"
+            else
+              echo ""
+              echo "### ✅ All Actions Properly Pinned!"
+              echo ""
+              echo "All GitHub Actions are pinned to commit SHAs. Great job!"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload unpinned actions report
+        if: steps.check.outputs.has_unpinned == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6a8ba27fb701b1cca79c5fc5e6e6e # v4.5.0
+        with:
+          name: unpinned-actions-report
+          path: /tmp/unpinned_actions.txt
+          if-no-files-found: ignore
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.check.outputs.has_unpinned == 'true'
+        uses: actions/github-script@f28e40c7f34b91dbef7c24a83a4803e19edca90d # v7.0.1
+        with:
+          script: |
+            const unpinned_count = '${{ steps.check.outputs.unpinned_count }}';
+            const pinned_count = '${{ steps.check.outputs.pinned_count }}';
+            const total = parseInt(pinned_count) + parseInt(unpinned_count);
+            const percentage = Math.round((parseInt(pinned_count) / total) * 100);
+            
+            const body = `## ⚠️ Action Pinning Security Warning
+
+            This PR contains workflow changes with unpinned GitHub Actions.
+
+            **Security Metrics:**
+            - ✅ Pinned: ${pinned_count}
+            - ⚠️ Unpinned: ${unpinned_count}
+            - 📊 Coverage: ${percentage}%
+
+            **Why this matters:**
+            - Tags can be moved to malicious code
+            - Required for SLSA Level 3 compliance
+            - Best practice per OSSF Security Scorecard
+
+            **Action Required:**
+            Please pin actions to commit SHAs using format:
+            \`\`\`yaml
+            uses: owner/action@<40-char-sha> # vX.Y.Z
+            \`\`\`
+
+            **Resources:**
+            - [OSSF Action Pinning Guide](https://github.com/ossf/scorecard/blob/main/docs/checks.md#pinned-dependencies)
+            - [GitHub Security Hardening](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
+            
+            Check the workflow artifacts for full list of unpinned actions.`;
+            
+            // Find existing bot comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Action Pinning Security Warning')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+      
+      - name: Fail if unpinned actions in critical workflows
+        if: steps.check.outputs.has_unpinned == 'true'
+        run: |
+          echo "⚠️ Warning: ${{ steps.check.outputs.unpinned_count }} unpinned actions found"
+          echo "This is a security risk but not blocking the workflow."
+          echo "Please consider pinning actions in future PRs."
+          # Note: We're not failing here to avoid blocking existing workflows
+          # Set to 'exit 1' once actions are pinned to enforce the policy

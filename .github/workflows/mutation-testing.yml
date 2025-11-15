@@ -56,12 +56,15 @@ jobs:
         id: mutmut
         run: |
           echo "Running mutation testing on core, backtest, execution modules..."
-          # Run mutation testing, allow it to fail gracefully
+          # Run mutation testing - failures will be caught by kill rate check
           mutmut run --paths-to-mutate=core,backtest,execution --tests-dir=tests || {
-            echo "Mutation testing encountered errors, continuing..."
-            exit 0
+            echo "⚠️ Mutation testing encountered some errors during execution"
+            echo "This may be due to surviving mutants or test failures"
+            echo "Continuing to evaluate kill rate..."
+            # Store failure but don't exit yet - let kill rate check decide
+            echo "had_errors=true" >> $GITHUB_OUTPUT
           }
-        continue-on-error: true
+          echo "had_errors=false" >> $GITHUB_OUTPUT
 
       - name: Generate mutation report
         run: |
