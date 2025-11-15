@@ -434,11 +434,13 @@ jobs:
             coverage.xml
             coverage_html
           if-no-files-found: error
-      - name: Upload coverage to Codecov (with token)
-        if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN != '' }}
+      - name: Upload coverage to Codecov
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) }}
         uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
+          flags: unittests
 
   security-tests:
     runs-on: ubuntu-latest
@@ -510,15 +512,6 @@ jobs:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
-      - name: Upload coverage to Codecov (OIDC)
-        if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage.xml
-          flags: py311
-          name: py311-coverage
-          fail_ci_if_error: false
-          use_oidc: true
 
   ui_accessibility:
     name: UI & Accessibility (Playwright)
