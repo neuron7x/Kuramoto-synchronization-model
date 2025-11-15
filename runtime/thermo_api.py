@@ -64,6 +64,9 @@ def get_status() -> Dict[str, object]:
         "bottleneck_edge": controller.get_bottleneck_edge(),
         "topology_id": controller.get_topology_id(),
         "violations_total": controller.get_monotonic_violations_total(),
+        "temperature": controller.get_system_temperature(),
+        "thermal_stability": controller.get_thermal_stability(),
+        "heat_dissipation_rate": controller.get_heat_dissipation_rate(),
         "crisis_mode": controller.telemetry_history[-1]["crisis_mode"] if controller.telemetry_history else "normal",
         "timestamp": time.time(),
     }

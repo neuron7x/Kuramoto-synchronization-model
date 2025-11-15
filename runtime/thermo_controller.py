@@ -23,8 +23,11 @@ from core.energy import (
     BondType,
     ENERGY_SCALE,
     bond_internal_energy,
+    compute_adaptive_temperature,
     delta_free_energy,
+    heat_dissipation_rate,
     system_free_energy,
+    thermal_stability_metric,
 )
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from runtime.link_activator import LinkActivator
@@ -329,6 +332,10 @@ class ThermoController:
         self.bottleneck_cost = 0.0
         self._baseline_latency = self._compute_average_latency(snapshot)
         self.unresolved_rise_steps = 0
+        
+        # Thermodynamic state tracking
+        self.system_temperature = 1.0  # Start at base temperature
+        self.thermal_history: List[float] = []  # Track temperature over time
 
         self.manual_override_active = False
         self.manual_override_reason = ""
@@ -615,6 +622,7 @@ class ThermoController:
         self._update_baseline(current_F)
         self._update_adaptive_epsilon(self.dF_dt)
         self._update_bottleneck(snapshot)
+        self._update_temperature(current_F, self.dF_dt)
 
         crisis_mode = CrisisMode.detect(current_F, self.baseline_F, self.crisis_ga.crisis_threshold)
         control_state = CRITICAL_HALT_STATE if self.circuit_breaker_active else crisis_mode
@@ -890,6 +898,10 @@ class ThermoController:
             {"src": src, "dst": dst, "old": old_type, "new": new_type}
             for src, dst, old_type, new_type in topology_changes
         ]
+        # Get current temperature and thermal metrics
+        temperature = getattr(self, 'system_temperature', 1.0)
+        thermal_stability = thermal_stability_metric(temperature)
+        
         record = {
             "timestamp": timestamp,
             "F": F_new,
@@ -900,6 +912,8 @@ class ThermoController:
             "baseline_ema": self.baseline_ema,
             "bottleneck_edge": self.bottleneck_edge or "",
             "bottleneck_cost": self.bottleneck_cost,
+            "temperature": temperature,
+            "thermal_stability": thermal_stability,
             "crisis_mode": crisis_mode,
             "circuit_breaker_active": self.circuit_breaker_active,
             "topology_changes": topology_change_records,
@@ -915,6 +929,8 @@ class ThermoController:
             "F_new": F_new,
             "dF_dt": self.dF_dt,
             "epsilon": self.epsilon_adaptive,
+            "temperature": temperature,
+            "thermal_stability": thermal_stability,
             "crisis_mode": crisis_mode,
             "circuit_breaker_active": self.circuit_breaker_active,
             "topology_changes": topology_change_records,
@@ -987,6 +1003,33 @@ class ThermoController:
         else:
             self.bottleneck_edge = None
             self.bottleneck_cost = 0.0
+
+    def _update_temperature(self, current_F: float, dF_dt: float) -> None:
+        """Update system temperature based on thermodynamic stress.
+        
+        Temperature adaptation provides:
+        1. System stress indication (high T = high stress)
+        2. Modified entropy contribution to free energy
+        3. Thermal stability metrics for monitoring
+        """
+        # Compute adaptive temperature based on current state
+        self.system_temperature = compute_adaptive_temperature(
+            baseline_F=self.baseline_F,
+            current_F=current_F,
+            dF_dt=dF_dt,
+        )
+        
+        # Track temperature history for analysis
+        self.thermal_history.append(self.system_temperature)
+        
+        # Keep only recent history (last 1000 samples)
+        if len(self.thermal_history) > 1000:
+            self.thermal_history.pop(0)
+        
+        # Record temperature metrics
+        self.metrics.record("system_temperature", self.system_temperature)
+        stability = thermal_stability_metric(self.system_temperature)
+        self.metrics.record("thermal_stability", stability)
 
     def _detect_latency_spike(self, snapshot: MetricsSnapshot) -> float:
         avg_latency = self._compute_average_latency(snapshot)
@@ -1095,16 +1138,32 @@ class ThermoController:
         self,
         topology: Optional[Topology] = None,
         snapshot: Optional[MetricsSnapshot] = None,
+        temperature: Optional[float] = None,
     ) -> float:
+        """Compute system free energy with optional adaptive temperature.
+        
+        Args:
+            topology: Optional topology (uses current if None)
+            snapshot: Optional metrics snapshot (uses latest if None)
+            temperature: Optional temperature (uses system_temperature if None)
+            
+        Returns:
+            Free energy in scaled units
+        """
         snapshot = snapshot or self._latest_snapshot
         topology = topology or self.current_topology
         bonds = {(src, dst): bond for src, dst, bond in topology}
+        
+        # Use adaptive temperature if available
+        temp = temperature if temperature is not None else getattr(self, 'system_temperature', None)
+        
         return system_free_energy(
             bonds,
             snapshot.latencies,
             snapshot.coherency,
             snapshot.resource_usage,
             snapshot.entropy,
+            temperature=temp,
         )
 
     def _evaluate_topology(self, topology: Topology) -> float:
@@ -1131,6 +1190,22 @@ class ThermoController:
 
     def get_monotonic_violations_total(self) -> int:
         return int(self.monotonic_violations_total)
+
+    def get_system_temperature(self) -> float:
+        """Get current system temperature in effective units."""
+        return float(getattr(self, 'system_temperature', 1.0))
+
+    def get_thermal_stability(self) -> float:
+        """Get thermal stability metric [0, 1] where 1.0 = stable."""
+        temperature = self.get_system_temperature()
+        return float(thermal_stability_metric(temperature))
+
+    def get_heat_dissipation_rate(self) -> float:
+        """Get rate at which excess energy is dissipating."""
+        return float(heat_dissipation_rate(
+            current_F=self.get_current_F(),
+            baseline_F=self.baseline_F,
+        ))
 
     # HPC-AI Integration -------------------------------------------------
     def init_hpc_ai(

@@ -47,8 +47,15 @@ BOND_LIBRARY: Dict[BondType, BondParams] = {
     "hydrogen": {"base_energy": 0.5, "latency_weight": 1.8, "coherency_weight": 3.5, "stability_bonus": 3.2},
 }
 
-K_BOLTZMANN_EFFECTIVE = 1.38e-23
-SYSTEM_TEMPERATURE_K = 300.0
+# Thermodynamic constants (dimensionless units for computational stability)
+# We use effective thermodynamic units scaled to match the typical magnitude
+# of bond energies (order ~1.0) to ensure all terms contribute meaningfully.
+K_BOLTZMANN_EFFECTIVE = 1.0  # Effective Boltzmann constant (dimensionless)
+SYSTEM_TEMPERATURE_BASE_K = 1.0  # Base temperature in effective units
+TEMPERATURE_SCALE_FACTOR = 0.1  # Scaling factor for temperature adaptation
+
+# Heat capacity - affects how quickly system temperature changes
+SYSTEM_HEAT_CAPACITY = 10.0  # Higher values = more stable temperature
 
 # We operate on dimensionless, normalised energy units.  The raw contributions
 # coming from bond, resource and entropy terms are scaled down to match
@@ -85,22 +92,167 @@ def system_free_energy(
     coherency: Dict[Tuple[str, str], float],
     resource_usage: float,
     entropy: float,
+    temperature: float | None = None,
 ) -> float:
+    """Calculate system free energy using Helmholtz formulation.
+    
+    F = U - TS + resource_costs
+    
+    where:
+        U = internal bond energy
+        T = system temperature (adaptive or base)
+        S = entropy (diversity of bond types)
+        resource_costs = computational overhead
+        
+    Args:
+        bonds: Mapping of edges to bond types
+        latencies: Edge latency measurements
+        coherency: Edge coherency measurements
+        resource_usage: Normalized resource consumption [0, 1]
+        entropy: System entropy (bond type diversity)
+        temperature: Optional system temperature (uses base if None)
+        
+    Returns:
+        Free energy in scaled units (multiplied by ENERGY_SCALE)
+    """
     internal_energy = 0.0
     for (src, dst), kind in bonds.items():
         internal_energy += bond_internal_energy(src, dst, kind, latencies, coherency)
 
-    resource_term = 2.0 * float(np.clip(resource_usage, 0.0, 1.0))
-    entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * max(entropy, 0.0)
+    # Resource term: computational overhead scales with utilization
+    # Use adaptive weighting based on resource pressure
+    resource_pressure = float(np.clip(resource_usage, 0.0, 1.0))
+    resource_term = 2.0 * resource_pressure + 0.5 * (resource_pressure ** 2)
 
+    # Temperature: use provided temperature or base temperature
+    T = temperature if temperature is not None else SYSTEM_TEMPERATURE_BASE_K
+    
+    # Entropy term: -TS (entropy reduces free energy, favoring diversity)
+    # Use effective thermodynamic units so entropy contributes meaningfully
+    entropy_term = -K_BOLTZMANN_EFFECTIVE * T * max(entropy, 0.0)
+
+    # Helmholtz free energy: F = U - TS + resource_costs
     free_energy = internal_energy + resource_term + entropy_term
     return ENERGY_SCALE * free_energy
 
 
 def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
+    """Calculate rate of change of free energy.
+    
+    Args:
+        F_prev: Previous free energy
+        F_now: Current free energy
+        dt_seconds: Time interval in seconds
+        
+    Returns:
+        dF/dt in energy units per second
+    """
     if dt_seconds <= 0:
         return 0.0
     return (F_now - F_prev) / dt_seconds
+
+
+def compute_adaptive_temperature(
+    baseline_F: float,
+    current_F: float,
+    dF_dt: float,
+    base_temp: float | None = None,
+) -> float:
+    """Compute adaptive system temperature based on thermodynamic stress.
+    
+    Temperature increases when:
+    - Free energy is elevated above baseline (system under stress)
+    - Free energy is rising rapidly (dF/dt > 0)
+    
+    This models the system "heating up" during periods of high load,
+    instability, or rapid change, which affects the entropy contribution
+    to free energy and influences optimization behavior.
+    
+    Args:
+        baseline_F: Baseline (equilibrium) free energy
+        current_F: Current free energy
+        dF_dt: Rate of change of free energy
+        base_temp: Base temperature (uses SYSTEM_TEMPERATURE_BASE_K if None)
+        
+    Returns:
+        Adaptive temperature in effective units
+    """
+    if base_temp is None:
+        base_temp = SYSTEM_TEMPERATURE_BASE_K
+    
+    # Stress component: temperature rises with free energy above baseline
+    stress = max(0.0, current_F - baseline_F)
+    stress_contribution = TEMPERATURE_SCALE_FACTOR * stress
+    
+    # Dynamics component: temperature rises when free energy is increasing
+    dynamics_contribution = TEMPERATURE_SCALE_FACTOR * max(0.0, dF_dt)
+    
+    # Adaptive temperature: T = T_base + stress_effects
+    temperature = base_temp + stress_contribution + dynamics_contribution
+    
+    # Clamp to reasonable bounds (0.1 to 10.0 times base)
+    return float(np.clip(temperature, 0.1 * base_temp, 10.0 * base_temp))
+
+
+def heat_dissipation_rate(
+    current_F: float,
+    baseline_F: float,
+    heat_capacity: float | None = None,
+) -> float:
+    """Calculate rate at which excess energy dissipates.
+    
+    Models thermal relaxation: systems naturally cool toward equilibrium.
+    Higher heat capacity = slower cooling.
+    
+    Args:
+        current_F: Current free energy
+        baseline_F: Equilibrium free energy
+        heat_capacity: System heat capacity (uses default if None)
+        
+    Returns:
+        Dissipation rate (positive = cooling toward baseline)
+    """
+    if heat_capacity is None:
+        heat_capacity = SYSTEM_HEAT_CAPACITY
+    
+    # Newton's law of cooling: dQ/dt ∝ (T - T_ambient)
+    # In our model: cooling rate proportional to energy above baseline
+    excess_energy = current_F - baseline_F
+    
+    # Dissipation rate inversely proportional to heat capacity
+    dissipation = excess_energy / max(heat_capacity, 1.0)
+    
+    return float(dissipation)
+
+
+def thermal_stability_metric(
+    temperature: float,
+    base_temp: float | None = None,
+) -> float:
+    """Measure how far system temperature is from baseline.
+    
+    Returns a value in [0, 1] where:
+    - 1.0 = at base temperature (thermally stable)
+    - 0.0 = far from base (high thermal stress)
+    
+    Args:
+        temperature: Current temperature
+        base_temp: Base temperature (uses default if None)
+        
+    Returns:
+        Stability metric in [0, 1]
+    """
+    if base_temp is None:
+        base_temp = SYSTEM_TEMPERATURE_BASE_K
+    
+    # Normalized temperature deviation
+    temp_ratio = temperature / max(base_temp, 1e-9)
+    
+    # Stability decreases as temperature deviates from base
+    # Use exponential decay for smooth behavior
+    stability = math.exp(-abs(temp_ratio - 1.0))
+    
+    return float(stability)
 
 
 __all__ = [
@@ -108,9 +260,14 @@ __all__ = [
     "BondParams",
     "BOND_LIBRARY",
     "K_BOLTZMANN_EFFECTIVE",
-    "SYSTEM_TEMPERATURE_K",
+    "SYSTEM_TEMPERATURE_BASE_K",
+    "TEMPERATURE_SCALE_FACTOR",
+    "SYSTEM_HEAT_CAPACITY",
     "ENERGY_SCALE",
     "bond_internal_energy",
     "system_free_energy",
     "delta_free_energy",
+    "compute_adaptive_temperature",
+    "heat_dissipation_rate",
+    "thermal_stability_metric",
 ]
