@@ -140,17 +140,7 @@ jobs:
           for file in $CHANGED_FILES; do
             if [ -f "$file" ]; then
               # Extract coverage for this specific file from coverage.json
-              FILE_COV=$(python3 -c "
-import json
-import sys
-data = json.load(open('coverage.json'))
-file_path = '$file'
-if file_path in data.get('files', {}):
-    pct = data['files'][file_path]['summary']['percent_covered']
-    print(f'{pct:.2f}')
-else:
-    print('N/A')
-" 2>/dev/null || echo "N/A")
+              FILE_COV=$(python3 -c "import json; data=json.load(open('coverage.json')); file_path='$file'; print(f\"{data['files'].get(file_path, {}).get('summary', {}).get('percent_covered', 'N/A')}\") if file_path in data.get('files', {}) else print('N/A')" 2>/dev/null || echo "N/A")
               
               if [ "$FILE_COV" = "N/A" ]; then
                 echo "⚠️  $file: No coverage data (file not covered by tests)"
