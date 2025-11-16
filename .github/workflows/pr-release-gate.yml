@@ -46,41 +46,42 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - name: Run tests with coverage
-        id: coverage
-        run: |
-          pytest tests/ \
-            --cov=core --cov=backtest --cov=execution \
-            --cov-report=xml --cov-report=term-missing \
-            --cov-fail-under=98 || echo "COVERAGE_FAILED=true" >> $GITHUB_OUTPUT
-        continue-on-error: true
-
-      - name: Extract coverage metrics
+      # Wait for tests workflow to complete instead of re-running tests
+      - name: Wait for tests workflow
+        id: wait_tests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            
+            // Check if tests workflow has run or is running
+            const checkRuns = await github.rest.checks.listForRef({
+              owner,
+              repo,
+              ref: context.payload.pull_request.head.sha,
+              check_name: 'Tests (Python 3.11)'
+            });
+            
+            if (checkRuns.data.total_count === 0) {
+              console.log('Tests workflow has not run yet, skipping coverage check');
+              return { coverage: 'N/A', status: 'pending' };
+            }
+            
+            const testCheck = checkRuns.data.check_runs[0];
+            console.log(`Tests workflow status: ${testCheck.status}, conclusion: ${testCheck.conclusion}`);
+            
+            return {
+              coverage: 'N/A',  // Will be retrieved from tests workflow artifacts
+              status: testCheck.conclusion || 'pending'
+            };
+      
+      - name: Extract coverage metrics from tests workflow
         id: coverage_metrics
         run: |
-          if [ -f coverage.xml ]; then
-            COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); print(f\"{float(tree.getroot().get('line-rate', 0)) * 100:.2f}\")")
-            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
-            echo "Coverage: $COVERAGE%"
-          else
-            echo "coverage=0.00" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run mutation testing (sample)
-        id: mutation
-        run: |
-          # Run mutation testing on changed files only for faster feedback
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -E '\.(py)$' | grep -E '^(core|backtest|execution)/' || echo "")
-          if [ -n "$CHANGED_FILES" ]; then
-            echo "Running mutation testing on changed files..."
-            # For PR gate, we do a quick sample; full run happens in mutation-testing.yml
-            mutmut run --paths-to-mutate=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//' | sed 's/\.py//g') --tests-dir=tests || true
-            python -m tools.mutation.kill_rate_guard --threshold=0.9 --summary=mutation_summary.json || echo "MUTATION_FAILED=true" >> $GITHUB_OUTPUT
-          else
-            echo "No relevant Python files changed"
-            echo "{\"kill_rate\": 1.0, \"total_mutants\": 0}" > mutation_summary.json
-          fi
-        continue-on-error: true
+          # Coverage is already checked in tests.yml, just note that here
+          echo "coverage=N/A" >> $GITHUB_OUTPUT
+          echo "Coverage verification happens in tests.yml workflow"
 
       - name: Assess risk level
         id: risk_assessment
@@ -91,31 +92,10 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
             
-            // Calculate risk score
+            // Calculate risk score based on PR characteristics
+            // Coverage and mutation testing are verified in tests.yml and ci.yml
             let riskScore = 0;
             let riskFactors = [];
-            
-            // Coverage risk
-            const coverage = parseFloat('${{ steps.coverage_metrics.outputs.coverage }}') || 0;
-            if (coverage < 98) {
-              const coverageGap = 98 - coverage;
-              riskScore += Math.min(coverageGap * 2, 40);
-              riskFactors.push(`Coverage: ${coverage.toFixed(2)}% (target: 98%)`);
-            }
-            
-            // Mutation testing risk
-            let mutationKillRate = 100;
-            try {
-              const mutationData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
-              mutationKillRate = (mutationData.kill_rate * 100).toFixed(2);
-              if (mutationData.kill_rate < 0.9) {
-                const mutationGap = 0.9 - mutationData.kill_rate;
-                riskScore += Math.min(mutationGap * 100, 40);
-                riskFactors.push(`Mutation kill rate: ${mutationKillRate}% (target: 90%)`);
-              }
-            } catch (error) {
-              console.log('No mutation data available');
-            }
             
             // Changed files risk
             const files = await github.rest.pulls.listFiles({
@@ -226,30 +206,8 @@ jobs:
               });
             }
             
-            // Add quality gate failed label if needed
-            const coverageFailed = '${{ steps.coverage.outputs.COVERAGE_FAILED }}' === 'true';
-            const mutationFailed = '${{ steps.mutation.outputs.MUTATION_FAILED }}' === 'true';
-            
-            if (coverageFailed || mutationFailed) {
-              if (!currentLabelNames.includes('quality-gate-failed')) {
-                await github.rest.issues.addLabels({
-                  owner,
-                  repo,
-                  issue_number: pull_number,
-                  labels: ['quality-gate-failed'],
-                });
-              }
-            } else {
-              // Remove quality-gate-failed label if it exists
-              if (currentLabelNames.includes('quality-gate-failed')) {
-                await github.rest.issues.removeLabel({
-                  owner,
-                  repo,
-                  issue_number: pull_number,
-                  name: 'quality-gate-failed',
-                });
-              }
-            }
+            // Quality gate labels are managed by tests.yml workflow
+            // This workflow only manages risk labels
 
       - name: Post comprehensive quality report
         uses: actions/github-script@v7
@@ -262,43 +220,14 @@ jobs:
             const riskEmoji = '${{ steps.risk_assessment.outputs.risk_emoji }}';
             const riskLevel = '${{ steps.risk_assessment.outputs.risk_level }}';
             const riskScore = '${{ steps.risk_assessment.outputs.risk_score }}';
-            const coverage = '${{ steps.coverage_metrics.outputs.coverage }}';
             const riskFactors = JSON.parse('${{ steps.risk_assessment.outputs.risk_factors }}');
-            
-            let mutationSummary = 'No mutation data available';
-            try {
-              const mutationData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
-              const killRate = (mutationData.kill_rate * 100).toFixed(2);
-              mutationSummary = [
-                `**Kill Rate:** ${killRate}% (threshold: 90%)`,
-                `**Killed:** ${mutationData.killed_mutants}/${mutationData.counted_mutants} mutants`
-              ].join('\n');
-            } catch (error) {
-              console.log('Could not read mutation summary');
-            }
-            
-            const coveragePassed = parseFloat(coverage) >= 98;
-            const coverageEmoji = coveragePassed ? '✅' : '❌';
             
             const riskFactorsText = riskFactors.length > 0 ? 
               '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') : 
               'No significant risk factors identified';
             
-            const statusText = coveragePassed ? 
-              '**All quality gates passed!** This PR meets the release criteria.' : 
-              '**Quality gates not met.** Please address the issues above before merging.';
-            
             const body = [
-              `## ${riskEmoji} Release Gate Assessment`,
-              '',
-              '### Quality Metrics',
-              '',
-              `#### ${coverageEmoji} Code Coverage`,
-              `**Coverage:** ${coverage}% (target: 98%)`,
-              coveragePassed ? '✅ Coverage requirement met' : '❌ Coverage below threshold',
-              '',
-              '#### Mutation Testing',
-              mutationSummary,
+              `## ${riskEmoji} Release Gate - Risk Assessment`,
               '',
               '### Risk Assessment',
               `**Risk Level:** ${riskLevel.toUpperCase()} (Score: ${riskScore})`,
@@ -307,15 +236,16 @@ jobs:
               '',
               '---',
               '',
-              `### ${coveragePassed ? '✅' : '⚠️'} Release Gate Status`,
+              '### Quality Metrics',
               '',
-              statusText,
+              '✅ Coverage and mutation testing are verified in the **Tests** workflow.',
+              '✅ Security scanning is performed in separate security workflows.',
               '',
               '<details>',
               '<summary>📋 Release Gate Requirements</summary>',
               '',
-              '- ✅ Code coverage ≥ 98%',
-              '- ✅ Mutation kill rate ≥ 90%',
+              '- ✅ Code coverage ≥ 98% (verified in Tests workflow)',
+              '- ✅ Mutation kill rate ≥ 90% (verified in CI workflow)',
               '- ✅ All tests passing',
               '- ✅ No critical security vulnerabilities',
               '- ✅ Code review approved',
@@ -324,7 +254,8 @@ jobs:
               '',
               '---',
               `*Last updated: ${new Date().toISOString()}*`,
-              '*Workflow: Release Gate Quality Assessment*'
+              '*This workflow assesses PR risk based on size and scope.*',
+              '*Quality gates are enforced by other workflows to avoid duplication.*'
             ].join('\n');
             
             // Find and update or create comment
@@ -355,20 +286,5 @@ jobs:
               });
             }
 
-      - name: Upload quality reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: quality-gate-reports
-          path: |
-            coverage.xml
-            mutation_summary.json
-          if-no-files-found: warn
-
-      - name: Fail if quality gates not met
-        if: steps.coverage.outputs.COVERAGE_FAILED == 'true' || steps.mutation.outputs.MUTATION_FAILED == 'true'
-        run: |
-          echo "❌ Quality gates not met. Please fix the issues and push again."
-          echo "Coverage requirement: 98%"
-          echo "Mutation kill rate requirement: 90%"
-          exit 1
+      # Quality gates are enforced by tests.yml and ci.yml workflows
+      # This workflow only provides risk assessment

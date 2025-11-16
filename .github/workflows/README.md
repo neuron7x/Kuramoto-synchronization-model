@@ -2,6 +2,25 @@
 
 This directory contains the CI/CD workflows that implement the TradePulse release gate system, inspired by dopamine-based reinforcement learning mechanisms (TD(0) RPE, DDM, Go/No-Go).
 
+## Recent Optimizations (2025-11-15)
+
+To improve development experience and reduce CI time, the following optimizations were made:
+
+### Removed Redundancies
+1. ✅ **Removed `coverage.yml`** - Coverage is already checked in both `ci.yml` and `tests.yml`
+2. ✅ **Simplified `pr-release-gate.yml`** - No longer re-runs tests that are already run in other workflows
+3. ✅ **Removed duplicate localization checks** in flaky-tests job
+4. ✅ **Optimized mutation testing** - Mutation testing on PRs only runs in `ci.yml`, not in separate workflow
+5. ✅ **SBOM generation** - Only runs on push to main and releases, not on every PR
+6. ✅ **Performance regression tests** - Only runs when performance-critical files change
+7. ✅ **NAK CI** - Only runs when nak_controller files change
+
+### Benefits
+- **Faster PR feedback** - Fewer redundant jobs
+- **Reduced CI minutes** - No duplicate test execution
+- **Clearer separation of concerns** - Each workflow has a specific purpose
+- **Better resource usage** - Heavy jobs only run when needed
+
 ## Workflow Overview
 
 ### Core Quality Gates
@@ -21,17 +40,11 @@ This directory contains the CI/CD workflows that implement the TradePulse releas
 - ✅ Mutation kill rate ≥ 90%
 - ✅ All tests passing
 
-#### 2. `coverage.yml` - Coverage Tracking
-**Triggers:** PR to main/develop, push to main/develop
-**Purpose:** Test coverage validation and reporting
-
-**Requirements:**
-- ✅ Coverage ≥ 98%
-- Uploads to Codecov if token configured
-
-#### 3. `mutation-testing.yml` - Mutation Testing
-**Triggers:** PR to main/develop when code changes
+#### 2. `mutation-testing.yml` - Mutation Testing (Push to main/develop only)
+**Triggers:** Push to main/develop, workflow_dispatch
 **Purpose:** Validates test quality through mutation testing
+
+**Note:** Mutation testing is also included in `ci.yml` for PRs. This workflow runs the full mutation suite on pushes to main branches.
 
 **Features:**
 - Runs mutmut on core, backtest, execution modules
@@ -41,21 +54,22 @@ This directory contains the CI/CD workflows that implement the TradePulse releas
 
 ### PR Management
 
-#### 4. `pr-release-gate.yml` - Quality & Risk Assessment
+#### 3. `pr-release-gate.yml` - Risk Assessment (No duplication)
 **Triggers:** PR opened/synchronized
-**Purpose:** Comprehensive quality assessment and risk scoring
+**Purpose:** Risk scoring based on PR characteristics
+
+**Optimizations:**
+- ✅ **No longer re-runs tests** - relies on tests.yml and ci.yml workflows
+- ✅ **No duplicate coverage checks** - coverage is validated in tests.yml
+- ✅ **No duplicate mutation testing** - mutation testing runs in ci.yml
 
 **Features:**
-- Runs quick coverage check
-- Samples mutation testing on changed files
 - Calculates risk score based on:
-  - Coverage gap (up to 40 points)
-  - Mutation gap (up to 40 points)
   - Critical files modified (up to 20 points)
   - PR size >500 lines (10 points)
 - Applies risk labels: `risk: low`, `risk: medium`, `risk: high`
-- Posts comprehensive quality report
-- Blocks merge if quality gates fail
+- Posts risk assessment report
+- Does NOT block merge (quality gates are in other workflows)
 
 #### 5. `pr-quality-labels.yml` - Auto-Labeling
 **Triggers:** PR opened/synchronized

@@ -9,12 +9,12 @@ permissions:
   pull-requests: write
 
 on:
-  pull_request:
-    branches: [main, develop]
+  # Only generate SBOM on push to main and releases, not on every PR
   push:
     branches: [main]
   release:
     types: [published]
+  workflow_dispatch:
 
 concurrency:
   group: sbom-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
