@@ -128,9 +128,15 @@ def test_p2_multiple_quantiles():
         true_q = float(np.quantile(data, q))
         p2_q = p2.quantile
 
-        # Relative error should be reasonable
-        rel_error = abs(p2_q - true_q) / max(abs(true_q), 1e-6)
-        assert rel_error < 0.10, f"P² error for q={q}: {rel_error:.2%}"
+        # Use absolute error for quantiles near zero, relative error otherwise
+        abs_error = abs(p2_q - true_q)
+        if abs(true_q) < 0.1:
+            # For values near zero, use absolute error threshold
+            assert abs_error < 0.15, f"P² absolute error for q={q}: {abs_error:.4f}"
+        else:
+            # For larger values, use relative error
+            rel_error = abs_error / abs(true_q)
+            assert rel_error < 0.10, f"P² relative error for q={q}: {rel_error:.2%}"
 
 
 def test_p2_constant_memory():

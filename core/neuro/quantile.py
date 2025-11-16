@@ -221,8 +221,9 @@ class P2Algorithm:
             self._n[i] += 1
 
         # Update desired positions
+        increments = [0.0, self._p / 2, self._p, (1 + self._p) / 2, 1.0]
         for i in range(5):
-            self._desired[i] += [0.0, self._p / 2, self._p, (1 + self._p) / 2, 1.0][i]
+            self._desired[i] += increments[i]
 
         # Adjust marker positions using P² formula
         for i in range(1, 4):

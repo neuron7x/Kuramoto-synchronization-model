@@ -303,7 +303,7 @@ class EWSkewness:
 
         if self._n == 1:
             self._mean = x_f
-            return float("nan")
+            return 0.0
 
         # Update moments using exponential weighting
         delta = x_f - self._mean
