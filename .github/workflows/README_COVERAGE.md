@@ -1,10 +1,17 @@
 # Test Coverage Configuration Guide
 
-This document explains how to configure and use the test coverage workflow (`.github/workflows/ci.yml`) in the TradePulse repository.
+This document explains how to configure and use the test coverage workflows in the TradePulse repository.
 
 ## Overview
 
-The CI workflow enforces test coverage requirements on all pull requests and pushes to the `main` branch. It runs tests with coverage reporting and fails the build if coverage drops below the configured threshold.
+**PRIMARY WORKFLOW:** Test coverage for PRs is enforced by `.github/workflows/tests.yml`
+
+The tests.yml workflow enforces test coverage requirements (98% line coverage, 90% branch coverage) on all pull requests. Additional validation with mutation testing runs on the main branch via `ci.yml`.
+
+### Workflow Split (As of 2025-11-16)
+
+- **`tests.yml`**: Primary PR quality gate - runs linting, type checking, unit/integration tests with coverage
+- **`ci.yml`**: Post-merge validation - runs sharded coverage and mutation testing on main branch only
 
 ## Quick Reference / Швидкий довідник
 
@@ -14,33 +21,49 @@ The CI workflow enforces test coverage requirements on all pull requests and pus
 
 ## Configuration
 
-### Coverage Threshold
+### Coverage Thresholds
 
-The default coverage threshold is **80%**. To change this threshold:
+Current coverage thresholds:
+- **Line Coverage:** 98% (strictly enforced)
+- **Branch Coverage:** 90% (strictly enforced)
 
-1. Open `.github/workflows/ci.yml`
-2. Locate the `pytest` command in the "Run tests with coverage" step
-3. Modify the `--cov-fail-under` parameter:
-   ```yaml
-   pytest \
-     --cov=src \
-     --cov=core \
-     --cov=backtest \
-     --cov=execution \
-     --cov-report=xml \
-     --cov-report=term-missing \
-     --cov-fail-under=85
-   ```
-   Replace `80` with your desired threshold (e.g., `85` for 85% coverage)
+To change these thresholds:
+
+1. **For PR Coverage (tests.yml):**
+   - Open `.github/workflows/tests.yml`
+   - Locate the `pytest` command in the "Run unit and integration tests with coverage" step
+   - Modify the `--cov-fail-under` parameter (currently 98)
+   - Update the branch coverage check in the "Publish coverage summary" step (currently 90)
+
+2. **For Main Branch Coverage (ci.yml):**
+   - Open `.github/workflows/ci.yml`
+   - Modify the "Enforce global coverage threshold" step (currently 98%)
+   - Update `configs/quality/critical_surface.toml` for module-specific thresholds
 
 ### Coverage Scope
 
-By default, the workflow measures coverage for the primary application packages (`src`, `core`, `backtest`, and `execution`). To measure coverage for different targets:
+Coverage is measured for critical business logic packages:
+- `core` - Core trading logic
+- `backtest` - Backtesting engine
+- `execution` - Order execution system
 
-1. Open `.github/workflows/ci.yml`
-2. Modify the `--cov` parameter to target specific packages:
+To measure coverage for different targets:
+
+1. **For PR Coverage (tests.yml):**
    ```yaml
-   pytest --cov=src --cov=core --cov-report=xml --cov-report=term-missing --cov-fail-under=80
+   pytest tests/ \
+     --cov=core --cov=backtest --cov=execution \
+     --cov-branch \
+     --cov-fail-under=98
+   ```
+
+2. **For Main Branch Coverage (ci.yml):**
+   ```yaml
+   pytest tests/ \
+     --cov=core \
+     --cov=backtest \
+     --cov=execution \
+     --cov-config=configs/quality/critical_surface.coveragerc
    ```
 
 ### Publishing Coverage Artifacts
@@ -81,24 +104,33 @@ To make test coverage a required check before merging pull requests:
 4. Check **Require status checks to pass before merging**
 5. Check **Require branches to be up to date before merging**
 6. In the search box, find and select:
-   - `Test Coverage (Python 3.10)`
-   - `Test Coverage (Python 3.11)`
+   - `Tests (Python 3.11)` - Main test suite with coverage from tests.yml
+   - `Lint & Type Check (Python 3.11)` - Code quality checks from tests.yml
+   - `Merge Guard Quality Check` - Final validation from merge-guard.yml
 7. (Optional but recommended) Check **Require a pull request before merging**
 8. Click **Create** or **Save changes**
 
 This ensures that:
 - All tests must pass
-- Coverage must meet the threshold
-- Both Python versions must succeed
+- Coverage must meet the 98% threshold
+- Branch coverage must meet the 90% threshold
+- All linting and type checks pass
 - Pull requests cannot be merged until these checks pass
 
 ## Workflow Triggers
 
-The workflow runs automatically on:
-- **Pull requests** targeting the `main` branch
-- **Pushes** to the `main` branch
+### tests.yml (Primary PR Coverage)
+Runs automatically on:
+- **Pull requests** to any branch
+- **Pushes** to main/develop branches
 
-This ensures coverage is checked both during code review and after merging.
+### ci.yml (Post-Merge Validation)
+Runs automatically on:
+- **Pushes** to the `main` branch only (PRs disabled as of 2025-11-16)
+
+This split ensures:
+- Fast feedback on PRs with essential coverage checks (tests.yml)
+- Comprehensive validation with sharded coverage and mutation testing after merge (ci.yml)
 
 ## Viewing Coverage Reports
 
