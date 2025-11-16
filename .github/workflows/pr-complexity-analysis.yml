@@ -289,7 +289,7 @@ jobs:
             const ownershipUncovered = '${{ steps.ownership_check.outputs.uncovered }}' || '0';
             const ownershipPercent = '${{ steps.ownership_check.outputs.coverage_percent }}' || '100';
             
-            const riskEmoji = riskLevel === 'high' ? '\u{1F534}' : riskLevel === 'medium' ? '\u{1F7E1}' : '\u{1F7E2}';
+            const riskEmoji = riskLevel === 'high' ? '\uD83D\uDD34' : riskLevel === 'medium' ? '\uD83D\uDFE1' : '\uD83D\uDFE2';
             
             let sizeWarning = '';
             if (parseInt(totalLines) > 500) {
