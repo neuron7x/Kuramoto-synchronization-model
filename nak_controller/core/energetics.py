@@ -117,10 +117,10 @@ def update_energy(
 
     # Compute energy change: gains from profit and support, losses from activity
     delta = (
-        params.a_p * pnl_signal      # Profit gain
-        - params.a_n * trades        # Trading cost
-        - params.a_v * vol           # Volatility cost
-        + params.a_g * glial         # Support gain
+        params.a_p * pnl_signal  # Profit gain
+        - params.a_n * trades  # Trading cost
+        - params.a_v * vol  # Volatility cost
+        + params.a_g * glial  # Support gain
     )
 
     # Add dopamine-driven unexpected reward bonus
