@@ -29,6 +29,7 @@ Example:
     ...     result = amm.update(return_t, R_t, kappa_t)
     >>> publish_metrics("BTCUSD", "1h", result, amm.gain, amm.threshold)
 """
+
 from __future__ import annotations
 
 import time

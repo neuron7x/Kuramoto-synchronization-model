@@ -23,6 +23,7 @@ Example:
     >>> signal = engine.analyze_market(price_df)
     >>> print(f"Phase: {signal.phase.value}, Entry: {signal.entry_signal}")
 """
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional
@@ -261,7 +262,9 @@ class TradePulseCompositeEngine:
             sanitized = sanitized[~sanitized.index.duplicated(keep="last")]
 
         if sanitized.empty:
-            raise ValueError("DataFrame must contain at least one row after sanitisation")
+            raise ValueError(
+                "DataFrame must contain at least one row after sanitisation"
+            )
 
         latest_ts = sanitized.index[-1]
         last_signal: CompositeSignal | None = self.history[-1] if self.history else None
