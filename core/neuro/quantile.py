@@ -330,3 +330,9 @@ class P2Algorithm:
 
 # Backward compatibility alias
 P2Quantile = ExactQuantile
+
+__all__ = [
+    "ExactQuantile",
+    "P2Algorithm",
+    "P2Quantile",  # Backward compatibility
+]

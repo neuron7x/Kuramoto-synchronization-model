@@ -1,6 +1,6 @@
 """Neuroscience-inspired modules for TradePulse."""
 
-from .amm import AdaptiveMarketMind, AMMConfig
+from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
 from .advanced import (
     AgencyControlNetwork,
     CandidateGenerator,
@@ -11,14 +11,23 @@ from .advanced import (
     MarketContext,
     NeuroAdvancedConfig,
     NeuroDecisionIntegrator,
+    NeuroplasticReinforcementEngine,
     NeuroRiskManager,
     NeuroStateMonitor,
-    NeuroplasticReinforcementEngine,
     TradeOutcome,
     TradeResult,
 )
-from .adapters.tradepulse_adapter import MarketPulse, TradePulseNeuroAdapter
+from .amm import AdaptiveMarketMind, AMMConfig
 from .ecs_regulator import ECSInspiredRegulator, ECSMetrics
+from .features import (
+    EWEntropy,
+    EWEntropyConfig,
+    EWMomentum,
+    EWSkewness,
+    EWZScore,
+    ema_update,
+    ewvar_update,
+)
 from .fractal_regulator import EEPFractalRegulator, RegulatorMetrics
 from .motivation import (
     FractalMotivationController,
@@ -26,7 +35,16 @@ from .motivation import (
     MotivationDecision,
     RealTimeMotivationMonitor,
 )
+from .quantile import ExactQuantile, P2Algorithm, P2Quantile
 from .shocks import ShockScenario, ShockScenarioGenerator
+from .sizing import (
+    SizerConfig,
+    kelly_size,
+    position_size,
+    precision_weight,
+    pulse_weight,
+    risk_parity_weight,
+)
 from .training import (
     AsyncDataLoader,
     CheckpointManager,
@@ -83,4 +101,23 @@ __all__ = [
     "FractalMotivationEngine",
     "MotivationDecision",
     "RealTimeMotivationMonitor",
+    # Quantile estimation
+    "ExactQuantile",
+    "P2Algorithm",
+    "P2Quantile",
+    # Position sizing
+    "SizerConfig",
+    "position_size",
+    "kelly_size",
+    "risk_parity_weight",
+    "pulse_weight",
+    "precision_weight",
+    # Streaming features
+    "EWEntropy",
+    "EWEntropyConfig",
+    "EWMomentum",
+    "EWZScore",
+    "EWSkewness",
+    "ema_update",
+    "ewvar_update",
 ]
