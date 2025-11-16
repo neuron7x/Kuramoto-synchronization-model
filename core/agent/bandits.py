@@ -370,3 +370,10 @@ class ThompsonSampling:
 
         temp_rng = random.Random(self._rng.getrandbits(256))
         return temp_rng.betavariate(alpha, beta)
+
+
+__all__ = [
+    "EpsilonGreedy",
+    "UCB1",
+    "ThompsonSampling",
+]
