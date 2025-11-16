@@ -33,7 +33,6 @@ from runtime.filters.vlpo_core_filter import VLPOCoreFilter
 from runtime.cns_stabilizer import CNSStabilizer
 from runtime.behavior_contract import (
     ActionClass,
-    SystemState,
     get_current_state,
     tacl_gate,
 )
@@ -189,25 +188,86 @@ class _NoopMetric:
 
 
 def estimate_entropy(graph: nx.DiGraph) -> float:
+    """Estimate normalized Shannon entropy of bond type distribution.
+
+    The entropy quantifies the diversity of bond types in the topology:
+    - Low entropy: homogeneous (mostly one bond type)
+    - High entropy: heterogeneous (diverse bond types)
+
+    The normalized entropy (H/H_max) allows comparison across different
+    graph sizes and bond type counts.
+
+    Args:
+        graph: Network graph with bond types as edge attributes
+
+    Returns:
+        Normalized entropy in [0, 1] where:
+        - 0.0 means all bonds are the same type
+        - 1.0 means maximum diversity (uniform distribution)
+        - Values near 0 after normalization may appear negative due to
+          numerical precision in edge cases
+
+    Notes:
+        - Uses Shannon entropy: H = -Σ p_i * log(p_i)
+        - Normalized by maximum possible entropy for the observed types
+        - Adds small epsilon (1e-12) to avoid log(0)
+    """
     import math
 
+    # Count occurrences of each bond type
     counts: Dict[str, int] = {}
     for _, _, data in graph.edges(data=True):
         bond_type = data.get("type", "vdw")
         counts[bond_type] = counts.get(bond_type, 0) + 1
 
-    total = sum(counts.values()) or 1
+    # Handle empty graph edge case
+    total = sum(counts.values())
+    if total == 0:
+        return 0.0
+
+    # Compute Shannon entropy with numerical stability
     entropy = 0.0
     for count in counts.values():
-        p = count / total
-        entropy -= p * math.log(p + 1e-12)
+        if count > 0:  # Skip zero counts
+            p = count / total
+            # Use natural logarithm for consistency with thermodynamics
+            entropy -= p * math.log(p + 1e-12)
 
-    max_entropy = math.log(len(counts) + 1e-12)
+    # Normalize by theoretical maximum entropy
+    num_types = len(counts)
+    if num_types <= 1:
+        return 0.0  # No diversity possible
+
+    max_entropy = math.log(num_types)
     return entropy / max_entropy if max_entropy > 0 else 0.0
 
 
 def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 0.02) -> bool:
+    """Perform one step of greedy gradient descent on bond types.
+
+    This function optimizes the system topology by iteratively finding the best
+    local bond type replacement that minimizes free energy. It uses an efficient
+    incremental energy calculation to avoid recomputing the full system energy
+    for each candidate.
+
+    Args:
+        graph: Network graph with bond types as edge attributes
+        snap: Current metrics snapshot (latencies, coherency, etc.)
+        lr: Learning rate (reserved for future use, currently unused)
+
+    Returns:
+        True if any bond type was changed, False otherwise
+
+    Notes:
+        - Uses greedy local search: evaluates all bond types for each edge
+        - Applies changes incrementally to maintain consistency
+        - Improvement threshold prevents numerical noise from triggering changes
+        - Non-bond components (resource, entropy) stay constant during iteration
+    """
+    # Extract current bond configuration
     bonds = {(u, v): data.get("type", "vdw") for u, v, data in graph.edges(data=True)}
+
+    # Compute baseline system energy
     base_energy = system_free_energy(
         bonds,
         snap.latencies,
@@ -216,6 +276,7 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
         snap.entropy,
     )
 
+    # Pre-compute individual bond energy contributions for efficiency
     bond_contributions: Dict[Tuple[str, str], float] = {}
     total_bond_energy = 0.0
     for (src, dst), kind in bonds.items():
@@ -229,12 +290,17 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
         bond_contributions[(src, dst)] = contribution
         total_bond_energy += contribution
 
+    # Separate non-bond components (constant during iteration)
     non_bond_component = base_energy - total_bond_energy
 
+    # Track whether any improvements were made
     improved = False
+
+    # Set improvement threshold to avoid numerical noise
     scale_reference = max(abs(base_energy), ENERGY_SCALE)
     improvement_threshold = scale_reference * 1e-6
 
+    # Greedy optimization: try improving each edge sequentially
     for src, dst in list(graph.edges()):
         current_type = bonds.get((src, dst))
         if current_type is None:
@@ -245,10 +311,12 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
         best_energy = base_energy
         best_contribution = base_contribution
 
+        # Evaluate all candidate bond types
         for candidate in _BOND_TYPES:
             if candidate == current_type:
                 continue
 
+            # Compute energy for this candidate using incremental update
             candidate_contribution = ENERGY_SCALE * bond_internal_energy(
                 src,
                 dst,
@@ -263,14 +331,17 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
                 + candidate_contribution
             )
 
+            # Check if this candidate improves energy
             if candidate_energy < best_energy - improvement_threshold:
                 best_energy = candidate_energy
                 best_type = candidate
                 best_contribution = candidate_contribution
 
+        # Apply the best improvement found for this edge
         if best_type != current_type:
             graph.edges[(src, dst)]["type"] = best_type
             bonds[(src, dst)] = best_type
+            # Update energy tracking incrementally
             total_bond_energy = total_bond_energy - base_contribution + best_contribution
             bond_contributions[(src, dst)] = best_contribution
             base_energy = best_energy

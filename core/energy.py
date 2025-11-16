@@ -40,11 +40,36 @@ class BondParams(TypedDict):
 
 
 BOND_LIBRARY: Dict[BondType, BondParams] = {
-    "covalent": {"base_energy": 1.0, "latency_weight": 4.0, "coherency_weight": 2.0, "stability_bonus": 1.5},
-    "ionic": {"base_energy": 1.4, "latency_weight": 2.5, "coherency_weight": 4.0, "stability_bonus": 1.2},
-    "metallic": {"base_energy": 0.7, "latency_weight": 1.0, "coherency_weight": 1.5, "stability_bonus": 2.5},
-    "vdw": {"base_energy": 0.25, "latency_weight": 0.6, "coherency_weight": 0.8, "stability_bonus": 0.2},
-    "hydrogen": {"base_energy": 0.5, "latency_weight": 1.8, "coherency_weight": 3.5, "stability_bonus": 3.2},
+    "covalent": {
+        "base_energy": 1.0,
+        "latency_weight": 4.0,
+        "coherency_weight": 2.0,
+        "stability_bonus": 1.5,
+    },
+    "ionic": {
+        "base_energy": 1.4,
+        "latency_weight": 2.5,
+        "coherency_weight": 4.0,
+        "stability_bonus": 1.2,
+    },
+    "metallic": {
+        "base_energy": 0.7,
+        "latency_weight": 1.0,
+        "coherency_weight": 1.5,
+        "stability_bonus": 2.5,
+    },
+    "vdw": {
+        "base_energy": 0.25,
+        "latency_weight": 0.6,
+        "coherency_weight": 0.8,
+        "stability_bonus": 0.2,
+    },
+    "hydrogen": {
+        "base_energy": 0.5,
+        "latency_weight": 1.8,
+        "coherency_weight": 3.5,
+        "stability_bonus": 3.2,
+    },
 }
 
 K_BOLTZMANN_EFFECTIVE = 1.38e-23
@@ -64,15 +89,40 @@ def bond_internal_energy(
     latencies: Dict[Tuple[str, str], float],
     coherency: Dict[Tuple[str, str], float],
 ) -> float:
+    """Calculate the internal energy of a bond between two nodes.
+
+    The internal energy represents the cost of communication between services,
+    incorporating latency penalties, coherency rewards, and stability bonuses
+    based on the bond type.
+
+    Args:
+        src: Source node name
+        dst: Destination node name
+        kind: Type of bond (covalent, ionic, metallic, vdw, hydrogen)
+        latencies: Normalized latency measurements for all edges
+        coherency: Coherency scores (0-1) for all edges
+
+    Returns:
+        Internal energy value for the bond (dimensionless units)
+
+    Raises:
+        KeyError: If bond type is not found in BOND_LIBRARY
+    """
+    if kind not in BOND_LIBRARY:
+        raise KeyError(f"Unknown bond type: {kind}")
+
     params = BOND_LIBRARY[kind]
 
+    # Extract and validate metrics with safe defaults
     latency = float(latencies.get((src, dst), 1.0))
     coherence = float(coherency.get((src, dst), 0.0))
 
+    # Ensure numerical stability with bounds checking
     latency = max(latency, 0.0)
     coherence = float(np.clip(coherence, 0.0, 1.0))
 
-    latency_cost = params["latency_weight"] * math.log(1.0 + latency)
+    # Energy contributions with numerically stable logarithm
+    latency_cost = params["latency_weight"] * math.log1p(latency)
     incoherence_cost = params["coherency_weight"] * (1.0 - coherence) ** 2
     stability_gain = params["stability_bonus"] * coherence
 
@@ -86,19 +136,72 @@ def system_free_energy(
     resource_usage: float,
     entropy: float,
 ) -> float:
+    """Calculate the total free energy of the system.
+
+    The free energy combines internal energy (bond costs), resource usage,
+    and entropy to provide a unified optimization metric. Lower free energy
+    indicates a more efficient system configuration.
+
+    The calculation follows thermodynamic principles:
+        F = U + Resource_Cost + T*S
+    where U is internal energy, T*S is the entropy term at system temperature.
+
+    Args:
+        bonds: Mapping of (src, dst) edges to bond types
+        latencies: Normalized latency measurements for all edges
+        coherency: Coherency scores (0-1) for all edges
+        resource_usage: Normalized CPU/memory usage (0-1)
+        entropy: System entropy from bond type distribution
+
+    Returns:
+        Total system free energy in Joules (scaled to ~10^-18 J)
+
+    Raises:
+        ValueError: If resource_usage or entropy are invalid
+    """
+    if not (0.0 <= resource_usage <= 1.0):
+        raise ValueError(f"resource_usage must be in [0, 1], got {resource_usage}")
+
+    # Compute internal energy from all bonds
     internal_energy = 0.0
     for (src, dst), kind in bonds.items():
         internal_energy += bond_internal_energy(src, dst, kind, latencies, coherency)
 
+    # Resource penalty: linear scaling with usage
     resource_term = 2.0 * float(np.clip(resource_usage, 0.0, 1.0))
-    entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * max(entropy, 0.0)
 
+    # Entropy contribution at system temperature
+    # Note: negative entropy can occur in normalized entropy calculations
+    # We preserve the sign to capture system ordering/disordering dynamics
+    entropy_term = (K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K) * entropy
+
+    # Combine all terms and scale to physically plausible magnitude
     free_energy = internal_energy + resource_term + entropy_term
     return ENERGY_SCALE * free_energy
 
 
 def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
-    if dt_seconds <= 0:
+    """Calculate the rate of change of free energy (dF/dt).
+
+    This derivative is critical for thermodynamic control: negative dF/dt
+    indicates the system is moving toward a more stable configuration,
+    while positive dF/dt may signal instability or degradation.
+
+    Args:
+        F_prev: Previous free energy measurement (Joules)
+        F_now: Current free energy measurement (Joules)
+        dt_seconds: Time elapsed between measurements (seconds)
+
+    Returns:
+        Rate of energy change (Joules per second, i.e., Watts)
+        Returns 0.0 if dt_seconds <= 0 to avoid division by zero
+
+    Raises:
+        ValueError: If dt_seconds is negative
+    """
+    if dt_seconds < 0:
+        raise ValueError(f"dt_seconds must be non-negative, got {dt_seconds}")
+    if dt_seconds == 0:
         return 0.0
     return (F_now - F_prev) / dt_seconds
 
