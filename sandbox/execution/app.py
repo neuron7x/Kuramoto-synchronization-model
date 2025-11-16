@@ -10,8 +10,8 @@ from pydantic import ValidationError
 
 from ..clients import ControlClient, RiskClient, SignalClient
 from ..models import AuditEvent, OrderTicket, RiskDecision, TradingSignal
-from ..settings import ExecutionSettings, execution_settings
 from ..risk.engine import AuditLoggerProtocol
+from ..settings import ExecutionSettings, execution_settings
 from .engine import ExecutionEngine, ExecutionParameters, RiskGatewayProtocol, SignalGatewayProtocol
 
 
@@ -33,7 +33,7 @@ class HttpRiskGateway(RiskGatewayProtocol):
 
 class ControlAuditLogger(AuditLoggerProtocol):
     """Audit logger that sends events to the control service.
-    
+
     Falls back gracefully on communication errors to avoid disrupting
     execution flow.
     """
@@ -42,7 +42,7 @@ class ControlAuditLogger(AuditLoggerProtocol):
 
     async def emit(self, event: AuditEvent) -> None:
         """Emit audit event to control service.
-        
+
         Catches and suppresses network errors to avoid disrupting execution.
         In production, these errors should be logged to a local fallback.
         """
@@ -71,7 +71,10 @@ def create_engine(settings: ExecutionSettings) -> ExecutionEngine:
     )
 
 
-def create_app(settings: ExecutionSettings | None = None, engine: ExecutionEngine | None = None) -> FastAPI:
+def create_app(
+    settings: ExecutionSettings | None = None,
+    engine: ExecutionEngine | None = None,
+) -> FastAPI:
     config = settings or execution_settings()
     execution_engine = engine or create_engine(config)
 
