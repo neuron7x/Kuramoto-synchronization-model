@@ -1,10 +1,13 @@
-name: PR Quality Summary Report
+# DISABLED: Redundant with test comments in tests.yml
+# This workflow provides duplicate information already shown in PR test comments
+name: PR Quality Summary Report (DISABLED)
 
 on:
-  workflow_run:
-    workflows: ["CI - Test Coverage", "Mutation Testing - Quality Gate"]
-    types:
-      - completed
+  workflow_dispatch:  # Only manual trigger, no automatic runs
+    inputs:
+      dummy:
+        description: 'Workflow disabled - use tests.yml comments instead'
+        required: false
 
 permissions:
   contents: read

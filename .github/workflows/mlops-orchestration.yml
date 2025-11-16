@@ -20,16 +20,7 @@ on:
       - 'infra/**'
       - 'Dockerfile'
       - 'requirements*.txt'
-  pull_request:
-    branches: [main]
-    paths:
-      - '.github/workflows/mlops-orchestration.yml'
-      - 'scripts/mlops/**'
-      - 'core/experiments/**'
-      - 'deploy/**'
-      - 'infra/**'
-      - 'Dockerfile'
-      - 'requirements*.txt'
+  # PRs disabled - only run on main branch for production deployments
   schedule:
     - cron: '0 3 * * 1-5'
 

@@ -4,13 +4,8 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    paths:
-      - 'tacl/**'
-      - 'ci/release_gates.yml'
-      - 'configs/perf_budgets.yaml'
-      - 'tests/e2e/test_progressive_rollout.py'
-      - '.github/workflows/progressive-release-gates.yml'
+  # PRs disabled - progressive release gates only needed for actual releases
+  # Single developer workflow doesn't need progressive rollout validation on PRs
   workflow_dispatch:
 
 permissions:
