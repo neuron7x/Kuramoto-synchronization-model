@@ -24,6 +24,7 @@ Example:
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Dict, Tuple, Literal, TypedDict
 import math
 
@@ -82,6 +83,39 @@ SYSTEM_TEMPERATURE_K = 300.0
 ENERGY_SCALE = 1e-18
 
 
+@lru_cache(maxsize=1024)
+def _compute_bond_energy_terms(
+    kind: BondType,
+    latency: float,
+    coherence: float,
+) -> Tuple[float, float, float]:
+    """Compute bond energy terms with caching for performance.
+
+    This internal function caches frequently computed energy components
+    to avoid redundant calculations during optimization loops.
+
+    Args:
+        kind: Bond type
+        latency: Normalized latency value (non-negative)
+        coherence: Coherency score (0-1)
+
+    Returns:
+        Tuple of (latency_cost, incoherence_cost, stability_gain)
+    """
+    params = BOND_LIBRARY[kind]
+
+    # Ensure inputs are hashable and bounded
+    latency = max(0.0, float(latency))
+    coherence = float(np.clip(coherence, 0.0, 1.0))
+
+    # Energy contributions with numerically stable logarithm
+    latency_cost = params["latency_weight"] * math.log1p(latency)
+    incoherence_cost = params["coherency_weight"] * (1.0 - coherence) ** 2
+    stability_gain = params["stability_bonus"] * coherence
+
+    return latency_cost, incoherence_cost, stability_gain
+
+
 def bond_internal_energy(
     src: str,
     dst: str,
@@ -111,21 +145,16 @@ def bond_internal_energy(
     if kind not in BOND_LIBRARY:
         raise KeyError(f"Unknown bond type: {kind}")
 
-    params = BOND_LIBRARY[kind]
-
-    # Extract and validate metrics with safe defaults
+    # Extract metrics with safe defaults
     latency = float(latencies.get((src, dst), 1.0))
     coherence = float(coherency.get((src, dst), 0.0))
 
-    # Ensure numerical stability with bounds checking
-    latency = max(latency, 0.0)
-    coherence = float(np.clip(coherence, 0.0, 1.0))
+    # Use cached computation for performance
+    latency_cost, incoherence_cost, stability_gain = _compute_bond_energy_terms(
+        kind, latency, coherence
+    )
 
-    # Energy contributions with numerically stable logarithm
-    latency_cost = params["latency_weight"] * math.log1p(latency)
-    incoherence_cost = params["coherency_weight"] * (1.0 - coherence) ** 2
-    stability_gain = params["stability_bonus"] * coherence
-
+    params = BOND_LIBRARY[kind]
     return params["base_energy"] + latency_cost + incoherence_cost - stability_gain
 
 
@@ -206,6 +235,16 @@ def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
     return (F_now - F_prev) / dt_seconds
 
 
+def clear_energy_cache() -> None:
+    """Clear the internal energy calculation cache.
+
+    This function should be called when bond parameters or system configuration
+    changes significantly to ensure fresh calculations. The cache is automatically
+    managed with LRU eviction, so manual clearing is rarely needed.
+    """
+    _compute_bond_energy_terms.cache_clear()
+
+
 __all__ = [
     "BondType",
     "BondParams",
@@ -216,4 +255,5 @@ __all__ = [
     "bond_internal_energy",
     "system_free_energy",
     "delta_free_energy",
+    "clear_energy_cache",
 ]
