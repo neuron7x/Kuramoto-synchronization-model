@@ -36,7 +36,7 @@ class NaKController:
         seed: int | None = None,
     ) -> None:
         """Initialize the NaK controller from a YAML configuration file.
-        
+
         Parameters
         ----------
         config_path : str | Path
@@ -45,7 +45,7 @@ class NaKController:
         seed : int | None, optional
             Random seed for reproducibility. If None, uses NAK_SEED environment
             variable or generates a random seed.
-            
+
         Raises
         ------
         FileNotFoundError
@@ -60,7 +60,7 @@ class NaKController:
             If YAML parsing fails.
         """
         config_path = Path(config_path)
-        
+
         # Validate file exists and is readable
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
@@ -68,7 +68,7 @@ class NaKController:
             raise ValueError(f"Configuration path is not a file: {config_path}")
         if not os.access(config_path, os.R_OK):
             raise PermissionError(f"Configuration file is not readable: {config_path}")
-        
+
         # Load and validate YAML with size limit to prevent DoS
         max_file_size = 10 * 1024 * 1024  # 10 MB limit
         file_size = config_path.stat().st_size
@@ -77,22 +77,22 @@ class NaKController:
                 f"Configuration file too large: {file_size} bytes "
                 f"(max {max_file_size} bytes)"
             )
-        
+
         try:
             with config_path.open("r", encoding="utf-8") as handle:
                 raw = yaml.safe_load(handle)
         except yaml.YAMLError as error:
             raise ValueError(f"Failed to parse YAML configuration: {error}") from error
-        
+
         if not isinstance(raw, dict):
             raise ValueError("Configuration file must contain a YAML dictionary")
-        
+
         if "nak" not in raw:
             raise KeyError("configuration file must contain a 'nak' root key")
-        
+
         if not isinstance(raw["nak"], dict):
             raise ValueError("'nak' configuration must be a dictionary")
-        
+
         cfg = NakConfig(**raw["nak"])
         self.params = NaKParams(
             L_min=cfg.L_min,

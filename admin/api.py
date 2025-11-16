@@ -90,34 +90,34 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     logger.debug("Token verified successfully")
     return True
 
 
 def rate_limit_check(identifier: str, max_calls: int = 10, window: int = 60) -> bool:
     """Simple rate limiting implementation.
-    
+
     Args:
         identifier: Unique identifier for rate limiting (e.g., IP address)
         max_calls: Maximum number of calls allowed in the window
         window: Time window in seconds
-    
+
     Returns:
         True if rate limit is not exceeded, False otherwise
     """
     now = time.time()
     cutoff = now - window
-    
+
     # Clean old entries
     _rate_limit_store[identifier] = [
         ts for ts in _rate_limit_store[identifier] if ts > cutoff
     ]
-    
+
     # Check rate limit
     if len(_rate_limit_store[identifier]) >= max_calls:
         return False
-    
+
     # Record this request
     _rate_limit_store[identifier].append(now)
     return True
@@ -135,7 +135,7 @@ def create_admin_app(
 
     Returns:
         FastAPI application with security middleware
-        
+
     Security:
         - Rate limiting: 10 requests per minute per IP
         - CORS: Restricted to same origin by default
@@ -147,13 +147,13 @@ def create_admin_app(
         description="Secure admin endpoints for risk controls",
         version="1.0.0",
     )
-    
+
     # Add CORS middleware with restrictive defaults
     allowed_origins = os.environ.get(
         "ADMIN_API_CORS_ORIGINS",
         "http://localhost:3000,http://localhost:8000"
     ).split(",")
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
@@ -161,7 +161,7 @@ def create_admin_app(
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "Content-Type"],
     )
-    
+
     # Add security headers middleware
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next):
@@ -170,15 +170,15 @@ def create_admin_app(
         client_ip = request.client.host if request.client else "unknown"
         rate_limit_max = int(os.environ.get("ADMIN_API_RATE_LIMIT_MAX", "10"))
         rate_limit_window = int(os.environ.get("ADMIN_API_RATE_LIMIT_WINDOW", "60"))
-        
+
         if not rate_limit_check(client_ip, rate_limit_max, rate_limit_window):
             return HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Rate limit exceeded. Please try again later.",
             )
-        
+
         response = await call_next(request)
-        
+
         # Add security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -186,7 +186,7 @@ def create_admin_app(
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Content-Security-Policy"] = "default-src 'self'"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        
+
         return response
 
     @app.post("/admin/risk/kill_switch", status_code=status.HTTP_200_OK)
@@ -212,7 +212,7 @@ def create_admin_app(
 
         action = "enabled" if request.enabled else "disabled"
         logger.info(f"Kill switch toggle requested: {action}")
-        
+
         try:
             risk_compliance.set_kill_switch(request.enabled)
             logger.info(f"Kill switch successfully {action}")

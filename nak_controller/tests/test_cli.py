@@ -1,6 +1,6 @@
 """Tests for NaK controller CLI interfaces.
 
-Security note: subprocess usage is acceptable here as we're running 
+Security note: subprocess usage is acceptable here as we're running
 trusted code with validated arguments in a test environment.
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 def test_cli_returns_json_and_zero() -> None:
     """Test that the validation CLI produces valid JSON output and exits successfully.
-    
+
     This test validates:
     - CLI accepts proper arguments
     - Returns valid JSON structure
@@ -24,12 +24,12 @@ def test_cli_returns_json_and_zero() -> None:
     env = os.environ.copy()
     env.setdefault("NAK_SEED", "1337")
     env.setdefault("PYTHONHASHSEED", "0")
-    
+
     # Validate config file exists before running
     config_path = Path("nak_controller/conf/nak.yaml")
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
-    
+
     # Build command with validated arguments
     # Note: All arguments are hardcoded constants, not user input
     cmd = [
@@ -45,25 +45,25 @@ def test_cli_returns_json_and_zero() -> None:
         "--seed",
         "1337",  # Constant numeric argument
     ]
-    
+
     # Run with timeout to prevent hanging
     proc = subprocess.run(
-        cmd, 
-        capture_output=True, 
-        text=True, 
-        check=False, 
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
         env=env,
         timeout=30  # 30 second timeout
     )
-    
+
     assert proc.returncode == 0, f"CLI failed with stderr: {proc.stderr}"
-    
+
     # Validate JSON output
     try:
         payload = json.loads(proc.stdout)
     except json.JSONDecodeError as error:
         raise AssertionError(f"Invalid JSON output: {error}\nOutput: {proc.stdout}") from error
-    
+
     # Validate expected structure
     assert set(payload) == {"baseline", "nak"}, f"Unexpected keys in output: {set(payload)}"
     assert "avg_risk_per_trade" in payload["baseline"], "Missing avg_risk_per_trade in baseline"
