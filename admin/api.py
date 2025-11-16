@@ -11,10 +11,12 @@ Security features:
 - CORS protection
 - Security headers
 - Localhost-only binding by default
+- Comprehensive audit logging
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from collections import defaultdict
@@ -27,6 +29,9 @@ from pydantic import BaseModel
 
 __all__ = ["create_admin_app", "KillSwitchRequest", "RiskStateResponse"]
 
+
+# Configure module logger
+logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
@@ -72,17 +77,21 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     """
     expected_token = os.environ.get("ADMIN_API_TOKEN")
     if not expected_token:
+        logger.error("Admin API token not configured in environment")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Admin API token not configured",
         )
 
     if credentials.credentials != expected_token:
+        logger.warning("Failed authentication attempt with invalid token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    logger.debug("Token verified successfully")
     return True
 
 
@@ -195,17 +204,29 @@ def create_admin_app(
             Success message with new state
         """
         if risk_compliance is None:
+            logger.error("Kill switch toggle attempted but risk_compliance not configured")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Risk compliance not configured",
             )
 
-        risk_compliance.set_kill_switch(request.enabled)
+        action = "enabled" if request.enabled else "disabled"
+        logger.info(f"Kill switch toggle requested: {action}")
+        
+        try:
+            risk_compliance.set_kill_switch(request.enabled)
+            logger.info(f"Kill switch successfully {action}")
+        except Exception as error:
+            logger.error(f"Failed to set kill switch: {error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to toggle kill switch: {str(error)}",
+            ) from error
 
         return {
             "success": True,
             "kill_switch": request.enabled,
-            "message": f"Kill switch {'enabled' if request.enabled else 'disabled'}",
+            "message": f"Kill switch {action}",
         }
 
     @app.get("/admin/risk/state", response_model=RiskStateResponse)
@@ -221,21 +242,32 @@ def create_admin_app(
             Current risk state
         """
         if risk_compliance is None:
+            logger.error("Risk state requested but risk_compliance not configured")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Risk compliance not configured",
             )
 
-        state = risk_compliance.get_state()
-        response_data = RiskStateResponse(**state)
+        logger.debug("Retrieving risk compliance state")
+        try:
+            state = risk_compliance.get_state()
+            response_data = RiskStateResponse(**state)
 
-        if circuit_breaker is not None:
-            response_data.circuit_breaker_state = circuit_breaker.state.value
-            response_data.circuit_breaker_ttl = circuit_breaker.get_time_until_recovery()
-            last_trip = circuit_breaker.get_last_trip_reason()
-            response_data.circuit_breaker_last_trip = last_trip
+            if circuit_breaker is not None:
+                response_data.circuit_breaker_state = circuit_breaker.state.value
+                response_data.circuit_breaker_ttl = circuit_breaker.get_time_until_recovery()
+                last_trip = circuit_breaker.get_last_trip_reason()
+                response_data.circuit_breaker_last_trip = last_trip
+                logger.debug(f"Circuit breaker state: {response_data.circuit_breaker_state}")
 
-        return response_data
+            logger.info(f"Risk state retrieved: kill_switch={response_data.kill_switch}")
+            return response_data
+        except Exception as error:
+            logger.error(f"Failed to retrieve risk state: {error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to retrieve risk state: {str(error)}",
+            ) from error
 
     @app.get("/health")
     def health_check() -> dict:

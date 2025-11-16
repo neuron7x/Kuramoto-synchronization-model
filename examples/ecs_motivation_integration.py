@@ -2,6 +2,13 @@
 
 This demonstrates how to combine the ECS-Inspired Regulator with TradePulse's
 existing FractalMotivationController for enhanced decision-making.
+
+Security Note:
+--------------
+This example uses dynamic module loading with exec_module for demonstration
+purposes to avoid circular imports. In production code, use standard imports
+instead. The file paths used here are validated and trusted (from the same
+repository), but this pattern should not be used with user-provided paths.
 """
 
 import sys
@@ -14,10 +21,20 @@ import numpy as np
 import importlib.util
 
 # Load ECS regulator
+# Security: Path is validated and comes from trusted source (same repository)
+module_path = Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py"
+if not module_path.exists():
+    raise FileNotFoundError(f"Required module not found: {module_path}")
+if not module_path.is_file():
+    raise ValueError(f"Path is not a file: {module_path}")
+
 spec_ecs = importlib.util.spec_from_file_location(
     "core.neuro.ecs_regulator",
-    Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py"
+    module_path
 )
+if spec_ecs is None or spec_ecs.loader is None:
+    raise ImportError(f"Failed to load module spec from {module_path}")
+
 ecs_module = importlib.util.module_from_spec(spec_ecs)
 sys.modules["core.neuro.ecs_regulator"] = ecs_module
 spec_ecs.loader.exec_module(ecs_module)
