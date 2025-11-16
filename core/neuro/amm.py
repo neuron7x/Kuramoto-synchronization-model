@@ -34,6 +34,7 @@ Example:
     >>> result = amm.update(return_t, R_kuramoto, kappa_ricci)
     >>> print(f"AMM pulse: {result['amm_pulse']:.3f}")
 """
+
 from __future__ import annotations
 
 import asyncio

@@ -27,6 +27,7 @@ Example:
     >>> print(f"Best score: {result.score:.3f}")
     >>> amm = AdaptiveMarketMind(result.config)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
