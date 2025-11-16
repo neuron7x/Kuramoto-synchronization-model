@@ -1,3 +1,31 @@
+"""Streaming feature extractors for neurobiologically-inspired market analysis.
+
+This module provides efficient, numerically stable implementations of common
+time-series features used throughout the neuro-economic trading framework.
+All functions operate in O(1) time with float32 precision for real-time streaming.
+
+Key Components:
+    ema_update: Single-step exponential moving average update
+    ewvar_update: EWMA variance estimation for residuals
+    EWEntropyConfig: Configuration for entropy estimator
+    EWEntropy: Streaming Shannon entropy with exponential decay
+
+The entropy estimator uses a fixed-bin histogram approach with exponential
+weighting to capture non-stationarity in market distributions. This provides
+a computationally efficient measure of predictability that can be updated
+in real-time without storing historical data.
+
+All implementations prioritize numerical stability and minimal memory footprint,
+making them suitable for high-frequency trading applications.
+
+Example:
+    >>> prev_ema = 100.0
+    >>> new_price = 101.5
+    >>> updated = ema_update(prev_ema, new_price, span=20)
+    >>>
+    >>> entropy = EWEntropy(EWEntropyConfig())
+    >>> H = entropy.update(return_value)
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

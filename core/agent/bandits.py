@@ -1,4 +1,33 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Multi-armed bandit algorithms for adaptive strategy selection.
+
+This module implements classic bandit algorithms used for online strategy
+selection and hyperparameter optimization in the trading agent system.
+The implementations use cryptographically strong randomness for security-
+sensitive production environments.
+
+Key Components:
+    EpsilonGreedy: Classic epsilon-greedy exploration-exploitation algorithm
+    UCB1: Upper Confidence Bound algorithm with optimistic initialization
+    ThompsonSampling: Bayesian bandit with Beta-Bernoulli conjugate priors
+
+The bandit framework treats trading strategies as "arms" and optimizes
+selection based on observed rewards (e.g., Sharpe ratio, PnL). This enables
+automatic adaptation to changing market conditions without manual intervention.
+
+All implementations support dynamic arm addition/removal to handle evolving
+strategy portfolios. Statistics are maintained incrementally for efficiency.
+
+Example:
+    >>> bandit = EpsilonGreedy(["momentum", "mean_reversion"], epsilon=0.1)
+    >>> selected = bandit.select()
+    >>> reward = execute_strategy(selected)
+    >>> bandit.update(selected, reward)
+
+Security Note:
+    Uses secrets.SystemRandom for cryptographically strong randomness,
+    preventing predictable exploration patterns in production trading.
+"""
 from __future__ import annotations
 
 from collections.abc import Iterable

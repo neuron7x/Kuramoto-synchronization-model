@@ -1,3 +1,34 @@
+"""Prometheus metrics instrumentation for Adaptive Market Mind (AMM).
+
+This module provides production-grade observability for the AMM prediction system
+through Prometheus metrics. It tracks pulse intensity, precision, adaptive parameters,
+and high-burst events in real-time for monitoring and alerting.
+
+Key Components:
+    timed_update: Context manager for measuring update latency
+    publish_metrics: Export AMM state to Prometheus gauges and counters
+
+Metrics Exposed:
+    - amm_pulse: Current pulse intensity (gauge)
+    - amm_precision: Current precision value (gauge)
+    - amm_gain: Adaptive gain parameter k (gauge)
+    - amm_threshold: Adaptive threshold parameter theta (gauge)
+    - amm_bursts_total: Count of high-pulse burst events (counter)
+    - amm_update_seconds: Update operation latency histogram
+
+Labels include symbol and timeframe (tf) for multi-instrument monitoring.
+
+The metrics enable production operators to:
+    - Detect anomalous pulse patterns
+    - Monitor adaptive parameter drift
+    - Alert on burst frequency changes
+    - Track performance across instruments
+
+Example:
+    >>> with timed_update("BTCUSD", "1h"):
+    ...     result = amm.update(return_t, R_t, kappa_t)
+    >>> publish_metrics("BTCUSD", "1h", result, amm.gain, amm.threshold)
+"""
 from __future__ import annotations
 
 import time

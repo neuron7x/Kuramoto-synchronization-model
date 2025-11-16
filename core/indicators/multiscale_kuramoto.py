@@ -1,3 +1,29 @@
+"""Multi-scale Kuramoto synchronization analyzer for market microstructure.
+
+This module implements a hierarchical Kuramoto oscillator model that analyzes market
+synchronization patterns across multiple time horizons. It leverages phase coherence
+of price oscillations to detect emergent market structures and regime shifts.
+
+The Kuramoto model treats each timeframe as a coupled oscillator. When oscillators
+synchronize (high order parameter R), it indicates strong market consensus and
+directional movement. Cross-scale coherence measures how well different timeframes
+align, providing insight into the robustness of market trends.
+
+Key Components:
+    TimeFrame: Enumeration of standard trading horizons (1m, 5m, 15m, 1h)
+    KuramotoResult: Per-timeframe synchronization metrics
+    MultiScaleResult: Aggregated consensus across all analyzed timeframes
+    FractalResampler: Efficient hierarchical data resampling with caching
+    MultiScaleKuramoto: Main analyzer class for computing order parameters
+
+The implementation includes energy-aware caching to minimize computational overhead
+during backtesting and supports adaptive windowing for different market conditions.
+
+Example:
+    >>> analyzer = MultiScaleKuramoto()
+    >>> result = analyzer.analyze(price_df)
+    >>> print(f"Consensus R: {result.consensus_R:.3f}")
+"""
 from __future__ import annotations
 
 import math
