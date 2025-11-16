@@ -1,4 +1,4 @@
-import metadata from './locales.metadata.json' assert { type: 'json' };
+import metadata from './locales.metadata.json' with { type: 'json' };
 
 export const localeMetadata = metadata.locales;
 export const defaultLocale = metadata.defaultLocale;
