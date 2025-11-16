@@ -1,10 +1,9 @@
 name: Mutation Testing - Quality Gate
 
 on:
-  pull_request:
-    branches:
-      - main
-      - develop
+  # Only run on push to main/develop or when explicitly requested
+  push:
+    branches: [main, develop]
     paths:
       - 'core/**'
       - 'backtest/**'
@@ -12,8 +11,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
-  push:
-    branches: [main, develop]
+  workflow_dispatch:
 
 concurrency:
   group: mutation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

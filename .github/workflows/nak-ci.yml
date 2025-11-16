@@ -2,9 +2,15 @@ name: nak-ci
 
 on:
   push:
-    branches: [ main, develop, "feat/**", "fix/**" ]
+    branches: [ main, develop ]
+    paths:
+      - 'nak_controller/**'
+      - '.github/workflows/nak-ci.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'nak_controller/**'
+      - '.github/workflows/nak-ci.yml'
 
 jobs:
   test:

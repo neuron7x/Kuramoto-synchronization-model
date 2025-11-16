@@ -6,8 +6,29 @@ permissions:
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'evolution/**'
+      - 'tacl/**'
+      - 'tests/test_energy.py'
+      - 'tests/test_link_activator.py'
+      - 'tests/test_recovery_agent.py'
+      - 'tests/test_polygon_integration.py'
+      - 'scripts/admission_check.py'
+      - 'scripts/benchmark_bonds.py'
+      - '.github/workflows/thermo-evolution.yml'
   pull_request:
     branches: ["main"]
+    paths:
+      - 'evolution/**'
+      - 'tacl/**'
+      - 'tests/test_energy.py'
+      - 'tests/test_link_activator.py'
+      - 'tests/test_recovery_agent.py'
+      - 'tests/test_polygon_integration.py'
+      - 'scripts/admission_check.py'
+      - 'scripts/benchmark_bonds.py'
+      - '.github/workflows/thermo-evolution.yml'
+  workflow_dispatch:
 
 jobs:
   thermo-gate:

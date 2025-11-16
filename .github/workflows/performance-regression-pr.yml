@@ -9,10 +9,12 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - 'core/**'
-      - 'backtest/**'
-      - 'execution/**'
+      - 'core/engine/**'
+      - 'core/execution/**'
+      - 'backtest/engine/**'
+      - 'execution/order_manager.py'
       - 'rust/**'
+  workflow_dispatch:
 
 concurrency:
   group: perf-regression-${{ github.workflow }}-${{ github.event.pull_request.number }}
