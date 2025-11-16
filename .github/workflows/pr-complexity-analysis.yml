@@ -289,22 +289,22 @@ jobs:
             const ownershipUncovered = '${{ steps.ownership_check.outputs.uncovered }}' || '0';
             const ownershipPercent = '${{ steps.ownership_check.outputs.coverage_percent }}' || '100';
             
-            const riskEmoji = riskLevel === 'high' ? '🔴' : riskLevel === 'medium' ? '🟡' : '🟢';
+            const riskEmoji = riskLevel === 'high' ? '\u{1F534}' : riskLevel === 'medium' ? '\u{1F7E1}' : '\u{1F7E2}';
             
             let sizeWarning = '';
             if (parseInt(totalLines) > 500) {
-              sizeWarning = '\n⚠️  **Large PR detected** - Consider breaking into smaller PRs for easier review';
+              sizeWarning = '\n\u26A0\uFE0F  **Large PR detected** - Consider breaking into smaller PRs for easier review';
             }
             
             let complexityWarning = '';
             if (parseFloat(maxComplexity) > 15) {
-              complexityWarning = '\n⚠️  **High complexity detected** - Consider refactoring complex functions';
+              complexityWarning = '\n\u26A0\uFE0F  **High complexity detected** - Consider refactoring complex functions';
             }
             
             let breakingWarning = '';
             if (breaking) {
               breakingWarning = [
-                '\n### ⚠️  Potential Breaking Changes',
+                '\n### \u26A0\uFE0F  Potential Breaking Changes',
                 '',
                 'The following files may contain breaking changes:',
                 breakingFiles,
@@ -314,8 +314,8 @@ jobs:
             }
             
             const ownershipStatus = parseInt(ownershipPercent) === 100 
-              ? '✅ All changed files have designated owners' 
-              : `⚠️  ${ownershipUncovered} file(s) lack designated code owners`;
+              ? '\u2705 All changed files have designated owners' 
+              : `\u26A0\uFE0F  ${ownershipUncovered} file(s) lack designated code owners`;
             
             const body = [
               `## ${riskEmoji} PR Complexity Analysis`,
@@ -324,16 +324,16 @@ jobs:
               '',
               '| Metric | Value | Threshold | Status |',
               '|--------|-------|-----------|--------|',
-              `| Lines Added | ${totalLines} | 500 | ${parseInt(totalLines) > 500 ? '⚠️' : '✅'} |`,
-              `| Lines Deleted | ${totalDeletions} | - | ℹ️ |`,
-              `| Files Changed | ${filesChanged} | 20 | ${parseInt(filesChanged) > 20 ? '⚠️' : '✅'} |`,
+              `| Lines Added | ${totalLines} | 500 | ${parseInt(totalLines) > 500 ? '\u26A0\uFE0F' : '\u2705'} |`,
+              `| Lines Deleted | ${totalDeletions} | - | \u2139\uFE0F |`,
+              `| Files Changed | ${filesChanged} | 20 | ${parseInt(filesChanged) > 20 ? '\u26A0\uFE0F' : '\u2705'} |`,
               '',
               '### Complexity Metrics',
               '',
               '| Metric | Value | Threshold | Status |',
               '|--------|-------|-----------|--------|',
-              `| Avg Cyclomatic Complexity | ${avgComplexity} | 10 | ${parseFloat(avgComplexity) > 10 ? '⚠️' : '✅'} |`,
-              `| Max Cyclomatic Complexity | ${maxComplexity} | 15 | ${parseFloat(maxComplexity) > 15 ? '⚠️' : '✅'} |`,
+              `| Avg Cyclomatic Complexity | ${avgComplexity} | 10 | ${parseFloat(avgComplexity) > 10 ? '\u26A0\uFE0F' : '\u2705'} |`,
+              `| Max Cyclomatic Complexity | ${maxComplexity} | 15 | ${parseFloat(maxComplexity) > 15 ? '\u26A0\uFE0F' : '\u2705'} |`,
               '',
               '### Risk Assessment',
               `**Risk Level:** ${riskLevel.toUpperCase()} (Score: ${riskScore}/100)`,
@@ -349,10 +349,10 @@ jobs:
               '---',
               '',
               '### Recommendations',
-              '- ✅ PRs under 500 lines are easier to review',
-              '- ✅ Keep cyclomatic complexity below 10',
-              '- ✅ Ensure all files have designated code owners',
-              '- ✅ Document breaking changes in PR description',
+              '- \u2705 PRs under 500 lines are easier to review',
+              '- \u2705 Keep cyclomatic complexity below 10',
+              '- \u2705 Ensure all files have designated code owners',
+              '- \u2705 Document breaking changes in PR description',
               '',
               '---',
               `*Last updated: ${new Date().toISOString()}*`
