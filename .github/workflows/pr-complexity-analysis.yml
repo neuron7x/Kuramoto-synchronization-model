@@ -206,9 +206,16 @@ jobs:
                 path: 'CODEOWNERS',
                 ref: context.payload.pull_request.base.ref,
               });
-              codeownersContent = Buffer.from(data.content, 'base64').toString();
+              
+              if (!data || !data.content) {
+                core.info('CODEOWNERS found but content is empty');
+                core.setOutput('has_owners', 'false');
+                return { covered: 0, uncovered: files.length };
+              }
+              
+              codeownersContent = Buffer.from(data.content, 'base64').toString('utf8');
             } catch (error) {
-              console.log('CODEOWNERS file not found');
+              core.info('CODEOWNERS file not found or error reading it: ' + (error.message || error));
               core.setOutput('has_owners', 'false');
               return { covered: 0, uncovered: files.length };
             }
