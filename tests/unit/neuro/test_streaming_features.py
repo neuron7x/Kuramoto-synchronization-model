@@ -125,7 +125,7 @@ def test_zscore_outlier_detection():
 
     # Normal data
     for _ in range(100):
-        z = zs.update(np.random.normal(0, 1))
+        zs.update(np.random.normal(0, 1))
 
     # Insert outlier
     outlier_z = zs.update(10.0)
