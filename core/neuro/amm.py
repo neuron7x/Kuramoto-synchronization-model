@@ -1,3 +1,39 @@
+"""Adaptive Market Mind (AMM) - precision-weighted prediction error analyzer.
+
+This module implements a neurobiologically-inspired market prediction system that
+combines precision-weighted forecasting with Kuramoto synchronization and Ricci
+curvature modulation. The AMM uses homeostatic gain control to maintain stable
+operation across varying market conditions.
+
+The core innovation is treating market prediction as a precision-weighted process
+where confidence dynamically adjusts based on:
+- Forecast variance (uncertainty)
+- Information entropy (predictability)
+- Kuramoto synchronization (market consensus)
+- Ricci curvature (geometric stability)
+
+Key Components:
+    AMMConfig: Configuration parameters for the AMM system
+    AdaptiveMarketMind: Main streaming analyzer with O(1) updates
+
+The implementation is optimized for real-time streaming with float32 precision
+and supports both synchronous and asynchronous operation modes. Homeostatic
+mechanisms automatically adjust gain and threshold parameters to maintain target
+burst levels in the pulse signal.
+
+Features:
+    - Streaming O(1) complexity per update
+    - Float32 numerical stability
+    - Async-friendly with internal locking
+    - Homeostatic gain/threshold adaptation
+    - Multi-modal precision modulation
+
+Example:
+    >>> config = AMMConfig()
+    >>> amm = AdaptiveMarketMind(config)
+    >>> result = amm.update(return_t, R_kuramoto, kappa_ricci)
+    >>> print(f"AMM pulse: {result['amm_pulse']:.3f}")
+"""
 from __future__ import annotations
 
 import asyncio

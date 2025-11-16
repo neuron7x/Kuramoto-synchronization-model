@@ -1,3 +1,32 @@
+"""Automated calibration system for Adaptive Market Mind (AMM) parameters.
+
+This module provides random search-based hyperparameter optimization for the AMM
+system. The calibration process evaluates candidate configurations based on a
+composite score that balances precision magnitude with pulse-error correlation.
+
+The calibrator explores key AMM parameters including:
+- EMA span for forecasting
+- Volatility decay rate
+- Precision scaling (alpha)
+- Entropy penalty (beta)
+- Kuramoto and Ricci modulation gains
+- Target burst rate (rho)
+
+Key Components:
+    CalibConfig: Search space bounds and iteration count
+    CalibResult: Complete calibration outcome with best config and diagnostics
+    calibrate_amm: Main calibration function using random search
+
+The scoring function prioritizes configurations that achieve high precision
+while maintaining strong correlation between prediction errors and the output
+pulse signal. This ensures the AMM responds appropriately to forecast quality.
+
+Example:
+    >>> calib_cfg = CalibConfig(iters=100)
+    >>> result = calibrate_amm(returns, R_series, kappa_series, calib_cfg)
+    >>> print(f"Best score: {result.score:.3f}")
+    >>> amm = AdaptiveMarketMind(result.config)
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

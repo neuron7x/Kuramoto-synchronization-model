@@ -1,3 +1,41 @@
+"""Serotonin-inspired risk inhibition controller for trading systems.
+
+This module implements a sophisticated risk management system inspired by the
+serotonergic system in neuroscience. Serotonin acts as an inhibitory signal that
+suppresses risky trading actions during adverse conditions (drawdowns, volatility).
+
+The controller combines multiple components:
+    - Tonic level: Baseline inhibition computed from market state and losses
+    - Phasic bursts: Rapid inhibition spikes triggered by threshold crossings
+    - Desensitization: Adaptive reduction in response to sustained signals
+    - Meta-adaptation: Long-term parameter adjustment toward target metrics
+    - Temporal modulation: Time-dependent gating of inhibitory strength
+
+Key Components:
+    SerotoninConfig: Complete parameter specification with validation
+    SerotoninState: Runtime state including tonic, phasic, and desensitization
+    SerotoninController: Main controller with thread-safe state management
+    gate_action: Apply inhibition to proposed trading actions
+
+The system uses a logistic function to convert composite risk signals into
+inhibition strength, with homeostatic mechanisms to prevent over-inhibition
+and meta-learning to tune parameters toward target Sharpe and drawdown levels.
+
+Features:
+    - Thread-safe state updates with RLock
+    - Persistent state snapshots to disk
+    - File-based locking for multi-process safety
+    - Meta-adaptation with gradient descent
+    - Configurable phasic burst dynamics
+
+Example:
+    >>> config = SerotoninConfig.from_yaml("serotonin.yaml")
+    >>> controller = SerotoninController(config)
+    >>> proposed_action = 0.5  # 50% long
+    >>> inhibited_action = controller.gate_action(
+    ...     proposed_action, vol=0.03, free_energy=2.0, losses=-0.05, rho=0.2
+    ... )
+"""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,34 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Trading strategy representation and evolutionary optimization.
+
+This module defines the Strategy abstraction used throughout the agent system,
+along with mutation operators for evolutionary parameter optimization. Strategies
+encapsulate both configuration parameters and performance metrics.
+
+Key Components:
+    Strategy: Core strategy representation with parameters and scoring
+    generate_mutation: Gaussian perturbation for parameter evolution
+    validate_params: Enforce parameter bounds and constraints
+    simulate_performance: Walk-forward evaluation with observability
+
+The Strategy class supports evolutionary optimization through mutation operators
+that perturb numeric parameters with controlled randomness. This enables gradient-
+free optimization of trading rules in non-stationary market environments.
+
+Performance simulation uses deterministic walk-forward validation to compute
+risk-adjusted returns. Results are instrumented with OpenTelemetry for production
+observability and debugging.
+
+Parameter Constraints:
+    - lookback: [5, 500] bars
+    - threshold: [0.0, 5.0] standard deviations
+    - risk_budget: [0.01, 10.0] Kelly fraction multiplier
+
+Example:
+    >>> strategy = Strategy("mean_reversion", {"lookback": 20, "threshold": 2.0})
+    >>> mutant = strategy.generate_mutation(scale=0.2)
+    >>> score = strategy.simulate_performance(price_data)
+"""
 from __future__ import annotations
 
 import math

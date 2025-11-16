@@ -1,3 +1,31 @@
+"""Streaming quantile estimation with deterministic insertion.
+
+This module provides a simple, deterministic streaming quantile estimator
+based on incremental sorted insertion. Unlike approximate algorithms like
+P² or t-digest, this implementation maintains exact quantiles by storing
+all observations in sorted order.
+
+Key Components:
+    P2Quantile: Streaming quantile tracker with O(n log n) insertion
+
+While this approach has higher memory requirements (O(n)) compared to
+approximate methods, it provides exact quantile values without tuning
+parameters or approximation errors. This makes it suitable for scenarios
+where exact quantiles are required and the data volume is manageable.
+
+The implementation uses Python's bisect module for efficient binary search
+insertion, minimizing the constant factors in the O(n log n) complexity.
+
+Example:
+    >>> tracker = P2Quantile(0.95)  # Track 95th percentile
+    >>> for value in data_stream:
+    ...     current_q95 = tracker.update(value)
+    >>> print(f"Final 95th percentile: {tracker.quantile:.3f}")
+
+Note:
+    For very large streams, consider approximate alternatives like
+    t-digest or P² algorithm with bounded memory.
+"""
 from __future__ import annotations
 
 import bisect
