@@ -24,6 +24,7 @@ Example:
     >>> result = analyzer.analyze(price_df)
     >>> print(f"Consensus R: {result.consensus_R:.3f}")
 """
+
 from __future__ import annotations
 
 import math
@@ -105,7 +106,9 @@ class FractalResampler:
     """
 
     series: pd.Series
-    _cache: MutableMapping[TimeFrame, pd.Series] = field(default_factory=dict, init=False)
+    _cache: MutableMapping[TimeFrame, pd.Series] = field(
+        default_factory=dict, init=False
+    )
     _cache_hits: int = field(default=0, init=False)
     _direct_resamples: int = field(default=0, init=False)
 
@@ -179,7 +182,11 @@ class FractalResampler:
                     raise
                 continue
 
-        return {timeframe: results[timeframe] for timeframe in unique_order if timeframe in results}
+        return {
+            timeframe: results[timeframe]
+            for timeframe in unique_order
+            if timeframe in results
+        }
 
     def stats(self) -> Mapping[str, float]:
         """Expose cache utilisation metrics for energy profiling."""

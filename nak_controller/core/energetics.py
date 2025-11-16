@@ -31,6 +31,7 @@ Example:
     >>> update_energy(state, params, obs, NA=0.3, DA=0.6, da_unexp=0.1)
     >>> ei = compute_EI(state, params, obs)
 """
+
 from __future__ import annotations
 
 from typing import Dict

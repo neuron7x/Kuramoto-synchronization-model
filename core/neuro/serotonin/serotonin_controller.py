@@ -36,8 +36,10 @@ Example:
     ...     proposed_action, vol=0.03, free_energy=2.0, losses=-0.05, rho=0.2
     ... )
 """
+
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 import math
@@ -47,7 +49,6 @@ from threading import RLock
 from time import time
 from typing import Callable, Mapping, Optional
 
-import fcntl
 import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -101,12 +102,8 @@ class SerotoninConfig(BaseModel):
     mod_t_max: float = Field(
         ..., gt=0.0, description="Time constant for modulation saturation"
     )
-    mod_t_half: float = Field(
-        ..., gt=0.0, description="Half-life for modulation decay"
-    )
-    mod_k: float = Field(
-        ..., description="Modulation gain", ge=-5.0, le=5.0
-    )
+    mod_t_half: float = Field(..., gt=0.0, description="Half-life for modulation decay")
+    mod_k: float = Field(..., description="Modulation gain", ge=-5.0, le=5.0)
     max_desens_counter: int = Field(
         ..., ge=1, description="Maximum desensitisation counter"
     )
@@ -176,7 +173,7 @@ def _generate_config_table(schema: dict) -> str:
 
 class SerotoninController:
     """SerotoninController v2.4.0 tonic–phasic stabiliser with TACL guardrails.
-    
+
     Enhanced version with improved action/rest potential dynamics:
     - Adaptive gate sensitivity based on tonic level
     - Non-linear phasic burst dynamics with saturation
@@ -227,7 +224,7 @@ class SerotoninController:
         self._file_lock_path = Path(self.config_path).with_suffix(".lock")
         self._cooldown_start_time: Optional[float] = None
         self._hold_state: bool = False
-        
+
         # Performance tracking
         self._step_count: int = 0
         self._total_cooldown_time: float = 0.0
@@ -241,7 +238,9 @@ class SerotoninController:
         return None
 
     @staticmethod
-    def prometheus_logger(collector: Callable[[str, float, Mapping[str, str]], None]) -> Callable[[str, float], None]:
+    def prometheus_logger(
+        collector: Callable[[str, float, Mapping[str, str]], None],
+    ) -> Callable[[str, float], None]:
         """Wrap a collector callable for Prometheus-style metrics."""
 
         def _log(name: str, value: float) -> None:
@@ -274,7 +273,9 @@ class SerotoninController:
                 cfg["decay_rate"],
             )
         if cfg.get("decay_rate") is None:
-            raise KeyError("decay_rate must be provided when tau_5ht_ms/step_ms are absent")
+            raise KeyError(
+                "decay_rate must be provided when tau_5ht_ms/step_ms are absent"
+            )
         floor_min = cfg["temperature_floor_min"]
         floor_max = cfg["temperature_floor_max"]
         if floor_min > floor_max:
@@ -287,7 +288,9 @@ class SerotoninController:
             self._tick_hours,
         )
 
-    def set_tacl_guard(self, guard_fn: Callable[[str, Mapping[str, float]], bool]) -> None:
+    def set_tacl_guard(
+        self, guard_fn: Callable[[str, Mapping[str, float]], bool]
+    ) -> None:
         """Inject a TACL guard to prevent free-energy regressions."""
 
         self._tacl_guard = guard_fn
@@ -338,7 +341,9 @@ class SerotoninController:
         if stress < 0:
             raise ValueError("stress must be non-negative")
         if drawdown > 0:
-            raise ValueError("drawdown should be negative or zero (e.g., -0.05 for 5% loss)")
+            raise ValueError(
+                "drawdown should be negative or zero (e.g., -0.05 for 5% loss)"
+            )
         if novelty < 0:
             raise ValueError("novelty must be non-negative")
 
@@ -378,8 +383,8 @@ class SerotoninController:
             if hold:
                 self._veto_count += 1
                 if cooldown_s > 0:
-                    self._total_cooldown_time += (
-                        current_time - (self._last_step_time or current_time)
+                    self._total_cooldown_time += current_time - (
+                        self._last_step_time or current_time
                     )
             self._last_step_time = current_time
 
@@ -409,7 +414,8 @@ class SerotoninController:
         legacy_candidate = Path("config") / candidate.name
         if legacy_candidate.is_file():
             logging.getLogger(__name__).warning(
-                "Using deprecated serotonin config path %s; migrate to configs/", legacy_candidate
+                "Using deprecated serotonin config path %s; migrate to configs/",
+                legacy_candidate,
             )
             return legacy_candidate
         raise FileNotFoundError(f"Serotonin configuration not found at {config_path}")
@@ -428,17 +434,19 @@ class SerotoninController:
         override_weights: Optional[Mapping[str, float]] = None,
     ) -> float:
         """Estimate aversive state from market conditions.
-        
+
         Combines multiple stress signals with configurable weights:
         - market_vol (alpha): External market volatility/uncertainty
         - free_energy (beta): Internal model uncertainty/surprise
         - cum_losses (gamma): Accumulated losses (pain signal)
         - rho_loss (delta_rho): Portfolio correlation losses
-        
+
         Enhanced with non-linear transformations for biological plausibility.
         """
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
-            raise ValueError("market_vol, free_energy and cum_losses must be non-negative")
+            raise ValueError(
+                "market_vol, free_energy and cum_losses must be non-negative"
+            )
 
         cfg = self.config
         if override_weights is not None:
@@ -451,31 +459,33 @@ class SerotoninController:
             beta = cfg["beta"]
             gamma = cfg["gamma"]
             delta_rho = cfg["delta_rho"]
-        
+
         # Clamp rho_loss to valid range
         rho_loss = max(-1.0, min(1.0, rho_loss))
-        
+
         # Apply non-linear transformations for better sensitivity
         # Square root for diminishing returns at high values (Weber-Fechner law)
         vol_contribution = alpha * math.sqrt(market_vol) if market_vol > 0 else 0.0
-        
+
         # Free energy uses linear scaling (uncertainty should be directly proportional)
         fe_contribution = beta * free_energy
-        
+
         # Cumulative losses use accelerating function (pain intensifies)
         # Use quadratic for losses to emphasize large drawdowns
-        loss_contribution = gamma * (cum_losses + 0.5 * cum_losses ** 2)
-        
+        loss_contribution = gamma * (cum_losses + 0.5 * cum_losses**2)
+
         # Rho-loss complement (decorrelation benefit)
         rho_contribution = delta_rho * (1.0 - rho_loss)
-        
+
         # Weighted sum with saturation
-        release = vol_contribution + fe_contribution + loss_contribution + rho_contribution
-        
+        release = (
+            vol_contribution + fe_contribution + loss_contribution + rho_contribution
+        )
+
         # Apply soft saturation to prevent unbounded growth
         # Using tanh-based saturation for smooth asymptotic behavior
         saturated = 3.0 * math.tanh(release / 3.0)
-        
+
         return float(max(0.0, saturated))
 
     def compute_serotonin_signal(self, aversive_state: float) -> float:
@@ -484,43 +494,49 @@ class SerotoninController:
 
         with self._lock:
             cfg = self.config
-            
+
             # Adaptive gate sensitivity based on current tonic level
             # Higher tonic → lower kappa → sharper gate response (better action onset)
             kappa_base = cfg["phase_kappa"]
             tonic_adaptation = 1.0 - 0.3 * min(self.tonic_level / 2.0, 1.0)
             kappa = kappa_base * tonic_adaptation
-            
+
             # Improved phasic gate with steeper sigmoid for sharper action potentials
             gate_raw = (aversive_state - cfg["phase_threshold"]) / kappa
             gate_raw = max(min(gate_raw, 20.0), -20.0)  # Numerical stability
             gate = 1.0 / (1.0 + math.exp(-gate_raw))
             self.gate_level = float(gate)
-            
+
             # Enhanced phasic component with saturation for realistic burst dynamics
             # Using Michaelis-Menten-like saturation for biological plausibility
             phasic_saturation = aversive_state / (1.0 + aversive_state)
             phasic_burst = cfg["burst_factor"] * gate * phasic_saturation
             # Add phasic decay to prevent accumulation
             self.phasic_level = float(0.7 * self.phasic_level + 0.3 * phasic_burst)
-            
+
             # Improved tonic dynamics with separate slow integration
             # Tonic should integrate slowly, phasic provides fast transients
             decay = cfg["decay_rate"]
             # Adaptive decay: faster when gate is low (rest), slower during action
-            effective_decay = decay * (1.0 - 0.3 * gate)  # Reduced from 0.4 to 0.3 for better integration
+            effective_decay = decay * (
+                1.0 - 0.3 * gate
+            )  # Reduced from 0.4 to 0.3 for better integration
             # Balance between direct aversive input and phasic contribution
             # Use 0.5 instead of 0.3 to maintain adequate tonic build-up
-            tonic_input = float(aversive_state) + 0.5 * phasic_burst  # Use burst not level for proper scaling
-            self.tonic_level = (1.0 - effective_decay) * self.tonic_level + effective_decay * tonic_input
-            
+            tonic_input = (
+                float(aversive_state) + 0.5 * phasic_burst
+            )  # Use burst not level for proper scaling
+            self.tonic_level = (
+                1.0 - effective_decay
+            ) * self.tonic_level + effective_decay * tonic_input
+
             # Enhanced sigmoid transformation with better numerical stability
             k = cfg["k"]
             theta = cfg["theta"]
             x = k * (self.tonic_level - theta)
             x = max(min(x, 60.0), -60.0)
             sig = 1.0 / (1.0 + math.exp(-x))
-            
+
             # Improved desensitization with exponential recovery curve
             max_counter = int(cfg["max_desens_counter"])
             if self.tonic_level > cfg["cooldown_threshold"]:
@@ -530,26 +546,31 @@ class SerotoninController:
                     desens_factor = 1.0 + 0.5 * (self.desens_counter / max_counter)
                     self.sensitivity = max(
                         0.1,
-                        self.sensitivity * math.exp(-cfg["desens_gain"] * sig * desens_factor),
+                        self.sensitivity
+                        * math.exp(-cfg["desens_gain"] * sig * desens_factor),
                     )
             else:
                 # Exponential recovery with temperature-dependent rate
                 # Faster recovery when well below threshold
-                recovery_boost = 1.0 + 0.5 * max(0.0, (cfg["cooldown_threshold"] - self.tonic_level) / cfg["cooldown_threshold"])
-                recovery_rate = cfg["desens_rate"] * recovery_boost
-                self.desens_counter = max(0, self.desens_counter - 2)  # Gradual counter decay
-                self.sensitivity = min(
-                    1.0, self.sensitivity + recovery_rate
+                recovery_boost = 1.0 + 0.5 * max(
+                    0.0,
+                    (cfg["cooldown_threshold"] - self.tonic_level)
+                    / cfg["cooldown_threshold"],
                 )
-            
+                recovery_rate = cfg["desens_rate"] * recovery_boost
+                self.desens_counter = max(
+                    0, self.desens_counter - 2
+                )  # Gradual counter decay
+                self.sensitivity = min(1.0, self.sensitivity + recovery_rate)
+
             # Final serotonin level with sensitivity modulation
             self.serotonin_level = float(sig * self.sensitivity)
-            
+
             # Enhanced temperature floor with smoother interpolation
             floor_min = cfg["temperature_floor_min"]
             floor_max = cfg["temperature_floor_max"]
             # Use cubic interpolation for smoother transitions
-            level_cubed = self.serotonin_level ** 3
+            level_cubed = self.serotonin_level**3
             self.temperature_floor = float(
                 floor_min + (floor_max - floor_min) * level_cubed
             )
@@ -562,12 +583,12 @@ class SerotoninController:
         za_bias: Optional[float] = None,
     ) -> float:
         """Apply serotonin-driven inhibition to an action probability.
-        
+
         Uses non-linear inhibition curve for biological realism:
         - Low serotonin: minimal inhibition (exploration/action allowed)
         - Medium serotonin: progressive inhibition (caution)
         - High serotonin: strong inhibition (rest/avoidance)
-        
+
         The inhibition follows a sigmoidal curve rather than linear suppression
         for more realistic neuromodulation dynamics.
         """
@@ -581,17 +602,19 @@ class SerotoninController:
                 serotonin_signal = self.serotonin_level
             if za_bias is None:
                 za_bias = cfg["za_bias"]
-            
+
             # Non-linear inhibition with sigmoidal curve
             # This creates a smooth transition from action to rest
             delta = cfg["delta"]
             # Transform linear signal to sigmoidal inhibition
-            inhibition_strength = serotonin_signal ** 2  # Quadratic for progressive effect
+            inhibition_strength = (
+                serotonin_signal**2
+            )  # Quadratic for progressive effect
             inhibition_factor = 1.0 - inhibition_strength * delta
-            
+
             # Apply inhibition
             inhibited = original_prob * max(0.0, inhibition_factor)
-            
+
             # Apply zero-action bias (preference for no action under uncertainty)
             # Use sigmoid-like bias application for smooth transitions
             if za_bias < 0:
@@ -600,19 +623,19 @@ class SerotoninController:
             else:
                 # Positive bias increases action probability (rare, but supported)
                 bias_factor = 1.0 + za_bias
-            
+
             biased = inhibited * bias_factor
-            
+
             return float(np.clip(biased, 0.0, 1.0))
 
     def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
         """Return ``True`` when the serotonin veto threshold is exceeded.
-        
+
         Implements hysteresis-based veto logic with multi-level thresholds:
         - Primary: serotonin_level > cooldown_threshold
         - Phasic burst: phasic_level > phasic_veto (fast transient detection)
         - Gate override: gate_level > gate_veto (sustained high stress)
-        
+
         Hysteresis prevents rapid oscillation at threshold boundaries by using
         slightly different thresholds for entering vs. exiting HOLD state.
         """
@@ -620,35 +643,39 @@ class SerotoninController:
         with self._lock:
             if serotonin_signal is None:
                 serotonin_signal = self.serotonin_level
-            
+
             cfg = self.config
-            
+
             # Hysteresis margins (5% of threshold for smooth transitions)
             hysteresis_margin = 0.05
-            
+
             # Calculate effective thresholds based on current hold state
             if self._hold_state:
                 # When in HOLD, require signal to drop below threshold - margin to exit
                 # This prevents premature exit from rest state
-                serotonin_threshold = cfg["cooldown_threshold"] * (1.0 - hysteresis_margin)
+                serotonin_threshold = cfg["cooldown_threshold"] * (
+                    1.0 - hysteresis_margin
+                )
                 phasic_threshold = cfg["phasic_veto"] * (1.0 - hysteresis_margin)
                 gate_threshold = cfg["gate_veto"] * (1.0 - hysteresis_margin)
             else:
                 # When active, require signal to exceed threshold + margin to enter HOLD
                 # This prevents premature entry to rest state
-                serotonin_threshold = cfg["cooldown_threshold"] * (1.0 + hysteresis_margin)
+                serotonin_threshold = cfg["cooldown_threshold"] * (
+                    1.0 + hysteresis_margin
+                )
                 phasic_threshold = cfg["phasic_veto"] * (1.0 + hysteresis_margin)
                 gate_threshold = cfg["gate_veto"] * (1.0 + hysteresis_margin)
-            
+
             # Multi-level veto with weighted contribution
             # Serotonin level is primary, phasic and gate provide additional signals
             serotonin_veto = serotonin_signal > serotonin_threshold
             phasic_veto = self.phasic_level > phasic_threshold
             gate_veto = self.gate_level > gate_threshold
-            
+
             # Combined veto decision with logical OR (any threshold triggers veto)
             veto = serotonin_veto or phasic_veto or gate_veto
-            
+
             # TACL guard validation for regulatory compliance
             if self._tacl_guard and veto:
                 payload = {
@@ -664,7 +691,7 @@ class SerotoninController:
                 self._log("serotonin_cooldown_guard", float(accepted))
                 if not accepted:
                     return False
-            
+
             return bool(veto)
 
     def apply_internal_shift(
@@ -674,13 +701,13 @@ class SerotoninController:
         beta_temper: Optional[float] = None,
     ) -> float:
         """Temper the exploitation gradient based on the serotonin signal.
-        
+
         High serotonin reduces exploitation (promotes exploration/caution).
         Uses non-linear tempering for smoother behavior:
         - Low serotonin: full exploitation allowed
         - Medium serotonin: gradual reduction in exploitation
         - High serotonin: strong suppression of exploitation
-        
+
         This implements the explore-exploit balance modulated by stress/uncertainty.
         """
 
@@ -692,15 +719,15 @@ class SerotoninController:
                 serotonin_signal = self.serotonin_level
             if beta_temper is None:
                 beta_temper = self.config["beta_temper"]
-            
+
             # Non-linear tempering with cubic function for smooth transitions
             # This provides gentle tempering at low levels, stronger at high levels
-            tempering_curve = serotonin_signal ** 1.5  # Power between 1 and 2 for balance
+            tempering_curve = serotonin_signal**1.5  # Power between 1 and 2 for balance
             tempering_factor = 1.0 - beta_temper * tempering_curve
-            
+
             # Ensure non-negative result
             tempered_gradient = exploitation_gradient * max(0.0, tempering_factor)
-            
+
             return float(tempered_gradient)
 
     def update_metrics(self) -> None:
@@ -831,10 +858,10 @@ class SerotoninController:
 
     def save_state(self, path: str) -> None:
         """Save controller state to a JSON file for recovery or analysis.
-        
+
         Args:
             path: Path to save the state file.
-            
+
         Example:
             >>> controller.save_state("state/serotonin_checkpoint.json")
         """
@@ -859,14 +886,14 @@ class SerotoninController:
 
     def load_state(self, path: str) -> None:
         """Load controller state from a JSON file.
-        
+
         Args:
             path: Path to the state file.
-            
+
         Raises:
             FileNotFoundError: If the state file does not exist.
             ValueError: If the state file is invalid or incompatible.
-            
+
         Example:
             >>> controller.load_state("state/serotonin_checkpoint.json")
         """
@@ -874,10 +901,10 @@ class SerotoninController:
             target = Path(path)
             if not target.exists():
                 raise FileNotFoundError(f"State file not found: {path}")
-            
+
             with open(target, "r", encoding="utf-8") as f:
                 state = json.load(f)
-            
+
             # Restore core state
             self.tonic_level = float(state.get("tonic_level", 0.0))
             self.sensitivity = float(state.get("sensitivity", 1.0))
@@ -885,29 +912,31 @@ class SerotoninController:
             self.serotonin_level = float(state.get("serotonin_level", 0.0))
             self.phasic_level = float(state.get("phasic_level", 0.0))
             self.gate_level = float(state.get("gate_level", 0.0))
-            self.temperature_floor = float(state.get("temperature_floor", self.config["temperature_floor_min"]))
+            self.temperature_floor = float(
+                state.get("temperature_floor", self.config["temperature_floor_min"])
+            )
             self._hold_state = bool(state.get("hold_state", False))
-            
+
             # Restore metadata if available
             metadata = state.get("_metadata", {})
             self._step_count = int(metadata.get("step_count", 0))
             self._total_cooldown_time = float(metadata.get("total_cooldown_time", 0.0))
             self._veto_count = int(metadata.get("veto_count", 0))
-            
+
             # Reset cooldown start time (don't persist absolute time)
             if self._hold_state:
                 self._cooldown_start_time = time()
             else:
                 self._cooldown_start_time = None
-            
+
             logging.getLogger(__name__).info("Loaded state from %s", path)
 
     def reset(self) -> None:
         """Reset controller state to initial conditions.
-        
+
         Useful for testing, recovery after errors, or starting a new trading session.
         Config parameters are preserved.
-        
+
         Example:
             >>> controller.reset()
             >>> assert controller.serotonin_level == 0.0
@@ -930,10 +959,10 @@ class SerotoninController:
 
     def health_check(self) -> dict:
         """Perform a health check and return diagnostic information.
-        
+
         Returns:
             Dictionary with health status and diagnostics.
-            
+
         Example:
             >>> health = controller.health_check()
             >>> if not health["healthy"]:
@@ -942,7 +971,7 @@ class SerotoninController:
         with self._lock:
             issues = []
             warnings = []
-            
+
             # Check for stuck in HOLD state
             if self._hold_state and self._cooldown_start_time is not None:
                 cooldown_duration = time() - self._cooldown_start_time
@@ -950,23 +979,27 @@ class SerotoninController:
                     issues.append(f"Stuck in HOLD for {cooldown_duration:.0f}s")
                 elif cooldown_duration > 600:  # 10 minutes
                     warnings.append(f"Extended HOLD duration: {cooldown_duration:.0f}s")
-            
+
             # Check sensitivity
             if self.sensitivity < 0.2:
                 warnings.append(f"Low sensitivity: {self.sensitivity:.3f}")
-            
+
             # Check desensitization counter
             if self.desens_counter > 0.8 * self.config["max_desens_counter"]:
-                warnings.append(f"High desens counter: {self.desens_counter}/{self.config['max_desens_counter']}")
-            
+                warnings.append(
+                    f"High desens counter: {self.desens_counter}/{self.config['max_desens_counter']}"
+                )
+
             # Check serotonin level
             if self.serotonin_level > 0.95:
-                warnings.append(f"Very high serotonin level: {self.serotonin_level:.3f}")
-            
+                warnings.append(
+                    f"Very high serotonin level: {self.serotonin_level:.3f}"
+                )
+
             # Check config validity
             if self.config["decay_rate"] <= 0 or self.config["decay_rate"] > 1:
                 issues.append(f"Invalid decay_rate: {self.config['decay_rate']}")
-            
+
             return {
                 "healthy": len(issues) == 0,
                 "issues": issues,
@@ -982,10 +1015,10 @@ class SerotoninController:
 
     def get_performance_metrics(self) -> dict:
         """Get performance and usage statistics.
-        
+
         Returns:
             Dictionary with performance metrics.
-            
+
         Example:
             >>> metrics = controller.get_performance_metrics()
             >>> print(f"Total steps: {metrics['step_count']}")
@@ -994,11 +1027,11 @@ class SerotoninController:
             avg_cooldown = 0.0
             if self._veto_count > 0:
                 avg_cooldown = self._total_cooldown_time / self._veto_count
-            
+
             veto_rate = 0.0
             if self._step_count > 0:
                 veto_rate = self._veto_count / self._step_count
-            
+
             return {
                 "step_count": self._step_count,
                 "veto_count": self._veto_count,
@@ -1010,10 +1043,10 @@ class SerotoninController:
 
     def diagnose(self) -> str:
         """Generate a diagnostic report for troubleshooting.
-        
+
         Returns:
             Formatted diagnostic string.
-            
+
         Example:
             >>> print(controller.diagnose())
         """
@@ -1039,26 +1072,26 @@ class SerotoninController:
                 "",
                 "Performance Metrics:",
             ]
-            
+
             metrics = self.get_performance_metrics()
             for key, value in metrics.items():
                 if isinstance(value, float):
                     lines.append(f"  {key}: {value:.4f}")
                 else:
                     lines.append(f"  {key}: {value}")
-            
+
             lines.append("")
             health = self.health_check()
             lines.append(f"Health: {'OK' if health['healthy'] else 'ISSUES DETECTED'}")
-            if health['issues']:
+            if health["issues"]:
                 lines.append("Issues:")
-                for issue in health['issues']:
+                for issue in health["issues"]:
                     lines.append(f"  - {issue}")
-            if health['warnings']:
+            if health["warnings"]:
                 lines.append("Warnings:")
-                for warning in health['warnings']:
+                for warning in health["warnings"]:
                     lines.append(f"  - {warning}")
-            
+
             return "\n".join(lines)
 
     def __enter__(self):
