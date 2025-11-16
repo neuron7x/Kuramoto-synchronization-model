@@ -25,7 +25,7 @@ def queue_imbalance(bid_sizes: Sequence[float], ask_sizes: Sequence[float]) -> f
         Queue imbalance in range [-1, 1]. Positive values indicate more bid
         volume, negative indicates more ask volume. Returns 0.0 if total
         volume is zero or inputs are invalid.
-        
+
     Raises
     ------
     ValueError
@@ -35,10 +35,10 @@ def queue_imbalance(bid_sizes: Sequence[float], ask_sizes: Sequence[float]) -> f
         raise ValueError("bid_sizes must not be empty")
     if len(ask_sizes) == 0:
         raise ValueError("ask_sizes must not be empty")
-    
+
     bid_arr = np.asarray(bid_sizes, dtype=float)
     ask_arr = np.asarray(ask_sizes, dtype=float)
-    
+
     if not np.all(np.isfinite(bid_arr)):
         raise ValueError("bid_sizes must contain only finite values")
     if not np.all(np.isfinite(ask_arr)):
@@ -54,10 +54,10 @@ def queue_imbalance(bid_sizes: Sequence[float], ask_sizes: Sequence[float]) -> f
 
 def kyles_lambda(returns: Sequence[float], signed_volume: Sequence[float]) -> float:
     """Estimate Kyle's lambda using a least squares regression.
-    
+
     Kyle's lambda measures price impact per unit of signed volume, representing
     the market's price response to informed trading.
-    
+
     Parameters
     ----------
     returns : Sequence[float]
@@ -65,24 +65,24 @@ def kyles_lambda(returns: Sequence[float], signed_volume: Sequence[float]) -> fl
     signed_volume : Sequence[float]
         Time series of signed (directional) trading volume.
         Positive for buyer-initiated, negative for seller-initiated.
-    
+
     Returns
     -------
     float
         Estimated Kyle's lambda coefficient. Returns 0.0 if the regression
         cannot be computed due to insufficient data or zero volume variance.
-        
+
     Raises
     ------
     ValueError
         If input sequences have different lengths or are empty.
-        
+
     Notes
     -----
     The metric regresses returns on signed volume to estimate price impact.
     Higher values indicate greater price impact per unit of volume, suggesting
     lower market liquidity or presence of informed traders.
-    
+
     References
     ----------
     Kyle, A. S. (1985). "Continuous Auctions and Insider Trading."
@@ -123,31 +123,31 @@ def hasbrouck_information_impulse(
     rescaling) of the input data, which is desirable for downstream property
     tests that compare relative information content rather than absolute
     magnitudes.
-    
+
     Parameters
     ----------
     returns : Sequence[float]
         Time series of price returns. Must have the same length as signed_volume.
     signed_volume : Sequence[float]
         Time series of signed (directional) trading volume.
-    
+
     Returns
     -------
     float
         Information impulse response coefficient in range [-1, 1].
         Returns 0.0 if computation cannot be performed due to zero variance
         or insufficient data.
-        
+
     Raises
     ------
     ValueError
         If input sequences have different lengths or are empty.
-        
+
     Notes
     -----
     This metric quantifies how much price changes contain information about
     order flow. Higher absolute values suggest greater price informativeness.
-    
+
     References
     ----------
     Hasbrouck, J. (1991). "Measuring the Information Content of Stock Trades."
