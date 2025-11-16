@@ -4,14 +4,24 @@ Provides endpoints for:
 - Toggling kill-switch
 - Inspecting risk compliance state
 - Circuit breaker state
+
+Security features:
+- Bearer token authentication
+- Rate limiting
+- CORS protection
+- Security headers
+- Localhost-only binding by default
 """
 
 from __future__ import annotations
 
 import os
+import time
+from collections import defaultdict
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Security, status
+from fastapi import FastAPI, HTTPException, Request, Security, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
@@ -19,6 +29,9 @@ __all__ = ["create_admin_app", "KillSwitchRequest", "RiskStateResponse"]
 
 
 security = HTTPBearer()
+
+# Simple in-memory rate limiting (for production, use Redis)
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 
 class KillSwitchRequest(BaseModel):
@@ -73,6 +86,34 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     return True
 
 
+def rate_limit_check(identifier: str, max_calls: int = 10, window: int = 60) -> bool:
+    """Simple rate limiting implementation.
+    
+    Args:
+        identifier: Unique identifier for rate limiting (e.g., IP address)
+        max_calls: Maximum number of calls allowed in the window
+        window: Time window in seconds
+    
+    Returns:
+        True if rate limit is not exceeded, False otherwise
+    """
+    now = time.time()
+    cutoff = now - window
+    
+    # Clean old entries
+    _rate_limit_store[identifier] = [
+        ts for ts in _rate_limit_store[identifier] if ts > cutoff
+    ]
+    
+    # Check rate limit
+    if len(_rate_limit_store[identifier]) >= max_calls:
+        return False
+    
+    # Record this request
+    _rate_limit_store[identifier].append(now)
+    return True
+
+
 def create_admin_app(
     risk_compliance: Optional[object] = None,
     circuit_breaker: Optional[object] = None,
@@ -84,13 +125,60 @@ def create_admin_app(
         circuit_breaker: CircuitBreaker instance (optional)
 
     Returns:
-        FastAPI application
+        FastAPI application with security middleware
+        
+    Security:
+        - Rate limiting: 10 requests per minute per IP
+        - CORS: Restricted to same origin by default
+        - Authentication: Bearer token required for all admin endpoints
+        - Security headers: HSTS, CSP, X-Frame-Options, etc.
     """
     app = FastAPI(
         title="TradePulse Admin API",
         description="Secure admin endpoints for risk controls",
         version="1.0.0",
     )
+    
+    # Add CORS middleware with restrictive defaults
+    allowed_origins = os.environ.get(
+        "ADMIN_API_CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:8000"
+    ).split(",")
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+    
+    # Add security headers middleware
+    @app.middleware("http")
+    async def add_security_headers(request: Request, call_next):
+        """Add security headers to all responses."""
+        # Check rate limit
+        client_ip = request.client.host if request.client else "unknown"
+        rate_limit_max = int(os.environ.get("ADMIN_API_RATE_LIMIT_MAX", "10"))
+        rate_limit_window = int(os.environ.get("ADMIN_API_RATE_LIMIT_WINDOW", "60"))
+        
+        if not rate_limit_check(client_ip, rate_limit_max, rate_limit_window):
+            return HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limit exceeded. Please try again later.",
+            )
+        
+        response = await call_next(request)
+        
+        # Add security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        
+        return response
 
     @app.post("/admin/risk/kill_switch", status_code=status.HTTP_200_OK)
     def toggle_kill_switch(
@@ -165,4 +253,8 @@ if __name__ == "__main__":
     import uvicorn
 
     app = create_admin_app()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Security: Only bind to localhost by default in production
+    # Set ADMIN_API_HOST environment variable to override
+    host = os.environ.get("ADMIN_API_HOST", "127.0.0.1")
+    port = int(os.environ.get("ADMIN_API_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

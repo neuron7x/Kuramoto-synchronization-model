@@ -16,11 +16,36 @@ def queue_imbalance(bid_sizes: Sequence[float], ask_sizes: Sequence[float]) -> f
     ----------
     bid_sizes, ask_sizes:
         Sequences of resting volume at the bid and ask.  The function accepts
-        either level aggregates or individual order sizes.
-    """
+        either level aggregates or individual order sizes. Must be non-empty
+        sequences of finite numeric values.
 
-    bid_total = float(np.sum(np.clip(bid_sizes, a_min=0.0, a_max=None)))
-    ask_total = float(np.sum(np.clip(ask_sizes, a_min=0.0, a_max=None)))
+    Returns
+    -------
+    float
+        Queue imbalance in range [-1, 1]. Positive values indicate more bid
+        volume, negative indicates more ask volume. Returns 0.0 if total
+        volume is zero or inputs are invalid.
+        
+    Raises
+    ------
+    ValueError
+        If bid_sizes or ask_sizes is empty or contains non-finite values.
+    """
+    if len(bid_sizes) == 0:
+        raise ValueError("bid_sizes must not be empty")
+    if len(ask_sizes) == 0:
+        raise ValueError("ask_sizes must not be empty")
+    
+    bid_arr = np.asarray(bid_sizes, dtype=float)
+    ask_arr = np.asarray(ask_sizes, dtype=float)
+    
+    if not np.all(np.isfinite(bid_arr)):
+        raise ValueError("bid_sizes must contain only finite values")
+    if not np.all(np.isfinite(ask_arr)):
+        raise ValueError("ask_sizes must contain only finite values")
+
+    bid_total = float(np.sum(np.clip(bid_arr, a_min=0.0, a_max=None)))
+    ask_total = float(np.sum(np.clip(ask_arr, a_min=0.0, a_max=None)))
     denom = bid_total + ask_total
     if denom <= 0.0:
         return 0.0
@@ -28,7 +53,47 @@ def queue_imbalance(bid_sizes: Sequence[float], ask_sizes: Sequence[float]) -> f
 
 
 def kyles_lambda(returns: Sequence[float], signed_volume: Sequence[float]) -> float:
-    """Estimate Kyle's lambda using a least squares regression."""
+    """Estimate Kyle's lambda using a least squares regression.
+    
+    Kyle's lambda measures price impact per unit of signed volume, representing
+    the market's price response to informed trading.
+    
+    Parameters
+    ----------
+    returns : Sequence[float]
+        Time series of price returns. Must have the same length as signed_volume.
+    signed_volume : Sequence[float]
+        Time series of signed (directional) trading volume.
+        Positive for buyer-initiated, negative for seller-initiated.
+    
+    Returns
+    -------
+    float
+        Estimated Kyle's lambda coefficient. Returns 0.0 if the regression
+        cannot be computed due to insufficient data or zero volume variance.
+        
+    Raises
+    ------
+    ValueError
+        If input sequences have different lengths or are empty.
+        
+    Notes
+    -----
+    The metric regresses returns on signed volume to estimate price impact.
+    Higher values indicate greater price impact per unit of volume, suggesting
+    lower market liquidity or presence of informed traders.
+    
+    References
+    ----------
+    Kyle, A. S. (1985). "Continuous Auctions and Insider Trading."
+    Econometrica, 53(6), 1315-1335.
+    """
+    if len(returns) == 0:
+        raise ValueError("returns must not be empty")
+    if len(signed_volume) == 0:
+        raise ValueError("signed_volume must not be empty")
+    if len(returns) != len(signed_volume):
+        raise ValueError("returns and signed_volume must have the same length")
 
     r = np.asarray(list(returns), dtype=float)
     q = np.asarray(list(signed_volume), dtype=float)
@@ -58,7 +123,42 @@ def hasbrouck_information_impulse(
     rescaling) of the input data, which is desirable for downstream property
     tests that compare relative information content rather than absolute
     magnitudes.
+    
+    Parameters
+    ----------
+    returns : Sequence[float]
+        Time series of price returns. Must have the same length as signed_volume.
+    signed_volume : Sequence[float]
+        Time series of signed (directional) trading volume.
+    
+    Returns
+    -------
+    float
+        Information impulse response coefficient in range [-1, 1].
+        Returns 0.0 if computation cannot be performed due to zero variance
+        or insufficient data.
+        
+    Raises
+    ------
+    ValueError
+        If input sequences have different lengths or are empty.
+        
+    Notes
+    -----
+    This metric quantifies how much price changes contain information about
+    order flow. Higher absolute values suggest greater price informativeness.
+    
+    References
+    ----------
+    Hasbrouck, J. (1991). "Measuring the Information Content of Stock Trades."
+    Journal of Finance, 46(1), 179-207.
     """
+    if len(returns) == 0:
+        raise ValueError("returns must not be empty")
+    if len(signed_volume) == 0:
+        raise ValueError("signed_volume must not be empty")
+    if len(returns) != len(signed_volume):
+        raise ValueError("returns and signed_volume must have the same length")
 
     r = np.asarray(list(returns), dtype=float)
     q = np.asarray(list(signed_volume), dtype=float)

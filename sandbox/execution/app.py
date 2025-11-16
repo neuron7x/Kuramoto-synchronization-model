@@ -32,13 +32,29 @@ class HttpRiskGateway(RiskGatewayProtocol):
 
 
 class ControlAuditLogger(AuditLoggerProtocol):
+    """Audit logger that sends events to the control service.
+    
+    Falls back gracefully on communication errors to avoid disrupting
+    execution flow.
+    """
     def __init__(self, client: ControlClient) -> None:
         self._client = client
 
     async def emit(self, event: AuditEvent) -> None:
+        """Emit audit event to control service.
+        
+        Catches and suppresses network errors to avoid disrupting execution.
+        In production, these errors should be logged to a local fallback.
+        """
         try:
             await self._client.emit_audit_event(event)
-        except Exception:  # pragma: no cover - control channel fallback
+        except (ConnectionError, TimeoutError, OSError) as error:  # pragma: no cover
+            # Control channel fallback - suppress network errors
+            # In production, log to local fallback storage
+            import logging
+            logging.getLogger(__name__).warning(
+                f"Failed to emit audit event: {error}. Event: {event.event_type}"
+            )
             return
 
 
