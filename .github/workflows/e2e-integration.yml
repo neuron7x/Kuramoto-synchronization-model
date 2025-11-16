@@ -6,6 +6,12 @@ permissions:
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'tests/e2e/**'
+      - 'tests/integration/**'
+      - 'core/**'
+      - 'backtest/**'
+      - 'execution/**'
   workflow_dispatch:
 
 concurrency:

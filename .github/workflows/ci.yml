@@ -4,10 +4,7 @@ permissions:
   contents: read
 
 on:
-  pull_request:
-    branches:
-      # Run coverage checks for every PR regardless of target branch.
-      - '**'
+  # Only run on push to main - PR testing is handled by tests.yml
   push:
     branches: [main]
 

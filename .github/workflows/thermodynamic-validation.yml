@@ -4,14 +4,8 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    paths:
-      - 'tacl/**'
-      - '.github/workflows/thermodynamic-validation.yml'
-      - 'ci/**'
-      - 'configs/**'
-      - 'docs/**'
-      - 'tests/**'
+  # PRs disabled - thermodynamic validation only needed for main branch merges
+  # Reduces CI overhead for development PRs
   workflow_dispatch:
 
 permissions:

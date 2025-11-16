@@ -12,14 +12,8 @@ on:
       - '**.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
-  pull_request:
-    branches:
-      # Enforce secret and dependency scans on every PR for consistent coverage.
-      - '**'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
+  # PRs disabled - security-policy-enforcement.yml handles PR security checks
+  # This reduces redundancy while maintaining security standards
   schedule:
     # Run weekly on Monday at 00:00 UTC
     - cron: '0 0 * * 1'

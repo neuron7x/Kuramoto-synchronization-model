@@ -1,12 +1,13 @@
-name: PR Quality Labels
+# DISABLED: Label management consolidated in pr-release-gate.yml and tests.yml
+# This reduces redundancy and CI minutes usage
+name: PR Quality Labels (DISABLED)
 
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - labels managed by pr-release-gate.yml'
+        required: false
 
 permissions:
   contents: read

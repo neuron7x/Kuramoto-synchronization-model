@@ -1,4 +1,6 @@
-name: PR Complexity & Size Analysis
+# DISABLED: Complexity analysis is redundant with pr-release-gate.yml risk assessment
+# This reduces CI overhead for solo developer workflow
+name: PR Complexity & Size Analysis (DISABLED)
 
 permissions:
   contents: read
@@ -6,9 +8,11 @@ permissions:
   issues: write
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main, develop]
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - risk assessment in pr-release-gate.yml'
+        required: false
 
 concurrency:
   group: pr-complexity-${{ github.workflow }}-${{ github.event.pull_request.number }}

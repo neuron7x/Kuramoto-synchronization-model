@@ -1,11 +1,8 @@
 name: Performance Load Tests
 
 on:
-  pull_request:
-    paths:
-      - 'deploy/**'
-      - 'loadtests/**'
-      - '.github/workflows/load-test.yml'
+  # Disabled on PRs - load tests are expensive and only needed before releases
+  # Re-enable by uncommenting pull_request trigger if needed
   workflow_dispatch:
 
 permissions:
