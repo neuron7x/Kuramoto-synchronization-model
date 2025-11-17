@@ -47,6 +47,8 @@ nav:
   - Core Concepts:
       - Architecture:
           - Architecture Blueprint: ARCHITECTURE.md
+          - Conceptual Architecture: architecture/CONCEPTUAL_ARCHITECTURE.md
+          - Conceptual Architecture (UA): CONCEPTUAL_ARCHITECTURE_UA.md
           - System Diagrams: architecture/system_overview.md
           - Feature Store: architecture/feature_store.md
           - Architecture Review Program: architecture/architecture_review_program.md
