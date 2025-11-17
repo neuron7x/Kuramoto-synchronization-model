@@ -1,0 +1,45 @@
+"""Architecture Integrator for TradePulse.
+
+This module provides centralized coordination and integration of architectural
+components across the TradePulse system. The Architecture Integrator serves as
+a unified orchestration layer that manages component lifecycles, validates
+architectural constraints, and ensures proper integration between subsystems.
+
+Key responsibilities:
+- Component registration and discovery
+- Dependency graph management and validation
+- Configuration consistency across components
+- Health check aggregation and monitoring
+- Lifecycle coordination (initialization, startup, shutdown)
+- Event-driven inter-component communication
+- Architecture compliance validation
+
+Example:
+    >>> from core.architecture_integrator import ArchitectureIntegrator
+    >>> integrator = ArchitectureIntegrator()
+    >>> integrator.register_component("data_ingestion", data_service)
+    >>> integrator.initialize_all()
+    >>> health = integrator.aggregate_health()
+"""
+
+from core.architecture_integrator.integrator import ArchitectureIntegrator
+from core.architecture_integrator.component import (
+    Component,
+    ComponentHealth,
+    ComponentStatus,
+    ComponentMetadata,
+)
+from core.architecture_integrator.registry import ComponentRegistry
+from core.architecture_integrator.lifecycle import LifecycleManager
+from core.architecture_integrator.validator import ArchitectureValidator
+
+__all__ = [
+    "ArchitectureIntegrator",
+    "Component",
+    "ComponentHealth",
+    "ComponentStatus",
+    "ComponentMetadata",
+    "ComponentRegistry",
+    "LifecycleManager",
+    "ArchitectureValidator",
+]
