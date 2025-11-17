@@ -10,14 +10,14 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from runtime.energy_validator import EnergyConfig, EnergyValidator
 
 
 def load_metrics_from_json(path: Path) -> List[Dict[str, float]]:
     """Load metrics from JSON file.
-    
+
     Expected format:
     {
         "metrics": [

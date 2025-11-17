@@ -5,7 +5,6 @@ Tests that recordings are valid, reproducible, and suitable for
 dopamine loop testing (TD(0) RPE, DDM, Go/No-Go).
 """
 
-from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -173,7 +172,7 @@ class TestDDMIntegration:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(
+            MarketFeedRecording.read_jsonl(
                 FIXTURES_DIR / recording_name
             )
 

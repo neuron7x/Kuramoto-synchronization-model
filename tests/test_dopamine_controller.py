@@ -99,7 +99,7 @@ def controller(tmp_path, config_dict: Dict[str, object]) -> DopamineController:
 
 def test_configuration_validation_missing_key(tmp_path) -> None:
     """Test that DopamineController rejects incomplete configuration.
-    
+
     The controller requires all mandatory configuration keys to be present.
     Missing keys should raise ValueError with a descriptive error message.
     """
@@ -113,7 +113,7 @@ def test_configuration_validation_missing_key(tmp_path) -> None:
 
 def test_configuration_validation_ranges(tmp_path, config_dict: Dict[str, object]) -> None:
     """Test that DopamineController validates parameter ranges.
-    
+
     Parameters must be within valid ranges (e.g., delta_gain must be <= 1.0).
     Out-of-range values should raise ValueError.
     """
@@ -127,11 +127,11 @@ def test_configuration_validation_ranges(tmp_path, config_dict: Dict[str, object
 
 def test_estimate_appetitive_state_with_abs_rpe(controller: DopamineController) -> None:
     """Test appetitive state estimation with absolute RPE novelty mode.
-    
+
     The appetitive state combines reward, novelty (based on abs RPE),
     motivation, and value with configured weights. This test validates
     the weighted sum computation.
-    
+
     Validates:
     - Novelty is computed from absolute RPE
     - All four components are correctly weighted
@@ -154,7 +154,7 @@ def test_estimate_appetitive_state_with_abs_rpe(controller: DopamineController) 
 
 def test_appetitive_state_rejects_negative(controller: DopamineController) -> None:
     """Test that negative reward values are rejected.
-    
+
     The appetitive state estimation should validate that reward is non-negative,
     as negative rewards indicate an error in the reward computation logic.
     """
@@ -164,10 +164,10 @@ def test_appetitive_state_rejects_negative(controller: DopamineController) -> No
 
 def test_compute_rpe_sign_and_magnitude(controller: DopamineController) -> None:
     """Test reward prediction error (RPE) computation and value update.
-    
+
     RPE = reward + gamma * next_value - value
     The value estimate should be updated via: value += learning_rate * RPE
-    
+
     Validates:
     - RPE has correct sign and magnitude
     - Value estimate is updated correctly
@@ -190,10 +190,10 @@ def test_compute_rpe_sign_and_magnitude(controller: DopamineController) -> None:
 
 def test_dopamine_signal_clamped_and_stable(controller: DopamineController) -> None:
     """Test that dopamine signal is clamped to [0, 1] range.
-    
+
     Even with extreme RPE values, the dopamine signal should remain bounded
     to prevent numerical instability in downstream computations.
-    
+
     Validates:
     - High RPE values produce clamped dopamine signal
     - Low RPE values produce clamped dopamine signal
@@ -213,10 +213,10 @@ def test_dopamine_signal_clamped_and_stable(controller: DopamineController) -> N
 
 def test_temperature_monotonic_decrease(controller: DopamineController) -> None:
     """Test that temperature decreases monotonically with dopamine signal.
-    
+
     Higher dopamine signals (indicating better outcomes) should reduce
     exploration temperature, favoring exploitation of known good actions.
-    
+
     Validates:
     - Temperature decreases as dopamine increases
     - Monotonic relationship is maintained
@@ -234,10 +234,10 @@ def test_temperature_monotonic_decrease(controller: DopamineController) -> None:
 
 def test_negative_rpe_increases_temperature(controller: DopamineController) -> None:
     """Test that negative RPE increases exploration temperature.
-    
+
     When outcomes are worse than expected (negative RPE), the system should
     increase exploration to find better alternatives.
-    
+
     Validates:
     - Negative RPE triggers temperature increase
     - Temperature adjustment is applied correctly
@@ -255,10 +255,10 @@ def test_negative_rpe_increases_temperature(controller: DopamineController) -> N
 
 def test_modulate_action_value(controller: DopamineController) -> None:
     """Test action value modulation via dopamine signal.
-    
+
     Dopamine modulates Q-values: Q_mod = Q * (1 + delta_gain * (DA - baseline))
     High dopamine boosts action values (invigoration), low dopamine reduces them.
-    
+
     Validates:
     - Modulation formula is applied correctly
     - High dopamine amplifies action values
@@ -274,10 +274,10 @@ def test_modulate_action_value(controller: DopamineController) -> None:
 
 def test_go_no_go_thresholds(controller: DopamineController) -> None:
     """Test invigoration and suppression threshold gates.
-    
+
     Dopamine above invigoration threshold promotes action initiation (go).
     Dopamine below suppression threshold inhibits actions (no-go).
-    
+
     Validates:
     - Invigoration threshold correctly identifies high dopamine states
     - Suppression threshold correctly identifies low dopamine states
@@ -299,10 +299,10 @@ def test_go_no_go_thresholds(controller: DopamineController) -> None:
 
 def test_meta_adapt_respects_cooldown(controller: DopamineController) -> None:
     """Test that meta-adaptation respects cooldown period.
-    
+
     Meta-adaptation adjusts controller parameters based on performance metrics.
     Cooldown prevents rapid oscillations from consecutive adaptations.
-    
+
     Validates:
     - Good performance increases learning rate
     - Cooldown prevents immediate re-adaptation
@@ -332,10 +332,10 @@ def test_meta_adapt_respects_cooldown(controller: DopamineController) -> None:
 
 def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
     """Test state persistence: dump, reset, and load operations.
-    
+
     The controller should support saving internal state, resetting to defaults,
     and restoring saved state for checkpointing and recovery.
-    
+
     Validates:
     - State can be dumped after operations
     - Reset clears all internal state

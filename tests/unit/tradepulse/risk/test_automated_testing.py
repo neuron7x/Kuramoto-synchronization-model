@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 # First load risk_core
 risk_core_spec = importlib.util.spec_from_file_location(

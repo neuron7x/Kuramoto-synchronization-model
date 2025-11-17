@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import yaml
 
@@ -235,10 +235,10 @@ class ThermoConfig:
     @classmethod
     def from_yaml(cls, path: str | Path) -> ThermoConfig:
         """Load configuration from YAML file.
-        
+
         Args:
             path: Path to YAML configuration file
-            
+
         Returns:
             ThermoConfig instance
         """
@@ -285,7 +285,7 @@ class ThermoConfig:
     @classmethod
     def from_env(cls) -> ThermoConfig:
         """Load configuration from environment variables.
-        
+
         Returns:
             ThermoConfig instance with values overridden by environment
         """
@@ -306,7 +306,7 @@ class ThermoConfig:
 
     def to_dict(self) -> Dict:
         """Convert configuration to dictionary.
-        
+
         Returns:
             Dictionary representation
         """
@@ -333,7 +333,7 @@ class ThermoConfig:
 
     def export_yaml(self, path: str | Path) -> None:
         """Export configuration to YAML file.
-        
+
         Args:
             path: Path to output YAML file
         """
@@ -343,9 +343,9 @@ class ThermoConfig:
 
 def load_default_config() -> ThermoConfig:
     """Load default thermodynamics configuration.
-    
+
     Attempts to load from file, falls back to defaults.
-    
+
     Returns:
         ThermoConfig instance
     """

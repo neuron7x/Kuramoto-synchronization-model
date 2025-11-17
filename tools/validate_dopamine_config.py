@@ -37,7 +37,7 @@ def load_config(config_path: Path) -> dict[str, Any]:
 
 def validate_config(config: dict[str, Any], schema: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate config against schema.
-    
+
     Returns:
         (is_valid, error_messages)
     """
@@ -54,7 +54,7 @@ def validate_config(config: dict[str, Any], schema: dict[str, Any]) -> tuple[boo
 
 def validate_semantic_rules(config: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate semantic rules not covered by JSON schema.
-    
+
     These are constraints that require comparing multiple fields.
     """
     errors = []

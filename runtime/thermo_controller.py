@@ -44,7 +44,6 @@ from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from rl.replay.sleep_engine import SleepReplayEngine
 from runtime.behavior_contract import (
     ActionClass,
-    SystemState,
     get_current_state,
     tacl_gate,
 )

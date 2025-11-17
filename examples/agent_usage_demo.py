@@ -10,7 +10,6 @@ This example shows how to use the various components of the agent system:
 - Scheduling for periodic execution
 """
 
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd

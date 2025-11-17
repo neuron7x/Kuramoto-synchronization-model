@@ -3,7 +3,7 @@
 
 Usage:
     python tools/migrate_dopamine_config.py <input_config.yaml> [output_config.yaml]
-    
+
 If output is not specified, prints to stdout.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ import yaml
 
 def migrate_2_2_to_1_0(config: Dict[str, Any]) -> Dict[str, Any]:
     """Migrate from version 2.2.x to 1.0.0.
-    
+
     Version 1.0.0 is the new production schema with standardized naming
     and additional safety parameters.
     """

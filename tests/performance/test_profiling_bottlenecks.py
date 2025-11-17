@@ -5,8 +5,6 @@ in critical trading system components.
 """
 
 import time
-from typing import Dict, List
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -101,7 +99,7 @@ class TestPerformanceBottleneckDetection:
         tracemalloc.start()
 
         # Allocate memory
-        data = [i for i in range(1000000)]
+        [i for i in range(1000000)]
 
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
@@ -164,7 +162,7 @@ class TestPerformanceBenchmarks:
         # Simulate order processing
         for i in range(10000):
             # Minimal processing
-            order = {"id": i, "price": 100 + i * 0.01, "size": 10}
+            {"id": i, "price": 100 + i * 0.01, "size": 10}
             orders_processed += 1
 
         elapsed = time.perf_counter() - start
@@ -223,7 +221,6 @@ class TestMemoryProfiling:
 
         # Take snapshots during allocation
         for i in range(5):
-            data = [0] * 100000
             current, peak = tracemalloc.get_traced_memory()
             snapshots.append(current)
 

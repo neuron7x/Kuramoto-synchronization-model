@@ -31,10 +31,10 @@ class TestNumericalEdgeCases:
 
     def test_kuramoto_order_handles_constant_prices(self) -> None:
         """Test that kuramoto_order handles zero-variance phase series.
-        
+
         Constant phases can cause issues in synchronization calculations.
         The function should handle this gracefully.
-        
+
         Validates:
         - No NaN in output
         - No Inf in output
@@ -49,7 +49,7 @@ class TestNumericalEdgeCases:
 
     def test_kuramoto_order_handles_single_phase(self) -> None:
         """Test kuramoto_order with single phase value.
-        
+
         Validates behavior with minimal input.
         """
         phases = np.array([np.pi / 4])
@@ -62,7 +62,7 @@ class TestNumericalEdgeCases:
 
     def test_position_sizing_with_zero_balance(self) -> None:
         """Test that position sizing handles zero balance gracefully.
-        
+
         Zero balance should result in zero position size, not division error.
         """
         size = position_sizing(balance=0.0, risk=0.1, price=100.0)
@@ -71,7 +71,7 @@ class TestNumericalEdgeCases:
 
     def test_position_sizing_with_very_high_price(self) -> None:
         """Test position sizing with prices near numerical limits.
-        
+
         Very high prices could cause overflow in notional calculations.
         """
         size = position_sizing(balance=1000.0, risk=0.1, price=1e10)
@@ -81,7 +81,7 @@ class TestNumericalEdgeCases:
 
     def test_position_sizing_with_very_low_price(self) -> None:
         """Test position sizing with very small prices.
-        
+
         Very low prices could cause precision loss in calculations.
         """
         size = position_sizing(balance=1000.0, risk=0.1, price=0.001)
@@ -92,7 +92,7 @@ class TestNumericalEdgeCases:
 
     def test_portfolio_heat_with_empty_positions(self) -> None:
         """Test portfolio heat calculation with no positions.
-        
+
         Empty portfolio should produce zero heat, not an error.
         """
         heat = portfolio_heat([])
@@ -101,7 +101,7 @@ class TestNumericalEdgeCases:
 
     def test_portfolio_heat_with_zero_quantities(self) -> None:
         """Test portfolio heat with zero-quantity positions.
-        
+
         Zero quantities should contribute zero to portfolio heat.
         """
         positions = [
@@ -113,7 +113,7 @@ class TestNumericalEdgeCases:
 
     def test_portfolio_heat_with_extreme_prices(self) -> None:
         """Test portfolio heat doesn't overflow with extreme prices.
-        
+
         Very large positions * prices should not cause overflow.
         """
         positions = [
@@ -129,7 +129,7 @@ class TestBoundaryConditions:
 
     def test_kuramoto_order_with_two_phases(self) -> None:
         """Test kuramoto_order with minimal number of oscillators.
-        
+
         Validates behavior at the minimum viable input length.
         """
         phases = np.array([0.0, np.pi])  # Opposite phases
@@ -142,7 +142,7 @@ class TestBoundaryConditions:
 
     def test_position_sizing_at_risk_extremes(self) -> None:
         """Test position sizing at risk percentage boundaries.
-        
+
         Validates behavior at 0% risk (minimum) and 100% risk (maximum).
         """
         balance = 1000.0
@@ -164,7 +164,7 @@ class TestErrorConditions:
 
     def test_kuramoto_order_handles_empty_array(self) -> None:
         """Test that kuramoto_order handles empty input gracefully.
-        
+
         Empty array should either return a sensible default or raise
         an appropriate error.
         """
@@ -179,7 +179,7 @@ class TestErrorConditions:
 
     def test_position_sizing_rejects_negative_balance(self) -> None:
         """Test that negative balance is rejected.
-        
+
         Balance must be non-negative.
         """
         with pytest.raises(ValueError, match="[Bb]alance.*non-negative"):
@@ -187,7 +187,7 @@ class TestErrorConditions:
 
     def test_position_sizing_rejects_negative_price(self) -> None:
         """Test that negative price is rejected.
-        
+
         Prices must be positive.
         """
         with pytest.raises(ValueError, match="[Pp]rice.*positive"):
@@ -195,7 +195,7 @@ class TestErrorConditions:
 
     def test_position_sizing_clamps_invalid_risk_percentage(self) -> None:
         """Test that invalid risk percentages are clamped to valid range.
-        
+
         Risk percentage is automatically clipped to [0, 1] range for safety
         rather than raising an error, as documented in calculate_position_size.
         """

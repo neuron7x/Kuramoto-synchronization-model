@@ -80,7 +80,7 @@ class ProgressiveRolloutManager:
 
     def __init__(self, config: DeploymentConfig):
         """Initialize rollout manager.
-        
+
         Args:
             config: Deployment configuration
         """
@@ -93,7 +93,7 @@ class ProgressiveRolloutManager:
 
     def register_traffic_router(self, router: Callable[[str, float], bool]) -> None:
         """Register traffic routing handler.
-        
+
         Args:
             router: Function to route traffic to version with percentage
         """
@@ -101,7 +101,7 @@ class ProgressiveRolloutManager:
 
     def register_health_checker(self, checker: Callable[[str], bool]) -> None:
         """Register health check handler.
-        
+
         Args:
             checker: Function to check health of a version
         """
@@ -109,10 +109,10 @@ class ProgressiveRolloutManager:
 
     def start_deployment(self, version: str) -> bool:
         """Start a new deployment.
-        
+
         Args:
             version: Version to deploy
-            
+
         Returns:
             True if deployment started successfully
         """
@@ -145,10 +145,10 @@ class ProgressiveRolloutManager:
 
     def _validate_deployment(self, version: str) -> bool:
         """Validate deployment before starting.
-        
+
         Args:
             version: Version to validate
-            
+
         Returns:
             True if validation passed
         """
@@ -171,7 +171,7 @@ class ProgressiveRolloutManager:
         p99_latency_ms: float
     ) -> None:
         """Record deployment metrics.
-        
+
         Args:
             version: Deployment version
             request_count: Number of requests
@@ -208,11 +208,11 @@ class ProgressiveRolloutManager:
 
     def _check_health(self, error_rate: float, latency_ms: float) -> bool:
         """Check if metrics are healthy.
-        
+
         Args:
             error_rate: Current error rate
             latency_ms: Current latency
-            
+
         Returns:
             True if healthy
         """
@@ -228,7 +228,7 @@ class ProgressiveRolloutManager:
 
     def advance_rollout(self) -> bool:
         """Advance to next rollout stage.
-        
+
         Returns:
             True if advanced successfully
         """
@@ -287,10 +287,10 @@ class ProgressiveRolloutManager:
 
     def _trigger_rollback(self, reason: str) -> bool:
         """Trigger automatic rollback.
-        
+
         Args:
             reason: Reason for rollback
-            
+
         Returns:
             True if rollback initiated
         """
@@ -315,10 +315,10 @@ class ProgressiveRolloutManager:
 
     def manual_rollback(self, reason: str = "Manual intervention") -> bool:
         """Manually trigger rollback.
-        
+
         Args:
             reason: Reason for rollback
-            
+
         Returns:
             True if rollback successful
         """
@@ -326,7 +326,7 @@ class ProgressiveRolloutManager:
 
     def get_deployment_status(self) -> Dict:
         """Get current deployment status.
-        
+
         Returns:
             Dictionary with deployment status
         """
@@ -358,10 +358,10 @@ class ProgressiveRolloutManager:
 
     def get_deployment_history(self, limit: int = 10) -> List[Dict]:
         """Get deployment history.
-        
+
         Args:
             limit: Maximum number of deployments to return
-            
+
         Returns:
             List of deployment summaries
         """
@@ -388,7 +388,7 @@ class CanaryValidator:
         threshold_multiplier: float = 2.0
     ):
         """Initialize canary validator.
-        
+
         Args:
             baseline_error_rate: Expected baseline error rate
             baseline_latency_ms: Expected baseline latency
@@ -406,13 +406,13 @@ class CanaryValidator:
         stable_latency_ms: float
     ) -> tuple[bool, List[str]]:
         """Validate canary against stable version.
-        
+
         Args:
             canary_error_rate: Canary error rate
             canary_latency_ms: Canary latency
             stable_error_rate: Stable version error rate
             stable_latency_ms: Stable version latency
-            
+
         Returns:
             Tuple of (is_valid, list of issues)
         """

@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import Mock
 
 import pytest
 
 from domain import Order, OrderSide, OrderStatus
-from execution.audit import ExecutionAuditLogger
 from execution.compliance import ComplianceViolation, RiskCompliance, RiskConfig
 from execution.connectors import ExecutionConnector
 from execution.oms import OMSConfig, OrderManagementSystem

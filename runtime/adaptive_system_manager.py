@@ -10,7 +10,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class SystemHealth:
 
     def health_score(self) -> float:
         """Calculate overall health score (0-100).
-        
+
         Returns:
             Health score where 100 is perfect health
         """
@@ -103,7 +103,7 @@ class AdaptiveSystemManager:
         adaptation_cooldown: float = 300.0
     ):
         """Initialize adaptive system manager.
-        
+
         Args:
             health_check_interval: Seconds between health checks
             adaptation_cooldown: Seconds to wait between adaptations
@@ -118,7 +118,7 @@ class AdaptiveSystemManager:
 
     def _default_configuration(self) -> Dict[str, any]:
         """Get default system configuration.
-        
+
         Returns:
             Default configuration dictionary
         """
@@ -138,7 +138,7 @@ class AdaptiveSystemManager:
         handler: Callable[[str, any], bool]
     ) -> None:
         """Register a handler for an adaptation strategy.
-        
+
         Args:
             strategy: Adaptation strategy
             handler: Handler function that applies the adaptation
@@ -154,14 +154,14 @@ class AdaptiveSystemManager:
         throughput: float
     ) -> SystemHealth:
         """Assess current system health.
-        
+
         Args:
             cpu_utilization: CPU usage percentage (0-100)
             memory_utilization: Memory usage percentage (0-100)
             error_rate: Error rate (0.0-1.0)
             latency_p99: 99th percentile latency in ms
             throughput: Operations per second
-            
+
         Returns:
             SystemHealth assessment
         """
@@ -207,10 +207,10 @@ class AdaptiveSystemManager:
 
     def detect_degradation(self, window_size: int = 10) -> bool:
         """Detect gradual system degradation.
-        
+
         Args:
             window_size: Number of recent health checks to analyze
-            
+
         Returns:
             True if degradation detected
         """
@@ -236,10 +236,10 @@ class AdaptiveSystemManager:
         health: SystemHealth
     ) -> List[AdaptationAction]:
         """Recommend adaptations based on health assessment.
-        
+
         Args:
             health: Current system health
-            
+
         Returns:
             List of recommended adaptation actions
         """
@@ -299,10 +299,10 @@ class AdaptiveSystemManager:
 
     def apply_adaptation(self, action: AdaptationAction) -> bool:
         """Apply an adaptation action.
-        
+
         Args:
             action: Adaptation action to apply
-            
+
         Returns:
             True if successfully applied
         """
@@ -341,10 +341,10 @@ class AdaptiveSystemManager:
 
     def rollback_adaptation(self, action: AdaptationAction) -> bool:
         """Rollback a previously applied adaptation.
-        
+
         Args:
             action: Adaptation action to rollback
-            
+
         Returns:
             True if successfully rolled back
         """
@@ -369,10 +369,10 @@ class AdaptiveSystemManager:
 
     def auto_adapt(self, health: SystemHealth) -> List[AdaptationAction]:
         """Automatically adapt system based on health.
-        
+
         Args:
             health: Current system health
-            
+
         Returns:
             List of applied adaptations
         """
@@ -390,10 +390,10 @@ class AdaptiveSystemManager:
 
     def get_adaptation_history(self, limit: int = 100) -> List[AdaptationAction]:
         """Get recent adaptation history.
-        
+
         Args:
             limit: Maximum number of actions to return
-            
+
         Returns:
             List of recent adaptations
         """
@@ -401,10 +401,10 @@ class AdaptiveSystemManager:
 
     def get_health_trend(self, window_minutes: int = 60) -> Dict:
         """Get health trend over time window.
-        
+
         Args:
             window_minutes: Time window in minutes
-            
+
         Returns:
             Dictionary with trend statistics
         """

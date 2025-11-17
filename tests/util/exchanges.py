@@ -2,7 +2,6 @@
 import base64
 import hashlib
 import hmac
-import importlib
 import os
 import time
 from urllib.parse import urlencode
@@ -54,7 +53,7 @@ def _kraken_http():
 
 def load_adapter_or_http_client(exchange: str):
     """Load an HTTP client for the exchange.
-    
+
     For canary tests, we use simple HTTP clients rather than full adapters
     to avoid credential and instantiation complexity.
     """

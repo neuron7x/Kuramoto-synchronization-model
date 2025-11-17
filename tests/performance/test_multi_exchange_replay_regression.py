@@ -228,7 +228,7 @@ def test_extended_regression_suite_with_historical_comparison(
     recordings_dir: Path, artifacts_dir: Path
 ) -> None:
     """Extended regression test with historical baseline comparison.
-    
+
     This test compares current performance against historical baselines
     stored in previous test runs.
     """
@@ -269,7 +269,7 @@ def test_throughput_stress_test(recordings_dir: Path) -> None:
 
     for _ in range(iterations):
         ticks, _ = load_replay_recording(recording_path)
-        metrics = compute_performance_metrics(ticks)
+        compute_performance_metrics(ticks)
 
     elapsed = time.perf_counter() - start
     processing_rate = iterations / elapsed

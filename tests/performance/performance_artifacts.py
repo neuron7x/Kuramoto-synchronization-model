@@ -7,10 +7,10 @@ for performance regression tracking.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 try:
     import matplotlib
@@ -57,7 +57,7 @@ class PerformanceArtifactGenerator:
 
     def __init__(self, output_dir: Path) -> None:
         """Initialize artifact generator.
-        
+
         Args:
             output_dir: Directory to write artifacts
         """
@@ -66,10 +66,10 @@ class PerformanceArtifactGenerator:
 
     def generate_json_report(self, report: PerformanceReport) -> Path:
         """Generate JSON report file.
-        
+
         Args:
             report: Performance report to serialize
-        
+
         Returns:
             Path to generated JSON file
         """
@@ -114,10 +114,10 @@ class PerformanceArtifactGenerator:
 
     def generate_markdown_summary(self, report: PerformanceReport) -> Path:
         """Generate markdown summary for GitHub.
-        
+
         Args:
             report: Performance report to summarize
-        
+
         Returns:
             Path to generated markdown file
         """
@@ -179,10 +179,10 @@ class PerformanceArtifactGenerator:
 
     def generate_charts(self, report: PerformanceReport) -> list[Path]:
         """Generate performance visualization charts.
-        
+
         Args:
             report: Performance report to visualize
-        
+
         Returns:
             List of paths to generated chart files
         """
@@ -341,11 +341,11 @@ class PerformanceArtifactGenerator:
         self, run: PerformanceRun, component: str = "performance"
     ) -> Path:
         """Generate GitHub issue template for regression.
-        
+
         Args:
             run: Performance run with regression
             component: Component label for the issue
-        
+
         Returns:
             Path to issue template file
         """

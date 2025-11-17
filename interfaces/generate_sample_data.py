@@ -12,7 +12,7 @@ Usage:
 """
 
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -28,21 +28,21 @@ def generate_trending_prices(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate prices with a trending pattern.
-    
+
     Args:
         n: Number of price points to generate.
         initial_price: Starting price level.
         trend: Trend strength (positive = uptrend, negative = downtrend).
         volatility: Price volatility multiplier.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated prices.
     """
     rng = np.random.default_rng(seed)
 
     # Create trend component
-    trend_component = np.linspace(0, trend * n, n)
+    np.linspace(0, trend * n, n)
 
     # Create noise component
     noise = rng.normal(0, volatility, n)
@@ -62,14 +62,14 @@ def generate_mean_reverting_prices(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate prices with mean-reverting behavior.
-    
+
     Args:
         n: Number of price points to generate.
         mean_price: Central price level.
         reversion_speed: Speed of reversion to mean (0-1).
         volatility: Price volatility multiplier.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated prices.
     """
@@ -93,13 +93,13 @@ def generate_random_walk_prices(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate prices following a random walk.
-    
+
     Args:
         n: Number of price points to generate.
         initial_price: Starting price level.
         volatility: Price volatility multiplier.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated prices.
     """
@@ -119,7 +119,7 @@ def generate_volume(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate trading volume data.
-    
+
     Args:
         n: Number of volume points to generate.
         mean_volume: Average volume level.
@@ -127,7 +127,7 @@ def generate_volume(
         price_correlation: Correlation with price changes (-1 to 1).
         prices: Optional price array for correlation.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated volumes.
     """
@@ -156,13 +156,13 @@ def generate_market_data(
     seed: int | None = None,
 ) -> pd.DataFrame:
     """Generate a complete market data CSV.
-    
+
     Args:
         periods: Number of periods to generate.
         regime: Market regime type.
         freq: Time frequency (e.g., '1h', '5m', '1d').
         seed: Random seed for reproducibility.
-    
+
     Returns:
         DataFrame with timestamp, price, and volume columns.
     """

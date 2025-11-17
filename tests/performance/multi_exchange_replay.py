@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Iterator, Sequence
 
 import numpy as np
-from numpy.typing import NDArray
 
 
 @dataclass(slots=True, frozen=True)
@@ -130,11 +129,11 @@ def load_replay_recording(
     path: Path, exchange: str | None = None
 ) -> tuple[Sequence[ExchangeTick], ReplayMetadata | None]:
     """Load exchange replay recording from JSONL file.
-    
+
     Args:
         path: Path to JSONL recording file
         exchange: Optional exchange identifier (read from metadata if not provided)
-    
+
     Returns:
         Tuple of (ticks, metadata)
     """
@@ -194,10 +193,10 @@ def load_replay_recording(
 
 def compute_performance_metrics(ticks: Sequence[ExchangeTick]) -> PerformanceMetrics:
     """Compute performance metrics from replay ticks.
-    
+
     Args:
         ticks: Sequence of exchange ticks
-    
+
     Returns:
         Performance metrics including latency, throughput, and slippage
     """
@@ -235,11 +234,11 @@ def check_regression(
     metrics: PerformanceMetrics, budget: PerformanceBudget
 ) -> RegressionResult:
     """Check if metrics violate performance budget.
-    
+
     Args:
         metrics: Measured performance metrics
         budget: Performance budget thresholds
-    
+
     Returns:
         Regression result indicating pass/fail and violations
     """
@@ -291,10 +290,10 @@ def check_regression(
 
 def discover_recordings(directory: Path) -> Iterator[Path]:
     """Discover all replay recording files in directory.
-    
+
     Args:
         directory: Directory to search for recordings
-    
+
     Yields:
         Paths to JSONL recording files
     """

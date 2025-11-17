@@ -36,10 +36,10 @@ from tradepulse.utils.drift import (
 )
 def test_js_divergence(data1, data2, expected):
     """Test Jensen-Shannon divergence computation for various distributions.
-    
+
     JS divergence is a symmetric measure of difference between two probability
     distributions, ranging from 0 (identical) to 1 (completely different).
-    
+
     Validates:
     - Identical distributions return divergence of 0
     - Different distributions return positive divergence values
@@ -53,7 +53,7 @@ def test_js_divergence(data1, data2, expected):
 
 def test_js_divergence_empty_inputs():
     """Test JS divergence returns NaN for empty input arrays.
-    
+
     Empty inputs cannot form a valid probability distribution, so the
     function should return NaN rather than raising an exception.
     """
@@ -85,10 +85,10 @@ def test_js_divergence_different_lengths_samples():
 )
 def test_ks_test(data1, data2, drifted):
     """Test Kolmogorov-Smirnov test detects distribution drift.
-    
+
     KS test should detect when two samples come from different distributions
     (p-value < 0.05) and accept when they come from the same distribution.
-    
+
     Validates:
     - Test is valid for sufficient data
     - Identical distributions are not flagged as drifted
@@ -104,7 +104,7 @@ def test_ks_test(data1, data2, drifted):
 
 def test_ks_test_insufficient_data():
     """Test KS test gracefully handles insufficient data.
-    
+
     With only one sample per distribution, the KS test cannot produce
     reliable results, so it should return invalid status with NaN statistic.
     """
@@ -124,12 +124,12 @@ def test_ks_test_insufficient_data():
 )
 def test_compute_psi(baseline, current, expected):
     """Test Population Stability Index (PSI) computation.
-    
+
     PSI measures the shift in population distributions across bins:
     - PSI < 0.1: No significant change
     - 0.1 <= PSI < 0.2: Small change
     - PSI >= 0.2: Significant change requiring investigation
-    
+
     Validates:
     - Identical distributions return PSI of 0
     - Shifted distributions return positive PSI values
@@ -143,11 +143,11 @@ def test_compute_psi(baseline, current, expected):
 
 def test_parallel_drift():
     """Test parallel drift detection across multiple features.
-    
+
     When generating synthetic data with drift_ratio=0.5, at least some
     features should show drift. The function should compute metrics for
     all features in parallel.
-    
+
     Validates:
     - All features are analyzed
     - At least one feature shows drift
@@ -165,10 +165,10 @@ def test_parallel_drift():
 
 def test_parallel_drift_handles_non_numeric_columns():
     """Test drift detection gracefully handles categorical columns.
-    
+
     Categorical columns cannot use numeric drift metrics (JS, KS, PSI),
     so the function should return NaN values and mark KS test as invalid.
-    
+
     Validates:
     - Both numeric and categorical columns are processed
     - Categorical metrics return NaN
@@ -197,10 +197,10 @@ def test_parallel_drift_handles_non_numeric_columns():
 
 def test_parallel_drift_coerces_numeric_strings():
     """Test drift detection coerces numeric strings to float.
-    
+
     String columns that contain only numeric values should be automatically
     converted to numeric type for drift analysis.
-    
+
     Validates:
     - String-encoded numbers are coerced to numeric
     - All drift metrics are computed successfully
@@ -222,10 +222,10 @@ def test_parallel_drift_coerces_numeric_strings():
 
 def test_parallel_drift_filters_coerced_nans():
     """Test drift detection filters out values that can't be coerced to numeric.
-    
+
     When coercing strings to numeric, invalid values should be filtered out
     rather than causing the entire analysis to fail.
-    
+
     Validates:
     - Invalid numeric strings are filtered (e.g., "bad", None)
     - Valid numeric strings and whitespace-padded numbers are kept
@@ -251,10 +251,10 @@ def test_parallel_drift_filters_coerced_nans():
 
 def test_drift_detector_summary():
     """Test DriftDetector generates comprehensive drift summary.
-    
+
     The summary should include all features with their drift metrics
     (JS divergence, PSI, and KS test results).
-    
+
     Validates:
     - Summary contains all expected features
     - Each feature has required metrics (jsd, psi)
@@ -274,10 +274,10 @@ def test_drift_detector_summary():
 
 def test_generate_synthetic_data_categorical():
     """Test synthetic data generation includes categorical features.
-    
+
     When include_categorical=True, the generated data should contain
     both numeric and categorical columns.
-    
+
     Validates:
     - Categorical column is present in baseline data
     - Baseline and drift datasets have same shape
@@ -294,10 +294,10 @@ def test_generate_synthetic_data_categorical():
 
 def test_load_thresholds_empty_yaml(tmp_path):
     """Test loading thresholds from empty YAML uses defaults.
-    
+
     When the threshold configuration file is empty, the function should
     return default threshold values rather than raising an error.
-    
+
     Validates:
     - Empty YAML files are handled gracefully
     - Default JS divergence threshold is 0.1
@@ -316,10 +316,10 @@ def test_load_thresholds_empty_yaml(tmp_path):
 
 def test_load_thresholds_requires_mapping(tmp_path):
     """Test loading thresholds fails gracefully for invalid YAML structure.
-    
+
     The threshold configuration should be a mapping (dict), not a list.
     Invalid structure should raise TypeError with informative message.
-    
+
     Validates:
     - List-structured YAML is rejected
     - TypeError is raised for invalid structure

@@ -7,9 +7,9 @@ initialization, startup, and shutdown sequences based on dependency ordering.
 from __future__ import annotations
 
 import logging
-from typing import Callable, Sequence
+from typing import Callable
 
-from core.architecture_integrator.component import Component, ComponentStatus
+from core.architecture_integrator.component import ComponentStatus
 from core.architecture_integrator.registry import ComponentRegistry
 
 logger = logging.getLogger(__name__)

@@ -34,7 +34,7 @@ def test_yaml_artifact(filepath: Path) -> bool:
     """Test that YAML artifact is valid."""
     try:
         with filepath.open() as f:
-            data = yaml.safe_load(f)
+            yaml.safe_load(f)
         print(f"  ✓ {filepath.name}: Valid YAML")
         return True
     except Exception as e:
@@ -131,7 +131,7 @@ def main():
         with open(repo_root / "data/sample.csv") as f:
             lines = f.readlines()
         header = lines[0].strip().split(",")
-        first_row = lines[1].strip().split(",")
+        lines[1].strip().split(",")
         print(f"  ✓ CSV Loading: {len(lines)-1} rows, columns: {', '.join(header)}")
         passed += 1
     except Exception as e:

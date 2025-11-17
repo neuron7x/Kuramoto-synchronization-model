@@ -26,7 +26,7 @@ from core.agent.strategy import PiAgent, Strategy
 
 def test_epsilon_greedy_prefers_best_arm_when_exploit() -> None:
     """Test that EpsilonGreedy selects the best-performing arm when exploiting.
-    
+
     With epsilon=0.0 (pure exploitation), the agent should always select
     the arm with the highest average reward.
     """
@@ -38,7 +38,7 @@ def test_epsilon_greedy_prefers_best_arm_when_exploit() -> None:
 
 def test_ucb1_selects_unseen_arm_first() -> None:
     """Test that UCB1 prioritizes arms that haven't been tried yet.
-    
+
     Upper Confidence Bound algorithm should explore untried arms first
     before refining estimates of known arms.
     """

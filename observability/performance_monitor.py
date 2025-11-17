@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
@@ -46,7 +45,7 @@ class PerformanceMonitor:
 
     def __init__(self, baseline: Optional[PerformanceBaseline] = None):
         """Initialize performance monitor.
-        
+
         Args:
             baseline: Optional baseline for regression detection
         """
@@ -65,7 +64,7 @@ class PerformanceMonitor:
         tags: Optional[Dict[str, str]] = None
     ) -> None:
         """Record a performance metric.
-        
+
         Args:
             latency_ms: Operation latency in milliseconds
             throughput: Operations per second
@@ -90,7 +89,7 @@ class PerformanceMonitor:
 
     def _detect_bottleneck(self, metric: PerformanceMetrics) -> None:
         """Detect performance bottlenecks.
-        
+
         Args:
             metric: Current performance metric
         """
@@ -133,10 +132,10 @@ class PerformanceMonitor:
 
     def get_recent_metrics(self, window_seconds: float = 60.0) -> List[PerformanceMetrics]:
         """Get metrics from recent time window.
-        
+
         Args:
             window_seconds: Time window in seconds
-            
+
         Returns:
             List of metrics within the time window
         """
@@ -148,10 +147,10 @@ class PerformanceMonitor:
         window_seconds: float = 60.0
     ) -> Dict[str, float]:
         """Calculate latency percentiles.
-        
+
         Args:
             window_seconds: Time window in seconds
-            
+
         Returns:
             Dictionary of percentile values
         """
@@ -174,7 +173,7 @@ class PerformanceMonitor:
 
     def check_regression(self) -> Dict[str, bool]:
         """Check for performance regression against baseline.
-        
+
         Returns:
             Dictionary indicating regression in various metrics
         """
@@ -205,11 +204,11 @@ class PerformanceMonitor:
         limit: int = 10
     ) -> List[Dict]:
         """Get detected bottlenecks.
-        
+
         Args:
             severity: Filter by severity (high, medium, low)
             limit: Maximum number of bottlenecks to return
-            
+
         Returns:
             List of bottleneck records
         """
@@ -222,7 +221,7 @@ class PerformanceMonitor:
 
     def get_summary(self) -> Dict:
         """Get performance monitoring summary.
-        
+
         Returns:
             Summary dictionary with key metrics
         """
@@ -274,7 +273,7 @@ class AnomalyDetector:
 
     def __init__(self, window_size: int = 100):
         """Initialize anomaly detector.
-        
+
         Args:
             window_size: Size of sliding window for baseline
         """
@@ -283,10 +282,10 @@ class AnomalyDetector:
 
     def add_value(self, value: float) -> bool:
         """Add a value and check for anomaly.
-        
+
         Args:
             value: Metric value to check
-            
+
         Returns:
             True if value is anomalous
         """
@@ -300,11 +299,11 @@ class AnomalyDetector:
 
     def is_anomaly(self, value: float, threshold: float = 3.0) -> bool:
         """Check if value is anomalous using z-score.
-        
+
         Args:
             value: Value to check
             threshold: Z-score threshold (default: 3.0)
-            
+
         Returns:
             True if value is anomalous
         """
@@ -324,7 +323,7 @@ class AnomalyDetector:
 
     def get_statistics(self) -> Dict[str, float]:
         """Get current statistics.
-        
+
         Returns:
             Dictionary with mean, std, min, max
         """

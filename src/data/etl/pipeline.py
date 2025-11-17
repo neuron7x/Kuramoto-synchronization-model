@@ -322,7 +322,7 @@ class ETLPipeline:
                 failure_frame = exc.failure_cases
                 self._quarantine.append(f"schema:{segment.name}", failure_frame)
                 raise
-            except SchemaError as exc:
+            except SchemaError:
                 raise
 
         for transform in segment.transform:

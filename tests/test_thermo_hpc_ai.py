@@ -35,7 +35,7 @@ class TestThermoControllerHPCAI:
 
     def test_init_hpc_ai(self, simple_graph):
         """Test HPC-AI initialization in ThermoController.
-        
+
         Validates that the ThermoController can initialize HPC-AI components
         with custom parameters and that all required attributes are created.
         """
@@ -62,7 +62,7 @@ class TestThermoControllerHPCAI:
 
     def test_hpc_ai_control_step_not_initialized(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step returns error when not initialized.
-        
+
         When HPC-AI is not initialized, the control step should gracefully
         return an error result with safe defaults rather than raising an exception.
         """
@@ -80,7 +80,7 @@ class TestThermoControllerHPCAI:
 
     def test_hpc_ai_control_step(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step returns complete result after initialization.
-        
+
         Validates that a properly initialized HPC-AI controller returns all
         required metrics and that values are within expected ranges.
         """
@@ -107,7 +107,7 @@ class TestThermoControllerHPCAI:
 
     def test_hpc_ai_control_step_with_execution(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step with action execution enabled.
-        
+
         When execute_action=True, the controller should not only compute
         the action but also apply it to the system state.
         """
@@ -126,7 +126,7 @@ class TestThermoControllerHPCAI:
 
     def test_multiple_control_steps(self, simple_graph, synthetic_market_data):
         """Test sequential HPC-AI control steps with state persistence.
-        
+
         Validates that the controller can handle multiple sequential control
         steps and properly maintains internal state (prev_pwpe) between steps.
         """

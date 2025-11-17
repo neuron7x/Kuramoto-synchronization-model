@@ -114,14 +114,14 @@ class EnergyValidationResult:
 
 class EnergyValidator:
     """Validator for thermodynamic free energy compliance.
-    
+
     This class implements the energy validation logic described in docs/TACL.md,
     computing Helmholtz free energy and validating against acceptable thresholds.
     """
 
     def __init__(self, config: Optional[EnergyConfig] = None) -> None:
         """Initialize the energy validator.
-        
+
         Args:
             config: Energy configuration. If None, uses default configuration.
         """
@@ -134,11 +134,11 @@ class EnergyValidator:
 
     def compute_penalty(self, metric_name: str, value: float) -> Tuple[float, float]:
         """Compute normalized penalty and headroom for a metric.
-        
+
         Args:
             metric_name: Name of the metric
             value: Measured value
-            
+
         Returns:
             Tuple of (penalty, headroom)
             - penalty: Weighted penalty contribution (0 if below threshold)
@@ -173,10 +173,10 @@ class EnergyValidator:
         metrics: Dict[str, float]
     ) -> Tuple[float, Dict[str, float], Dict[str, float]]:
         """Compute internal energy U from metrics.
-        
+
         Args:
             metrics: Dictionary of metric name to measured value
-            
+
         Returns:
             Tuple of (internal_energy, penalties, headrooms)
         """
@@ -194,12 +194,12 @@ class EnergyValidator:
 
     def compute_stability(self, headrooms: Dict[str, float]) -> float:
         """Compute stability term S from headroom values.
-        
+
         Higher stability (more headroom) increases entropy, thus reducing free energy.
-        
+
         Args:
             headrooms: Dictionary of metric name to headroom value
-            
+
         Returns:
             Stability value (0-1 range typically)
         """
@@ -216,10 +216,10 @@ class EnergyValidator:
 
     def compute_free_energy(self, metrics: Dict[str, float]) -> EnergyValidationResult:
         """Compute Helmholtz free energy F = U - T·S.
-        
+
         Args:
             metrics: Dictionary of metric name to measured value
-            
+
         Returns:
             EnergyValidationResult with all computed values
         """
@@ -267,10 +267,10 @@ class EnergyValidator:
 
     def validate(self, metrics: Dict[str, float]) -> bool:
         """Validate that metrics meet energy requirements.
-        
+
         Args:
             metrics: Dictionary of metric name to measured value
-            
+
         Returns:
             True if validation passes, False otherwise
         """
@@ -279,7 +279,7 @@ class EnergyValidator:
 
     def export_validation_report(self, output_path: Path) -> None:
         """Export validation results to JSON file.
-        
+
         Args:
             output_path: Path to output JSON file
         """
@@ -320,7 +320,7 @@ class EnergyValidator:
 
     def get_latest_result(self) -> Optional[EnergyValidationResult]:
         """Get the most recent validation result.
-        
+
         Returns:
             Latest EnergyValidationResult or None if no validations performed
         """

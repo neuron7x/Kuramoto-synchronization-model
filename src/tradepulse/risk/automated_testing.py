@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Callable, List, Optional, Protocol, Tuple
+from typing import List, Optional, Protocol, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -28,7 +28,6 @@ except ImportError:
             var_es,
         )
     except ImportError:
-        import sys
         from pathlib import Path
 
         # Try to import from absolute path

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from tradepulse.core.neuro.desensitization import (
     DesensitizationGate,
-    DesensitizationManager,
     integration,
 )
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Sequence
+from typing import Any, Dict
 
 
 def assert_no_nan_inf(*values: float, context: Dict[str, Any] | None = None) -> None:

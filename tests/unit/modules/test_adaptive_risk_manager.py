@@ -3,15 +3,10 @@ Tests for Adaptive Risk Manager Module
 """
 
 import numpy as np
-import pytest
 
 from modules.adaptive_risk_manager import (
     AdaptiveRiskManager,
     MarketCondition,
-    PortfolioRisk,
-    PositionLimit,
-    RiskLevel,
-    RiskMetrics,
 )
 
 

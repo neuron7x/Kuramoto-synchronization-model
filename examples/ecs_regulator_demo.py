@@ -32,11 +32,11 @@ except ImportError:
 
 def simulate_market_data(n_steps: int, seed: int = 42) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Simulate market returns, drawdowns, and phase data.
-    
+
     Args:
         n_steps: Number of simulation steps
         seed: Random seed for reproducibility
-    
+
     Returns:
         Tuple of (returns, drawdowns, phases)
     """
@@ -73,11 +73,11 @@ def simulate_market_data(n_steps: int, seed: int = 42) -> tuple[np.ndarray, np.n
 
 def calculate_performance_metrics(returns: np.ndarray, actions: list[int]) -> dict:
     """Calculate trading performance metrics.
-    
+
     Args:
         returns: Market returns
         actions: Trading actions (-1, 0, 1)
-    
+
     Returns:
         Dictionary of performance metrics
     """
@@ -286,18 +286,18 @@ The ECS-Inspired Regulator can be integrated with TradePulse components:
    - Store in TradePulse feature store
 
 Example integration code:
-    
+
     from core.neuro import ECSInspiredRegulator, FractalMotivationController
-    
+
     # Initialize
     ecs_reg = ECSInspiredRegulator()
     motivation = FractalMotivationController(actions=["buy", "sell", "hold"])
-    
+
     # Trading loop
     ecs_reg.update_stress(returns, drawdown)
     ecs_reg.adapt_parameters(phase)
     ecs_action = ecs_reg.decide_action(signal, phase)
-    
+
     # Combine with motivation system
     motivation_decision = motivation.recommend(
         state=[ecs_reg.stress_level, signal],

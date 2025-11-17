@@ -5,7 +5,7 @@ Target: ≥15k step/s on reference CPU.
 
 Usage:
     python benchmarks/dopamine_step_bench.py [--profile PROFILE]
-    
+
 Options:
     --profile PROFILE   Use specific config profile (conservative, normal, aggressive)
     --iterations N      Number of iterations (default: 100000)
@@ -25,11 +25,11 @@ from dopamine.dopamine_controller import DopamineController
 
 def benchmark_step(controller: DopamineController, iterations: int = 100000) -> dict[str, float]:
     """Benchmark dopamine controller step performance.
-    
+
     Args:
         controller: DopamineController instance
         iterations: Number of step() calls to perform
-        
+
     Returns:
         Dict with benchmark results
     """

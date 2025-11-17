@@ -8,7 +8,7 @@ Analyzes historical thermodynamic metrics to identify trends and anomalies.
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 

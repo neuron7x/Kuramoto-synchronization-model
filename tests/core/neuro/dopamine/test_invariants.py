@@ -1,8 +1,6 @@
 """Tests for dopamine numerical invariants and safety checks."""
 from __future__ import annotations
 
-import math
-
 import pytest
 
 try:

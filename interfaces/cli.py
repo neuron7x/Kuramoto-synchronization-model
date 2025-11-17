@@ -570,7 +570,7 @@ def _run_with_trace_context(cmd_name: str, args: argparse.Namespace) -> None:
 
 def main():
     """Main entry point for the TradePulse CLI.
-    
+
     Provides three main commands:
     - analyze: Compute market indicators from price data
     - backtest: Run walk-forward backtesting with indicator signals
