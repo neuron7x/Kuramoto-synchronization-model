@@ -5,6 +5,7 @@ This directory captures significant technical and governance decisions for Trade
 ## Records
 
 - [ADR 0001: Security, Compliance, and Documentation Automation](0001-security-compliance-automation.md)
+- [ADR 0002: Serotonin Controller - Hysteretic Hold Logic with SRE Observability](0002-serotonin-controller-architecture.md)
 
 ## Contributing
 
