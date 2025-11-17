@@ -8,13 +8,13 @@ Integrated Risk Management Example
 - Agent Coordinator
 """
 
-import numpy as np
-from datetime import datetime
 
-from modules.adaptive_risk_manager import AdaptiveRiskManager, MarketCondition
-from modules.market_regime_analyzer import MarketRegimeAnalyzer, RegimeType
-from modules.dynamic_position_sizer import DynamicPositionSizer, SizingMethod
+import numpy as np
+
+from modules.adaptive_risk_manager import AdaptiveRiskManager
 from modules.agent_coordinator import AgentCoordinator, AgentType, Priority
+from modules.dynamic_position_sizer import DynamicPositionSizer, SizingMethod
+from modules.market_regime_analyzer import MarketRegimeAnalyzer
 
 
 def generate_market_data(n_bars=200, trend=0.0005, volatility=0.015):

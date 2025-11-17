@@ -16,8 +16,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
-import numpy as np
-
 
 class AgentType(str, Enum):
     """Типи агентів"""
@@ -263,7 +261,7 @@ class AgentCoordinator:
         Returns:
             Список ID оброблених задач
         """
-        processed = []
+        processed: List[str] = []
 
         # Обмежуємо кількість одночасних задач
         available_slots = self.max_concurrent_tasks - len(self._active_tasks)

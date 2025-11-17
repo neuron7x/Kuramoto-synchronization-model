@@ -17,7 +17,6 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy import stats
 
 
 class RegimeType(str, Enum):
@@ -169,7 +168,7 @@ class MarketRegimeAnalyzer:
         slope, _ = np.polyfit(log_lags, log_tau, 1)
 
         # Обмежуємо в розумних межах
-        return np.clip(slope, 0.0, 1.0)
+        return float(np.clip(slope, 0.0, 1.0))
 
     def augmented_dickey_fuller_test(self, prices: np.ndarray) -> Tuple[float, float]:
         """

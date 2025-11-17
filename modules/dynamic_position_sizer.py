@@ -148,7 +148,7 @@ class DynamicPositionSizer:
         vol_adjustment = self.volatility_target / (volatility * np.sqrt(252))
         vol_adjustment = np.clip(vol_adjustment, 0.3, 2.0)
 
-        return base_size * vol_adjustment
+        return float(base_size * vol_adjustment)
 
     def calculate_risk_parity_size(
         self, symbol: str, volatility: float, portfolio_volatilities: Dict[str, float]
@@ -184,7 +184,7 @@ class DynamicPositionSizer:
         max_size = self.base_capital * self.max_position_pct
         min_size = self.base_capital * self.min_position_pct
 
-        return np.clip(size, min_size, max_size)
+        return float(np.clip(size, min_size, max_size))
 
     def calculate_adaptive_size(
         self,
