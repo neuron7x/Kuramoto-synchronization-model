@@ -13,10 +13,38 @@ import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
 from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from src.tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
+from src.tradepulse.core.neuro.dopamine.action_gate import ActionGate, DopamineSnapshot
 
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
+
+
+def calculate_simple_reward(records: List[MarketFeedRecord], window: int = 1) -> List[float]:
+    """Calculate simple price change rewards from market feed records.
+    
+    Args:
+        records: List of market feed records
+        window: Lookback window for price change calculation
+        
+    Returns:
+        List of reward values (price changes normalized)
+    """
+    rewards = []
+    for i in range(len(records)):
+        if i < window:
+            # Not enough history, use zero reward
+            rewards.append(0.0)
+        else:
+            # Calculate price change over window
+            current_price = float(records[i].price)
+            past_price = float(records[i - window].price)
+            price_change = (current_price - past_price) / past_price
+            # Normalize to reasonable range
+            reward = max(min(price_change * 10.0, 1.0), -1.0)
+            rewards.append(reward)
+    return rewards
 
 
 class TestDopamineTD0RPE:

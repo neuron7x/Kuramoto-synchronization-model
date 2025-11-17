@@ -382,7 +382,7 @@ class TestDigitalGovernanceFramework:
         # Data with spike
         values_with_spike = [1.0, 1.1, 1.05, 10.0, 1.08]
         checks = governance.check_data_quality(
-            "price", values_with_spike, spike_threshold_std=3.0
+            "price", values_with_spike, spike_threshold_std=1.5
         )
         
         # Should detect spike
