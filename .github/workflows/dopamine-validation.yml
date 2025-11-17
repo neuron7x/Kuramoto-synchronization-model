@@ -1,5 +1,8 @@
 name: Dopamine Config Validation
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:
@@ -18,10 +21,15 @@ on:
       - 'src/tradepulse/core/neuro/dopamine/**'
       - 'tests/core/neuro/dopamine/**'
 
+concurrency:
+  group: dopamine-validation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-schema:
     name: Validate Config Schema
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       
@@ -29,6 +37,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -41,6 +50,7 @@ jobs:
   test-dopamine:
     name: Test Dopamine Module
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       
@@ -48,6 +58,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -61,6 +72,7 @@ jobs:
   benchmark:
     name: Performance Benchmark
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       
@@ -68,6 +80,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -86,6 +99,7 @@ jobs:
   migration-test:
     name: Test Config Migration
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       
@@ -93,6 +107,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
       
       - name: Install dependencies
         run: |

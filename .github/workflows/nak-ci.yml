@@ -1,5 +1,8 @@
 name: nak-ci
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main, develop ]
@@ -12,9 +15,14 @@ on:
       - 'nak_controller/**'
       - '.github/workflows/nak-ci.yml'
 
+concurrency:
+  group: nak-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       NAK_SEED: "1337"
       PYTHONHASHSEED: "0"
