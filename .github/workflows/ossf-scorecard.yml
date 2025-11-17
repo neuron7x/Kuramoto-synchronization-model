@@ -23,6 +23,8 @@ jobs:
   ossf-scorecard:
     name: OSSF Scorecard Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     permissions:
       security-events: write
       contents: read
@@ -92,6 +94,8 @@ jobs:
   post-pr-comment:
     name: Post PR Comment
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     needs: ossf-scorecard
     if: github.event_name == 'pull_request'
     permissions:

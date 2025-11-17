@@ -22,6 +22,8 @@ jobs:
   analyze-complexity:
     name: Analyze PR Complexity
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     
     steps:
       - name: Checkout code
