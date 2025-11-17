@@ -66,7 +66,7 @@
   <a href="#-quick-start"><b>Quick Start</b></a> •
   <a href="#-feature-highlights"><b>Features</b></a> •
   <a href="#-documentation"><b>Docs</b></a> •
-  <a href="#-examples"><b>Examples</b></a> •
+  <a href="#-use-cases"><b>Use Cases</b></a> •
   <a href="#-roadmap"><b>Roadmap</b></a> •
   <a href="#-community"><b>Community</b></a>
 </p>
