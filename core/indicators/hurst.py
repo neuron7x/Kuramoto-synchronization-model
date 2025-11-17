@@ -388,9 +388,9 @@ def hurst_exponent(
                 _LAST_HURST_BACKEND = "numpy"
         except Exception as exc:  # pragma: no cover - defensive fallback
             _logger.warning(
-                "Hurst backend '%s' failed (%s); falling back to NumPy.",
-                selected_backend,
-                exc,
+                f"Hurst backend '{selected_backend}' failed ({exc}); falling back to NumPy.",
+                backend=selected_backend,
+                error=str(exc),
             )
             tau = _compute_tau_numpy(x, lags, scratch, tau_buffer)
             _LAST_HURST_BACKEND = "numpy"

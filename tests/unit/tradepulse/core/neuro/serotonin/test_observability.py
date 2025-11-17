@@ -1,14 +1,7 @@
 """Tests for serotonin controller observability module."""
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Add specific module path to avoid importing full tradepulse package
-module_path = Path(__file__).parent.parent.parent.parent.parent.parent / "src" / "tradepulse" / "core" / "neuro" / "serotonin"
-sys.path.insert(0, str(module_path))
-
-from observability import (  # type: ignore
+from src.tradepulse.core.neuro.serotonin.observability import (
     Alert,
     AlertSeverity,
     SerotoninMonitor,
