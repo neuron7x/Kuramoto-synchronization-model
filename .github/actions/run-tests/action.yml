@@ -87,7 +87,8 @@ runs:
         
         # Add parallel execution if enabled
         if [ "${{ inputs.parallel }}" == "true" ] && [ "${{ inputs.shard-total }}" -gt "1" ]; then
-          PYTEST_ARGS="$PYTEST_ARGS --splits ${{ inputs.shard-total }} --group ${{ inputs.shard-index }}"
+          # Use pytest-xdist for parallel execution instead of sharding
+          PYTEST_ARGS="$PYTEST_ARGS -n auto"
         fi
         
         # Add verbosity
@@ -146,14 +147,13 @@ runs:
       if: inputs.upload-coverage == 'true' && always()
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-${{ inputs.test-suite }}-shard-${{ inputs.shard-index }}
+        name: coverage-${{ inputs.test-suite }}
         path: |
           .coverage.${{ inputs.shard-index }}
           coverage-${{ inputs.shard-index }}.xml
           coverage_html/
           junit-${{ inputs.shard-index }}.xml
         if-no-files-found: warn
-      shell: bash
 
     - name: Test summary
       if: always()

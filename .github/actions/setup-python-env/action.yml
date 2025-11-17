@@ -47,7 +47,6 @@ runs:
     - name: Set up uv (fast package installer)
       if: inputs.use-uv == 'true'
       uses: astral-sh/setup-uv@v3
-      shell: bash
 
     - name: Cache Python packages
       id: cache-deps

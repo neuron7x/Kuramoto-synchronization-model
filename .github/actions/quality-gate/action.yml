@@ -40,7 +40,6 @@ runs:
       with:
         path: ~/.cache/pre-commit
         key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-      shell: bash
 
     - name: Install quality tooling
       shell: bash
