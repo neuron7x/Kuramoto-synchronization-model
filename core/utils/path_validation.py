@@ -144,18 +144,18 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
     # Remove null bytes
     filename = filename.replace('\0', '')
 
-    # Dangerous characters to replace
-    dangerous_chars = ['/', '\\', '<', '>', ':', '"', '|', '?', '*', '\n', '\r', '\t']
+    # Dangerous characters to replace (including dots which can be used in path traversal)
+    dangerous_chars = ['/', '\\', '<', '>', ':', '"', '|', '?', '*', '\n', '\r', '\t', '.']
     
     sanitized = filename
     for char in dangerous_chars:
         sanitized = sanitized.replace(char, replacement)
 
-    # Remove leading/trailing dots and spaces
-    sanitized = sanitized.strip('. ')
+    # Remove leading/trailing underscores and spaces
+    sanitized = sanitized.strip('_ ')
 
-    # Ensure the result is not empty and not a special name
-    if not sanitized or sanitized in ('.', '..'):
+    # Ensure the result is not empty
+    if not sanitized:
         sanitized = 'unnamed_file'
 
     return sanitized
