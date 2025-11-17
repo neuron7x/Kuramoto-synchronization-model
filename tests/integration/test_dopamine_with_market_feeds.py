@@ -7,9 +7,24 @@ decision making using stable, reproducible market feed recordings.
 
 from pathlib import Path
 
-
 from core.data.market_feed import MarketFeedRecording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from tradepulse.core.neuro.dopamine import (
+    ActionGate,
+    DopamineController,
+    DopamineSnapshot,
+    adapt_ddm_parameters,
+)
+
+
+def calculate_simple_reward(records, window=1):
+    """Calculate simple returns as rewards from price records."""
+    rewards = []
+    prices = [r.price for r in records]
+    for i in range(window, len(prices)):
+        ret = (prices[i] - prices[i - window]) / prices[i - window]
+        rewards.append(ret)
+    # Pad beginning with zeros
+    return [0.0] * window + rewards
 
 
 # Path to test fixtures
