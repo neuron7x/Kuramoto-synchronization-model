@@ -1,0 +1,99 @@
+name: 'Setup Python Environment'
+description: 'Centralized Python environment setup with caching and dependency installation'
+author: 'TradePulse Team'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.11'
+  install-dev-deps:
+    description: 'Whether to install development dependencies'
+    required: false
+    default: 'true'
+  use-uv:
+    description: 'Use uv for faster package installation'
+    required: false
+    default: 'true'
+  cache-key-suffix:
+    description: 'Additional suffix for cache key'
+    required: false
+    default: ''
+
+outputs:
+  python-path:
+    description: 'Path to Python interpreter'
+    value: ${{ steps.setup.outputs.python-path }}
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache-deps.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      id: setup
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.txt
+          requirements.lock
+          requirements-dev.txt
+          requirements-dev.lock
+          constraints/security.txt
+
+    - name: Set up uv (fast package installer)
+      if: inputs.use-uv == 'true'
+      uses: astral-sh/setup-uv@v3
+      shell: bash
+
+    - name: Cache Python packages
+      id: cache-deps
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/uv
+          .venv
+        key: python-deps-${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'pyproject.toml') }}-${{ inputs.cache-key-suffix }}
+        restore-keys: |
+          python-deps-${{ runner.os }}-py${{ inputs.python-version }}-
+
+    - name: Create virtual environment
+      shell: bash
+      run: |
+        if [ "${{ inputs.use-uv }}" == "true" ]; then
+          uv venv
+        else
+          python -m venv .venv
+        fi
+
+    - name: Install production dependencies
+      shell: bash
+      run: |
+        if [ "${{ inputs.use-uv }}" == "true" ]; then
+          uv pip install --upgrade pip setuptools wheel
+          uv pip install -c constraints/security.txt -r requirements.txt
+        else
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
+        fi
+
+    - name: Install development dependencies
+      if: inputs.install-dev-deps == 'true'
+      shell: bash
+      run: |
+        if [ "${{ inputs.use-uv }}" == "true" ]; then
+          uv pip install -c constraints/security.txt -r requirements-dev.txt
+        else
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+        fi
+
+    - name: Verify installation
+      shell: bash
+      run: |
+        .venv/bin/python --version
+        .venv/bin/pip list | head -20
+        echo "✅ Python environment setup complete"

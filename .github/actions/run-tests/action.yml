@@ -1,0 +1,167 @@
+name: 'Run Tests'
+description: 'Centralized test execution with coverage and reporting'
+author: 'TradePulse Team'
+
+inputs:
+  test-suite:
+    description: 'Test suite to run (unit, integration, e2e, all)'
+    required: false
+    default: 'all'
+  coverage-threshold:
+    description: 'Minimum coverage percentage required'
+    required: false
+    default: '98'
+  parallel:
+    description: 'Enable parallel test execution'
+    required: false
+    default: 'true'
+  shard-index:
+    description: 'Shard index for parallel execution (1-based)'
+    required: false
+    default: '1'
+  shard-total:
+    description: 'Total number of shards'
+    required: false
+    default: '1'
+  mutation-testing:
+    description: 'Run mutation testing'
+    required: false
+    default: 'false'
+  upload-coverage:
+    description: 'Upload coverage reports'
+    required: false
+    default: 'true'
+
+outputs:
+  coverage:
+    description: 'Test coverage percentage'
+    value: ${{ steps.coverage.outputs.percentage }}
+  tests-passed:
+    description: 'Number of tests passed'
+    value: ${{ steps.run-tests.outputs.passed }}
+  tests-failed:
+    description: 'Number of tests failed'
+    value: ${{ steps.run-tests.outputs.failed }}
+
+runs:
+  using: composite
+  steps:
+    - name: Determine test paths
+      id: paths
+      shell: bash
+      run: |
+        case "${{ inputs.test-suite }}" in
+          unit)
+            echo "paths=tests/unit" >> $GITHUB_OUTPUT
+            ;;
+          integration)
+            echo "paths=tests/integration" >> $GITHUB_OUTPUT
+            ;;
+          e2e)
+            echo "paths=tests/e2e" >> $GITHUB_OUTPUT
+            ;;
+          all)
+            echo "paths=tests/" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            echo "paths=${{ inputs.test-suite }}" >> $GITHUB_OUTPUT
+            ;;
+        esac
+
+    - name: Run tests
+      id: run-tests
+      shell: bash
+      env:
+        COVERAGE_FILE: .coverage.${{ inputs.shard-index }}
+      run: |
+        echo "::group::Running tests (${{ inputs.test-suite }}, shard ${{ inputs.shard-index }}/${{ inputs.shard-total }})"
+        
+        # Build pytest command
+        PYTEST_ARGS="${{ steps.paths.outputs.paths }}"
+        PYTEST_ARGS="$PYTEST_ARGS --cov=core --cov=backtest --cov=execution"
+        PYTEST_ARGS="$PYTEST_ARGS --cov-config=configs/quality/critical_surface.coveragerc"
+        PYTEST_ARGS="$PYTEST_ARGS --cov-report=term-missing"
+        PYTEST_ARGS="$PYTEST_ARGS --cov-report=xml:coverage-${{ inputs.shard-index }}.xml"
+        PYTEST_ARGS="$PYTEST_ARGS --cov-report=html:coverage_html"
+        PYTEST_ARGS="$PYTEST_ARGS --junit-xml=junit-${{ inputs.shard-index }}.xml"
+        
+        # Add parallel execution if enabled
+        if [ "${{ inputs.parallel }}" == "true" ] && [ "${{ inputs.shard-total }}" -gt "1" ]; then
+          PYTEST_ARGS="$PYTEST_ARGS --splits ${{ inputs.shard-total }} --group ${{ inputs.shard-index }}"
+        fi
+        
+        # Add verbosity
+        PYTEST_ARGS="$PYTEST_ARGS -v"
+        
+        # Run tests
+        .venv/bin/pytest $PYTEST_ARGS || {
+          echo "❌ Tests failed"
+          exit 1
+        }
+        
+        echo "::endgroup::"
+        echo "✅ Tests passed"
+
+    - name: Generate coverage report
+      id: coverage
+      if: always()
+      shell: bash
+      run: |
+        if [ -f .coverage.${{ inputs.shard-index }} ]; then
+          .venv/bin/python -m coverage report --show-missing || true
+          
+          # Extract coverage percentage
+          COVERAGE_PCT=$(.venv/bin/python -m coverage report | tail -1 | awk '{print $NF}' | sed 's/%//')
+          echo "percentage=${COVERAGE_PCT}" >> $GITHUB_OUTPUT
+          
+          echo "### Test Coverage: ${COVERAGE_PCT}%" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Check coverage threshold
+      if: always() && steps.coverage.outputs.percentage != ''
+      shell: bash
+      run: |
+        COVERAGE=${{ steps.coverage.outputs.percentage }}
+        THRESHOLD=${{ inputs.coverage-threshold }}
+        
+        if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+          echo "❌ Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+          exit 1
+        else
+          echo "✅ Coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
+        fi
+
+    - name: Run mutation testing
+      if: inputs.mutation-testing == 'true'
+      shell: bash
+      run: |
+        echo "::group::Running mutation testing"
+        .venv/bin/mutmut run --paths-to-mutate=core,backtest,execution --tests-dir=tests || {
+          echo "⚠️ Mutation testing encountered issues"
+        }
+        .venv/bin/mutmut results || echo "No mutation results to display"
+        echo "::endgroup::"
+
+    - name: Upload coverage reports
+      if: inputs.upload-coverage == 'true' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ inputs.test-suite }}-shard-${{ inputs.shard-index }}
+        path: |
+          .coverage.${{ inputs.shard-index }}
+          coverage-${{ inputs.shard-index }}.xml
+          coverage_html/
+          junit-${{ inputs.shard-index }}.xml
+        if-no-files-found: warn
+      shell: bash
+
+    - name: Test summary
+      if: always()
+      shell: bash
+      run: |
+        echo "### Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Test Suite**: ${{ inputs.test-suite }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Shard**: ${{ inputs.shard-index }}/${{ inputs.shard-total }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Coverage**: ${{ steps.coverage.outputs.percentage }}%" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ steps.run-tests.outcome }}" >> $GITHUB_STEP_SUMMARY

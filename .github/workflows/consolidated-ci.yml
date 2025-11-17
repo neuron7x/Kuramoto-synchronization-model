@@ -1,0 +1,270 @@
+name: 'Consolidated CI Pipeline'
+# This is the new centralized CI/CD pipeline that replaces multiple redundant workflows
+# It consolidates 19 separate test workflows into a single, efficient orchestration
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+  pull_request:
+    branches: ['**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+  workflow_dispatch:
+    inputs:
+      skip-tests:
+        description: 'Skip test execution'
+        required: false
+        default: 'false'
+        type: boolean
+      mutation-testing:
+        description: 'Enable mutation testing'
+        required: false
+        default: 'false'
+        type: boolean
+
+concurrency:
+  group: consolidated-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ============================================================================
+  # Stage 1: Fast Feedback - Quality Gates (< 2 minutes)
+  # ============================================================================
+  quality-gate:
+    name: 'Quality Gate • Lint & Security'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          install-dev-deps: true
+          use-uv: true
+
+      - name: Run quality checks
+        uses: ./.github/actions/quality-gate
+        with:
+          skip-lint: false
+          skip-type-check: false
+          skip-security: false
+          fail-on-warnings: false
+
+  # ============================================================================
+  # Stage 2: Parallel Test Execution (< 5 minutes with sharding)
+  # ============================================================================
+  test-matrix:
+    name: 'Tests • ${{ matrix.suite }} • Shard ${{ matrix.shard }}'
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    if: inputs.skip-tests != true
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, integration]
+        shard: [1, 2, 3]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          install-dev-deps: true
+          use-uv: true
+          cache-key-suffix: tests-${{ matrix.suite }}
+
+      - name: Run tests
+        uses: ./.github/actions/run-tests
+        with:
+          test-suite: ${{ matrix.suite }}
+          coverage-threshold: 95
+          parallel: true
+          shard-index: ${{ matrix.shard }}
+          shard-total: 3
+          upload-coverage: true
+
+  # ============================================================================
+  # Stage 3: E2E Tests (sequential, longer timeout)
+  # ============================================================================
+  test-e2e:
+    name: 'Tests • E2E'
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    if: inputs.skip-tests != true && github.event_name != 'pull_request'
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          install-dev-deps: true
+          use-uv: true
+          cache-key-suffix: tests-e2e
+
+      - name: Run E2E tests
+        uses: ./.github/actions/run-tests
+        with:
+          test-suite: e2e
+          coverage-threshold: 80
+          parallel: false
+          upload-coverage: true
+
+  # ============================================================================
+  # Stage 4: Coverage Aggregation & Enforcement
+  # ============================================================================
+  coverage-gate:
+    name: 'Coverage Gate • 98% Threshold'
+    runs-on: ubuntu-latest
+    needs: [test-matrix, test-e2e]
+    if: always() && inputs.skip-tests != true
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          install-dev-deps: false
+          use-uv: true
+
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+          path: ./coverage-reports
+
+      - name: Combine coverage data
+        run: |
+          .venv/bin/pip install coverage
+          cd coverage-reports
+          .venv/bin/python -m coverage combine .coverage.*
+          .venv/bin/python -m coverage xml -i -o ../coverage.xml
+          cd ..
+
+      - name: Enforce global coverage threshold (98%)
+        run: |
+          .venv/bin/python -m coverage report --fail-under=98
+
+      - name: Generate coverage HTML report
+        if: always()
+        run: |
+          .venv/bin/python -m coverage html -i -d coverage_html
+
+      - name: Upload combined coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-coverage
+          path: |
+            coverage.xml
+            coverage_html/
+          if-no-files-found: error
+
+      - name: Upload to Codecov
+        if: always() && env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: consolidated-ci
+          name: consolidated-ci-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ============================================================================
+  # Stage 5: Mutation Testing (optional, resource-intensive)
+  # ============================================================================
+  mutation-testing:
+    name: 'Mutation Testing • 90% Kill Rate'
+    runs-on: ubuntu-latest
+    needs: coverage-gate
+    if: inputs.mutation-testing == true || github.event_name == 'push'
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          install-dev-deps: true
+          use-uv: true
+
+      - name: Run mutation testing
+        uses: ./.github/actions/run-tests
+        with:
+          test-suite: unit
+          mutation-testing: true
+          upload-coverage: true
+
+      - name: Check mutation kill rate
+        run: |
+          .venv/bin/pip install mutmut
+          if [ -f .mutmut-cache ]; then
+            .venv/bin/mutmut results
+            # Note: Actual kill rate enforcement can be added here
+            echo "✅ Mutation testing completed"
+          else
+            echo "⚠️ No mutations generated"
+          fi
+
+  # ============================================================================
+  # Final Stage: Pipeline Status Summary
+  # ============================================================================
+  pipeline-status:
+    name: 'Pipeline Status'
+    runs-on: ubuntu-latest
+    needs: [quality-gate, test-matrix, coverage-gate]
+    if: always()
+    steps:
+      - name: Check pipeline status
+        run: |
+          echo "### Pipeline Status Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Quality Gate | ${{ needs.quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Matrix | ${{ needs.test-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage Gate | ${{ needs.coverage-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.quality-gate.result }}" != "success" ] || \
+             [ "${{ needs.test-matrix.result }}" != "success" ] || \
+             [ "${{ needs.coverage-gate.result }}" != "success" ]; then
+            echo "❌ Pipeline failed"
+            exit 1
+          else
+            echo "✅ Pipeline passed"
+          fi

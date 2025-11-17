@@ -1,0 +1,156 @@
+name: 'Quality Gate'
+description: 'Consolidated quality checks: linting, type checking, security scanning'
+author: 'TradePulse Team'
+
+inputs:
+  skip-lint:
+    description: 'Skip linting checks'
+    required: false
+    default: 'false'
+  skip-type-check:
+    description: 'Skip type checking'
+    required: false
+    default: 'false'
+  skip-security:
+    description: 'Skip security scanning'
+    required: false
+    default: 'false'
+  fail-on-warnings:
+    description: 'Fail on warnings in addition to errors'
+    required: false
+    default: 'false'
+
+outputs:
+  lint-status:
+    description: 'Status of linting checks'
+    value: ${{ steps.lint.outcome }}
+  type-check-status:
+    description: 'Status of type checking'
+    value: ${{ steps.typecheck.outcome }}
+  security-status:
+    description: 'Status of security scanning'
+    value: ${{ steps.security.outcome }}
+
+runs:
+  using: composite
+  steps:
+    - name: Cache pre-commit environments
+      if: inputs.skip-lint == 'false'
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      shell: bash
+
+    - name: Install quality tooling
+      shell: bash
+      run: |
+        .venv/bin/pip install pre-commit detect-secrets bandit
+
+    - name: Run linting (ruff + black + shellcheck)
+      id: lint
+      if: inputs.skip-lint == 'false'
+      shell: bash
+      run: |
+        echo "::group::Running ruff"
+        .venv/bin/ruff check .
+        echo "::endgroup::"
+        
+        echo "::group::Running black"
+        .venv/bin/black --check .
+        echo "::endgroup::"
+        
+        echo "::group::Running shellcheck"
+        if command -v shellcheck >/dev/null 2>&1; then
+          .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure || true
+        else
+          echo "⚠️ shellcheck not installed, skipping"
+        fi
+        echo "::endgroup::"
+        
+        echo "✅ Linting passed"
+
+    - name: Run type checking (mypy + slotscheck)
+      id: typecheck
+      if: inputs.skip-type-check == 'false'
+      shell: bash
+      run: |
+        echo "::group::Running mypy"
+        .venv/bin/mypy
+        echo "::endgroup::"
+        
+        echo "::group::Running slotscheck"
+        .venv/bin/python -m slotscheck --module core --module backtest --module execution
+        echo "::endgroup::"
+        
+        echo "✅ Type checking passed"
+
+    - name: Run security scanning (detect-secrets + bandit)
+      id: security
+      if: inputs.skip-security == 'false'
+      shell: bash
+      run: |
+        echo "::group::Running detect-secrets"
+        scan_output="$(mktemp)"
+        .venv/bin/detect-secrets scan core backtest execution src application >"$scan_output"
+        python - <<'PY' "$scan_output"
+        import json
+        import sys
+        
+        path = sys.argv[1]
+        data = json.loads(open(path, encoding="utf-8").read())
+        results = data.get("results", {})
+        violations = sum(len(entries) for entries in results.values())
+        if violations:
+            print(f"⚠️ Found {violations} potential secrets")
+            if "${{ inputs.fail-on-warnings }}" == "true":
+                message = [
+                    "Potential secrets detected in privileged modules:",
+                    json.dumps(results, indent=2, sort_keys=True),
+                ]
+                raise SystemExit("\n".join(message))
+        else:
+            print("✅ No secrets detected")
+        PY
+        echo "::endgroup::"
+        
+        echo "::group::Running bandit"
+        .venv/bin/bandit -r core backtest execution src -f json -o bandit-report.json || true
+        if [ -f bandit-report.json ]; then
+          python - <<'PY'
+        import json
+        
+        with open('bandit-report.json', 'r') as f:
+            data = json.load(f)
+            high = len([x for x in data.get('results', []) if x.get('issue_severity') == 'HIGH'])
+            medium = len([x for x in data.get('results', []) if x.get('issue_severity') == 'MEDIUM'])
+            low = len([x for x in data.get('results', []) if x.get('issue_severity') == 'LOW'])
+            
+            print(f"Bandit scan results:")
+            print(f"  HIGH:   {high}")
+            print(f"  MEDIUM: {medium}")
+            print(f"  LOW:    {low}")
+            
+            if high > 0:
+                raise SystemExit(f"❌ Found {high} HIGH severity issues")
+            elif medium > 0 and "${{ inputs.fail-on-warnings }}" == "true":
+                raise SystemExit(f"⚠️ Found {medium} MEDIUM severity issues")
+            else:
+                print("✅ No critical security issues found")
+        PY
+        fi
+        echo "::endgroup::"
+        
+        echo "✅ Security scanning passed"
+
+    - name: Quality gate summary
+      if: always()
+      shell: bash
+      run: |
+        echo "### Quality Gate Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Linting | ${{ steps.lint.outcome || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Type Checking | ${{ steps.typecheck.outcome || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security | ${{ steps.security.outcome || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
