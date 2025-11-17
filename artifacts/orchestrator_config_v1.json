@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "name": "standard_dopamine_backtest",
+    "version": "1.0.0",
+    "created": "2025-11-17T01:50:00Z",
+    "description": "Standard configuration for dopamine-enhanced backtesting"
+  },
+  "module_sequence": [
+    {
+      "module_name": "data_ingestion",
+      "operation": "ingest",
+      "parameters": {
+        "symbol": "BTC/USDT",
+        "timeframe": "1h",
+        "buffer_size": 1000
+      },
+      "priority": 0
+    },
+    {
+      "module_name": "feature_extraction",
+      "operation": "extract",
+      "parameters": {
+        "indicators": [
+          "kuramoto",
+          "ricci_flow",
+          "entropy"
+        ],
+        "lookback": 100
+      },
+      "priority": 1
+    },
+    {
+      "module_name": "risk_assessment",
+      "operation": "evaluate",
+      "parameters": {
+        "method": "var_es",
+        "confidence": 0.95,
+        "window": 50
+      },
+      "priority": 2
+    },
+    {
+      "module_name": "action_selector",
+      "operation": "select",
+      "parameters": {
+        "algorithm": "basal_ganglia",
+        "temperature": 1.0,
+        "neuromodulators": [
+          "dopamine",
+          "serotonin",
+          "gaba",
+          "na_ach"
+        ]
+      },
+      "priority": 3
+    }
+  ],
+  "parameters": {
+    "capital": 100000.0,
+    "max_position_size": 0.2,
+    "learning_rate": 0.01,
+    "discount_gamma": 0.99,
+    "exposure_limit": 0.5
+  }
+}
