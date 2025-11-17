@@ -1,14 +1,13 @@
 """Tests for Ricci curvature and topological features."""
 
+# Import directly from module files to avoid package __init__
+import importlib.util
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-
-# Import directly from module files to avoid package __init__
-import importlib.util
 
 # Import RicciCurvatureGraph
 spec = importlib.util.spec_from_file_location(

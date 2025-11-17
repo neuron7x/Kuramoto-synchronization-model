@@ -24,8 +24,8 @@ from application.system_orchestrator import (
     TradePulseOrchestrator,
     build_tradepulse_system,
 )
+from core.data.models import InstrumentType
 from execution.risk import RiskLimits
-
 from src.audit.audit_logger import AuditLogger, AuditRecord
 from src.data.ingestion_service import CacheEntrySnapshot, DataIngestionCacheService
 from src.data.kafka_ingestion import (
@@ -40,7 +40,6 @@ from src.data.pipeline import (
 )
 from src.data.streaming_aggregator import TickStreamAggregator
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
-from core.data.models import InstrumentType
 
 
 @dataclass(slots=True)
@@ -396,7 +395,9 @@ def _resolve_audit_logger(
         )
 
     if audit_secret is not None and audit_secret_resolver is not None:
-        raise ValueError("audit_secret and audit_secret_resolver are mutually exclusive")
+        raise ValueError(
+            "audit_secret and audit_secret_resolver are mutually exclusive"
+        )
 
     if audit_secret is not None:
         return AuditLogger(secret=audit_secret)

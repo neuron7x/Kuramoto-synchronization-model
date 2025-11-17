@@ -37,7 +37,9 @@ class AnswerCache:
         while len(self._entries) > self._max_entries:
             self._entries.popitem(last=False)
 
-    def _is_expired(self, entry: AnswerCacheEntry, *, now: datetime | None = None) -> bool:
+    def _is_expired(
+        self, entry: AnswerCacheEntry, *, now: datetime | None = None
+    ) -> bool:
         if self._ttl is None:
             return False
         reference = now or self._now()

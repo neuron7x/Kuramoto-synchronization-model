@@ -60,9 +60,7 @@ class RicciCurvatureGraph:
         self.window = window
         self.alpha = alpha
 
-    def fit_transform(
-        self, returns: DataFrame
-    ) -> dict[str, float | dict]:
+    def fit_transform(self, returns: DataFrame) -> dict[str, float | dict]:
         """Compute Ricci curvature from returns.
 
         Parameters

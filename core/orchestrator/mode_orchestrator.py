@@ -138,7 +138,9 @@ class ModeOrchestrator:
     def state(self) -> ModeState:
         return self._state
 
-    def reset(self, state: Optional[ModeState] = None, *, timestamp: float = 0.0) -> None:
+    def reset(
+        self, state: Optional[ModeState] = None, *, timestamp: float = 0.0
+    ) -> None:
         """Reinitialise the orchestrator for deterministic testing."""
 
         self._state = state or self.config.initial_state
@@ -179,7 +181,9 @@ class ModeOrchestrator:
         hard_breach = self._any_guard(metrics, guard, "is_hard_breach")
         soft_breach = self._any_guard(metrics, guard, "is_soft_breach")
         recovered = self._all_guard(metrics, guard, "is_recovered")
-        state_started = self._state_entered_at if self._state_entered_at is not None else timestamp
+        state_started = (
+            self._state_entered_at if self._state_entered_at is not None else timestamp
+        )
         elapsed = timestamp - state_started
 
         if hard_breach:
@@ -218,7 +222,9 @@ class ModeOrchestrator:
 
         if self._state == ModeState.SAFE_EXIT:
             state_started = (
-                self._state_entered_at if self._state_entered_at is not None else timestamp
+                self._state_entered_at
+                if self._state_entered_at is not None
+                else timestamp
             )
             lock_elapsed = timestamp - state_started
             if lock_elapsed >= self.config.timeouts.safe_exit_lock and recovered:
@@ -280,4 +286,3 @@ class ModeOrchestrator:
                 (metrics.kappa, metrics.var, metrics.max_drawdown, metrics.heat),
             )
         )
-

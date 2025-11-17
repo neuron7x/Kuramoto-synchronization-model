@@ -16,12 +16,13 @@ from application.api.authorization import (
     get_authorization_gateway,
     require_permission,
 )
+from application.api.debug import install_debug_routes
 from application.api.errors import register_exception_handlers
+from application.api.middleware import AccessLogMiddleware
 from application.api.rate_limit import (
     SlidingWindowRateLimiter,
     build_rate_limiter,
 )
-from application.api.debug import install_debug_routes
 from application.api.security import verify_request_identity
 from application.security.rbac import AuthorizationGateway
 from application.settings import (
@@ -31,8 +32,8 @@ from application.settings import (
 )
 from application.system import TradePulseSystem
 from application.trading import order_to_dto
-from domain import Order, OrderSide, OrderType, Position
 from core.utils.debug import VariableInspector
+from domain import Order, OrderSide, OrderType, Position
 from observability.audit.trail import (
     AuditTrail,
     AuditTrailError,
@@ -47,8 +48,6 @@ from observability.notifications import (
 )
 from src.admin.remote_control import AdminIdentity
 from src.security import AccessDeniedError
-
-from application.api.middleware import AccessLogMiddleware
 
 
 def _read_version() -> str:

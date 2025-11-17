@@ -21,7 +21,10 @@ class VariableInspector:
         *,
         redact_patterns: Iterable[str] | None = None,
     ) -> None:
-        patterns = tuple(pattern.lower() for pattern in (redact_patterns or ("secret", "token", "key", "password")))
+        patterns = tuple(
+            pattern.lower()
+            for pattern in (redact_patterns or ("secret", "token", "key", "password"))
+        )
         # Preserve order while normalising duplicates.
         self._redact_patterns: tuple[str, ...] = tuple(dict.fromkeys(patterns))
         self._providers: dict[str, Callable[[], Any | Awaitable[Any]]] = {}
@@ -88,8 +91,13 @@ class VariableInspector:
                 for item_key, item_value in value.items()
             }
 
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
-            return [self._sanitise(path + (str(index),), item) for index, item in enumerate(value)]
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            return [
+                self._sanitise(path + (str(index),), item)
+                for index, item in enumerate(value)
+            ]
 
         if is_dataclass(value):
             return self._sanitise(path, asdict(value))

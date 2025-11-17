@@ -1,4 +1,5 @@
 """Agent registry for runtime trading agents."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

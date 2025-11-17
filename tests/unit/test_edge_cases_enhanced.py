@@ -42,7 +42,7 @@ class TestNumericalEdgeCases:
         """
         phases = np.ones(100) * np.pi / 2  # Constant phase
         result = kuramoto_order(phases)
-        
+
         assert not np.isnan(result), "Result should not be NaN"
         assert not np.isinf(result), "Result should not be Inf"
         assert 0.0 <= result <= 1.0, "Order parameter should be in [0, 1]"
@@ -54,7 +54,7 @@ class TestNumericalEdgeCases:
         """
         phases = np.array([np.pi / 4])
         result = kuramoto_order(phases)
-        
+
         assert not np.isnan(result), "Result should not be NaN"
         assert not np.isinf(result), "Result should not be Inf"
         # Single oscillator should have perfect order
@@ -134,7 +134,7 @@ class TestBoundaryConditions:
         """
         phases = np.array([0.0, np.pi])  # Opposite phases
         result = kuramoto_order(phases)
-        
+
         # Two opposite phases should have low order parameter
         assert not np.isnan(result)
         assert 0.0 <= result <= 1.0
@@ -147,12 +147,12 @@ class TestBoundaryConditions:
         """
         balance = 1000.0
         price = 100.0
-        
+
         # Zero risk should produce zero or minimal size
         size_zero = position_sizing(balance, risk=0.0, price=price)
         assert size_zero >= 0.0, "Size should be non-negative"
         assert size_zero * price <= balance * 0.01, "Should allocate minimal capital"
-        
+
         # Full risk should use entire balance
         size_full = position_sizing(balance, risk=1.0, price=price)
         assert size_full > 0, "Size should be positive"
@@ -203,7 +203,7 @@ class TestErrorConditions:
         size_high = position_sizing(balance=1000.0, risk=1.5, price=100.0)
         size_normal = position_sizing(balance=1000.0, risk=1.0, price=100.0)
         assert size_high == size_normal, "Risk > 1.0 should be clamped to 1.0"
-        
+
         # Risk < 0.0 should be clamped to 0.0
         size_negative = position_sizing(balance=1000.0, risk=-0.1, price=100.0)
         assert size_negative == 0.0, "Negative risk should be clamped to 0.0"

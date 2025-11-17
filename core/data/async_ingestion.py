@@ -300,7 +300,9 @@ class AsyncDataIngestor(AsyncDataIngestionService):
                             await asyncio.sleep(delay_ms / 1000.0)
 
             except Exception as exc:
-                logger.error("CSV ingestion failed", path=str(resolved_path), error=str(exc))
+                logger.error(
+                    "CSV ingestion failed", path=str(resolved_path), error=str(exc)
+                )
                 raise
             finally:
                 if not worker_task.done():
@@ -346,9 +348,12 @@ class AsyncDataIngestor(AsyncDataIngestionService):
 
         count = 0
         try:
-            with logger.operation(
-                "async_stream_ticks", source=source, symbol=symbol, mode="connector"
-            ), _TickMetricBatcher(metrics, source, symbol) as metric_batcher:
+            with (
+                logger.operation(
+                    "async_stream_ticks", source=source, symbol=symbol, mode="connector"
+                ),
+                _TickMetricBatcher(metrics, source, symbol) as metric_batcher,
+            ):
                 async for event in connector.stream_ticks(
                     symbol=symbol, instrument_type=instrument_type
                 ):
@@ -464,9 +469,12 @@ class AsyncDataIngestor(AsyncDataIngestionService):
         interval_ms: int,
         max_ticks: Optional[int],
     ) -> AsyncIterator[Ticker]:
-        with logger.operation(
-            "async_stream_ticks", source=source, symbol=symbol, mode="synthetic"
-        ), _TickMetricBatcher(metrics, source, symbol) as metric_batcher:
+        with (
+            logger.operation(
+                "async_stream_ticks", source=source, symbol=symbol, mode="synthetic"
+            ),
+            _TickMetricBatcher(metrics, source, symbol) as metric_batcher,
+        ):
             count = 0
 
             while max_ticks is None or count < max_ticks:
@@ -533,6 +541,7 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
     # still allowing a small amount of ahead-of-time reads for fairness.
     prefetch_per_stream = 2
     max_queue_size = max(1, len(streams) * prefetch_per_stream)
+
     @dataclass(frozen=True, slots=True)
     class _StreamError:
         stream: str | None
@@ -581,8 +590,7 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
                     await asyncio.shield(aclose())
 
     workers = [
-        asyncio.create_task(_pump(idx, stream))
-        for idx, stream in enumerate(streams)
+        asyncio.create_task(_pump(idx, stream)) for idx, stream in enumerate(streams)
     ]
 
     remaining = len(workers)

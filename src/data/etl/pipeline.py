@@ -13,9 +13,22 @@ from typing import Any, Awaitable, Callable, MutableMapping, Sequence
 import pandas as pd
 import pandera as pa
 from pandera.errors import SchemaError, SchemaErrors
-from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from .monitoring import AutoReporter, DistributionProfiler, DriftDetector, DriftReport, ProfileSummary, SLAMonitor
+from .monitoring import (
+    AutoReporter,
+    DistributionProfiler,
+    DriftDetector,
+    DriftReport,
+    ProfileSummary,
+    SLAMonitor,
+)
 from .stores import (
     AuditEntry,
     AuditLog,
@@ -28,9 +41,13 @@ from .stores import (
 )
 
 Extractor = Callable[["PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame]
-Transformer = Callable[[pd.DataFrame, "PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame]
+Transformer = Callable[
+    [pd.DataFrame, "PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame
+]
 Loader = Callable[[pd.DataFrame, "PipelineContext"], Awaitable[Any] | Any]
-Validator = Callable[[pd.DataFrame, "PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame]
+Validator = Callable[
+    [pd.DataFrame, "PipelineContext"], Awaitable[pd.DataFrame] | pd.DataFrame
+]
 
 
 LOGGER = logging.getLogger(__name__)
@@ -50,7 +67,9 @@ class RetryPolicy:
     base: float = 1.0
     max_wait: float = 30.0
 
-    async def run(self, func: Callable[..., Awaitable[Any] | Any], *args: Any, **kwargs: Any) -> Any:
+    async def run(
+        self, func: Callable[..., Awaitable[Any] | Any], *args: Any, **kwargs: Any
+    ) -> Any:
         retrying = AsyncRetrying(
             retry=retry_if_exception_type(Exception),
             stop=stop_after_attempt(self.attempts),
@@ -177,10 +196,14 @@ class ETLPipeline:
     def quarantine_store(self) -> QuarantineStore:
         return self._quarantine
 
-    async def run(self, config: PipelineRunConfig, *, allow_rerun: bool = False) -> PipelineRunResult:
+    async def run(
+        self, config: PipelineRunConfig, *, allow_rerun: bool = False
+    ) -> PipelineRunResult:
         """Execute pipeline segments with resilience features."""
 
-        if not allow_rerun and not self._idempotency_store.check_and_register(config.run_id):
+        if not allow_rerun and not self._idempotency_store.check_and_register(
+            config.run_id
+        ):
             raise ValueError(f"Run {config.run_id} has already been processed")
 
         self._run_configs[config.run_id] = replace(config)
@@ -265,7 +288,9 @@ class ETLPipeline:
             report=report,
             context_snapshot={
                 "metadata": dict(context.metadata),
-                "segment_outputs": {k: v.copy(deep=True) for k, v in context.segment_outputs.items()},
+                "segment_outputs": {
+                    k: v.copy(deep=True) for k, v in context.segment_outputs.items()
+                },
             },
         )
         self._run_cache[config.run_id] = result
@@ -281,7 +306,9 @@ class ETLPipeline:
             )
 
         if segment.deduplicate_on:
-            duplicates = frame.duplicated(subset=list(segment.deduplicate_on), keep="first")
+            duplicates = frame.duplicated(
+                subset=list(segment.deduplicate_on), keep="first"
+            )
             if duplicates.any():
                 self._quarantine.append(
                     f"deduplicated:{segment.name}", frame.loc[duplicates]
@@ -350,7 +377,9 @@ class ETLPipeline:
             load_result=load_result,
         )
 
-    async def restart_segment(self, run_id: str, segment_name: str) -> PipelineRunResult:
+    async def restart_segment(
+        self, run_id: str, segment_name: str
+    ) -> PipelineRunResult:
         """Re-run the pipeline starting from a particular segment."""
 
         config = self._run_configs.get(run_id)
@@ -373,7 +402,9 @@ class PipelineScheduler:
     ) -> None:
         self._pipeline = pipeline
         self._max_workers = max(1, max_workers)
-        self._resource_scaler: Callable[..., int] = resource_scaler or self._default_resource_scaler
+        self._resource_scaler: Callable[..., int] = (
+            resource_scaler or self._default_resource_scaler
+        )
         self._poll_interval = poll_interval
         self._queue: asyncio.Queue[QueueItem] = asyncio.Queue()
         self._workers: set[asyncio.Task[None]] = set()
@@ -382,7 +413,9 @@ class PipelineScheduler:
         self._stop_signals = 0
         self._running = False
         self._state_lock = asyncio.Lock()
-        self._scaler_accepts_active = self._scaler_supports_active(self._resource_scaler)
+        self._scaler_accepts_active = self._scaler_supports_active(
+            self._resource_scaler
+        )
 
     async def submit(self, config: PipelineRunConfig) -> None:
         async with self._state_lock:
@@ -494,7 +527,11 @@ class PipelineScheduler:
         positional = [
             p
             for p in params
-            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            if p.kind
+            in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
         ]
         if any(p.kind is inspect.Parameter.VAR_POSITIONAL for p in params):
             return True

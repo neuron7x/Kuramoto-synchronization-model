@@ -135,10 +135,10 @@ class TestPositionSizingBehavior:
         size = calculate_position_size(balance=balance, risk=risk, price=price)
         assert size >= 0.0, "Size should be non-negative"
         assert not math.isinf(size), "Size should not be infinite"
-        
+
         cost = size * price
         risk_budget = balance * risk
-        
+
         if expected_within_budget:
             assert cost <= risk_budget * 1.01, f"Cost {cost} exceeds budget {risk_budget}"
 

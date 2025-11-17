@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from application.microservices.base import Microservice, ServiceState
 from application.microservices.backtesting import BacktestingService
+from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import default_contract_registry
 from application.microservices.execution import ExecutionService
 from application.microservices.market_data import MarketDataService

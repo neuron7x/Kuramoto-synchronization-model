@@ -37,13 +37,17 @@ class TickBatchPersistedEvent:
             "first_timestamp": _isoformat(self.first_timestamp),
             "last_timestamp": _isoformat(self.last_timestamp),
         }
-        return json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+        return json.dumps(payload, separators=(",", ":"), sort_keys=True).encode(
+            "utf-8"
+        )
 
 
 class TickEventPublisher(Protocol):
     """Publish events describing pipeline activity."""
 
-    async def publish_batch(self, event: TickBatchPersistedEvent) -> None:  # pragma: no cover - protocol definition
+    async def publish_batch(
+        self, event: TickBatchPersistedEvent
+    ) -> None:  # pragma: no cover - protocol definition
         """Publish ``event`` to downstream consumers."""
 
 
@@ -72,7 +76,9 @@ class BrokeredTickEventPublisher:
         from .event_bus import BrokerMessage
 
         headers = self._header_factory(event)
-        message = BrokerMessage(topic=self._topic, payload=event.to_payload(), headers=headers)
+        message = BrokerMessage(
+            topic=self._topic, payload=event.to_payload(), headers=headers
+        )
         await self._broker.publish(message)
 
 
@@ -110,7 +116,9 @@ def build_tick_event(
     """Create an event payload for ``ticks`` stored in ``route``."""
 
     if not ticks:
-        raise ValueError("ticks must not be empty when creating TickBatchPersistedEvent")
+        raise ValueError(
+            "ticks must not be empty when creating TickBatchPersistedEvent"
+        )
     first_ts = min(tick.timestamp for tick in ticks)
     last_ts = max(tick.timestamp for tick in ticks)
     return TickBatchPersistedEvent(

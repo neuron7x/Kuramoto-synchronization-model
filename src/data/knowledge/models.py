@@ -121,7 +121,6 @@ class IndexMaintenanceReport:
     issues: Sequence[str] = field(default_factory=tuple)
 
 
-
 @dataclass(slots=True)
 class PipelineResult:
     """Outcome of a pipeline execution."""
@@ -130,10 +129,13 @@ class PipelineResult:
     index_report: IndexMaintenanceReport
     invalid_links: Sequence[str]
 
+
 @dataclass(slots=True)
 class PipelineContext:
     """Mutable state shared within a pipeline execution."""
 
     segments: MutableMapping[str, DocumentSegment] = field(default_factory=dict)
-    compressed_segments: MutableMapping[str, CompressedSegment] = field(default_factory=dict)
+    compressed_segments: MutableMapping[str, CompressedSegment] = field(
+        default_factory=dict
+    )
     indexed_segments: MutableMapping[str, IndexedSegment] = field(default_factory=dict)

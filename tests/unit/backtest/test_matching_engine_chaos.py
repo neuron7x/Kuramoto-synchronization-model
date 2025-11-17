@@ -5,7 +5,14 @@ import contextlib
 import numpy as np
 import pytest
 
-from backtest.execution_simulation import HaltMode, MarketHalt, MatchingEngine, Order, OrderSide, OrderType
+from backtest.execution_simulation import (
+    HaltMode,
+    MarketHalt,
+    MatchingEngine,
+    Order,
+    OrderSide,
+    OrderType,
+)
 from observability.tracing import chaos_span
 
 

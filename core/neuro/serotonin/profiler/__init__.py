@@ -2,8 +2,8 @@
 
 from .behavioral_profiler import (
     BehavioralProfile,
-    SerotoninProfiler,
     ProfileStatistics,
+    SerotoninProfiler,
     TonicPhasicCharacteristics,
     VetoCooldownCharacteristics,
 )

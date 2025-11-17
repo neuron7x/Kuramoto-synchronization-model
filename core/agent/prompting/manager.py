@@ -158,7 +158,9 @@ class PromptSanitizer:
         sanitized: dict[str, str] = {}
         for key, value in mapping.items():
             if not isinstance(key, str) or not key.strip():
-                raise PromptInjectionDetected("parameter names must be non-empty strings")
+                raise PromptInjectionDetected(
+                    "parameter names must be non-empty strings"
+                )
             sanitized[key.strip()] = self.sanitize_text(value)
         return sanitized
 
@@ -175,7 +177,9 @@ class PromptSanitizer:
 class PromptRunObserver:
     """Observer invoked when prompts are rendered or outcomes reported."""
 
-    def on_render(self, record: PromptExecutionRecord) -> None:  # pragma: no cover - hook
+    def on_render(
+        self, record: PromptExecutionRecord
+    ) -> None:  # pragma: no cover - hook
         del record
 
     def on_outcome(
@@ -356,7 +360,9 @@ class PromptManager:
                 if excess >= len(t_content):
                     truncated.append(fragment.truncated(0))
                     continue
-                truncated_fragment = truncated_fragment.truncated(len(t_content) - excess)
+                truncated_fragment = truncated_fragment.truncated(
+                    len(t_content) - excess
+                )
                 t_prefix, t_content = self._fragment_components(
                     truncated_fragment, window.separator
                 )
@@ -366,7 +372,9 @@ class PromptManager:
             truncated.append(truncated_fragment)
         return prompt, tuple(included), tuple(truncated)
 
-    def _fragment_components(self, fragment: ContextFragment, separator: str) -> tuple[str, str]:
+    def _fragment_components(
+        self, fragment: ContextFragment, separator: str
+    ) -> tuple[str, str]:
         content = fragment.content.strip()
         if not content:
             return fragment.label, ""
@@ -404,7 +412,9 @@ class PromptManager:
             return None
         if isinstance(variant_assignment, float):
             if not 0.0 <= variant_assignment < 1.0:
-                raise PromptGuardrailViolation("variant assignment floats must be within [0, 1)")
+                raise PromptGuardrailViolation(
+                    "variant assignment floats must be within [0, 1)"
+                )
             return variant_assignment
         seed_material = family
         if variant_assignment is not None:
@@ -429,4 +439,3 @@ class PromptManager:
                 observer.on_outcome(record_id, outcome)
             except Exception:  # pragma: no cover - defensive branch
                 self._logger.exception("prompt.observer.outcome-failed")
-

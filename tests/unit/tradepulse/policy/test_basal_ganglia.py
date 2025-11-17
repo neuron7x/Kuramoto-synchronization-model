@@ -1,10 +1,9 @@
 """Tests for Basal Ganglia policy."""
 
-import sys
-from pathlib import Path
-
 # Import directly from module file to avoid package __init__
 import importlib.util
+import sys
+from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
     "basal_ganglia",

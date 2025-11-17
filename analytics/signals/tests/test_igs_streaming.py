@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analytics.signals.irreversibility import IGSConfig, StreamingIGS, compute_igs_features
+from analytics.signals.irreversibility import (
+    IGSConfig,
+    StreamingIGS,
+    compute_igs_features,
+)
 
 
 @pytest.mark.parametrize("quantize_mode", ["zscore", "rank"])
@@ -13,7 +17,13 @@ def test_streaming_approx_batch(quantize_mode: str):
     idx = pd.date_range("2024-01-01", periods=n, freq="T")
     series = pd.Series(prices, index=idx)
 
-    cfg = IGSConfig(window=200, n_states=5, min_counts=50, adapt_method="off", quantize_mode=quantize_mode)
+    cfg = IGSConfig(
+        window=200,
+        n_states=5,
+        min_counts=50,
+        adapt_method="off",
+        quantize_mode=quantize_mode,
+    )
     feats = compute_igs_features(series, cfg)
     engine = StreamingIGS(cfg)
 

@@ -146,11 +146,15 @@ class ExecutionConnector:
             if data["long_qty"] > 0:
                 position["long_quantity"] = data["long_qty"]
                 if data["long_cost"] > 0:
-                    position["long_average_price"] = data["long_cost"] / data["long_qty"]
+                    position["long_average_price"] = (
+                        data["long_cost"] / data["long_qty"]
+                    )
             if data["short_qty"] > 0:
                 position["short_quantity"] = data["short_qty"]
                 if data["short_cost"] > 0:
-                    position["short_average_price"] = data["short_cost"] / data["short_qty"]
+                    position["short_average_price"] = (
+                        data["short_cost"] / data["short_qty"]
+                    )
             positions.append(position)
         return positions
 

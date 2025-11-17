@@ -16,7 +16,6 @@ from core.architecture_integrator import (
     ComponentStatus,
 )
 
-
 # ------------------------------------------------------------------
 # Example Components
 # ------------------------------------------------------------------

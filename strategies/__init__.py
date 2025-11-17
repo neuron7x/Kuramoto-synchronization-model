@@ -9,9 +9,11 @@ from .registry import (
     StrategyRegistry,
     StrategySpec,
     UnknownStrategyError,
-    available_strategies as _available_strategies,
     register_strategy,
     resolve_strategy,
+)
+from .registry import (
+    available_strategies as _available_strategies,
 )
 
 

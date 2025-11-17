@@ -326,7 +326,11 @@ class AutoRollbackGuard:
             else:
                 total, errors, _ = self._aggregate_window(now, rule.window)
             label = rule.identifier
-            minimum = rule.min_requests if rule.min_requests is not None else self.config.min_requests
+            minimum = (
+                rule.min_requests
+                if rule.min_requests is not None
+                else self.config.min_requests
+            )
             summary[f"requests[{label}]"] = float(total)
             if total < minimum:
                 summary[f"burn_rate[{label}]"] = math.nan

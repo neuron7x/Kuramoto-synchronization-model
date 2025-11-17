@@ -12,7 +12,6 @@ from typing import Callable, Sequence
 from core.architecture_integrator.component import Component, ComponentStatus
 from core.architecture_integrator.registry import ComponentRegistry
 
-
 logger = logging.getLogger(__name__)
 
 

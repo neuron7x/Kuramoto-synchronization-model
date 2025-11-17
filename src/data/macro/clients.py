@@ -87,7 +87,8 @@ class MacrosynergyClient:
         missing = expected_columns.difference(frame.columns)
         if missing:
             raise MacroClientError(
-                "Macrosynergy API payload missing expected fields: " + ", ".join(sorted(missing))
+                "Macrosynergy API payload missing expected fields: "
+                + ", ".join(sorted(missing))
             )
 
         frame["release_date"] = pd.to_datetime(frame["release_date"], utc=True)
@@ -106,6 +107,10 @@ class MacrosynergyClient:
             "release_date",
             "period_end",
             "value",
-        ] + [col for col in frame.columns if col not in {"indicator", "release_date", "period_end", "value"}]
+        ] + [
+            col
+            for col in frame.columns
+            if col not in {"indicator", "release_date", "period_end", "value"}
+        ]
 
         return frame[ordered_columns]

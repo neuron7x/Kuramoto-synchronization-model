@@ -13,8 +13,8 @@ import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, MutableSequence, Sequence
 from concurrent.futures import ProcessPoolExecutor
-from functools import partial
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Any, Callable, Literal
 
 from core.utils.metrics import get_metrics_collector
@@ -142,17 +142,16 @@ class FeatureBlock(BaseBlock):
             try:
                 yield feature.transform(data, **kwargs)
             except Exception as exc:  # noqa: BLE001 - we re-raise with context
-                raise FeatureExecutionError(feature=feature, block=self.name, cause=exc) from exc
+                raise FeatureExecutionError(
+                    feature=feature, block=self.name, cause=exc
+                ) from exc
 
     def evaluate(
         self, data: FeatureInput, **kwargs: Any
     ) -> Mapping[str, FeatureResult]:
         """Run all features and return their full :class:`FeatureResult`s."""
 
-        return {
-            result.name: result
-            for result in self._iter_results(data, kwargs)
-        }
+        return {result.name: result for result in self._iter_results(data, kwargs)}
 
     def transform_all(
         self, data: FeatureInput, **kwargs: Any
@@ -163,8 +162,7 @@ class FeatureBlock(BaseBlock):
 
     def run(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
         return {
-            name: result.value
-            for name, result in self.evaluate(data, **kwargs).items()
+            name: result.value for name, result in self.evaluate(data, **kwargs).items()
         }
 
 
@@ -279,7 +277,9 @@ def _execute_feature(
     try:
         return feature.transform(data, **kwargs)
     except Exception as exc:  # noqa: BLE001 - we re-raise with context
-        raise FeatureExecutionError(feature=feature, block=block_name, cause=exc) from exc
+        raise FeatureExecutionError(
+            feature=feature, block=block_name, cause=exc
+        ) from exc
 
 
 class FeatureExecutionError(RuntimeError):

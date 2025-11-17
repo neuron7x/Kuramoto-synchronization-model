@@ -21,13 +21,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 try:  # pragma: no cover - optional dependency import guarded at runtime
-    from opentelemetry import context as otel_context
     from opentelemetry import baggage as otel_baggage
+    from opentelemetry import context as otel_context
     from opentelemetry import trace
     from opentelemetry.exporter.jaeger.thrift import JaegerExporter
     from opentelemetry.propagate import get_global_textmap, set_global_textmap
-    from opentelemetry.propagators.composite import CompositeTextMapPropagator
     from opentelemetry.propagators.baggage import BaggagePropagator
+    from opentelemetry.propagators.composite import CompositeTextMapPropagator
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -104,10 +104,12 @@ if _TRACE_AVAILABLE:
     _DICT_GETTER = _DictGetter()
     _W3C_PROPAGATOR = TraceContextTextMapPropagator()
     _BAGGAGE_PROPAGATOR = BaggagePropagator()
-    _GLOBAL_PROPAGATOR = CompositeTextMapPropagator([
-        _W3C_PROPAGATOR,
-        _BAGGAGE_PROPAGATOR,
-    ])
+    _GLOBAL_PROPAGATOR = CompositeTextMapPropagator(
+        [
+            _W3C_PROPAGATOR,
+            _BAGGAGE_PROPAGATOR,
+        ]
+    )
 else:  # pragma: no cover - tracing stack unavailable
     _DICT_SETTER = _DICT_GETTER = None  # type: ignore[assignment]
     _W3C_PROPAGATOR = None  # type: ignore[assignment]
@@ -401,7 +403,9 @@ def baggage_scope(
         current = otel_context.get_current()
         updated_context = current
         for key, value in updates.items():
-            updated_context = otel_baggage.set_baggage(key, value, context=updated_context)
+            updated_context = otel_baggage.set_baggage(
+                key, value, context=updated_context
+            )
         token = otel_context.attach(updated_context)
         try:
             yield current_baggage()
@@ -449,11 +453,7 @@ def activate_distributed_context(
 
     trace_token = None
     baggage_token: Token | None = None
-    if (
-        _TRACE_AVAILABLE
-        and otel_context
-        and context.trace_context is not None
-    ):
+    if _TRACE_AVAILABLE and otel_context and context.trace_context is not None:
         trace_token = otel_context.attach(context.trace_context)
     if context.baggage and (not _TRACE_AVAILABLE or context.trace_context is None):
         baggage_token = _LOCAL_BAGGAGE.set(dict(context.baggage))
@@ -501,7 +501,9 @@ def start_distributed_span(
                 try:
                     span.set_attribute(_CORRELATION_ATTRIBUTE, correlation)
                 except Exception:  # pragma: no cover - defensive guard
-                    LOGGER.debug("Failed to set correlation attribute on span", exc_info=True)
+                    LOGGER.debug(
+                        "Failed to set correlation attribute on span", exc_info=True
+                    )
             if span and attributes:
                 try:
                     span.set_attributes(dict(attributes))

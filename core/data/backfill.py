@@ -71,7 +71,9 @@ class LayerCache:
         self._entries: MutableMapping[CacheKey, CacheEntry] = {}
         self._lock = threading.RLock()
 
-    def _normalize_payload(self, frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.Timestamp, pd.Timestamp]:
+    def _normalize_payload(
+        self, frame: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.Timestamp, pd.Timestamp]:
         if frame.empty:
             raise ValueError("Cannot cache empty frame")
         if not isinstance(frame.index, pd.DatetimeIndex):
@@ -312,7 +314,9 @@ class BackfillProgressSnapshot:
 
     @property
     def remaining_segments(self) -> int:
-        return max(self.total_segments - self.completed_segments - self.failed_segments, 0)
+        return max(
+            self.total_segments - self.completed_segments - self.failed_segments, 0
+        )
 
     @property
     def completion_ratio(self) -> float:
@@ -371,7 +375,9 @@ class _ThroughputLimiter:
                 current = time.monotonic()
                 elapsed = current - self._last_check
                 self._last_check = current
-                self._allowance = min(self._rate, self._allowance + elapsed * self._rate)
+                self._allowance = min(
+                    self._rate, self._allowance + elapsed * self._rate
+                )
                 if self._allowance >= tokens:
                     self._allowance -= tokens
                     return
@@ -446,11 +452,15 @@ class BackfillPlanner:
         key: CacheKey,
         *,
         expected_index: pd.DatetimeIndex,
-        loader: Callable[[CacheKey, pd.Timestamp, pd.Timestamp], BackfillPayload | pd.DataFrame],
+        loader: Callable[
+            [CacheKey, pd.Timestamp, pd.Timestamp], BackfillPayload | pd.DataFrame
+        ],
         frequency: str | pd.Timedelta | pd.tseries.offsets.BaseOffset | None = None,
         progress_callback: Callable[[BackfillProgressSnapshot], None] | None = None,
     ) -> BackfillResult:
-        plan = self._gap_planner.plan(key, expected_index=expected_index, frequency=frequency)
+        plan = self._gap_planner.plan(
+            key, expected_index=expected_index, frequency=frequency
+        )
         if not plan.gaps:
             snapshot = BackfillProgressSnapshot(
                 total_segments=0,
@@ -479,7 +489,9 @@ class BackfillPlanner:
         failed_lock = threading.Lock()
         error_lock = threading.Lock()
 
-        queue: PriorityQueue[tuple[int, str, Optional[BackfillSegment]]] = PriorityQueue()
+        queue: PriorityQueue[tuple[int, str, Optional[BackfillSegment]]] = (
+            PriorityQueue()
+        )
         for segment in segments:
             queue.put((segment.priority, segment.id, segment))
 
@@ -508,14 +520,18 @@ class BackfillPlanner:
                     else:
                         frame = payload.frame
                         checksum = self._checksum_func(frame)
-                        if payload.checksum is not None and payload.checksum != checksum:
+                        if (
+                            payload.checksum is not None
+                            and payload.checksum != checksum
+                        ):
                             raise ValueError(
                                 "Checksum mismatch for segment "
                                 f"{segment.start.isoformat()} - {segment.end.isoformat()}"
                             )
 
                     expected_slice = expected_index[
-                        (expected_index >= segment.start) & (expected_index < segment.end)
+                        (expected_index >= segment.start)
+                        & (expected_index < segment.end)
                     ]
                     self._validate_payload(frame, expected_slice)
                     self._gap_planner.apply(key, frame)
@@ -529,7 +545,9 @@ class BackfillPlanner:
                         progress_callback(snapshot)
                 except Exception as exc:  # noqa: BLE001
                     segment.attempts += 1
-                    message = f"Backfill segment failed ({segment.attempts} attempts): {exc}"
+                    message = (
+                        f"Backfill segment failed ({segment.attempts} attempts): {exc}"
+                    )
                     self._logger.exception(message)
                     if segment.attempts <= self._max_retries:
                         retry = segment.clone_for_retry()
@@ -540,7 +558,9 @@ class BackfillPlanner:
                         with failed_lock:
                             failed.append(segment)
                         with error_lock:
-                            errors.append(SegmentError(segment=segment, message=str(exc)))
+                            errors.append(
+                                SegmentError(segment=segment, message=str(exc))
+                            )
                         snapshot = tracker.mark_failure()
                         if progress_callback is not None:
                             progress_callback(snapshot)

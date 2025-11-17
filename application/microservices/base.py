@@ -2,22 +2,21 @@
 
 from __future__ import annotations
 
+import math
+import random
+import time
 from collections import deque
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
 from enum import Enum
-import math
-import random
-import time
 from typing import Any, Callable, Iterator, Mapping, MutableMapping, Sequence, TypeVar
-
-from observability.tracing import Status, StatusCode, get_tracer
 
 from application.microservices.contracts import (
     RetryPolicy,
     ServiceInteractionContract,
     ServiceLevelAgreement,
 )
+from observability.tracing import Status, StatusCode, get_tracer
 
 T = TypeVar("T")
 

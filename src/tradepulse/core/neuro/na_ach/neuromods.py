@@ -1,4 +1,5 @@
 """Noradrenaline (NA) and acetylcholine (ACh) neuromodulation utilities."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -38,7 +39,13 @@ class NAACHConfig:
         }
 
 
-def _ensure_float(name: str, value: object, *, min_value: Optional[float] = None, max_value: Optional[float] = None) -> float:
+def _ensure_float(
+    name: str,
+    value: object,
+    *,
+    min_value: Optional[float] = None,
+    max_value: Optional[float] = None,
+) -> float:
     if not isinstance(value, (int, float)):
         raise ValueError(f"{name} must be a number")
     result = float(value)
@@ -91,17 +98,31 @@ class NAACHNeuromodulator:
         missing = required - set(raw.keys())
         if missing:
             raise ValueError(f"Missing NA/ACh config keys: {sorted(missing)}")
-        arousal_baseline = _ensure_float("arousal_baseline", raw["arousal_baseline"], min_value=0.0)
+        arousal_baseline = _ensure_float(
+            "arousal_baseline", raw["arousal_baseline"], min_value=0.0
+        )
         arousal_gain = _ensure_float("arousal_gain", raw["arousal_gain"], min_value=0.0)
         arousal_min = _ensure_float("arousal_min", raw["arousal_min"], min_value=0.0)
-        arousal_max = _ensure_float("arousal_max", raw["arousal_max"], min_value=arousal_min)
+        arousal_max = _ensure_float(
+            "arousal_max", raw["arousal_max"], min_value=arousal_min
+        )
         risk_min = _ensure_float("risk_min", raw["risk_min"], min_value=0.0)
         risk_max = _ensure_float("risk_max", raw["risk_max"], min_value=risk_min)
-        attention_baseline = _ensure_float("attention_baseline", raw["attention_baseline"], min_value=0.0)
-        attention_gain = _ensure_float("attention_gain", raw["attention_gain"], min_value=0.0)
-        attention_min = _ensure_float("attention_min", raw["attention_min"], min_value=0.0)
-        attention_max = _ensure_float("attention_max", raw["attention_max"], min_value=attention_min)
-        temp_gain = _ensure_float("temp_gain", raw["temp_gain"], min_value=0.0, max_value=3.0)
+        attention_baseline = _ensure_float(
+            "attention_baseline", raw["attention_baseline"], min_value=0.0
+        )
+        attention_gain = _ensure_float(
+            "attention_gain", raw["attention_gain"], min_value=0.0
+        )
+        attention_min = _ensure_float(
+            "attention_min", raw["attention_min"], min_value=0.0
+        )
+        attention_max = _ensure_float(
+            "attention_max", raw["attention_max"], min_value=attention_min
+        )
+        temp_gain = _ensure_float(
+            "temp_gain", raw["temp_gain"], min_value=0.0, max_value=3.0
+        )
         return NAACHConfig(
             arousal_baseline=arousal_baseline,
             arousal_gain=arousal_gain,
@@ -127,15 +148,26 @@ class NAACHNeuromodulator:
 
         self.arousal = min(
             cfg.arousal_max,
-            max(cfg.arousal_min, cfg.arousal_baseline + cfg.arousal_gain * (vol - cfg.arousal_baseline)),
+            max(
+                cfg.arousal_min,
+                cfg.arousal_baseline + cfg.arousal_gain * (vol - cfg.arousal_baseline),
+            ),
         )
         self.attention = min(
             cfg.attention_max,
-            max(cfg.attention_min, cfg.attention_baseline + cfg.attention_gain * (nov - cfg.attention_baseline)),
+            max(
+                cfg.attention_min,
+                cfg.attention_baseline
+                + cfg.attention_gain * (nov - cfg.attention_baseline),
+            ),
         )
 
-        risk_multiplier = max(cfg.risk_min, min(cfg.risk_max, 1.0 + (self.arousal - cfg.arousal_baseline)))
-        temperature_scale = max(0.2, min(3.0, 1.0 + cfg.temp_gain * (1.0 - self.arousal)))
+        risk_multiplier = max(
+            cfg.risk_min, min(cfg.risk_max, 1.0 + (self.arousal - cfg.arousal_baseline))
+        )
+        temperature_scale = max(
+            0.2, min(3.0, 1.0 + cfg.temp_gain * (1.0 - self.arousal))
+        )
 
         self._log("tacl.na.arousal", self.arousal)
         self._log("tacl.ach.attn", self.attention)
@@ -152,4 +184,3 @@ class NAACHNeuromodulator:
             "arousal": self.arousal,
             "attention": self.attention,
         }
-

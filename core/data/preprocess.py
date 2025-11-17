@@ -194,7 +194,9 @@ def normalize_numeric_columns(
         normalized = df.copy()
 
         if columns is None:
-            candidate_columns = list(normalized.select_dtypes(include=["number"]).columns)
+            candidate_columns = list(
+                normalized.select_dtypes(include=["number"]).columns
+            )
         else:
             candidate_columns = list(columns)
 
@@ -212,7 +214,9 @@ def normalize_numeric_columns(
                     f"Column {column!r} has non-numeric dtype {series.dtype}"
                 )
 
-            values = series.to_numpy(dtype=np.float32 if use_float32 else float, copy=True)
+            values = series.to_numpy(
+                dtype=np.float32 if use_float32 else float, copy=True
+            )
 
             if values.size == 0:
                 continue
@@ -222,7 +226,9 @@ def normalize_numeric_columns(
                 normalized[column] = values
                 continue
 
-            scaled = scale_series(values[~nan_mask], method=method, use_float32=use_float32)
+            scaled = scale_series(
+                values[~nan_mask], method=method, use_float32=use_float32
+            )
             values[~nan_mask] = scaled
             normalized[column] = values
 

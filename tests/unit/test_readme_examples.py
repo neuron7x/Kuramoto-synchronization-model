@@ -82,7 +82,7 @@ def test_readme_volume_metrics_example() -> None:
 
     buys = np.array([100, 150, 200])
     sells = np.array([80, 120, 180])
-    
+
     cvd = cumulative_volume_delta(buys, sells)
     imb = imbalance(buys, sells)
 

@@ -21,30 +21,30 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate secure token for thermodynamic manual override"
     )
-    
+
     parser.add_argument(
         "--duration",
         type=str,
         default="1h",
         help="Token validity duration (e.g., 1h, 24h, 7d)"
     )
-    
+
     parser.add_argument(
         "--length",
         type=int,
         default=32,
         help="Token length in bytes (default: 32)"
     )
-    
+
     parser.add_argument(
         "--type",
         choices=["override", "dual_approval"],
         default="override",
         help="Token type"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Parse duration
     duration_str = args.duration.lower()
     if duration_str.endswith('h'):
@@ -56,12 +56,12 @@ def main():
     else:
         print(f"Error: Invalid duration format '{args.duration}'. Use format like '1h', '24h', or '7d'")
         return 1
-    
+
     expiration = datetime.now() + timedelta(hours=hours)
-    
+
     # Generate token
     token = generate_token(args.length)
-    
+
     # Display token information
     print("=" * 70)
     print("THERMODYNAMIC TOKEN")
@@ -70,11 +70,11 @@ def main():
     print(f"Generated At:  {datetime.now().isoformat()}")
     print(f"Expires At:    {expiration.isoformat()}")
     print(f"Valid For:     {args.duration}")
-    print(f"\nToken (copy to environment variable):")
+    print("\nToken (copy to environment variable):")
     print("-" * 70)
     print(token)
     print("-" * 70)
-    
+
     # Usage instructions
     print("\nUsage:")
     if args.type == "override":
@@ -86,7 +86,7 @@ def main():
     else:
         print(f"  export THERMO_DUAL_TOKEN='{token}'")
         print("\n  The controller will use this token for dual approval checks.")
-    
+
     print("\n" + "=" * 70)
     print("⚠️  SECURITY NOTICE:")
     print("  - Store this token securely")
@@ -94,7 +94,7 @@ def main():
     print("  - Revoke after use or expiration")
     print("  - Log all token usage for audit trail")
     print("=" * 70)
-    
+
     return 0
 
 

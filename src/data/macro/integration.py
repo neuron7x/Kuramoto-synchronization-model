@@ -42,11 +42,15 @@ def integrate_macro_features(
     if macro_features.empty:
         return market_data.copy()
 
-    use_indicator_grouping = "indicator" in market_data.columns and "indicator" in macro_features.columns
+    use_indicator_grouping = (
+        "indicator" in market_data.columns and "indicator" in macro_features.columns
+    )
 
     if use_indicator_grouping:
         market = market_data.sort_values(["indicator", on]).reset_index(drop=True)
-        macro = macro_features.sort_values(["indicator", macro_time_column]).reset_index(drop=True)
+        macro = macro_features.sort_values(
+            ["indicator", macro_time_column]
+        ).reset_index(drop=True)
     else:
         market = market_data.sort_values(on).reset_index(drop=True)
         macro = macro_features.sort_values(macro_time_column).reset_index(drop=True)

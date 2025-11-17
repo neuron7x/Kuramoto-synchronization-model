@@ -18,7 +18,6 @@ from core.orchestrator import (
     TimeoutConfig,
 )
 
-
 GUARDS = GuardConfig(
     kappa=GuardBand(soft_limit=0.85, hard_limit=0.95, recover_limit=0.6),
     var=GuardBand(soft_limit=0.75, hard_limit=0.9, recover_limit=0.5),

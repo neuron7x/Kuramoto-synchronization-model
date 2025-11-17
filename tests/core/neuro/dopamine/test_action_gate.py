@@ -3,9 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional
 
-import yaml
-
 import pytest
+import yaml
 
 from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
 from tradepulse.core.neuro.dopamine.action_gate import (
@@ -16,7 +15,6 @@ from tradepulse.core.neuro.dopamine.action_gate import (
 )
 from tradepulse.core.neuro.dopamine.ddm_adapter import DDMThresholds, ddm_thresholds
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
-
 
 SEROTONIN_TEST_CONFIG = {
     "tonic_beta": 0.15,

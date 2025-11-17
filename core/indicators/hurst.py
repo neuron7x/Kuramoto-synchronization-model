@@ -93,6 +93,7 @@ else:  # pragma: no cover - executed when Numba missing
 
 
 if _cuda_available():  # pragma: no cover - requires GPU runtime
+
     @cuda.jit
     def _compute_tau_cuda_kernel(
         x: np.ndarray,
@@ -371,7 +372,9 @@ def hurst_exponent(
         lags_int = lags.astype(np.int32, copy=False)
         try:
             if selected_backend == "cuda":
-                tau = _compute_tau_cuda(np.asarray(x, dtype=np.float32, copy=False), lags)
+                tau = _compute_tau_cuda(
+                    np.asarray(x, dtype=np.float32, copy=False), lags
+                )
                 if tau_buffer is not None and tau_buffer.shape == tau.shape:
                     np.copyto(tau_buffer, tau)
                     tau = tau_buffer

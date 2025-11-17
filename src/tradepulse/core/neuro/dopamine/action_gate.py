@@ -1,4 +1,5 @@
 """Aggregate neuromodulator signals into a Go/No-Go/Hold decision."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -143,4 +144,3 @@ class ActionGate:
             temperature=temperature,
             dopamine_level=da,
         )
-

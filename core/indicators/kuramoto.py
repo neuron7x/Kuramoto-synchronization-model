@@ -54,7 +54,9 @@ except Exception:  # fallback if SciPy not installed
     hilbert = None
 
 
-def _broadcast_weights(weights: np.ndarray | Sequence[float], shape: tuple[int, int]) -> np.ndarray:
+def _broadcast_weights(
+    weights: np.ndarray | Sequence[float], shape: tuple[int, int]
+) -> np.ndarray:
     """Broadcast weight vectors to match the phase matrix shape."""
 
     weight_array = np.array(weights, dtype=float, copy=True)
@@ -67,9 +69,7 @@ def _broadcast_weights(weights: np.ndarray | Sequence[float], shape: tuple[int, 
         elif weight_array.size == shape[1]:
             weight_array = np.broadcast_to(weight_array[None, :], shape).copy()
         else:
-            raise ValueError(
-                "weights must match number of oscillators or time steps"
-            )
+            raise ValueError("weights must match number of oscillators or time steps")
     elif weight_array.ndim == 2:
         if weight_array.shape != shape:
             raise ValueError("weights must match the phase matrix shape")

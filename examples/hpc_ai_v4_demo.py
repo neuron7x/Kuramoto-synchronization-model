@@ -7,11 +7,11 @@ with Active Inference (HPC-AI v4) module for adaptive trading.
 
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
-    generate_synthetic_data,
     calibrate_perturbation_scale,
-    validate_hpc_ai,
-    simple_backtest,
     format_validation_report,
+    generate_synthetic_data,
+    simple_backtest,
+    validate_hpc_ai,
 )
 
 
@@ -43,10 +43,10 @@ def main():
         learning_rate=1e-4,
     )
     print("Model initialized with:")
-    print(f"  - Input dimension: 10 (OHLCV + 5 indicators)")
-    print(f"  - State dimension: 128")
-    print(f"  - Action dimension: 3 (Hold, Buy, Sell)")
-    print(f"  - HPC levels: 3")
+    print("  - Input dimension: 10 (OHLCV + 5 indicators)")
+    print("  - State dimension: 128")
+    print("  - Action dimension: 3 (Hold, Buy, Sell)")
+    print("  - HPC levels: 3")
     print(f"  - Device: {model.device}")
     print()
 
@@ -121,7 +121,7 @@ def main():
     action = model.decide_action(latest_window, prev_pwpe=0.0)
     pwpe = model.get_pwpe(latest_window)
     state = model.get_state_representation(latest_window)
-    
+
     action_names = {0: "HOLD", 1: "BUY", 2: "SELL"}
     print(f"Latest price: ${data.iloc[-1]['close']:.2f}")
     print(f"Decision: {action_names[action]}")

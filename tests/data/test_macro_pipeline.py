@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import pandas as pd
+
 from src.data.macro.feature_engineering import MacroFeatureBuilder, MacroFeatureConfig
 from src.data.macro.models import MacroIndicatorConfig
 from src.data.macro.pipeline import MacroSignalPipeline

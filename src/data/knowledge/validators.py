@@ -30,7 +30,11 @@ class CitationBuilder:
 
     def build(self, metadata: DocumentMetadata) -> Citation | None:
         url = metadata.attributes.get("url") if metadata.attributes else None
-        title = metadata.attributes.get("title", metadata.document_id) if metadata.attributes else metadata.document_id
+        title = (
+            metadata.attributes.get("title", metadata.document_id)
+            if metadata.attributes
+            else metadata.document_id
+        )
         if not url or not self._link_validator.is_valid(url):
             return None
         return Citation(
@@ -49,7 +53,9 @@ class FreshnessPolicy:
             raise ValueError("half_life_days must be positive")
         self._half_life_days = half_life_days
 
-    def score(self, metadata: DocumentMetadata, horizon_days: int | None = None) -> float:
+    def score(
+        self, metadata: DocumentMetadata, horizon_days: int | None = None
+    ) -> float:
         now = datetime.now(timezone.utc)
         age_days = (now - metadata.updated_at).total_seconds() / 86400
         if horizon_days is not None and age_days > horizon_days:
@@ -61,10 +67,14 @@ class FreshnessPolicy:
 class CompletenessController:
     """Assess coverage of search results."""
 
-    def __init__(self, required_tags_by_query: Mapping[str, Sequence[str]] | None = None) -> None:
+    def __init__(
+        self, required_tags_by_query: Mapping[str, Sequence[str]] | None = None
+    ) -> None:
         self._required_tags_by_query = required_tags_by_query or {}
 
-    def evaluate(self, query: str, results: Sequence[SearchResult]) -> CompletenessReport:
+    def evaluate(
+        self, query: str, results: Sequence[SearchResult]
+    ) -> CompletenessReport:
         required_tags = set(self._required_tags_by_query.get(query, ()))
         present_tags = {tag for result in results for tag in result.metadata.tags}
         missing = sorted(required_tags - present_tags)

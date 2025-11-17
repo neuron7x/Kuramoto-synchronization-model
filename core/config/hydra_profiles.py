@@ -37,7 +37,9 @@ class ExperimentProfileRegistry:
         base_path = conf_root or Path(__file__).resolve().parents[2] / "conf"
         experiment_dir = base_path / "experiment"
         if not experiment_dir.exists():
-            msg = f"Hydra experiment configuration directory not found: {experiment_dir}"
+            msg = (
+                f"Hydra experiment configuration directory not found: {experiment_dir}"
+            )
             raise ExperimentProfileError(msg)
 
         profiles: dict[str, Path] = {}

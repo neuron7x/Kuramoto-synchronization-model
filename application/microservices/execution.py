@@ -5,8 +5,6 @@ from __future__ import annotations
 import time
 from typing import MutableMapping
 
-from core.messaging.idempotency import InMemoryEventIdempotencyStore
-
 from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import (
     ExecutionRequest,
@@ -14,6 +12,7 @@ from application.microservices.contracts import (
     default_contract_registry,
 )
 from application.system import TradePulseSystem
+from core.messaging.idempotency import InMemoryEventIdempotencyStore
 from domain import Order
 from execution.live_loop import LiveExecutionLoop
 

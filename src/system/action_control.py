@@ -57,7 +57,10 @@ class TaclGate:
         if forecast.projected < 0 or forecast.current < 0:
             raise ValueError("Free energy values must be non-negative")
 
-        if self._max_free_energy is not None and forecast.projected > self._max_free_energy:
+        if (
+            self._max_free_energy is not None
+            and forecast.projected > self._max_free_energy
+        ):
             return TaclDecision(
                 allowed=False,
                 reason=(
@@ -143,7 +146,9 @@ class Mandate:
                 engaged_corridor=False,
             )
 
-        if self.object_scope and (intent.target is None or intent.target not in self.object_scope):
+        if self.object_scope and (
+            intent.target is None or intent.target not in self.object_scope
+        ):
             return MandateDecision(
                 allowed=False,
                 reason="target outside module object scope",
@@ -168,7 +173,9 @@ class Mandate:
             )
 
         allowed_targets = permission.allowed_targets or self.object_scope
-        if allowed_targets and (intent.target is None or intent.target not in allowed_targets):
+        if allowed_targets and (
+            intent.target is None or intent.target not in allowed_targets
+        ):
             return MandateDecision(
                 allowed=False,
                 reason="target not permitted for state",
@@ -186,7 +193,9 @@ class Mandate:
                     engaged_corridor=False,
                 )
 
-        return MandateDecision(allowed=True, reason=None, engaged_corridor=engaged_corridor)
+        return MandateDecision(
+            allowed=True, reason=None, engaged_corridor=engaged_corridor
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,7 +250,9 @@ class AuditLoggerActionSink:
         self._audit_logger = audit_logger
         self._ip_address = ip_address
 
-    def record(self, decision: ActionDecision) -> None:  # pragma: no cover - thin wrapper
+    def record(
+        self, decision: ActionDecision
+    ) -> None:  # pragma: no cover - thin wrapper
         forecast = decision.forecast
         tacl = decision.tacl
         intent = decision.intent
@@ -259,15 +270,17 @@ class AuditLoggerActionSink:
             "tacl_allowed": None if tacl is None else tacl.allowed,
             "tacl_reason": None if tacl is None else tacl.reason,
             "tacl_requires_recovery": None if tacl is None else tacl.requires_recovery,
-            "forecast": None
-            if forecast is None
-            else {
-                "current": forecast.current,
-                "projected": forecast.projected,
-                "recovery_path": forecast.recovery_path,
-                "recovery_window": forecast.recovery_window,
-                "guarantees_descent": forecast.guarantees_descent,
-            },
+            "forecast": (
+                None
+                if forecast is None
+                else {
+                    "current": forecast.current,
+                    "projected": forecast.projected,
+                    "recovery_path": forecast.recovery_path,
+                    "recovery_window": forecast.recovery_window,
+                    "guarantees_descent": forecast.guarantees_descent,
+                }
+            ),
             "allowed": decision.allowed,
             "decision_reason": decision.reason,
         }
@@ -372,4 +385,3 @@ __all__ = [
     "TaclDecision",
     "TaclGate",
 ]
-

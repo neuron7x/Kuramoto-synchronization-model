@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import deque
 from concurrent.futures import (
     FIRST_COMPLETED,
@@ -10,7 +11,6 @@ from concurrent.futures import (
     wait,
 )
 from dataclasses import dataclass
-import os
 from heapq import heappop, heappush
 from time import perf_counter
 from types import MappingProxyType
@@ -174,10 +174,7 @@ class ModuleRunSummary:
                 launch_delay = result.launch_delay
                 total_wait = result.total_wait_time
 
-                if (
-                    result.started_at is not None
-                    and result.completed_at is not None
-                ):
+                if result.started_at is not None and result.completed_at is not None:
                     timelines.append(
                         ModuleTimelineEntry(
                             name=name,
@@ -271,7 +268,9 @@ class ModuleRunSummary:
                 else 0.0
             )
 
-        concurrency_profile = MappingProxyType(dict(sorted(concurrency_durations.items())))
+        concurrency_profile = MappingProxyType(
+            dict(sorted(concurrency_durations.items()))
+        )
         total_queue_delay = sum(queue_delays)
         average_queue_delay = (
             total_queue_delay / len(queue_delays) if queue_delays else 0.0
@@ -351,7 +350,8 @@ class ModuleOrchestrator:
             return ()
 
         dependencies: dict[str, set[str]] = {
-            name: set(definition.after) for name, definition in self._definitions.items()
+            name: set(definition.after)
+            for name, definition in self._definitions.items()
         }
         missing_dependencies = {
             name: deps - self._definitions.keys()
@@ -367,9 +367,7 @@ class ModuleOrchestrator:
                 "Unknown module dependencies declared: " + "; ".join(messages)
             )
 
-        dependents: dict[str, set[str]] = {
-            name: set() for name in self._definitions
-        }
+        dependents: dict[str, set[str]] = {name: set() for name in self._definitions}
         indegree: dict[str, int] = {}
         for name, deps in dependencies.items():
             indegree[name] = len(deps)
@@ -443,9 +441,7 @@ class ModuleOrchestrator:
                 required_modules.add(current)
                 stack.extend(self._definitions[current].after)
 
-        order = tuple(
-            name for name in resolved_order if name in required_modules
-        )
+        order = tuple(name for name in resolved_order if name in required_modules)
         if not order:
             return ModuleRunSummary(order=(), context=dict(context), results={})
 
@@ -560,7 +556,10 @@ class ModuleOrchestrator:
                         context.update(updates)
 
                     definition = definitions[module_name]
-                    if definition.provides and not definition.provides <= context.keys():
+                    if (
+                        definition.provides
+                        and not definition.provides <= context.keys()
+                    ):
                         missing_keys = definition.provides - context.keys()
                         error = KeyError(
                             f"Module '{module_name}' failed to provide context keys: "
@@ -588,7 +587,9 @@ class ModuleOrchestrator:
 
         if failure_details is not None:
             module, cause = failure_details
-            raise ModuleExecutionError(module=module, cause=cause, results=dict(results))
+            raise ModuleExecutionError(
+                module=module, cause=cause, results=dict(results)
+            )
 
         while next_to_finalize < len(order_list):
             module_name = order_list[next_to_finalize]
@@ -661,19 +662,31 @@ def _coerce_allocation(value: object, *, default: float, field: str) -> float:
     try:
         return float(value)
     except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
-        raise TypeError(f"Allocation field '{field}' must be numeric, received {value!r}") from exc
+        raise TypeError(
+            f"Allocation field '{field}' must be numeric, received {value!r}"
+        ) from exc
 
 
-def apply_neural_decision(decision: Mapping[str, object], risk_manager: "RiskManagerFacade") -> None:
+def apply_neural_decision(
+    decision: Mapping[str, object], risk_manager: "RiskManagerFacade"
+) -> None:
     """Normalise and forward neural-controller output to the risk facade."""
 
     action = str(decision.get("action", "hold"))
-    alloc_main = _coerce_allocation(decision.get("alloc_main"), default=0.0, field="alloc_main")
-    alloc_alt = _coerce_allocation(decision.get("alloc_alt"), default=0.0, field="alloc_alt")
+    alloc_main = _coerce_allocation(
+        decision.get("alloc_main"), default=0.0, field="alloc_main"
+    )
+    alloc_alt = _coerce_allocation(
+        decision.get("alloc_alt"), default=0.0, field="alloc_alt"
+    )
     allocs = decision.get("allocs")
     if isinstance(allocs, Mapping):
-        alloc_main = _coerce_allocation(allocs.get("main"), default=alloc_main, field="allocs.main")
-        alloc_alt = _coerce_allocation(allocs.get("alt"), default=alloc_alt, field="allocs.alt")
+        alloc_main = _coerce_allocation(
+            allocs.get("main"), default=alloc_main, field="allocs.main"
+        )
+        alloc_alt = _coerce_allocation(
+            allocs.get("alt"), default=alloc_alt, field="allocs.alt"
+        )
     alloc_scale = _coerce_allocation(
         decision.get("alloc_scale"), default=1.0, field="alloc_scale"
     )
@@ -697,4 +710,3 @@ __all__ = [
     "ModuleTimelineEntry",
     "apply_neural_decision",
 ]
-

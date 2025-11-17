@@ -60,7 +60,9 @@ class _ClickHouseIdentifiers:
     def from_config(cls, config: ClickHouseConfig) -> "_ClickHouseIdentifiers":
         database = ensure_identifier(config.database, label="ClickHouse database")
         raw_table = ensure_identifier(config.raw_table, label="ClickHouse raw table")
-        rollup_table = ensure_identifier(config.rollup_table, label="ClickHouse rollup table")
+        rollup_table = ensure_identifier(
+            config.rollup_table, label="ClickHouse rollup table"
+        )
         timezone_value = ensure_timezone(config.timezone_name)
         timezone_literal = literal(timezone_value)
         raw_qualified = ".".join((database, raw_table))
@@ -113,7 +115,11 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "    volume Decimal64(10),",
             "    trade_id String DEFAULT '',",
             "    ingest_id UUID DEFAULT generateUUIDv4(),",
-            "    ingest_ts DateTime64(6, " + timezone_literal + ") DEFAULT now(" + timezone_literal + ")",
+            "    ingest_ts DateTime64(6, "
+            + timezone_literal
+            + ") DEFAULT now("
+            + timezone_literal
+            + ")",
             "    , INDEX idx_symbol symbol TYPE set(0) GRANULARITY 1",
             ")",
             "ENGINE = MergeTree",
@@ -140,13 +146,19 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "    close_price Decimal64(10),",
             "    volume Decimal64(12),",
             "    trade_count UInt64,",
-            "    ingest_ts DateTime64(6, " + timezone_literal + ") DEFAULT now(" + timezone_literal + ")",
+            "    ingest_ts DateTime64(6, "
+            + timezone_literal
+            + ") DEFAULT now("
+            + timezone_literal
+            + ")",
             "    , INDEX idx_rollup_symbol symbol TYPE set(0) GRANULARITY 1",
             ")",
             "ENGINE = MergeTree",
             "PARTITION BY toYYYYMM(window_start)",
             "ORDER BY (symbol, window_start)",
-            "TTL window_start + INTERVAL " + str(cfg.rollup_retention_days) + " DAY DELETE",
+            "TTL window_start + INTERVAL "
+            + str(cfg.rollup_retention_days)
+            + " DAY DELETE",
             "SETTINGS index_granularity = 2048",
             "COMMENT 'One minute rollups from ticks'",
         ]
@@ -159,7 +171,9 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "CREATE MATERIALIZED VIEW IF NOT EXISTS " + ids.mv_rollup,
             "TO " + ids.rollup_qualified + " AS",
             "SELECT",
-            "    toStartOfInterval(ts, INTERVAL 1 MINUTE, " + timezone_literal + ") AS window_start,",
+            "    toStartOfInterval(ts, INTERVAL 1 MINUTE, "
+            + timezone_literal
+            + ") AS window_start,",
             "    symbol,",
             "    venue,",
             "    instrument_type,",
@@ -178,7 +192,12 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "\n".join(mv_lines),
         )
 
-        return (create_database, create_raw_table, create_rollup_table, materialized_view)
+        return (
+            create_database,
+            create_raw_table,
+            create_rollup_table,
+            materialized_view,
+        )
 
     def rollup_jobs(self) -> Sequence[RollupJob]:
         ids = self._identifiers
@@ -302,7 +321,9 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
         )
 
     # -- Ingestion ------------------------------------------------------------
-    def ingest_ticks(self, ticks: Sequence[PriceTick], *, chunk_size: int = 10_000) -> None:
+    def ingest_ticks(
+        self, ticks: Sequence[PriceTick], *, chunk_size: int = 10_000
+    ) -> None:
         if not ticks:
             return
         ids = self._identifiers
@@ -325,7 +346,10 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
                     + response.text
                 )
             _LOGGER.debug(
-                "clickhouse_ingest_batch", rows=len(chunk), table=table, status=response.status_code
+                "clickhouse_ingest_batch",
+                rows=len(chunk),
+                table=table,
+                status=response.status_code,
             )
 
     def ingest_bars(

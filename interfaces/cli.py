@@ -240,7 +240,7 @@ def cmd_analyze(args):
         the ``--gpu`` flag is set and the CuPy-backed implementation is available.
     """
     args = _apply_config(args)
-    
+
     # Validate CSV file exists
     csv_path = Path(args.csv).expanduser().resolve()
     if not csv_path.exists():
@@ -253,7 +253,7 @@ def cmd_analyze(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     try:
         df = pd.read_csv(csv_path)
     except Exception as e:
@@ -266,7 +266,7 @@ def cmd_analyze(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     # Validate required columns
     if args.price_col not in df.columns:
         print(
@@ -279,9 +279,9 @@ def cmd_analyze(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     prices = df[args.price_col].to_numpy()
-    
+
     # Validate data quality
     if len(prices) < args.window:
         print(
@@ -293,7 +293,7 @@ def cmd_analyze(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     # Check for NaN values
     nan_count = np.isnan(prices).sum()
     if nan_count > 0:
@@ -308,7 +308,7 @@ def cmd_analyze(args):
         )
         # Remove NaN values
         prices = prices[~np.isnan(prices)]
-    
+
     # Check for constant prices
     if np.std(prices) == 0:
         print(
@@ -320,10 +320,10 @@ def cmd_analyze(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     try:
         from core.indicators.kuramoto import compute_phase_gpu
-        
+
         phases = (
             compute_phase_gpu(prices)
             if getattr(args, "gpu", False)
@@ -335,7 +335,7 @@ def cmd_analyze(args):
         kappa = mean_ricci(build_price_graph(prices[-args.window :], delta=args.delta))
         Hs = hurst_exponent(prices[-args.window :])
         phase = phase_flags(R, dH, kappa, H)
-        
+
         print(
             json.dumps(
                 _enrich_with_trace(
@@ -392,7 +392,7 @@ def cmd_backtest(args):
         same implementation invoked by automation in ``docs/runbook_live_trading.md``.
     """
     args = _apply_config(args)
-    
+
     # Validate CSV file
     csv_path = Path(args.csv).expanduser().resolve()
     if not csv_path.exists():
@@ -405,7 +405,7 @@ def cmd_backtest(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     try:
         df = pd.read_csv(csv_path)
     except Exception as e:
@@ -418,7 +418,7 @@ def cmd_backtest(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     # Validate column exists
     if args.price_col not in df.columns:
         print(
@@ -426,14 +426,14 @@ def cmd_backtest(args):
                 "error": "ValueError",
                 "message": f"Column '{args.price_col}' not found in CSV",
                 "available_columns": list(df.columns),
-                "suggestion": f"Use --price-col to specify the correct column name."
+                "suggestion": "Use --price-col to specify the correct column name."
             }, indent=2),
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     prices = df[args.price_col].to_numpy()
-    
+
     # Data quality checks
     if len(prices) < args.window * 2:
         print(
@@ -445,7 +445,7 @@ def cmd_backtest(args):
             file=sys.stderr
         )
         sys.exit(1)
-    
+
     # Remove NaN values
     nan_count = np.isnan(prices).sum()
     if nan_count > 0:
@@ -458,18 +458,18 @@ def cmd_backtest(args):
             file=sys.stderr
         )
         prices = prices[~np.isnan(prices)]
-    
+
     try:
         sig = signal_from_indicators(prices, window=args.window)
         res = walk_forward(prices, lambda _: sig, fee=args.fee)
-        
+
         # Calculate additional statistics
         sharpe = res.sharpe_ratio if hasattr(res, 'sharpe_ratio') else None
         win_rate = res.win_rate if hasattr(res, 'win_rate') else None
-        
+
         out = {
-            "pnl": res.pnl, 
-            "max_dd": res.max_dd, 
+            "pnl": res.pnl,
+            "max_dd": res.max_dd,
             "trades": res.trades,
             "metadata": {
                 "window_size": args.window,
@@ -477,14 +477,14 @@ def cmd_backtest(args):
                 "data_points": len(prices),
             }
         }
-        
+
         if sharpe is not None:
             out["sharpe_ratio"] = sharpe
         if win_rate is not None:
             out["win_rate"] = win_rate
-        
+
         print(json.dumps(_enrich_with_trace(out), indent=2))
-        
+
     except Exception as e:
         print(
             json.dumps({
@@ -583,7 +583,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     sub = p.add_subparsers(
-        dest="cmd", 
+        dest="cmd",
         required=True,
         help="Available commands",
         metavar="COMMAND"
@@ -607,46 +607,46 @@ Outputs comprehensive JSON analysis suitable for pipelines and auditing.
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     pa.add_argument(
-        "--csv", 
+        "--csv",
         required=True,
         help="Path to CSV file containing price data (required)"
     )
     pa.add_argument(
-        "--price-col", 
+        "--price-col",
         default="price",
         help="Name of the column containing price values (default: 'price')"
     )
     pa.add_argument(
-        "--window", 
-        type=int, 
+        "--window",
+        type=int,
         default=200,
         help="Analysis window size in periods (default: 200, recommended: 100-300)"
     )
     pa.add_argument(
-        "--bins", 
-        type=int, 
+        "--bins",
+        type=int,
         default=30,
         help="Number of bins for entropy calculation (default: 30)"
     )
     pa.add_argument(
-        "--delta", 
-        type=float, 
+        "--delta",
+        type=float,
         default=0.005,
         help="Step size for Ricci curvature calculation (default: 0.005)"
     )
     pa.add_argument(
-        "--config", 
-        help="Path to YAML configuration file (optional)", 
+        "--config",
+        help="Path to YAML configuration file (optional)",
         default=None
     )
     pa.add_argument(
-        "--gpu", 
+        "--gpu",
         action="store_true",
         help="Enable GPU acceleration for phase computation (requires CUDA)"
     )
     pa.add_argument(
-        "--traceparent", 
-        default=None, 
+        "--traceparent",
+        default=None,
         help=trace_arg_help
     )
     pa.set_defaults(func=cmd_analyze)
@@ -665,40 +665,40 @@ Outputs performance metrics including PnL, max drawdown, and trade count.
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     pb.add_argument(
-        "--csv", 
+        "--csv",
         required=True,
         help="Path to CSV file containing historical price data (required)"
     )
     pb.add_argument(
-        "--price-col", 
+        "--price-col",
         default="price",
         help="Name of the column containing price values (default: 'price')"
     )
     pb.add_argument(
-        "--window", 
-        type=int, 
+        "--window",
+        type=int,
         default=200,
         help="Lookback window for indicator calculation (default: 200)"
     )
     pb.add_argument(
-        "--fee", 
-        type=float, 
+        "--fee",
+        type=float,
         default=0.0005,
         help="Transaction fee as a fraction (default: 0.0005 = 0.05%%)"
     )
     pb.add_argument(
-        "--config", 
-        help="Path to YAML configuration file (optional)", 
+        "--config",
+        help="Path to YAML configuration file (optional)",
         default=None
     )
     pb.add_argument(
-        "--gpu", 
+        "--gpu",
         action="store_true",
         help="Enable GPU acceleration (requires CUDA)"
     )
     pb.add_argument(
-        "--traceparent", 
-        default=None, 
+        "--traceparent",
+        default=None,
         help=trace_arg_help
     )
     pb.set_defaults(func=cmd_backtest)
@@ -746,8 +746,8 @@ Requires proper configuration including venue credentials and risk parameters.
         help="Port to expose Prometheus metrics on (optional)",
     )
     pl.add_argument(
-        "--traceparent", 
-        default=None, 
+        "--traceparent",
+        default=None,
         help=trace_arg_help
     )
     pl.set_defaults(func=cmd_live)

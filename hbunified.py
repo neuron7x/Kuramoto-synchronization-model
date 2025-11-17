@@ -252,9 +252,9 @@ def serve(cfg_path: str) -> None:
     cfg = yaml.safe_load(Path(cfg_path).read_text())
     setup_logging(cfg["logging"]["dir"], cfg["logging"]["file"])
     try:
+        import uvicorn
         from fastapi import FastAPI
         from pydantic import BaseModel
-        import uvicorn
     except Exception as exc:  # pragma: no cover - optional dependency guard
         raise SystemExit("Install fastapi & uvicorn to use API") from exc
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from envs.market_env import ToyMarketEnv, RegimeShiftEnv, _max_drawdown
+from envs.market_env import RegimeShiftEnv, ToyMarketEnv, _max_drawdown
 
 
 def test_toy_market_step_shapes():

@@ -22,7 +22,6 @@ from core.architecture_integrator.validator import (
     ValidationResult,
 )
 
-
 logger = logging.getLogger(__name__)
 
 

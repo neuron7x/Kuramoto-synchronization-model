@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from strategies.neuro_trade_pulse import NeuroTradePulseStrategy, NeuroTradePulseConfig
+from strategies.neuro_trade_pulse import NeuroTradePulseConfig, NeuroTradePulseStrategy
 
 
 def sample_df(n=1500, seed=42) -> pd.DataFrame:

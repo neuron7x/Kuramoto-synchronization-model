@@ -97,7 +97,7 @@ class _TimeStub:
     Allows tests to control the passage of time without actual delays,
     making tests faster and deterministic.
     """
-    
+
     def __init__(self) -> None:
         self._now = 0.0
 
@@ -172,7 +172,7 @@ def test_risk_manager_rate_limiter_blocks_excess_orders() -> None:
     # First two orders should succeed
     manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
     manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
-    
+
     # Third order exceeds rate limit
     with pytest.raises(OrderRateExceeded, match="[Rr]ate|[Ee]xceeded"):
         manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
@@ -229,7 +229,7 @@ def test_kill_switch_blocks_all_orders() -> None:
     """
     manager = RiskManager(RiskLimits(max_notional=100.0, max_position=10.0))
     manager.kill_switch.trigger("test")
-    
+
     with pytest.raises(RiskError, match="[Kk]ill.*[Ss]witch"):
         manager.validate_order("BTC", "buy", qty=1.0, price=10.0)
 

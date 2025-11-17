@@ -74,7 +74,6 @@ if torch is not None and nn is not None:
             activated = self._activation(combined)
             return activated.mean(dim=0)
 
-
     class AdvancedNeuroEconCore(nn.Module):  # type: ignore[misc]
         """Graph-based actor-critic core inspired by cortico-striatal circuitry."""
 
@@ -95,7 +94,9 @@ if torch is not None and nn is not None:
         ) -> None:
             super().__init__()
             if torch is None or nn is None:
-                raise ModuleNotFoundError("PyTorch is required for AdvancedNeuroEconCore") from _IMPORT_ERROR
+                raise ModuleNotFoundError(
+                    "PyTorch is required for AdvancedNeuroEconCore"
+                ) from _IMPORT_ERROR
 
             self.gamma = float(gamma)
             self.alpha = float(alpha)
@@ -109,9 +110,13 @@ if torch is not None and nn is not None:
                 raise ValueError("temperature must be greater than zero")
 
             adjacency_tensor = self._build_adjacency(adjacency)
-            self._device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+            self._device = torch.device(
+                device or ("cuda" if torch.cuda.is_available() else "cpu")
+            )
             adjacency_tensor = adjacency_tensor.to(self._device)
-            self._graph = _NeuroGraphEncoder(adjacency_tensor, hidden_dim).to(self._device)
+            self._graph = _NeuroGraphEncoder(adjacency_tensor, hidden_dim).to(
+                self._device
+            )
             self._actor = nn.Sequential(
                 nn.Linear(1, hidden_dim),
                 nn.Tanh(),
@@ -165,7 +170,9 @@ if torch is not None and nn is not None:
                 features[3, 0] = self.uncertainty_reduction
             return self._graph(features)
 
-        def evaluate_option(self, option: Mapping[str, float] | DecisionOption) -> float:
+        def evaluate_option(
+            self, option: Mapping[str, float] | DecisionOption
+        ) -> float:
             """Return the adjusted subjective value for a single option."""
 
             decision = (
@@ -220,8 +227,10 @@ if torch is not None and nn is not None:
             current_estimate = self._q_values.get(key, 0.0)
             next_estimate = self._q_values.get(next_key, 0.0)
 
-            return float(reward) + self.gamma * (next_estimate + critic_next) - (
-                current_estimate + critic_current
+            return (
+                float(reward)
+                + self.gamma * (next_estimate + critic_next)
+                - (current_estimate + critic_current)
             )
 
         def update_Q(
@@ -270,7 +279,9 @@ if torch is not None and nn is not None:
             temperature: float | None = None,
             deterministic: bool = False,
         ) -> Tuple[int, float]:
-            distribution, values = self.policy_distribution(options, temperature=temperature)
+            distribution, values = self.policy_distribution(
+                options, temperature=temperature
+            )
             if deterministic or distribution.probs.numel() == 1:
                 choice = int(torch.argmax(distribution.probs).item())
             else:
@@ -284,9 +295,13 @@ if torch is not None and nn is not None:
             rewards: Sequence[float],
         ) -> Sequence[float]:
             if len(states) < 2 or len(actions) < 2 or len(rewards) < 1:
-                raise ValueError("scenario sequences must contain at least two transitions")
+                raise ValueError(
+                    "scenario sequences must contain at least two transitions"
+                )
             if not (len(states) == len(actions) == len(rewards) + 1):
-                raise ValueError("states/actions must be one element longer than rewards")
+                raise ValueError(
+                    "states/actions must be one element longer than rewards"
+                )
 
             history: list[float] = []
             for idx in range(len(rewards)):
@@ -300,14 +315,17 @@ if torch is not None and nn is not None:
                 history.append(delta)
             return history
 
-
 else:
 
     class AdvancedNeuroEconCore:
         """Fallback that raises a descriptive error when PyTorch is unavailable."""
 
-        def __init__(self, *args: object, **kwargs: object) -> None:  # noqa: D401 - simple guard
-            raise ModuleNotFoundError("PyTorch is required for AdvancedNeuroEconCore") from _IMPORT_ERROR
+        def __init__(
+            self, *args: object, **kwargs: object
+        ) -> None:  # noqa: D401 - simple guard
+            raise ModuleNotFoundError(
+                "PyTorch is required for AdvancedNeuroEconCore"
+            ) from _IMPORT_ERROR
 
 
 __all__ = ["AdvancedNeuroEconCore", "DecisionOption"]

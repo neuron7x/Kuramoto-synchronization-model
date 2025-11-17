@@ -88,7 +88,9 @@ class VectorIndex:
     def upsert(self, segment_id: str, vector: Sequence[float]) -> None:
         arr = np.asarray(vector, dtype=float)
         if arr.shape != (self._dimension,):
-            raise ValueError(f"vector dimensionality mismatch: expected {self._dimension}")
+            raise ValueError(
+                f"vector dimensionality mismatch: expected {self._dimension}"
+            )
         norm = np.linalg.norm(arr)
         if norm > 0:
             arr = arr / norm
@@ -97,12 +99,16 @@ class VectorIndex:
     def remove(self, segment_id: str) -> None:
         self._vectors.pop(segment_id, None)
 
-    def search(self, vector: Sequence[float], limit: int = 10) -> List[Tuple[str, float]]:
+    def search(
+        self, vector: Sequence[float], limit: int = 10
+    ) -> List[Tuple[str, float]]:
         if not self._vectors:
             return []
         query = np.asarray(vector, dtype=float)
         if query.shape != (self._dimension,):
-            raise ValueError(f"vector dimensionality mismatch: expected {self._dimension}")
+            raise ValueError(
+                f"vector dimensionality mismatch: expected {self._dimension}"
+            )
         norm = np.linalg.norm(query)
         if norm > 0:
             query = query / norm
@@ -212,7 +218,9 @@ class HybridIndex:
         for shard, vector_index in self._vector_by_shard.items():
             candidates = vector_index.search(query_vector, limit=candidate_limit)
             for segment_id, score in candidates:
-                vector_scores[segment_id] = max(vector_scores.get(segment_id, 0.0), score)
+                vector_scores[segment_id] = max(
+                    vector_scores.get(segment_id, 0.0), score
+                )
 
         combined: Dict[str, float] = defaultdict(float)
         for segment_id, score in bm25_scores.items():
@@ -220,7 +228,9 @@ class HybridIndex:
         for segment_id, score in vector_scores.items():
             combined[segment_id] += score * self._config.vector_weight
 
-        ranked = sorted(combined.items(), key=lambda item: item[1], reverse=True)[:candidate_limit]
+        ranked = sorted(combined.items(), key=lambda item: item[1], reverse=True)[
+            :candidate_limit
+        ]
         results: List[Tuple[IndexedSegment, float]] = []
         for segment_id, score in ranked[:limit]:
             segment = self._segments.get(segment_id)

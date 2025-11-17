@@ -28,7 +28,7 @@ def sample_order() -> Order:
 def test_order_ledger_append_and_iter(tmp_path: Path) -> None:
     """Test that OrderLedger can append events and iterate from a given offset."""
     ledger = OrderLedger(tmp_path / "test_ledger.jsonl")
-    
+
     # Append first event
     event1 = ledger.append(
         "submit",
@@ -36,7 +36,7 @@ def test_order_ledger_append_and_iter(tmp_path: Path) -> None:
         correlation_id="corr-1",
     )
     off1 = event1.sequence
-    
+
     # Append second event
     event2 = ledger.append(
         "ack",
@@ -44,9 +44,9 @@ def test_order_ledger_append_and_iter(tmp_path: Path) -> None:
         correlation_id="corr-1",
     )
     off2 = event2.sequence
-    
+
     assert off2 == off1 + 1
-    
+
     # Iterate from first offset - should only see second event
     events = list(ledger.replay_from(off1 + 1))
     assert len(events) == 1
@@ -57,7 +57,7 @@ def test_order_ledger_append_and_iter(tmp_path: Path) -> None:
 def test_order_ledger_replay_integrity(tmp_path: Path) -> None:
     """Test that ledger replay validates digest chain integrity."""
     ledger = OrderLedger(tmp_path / "test_ledger_integrity.jsonl")
-    
+
     # Append multiple events
     for i in range(5):
         ledger.append(
@@ -65,11 +65,11 @@ def test_order_ledger_replay_integrity(tmp_path: Path) -> None:
             order={"order_id": f"order_{i}"},
             metadata={"index": i},
         )
-    
+
     # Replay with verification should succeed
     events = list(ledger.replay(verify=True))
     assert len(events) == 5
-    
+
     # Verify sequence is monotonically increasing
     for i, event in enumerate(events):
         assert event.sequence == i + 1
@@ -78,7 +78,7 @@ def test_order_ledger_replay_integrity(tmp_path: Path) -> None:
 def test_oms_state_apply_and_outstanding(sample_order: Order) -> None:
     """Test that OMSState can apply events and track outstanding orders."""
     oms = OMSState()
-    
+
     # Create order with ID
     order_with_id = Order(
         symbol="BTCUSDT",
@@ -88,7 +88,7 @@ def test_oms_state_apply_and_outstanding(sample_order: Order) -> None:
         order_type=OrderType.LIMIT,
     )
     order_with_id.mark_submitted("test-order-1")
-    
+
     # Apply submit event
     evt_submit = {
         "type": "submit",
@@ -97,12 +97,12 @@ def test_oms_state_apply_and_outstanding(sample_order: Order) -> None:
         "ts": 123.0,
     }
     oms.apply(evt_submit)
-    
+
     # Check outstanding orders
     outstanding = oms.outstanding("binance")
     assert len(outstanding) == 1
     assert outstanding[0].order_id == "test-order-1"
-    
+
     # Apply ack event
     evt_ack = {
         "type": "ack",
@@ -111,11 +111,11 @@ def test_oms_state_apply_and_outstanding(sample_order: Order) -> None:
         "ts": 124.0,
     }
     oms.apply(evt_ack)
-    
+
     # Still outstanding with status updated
     outstanding = oms.outstanding("binance")
     assert len(outstanding) == 1
-    
+
     # Apply fill event
     evt_fill = {
         "type": "fill",
@@ -124,7 +124,7 @@ def test_oms_state_apply_and_outstanding(sample_order: Order) -> None:
         "ts": 125.0,
     }
     oms.apply(evt_fill)
-    
+
     # Should no longer be outstanding
     outstanding = oms.outstanding("binance")
     assert len(outstanding) == 0
@@ -133,7 +133,7 @@ def test_oms_state_apply_and_outstanding(sample_order: Order) -> None:
 def test_oms_state_adopt_stray_orders() -> None:
     """Test that OMSState can adopt stray venue-open orders."""
     oms = OMSState()
-    
+
     # Create stray orders
     stray1 = Order(
         symbol="ETHUSDT",
@@ -143,7 +143,7 @@ def test_oms_state_adopt_stray_orders() -> None:
         order_type=OrderType.LIMIT,
     )
     stray1.mark_submitted("stray-1")
-    
+
     stray2 = Order(
         symbol="BTCUSDT",
         side=OrderSide.BUY,
@@ -152,10 +152,10 @@ def test_oms_state_adopt_stray_orders() -> None:
         order_type=OrderType.LIMIT,
     )
     stray2.mark_submitted("stray-2")
-    
+
     # Adopt strays
     oms.adopt("binance", [stray1, stray2])
-    
+
     # Check they're now tracked
     outstanding = oms.outstanding("binance")
     assert len(outstanding) == 2
@@ -168,7 +168,7 @@ def test_oms_state_snapshot_restore_roundtrip(tmp_path: Path) -> None:
     """Test that OMSState snapshot/restore preserves state correctly."""
     oms = OMSState()
     oms.set_ledger_offset(42)
-    
+
     # Create and apply some orders
     order1 = Order(
         symbol="BTCUSDT",
@@ -178,7 +178,7 @@ def test_oms_state_snapshot_restore_roundtrip(tmp_path: Path) -> None:
         order_type=OrderType.LIMIT,
     )
     order1.mark_submitted("X1")
-    
+
     evt = {
         "type": "submit",
         "venue": "binance",
@@ -186,20 +186,20 @@ def test_oms_state_snapshot_restore_roundtrip(tmp_path: Path) -> None:
         "ts": 123.0,
     }
     oms.apply(evt)
-    
+
     # Take snapshot
     snap = oms.snapshot()
     assert snap["ledger_offset"] == 42
     assert "checksum" in snap
     assert "venues" in snap
     assert "binance" in snap["venues"]
-    
+
     # Persist and restore
     path = tmp_path / "oms_snap.json"
     path.write_text(json.dumps(snap), encoding="utf-8")
-    
+
     restored = OMSState.restore(json.loads(path.read_text(encoding="utf-8")))
-    
+
     # Verify restored state
     assert restored.last_ledger_offset() == 42
     outstanding = restored.outstanding("binance")
@@ -218,7 +218,7 @@ def test_oms_state_snapshot_checksum_integrity(tmp_path: Path) -> None:
     """Test that snapshot includes checksum for integrity verification."""
     oms = OMSState()
     oms.set_ledger_offset(100)
-    
+
     order = Order(
         symbol="BTCUSDT",
         side=OrderSide.BUY,
@@ -227,7 +227,7 @@ def test_oms_state_snapshot_checksum_integrity(tmp_path: Path) -> None:
         order_type=OrderType.LIMIT,
     )
     order.mark_submitted("check-1")
-    
+
     evt = {
         "type": "submit",
         "venue": "binance",
@@ -235,13 +235,13 @@ def test_oms_state_snapshot_checksum_integrity(tmp_path: Path) -> None:
         "ts": 200.0,
     }
     oms.apply(evt)
-    
+
     snap = oms.snapshot()
-    
+
     # Verify checksum format
     assert "checksum" in snap
     assert snap["checksum"].startswith("sha256:")
-    
+
     # Verify checksum is deterministic
     snap2 = oms.snapshot()
     assert snap["checksum"] == snap2["checksum"]
@@ -256,7 +256,7 @@ def test_make_idempotency_key_with_correlation_id() -> None:
         price=20000.0,
         order_type=OrderType.LIMIT,
     )
-    
+
     key = make_idempotency_key(order, correlation_id="my-correlation-123")
     assert key == "corr:my-correlation-123"
 
@@ -270,7 +270,7 @@ def test_make_idempotency_key_deterministic() -> None:
         price=20000.0,
         order_type=OrderType.LIMIT,
     )
-    
+
     order2 = Order(
         symbol="BTCUSDT",
         side=OrderSide.BUY,
@@ -278,12 +278,12 @@ def test_make_idempotency_key_deterministic() -> None:
         price=20000.0,
         order_type=OrderType.LIMIT,
     )
-    
+
     # Within the same minute bucket, keys should match
     key1 = make_idempotency_key(order1)
     key2 = make_idempotency_key(order2)
     assert key1 == key2
-    
+
     # Different order should have different key
     order3 = Order(
         symbol="ETHUSDT",  # Different symbol
@@ -299,17 +299,17 @@ def test_make_idempotency_key_deterministic() -> None:
 def test_ledger_last_offset(tmp_path: Path) -> None:
     """Test that ledger tracks the last sequence correctly."""
     ledger = OrderLedger(tmp_path / "offset_test.jsonl")
-    
+
     # Initially should have no events
     latest = ledger.latest_event(verify=False)
     assert latest is None
-    
+
     event1 = ledger.append("event1", metadata={"test": True})
     assert event1.sequence >= 1
-    
+
     event2 = ledger.append("event2", metadata={"test": True})
     assert event2.sequence > event1.sequence
-    
+
     # Latest event should be event2
     latest = ledger.latest_event(verify=False)
     assert latest is not None

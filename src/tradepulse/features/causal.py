@@ -133,9 +133,7 @@ class CausalGuard:
 
         return {"TE_pass": TE_pass}
 
-    def _transfer_entropy(
-        self, source: pd.Series, target: pd.Series
-    ) -> float:
+    def _transfer_entropy(self, source: pd.Series, target: pd.Series) -> float:
         """Compute Transfer Entropy from source to target.
 
         TE(X→Y) = H(Y_t | Y_t-1) - H(Y_t | Y_t-1, X_t-1)
@@ -201,18 +199,14 @@ class CausalGuard:
         probs = counts / len(xy)
         return float(-np.sum(probs * np.log2(probs + 1e-10)))
 
-    def _joint_entropy_3(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray
-    ) -> float:
+    def _joint_entropy_3(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
         """Compute joint entropy H(X,Y,Z)."""
         xyz = np.column_stack([x, y, z])
         unique_rows, counts = np.unique(xyz, axis=0, return_counts=True)
         probs = counts / len(xyz)
         return float(-np.sum(probs * np.log2(probs + 1e-10)))
 
-    def _granger_test(
-        self, df: DataFrame, target: str, drivers: list[str]
-    ) -> bool:
+    def _granger_test(self, df: DataFrame, target: str, drivers: list[str]) -> bool:
         """Run Granger causality tests.
 
         Returns True if any driver Granger-causes the target.

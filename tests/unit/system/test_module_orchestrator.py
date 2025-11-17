@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from collections import deque
 import threading
 import time
+from collections import deque
 from typing import Mapping
 
 import pytest
 
 from src.system import (
-    ModuleExecutionError,
     ModuleExecutionDynamics,
+    ModuleExecutionError,
     ModuleHandler,
     ModuleOrchestrator,
     ModuleRunResult,

@@ -7,10 +7,10 @@ from typing import Iterable, Literal
 
 import numpy as np
 
-from .hurst import hurst_exponent
-from .kuramoto import compute_phase
 from ..utils.logging import get_logger
 from ..utils.metrics import get_metrics_collector
+from .hurst import hurst_exponent
+from .kuramoto import compute_phase
 
 try:  # pragma: no cover - optional GPU dependency
     import cupy as cp
@@ -180,7 +180,9 @@ def _rolling_sum(
             device_out = cuda.device_array_like(device_values)
             threads = 256
             blocks = (array.size + threads - 1) // threads
-            _rolling_sum_cuda_kernel[blocks, threads](device_values, int(window), device_out)
+            _rolling_sum_cuda_kernel[blocks, threads](
+                device_values, int(window), device_out
+            )
             cuda.synchronize()
             return device_out.copy_to_host()
         except Exception:
@@ -287,7 +289,6 @@ if _numba_available():  # pragma: no cover - compiled at import time
             slope = 1.0
         return slope
 
-
     @njit(parallel=True, cache=True, fastmath=True)
     def _rolling_hurst_numba(
         series: np.ndarray,
@@ -358,9 +359,7 @@ class KuramotoIndicator:
         if not (0.0 <= self.smoothing < 1.0):
             raise ValueError("smoothing must be within [0, 1)")
         if self.volume_weighting not in _WEIGHTING_MODES:
-            raise ValueError(
-                f"Unsupported volume_weighting '{self.volume_weighting}'"
-            )
+            raise ValueError(f"Unsupported volume_weighting '{self.volume_weighting}'")
 
     def compute(
         self, prices: Iterable[float], volumes: Iterable[float] | None = None
@@ -609,9 +608,13 @@ class VPINIndicator:
                     result[valid] = np.clip(computed_ratios, -1.0, 1.0)
                 else:
                     result[valid] = np.clip(np.abs(computed_ratios), 0.0, 1.0)
-            ratio_metrics["valid_windows"] = float(np.mean(valid)) if valid.size else 0.0
+            ratio_metrics["valid_windows"] = (
+                float(np.mean(valid)) if valid.size else 0.0
+            )
             if total.size:
-                ratio_metrics["positive_volume"] = float(np.mean(total > self.min_volume))
+                ratio_metrics["positive_volume"] = float(
+                    np.mean(total > self.min_volume)
+                )
 
             if self.smoothing > 0.0:
                 result = _apply_exponential_smoothing(result, valid, self.smoothing)

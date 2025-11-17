@@ -3,10 +3,11 @@ Additional tests to achieve 98% coverage for HPC-AI v4.
 Targets specific uncovered lines in afferent_synthesis.
 """
 
+import numpy as np
+import pandas as pd
 import pytest
 import torch
-import pandas as pd
-import numpy as np
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 
 
@@ -29,7 +30,7 @@ class TestAfferentSynthesisIndexHandling:
             'close': np.random.uniform(95, 105, 100),
             'volume': np.random.uniform(1e6, 1e7, 100),
         })
-        
+
         # Should convert timestamp to index
         state = model.afferent_synthesis(data)
         assert state is not None
@@ -45,7 +46,7 @@ class TestAfferentSynthesisIndexHandling:
             'close': np.random.uniform(95, 105, 100),
             'volume': np.random.uniform(1e6, 1e7, 100),
         })
-        
+
         # Should convert date to index
         state = model.afferent_synthesis(data)
         assert state is not None
@@ -65,7 +66,7 @@ class TestFeaturePadding:
             'close': [102.0],
             'volume': [1000000.0],
         }, index=pd.date_range('2020-01-01', periods=1))
-        
+
         # Should pad to 10 dimensions
         state = model.afferent_synthesis(data)
         assert state is not None
@@ -82,7 +83,7 @@ class TestFeaturePadding:
             'volume': np.random.uniform(1e6, 1e7, 100),
             **{f'extra_feature_{i}': np.random.rand(100) for i in range(10)}
         }, index=pd.date_range('2020-01-01', periods=100))
-        
+
         # Should handle gracefully (TradePulseCompositeEngine might fail with extra columns)
         state = model.afferent_synthesis(data)
         assert state is not None
@@ -102,7 +103,7 @@ class TestFallbackMechanism:
             'close': [100.0] * 50,
             'volume': [1000000.0] * 50,
         }, index=pd.date_range('2020-01-01', periods=50))
-        
+
         # Should use fallback if engine fails
         state = model.afferent_synthesis(data)
         assert state is not None
@@ -112,7 +113,7 @@ class TestFallbackMechanism:
         """Test that fallback path pads features correctly (lines 174-175)."""
         # Ensure we use model with different input_dim to force padding
         model_large = HPCActiveInferenceModuleV4(input_dim=20, state_dim=32)
-        
+
         data = pd.DataFrame({
             'open': [100.0] * 10,
             'high': [105.0] * 10,
@@ -120,7 +121,7 @@ class TestFallbackMechanism:
             'close': [102.0] * 10,
             'volume': [1000000.0] * 10,
         }, index=pd.date_range('2020-01-01', periods=10))
-        
+
         # With input_dim=20 and only 5 OHLCV features, should pad
         state = model_large.afferent_synthesis(data)
         assert state is not None

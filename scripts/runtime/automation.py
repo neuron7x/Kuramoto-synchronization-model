@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import threading
+
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from collections import OrderedDict, deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-import threading
 from typing import Any, Callable, Iterable, Mapping
 
 

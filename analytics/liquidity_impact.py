@@ -60,15 +60,25 @@ class LiquiditySnapshot:
     def __post_init__(self) -> None:
         if self.mid_price <= 0.0:
             raise ValueError("mid_price must be positive")
-        object.__setattr__(self, "bid_levels", tuple(sorted(self.bid_levels, key=lambda lvl: lvl.price, reverse=True)))
-        object.__setattr__(self, "ask_levels", tuple(sorted(self.ask_levels, key=lambda lvl: lvl.price)))
+        object.__setattr__(
+            self,
+            "bid_levels",
+            tuple(sorted(self.bid_levels, key=lambda lvl: lvl.price, reverse=True)),
+        )
+        object.__setattr__(
+            self,
+            "ask_levels",
+            tuple(sorted(self.ask_levels, key=lambda lvl: lvl.price)),
+        )
 
     def total_depth(self, side: SideLiteral) -> float:
         side_norm = _normalise_side(side)
         levels = self.bid_levels if side_norm == "sell" else self.ask_levels
         return float(sum(level.quantity for level in levels))
 
-    def simulate_market_order(self, side: SideLiteral, quantity: float, *, shortfall_penalty_bps: float) -> tuple[float, float, float]:
+    def simulate_market_order(
+        self, side: SideLiteral, quantity: float, *, shortfall_penalty_bps: float
+    ) -> tuple[float, float, float]:
         """Simulate the book impact of a market order.
 
         Returns a tuple ``(average_price, filled_from_book, shortfall_quantity)``.
@@ -221,16 +231,32 @@ class LiquidityImpactModel:
             shortfall_penalty_bps=self._config.shortfall_penalty_bps,
         )
 
-        base_slippage = self._compute_base_slippage(side_norm, snapshot.mid_price, avg_price)
-        effective_participation = min(max(participation_rate, 1e-6), 1.0)
-        participation_component = snapshot.mid_price * self._config.impact_sensitivity * (
-            effective_participation ** self._config.participation_exponent
+        base_slippage = self._compute_base_slippage(
+            side_norm, snapshot.mid_price, avg_price
         )
-        realised_volatility = volatility if volatility is not None else snapshot.volatility or 0.0
-        volatility_component = snapshot.mid_price * self._config.volatility_sensitivity * max(realised_volatility, 0.0)
+        effective_participation = min(max(participation_rate, 1e-6), 1.0)
+        participation_component = (
+            snapshot.mid_price
+            * self._config.impact_sensitivity
+            * (effective_participation**self._config.participation_exponent)
+        )
+        realised_volatility = (
+            volatility if volatility is not None else snapshot.volatility or 0.0
+        )
+        volatility_component = (
+            snapshot.mid_price
+            * self._config.volatility_sensitivity
+            * max(realised_volatility, 0.0)
+        )
 
-        expected_slippage = base_slippage + participation_component + volatility_component
-        expected_slippage_bps = (expected_slippage / snapshot.mid_price) * 1e4 if snapshot.mid_price else 0.0
+        expected_slippage = (
+            base_slippage + participation_component + volatility_component
+        )
+        expected_slippage_bps = (
+            (expected_slippage / snapshot.mid_price) * 1e4
+            if snapshot.mid_price
+            else 0.0
+        )
 
         if side_norm == "buy":
             expected_fill_price = snapshot.mid_price + expected_slippage
@@ -256,7 +282,9 @@ class LiquidityImpactModel:
             volatility_component=volatility_component,
         )
 
-    def _compute_base_slippage(self, side: SideLiteral, mid_price: float, avg_price: float) -> float:
+    def _compute_base_slippage(
+        self, side: SideLiteral, mid_price: float, avg_price: float
+    ) -> float:
         if side == "buy":
             return max(0.0, avg_price - mid_price)
         return max(0.0, mid_price - avg_price)
@@ -280,7 +308,9 @@ class LiquidityImpactModel:
             else:
                 shortfall = benchmark_price - forecast.expected_fill_price
             metrics["expected_implementation_shortfall"] = shortfall
-            metrics["expected_implementation_shortfall_bps"] = (shortfall / benchmark_price) * 1e4
+            metrics["expected_implementation_shortfall_bps"] = (
+                shortfall / benchmark_price
+            ) * 1e4
         return metrics
 
     def adjust_execution_params(
@@ -297,18 +327,37 @@ class LiquidityImpactModel:
         new_limit_offset = current.limit_offset_bps
 
         if slippage_bps > config.slippage_upper_band_bps or liquidity_score < 1.0:
-            new_participation = config.clamp_participation(current.participation_rate * 0.75)
-            new_slice = max(current.slice_volume * config.min_slice_multiplier, current.slice_volume * 0.5)
-            new_limit_offset = config.clamp_limit_offset(current.limit_offset_bps + config.limit_offset_step_bps)
-        elif slippage_bps < config.slippage_lower_band_bps and liquidity_score > config.liquidity_score_threshold:
-            new_participation = config.clamp_participation(current.participation_rate * 1.15)
-            new_slice = min(current.slice_volume * config.max_slice_multiplier, current.slice_volume * 1.25)
-            new_limit_offset = config.clamp_limit_offset(max(current.limit_offset_bps - config.limit_offset_step_bps, 0.0))
+            new_participation = config.clamp_participation(
+                current.participation_rate * 0.75
+            )
+            new_slice = max(
+                current.slice_volume * config.min_slice_multiplier,
+                current.slice_volume * 0.5,
+            )
+            new_limit_offset = config.clamp_limit_offset(
+                current.limit_offset_bps + config.limit_offset_step_bps
+            )
+        elif (
+            slippage_bps < config.slippage_lower_band_bps
+            and liquidity_score > config.liquidity_score_threshold
+        ):
+            new_participation = config.clamp_participation(
+                current.participation_rate * 1.15
+            )
+            new_slice = min(
+                current.slice_volume * config.max_slice_multiplier,
+                current.slice_volume * 1.25,
+            )
+            new_limit_offset = config.clamp_limit_offset(
+                max(current.limit_offset_bps - config.limit_offset_step_bps, 0.0)
+            )
 
         # Volatility overrides: if volatility component dominates slippage, be conservative.
         if forecast.volatility_component > forecast.base_market_impact:
             new_participation = config.clamp_participation(new_participation * 0.9)
-            new_limit_offset = config.clamp_limit_offset(new_limit_offset + config.limit_offset_step_bps / 2)
+            new_limit_offset = config.clamp_limit_offset(
+                new_limit_offset + config.limit_offset_step_bps / 2
+            )
 
         return ExecutionParameters(
             participation_rate=new_participation,
@@ -335,4 +384,3 @@ class LiquidityImpactModel:
             )
             for qty in quantities
         ]
-

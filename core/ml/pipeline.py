@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+import math
+import statistics
 from bisect import bisect_right
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import logging
-import math
-import statistics
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 
 LOGGER = logging.getLogger(__name__)
@@ -100,7 +100,9 @@ class MLExperimentManager:
             self._active_run = mlflow.start_run()
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - context protocol
+    def __exit__(
+        self, exc_type, exc, tb
+    ) -> None:  # pragma: no cover - context protocol
         if mlflow is not None and self._active_run is not None:
             mlflow.end_run(status="FAILED" if exc else "FINISHED")
             self._active_run = None
@@ -126,11 +128,15 @@ class MLExperimentManager:
 class OptunaTuner:
     """Hyper-parameter tuning abstraction around Optuna."""
 
-    def __init__(self, objective: Callable[[Mapping[str, Any]], float], n_trials: int = 25) -> None:
+    def __init__(
+        self, objective: Callable[[Mapping[str, Any]], float], n_trials: int = 25
+    ) -> None:
         self._objective = objective
         self._n_trials = n_trials
 
-    def optimise(self, search_space: Callable[["optuna.trial.Trial"], Mapping[str, Any]]) -> Mapping[str, Any]:
+    def optimise(
+        self, search_space: Callable[["optuna.trial.Trial"], Mapping[str, Any]]
+    ) -> Mapping[str, Any]:
         if optuna is None:
             LOGGER.warning("Optuna not installed; using default parameters")
             return search_space(MockTrial())
@@ -147,7 +153,9 @@ class OptunaTuner:
 class MockTrial:
     """Fallback Optuna trial when the dependency is missing."""
 
-    def suggest_float(self, name: str, low: float, high: float, *, log: bool = False) -> float:
+    def suggest_float(
+        self, name: str, low: float, high: float, *, log: bool = False
+    ) -> float:
         return (low + high) / 2
 
     def suggest_int(self, name: str, low: int, high: int) -> int:
@@ -163,7 +171,9 @@ class ABTestManager:
     def __init__(self) -> None:
         self._metrics: MutableMapping[str, deque[float]] = {}
 
-    def record_metric(self, variant: str, value: float, *, max_points: int = 1_000) -> None:
+    def record_metric(
+        self, variant: str, value: float, *, max_points: int = 1_000
+    ) -> None:
         series = self._metrics.setdefault(variant, deque(maxlen=max_points))
         series.append(value)
 
@@ -181,7 +191,9 @@ class ModelDriftDetector:
     def __init__(self, threshold: float = 0.2) -> None:
         self._threshold = threshold
 
-    def psi(self, expected: Sequence[float], observed: Sequence[float], *, buckets: int = 10) -> float:
+    def psi(
+        self, expected: Sequence[float], observed: Sequence[float], *, buckets: int = 10
+    ) -> float:
         if buckets <= 0:
             raise ValueError("buckets must be positive")
         if not expected or not observed:
@@ -194,7 +206,9 @@ class ModelDriftDetector:
         quantile_edges: list[float] = []
         for i in range(1, buckets):
             quantile_position = (len(expected_sorted) * i) / buckets
-            index = max(0, min(len(expected_sorted) - 1, math.ceil(quantile_position) - 1))
+            index = max(
+                0, min(len(expected_sorted) - 1, math.ceil(quantile_position) - 1)
+            )
             quantile_edges.append(expected_sorted[index])
         quantile_edges.sort()
 
@@ -231,7 +245,9 @@ class MLPipeline:
     def __init__(
         self,
         feature_dag: FeatureEngineeringDAG,
-        train_fn: Callable[[PipelineContext, Mapping[str, Any]], tuple[Any, Mapping[str, float]]],
+        train_fn: Callable[
+            [PipelineContext, Mapping[str, Any]], tuple[Any, Mapping[str, float]]
+        ],
         *,
         tuner: OptunaTuner | None = None,
         experiment_manager: MLExperimentManager | None = None,
@@ -268,10 +284,14 @@ class MLPipeline:
             manager.log_params(params)
             model, metrics = self._train_fn(context, params)
 
-            if self._drift_detector and {
-                "baseline_scores",
-                "observed_scores",
-            } <= context.params.keys():
+            if (
+                self._drift_detector
+                and {
+                    "baseline_scores",
+                    "observed_scores",
+                }
+                <= context.params.keys()
+            ):
                 expected = context.params["baseline_scores"]
                 observed = context.params["observed_scores"]
                 drifted, psi_value = detect_model_drift(
@@ -293,12 +313,16 @@ class MLPipeline:
             )
 
         if self._ab_tester and "ab_variant" in params:
-            self._ab_tester.record_metric(params["ab_variant"], metrics.get("sharpe", 0.0))
+            self._ab_tester.record_metric(
+                params["ab_variant"], metrics.get("sharpe", 0.0)
+            )
 
         return PipelineResult(model=model, metrics=metrics, params=params)
 
 
-def shadow_mode_inference(model_a: Any, model_b: Any, inputs: Iterable[Any]) -> list[dict[str, Any]]:
+def shadow_mode_inference(
+    model_a: Any, model_b: Any, inputs: Iterable[Any]
+) -> list[dict[str, Any]]:
     """Run model B in shadow mode alongside model A and capture divergences."""
 
     results = []
@@ -306,15 +330,21 @@ def shadow_mode_inference(model_a: Any, model_b: Any, inputs: Iterable[Any]) -> 
         pred_a = model_a.predict(payload)
         pred_b = model_b.predict(payload)
         delta = pred_b - pred_a
-        results.append({"input": payload, "primary": pred_a, "shadow": pred_b, "delta": delta})
+        results.append(
+            {"input": payload, "primary": pred_a, "shadow": pred_b, "delta": delta}
+        )
     return results
 
 
-def record_online_learning_event(storage: MutableMapping[str, Any], *, model_id: str, payload: Mapping[str, Any]) -> None:
+def record_online_learning_event(
+    storage: MutableMapping[str, Any], *, model_id: str, payload: Mapping[str, Any]
+) -> None:
     """Persist an online-learning event for replay."""
 
     events = storage.setdefault(model_id, [])
-    events.append({"payload": payload, "recorded_at": datetime.now(timezone.utc).isoformat()})
+    events.append(
+        {"payload": payload, "recorded_at": datetime.now(timezone.utc).isoformat()}
+    )
 
 
 def detect_model_drift(
@@ -343,4 +373,3 @@ __all__ = [
     "record_online_learning_event",
     "shadow_mode_inference",
 ]
-

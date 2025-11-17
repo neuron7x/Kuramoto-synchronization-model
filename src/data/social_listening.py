@@ -29,7 +29,9 @@ class SocialStreamClient(Protocol):
     async def stop(self) -> None:  # pragma: no cover - protocol definition
         """Release resources previously allocated in :meth:`start`."""
 
-    def stream(self) -> AsyncIterator[SocialPost]:  # pragma: no cover - protocol definition
+    def stream(
+        self,
+    ) -> AsyncIterator[SocialPost]:  # pragma: no cover - protocol definition
         """Yield :class:`SocialPost` instances as they are observed."""
 
 
@@ -55,7 +57,9 @@ class SocialListeningPipeline:
         publication: SocialPublicationConfig | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
         frame_encoder: Callable[[pd.DataFrame], bytes] | None = None,
-        snapshot_encoder: Callable[[Mapping[str, dict[str, float]]], bytes] | None = None,
+        snapshot_encoder: (
+            Callable[[Mapping[str, dict[str, float]]], bytes] | None
+        ) = None,
     ) -> None:
         self._clients = list(clients)
         self._processor = processor or SocialListeningProcessor(config=config)
@@ -100,7 +104,9 @@ class SocialListeningPipeline:
                 await _maybe_call(client, "stop")
             await self._broker.stop()
 
-    async def _consume(self, client: SocialStreamClient, stop_event: asyncio.Event) -> None:
+    async def _consume(
+        self, client: SocialStreamClient, stop_event: asyncio.Event
+    ) -> None:
         stream = client.stream()
         try:
             async for post in stream:
@@ -207,16 +213,12 @@ class SocialListeningPipeline:
         return json.dumps(records, separators=(",", ":")).encode("utf-8")
 
     @staticmethod
-    def _default_snapshot_encoder(
-        snapshot: Mapping[str, dict[str, float]]
-    ) -> bytes:
+    def _default_snapshot_encoder(snapshot: Mapping[str, dict[str, float]]) -> bytes:
         if not snapshot:
             return b"{}"
         normalised: dict[str, dict[str, float]] = {}
         for symbol, metrics in snapshot.items():
-            normalised[symbol] = {
-                key: float(value) for key, value in metrics.items()
-            }
+            normalised[symbol] = {key: float(value) for key, value in metrics.items()}
         return json.dumps(normalised, separators=(",", ":")).encode("utf-8")
 
 

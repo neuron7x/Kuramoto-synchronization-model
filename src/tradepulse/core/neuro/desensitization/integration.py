@@ -41,7 +41,9 @@ def run_gate_step(
     state["combined"]["lambda"] = state["combined"].get(
         "lambda_", state["combined"].get("lambda", 0.05)
     )
-    return GateStepIO(shaped_reward=shaped_reward, size=size, temp=temp_abs, state=state)
+    return GateStepIO(
+        shaped_reward=shaped_reward, size=size, temp=temp_abs, state=state
+    )
 
 
 def apply_to_policy_decision(

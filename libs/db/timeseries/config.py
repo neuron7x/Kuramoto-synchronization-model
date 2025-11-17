@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import timedelta
-import re
 from typing import Sequence
 
 __all__ = [

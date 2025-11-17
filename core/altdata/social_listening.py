@@ -10,13 +10,12 @@ window of weighted sentiment observations.
 
 from __future__ import annotations
 
+import math
+import re
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, Mapping, Sequence
-
-import math
-import re
 
 import pandas as pd
 
@@ -106,8 +105,12 @@ class SocialSentimentScorer:
         emoji_weights: Mapping[str, float] | None = None,
         emphasis_multiplier: float = 1.4,
     ) -> None:
-        self._positive = {token.lower() for token in (positive_tokens or _DEFAULT_POSITIVE)}
-        self._negative = {token.lower() for token in (negative_tokens or _DEFAULT_NEGATIVE)}
+        self._positive = {
+            token.lower() for token in (positive_tokens or _DEFAULT_POSITIVE)
+        }
+        self._negative = {
+            token.lower() for token in (negative_tokens or _DEFAULT_NEGATIVE)
+        }
         self._emoji = dict(emoji_weights or _EMOJI_SENTIMENT)
         self._emphasis_multiplier = max(1.0, emphasis_multiplier)
 
@@ -138,7 +141,9 @@ class SocialSentimentScorer:
     def extract_symbols(self, text: str) -> list[str]:
         """Return unique upper-case cashtags referenced in ``text``."""
 
-        return sorted({match.group(1) for match in _CASHTAG_PATTERN.finditer(text or "")})
+        return sorted(
+            {match.group(1) for match in _CASHTAG_PATTERN.finditer(text or "")}
+        )
 
 
 class SocialSignalFactory:
@@ -297,7 +302,9 @@ class SocialListeningProcessor:
         }
         aggregated: dict[str, pd.DataFrame] = {}
         for symbol, signals in grouped.items():
-            frame = self._feature_builder.aggregate(signals, freq=self._config.frequency)
+            frame = self._feature_builder.aggregate(
+                signals, freq=self._config.frequency
+            )
             if not frame.empty:
                 aggregated[symbol] = frame
         if not aggregated:

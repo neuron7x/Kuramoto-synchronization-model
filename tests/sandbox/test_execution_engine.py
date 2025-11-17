@@ -3,7 +3,15 @@ from datetime import datetime, timezone
 import pytest
 
 from sandbox.execution.engine import ExecutionEngine, ExecutionParameters
-from sandbox.models import AuditEvent, ExecutionReport, OrderSide, OrderTicket, RiskDecision, SignalDirection, TradingSignal
+from sandbox.models import (
+    AuditEvent,
+    ExecutionReport,
+    OrderSide,
+    OrderTicket,
+    RiskDecision,
+    SignalDirection,
+    TradingSignal,
+)
 from sandbox.risk.engine import AuditLoggerProtocol
 
 

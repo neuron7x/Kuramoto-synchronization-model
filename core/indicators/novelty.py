@@ -1,4 +1,5 @@
 """Novelty score helpers supporting FHMC integration tests."""
+
 from __future__ import annotations
 
 import numpy as np
