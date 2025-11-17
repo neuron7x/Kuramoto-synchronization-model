@@ -126,14 +126,14 @@ class FinBERTSentimentModel:
         # Use a specific revision hash for production deployments
         model_revision = "main"  # TODO: Pin to specific commit hash in production
         self._tokenizer = AutoTokenizer.from_pretrained(
-            model_name, 
+            model_name,
             revision=model_revision,
-            trust_remote_code=False  # Security: Never execute remote code
+            trust_remote_code=False,  # Security: Never execute remote code
         )
         self._model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
             revision=model_revision,
-            trust_remote_code=False  # Security: Never execute remote code
+            trust_remote_code=False,  # Security: Never execute remote code
         )
 
         if device is None:
