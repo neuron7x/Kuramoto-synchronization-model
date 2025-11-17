@@ -804,8 +804,17 @@ class MetricsDashboard:
 
             return spread_fig, depth_fig, f"Last state: {last_state}"
 
-    def serve_forever(self):
-        self.app.run_server(host="0.0.0.0", port=8050)
+    def serve_forever(self, host: str = '127.0.0.1', port: int = 8050):
+        """
+        Start the dashboard server.
+        
+        Args:
+            host: Network interface to bind to. Default '127.0.0.1' (localhost only).
+                  Use '0.0.0.0' only in containerized environments with proper firewall rules.
+            port: TCP port to listen on.
+        """
+        # Security: Default to localhost binding unless explicitly overridden
+        self.app.run_server(host=host, port=port)
 
 
 def load_runtime_config(path: str):
