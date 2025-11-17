@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - only for static analysers
-    from z3 import And, Or, Real, Solver, Sum, sat, unsat  # type: ignore[import]
+    pass  # type: ignore[import]
 
 
 HAS_Z3 = importlib.util.find_spec("z3") is not None

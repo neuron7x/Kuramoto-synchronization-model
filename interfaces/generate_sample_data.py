@@ -12,7 +12,7 @@ Usage:
 """
 
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -42,7 +42,7 @@ def generate_trending_prices(
     rng = np.random.default_rng(seed)
     
     # Create trend component
-    trend_component = np.linspace(0, trend * n, n)
+    np.linspace(0, trend * n, n)
     
     # Create noise component
     noise = rng.normal(0, volatility, n)
@@ -276,16 +276,16 @@ Examples:
     # Print summary
     print(f"\n✓ Generated {len(df)} rows of market data")
     print(f"✓ Saved to: {output_path.absolute()}")
-    print(f"\nData Summary:")
+    print("\nData Summary:")
     print(f"  Time range: {df['timestamp'].min()} to {df['timestamp'].max()}")
     print(f"  Price range: ${df['price'].min():.2f} - ${df['price'].max():.2f}")
     print(f"  Mean price: ${df['price'].mean():.2f}")
     print(f"  Price std dev: ${df['price'].std():.2f}")
     print(f"  Mean volume: {df['volume'].mean():,.0f}")
-    print(f"\nYou can now use this data with:")
+    print("\nYou can now use this data with:")
     print(f"  tradepulse analyze --csv {output_path}")
     print(f"  tradepulse backtest --csv {output_path}")
-    print(f"  streamlit run interfaces/dashboard_streamlit.py")
+    print("  streamlit run interfaces/dashboard_streamlit.py")
 
 
 if __name__ == "__main__":

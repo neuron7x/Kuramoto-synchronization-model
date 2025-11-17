@@ -135,7 +135,7 @@ class TestCooldownBehavior:
         
         # Build up to hold
         for _ in range(15):
-            result = ctrl.step(stress=1.0, drawdown=0.5, novelty=0.0, dt=1.0)
+            ctrl.step(stress=1.0, drawdown=0.5, novelty=0.0, dt=1.0)
             if ctrl._hold:
                 break
         
@@ -144,7 +144,7 @@ class TestCooldownBehavior:
         
         # Stay in hold - cooldown should remain 0
         for _ in range(5):
-            result = ctrl.step(stress=1.0, drawdown=0.5, novelty=0.0, dt=1.0)
+            ctrl.step(stress=1.0, drawdown=0.5, novelty=0.0, dt=1.0)
             assert ctrl._cooldown == 0, "Cooldown should stay at 0 while in hold"
     
     def test_cooldown_initialized_on_exit(self, serotonin_controller, serotonin_config):

@@ -303,7 +303,7 @@ class TestOrchestrator:
         with open(md_report, "w", encoding="utf-8") as f:
             f.write(report.to_markdown())
 
-        print(f"\n📊 Reports written to:")
+        print("\n📊 Reports written to:")
         print(f"  - {json_report}")
         print(f"  - {md_report}")
 

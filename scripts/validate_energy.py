@@ -10,7 +10,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from runtime.energy_validator import EnergyValidator, EnergyConfig
 
@@ -53,8 +53,8 @@ def validate_single_metric_set(
         print(f"  Margin: {result.margin:+.6f}")
         
         if not result.passed:
-            print(f"  ⚠️  FAILED: Free energy exceeds threshold")
-            print(f"  Violations:")
+            print("  ⚠️  FAILED: Free energy exceeds threshold")
+            print("  Violations:")
             for name, penalty in result.penalties.items():
                 if penalty > 0:
                     metric_config = validator.config.get_metric(name)
@@ -137,7 +137,7 @@ def main():
         print("Energy Validation Configuration:")
         print(f"  Control Temperature: {config.control_temperature}")
         print(f"  Max Acceptable Energy: {config.max_acceptable_energy}")
-        print(f"\nMetric Thresholds:")
+        print("\nMetric Thresholds:")
         for metric in config.metrics:
             print(f"  {metric.name:20s}: {metric.threshold:8.3f} {metric.unit:5s} (weight: {metric.weight:.1f})")
         return 0
@@ -188,7 +188,7 @@ def main():
             all_passed = False
             failed_count += 1
             if args.fail_fast:
-                print(f"\n❌ Validation failed (fail-fast enabled)")
+                print("\n❌ Validation failed (fail-fast enabled)")
                 break
         
         if args.verbose and len(metrics_list) > 1:

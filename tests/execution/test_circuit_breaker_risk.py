@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
 
 from execution.resilience.circuit_breaker import (
     CircuitBreaker,

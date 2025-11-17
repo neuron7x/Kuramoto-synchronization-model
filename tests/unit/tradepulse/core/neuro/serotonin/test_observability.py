@@ -15,7 +15,6 @@ from observability import (  # type: ignore
     SLI,
     SLO,
     SEROTONIN_ALERTS,
-    SEROTONIN_SLIS,
     SEROTONIN_SLOS,
 )
 

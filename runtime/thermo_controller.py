@@ -33,7 +33,6 @@ from runtime.filters.vlpo_core_filter import VLPOCoreFilter
 from runtime.cns_stabilizer import CNSStabilizer
 from runtime.behavior_contract import (
     ActionClass,
-    SystemState,
     get_current_state,
     tacl_gate,
 )

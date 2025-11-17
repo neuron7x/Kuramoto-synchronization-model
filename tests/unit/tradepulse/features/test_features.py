@@ -1,6 +1,5 @@
 """Tests for Ricci curvature and topological features."""
 
-import sys
 from pathlib import Path
 
 import numpy as np

@@ -4,7 +4,6 @@ Targets specific uncovered lines in afferent_synthesis.
 """
 
 import pytest
-import torch
 import pandas as pd
 import numpy as np
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4

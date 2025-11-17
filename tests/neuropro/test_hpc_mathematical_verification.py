@@ -127,7 +127,7 @@ class TestTDLossFormulation:
         # Create toy states
         state = torch.randn(1, 16, requires_grad=True)
         next_state = torch.randn(1, 16, requires_grad=True)
-        action = torch.tensor([1])
+        torch.tensor([1])
         reward = 1.0
         gamma = 0.99
         
@@ -331,7 +331,7 @@ class TestGradientProperties:
         """Test actor and critic gradients are computed correctly."""
         data = generate_synthetic_data(n_days=100, seed=42)
         state = small_model.afferent_synthesis(data)
-        action = torch.tensor([1])
+        torch.tensor([1])
         reward = 1.0
         
         # Zero gradients

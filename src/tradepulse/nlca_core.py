@@ -10,7 +10,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import queue
-import threading
 import argparse
 import yaml
 

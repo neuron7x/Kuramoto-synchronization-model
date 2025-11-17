@@ -149,7 +149,7 @@ else:
                     st.error(f"❌ Missing required columns: {', '.join(missing_cols)}")
                     validation_passed = False
                 else:
-                    st.success(f"✅ Required column 'price' found")
+                    st.success("✅ Required column 'price' found")
                 
                 # Check optional columns
                 found_optional = [col for col in optional_cols if col in df.columns]

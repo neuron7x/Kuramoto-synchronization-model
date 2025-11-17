@@ -5,12 +5,11 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from threading import Event
 from typing import Any, Mapping
 
 import pytest
 
-from domain import Order, OrderSide, OrderStatus, OrderType
+from domain import Order, OrderSide, OrderType
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.order_lifecycle import IdempotentSubmitter
@@ -151,17 +150,17 @@ def test_idempotent_submitter_deduplication() -> None:
     )
     
     # First submission
-    result1 = submitter.submit("binance", order, idempotency_key="test-key", connector=connector)
+    submitter.submit("binance", order, idempotency_key="test-key", connector=connector)
     assert connector.calls == 1
     assert submitter.seen("binance", "test-key")
     
     # Second submission with same key
-    result2 = submitter.submit("binance", order, idempotency_key="test-key", connector=connector)
+    submitter.submit("binance", order, idempotency_key="test-key", connector=connector)
     assert connector.calls == 1  # Should not increment
     assert submitter.seen("binance", "test-key")
     
     # Third submission with different key
-    result3 = submitter.submit("binance", order, idempotency_key="different-key", connector=connector)
+    submitter.submit("binance", order, idempotency_key="different-key", connector=connector)
     assert connector.calls == 2  # Should increment
     assert submitter.seen("binance", "different-key")
 
@@ -342,7 +341,7 @@ def test_ledger_replay_after_snapshot(
         time.sleep(0.15)  # Wait for snapshot
         
         # Get snapshot offset
-        snapshot_offset = loop1._oms_state.last_ledger_offset()
+        loop1._oms_state.last_ledger_offset()
         
         # Submit another order after snapshot
         order2 = Order(
@@ -369,7 +368,7 @@ def test_ledger_replay_after_snapshot(
         # Both orders should be in OMS state after replay
         time.sleep(0.1)
         outstanding = loop2._oms_state.outstanding("binance")
-        symbols = {o.symbol for o in outstanding}
+        {o.symbol for o in outstanding}
         # At least one order should be present (some may have filled)
         assert len(outstanding) >= 0  # Relaxed check since orders may not be active
     finally:

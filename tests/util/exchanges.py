@@ -4,7 +4,6 @@ import time
 import hmac
 import hashlib
 import base64
-import importlib
 from urllib.parse import urlencode
 
 import requests

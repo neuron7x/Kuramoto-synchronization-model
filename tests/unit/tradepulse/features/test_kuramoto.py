@@ -1,6 +1,5 @@
 """Tests for Kuramoto synchrony feature."""
 
-import sys
 from pathlib import Path
 
 import numpy as np

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
-from typing import Callable
 
 import os
 
@@ -55,7 +54,8 @@ def configure_security_overrides() -> ApiSecuritySettings:
     )
 
     # Ensure FastAPI dependency injection reuses our explicit settings instance.
-    loader: Callable[[], ApiSecuritySettings] = lambda: settings
+    def loader() -> ApiSecuritySettings:
+        return settings
     security_module._default_settings_loader = loader  # type: ignore[attr-defined]
     setattr(security_module.get_api_security_settings, "_instance", settings)
     setattr(security_module.get_api_security_settings, "_loader", loader)

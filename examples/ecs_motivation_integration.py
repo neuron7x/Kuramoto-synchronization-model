@@ -179,12 +179,12 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
     combined_counts = count_actions(combined_actions)
     
     print("Action Distribution:")
-    print(f"  ECS Only:")
+    print("  ECS Only:")
     print(f"    Sells: {ecs_counts['sell']:3d} ({ecs_counts['sell']/n_steps*100:.1f}%)")
     print(f"    Holds: {ecs_counts['hold']:3d} ({ecs_counts['hold']/n_steps*100:.1f}%)")
     print(f"    Buys:  {ecs_counts['buy']:3d} ({ecs_counts['buy']/n_steps*100:.1f}%)")
     print()
-    print(f"  Combined (ECS + Motivation):")
+    print("  Combined (ECS + Motivation):")
     print(f"    Sells: {combined_counts['sell']:3d} ({combined_counts['sell']/n_steps*100:.1f}%)")
     print(f"    Holds: {combined_counts['hold']:3d} ({combined_counts['hold']/n_steps*100:.1f}%)")
     print(f"    Buys:  {combined_counts['buy']:3d} ({combined_counts['buy']/n_steps*100:.1f}%)")
@@ -210,7 +210,7 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
         if event['details']['stress'] > ecs_reg.stress_threshold
     )
 
-    print(f"Stress Analysis:")
+    print("Stress Analysis:")
     print(f"  High stress events: {high_stress_count}/{len(stress_events)} "
           f"({high_stress_count/len(stress_events)*100:.1f}%)")
     print()

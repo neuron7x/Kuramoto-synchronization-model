@@ -52,7 +52,6 @@ class TestAblationStudies:
             prev_pwpe = pwpe
         
         # Test without gate (override method to always return False)
-        original_gate = model_no_gate.metastable_transition_gate
         model_no_gate.metastable_transition_gate = lambda pwpe, d_pwpe: False
         
         actions_no_gate = []
@@ -68,8 +67,8 @@ class TestAblationStudies:
             prev_pwpe = pwpe
         
         # Metrics
-        hold_pct_with = actions_with_gate.count(0) / len(actions_with_gate)
-        hold_pct_without = actions_no_gate.count(0) / len(actions_no_gate)
+        actions_with_gate.count(0) / len(actions_with_gate)
+        actions_no_gate.count(0) / len(actions_no_gate)
         diversity_with = len(set(actions_with_gate)) / 3.0
         diversity_without = len(set(actions_no_gate)) / 3.0
         

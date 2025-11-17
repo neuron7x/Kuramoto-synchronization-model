@@ -225,7 +225,7 @@ def example_4_diagnostics():
     
     # Get structured state
     state = controller.to_dict()
-    print(f"\nStructured state:")
+    print("\nStructured state:")
     for key, value in state.items():
         print(f"  {key}: {value:.3f}")
     
@@ -283,7 +283,7 @@ def example_5_batch_processing():
     print(f"  Speedup:      {loop_time/batch_time:.2f}x")
     
     # Show sample results
-    print(f"\nSample results (last 5 steps):")
+    print("\nSample results (last 5 steps):")
     for i, result in enumerate(results[-5:], start=n_steps-5):
         print(f"  Step {i}: level={result['level']:.3f}, hold={bool(result['hold'])}")
     

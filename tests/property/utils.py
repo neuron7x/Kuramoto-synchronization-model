@@ -46,7 +46,7 @@ def property_settings(identifier: str, *, max_examples: int = 128) -> dict[str, 
     across shards while still allowing Hypothesis to shrink counterexamples.
     """
 
-    seed = _stable_seed(identifier)
+    _stable_seed(identifier)
     return {
         "max_examples": max_examples,
         "deadline": None,

@@ -99,7 +99,7 @@ def test_should_take_action():
     assert not ctrl.should_take_action("conservative"), "Should not trade in hold"
     assert not ctrl.should_take_action("moderate"), "Should not trade in hold"
     assert not ctrl.should_take_action("aggressive"), "Should not trade in hold"
-    print(f"✓ In hold: no risk level allows trading")
+    print("✓ In hold: no risk level allows trading")
 
 
 def test_position_size_multiplier():
@@ -262,7 +262,7 @@ def test_step_batch():
         assert "hold" in result, f"Result {i} missing 'hold'"
         assert "cooldown" in result, f"Result {i} missing 'cooldown'"
     
-    print(f"✓ All results have correct structure")
+    print("✓ All results have correct structure")
     print(f"  Final state: level={results[-1]['level']:.3f}, hold={bool(results[-1]['hold'])}")
     
     # Test error handling
@@ -305,7 +305,7 @@ def test_performance_tracking():
     assert stats["avg_step_time_ms"] > 0, "Should have positive step time"
     assert stats["steps_per_second"] > 0, "Should have positive throughput"
     
-    print(f"✓ Performance stats collected:")
+    print("✓ Performance stats collected:")
     print(f"  Total steps: {stats['total_steps']:.0f}")
     print(f"  Avg time: {stats['avg_step_time_ms']:.4f} ms/step")
     print(f"  Throughput: {stats['steps_per_second']:.0f} steps/sec")

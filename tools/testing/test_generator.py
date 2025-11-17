@@ -354,7 +354,7 @@ def _render_component_test(component: ComponentAnalysis) -> str:
     lines.extend(explanation_comment)
     lines.extend(
         [
-            f"    assert analysis.module == MODULE_UNDER_TEST",
+            "    assert analysis.module == MODULE_UNDER_TEST",
             f"    assert analysis.name == \"{component.name}\"",
             f"    assert analysis.kind == \"{component.kind}\"",
             f"    assert analysis.signature == {component.signature!r}",

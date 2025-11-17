@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from domain import Order, OrderSide, OrderStatus, OrderType
+from domain import Order, OrderSide, OrderType
 from execution.order_ledger import OrderLedger
 from execution.order_lifecycle import OMSState, make_idempotency_key
 

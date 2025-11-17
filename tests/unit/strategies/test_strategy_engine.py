@@ -17,7 +17,6 @@ from core.strategies.engine import (
     StrategyEngineEvent,
     StrategyEngineMode,
     StrategyEventType,
-    StrategyModule,
     StrategySignal,
 )
 
