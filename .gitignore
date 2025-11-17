@@ -18,6 +18,7 @@ coverage_html/
 reports/
 .pytest_cache/
 .hypothesis/
+test_results/
 
 # IDEs
 .vscode/
