@@ -15,6 +15,8 @@ permissions:
 jobs:
   quality-assessment:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     name: Quality Assessment & Risk Labeling
     if: github.event.pull_request.draft == false
     

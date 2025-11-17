@@ -28,6 +28,8 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     
     steps:
       - name: Checkout code
@@ -48,6 +50,8 @@ jobs:
   license-compliance:
     name: License Compliance Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     
     steps:
       - name: Checkout code

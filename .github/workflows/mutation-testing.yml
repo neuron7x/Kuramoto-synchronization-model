@@ -24,6 +24,8 @@ permissions:
 jobs:
   mutation-testing:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+
     name: Mutation Testing (90% kill rate required)
     
     steps:

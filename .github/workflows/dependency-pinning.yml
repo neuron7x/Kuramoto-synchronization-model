@@ -26,6 +26,8 @@ jobs:
   check-pinned-dependencies:
     name: Check Pinned Dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     permissions:
       contents: read
 

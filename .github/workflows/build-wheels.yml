@@ -24,6 +24,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }} (Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:

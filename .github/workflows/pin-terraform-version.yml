@@ -18,6 +18,8 @@ jobs:
   terraform-validate:
     name: Terraform validation tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
 
     steps:
       - name: Checkout repository
