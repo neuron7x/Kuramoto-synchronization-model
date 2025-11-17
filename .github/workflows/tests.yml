@@ -285,6 +285,14 @@ jobs:
           name: localization-coverage
           path: reports/localization/coverage.json
           if-no-files-found: warn
+      - name: Run test quality validation
+        id: test_quality
+        continue-on-error: true
+        run: |
+          .venv/bin/python -m tools.testing.quality_validator \
+            --test-dir=tests \
+            --report=reports/test-quality.json \
+            --threshold=70.0
       - name: Run unit and integration tests with coverage
         id: run_tests
         continue-on-error: true
@@ -299,7 +307,8 @@ jobs:
             --cov-fail-under=98 \
             --junitxml=reports/unit-integration-tests.xml \
             --html=reports/unit-integration-report.html --self-contained-html \
-            --flaky-report=reports/flaky-tests-skipped.json
+            --flaky-report=reports/flaky-tests-skipped.json \
+            --json-report --json-report-file=reports/test-results.json
           test_exit_code=$?
           set -e
           echo "test_exit_code=$test_exit_code" >> $GITHUB_OUTPUT
@@ -307,6 +316,18 @@ jobs:
             echo "⚠️ Tests failed with exit code $test_exit_code"
           fi
           exit $test_exit_code
+      - name: Track test performance
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f reports/test-results.json ]; then
+            .venv/bin/python -m tools.testing.performance_tracker \
+              --results=reports/test-results.json \
+              --report=reports/test-performance.json \
+              --save-baseline=reports/test-performance-baseline.json
+          else
+            echo "⚠️ Test results file not found, skipping performance tracking"
+          fi
       - name: Run end-to-end smoke tests
         continue-on-error: true
         run: |
@@ -520,6 +541,17 @@ jobs:
         with:
           name: flaky-tests-skipped-${{ matrix.python-version }}
           path: reports/flaky-tests-skipped.json
+          if-no-files-found: warn
+      - name: Upload test quality and performance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-quality-performance-${{ matrix.python-version }}
+          path: |
+            reports/test-quality.json
+            reports/test-performance.json
+            reports/test-performance-baseline.json
+            reports/test-results.json
           if-no-files-found: warn
       - name: Upload coverage reports
         if: always()
