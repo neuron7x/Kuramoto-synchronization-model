@@ -118,8 +118,19 @@ class FinBERTSentimentModel:
                 "FinBERTSentimentModel requires PyTorch. Install `torch` for your platform."
             ) from exc
 
-        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        # Security: Pin model revision to prevent supply chain attacks
+        # Use a specific revision hash for production deployments
+        model_revision = "main"  # TODO: Pin to specific commit hash in production
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            model_name, 
+            revision=model_revision,
+            trust_remote_code=False  # Security: Never execute remote code
+        )
+        self._model = AutoModelForSequenceClassification.from_pretrained(
+            model_name,
+            revision=model_revision,
+            trust_remote_code=False  # Security: Never execute remote code
+        )
 
         if device is None:
             if torch.cuda.is_available():  # pragma: no cover - environment dependent
