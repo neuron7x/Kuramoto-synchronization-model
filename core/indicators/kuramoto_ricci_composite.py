@@ -1,3 +1,29 @@
+"""Kuramoto-Ricci composite market phase analyzer.
+
+This module provides a sophisticated market regime classification system that combines
+Kuramoto synchronization analysis with Ricci flow curvature metrics to identify
+distinct market phases and generate actionable trading signals.
+
+The composite engine fuses multi-scale Kuramoto oscillator analysis with temporal
+Ricci flow to classify markets into five distinct phases:
+- CHAOTIC: Low synchronization, unpredictable dynamics
+- PROTO_EMERGENT: Early synchronization signals appearing
+- STRONG_EMERGENT: High synchronization with favorable geometry
+- TRANSITION: Phase shift in progress
+- POST_EMERGENT: Synchronization breaking down
+
+Key Components:
+    MarketPhase: Enumeration of market regime states
+    CompositeSignal: Complete signal output with phase, confidence, and trading signals
+    KuramotoRicciComposite: Core analyzer that produces signals from raw metrics
+    TradePulseCompositeEngine: High-level API for market analysis
+
+Example:
+    >>> engine = TradePulseCompositeEngine()
+    >>> signal = engine.analyze_market(price_df)
+    >>> print(f"Phase: {signal.phase.value}, Entry: {signal.entry_signal}")
+"""
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional
@@ -236,7 +262,9 @@ class TradePulseCompositeEngine:
             sanitized = sanitized[~sanitized.index.duplicated(keep="last")]
 
         if sanitized.empty:
-            raise ValueError("DataFrame must contain at least one row after sanitisation")
+            raise ValueError(
+                "DataFrame must contain at least one row after sanitisation"
+            )
 
         latest_ts = sanitized.index[-1]
         last_signal: CompositeSignal | None = self.history[-1] if self.history else None

@@ -1,3 +1,37 @@
+"""Neuronal energetics model for adaptive trading system regulation.
+
+This module implements a biologically-inspired energy and load tracking system
+for the NaK (Sodium-Potassium) controller. It models metabolic constraints on
+trading activity, using energy reserves and neuronal load to regulate strategy
+engagement dynamically.
+
+The energetics model provides three core mechanisms:
+    1. Load tracking: Accumulates stress from trading activity, volatility,
+       drawdowns, and technical issues
+    2. Energy dynamics: Manages metabolic reserves with gains from PnL and
+       costs from activity, including debt accumulation under deficit
+    3. Engagement Index (EI): Composite health score combining energy, load,
+       and profitability
+
+Key Functions:
+    update_load: Compute neuronal load from market and operational metrics
+    update_energy: Update energy reserves with income and expenses
+    compute_EI: Calculate engagement index as overall health score
+
+The energy system includes a debt mechanism that accumulates when energy drops
+below zero, creating a homeostatic pressure to reduce activity during extended
+drawdowns. Noradrenaline (NA) and dopamine (DA) modulators influence the
+dynamics to respond to market volatility and unexpected outcomes.
+
+Example:
+    >>> state = StrategyState()
+    >>> params = NaKParams()
+    >>> obs = {"pnl": 0.01, "trades": 5, "local_vol": 0.02}
+    >>> update_load(state, params, obs, NA=0.3, rng=rng)
+    >>> update_energy(state, params, obs, NA=0.3, DA=0.6, da_unexp=0.1)
+    >>> ei = compute_EI(state, params, obs)
+"""
+
 from __future__ import annotations
 
 from typing import Dict
