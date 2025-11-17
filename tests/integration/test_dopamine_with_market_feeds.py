@@ -352,7 +352,7 @@ class TestLatencyImpact:
             # All latencies should be reasonable
             assert avg_latency < 100, f"{recording_name}: Average latency too high"
             assert max_latency < 150, f"{recording_name}: Max latency too high"
-            assert all(l >= 0 for l in latencies), f"{recording_name}: Negative latency detected"
+            assert all(lat >= 0 for lat in latencies), f"{recording_name}: Negative latency detected"
     
     def test_timestamp_monotonicity(self):
         """Test that all recordings have monotonic timestamps."""

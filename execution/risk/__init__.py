@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .advanced import (
+from .advanced import (  # noqa: F401 - re-exported in __all__
     AdvancedRiskController,
     CorrelationLimitGuard,
     DrawdownBreaker,

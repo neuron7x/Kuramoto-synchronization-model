@@ -9,8 +9,8 @@ import torch.nn as nn
 # --- Graph backend (minimal, dependency free) ---
 def _normalize_adjacency(A: torch.Tensor, add_self_loops: bool = True) -> torch.Tensor:
     if add_self_loops:
-        I = torch.eye(A.size(-1), device=A.device, dtype=A.dtype)
-        A = A + I
+        identity = torch.eye(A.size(-1), device=A.device, dtype=A.dtype)
+        A = A + identity
     deg = A.sum(-1)
     deg_inv_sqrt = torch.pow(deg + 1e-8, -0.5)
     D_inv_sqrt = torch.diag_embed(deg_inv_sqrt)
