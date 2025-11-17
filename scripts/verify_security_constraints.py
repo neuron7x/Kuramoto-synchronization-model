@@ -94,10 +94,17 @@ def compare_versions(
         Tuple of (is_satisfied, reason)
     """
     try:
-        from packaging import version
+        # Try to use packaging module if available
+        try:
+            from packaging import version
 
-        installed_v = version.parse(installed)
-        required_v = version.parse(required)
+            installed_v = version.parse(installed)
+            required_v = version.parse(required)
+        except ImportError:
+            # Fallback to simple string comparison if packaging not available
+            # This is a simplified comparison that works for most semantic versions
+            installed_v = tuple(map(int, installed.split('.')[:3])) if '.' in installed else (0, 0, 0)
+            required_v = tuple(map(int, required.split('.')[:3])) if '.' in required else (0, 0, 0)
 
         if operator == "==":
             satisfied = installed_v == required_v
