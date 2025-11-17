@@ -1,32 +1,189 @@
-# Sample Binance execution configuration overlay.
+# Binance Production Execution Configuration
+# This configuration provides production-ready settings for Binance Spot and Futures trading
+# Last Updated: 2025-11-17
+
 execution:
   venues:
     binance:
       enabled: true
-      sandbox: true  # Set to false for production trading
+      sandbox: false  # Set to true for testnet/sandbox environment
+      
+      # Trading pairs configuration
       symbols:
-        - BTCUSDT
-        - ETHUSDT
+        # Major pairs - High liquidity, tight spreads
+        - BTCUSDT    # Bitcoin/USDT - Daily volume ~$30B
+        - ETHUSDT    # Ethereum/USDT - Daily volume ~$15B
+        - BNBUSDT    # Binance Coin/USDT - Daily volume ~$2B
+        
+        # Altcoin pairs - Medium liquidity
+        - ADAUSDT    # Cardano/USDT
+        - SOLUSDT    # Solana/USDT
+        - DOTUSDT    # Polkadot/USDT
+        - MATICUSDT  # Polygon/USDT
+        
+        # Optional: Futures contracts
+        # - BTCUSD_PERP
+        # - ETHUSD_PERP
+      
+      # Credential management - HashiCorp Vault integration
       credentials:
         env_prefix: BINANCE
         required:
-          - API_KEY
-          - API_SECRET
+          - API_KEY      # Binance API key (read + trade permissions)
+          - API_SECRET   # Binance API secret (HMAC-SHA256 signing)
         optional:
-          - RECV_WINDOW
+          - RECV_WINDOW  # Request validity window in ms (default: 5000)
+        
+        # Production secret backend: HashiCorp Vault
         secret_backend:
           adapter: vault
-          path_env: BINANCE_VAULT_PATH
+          path_env: BINANCE_VAULT_PATH  # e.g., secret/tradepulse/prod/binance
           field_mapping:
             API_KEY: api_key
             API_SECRET: api_secret
             RECV_WINDOW: recv_window
+          
+          # Vault connection settings
+          vault_addr: "${VAULT_ADDR}"  # https://vault.example.com:8200
+          vault_token: "${VAULT_TOKEN}"  # Token or AppRole auth
+          vault_namespace: "tradepulse"  # Optional: Vault namespace
+          
+          # Secret rotation policy
+          rotation_enabled: true
+          rotation_check_interval_hours: 24
+          rotation_grace_period_hours: 2
+      
+      # API rate limits (Binance Spot)
+      # See: https://binance-docs.github.io/apidocs/spot/en/#limits
       rate_limits:
-        max_orders_per_second: 10
-        max_orders_per_minute: 600
+        max_orders_per_second: 10      # Hard limit: 10/sec per API key
+        max_orders_per_minute: 100     # Hard limit: 100/min per API key
+        max_requests_per_minute: 1200  # Weight-based limit
+        
+        # Request weight tracking
+        weight_per_order: 1
+        weight_per_cancel: 1
+        weight_per_query: 2
+        
+        # Burst capacity
+        burst_capacity: 20
+        burst_recovery_sec: 1
+      
+      # Risk management limits
       risk:
-        max_notional_usd: 25000
-        max_position_usd: 50000
+        # Position limits (per symbol)
+        max_notional_usd: 50000          # Max position size per symbol
+        max_position_usd: 100000         # Max total portfolio exposure
+        max_leverage: 5.0                # Max leverage (for futures)
+        
+        # Order limits
+        max_order_size_usd: 10000        # Max single order size
+        min_order_size_usd: 10           # Min order size (Binance minimum)
+        
+        # Stop loss and take profit
+        default_stop_loss_pct: 0.02      # 2% stop loss
+        default_take_profit_pct: 0.05    # 5% take profit
+        trailing_stop_enabled: true
+        trailing_stop_callback_pct: 0.01 # 1% trailing stop
+        
+        # Daily limits
+        max_daily_trades: 100            # Max trades per day
+        max_daily_loss_usd: 5000         # Max daily loss threshold
+        
+        # Circuit breakers
+        circuit_breaker_enabled: true
+        circuit_breaker_loss_pct: 0.10   # Halt trading at 10% portfolio loss
+        circuit_breaker_cooldown_min: 60 # 1 hour cooldown period
+      
+      # WebSocket configuration for real-time data
       websocket:
-        heartbeat_interval_sec: 30
-        reconnect_jitter_sec: 0.5
+        enabled: true
+        endpoint: "wss://stream.binance.com:9443/ws"
+        # Futures endpoint: "wss://fstream.binance.com/ws"
+        
+        # Connection management
+        heartbeat_interval_sec: 30       # Ping interval
+        heartbeat_timeout_sec: 10        # Pong timeout
+        reconnect_jitter_sec: 0.5        # Random delay on reconnect
+        max_reconnect_attempts: 10       # Max reconnect tries
+        reconnect_backoff_base: 2        # Exponential backoff base
+        
+        # Stream configuration
+        streams:
+          - type: trade              # Real-time trades
+            symbols: all             # All configured symbols
+          - type: bookTicker         # Best bid/ask
+            symbols: all
+          - type: aggTrade          # Aggregated trades
+            symbols: ["BTCUSDT", "ETHUSDT"]
+        
+        # Buffer settings
+        buffer_size: 10000              # Message buffer size
+        flush_interval_ms: 100          # Buffer flush interval
+      
+      # Order execution settings
+      execution:
+        order_type: LIMIT                # Default order type: LIMIT, MARKET, STOP_LOSS_LIMIT
+        time_in_force: GTC              # Good Till Cancel
+        
+        # Slippage protection
+        max_slippage_bps: 50            # Max 0.5% slippage
+        price_offset_bps: 10            # 0.1% price offset for limit orders
+        
+        # Retry logic
+        retry_enabled: true
+        max_retries: 3
+        retry_delay_ms: 500
+        retry_backoff_multiplier: 2
+        
+        # Post-only orders (maker-only)
+        post_only: false                # Set true to avoid taker fees
+        reduce_only: false              # For futures: reduce-only orders
+      
+      # Fee structure (Binance VIP 0)
+      fees:
+        maker_fee_bps: 10               # 0.10% maker fee
+        taker_fee_bps: 10               # 0.10% taker fee
+        
+        # BNB fee discount (25% discount when paying fees in BNB)
+        bnb_discount_enabled: true
+        bnb_discount_pct: 0.25
+        
+        # VIP level discounts
+        vip_level: 0                    # Update based on account status
+        # VIP 1: maker 0.09%, taker 0.10%
+        # VIP 2: maker 0.08%, taker 0.10%
+      
+      # Health check and monitoring
+      health_check:
+        enabled: true
+        interval_sec: 60
+        timeout_sec: 5
+        
+        # Checks to perform
+        checks:
+          - api_connectivity
+          - websocket_connectivity
+          - account_status
+          - position_sync
+          - rate_limit_status
+        
+        # Alert thresholds
+        alert_on_failure: true
+        max_consecutive_failures: 3
+      
+      # Audit and compliance
+      audit:
+        enabled: true
+        log_level: INFO                 # DEBUG, INFO, WARNING, ERROR
+        log_retention_days: 400         # Regulatory requirement
+        
+        # What to log
+        log_all_orders: true
+        log_all_fills: true
+        log_all_cancels: true
+        log_api_errors: true
+        
+        # PII protection
+        mask_api_keys: true
+        mask_account_ids: false

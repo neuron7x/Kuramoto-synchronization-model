@@ -1,31 +1,326 @@
-# Sample Coinbase Advanced Trade execution configuration overlay.
+# Coinbase Advanced Trade Production Configuration
+# This configuration provides production-ready settings for Coinbase Advanced Trade API
+# Last Updated: 2025-11-17
+# API Docs: https://docs.cloud.coinbase.com/advanced-trade-api/docs
+
 execution:
   venues:
     coinbase:
-      enabled: false
-      sandbox: true
+      enabled: true
+      sandbox: false  # Set to true for sandbox environment
+      
+      # API endpoint configuration
+      api:
+        rest_endpoint: "https://api.coinbase.com"
+        websocket_endpoint: "wss://advanced-trade-ws.coinbase.com"
+        # Sandbox endpoints:
+        # rest_endpoint: "https://api-public.sandbox.exchange.coinbase.com"
+        # websocket_endpoint: "wss://ws-feed-public.sandbox.exchange.coinbase.com"
+      
+      # Trading pairs configuration
       symbols:
-        - BTC-USD
-        - ETH-USD
+        # Major pairs - High liquidity on Coinbase
+        - BTC-USD     # Bitcoin/USD - Daily volume ~$2B
+        - ETH-USD     # Ethereum/USD - Daily volume ~$1B
+        - BTC-EUR     # Bitcoin/EUR
+        - ETH-EUR     # Ethereum/EUR
+        
+        # Popular altcoins
+        - SOL-USD     # Solana/USD
+        - AVAX-USD    # Avalanche/USD
+        - MATIC-USD   # Polygon/USD
+        - DOT-USD     # Polkadot/USD
+        - LINK-USD    # Chainlink/USD
+        - UNI-USD     # Uniswap/USD
+        
+        # Stablecoins
+        - USDC-USD    # USD Coin
+        - DAI-USD     # Dai Stablecoin
+      
+      # Credential management - Google Cloud KMS integration
       credentials:
         env_prefix: COINBASE
         required:
-          - API_KEY
-          - API_SECRET
-          - PASSPHRASE
+          - API_KEY        # Coinbase Cloud API Key
+          - API_SECRET     # Coinbase Cloud API Secret (for signature)
+        optional:
+          - PASSPHRASE     # Legacy API passphrase (may not be needed for new keys)
+        
+        # Production secret backend: Google Cloud KMS
         secret_backend:
-          adapter: kms
-          path: projects/sample/locations/global/keyRings/tradepulse/cryptoKeys/coinbase
+          adapter: gcp_kms
+          project_id: "${GCP_PROJECT_ID}"  # e.g., tradepulse-prod
+          location: "global"
+          key_ring: "tradepulse-keys"
+          crypto_key: "coinbase-credentials"
+          
+          # Full KMS path format:
+          # projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{cryptoKey}
+          path: "projects/${GCP_PROJECT_ID}/locations/global/keyRings/tradepulse-keys/cryptoKeys/coinbase-credentials"
+          
+          # Field mapping for encrypted credentials
           field_mapping:
             API_KEY: apiKey
             API_SECRET: apiSecret
             PASSPHRASE: passphrase
+          
+          # KMS authentication
+          auth_method: "service_account"  # or "workload_identity"
+          service_account: "${GCP_SERVICE_ACCOUNT}"
+          
+          # Secret rotation
+          rotation_enabled: true
+          rotation_check_interval_hours: 24
+          rotation_notification: true
+      
+      # API rate limits (Coinbase Advanced Trade)
+      # See: https://docs.cloud.coinbase.com/advanced-trade-api/docs/rest-api-rate-limits
       rate_limits:
-        max_orders_per_second: 5
+        # Public endpoints (no auth)
+        public_requests_per_second: 10
+        
+        # Private endpoints (with auth)
+        max_orders_per_second: 8       # Conservative limit
         max_orders_per_minute: 150
+        max_requests_per_second: 15    # All authenticated requests
+        
+        # Advanced Trade specific limits
+        max_open_orders: 500           # Per account
+        max_open_orders_per_product: 100
+        
+        # Request throttling
+        throttle_enabled: true
+        throttle_retry_after_sec: 1
+        throttle_backoff_multiplier: 2
+        max_throttle_retries: 3
+        
+        # Burst handling
+        burst_capacity: 15
+        burst_recovery_sec: 2
+      
+      # Risk management limits
       risk:
-        max_notional_usd: 15000
-        max_position_usd: 30000
+        # Position limits (per symbol)
+        max_notional_usd: 50000          # Max position size per symbol
+        max_position_usd: 200000         # Max total portfolio exposure
+        
+        # Order size limits
+        max_order_size_usd: 20000        # Max single order size
+        min_order_size_usd: 10           # Coinbase minimum (varies by symbol)
+        
+        # Coinbase specific minimums (examples)
+        symbol_minimums:
+          BTC-USD:
+            min_size: 0.00001            # BTC
+            min_notional: 10.00          # USD
+          ETH-USD:
+            min_size: 0.0001             # ETH
+            min_notional: 10.00          # USD
+        
+        # Stop loss and take profit
+        default_stop_loss_pct: 0.025     # 2.5% stop loss
+        default_take_profit_pct: 0.06    # 6% take profit
+        trailing_stop_enabled: true
+        trailing_stop_callback_pct: 0.015 # 1.5% trailing
+        
+        # Daily limits
+        max_daily_trades: 80             # Max trades per day
+        max_daily_volume_usd: 500000     # Max daily trading volume
+        max_daily_loss_usd: 10000        # Daily loss limit
+        
+        # Portfolio risk limits
+        max_portfolio_drawdown_pct: 0.15 # 15% max drawdown
+        position_concentration_limit: 0.30 # Max 30% in single position
+        
+        # Circuit breakers
+        circuit_breaker_enabled: true
+        circuit_breaker_loss_pct: 0.08   # Halt at 8% portfolio loss
+        circuit_breaker_consecutive_losses: 5
+        circuit_breaker_cooldown_min: 90  # 90 min cooldown
+        
+        # Margin and leverage (if applicable)
+        margin_enabled: false            # Coinbase has limited margin
+        max_leverage: 1.0                # Spot trading only
+      
+      # WebSocket configuration for real-time data
       websocket:
-        heartbeat_interval_sec: 20
+        enabled: true
+        endpoint: "wss://advanced-trade-ws.coinbase.com"
+        
+        # Connection management
+        heartbeat_interval_sec: 20       # Coinbase recommends 20-30s
+        heartbeat_timeout_sec: 10
+        reconnect_enabled: true
         reconnect_jitter_sec: 0.5
+        max_reconnect_attempts: 10
+        reconnect_backoff_base: 2
+        initial_reconnect_delay_sec: 1
+        max_reconnect_delay_sec: 60
+        
+        # Channel subscriptions
+        channels:
+          - name: ticker                 # Real-time price updates
+            product_ids: all
+          - name: level2                 # Order book updates
+            product_ids: ["BTC-USD", "ETH-USD"]
+          - name: matches                # Trade executions
+            product_ids: all
+          - name: heartbeat             # Connection health
+            product_ids: ["BTC-USD"]
+        
+        # Authentication for private channels
+        auth_enabled: true
+        private_channels:
+          - user                        # Account updates
+          - orders                      # Order updates
+        
+        # Buffer and message handling
+        buffer_size: 5000
+        message_queue_size: 10000
+        flush_interval_ms: 100
+        max_message_size_bytes: 65536
+      
+      # Order execution settings
+      execution:
+        # Order types supported by Coinbase
+        default_order_type: LIMIT        # LIMIT, MARKET, STOP, STOP_LIMIT
+        time_in_force: GTC              # GTC, IOC, FOK
+        
+        # Limit order configuration
+        limit_order_offset_bps: 10      # 0.1% price offset
+        post_only: false                # Maker-only orders
+        
+        # Market order protection
+        market_order_slippage_limit_bps: 100  # Max 1% slippage
+        
+        # Self-trade prevention
+        self_trade_prevention: "decrease_and_cancel"  # dc, co, cn, cb
+        
+        # Retry configuration
+        retry_enabled: true
+        max_retries: 3
+        retry_delay_ms: 1000
+        retry_on_status_codes: [429, 500, 502, 503, 504]
+        
+        # Order lifecycle
+        cancel_after: null              # Optional: "min", "hour", "day"
+        auto_cancel_expired: true
+      
+      # Fee structure
+      fees:
+        # Coinbase Advanced Trade fees (volume-based tiers)
+        # Tier 0: Under $10k volume
+        maker_fee_bps: 60               # 0.60% maker fee
+        taker_fee_bps: 80               # 0.80% taker fee
+        
+        # Fee tiers (update based on 30-day volume)
+        fee_tiers:
+          tier_0:  # < $10k
+            maker_bps: 60
+            taker_bps: 80
+          tier_1:  # $10k - $100k
+            maker_bps: 40
+            taker_bps: 60
+          tier_2:  # $100k - $1M
+            maker_bps: 25
+            taker_bps: 40
+          tier_3:  # $1M - $10M
+            maker_bps: 15
+            taker_bps: 25
+          tier_4:  # > $10M
+            maker_bps: 10
+            taker_bps: 20
+        
+        current_tier: "tier_0"          # Update based on account
+        
+        # Fee optimization
+        optimize_for_maker: true        # Prefer maker orders
+        fee_estimation_enabled: true
+      
+      # Account and position management
+      account:
+        # Account sync
+        sync_interval_sec: 30
+        sync_on_start: true
+        sync_on_error: true
+        
+        # Balance management
+        reserve_balance_usd: 1000       # Keep as reserve
+        min_trading_balance_usd: 500    # Min balance to trade
+        
+        # Position tracking
+        track_realized_pnl: true
+        track_unrealized_pnl: true
+        pnl_calculation_method: "fifo"  # fifo, lifo, average
+      
+      # Health check and monitoring
+      health_check:
+        enabled: true
+        interval_sec: 60
+        timeout_sec: 10
+        
+        # System checks
+        checks:
+          - api_connectivity
+          - websocket_connectivity
+          - account_access
+          - order_book_latency
+          - position_consistency
+          - balance_sync
+        
+        # Alerting
+        alert_on_failure: true
+        alert_channels: ["email", "slack", "pagerduty"]
+        max_consecutive_failures: 5
+        
+        # Performance monitoring
+        track_latency: true
+        latency_alert_threshold_ms: 500
+        track_order_success_rate: true
+        min_success_rate_pct: 95
+      
+      # Compliance and audit
+      audit:
+        enabled: true
+        log_level: INFO
+        log_retention_days: 400         # Regulatory compliance
+        
+        # Audit logging scope
+        log_all_orders: true
+        log_all_fills: true
+        log_all_cancels: true
+        log_all_transfers: true
+        log_api_requests: true
+        log_api_errors: true
+        log_authentication: true
+        
+        # Data protection
+        mask_api_keys: true
+        mask_secrets: true
+        encrypt_logs: true
+        
+        # Regulatory reporting
+        generate_daily_reports: true
+        generate_monthly_reports: true
+        report_output_path: "/var/log/tradepulse/coinbase/reports"
+        
+        # MiFID II / EMIR compliance
+        transaction_reporting: true
+        best_execution_monitoring: true
+      
+      # US regulatory compliance (if applicable)
+      compliance:
+        jurisdiction: "US"              # or "EU", "UK", etc.
+        
+        # FinCEN / AML requirements
+        kyc_verified: true
+        aml_monitoring: true
+        suspicious_activity_reporting: true
+        
+        # FINRA compliance
+        order_audit_trail: true         # OATS/CAT reporting
+        trade_reporting: true
+        
+        # Pattern day trader protection
+        pdt_protection_enabled: true
+        pdt_min_equity: 25000           # $25k minimum for day trading
