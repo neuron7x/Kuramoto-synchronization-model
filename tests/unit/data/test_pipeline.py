@@ -54,9 +54,7 @@ def _fallback_source() -> SourceOfTruthSpec:
 
 
 def _build_frame() -> pd.DataFrame:
-    timestamps = pd.date_range(
-        "2024-01-01T00:00:00Z", periods=8, freq="1min", tz=UTC
-    )
+    timestamps = pd.date_range("2024-01-01T00:00:00Z", periods=8, freq="1min", tz=UTC)
     payload = pd.DataFrame(
         {
             "timestamp": timestamps,
@@ -117,13 +115,12 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
         price_column="price",
         anomaly_threshold=2.0,
         anomaly_window=3,
-        range_checks=(
-            RangeCheck(column="volume", min_value=0, max_value=20),
-        ),
+        range_checks=(RangeCheck(column="volume", min_value=0, max_value=20),),
         max_quarantine_fraction=0.5,
     )
 
     queue = DeadLetterQueue(max_items=128, toxicity_threshold=2)
+
     class StubBackfillPlanner:
         def __init__(self) -> None:
             self.invocations = 0
@@ -170,14 +167,20 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
         schema_registry={"ohlcv": schema},
         quality_gates={"ohlcv": gate},
         toxicity_filter=ToxicityFilterConfig(column="toxicity_score", threshold=3.0),
-        anonymization_rules=(AnonymizationRule(column="pii", salt=b"unit-test", keep_last_chars=2),),
+        anonymization_rules=(
+            AnonymizationRule(column="pii", salt=b"unit-test", keep_last_chars=2),
+        ),
         balance=BalanceConfig(column="label"),
-        stratified_split=StratifiedSplitConfig(column="label", splits={"train": 0.5, "validation": 0.25}),
+        stratified_split=StratifiedSplitConfig(
+            column="label", splits={"train": 0.5, "validation": 0.25}
+        ),
         synthetic=SyntheticAugmentationConfig(samples=2, noise_scale=0.05),
         drift_detector=DriftDetector(psi_threshold=0.2, ks_confidence=0.9, bins=4),
         dead_letter=queue,
         backfill_planner=planner,
-        sla=SLAConfig(target_seconds=(5.0 if not strict_sla else 1e-9), strict=strict_sla),
+        sla=SLAConfig(
+            target_seconds=(5.0 if not strict_sla else 1e-9), strict=strict_sla
+        ),
         offline_writer=offline_writer,
         online_writer=online_writer,
         random_seed=42,
@@ -185,7 +188,9 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
     pipeline = DataPipeline(config)
 
     expected_index = pd.Index(
-        frame.loc[(frame["toxicity_score"] <= 3.0) & (frame["price"] < 200.0), "timestamp"]
+        frame.loc[
+            (frame["toxicity_score"] <= 3.0) & (frame["price"] < 200.0), "timestamp"
+        ]
         .drop_duplicates()
         .sort_values()
     )
@@ -195,7 +200,9 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
         reference_frame=_reference_frame(frame),
         expected_index=expected_index,
         backfill=True,
-        cache_key=CacheKey(layer="ohlcv", symbol="BTCUSDT", venue="BINANCE", timeframe="1m"),
+        cache_key=CacheKey(
+            layer="ohlcv", symbol="BTCUSDT", venue="BINANCE", timeframe="1m"
+        ),
         feature_view="feature/btcusdt",
         offline_dataset="dataset/btcusdt",
     )
@@ -227,13 +234,17 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
 
     splits = result.stratified_splits
     assert set(splits) == {"train", "validation", "remainder"}
-    assert sum(split.shape[0] for split in splits.values()) == result.clean_frame.shape[0]
+    assert (
+        sum(split.shape[0] for split in splits.values()) == result.clean_frame.shape[0]
+    )
 
     assert result.synthetic_frame.shape[0] == 2
     assert "synthetic" in result.synthetic_frame.columns
 
     assert result.drift_summaries
-    assert all(summary.feature.startswith("ohlcv:") for summary in result.drift_summaries)
+    assert all(
+        summary.feature.startswith("ohlcv:") for summary in result.drift_summaries
+    )
 
     assert result.backfill_result is not None
     assert planner.invocations == 1
@@ -247,4 +258,3 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
 
     assert result.sla_met is True
     assert result.metadata["symbol"] == "BTCUSDT"
-

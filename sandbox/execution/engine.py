@@ -18,12 +18,16 @@ from ..risk.engine import AuditLoggerProtocol
 
 
 class SignalGatewayProtocol:
-    async def generate(self, symbol: str) -> TradingSignal:  # pragma: no cover - protocol definition
+    async def generate(
+        self, symbol: str
+    ) -> TradingSignal:  # pragma: no cover - protocol definition
         raise NotImplementedError
 
 
 class RiskGatewayProtocol:
-    async def evaluate(self, order: OrderTicket, signal: TradingSignal) -> RiskDecision:  # pragma: no cover
+    async def evaluate(
+        self, order: OrderTicket, signal: TradingSignal
+    ) -> RiskDecision:  # pragma: no cover
         raise NotImplementedError
 
 

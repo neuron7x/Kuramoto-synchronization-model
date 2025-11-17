@@ -305,9 +305,7 @@ def test_kill_switch_endpoint_requires_access_policy(tmp_path: Path) -> None:
     )
     client = TestClient(app)
     try:
-        response = client.post(
-            "/admin/kill-switch", json={"reason": "manual"}
-        )
+        response = client.post("/admin/kill-switch", json={"reason": "manual"})
     finally:
         client.close()
 

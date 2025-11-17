@@ -1,4 +1,5 @@
 """Tests for dopamine numerical invariants and safety checks."""
+
 from __future__ import annotations
 
 import pytest
@@ -6,9 +7,11 @@ import pytest
 try:
     from hypothesis import given
     from hypothesis import strategies as st
+
     HAS_HYPOTHESIS = True
 except ImportError:
     HAS_HYPOTHESIS = False
+
     # Dummy decorators for when hypothesis is not available
     def given(*args, **kwargs):
         return lambda f: pytest.mark.skip(reason="hypothesis not installed")(f)
@@ -17,6 +20,7 @@ except ImportError:
         @staticmethod
         def floats(*args, **kwargs):
             return None
+
 
 from tradepulse.core.neuro.dopamine._invariants import (
     assert_no_nan_inf,
@@ -80,9 +84,15 @@ class TestClamp:
 
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
     @given(
-        value=st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False),
-        min_val=st.floats(min_value=-1e3, max_value=0.0, allow_nan=False, allow_infinity=False),
-        max_val=st.floats(min_value=0.0, max_value=1e3, allow_nan=False, allow_infinity=False),
+        value=st.floats(
+            min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False
+        ),
+        min_val=st.floats(
+            min_value=-1e3, max_value=0.0, allow_nan=False, allow_infinity=False
+        ),
+        max_val=st.floats(
+            min_value=0.0, max_value=1e3, allow_nan=False, allow_infinity=False
+        ),
     )
     def test_clamp_property_always_in_range(
         self, value: float, min_val: float, max_val: float
@@ -132,7 +142,9 @@ class TestValidateProbability:
             validate_probability("p", 1.1)
 
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
-    @given(p=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False))
+    @given(
+        p=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
+    )
     def test_probability_property(self, p: float) -> None:
         """Property: valid probabilities should pass validation."""
         result = validate_probability("p", p)
@@ -214,9 +226,15 @@ class TestCheckMonotonicThresholds:
 
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
     @given(
-        go=st.floats(min_value=-1.0, max_value=2.0, allow_nan=False, allow_infinity=False),
-        hold=st.floats(min_value=-1.0, max_value=2.0, allow_nan=False, allow_infinity=False),
-        no_go=st.floats(min_value=-1.0, max_value=2.0, allow_nan=False, allow_infinity=False),
+        go=st.floats(
+            min_value=-1.0, max_value=2.0, allow_nan=False, allow_infinity=False
+        ),
+        hold=st.floats(
+            min_value=-1.0, max_value=2.0, allow_nan=False, allow_infinity=False
+        ),
+        no_go=st.floats(
+            min_value=-1.0, max_value=2.0, allow_nan=False, allow_infinity=False
+        ),
     )
     def test_monotonic_property(self, go: float, hold: float, no_go: float) -> None:
         """Property: output should always satisfy go >= hold >= no_go and be in [0, 1]."""
@@ -262,11 +280,19 @@ class TestRateLimitedChange:
 
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
     @given(
-        current=st.floats(min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False),
-        target=st.floats(min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False),
-        max_rate=st.floats(min_value=0.01, max_value=10.0, allow_nan=False, allow_infinity=False),
+        current=st.floats(
+            min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False
+        ),
+        target=st.floats(
+            min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False
+        ),
+        max_rate=st.floats(
+            min_value=0.01, max_value=10.0, allow_nan=False, allow_infinity=False
+        ),
     )
-    def test_rate_limit_property(self, current: float, target: float, max_rate: float) -> None:
+    def test_rate_limit_property(
+        self, current: float, target: float, max_rate: float
+    ) -> None:
         """Property: change should never exceed max_rate (for dt=1)."""
         result = rate_limited_change(current, target, max_rate, dt=1.0)
         actual_change = abs(result - current)

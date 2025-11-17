@@ -21,13 +21,17 @@ def test_zscore_normalization_centres_and_scales_unit_variance() -> None:
 
 
 def test_zscore_normalization_returns_zeros_for_constant_series() -> None:
-    normalized = normalize_indicator_series([5.0, 5.0, 5.0], mode=NormalizationMode.Z_SCORE)
+    normalized = normalize_indicator_series(
+        [5.0, 5.0, 5.0], mode=NormalizationMode.Z_SCORE
+    )
 
     assert np.allclose(normalized, 0.0)
 
 
 def test_minmax_normalization_respects_feature_range() -> None:
-    config = IndicatorNormalizationConfig(mode=NormalizationMode.MIN_MAX, feature_range=(-1.0, 1.0))
+    config = IndicatorNormalizationConfig(
+        mode=NormalizationMode.MIN_MAX, feature_range=(-1.0, 1.0)
+    )
 
     normalized = normalize_indicator_series([5.0, 10.0, 15.0], config=config)
 
@@ -41,7 +45,9 @@ def test_indicator_normalization_config_validates_inputs() -> None:
         IndicatorNormalizationConfig(epsilon=0.0)
 
     with pytest.raises(ValueError):
-        IndicatorNormalizationConfig(mode=NormalizationMode.MIN_MAX, feature_range=(1.0, -1.0))
+        IndicatorNormalizationConfig(
+            mode=NormalizationMode.MIN_MAX, feature_range=(1.0, -1.0)
+        )
 
 
 def test_normalize_indicator_series_rejects_multiple_configuration_sources() -> None:

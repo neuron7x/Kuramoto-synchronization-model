@@ -128,9 +128,8 @@ def test_purged_kfold_with_label_overlap_purges_training_frame():
         test_end = frame.loc[test_idx, "label_end"].max()
         # Purging should remove any training observation whose label extends into the
         # beginning of the test fold, preventing look-ahead leakage.
-        overlaps = (
-            (frame.loc[train_idx, "label_end"] >= test_start)
-            & (frame.loc[train_idx, "timestamp"] <= test_end)
+        overlaps = (frame.loc[train_idx, "label_end"] >= test_start) & (
+            frame.loc[train_idx, "timestamp"] <= test_end
         )
         assert not overlaps.any(), "Purging failed to remove overlapping labels"
 

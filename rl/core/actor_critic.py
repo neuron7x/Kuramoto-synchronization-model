@@ -1,4 +1,5 @@
 """Actor-critic agent specialised for coupling with the FHMC controller."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -72,7 +73,11 @@ class ActorCriticFHMC:
         self.opt_habit = torch.optim.Adam(self.habit.parameters(), lr=lr)
 
         explore_cfg = self.fhmc.cfg["explore"]
-        self.ou = OUProcess(size=action_dim, theta=explore_cfg["ou_theta"], sigma=explore_cfg["ou_sigma"])
+        self.ou = OUProcess(
+            size=action_dim,
+            theta=explore_cfg["ou_theta"],
+            sigma=explore_cfg["ou_sigma"],
+        )
         self.colored = ColoredNoiseAR1(size=action_dim, rho=0.95, sigma=0.05)
         self.beta0 = 1.0
         self.state_dim = state_dim
@@ -82,7 +87,9 @@ class ActorCriticFHMC:
         return np.zeros(self.state_dim, dtype=np.float32)
 
     def act(self, state_np: np.ndarray) -> np.ndarray:
-        state = torch.as_tensor(state_np, dtype=torch.float32, device=self.device).unsqueeze(0)
+        state = torch.as_tensor(
+            state_np, dtype=torch.float32, device=self.device
+        ).unsqueeze(0)
         orexin = self.fhmc.orexin_value()
         threat = self.fhmc.threat_value()
         beta = self.beta0 + 0.8 * orexin - 0.6 * threat
@@ -91,16 +98,33 @@ class ActorCriticFHMC:
         dist = torch.distributions.Normal(mu * beta, std)
         action = dist.sample()
         if self.fhmc.state == "WAKE":
-            action = action + torch.from_numpy(self.ou.sample()).to(self.device, dtype=torch.float32)
+            action = action + torch.from_numpy(self.ou.sample()).to(
+                self.device, dtype=torch.float32
+            )
             if self.fhmc.cfg["explore"].get("use_colored_noise_ppo", False):
-                action = action + torch.from_numpy(self.colored.sample()).to(self.device, dtype=torch.float32)
+                action = action + torch.from_numpy(self.colored.sample()).to(
+                    self.device, dtype=torch.float32
+                )
         return action.squeeze(0).detach().cpu().numpy()
 
-    def learn(self, state: np.ndarray, action: np.ndarray, reward: float, next_state: np.ndarray, done: bool) -> None:
+    def learn(
+        self,
+        state: np.ndarray,
+        action: np.ndarray,
+        reward: float,
+        next_state: np.ndarray,
+        done: bool,
+    ) -> None:
         s = torch.as_tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
-        a = torch.as_tensor(action, dtype=torch.float32, device=self.device).unsqueeze(0)
-        r = torch.as_tensor(reward, dtype=torch.float32, device=self.device).unsqueeze(0)
-        s_next = torch.as_tensor(next_state, dtype=torch.float32, device=self.device).unsqueeze(0)
+        a = torch.as_tensor(action, dtype=torch.float32, device=self.device).unsqueeze(
+            0
+        )
+        r = torch.as_tensor(reward, dtype=torch.float32, device=self.device).unsqueeze(
+            0
+        )
+        s_next = torch.as_tensor(
+            next_state, dtype=torch.float32, device=self.device
+        ).unsqueeze(0)
 
         v = self.value(s)
         v_next = self.value(s_next).detach()
@@ -109,7 +133,10 @@ class ActorCriticFHMC:
 
         self.opt_value.zero_grad()
         (-delta_r.detach() * v).mean().backward()
-        grads_value = [param.grad.clone() if param.grad is not None else None for param in self.value.parameters()]
+        grads_value = [
+            param.grad.clone() if param.grad is not None else None
+            for param in self.value.parameters()
+        ]
         fractional_update(
             list(self.value.parameters()),
             grads_value,
@@ -142,7 +169,10 @@ class ActorCriticFHMC:
         loss_policy = -(delta_r.detach() * log_prob).mean()
         self.opt_policy.zero_grad()
         loss_policy.backward()
-        grads_policy = [param.grad.clone() if param.grad is not None else None for param in self.policy.parameters()]
+        grads_policy = [
+            param.grad.clone() if param.grad is not None else None
+            for param in self.policy.parameters()
+        ]
         fractional_update(
             list(self.policy.parameters()),
             grads_policy,

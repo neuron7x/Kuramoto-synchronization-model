@@ -1,4 +1,5 @@
 """Tests for input validation utilities."""
+
 from decimal import Decimal
 
 import pytest
@@ -93,7 +94,7 @@ class TestValidateQuantity:
     def test_infinity_rejected(self):
         """Test that infinity is rejected."""
         with pytest.raises(ValidationError, match="must be finite"):
-            validate_quantity(float('inf'))
+            validate_quantity(float("inf"))
 
 
 class TestValidatePrice:
@@ -240,27 +241,27 @@ class TestValidateEnum:
 
     def test_valid_value(self):
         """Test validation of valid enum value."""
-        allowed = ['USD', 'EUR', 'GBP']
-        assert validate_enum('USD', allowed) == 'USD'
+        allowed = ["USD", "EUR", "GBP"]
+        assert validate_enum("USD", allowed) == "USD"
 
     def test_case_insensitive_by_default(self):
         """Test that validation is case-insensitive by default."""
-        allowed = ['USD', 'EUR', 'GBP']
-        assert validate_enum('usd', allowed, case_sensitive=False) == 'usd'
+        allowed = ["USD", "EUR", "GBP"]
+        assert validate_enum("usd", allowed, case_sensitive=False) == "usd"
 
     def test_case_sensitive_when_enabled(self):
         """Test case-sensitive validation."""
-        allowed = ['USD', 'EUR', 'GBP']
+        allowed = ["USD", "EUR", "GBP"]
 
         with pytest.raises(ValidationError):
-            validate_enum('usd', allowed, case_sensitive=True)
+            validate_enum("usd", allowed, case_sensitive=True)
 
     def test_invalid_value_rejected(self):
         """Test that invalid value is rejected."""
-        allowed = ['USD', 'EUR', 'GBP']
+        allowed = ["USD", "EUR", "GBP"]
 
         with pytest.raises(ValidationError, match="Invalid"):
-            validate_enum('JPY', allowed)
+            validate_enum("JPY", allowed)
 
 
 class TestSanitizeSqlIdentifier:

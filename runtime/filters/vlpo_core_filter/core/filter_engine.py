@@ -88,8 +88,12 @@ class VLPOCoreFilter:
 
             entropy_before = float(np.nan_to_num(self._entropy(signal)))
             entropy_after = float(np.nan_to_num(self._entropy(filtered_signal)))
-            corr_before = float(np.nan_to_num(self._correlation(signal, cleaned_target)))
-            corr_after = float(np.nan_to_num(self._correlation(filtered_signal, cleaned_target)))
+            corr_before = float(
+                np.nan_to_num(self._correlation(signal, cleaned_target))
+            )
+            corr_after = float(
+                np.nan_to_num(self._correlation(filtered_signal, cleaned_target))
+            )
 
             filtered_columns[column] = filtered_signal
             stats[column] = FilterStats(

@@ -30,7 +30,9 @@ class _GraphLayer(nn.Module):
 
 
 class SpatialEncoderMinimal(nn.Module):
-    def __init__(self, in_features: int, hidden: int = 128, layers: int = 2, pool: str = "mean") -> None:
+    def __init__(
+        self, in_features: int, hidden: int = 128, layers: int = 2, pool: str = "mean"
+    ) -> None:
         super().__init__()
         self.layers = nn.ModuleList()
         dims = [in_features] + [hidden] * layers
@@ -128,7 +130,9 @@ class HydroBrainV2(nn.Module):
         gnn_hidden = m.get("gnn_hidden", 128)
         gnn_layers = m.get("gnn_layers", 2)
 
-        self.spatial = SpatialEncoderMinimal(in_feats, gnn_hidden, gnn_layers, self.pool)
+        self.spatial = SpatialEncoderMinimal(
+            in_feats, gnn_hidden, gnn_layers, self.pool
+        )
 
         hs_in = gnn_hidden if self.pool in ("mean", "max") else 2 * gnn_hidden
         self.temporal = TemporalEncoder(

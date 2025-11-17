@@ -18,7 +18,9 @@ def _load_serotonin_module() -> tuple[object, object]:
         / "serotonin"
         / "serotonin_controller.py"
     )
-    spec = importlib.util.spec_from_file_location("serotonin_controller_test_module", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "serotonin_controller_test_module", module_path
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     assert spec.loader is not None
@@ -61,15 +63,18 @@ def test_resolve_config_path_direct_file(serotonin_cls, serotonin_config_path):
     assert resolved == serotonin_config_path
 
 
-def test_resolve_config_path_prefers_env_dir(monkeypatch, serotonin_cls, tmp_path: Path):
+def test_resolve_config_path_prefers_env_dir(
+    monkeypatch, serotonin_cls, tmp_path: Path
+):
     env_dir = tmp_path / "env"
     env_dir.mkdir()
     alt_cfg = env_dir / "serotonin.yaml"
-    alt_cfg.write_text((
-        Path(__file__).resolve().parents[4]
-        / "configs"
-        / "serotonin.yaml"
-    ).read_text(encoding="utf-8"), encoding="utf-8")
+    alt_cfg.write_text(
+        (Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setenv("TRADEPULSE_CONFIG_DIR", str(env_dir))
 
     resolved = serotonin_cls._resolve_config_path("nonexistent.yaml")
@@ -96,7 +101,7 @@ def test_estimate_aversive_state_matches_formula(serotonin_controller):
     expected_release = (
         cfg["alpha"] * math.sqrt(market_vol)
         + cfg["beta"] * free_energy
-        + cfg["gamma"] * (losses + 0.5 * losses ** 2)
+        + cfg["gamma"] * (losses + 0.5 * losses**2)
         + cfg["delta_rho"] * (1.0 - rho)
     )
     expected = 3.0 * math.tanh(expected_release / 3.0)
@@ -153,7 +158,7 @@ def test_modulate_action_prob_applies_inhibition(serotonin_controller):
     result = ctrl.modulate_action_prob(0.8)
 
     cfg = ctrl.config
-    inhibition_strength = ctrl.serotonin_level ** 2
+    inhibition_strength = ctrl.serotonin_level**2
     inhibition_factor = 1.0 - inhibition_strength * cfg["delta"]
     inhibited = 0.8 * max(0.0, inhibition_factor)
     bias_factor = 1.0 + cfg["za_bias"] * (1.0 - math.exp(-2.0 * ctrl.serotonin_level))
@@ -226,7 +231,9 @@ def test_step_validates_inputs(serotonin_controller):
         ctrl.step(stress=0.1, drawdown=-0.01, novelty=-0.2)
 
 
-def test_step_returns_cooldown_tuple(monkeypatch, serotonin_module, serotonin_controller):
+def test_step_returns_cooldown_tuple(
+    monkeypatch, serotonin_module, serotonin_controller
+):
     ctrl = serotonin_controller
     times = [1000.0, 1000.1, 1000.2, 1000.3]
 
@@ -243,7 +250,9 @@ def test_step_returns_cooldown_tuple(monkeypatch, serotonin_module, serotonin_co
     assert 0.0 <= level <= 1.0
 
 
-def test_to_dict_reports_current_state(monkeypatch, serotonin_module, serotonin_controller, tmp_path: Path):
+def test_to_dict_reports_current_state(
+    monkeypatch, serotonin_module, serotonin_controller, tmp_path: Path
+):
     ctrl = serotonin_controller
     ctrl._hold_state = True
     ctrl._cooldown_start_time = 50.0
@@ -262,7 +271,9 @@ def test_to_dict_reports_current_state(monkeypatch, serotonin_module, serotonin_
     assert snapshot["temperature_floor"] >= ctrl.config["temperature_floor_min"]
 
 
-def test_save_state_persists_json(monkeypatch, serotonin_module, serotonin_controller, tmp_path: Path):
+def test_save_state_persists_json(
+    monkeypatch, serotonin_module, serotonin_controller, tmp_path: Path
+):
     ctrl = serotonin_controller
     target = tmp_path / "state.json"
 
@@ -361,7 +372,9 @@ beta: 0.3
         serotonin_cls(str(incomplete_config))
 
 
-def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_config_path):
+def test_dual_compatibility_config_loads_successfully(
+    serotonin_cls, serotonin_config_path
+):
     """Test that the dual-compatibility config (with both legacy and v2.4.0 fields) loads correctly."""
     # The fixture provides the actual serotonin.yaml with both field sets
     ctrl = serotonin_cls(str(serotonin_config_path))
@@ -382,10 +395,7 @@ def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_c
 
     # Test basic functionality
     result = ctrl.estimate_aversive_state(
-        market_vol=2.0,
-        free_energy=0.3,
-        cum_losses=0.5,
-        rho_loss=0.2
+        market_vol=2.0, free_energy=0.3, cum_losses=0.5, rho_loss=0.2
     )
     assert isinstance(result, float)
     assert result >= 0.0

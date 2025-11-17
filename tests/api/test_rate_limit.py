@@ -50,7 +50,9 @@ class _FakeRedisClient:
 
 
 @pytest.mark.anyio
-async def test_redis_backend_hit_invokes_expected_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_redis_backend_hit_invokes_expected_pipeline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     now = 123.456
     window_seconds = 10.2
     pipeline = _FakePipeline()

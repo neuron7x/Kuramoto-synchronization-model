@@ -18,10 +18,14 @@ class KillSwitchRequest(BaseModel):
 
 
 def create_state(settings: ControlSettings) -> ControlState:
-    return ControlState(health_targets={name: str(url) for name, url in settings.health_targets.items()})
+    return ControlState(
+        health_targets={name: str(url) for name, url in settings.health_targets.items()}
+    )
 
 
-def create_app(settings: ControlSettings | None = None, state: ControlState | None = None) -> FastAPI:
+def create_app(
+    settings: ControlSettings | None = None, state: ControlState | None = None
+) -> FastAPI:
     config = settings or control_settings()
     control_state = state or create_state(config)
 
@@ -30,7 +34,11 @@ def create_app(settings: ControlSettings | None = None, state: ControlState | No
     @app.get("/health")
     async def health() -> dict[str, Any]:
         results = await control_state.health()
-        return {"status": "ok", "timestamp": datetime.now(timezone.utc), "services": results}
+        return {
+            "status": "ok",
+            "timestamp": datetime.now(timezone.utc),
+            "services": results,
+        }
 
     @app.get("/kill-switch")
     async def kill_switch_state() -> KillSwitchState:

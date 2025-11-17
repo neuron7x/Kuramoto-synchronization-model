@@ -11,12 +11,12 @@ from modules.gaba_inhibition_gate import (
 
 def base_state(vix=20.0, vol=0.1, ret=0.01, pos=1.0, rpe=0.0, dt_ms=20.0):
     return {
-        'vix': torch.tensor(vix),
-        'vol': torch.tensor(vol),
-        'ret': torch.tensor(ret),
-        'pos': torch.tensor(pos),
-        'rpe': torch.tensor(rpe),
-        'delta_t_ms': torch.tensor(dt_ms),
+        "vix": torch.tensor(vix),
+        "vol": torch.tensor(vol),
+        "ret": torch.tensor(ret),
+        "pos": torch.tensor(pos),
+        "rpe": torch.tensor(rpe),
+        "delta_t_ms": torch.tensor(dt_ms),
     }
 
 
@@ -53,10 +53,7 @@ def test_cycle_modulation_range():
 def test_custom_gate_params():
     """Test gate with custom parameters."""
     custom_params = GateParams(
-        k_inhibit=0.6,
-        cycle_modulation=False,
-        risk_min=0.3,
-        risk_max=2.0
+        k_inhibit=0.6, cycle_modulation=False, risk_min=0.3, risk_max=2.0
     )
     gate = GABAInhibitionGate(params=custom_params)
     a = torch.tensor([1.0])
@@ -64,23 +61,23 @@ def test_custom_gate_params():
 
     assert isinstance(gated, torch.Tensor)
     assert isinstance(metrics, GateMetrics)
-    assert hasattr(metrics, 'inhibition')
-    assert hasattr(metrics, 'gaba_level')
-    assert hasattr(metrics, 'risk_weight')
-    assert hasattr(metrics, 'cycle_multiplier')
-    assert hasattr(metrics, 'stdp_delta')
-    assert hasattr(metrics, 'ltp_ltd_delta')
-    assert hasattr(metrics, 'adaptive_delta')
+    assert hasattr(metrics, "inhibition")
+    assert hasattr(metrics, "gaba_level")
+    assert hasattr(metrics, "risk_weight")
+    assert hasattr(metrics, "cycle_multiplier")
+    assert hasattr(metrics, "stdp_delta")
+    assert hasattr(metrics, "ltp_ltd_delta")
+    assert hasattr(metrics, "adaptive_delta")
 
 
 def test_device_parameter():
     """Test gate initialization with explicit device."""
-    gate = GABAInhibitionGate(device='cpu')
-    assert gate.device.type == 'cpu'
+    gate = GABAInhibitionGate(device="cpu")
+    assert gate.device.type == "cpu"
 
     a = torch.tensor([1.0])
     gated, _ = gate(base_state(), a)
-    assert gated.device.type == 'cpu'
+    assert gated.device.type == "cpu"
 
 
 def test_apply_hedge():
@@ -115,7 +112,7 @@ def test_apply_hedge_invalid_strength():
 def test_missing_market_state_keys():
     """Test forward raises KeyError for missing market_state keys."""
     gate = GABAInhibitionGate()
-    incomplete_state = {'vix': torch.tensor(20.0)}
+    incomplete_state = {"vix": torch.tensor(20.0)}
 
     with pytest.raises(KeyError, match="Missing required keys"):
         gate(incomplete_state, torch.tensor([1.0]))
@@ -126,10 +123,10 @@ def test_invalid_action_values():
     gate = GABAInhibitionGate()
 
     with pytest.raises(ValueError, match="NaN or Inf"):
-        gate(base_state(), torch.tensor([float('nan')]))
+        gate(base_state(), torch.tensor([float("nan")]))
 
     with pytest.raises(ValueError, match="NaN or Inf"):
-        gate(base_state(), torch.tensor([float('inf')]))
+        gate(base_state(), torch.tensor([float("inf")]))
 
 
 def test_get_set_state():
@@ -202,13 +199,13 @@ def test_market_state_nan_validation():
 
     # Test NaN in vix
     state_with_nan = base_state()
-    state_with_nan['vix'] = torch.tensor(float('nan'))
+    state_with_nan["vix"] = torch.tensor(float("nan"))
     with pytest.raises(ValueError, match="vix contains NaN or Inf"):
         gate(state_with_nan, torch.tensor([1.0]))
 
     # Test Inf in vol
     state_with_inf = base_state()
-    state_with_inf['vol'] = torch.tensor(float('inf'))
+    state_with_inf["vol"] = torch.tensor(float("inf"))
     with pytest.raises(ValueError, match="vol contains NaN or Inf"):
         gate(state_with_inf, torch.tensor([1.0]))
 
@@ -242,8 +239,9 @@ def test_cycle_modulation_determinism():
     # With cycles enabled, we should see oscillatory behavior over time
     # Both will have GABA dynamics, but cycles adds oscillations
     # The key test is that with cycles we get meaningful variation
-    assert variance_with_cycles > 0.01, \
-        f"With cycles enabled, should see oscillatory variation: {variance_with_cycles:.6f}"
+    assert (
+        variance_with_cycles > 0.01
+    ), f"With cycles enabled, should see oscillatory variation: {variance_with_cycles:.6f}"
 
     print(f"  Variance with cycles: {variance_with_cycles:.6f}")
     print(f"  Variance without cycles: {variance_no_cycles:.6f}")
@@ -308,7 +306,7 @@ def test_plasticity_metric_direction():
 
     # Positive timing and cooperative activity => potentiation
     state_potentiate = base_state(vix=45.0, vol=0.9, ret=0.5, dt_ms=5.0)
-    state_potentiate['delta_t_ms'] = torch.tensor(5.0)
+    state_potentiate["delta_t_ms"] = torch.tensor(5.0)
     _, metrics_potentiate = gate(state_potentiate, action)
 
     assert metrics_potentiate.stdp_delta > 0
@@ -316,7 +314,7 @@ def test_plasticity_metric_direction():
 
     # Negative timing and anti-correlated returns => depression
     state_depress = base_state(vix=45.0, vol=0.9, ret=-0.5, dt_ms=-5.0)
-    state_depress['delta_t_ms'] = torch.tensor(-5.0)
+    state_depress["delta_t_ms"] = torch.tensor(-5.0)
     _, metrics_depress = gate(state_depress, action)
 
     assert metrics_depress.stdp_delta < 0
@@ -336,7 +334,7 @@ def test_gate_params_validation():
 def test_gate_params_from_dict_partial():
     """from_dict should ignore unknown keys while applying overrides."""
 
-    params = GateParams.from_dict({'k_inhibit': 0.75, 'nonexistent': 5})
+    params = GateParams.from_dict({"k_inhibit": 0.75, "nonexistent": 5})
     assert pytest.approx(params.k_inhibit, rel=1e-6) == 0.75
 
 
@@ -419,10 +417,14 @@ def test_rpe_and_position_adaptive_plasticity():
     gate = GABAInhibitionGate()
     action = torch.tensor([1.0])
 
-    positive_state = base_state(vix=50.0, vol=0.6, ret=0.4, rpe=0.9, pos=0.2, dt_ms=10.0)
+    positive_state = base_state(
+        vix=50.0, vol=0.6, ret=0.4, rpe=0.9, pos=0.2, dt_ms=10.0
+    )
     _, metrics_positive = gate(positive_state, action)
 
-    negative_state = base_state(vix=50.0, vol=0.6, ret=0.4, rpe=-0.9, pos=3.0, dt_ms=10.0)
+    negative_state = base_state(
+        vix=50.0, vol=0.6, ret=0.4, rpe=-0.9, pos=3.0, dt_ms=10.0
+    )
     _, metrics_negative = gate(negative_state, action)
 
     assert metrics_positive.adaptive_delta > metrics_negative.adaptive_delta

@@ -52,7 +52,9 @@ def test_plan_reduces_position_to_restore_margin() -> None:
             make_position("ETH-PERP", 1.0, 200.0, 0.4),  # maintenance: 80
         ],
     )
-    engine = LiquidationEngine(lambda *_args: None, config=LiquidationEngineConfig(target_margin_ratio=1.1))
+    engine = LiquidationEngine(
+        lambda *_args: None, config=LiquidationEngineConfig(target_margin_ratio=1.1)
+    )
 
     plan = engine.plan(account)
 
@@ -62,7 +64,9 @@ def test_plan_reduces_position_to_restore_margin() -> None:
     assert action.symbol == "ETH-PERP"
     assert action.side is OrderSide.SELL
     # Reduction should cover the deficit and achieve the 1.1 ratio.
-    assert action.maintenance_reduction == pytest.approx(plan.required_reduction, rel=1e-6)
+    assert action.maintenance_reduction == pytest.approx(
+        plan.required_reduction, rel=1e-6
+    )
     assert plan.post_margin_ratio >= 1.1
 
 

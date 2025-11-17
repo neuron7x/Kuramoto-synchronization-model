@@ -72,7 +72,9 @@ def test_scan_file_handles_unreadable_file(
         findings = detector.scan_file(target)
 
     assert findings == []
-    assert any("Skipping unreadable file" in message for message in caplog.text.splitlines())
+    assert any(
+        "Skipping unreadable file" in message for message in caplog.text.splitlines()
+    )
 
 
 def test_scan_directory_respects_extension_filter() -> None:
@@ -88,7 +90,9 @@ def test_scan_directory_respects_extension_filter() -> None:
     assert "image.png" not in results
 
 
-def test_scan_directory_skips_non_files_and_empty_extension_list(tmp_path: Path) -> None:
+def test_scan_directory_skips_non_files_and_empty_extension_list(
+    tmp_path: Path,
+) -> None:
     repo = Path(tempfile.mkdtemp(prefix="secrepo"))
     nested = repo / "configs"
     nested.mkdir()

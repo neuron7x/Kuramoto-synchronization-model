@@ -52,12 +52,18 @@ class ApiArtifactGenerator:
         docs_dir.mkdir(parents=True, exist_ok=True)
         examples_dir.mkdir(parents=True, exist_ok=True)
 
-        python_client = self._generate_python_client(clients_dir / "tradepulse_client.py")
-        typescript_client = self._generate_typescript_client(clients_dir / "tradepulseClient.ts")
+        python_client = self._generate_python_client(
+            clients_dir / "tradepulse_client.py"
+        )
+        typescript_client = self._generate_typescript_client(
+            clients_dir / "tradepulseClient.ts"
+        )
         overview = self._generate_overview(docs_dir / "overview.md")
         routes_index = self._generate_route_index(docs_dir / "routes.json")
         webhooks_doc = self._generate_webhook_doc(docs_dir / "webhooks.md")
-        smoke_tests_index = self._generate_smoke_tests_index(docs_dir / "smoke_tests.json")
+        smoke_tests_index = self._generate_smoke_tests_index(
+            docs_dir / "smoke_tests.json"
+        )
         changelog = self._generate_changelog(docs_dir / "CHANGELOG.md")
         deprecations = self._generate_deprecations(docs_dir / "deprecations.md")
         migrations = self._generate_migrations(docs_dir / "migrations.md")
@@ -151,7 +157,9 @@ class ApiArtifactGenerator:
             """
         ).strip()
         method_source = textwrap.indent("\n\n".join(method_blocks), "    ")
-        client_source = client_template.replace("{{METHODS}}", method_source).rstrip() + "\n"
+        client_source = (
+            client_template.replace("{{METHODS}}", method_source).rstrip() + "\n"
+        )
         _write_if_changed(path, client_source)
         return path
 
@@ -163,7 +171,7 @@ class ApiArtifactGenerator:
             param_signature = ", " + param_signature
         request_builder = self._render_python_request_builder(route, path_params)
         doc_lines = self._render_method_docstring(route)
-        docstring = "    \"\"\"" + doc_lines.replace("\n", "\n    ") + "\n    \"\"\""
+        docstring = '    """' + doc_lines.replace("\n", "\n    ") + '\n    """'
         signature = (
             f"def {method_name}(self{param_signature}, *, payload: Mapping[str, Any] | None = None, "
             "headers: Mapping[str, str] | None = None) -> httpx.Response:"
@@ -177,7 +185,11 @@ class ApiArtifactGenerator:
         lines.append(f"Scope: {route.scope}")
         lines.append(f"Cache: {route.cache.strategy}; max-age={route.cache.max_age}s")
         if route.idempotency.required:
-            ttl = f" ttl={route.idempotency.ttl_seconds}s" if route.idempotency.ttl_seconds else ""
+            ttl = (
+                f" ttl={route.idempotency.ttl_seconds}s"
+                if route.idempotency.ttl_seconds
+                else ""
+            )
             lines.append(
                 f"Idempotency: required via {route.idempotency.header or self._registry.metadata.idempotency_header}{ttl}"
             )
@@ -185,28 +197,30 @@ class ApiArtifactGenerator:
             lines.append("Idempotency: optional")
         return "\n".join(lines)
 
-    def _render_python_request_builder(self, route: ApiRoute, path_params: Sequence[str]) -> str:
+    def _render_python_request_builder(
+        self, route: ApiRoute, path_params: Sequence[str]
+    ) -> str:
         path_expr = route.path
         for name in path_params:
             path_expr = path_expr.replace(f"{{{name}}}", "{" + name + "}")
-        path_format = f"f\"{path_expr}\""
+        path_format = f'f"{path_expr}"'
         has_body = route.method.upper() in {"POST", "PUT", "PATCH"}
         lines = [
             "request_headers = dict(self._default_headers)",
             "if headers:",
             "    request_headers.update(headers)",
-            "request_kwargs: dict[str, Any] = {\"headers\": request_headers}",
+            'request_kwargs: dict[str, Any] = {"headers": request_headers}',
         ]
         if has_body:
             lines.extend(
                 [
                     "if payload is not None:",
-                    "    request_kwargs[\"json\"] = payload",
+                    '    request_kwargs["json"] = payload',
                 ]
             )
         response_lines = [
             "response = self._client.request(",
-            f"    \"{route.method.upper()}\",",
+            f'    "{route.method.upper()}",',
             f"    {path_format},",
             "    **request_kwargs,",
             ")",
@@ -217,7 +231,9 @@ class ApiArtifactGenerator:
         return textwrap.indent("\n".join(lines), "    ")
 
     def _generate_typescript_client(self, path: Path) -> Path:
-        method_blocks = [self._render_typescript_method(route) for route in self._registry.routes]
+        method_blocks = [
+            self._render_typescript_method(route) for route in self._registry.routes
+        ]
         template = textwrap.dedent(
             """
 /* Auto-generated TradePulse REST client (TypeScript). */
@@ -273,7 +289,7 @@ export class TradePulseClient {
             "    const headers = { ...this.defaultHeaders, ...(options.headers || {}) };",
             f"    const requestUrl = `${{this.baseUrl}}{request_path}`;",
             "    const response = await fetch(requestUrl, {",
-            f"        method: \"{route.method.upper()}\",",
+            f'        method: "{route.method.upper()}",',
             "        headers,",
         ]
         if has_body:
@@ -345,19 +361,30 @@ export class TradePulseClient {
             "Signature",
             "Webhooks",
         ]
-        rows = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+        rows = [
+            "| " + " | ".join(headers) + " |",
+            "| " + " | ".join(["---"] * len(headers)) + " |",
+        ]
         for route in self._registry.routes:
             cache = f"{route.cache.strategy}; max-age={route.cache.max_age}; swr={route.cache.stale_while_revalidate}"
             rate_limit = _format_rate_limit(route.rate_limit)
-            throttle = f"burst={route.throttle.burst} / {route.throttle.period_seconds}s"
+            throttle = (
+                f"burst={route.throttle.burst} / {route.throttle.period_seconds}s"
+            )
             if route.idempotency.required:
-                ttl = f" ttl={route.idempotency.ttl_seconds}s" if route.idempotency.ttl_seconds else ""
+                ttl = (
+                    f" ttl={route.idempotency.ttl_seconds}s"
+                    if route.idempotency.ttl_seconds
+                    else ""
+                )
                 idempotency = f"required ({route.idempotency.header or self._registry.metadata.idempotency_header}{ttl})"
             else:
                 idempotency = "optional"
             signature = "required" if route.signatures.required else "optional"
             suffix = f" {route.signatures.version}" if route.signatures.version else ""
-            signature += f" ({route.signatures.algorithm} via {route.signatures.header}{suffix})"
+            signature += (
+                f" ({route.signatures.algorithm} via {route.signatures.header}{suffix})"
+            )
             webhooks = ", ".join(route.webhooks) if route.webhooks else "—"
             rows.append(
                 "| "
@@ -383,7 +410,10 @@ export class TradePulseClient {
         tests = [test for route in self._registry.routes for test in route.smoke_tests]
         if not tests:
             return "## Smoke tests\n\n_No smoke tests declared._"
-        rows = ["| Name | Description | Expected status | Route |", "| --- | --- | --- | --- |"]
+        rows = [
+            "| Name | Description | Expected status | Route |",
+            "| --- | --- | --- | --- |",
+        ]
         for route in self._registry.routes:
             for test in route.smoke_tests:
                 rows.append(
@@ -404,7 +434,10 @@ export class TradePulseClient {
         guards = self._registry.compatibility
         if not guards:
             return "## Compatibility\n\n_The registry does not define additional compatibility guards._"
-        rows = ["| Route | Minimum client version | Status | Comments |", "| --- | --- | --- | --- |"]
+        rows = [
+            "| Route | Minimum client version | Status | Comments |",
+            "| --- | --- | --- | --- |",
+        ]
         for guard in guards:
             rows.append(
                 f"| {guard.route} | {guard.minimum_client_version} | {guard.status} | {guard.comments or '—'} |"
@@ -415,7 +448,10 @@ export class TradePulseClient {
         maintainers = self._registry.metadata.maintainers
         if not maintainers:
             return "## Maintainers\n\n_No maintainer records available._"
-        bullet_lines = [f"- **{maintainer.name}** — {maintainer.contact}" for maintainer in maintainers]
+        bullet_lines = [
+            f"- **{maintainer.name}** — {maintainer.contact}"
+            for maintainer in maintainers
+        ]
         return "## Maintainers\n\n" + "\n".join(bullet_lines)
 
     def _generate_route_index(self, path: Path) -> Path:
@@ -448,11 +484,16 @@ export class TradePulseClient {
                 },
                 "idempotency": {
                     "required": route.idempotency.required,
-                    "header": route.idempotency.header or self._registry.metadata.idempotency_header,
+                    "header": route.idempotency.header
+                    or self._registry.metadata.idempotency_header,
                     "ttl_seconds": route.idempotency.ttl_seconds,
                 },
-                "request_schema": self._normalise_schema_reference(route.request_schema),
-                "response_schema": self._normalise_schema_reference(route.response_schema),
+                "request_schema": self._normalise_schema_reference(
+                    route.request_schema
+                ),
+                "response_schema": self._normalise_schema_reference(
+                    route.response_schema
+                ),
                 "webhooks": list(route.webhooks),
             }
             route_index.append(entry)
@@ -494,7 +535,9 @@ export class TradePulseClient {
                         "headers": dict(test.request.headers),
                         "body": test.request.body,
                         "expected_status": test.expected_status,
-                        "response_schema": self._normalise_schema_reference(test.response_schema),
+                        "response_schema": self._normalise_schema_reference(
+                            test.response_schema
+                        ),
                     }
                 )
         _write_json_if_changed(path, tests)
@@ -548,17 +591,23 @@ export class TradePulseClient {
         return path
 
     def _generate_visualization(self, path: Path) -> Path:
-        lines = ["digraph TradePulseAPI {", "    rankdir=LR;", "    node [shape=box, style=rounded, fontname=Helvetica];"]
+        lines = [
+            "digraph TradePulseAPI {",
+            "    rankdir=LR;",
+            "    node [shape=box, style=rounded, fontname=Helvetica];",
+        ]
         for route in self._registry.routes:
             label = f"{route.method.upper()}\\n{route.path}"
-            lines.append(f"    \"{route.name}\" [label=\"{label}\"];")
+            lines.append(f'    "{route.name}" [label="{label}"];')
         for webhook in self._registry.webhooks:
-            lines.append(f"    \"{webhook.name}\" [shape=ellipse, style=filled, fillcolor=lightgrey];")
+            lines.append(
+                f'    "{webhook.name}" [shape=ellipse, style=filled, fillcolor=lightgrey];'
+            )
         for route in self._registry.routes:
             if not route.webhooks:
                 continue
             for webhook in route.webhooks:
-                lines.append(f"    \"{route.name}\" -> \"{webhook}\";")
+                lines.append(f'    "{route.name}" -> "{webhook}";')
         lines.append("}")
         content = "\n".join(lines) + "\n"
         _write_if_changed(path, content)
@@ -579,6 +628,7 @@ export class TradePulseClient {
 # Helper utilities
 # ----------------------------------------------------------------------
 
+
 def _write_if_changed(path: Path, content: str) -> None:
     existing = path.read_text(encoding="utf-8") if path.exists() else None
     if existing == content:
@@ -586,7 +636,9 @@ def _write_if_changed(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _write_json_if_changed(path: Path, payload: Mapping[str, object] | Sequence[object]) -> None:
+def _write_json_if_changed(
+    path: Path, payload: Mapping[str, object] | Sequence[object]
+) -> None:
     serialized = json.dumps(payload, indent=2, sort_keys=True)
     existing = path.read_text(encoding="utf-8") if path.exists() else None
     if existing == serialized:
@@ -602,7 +654,9 @@ def _path_parameters(path: str) -> list[str]:
     return params
 
 
-def _format_rate_limit(rate_limit: Mapping[str, int | None] | RateLimitPolicy | None) -> str:
+def _format_rate_limit(
+    rate_limit: Mapping[str, int | None] | RateLimitPolicy | None,
+) -> str:
     if isinstance(rate_limit, Mapping):
         per_minute = rate_limit.get("per_minute")
         per_hour = rate_limit.get("per_hour")

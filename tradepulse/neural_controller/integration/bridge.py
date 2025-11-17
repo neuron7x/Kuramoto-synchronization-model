@@ -38,7 +38,8 @@ def _call_with_known_kwargs(func: Callable[..., Any], **kwargs: Any) -> Any:
     accepted = {
         name: kwargs[name]
         for name in signature.parameters
-        if name in kwargs and signature.parameters[name].kind
+        if name in kwargs
+        and signature.parameters[name].kind
         in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
     }
     if accepted:
@@ -109,7 +110,10 @@ class TACLSystem:
         except TypeError:
             result = self._optimizer(dict(allocs), temperature, gens)  # type: ignore[arg-type]
         except Exception as exc:  # pragma: no cover - defensive
-            log.exception("TACL optimisation failed", extra={"event": "neuro.tacl_error", "error": str(exc)})
+            log.exception(
+                "TACL optimisation failed",
+                extra={"event": "neuro.tacl_error", "error": str(exc)},
+            )
             return base
         if isinstance(result, Mapping) and "allocs" in result:
             return dict(result)
@@ -145,7 +149,8 @@ class KuramotoSync:
             value = float(self._monitor())
         except Exception as exc:  # pragma: no cover - defensive path
             log.exception(
-                "Kuramoto monitor failure", extra={"event": "neuro.kuramoto_error", "error": str(exc)}
+                "Kuramoto monitor failure",
+                extra={"event": "neuro.kuramoto_error", "error": str(exc)},
             )
             return 0.5
         return float(np.clip(value, 0.0, 1.0))
@@ -191,7 +196,9 @@ class NeuralMarketController:
         adapter_cfg = MarketAdapterConfig(**(cfg.get("market_adapter", {}) or {}))
         inst = cls(params, ekf, policy, risk, homeo, adapter=adapter_cfg)
         bridge_cfg = cfg.get("tacl_bridge", {}) or {}
-        inst.sync_threshold = float(bridge_cfg.get("sync_threshold", inst.sync_threshold))
+        inst.sync_threshold = float(
+            bridge_cfg.get("sync_threshold", inst.sync_threshold)
+        )
         inst.generations = int(bridge_cfg.get("generations", inst.generations))
         return inst
 
@@ -201,12 +208,16 @@ class NeuralMarketController:
         obs["belief_term"] = belief - 0.5
 
         snapshot = self.model.step(obs)
-        snapshot["S"] = float(np.clip(snapshot["S"] + 0.10 * self.homeo.pressure(snapshot["M"]), 0.0, 1.0))
+        snapshot["S"] = float(
+            np.clip(snapshot["S"] + 0.10 * self.homeo.pressure(snapshot["M"]), 0.0, 1.0)
+        )
 
         estimate = self.ekf.step(obs)
         estimate_scoped = {f"{key}_est": value for key, value in estimate.items()}
 
-        action, extra = self.ctrl.decide({**snapshot, **estimate}, snapshot["mode"], snapshot["RPE"])
+        action, extra = self.ctrl.decide(
+            {**snapshot, **estimate}, snapshot["mode"], snapshot["RPE"]
+        )
 
         scale = self.cvar.update(float(obs.get("reward", 0.0)))
         extra["alloc_main"] = float(extra["alloc_main"] * scale)
@@ -270,7 +281,9 @@ class NeuralTACLBridge:
         coupling = self._mode_to_coupling(decision["mode"])
 
         initial_allocs = {"main": decision["alloc_main"], "alt": decision["alloc_alt"]}
-        tacl_out = self.tacl.optimize(initial_allocs, temperature, generations=self.neural.generations)
+        tacl_out = self.tacl.optimize(
+            initial_allocs, temperature, generations=self.neural.generations
+        )
         optim_allocs = dict(tacl_out.get("allocs", initial_allocs))
 
         sync = self.kuramoto.get_order_parameter()

@@ -21,16 +21,19 @@ try:
 except ImportError:
     # Fallback: load module directly
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "ecs_regulator",
-        Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py"
+        Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py",
     )
     ecs_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ecs_module)
     ECSInspiredRegulator = ecs_module.ECSInspiredRegulator
 
 
-def simulate_market_data(n_steps: int, seed: int = 42) -> tuple[np.ndarray, np.ndarray, list[str]]:
+def simulate_market_data(
+    n_steps: int, seed: int = 42
+) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Simulate market returns, drawdowns, and phase data.
 
     Args:
@@ -99,7 +102,9 @@ def calculate_performance_metrics(returns: np.ndarray, actions: list[int]) -> di
     sharpe_ratio = (np.mean(strategy_returns) / (volatility + 1e-10)) * np.sqrt(252)
 
     cum_strategy = np.cumprod(1 + strategy_returns)
-    max_dd = np.max((cum_strategy.cummax() - cum_strategy) / (cum_strategy.cummax() + 1e-10))
+    max_dd = np.max(
+        (cum_strategy.cummax() - cum_strategy) / (cum_strategy.cummax() + 1e-10)
+    )
 
     return {
         "total_return": float(total_return),
@@ -159,9 +164,7 @@ def main():
     for i in range(n_steps):
         # Update stress with market conditions
         regulator.update_stress(
-            market_returns[:i+1],
-            drawdowns[i] if i > 0 else 0.0,
-            prev_fe
+            market_returns[: i + 1], drawdowns[i] if i > 0 else 0.0, prev_fe
         )
         prev_fe = regulator.free_energy_proxy
 
@@ -223,7 +226,9 @@ def main():
     # Chronic stress detection
     chronic_periods = sum(1 for s in stress_history if s > regulator.stress_threshold)
     print("\nStress Analysis:")
-    print(f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods/n_steps*100:.1f}%)")
+    print(
+        f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods/n_steps*100:.1f}%)"
+    )
     print(f"  Mean Stress: {np.mean(stress_history):.4f}")
     print(f"  Max Stress: {np.max(stress_history):.4f}")
 
@@ -238,16 +243,18 @@ def main():
     print(f"  Saved to: {trace_file}")
 
     # Create summary CSV
-    summary_df = pd.DataFrame({
-        "step": range(n_steps),
-        "return": market_returns,
-        "drawdown": drawdowns,
-        "phase": phases,
-        "signal": signals,
-        "action": actions,
-        "stress": stress_history,
-        "free_energy": fe_history,
-    })
+    summary_df = pd.DataFrame(
+        {
+            "step": range(n_steps),
+            "return": market_returns,
+            "drawdown": drawdowns,
+            "phase": phases,
+            "signal": signals,
+            "action": actions,
+            "stress": stress_history,
+            "free_energy": fe_history,
+        }
+    )
 
     summary_file = "/tmp/ecs_regulator_summary.csv"
     summary_df.to_csv(summary_file, index=False)
@@ -257,7 +264,8 @@ def main():
     print("=" * 70)
     print("Integration Notes:")
     print("=" * 70)
-    print("""
+    print(
+        """
 The ECS-Inspired Regulator can be integrated with TradePulse components:
 
 1. FractalMotivationController Integration:
@@ -303,7 +311,8 @@ Example integration code:
         state=[ecs_reg.stress_level, signal],
         signals={"risk_ok": ecs_reg.risk_threshold > 0.01}
     )
-""")
+"""
+    )
 
     print("=" * 70)
     print("Demo completed successfully!")

@@ -94,23 +94,39 @@ else:
     st.title("TradePulse — Real-time Indicators Dashboard")
 
     st.sidebar.header("Configuration")
-    window_size = st.sidebar.slider("Analysis Window", min_value=50, max_value=500, value=200, step=50)
+    window_size = st.sidebar.slider(
+        "Analysis Window", min_value=50, max_value=500, value=200, step=50
+    )
 
     # Additional configuration options
     st.sidebar.subheader("Advanced Settings")
-    ricci_delta = st.sidebar.number_input("Ricci Delta", min_value=0.001, max_value=0.1, value=0.005, step=0.001,
-                                          help="Step size for Ricci curvature calculation")
-    entropy_bins = st.sidebar.slider("Entropy Bins", min_value=10, max_value=100, value=50, step=10,
-                                     help="Number of bins for entropy calculation")
+    ricci_delta = st.sidebar.number_input(
+        "Ricci Delta",
+        min_value=0.001,
+        max_value=0.1,
+        value=0.005,
+        step=0.001,
+        help="Step size for Ricci curvature calculation",
+    )
+    entropy_bins = st.sidebar.slider(
+        "Entropy Bins",
+        min_value=10,
+        max_value=100,
+        value=50,
+        step=10,
+        help="Number of bins for entropy calculation",
+    )
 
     # Initialize session state for data persistence
-    if 'analysis_history' not in st.session_state:
+    if "analysis_history" not in st.session_state:
         st.session_state.analysis_history = []
-    if 'uploaded_filename' not in st.session_state:
+    if "uploaded_filename" not in st.session_state:
         st.session_state.uploaded_filename = None
 
     # Tabs for different sections
-    tab1, tab2, tab3, tab4 = st.tabs(["📈 Data Upload", "📊 Indicators", "📋 Export & History", "ℹ️ Info"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["📈 Data Upload", "📊 Indicators", "📋 Export & History", "ℹ️ Info"]
+    )
 
     with tab1:
         st.header("Data Upload & Preview")
@@ -133,8 +149,11 @@ else:
                 with col2:
                     st.metric("Columns", len(df.columns))
                 with col3:
-                    if 'price' in df.columns:
-                        st.metric("Price Range", f"${df['price'].min():.2f} - ${df['price'].max():.2f}")
+                    if "price" in df.columns:
+                        st.metric(
+                            "Price Range",
+                            f"${df['price'].min():.2f} - ${df['price'].max():.2f}",
+                        )
 
                 # Enhanced validation with detailed feedback
                 st.write("### Data Validation")
@@ -157,47 +176,59 @@ else:
                     st.info(f"📊 Optional columns found: {', '.join(found_optional)}")
 
                 # Check for missing values
-                if 'price' in df.columns:
-                    missing_prices = df['price'].isna().sum()
+                if "price" in df.columns:
+                    missing_prices = df["price"].isna().sum()
                     if missing_prices > 0:
-                        st.warning(f"⚠️ Found {missing_prices} missing price values ({missing_prices/len(df)*100:.1f}%)")
+                        st.warning(
+                            f"⚠️ Found {missing_prices} missing price values ({missing_prices/len(df)*100:.1f}%)"
+                        )
                         if st.button("Remove rows with missing prices"):
-                            df = df.dropna(subset=['price'])
-                            st.success(f"Removed {missing_prices} rows. New total: {len(df)}")
+                            df = df.dropna(subset=["price"])
+                            st.success(
+                                f"Removed {missing_prices} rows. New total: {len(df)}"
+                            )
                     else:
                         st.success("✅ No missing price values")
 
                 # Check data quality
-                if 'price' in df.columns and len(df) > 0:
-                    price_stats = df['price'].describe()
-                    if price_stats['std'] == 0:
+                if "price" in df.columns and len(df) > 0:
+                    price_stats = df["price"].describe()
+                    if price_stats["std"] == 0:
                         st.error("❌ Price data has no variation (constant values)")
                         validation_passed = False
                     else:
-                        st.success(f"✅ Price variation detected (std: {price_stats['std']:.4f})")
+                        st.success(
+                            f"✅ Price variation detected (std: {price_stats['std']:.4f})"
+                        )
 
                 if validation_passed:
-                    st.success("🎉 Data validated successfully! You can proceed to indicator analysis.")
+                    st.success(
+                        "🎉 Data validated successfully! You can proceed to indicator analysis."
+                    )
 
             except Exception as e:
                 st.error(f"❌ Error loading CSV file: {str(e)}")
-                st.info("Please ensure your CSV file is properly formatted with a 'price' column.")
+                st.info(
+                    "Please ensure your CSV file is properly formatted with a 'price' column."
+                )
 
     with tab2:
         st.header("Indicator Analysis")
-        if uploaded and 'price' in df.columns:
+        if uploaded and "price" in df.columns:
             try:
                 # Compute indicators
                 prices = df["price"].to_numpy()
 
                 if len(prices) < window_size:
-                    st.warning(f"Data has {len(prices)} rows but window size is {window_size}. Using all available data.")
+                    st.warning(
+                        f"Data has {len(prices)} rows but window size is {window_size}. Using all available data."
+                    )
                     analysis_window = len(prices)
                 else:
                     analysis_window = window_size
 
                 # Progress indicator for calculations
-                with st.spinner('Computing indicators...'):
+                with st.spinner("Computing indicators..."):
                     # Calculate all indicators
                     phases = compute_phase(prices)
                     R = kuramoto_order(phases[-analysis_window:])
@@ -220,25 +251,25 @@ else:
                     st.metric(
                         "Kuramoto Order (R)",
                         f"{R:.4f}",
-                        help="Measures phase synchronization. Higher values indicate stronger coherence."
+                        help="Measures phase synchronization. Higher values indicate stronger coherence.",
                     )
                 with col2:
                     st.metric(
                         f"Entropy H({analysis_window})",
                         f"{H:.4f}",
-                        help="Shannon entropy of price distribution. Higher values indicate more uncertainty."
+                        help="Shannon entropy of price distribution. Higher values indicate more uncertainty.",
                     )
                 with col3:
                     st.metric(
                         f"Delta Entropy ΔH({analysis_window})",
                         f"{dH:.4f}",
-                        help="Change in entropy over the window. Indicates shifting market dynamics."
+                        help="Change in entropy over the window. Indicates shifting market dynamics.",
                     )
                 with col4:
                     st.metric(
                         "Hurst Exponent",
                         f"{Hs:.4f}",
-                        help="Measures long-term memory. H>0.5: trending, H<0.5: mean-reverting, H≈0.5: random walk"
+                        help="Measures long-term memory. H>0.5: trending, H<0.5: mean-reverting, H≈0.5: random walk",
                     )
 
                 # Additional metrics
@@ -249,7 +280,7 @@ else:
                     st.metric(
                         "Mean Ricci Curvature (κ)",
                         f"{kappa:.6f}",
-                        help="Geometric curvature of price manifold. Negative values indicate expanding regimes."
+                        help="Geometric curvature of price manifold. Negative values indicate expanding regimes.",
                     )
                 with col2:
                     # Market regime classification
@@ -259,16 +290,24 @@ else:
                         regime_type = "Mean-Reverting"
                     else:
                         regime_type = "Random Walk"
-                    st.metric("Regime Type", regime_type, help="Based on Hurst exponent classification")
+                    st.metric(
+                        "Regime Type",
+                        regime_type,
+                        help="Based on Hurst exponent classification",
+                    )
 
                 # Visualization
                 st.write("### Price Series Visualization")
 
                 # Create price chart with moving average
-                price_df = pd.DataFrame({
-                    'Price': prices,
-                    f'MA{analysis_window}': pd.Series(prices).rolling(window=min(20, len(prices))).mean()
-                })
+                price_df = pd.DataFrame(
+                    {
+                        "Price": prices,
+                        f"MA{analysis_window}": pd.Series(prices)
+                        .rolling(window=min(20, len(prices)))
+                        .mean(),
+                    }
+                )
                 st.line_chart(price_df, use_container_width=True)
 
                 if "volume" in df.columns:
@@ -280,7 +319,9 @@ else:
 
                 # Kuramoto-based regime
                 if R > 0.7:
-                    kuramoto_regime = "🟢 High Coherence - Strong trend or pattern detected"
+                    kuramoto_regime = (
+                        "🟢 High Coherence - Strong trend or pattern detected"
+                    )
                     regime_color = "green"
                 elif R > 0.4:
                     kuramoto_regime = "🟡 Moderate Coherence - Mixed signals"
@@ -293,7 +334,8 @@ else:
 
                 # Comprehensive analysis summary
                 with st.expander("📊 Detailed Analysis Summary"):
-                    st.markdown(f"""
+                    st.markdown(
+                        f"""
                     **Analysis Window:** {analysis_window} periods
                     **Data Points Analyzed:** {len(prices)}
 
@@ -314,19 +356,20 @@ else:
                     **Geometric Properties:**
                     - Mean Ricci Curvature: {kappa:.6f}
                     - Price Manifold: {'Contracting' if kappa > 0 else 'Expanding' if kappa < -0.001 else 'Stable'}
-                    """)
+                    """
+                    )
 
                 # Store analysis in history
                 analysis_record = {
-                    'timestamp': datetime.now().isoformat(),
-                    'filename': st.session_state.uploaded_filename,
-                    'window_size': analysis_window,
-                    'R': float(R),
-                    'H': float(H),
-                    'dH': float(dH),
-                    'Hs': float(Hs),
-                    'kappa': float(kappa),
-                    'regime': regime_type
+                    "timestamp": datetime.now().isoformat(),
+                    "filename": st.session_state.uploaded_filename,
+                    "window_size": analysis_window,
+                    "R": float(R),
+                    "H": float(H),
+                    "dH": float(dH),
+                    "Hs": float(Hs),
+                    "kappa": float(kappa),
+                    "regime": regime_type,
                 }
 
                 # Append to history (keep last 10)
@@ -336,25 +379,35 @@ else:
 
             except Exception as e:
                 st.error(f"❌ Error during indicator computation: {str(e)}")
-                st.info("This may be due to insufficient data or invalid values. Please check your dataset.")
+                st.info(
+                    "This may be due to insufficient data or invalid values. Please check your dataset."
+                )
 
         else:
-            st.info("📥 Upload data in the 'Data Upload' tab to see indicator analysis.")
+            st.info(
+                "📥 Upload data in the 'Data Upload' tab to see indicator analysis."
+            )
             st.write("### What You'll Get:")
-            st.markdown("""
+            st.markdown(
+                """
             - **Kuramoto Order Parameter**: Phase synchronization analysis
             - **Shannon Entropy**: Information content and uncertainty measures
             - **Hurst Exponent**: Long-term memory and trend detection
             - **Ricci Curvature**: Geometric market manifold analysis
             - **Interactive Visualizations**: Price charts with moving averages
             - **Regime Classification**: Automated market state detection
-            """)
+            """
+            )
 
     with tab3:
         st.header("Export & Analysis History")
 
         # Export current analysis
-        if uploaded and 'price' in df.columns and len(st.session_state.analysis_history) > 0:
+        if (
+            uploaded
+            and "price" in df.columns
+            and len(st.session_state.analysis_history) > 0
+        ):
             st.write("### Export Current Analysis")
 
             latest_analysis = st.session_state.analysis_history[-1]
@@ -369,7 +422,7 @@ else:
                     data=json_str,
                     file_name=f"tradepulse_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                     mime="application/json",
-                    help="Download analysis results in JSON format"
+                    help="Download analysis results in JSON format",
                 )
 
             with col2:
@@ -382,13 +435,15 @@ else:
                     data=csv_buffer.getvalue(),
                     file_name=f"tradepulse_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv",
-                    help="Download analysis results in CSV format"
+                    help="Download analysis results in CSV format",
                 )
 
             # Export price data with indicators
             if st.checkbox("Include full price data with indicators"):
                 st.write("### Export Enhanced Dataset")
-                st.info("This will include your original price data with computed indicator values.")
+                st.info(
+                    "This will include your original price data with computed indicator values."
+                )
 
                 try:
                     prices = df["price"].to_numpy()
@@ -398,14 +453,20 @@ else:
 
                     # Create enhanced dataframe
                     enhanced_df = df.copy()
-                    enhanced_df['phase'] = phases
+                    enhanced_df["phase"] = phases
 
                     # Add rolling indicators
                     window = min(window_size, len(prices))
-                    enhanced_df['kuramoto_order'] = pd.Series([
-                        kuramoto_order(phases[max(0, i-window):i+1]) if i >= window else np.nan
-                        for i in range(len(phases))
-                    ])
+                    enhanced_df["kuramoto_order"] = pd.Series(
+                        [
+                            (
+                                kuramoto_order(phases[max(0, i - window) : i + 1])
+                                if i >= window
+                                else np.nan
+                            )
+                            for i in range(len(phases))
+                        ]
+                    )
 
                     csv_buffer = StringIO()
                     enhanced_df.to_csv(csv_buffer, index=False)
@@ -415,7 +476,7 @@ else:
                         data=csv_buffer.getvalue(),
                         file_name=f"tradepulse_enhanced_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                         mime="text/csv",
-                        help="Download original data with computed indicators"
+                        help="Download original data with computed indicators",
                     )
                 except Exception as e:
                     st.error(f"Error creating enhanced dataset: {str(e)}")
@@ -427,13 +488,15 @@ else:
 
             # Convert history to dataframe for display
             history_df = pd.DataFrame(st.session_state.analysis_history)
-            history_df['timestamp'] = pd.to_datetime(history_df['timestamp'])
+            history_df["timestamp"] = pd.to_datetime(history_df["timestamp"])
 
             # Display history table
             st.dataframe(
-                history_df[['timestamp', 'filename', 'R', 'H', 'Hs', 'regime']].sort_values('timestamp', ascending=False),
+                history_df[
+                    ["timestamp", "filename", "R", "H", "Hs", "regime"]
+                ].sort_values("timestamp", ascending=False),
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
             )
 
             # Historical comparison chart
@@ -442,11 +505,13 @@ else:
 
                 metric_choice = st.selectbox(
                     "Select metric to visualize",
-                    ['R', 'H', 'dH', 'Hs', 'kappa'],
-                    help="Choose which indicator to plot over analysis history"
+                    ["R", "H", "dH", "Hs", "kappa"],
+                    help="Choose which indicator to plot over analysis history",
                 )
 
-                chart_df = history_df[['timestamp', metric_choice]].set_index('timestamp')
+                chart_df = history_df[["timestamp", metric_choice]].set_index(
+                    "timestamp"
+                )
                 st.line_chart(chart_df, use_container_width=True)
 
             # Clear history button
@@ -462,14 +527,17 @@ else:
                 data=history_json,
                 file_name=f"tradepulse_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 mime="application/json",
-                help="Download complete analysis history"
+                help="Download complete analysis history",
             )
         else:
-            st.info("No analysis history yet. Analyze some data in the 'Indicators' tab to build history.")
+            st.info(
+                "No analysis history yet. Analyze some data in the 'Indicators' tab to build history."
+            )
 
     with tab4:
         st.header("About TradePulse Indicators")
-        st.markdown("""
+        st.markdown(
+            """
         ### Kuramoto Order Parameter (R)
         The Kuramoto model describes synchronization of coupled oscillators. In trading:
         - **R ≈ 1**: Strong phase synchronization (trending market)
@@ -520,10 +588,12 @@ else:
 
         ### Best Practices
 
-        """)
+        """
+        )
 
         st.write("### Quick Tips")
-        st.markdown("""
+        st.markdown(
+            """
         1. **Upload** your price/volume CSV data with at least a 'price' column
         2. **Adjust** the analysis window using the sidebar slider (recommend 100-300 periods)
         3. **Interpret** the indicators in context of your strategy and market conditions
@@ -562,16 +632,18 @@ else:
         - [TradePulse Documentation](https://github.com/neuron7x/TradePulse)
         - [Indicator Theory](https://github.com/neuron7x/TradePulse/docs/indicators.md)
         - [API Reference](https://docs.tradepulse.io/api)
-        """)
+        """
+        )
 
         # System info
         with st.expander("🔧 System Information"):
-            st.markdown(f"""
+            st.markdown(
+                f"""
             **Dashboard Version:** 2.0.0
             **Analysis Window:** {window_size} periods
             **Entropy Bins:** {entropy_bins}
             **Ricci Delta:** {ricci_delta}
             **Session Analyses:** {len(st.session_state.analysis_history)}
             **User:** {name}
-            """)
-
+            """
+            )

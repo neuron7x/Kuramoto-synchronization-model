@@ -40,7 +40,9 @@ def _load_targets(config_path: Path) -> list[CoverageTarget]:
             raw_path = entry["path"]
             raw_min_line_rate = entry["min_line_rate"]
         except KeyError as exc:
-            raise ValueError("Each coverage target requires 'path' and 'min_line_rate'.") from exc
+            raise ValueError(
+                "Each coverage target requires 'path' and 'min_line_rate'."
+            ) from exc
 
         min_line_rate = float(raw_min_line_rate)
         if not 0.0 <= min_line_rate <= 100.0:
@@ -72,7 +74,11 @@ def _load_coverage_map(report_path: Path) -> Mapping[str, CoverageSnapshot]:
     root = tree.getroot()
 
     sources_element = root.find("sources")
-    sources = [Path(elem.text or "") for elem in sources_element.findall("source")] if sources_element is not None else []
+    sources = (
+        [Path(elem.text or "") for elem in sources_element.findall("source")]
+        if sources_element is not None
+        else []
+    )
 
     coverage_by_path: dict[str, CoverageSnapshot] = {}
     packages_element = root.find("packages")
@@ -89,7 +95,9 @@ def _load_coverage_map(report_path: Path) -> Mapping[str, CoverageSnapshot]:
                 continue
             line_rate = float(cls.get("line-rate", "0")) * 100.0
             branch_attr = cls.get("branch-rate")
-            branch_rate = float(branch_attr) * 100.0 if branch_attr is not None else None
+            branch_rate = (
+                float(branch_attr) * 100.0 if branch_attr is not None else None
+            )
             snapshot = CoverageSnapshot(line_rate=line_rate, branch_rate=branch_rate)
 
             for candidate in _resolve_filename(filename, sources):
@@ -131,7 +139,9 @@ def _evaluate_targets(
             )
             continue
 
-        print(f"✓ {target.path.as_posix()} — line coverage {line_rate:.2f}% (threshold {threshold:.2f}%)")
+        print(
+            f"✓ {target.path.as_posix()} — line coverage {line_rate:.2f}% (threshold {threshold:.2f}%)"
+        )
 
     return 0 if success else 1
 

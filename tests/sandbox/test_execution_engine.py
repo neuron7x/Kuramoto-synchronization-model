@@ -52,7 +52,9 @@ async def test_execution_engine_respects_risk_rejection() -> None:
         reference_price=100.0,
         rationale="test",
     )
-    risk_decision = RiskDecision(approved=False, reason="limits_exceeded", limit_consumption=1.0)
+    risk_decision = RiskDecision(
+        approved=False, reason="limits_exceeded", limit_consumption=1.0
+    )
     audit = StubAudit()
     engine = ExecutionEngine(
         signals=StubSignalGateway(signal),
@@ -77,7 +79,9 @@ async def test_execution_engine_creates_fill_when_risk_approves() -> None:
         reference_price=100.0,
         rationale="test",
     )
-    risk_decision = RiskDecision(approved=True, reason="approved", limit_consumption=0.5)
+    risk_decision = RiskDecision(
+        approved=True, reason="approved", limit_consumption=0.5
+    )
     audit = StubAudit()
     engine = ExecutionEngine(
         signals=StubSignalGateway(signal),

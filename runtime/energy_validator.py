@@ -44,15 +44,27 @@ class EnergyConfig:
     max_acceptable_energy: float = 1.35
 
     # Metric thresholds as specified in docs/TACL.md
-    metrics: Tuple[MetricThreshold, ...] = field(default_factory=lambda: (
-        MetricThreshold("latency_p95", "95th percentile end-to-end latency", 85.0, 1.6, "ms"),
-        MetricThreshold("latency_p99", "99th percentile end-to-end latency", 120.0, 1.9, "ms"),
-        MetricThreshold("coherency_drift", "Fractional drift of shared state", 0.08, 1.2, ""),
-        MetricThreshold("cpu_burn", "CPU utilisation ratio", 0.75, 0.9, ""),
-        MetricThreshold("mem_cost", "Memory footprint per node", 6.5, 0.8, "GiB"),
-        MetricThreshold("queue_depth", "Queue length at activator ingress", 32.0, 0.7, ""),
-        MetricThreshold("packet_loss", "Control-plane packet loss ratio", 0.005, 1.4, ""),
-    ))
+    metrics: Tuple[MetricThreshold, ...] = field(
+        default_factory=lambda: (
+            MetricThreshold(
+                "latency_p95", "95th percentile end-to-end latency", 85.0, 1.6, "ms"
+            ),
+            MetricThreshold(
+                "latency_p99", "99th percentile end-to-end latency", 120.0, 1.9, "ms"
+            ),
+            MetricThreshold(
+                "coherency_drift", "Fractional drift of shared state", 0.08, 1.2, ""
+            ),
+            MetricThreshold("cpu_burn", "CPU utilisation ratio", 0.75, 0.9, ""),
+            MetricThreshold("mem_cost", "Memory footprint per node", 6.5, 0.8, "GiB"),
+            MetricThreshold(
+                "queue_depth", "Queue length at activator ingress", 32.0, 0.7, ""
+            ),
+            MetricThreshold(
+                "packet_loss", "Control-plane packet loss ratio", 0.005, 1.4, ""
+            ),
+        )
+    )
 
     def get_total_weight(self) -> float:
         """Calculate total weight of all metrics."""
@@ -169,8 +181,7 @@ class EnergyValidator:
         return penalty, headroom
 
     def compute_internal_energy(
-        self,
-        metrics: Dict[str, float]
+        self, metrics: Dict[str, float]
     ) -> Tuple[float, Dict[str, float], Dict[str, float]]:
         """Compute internal energy U from metrics.
 
@@ -302,7 +313,9 @@ class EnergyValidator:
                     for m in self.config.metrics
                 ],
             },
-            "validation_history": [result.to_dict() for result in self.validation_history],
+            "validation_history": [
+                result.to_dict() for result in self.validation_history
+            ],
             "summary": {
                 "total_validations": len(self.validation_history),
                 "passed": sum(1 for r in self.validation_history if r.passed),

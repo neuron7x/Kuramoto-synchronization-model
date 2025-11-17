@@ -45,7 +45,13 @@ class TradePulseAPIClient:
             timeout=float(self._client.timeout.connect),
         )
 
-    def get_market_signal(self, symbol: str, *, payload: Mapping[str, Any] | None = None, headers: Mapping[str, str] | None = None) -> httpx.Response:
+    def get_market_signal(
+        self,
+        symbol: str,
+        *,
+        payload: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> httpx.Response:
         """Retrieve the latest trading signal for a symbol.
 
         Method: GET /api/v1/signals/{symbol}
@@ -65,7 +71,12 @@ class TradePulseAPIClient:
         response.raise_for_status()
         return response
 
-    def create_prediction(self, *, payload: Mapping[str, Any] | None = None, headers: Mapping[str, str] | None = None) -> httpx.Response:
+    def create_prediction(
+        self,
+        *,
+        payload: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> httpx.Response:
         """Submit feature vectors and request an inference run.
 
         Method: POST /api/v1/predictions

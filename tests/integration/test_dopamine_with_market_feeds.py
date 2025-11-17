@@ -48,7 +48,9 @@ def calculate_simple_reward(records: List, window: int = 1) -> List[float]:
     return rewards
 
 
-@pytest.mark.skip(reason="DopamineController API changed - needs refactoring to use step() instead of update_td0()")
+@pytest.mark.skip(
+    reason="DopamineController API changed - needs refactoring to use step() instead of update_td0()"
+)
 class TestDopamineTD0RPE:
     """Test TD(0) Reward Prediction Error with market feeds."""
 
@@ -83,13 +85,17 @@ class TestDopamineTD0RPE:
         assert len(dopamine_levels) == 100
 
         # In stable market, prediction errors should be small on average
-        avg_abs_error = sum(abs(pe) for pe in prediction_errors) / len(prediction_errors)
+        avg_abs_error = sum(abs(pe) for pe in prediction_errors) / len(
+            prediction_errors
+        )
         assert avg_abs_error < 0.5, "Prediction errors should be small in stable market"
 
         # Dopamine should remain in reasonable range
         assert all(0.0 <= d <= 1.0 for d in dopamine_levels)
         avg_dopamine = sum(dopamine_levels) / len(dopamine_levels)
-        assert 0.3 < avg_dopamine < 0.7, "Average dopamine should be moderate in stable market"
+        assert (
+            0.3 < avg_dopamine < 0.7
+        ), "Average dopamine should be moderate in stable market"
 
     def test_td0_rpe_trending_up_market(self):
         """Test TD(0) RPE in uptrending market."""
@@ -118,7 +124,9 @@ class TestDopamineTD0RPE:
         # Later dopamine should be higher than early (learning positive rewards)
         early_dopamine = sum(dopamine_levels[:50]) / 50
         late_dopamine = sum(dopamine_levels[-50:]) / 50
-        assert late_dopamine > early_dopamine * 0.9, "Dopamine should adapt to positive trend"
+        assert (
+            late_dopamine > early_dopamine * 0.9
+        ), "Dopamine should adapt to positive trend"
 
     def test_td0_rpe_trending_down_market(self):
         """Test TD(0) RPE in downtrending market."""
@@ -149,7 +157,9 @@ class TestDopamineTD0RPE:
         assert avg_dopamine < 0.55, "Dopamine should be depressed in downtrend"
 
 
-@pytest.mark.skip(reason="DopamineController API changed - needs refactoring to use new API")
+@pytest.mark.skip(
+    reason="DopamineController API changed - needs refactoring to use new API"
+)
 class TestDDMAdaptation:
     """Test DDM (Drift Diffusion Model) parameter adaptation with market feeds."""
 
@@ -234,7 +244,9 @@ class TestDDMAdaptation:
         assert avg_post < avg_pre, "Dopamine should drop after flash crash"
 
 
-@pytest.mark.skip(reason="DopamineController API changed - needs refactoring to use new API")
+@pytest.mark.skip(
+    reason="DopamineController API changed - needs refactoring to use new API"
+)
 class TestGoNoGoDecisions:
     """Test Go/No-Go decision making with market feeds."""
 
@@ -345,10 +357,14 @@ class TestGoNoGoDecisions:
 
             # Each phase should have some variety in decisions
             unique_decisions = len(set(decisions))
-            assert unique_decisions >= 1, f"Phase {phase} should have at least 1 decision type"
+            assert (
+                unique_decisions >= 1
+            ), f"Phase {phase} should have at least 1 decision type"
 
 
-@pytest.mark.skip(reason="DopamineController API changed - needs refactoring to use new API")
+@pytest.mark.skip(
+    reason="DopamineController API changed - needs refactoring to use new API"
+)
 class TestLatencyImpact:
     """Test impact of market feed latency on dopamine system."""
 
@@ -361,9 +377,7 @@ class TestLatencyImpact:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(
-                FIXTURES_DIR / recording_name
-            )
+            recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
 
             # Check latency metrics
             latencies = [r.latency_ms for r in recording.records]
@@ -373,7 +387,9 @@ class TestLatencyImpact:
             # All latencies should be reasonable
             assert avg_latency < 100, f"{recording_name}: Average latency too high"
             assert max_latency < 150, f"{recording_name}: Max latency too high"
-            assert all(l >= 0 for l in latencies), f"{recording_name}: Negative latency detected"
+            assert all(
+                l >= 0 for l in latencies
+            ), f"{recording_name}: Negative latency detected"
 
     def test_timestamp_monotonicity(self):
         """Test that all recordings have monotonic timestamps."""
@@ -386,14 +402,12 @@ class TestLatencyImpact:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(
-                FIXTURES_DIR / recording_name
-            )
+            recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
 
             # Verify monotonicity
             for i in range(1, len(recording)):
                 prev_ts = recording[i - 1].exchange_ts
                 curr_ts = recording[i].exchange_ts
-                assert curr_ts >= prev_ts, (
-                    f"{recording_name}: Timestamps not monotonic at index {i}"
-                )
+                assert (
+                    curr_ts >= prev_ts
+                ), f"{recording_name}: Timestamps not monotonic at index {i}"

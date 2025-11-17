@@ -25,7 +25,9 @@ def parity_spec() -> FeatureParitySpec:
 
 def _make_frame(ts_values: list[str], values: list[float]) -> pd.DataFrame:
     timestamps = [pd.Timestamp(item, tz=UTC) for item in ts_values]
-    return pd.DataFrame({"entity_id": ["A"] * len(values), "ts": timestamps, "value": values})
+    return pd.DataFrame(
+        {"entity_id": ["A"] * len(values), "ts": timestamps, "value": values}
+    )
 
 
 def test_parity_coordinator_validates_empty_frames(tmp_path) -> None:
@@ -123,7 +125,12 @@ def test_parity_coordinator_allows_schema_evolution_on_overwrite(tmp_path) -> No
 
     report = coordinator.synchronize(evolving_spec, evolved, mode="overwrite")
     assert report.columns_added == ("confidence",)
-    assert store.load("prices").columns.tolist() == ["entity_id", "ts", "value", "confidence"]
+    assert store.load("prices").columns.tolist() == [
+        "entity_id",
+        "ts",
+        "value",
+        "confidence",
+    ]
 
 
 def test_parity_coordinator_append_skips_duplicate_rows(tmp_path, parity_spec) -> None:

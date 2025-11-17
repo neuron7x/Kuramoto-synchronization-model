@@ -71,7 +71,9 @@ def test_build_scenario_clamps_to_risk_tolerance() -> None:
     metrics = {
         "novelty": torch.tensor([0.6], dtype=torch.float32, device=generator._device),
         "drawdown": torch.tensor([0.2], dtype=torch.float32, device=generator._device),
-        "correlation": torch.tensor([0.1], dtype=torch.float32, device=generator._device),
+        "correlation": torch.tensor(
+            [0.1], dtype=torch.float32, device=generator._device
+        ),
     }
     sample = torch.tensor(
         [0.2, 0.1, 0.05, 0.03], dtype=torch.float32, device=generator._device

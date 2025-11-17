@@ -262,7 +262,9 @@ def test_tick_stream_aggregator_requires_non_empty_timeframe() -> None:
         TickStreamAggregator(timeframe="   ")
 
 
-def test_tick_stream_aggregator_accepts_offset_frequency_and_calendar_alignment() -> None:
+def test_tick_stream_aggregator_accepts_offset_frequency_and_calendar_alignment() -> (
+    None
+):
     cache_service = DataIngestionCacheService()
     aggregator = TickStreamAggregator(
         cache_service=cache_service,

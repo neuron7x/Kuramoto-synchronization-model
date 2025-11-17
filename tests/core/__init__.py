@@ -8,4 +8,3 @@ same top-level name, which leads to import collisions when different suites
 contain files with identical basenames.  Adding the package initializer
 prevents those collisions and keeps module discovery stable.
 """
-

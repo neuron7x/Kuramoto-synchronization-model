@@ -15,6 +15,7 @@ from neuropro.hpc_validation import generate_synthetic_data
 
 try:
     import sympy as sp
+
     SYMPY_AVAILABLE = True
 except ImportError:
     SYMPY_AVAILABLE = False
@@ -96,9 +97,9 @@ class TestPWPEFormulation:
     def test_pwpe_symbolic_verification(self):
         """Symbolic verification of PWPE formula."""
         # Define symbolic variables
-        pi_l = sp.Symbol('pi_l', positive=True)  # precision
-        s_l = sp.Symbol('s_l', real=True)  # sensory state
-        mu_l = sp.Symbol('mu_l', real=True)  # prediction
+        pi_l = sp.Symbol("pi_l", positive=True)  # precision
+        s_l = sp.Symbol("s_l", real=True)  # sensory state
+        mu_l = sp.Symbol("mu_l", real=True)  # prediction
 
         # PWPE formula from literature
         epsilon_l = pi_l * (s_l - mu_l)
@@ -199,10 +200,10 @@ class TestTDLossFormulation:
     def test_td_error_symbolic(self):
         """Symbolic verification of TD-error formula."""
         # Define symbolic variables
-        r = sp.Symbol('r', real=True)  # reward
-        gamma = sp.Symbol('gamma', positive=True)  # discount
-        V_s = sp.Symbol('V_s', real=True)  # value at s
-        V_s_next = sp.Symbol('V_s_next', real=True)  # value at s'
+        r = sp.Symbol("r", real=True)  # reward
+        gamma = sp.Symbol("gamma", positive=True)  # discount
+        V_s = sp.Symbol("V_s", real=True)  # value at s
+        V_s_next = sp.Symbol("V_s_next", real=True)  # value at s'
 
         # TD-error formula
         delta = r + gamma * V_s_next - V_s
@@ -282,11 +283,11 @@ class TestSelfRewardFormulation:
     def test_reward_modulation_symbolic(self):
         """Symbolic verification of reward modulation."""
         # Define symbolic variables
-        r_pred = sp.Symbol('r_pred', real=True)
-        r_expert = sp.Symbol('r_expert', real=True)
-        alpha = sp.Symbol('alpha', positive=True)
-        k = sp.Symbol('k', positive=True)
-        epsilon = sp.Symbol('epsilon', positive=True)
+        r_pred = sp.Symbol("r_pred", real=True)
+        r_expert = sp.Symbol("r_expert", real=True)
+        alpha = sp.Symbol("alpha", positive=True)
+        k = sp.Symbol("k", positive=True)
+        epsilon = sp.Symbol("epsilon", positive=True)
 
         # Formulas
         r_self = alpha * r_pred + (1 - alpha) * r_expert

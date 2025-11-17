@@ -57,5 +57,7 @@ def validate(stats_path: Path) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        raise SystemExit("Usage: python loadtests/validate_results.py <locust_stats_csv>")
+        raise SystemExit(
+            "Usage: python loadtests/validate_results.py <locust_stats_csv>"
+        )
     validate(Path(sys.argv[1]))

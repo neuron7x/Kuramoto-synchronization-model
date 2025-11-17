@@ -24,7 +24,9 @@ class ControlState:
         self._kill_switch = KillSwitchState(engaged=False)
         self._lock = Lock()
         self._audit = InMemoryAuditLog()
-        self._targets = [HealthCheckTarget(name, url) for name, url in health_targets.items()]
+        self._targets = [
+            HealthCheckTarget(name, url) for name, url in health_targets.items()
+        ]
 
     def engage(self, reason: str) -> KillSwitchState:
         with self._lock:
@@ -43,7 +45,9 @@ class ControlState:
 
     def reset(self) -> KillSwitchState:
         with self._lock:
-            self._kill_switch = KillSwitchState(engaged=False, reason=None, engaged_at=None)
+            self._kill_switch = KillSwitchState(
+                engaged=False, reason=None, engaged_at=None
+            )
             self._audit.emit(
                 source="control-api",
                 category="kill-switch",
@@ -69,7 +73,10 @@ class ControlState:
                     results[target.name] = {"status": "ok", "details": response.json()}
                 except Exception as error:  # pragma: no cover - network failure path
                     results[target.name] = {"status": "error", "details": str(error)}
-        results["control-api"] = {"status": "ok", "timestamp": datetime.now(timezone.utc)}
+        results["control-api"] = {
+            "status": "ok",
+            "timestamp": datetime.now(timezone.utc),
+        }
         return results
 
     def ingest_audit_event(self, event: AuditEvent) -> None:

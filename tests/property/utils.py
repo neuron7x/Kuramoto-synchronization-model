@@ -21,7 +21,9 @@ import pandas as pd
 try:  # pragma: no cover - Hypothesis is optional in some environments
     from hypothesis import HealthCheck, Phase, note
 except ImportError as exc:  # pragma: no cover
-    raise RuntimeError("Hypothesis must be installed to use property utilities") from exc
+    raise RuntimeError(
+        "Hypothesis must be installed to use property utilities"
+    ) from exc
 
 _SEED_REGISTRY: dict[str, int] = {}
 
@@ -119,4 +121,3 @@ __all__ = [
     "property_seed",
     "regression_note",
 ]
-

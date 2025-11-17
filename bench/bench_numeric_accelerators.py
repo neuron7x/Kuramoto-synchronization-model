@@ -138,8 +138,7 @@ def _load_baseline(path: Path) -> tuple[dict[str, object], BenchmarkResults]:
         if not isinstance(backend_map, Mapping):
             raise ValueError(f"baseline suite '{suite}' is not a mapping")
         normalized[suite] = {
-            backend: float(value)
-            for backend, value in backend_map.items()
+            backend: float(value) for backend, value in backend_map.items()
         }
     return metadata, normalized
 
@@ -155,7 +154,9 @@ def _analyze(
     current: BenchmarkResults,
     baseline: BenchmarkResults,
     threshold: float,
-) -> tuple[list[tuple[str, str, float]], list[tuple[str, str, float]], list[tuple[str, str]]]:
+) -> tuple[
+    list[tuple[str, str, float]], list[tuple[str, str, float]], list[tuple[str, str]]
+]:
     regressions: list[tuple[str, str, float]] = []
     improvements: list[tuple[str, str, float]] = []
     missing: list[tuple[str, str]] = []
@@ -392,22 +393,22 @@ def main() -> None:
                 for backend in backend_map
                 if backend not in results.get(suite, {})
             ]
-            print("Baseline comparison (threshold {:.1%}):".format(args.regression_threshold))
+            print(
+                "Baseline comparison (threshold {:.1%}):".format(
+                    args.regression_threshold
+                )
+            )
             if regressions:
                 print("  Regressions detected:")
                 for suite, backend, delta in regressions:
-                    print(
-                        f"    - {suite}:{backend} slower by {delta * 100:.2f}%"
-                    )
+                    print(f"    - {suite}:{backend} slower by {delta * 100:.2f}%")
                 exit_code = 1
             else:
                 print("  No regressions detected.")
             if improvements:
                 print("  Improvements:")
                 for suite, backend, delta in improvements:
-                    print(
-                        f"    - {suite}:{backend} faster by {-delta * 100:.2f}%"
-                    )
+                    print(f"    - {suite}:{backend} faster by {-delta * 100:.2f}%")
             if missing:
                 prefix = "ERROR" if args.fail_on_missing else "Warning"
                 print(f"  {prefix}: missing baseline entries for")

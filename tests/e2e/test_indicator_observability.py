@@ -84,7 +84,9 @@ def test_indicator_observability_pipeline() -> None:
     analysis_frame = df.tail(160)[["price", "volume"]].rename(
         columns={"price": "close"}
     )
-    result = analyzer.analyze(analysis_frame, price_col="close", volume_col="volume", reset_history=True)
+    result = analyzer.analyze(
+        analysis_frame, price_col="close", volume_col="volume", reset_history=True
+    )
 
     assert np.isfinite(result.temporal_curvature)
     assert -1.0 <= result.temporal_curvature <= 1.0

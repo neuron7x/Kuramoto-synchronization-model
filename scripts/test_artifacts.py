@@ -71,11 +71,9 @@ def main():
         # JSON artifacts
         ("artifacts/cns_stabilizer/eventlog_sample.json", test_json_artifact),
         ("artifacts/orchestrator_config_v1.json", test_json_artifact),
-
         # YAML artifacts
         ("artifacts/configs/binance_prod_template.yaml", test_yaml_artifact),
         ("artifacts/configs/coinbase_prod_template.yaml", test_yaml_artifact),
-
         # CSV artifacts
         ("data/sample.csv", test_csv_artifact),
         ("data/sample_ohlc.csv", test_csv_artifact),
@@ -109,7 +107,9 @@ def main():
     print("\nVerifying checksum computation...")
     print("-" * 60)
     test_file = repo_root / "data/sample.csv"
-    expected_checksum = "5eb16d5e9b45f4a21772ef1500cbe7a9923c897ae38483c71cd4e917600861b8"
+    expected_checksum = (
+        "5eb16d5e9b45f4a21772ef1500cbe7a9923c897ae38483c71cd4e917600861b8"
+    )
     actual_checksum = compute_sha256(test_file)
 
     if actual_checksum == expected_checksum:
@@ -154,7 +154,7 @@ def main():
     try:
         with open(repo_root / "artifacts/configs/binance_prod_template.yaml") as f:
             exchange_config = yaml.safe_load(f)
-        venues = list(exchange_config['execution']['venues'].keys())
+        venues = list(exchange_config["execution"]["venues"].keys())
         print(f"  ✓ YAML Config Loading: {', '.join(venues)}")
         passed += 1
     except Exception as e:

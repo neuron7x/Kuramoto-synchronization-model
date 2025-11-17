@@ -49,9 +49,11 @@ def main():
                 description = metadata.get("description", "")
 
         print(f"  {filepath.name:45s}")
-        print(f"    Records: {len(records):4d} | "
-              f"Avg Price: ${avg_price:,.2f} | "
-              f"Volatility: {volatility:.2f}%")
+        print(
+            f"    Records: {len(records):4d} | "
+            f"Avg Price: ${avg_price:,.2f} | "
+            f"Volatility: {volatility:.2f}%"
+        )
         if description:
             print(f"    {description}")
         print()

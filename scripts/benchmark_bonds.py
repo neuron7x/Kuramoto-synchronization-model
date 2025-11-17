@@ -34,7 +34,9 @@ def run_benchmark(iterations: int = 200) -> dict[str, float | int]:
     graph.add_node("broker", cpu_norm=0.3)
     graph.add_node("audit", cpu_norm=0.7)
 
-    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.92)
+    graph.add_edge(
+        "ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.92
+    )
     graph.add_edge("matcher", "risk", type="ionic", latency_norm=0.8, coherency=0.71)
     graph.add_edge("risk", "broker", type="metallic", latency_norm=0.15, coherency=0.88)
     graph.add_edge("broker", "audit", type="hydrogen", latency_norm=1.2, coherency=0.63)

@@ -79,8 +79,7 @@ def test_budget_priority(budget_loader: BudgetLoader) -> None:
     """Test budget priority selection."""
     # Scenario should take priority over exchange
     scenario_budget = budget_loader.get_budget(
-        exchange="coinbase",
-        scenario="flash_crash"
+        exchange="coinbase", scenario="flash_crash"
     )
     flash_crash_only = budget_loader.get_scenario_budget("flash_crash")
 
@@ -89,8 +88,7 @@ def test_budget_priority(budget_loader: BudgetLoader) -> None:
 
     # Exchange should take priority over environment
     exchange_budget = budget_loader.get_budget(
-        exchange="coinbase",
-        environment="production"
+        exchange="coinbase", environment="production"
     )
     coinbase_only = budget_loader.get_exchange_budget("coinbase")
 
@@ -149,7 +147,8 @@ def test_list_components(budget_loader: BudgetLoader) -> None:
 def test_budget_loader_with_custom_config(tmp_path: Path) -> None:
     """Test loading budget from custom config file."""
     config_path = tmp_path / "custom_budgets.yaml"
-    config_path.write_text("""
+    config_path.write_text(
+        """
 version: "1.0.0"
 
 default:
@@ -168,7 +167,9 @@ exchanges:
     throughput_min_tps: 5.0
     slippage_median_bps: 5.0
     slippage_p95_bps: 15.0
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     loader = BudgetLoader(config_path)
 

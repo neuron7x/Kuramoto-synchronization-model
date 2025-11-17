@@ -70,13 +70,17 @@ def _collect_summary() -> MutationSummary:
     counted = total - sum(counts[status] for status in _EXCLUDED_STATUSES)
     killed = counts.get("killed", 0)
 
-    return MutationSummary(total=total, counted=counted, killed=killed, status_counts=counts)
+    return MutationSummary(
+        total=total, counted=counted, killed=killed, status_counts=counts
+    )
 
 
 def _render_summary(summary: MutationSummary) -> str:
     ordered_statuses = sorted(summary.status_counts.items())
     status_fragments = [f"{name}={count}" for name, count in ordered_statuses if count]
-    status_section = ", ".join(status_fragments) if status_fragments else "no mutants discovered"
+    status_section = (
+        ", ".join(status_fragments) if status_fragments else "no mutants discovered"
+    )
     kill_percentage = summary.kill_rate * 100.0
     return (
         "Mutation summary: "
@@ -85,7 +89,9 @@ def _render_summary(summary: MutationSummary) -> str:
     )
 
 
-def _write_summary(summary: MutationSummary, *, destination: Path | None, threshold: float) -> None:
+def _write_summary(
+    summary: MutationSummary, *, destination: Path | None, threshold: float
+) -> None:
     if destination is None:
         return
     payload = {
@@ -96,7 +102,9 @@ def _write_summary(summary: MutationSummary, *, destination: Path | None, thresh
         "threshold": threshold,
         "status_counts": dict(summary.status_counts),
     }
-    destination.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    destination.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _validate_threshold(value: str) -> float:
@@ -134,7 +142,10 @@ def main(argv: list[str] | None = None) -> int:
     _write_summary(summary, destination=args.summary, threshold=args.threshold)
 
     if summary.total == 0:
-        print("No mutation results were found. Did you run 'mutmut run' first?", file=sys.stderr)
+        print(
+            "No mutation results were found. Did you run 'mutmut run' first?",
+            file=sys.stderr,
+        )
         return 2
 
     print(message)
@@ -153,8 +164,13 @@ def main(argv: list[str] | None = None) -> int:
             if summary.status_counts.get(name, 0)
         }
         if failing_statuses:
-            details = ", ".join(f"{name}={count}" for name, count in sorted(failing_statuses.items()))
-            print(f"Mutation kill rate below threshold; unresolved mutants: {details}", file=sys.stderr)
+            details = ", ".join(
+                f"{name}={count}" for name, count in sorted(failing_statuses.items())
+            )
+            print(
+                f"Mutation kill rate below threshold; unresolved mutants: {details}",
+                file=sys.stderr,
+            )
         else:
             print("Mutation kill rate below threshold.", file=sys.stderr)
         return 1

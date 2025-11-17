@@ -114,7 +114,9 @@ def _collect_components(tree: ast.AST, module_name: str) -> List[ComponentAnalys
     return components
 
 
-def _analyse_function(node: ast.FunctionDef | ast.AsyncFunctionDef, module_name: str) -> ComponentAnalysis:
+def _analyse_function(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, module_name: str
+) -> ComponentAnalysis:
     signature = _format_function_signature(node)
     explanation = _build_function_explanation(node)
     return ComponentAnalysis(
@@ -236,7 +238,9 @@ def _build_class_explanation(node: ast.ClassDef) -> str:
         parts.append(doc.strip().splitlines()[0])
     bases = [ast.unparse(base) for base in node.bases] or ["object"]
     parts.append(
-        "The class inherits from " + (", ".join(bases) if len(bases) > 1 else bases[0]) + "."
+        "The class inherits from "
+        + (", ".join(bases) if len(bases) > 1 else bases[0])
+        + "."
     )
     public_methods = [
         child.name
@@ -252,11 +256,16 @@ def _build_class_explanation(node: ast.ClassDef) -> str:
     return " ".join(parts)
 
 
-def _describe_control_flow(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Iterable[str]:
+def _describe_control_flow(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> Iterable[str]:
     control_features: list[str] = []
     if any(isinstance(child, ast.If) for child in ast.walk(node)):
         control_features.append("performs conditional branching")
-    if any(isinstance(child, (ast.For, ast.AsyncFor, ast.While)) for child in ast.walk(node)):
+    if any(
+        isinstance(child, (ast.For, ast.AsyncFor, ast.While))
+        for child in ast.walk(node)
+    ):
         control_features.append("iterates over sequences or generators")
     if any(isinstance(child, ast.Try) for child in ast.walk(node)):
         control_features.append("handles exceptions via try/except blocks")
@@ -290,7 +299,10 @@ def _describe_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
 
 
 def _contains_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    return any(isinstance(child, ast.Return) and child.value is not None for child in ast.walk(node))
+    return any(
+        isinstance(child, ast.Return) and child.value is not None
+        for child in ast.walk(node)
+    )
 
 
 def _contains_raise(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
@@ -348,15 +360,15 @@ def _render_component_test(component: ComponentAnalysis) -> str:
     explanation_comment = _format_explanation_comment(component.explanation)
     lines = [
         f"def test_{slug}_analysis() -> None:",
-        f"    \"\"\"Auto-generated behavioural overview for ``{component.name}``.\"\"\"",
-        f"    analysis = analyze_component(MODULE_UNDER_TEST, \"{component.name}\")",
+        f'    """Auto-generated behavioural overview for ``{component.name}``."""',
+        f'    analysis = analyze_component(MODULE_UNDER_TEST, "{component.name}")',
     ]
     lines.extend(explanation_comment)
     lines.extend(
         [
             "    assert analysis.module == MODULE_UNDER_TEST",
-            f"    assert analysis.name == \"{component.name}\"",
-            f"    assert analysis.kind == \"{component.kind}\"",
+            f'    assert analysis.name == "{component.name}"',
+            f'    assert analysis.kind == "{component.kind}"',
             f"    assert analysis.signature == {component.signature!r}",
             f"    assert analysis.explanation == {component.explanation!r}",
             f"    assert analysis.lineno == {component.lineno}",
@@ -398,7 +410,9 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    destination = generate_unit_tests(args.module, Path(args.output_dir), filename=args.filename)
+    destination = generate_unit_tests(
+        args.module, Path(args.output_dir), filename=args.filename
+    )
     print(f"Generated tests written to {destination}")
     return 0
 

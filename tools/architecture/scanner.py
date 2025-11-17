@@ -174,7 +174,12 @@ class ArchitectureScanner:
             if not name:
                 continue
             internal, external = self._collect_imports(name, path, module_names)
-            modules[name] = ModuleInfo(name=name, path=path, internal_imports=internal, external_imports=external)
+            modules[name] = ModuleInfo(
+                name=name,
+                path=path,
+                internal_imports=internal,
+                external_imports=external,
+            )
             for dep in internal:
                 dependencies[name].add(dep)
                 reverse_dependencies[dep].add(name)
@@ -257,7 +262,9 @@ class ArchitectureScanner:
 
         external.add(target.split(".")[0])
 
-    def _resolve_internal_target(self, target: str, known_modules: Set[str]) -> str | None:
+    def _resolve_internal_target(
+        self, target: str, known_modules: Set[str]
+    ) -> str | None:
         if target in known_modules:
             return target
 
@@ -268,7 +275,9 @@ class ArchitectureScanner:
                 return target
         return None
 
-    def _resolve_from_import(self, current_module: str, node: ast.ImportFrom) -> Set[str]:
+    def _resolve_from_import(
+        self, current_module: str, node: ast.ImportFrom
+    ) -> Set[str]:
         results: Set[str] = set()
         base_module = node.module or ""
         level = node.level or 0
@@ -299,7 +308,9 @@ class ArchitectureScanner:
                 results.add(alias.name)
         return results
 
-    def _detect_cycles(self, modules: Iterable[str], dependencies: Mapping[str, Set[str]]) -> List[List[str]]:
+    def _detect_cycles(
+        self, modules: Iterable[str], dependencies: Mapping[str, Set[str]]
+    ) -> List[List[str]]:
         cycles: List[List[str]] = []
         temp_mark: Set[str] = set()
         perm_mark: Set[str] = set()

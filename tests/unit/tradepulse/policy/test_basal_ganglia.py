@@ -32,7 +32,9 @@ class TestBasalGangliaPolicy:
         policy = BasalGangliaPolicy()
         state = {"R": 0.8}
 
-        action, size_hint = policy.decide(state, ews_state="EMERGENT", risk_state="BREACH")
+        action, size_hint = policy.decide(
+            state, ews_state="EMERGENT", risk_state="BREACH"
+        )
 
         assert action == "NO_GO"
         assert size_hint == 0.0
@@ -54,7 +56,9 @@ class TestBasalGangliaPolicy:
 
         # Low R
         state_low = {"R": 0.2}
-        action_low, size_low = policy.decide(state_low, ews_state="EMERGENT", risk_state="OK")
+        action_low, size_low = policy.decide(
+            state_low, ews_state="EMERGENT", risk_state="OK"
+        )
         assert action_low == "GO"
         assert abs(size_low - 0.6) < 0.01
 

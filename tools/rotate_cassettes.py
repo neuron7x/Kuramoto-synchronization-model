@@ -23,5 +23,6 @@ def main():
             removed += 1
     print(f"Removed {removed} old cassette(s) older than {args.max_age_days} days")
 
+
 if __name__ == "__main__":
     main()

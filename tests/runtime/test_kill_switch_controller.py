@@ -30,7 +30,9 @@ def test_kill_switch_prevents_control_step(tmp_path, monkeypatch):
     monkeypatch.setattr(ThermoController, "AUDIT_LOG_PATH", log_path)
     controller = ThermoController(_graph())
     controller.set_dual_approval_token(
-        DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+        DualApprovalManager(secret="test-secret").issue_service_token(
+            action_id="thermo_topology"
+        )
     )
 
     activate_kill_switch()

@@ -24,11 +24,11 @@ def load_audit_log(log_path: Path, period_days: int = 7) -> List[Dict[str, Any]]
         print(f"Warning: Audit log not found at {log_path}")
         return entries
 
-    with log_path.open('r') as f:
+    with log_path.open("r") as f:
         for line in f:
             try:
                 entry = json.loads(line.strip())
-                if entry.get('ts', 0) >= cutoff_time:
+                if entry.get("ts", 0) >= cutoff_time:
                     entries.append(entry)
             except json.JSONDecodeError:
                 continue
@@ -41,8 +41,8 @@ def analyze_free_energy_trend(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
     if not entries:
         return {"status": "no_data"}
 
-    F_values = [e.get('F_new', 0) for e in entries]
-    timestamps = [e.get('ts', 0) for e in entries]
+    F_values = [e.get("F_new", 0) for e in entries]
+    timestamps = [e.get("ts", 0) for e in entries]
 
     if not F_values:
         return {"status": "no_data"}
@@ -82,8 +82,8 @@ def analyze_free_energy_trend(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def analyze_circuit_breaker_events(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Analyze circuit breaker activations."""
-    cb_active_count = sum(1 for e in entries if e.get('circuit_breaker_active', False))
-    manual_overrides = sum(1 for e in entries if e.get('manual_override', False))
+    cb_active_count = sum(1 for e in entries if e.get("circuit_breaker_active", False))
+    manual_overrides = sum(1 for e in entries if e.get("manual_override", False))
 
     return {
         "circuit_breaker_activations": cb_active_count,
@@ -98,19 +98,21 @@ def analyze_topology_changes(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
     bond_type_changes = {}
 
     for entry in entries:
-        changes = entry.get('topology_changes', [])
+        changes = entry.get("topology_changes", [])
         total_changes += len(changes)
 
         for change in changes:
-            old_type = change.get('old', 'unknown')
-            new_type = change.get('new', 'unknown')
+            old_type = change.get("old", "unknown")
+            new_type = change.get("new", "unknown")
             transition = f"{old_type}->{new_type}"
             bond_type_changes[transition] = bond_type_changes.get(transition, 0) + 1
 
     return {
         "total_changes": total_changes,
         "changes_per_hour": (total_changes / len(entries) * 3600) if entries else 0,
-        "top_transitions": sorted(bond_type_changes.items(), key=lambda x: x[1], reverse=True)[:5],
+        "top_transitions": sorted(
+            bond_type_changes.items(), key=lambda x: x[1], reverse=True
+        )[:5],
     }
 
 
@@ -121,14 +123,16 @@ def generate_report(analysis: Dict[str, Any], output_path: Path = None) -> None:
     print("=" * 70)
 
     # Free Energy Trends
-    fe_analysis = analysis.get('free_energy', {})
-    if fe_analysis.get('status') == 'ok':
+    fe_analysis = analysis.get("free_energy", {})
+    if fe_analysis.get("status") == "ok":
         print("\n## Free Energy Analysis")
         print(f"  Mean F:       {fe_analysis['mean']:.6f}")
         print(f"  Std Dev:      {fe_analysis['std']:.6f}")
         print(f"  Min F:        {fe_analysis['min']:.6f}")
         print(f"  Max F:        {fe_analysis['max']:.6f}")
-        print(f"  Trend:        {fe_analysis['trend_direction']} (slope: {fe_analysis['trend_slope']:.2e})")
+        print(
+            f"  Trend:        {fe_analysis['trend_direction']} (slope: {fe_analysis['trend_slope']:.2e})"
+        )
         print(f"  Violations:   {fe_analysis['violations']} (F > 1.35)")
         print(f"  Warnings:     {fe_analysis['warnings']} (1.20 < F ≤ 1.35)")
         print(f"  Total Samples: {fe_analysis['total_samples']}")
@@ -136,19 +140,19 @@ def generate_report(analysis: Dict[str, Any], output_path: Path = None) -> None:
         print("\n## Free Energy Analysis: NO DATA")
 
     # Circuit Breaker
-    cb_analysis = analysis.get('circuit_breaker', {})
+    cb_analysis = analysis.get("circuit_breaker", {})
     print("\n## Circuit Breaker Events")
     print(f"  Activations:     {cb_analysis.get('circuit_breaker_activations', 0)}")
     print(f"  Manual Overrides: {cb_analysis.get('manual_overrides', 0)}")
     print(f"  Activation Rate:  {cb_analysis.get('activation_rate', 0):.2%}")
 
     # Topology Changes
-    topo_analysis = analysis.get('topology', {})
+    topo_analysis = analysis.get("topology", {})
     print("\n## Topology Changes")
     print(f"  Total Changes:    {topo_analysis.get('total_changes', 0)}")
     print(f"  Changes/Hour:     {topo_analysis.get('changes_per_hour', 0):.2f}")
 
-    top_transitions = topo_analysis.get('top_transitions', [])
+    top_transitions = topo_analysis.get("top_transitions", [])
     if top_transitions:
         print("\n  Top Bond Transitions:")
         for transition, count in top_transitions:
@@ -159,7 +163,7 @@ def generate_report(analysis: Dict[str, Any], output_path: Path = None) -> None:
     # Export if requested
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with output_path.open('w') as f:
+        with output_path.open("w") as f:
             json.dump(analysis, f, indent=2)
         print(f"\nFull analysis exported to: {output_path}")
 
@@ -173,33 +177,27 @@ def main():
         "--log-path",
         type=Path,
         default=Path("/var/log/tradepulse/thermo_audit.jsonl"),
-        help="Path to audit log file"
+        help="Path to audit log file",
     )
 
     parser.add_argument(
-        "--period",
-        type=str,
-        default="7d",
-        help="Analysis period (e.g., 7d, 24h, 30d)"
+        "--period", type=str, default="7d", help="Analysis period (e.g., 7d, 24h, 30d)"
     )
 
-    parser.add_argument(
-        "--output",
-        "-o",
-        type=Path,
-        help="Output path for JSON report"
-    )
+    parser.add_argument("--output", "-o", type=Path, help="Output path for JSON report")
 
     args = parser.parse_args()
 
     # Parse period
     period_str = args.period.lower()
-    if period_str.endswith('d'):
+    if period_str.endswith("d"):
         period_days = int(period_str[:-1])
-    elif period_str.endswith('h'):
+    elif period_str.endswith("h"):
         period_days = int(period_str[:-1]) / 24
     else:
-        print(f"Error: Invalid period format '{args.period}'. Use format like '7d' or '24h'")
+        print(
+            f"Error: Invalid period format '{args.period}'. Use format like '7d' or '24h'"
+        )
         return 1
 
     print(f"Loading audit log from: {args.log_path}")

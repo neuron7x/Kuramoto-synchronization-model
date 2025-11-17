@@ -20,7 +20,9 @@ from sandbox.risk.engine import (
 
 class StubKillSwitch(KillSwitchProviderProtocol):
     def __init__(self, engaged: bool = False) -> None:
-        self._state = KillSwitchState(engaged=engaged, reason="maintenance" if engaged else None)
+        self._state = KillSwitchState(
+            engaged=engaged, reason="maintenance" if engaged else None
+        )
 
     async def state(self) -> KillSwitchState:
         return self._state

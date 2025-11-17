@@ -49,16 +49,24 @@ def git_info() -> dict[str, str]:
     import subprocess
 
     try:
-        commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
-        ).decode().strip()
+        commit = (
+            subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         commit = "unknown"
 
     try:
-        branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
-        ).decode().strip()
+        branch = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         branch = "unknown"
 
@@ -122,7 +130,9 @@ def test_all_recordings_regression_suite(
 
         try:
             # Load and process recording
-            ticks, metadata = load_replay_recording(recording_path, exchange=exchange_name)
+            ticks, metadata = load_replay_recording(
+                recording_path, exchange=exchange_name
+            )
             metrics = compute_performance_metrics(ticks)
 
             # Check against budget
@@ -156,7 +166,13 @@ def test_all_recordings_regression_suite(
     # Generate summary
     report.summary = {
         "total_runs": len(report.runs),
-        "passed": len([r for r in report.runs if r.regression_result and r.regression_result.passed]),
+        "passed": len(
+            [
+                r
+                for r in report.runs
+                if r.regression_result and r.regression_result.passed
+            ]
+        ),
         "failed": len(failed_runs),
         "git_commit": git_info["commit"][:8],
         "git_branch": git_info["branch"],
@@ -179,7 +195,9 @@ def test_all_recordings_regression_suite(
     for run in report.runs:
         if run.regression_result and not run.regression_result.passed:
             issue_path = generator.generate_issue_template(run, component="backtest")
-            assert issue_path.exists(), f"Issue template should be generated for {run.name}"
+            assert (
+                issue_path.exists()
+            ), f"Issue template should be generated for {run.name}"
 
     # Assert no regressions
     if failed_runs:
@@ -265,6 +283,7 @@ def test_throughput_stress_test(recordings_dir: Path) -> None:
     iterations = 100
 
     import time
+
     start = time.perf_counter()
 
     for _ in range(iterations):
@@ -275,7 +294,9 @@ def test_throughput_stress_test(recordings_dir: Path) -> None:
     processing_rate = iterations / elapsed
 
     # Should process at least 10 replays per second
-    assert processing_rate >= 10.0, f"Processing rate too low: {processing_rate:.2f} replays/s"
+    assert (
+        processing_rate >= 10.0
+    ), f"Processing rate too low: {processing_rate:.2f} replays/s"
 
 
 @pytest.mark.heavy_math

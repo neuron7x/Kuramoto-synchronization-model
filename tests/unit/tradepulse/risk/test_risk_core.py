@@ -8,7 +8,8 @@ import numpy as np
 
 spec = importlib.util.spec_from_file_location(
     "risk_core",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/risk/risk_core.py",
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src/tradepulse/risk/risk_core.py",
 )
 risk_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(risk_module)

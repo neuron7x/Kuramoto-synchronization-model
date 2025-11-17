@@ -79,9 +79,9 @@ def generate_mean_reverting_prices(
 
     for i in range(1, n):
         # Ornstein-Uhlenbeck process
-        drift = reversion_speed * (mean_price - prices[i-1])
+        drift = reversion_speed * (mean_price - prices[i - 1])
         shock = rng.normal(0, volatility)
-        prices[i] = prices[i-1] + drift + shock
+        prices[i] = prices[i - 1] + drift + shock
 
     return prices
 
@@ -135,9 +135,7 @@ def generate_volume(
 
     # Base log-normal volume
     volume = rng.lognormal(
-        mean=np.log(mean_volume) - (volatility**2) / 2,
-        sigma=volatility,
-        size=n
+        mean=np.log(mean_volume) - (volatility**2) / 2, sigma=volatility, size=n
     )
 
     # Add correlation with price changes if prices provided
@@ -172,7 +170,9 @@ def generate_market_data(
 
     # Generate prices based on regime
     if regime == "trending":
-        prices = generate_trending_prices(periods, trend=0.03, volatility=1.2, seed=seed)
+        prices = generate_trending_prices(
+            periods, trend=0.03, volatility=1.2, seed=seed
+        )
     elif regime == "mean_reverting":
         prices = generate_mean_reverting_prices(
             periods, reversion_speed=0.15, volatility=2.0, seed=seed
@@ -187,15 +187,13 @@ def generate_market_data(
         volatility=0.4,
         price_correlation=0.3,
         prices=prices,
-        seed=seed
+        seed=seed,
     )
 
     # Create DataFrame
-    df = pd.DataFrame({
-        'timestamp': timestamps,
-        'price': prices,
-        'volume': volume.astype(int)
-    })
+    df = pd.DataFrame(
+        {"timestamp": timestamps, "price": prices, "volume": volume.astype(int)}
+    )
 
     return df
 
@@ -218,43 +216,44 @@ Examples:
 
     # Use specific random seed for reproducibility
     python generate_sample_data.py --output data.csv --periods 300 --seed 42
-        """
+        """,
     )
 
     parser.add_argument(
-        '--output', '-o',
-        type=str,
-        required=True,
-        help='Output CSV file path'
+        "--output", "-o", type=str, required=True, help="Output CSV file path"
     )
 
     parser.add_argument(
-        '--periods', '-n',
+        "--periods",
+        "-n",
         type=int,
         default=1000,
-        help='Number of periods to generate (default: 1000)'
+        help="Number of periods to generate (default: 1000)",
     )
 
     parser.add_argument(
-        '--regime', '-r',
+        "--regime",
+        "-r",
         type=str,
-        choices=['trending', 'mean_reverting', 'random_walk'],
-        default='random_walk',
-        help='Market regime type (default: random_walk)'
+        choices=["trending", "mean_reverting", "random_walk"],
+        default="random_walk",
+        help="Market regime type (default: random_walk)",
     )
 
     parser.add_argument(
-        '--freq', '-f',
+        "--freq",
+        "-f",
         type=str,
-        default='1h',
-        help='Time frequency: e.g., 1m, 5m, 15m, 1h, 4h, 1d (default: 1h)'
+        default="1h",
+        help="Time frequency: e.g., 1m, 5m, 15m, 1h, 4h, 1d (default: 1h)",
     )
 
     parser.add_argument(
-        '--seed', '-s',
+        "--seed",
+        "-s",
         type=int,
         default=None,
-        help='Random seed for reproducibility (optional)'
+        help="Random seed for reproducibility (optional)",
     )
 
     args = parser.parse_args()
@@ -262,10 +261,7 @@ Examples:
     # Generate data
     print(f"Generating {args.periods} periods of {args.regime} market data...")
     df = generate_market_data(
-        periods=args.periods,
-        regime=args.regime,
-        freq=args.freq,
-        seed=args.seed
+        periods=args.periods, regime=args.regime, freq=args.freq, seed=args.seed
     )
 
     # Save to CSV

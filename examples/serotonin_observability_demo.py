@@ -19,7 +19,9 @@ from pathlib import Path
 import yaml
 
 # Add serotonin module path directly to avoid full package import
-serotonin_path = Path(__file__).parent.parent / "src" / "tradepulse" / "core" / "neuro" / "serotonin"
+serotonin_path = (
+    Path(__file__).parent.parent / "src" / "tradepulse" / "core" / "neuro" / "serotonin"
+)
 sys.path.insert(0, str(serotonin_path))
 
 from serotonin_controller import SerotoninController  # type: ignore
@@ -141,9 +143,11 @@ def main() -> None:
             )
 
             if i % 10 == 0:
-                print(f"  Step {i:3d}: level={result['level']:.3f}, "
-                      f"hold={result['hold']:.0f}, "
-                      f"floor={result['temperature_floor']:.3f}")
+                print(
+                    f"  Step {i:3d}: level={result['level']:.3f}, "
+                    f"hold={result['hold']:.0f}, "
+                    f"floor={result['temperature_floor']:.3f}"
+                )
 
         print("✓ Normal conditions: No alerts triggered")
         print()
@@ -170,9 +174,11 @@ def main() -> None:
             )
 
             if i % 5 == 0:
-                print(f"  Step {i:3d}: level={result['level']:.3f}, "
-                      f"hold={result['hold']:.0f}, "
-                      f"desentitization={result['desensitization']:.3f}")
+                print(
+                    f"  Step {i:3d}: level={result['level']:.3f}, "
+                    f"hold={result['hold']:.0f}, "
+                    f"desentitization={result['desensitization']:.3f}"
+                )
 
         print()
 
@@ -191,15 +197,21 @@ def main() -> None:
             print("SLO Compliance Check:")
 
             # Simulate P95 latency measurement
-            simulated_p95_success_rate = 99.92  # Would be calculated from actual measurements
+            simulated_p95_success_rate = (
+                99.92  # Would be calculated from actual measurements
+            )
             latency_slo = SEROTONIN_SLOS["step_latency_p95"]
 
             if latency_slo.is_met(simulated_p95_success_rate):
                 print(f"  ✓ {latency_slo.sli.name}: PASS")
-                print(f"    Target: {latency_slo.target}%, Actual: {simulated_p95_success_rate}%")
+                print(
+                    f"    Target: {latency_slo.target}%, Actual: {simulated_p95_success_rate}%"
+                )
             else:
                 print(f"  ✗ {latency_slo.sli.name}: FAIL")
-                budget_consumed = latency_slo.budget_consumed(simulated_p95_success_rate)
+                budget_consumed = latency_slo.budget_consumed(
+                    simulated_p95_success_rate
+                )
                 print(f"    Error budget consumed: {budget_consumed * 100:.1f}%")
 
         print()
@@ -223,7 +235,9 @@ def main() -> None:
 
         recovery = controller.estimate_recovery_time()
         if recovery > 0:
-            print(f"  Estimated recovery time: {recovery} ticks (~{recovery/60:.1f} min)")
+            print(
+                f"  Estimated recovery time: {recovery} ticks (~{recovery/60:.1f} min)"
+            )
         else:
             print("  Status: Ready for trading")
 
@@ -255,7 +269,9 @@ def main() -> None:
         print("• SRE monitor evaluates alerts based on SLO/SLI definitions")
         print("• State validation ensures system integrity")
         print("• Practical utilities support trading decision-making")
-        print("• Integration with metrics systems (Prometheus, etc.) via logger callback")
+        print(
+            "• Integration with metrics systems (Prometheus, etc.) via logger callback"
+        )
         print()
 
     finally:

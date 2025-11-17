@@ -165,7 +165,9 @@ class TestHPCActiveInferenceModule:
         hpc_ai_model.metastable_transition_gate = lambda pwpe, d: False
 
         dummy_data = pd.DataFrame({"close": [1.0], "volume": [1.0]})
-        actions = [hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0) for _ in range(5)]
+        actions = [
+            hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0) for _ in range(5)
+        ]
 
         assert len(set(actions)) == 1
 
@@ -194,8 +196,7 @@ class TestHPCActiveInferenceModule:
 
         dummy_data = pd.DataFrame({"close": [1.0], "volume": [1.0]})
         actions = {
-            hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0)
-            for _ in range(20)
+            hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0) for _ in range(20)
         }
 
         assert len(actions) > 1
@@ -224,7 +225,9 @@ class TestValidationUtils:
 
         assert len(data) == 100
         assert isinstance(data.index, pd.DatetimeIndex)
-        assert all(col in data.columns for col in ["open", "high", "low", "close", "volume"])
+        assert all(
+            col in data.columns for col in ["open", "high", "low", "close", "volume"]
+        )
 
         # Check OHLC constraints
         assert (data["high"] >= data["low"]).all()

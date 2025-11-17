@@ -27,7 +27,9 @@ class _InMemoryAuditLogger:
     def __init__(self) -> None:
         self.events: list[_RecordedEvent] = []
 
-    def log_event(self, *, event_type: str, actor: str, ip_address: str, details: dict) -> None:
+    def log_event(
+        self, *, event_type: str, actor: str, ip_address: str, details: dict
+    ) -> None:
         self.events.append(_RecordedEvent(event_type, actor, dict(details)))
 
 
@@ -68,9 +70,7 @@ def test_secret_vault_enforces_access_policy(tmp_path: Path) -> None:
         actor="alice",
         ip_address="10.0.0.1",
     )
-    retrieved = vault.access_secret(
-        secret_name, actor="auditor", ip_address="10.0.0.2"
-    )
+    retrieved = vault.access_secret(secret_name, actor="auditor", ip_address="10.0.0.2")
     assert retrieved == "super-secret-password-1234567890"
     assert any(event.event_type == "secret_read" for event in audit_logger.events)
     with pytest.raises(SecretVaultError):
@@ -113,7 +113,9 @@ def test_secret_rotator_performs_rotation(tmp_path: Path) -> None:
     )
     clock.advance(timedelta(hours=1))
     rotated_metadata = rotator.evaluate()
-    assert rotated_metadata and rotated_metadata[0].version == metadata_before.version + 1
+    assert (
+        rotated_metadata and rotated_metadata[0].version == metadata_before.version + 1
+    )
 
 
 def test_secret_manager_resolves_vault_secret(tmp_path: Path) -> None:
@@ -141,10 +143,7 @@ def test_secret_manager_resolves_vault_secret(tmp_path: Path) -> None:
         }
     )
     with secret_caller_context(actor="auditor", ip_address="10.0.0.5"):
-        assert (
-            manager.get("api_token")
-            == "token-abcdefghijklmnopqrstuvwxyz123456"
-        )
+        assert manager.get("api_token") == "token-abcdefghijklmnopqrstuvwxyz123456"
 
 
 def test_secure_channel_round_trip() -> None:
@@ -156,4 +155,3 @@ def test_secure_channel_round_trip() -> None:
     assert decrypted == payload
     with pytest.raises(ValueError):
         channel.unwrap_json(encrypted, associated_data={"component": "different"})
-

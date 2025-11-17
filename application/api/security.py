@@ -454,7 +454,10 @@ def require_two_factor(
 
 def verify_optional_request_identity(
     *, require_client_certificate: bool = False
-) -> Callable[[Request, HTTPAuthorizationCredentials | None, ApiSecuritySettings], Awaitable[AdminIdentity | None]]:
+) -> Callable[
+    [Request, HTTPAuthorizationCredentials | None, ApiSecuritySettings],
+    Awaitable[AdminIdentity | None],
+]:
     """Return a dependency that authenticates requests when credentials are supplied."""
 
     required_dependency = verify_request_identity(

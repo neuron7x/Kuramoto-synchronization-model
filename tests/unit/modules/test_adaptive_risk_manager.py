@@ -15,10 +15,7 @@ class TestAdaptiveRiskManager:
 
     def test_initialization(self):
         """Test risk manager initialization"""
-        manager = AdaptiveRiskManager(
-            base_capital=100000.0,
-            risk_tolerance=0.02
-        )
+        manager = AdaptiveRiskManager(base_capital=100000.0, risk_tolerance=0.02)
 
         assert manager.base_capital == 100000.0
         assert manager.risk_tolerance == 0.02
@@ -64,10 +61,7 @@ class TestAdaptiveRiskManager:
         manager = AdaptiveRiskManager(base_capital=100000.0, risk_tolerance=0.02)
 
         size = manager.calculate_position_size(
-            symbol="BTCUSD",
-            price=50000.0,
-            volatility=0.01,
-            confidence=0.8
+            symbol="BTCUSD", price=50000.0, volatility=0.01, confidence=0.8
         )
 
         assert size > 0

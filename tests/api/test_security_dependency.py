@@ -212,7 +212,9 @@ async def test_certificate_required_but_missing_is_rejected(
 
 
 @pytest.mark.anyio
-async def test_disallowed_algorithm_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_disallowed_algorithm_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     if hasattr(get_api_security_settings, "_instance"):
         delattr(get_api_security_settings, "_instance")
 
@@ -679,7 +681,9 @@ async def test_two_factor_dependency_rejects_missing_code() -> None:
         await dependency(request, identity)
 
     assert exc.value.status_code == 401
-    assert exc.value.detail == "Two-factor authentication code required for this endpoint."
+    assert (
+        exc.value.detail == "Two-factor authentication code required for this endpoint."
+    )
 
 
 @pytest.mark.anyio

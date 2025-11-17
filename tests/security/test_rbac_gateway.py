@@ -159,4 +159,3 @@ def test_temporary_grant_respects_expiry(rbac_policy_path: Path) -> None:
             action="submit",
             attributes={"desk": "rescue"},
         )
-

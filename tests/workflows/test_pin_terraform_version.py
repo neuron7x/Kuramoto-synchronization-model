@@ -1,4 +1,5 @@
 """Regression tests for the Terraform pinning workflow."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,7 +8,10 @@ from typing import Any, Dict
 import yaml
 
 WORKFLOW_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "pin-terraform-version.yml"
+    Path(__file__).resolve().parents[2]
+    / ".github"
+    / "workflows"
+    / "pin-terraform-version.yml"
 )
 
 

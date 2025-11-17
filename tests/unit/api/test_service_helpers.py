@@ -26,7 +26,10 @@ from application.api.service import (
 def sample_frame() -> pd.DataFrame:
     base = datetime(2025, 1, 1, tzinfo=timezone.utc)
     index = [base + timedelta(minutes=idx) for idx in range(5)]
-    data = {"macd": [0.1 * idx for idx in range(5)], "rsi": [50 + idx for idx in range(5)]}
+    data = {
+        "macd": [0.1 * idx for idx in range(5)],
+        "rsi": [50 + idx for idx in range(5)],
+    }
     frame = pd.DataFrame(data, index=index)
     frame.index.name = "timestamp"
     return frame
@@ -56,13 +59,17 @@ def test_paginate_frame_respects_cursor(sample_frame: pd.DataFrame) -> None:
 
 
 def test_filter_feature_values_applies_prefix_and_keys() -> None:
-    series = pd.Series({
-        "macd": 1.2,
-        "macd_signal": 0.8,
-        "macd_histogram": -0.2,
-        "volume": 1200,
-    })
-    values = _filter_feature_values(series, feature_prefix="macd", feature_keys=("macd", "macd_signal"))
+    series = pd.Series(
+        {
+            "macd": 1.2,
+            "macd_signal": 0.8,
+            "macd_histogram": -0.2,
+            "volume": 1200,
+        }
+    )
+    values = _filter_feature_values(
+        series, feature_prefix="macd", feature_keys=("macd", "macd_signal")
+    )
     assert set(values.keys()) == {"macd", "macd_signal"}
     assert values["macd"] == pytest.approx(1.2)
 
@@ -145,7 +152,9 @@ def test_payload_guard_middleware_handles_invalid_json() -> None:
     )
 
     client = TestClient(app)
-    response = client.post("/test", content=b"not-json", headers={"content-type": "application/json"})
+    response = client.post(
+        "/test", content=b"not-json", headers={"content-type": "application/json"}
+    )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == "Malformed JSON payload."
 
@@ -194,5 +203,3 @@ def test_resolve_ip_falls_back_to_client_host() -> None:
 
     request = Request(scope, receive=receive)
     assert _resolve_ip(request) == "198.18.0.1"
-
-

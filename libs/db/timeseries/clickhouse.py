@@ -93,7 +93,9 @@ class ClickHouseSchemaManager:
                 f"{self.schema.timestamp_column} + {_format_interval(self.retention.cold)} TO VOLUME 'cold'"
             )
         if self.retention.drop:
-            ttl_parts.append(f"{self.schema.timestamp_column} + {_format_interval(self.retention.drop)} DELETE")
+            ttl_parts.append(
+                f"{self.schema.timestamp_column} + {_format_interval(self.retention.drop)} DELETE"
+            )
 
         parts = [
             f"CREATE TABLE IF NOT EXISTS {self.schema.fully_qualified_name}",
@@ -111,7 +113,9 @@ class ClickHouseSchemaManager:
             parts.append(f"SAMPLE BY {self.sample_by}")
         parts.append("TTL " + ", ".join(ttl_parts))
         if self.settings:
-            rendered_settings = ", ".join(f"{key} = {value}" for key, value in self.settings.items())
+            rendered_settings = ", ".join(
+                f"{key} = {value}" for key, value in self.settings.items()
+            )
             parts.append(f"SETTINGS {rendered_settings}")
         return "\n".join(parts)
 
@@ -121,9 +125,20 @@ class ClickHouseSchemaManager:
         target = self._qualified_rollup_name(rollup.name)
         columns = ["bucket DateTime64(6, 'UTC')"]
         columns.extend(column.ddl() for column in self.schema.dimensions)
-        columns.extend(f"{aggregation.alias} {aggregation.data_type}" for aggregation in rollup.aggregations)
-        order_by_columns = ["bucket", *(dimension.name for dimension in self.schema.dimensions)]
-        ttl_horizon = self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
+        columns.extend(
+            f"{aggregation.alias} {aggregation.data_type}"
+            for aggregation in rollup.aggregations
+        )
+        order_by_columns = [
+            "bucket",
+            *(dimension.name for dimension in self.schema.dimensions),
+        ]
+        ttl_horizon = (
+            self.retention.drop
+            or self.retention.cold
+            or self.retention.warm
+            or self.retention.hot
+        )
         parts = [
             f"CREATE TABLE IF NOT EXISTS {target}",
             "(",
@@ -145,7 +160,8 @@ class ClickHouseSchemaManager:
         ]
         select_columns.extend(dimension.name for dimension in self.schema.dimensions)
         select_columns.extend(
-            f"{aggregation.expression} AS {aggregation.alias}" for aggregation in rollup.aggregations
+            f"{aggregation.expression} AS {aggregation.alias}"
+            for aggregation in rollup.aggregations
         )
 
         group_by = ["bucket", *(dimension.name for dimension in self.schema.dimensions)]
@@ -246,12 +262,20 @@ class ClickHouseQueryBuilder:
         limit: int = 10_000,
         filters: Mapping[str, str] | None = None,
     ) -> str:
-        table = self._schema.fully_qualified_name if rollup is None else self._qualified_rollup_name(rollup.name)
-        timeframe = _format_interval(rollup.interval if rollup else timedelta(minutes=1))
+        table = (
+            self._schema.fully_qualified_name
+            if rollup is None
+            else self._qualified_rollup_name(rollup.name)
+        )
+        timeframe = _format_interval(
+            rollup.interval if rollup else timedelta(minutes=1)
+        )
         dims = [dimension.name for dimension in self._schema.dimensions]
         filters = filters or {}
         prewhere_clauses = [f"{key} = %({key})s" for key in filters]
-        prewhere = "\nPREWHERE " + " AND ".join(prewhere_clauses) if prewhere_clauses else ""
+        prewhere = (
+            "\nPREWHERE " + " AND ".join(prewhere_clauses) if prewhere_clauses else ""
+        )
         timestamp_column = self._schema.timestamp_column
         price_column = self._resolve_measure("price", "last_price", "close")
         volume_column = self._try_resolve_measure("volume", "qty", "quantity")

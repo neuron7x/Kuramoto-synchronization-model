@@ -44,10 +44,10 @@ class TestHighVolatilityEdgeCases:
         data = generate_synthetic_data(n_days=100, seed=42)
         # Simulate crash: drop 50% in last 10 days
         crash_factor = np.linspace(1.0, 0.5, 10)
-        data.iloc[-10:, data.columns.get_loc('close')] *= crash_factor
-        data.iloc[-10:, data.columns.get_loc('open')] *= crash_factor
-        data.iloc[-10:, data.columns.get_loc('high')] *= crash_factor
-        data.iloc[-10:, data.columns.get_loc('low')] *= crash_factor
+        data.iloc[-10:, data.columns.get_loc("close")] *= crash_factor
+        data.iloc[-10:, data.columns.get_loc("open")] *= crash_factor
+        data.iloc[-10:, data.columns.get_loc("high")] *= crash_factor
+        data.iloc[-10:, data.columns.get_loc("low")] *= crash_factor
 
         action = model.decide_action(data)
         assert action in [0, 1, 2]
@@ -57,8 +57,8 @@ class TestHighVolatilityEdgeCases:
         data = generate_synthetic_data(n_days=100, seed=42)
         # Simulate spike: increase 200% in last 10 days
         spike_factor = np.linspace(1.0, 3.0, 10)
-        data.iloc[-10:, data.columns.get_loc('close')] *= spike_factor
-        data.iloc[-10:, data.columns.get_loc('high')] *= spike_factor
+        data.iloc[-10:, data.columns.get_loc("close")] *= spike_factor
+        data.iloc[-10:, data.columns.get_loc("high")] *= spike_factor
 
         action = model.decide_action(data)
         assert action in [0, 1, 2]
@@ -66,7 +66,7 @@ class TestHighVolatilityEdgeCases:
     def test_zero_volume(self, model):
         """Test with zero volume data."""
         data = generate_synthetic_data(n_days=100, seed=42)
-        data['volume'] = 0.0
+        data["volume"] = 0.0
 
         # Should handle gracefully
         try:
@@ -79,7 +79,7 @@ class TestHighVolatilityEdgeCases:
         """Test robustness with negative prices (edge case)."""
         data = generate_synthetic_data(n_days=100, seed=42)
         # Inject negative prices (shouldn't happen in real markets but test robustness)
-        data.iloc[-5:, data.columns.get_loc('close')] *= -1
+        data.iloc[-5:, data.columns.get_loc("close")] *= -1
 
         # Should handle without crashing
         try:
@@ -96,7 +96,7 @@ class TestNaNHandling:
     def test_nan_in_close_price(self, model):
         """Test with NaN in close price."""
         data = generate_synthetic_data(n_days=100, seed=42)
-        data.loc[data.index[50], 'close'] = np.nan
+        data.loc[data.index[50], "close"] = np.nan
 
         # Should handle NaN gracefully (fallback mechanism)
         action = model.decide_action(data)
@@ -105,7 +105,7 @@ class TestNaNHandling:
     def test_nan_in_volume(self, model):
         """Test with NaN in volume."""
         data = generate_synthetic_data(n_days=100, seed=42)
-        data.loc[data.index[50], 'volume'] = np.nan
+        data.loc[data.index[50], "volume"] = np.nan
 
         action = model.decide_action(data)
         assert action in [0, 1, 2]
@@ -113,7 +113,7 @@ class TestNaNHandling:
     def test_multiple_nans(self, model):
         """Test with multiple NaN values."""
         data = generate_synthetic_data(n_days=100, seed=42)
-        data.loc[data.index[40:60], 'close'] = np.nan
+        data.loc[data.index[40:60], "close"] = np.nan
 
         # Should handle or fail gracefully
         try:
@@ -214,8 +214,10 @@ class TestRobustnessWithPerturbations:
         # Add perturbation to data
         noise = np.random.normal(0, perturb, size=data.shape)
         perturbed_data = data.copy()
-        for col in ['open', 'high', 'low', 'close']:
-            perturbed_data[col] += perturbed_data[col] * noise[:, data.columns.get_loc(col)]
+        for col in ["open", "high", "low", "close"]:
+            perturbed_data[col] += (
+                perturbed_data[col] * noise[:, data.columns.get_loc(col)]
+            )
 
         # Model should still produce valid action
         perturbed_action = model.decide_action(perturbed_data)
@@ -274,10 +276,10 @@ class TestEdgeCaseScenarios:
         """Test with constant (no movement) prices."""
         data = generate_synthetic_data(n_days=100, seed=42)
         constant_price = 100.0
-        data['open'] = constant_price
-        data['high'] = constant_price
-        data['low'] = constant_price
-        data['close'] = constant_price
+        data["open"] = constant_price
+        data["high"] = constant_price
+        data["low"] = constant_price
+        data["close"] = constant_price
 
         action = model.decide_action(data)
         assert action in [0, 1, 2]
@@ -300,7 +302,7 @@ class TestEdgeCaseScenarios:
     def test_inf_values_handling(self, model):
         """Test handling of infinity values."""
         data = generate_synthetic_data(n_days=100, seed=42)
-        data.loc[data.index[50], 'close'] = np.inf
+        data.loc[data.index[50], "close"] = np.inf
 
         # Should handle or fail gracefully
         try:

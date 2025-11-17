@@ -20,7 +20,9 @@ def test_optimizer_respects_bounds_and_targets() -> None:
     metrics = {
         "alpha": PipelineMetrics(0.02, 0.10, 0.15, risk_limit=0.5, min_allocation=0.10),
         "beta": PipelineMetrics(0.015, 0.08, 0.10, risk_limit=0.4, min_allocation=0.05),
-        "gamma": PipelineMetrics(0.012, 0.06, 0.07, risk_limit=0.6, min_allocation=0.05),
+        "gamma": PipelineMetrics(
+            0.012, 0.06, 0.07, risk_limit=0.6, min_allocation=0.05
+        ),
     }
     correlations = {
         ("alpha", "beta"): 0.3,
@@ -133,4 +135,6 @@ def test_stability_validation_scales_portfolio(caplog) -> None:
         result = optimizer.optimise(metrics, correlations, target_profile=target)
 
     assert result.weights["trend"] < baseline.weights["trend"]
-    assert any("stability adjustment" in record.getMessage() for record in caplog.records)
+    assert any(
+        "stability adjustment" in record.getMessage() for record in caplog.records
+    )

@@ -139,10 +139,14 @@ class ApiServerTLSSettings(BaseModel):
     """TLS certificate bundle used to secure the external TradePulse API."""
 
     certificate: Path = Field(
-        ..., alias="cert_file", description="PEM encoded certificate chain presented to clients."
+        ...,
+        alias="cert_file",
+        description="PEM encoded certificate chain presented to clients.",
     )
     private_key: Path = Field(
-        ..., alias="key_file", description="Private key paired with the server certificate."
+        ...,
+        alias="key_file",
+        description="Private key paired with the server certificate.",
     )
     client_ca: Path | None = Field(
         default=None,
@@ -241,7 +245,9 @@ class ApiServerTLSSettings(BaseModel):
 class ApiServerSettings(BaseSettings):
     """Runtime configuration for the HTTPS listener."""
 
-    host: str = Field("0.0.0.0", description="Network interface bound by the API server.")
+    host: str = Field(
+        "0.0.0.0", description="Network interface bound by the API server."
+    )
     port: PositiveInt = Field(8000, description="TCP port exposed by the API server.")
     allow_plaintext: bool = Field(
         False,
@@ -255,7 +261,9 @@ class ApiServerSettings(BaseSettings):
     @model_validator(mode="after")
     def _enforce_tls(self) -> "ApiServerSettings":
         if not self.allow_plaintext and self.tls is None:
-            raise ValueError("TLS configuration is required for the TradePulse API server")
+            raise ValueError(
+                "TLS configuration is required for the TradePulse API server"
+            )
         return self
 
     model_config = SettingsConfigDict(
@@ -595,9 +603,9 @@ class AdminApiSettings(BaseSettings):
 
     def _resolve_config_vault_key(self) -> bytes:
         if self.config_vault_master_key_path is not None:
-            key_text = (
-                self.config_vault_master_key_path.read_text(encoding="utf-8").strip()
-            )
+            key_text = self.config_vault_master_key_path.read_text(
+                encoding="utf-8"
+            ).strip()
             if not key_text:
                 raise ValueError("Configuration vault master key file is empty")
             if len(key_text) < 44:
@@ -748,7 +756,9 @@ class ApiSecuritySettings(BaseSettings):
                 canonical.append(value)
         algorithms = tuple(canonical)
         if not algorithms:
-            raise ValueError("oauth2_algorithms must define at least one signing algorithm")
+            raise ValueError(
+                "oauth2_algorithms must define at least one signing algorithm"
+            )
         return self.model_copy(update={"oauth2_algorithms": algorithms})
 
     model_config = SettingsConfigDict(env_prefix="TRADEPULSE_", extra="ignore")
@@ -896,14 +906,10 @@ class BackendRuntimeSettings(BaseSettings):
     )
     log_variables_on_startup: bool = Field(
         True,
-        description=(
-            "Emit a debug snapshot at startup when debug mode is enabled."
-        ),
+        description=("Emit a debug snapshot at startup when debug mode is enabled."),
     )
 
-    model_config = SettingsConfigDict(
-        env_prefix="TRADEPULSE_BACKEND_", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_prefix="TRADEPULSE_BACKEND_", extra="ignore")
 
     @staticmethod
     def _coerce_sequence(value: Any, *, lower: bool) -> tuple[str, ...]:
@@ -951,6 +957,7 @@ class BackendRuntimeSettings(BaseSettings):
         """Return the redaction substrings for debug sanitisation."""
 
         return self.redact_patterns
+
 
 __all__ = [
     "ApiServerTLSSettings",

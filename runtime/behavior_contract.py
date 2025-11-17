@@ -44,7 +44,11 @@ MANDATES: Dict[str, ModuleMandate] = {
         escalation_policy={"A1": "log_only", "CRISIS": "no_A2"},
     ),
     "thermo_controller": ModuleMandate(
-        allowed_actions=(ActionClass.A0_OBSERVATION, ActionClass.A1_LOCAL_CORRECTION, ActionClass.A2_SYSTEMIC),
+        allowed_actions=(
+            ActionClass.A0_OBSERVATION,
+            ActionClass.A1_LOCAL_CORRECTION,
+            ActionClass.A2_SYSTEMIC,
+        ),
         allowed_states=(SystemState.NORMAL, SystemState.DEGRADED),
         allowed_scope=("topology", "metrics", "system_state"),
         escalation_policy={"A2": "dual_approval", "CRISIS": "downgrade_to_A1"},
@@ -64,11 +68,16 @@ def register_mandate(module_name: str, mandate: ModuleMandate) -> None:
 
 def classify_action(description: str) -> ActionClass:
     lowered = description.lower()
-    if any(keyword in lowered for keyword in ("read", "inspect", "observe", "simulate")):
+    if any(
+        keyword in lowered for keyword in ("read", "inspect", "observe", "simulate")
+    ):
         return ActionClass.A0_OBSERVATION
     if any(keyword in lowered for keyword in ("update", "adjust", "tune", "local")):
         return ActionClass.A1_LOCAL_CORRECTION
-    if any(keyword in lowered for keyword in ("change", "deploy", "topology", "order", "system")):
+    if any(
+        keyword in lowered
+        for keyword in ("change", "deploy", "topology", "order", "system")
+    ):
         return ActionClass.A2_SYSTEMIC
     raise ValueError(f"Unable to classify action '{description}' into A0/A1/A2")
 

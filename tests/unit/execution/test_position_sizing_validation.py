@@ -118,7 +118,9 @@ class TestPositionSizingBehavior:
         risk_budget = balance * risk
 
         # Allow tiny floating-point overshoot
-        assert cost <= risk_budget * 1.000001, f"Cost {cost} exceeds budget {risk_budget}"
+        assert (
+            cost <= risk_budget * 1.000001
+        ), f"Cost {cost} exceeds budget {risk_budget}"
 
     @pytest.mark.parametrize(
         "balance,risk,price,expected_within_budget",
@@ -140,7 +142,9 @@ class TestPositionSizingBehavior:
         risk_budget = balance * risk
 
         if expected_within_budget:
-            assert cost <= risk_budget * 1.01, f"Cost {cost} exceeds budget {risk_budget}"
+            assert (
+                cost <= risk_budget * 1.01
+            ), f"Cost {cost} exceeds budget {risk_budget}"
 
     def test_zero_size_when_balance_too_small(self) -> None:
         """Should return zero size when balance is too small for minimum position."""
@@ -170,12 +174,8 @@ class TestPositionSizingWrapper:
 
     def test_wrapper_accepts_leverage_parameter(self) -> None:
         """Wrapper should accept and forward max_leverage parameter."""
-        size1 = position_sizing(
-            balance=1000.0, risk=1.0, price=50.0, max_leverage=2.0
-        )
-        size2 = position_sizing(
-            balance=1000.0, risk=1.0, price=50.0, max_leverage=5.0
-        )
+        size1 = position_sizing(balance=1000.0, risk=1.0, price=50.0, max_leverage=2.0)
+        size2 = position_sizing(balance=1000.0, risk=1.0, price=50.0, max_leverage=5.0)
         # With higher leverage, size should be larger (or equal due to risk budget)
         assert size2 >= size1, "Higher leverage should allow larger positions"
 
@@ -219,7 +219,9 @@ class TestPositionSizingEdgeCases:
             balance=1000.0, risk=0.1, price=100.0, max_leverage=100.0
         )
         # Risk budget is 100, so max size is 1.0
-        assert size >= 0.0 and size <= 1.0 * 1.01, "Size should be bounded by risk budget"
+        assert (
+            size >= 0.0 and size <= 1.0 * 1.01
+        ), "Size should be bounded by risk budget"
 
     def test_leverage_exactly_one(self) -> None:
         """Test with leverage = 1.0 (no leverage)."""

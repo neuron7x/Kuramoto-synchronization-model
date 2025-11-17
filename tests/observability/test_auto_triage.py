@@ -34,7 +34,9 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
     old_incident = old_year / "INC-20230101-001"
     old_incident.mkdir(parents=True)
     (old_incident / "summary.json").write_text("{}", encoding="utf-8")
-    os.utime(old_incident, (base_time.timestamp() - 10_000, base_time.timestamp() - 10_000))
+    os.utime(
+        old_incident, (base_time.timestamp() - 10_000, base_time.timestamp() - 10_000)
+    )
 
     service_log = tmp_path / "service.log"
     service_log.write_text("error: something happened\n", encoding="utf-8")
@@ -114,7 +116,9 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
     assert summary["detection"]["triggered"] is True
     assert summary["incident"]["id"] == report.incident.identifier
     step_names = {step["name"] for step in summary["steps"]}
-    assert {"detection", "traffic_capture", "log_collection", "postmortem"}.issubset(step_names)
+    assert {"detection", "traffic_capture", "log_collection", "postmortem"}.issubset(
+        step_names
+    )
 
     assert not old_incident.exists(), "archive pruning should remove oldest incident"
 
@@ -130,7 +134,9 @@ def test_auto_triage_skips_when_no_thresholds_breached(tmp_path: Path) -> None:
     )
 
     orchestrator = AutoTriageOrchestrator(config, now=now)
-    report = orchestrator.execute(metrics={"error_rate": 0.05}, context={"service": "pricing"})
+    report = orchestrator.execute(
+        metrics={"error_rate": 0.05}, context={"service": "pricing"}
+    )
 
     assert report.detection.triggered is False
     assert report.incident is None
@@ -142,4 +148,3 @@ def test_auto_triage_skips_when_no_thresholds_breached(tmp_path: Path) -> None:
 
     assert summary["detection"]["triggered"] is False
     assert summary["steps"] == []
-

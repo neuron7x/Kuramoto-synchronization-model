@@ -34,13 +34,13 @@ def load_metrics_from_json(path: Path) -> List[Dict[str, float]]:
     elif "metrics" in data:
         return data["metrics"]
     else:
-        raise ValueError("Invalid JSON format: expected list or dict with 'metrics' key")
+        raise ValueError(
+            "Invalid JSON format: expected list or dict with 'metrics' key"
+        )
 
 
 def validate_single_metric_set(
-    validator: EnergyValidator,
-    metrics: Dict[str, float],
-    verbose: bool = False
+    validator: EnergyValidator, metrics: Dict[str, float], verbose: bool = False
 ) -> bool:
     """Validate a single set of metrics."""
     result = validator.compute_free_energy(metrics)
@@ -59,7 +59,9 @@ def validate_single_metric_set(
                 if penalty > 0:
                     metric_config = validator.config.get_metric(name)
                     metric_value = metrics.get(name, 0)
-                    print(f"    - {name}: {metric_value:.3f} > {metric_config.threshold:.3f}")
+                    print(
+                        f"    - {name}: {metric_value:.3f} > {metric_config.threshold:.3f}"
+                    )
 
     return result.passed
 
@@ -73,46 +75,36 @@ def main():
         "metrics_file",
         type=Path,
         nargs="?",
-        help="JSON file containing metrics to validate"
+        help="JSON file containing metrics to validate",
     )
 
     parser.add_argument(
-        "--config",
-        type=Path,
-        help="Custom energy configuration YAML file"
+        "--config", type=Path, help="Custom energy configuration YAML file"
     )
 
     parser.add_argument(
         "--metric",
         "-m",
         action="append",
-        help="Individual metric in format name=value (can be used multiple times)"
+        help="Individual metric in format name=value (can be used multiple times)",
     )
 
     parser.add_argument(
-        "--output",
-        "-o",
-        type=Path,
-        help="Output path for validation report JSON"
+        "--output", "-o", type=Path, help="Output path for validation report JSON"
     )
 
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     parser.add_argument(
         "--fail-fast",
         action="store_true",
-        help="Exit immediately on first validation failure"
+        help="Exit immediately on first validation failure",
     )
 
     parser.add_argument(
         "--show-config",
         action="store_true",
-        help="Display current configuration and exit"
+        help="Display current configuration and exit",
     )
 
     args = parser.parse_args()
@@ -122,6 +114,7 @@ def main():
         if args.verbose:
             print(f"Loading configuration from {args.config}")
         from runtime.thermo_config import ThermoConfig
+
         thermo_config = ThermoConfig.from_yaml(args.config)
         config = EnergyConfig(
             control_temperature=thermo_config.control_temperature,
@@ -139,7 +132,9 @@ def main():
         print(f"  Max Acceptable Energy: {config.max_acceptable_energy}")
         print("\nMetric Thresholds:")
         for metric in config.metrics:
-            print(f"  {metric.name:20s}: {metric.threshold:8.3f} {metric.unit:5s} (weight: {metric.weight:.1f})")
+            print(
+                f"  {metric.name:20s}: {metric.threshold:8.3f} {metric.unit:5s} (weight: {metric.weight:.1f})"
+            )
         return 0
 
     # Collect metrics to validate
@@ -153,7 +148,9 @@ def main():
                 name, value = metric_arg.split("=")
                 metrics[name.strip()] = float(value.strip())
             except ValueError:
-                print(f"Error: Invalid metric format '{metric_arg}'. Expected name=value")
+                print(
+                    f"Error: Invalid metric format '{metric_arg}'. Expected name=value"
+                )
                 return 1
         metrics_list.append(metrics)
 

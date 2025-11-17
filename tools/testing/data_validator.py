@@ -33,7 +33,11 @@ class TestDataInventory:
     @property
     def total_assets(self) -> int:
         """Total number of test data assets."""
-        return len(self.fixture_files) + len(self.cassette_files) + len(self.recording_files)
+        return (
+            len(self.fixture_files)
+            + len(self.cassette_files)
+            + len(self.recording_files)
+        )
 
 
 class TestDataValidator:
@@ -72,7 +76,9 @@ class TestDataValidator:
 
         # Calculate total size
         all_files = (
-            inventory.fixture_files + inventory.cassette_files + inventory.recording_files
+            inventory.fixture_files
+            + inventory.cassette_files
+            + inventory.recording_files
         )
         inventory.total_size_bytes = sum(
             f.stat().st_size for f in all_files if f.exists()
@@ -105,9 +111,7 @@ class TestDataValidator:
 
         return orphaned
 
-    def validate_cassette_completeness(
-        self, inventory: TestDataInventory
-    ) -> list[str]:
+    def validate_cassette_completeness(self, inventory: TestDataInventory) -> list[str]:
         """Validate that all VCR cassettes have required fields."""
         missing_fields = []
 
@@ -115,6 +119,7 @@ class TestDataValidator:
             try:
                 if cassette.suffix == ".yaml":
                     import yaml
+
                     with open(cassette, encoding="utf-8") as f:
                         data = yaml.safe_load(f)
                 elif cassette.suffix == ".json":
@@ -129,7 +134,9 @@ class TestDataValidator:
                     continue
 
                 if "interactions" not in data:
-                    missing_fields.append(f"{cassette.name}: Missing 'interactions' field")
+                    missing_fields.append(
+                        f"{cassette.name}: Missing 'interactions' field"
+                    )
 
             except Exception as e:
                 missing_fields.append(f"{cassette.name}: Error reading cassette - {e}")
@@ -154,10 +161,21 @@ class TestDataValidator:
                 "invalid_cassettes": len(missing_fields),
             },
             "details": {
-                "fixtures": [str(f.relative_to(self.test_dir)) for f in inventory.fixture_files[:50]],
-                "cassettes": [str(f.relative_to(self.test_dir)) for f in inventory.cassette_files[:50]],
-                "recordings": [str(f.relative_to(self.test_dir)) for f in inventory.recording_files[:50]],
-                "orphaned_fixtures": [str(f.relative_to(self.test_dir)) for f in orphaned[:20]],
+                "fixtures": [
+                    str(f.relative_to(self.test_dir))
+                    for f in inventory.fixture_files[:50]
+                ],
+                "cassettes": [
+                    str(f.relative_to(self.test_dir))
+                    for f in inventory.cassette_files[:50]
+                ],
+                "recordings": [
+                    str(f.relative_to(self.test_dir))
+                    for f in inventory.recording_files[:50]
+                ],
+                "orphaned_fixtures": [
+                    str(f.relative_to(self.test_dir)) for f in orphaned[:20]
+                ],
                 "invalid_cassettes": missing_fields[:20],
             },
         }

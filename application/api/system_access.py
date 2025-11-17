@@ -342,10 +342,7 @@ class SystemAccess:
             logger_payload.setdefault("subject", audit_subject)
         logger_method(message, extra=logger_payload)
 
-        if (
-            self._audit_trail is not None
-            and level.lower() in self._auditable_levels
-        ):
+        if self._audit_trail is not None and level.lower() in self._auditable_levels:
             try:
                 self._audit_trail.record(
                     message,
@@ -764,7 +761,9 @@ def create_system_app(
         risk_manager = getattr(system, "risk_manager", None)
         kill_switch = getattr(risk_manager, "kill_switch", None)
         try:
-            engaged = bool(kill_switch.is_triggered()) if kill_switch is not None else None
+            engaged = (
+                bool(kill_switch.is_triggered()) if kill_switch is not None else None
+            )
         except Exception:  # pragma: no cover - defensive guard
             engaged = None
         reason = getattr(kill_switch, "reason", None)
@@ -788,7 +787,9 @@ def create_system_app(
         "notifications",
         lambda: {
             "dispatcher": type(notifier).__name__ if notifier is not None else None,
-            "email_configured": bool(notification_settings and notification_settings.email),
+            "email_configured": bool(
+                notification_settings and notification_settings.email
+            ),
             "slack_configured": bool(
                 notification_settings and notification_settings.slack_webhook_url
             ),
@@ -811,9 +812,11 @@ def create_system_app(
             )
 
     def _wrap_with_rate_limit(
-        dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity]
+        dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity],
     ) -> Callable[..., Awaitable[AdminIdentity]]:
-        async def _precheck_rate_limit(request: Request) -> Callable[[AdminIdentity | None], Awaitable[None]]:
+        async def _precheck_rate_limit(
+            request: Request,
+        ) -> Callable[[AdminIdentity | None], Awaitable[None]]:
             ip_address = _resolve_ip(request)
             await limiter.check(subject=None, ip_address=ip_address)
 
@@ -829,7 +832,9 @@ def create_system_app(
 
         async def _rate_limited_dependency(
             request: Request,
-            finalize: Callable[[AdminIdentity | None], Awaitable[None]] = Depends(_precheck_rate_limit),
+            finalize: Callable[[AdminIdentity | None], Awaitable[None]] = Depends(
+                _precheck_rate_limit
+            ),
             identity: AdminIdentity = Depends(dependency),
         ) -> AdminIdentity:
             await finalize(identity)

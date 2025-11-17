@@ -182,7 +182,9 @@ def _hierarchical_features_peak_memory() -> Metric:
 
 
 def _compute_phase_cpu_time() -> Metric:
-    samples = np.random.default_rng(1337).normal(scale=1.0, size=131_072).astype(np.float32)
+    samples = (
+        np.random.default_rng(1337).normal(scale=1.0, size=131_072).astype(np.float32)
+    )
 
     cpu_seconds = _measure_cpu_seconds(
         lambda: compute_phase(samples, use_float32=True), rounds=10
@@ -237,11 +239,15 @@ def _walk_forward_response_time() -> Metric:
 
 
 def _strategy_response_time() -> Metric:
-    prices = 100.0 + np.cumsum(np.random.default_rng(123).normal(scale=0.1, size=50_000))
+    prices = 100.0 + np.cumsum(
+        np.random.default_rng(123).normal(scale=0.1, size=50_000)
+    )
     frame = pd.DataFrame({"close": prices})
     strategy = Strategy(name="large", params={"lookback": 50, "threshold": 0.5})
 
-    duration = _measure_response_seconds(lambda: strategy.simulate_performance(frame), rounds=1)
+    duration = _measure_response_seconds(
+        lambda: strategy.simulate_performance(frame), rounds=1
+    )
     return Metric(
         name="strategy.simulate_performance.response_seconds",
         value=float(duration),
@@ -254,7 +260,9 @@ def _strategy_response_time() -> Metric:
 
 def _scale_series_response_time() -> Metric:
     data = np.random.default_rng(2025).normal(size=100_000)
-    duration = _measure_response_seconds(lambda: scale_series(data, method="zscore"), rounds=1)
+    duration = _measure_response_seconds(
+        lambda: scale_series(data, method="zscore"), rounds=1
+    )
     return Metric(
         name="preprocess.scale_series.response_seconds",
         value=float(duration),
@@ -270,7 +278,8 @@ def _normalize_df_response_time() -> Metric:
     frame = pd.DataFrame(
         {
             "ts": np.arange(n),
-            "price": 100.0 + np.cumsum(np.random.default_rng(777).normal(scale=0.1, size=n)),
+            "price": 100.0
+            + np.cumsum(np.random.default_rng(777).normal(scale=0.1, size=n)),
             "volume": np.random.default_rng(888).lognormal(mean=10, sigma=1, size=n),
         }
     )
@@ -321,7 +330,9 @@ def main() -> None:
         "metrics": [metric.to_payload() for metric in metrics],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    args.output.write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":

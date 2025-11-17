@@ -1,4 +1,5 @@
 """Tests for sandbox subchart templates."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +7,14 @@ from typing import Any, Dict, List
 
 import yaml
 
-SANDBOX_CHART = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "tradepulse" / "charts" / "sandbox"
+SANDBOX_CHART = (
+    Path(__file__).resolve().parents[2]
+    / "deploy"
+    / "helm"
+    / "tradepulse"
+    / "charts"
+    / "sandbox"
+)
 
 
 def _load_yaml(path: Path) -> Dict[str, Any] | List[Any]:

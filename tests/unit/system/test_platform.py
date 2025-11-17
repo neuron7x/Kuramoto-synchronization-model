@@ -382,7 +382,9 @@ def test_build_tradepulse_platform_uses_explicit_system_config(tmp_path: Path) -
     )
 
     assert platform.system.connector_names == ("sim",)
-    path_guard = platform.system.data_ingestor._path_guard  # noqa: SLF001 - test introspection
+    path_guard = (
+        platform.system.data_ingestor._path_guard
+    )  # noqa: SLF001 - test introspection
     assert path_guard.allowed_roots == (allowed_root.resolve(),)
     assert path_guard.max_bytes == 1234
 
@@ -467,7 +469,9 @@ async def test_build_tradepulse_platform_streaming_settings_create_pipeline() ->
     assert service.kwargs == {"retries": 3}
 
     aggregator = platform.create_aggregator(CacheRoute(layer="raw", timeframe="1s"))
-    assert aggregator._cache_service is cache_service  # noqa: SLF001 - test introspection
+    assert (
+        aggregator._cache_service is cache_service
+    )  # noqa: SLF001 - test introspection
 
     await platform.start_streaming()
     await platform.stop_streaming()

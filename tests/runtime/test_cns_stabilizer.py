@@ -171,7 +171,9 @@ async def test_circadian_reset_cleanup(monkeypatch):
 
 def test_heatmap_file_written(tmp_path):
     stabilizer = CNSStabilizer()
-    stabilizer.heatmap_data.append({"epoch": 1, "delta_f": 0.1, "phase": "stable", "margin": 0.03})
+    stabilizer.heatmap_data.append(
+        {"epoch": 1, "delta_f": 0.1, "phase": "stable", "margin": 0.03}
+    )
     csv_path = tmp_path / "delta.csv"
     stabilizer.export_heatmap(str(csv_path))
     assert csv_path.exists()
@@ -210,7 +212,9 @@ def test_hybrid_throttle_emits_event():
     stabilizer.delta_f_history = deque([0.0, 0.5, 1.5], maxlen=10)
     raw = np.linspace(-5.0, 5.0, 64)
     stabilizer.process_signals_sync(raw.tolist(), ga_phase="pre_evolve")
-    hybrid_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("type") == "hybrid"]
+    hybrid_events = [
+        evt for evt in stabilizer.get_eventlog() if evt["data"].get("type") == "hybrid"
+    ]
     assert hybrid_events
     throttle_event = hybrid_events[-1]
     assert throttle_event["data"].get("action") == "throttle"
@@ -238,7 +242,11 @@ def test_monotonic_violation_triggers_veto(monkeypatch):
     assert event["data"].get("type") == "monotonic"
     assert event["allowed"] is False
     assert event["mode"] == "PoR"
-    recovery_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("action") == "micro_recovery"]
+    recovery_events = [
+        evt
+        for evt in stabilizer.get_eventlog()
+        if evt["data"].get("action") == "micro_recovery"
+    ]
     assert recovery_events
 
 
@@ -257,7 +265,9 @@ def test_micro_recovery_invocation_in_audit(monkeypatch):
 
 def test_heatmap_export_default_path(tmp_path):
     stabilizer = CNSStabilizer()
-    stabilizer.heatmap_data.append({"epoch": 1, "delta_f": 0.1, "phase": "stable", "margin": 0.03})
+    stabilizer.heatmap_data.append(
+        {"epoch": 1, "delta_f": 0.1, "phase": "stable", "margin": 0.03}
+    )
 
     csv_path = tmp_path / "custom.csv"
     df = stabilizer.export_heatmap(str(csv_path))

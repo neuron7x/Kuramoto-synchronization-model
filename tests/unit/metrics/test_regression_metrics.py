@@ -25,9 +25,7 @@ def test_regression_metrics_match_numpy() -> None:
     np.testing.assert_allclose(mae, np.mean(np.abs(y_true - y_pred)))
     np.testing.assert_allclose(mse, np.mean((y_true - y_pred) ** 2))
     np.testing.assert_allclose(rmse, np.sqrt(np.mean((y_true - y_pred) ** 2)))
-    np.testing.assert_allclose(
-        mape_value, np.mean(np.abs((y_true - y_pred) / y_true))
-    )
+    np.testing.assert_allclose(mape_value, np.mean(np.abs((y_true - y_pred) / y_true)))
 
     denom = np.maximum(np.abs(y_true) + np.abs(y_pred), 1e-8)
     expected_smape = np.mean(np.abs(y_true - y_pred) / denom) * 2.0

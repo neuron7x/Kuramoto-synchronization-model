@@ -1,4 +1,5 @@
 """Fractal barrier utilities coordinating FHMC multi-agent execution."""
+
 from __future__ import annotations
 
 import threading
@@ -10,9 +11,7 @@ class FractalBarrier:
         unique_levels = sorted({level for level in levels if level > 0})
         self.levels = unique_levels
         self._locks: Dict[int, threading.Barrier] = {
-            level: threading.Barrier(level)
-            for level in unique_levels
-            if level > 1
+            level: threading.Barrier(level) for level in unique_levels if level > 1
         }
 
     def wait(self, world_rank: int, world_size: int) -> None:

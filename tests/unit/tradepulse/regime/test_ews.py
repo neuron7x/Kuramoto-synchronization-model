@@ -6,7 +6,7 @@ from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
     "ews",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/regime/ews.py"
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/regime/ews.py",
 )
 ews_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ews_module)

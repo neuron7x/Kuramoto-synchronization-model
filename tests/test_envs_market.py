@@ -11,7 +11,16 @@ def test_toy_market_step_shapes():
     reward, next_state, info = env.step(action)
     assert isinstance(reward, float)
     assert next_state.shape == (16,)
-    expected_keys = {"latent", "maxdd", "volshock", "cp", "exp_ret", "novelty", "load", "fd"}
+    expected_keys = {
+        "latent",
+        "maxdd",
+        "volshock",
+        "cp",
+        "exp_ret",
+        "novelty",
+        "load",
+        "fd",
+    }
     assert expected_keys <= info.keys()
     expected_maxdd = _max_drawdown(np.array(env.returns, dtype=float))
     assert np.isclose(info["maxdd"], expected_maxdd)

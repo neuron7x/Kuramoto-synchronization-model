@@ -18,12 +18,16 @@ import time
 from pathlib import Path
 
 # Add src to path for direct import - import only the dopamine controller module
-sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "tradepulse" / "core" / "neuro"))
+sys.path.insert(
+    0, str(Path(__file__).parent.parent / "src" / "tradepulse" / "core" / "neuro")
+)
 
 from dopamine.dopamine_controller import DopamineController
 
 
-def benchmark_step(controller: DopamineController, iterations: int = 100000) -> dict[str, float]:
+def benchmark_step(
+    controller: DopamineController, iterations: int = 100000
+) -> dict[str, float]:
     """Benchmark dopamine controller step performance.
 
     Args:
@@ -132,13 +136,15 @@ def main() -> int:
 
     # Check against target
     target = 15000
-    if results['steps_per_sec'] >= target:
+    if results["steps_per_sec"] >= target:
         print(f"✅ PASS: Meets target of ≥{target:,} steps/s")
         return 0
     else:
-        shortfall = target - results['steps_per_sec']
+        shortfall = target - results["steps_per_sec"]
         pct = (shortfall / target) * 100
-        print(f"❌ FAIL: Below target of ≥{target:,} steps/s (short by {shortfall:,.0f} or {pct:.1f}%)")
+        print(
+            f"❌ FAIL: Below target of ≥{target:,} steps/s (short by {shortfall:,.0f} or {pct:.1f}%)"
+        )
         return 1
 
 

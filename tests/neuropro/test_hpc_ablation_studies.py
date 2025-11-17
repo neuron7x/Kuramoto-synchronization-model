@@ -45,7 +45,7 @@ class TestAblationStudies:
         prev_pwpe = 0.0
 
         for i in range(20):
-            window = data.iloc[i*20:(i+1)*20+80]
+            window = data.iloc[i * 20 : (i + 1) * 20 + 80]
             action = model_with_gate.decide_action(window, prev_pwpe)
             pwpe = model_with_gate.get_pwpe(window)
             actions_with_gate.append(action)
@@ -60,7 +60,7 @@ class TestAblationStudies:
         prev_pwpe = 0.0
 
         for i in range(20):
-            window = data.iloc[i*20:(i+1)*20+80]
+            window = data.iloc[i * 20 : (i + 1) * 20 + 80]
             action = model_no_gate.decide_action(window, prev_pwpe)
             pwpe = model_no_gate.get_pwpe(window)
             actions_no_gate.append(action)
@@ -74,7 +74,10 @@ class TestAblationStudies:
         diversity_without = len(set(actions_no_gate)) / 3.0
 
         # Without gate should have more diversity (less conservative)
-        assert diversity_without >= diversity_with or abs(diversity_without - diversity_with) < 0.2
+        assert (
+            diversity_without >= diversity_with
+            or abs(diversity_without - diversity_with) < 0.2
+        )
 
         # PWPE should be similar (gate doesn't affect computation, only decisions)
         assert abs(np.mean(pwpes_with_gate) - np.mean(pwpes_no_gate)) < 5.0
@@ -101,7 +104,7 @@ class TestAblationStudies:
         rewards_expert = []
 
         for i in range(10):
-            window = data.iloc[i*25:(i+1)*25+75]
+            window = data.iloc[i * 25 : (i + 1) * 25 + 75]
 
             # Blended model
             state_b = model_blend.afferent_synthesis(window)
@@ -169,14 +172,14 @@ class TestAblationStudies:
         results_ablated = simple_backtest(model_ablated, data, initial_capital=10000.0)
 
         # Both should complete without errors
-        assert 'total_return' in results_full
-        assert 'total_return' in results_ablated
-        assert 'sharpe' in results_full
-        assert 'sharpe' in results_ablated
+        assert "total_return" in results_full
+        assert "total_return" in results_ablated
+        assert "sharpe" in results_full
+        assert "sharpe" in results_ablated
 
         # Action distributions should differ
-        dist_full = results_full['action_distribution']
-        dist_ablated = results_ablated['action_distribution']
+        dist_full = results_full["action_distribution"]
+        dist_ablated = results_ablated["action_distribution"]
 
         # Check distributions are valid
         assert abs(sum(dist_full.values()) - 1.0) < 0.01
@@ -201,7 +204,7 @@ class TestStatisticalSignificance:
         pwpes_without = []
 
         for i in range(15):
-            window = data.iloc[i*10:(i+1)*10+50]
+            window = data.iloc[i * 10 : (i + 1) * 10 + 50]
             pwpes_with.append(model_with.get_pwpe(window))
             pwpes_without.append(model_without.get_pwpe(window))
 
@@ -232,7 +235,7 @@ class TestStatisticalSignificance:
             with torch.no_grad():
                 model_expert.blending_alpha.fill_(0.0)
 
-            data = generate_synthetic_data(n_days=200, seed=42+trial)
+            data = generate_synthetic_data(n_days=200, seed=42 + trial)
 
             # Quick validation (fewer steps for speed)
             metrics_blend = validate_hpc_ai(model_blend, data, n_steps=5)
@@ -245,8 +248,12 @@ class TestStatisticalSignificance:
         t_stat, p_value = stats.ttest_rel(sharpes_blend, sharpes_expert)
 
         print(f"\nSharpe t-test: t={t_stat:.4f}, p={p_value:.4f}")
-        print(f"Mean Sharpe with blending: {np.mean(sharpes_blend):.4f} ± {np.std(sharpes_blend):.4f}")
-        print(f"Mean Sharpe expert-only: {np.mean(sharpes_expert):.4f} ± {np.std(sharpes_expert):.4f}")
+        print(
+            f"Mean Sharpe with blending: {np.mean(sharpes_blend):.4f} ± {np.std(sharpes_blend):.4f}"
+        )
+        print(
+            f"Mean Sharpe expert-only: {np.mean(sharpes_expert):.4f} ± {np.std(sharpes_expert):.4f}"
+        )
 
         # Test should complete
         assert not np.isnan(t_stat)
@@ -271,8 +278,8 @@ class TestComponentContributions:
         results_with = simple_backtest(model_with, data, initial_capital=10000.0)
         results_without = simple_backtest(model_without, data, initial_capital=10000.0)
 
-        dd_with = results_with['max_drawdown']
-        dd_without = results_without['max_drawdown']
+        dd_with = results_with["max_drawdown"]
+        dd_without = results_without["max_drawdown"]
 
         print(f"\nDrawdown with gate: {dd_with:.2%}")
         print(f"Drawdown without gate: {dd_without:.2%}")
@@ -296,28 +303,36 @@ class TestComponentContributions:
             with torch.no_grad():
                 model_expert.blending_alpha.fill_(0.0)
 
-            data = generate_synthetic_data(n_days=150, seed=42+run)
+            data = generate_synthetic_data(n_days=150, seed=42 + run)
             expert_metrics = torch.tensor([1.0, 0.1, 0.2])
 
             rewards_blend = []
             rewards_expert = []
 
             for i in range(10):
-                window = data.iloc[i*10:(i+1)*10+50]
+                window = data.iloc[i * 10 : (i + 1) * 10 + 50]
 
                 state_b = model_blend.afferent_synthesis(window)
                 _, pwpe_b = model_blend.hpc_forward(state_b)
-                rewards_blend.append(model_blend.compute_self_reward(expert_metrics, pwpe_b.item()))
+                rewards_blend.append(
+                    model_blend.compute_self_reward(expert_metrics, pwpe_b.item())
+                )
 
                 state_e = model_expert.afferent_synthesis(window)
                 _, pwpe_e = model_expert.hpc_forward(state_e)
-                rewards_expert.append(model_expert.compute_self_reward(expert_metrics, pwpe_e.item()))
+                rewards_expert.append(
+                    model_expert.compute_self_reward(expert_metrics, pwpe_e.item())
+                )
 
             variances_blend.append(np.var(rewards_blend))
             variances_expert.append(np.var(rewards_expert))
 
-        print(f"\nReward variance with blending: {np.mean(variances_blend):.6f} ± {np.std(variances_blend):.6f}")
-        print(f"Reward variance expert-only: {np.mean(variances_expert):.6f} ± {np.std(variances_expert):.6f}")
+        print(
+            f"\nReward variance with blending: {np.mean(variances_blend):.6f} ± {np.std(variances_blend):.6f}"
+        )
+        print(
+            f"Reward variance expert-only: {np.mean(variances_expert):.6f} ± {np.std(variances_expert):.6f}"
+        )
 
         # Both should be non-negative
         assert all(v >= 0.0 for v in variances_blend)

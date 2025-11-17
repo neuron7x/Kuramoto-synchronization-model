@@ -302,4 +302,3 @@ def test_synchronisation_metrics_capture_queue_delays() -> None:
     assert dynamics.total_queue_delay >= fast_result.queue_delay
     assert dynamics.max_queue_delay >= fast_result.queue_delay
     assert dynamics.average_queue_delay >= fast_result.queue_delay / 2
-

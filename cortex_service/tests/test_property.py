@@ -73,7 +73,10 @@ def test_regime_valence_always_clipped(valence, min_valence, max_valence):
         return  # Skip invalid configurations
 
     settings = RegimeSettings(
-        decay=0.2, min_valence=min_valence, max_valence=max_valence, confidence_floor=0.1
+        decay=0.2,
+        min_valence=min_valence,
+        max_valence=max_valence,
+        confidence_floor=0.1,
     )
     modulator = RegimeModulator(settings)
 

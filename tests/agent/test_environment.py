@@ -64,4 +64,3 @@ def test_environment_requires_reset(tmp_path: Path) -> None:
     env.reset()
     for _ in range(4):
         env.step(AgentAction.HOLD)
-

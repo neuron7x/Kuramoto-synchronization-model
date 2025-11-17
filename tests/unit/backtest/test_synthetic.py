@@ -92,7 +92,9 @@ def test_liquidity_shock_reduces_depth_and_widens_spread() -> None:
 
     scenario = generator.generate(liquidity_shocks=[shock])[0]
     liquidity_series = scenario.liquidity_series
-    assert liquidity_series[2] == pytest.approx(config.liquidity * (1.0 - shock.severity))
+    assert liquidity_series[2] == pytest.approx(
+        config.liquidity * (1.0 - shock.severity)
+    )
     assert liquidity_series[1] == pytest.approx(config.liquidity)
 
     pre_profile = scenario.order_book_profiles[1]
@@ -128,7 +130,9 @@ def test_structural_break_changes_drift_and_volatility() -> None:
 
 
 def test_controlled_experiments_evaluate_strategies() -> None:
-    config = SyntheticScenarioConfig(length=6, drift=0.0, volatility=0.2, random_seed=21)
+    config = SyntheticScenarioConfig(
+        length=6, drift=0.0, volatility=0.2, random_seed=21
+    )
     generator = SyntheticScenarioGenerator(config)
     scenario = generator.generate()[0]
 
@@ -145,7 +149,9 @@ def test_controlled_experiments_evaluate_strategies() -> None:
     assert len(experiments) == 1
     experiment = experiments[0]
     assert experiment.scenario is scenario
-    metrics = {evaluation.strategy: evaluation.metric for evaluation in experiment.evaluations}
+    metrics = {
+        evaluation.strategy: evaluation.metric for evaluation in experiment.evaluations
+    }
     expected_terminal = scenario.prices[-1] / scenario.prices[0] - 1.0
     expected_vol = float(np.std(scenario.returns, ddof=1))
     assert metrics["terminal_return"] == pytest.approx(expected_terminal)

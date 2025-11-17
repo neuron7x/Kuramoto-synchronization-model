@@ -148,8 +148,14 @@ class Order:
         """Serialize the order into a transport-friendly representation."""
         # Types are converted in __post_init__, but mypy sees the union types
         side_value = self.side.value if isinstance(self.side, OrderSide) else self.side
-        order_type_value = self.order_type.value if isinstance(self.order_type, OrderType) else self.order_type
-        status_value = self.status.value if isinstance(self.status, OrderStatus) else self.status
+        order_type_value = (
+            self.order_type.value
+            if isinstance(self.order_type, OrderType)
+            else self.order_type
+        )
+        status_value = (
+            self.status.value if isinstance(self.status, OrderStatus) else self.status
+        )
 
         return {
             "symbol": self.symbol,

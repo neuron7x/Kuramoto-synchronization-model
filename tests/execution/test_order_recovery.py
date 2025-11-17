@@ -160,7 +160,9 @@ def test_idempotent_submitter_deduplication() -> None:
     assert submitter.seen("binance", "test-key")
 
     # Third submission with different key
-    submitter.submit("binance", order, idempotency_key="different-key", connector=connector)
+    submitter.submit(
+        "binance", order, idempotency_key="different-key", connector=connector
+    )
     assert connector.calls == 2  # Should increment
     assert submitter.seen("binance", "different-key")
 
@@ -233,7 +235,9 @@ def test_reconnect_with_jittered_backoff(
 
     reconnect_events = []
 
-    def on_reconnect(venue: str, attempt: int, delay: float, exc: Exception | None) -> None:
+    def on_reconnect(
+        venue: str, attempt: int, delay: float, exc: Exception | None
+    ) -> None:
         reconnect_events.append((venue, attempt, delay, exc))
 
     loop = LiveExecutionLoop(

@@ -18,10 +18,7 @@ class TestProfilingInstrumentation:
     def test_profile_section_basic(self):
         """Test basic profiling section timing."""
         result = ProfileSectionResult(
-            name="test_operation",
-            wall_time_s=1.5,
-            cpu_time_s=1.2,
-            peak_memory_mb=100.0
+            name="test_operation", wall_time_s=1.5, cpu_time_s=1.2, peak_memory_mb=100.0
         )
 
         assert result.name == "test_operation"
@@ -34,7 +31,7 @@ class TestProfilingInstrumentation:
         sections = [
             ProfileSectionResult("init", 0.5, 0.4, 50.0),
             ProfileSectionResult("process", 2.0, 1.8, 150.0),
-            ProfileSectionResult("finalize", 0.3, 0.2, 75.0)
+            ProfileSectionResult("finalize", 0.3, 0.2, 75.0),
         ]
 
         report = ProfileReport(sections=sections)
@@ -50,7 +47,7 @@ class TestProfilingInstrumentation:
             wall_time_s=0.1,
             cpu_time_s=0.05,
             peak_memory_mb=10.0,
-            error="Division by zero"
+            error="Division by zero",
         )
 
         assert result.error == "Division by zero"
@@ -146,7 +143,7 @@ class TestPerformanceBenchmarks:
 
         # Simulate moving average calculation
         window = 20
-        ma = np.convolve(data, np.ones(window)/window, mode='valid')
+        ma = np.convolve(data, np.ones(window) / window, mode="valid")
 
         elapsed = time.perf_counter() - start
 
@@ -286,7 +283,7 @@ class TestLatencyProfiling:
             "ingestion": 5.0,
             "processing": 15.0,
             "risk_check": 8.0,
-            "execution": 12.0
+            "execution": 12.0,
         }
 
         total_latency = sum(component_latencies.values())
@@ -333,6 +330,7 @@ class TestConcurrencyProfiling:
 
     def test_parallel_execution_speedup(self):
         """Test speedup from parallel execution."""
+
         def cpu_work():
             return sum(i * i for i in range(100000))
 
@@ -396,7 +394,9 @@ class TestPerformanceRegression:
         regression = (current_latency - baseline_latency) / baseline_latency
 
         # Check if within acceptable range
-        assert regression <= threshold, f"Performance regression detected: {regression:.1%}"
+        assert (
+            regression <= threshold
+        ), f"Performance regression detected: {regression:.1%}"
 
     def test_throughput_regression(self):
         """Test throughput regression detection."""

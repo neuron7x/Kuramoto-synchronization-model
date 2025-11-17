@@ -47,7 +47,9 @@ def test_serotonin_hold_suppresses_go(stack: BasalGangliaDecisionStack) -> None:
     assert result.extras["serotonin"]["hold"] >= 0.5
 
 
-def test_gaba_inhibition_prevents_impulsive_trades(stack: BasalGangliaDecisionStack) -> None:
+def test_gaba_inhibition_prevents_impulsive_trades(
+    stack: BasalGangliaDecisionStack,
+) -> None:
     """Repeated impulses increase GABA inhibition reducing GO probability."""
     q_values = {"long": 0.9, "flat": 0.2}
     constraints = {
@@ -81,7 +83,9 @@ def test_policy_temperature_remains_bounded_under_noise() -> None:
     for _ in range(120):
         reward = random.uniform(-0.1, 0.1)
         next_value = random.uniform(0.4, 0.6)
-        appetitive = ctrl.estimate_appetitive_state(abs(reward), 0.2, 0.1, abs(next_value - value))
+        appetitive = ctrl.estimate_appetitive_state(
+            abs(reward), 0.2, 0.1, abs(next_value - value)
+        )
         ctrl.step(
             reward=reward,
             value=value,
@@ -138,7 +142,9 @@ def test_select_action_module_level_api(stack: BasalGangliaDecisionStack) -> Non
 
 
 def test_basal_ganglia_reset_and_gates(stack: BasalGangliaDecisionStack) -> None:
-    stack.select_action([0.1, 0.2], {"reward": 0.0, "value": 0.2, "next_value": 0.2, "volatility": 0.3})
+    stack.select_action(
+        [0.1, 0.2], {"reward": 0.0, "value": 0.2, "next_value": 0.2, "volatility": 0.3}
+    )
     stack.reset()
     assert stack.dopamine.last_rpe == 0.0
     result = stack.select_action(

@@ -488,14 +488,18 @@ class PostmortemTemplateBuilder:
             "Follow-up Actions": "- Define remediation tasks with owners and due dates to prevent recurrence.",
             "Lessons Learned": "- Summarize key takeaways to improve processes, tooling, and communication.",
         }
-        default_note = "- Record the most relevant facts, decisions, and outstanding questions."
+        default_note = (
+            "- Record the most relevant facts, decisions, and outstanding questions."
+        )
         for section in self.sections:
             lines.append(f"## {section}")
             lines.append("")
             lines.append(guidance.get(section, default_note))
             lines.append("")
 
-        self.template_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+        self.template_path.write_text(
+            "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+        )
         return self.template_path
 
 

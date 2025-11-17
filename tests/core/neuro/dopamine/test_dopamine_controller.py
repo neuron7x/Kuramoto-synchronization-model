@@ -145,7 +145,9 @@ def test_release_gate_reacts_to_variance(controller: DopamineController) -> None
     assert extras_low["release_gate_open"] is True
 
 
-def test_meta_temperature_adaptation_increases_base(controller: DopamineController) -> None:
+def test_meta_temperature_adaptation_increases_base(
+    controller: DopamineController,
+) -> None:
     controller.reset_state()
     controller.config["temp_adapt_lr"] = 0.2
     controller.config["temp_adapt_beta1"] = 0.5

@@ -19,6 +19,7 @@ try:
     from backtest.event_driven import ArrayDataHandler, EventDrivenBacktestEngine
     from backtest.events import MarketEvent, SignalEvent
     from backtest.performance import compute_performance_metrics
+
     BACKTEST_AVAILABLE = True
 except ImportError:
     BACKTEST_AVAILABLE = False
@@ -96,25 +97,27 @@ class HPCAIStrategy:
         """
         # Store price history
         self.price_history.append(event.price)
-        self.volume_history.append(getattr(event, 'volume', 1000000.0))
+        self.volume_history.append(getattr(event, "volume", 1000000.0))
 
         # Wait for sufficient history
         if len(self.price_history) < self.lookback_window:
             return None
 
         # Keep only lookback window
-        self.price_history = self.price_history[-self.lookback_window:]
-        self.volume_history = self.volume_history[-self.lookback_window:]
+        self.price_history = self.price_history[-self.lookback_window :]
+        self.volume_history = self.volume_history[-self.lookback_window :]
 
         # Create DataFrame for model
-        data = pd.DataFrame({
-            'open': self.price_history,
-            'high': [p * 1.01 for p in self.price_history],  # Mock high
-            'low': [p * 0.99 for p in self.price_history],   # Mock low
-            'close': self.price_history,
-            'volume': self.volume_history,
-        })
-        data.index = pd.date_range(end=pd.Timestamp.now(), periods=len(data), freq='D')
+        data = pd.DataFrame(
+            {
+                "open": self.price_history,
+                "high": [p * 1.01 for p in self.price_history],  # Mock high
+                "low": [p * 0.99 for p in self.price_history],  # Mock low
+                "close": self.price_history,
+                "volume": self.volume_history,
+            }
+        )
+        data.index = pd.date_range(end=pd.Timestamp.now(), periods=len(data), freq="D")
 
         # Get action from HPC-AI
         action = self.model.decide_action(data, self.prev_pwpe)
@@ -126,14 +129,14 @@ class HPCAIStrategy:
         if action == 1:  # BUY
             return SignalEvent(
                 symbol=event.symbol,
-                signal_type='LONG',
+                signal_type="LONG",
                 strength=self.position_size,
                 price=event.price,
             )
         elif action == 2:  # SELL
             return SignalEvent(
                 symbol=event.symbol,
-                signal_type='SHORT',
+                signal_type="SHORT",
                 strength=self.position_size,
                 price=event.price,
             )
@@ -181,7 +184,7 @@ class SimplifiedBacktest:
                     self.step = step
                     self.volume = 1000000.0
 
-            event = MockEvent('ASSET', price, i)
+            event = MockEvent("ASSET", price, i)
             signal = strategy.on_market_data(event)
 
             # Track metrics
@@ -190,7 +193,7 @@ class SimplifiedBacktest:
 
             # Execute signal
             if signal is not None:
-                if signal.signal_type == 'LONG' and self.position == 0:
+                if signal.signal_type == "LONG" and self.position == 0:
                     # Buy
                     trade_size = self.capital * strategy.position_size / price
                     self.position = trade_size
@@ -198,26 +201,30 @@ class SimplifiedBacktest:
                     self.capital -= trade_size * price
                     actions.append(1)
 
-                    self.trades.append({
-                        'step': i,
-                        'type': 'BUY',
-                        'price': price,
-                        'size': trade_size,
-                    })
+                    self.trades.append(
+                        {
+                            "step": i,
+                            "type": "BUY",
+                            "price": price,
+                            "size": trade_size,
+                        }
+                    )
 
-                elif signal.signal_type == 'SHORT' and self.position > 0:
+                elif signal.signal_type == "SHORT" and self.position > 0:
                     # Sell
                     pnl = self.position * (price - self.entry_price)
                     self.capital += self.position * price
                     actions.append(2)
 
-                    self.trades.append({
-                        'step': i,
-                        'type': 'SELL',
-                        'price': price,
-                        'size': self.position,
-                        'pnl': pnl,
-                    })
+                    self.trades.append(
+                        {
+                            "step": i,
+                            "type": "SELL",
+                            "price": price,
+                            "size": self.position,
+                            "pnl": pnl,
+                        }
+                    )
 
                     self.position = 0.0
                     self.entry_price = 0.0
@@ -236,13 +243,15 @@ class SimplifiedBacktest:
             pnl = self.position * (final_price - self.entry_price)
             self.capital += self.position * final_price
 
-            self.trades.append({
-                'step': len(prices) - 1,
-                'type': 'SELL',
-                'price': final_price,
-                'size': self.position,
-                'pnl': pnl,
-            })
+            self.trades.append(
+                {
+                    "step": len(prices) - 1,
+                    "type": "SELL",
+                    "price": final_price,
+                    "size": self.position,
+                    "pnl": pnl,
+                }
+            )
 
             self.position = 0.0
 
@@ -252,7 +261,11 @@ class SimplifiedBacktest:
 
         total_return = (self.capital - self.initial_capital) / self.initial_capital
         volatility = returns.std() * np.sqrt(252)  # Annualized
-        sharpe = (returns.mean() / returns.std() * np.sqrt(252)) if returns.std() > 0 else 0.0
+        sharpe = (
+            (returns.mean() / returns.std() * np.sqrt(252))
+            if returns.std() > 0
+            else 0.0
+        )
 
         # Drawdown
         cummax = equity_series.cummax()
@@ -260,7 +273,7 @@ class SimplifiedBacktest:
         max_drawdown = abs(drawdown.min())
 
         # Win rate
-        winning_trades = [t for t in self.trades if t.get('pnl', 0) > 0]
+        winning_trades = [t for t in self.trades if t.get("pnl", 0) > 0]
         win_rate = len(winning_trades) / len(self.trades) if self.trades else 0.0
 
         # Action diversity
@@ -268,7 +281,7 @@ class SimplifiedBacktest:
         action_diversity = len([c for c in action_counts.values() if c > 0]) / 3.0
 
         return BacktestResult(
-            strategy_name='HPC-AI v4',
+            strategy_name="HPC-AI v4",
             total_return=total_return,
             sharpe_ratio=sharpe,
             max_drawdown=max_drawdown,
@@ -321,8 +334,8 @@ def run_hpc_ai_backtest(
     # Run backtest
     backtest = SimplifiedBacktest(initial_capital=initial_capital)
 
-    if 'close' in data.columns:
-        prices = data['close']
+    if "close" in data.columns:
+        prices = data["close"]
     else:
         prices = data.iloc[:, 0]  # Use first column
 
@@ -350,11 +363,11 @@ def compare_with_baseline(
     # HPC-AI strategy
     print("Running HPC-AI backtest...")
     hpc_result = run_hpc_ai_backtest(data, initial_capital=initial_capital)
-    results['HPC-AI v4'] = hpc_result
+    results["HPC-AI v4"] = hpc_result
 
     # Buy-and-Hold baseline
     print("Running Buy-and-Hold baseline...")
-    prices = data['close'] if 'close' in data.columns else data.iloc[:, 0]
+    prices = data["close"] if "close" in data.columns else data.iloc[:, 0]
     returns_bh = (prices.iloc[-1] - prices.iloc[0]) / prices.iloc[0]
 
     equity_bh = pd.Series(
@@ -362,10 +375,14 @@ def compare_with_baseline(
     )
     returns_series = equity_bh.pct_change().dropna()
 
-    results['Buy-and-Hold'] = BacktestResult(
-        strategy_name='Buy-and-Hold',
+    results["Buy-and-Hold"] = BacktestResult(
+        strategy_name="Buy-and-Hold",
         total_return=returns_bh,
-        sharpe_ratio=(returns_series.mean() / returns_series.std() * np.sqrt(252)) if returns_series.std() > 0 else 0.0,
+        sharpe_ratio=(
+            (returns_series.mean() / returns_series.std() * np.sqrt(252))
+            if returns_series.std() > 0
+            else 0.0
+        ),
         max_drawdown=abs((equity_bh - equity_bh.cummax()) / equity_bh.cummax()).max(),
         volatility=returns_series.std() * np.sqrt(252),
         n_trades=1,
@@ -387,24 +404,28 @@ def print_backtest_report(results: Dict[str, BacktestResult]):
     Args:
         results: Dictionary of backtest results
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("BACKTEST COMPARISON REPORT")
-    print("="*80)
+    print("=" * 80)
 
     # Create comparison table
-    print(f"\n{'Strategy':<20} {'Return':<12} {'Sharpe':<10} {'MaxDD':<10} {'Trades':<8} {'WinRate':<10}")
-    print("-"*80)
+    print(
+        f"\n{'Strategy':<20} {'Return':<12} {'Sharpe':<10} {'MaxDD':<10} {'Trades':<8} {'WinRate':<10}"
+    )
+    print("-" * 80)
 
     for name, result in results.items():
-        print(f"{name:<20} {result.total_return:>10.2%} {result.sharpe_ratio:>9.4f} "
-              f"{result.max_drawdown:>9.2%} {result.n_trades:>7} {result.win_rate:>9.1%}")
+        print(
+            f"{name:<20} {result.total_return:>10.2%} {result.sharpe_ratio:>9.4f} "
+            f"{result.max_drawdown:>9.2%} {result.n_trades:>7} {result.win_rate:>9.1%}"
+        )
 
     # Detailed HPC-AI metrics
-    if 'HPC-AI v4' in results:
-        hpc = results['HPC-AI v4']
-        print("\n" + "="*80)
+    if "HPC-AI v4" in results:
+        hpc = results["HPC-AI v4"]
+        print("\n" + "=" * 80)
         print("HPC-AI v4 Detailed Metrics")
-        print("="*80)
+        print("=" * 80)
         print(f"Total Return:      {hpc.total_return:>10.2%}")
         print(f"Sharpe Ratio:      {hpc.sharpe_ratio:>10.4f}")
         print(f"Max Drawdown:      {hpc.max_drawdown:>10.2%}")
@@ -415,7 +436,7 @@ def print_backtest_report(results: Dict[str, BacktestResult]):
         print(f"Mean PWPE:         {hpc.mean_pwpe:>10.4f}")
         print(f"Final Capital:     ${hpc.final_capital:>9.2f}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
 
 
 def run_example():
@@ -423,7 +444,9 @@ def run_example():
     print("Generating synthetic market data...")
     data = generate_synthetic_data(n_days=1000, volatility=1.5, seed=42)
 
-    print(f"Data: {len(data)} days, price range ${data['close'].min():.2f}-${data['close'].max():.2f}")
+    print(
+        f"Data: {len(data)} days, price range ${data['close'].min():.2f}-${data['close'].max():.2f}"
+    )
 
     # Run comparison
     results = compare_with_baseline(data, initial_capital=10000.0)

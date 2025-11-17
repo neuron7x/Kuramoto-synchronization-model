@@ -28,7 +28,10 @@ def _build_connect_args(
 ) -> dict[str, object]:
     """Return connection keyword arguments compatible with psycopg."""
 
-    options = [f"-c statement_timeout={int(runtime.statement_timeout_ms)}", "-c timezone=UTC"]
+    options = [
+        f"-c statement_timeout={int(runtime.statement_timeout_ms)}",
+        "-c timezone=UTC",
+    ]
     connect_args: dict[str, object] = {
         "connect_timeout": float(runtime.connect_timeout_seconds),
         "application_name": runtime.application_name,

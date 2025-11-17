@@ -90,9 +90,7 @@ class FakeLiveLoop:
         self.last_order: Order | None = None
         self.last_correlation_id: str | None = None
 
-    def submit_order(
-        self, venue: str, order: Order, *, correlation_id: str
-    ) -> Order:
+    def submit_order(self, venue: str, order: Order, *, correlation_id: str) -> Order:
         self.last_venue = venue
         self.last_order = order
         self.last_correlation_id = correlation_id

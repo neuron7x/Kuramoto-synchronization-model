@@ -1018,17 +1018,15 @@ class OnlineSignalForecaster:
         # Preserve directionality: when divergence and convergence point in the
         # same direction but at different speeds we want only a gentle nudge,
         # whereas opposing directions should trigger a sharper correction.
-        directional_tension = np.tanh((divergence_strength - convergence_strength) * 1.1)
+        directional_tension = np.tanh(
+            (divergence_strength - convergence_strength) * 1.1
+        )
 
         # Blend the above ingredients into a single correction term. Positive
         # raw values imply divergence dominance and yield a negative correction;
         # negative values indicate healthy agreement and therefore earn a
         # positive contribution.
-        raw_balance = (
-            magnitude_pressure
-            + 0.75 * directional_tension
-            - 1.0 * alignment
-        )
+        raw_balance = magnitude_pressure + 0.75 * directional_tension - 1.0 * alignment
 
         # When both legs are quiet we do not want the balance leg to oscillate
         # unnecessarily, hence the neutraliser softly damps the correction.

@@ -3,7 +3,12 @@ import os
 import time
 
 import pytest
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from tests.util.exchanges import (
     get_authenticated_balance,

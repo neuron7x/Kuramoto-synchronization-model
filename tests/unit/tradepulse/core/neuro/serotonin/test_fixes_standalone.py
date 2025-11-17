@@ -21,7 +21,15 @@ import yaml
 
 def load_controller():
     """Load the serotonin controller module."""
-    controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
+    controller_path = (
+        Path(__file__).parents[6]
+        / "src"
+        / "tradepulse"
+        / "core"
+        / "neuro"
+        / "serotonin"
+        / "serotonin_controller.py"
+    )
     spec = importlib.util.spec_from_file_location("serotonin_ctrl", controller_path)
     module = importlib.util.module_from_spec(spec)
     sys.modules["serotonin_ctrl"] = module  # Register module before execution
@@ -51,7 +59,7 @@ def create_controller():
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -64,9 +72,9 @@ def create_controller():
 
 def test_hysteresis():
     """Test hysteresis prevents oscillation."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 1: HYSTERESIS APPLICATION")
-    print("="*70)
+    print("=" * 70)
 
     ctrl, config = create_controller()
 
@@ -82,8 +90,9 @@ def test_hysteresis():
     for i in range(15):
         result = ctrl.step(stress=1.0, drawdown=0.0, novelty=0.0, dt=1.0)
         if ctrl._hold:
-            assert result["level"] >= entry_threshold - 0.05, \
-                f"Entry level {result['level']:.3f} below threshold {entry_threshold:.3f}"
+            assert (
+                result["level"] >= entry_threshold - 0.05
+            ), f"Entry level {result['level']:.3f} below threshold {entry_threshold:.3f}"
             print(f"✓ Entered hold at level {result['level']:.3f} (step {i})")
             break
     else:
@@ -93,8 +102,9 @@ def test_hysteresis():
     for i in range(30):
         result = ctrl.step(stress=0.0, drawdown=0.0, novelty=0.0, dt=1.0)
         if not ctrl._hold and result["cooldown"] > 0:
-            assert result["level"] <= exit_threshold + 0.05, \
-                f"Exit level {result['level']:.3f} above threshold {exit_threshold:.3f}"
+            assert (
+                result["level"] <= exit_threshold + 0.05
+            ), f"Exit level {result['level']:.3f} above threshold {exit_threshold:.3f}"
             print(f"✓ Exited hold at level {result['level']:.3f} (step {i})")
             break
     else:
@@ -103,9 +113,9 @@ def test_hysteresis():
 
 def test_cooldown_timing():
     """Test cooldown timing and decrement."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 2: COOLDOWN TIMING")
-    print("="*70)
+    print("=" * 70)
 
     ctrl, config = create_controller()
     ctrl.reset()
@@ -135,8 +145,9 @@ def test_cooldown_timing():
             break
 
     # Cooldown should be initialized (may have already decremented if we took extra steps)
-    assert result["cooldown"] >= config["cooldown_ticks"] - 2, \
-        f"Cooldown should be near {config['cooldown_ticks']} on exit, got {result['cooldown']}"
+    assert (
+        result["cooldown"] >= config["cooldown_ticks"] - 2
+    ), f"Cooldown should be near {config['cooldown_ticks']} on exit, got {result['cooldown']}"
     print(f"✓ Cooldown initialized to {result['cooldown']} on exit")
 
     # Verify cooldown decrements
@@ -144,7 +155,9 @@ def test_cooldown_timing():
     for i in range(5):
         result = ctrl.step(stress=0.0, drawdown=0.0, novelty=0.0, dt=1.0)
         if prev > 0:
-            assert result["cooldown"] < prev, f"Cooldown should decrement: {prev} -> {result['cooldown']}"
+            assert (
+                result["cooldown"] < prev
+            ), f"Cooldown should decrement: {prev} -> {result['cooldown']}"
             if result["cooldown"] < prev:
                 print(f"✓ Cooldown decremented: {prev} -> {result['cooldown']}")
         prev = result["cooldown"]
@@ -157,9 +170,9 @@ def test_cooldown_timing():
 
 def test_tonic_phasic():
     """Test tonic/phasic separation."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 3: TONIC/PHASIC SEPARATION")
-    print("="*70)
+    print("=" * 70)
 
     ctrl, config = create_controller()
 
@@ -171,8 +184,12 @@ def test_tonic_phasic():
         if i % 2 == 0:
             print(f"  Step {i}: tonic={ctrl.tonic_level:.4f}")
 
-    assert ctrl.tonic_level > 0.2, f"Tonic should accumulate, got {ctrl.tonic_level:.4f}"
-    assert ctrl.tonic_level < 0.5, f"Tonic should accumulate slowly, got {ctrl.tonic_level:.4f}"
+    assert (
+        ctrl.tonic_level > 0.2
+    ), f"Tonic should accumulate, got {ctrl.tonic_level:.4f}"
+    assert (
+        ctrl.tonic_level < 0.5
+    ), f"Tonic should accumulate slowly, got {ctrl.tonic_level:.4f}"
     print(f"✓ Tonic accumulated slowly to {ctrl.tonic_level:.4f}")
 
     # Test phasic (fast response)
@@ -192,15 +209,17 @@ def test_tonic_phasic():
 
     assert phasic_during > phasic_before, "Phasic should spike"
     assert phasic_after < phasic_during, "Phasic should decay"
-    assert phasic_during > 0.3, f"Phasic should show significant response, got {phasic_during:.4f}"
+    assert (
+        phasic_during > 0.3
+    ), f"Phasic should show significant response, got {phasic_during:.4f}"
     print(f"✓ Phasic responded quickly (spike: {phasic_during:.4f})")
 
 
 def test_hold_property():
     """Test hold property logic."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 4: HOLD PROPERTY LOGIC")
-    print("="*70)
+    print("=" * 70)
 
     ctrl, config = create_controller()
     ctrl.reset()
@@ -225,21 +244,25 @@ def test_hold_property():
             break
 
     assert not ctrl._hold and ctrl.hold, "hold should be True via cooldown"
-    print(f"✓ After exit: hold={ctrl.hold}, _hold={ctrl._hold}, cooldown={result['cooldown']}")
+    print(
+        f"✓ After exit: hold={ctrl.hold}, _hold={ctrl._hold}, cooldown={result['cooldown']}"
+    )
 
     # Wait for cooldown to expire
     for _ in range(config["cooldown_ticks"] + 2):
         result = ctrl.step(stress=0.0, drawdown=0.0, novelty=0.0, dt=1.0)
 
     assert not ctrl.hold, "hold should be False after cooldown expires"
-    print(f"✓ After cooldown: hold={ctrl.hold}, _hold={ctrl._hold}, cooldown={ctrl._cooldown}")
+    print(
+        f"✓ After cooldown: hold={ctrl.hold}, _hold={ctrl._hold}, cooldown={ctrl._cooldown}"
+    )
 
 
 def test_config_validation():
     """Test configuration validation."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 5: CONFIGURATION VALIDATION")
-    print("="*70)
+    print("=" * 70)
 
     Controller = load_controller()
 
@@ -249,7 +272,7 @@ def test_config_validation():
         # Missing other required keys
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(incomplete_config, f)
         config_path = f.name
 
@@ -283,7 +306,7 @@ def test_config_validation():
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(invalid_config, f)
         config_path = f.name
 
@@ -298,9 +321,9 @@ def test_config_validation():
 
 def main():
     """Run all tests."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("SEROTONIN CONTROLLER - COMPREHENSIVE FIX VALIDATION")
-    print("="*70)
+    print("=" * 70)
 
     try:
         test_hysteresis()
@@ -309,21 +332,22 @@ def main():
         test_hold_property()
         test_config_validation()
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("✅ ALL TESTS PASSED SUCCESSFULLY!")
-        print("="*70)
+        print("=" * 70)
         print("\nValidated fixes:")
         print("  1. ✓ Hysteresis application (entry 0.75, exit 0.35)")
         print("  2. ✓ Cooldown timing (initialized on exit, decrements outside hold)")
         print("  3. ✓ Tonic/phasic separation (slow vs fast response)")
         print("  4. ✓ Hold property logic (_hold + cooldown)")
         print("  5. ✓ Configuration validation")
-        print("="*70)
+        print("=" * 70)
         return 0
 
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

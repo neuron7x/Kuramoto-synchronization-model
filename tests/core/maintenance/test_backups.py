@@ -18,6 +18,7 @@ class _Recorder:
     def __call__(self, command: Sequence[str], env: dict[str, str] | None = None):
         self.commands.append(list(command))
         self.env.append(dict(env or {}))
+
         class _Result:
             returncode = 0
 

@@ -41,7 +41,9 @@ def test_binance_ingest_flow() -> None:
         "E": 1_700_000_000_000,
     }
     arrival = _ts(1_700_000_000_500)
-    snapshot = binance.parse_snapshot(snapshot_payload, instrument="BTCUSDT", ts_arrival=arrival)
+    snapshot = binance.parse_snapshot(
+        snapshot_payload, instrument="BTCUSDT", ts_arrival=arrival
+    )
     service.process_snapshot(snapshot)
 
     diff_payload = {
@@ -69,7 +71,9 @@ def test_binance_ingest_flow() -> None:
 
     metrics_snapshot = metrics.snapshot()["BTCUSDT"]
     assert metrics_snapshot.latency_ms is not None and metrics_snapshot.latency_ms >= 0
-    assert metrics_snapshot.freshness_ms is not None and metrics_snapshot.freshness_ms >= 0
+    assert (
+        metrics_snapshot.freshness_ms is not None and metrics_snapshot.freshness_ms >= 0
+    )
     assert metrics_snapshot.gap_events == 0
     assert not requests  # no recovery requested
 
@@ -126,7 +130,9 @@ def test_okx_snapshot_and_updates_indexed_by_time() -> None:
         requests.append((instrument, reason))
 
     service = OrderBookIngestService(
-        config=IngestConfig(snapshot_interval=timedelta(seconds=1), snapshot_depth=2, max_snapshots=8),
+        config=IngestConfig(
+            snapshot_interval=timedelta(seconds=1), snapshot_depth=2, max_snapshots=8
+        ),
         metrics=metrics,
         snapshot_requester=capture_request,
     )

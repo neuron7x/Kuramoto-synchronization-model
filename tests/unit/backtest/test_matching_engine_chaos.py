@@ -28,15 +28,21 @@ def resilient_engine(monkeypatch):
 
     def halt_model(symbol: str, timestamp: int) -> MarketHalt | None:
         if symbol == "XBTUSD" and timestamp >= 5:
-            return MarketHalt(mode=HaltMode.PARTIAL, resume_time=timestamp + 2, liquidity_factor=0.7)
+            return MarketHalt(
+                mode=HaltMode.PARTIAL, resume_time=timestamp + 2, liquidity_factor=0.7
+            )
         return None
 
     engine = MatchingEngine(
         latency_model=lambda order: 2 if order.symbol == "XBTUSD" else 0,
         halt_model=halt_model,
     )
-    engine.add_passive_liquidity("XBTUSD", OrderSide.SELL, price=100.0, qty=200.0, timestamp=0)
-    engine.add_passive_liquidity("XBTUSD", OrderSide.BUY, price=99.5, qty=200.0, timestamp=0)
+    engine.add_passive_liquidity(
+        "XBTUSD", OrderSide.SELL, price=100.0, qty=200.0, timestamp=0
+    )
+    engine.add_passive_liquidity(
+        "XBTUSD", OrderSide.BUY, price=99.5, qty=200.0, timestamp=0
+    )
     return engine, captured
 
 

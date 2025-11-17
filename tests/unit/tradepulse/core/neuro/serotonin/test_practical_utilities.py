@@ -21,8 +21,18 @@ import yaml
 
 def load_controller():
     """Load the serotonin controller module."""
-    controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
-    spec = importlib.util.spec_from_file_location("serotonin_util_test", controller_path)
+    controller_path = (
+        Path(__file__).parents[6]
+        / "src"
+        / "tradepulse"
+        / "core"
+        / "neuro"
+        / "serotonin"
+        / "serotonin_controller.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "serotonin_util_test", controller_path
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules["serotonin_util_test"] = module
     spec.loader.exec_module(module)
@@ -51,7 +61,7 @@ def create_controller(enable_perf=False):
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -64,18 +74,22 @@ def create_controller(enable_perf=False):
 
 def test_should_take_action():
     """Test should_take_action utility method."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 1: should_take_action()")
-    print("="*70)
+    print("=" * 70)
 
     ctrl = create_controller()
 
     # Low stress - should allow actions
     ctrl.reset()
     ctrl.step(0.1, 0.0, 0.0)
-    assert ctrl.should_take_action("conservative"), "Conservative should allow at low stress"
+    assert ctrl.should_take_action(
+        "conservative"
+    ), "Conservative should allow at low stress"
     assert ctrl.should_take_action("moderate"), "Moderate should allow at low stress"
-    assert ctrl.should_take_action("aggressive"), "Aggressive should allow at low stress"
+    assert ctrl.should_take_action(
+        "aggressive"
+    ), "Aggressive should allow at low stress"
     print("✓ Low stress: all risk levels allow trading")
 
     # Medium stress - varies by risk level
@@ -88,7 +102,9 @@ def test_should_take_action():
     aggressive = ctrl.should_take_action("aggressive")
 
     print(f"✓ Medium stress (level={ctrl.level:.3f}):")
-    print(f"  Conservative: {conservative}, Moderate: {moderate}, Aggressive: {aggressive}")
+    print(
+        f"  Conservative: {conservative}, Moderate: {moderate}, Aggressive: {aggressive}"
+    )
 
     # In hold - none should allow
     ctrl.reset()
@@ -105,9 +121,9 @@ def test_should_take_action():
 
 def test_position_size_multiplier():
     """Test get_position_size_multiplier utility method."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 2: get_position_size_multiplier()")
-    print("="*70)
+    print("=" * 70)
 
     ctrl = create_controller()
 
@@ -124,7 +140,9 @@ def test_position_size_multiplier():
         ctrl.step(1.0, 0.0, 0.0)
 
     multiplier = ctrl.get_position_size_multiplier()
-    assert multiplier >= 0.0 and multiplier <= 0.1, f"Should be near 0 at threshold, got {multiplier}"
+    assert (
+        multiplier >= 0.0 and multiplier <= 0.1
+    ), f"Should be near 0 at threshold, got {multiplier}"
     print(f"✓ At threshold: multiplier = {multiplier:.2f} (minimal/no size)")
 
     # Mid-range stress - scaled
@@ -150,9 +168,9 @@ def test_position_size_multiplier():
 
 def test_estimate_recovery_time():
     """Test estimate_recovery_time utility method."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 3: estimate_recovery_time()")
-    print("="*70)
+    print("=" * 70)
 
     ctrl = create_controller()
 
@@ -181,15 +199,17 @@ def test_estimate_recovery_time():
             break
 
     recovery = ctrl.estimate_recovery_time()
-    assert recovery == ctrl._cooldown, f"Should match cooldown, got {recovery} vs {ctrl._cooldown}"
+    assert (
+        recovery == ctrl._cooldown
+    ), f"Should match cooldown, got {recovery} vs {ctrl._cooldown}"
     print(f"✓ In cooldown: recovery time = {recovery} (matches cooldown)")
 
 
 def test_validate_state():
     """Test validate_state utility method."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 4: validate_state()")
-    print("="*70)
+    print("=" * 70)
 
     ctrl = create_controller()
 
@@ -213,9 +233,9 @@ def test_validate_state():
 
 def test_get_state_summary():
     """Test get_state_summary utility method."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 5: get_state_summary()")
-    print("="*70)
+    print("=" * 70)
 
     ctrl = create_controller()
     ctrl.reset()
@@ -238,9 +258,9 @@ def test_get_state_summary():
 
 def test_step_batch():
     """Test step_batch utility method."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 6: step_batch()")
-    print("="*70)
+    print("=" * 70)
 
     ctrl = create_controller()
     ctrl.reset()
@@ -264,7 +284,9 @@ def test_step_batch():
         assert "cooldown" in result, f"Result {i} missing 'cooldown'"
 
     print("✓ All results have correct structure")
-    print(f"  Final state: level={results[-1]['level']:.3f}, hold={bool(results[-1]['hold'])}")
+    print(
+        f"  Final state: level={results[-1]['level']:.3f}, hold={bool(results[-1]['hold'])}"
+    )
 
     # Test error handling
     try:
@@ -276,9 +298,9 @@ def test_step_batch():
 
 def test_performance_tracking():
     """Test performance tracking functionality."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST 7: Performance Tracking")
-    print("="*70)
+    print("=" * 70)
 
     # Controller without tracking
     ctrl_no_track = create_controller(enable_perf=False)
@@ -302,7 +324,9 @@ def test_performance_tracking():
     assert "steps_per_second" in stats, "Should have steps_per_second"
     assert "hold_rate" in stats, "Should have hold_rate"
 
-    assert stats["total_steps"] == 50, f"Should have 50 steps, got {stats['total_steps']}"
+    assert (
+        stats["total_steps"] == 50
+    ), f"Should have 50 steps, got {stats['total_steps']}"
     assert stats["avg_step_time_ms"] > 0, "Should have positive step time"
     assert stats["steps_per_second"] > 0, "Should have positive throughput"
 
@@ -321,9 +345,9 @@ def test_performance_tracking():
 
 def main():
     """Run all tests."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("PRACTICAL UTILITIES - COMPREHENSIVE VALIDATION")
-    print("="*70)
+    print("=" * 70)
 
     try:
         test_should_take_action()
@@ -334,9 +358,9 @@ def main():
         test_step_batch()
         test_performance_tracking()
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("✅ ALL UTILITY TESTS PASSED SUCCESSFULLY!")
-        print("="*70)
+        print("=" * 70)
         print("\nValidated utilities:")
         print("  1. ✓ should_take_action() - Risk-adjusted trading decisions")
         print("  2. ✓ get_position_size_multiplier() - Dynamic position sizing")
@@ -345,12 +369,13 @@ def main():
         print("  5. ✓ get_state_summary() - Human-readable diagnostics")
         print("  6. ✓ step_batch() - Efficient batch processing")
         print("  7. ✓ Performance tracking - Monitoring and profiling")
-        print("="*70)
+        print("=" * 70)
         return 0
 
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

@@ -1,4 +1,5 @@
 """Tests for dependency-pinning workflow."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +7,12 @@ from typing import Any, Dict
 
 import yaml
 
-WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "dependency-pinning.yml"
+WORKFLOW_PATH = (
+    Path(__file__).resolve().parents[2]
+    / ".github"
+    / "workflows"
+    / "dependency-pinning.yml"
+)
 
 
 def _load_workflow() -> Dict[str, Any]:
@@ -58,7 +64,9 @@ def test_check_python_dependencies_validates_lock_files() -> None:
 
     python_step = None
     for step in steps:
-        if isinstance(step, dict) and "Check Python dependencies" in step.get("name", ""):
+        if isinstance(step, dict) and "Check Python dependencies" in step.get(
+            "name", ""
+        ):
             python_step = step
             break
 
@@ -76,7 +84,9 @@ def test_check_nodejs_dependencies_validates_package_lock() -> None:
 
     nodejs_step = None
     for step in steps:
-        if isinstance(step, dict) and "Check Node.js dependencies" in step.get("name", ""):
+        if isinstance(step, dict) and "Check Node.js dependencies" in step.get(
+            "name", ""
+        ):
             nodejs_step = step
             break
 

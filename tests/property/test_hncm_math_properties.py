@@ -17,7 +17,9 @@ from tests.property.utils import property_settings, regression_note
 
 # Hypothesis struggles with NaN/Inf comparisons for these helpers, so we
 # constrain to finite numbers that still span a wide dynamic range.
-_floats = st.floats(min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False, width=64)
+_floats = st.floats(
+    min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False, width=64
+)
 
 
 @given(
@@ -72,7 +74,9 @@ def test_clamp_is_monotonic_in_x(
     assert first <= second + 1e-12
 
 
-@given(prev=_floats, value=_floats, alpha=st.floats(min_value=0.0, max_value=1.0, width=64))
+@given(
+    prev=_floats, value=_floats, alpha=st.floats(min_value=0.0, max_value=1.0, width=64)
+)
 @settings(**property_settings("test_ema_is_convex_combination"))
 def test_ema_is_convex_combination(prev: float, value: float, alpha: float) -> None:
     result = ema(prev, value, alpha)

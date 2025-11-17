@@ -55,7 +55,10 @@ class QRDQN(nn.Module):
 
 
 def quantile_huber_elementwise(
-    target: torch.Tensor, tau: torch.Tensor, prediction: torch.Tensor, kappa: float = 1.0
+    target: torch.Tensor,
+    tau: torch.Tensor,
+    prediction: torch.Tensor,
+    kappa: float = 1.0,
 ) -> torch.Tensor:
     """Elementwise Quantile Huber loss without reduction."""
 
@@ -91,7 +94,11 @@ class PERBuffer:
     def __len__(self) -> int:
         return len(self.storage)
 
-    def add(self, transition: Tuple[np.ndarray, int, float, np.ndarray, bool], priority: Optional[float] = None) -> None:
+    def add(
+        self,
+        transition: Tuple[np.ndarray, int, float, np.ndarray, bool],
+        priority: Optional[float] = None,
+    ) -> None:
         if priority is None:
             priority = max(self.priorities, default=1.0)
         priority = float(abs(priority) + self.eps)
@@ -106,7 +113,9 @@ class PERBuffer:
 
     def sample(
         self, batch_size: int
-    ) -> Tuple[np.ndarray, List[Tuple[np.ndarray, int, float, np.ndarray, bool]], np.ndarray]:
+    ) -> Tuple[
+        np.ndarray, List[Tuple[np.ndarray, int, float, np.ndarray, bool]], np.ndarray
+    ]:
         priorities = np.asarray(self.priorities, dtype=np.float64)
         probs = priorities**self.alpha
         total = probs.sum()
@@ -121,7 +130,9 @@ class PERBuffer:
         weights = (weights / weights.max()).astype(np.float32)
         return indices, samples, weights
 
-    def update_priorities(self, indices: Iterable[int], new_priorities: Iterable[float]) -> None:
+    def update_priorities(
+        self, indices: Iterable[int], new_priorities: Iterable[float]
+    ) -> None:
         for idx, priority in zip(indices, new_priorities):
             self.priorities[int(idx)] = float(abs(priority) + self.eps)
 
@@ -160,17 +171,23 @@ class MisanthropicAgent:
         self.action_size = action_size
         self.quantiles = quantiles
 
-        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device or torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         self.model = QRDQN(state_size, action_size, quantiles).to(self.device)
         self.target_model = QRDQN(state_size, action_size, quantiles).to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())
-        self.optimizer = optim.AdamW(self.model.parameters(), lr=1e-3, weight_decay=1e-4)
+        self.optimizer = optim.AdamW(
+            self.model.parameters(), lr=1e-3, weight_decay=1e-4
+        )
 
         self.per_alpha = 0.6
         self.per_beta = 0.4
         self._rng: Generator = rng or default_rng()
-        self.replay = PERBuffer(100_000, alpha=self.per_alpha, beta=self.per_beta, rng=self._rng)
+        self.replay = PERBuffer(
+            100_000, alpha=self.per_alpha, beta=self.per_beta, rng=self._rng
+        )
         self.discount = 0.997
         self.batch_size = 64
 
@@ -200,10 +217,14 @@ class MisanthropicAgent:
         self.ood_hold = False
 
         self.ensemble = [
-            nn.Sequential(nn.Linear(state_size, 32), nn.ReLU(), nn.Linear(32, 1)).to(self.device)
+            nn.Sequential(nn.Linear(state_size, 32), nn.ReLU(), nn.Linear(32, 1)).to(
+                self.device
+            )
             for _ in range(5)
         ]
-        self.ensemble_optimizers = [optim.Adam(model.parameters(), lr=1e-3) for model in self.ensemble]
+        self.ensemble_optimizers = [
+            optim.Adam(model.parameters(), lr=1e-3) for model in self.ensemble
+        ]
 
         self.history: Deque[float] = deque(maxlen=5000)
         self.last_state: Optional[np.ndarray] = None
@@ -213,17 +234,25 @@ class MisanthropicAgent:
         elif metrics_path is not None:
             metrics_location = Path(metrics_path)
         else:
-            metrics_location = Path(os.environ.get("TP_AGENT_METRICS_PATH", "logs/misanthropic_agent_metrics.jsonl"))
+            metrics_location = Path(
+                os.environ.get(
+                    "TP_AGENT_METRICS_PATH", "logs/misanthropic_agent_metrics.jsonl"
+                )
+            )
         self.metrics_path = metrics_location
 
     # ------------------------------------------------------------------
     # Feature engineering helpers
     # ------------------------------------------------------------------
     @staticmethod
-    def compute_ofi(delta_ask: np.ndarray, delta_bid: np.ndarray, levels: int = 10) -> float:
+    def compute_ofi(
+        delta_ask: np.ndarray, delta_bid: np.ndarray, levels: int = 10
+    ) -> float:
         return float(np.sum(delta_ask - delta_bid) / max(levels, 1))
 
-    def _threat_index(self, ofi: float, depth: float, z_vol: float, run_length: int, skew: float) -> float:
+    def _threat_index(
+        self, ofi: float, depth: float, z_vol: float, run_length: int, skew: float
+    ) -> float:
         indicator_cp = 1.0 if run_length < self.change_point_horizon else 0.0
         features = [abs(ofi) / max(depth, 1e-6), z_vol, indicator_cp, skew]
         return float(np.dot(self.threat_weights, features))
@@ -262,7 +291,9 @@ class MisanthropicAgent:
 
     def _uncertainty(self, state: np.ndarray) -> float:
         with torch.no_grad():
-            tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+            tensor_state = torch.tensor(
+                state, dtype=torch.float32, device=self.device
+            ).unsqueeze(0)
             preds: List[float] = []
             for model in self.ensemble:
                 was_training = model.training
@@ -290,7 +321,10 @@ class MisanthropicAgent:
     # OOD helper
     # ------------------------------------------------------------------
     def _ood_score(self) -> float:
-        if len(self.state_window) < self.state_window.maxlen or len(self.reference_window) < self.reference_window.maxlen:
+        if (
+            len(self.state_window) < self.state_window.maxlen
+            or len(self.reference_window) < self.reference_window.maxlen
+        ):
             return 0.0
         recent = np.asarray(self.state_window, dtype=float)
         reference = np.asarray(self.reference_window, dtype=float)
@@ -318,7 +352,9 @@ class MisanthropicAgent:
         sorted_dist, _ = torch.sort(distribution, dim=1)
         return sorted_dist[:, :k].mean(dim=1)
 
-    def _position_size(self, threat: float, uncertainty: float, cvar_hat: float, ood_score: float) -> float:
+    def _position_size(
+        self, threat: float, uncertainty: float, cvar_hat: float, ood_score: float
+    ) -> float:
         gate_uncertainty = np.exp(-uncertainty)
         gate_risk = 1.0 if cvar_hat > self.cvar_floor else 0.0
         gate_ood = 1.0 / (1.0 + 3.0 * ood_score)
@@ -344,12 +380,16 @@ class MisanthropicAgent:
 
         history_list = list(self.history)
         mean_history = float(np.mean(history_list[-10:])) if history_list else price
-        run_length = self._update_run_length(price - mean_history, update=update_trackers)
+        run_length = self._update_run_length(
+            price - mean_history, update=update_trackers
+        )
         skew = float(lob_data["skew"])
         threat = self._threat_index(ofi, depth, z_vol, run_length, skew)
         context_id = self._context_id(span=20)
 
-        state = np.array([ofi, depth, z_vol, threat, skew, context_id], dtype=np.float32)
+        state = np.array(
+            [ofi, depth, z_vol, threat, skew, context_id], dtype=np.float32
+        )
 
         if update_trackers:
             self.state_window.append(state)
@@ -373,7 +413,9 @@ class MisanthropicAgent:
         }
         return state, meta
 
-    def _decide_action(self, state: np.ndarray, meta: Dict[str, float]) -> Tuple[int, float, float]:
+    def _decide_action(
+        self, state: np.ndarray, meta: Dict[str, float]
+    ) -> Tuple[int, float, float]:
         threat = meta["threat"]
         uncertainty = meta["uncertainty"]
         ood_score = meta["ood_score"]
@@ -382,13 +424,20 @@ class MisanthropicAgent:
         cvar_hat = 0.0
         size = self._position_size(threat, uncertainty, cvar_hat, ood_score)
 
-        if size <= 0.0 or threat > 1.0 or coverage < self.coverage_floor or self.ood_hold:
+        if (
+            size <= 0.0
+            or threat > 1.0
+            or coverage < self.coverage_floor
+            or self.ood_hold
+        ):
             return 2, 0.0, 0.0
 
         prev_training = self.model.training
         self.model.eval()
         with torch.no_grad():
-            tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+            tensor_state = torch.tensor(
+                state, dtype=torch.float32, device=self.device
+            ).unsqueeze(0)
             q_dist = self.model(tensor_state)
             means = q_dist.mean(dim=2)
 
@@ -476,27 +525,46 @@ class MisanthropicAgent:
         indices, batch, importance_weights = self.replay.sample(self.batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
 
-        states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
-        next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
-        actions_tensor = torch.tensor(actions, dtype=torch.long, device=self.device).unsqueeze(1)
-        rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device).unsqueeze(1)
-        dones_tensor = torch.tensor(dones, dtype=torch.float32, device=self.device).unsqueeze(1)
-        weights_tensor = torch.tensor(importance_weights, dtype=torch.float32, device=self.device).unsqueeze(1)
+        states_tensor = torch.tensor(
+            np.array(states), dtype=torch.float32, device=self.device
+        )
+        next_states_tensor = torch.tensor(
+            np.array(next_states), dtype=torch.float32, device=self.device
+        )
+        actions_tensor = torch.tensor(
+            actions, dtype=torch.long, device=self.device
+        ).unsqueeze(1)
+        rewards_tensor = torch.tensor(
+            rewards, dtype=torch.float32, device=self.device
+        ).unsqueeze(1)
+        dones_tensor = torch.tensor(
+            dones, dtype=torch.float32, device=self.device
+        ).unsqueeze(1)
+        weights_tensor = torch.tensor(
+            importance_weights, dtype=torch.float32, device=self.device
+        ).unsqueeze(1)
 
         tau = torch.rand(self.batch_size, self.quantiles, device=states_tensor.device)
         tau, _ = tau.sort(dim=1)
 
         self.model.train()
         all_q = self.model(states_tensor)
-        q_dist = all_q.gather(1, actions_tensor.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(1)
+        q_dist = all_q.gather(
+            1, actions_tensor.unsqueeze(-1).repeat(1, 1, self.quantiles)
+        ).squeeze(1)
 
         with torch.no_grad():
             next_all_q = self.target_model(next_states_tensor)
             next_actions = next_all_q.mean(dim=2).argmax(dim=1).unsqueeze(1)
-            next_dist = next_all_q.gather(1, next_actions.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(1)
-            target_dist = rewards_tensor.repeat(1, self.quantiles) + (
-                1 - dones_tensor.repeat(1, self.quantiles)
-            ) * self.discount * next_dist
+            next_dist = next_all_q.gather(
+                1, next_actions.unsqueeze(-1).repeat(1, 1, self.quantiles)
+            ).squeeze(1)
+            target_dist = (
+                rewards_tensor.repeat(1, self.quantiles)
+                + (1 - dones_tensor.repeat(1, self.quantiles))
+                * self.discount
+                * next_dist
+            )
 
         elementwise = quantile_huber_elementwise(target_dist, tau, q_dist)
         per_sample_loss = elementwise.sum(dim=1, keepdim=True) / self.quantiles
@@ -520,8 +588,12 @@ class MisanthropicAgent:
         td_error = td_error.clamp_min(1e-6).detach().cpu().numpy()
         self.replay.update_priorities(indices, td_error)
 
-        for param, target_param in zip(self.model.parameters(), self.target_model.parameters()):
-            target_param.data.copy_(0.005 * param.data + (1 - 0.005) * target_param.data)
+        for param, target_param in zip(
+            self.model.parameters(), self.target_model.parameters()
+        ):
+            target_param.data.copy_(
+                0.005 * param.data + (1 - 0.005) * target_param.data
+            )
 
         for ensemble_model, optimizer in zip(self.ensemble, self.ensemble_optimizers):
             predictions = ensemble_model(states_tensor.detach())
@@ -530,12 +602,16 @@ class MisanthropicAgent:
             ensemble_loss.backward()
             optimizer.step()
 
-        logger.info("repose: loss=%.4f lambda=%.4f", float(loss.item()), self.lambda_cvar)
+        logger.info(
+            "repose: loss=%.4f lambda=%.4f", float(loss.item()), self.lambda_cvar
+        )
 
     def train(self, env, episodes: int = 100, *, save_artifacts: bool = True) -> None:
         for episode in range(episodes):
             state_dict = env.reset()
-            state, meta = self._prepare_state(state_dict["lob_data"], state_dict["price"], update_trackers=True)
+            state, meta = self._prepare_state(
+                state_dict["lob_data"], state_dict["price"], update_trackers=True
+            )
             done = False
             episode_reward = 0.0
 
@@ -557,16 +633,26 @@ class MisanthropicAgent:
                 episode_reward += float(reward)
 
                 with torch.no_grad():
-                    tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+                    tensor_state = torch.tensor(
+                        state, dtype=torch.float32, device=self.device
+                    ).unsqueeze(0)
                     prediction = self.model(tensor_state).mean().item()
                 self.residuals.append(float(reward - prediction))
 
                 if done:
                     next_state = np.zeros_like(state)
-                    next_meta = {"threat": 0.0, "uncertainty": 0.0, "coverage": self.conformal_coverage(), "ood_score": 0.0, "ofi": 0.0}
+                    next_meta = {
+                        "threat": 0.0,
+                        "uncertainty": 0.0,
+                        "coverage": self.conformal_coverage(),
+                        "ood_score": 0.0,
+                        "ofi": 0.0,
+                    }
                 else:
                     next_state, next_meta = self._prepare_state(
-                        next_state_dict["lob_data"], next_state_dict["price"], update_trackers=True
+                        next_state_dict["lob_data"],
+                        next_state_dict["price"],
+                        update_trackers=True,
                     )
 
                 self.replay.add((state, action, float(reward), next_state, bool(done)))
@@ -584,7 +670,9 @@ class MisanthropicAgent:
                 self.breach_streak = 0
 
             if self.breach_streak >= self.breach_patience:
-                logger.warning("coverage breach streak=%d -> extra repose", self.breach_streak)
+                logger.warning(
+                    "coverage breach streak=%d -> extra repose", self.breach_streak
+                )
                 for _ in range(3):
                     self.repose()
                 self.breach_streak = 0
@@ -603,12 +691,16 @@ class MisanthropicAgent:
                 current_device = self.device
                 dummy_input = torch.randn(1, self.state_size, device="cpu")
                 model_cpu = self.model.to("cpu")
-                torch.onnx.export(model_cpu, dummy_input, "agent.onnx", opset_version=11)
+                torch.onnx.export(
+                    model_cpu, dummy_input, "agent.onnx", opset_version=11
+                )
                 self.model.to(current_device)
                 self.target_model.to(current_device)
                 for ensemble_model in self.ensemble:
                     ensemble_model.to(current_device)
-            except Exception as exc:  # pragma: no cover - export failures should not break training
+            except (
+                Exception
+            ) as exc:  # pragma: no cover - export failures should not break training
                 logger.warning("ONNX export skipped: %s", exc)
 
     # ------------------------------------------------------------------
@@ -637,8 +729,16 @@ class MisanthropicAgent:
                 current_position = 0.0
 
             if last_price is not None:
-                pnl.append(pnl[-1] + current_position * (price - last_price) - fee * abs(current_position))
-                ofi_values.append(self.compute_ofi(lob_data["delta_ask_vol"], lob_data["delta_bid_vol"]))
+                pnl.append(
+                    pnl[-1]
+                    + current_position * (price - last_price)
+                    - fee * abs(current_position)
+                )
+                ofi_values.append(
+                    self.compute_ofi(
+                        lob_data["delta_ask_vol"], lob_data["delta_bid_vol"]
+                    )
+                )
                 price_changes.append(price - last_price)
 
             prices.append(price)
@@ -648,7 +748,12 @@ class MisanthropicAgent:
         coverage = self.conformal_coverage()
 
         if pnl_array.size == 0:
-            return {"pnl_mean": 0.0, "cvar_95": 0.0, "coverage": coverage, "r2_ofi": 0.0}
+            return {
+                "pnl_mean": 0.0,
+                "cvar_95": 0.0,
+                "coverage": coverage,
+                "r2_ofi": 0.0,
+            }
 
         negative = pnl_array[pnl_array < 0]
         if negative.size:
@@ -694,10 +799,16 @@ class MisanthropicAgent:
         coherence_bonus = max(coherency, 0.0)
 
         if tail_penalty > 0.0 or latency_penalty > 0.0 or coverage_shortfall > 0.0:
-            delta_lambda = 0.5 * tail_penalty + 0.2 * latency_penalty + 0.3 * coverage_shortfall
-            self.lambda_cvar = float(np.clip(self.lambda_cvar + delta_lambda, 0.0, self.lambda_max))
+            delta_lambda = (
+                0.5 * tail_penalty + 0.2 * latency_penalty + 0.3 * coverage_shortfall
+            )
+            self.lambda_cvar = float(
+                np.clip(self.lambda_cvar + delta_lambda, 0.0, self.lambda_max)
+            )
 
-            reduction = 0.05 * latency_penalty + 0.1 * tail_penalty + 0.08 * coverage_shortfall
+            reduction = (
+                0.05 * latency_penalty + 0.1 * tail_penalty + 0.08 * coverage_shortfall
+            )
             self.capital = max(self.min_capital, self.capital * (1.0 - reduction))
         else:
             relaxation = 0.05 * coherence_bonus

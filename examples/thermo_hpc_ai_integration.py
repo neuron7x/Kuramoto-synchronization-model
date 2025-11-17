@@ -17,10 +17,26 @@ def create_sample_graph():
 
     # Add edges representing system components
     edges = [
-        ("DataFeed", "Processor", {"type": "covalent", "latency_norm": 0.1, "coherency": 0.9}),
-        ("Processor", "Strategy", {"type": "ionic", "latency_norm": 0.15, "coherency": 0.85}),
-        ("Strategy", "Executor", {"type": "metallic", "latency_norm": 0.2, "coherency": 0.8}),
-        ("Executor", "Market", {"type": "covalent", "latency_norm": 0.25, "coherency": 0.75}),
+        (
+            "DataFeed",
+            "Processor",
+            {"type": "covalent", "latency_norm": 0.1, "coherency": 0.9},
+        ),
+        (
+            "Processor",
+            "Strategy",
+            {"type": "ionic", "latency_norm": 0.15, "coherency": 0.85},
+        ),
+        (
+            "Strategy",
+            "Executor",
+            {"type": "metallic", "latency_norm": 0.2, "coherency": 0.8},
+        ),
+        (
+            "Executor",
+            "Market",
+            {"type": "covalent", "latency_norm": 0.25, "coherency": 0.75},
+        ),
         ("Market", "DataFeed", {"type": "vdw", "latency_norm": 0.3, "coherency": 0.7}),
     ]
 
@@ -45,7 +61,9 @@ def main():
     print("-" * 80)
     graph = create_sample_graph()
     controller = ThermoController(graph)
-    print(f"ThermoController initialized with {len(graph.nodes())} nodes and {len(graph.edges())} edges")
+    print(
+        f"ThermoController initialized with {len(graph.nodes())} nodes and {len(graph.edges())} edges"
+    )
     print(f"Nodes: {', '.join(graph.nodes())}")
     print(f"Initial free energy: {controller.get_current_F():.6f}")
     print()
@@ -68,7 +86,9 @@ def main():
     print("-" * 80)
     market_data = generate_synthetic_data(n_days=500, seed=42)
     print(f"Generated {len(market_data)} days of market data")
-    print(f"Price range: ${market_data['close'].min():.2f} - ${market_data['close'].max():.2f}")
+    print(
+        f"Price range: ${market_data['close'].min():.2f} - ${market_data['close'].max():.2f}"
+    )
     print()
 
     # Step 4: Run combined control loop
@@ -103,10 +123,12 @@ def main():
 
         # Print progress
         action_names = {0: "HOLD", 1: "BUY", 2: "SELL"}
-        print(f"Step {i:2d}: F={combined_result['free_energy']:8.6f} | "
-              f"dF/dt={combined_result['dF_dt']:7.4f} | "
-              f"Action={action_names[combined_result['hpc_action']]:4s} | "
-              f"PWPE={combined_result['hpc_pwpe']:.4f}")
+        print(
+            f"Step {i:2d}: F={combined_result['free_energy']:8.6f} | "
+            f"dF/dt={combined_result['dF_dt']:7.4f} | "
+            f"Action={action_names[combined_result['hpc_action']]:4s} | "
+            f"PWPE={combined_result['hpc_pwpe']:.4f}"
+        )
 
     print()
 

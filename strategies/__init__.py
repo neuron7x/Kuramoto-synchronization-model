@@ -24,7 +24,9 @@ def get_strategy(name: str, config: Dict[str, Any] | None = None) -> Any:
         return resolve_strategy(name, config)
     except UnknownStrategyError as exc:  # pragma: no cover - defensive guard
         available = ", ".join(spec.name for spec in _available_strategies())
-        raise ValueError(f"Unknown strategy '{name}'. Available: [{available}]") from exc
+        raise ValueError(
+            f"Unknown strategy '{name}'. Available: [{available}]"
+        ) from exc
 
 
 def list_strategies() -> Tuple[StrategySpec, ...]:
@@ -52,4 +54,3 @@ __all__ = [
     "list_strategies",
     "register_strategy",
 ]
-

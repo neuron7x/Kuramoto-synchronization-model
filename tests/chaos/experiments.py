@@ -22,7 +22,9 @@ from typing import Any, Callable, Optional, Protocol, Sequence
 class NetworkController(Protocol):
     """Controls traffic shaping for network related chaos."""
 
-    def inject_latency(self, latency_ms: int, jitter_ms: int, duration_s: float) -> None:
+    def inject_latency(
+        self, latency_ms: int, jitter_ms: int, duration_s: float
+    ) -> None:
         """Introduce latency with optional jitter for the provided duration."""
 
     def reset(self) -> None:
@@ -157,7 +159,9 @@ class MetricCheck:
             success=success,
             description=self.description,
         )
-        return MetricResult(name=self.name, success=success, description=self.description)
+        return MetricResult(
+            name=self.name, success=success, description=self.description
+        )
 
 
 @dataclass(slots=True)
@@ -196,7 +200,9 @@ class ChaosScenario:
     detection: Optional[Callable[[ChaosContext], DetectionResult]] = None
 
     def execute(self, context: ChaosContext) -> ChaosOutcome:
-        context.log("Starting scenario", scenario=self.name, description=self.description)
+        context.log(
+            "Starting scenario", scenario=self.name, description=self.description
+        )
         baseline = context.steady_state.snapshot()
         start = context.clock()
         for step in self.steps:
@@ -228,7 +234,9 @@ class ChaosExperimentSuite:
     scenarios: Sequence[ChaosScenario]
 
     def run(self, context: ChaosContext) -> Sequence[ChaosOutcome]:
-        context.log("Running chaos experiment suite", scenario_count=len(self.scenarios))
+        context.log(
+            "Running chaos experiment suite", scenario_count=len(self.scenarios)
+        )
         return tuple(scenario.execute(context) for scenario in self.scenarios)
 
 

@@ -755,7 +755,9 @@ def test_kraken_rest_connector_signs_and_streams(
         raise AssertionError(f"Unhandled Kraken request {request.method} {path}")
 
     transport = httpx.MockTransport(handler)
-    client = httpx.Client(base_url="https://api.sandbox.kraken.com", transport=transport)
+    client = httpx.Client(
+        base_url="https://api.sandbox.kraken.com", transport=transport
+    )
     connector = KrakenRESTConnector(
         sandbox=True, http_client=client, ws_factory=ws_factory
     )

@@ -65,10 +65,14 @@ class GoldenDataset:
             return self.records
         return tuple(record for record in self.records if record.matches_tags(tags))
 
-    def merge(self, records: Iterable[GoldenRecord], *, version: str | None = None) -> "GoldenDataset":
+    def merge(
+        self, records: Iterable[GoldenRecord], *, version: str | None = None
+    ) -> "GoldenDataset":
         """Return a dataset with ``records`` merged into the existing collection."""
 
-        updated: MutableMapping[str, GoldenRecord] = {record.identifier: record for record in self.records}
+        updated: MutableMapping[str, GoldenRecord] = {
+            record.identifier: record for record in self.records
+        }
         order: list[str] = [record.identifier for record in self.records]
         for record in records:
             key = record.identifier
@@ -100,9 +104,14 @@ class QualityContract:
 
     name: str
     description: str
-    validator: Callable[[Mapping[str, object]], Sequence[QualityContractViolation] | QualityContractViolation | None]
+    validator: Callable[
+        [Mapping[str, object]],
+        Sequence[QualityContractViolation] | QualityContractViolation | None,
+    ]
 
-    def validate(self, response: Mapping[str, object]) -> Tuple[QualityContractViolation, ...]:
+    def validate(
+        self, response: Mapping[str, object]
+    ) -> Tuple[QualityContractViolation, ...]:
         result = self.validator(response)
         if result is None:
             return ()
@@ -161,7 +170,9 @@ class ReviewTicket:
     reviewer: str | None = None
     notes: str | None = None
 
-    def resolve(self, reviewer: str, *, notes: str | None = None, status: str = "resolved") -> "ReviewTicket":
+    def resolve(
+        self, reviewer: str, *, notes: str | None = None, status: str = "resolved"
+    ) -> "ReviewTicket":
         object.__setattr__(self, "status", status)
         object.__setattr__(self, "reviewer", reviewer)
         object.__setattr__(self, "notes", notes)
@@ -283,10 +294,14 @@ class ResponseQualityOrchestrator:
 
         self._reviews: Dict[str, ReviewTicket] = {}
         self._review_queue: Deque[str] = deque()
-        self._complaint_routes: Dict[str, Callable[[str, Mapping[str, object] | None], str] | str] = {}
+        self._complaint_routes: Dict[
+            str, Callable[[str, Mapping[str, object] | None], str] | str
+        ] = {}
         self._complaints: Deque[ComplaintRecord] = deque(maxlen=512)
         self._reason_map: Counter[str] = Counter()
-        self._active_samples: Deque[ActiveSample] = deque(maxlen=config.max_active_samples)
+        self._active_samples: Deque[ActiveSample] = deque(
+            maxlen=config.max_active_samples
+        )
         self._improvements: Dict[str, ImprovementLog] = {}
 
         self._ticket_counter = 0
@@ -302,7 +317,9 @@ class ResponseQualityOrchestrator:
 
         self._datasets[dataset.name] = dataset
 
-    def update_golden_dataset(self, name: str, records: Iterable[GoldenRecord], *, version: str | None = None) -> None:
+    def update_golden_dataset(
+        self, name: str, records: Iterable[GoldenRecord], *, version: str | None = None
+    ) -> None:
         """Merge ``records`` into the named dataset."""
 
         dataset = self._datasets.get(name)
@@ -326,7 +343,9 @@ class ResponseQualityOrchestrator:
     ) -> None:
         """Configure the baseline expectations for ``dataset``."""
 
-        tolerance_value = self._config.baseline_tolerance if tolerance is None else tolerance
+        tolerance_value = (
+            self._config.baseline_tolerance if tolerance is None else tolerance
+        )
         if tolerance_value < 0.0:
             raise ValueError("tolerance cannot be negative")
         baseline = DatasetBaseline(
@@ -376,7 +395,9 @@ class ResponseQualityOrchestrator:
     ) -> Dict[str, QualityRunSummary]:
         """Execute golden dataset checks, optionally filtered by ``tags``."""
 
-        dataset_names = list(datasets) if datasets is not None else sorted(self._datasets)
+        dataset_names = (
+            list(datasets) if datasets is not None else sorted(self._datasets)
+        )
         tag_set = {str(tag) for tag in (tags or ())}
         summaries: Dict[str, QualityRunSummary] = {}
         for name in dataset_names:
@@ -393,11 +414,16 @@ class ResponseQualityOrchestrator:
             self._last_run_at = self._monotonic()
         return summaries
 
-    def run_automated_checks(self, *, tags: Iterable[str] | None = None) -> Dict[str, QualityRunSummary]:
+    def run_automated_checks(
+        self, *, tags: Iterable[str] | None = None
+    ) -> Dict[str, QualityRunSummary]:
         """Run checks if the schedule interval has elapsed."""
 
         now = self._monotonic()
-        if self._last_run_at is not None and now - self._last_run_at < self._config.schedule_interval_seconds:
+        if (
+            self._last_run_at is not None
+            and now - self._last_run_at < self._config.schedule_interval_seconds
+        ):
             return {}
         return self.run_golden_checks(tags=tags)
 
@@ -407,7 +433,14 @@ class ResponseQualityOrchestrator:
     def pending_reviews(self) -> Tuple[ReviewTicket, ...]:
         return tuple(self._reviews[ticket_id] for ticket_id in self._review_queue)
 
-    def resolve_review(self, ticket_id: str, reviewer: str, *, notes: str | None = None, status: str = "resolved") -> ReviewTicket:
+    def resolve_review(
+        self,
+        ticket_id: str,
+        reviewer: str,
+        *,
+        notes: str | None = None,
+        status: str = "resolved",
+    ) -> ReviewTicket:
         ticket = self._reviews.get(ticket_id)
         if ticket is None:
             raise KeyError(f"Review ticket '{ticket_id}' not found")
@@ -494,7 +527,9 @@ class ResponseQualityOrchestrator:
         request_payload = _normalise_payload(request)
         response_payload = _normalise_payload(response)
         score = float(
-            confidence if confidence is not None else response_payload.get("confidence", 1.0)
+            confidence
+            if confidence is not None
+            else response_payload.get("confidence", 1.0)
         )
         if score >= self._config.active_sampling_threshold:
             return None
@@ -556,8 +591,14 @@ class ResponseQualityOrchestrator:
             try:
                 raw_response = self._responder(request_payload)
                 response_payload = _normalise_payload(raw_response)
-            except Exception as exc:  # pragma: no cover - defensive logging path exercised via tests
-                LOGGER.exception("Failed to evaluate record '%s' in dataset '%s'", record.identifier, dataset.name)
+            except (
+                Exception
+            ) as exc:  # pragma: no cover - defensive logging path exercised via tests
+                LOGGER.exception(
+                    "Failed to evaluate record '%s' in dataset '%s'",
+                    record.identifier,
+                    dataset.name,
+                )
                 mismatches += 1
                 failure = QualityFailure(
                     dataset=dataset.name,
@@ -665,7 +706,9 @@ class ResponseQualityOrchestrator:
         for contract in self._contracts.values():
             try:
                 failures = contract.validate(response)
-            except Exception as exc:  # pragma: no cover - contract errors should be surfaced
+            except (
+                Exception
+            ) as exc:  # pragma: no cover - contract errors should be surfaced
                 LOGGER.exception("Contract '%s' validation failed", contract.name)
                 failure = QualityContractViolation(
                     contract=contract.name,
@@ -687,7 +730,11 @@ class ResponseQualityOrchestrator:
         baseline = self._baselines.get(summary.dataset)
         if baseline is None:
             return
-        tolerance = baseline.tolerance if baseline.tolerance > 0.0 else max(self._config.baseline_tolerance, 1e-6)
+        tolerance = (
+            baseline.tolerance
+            if baseline.tolerance > 0.0
+            else max(self._config.baseline_tolerance, 1e-6)
+        )
         delta = baseline.score - summary.score
         if delta <= tolerance:
             return
@@ -802,7 +849,9 @@ def _normalise_payload(payload: Mapping[str, object] | object) -> Mapping[str, o
     raise TypeError("Payload must be a mapping or provide model_dump()/dict()")
 
 
-def _diff_payloads(expected: Mapping[str, object], actual: Mapping[str, object]) -> Mapping[str, Tuple[object, object]]:
+def _diff_payloads(
+    expected: Mapping[str, object], actual: Mapping[str, object]
+) -> Mapping[str, Tuple[object, object]]:
     diff: Dict[str, Tuple[object, object]] = {}
     for key, expected_value in expected.items():
         actual_value = actual.get(key)

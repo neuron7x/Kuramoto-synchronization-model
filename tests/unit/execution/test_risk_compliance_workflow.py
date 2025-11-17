@@ -56,4 +56,7 @@ def test_workflow_blocks_limit_violation() -> None:
     assert assessment.accepted == ()
     assert len(assessment.rejected) == 1
     assert assessment.rejected[0].risk_error is not None
-    assert "Position cap" in assessment.rejected[0].risk_error or "Notional cap" in assessment.rejected[0].risk_error
+    assert (
+        "Position cap" in assessment.rejected[0].risk_error
+        or "Notional cap" in assessment.rejected[0].risk_error
+    )

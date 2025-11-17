@@ -38,7 +38,11 @@ def generate_yangtze_npz(
         for s in range(S):
             flow = base_flow[s] * (1 + 0.2 * seasonal) + rain * 2000 * (1 + s * 0.05)
             level = 8.0 + (flow - 15000.0) / 2500.0 + rng.normal(0, 0.3, size=T)
-            temp = 15 + 8 * np.sin(2 * np.pi * np.arange(T) / 24) + rng.normal(0, 1, size=T)
+            temp = (
+                15
+                + 8 * np.sin(2 * np.pi * np.arange(T) / 24)
+                + rng.normal(0, 1, size=T)
+            )
             turb = np.maximum(5, rain * 100 + rng.exponential(20, size=T))
             dissolved_oxygen = 8 - 0.1 * level + rng.normal(0, 0.2, size=T)
             X[n, :, s, 0] = np.maximum(0, level)
@@ -49,14 +53,18 @@ def generate_yangtze_npz(
         last = X[n, -1].mean(axis=0)
         y_hydro[n, 0] = last[0]
         y_hydro[n, 1] = np.clip(last[1], 10000.0, 50000.0)
-        y_qual[n] = np.array([7.2, max(2.0, last[4]), min(500.0, last[3]), 3.0, 1.0], dtype=np.float32)
+        y_qual[n] = np.array(
+            [7.2, max(2.0, last[4]), min(500.0, last[3]), 3.0, 1.0], dtype=np.float32
+        )
 
     os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
     np.savez(save_path, X=X, y_flood=y_flood, y_hydro=y_hydro, y_qual=y_qual)
     return save_path
 
 
-def load_npz_dataset(path: str | None, cfg: dict, synth_ok: bool = True, N: int | None = None):
+def load_npz_dataset(
+    path: str | None, cfg: dict, synth_ok: bool = True, N: int | None = None
+):
     if (not path or not os.path.exists(path)) and synth_ok:
         path = "data/sample_yangtze.npz"
         generate_yangtze_npz(

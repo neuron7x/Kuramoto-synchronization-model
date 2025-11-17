@@ -114,8 +114,12 @@ def test_portfolio_aggregation_preserves_divergence_for_short_weights():
     )
 
     signals = [
-        DivConvSignal(asset_id="LONG", snapshot=long_snapshot, risk_weight=0.6, exposure=1.0),
-        DivConvSignal(asset_id="SHORT", snapshot=short_snapshot, risk_weight=-0.4, exposure=1.0),
+        DivConvSignal(
+            asset_id="LONG", snapshot=long_snapshot, risk_weight=0.6, exposure=1.0
+        ),
+        DivConvSignal(
+            asset_id="SHORT", snapshot=short_snapshot, risk_weight=-0.4, exposure=1.0
+        ),
     ]
 
     aggregated = aggregate_signals(signals)

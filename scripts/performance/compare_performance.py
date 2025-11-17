@@ -104,7 +104,11 @@ def _load_resources(path: Path) -> ResourceMap:
             category=str(entry.get("category", "unknown")),
             value=float(entry.get("value", math.nan)),
             unit=str(entry.get("unit", "")),
-            budget=float(entry["budget"]) if "budget" in entry and entry["budget"] is not None else None,
+            budget=(
+                float(entry["budget"])
+                if "budget" in entry and entry["budget"] is not None
+                else None
+            ),
         )
     return metrics
 
@@ -215,7 +219,11 @@ def _build_markdown(
         baseline_ms = item.baseline * 1000
         current_ms = item.current * 1000
         delta = _format_delta(item.delta_pct)
-        ops_delta = _format_delta(item.ops_delta_pct) if item.ops_delta_pct is not None else "n/a"
+        ops_delta = (
+            _format_delta(item.ops_delta_pct)
+            if item.ops_delta_pct is not None
+            else "n/a"
+        )
         status_icon = "✅" if item.status == "pass" else "❌"
         lines.append(
             f"| {item.name} | {baseline_ms:.3f} | {current_ms:.3f} | {delta} | {ops_delta} | {status_icon} |"
@@ -227,11 +235,13 @@ def _build_markdown(
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | :---: |")
     for item in resources:
         if item.unit == "bytes":
-            baseline_val = item.baseline / (1024 ** 2)
-            current_val = item.current / (1024 ** 2)
+            baseline_val = item.baseline / (1024**2)
+            current_val = item.current / (1024**2)
             unit = "MiB"
             budget_display = (
-                f"{item.budget / (1024 ** 2):.3f} {unit}" if item.budget is not None else "—"
+                f"{item.budget / (1024 ** 2):.3f} {unit}"
+                if item.budget is not None
+                else "—"
             )
         else:
             baseline_val = item.baseline
@@ -255,7 +265,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--current-benchmark", type=Path, required=True)
     parser.add_argument("--baseline-resources", type=Path, required=True)
     parser.add_argument("--current-resources", type=Path, required=True)
-    parser.add_argument("--threshold", type=float, default=0.20, help="Allowed slowdown ratio (e.g. 0.20 for 20%).")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.20,
+        help="Allowed slowdown ratio (e.g. 0.20 for 20%).",
+    )
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-markdown", type=Path, required=True)
     return parser.parse_args()
@@ -318,7 +333,9 @@ def main() -> None:
     }
 
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
-    args.output_json.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    args.output_json.write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
     failures = [item for item in benchmark_results if item.status == "fail"]
     failures.extend(item for item in resource_results if item.status == "fail")

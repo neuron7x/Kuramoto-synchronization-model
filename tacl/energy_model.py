@@ -160,8 +160,7 @@ class EnergyModel:
     def internal_energy(self, metrics: EnergyMetrics) -> float:
         penalties = self.diagnostics(metrics)
         weighted_penalty = sum(
-            penalties[name] * self._normalised_weights[name]
-            for name in penalties
+            penalties[name] * self._normalised_weights[name] for name in penalties
         )
         return self._base_internal_energy + weighted_penalty
 
@@ -174,7 +173,9 @@ class EnergyModel:
         entropy = max(self._entropy_floor, aggregate)
         return entropy
 
-    def free_energy(self, metrics: EnergyMetrics) -> tuple[float, float, float, Mapping[str, float]]:
+    def free_energy(
+        self, metrics: EnergyMetrics
+    ) -> tuple[float, float, float, Mapping[str, float]]:
         penalties = self.diagnostics(metrics)
         internal = self.internal_energy(metrics)
         entropy = self.entropy(metrics)
@@ -236,7 +237,9 @@ class EnergyValidator:
     def validate(self, metrics: EnergyMetrics) -> EnergyValidationResult:
         result = self.evaluate(metrics)
         if not result.passed:
-            raise EnergyValidationError(result.reason or "energy validation failed", result)
+            raise EnergyValidationError(
+                result.reason or "energy validation failed", result
+            )
         return result
 
     def enforce_contract(

@@ -17,7 +17,7 @@ import numpy as np
 # Load ECS regulator
 spec_ecs = importlib.util.spec_from_file_location(
     "core.neuro.ecs_regulator",
-    Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py"
+    Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py",
 )
 ecs_module = importlib.util.module_from_spec(spec_ecs)
 sys.modules["core.neuro.ecs_regulator"] = ecs_module
@@ -40,7 +40,7 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
         initial_risk_threshold=0.05,
         stress_threshold=0.1,
         chronic_threshold=5,
-        seed=seed
+        seed=seed,
     )
 
     # Note: FractalMotivationController requires torch and other dependencies
@@ -88,7 +88,7 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
 
     for i in range(n_steps):
         # 1. Update ECS regulator
-        ecs_reg.update_stress(returns_array[:i+1], drawdowns[i], prev_fe)
+        ecs_reg.update_stress(returns_array[: i + 1], drawdowns[i], prev_fe)
         prev_fe = ecs_reg.free_energy_proxy
         ecs_reg.adapt_parameters(context_phase=phases[i])
 
@@ -136,16 +136,20 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
             combined_action = ecs_action
         else:
             # Disagreement: use ECS for conservative bias
-            combined_action = ecs_action if ecs_metrics.is_chronic else motivation_action
+            combined_action = (
+                ecs_action if ecs_metrics.is_chronic else motivation_action
+            )
 
         combined_actions.append(combined_action)
 
         # 6. Log periodic status
         if i % 25 == 0:
-            print(f"  Step {i:3d}: Phase={phases[i]:10s}, "
-                  f"Stress={ecs_metrics.stress_level:.4f}, "
-                  f"Chronic={'Yes' if ecs_metrics.is_chronic else 'No ':3s}, "
-                  f"Action={combined_action:2d}")
+            print(
+                f"  Step {i:3d}: Phase={phases[i]:10s}, "
+                f"Stress={ecs_metrics.stress_level:.4f}, "
+                f"Chronic={'Yes' if ecs_metrics.is_chronic else 'No ':3s}, "
+                f"Action={combined_action:2d}"
+            )
 
     print(f"  ... {n_steps} steps completed")
     print()
@@ -173,7 +177,7 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
         return {
             "sell": action_dict.get(-1, 0),
             "hold": action_dict.get(0, 0),
-            "buy": action_dict.get(1, 0)
+            "buy": action_dict.get(1, 0),
         }
 
     ecs_counts = count_actions(ecs_actions)
@@ -186,9 +190,15 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
     print(f"    Buys:  {ecs_counts['buy']:3d} ({ecs_counts['buy']/n_steps*100:.1f}%)")
     print()
     print("  Combined (ECS + Motivation):")
-    print(f"    Sells: {combined_counts['sell']:3d} ({combined_counts['sell']/n_steps*100:.1f}%)")
-    print(f"    Holds: {combined_counts['hold']:3d} ({combined_counts['hold']/n_steps*100:.1f}%)")
-    print(f"    Buys:  {combined_counts['buy']:3d} ({combined_counts['buy']/n_steps*100:.1f}%)")
+    print(
+        f"    Sells: {combined_counts['sell']:3d} ({combined_counts['sell']/n_steps*100:.1f}%)"
+    )
+    print(
+        f"    Holds: {combined_counts['hold']:3d} ({combined_counts['hold']/n_steps*100:.1f}%)"
+    )
+    print(
+        f"    Buys:  {combined_counts['buy']:3d} ({combined_counts['buy']/n_steps*100:.1f}%)"
+    )
     print()
 
     # Agreement analysis
@@ -201,19 +211,24 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
     for phase in ["stable", "chaotic", "transition"]:
         count = sum(1 for p in phases if p == phase)
         phase_counts[phase] = count
-        print(f"  {phase.capitalize():12s} phases: {count:3d} ({count/n_steps*100:.1f}%)")
+        print(
+            f"  {phase.capitalize():12s} phases: {count:3d} ({count/n_steps*100:.1f}%)"
+        )
     print()
 
     # Stress analysis
-    stress_events = [h for h in ecs_reg.history if h['type'] == 'Stress update']
+    stress_events = [h for h in ecs_reg.history if h["type"] == "Stress update"]
     high_stress_count = sum(
-        1 for event in stress_events
-        if event['details']['stress'] > ecs_reg.stress_threshold
+        1
+        for event in stress_events
+        if event["details"]["stress"] > ecs_reg.stress_threshold
     )
 
     print("Stress Analysis:")
-    print(f"  High stress events: {high_stress_count}/{len(stress_events)} "
-          f"({high_stress_count/len(stress_events)*100:.1f}%)")
+    print(
+        f"  High stress events: {high_stress_count}/{len(stress_events)} "
+        f"({high_stress_count/len(stress_events)*100:.1f}%)"
+    )
     print()
 
     # Performance simulation
@@ -243,7 +258,8 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
     print("=" * 70)
     print("Integration Benefits")
     print("=" * 70)
-    print("""
+    print(
+        """
 1. Chronic Stress Detection:
    - ECS tracks cumulative stress over time
    - Motivation system can adjust exploration vs exploitation
@@ -263,7 +279,8 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
    - ECS: Bottom-up stress response
    - Motivation: Top-down goal-directed behavior
    - Combined: Balanced decision-making
-    """)
+    """
+    )
 
     print("=" * 70)
     print("Integration demo completed successfully!")

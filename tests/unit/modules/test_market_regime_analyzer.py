@@ -17,10 +17,7 @@ class TestMarketRegimeAnalyzer:
 
     def test_initialization(self):
         """Test analyzer initialization"""
-        analyzer = MarketRegimeAnalyzer(
-            regime_window=100,
-            transition_threshold=0.7
-        )
+        analyzer = MarketRegimeAnalyzer(regime_window=100, transition_threshold=0.7)
 
         assert analyzer.regime_window == 100
         assert analyzer.transition_threshold == 0.7
@@ -51,7 +48,9 @@ class TestMarketRegimeAnalyzer:
         prices[0] = 100
         for i in range(1, 100):
             # Stronger mean reversion coefficient
-            prices[i] = prices[i-1] + np.random.normal(0, 0.5) - 0.8 * (prices[i-1] - 100)
+            prices[i] = (
+                prices[i - 1] + np.random.normal(0, 0.5) - 0.8 * (prices[i - 1] - 100)
+            )
 
         hurst = analyzer.calculate_hurst_exponent(prices)
 
@@ -68,13 +67,21 @@ class TestMarketRegimeAnalyzer:
 
         assert trend_value > 0
         # Trend should be at least moderate
-        assert strength in [TrendStrength.MODERATE, TrendStrength.STRONG, TrendStrength.VERY_STRONG]
+        assert strength in [
+            TrendStrength.MODERATE,
+            TrendStrength.STRONG,
+            TrendStrength.VERY_STRONG,
+        ]
 
         # Flat/weak trend
         prices_flat = np.full(100, 100) + np.random.normal(0, 0.5, 100)
         trend_value, strength = analyzer.calculate_trend_strength(prices_flat)
 
-        assert strength in [TrendStrength.VERY_WEAK, TrendStrength.WEAK, TrendStrength.MODERATE]
+        assert strength in [
+            TrendStrength.VERY_WEAK,
+            TrendStrength.WEAK,
+            TrendStrength.MODERATE,
+        ]
 
     def test_classify_regime_trending_up(self):
         """Test regime classification for uptrend"""
@@ -104,10 +111,7 @@ class TestMarketRegimeAnalyzer:
 
     def test_regime_transition_tracking(self):
         """Test regime transition tracking"""
-        analyzer = MarketRegimeAnalyzer(
-            min_regime_duration=5,
-            transition_threshold=0.6
-        )
+        analyzer = MarketRegimeAnalyzer(min_regime_duration=5, transition_threshold=0.6)
 
         # Start with uptrend
         prices_up = np.linspace(100, 120, 30)

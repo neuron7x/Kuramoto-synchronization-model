@@ -92,13 +92,17 @@ def test_pytest_terminal_summary_labels_median(monkeypatch: pytest.MonkeyPatch) 
     captured: list[str] = []
 
     class _DummyReporter:
-        def write_sep(self, sep: str, msg: str) -> None:  # pragma: no cover - behaviour simple
+        def write_sep(
+            self, sep: str, msg: str
+        ) -> None:  # pragma: no cover - behaviour simple
             captured.append(f"{sep}:{msg}")
 
         def write_line(self, line: str) -> None:
             captured.append(line)
 
-    monkeypatch.setattr(perf_conftest, "_persist_benchmark_artifacts", lambda records: None)
+    monkeypatch.setattr(
+        perf_conftest, "_persist_benchmark_artifacts", lambda records: None
+    )
 
     try:
         perf_conftest.pytest_terminal_summary(_DummyReporter(), exitstatus=0)

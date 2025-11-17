@@ -101,23 +101,27 @@ class LinkActivatorConfig:
     """Configuration for link activator (protocol hot-swapping)."""
 
     # Bond type to protocol mapping priorities
-    protocol_hierarchy: Dict[str, tuple] = field(default_factory=lambda: {
-        "covalent": ("rdma", "crdt", "shared_memory"),
-        "ionic": ("crdt", "grpc", "shared_memory"),
-        "metallic": ("shared_memory", "grpc", "local"),
-        "vdw": ("grpc", "gossip", "local"),
-        "hydrogen": ("gossip", "grpc", "local"),
-    })
+    protocol_hierarchy: Dict[str, tuple] = field(
+        default_factory=lambda: {
+            "covalent": ("rdma", "crdt", "shared_memory"),
+            "ionic": ("crdt", "grpc", "shared_memory"),
+            "metallic": ("shared_memory", "grpc", "local"),
+            "vdw": ("grpc", "gossip", "local"),
+            "hydrogen": ("gossip", "grpc", "local"),
+        }
+    )
 
     # Activation costs (relative)
-    activation_costs: Dict[str, float] = field(default_factory=lambda: {
-        "rdma": 1.0,
-        "crdt": 0.8,
-        "shared_memory": 0.6,
-        "grpc": 0.4,
-        "gossip": 0.3,
-        "local": 0.1,
-    })
+    activation_costs: Dict[str, float] = field(
+        default_factory=lambda: {
+            "rdma": 1.0,
+            "crdt": 0.8,
+            "shared_memory": 0.6,
+            "grpc": 0.4,
+            "gossip": 0.3,
+            "local": 0.1,
+        }
+    )
 
     # Timeout for protocol activation (seconds)
     activation_timeout: float = 5.0
@@ -198,11 +202,13 @@ class DualApprovalConfig:
     token_env_var: str = "THERMO_DUAL_TOKEN"
 
     # Action types requiring dual approval
-    dual_approval_actions: tuple = field(default_factory=lambda: (
-        "topology_mutation",
-        "protocol_activation",
-        "circuit_breaker_override",
-    ))
+    dual_approval_actions: tuple = field(
+        default_factory=lambda: (
+            "topology_mutation",
+            "protocol_activation",
+            "circuit_breaker_override",
+        )
+    )
 
     # Token expiration
     token_expiration_seconds: float = 3600.0  # 1 hour
@@ -215,7 +221,9 @@ class ThermoConfig:
     # Sub-configurations
     crisis: CrisisThresholds = field(default_factory=CrisisThresholds)
     safety: SafetyConstraints = field(default_factory=SafetyConstraints)
-    genetic_algorithm: GeneticAlgorithmConfig = field(default_factory=GeneticAlgorithmConfig)
+    genetic_algorithm: GeneticAlgorithmConfig = field(
+        default_factory=GeneticAlgorithmConfig
+    )
     recovery_agent: RecoveryAgentConfig = field(default_factory=RecoveryAgentConfig)
     link_activator: LinkActivatorConfig = field(default_factory=LinkActivatorConfig)
     telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
@@ -253,7 +261,9 @@ class ThermoConfig:
         if "safety" in data:
             config.safety = SafetyConstraints(**data["safety"])
         if "genetic_algorithm" in data:
-            config.genetic_algorithm = GeneticAlgorithmConfig(**data["genetic_algorithm"])
+            config.genetic_algorithm = GeneticAlgorithmConfig(
+                **data["genetic_algorithm"]
+            )
         if "recovery_agent" in data:
             config.recovery_agent = RecoveryAgentConfig(**data["recovery_agent"])
         if "link_activator" in data:
@@ -261,9 +271,13 @@ class ThermoConfig:
         if "telemetry" in data:
             telemetry_data = data["telemetry"]
             if "audit_log_path" in telemetry_data:
-                telemetry_data["audit_log_path"] = Path(telemetry_data["audit_log_path"])
+                telemetry_data["audit_log_path"] = Path(
+                    telemetry_data["audit_log_path"]
+                )
             if "telemetry_export_dir" in telemetry_data:
-                telemetry_data["telemetry_export_dir"] = Path(telemetry_data["telemetry_export_dir"])
+                telemetry_data["telemetry_export_dir"] = Path(
+                    telemetry_data["telemetry_export_dir"]
+                )
             config.telemetry = TelemetryConfig(**telemetry_data)
         if "cns_stabilizer" in data:
             config.cns_stabilizer = CNSStabilizerConfig(**data["cns_stabilizer"])

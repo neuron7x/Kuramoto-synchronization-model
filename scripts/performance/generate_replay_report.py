@@ -34,16 +34,24 @@ def get_git_info() -> dict[str, str]:
     import subprocess
 
     try:
-        commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
-        ).decode().strip()
+        commit = (
+            subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         commit = "unknown"
 
     try:
-        branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
-        ).decode().strip()
+        branch = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         branch = "unknown"
 
@@ -201,7 +209,13 @@ def main() -> int:
     # Generate summary
     report.summary = {
         "total_runs": len(report.runs),
-        "passed": len([r for r in report.runs if r.regression_result and r.regression_result.passed]),
+        "passed": len(
+            [
+                r
+                for r in report.runs
+                if r.regression_result and r.regression_result.passed
+            ]
+        ),
         "failed": len(failed_runs),
         "git_commit": git_info["commit"][:8],
         "git_branch": git_info["branch"],

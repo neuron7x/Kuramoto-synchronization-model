@@ -59,14 +59,18 @@ def test_transfer_with_resume_local_file(tmp_path: Path) -> None:
     assert destination.read_bytes() == payload
 
 
-def test_transfer_with_resume_restarts_when_server_ignores_range(tmp_path: Path) -> None:
+def test_transfer_with_resume_restarts_when_server_ignores_range(
+    tmp_path: Path,
+) -> None:
     url = "https://example.test/data.bin"
     payload = os.urandom(32 * 1024)
     destination = tmp_path / "dest.bin"
     destination.write_bytes(payload[: len(payload) // 2])
 
     class _StubResponse:
-        def __init__(self, status_code: int, headers: dict[str, str], data: bytes = b"") -> None:
+        def __init__(
+            self, status_code: int, headers: dict[str, str], data: bytes = b""
+        ) -> None:
             self.status_code = status_code
             self.headers = headers
             self._data = data
@@ -103,7 +107,9 @@ def test_transfer_with_resume_rejects_incorrect_resume_offset(tmp_path: Path) ->
     destination.write_bytes(payload[: len(payload) // 2])
 
     class _StubResponse:
-        def __init__(self, status_code: int, headers: dict[str, str], data: bytes = b"") -> None:
+        def __init__(
+            self, status_code: int, headers: dict[str, str], data: bytes = b""
+        ) -> None:
             self.status_code = status_code
             self.headers = headers
             self._data = data
@@ -125,7 +131,10 @@ def test_transfer_with_resume_rejects_incorrect_resume_offset(tmp_path: Path) ->
             assert headers.get("Range") == f"bytes={len(payload) // 2}-"
             return _StubResponse(
                 206,
-                {"Content-Range": "bytes 1-15/16", "Content-Length": str(len(payload) - 1)},
+                {
+                    "Content-Range": "bytes 1-15/16",
+                    "Content-Length": str(len(payload) - 1),
+                },
                 payload[1:],
             )
 
@@ -209,9 +218,7 @@ def test_automation_runner_retries_on_failure() -> None:
             raise RuntimeError("transient failure")
         return "ok"
 
-    runner = AutomationRunner(
-        [AutomationStep("flaky", flaky, retry_attempts=1)]
-    )
+    runner = AutomationRunner([AutomationStep("flaky", flaky, retry_attempts=1)])
 
     report = runner.run()
     result = report.results["flaky"]

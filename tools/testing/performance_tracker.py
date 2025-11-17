@@ -103,7 +103,9 @@ class TestPerformanceTracker:
             current_duration = record.duration
             delta_seconds = current_duration - baseline_duration
             delta_percentage = (
-                (delta_seconds / baseline_duration * 100) if baseline_duration > 0 else 0
+                (delta_seconds / baseline_duration * 100)
+                if baseline_duration > 0
+                else 0
             )
 
             is_regression = current_duration > baseline_duration * threshold
@@ -196,7 +198,9 @@ class TestPerformanceTracker:
                     "delta_seconds": c.delta_seconds,
                     "delta_percentage": c.delta_percentage,
                 }
-                for c in sorted(regressions, key=lambda x: x.delta_percentage, reverse=True)[
+                for c in sorted(
+                    regressions, key=lambda x: x.delta_percentage, reverse=True
+                )[
                     :20
                 ]  # Top 20 worst
             ],

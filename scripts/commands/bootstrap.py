@@ -162,7 +162,10 @@ def _venv_exists(venv_path: Path) -> bool:
 def _create_virtualenv(python: Path, venv_path: Path, recreate: bool) -> None:
     if _venv_exists(venv_path):
         if not recreate:
-            LOGGER.info("Virtual environment already present at %s – skipping creation.", venv_path)
+            LOGGER.info(
+                "Virtual environment already present at %s – skipping creation.",
+                venv_path,
+            )
             return
         LOGGER.info("Removing existing virtual environment at %s", venv_path)
         shutil.rmtree(venv_path)
@@ -180,13 +183,26 @@ def _create_virtualenv(python: Path, venv_path: Path, recreate: bool) -> None:
 
 def _upgrade_pip(venv_python: Path) -> None:
     LOGGER.info("Upgrading pip, setuptools, and wheel…")
-    run_subprocess((str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"))
+    run_subprocess(
+        (
+            str(venv_python),
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            "pip",
+            "setuptools",
+            "wheel",
+        )
+    )
 
 
 def _install_from_requirements(venv_python: Path, files: Sequence[Path]) -> None:
     for requirement in files:
         LOGGER.info("Installing Python dependencies from %s", requirement)
-        run_subprocess((str(venv_python), "-m", "pip", "install", "-r", str(requirement)))
+        run_subprocess(
+            (str(venv_python), "-m", "pip", "install", "-r", str(requirement))
+        )
 
 
 def _install_extras(venv_python: Path, extras: Sequence[str]) -> None:
@@ -194,7 +210,9 @@ def _install_extras(venv_python: Path, extras: Sequence[str]) -> None:
         return
     extras_arg = ",".join(extras)
     LOGGER.info("Installing project extras: %s", extras_arg)
-    run_subprocess((str(venv_python), "-m", "pip", "install", f".[{extras_arg}]"), cwd=Path.cwd())
+    run_subprocess(
+        (str(venv_python), "-m", "pip", "install", f".[{extras_arg}]"), cwd=Path.cwd()
+    )
 
 
 def _install_pre_commit(venv_python: Path) -> None:
@@ -229,17 +247,23 @@ def _select_package_manager(frontend_path: Path) -> Sequence[str]:
         return ("yarn", "install")
     if shutil.which("pnpm"):
         return ("pnpm", "install")
-    raise CommandError("No supported Node.js package manager (pnpm, yarn, npm) found in PATH.")
+    raise CommandError(
+        "No supported Node.js package manager (pnpm, yarn, npm) found in PATH."
+    )
 
 
 def _install_frontend_dependencies(frontend_path: Path, reinstall: bool) -> None:
     package_json = frontend_path / "package.json"
     if not package_json.exists():
-        raise CommandError(f"package.json not found in {frontend_path}; cannot install frontend dependencies.")
+        raise CommandError(
+            f"package.json not found in {frontend_path}; cannot install frontend dependencies."
+        )
 
     node_modules = frontend_path / "node_modules"
     if node_modules.exists() and not reinstall:
-        LOGGER.info("Frontend dependencies already installed at %s – skipping.", node_modules)
+        LOGGER.info(
+            "Frontend dependencies already installed at %s – skipping.", node_modules
+        )
         return
 
     command = _select_package_manager(frontend_path)
@@ -257,10 +281,14 @@ def _build_config(args: Namespace) -> BootstrapConfig:
 
     extra_requirements = tuple(getattr(args, "requirements") or ())
     requirements = DEFAULT_REQUIREMENTS + extra_requirements
-    dev_requirements = tuple(getattr(args, "dev_requirements") or DEFAULT_DEV_REQUIREMENTS)
+    dev_requirements = tuple(
+        getattr(args, "dev_requirements") or DEFAULT_DEV_REQUIREMENTS
+    )
 
     resolved_requirements = _resolve_requirements(requirements)
-    resolved_dev_requirements = _resolve_requirements(dev_requirements) if include_dev else ()
+    resolved_dev_requirements = (
+        _resolve_requirements(dev_requirements) if include_dev else ()
+    )
 
     extras = tuple(getattr(args, "extras", ()))
     install_pre_commit = bool(getattr(args, "install_pre_commit", False))
@@ -302,7 +330,10 @@ def execute(config: BootstrapConfig) -> None:
         LOGGER.info("Skipping Python dependency installation as requested.")
 
     if config.install_pre_commit:
-        if not config.install_python_dependencies and not config.include_dev_dependencies:
+        if (
+            not config.install_python_dependencies
+            and not config.include_dev_dependencies
+        ):
             LOGGER.warning(
                 "pre-commit installation requested but Python dependencies were skipped."
                 " Ensure pre-commit is available inside the virtual environment."
@@ -319,4 +350,3 @@ def handle(args: Namespace) -> int:
     execute(config)
     LOGGER.info("Bootstrap completed successfully.")
     return 0
-

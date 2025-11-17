@@ -15,6 +15,7 @@ Test Coverage:
 - Meta-adaptation: online parameter tuning based on performance metrics
 - State management: reset, dump, and load operations
 """
+
 from __future__ import annotations
 
 import math
@@ -111,7 +112,9 @@ def test_configuration_validation_missing_key(tmp_path) -> None:
         DopamineController(str(cfg_path))
 
 
-def test_configuration_validation_ranges(tmp_path, config_dict: Dict[str, object]) -> None:
+def test_configuration_validation_ranges(
+    tmp_path, config_dict: Dict[str, object]
+) -> None:
     """Test that DopamineController validates parameter ranges.
 
     Parameters must be within valid ranges (e.g., delta_gain must be <= 1.0).
@@ -147,9 +150,9 @@ def test_estimate_appetitive_state_with_abs_rpe(controller: DopamineController) 
         + cfg["w_m"] * 0.2
         + cfg["w_v"] * 0.3
     )
-    assert appetitive == pytest.approx(expected, rel=1e-6), (
-        f"Appetitive state mismatch: expected {expected}, got {appetitive}"
-    )
+    assert appetitive == pytest.approx(
+        expected, rel=1e-6
+    ), f"Appetitive state mismatch: expected {expected}, got {appetitive}"
 
 
 def test_appetitive_state_rejects_negative(controller: DopamineController) -> None:
@@ -175,17 +178,17 @@ def test_compute_rpe_sign_and_magnitude(controller: DopamineController) -> None:
     """
     reward, value, next_value = 0.1, 0.2, 0.5
     rpe = controller.compute_rpe(reward, value, next_value)
-    assert math.copysign(1.0, rpe) == math.copysign(1.0, 0.39), (
-        f"RPE sign mismatch: expected positive, got {rpe}"
-    )
-    assert rpe == pytest.approx(0.39, rel=1e-6), (
-        f"RPE magnitude mismatch: expected 0.39, got {rpe}"
-    )
+    assert math.copysign(1.0, rpe) == math.copysign(
+        1.0, 0.39
+    ), f"RPE sign mismatch: expected positive, got {rpe}"
+    assert rpe == pytest.approx(
+        0.39, rel=1e-6
+    ), f"RPE magnitude mismatch: expected 0.39, got {rpe}"
     updated_value = controller.update_value_estimate()
     expected_update = 0.0 + 0.1 * 0.39
-    assert updated_value == pytest.approx(expected_update, rel=1e-6), (
-        f"Value update mismatch: expected {expected_update}, got {updated_value}"
-    )
+    assert updated_value == pytest.approx(
+        expected_update, rel=1e-6
+    ), f"Value update mismatch: expected {expected_update}, got {updated_value}"
 
 
 def test_dopamine_signal_clamped_and_stable(controller: DopamineController) -> None:
@@ -201,14 +204,14 @@ def test_dopamine_signal_clamped_and_stable(controller: DopamineController) -> N
     """
     controller.compute_rpe(1e6, 0.0, 0.0)
     high = controller.compute_dopamine_signal(5.0, controller.last_rpe)
-    assert 0.0 <= high <= 1.0, (
-        f"Dopamine signal should be in [0,1], got {high} for high RPE"
-    )
+    assert (
+        0.0 <= high <= 1.0
+    ), f"Dopamine signal should be in [0,1], got {high} for high RPE"
     controller.compute_rpe(-1e6, 0.0, 0.0)
     low = controller.compute_dopamine_signal(0.0, controller.last_rpe)
-    assert 0.0 <= low <= 1.0, (
-        f"Dopamine signal should be in [0,1], got {low} for low RPE"
-    )
+    assert (
+        0.0 <= low <= 1.0
+    ), f"Dopamine signal should be in [0,1], got {low} for low RPE"
 
 
 def test_temperature_monotonic_decrease(controller: DopamineController) -> None:
@@ -227,9 +230,9 @@ def test_temperature_monotonic_decrease(controller: DopamineController) -> None:
         controller.compute_rpe(rpe, 0.0, 0.0)
         da = controller.compute_dopamine_signal(appetitive, rpe)
         readings.append(controller.compute_temperature(da))
-    assert readings[0] >= readings[1] >= readings[2], (
-        f"Temperature should decrease monotonically, got {readings}"
-    )
+    assert (
+        readings[0] >= readings[1] >= readings[2]
+    ), f"Temperature should decrease monotonically, got {readings}"
 
 
 def test_negative_rpe_increases_temperature(controller: DopamineController) -> None:
@@ -248,9 +251,9 @@ def test_negative_rpe_increases_temperature(controller: DopamineController) -> N
     base_temp = controller.compute_temperature(da)
     controller.last_rpe = -0.8
     hotter = controller.compute_temperature(da)
-    assert hotter >= base_temp, (
-        f"Negative RPE should increase temperature: base={base_temp}, after={hotter}"
-    )
+    assert (
+        hotter >= base_temp
+    ), f"Negative RPE should increase temperature: base={base_temp}, after={hotter}"
 
 
 def test_modulate_action_value(controller: DopamineController) -> None:
@@ -267,9 +270,9 @@ def test_modulate_action_value(controller: DopamineController) -> None:
     q_mod = controller.modulate_action_value(2.0, dopamine_signal=0.8)
     cfg = controller.config
     expected = 2.0 * (1.0 + cfg["delta_gain"] * (0.8 - cfg["baseline"]))
-    assert q_mod == pytest.approx(expected, rel=1e-6), (
-        f"Modulated Q-value mismatch: expected {expected}, got {q_mod}"
-    )
+    assert q_mod == pytest.approx(
+        expected, rel=1e-6
+    ), f"Modulated Q-value mismatch: expected {expected}, got {q_mod}"
 
 
 def test_go_no_go_thresholds(controller: DopamineController) -> None:
@@ -283,18 +286,18 @@ def test_go_no_go_thresholds(controller: DopamineController) -> None:
     - Suppression threshold correctly identifies low dopamine states
     - Thresholds work independently
     """
-    assert controller.check_invigoration(0.8) is True, (
-        "Dopamine 0.8 should exceed invigoration threshold"
-    )
-    assert controller.check_invigoration(0.6) is False, (
-        "Dopamine 0.6 should not exceed invigoration threshold"
-    )
-    assert controller.check_suppress(0.2) is True, (
-        "Dopamine 0.2 should be below suppression threshold"
-    )
-    assert controller.check_suppress(0.4) is False, (
-        "Dopamine 0.4 should not be below suppression threshold"
-    )
+    assert (
+        controller.check_invigoration(0.8) is True
+    ), "Dopamine 0.8 should exceed invigoration threshold"
+    assert (
+        controller.check_invigoration(0.6) is False
+    ), "Dopamine 0.6 should not exceed invigoration threshold"
+    assert (
+        controller.check_suppress(0.2) is True
+    ), "Dopamine 0.2 should be below suppression threshold"
+    assert (
+        controller.check_suppress(0.4) is False
+    ), "Dopamine 0.4 should not be below suppression threshold"
 
 
 def test_meta_adapt_respects_cooldown(controller: DopamineController) -> None:
@@ -314,20 +317,20 @@ def test_meta_adapt_respects_cooldown(controller: DopamineController) -> None:
         "base_temperature": controller.config["base_temperature"],
     }
     controller.meta_adapt({"drawdown": -0.03, "sharpe": 1.2})
-    assert controller.config["learning_rate_v"] > cfg_snapshot["learning_rate_v"], (
-        "Good performance should increase learning rate"
-    )
+    assert (
+        controller.config["learning_rate_v"] > cfg_snapshot["learning_rate_v"]
+    ), "Good performance should increase learning rate"
     # During cooldown, bad performance should not change parameters
     controller.meta_adapt({"drawdown": -0.10, "sharpe": 0.2})
-    assert controller.config["learning_rate_v"] > cfg_snapshot["learning_rate_v"], (
-        "Parameters should not change during cooldown"
-    )
+    assert (
+        controller.config["learning_rate_v"] > cfg_snapshot["learning_rate_v"]
+    ), "Parameters should not change during cooldown"
     # After cooldown, bad performance should decrease learning rate
     controller._meta_cooldown_counter = 0
     controller.meta_adapt({"drawdown": -0.10, "sharpe": 0.2})
-    assert controller.config["learning_rate_v"] < cfg_snapshot["learning_rate_v"], (
-        "Bad performance after cooldown should decrease learning rate"
-    )
+    assert (
+        controller.config["learning_rate_v"] < cfg_snapshot["learning_rate_v"]
+    ), "Bad performance after cooldown should decrease learning rate"
 
 
 def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
@@ -355,14 +358,14 @@ def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
         "value_estimate": 0.0,
         "last_rpe": 0.0,
     }
-    assert reset_state == expected_reset, (
-        f"Reset state should be zero: expected {expected_reset}, got {reset_state}"
-    )
+    assert (
+        reset_state == expected_reset
+    ), f"Reset state should be zero: expected {expected_reset}, got {reset_state}"
     controller.load_state(state)
     loaded_state = controller.dump_state()
-    assert loaded_state == state, (
-        f"State round-trip failed: expected {state}, got {loaded_state}"
-    )
+    assert (
+        loaded_state == state
+    ), f"State round-trip failed: expected {state}, got {loaded_state}"
 
 
 def test_load_state_validation(controller: DopamineController) -> None:
@@ -386,7 +389,13 @@ def test_save_and_to_dict(controller: DopamineController, tmp_path) -> None:
 
     snapshot = controller.to_dict()
     assert snapshot["version"] == "2.2.0"
-    for key in ("tonic_level", "phasic_level", "dopamine_level", "value_estimate", "last_rpe"):
+    for key in (
+        "tonic_level",
+        "phasic_level",
+        "dopamine_level",
+        "value_estimate",
+        "last_rpe",
+    ):
         assert key in snapshot
 
 

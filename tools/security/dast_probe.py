@@ -117,7 +117,11 @@ def _create_app() -> Any:
     _silence_expected_warnings()
     logging.getLogger("httpx").setLevel(logging.CRITICAL)
     from application.api.service import create_app
-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+
+    with (
+        contextlib.redirect_stdout(io.StringIO()),
+        contextlib.redirect_stderr(io.StringIO()),
+    ):
         return create_app(runtime_settings=runtime)
 
 
@@ -137,10 +141,14 @@ async def _check_health(client: httpx.AsyncClient, report: dict[str, Any]) -> No
         raise AssertionError("Risk manager metrics missing kill_switch_engaged flag")
     cache_control = response.headers.get("cache-control", "")
     if not cache_control.startswith("private"):
-        raise AssertionError("Cache-Control header should be private for health endpoint")
+        raise AssertionError(
+            "Cache-Control header should be private for health endpoint"
+        )
 
 
-async def _check_unauthorised_features(client: httpx.AsyncClient, report: dict[str, Any]) -> None:
+async def _check_unauthorised_features(
+    client: httpx.AsyncClient, report: dict[str, Any]
+) -> None:
     now = datetime.now(timezone.utc).isoformat()
     payload = {
         "symbol": "BTC-USD",
@@ -161,20 +169,26 @@ async def _check_unauthorised_features(client: httpx.AsyncClient, report: dict[s
         "body": response.json(),
     }
     if response.status_code != 401:
-        raise AssertionError("Unauthenticated feature request must be rejected with 401")
+        raise AssertionError(
+            "Unauthenticated feature request must be rejected with 401"
+        )
     error = response.json().get("error", {})
     if error.get("code") != "ERR_AUTH_REQUIRED":
         raise AssertionError("Unexpected error code for unauthorised feature request")
 
 
-async def _check_trusted_host(client: httpx.AsyncClient, *, host: str, report: dict[str, Any]) -> None:
+async def _check_trusted_host(
+    client: httpx.AsyncClient, *, host: str, report: dict[str, Any]
+) -> None:
     response = await client.get("/health", headers={"host": host})
     report["trusted_host"] = {
         "status_code": response.status_code,
         "body": response.text,
     }
     if response.status_code != 400:
-        raise AssertionError("Requests with an untrusted host header should be rejected")
+        raise AssertionError(
+            "Requests with an untrusted host header should be rejected"
+        )
 
 
 async def _run_checks(host_header: str) -> dict[str, Any]:
@@ -207,7 +221,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
             report = asyncio.run(_run_checks(args.host_header))
     except AssertionError as exc:
         failure_report = {
@@ -215,11 +232,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             "status": "failed",
             "reason": str(exc),
         }
-        report_path.write_text(json.dumps(failure_report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        report_path.write_text(
+            json.dumps(failure_report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
         print(f"DAST checks failed: {exc}")
         return 1
 
-    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print("DAST checks passed:", json.dumps(report, indent=2, sort_keys=True))
     return 0
 

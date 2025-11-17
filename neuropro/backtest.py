@@ -27,9 +27,7 @@ class BacktesterCAL:
             cfg["features"]["fracdiff_d"], cfg["features"].get("ofi_window", 20)
         )
         self.reg = RegimeModel(tuple(cfg["regime"]["bins"]))
-        self.qm = QuantileModels(
-            cfg["quantile"]["low_q"], cfg["quantile"]["high_q"]
-        )
+        self.qm = QuantileModels(cfg["quantile"]["low_q"], cfg["quantile"]["high_q"])
         self.cqr = ConformalCQR(
             cfg["conformal"]["alpha"],
             cfg["conformal"]["decay"],
