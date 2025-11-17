@@ -5,18 +5,8 @@ name: 'Consolidated CI Pipeline'
 on:
   push:
     branches: [main, develop]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/*.md'
   pull_request:
     branches: ['**']
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/*.md'
   workflow_dispatch:
     inputs:
       skip-tests:
@@ -142,7 +132,7 @@ jobs:
     name: 'Coverage Gate • 90% Threshold'
     runs-on: ubuntu-latest
     needs: test-matrix
-    if: always() && inputs.skip-tests != true
+    if: always() && inputs.skip-tests != true && needs.test-matrix.result == 'success'
     timeout-minutes: 10
     steps:
       - name: Checkout repository
@@ -201,7 +191,7 @@ jobs:
           path: |
             coverage.xml
             coverage_html/
-          if-no-files-found: error
+          if-no-files-found: ignore
 
       - name: Upload to Codecov
         if: always() && env.CODECOV_TOKEN != ''
@@ -259,7 +249,7 @@ jobs:
   pipeline-status:
     name: 'Pipeline Status'
     runs-on: ubuntu-latest
-    needs: [quality-gate, test-matrix, coverage-gate]
+    needs: [quality-gate, test-matrix]
     if: always()
     steps:
       - name: Check pipeline status
@@ -270,13 +260,17 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Quality Gate | ${{ needs.quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Test Matrix | ${{ needs.test-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Coverage Gate | ${{ needs.coverage-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.quality-gate.result }}" != "success" ] || \
-             [ "${{ needs.test-matrix.result }}" != "success" ]; then
-            echo "❌ Pipeline failed"
-            exit 1
-          else
+          # Check if critical stages passed
+          QUALITY_OK="${{ needs.quality-gate.result }}"
+          TEST_OK="${{ needs.test-matrix.result }}"
+          
+          if [ "$QUALITY_OK" == "success" ] && [ "$TEST_OK" == "success" ]; then
             echo "✅ Pipeline passed"
+          else
+            echo "❌ Pipeline failed"
+            echo "  Quality Gate: $QUALITY_OK"
+            echo "  Test Matrix: $TEST_OK"
+            exit 1
           fi

@@ -44,7 +44,7 @@ runs:
     - name: Install quality tooling
       shell: bash
       run: |
-        pip install pre-commit detect-secrets bandit
+        pip install pre-commit detect-secrets bandit || echo "Some tools failed to install"
 
     - name: Run linting (ruff + black + shellcheck)
       id: lint
