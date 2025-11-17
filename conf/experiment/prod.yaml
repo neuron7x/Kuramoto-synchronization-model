@@ -8,9 +8,16 @@ defaults:
   - base
 
 name: prod
-description: "Production configuration for TradePulse with high-reliability settings"
+# BACKWARD COMPATIBLE: Top-level database configuration
+db_uri: "postgresql://prod:${PROD_DB_PASSWORD:-secure}@host/prod?sslmode=verify-full"
+db_tls:
+  ca_file: ${PROD_DB_CA_FILE:-/etc/tradepulse/db/root-ca.pem}
+  cert_file: ${PROD_DB_CERT_FILE:-/etc/tradepulse/db/client.crt}
+  key_file: ${PROD_DB_KEY_FILE:-/etc/tradepulse/db/client.key}
+log_level: WARNING
+random_seed: 7
 
-# Production Database Configuration
+# Extended: Production Database Configuration
 database:
   # Primary PostgreSQL/TimescaleDB connection
   uri: "postgresql://tradepulse_prod:${PROD_DB_PASSWORD}@db.prod.tradepulse.internal:5432/tradepulse_prod?sslmode=verify-full"
@@ -45,7 +52,7 @@ database:
       keepalives_interval: 10
       keepalives_count: 5
 
-# Production Environment
+# Extended: Production Environment Configuration
 environment:
   name: production
   debug: false
@@ -61,15 +68,18 @@ environment:
     gpu_memory_fraction: 0.9
 
 # Production Data Configuration
+# BACKWARD COMPATIBLE: Keep original fields
 data:
-  # Data source - Production data lake
+  price_csv: /mnt/prod_data/prices.csv
+  
+  # Extended: Data source - Production data lake
   source:
     type: parquet  # Parquet for better performance
     path: /mnt/prod_data/market_data/
     format: ohlcv
     partition_keys: [year, month, symbol]
     
-  # Column mapping (production standardized schema)
+  # Extended: Column mapping (production standardized schema)
   columns:
     timestamp: ts_utc
     open: open_price
@@ -78,7 +88,7 @@ data:
     close: close_price
     volume: volume_base
     
-  # Strict data processing for production
+  # Extended: Strict data processing for production
   preprocessing:
     fill_method: forward
     remove_duplicates: true
@@ -87,14 +97,14 @@ data:
     outlier_method: zscore
     outlier_threshold: 5.0  # More lenient for production data
     
-  # Strict quality requirements
+  # Extended: Strict quality requirements
   quality:
     min_required_rows: 10000
     max_missing_pct: 0.01  # 1% max missing
     min_volume: 1000.0  # Minimum volume threshold
     price_decimal_places: 8
     
-  # Redis caching for production
+  # Extended: Redis caching for production
   cache:
     enabled: true
     backend: redis
@@ -106,21 +116,26 @@ data:
     key_prefix: tradepulse_prod_data
 
 # Production Analytics Configuration
+# BACKWARD COMPATIBLE: Keep original flat structure for existing code
 analytics:
-  # Optimized windows for production
+  window: 512
+  bins: 64
+  delta: 0.0025
+  
+  # Extended: Optimized windows for production
   windows:
     primary: 512  # Larger window for stability
     short: 100
     medium: 200
     long: 500
   
-  # Entropy configuration
+  # Extended: Entropy configuration
   entropy:
     bins: 64  # Higher resolution
     method: shannon
     base: 2
     
-  # Ricci flow configuration
+  # Extended: Ricci flow configuration
   ricci:
     delta: 0.0025  # Finer granularity
     neighbor_k: 10  # More neighbors

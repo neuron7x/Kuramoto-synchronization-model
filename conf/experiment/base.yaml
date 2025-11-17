@@ -4,23 +4,19 @@
 # Last Updated: 2025-11-17
 
 name: default
-description: "Base configuration for TradePulse experiments with production-ready defaults"
+# Use a local sqlite database by default; production profiles must override this.
+db_uri: "sqlite:///tradepulse.db"
+db_tls: null
+debug: false
+log_level: INFO
+random_seed: 0
 
-# Database Configuration
-# Use local SQLite for development; production profiles should override with PostgreSQL/TimescaleDB
+# Optional: Extended database configuration for production deployments
+# Production examples:
+# database:
+#   uri: "postgresql://user:pass@localhost:5432/tradepulse"
+#   uri: "timescaledb://user:pass@timescale.example.com:5432/tradepulse"
 database:
-  uri: "sqlite:///tradepulse.db"
-  # Production examples:
-  # uri: "postgresql://user:pass@localhost:5432/tradepulse"
-  # uri: "timescaledb://user:pass@timescale.example.com:5432/tradepulse"
-  
-  tls:
-    enabled: false
-    verify: true
-    ca_cert: null
-    client_cert: null
-    client_key: null
-  
   pool:
     min_size: 5
     max_size: 20
@@ -34,12 +30,9 @@ database:
     pool_pre_ping: true
     isolation_level: "READ_COMMITTED"
 
-# Environment Configuration
+# Optional: Extended environment configuration
 environment:
   name: development  # development, staging, production
-  debug: false
-  log_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-  random_seed: 42
   deterministic: true
   
   # Resource limits
@@ -51,13 +44,15 @@ environment:
 
 # Data Configuration
 data:
-  # Input data source
+  price_csv: sample.csv
+  price_column: price
+  
+  # Optional: Extended data source configuration
   source:
     type: csv  # csv, parquet, database, api
-    path: sample.csv
     format: ohlcv
     
-  # Column mapping
+  # Optional: Column mapping for OHLCV data
   columns:
     timestamp: timestamp
     open: open
@@ -66,7 +61,7 @@ data:
     close: close
     volume: volume
     
-  # Data processing
+  # Optional: Data processing options
   preprocessing:
     fill_method: forward  # forward, backward, linear, zero
     remove_duplicates: true
@@ -75,14 +70,14 @@ data:
     outlier_method: zscore
     outlier_threshold: 3.0
     
-  # Data quality
+  # Optional: Data quality controls
   quality:
     min_required_rows: 1000
     max_missing_pct: 0.05
     min_volume: 0.0
     price_decimal_places: 8
     
-  # Caching
+  # Optional: Caching configuration
   cache:
     enabled: true
     backend: redis
@@ -90,27 +85,33 @@ data:
     key_prefix: tradepulse_data
 
 # Analytics Configuration
+# BACKWARD COMPATIBLE: Keep original flat structure for existing tests
 analytics:
-  # Indicator windows
+  window: 256
+  bins: 48
+  delta: 0.005
+  
+  # Optional: Extended analytics configuration
+  # Indicator windows for different timeframes
   windows:
     primary: 256
     short: 50
     medium: 100
     long: 200
   
-  # Entropy configuration
+  # Optional: Entropy configuration
   entropy:
     bins: 48
     method: shannon  # shannon, tsallis, renyi
     base: 2  # logarithm base
     
-  # Ricci flow configuration
+  # Optional: Ricci flow configuration
   ricci:
     delta: 0.005
     neighbor_k: 5
     method: ollivier  # ollivier, forman
     
-  # Kuramoto configuration
+  # Optional: Kuramoto configuration
   kuramoto:
     coupling: 0.9
     natural_frequency: true
