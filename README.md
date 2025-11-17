@@ -227,6 +227,9 @@ if result.equity_curve is not None:
 
 ## 🏗️ System Architecture
 
+TradePulse follows a contracts-first approach with explicit boundaries between
+ingestion, feature generation, strategy execution, and observability layers.
+
 ```mermaid
 graph TB
   A[Data Ingestion] --> B[Feature Store]
@@ -242,6 +245,12 @@ graph TB
   style E fill:#f5a623
   style H fill:#bd10e0
 ```
+
+**📚 Architecture Documentation:**
+- [Architecture Blueprint](docs/ARCHITECTURE.md) — Full system topology and governance model
+- [Conceptual Architecture (UA)](docs/CONCEPTUAL_ARCHITECTURE_UA.md) — Visual guide to conceptual elements and relationships
+- [System Overview](docs/architecture/system_overview.md) — Component interactions and data flow
+- [Architecture Diagrams](docs/architecture/assets/README.md) — Complete diagram catalog
 
 ## Thermodynamic Autonomic Control Layer (TACL)
 

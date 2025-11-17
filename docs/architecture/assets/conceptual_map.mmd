@@ -1,0 +1,119 @@
+%% TradePulse Концептуальна карта системи
+%% Високорівнева візуалізація всіх концептуальних елементів та їхніх взаємозв'язків
+graph TB
+    subgraph "🌐 Зовнішні джерела"
+        MD[Ринкові дані]
+        AD[Альтернативні дані]
+        NF[Новини та настрої]
+        BE[Брокерські події]
+    end
+
+    subgraph "📥 Шар інтеграції"
+        ING[Інжестор даних]
+        VAL[Валідація якості]
+        BUS[Шина подій]
+    end
+
+    subgraph "🧠 Ядро обробки"
+        subgraph "📊 Індикатори"
+            KURA[Kuramoto<br/>Синхронізація]
+            RICCI[Ricci Flow<br/>Кривизна]
+            ENTR[Ентропійні<br/>міри]
+            TECH[Технічні<br/>індикатори]
+        end
+
+        subgraph "🎯 Стратегії"
+            FETE[FETE DSL<br/>Стратегії]
+            BACKT[Бектестинг]
+            OPT[Оптимізація]
+        end
+
+        subgraph "🧬 Нейромодуляція"
+            DOP[Дофамін<br/>Винагорода]
+            SER[Серотонін<br/>Ризик]
+            GABA[GABA<br/>Гальмування]
+        end
+
+        subgraph "⚡ TACL"
+            THERMO[Термодинамічна<br/>валідація]
+            ENERGY[Енергетичний<br/>бюджет]
+            CRISIS[Управління<br/>кризами]
+        end
+    end
+
+    subgraph "💼 Виконання"
+        RISK[Перевірка<br/>ризиків]
+        EXEC[Шлюз<br/>виконання]
+        BROKER[Адаптери<br/>брокерів]
+    end
+
+    subgraph "📡 Спостереження"
+        TELEM[Телеметрія]
+        ALERT[Алерти]
+        AUDIT[Аудит]
+    end
+
+    subgraph "👤 Інтерфейси"
+        UI[Веб UI]
+        CLI[CLI]
+        API[API]
+    end
+
+    MD --> ING
+    AD --> ING
+    NF --> ING
+    BE --> ING
+
+    ING --> VAL
+    VAL --> BUS
+
+    BUS --> KURA
+    BUS --> RICCI
+    BUS --> ENTR
+    BUS --> TECH
+
+    KURA --> FETE
+    RICCI --> FETE
+    ENTR --> FETE
+    TECH --> FETE
+
+    FETE --> BACKT
+    FETE --> OPT
+
+    DOP -.регулює.-> FETE
+    SER -.регулює.-> RISK
+    GABA -.регулює.-> EXEC
+
+    THERMO -.контролює.-> FETE
+    ENERGY -.моніторить.-> EXEC
+    CRISIS -.керує.-> RISK
+
+    OPT --> RISK
+    BACKT --> RISK
+    RISK --> EXEC
+    EXEC --> BROKER
+
+    BROKER --> BE
+
+    TELEM -.збирає з.-> ING
+    TELEM -.збирає з.-> FETE
+    TELEM -.збирає з.-> EXEC
+    ALERT -.реагує на.-> TELEM
+    AUDIT -.відстежує.-> EXEC
+
+    UI --> API
+    CLI --> API
+    API --> FETE
+    API --> RISK
+    API --> TELEM
+
+    style KURA fill:#e1f5ff
+    style RICCI fill:#e1f5ff
+    style ENTR fill:#e1f5ff
+    style TECH fill:#e1f5ff
+    style DOP fill:#fff4e1
+    style SER fill:#fff4e1
+    style GABA fill:#fff4e1
+    style THERMO fill:#ffe1e1
+    style ENERGY fill:#ffe1e1
+    style CRISIS fill:#ffe1e1
