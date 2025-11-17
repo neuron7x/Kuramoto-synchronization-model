@@ -1,25 +1,449 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 # Production deployment Hydra profile.
+# This configuration provides production-ready settings with enhanced security,
+# monitoring, and reliability features.
+# Last Updated: 2025-11-17
 
 defaults:
   - base
 
 name: prod
-db_uri: "postgresql://prod:${PROD_DB_PASSWORD:-secure}@host/prod?sslmode=verify-full"
-db_tls:
-  ca_file: ${PROD_DB_CA_FILE:-/etc/tradepulse/db/root-ca.pem}
-  cert_file: ${PROD_DB_CERT_FILE:-/etc/tradepulse/db/client.crt}
-  key_file: ${PROD_DB_KEY_FILE:-/etc/tradepulse/db/client.key}
-log_level: WARNING
-random_seed: 7
+description: "Production configuration for TradePulse with high-reliability settings"
 
+# Production Database Configuration
+database:
+  # Primary PostgreSQL/TimescaleDB connection
+  uri: "postgresql://tradepulse_prod:${PROD_DB_PASSWORD}@db.prod.tradepulse.internal:5432/tradepulse_prod?sslmode=verify-full"
+  
+  # TLS/SSL Configuration
+  tls:
+    enabled: true
+    verify: true
+    ca_cert: ${PROD_DB_CA_FILE:-/etc/tradepulse/db/root-ca.pem}
+    client_cert: ${PROD_DB_CERT_FILE:-/etc/tradepulse/db/client.crt}
+    client_key: ${PROD_DB_KEY_FILE:-/etc/tradepulse/db/client.key}
+  
+  # Production connection pool
+  pool:
+    min_size: 10
+    max_size: 50
+    max_overflow: 20
+    pool_timeout: 30
+    pool_recycle: 1800  # 30 minutes
+  
+  # Production options
+  options:
+    echo: false  # Disable SQL logging in production
+    echo_pool: false
+    pool_pre_ping: true
+    isolation_level: "READ_COMMITTED"
+    connect_args:
+      application_name: "tradepulse_prod"
+      connect_timeout: 10
+      keepalives: 1
+      keepalives_idle: 30
+      keepalives_interval: 10
+      keepalives_count: 5
+
+# Production Environment
+environment:
+  name: production
+  debug: false
+  log_level: WARNING  # WARNING, ERROR, CRITICAL only in production
+  random_seed: 42  # Fixed seed for reproducibility
+  deterministic: true
+  
+  # Production resource limits
+  resources:
+    max_memory_gb: 64
+    max_cpu_cores: 32
+    gpu_enabled: true
+    gpu_memory_fraction: 0.9
+
+# Production Data Configuration
 data:
-  price_csv: /mnt/prod_data/prices.csv
+  # Data source - Production data lake
+  source:
+    type: parquet  # Parquet for better performance
+    path: /mnt/prod_data/market_data/
+    format: ohlcv
+    partition_keys: [year, month, symbol]
+    
+  # Column mapping (production standardized schema)
+  columns:
+    timestamp: ts_utc
+    open: open_price
+    high: high_price
+    low: low_price
+    close: close_price
+    volume: volume_base
+    
+  # Strict data processing for production
+  preprocessing:
+    fill_method: forward
+    remove_duplicates: true
+    validate_ohlc: true
+    outlier_detection: true
+    outlier_method: zscore
+    outlier_threshold: 5.0  # More lenient for production data
+    
+  # Strict quality requirements
+  quality:
+    min_required_rows: 10000
+    max_missing_pct: 0.01  # 1% max missing
+    min_volume: 1000.0  # Minimum volume threshold
+    price_decimal_places: 8
+    
+  # Redis caching for production
+  cache:
+    enabled: true
+    backend: redis
+    host: redis.prod.tradepulse.internal
+    port: 6379
+    db: 0
+    password: ${REDIS_PASSWORD}
+    ttl_seconds: 1800  # 30 minutes
+    key_prefix: tradepulse_prod_data
 
+# Production Analytics Configuration
 analytics:
-  window: 512
-  bins: 64
-  delta: 0.0025
+  # Optimized windows for production
+  windows:
+    primary: 512  # Larger window for stability
+    short: 100
+    medium: 200
+    long: 500
+  
+  # Entropy configuration
+  entropy:
+    bins: 64  # Higher resolution
+    method: shannon
+    base: 2
+    
+  # Ricci flow configuration
+  ricci:
+    delta: 0.0025  # Finer granularity
+    neighbor_k: 10  # More neighbors
+    method: ollivier
+    
+  # Kuramoto configuration
+  kuramoto:
+    coupling: 0.95  # Higher coupling for production
+    natural_frequency: true
+    phase_method: hilbert
+    
+  # All features enabled
+  features:
+    technical_indicators: true
+    geometric_indicators: true
+    fractal_measures: true
+    information_theory: true
+    
+  # Production computation settings
+  computation:
+    parallel: true
+    num_workers: 16  # More workers for production
+    batch_size: 5000  # Larger batches
+    use_numba: true
+    use_cython: true  # Enable Cython optimizations
 
+# Production Tracking
 tracking:
+  enabled: true
+  backend: mlflow
+  
+  # Production paths (mounted volumes)
   base_dir: /mnt/prod_runs
+  artifacts_dirname: artifacts
+  reports_dirname: reports
+  checkpoints_dirname: checkpoints
+  logs_dirname: logs
+  
+  # Comprehensive auto-logging
+  auto_log:
+    config: true
+    metadata: true
+    code: true
+    git_info: true
+    system_metrics: true
+    parameters: true
+    metrics: true
+    artifacts: true
+    
+  # Production data versioning (S3)
+  data_versioning:
+    enabled: true
+    backend: dvc
+    storage: s3  # S3 for production
+    bucket: tradepulse-prod-dvc
+    region: us-east-1
+    track_inputs: true
+    track_outputs: true
+    
+  # CI/CD integration
+  ci_integration:
+    enabled: true
+    provider: github
+    notify_on_completion: true
+    fail_on_error: true
+    
+  # Production reports
+  reports:
+    auto_generate: true
+    formats: [markdown, html, pdf]
+    markdown_filename: experiment_report.md
+    html_filename: experiment_dashboard.html
+    pdf_filename: experiment_report.pdf
+    include_plots: true
+    include_tables: true
+    include_code: false  # Don't include code in production reports
+    
+  # Production archiving to S3
+  archive:
+    enabled: true
+    format: tar.gz
+    directory: s3://tradepulse-prod-archives/experiments/
+    keep_original: false  # Delete local after upload
+    retention_days: 2555  # 7 years
+    
+  # Production alerts (PagerDuty + Slack)
+  alerts:
+    enabled: true
+    strategy: adaptive
+    tolerance: 0.03  # Tighter tolerance
+    fail_on_deviation: true
+    notification_channels: [pagerduty, slack, email]
+    
+  # Baseline tracking
+  baseline:
+    enabled: true
+    experiment_id: prod_baseline_v1
+    run_id: latest
+    metrics: [sharpe_ratio, max_drawdown, total_return, sortino_ratio]
+    
+  # Production tags
+  tags:
+    project: tradepulse
+    team: quantitative_research
+    environment: production
+    version: 1.0.0
+    deployment: kubernetes
+    region: us-east-1
+
+# Production Model Configuration
+model:
+  type: ensemble  # Ensemble for robustness
+  framework: tradepulse
+  
+  # Production training
+  training:
+    epochs: 200  # More epochs for production models
+    batch_size: 64
+    learning_rate: 0.0005  # Conservative learning rate
+    optimizer: adam
+    loss_function: huber  # Robust to outliers
+    early_stopping:
+      enabled: true
+      patience: 20
+      min_delta: 0.0001
+      monitor: val_sharpe_ratio
+    
+  # Walk-forward validation
+  validation:
+    method: walk_forward
+    train_size: 0.75
+    test_size: 0.25
+    n_splits: 10  # More splits for robustness
+    
+  # Production checkpointing
+  checkpointing:
+    enabled: true
+    save_best_only: true
+    monitor: val_sharpe_ratio
+    mode: max
+    save_frequency: 5
+    storage: s3://tradepulse-prod-models/checkpoints/
+
+# Production Risk Management
+risk:
+  # Production capital
+  capital:
+    initial: 1000000.0  # $1M production capital
+    currency: USD
+    risk_per_trade: 0.005  # 0.5% (more conservative)
+    max_position_size: 0.15  # 15%
+    max_portfolio_exposure: 0.50  # 50%
+    
+  # Strict position limits
+  limits:
+    max_positions: 5  # Fewer positions for production
+    max_positions_per_symbol: 1
+    concentration_limit: 0.20  # 20% max
+    
+  # Conservative drawdown controls
+  drawdown:
+    max_drawdown: 0.10  # 10% (stricter)
+    daily_loss_limit: 10000.0
+    weekly_loss_limit: 20000.0
+    monthly_loss_limit: 40000.0
+    
+  # Tight exit rules
+  exit_rules:
+    stop_loss_pct: 0.015  # 1.5% (tighter)
+    take_profit_pct: 0.04  # 4%
+    trailing_stop_enabled: true
+    trailing_stop_pct: 0.008  # 0.8%
+    time_stop_hours: 48  # 2 days
+    
+  # Production circuit breaker
+  circuit_breaker:
+    enabled: true
+    loss_threshold: 0.08  # 8%
+    consecutive_losses: 3  # Stricter
+    cooldown_minutes: 120  # 2 hours
+
+# Production Performance
+performance:
+  # Redis cache cluster
+  cache:
+    enabled: true
+    backend: redis
+    host: redis-cluster.prod.tradepulse.internal
+    port: 6379
+    db: 0
+    password: ${REDIS_PASSWORD}
+    ttl: 1800
+    cluster_mode: true
+    
+  # Production multiprocessing
+  multiprocessing:
+    enabled: true
+    method: spawn  # Safer for production
+    max_workers: 32
+    
+  # Production memory management
+  memory:
+    low_memory_mode: false
+    chunk_size: 50000
+    garbage_collection: true
+    gc_threshold: 0.7  # 70% threshold
+
+# Production Monitoring
+monitoring:
+  # Prometheus metrics
+  metrics:
+    enabled: true
+    interval_seconds: 30
+    export_prometheus: true
+    prometheus_port: 9090
+    export_statsd: true
+    statsd_host: statsd.prod.tradepulse.internal
+    statsd_port: 8125
+    
+  # Production health checks
+  health_checks:
+    enabled: true
+    interval_seconds: 15
+    timeout_seconds: 3
+    liveness_probe: true
+    readiness_probe: true
+    
+  # Structured logging
+  logging:
+    format: json  # JSON for production log aggregation
+    datefmt: "%Y-%m-%dT%H:%M:%S.%fZ"
+    handlers: [console, file, syslog]
+    file:
+      path: /var/log/tradepulse/tradepulse.log
+      max_bytes: 104857600  # 100 MB
+      backup_count: 30
+    syslog:
+      enabled: true
+      host: logs.prod.tradepulse.internal
+      port: 514
+      facility: local0
+      
+  # Production tracing
+  tracing:
+    enabled: true
+    backend: opentelemetry
+    sampling_rate: 0.05  # 5% sampling in production
+    export_endpoint: http://otel-collector.prod.tradepulse.internal:4318
+
+# Production Security
+security:
+  # Production authentication
+  auth:
+    enabled: true
+    method: oauth2
+    token_expiry_hours: 8
+    refresh_token_enabled: true
+    mfa_required: true
+    
+  # HashiCorp Vault
+  secrets:
+    backend: vault
+    vault_addr: https://vault.prod.tradepulse.internal:8200
+    vault_token: ${VAULT_TOKEN}
+    vault_namespace: tradepulse/prod
+    auto_renew: true
+    
+  # Full encryption
+  encryption:
+    at_rest: true
+    in_transit: true
+    algorithm: AES256-GCM
+    key_rotation_days: 90
+    
+  # Comprehensive audit logging
+  audit:
+    enabled: true
+    log_all_access: true
+    log_all_changes: true
+    retention_days: 2555  # 7 years
+    export_to_siem: true
+    siem_endpoint: https://siem.prod.tradepulse.internal
+
+# Production Compliance
+compliance:
+  # All regulatory frameworks
+  frameworks:
+    - MiFID II
+    - SEC
+    - FINRA
+    - GDPR
+    - CCPA
+    
+  # Full reporting
+  reporting:
+    enabled: true
+    transaction_reporting: true
+    best_execution_monitoring: true
+    audit_trail: true
+    regulatory_submissions: true
+    
+  # Regulatory retention
+  retention:
+    trade_data_days: 2555  # 7 years
+    audit_logs_days: 2555  # 7 years
+    communications_days: 2555  # 7 years
+    backups_days: 365  # 1 year
+
+# High Availability
+high_availability:
+  enabled: true
+  replication: true
+  failover: automatic
+  backup:
+    enabled: true
+    frequency: hourly
+    retention_days: 30
+    destination: s3://tradepulse-prod-backups/
+  
+# Disaster Recovery
+disaster_recovery:
+  enabled: true
+  rpo_hours: 1  # Recovery Point Objective
+  rto_hours: 4  # Recovery Time Objective
+  geographic_redundancy: true
+  backup_regions: [us-west-2, eu-west-1]

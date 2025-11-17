@@ -1,49 +1,396 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 # Base defaults shared by all Hydra experiment profiles.
+# This configuration provides a comprehensive foundation for all TradePulse experiments
+# Last Updated: 2025-11-17
 
 name: default
-# Use a local sqlite database by default; production profiles must override this.
-db_uri: "sqlite:///tradepulse.db"
-db_tls: null
-debug: false
-log_level: INFO
-random_seed: 0
+description: "Base configuration for TradePulse experiments with production-ready defaults"
 
+# Database Configuration
+# Use local SQLite for development; production profiles should override with PostgreSQL/TimescaleDB
+database:
+  uri: "sqlite:///tradepulse.db"
+  # Production examples:
+  # uri: "postgresql://user:pass@localhost:5432/tradepulse"
+  # uri: "timescaledb://user:pass@timescale.example.com:5432/tradepulse"
+  
+  tls:
+    enabled: false
+    verify: true
+    ca_cert: null
+    client_cert: null
+    client_key: null
+  
+  pool:
+    min_size: 5
+    max_size: 20
+    max_overflow: 10
+    pool_timeout: 30
+    pool_recycle: 3600  # 1 hour
+  
+  options:
+    echo: false  # Set true for SQL query logging
+    echo_pool: false
+    pool_pre_ping: true
+    isolation_level: "READ_COMMITTED"
+
+# Environment Configuration
+environment:
+  name: development  # development, staging, production
+  debug: false
+  log_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  random_seed: 42
+  deterministic: true
+  
+  # Resource limits
+  resources:
+    max_memory_gb: 16
+    max_cpu_cores: 8
+    gpu_enabled: false
+    gpu_memory_fraction: 0.8
+
+# Data Configuration
 data:
-  price_csv: sample.csv
-  price_column: price
+  # Input data source
+  source:
+    type: csv  # csv, parquet, database, api
+    path: sample.csv
+    format: ohlcv
+    
+  # Column mapping
+  columns:
+    timestamp: timestamp
+    open: open
+    high: high
+    low: low
+    close: close
+    volume: volume
+    
+  # Data processing
+  preprocessing:
+    fill_method: forward  # forward, backward, linear, zero
+    remove_duplicates: true
+    validate_ohlc: true
+    outlier_detection: true
+    outlier_method: zscore
+    outlier_threshold: 3.0
+    
+  # Data quality
+  quality:
+    min_required_rows: 1000
+    max_missing_pct: 0.05
+    min_volume: 0.0
+    price_decimal_places: 8
+    
+  # Caching
+  cache:
+    enabled: true
+    backend: redis
+    ttl_seconds: 3600
+    key_prefix: tradepulse_data
 
+# Analytics Configuration
 analytics:
-  window: 256
-  bins: 48
-  delta: 0.005
+  # Indicator windows
+  windows:
+    primary: 256
+    short: 50
+    medium: 100
+    long: 200
+  
+  # Entropy configuration
+  entropy:
+    bins: 48
+    method: shannon  # shannon, tsallis, renyi
+    base: 2  # logarithm base
+    
+  # Ricci flow configuration
+  ricci:
+    delta: 0.005
+    neighbor_k: 5
+    method: ollivier  # ollivier, forman
+    
+  # Kuramoto configuration
+  kuramoto:
+    coupling: 0.9
+    natural_frequency: true
+    phase_method: hilbert  # hilbert, arctan
+    
+  # Feature engineering
+  features:
+    technical_indicators: true
+    geometric_indicators: true
+    fractal_measures: true
+    information_theory: true
+    
+  # Computation
+  computation:
+    parallel: true
+    num_workers: 4
+    batch_size: 1000
+    use_numba: true
+    use_cython: false
 
+# Experiment Tracking
 tracking:
   enabled: true
+  backend: mlflow  # mlflow, wandb, tensorboard, none
+  
+  # Paths
   base_dir: ${hydra.run.dir}
   artifacts_dirname: artifacts
   reports_dirname: reports
-  hyperparameters_filename: hyperparameters.json
-  data_versioning: true
-  auto_log_config: true
-  auto_log_metadata: true
-  ci_integration: false
+  checkpoints_dirname: checkpoints
+  logs_dirname: logs
+  
+  # Artifacts
+  artifacts:
+    hyperparameters_filename: hyperparameters.json
+    metrics_filename: metrics.json
+    config_filename: config.yaml
+    model_filename: model.pkl
+    
+  # Auto-logging
+  auto_log:
+    config: true
+    metadata: true
+    code: true
+    git_info: true
+    system_metrics: true
+    parameters: true
+    metrics: true
+    artifacts: true
+    
+  # Data versioning
+  data_versioning:
+    enabled: true
+    backend: dvc  # dvc, git-lfs, none
+    storage: local  # local, s3, gcs, azure
+    track_inputs: true
+    track_outputs: true
+    
+  # CI/CD integration
+  ci_integration:
+    enabled: false
+    provider: github  # github, gitlab, jenkins
+    notify_on_completion: true
+    fail_on_error: true
+    
+  # Reports
   reports:
     auto_generate: true
+    formats: [markdown, html, pdf]
     markdown_filename: experiment_report.md
-    dashboard_filename: experiment_dashboard.html
+    html_filename: experiment_dashboard.html
+    pdf_filename: experiment_report.pdf
+    include_plots: true
+    include_tables: true
+    include_code: false
+    
+  # Archiving
   archive:
     enabled: true
-    format: zip
-    directory: null
+    format: tar.gz  # zip, tar.gz, tar.bz2
+    directory: archives
     keep_original: true
+    retention_days: 90
+    
+  # Alerts and monitoring
   alerts:
     enabled: true
-    strategy: relative
+    strategy: relative  # relative, absolute, adaptive
     tolerance: 0.05
     fail_on_deviation: true
-  baseline: null
-  versioning:
-    backend: none
-    repo_path: null
-    message: null
+    notification_channels: [email, slack]
+    
+  # Baseline comparison
+  baseline:
+    enabled: false
+    experiment_id: null
+    run_id: null
+    metrics: [sharpe_ratio, max_drawdown, total_return]
+    
+  # Tags and metadata
+  tags:
+    project: tradepulse
+    team: quantitative_research
+    environment: ${environment.name}
+    version: 1.0.0
+
+# Model Configuration
+model:
+  # Model selection
+  type: composite  # composite, single, ensemble
+  framework: tradepulse  # tradepulse, sklearn, pytorch, tensorflow
+  
+  # Training
+  training:
+    epochs: 100
+    batch_size: 32
+    learning_rate: 0.001
+    optimizer: adam  # adam, sgd, rmsprop
+    loss_function: mse  # mse, mae, huber
+    early_stopping:
+      enabled: true
+      patience: 10
+      min_delta: 0.001
+      monitor: val_loss
+    
+  # Validation
+  validation:
+    method: walk_forward  # walk_forward, kfold, time_series_split
+    train_size: 0.7
+    test_size: 0.3
+    n_splits: 5
+    
+  # Checkpointing
+  checkpointing:
+    enabled: true
+    save_best_only: true
+    monitor: val_sharpe_ratio
+    mode: max
+    save_frequency: 1  # epochs
+    
+# Risk Management Configuration
+risk:
+  # Capital management
+  capital:
+    initial: 100000.0
+    currency: USD
+    risk_per_trade: 0.01  # 1%
+    max_position_size: 0.20  # 20%
+    max_portfolio_exposure: 0.60  # 60%
+    
+  # Position limits
+  limits:
+    max_positions: 10
+    max_positions_per_symbol: 1
+    concentration_limit: 0.30  # 30% max in single position
+    
+  # Drawdown controls
+  drawdown:
+    max_drawdown: 0.15  # 15%
+    daily_loss_limit: 5000.0
+    weekly_loss_limit: 10000.0
+    monthly_loss_limit: 20000.0
+    
+  # Stop loss / take profit
+  exit_rules:
+    stop_loss_pct: 0.02  # 2%
+    take_profit_pct: 0.05  # 5%
+    trailing_stop_enabled: true
+    trailing_stop_pct: 0.01  # 1%
+    time_stop_hours: 72  # 3 days
+    
+  # Circuit breakers
+  circuit_breaker:
+    enabled: true
+    loss_threshold: 0.10  # 10% portfolio loss
+    consecutive_losses: 5
+    cooldown_minutes: 60
+    
+# Performance Optimization
+performance:
+  # Caching
+  cache:
+    enabled: true
+    backend: redis
+    host: localhost
+    port: 6379
+    db: 0
+    ttl: 3600
+    
+  # Multiprocessing
+  multiprocessing:
+    enabled: true
+    method: fork  # fork, spawn, forkserver
+    max_workers: null  # null = auto detect
+    
+  # Memory management
+  memory:
+    low_memory_mode: false
+    chunk_size: 10000
+    garbage_collection: true
+    gc_threshold: 0.8  # 80% memory usage
+    
+# Monitoring and Observability
+monitoring:
+  # Metrics collection
+  metrics:
+    enabled: true
+    interval_seconds: 60
+    export_prometheus: true
+    export_statsd: false
+    
+  # Health checks
+  health_checks:
+    enabled: true
+    interval_seconds: 30
+    timeout_seconds: 5
+    
+  # Logging
+  logging:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    handlers: [console, file, syslog]
+    file:
+      path: logs/tradepulse.log
+      max_bytes: 10485760  # 10 MB
+      backup_count: 10
+    syslog:
+      enabled: false
+      host: localhost
+      port: 514
+      
+  # Tracing
+  tracing:
+    enabled: false
+    backend: opentelemetry
+    sampling_rate: 0.1
+    export_endpoint: http://localhost:4318
+    
+# Security Configuration
+security:
+  # Authentication
+  auth:
+    enabled: true
+    method: jwt  # jwt, oauth2, api_key
+    token_expiry_hours: 24
+    
+  # Secrets management
+  secrets:
+    backend: vault  # vault, aws_secrets_manager, gcp_secret_manager, env
+    vault_addr: ${oc.env:VAULT_ADDR,http://localhost:8200}
+    vault_token: ${oc.env:VAULT_TOKEN}
+    
+  # Encryption
+  encryption:
+    at_rest: true
+    in_transit: true
+    algorithm: AES256
+    
+  # Audit logging
+  audit:
+    enabled: true
+    log_all_access: true
+    retention_days: 400
+    
+# Compliance Configuration
+compliance:
+  # Regulatory frameworks
+  frameworks:
+    - MiFID II
+    - SEC
+    - FINRA
+    
+  # Reporting
+  reporting:
+    enabled: true
+    transaction_reporting: true
+    best_execution_monitoring: true
+    
+  # Data retention
+  retention:
+    trade_data_days: 2555  # 7 years
+    audit_logs_days: 400
+    backups_days: 90
