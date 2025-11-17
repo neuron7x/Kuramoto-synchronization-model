@@ -384,8 +384,8 @@ def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_c
     result = ctrl.estimate_aversive_state(
         market_vol=2.0,
         free_energy=0.3,
-        losses=0.5,
-        rho=0.2
+        cum_losses=0.5,
+        rho_loss=0.2
     )
     assert isinstance(result, float)
     assert result >= 0.0
