@@ -20,14 +20,20 @@ on:
   # Reduces CI overhead for development cycle
   workflow_dispatch:
 
+concurrency:
+  group: thermo-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   thermo-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Enforce thermodynamic monotonicity
@@ -35,11 +41,13 @@ jobs:
 
   admission-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run thermodynamic admission check
@@ -47,12 +55,14 @@ jobs:
 
   validate-energy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
@@ -68,11 +78,13 @@ jobs:
 
   test-link-activator:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -82,11 +94,13 @@ jobs:
 
   test-recovery-agent:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -96,6 +110,7 @@ jobs:
 
   security-policy-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: Ensure SECURITY.md exists
@@ -109,12 +124,14 @@ jobs:
 
   integration-polygon:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

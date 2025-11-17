@@ -4,6 +4,10 @@ on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
 
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 permissions:
   checks: read
   contents: write
@@ -16,6 +20,7 @@ jobs:
     # Only run for Dependabot PRs from the same repository (not forks)
     if: github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Rebase Dependabot PR onto base branch
         uses: peter-evans/rebase@v2

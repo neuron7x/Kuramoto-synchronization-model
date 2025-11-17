@@ -3,6 +3,10 @@ name: Helm Charts
 permissions:
   contents: read
 
+concurrency:
+  group: helm-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
     branches:
@@ -21,6 +25,7 @@ jobs:
   lint:
     name: Lint Helm Charts
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
 
@@ -32,6 +37,16 @@ jobs:
         uses: azure/setup-helm@v4
         with:
           version: '3.14.0'
+          
+      - name: Cache Helm charts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            deploy/helm/tradepulse/charts
+          key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
+          restore-keys: |
+            helm-${{ runner.os }}-
 
       - name: Lint umbrella chart
         run: |
@@ -44,6 +59,7 @@ jobs:
   template:
     name: Template and Validate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
 
@@ -92,6 +108,7 @@ jobs:
   kind-smoke-test:
     name: Kind Smoke Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -238,6 +255,7 @@ jobs:
   kubescape-scan:
     name: Kubescape Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: write
@@ -284,6 +302,7 @@ jobs:
   polaris-scan:
     name: Polaris Best Practices
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
 
