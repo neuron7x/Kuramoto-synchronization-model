@@ -1,0 +1,142 @@
+# TACL (Thermodynamic Autonomic Control Layer) Configuration
+#
+# This is the default configuration for the thermodynamics control system.
+# Adjust these values based on your environment and requirements.
+
+# Control temperature for Helmholtz free energy calculation
+# Higher values discount stability more aggressively
+control_temperature: 0.60
+
+# Maximum acceptable free energy before triggering rollback
+max_acceptable_energy: 1.35
+
+# Controller cadence (seconds between control steps)
+control_step_interval: 0.001  # 1ms
+
+# Crisis detection thresholds
+crisis:
+  # Free energy deviation thresholds (relative to baseline)
+  normal_threshold: 0.0
+  elevated_threshold: 0.1    # 10% deviation
+  critical_threshold: 0.25   # 25% deviation
+  
+  # Latency spike thresholds (ratio to baseline)
+  latency_spike_elevated: 1.5  # 1.5x baseline
+  latency_spike_critical: 2.0  # 2x baseline
+  
+  # Rate of change thresholds (dF/dt)
+  dF_dt_warning: 0.01
+  dF_dt_critical: 0.05
+  
+  # Sustained rise threshold (consecutive steps)
+  sustained_rise_steps: 5
+
+# Safety constraints
+safety:
+  # Monotonic descent tolerance
+  epsilon_base: 0.01  # 1% of baseline_EMA
+  epsilon_min: 1.0e-9
+  epsilon_adaptive_scale: 0.05
+  
+  # Circuit breaker parameters
+  circuit_breaker_timeout_seconds: 300.0  # 5 minutes
+  max_consecutive_violations: 3
+  
+  # Recovery window for temporary spikes
+  recovery_window_steps: 3
+  recovery_decay_factor: 0.9
+
+# Genetic algorithm configuration
+genetic_algorithm:
+  # Population sizes by crisis mode
+  pop_size_normal: 16
+  pop_size_elevated: 24
+  pop_size_critical: 32
+  
+  # Probabilities
+  crossover_prob: 0.4
+  mutation_prob_normal: 0.6
+  mutation_prob_elevated: 0.7
+  mutation_prob_critical: 0.8
+  
+  # Evolution parameters
+  generations: 10
+  elitism_count: 2
+  fitness_scaling_factor: 1.0
+
+# Recovery agent (Q-learning) configuration
+recovery_agent:
+  learning_rate: 0.1
+  discount_factor: 0.95
+  epsilon_exploration: 0.1
+  
+  # State discretization
+  F_deviation_bins: 5
+  latency_spike_bins: 4
+  crisis_duration_bins: 3
+
+# Link activator configuration
+link_activator:
+  # Protocol hierarchy is defined in code
+  # See runtime/thermo_config.py LinkActivatorConfig for defaults
+  
+  # Timeout for protocol activation (seconds)
+  activation_timeout: 5.0
+  
+  # Maximum retries for failed activations
+  max_retries: 3
+
+# Telemetry and observability
+telemetry:
+  # Audit log path (must be writable)
+  audit_log_path: /var/log/tradepulse/thermo_audit.jsonl
+  
+  # Telemetry export directory
+  telemetry_export_dir: .ci_artifacts
+  
+  # History retention
+  max_history_size: 10000
+  
+  # Export intervals
+  export_interval_seconds: 60.0
+  
+  # Prometheus metrics
+  enable_prometheus: true
+  prometheus_port: 9090
+
+# CNS Stabilizer configuration
+cns_stabilizer:
+  # Normalization mode: "logret", "zscore", or "none"
+  normalize: logret
+  
+  # Hybrid mode (combine Kalman + PID)
+  hybrid_mode: true
+  
+  # Kalman filter parameters
+  kalman_process_noise: 1.0e-5
+  kalman_measurement_noise: 1.0e-3
+  
+  # PID controller parameters
+  pid_kp: 0.5
+  pid_ki: 0.1
+  pid_kd: 0.05
+  
+  # Veto thresholds
+  veto_integrity_threshold: 0.8
+  veto_delta_f_threshold: 0.1
+  
+  # Circadian rhythm
+  enable_circadian: true
+  circadian_period_hours: 24.0
+
+# VLPO Core Filter configuration
+vlpo_filter:
+  window_size: 64
+  outlier_threshold: 3.0  # Standard deviations
+  smoothing_alpha: 0.2
+
+# Dual approval system
+dual_approval:
+  require_dual_approval: true
+  token_env_var: THERMO_DUAL_TOKEN
+  token_expiration_seconds: 3600.0  # 1 hour

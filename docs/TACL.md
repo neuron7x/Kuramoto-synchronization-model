@@ -57,3 +57,97 @@ Temporary exceptions to the energy budget require dual approval:
 
 Both approvals must be recorded in the release ticket together with the
 telemetry snapshots exported by `.ci_artifacts/energy_validation.json`.
+
+## Programmatic Implementation
+
+The TACL specification described in this document is implemented in the following modules:
+
+### Core Modules
+
+- **`runtime/energy_validator.py`**: Implements the energy validation logic
+  - Computes Helmholtz free energy: F = U - T·S
+  - Validates metrics against thresholds
+  - Exports validation reports to JSON
+  
+- **`runtime/thermo_config.py`**: Centralized configuration for all TACL components
+  - Crisis thresholds and detection parameters
+  - Safety constraints (monotonic descent, circuit breaker)
+  - Genetic algorithm and recovery agent configuration
+  - Load from YAML or environment variables
+
+- **`runtime/thermo_controller.py`**: Main control loop orchestrator
+  - Orchestrates thermodynamic control steps
+  - Enforces monotonic descent constraint
+  - Manages crisis detection and recovery
+  - Integrates CNS stabilizer, recovery agent, and GA
+
+- **`runtime/thermo_api.py`**: FastAPI telemetry endpoints
+  - `/thermo/status` - Current system state
+  - `/thermo/history` - Historical telemetry
+  - `/thermo/crisis` - Crisis statistics
+  - `/thermo/activations` - Protocol activation history
+  - `/thermo/override` - Manual override endpoint
+
+### Configuration
+
+Default configuration is provided in `config/thermo_config.yaml` with all metrics,
+thresholds, and control parameters matching this specification.
+
+### CLI Tools
+
+**Energy Validation Script** (`scripts/validate_energy.py`):
+```bash
+# Validate metrics from command line
+python scripts/validate_energy.py \
+  --metric latency_p95=75.0 \
+  --metric latency_p99=100.0 \
+  --metric cpu_burn=0.65 \
+  --output validation_report.json
+
+# Validate from JSON file
+python scripts/validate_energy.py metrics.json --verbose
+
+# Show current configuration
+python scripts/validate_energy.py --show-config
+```
+
+### Usage Example
+
+```python
+from runtime.energy_validator import EnergyValidator
+
+validator = EnergyValidator()
+
+metrics = {
+    "latency_p95": 75.0,
+    "latency_p99": 100.0,
+    "coherency_drift": 0.05,
+    "cpu_burn": 0.65,
+    "mem_cost": 5.5,
+    "queue_depth": 25.0,
+    "packet_loss": 0.003,
+}
+
+result = validator.compute_free_energy(metrics)
+print(f"Free Energy: {result.free_energy:.6f}")
+print(f"Status: {'PASS' if result.passed else 'FAIL'}")
+
+# Export validation report
+validator.export_validation_report(Path(".ci_artifacts/energy_validation.json"))
+```
+
+### Documentation
+
+For comprehensive documentation, see:
+
+- **[Thermodynamics Documentation Hub](./thermodynamics/README.md)**: Complete guide
+- **[Metrics Formalization](./thermodynamics/METRICS_FORMALIZATION.md)**: Mathematical foundations
+- **[Operational Runbook](./thermodynamics/OPERATIONAL_RUNBOOK.md)**: Production procedures
+- **[Energy Validation Example](../examples/energy_validation_example.py)**: Usage examples
+
+### Testing
+
+Comprehensive test suite in `tests/test_energy_validator.py`:
+```bash
+pytest tests/test_energy_validator.py -v
+```
