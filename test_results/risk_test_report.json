@@ -1,0 +1,172 @@
+{
+  "total_scenarios": 9,
+  "passed": 8,
+  "failed": 1,
+  "pass_rate": 0.8888888888888888,
+  "metrics": {
+    "var": {
+      "mean": 0.04488125376713749,
+      "std": 0.02926485435851635,
+      "min": 0.017886033073537685,
+      "max": 0.10871016421874666
+    },
+    "es": {
+      "mean": 0.05625624104723184,
+      "std": 0.03134238322201226,
+      "min": 0.019916347688252296,
+      "max": 0.1244037535021113
+    },
+    "max_drawdown": {
+      "mean": -0.27984704027361434,
+      "std": 0.20326037004470313,
+      "min": -0.6866002833678465,
+      "max": -0.060332410082125476
+    },
+    "sharpe_ratio": {
+      "mean": 0.3360144252146607,
+      "std": 0.7461319110429635,
+      "min": -0.9362989491347381,
+      "max": 1.5811784546890508
+    }
+  },
+  "results": [
+    {
+      "scenario_name": "normal_market",
+      "scenario_type": "normal_market",
+      "var": 0.017886033073537685,
+      "es": 0.019916347688252296,
+      "alpha": 0.975,
+      "kelly_fraction": 1.0,
+      "risk_breach": "OK",
+      "max_drawdown": -0.13525205710992855,
+      "sharpe_ratio": 0.7603482836074157,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.057812",
+      "duration_seconds": 0.000185
+    },
+    {
+      "scenario_name": "high_volatility_market",
+      "scenario_type": "volatile_market",
+      "var": 0.052385943694702466,
+      "es": 0.06636251054082883,
+      "alpha": 0.975,
+      "kelly_fraction": 0.8413264707636371,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.38548954032202914,
+      "sharpe_ratio": 0.40089958403988685,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.057970",
+      "duration_seconds": 0.000152
+    },
+    {
+      "scenario_name": "bull_market",
+      "scenario_type": "trending_market",
+      "var": 0.03924651691211452,
+      "es": 0.049236860128765055,
+      "alpha": 0.975,
+      "kelly_fraction": 1.0,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.060332410082125476,
+      "sharpe_ratio": 1.5811784546890508,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.058120",
+      "duration_seconds": 0.000145
+    },
+    {
+      "scenario_name": "bear_market",
+      "scenario_type": "trending_market",
+      "var": 0.05412641978345368,
+      "es": 0.05997319324357304,
+      "alpha": 0.975,
+      "kelly_fraction": 0.0,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.415994157824569,
+      "sharpe_ratio": -0.9362989491347381,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.058265",
+      "duration_seconds": 0.00014
+    },
+    {
+      "scenario_name": "mean_reverting_market",
+      "scenario_type": "mean_reverting",
+      "var": 0.0203204774124851,
+      "es": 0.02511431983640449,
+      "alpha": 0.975,
+      "kelly_fraction": 1.0,
+      "risk_breach": "OK",
+      "max_drawdown": -0.07370236498744763,
+      "sharpe_ratio": 1.0518566885292175,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.058409",
+      "duration_seconds": 0.000141
+    },
+    {
+      "scenario_name": "liquidity_crisis",
+      "scenario_type": "liquidity_crisis",
+      "var": 0.07309679301835334,
+      "es": 0.08754133506220944,
+      "alpha": 0.975,
+      "kelly_fraction": 0.0,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.4575034812754534,
+      "sharpe_ratio": -0.6071234885240927,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.058633",
+      "duration_seconds": 0.000219
+    },
+    {
+      "scenario_name": "gradual_liquidity_deterioration",
+      "scenario_type": "liquidity_crisis",
+      "var": 0.10871016421874666,
+      "es": 0.1244037535021113,
+      "alpha": 0.975,
+      "kelly_fraction": 0.0,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.6866002833678465,
+      "sharpe_ratio": -0.10331079915094081,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.058799",
+      "duration_seconds": 0.00016
+    },
+    {
+      "scenario_name": "single_flash_crash",
+      "scenario_type": "flash_crash",
+      "var": 0.01850626105339634,
+      "es": 0.034463111698835515,
+      "alpha": 0.975,
+      "kelly_fraction": 1.0,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.17165686195478108,
+      "sharpe_ratio": 0.294998631413445,
+      "validation_errors": [
+        "VaR 0.0185 outside expected range [0.0200, 0.0500]",
+        "ES 0.0345 outside expected range [0.0400, 0.1000]"
+      ],
+      "passed": false,
+      "timestamp": "2025-11-17T01:17:25.058953",
+      "duration_seconds": 0.00015
+    },
+    {
+      "scenario_name": "multiple_flash_crashes",
+      "scenario_type": "flash_crash",
+      "var": 0.019652674737447605,
+      "es": 0.03929473772410652,
+      "alpha": 0.975,
+      "kelly_fraction": 1.0,
+      "risk_breach": "BREACH",
+      "max_drawdown": -0.13209220553834816,
+      "sharpe_ratio": 0.5815814214627021,
+      "validation_errors": [],
+      "passed": true,
+      "timestamp": "2025-11-17T01:17:25.059103",
+      "duration_seconds": 0.000145
+    }
+  ]
+}
