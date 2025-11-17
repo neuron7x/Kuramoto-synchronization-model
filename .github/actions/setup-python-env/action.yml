@@ -64,7 +64,7 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.use-uv }}" == "true" ]; then
-          uv venv
+          uv venv .venv
         else
           python -m venv .venv
         fi
@@ -72,27 +72,37 @@ runs:
     - name: Install production dependencies
       shell: bash
       run: |
+        # Activate venv and install dependencies
+        source .venv/bin/activate
+        python -m pip install --upgrade pip setuptools wheel
+        
         if [ "${{ inputs.use-uv }}" == "true" ]; then
-          uv pip install --upgrade pip setuptools wheel
           uv pip install -c constraints/security.txt -r requirements.txt
         else
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements.txt
         fi
 
     - name: Install development dependencies
       if: inputs.install-dev-deps == 'true'
       shell: bash
       run: |
+        source .venv/bin/activate
+        
         if [ "${{ inputs.use-uv }}" == "true" ]; then
           uv pip install -c constraints/security.txt -r requirements-dev.txt
         else
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
         fi
 
     - name: Verify installation
       shell: bash
       run: |
-        .venv/bin/python --version
-        .venv/bin/pip list | head -20
+        source .venv/bin/activate
+        python --version
+        pip list | head -20
         echo "✅ Python environment setup complete"
+        
+    - name: Add venv to PATH
+      shell: bash
+      run: |
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
