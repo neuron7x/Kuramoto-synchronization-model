@@ -1,0 +1,31 @@
+# Sample Coinbase Advanced Trade execution configuration overlay.
+execution:
+  venues:
+    coinbase:
+      enabled: false
+      sandbox: true
+      symbols:
+        - BTC-USD
+        - ETH-USD
+      credentials:
+        env_prefix: COINBASE
+        required:
+          - API_KEY
+          - API_SECRET
+          - PASSPHRASE
+        secret_backend:
+          adapter: kms
+          path: projects/sample/locations/global/keyRings/tradepulse/cryptoKeys/coinbase
+          field_mapping:
+            API_KEY: apiKey
+            API_SECRET: apiSecret
+            PASSPHRASE: passphrase
+      rate_limits:
+        max_orders_per_second: 5
+        max_orders_per_minute: 150
+      risk:
+        max_notional_usd: 15000
+        max_position_usd: 30000
+      websocket:
+        heartbeat_interval_sec: 20
+        reconnect_jitter_sec: 0.5
