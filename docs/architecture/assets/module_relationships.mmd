@@ -1,0 +1,88 @@
+%% TradePulse Взаємозв'язки модулів
+%% Детальна візуалізація залежностей між шарами системи
+graph LR
+    subgraph "Шар даних"
+        DS[Data Sources]
+        DQ[Data Quality]
+        FS[Feature Store]
+    end
+
+    subgraph "Аналітичний шар"
+        IND[Indicators Layer]
+        FEAT[Feature Engineering]
+        SIG[Signal Generation]
+    end
+
+    subgraph "Шар рішень"
+        STRAT[Strategy Engine]
+        RISK[Risk Management]
+        PORT[Portfolio Manager]
+    end
+
+    subgraph "Шар виконання"
+        EXEC[Execution Engine]
+        OMS[Order Management]
+        ADAPT[Broker Adapters]
+    end
+
+    subgraph "Контрольний шар"
+        NEURO[Neuromodulators]
+        TACL[TACL Controller]
+        GOV[Governance]
+    end
+
+    subgraph "Шар спостереження"
+        TELEM[Telemetry]
+        LOG[Logging]
+        TRACE[Tracing]
+    end
+
+    DS -->|raw data| DQ
+    DQ -->|validated| FS
+    FS -->|features| IND
+    IND -->|indicators| FEAT
+    FEAT -->|engineered| SIG
+    SIG -->|signals| STRAT
+
+    STRAT -->|orders intent| RISK
+    RISK -->|approved| PORT
+    PORT -->|allocations| EXEC
+    EXEC -->|orders| OMS
+    OMS -->|routes| ADAPT
+
+    NEURO -.modulates.-> STRAT
+    NEURO -.modulates.-> RISK
+    NEURO -.modulates.-> EXEC
+
+    TACL -.validates.-> STRAT
+    TACL -.validates.-> EXEC
+    TACL -.controls.-> RISK
+
+    GOV -.audits.-> RISK
+    GOV -.audits.-> EXEC
+    GOV -.policies.-> STRAT
+
+    TELEM -.observes.-> IND
+    TELEM -.observes.-> STRAT
+    TELEM -.observes.-> EXEC
+
+    LOG -.captures.-> DS
+    LOG -.captures.-> RISK
+    LOG -.captures.-> OMS
+
+    TRACE -.tracks.-> SIG
+    TRACE -.tracks.-> EXEC
+    TRACE -.tracks.-> ADAPT
+
+    ADAPT -->|fills| OMS
+    OMS -->|confirmations| EXEC
+    EXEC -->|P&L| PORT
+    PORT -->|feedback| STRAT
+    STRAT -->|learning| FEAT
+
+    style DS fill:#e3f2fd
+    style FS fill:#e3f2fd
+    style STRAT fill:#fff3e0
+    style EXEC fill:#f3e5f5
+    style NEURO fill:#ffebee
+    style TACL fill:#ffebee

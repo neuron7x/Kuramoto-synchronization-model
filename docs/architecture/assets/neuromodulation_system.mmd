@@ -1,0 +1,79 @@
+%% TradePulse Нейромодуляційна система
+%% Детальна візуалізація нейромодуляційних контрольних механізмів
+graph TB
+    subgraph "🧠 Нейромодуляційна система"
+        subgraph "💊 Дофамінова підсистема"
+            DOP_REWARD[Сигнал винагороди]
+            DOP_PREDICT[Прогноз винагороди]
+            DOP_ERROR[Помилка прогнозу δ]
+            DOP_LEARNING[Навчальний сигнал]
+            
+            DOP_REWARD --> DOP_ERROR
+            DOP_PREDICT --> DOP_ERROR
+            DOP_ERROR --> DOP_LEARNING
+        end
+
+        subgraph "🎯 Серотонінова підсистема"
+            SER_STATE[Оцінка стану]
+            SER_RISK[Рівень ризику]
+            SER_MOOD[Настрій системи]
+            SER_ADAPT[Адаптація стратегії]
+            
+            SER_STATE --> SER_RISK
+            SER_RISK --> SER_MOOD
+            SER_MOOD --> SER_ADAPT
+        end
+
+        subgraph "🛑 GABA підсистема"
+            GABA_MONITOR[Моніторинг активності]
+            GABA_THRESH[Поріг гальмування]
+            GABA_INHIB[Гальмівний сигнал]
+            GABA_COOL[Період охолодження]
+            
+            GABA_MONITOR --> GABA_THRESH
+            GABA_THRESH --> GABA_INHIB
+            GABA_INHIB --> GABA_COOL
+        end
+
+        subgraph "⚙️ Інтеграційний центр"
+            INTEGRATE[Інтеграція сигналів]
+            WEIGHTS[Вагові коефіцієнти]
+            FINAL_MOD[Фінальна модуляція]
+        end
+    end
+
+    subgraph "📊 Входи"
+        PNL[P&L історія]
+        MARKET[Ринкові умови]
+        PERF[Метрики продуктивності]
+        TRADES[Частота торгів]
+    end
+
+    subgraph "🎯 Виходи"
+        POS_SIZE[Розмір позиції ↑↓]
+        RISK_TOL[Толерантність ризику ↑↓]
+        ENTRY_THRESH[Поріг входу ↑↓]
+        EXIT_SPEED[Швидкість виходу ↑↓]
+    end
+
+    PNL --> DOP_REWARD
+    MARKET --> SER_STATE
+    PERF --> DOP_PREDICT
+    TRADES --> GABA_MONITOR
+
+    DOP_LEARNING --> INTEGRATE
+    SER_ADAPT --> INTEGRATE
+    GABA_INHIB --> INTEGRATE
+
+    INTEGRATE --> WEIGHTS
+    WEIGHTS --> FINAL_MOD
+
+    FINAL_MOD --> POS_SIZE
+    FINAL_MOD --> RISK_TOL
+    FINAL_MOD --> ENTRY_THRESH
+    FINAL_MOD --> EXIT_SPEED
+
+    style DOP_LEARNING fill:#81c784
+    style SER_ADAPT fill:#64b5f6
+    style GABA_INHIB fill:#e57373
+    style FINAL_MOD fill:#ffd54f

@@ -89,3 +89,10 @@ Sequence and data flow diagrams backing this narrative are maintained in
 
 Refer to the [Documentation Information Architecture](documentation_information_architecture.md) for
 navigation patterns, ownership, and versioning rules across the wider knowledge base.
+
+## Conceptual Architecture Visualization
+
+For a comprehensive visual guide to TradePulse conceptual elements and their relationships, including detailed
+diagrams of neuromodulation systems, TACL thermodynamic control, and signal lifecycle, see the
+[Conceptual Architecture (Ukrainian)](CONCEPTUAL_ARCHITECTURE_UA.md) document and the
+[Architecture Diagrams](architecture/assets/README.md) catalog.

@@ -1,0 +1,87 @@
+%% TradePulse TACL - Thermodynamic Autonomic Control Layer
+%% Візуалізація термодинамічного контролю
+graph TB
+    subgraph "⚡ TACL - Thermodynamic Autonomic Control Layer"
+        subgraph "📊 Збір метрик"
+            LAT_P95[Латентність P95]
+            LAT_P99[Латентність P99]
+            CPU[Використання CPU]
+            MEM[Використання пам'яті]
+            QUEUE[Глибина черги]
+            COHERENCY[Дрейф когерентності]
+            PACKET[Втрата пакетів]
+        end
+
+        subgraph "🧮 Обчислення енергії"
+            INTERNAL[Внутрішня енергія U]
+            ENTROPY[Ентропія стабільності S]
+            TEMP[Температура контролю T]
+            FREE_ENERGY[Вільна енергія Гельмгольца<br/>F = U - T·S]
+        end
+
+        subgraph "🎚️ Валідація порогів"
+            THRESHOLD{F ≤ 1.35?}
+            MARGIN[Запас безпеки 12%]
+            TREND[Аналіз тренду]
+        end
+
+        subgraph "🚨 Управління кризами"
+            DETECT[Виявлення кризи]
+            CLASSIFY[Класифікація типу]
+            PROTOCOL[Вибір протоколу]
+            RECOVER[Виконання відновлення]
+        end
+
+        subgraph "⚙️ Дії контролю"
+            PROCEED[✅ Дозволити операцію]
+            THROTTLE[⚠️ Обмежити навантаження]
+            ROLLBACK[🔄 Автоматичний відкат]
+            ALERT[📢 Ескалація алерту]
+        end
+    end
+
+    LAT_P95 --> INTERNAL
+    LAT_P99 --> INTERNAL
+    CPU --> INTERNAL
+    MEM --> INTERNAL
+    QUEUE --> INTERNAL
+    COHERENCY --> INTERNAL
+    PACKET --> INTERNAL
+
+    LAT_P95 --> ENTROPY
+    LAT_P99 --> ENTROPY
+    CPU --> ENTROPY
+    MEM --> ENTROPY
+    QUEUE --> ENTROPY
+    COHERENCY --> ENTROPY
+    PACKET --> ENTROPY
+
+    INTERNAL --> FREE_ENERGY
+    ENTROPY --> FREE_ENERGY
+    TEMP --> FREE_ENERGY
+
+    FREE_ENERGY --> THRESHOLD
+    MARGIN --> THRESHOLD
+    FREE_ENERGY --> TREND
+
+    THRESHOLD -->|Так| PROCEED
+    THRESHOLD -->|Ні| DETECT
+    TREND -->|Погіршення| DETECT
+
+    DETECT --> CLASSIFY
+    CLASSIFY --> PROTOCOL
+    PROTOCOL --> RECOVER
+
+    RECOVER --> THROTTLE
+    RECOVER --> ROLLBACK
+    RECOVER --> ALERT
+
+    THROTTLE -.зворотний зв'язок.-> LAT_P95
+    ROLLBACK -.зворотний зв'язок.-> CPU
+
+    style FREE_ENERGY fill:#ffeb3b
+    style THRESHOLD fill:#ff9800
+    style PROCEED fill:#4caf50
+    style DETECT fill:#f44336
+    style ROLLBACK fill:#e91e63
+    style RECOVER fill:#9c27b0
