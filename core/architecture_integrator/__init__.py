@@ -31,7 +31,12 @@ from core.architecture_integrator.component import (
 )
 from core.architecture_integrator.registry import ComponentRegistry
 from core.architecture_integrator.lifecycle import LifecycleManager
-from core.architecture_integrator.validator import ArchitectureValidator
+from core.architecture_integrator.validator import (
+    ArchitectureValidator,
+    ValidationIssue,
+    ValidationSeverity,
+    ValidationResult,
+)
 
 __all__ = [
     "ArchitectureIntegrator",
@@ -42,4 +47,7 @@ __all__ = [
     "ComponentRegistry",
     "LifecycleManager",
     "ArchitectureValidator",
+    "ValidationIssue",
+    "ValidationSeverity",
+    "ValidationResult",
 ]
