@@ -22,6 +22,31 @@ TACL treats the entire TradePulse topology as a thermodynamic system, measuring 
 
 **This layer enforces thermodynamic stability using Lyapunov-style energy descent, GA/RL adaptation, runtime monotonic safety gates, and auditable decision logs.**
 
+## Security Constraint Policy (Updated 2025-11-17)
+
+### Critical Supply Chain Security Enhancement
+
+**Issue Fixed**: The original security constraint file (`constraints/security.txt`) was incomplete, creating a critical supply chain vulnerability where production systems could install versions of security-critical packages with known CVEs.
+
+**Affected Packages**: 
+- `cryptography` - CVE-2023-50782, CVE-2024-26130, CVE-2024-0727
+- `PyYAML` - CVE-2020-14343 (arbitrary code execution)
+- `Jinja2` - CVE-2024-34064 (XSS vulnerability)
+- `PyJWT` - CVE-2022-29217 (key confusion attack)
+
+**Resolution**: Enhanced security constraints now cover ALL security-critical packages with exact version pinning. See [SECURITY_CONSTRAINT_POLICY.md](SECURITY_CONSTRAINT_POLICY.md) for complete details.
+
+### Mandatory Constraint Enforcement
+
+All dependency installations MUST use the security constraint file:
+
+```bash
+pip install -c constraints/security.txt -r requirements.txt
+python scripts/verify_security_constraints.py
+```
+
+**Compliance**: This policy ensures adherence to NIST SP 800-53 (SI-7), ISO 27001 (A.12.6.1), and OWASP Top 10 (A06:2021 - Vulnerable Components).
+
 ## Supported Versions
 
 We actively support the following versions with security updates:

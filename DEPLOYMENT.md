@@ -13,29 +13,42 @@ Before deploying, install the following tools:
 
 ### Dependency security guardrails
 
-- The repository now ships with `constraints/security.txt`, which locks the vetted versions of the HTTP client stack (`requests`,
-  `urllib3`, `idna`, `certifi`, and `charset-normalizer`). Always install dependencies with the constraint file to guarantee the
-  hardened versions are applied:
+⚠️ **CRITICAL**: As of 2025-11-17, the security constraint policy has been significantly enhanced to address a critical supply chain vulnerability. See [SECURITY_CONSTRAINT_POLICY.md](SECURITY_CONSTRAINT_POLICY.md) for full details.
+
+- The repository ships with `constraints/security.txt`, which enforces exact versions of **all security-critical packages**:
+  - **HTTP Stack**: `requests`, `urllib3`, `certifi`, `idna`, `charset-normalizer`
+  - **Cryptography**: `cryptography`, `PyJWT` (fixes CVE-2023-50782, CVE-2024-26130, CVE-2022-29217)
+  - **Templates**: `Jinja2` (XSS prevention), `PyYAML` (arbitrary code execution prevention)
+  - **Data/ORM**: `SQLAlchemy`, `pydantic`, `pydantic-settings`, `pandera`
+
+- **MANDATORY**: Always install dependencies with the constraint file to guarantee hardened versions:
 
   ```bash
   pip install -c constraints/security.txt -r requirements.txt
   pip install -c constraints/security.txt -r requirements-dev.txt
   ```
 
-- When `pip-audit` or Dependabot reports a vulnerability in one of these packages, update the constraint by editing
-  `constraints/security.txt` and re-locking the dependency sets:
+- **Verification**: Run the security constraint verification script after installation:
 
   ```bash
-  pip install --upgrade pip-tools
-  make lock  # regenerates *.lock using the security constraint
+  python scripts/verify_security_constraints.py
+  # Or to auto-fix violations:
+  python scripts/verify_security_constraints.py --fix
   ```
 
-- Validate the new versions locally (lint, unit tests, smoke flows) and run `pip-audit` with the constraints to verify that the
-  vulnerability is resolved:
-
-  ```bash
-  pip-audit -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
-  ```
+- When `pip-audit` or Dependabot reports a vulnerability in any security-critical package:
+  1. Update the constraint in `constraints/security.txt` with the fixed version
+  2. Re-lock dependency sets:
+     ```bash
+     pip install --upgrade pip-tools
+     make lock  # regenerates *.lock using the security constraint
+     ```
+  3. Validate locally (lint, unit tests, smoke flows)
+  4. Run security audit to verify the vulnerability is resolved:
+     ```bash
+     pip-audit -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
+     python scripts/verify_security_constraints.py
+     ```
 
 - Commit the updated constraint and regenerated lock files. Dependabot is configured to watch `/constraints/security.txt`, so
   CVE-driven updates will surface as automated pull requests that follow the same workflow.
