@@ -3,7 +3,6 @@ name: OSSF Scorecard - Supply Chain Security
 # Least privilege at the workflow (global) level — no global writes
 permissions:
   contents: read
-  id-token: write  # Required for OIDC-signed Scorecard results
 
 on:
   branch_protection_rule:
