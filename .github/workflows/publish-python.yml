@@ -8,10 +8,15 @@ permissions:
   contents: write
   id-token: write
 
+concurrency:
+  group: publish-python-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
   coverage-gate:
     name: Release coverage verification
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -60,6 +65,7 @@ jobs:
   verify-ci:
     name: Ensure release commit passed CI
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       actions: read
       checks: read
@@ -132,6 +138,7 @@ jobs:
       - verify-ci
       - coverage-gate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       id-token: write
@@ -316,6 +323,7 @@ jobs:
     name: Dry-run publish to TestPyPI
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
       contents: read
@@ -328,7 +336,7 @@ jobs:
           path: dist
 
       - name: Dry-run upload to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@4bb033805d9e19112d8c697528791ff53f6c2f74  # v1.9.0
         with:
           packages-dir: dist
           repository-url: https://test.pypi.org/legacy/
@@ -341,6 +349,7 @@ jobs:
       - build
       - testpypi-dry-run
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
       id-token: write
@@ -353,7 +362,7 @@ jobs:
           path: dist
 
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@4bb033805d9e19112d8c697528791ff53f6c2f74  # v1.9.0
         with:
           packages-dir: dist
           print-hash: true

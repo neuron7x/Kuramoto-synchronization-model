@@ -47,6 +47,7 @@ jobs:
   preflight:
     name: Deployment Preflight
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       can_deploy: ${{ steps.check.outputs.can_deploy }}
       missing_secrets: ${{ steps.check.outputs.missing_secrets }}
@@ -123,6 +124,7 @@ jobs:
       - preflight
     if: needs.preflight.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       environment_exists: ${{ steps.check.outputs.environment_exists }}
     steps:

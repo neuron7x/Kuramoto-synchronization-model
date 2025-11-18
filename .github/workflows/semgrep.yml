@@ -24,6 +24,7 @@ jobs:
   semgrep:
     name: Semgrep Scan (Python/TS/Rust/Go)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     container:
       image: semgrep/semgrep

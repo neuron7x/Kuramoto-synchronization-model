@@ -9,6 +9,10 @@ on:
     types:
       - completed
 
+concurrency:
+  group: slo-gate-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
 env:
   # SLO Thresholds
   ERROR_BUDGET: "0.001"  # 99.9% uptime
@@ -20,6 +24,7 @@ jobs:
   evaluate-slo:
     name: Evaluate Canary SLO
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       actions: write
@@ -189,6 +194,7 @@ jobs:
     name: Auto-Rollback on SLO Violation
     needs: evaluate-slo
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       issues: write
@@ -249,6 +255,7 @@ jobs:
     name: Promote Canary to Production
     needs: evaluate-slo
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       issues: write

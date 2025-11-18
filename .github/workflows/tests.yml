@@ -29,6 +29,7 @@ concurrency:
 jobs:
   detect_ui_changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       ui: ${{ steps.filter.outputs.ui }}
       web: ${{ steps.filter.outputs.web }}
@@ -45,6 +46,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         python-version: ['3.11']
@@ -116,6 +118,7 @@ jobs:
 
   web-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: detect_ui_changes
     name: Web Frontend Lint & Type Check
     steps:
@@ -144,6 +147,7 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     strategy:
       matrix:
         python-version: ['3.11']
@@ -570,6 +574,7 @@ jobs:
 
   security-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs:
       - lint
     strategy:
@@ -615,6 +620,7 @@ jobs:
 
   mutation-trading-engine:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     needs:
       - tests
     name: Targeted Mutation Testing (Trading Engine)
@@ -651,6 +657,7 @@ jobs:
   ui_accessibility:
     name: UI & Accessibility (Playwright)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: detect_ui_changes
     if: needs.detect_ui_changes.outputs.ui == 'true'
     steps:
@@ -685,6 +692,7 @@ jobs:
   benchmarks:
     name: Performance Benchmarks (Python 3.11)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       TP_BENCHMARK_ARTIFACT_DIR: reports/benchmarks
     steps:
@@ -838,6 +846,7 @@ jobs:
   pytest-xdist:
     name: Pytest (xdist profiling)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: tests
     steps:
       - uses: actions/checkout@v5
@@ -878,6 +887,7 @@ jobs:
   ui-smoke:
     name: Playwright UI smoke tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: tests
     steps:
       - uses: actions/checkout@v5
@@ -912,6 +922,7 @@ jobs:
   flaky-tests:
     name: Quarantined flaky tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: tests
     if: always()
     continue-on-error: true

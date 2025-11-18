@@ -17,6 +17,7 @@ jobs:
   version-check:
     name: Verify Version Matches Git Tag
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
 

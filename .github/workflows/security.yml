@@ -26,6 +26,7 @@ jobs:
   secret-scan:
     name: Scan for Secrets
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v5
@@ -58,7 +59,7 @@ jobs:
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
     - name: Run TruffleHog
-      uses: trufflesecurity/trufflehog@main
+      uses: trufflesecurity/trufflehog@9ffb50d96fc39466aedad6a262c553117fa38aab  # v3.82.13
       with:
         extra_args: --only-verified
 
@@ -80,6 +81,7 @@ jobs:
   dependency-scan:
     name: Scan Dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v5
@@ -159,6 +161,7 @@ jobs:
   container-scan:
     name: Container Image Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       actions: read
       contents: read
@@ -389,6 +392,7 @@ jobs:
   codeql-analysis:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       actions: read
       contents: read
@@ -431,6 +435,7 @@ jobs:
   security-tests:
     name: Security Test Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
     - name: Checkout repository

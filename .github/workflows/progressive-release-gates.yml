@@ -14,6 +14,10 @@ permissions:
   id-token: write
   attestations: write
 
+concurrency:
+  group: progressive-release-gates-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-gates:
     runs-on: ubuntu-latest
