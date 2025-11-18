@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import time
 from datetime import UTC, datetime
-from unittest.mock import Mock, patch
+
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,18 +28,12 @@ from cortex_service.app.config import (
     ServiceMeta,
     SignalSettings,
 )
-from cortex_service.app.constants import ZERO_STD_THRESHOLD
 from cortex_service.app.core.signals import FeatureObservation, compute_signal
-from cortex_service.app.decorators import transactional, with_retry
+from cortex_service.app.decorators import with_retry
 from cortex_service.app.errors import (
-    ComputationError,
-    CortexError,
     DatabaseError,
-    NotFoundError,
 )
-from cortex_service.app.ethics.risk import Exposure, compute_risk
-from cortex_service.app.memory.repository import MemoryRepository
-from cortex_service.app.middleware import get_request_id
+from cortex_service.app.ethics.risk import compute_risk
 from cortex_service.app.services.regime_service import RegimeCache
 
 

@@ -132,7 +132,7 @@ def main() -> None:
             is_valid, issues = controller.validate_state()
             
             # Check alerts
-            alerts = monitor.check_alerts(
+            _ = monitor.check_alerts(
                 level=result["level"],
                 hold=bool(result["hold"]),
                 desensitization=result["desensitization"],
