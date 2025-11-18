@@ -1,10 +1,9 @@
 name: OSSF Scorecard - Supply Chain Security
 
+# Least privilege at the workflow (global) level — no global writes
 permissions:
-  security-events: write
   contents: read
-  actions: read
-  id-token: write
+  id-token: write  # Required for OIDC-signed Scorecard results
 
 on:
   branch_protection_rule:
@@ -25,8 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    # Job-level permissions: write only where needed
     permissions:
-      security-events: write
+      security-events: write  # Required for uploading SARIF to Code Scanning
       contents: read
       actions: read
       id-token: write
