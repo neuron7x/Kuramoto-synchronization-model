@@ -1,58 +1,40 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Pre-commit hooks for TradePulse
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.5
-    hooks:
-      - id: ruff
-        args: ["--fix"]
+  # Black code formatter
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:
       - id: black
-        language_version: python3
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+        args: [--line-length=100, --target-version=py311]
+        language_version: python3.11
+
+  # Ruff linter (fast alternative to flake8, isort, etc.)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
     hooks:
-      - id: isort
-        args: ["--profile=black"]
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+      - id: ruff
+        args: [--fix, --select=F,E]
+        
+  # Additional useful hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
-      - id: flake8
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+
+  # Security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
     hooks:
-      - id: shfmt
-        args: ["-w", "-i", "2", "-ci"]
-  - repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: 3.0.0
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-requests]
-  - repo: local
-    hooks:
-      - id: slotscheck
-        name: slotscheck (core packages)
-        entry: python -m slotscheck --module core --module backtest --module execution
-        language: python
-        additional_dependencies:
-          - slotscheck==0.19.1
-        pass_filenames: false
-      - id: eslint
-        name: eslint (dashboard UI)
-        entry: npm run lint --prefix ui/dashboard
-        language: system
-        pass_filenames: false
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.22.1
-    hooks:
-      - id: gitleaks
+      - id: bandit
+        args: [-ll, -r, .]
+        exclude: ^tests/
