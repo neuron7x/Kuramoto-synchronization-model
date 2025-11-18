@@ -622,6 +622,11 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 - [Security Requirements](docs/security/requirements/security-requirements-specification.md) — 93 controls mapped to NIST and ISO 27001
 - [DevSecOps Guide](docs/security/devsecops/devsecops-integration-guide.md) — Security automation in CI/CD
 
+#### 🤖 Documentation Automation
+- [DOC PR COPILOT v2](.github/agents/doc-pr-copilot-v2.md) — LLM-based documentation agent for PR reviews
+- [Agent Integration Guide](.github/agents/INTEGRATION.md) — How to integrate documentation automation
+- [Agent Configuration](.github/agents/README.md) — Available agents and usage
+
 </td>
 </tr>
 </table>
