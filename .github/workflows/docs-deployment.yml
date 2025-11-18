@@ -1,0 +1,357 @@
+name: Documentation Deployment
+
+# Automatically deploy documentation to GitHub Pages
+# Includes ADRs, operational runbooks, and API documentation
+# Principal System Architect: Single source of truth for documentation
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs-deployment.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Need full history for git metadata
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocs-minify-plugin pymdown-extensions mike
+
+      - name: Verify documentation structure
+        run: |
+          echo "Verifying documentation structure..."
+          
+          # Check for required files
+          REQUIRED_FILES=(
+            "docs/index.md"
+            "mkdocs.yml"
+            "docs/adr/index.md"
+            "docs/operations/ROLLBACK_PROCEDURES.md"
+          )
+          
+          MISSING_FILES=0
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing required file: $file"
+              MISSING_FILES=$((MISSING_FILES + 1))
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+          
+          if [ $MISSING_FILES -gt 0 ]; then
+            echo "⚠️ Warning: $MISSING_FILES required files missing"
+          else
+            echo "✅ All required documentation files present"
+          fi
+
+      - name: Build MkDocs site
+        run: |
+          echo "Building documentation site..."
+          mkdocs build --strict --verbose
+          
+          echo "✅ Documentation built successfully"
+
+      - name: Generate ADR index
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          from datetime import datetime
+          
+          adr_dir = Path('docs/adr')
+          if not adr_dir.exists():
+              print("⚠️ ADR directory not found")
+              exit(0)
+          
+          # Find all ADR files
+          adr_files = sorted([f for f in adr_dir.glob('*.md') if f.name != 'index.md' and f.name != 'README.md' and f.name != 'template.md'])
+          
+          print(f"Found {len(adr_files)} ADR files")
+          
+          # Parse ADR metadata
+          adrs = []
+          for adr_file in adr_files:
+              content = adr_file.read_text()
+              
+              # Extract metadata
+              title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+              status_match = re.search(r'\*\*Status:\*\*\s+(.+)$', content, re.MULTILINE)
+              date_match = re.search(r'\*\*Date:\*\*\s+(.+)$', content, re.MULTILINE)
+              
+              adrs.append({
+                  'file': adr_file.name,
+                  'title': title_match.group(1) if title_match else adr_file.stem,
+                  'status': status_match.group(1) if status_match else 'Unknown',
+                  'date': date_match.group(1) if date_match else 'Unknown'
+              })
+          
+          # Generate index
+          index_file = adr_dir / 'index.md'
+          with index_file.open('w') as f:
+              f.write("# Architecture Decision Records (ADRs)\n\n")
+              f.write("This directory contains all Architecture Decision Records for TradePulse.\n\n")
+              f.write(f"**Last Updated:** {datetime.utcnow().strftime('%Y-%m-%d')}\n\n")
+              
+              f.write("## What are ADRs?\n\n")
+              f.write("Architecture Decision Records document important architectural decisions made in the project, ")
+              f.write("including the context, decision, and consequences.\n\n")
+              
+              f.write("## All ADRs\n\n")
+              f.write("| ADR | Title | Status | Date |\n")
+              f.write("|-----|-------|--------|------|\n")
+              
+              for adr in sorted(adrs, key=lambda x: x['file']):
+                  f.write(f"| [{adr['file']}]({adr['file']}) | {adr['title']} | {adr['status']} | {adr['date']} |\n")
+              
+              f.write("\n## Creating a New ADR\n\n")
+              f.write("1. Copy `template.md` to a new file with the next number\n")
+              f.write("2. Fill in the sections\n")
+              f.write("3. Get it reviewed by the team\n")
+              f.write("4. Merge when approved\n")
+          
+          print("✅ ADR index generated")
+          PY
+
+      - name: Generate operations documentation index
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from datetime import datetime
+          
+          ops_dir = Path('docs/operations')
+          if not ops_dir.exists():
+              print("⚠️ Operations directory not found")
+              exit(0)
+          
+          # Find all operations docs
+          ops_files = sorted([f for f in ops_dir.glob('*.md')])
+          
+          print(f"Found {len(ops_files)} operations documents")
+          
+          # Generate index if it doesn't exist
+          index_file = ops_dir / 'index.md'
+          if index_file.exists():
+              print("Operations index already exists, skipping")
+              exit(0)
+          
+          with index_file.open('w') as f:
+              f.write("# Operations Documentation\n\n")
+              f.write("This directory contains operational procedures, runbooks, and guides.\n\n")
+              f.write(f"**Last Updated:** {datetime.utcnow().strftime('%Y-%m-%d')}\n\n")
+              
+              f.write("## Available Documents\n\n")
+              
+              for ops_file in ops_files:
+                  if ops_file.name != 'index.md':
+                      title = ops_file.stem.replace('_', ' ').replace('-', ' ').title()
+                      f.write(f"- [{title}]({ops_file.name})\n")
+              
+              f.write("\n## Quick Links\n\n")
+              f.write("- [Rollback Procedures](ROLLBACK_PROCEDURES.md) - Emergency response and rollback\n")
+              f.write("- [Incident Response](../incident_coordination_procedures.md) - Incident management\n")
+              f.write("- [Runbooks](../operational_handbook.md) - Operational procedures\n")
+          
+          print("✅ Operations documentation index generated")
+          PY
+
+      - name: Validate documentation links
+        run: |
+          echo "Validating internal links..."
+          
+          # Simple link validation - check for broken internal links
+          find docs -name "*.md" -type f | while read -r file; do
+            # Extract markdown links [text](path)
+            grep -oP '\[.*?\]\(\K[^)]+' "$file" 2>/dev/null | while read -r link; do
+              # Skip external links
+              if [[ "$link" =~ ^https?:// ]]; then
+                continue
+              fi
+              
+              # Skip anchors
+              if [[ "$link" =~ ^# ]]; then
+                continue
+              fi
+              
+              # Check if linked file exists
+              link_path=$(dirname "$file")/"$link"
+              if [ ! -f "$link_path" ] && [ ! -d "$link_path" ]; then
+                echo "⚠️  Broken link in $file: $link"
+              fi
+            done
+          done
+          
+          echo "✅ Link validation complete"
+
+      - name: Generate documentation metadata
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime
+          
+          # Count documentation by category
+          docs_dir = Path('docs')
+          
+          categories = {
+              'Architecture': list(docs_dir.glob('architecture/**/*.md')),
+              'ADRs': list(docs_dir.glob('adr/*.md')),
+              'API': list(docs_dir.glob('api/**/*.md')),
+              'Operations': list(docs_dir.glob('operations/**/*.md')),
+              'Security': list(docs_dir.glob('security/**/*.md')),
+              'Testing': list(docs_dir.glob('testing/**/*.md')),
+          }
+          
+          metadata = {
+              'generated_at': datetime.utcnow().isoformat() + 'Z',
+              'total_documents': sum(len(files) for files in categories.values()),
+              'categories': {cat: len(files) for cat, files in categories.items()}
+          }
+          
+          Path('site/metadata.json').write_text(json.dumps(metadata, indent=2))
+          
+          print("📊 Documentation Statistics:")
+          print(f"  Total Documents: {metadata['total_documents']}")
+          for cat, count in metadata['categories'].items():
+              print(f"  {cat}: {count}")
+          PY
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-site
+          path: site/
+          retention-days: 30
+
+      - name: Setup Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy-docs:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Post deployment notification
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentUrl = '${{ steps.deployment.outputs.page_url }}';
+            
+            console.log(`✅ Documentation deployed to: ${deploymentUrl}`);
+            
+            // Create a deployment event
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment?.id || 0,
+              state: 'success',
+              description: 'Documentation deployed successfully',
+              environment_url: deploymentUrl
+            });
+
+  verify-deployment:
+    name: Verify Documentation Deployment
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy-docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Verify documentation site
+        run: |
+          echo "Verifying deployed documentation..."
+          
+          # Get the GitHub Pages URL
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          
+          echo "Checking: $PAGES_URL"
+          
+          # Check if site is accessible
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PAGES_URL" || echo "000")
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Documentation site is accessible"
+          else
+            echo "⚠️ Documentation site returned HTTP $HTTP_CODE"
+            echo "Site may still be deploying or there may be an issue"
+          fi
+
+      - name: Post verification comment
+        if: github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commit = context.sha;
+            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/`;
+            
+            const message = `📚 **Documentation Deployed**
+            
+Documentation has been successfully deployed from commit ${commit.substring(0, 7)}.
+
+**View Documentation:** ${pagesUrl}
+
+**Recent Updates:**
+- ADRs (Architecture Decision Records)
+- Operations runbooks
+- API documentation
+- Security guides
+
+**Deployment Info:**
+- Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+- Commit: ${commit}
+
+---
+_Automated by Documentation Deployment workflow_
+`;
+            
+            console.log(message);

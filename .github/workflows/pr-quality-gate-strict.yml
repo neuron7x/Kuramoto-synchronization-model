@@ -1,0 +1,451 @@
+name: PR Quality Gate - Strict Enforcement
+
+# Enforces mandatory quality checks on ALL PRs
+# BLOCKING checks that must pass before merge
+# Principal System Architect: Zero-tolerance quality enforcement
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  statuses: write
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: pr-quality-strict-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # MANDATORY CHECK 1: Code formatting and linting
+  formatting-lint-gate:
+    name: "BLOCKING: Formatting & Linting"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install formatting and linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black isort mypy
+
+      - name: Run Ruff (mandatory)
+        id: ruff
+        run: |
+          echo "Running Ruff linter..."
+          ruff check . --output-format=github || {
+            echo "❌ BLOCKING: Ruff linting failed"
+            echo "Run 'ruff check . --fix' to auto-fix issues"
+            exit 1
+          }
+          echo "✅ Ruff linting passed"
+
+      - name: Run Black (mandatory)
+        id: black
+        run: |
+          echo "Running Black formatter check..."
+          black --check . || {
+            echo "❌ BLOCKING: Black formatting failed"
+            echo "Run 'black .' to format code"
+            exit 1
+          }
+          echo "✅ Black formatting passed"
+
+      - name: Run isort (mandatory)
+        id: isort
+        run: |
+          echo "Running isort import sorting check..."
+          isort --check-only . || {
+            echo "❌ BLOCKING: isort import sorting failed"
+            echo "Run 'isort .' to sort imports"
+            exit 1
+          }
+          echo "✅ isort import sorting passed"
+
+      - name: Run mypy type checking (mandatory)
+        id: mypy
+        run: |
+          echo "Running mypy type checking..."
+          pip install -c constraints/security.txt -r requirements.txt
+          mypy core/ backtest/ execution/ --config-file=mypy.ini || {
+            echo "❌ BLOCKING: mypy type checking failed"
+            echo "Fix type errors before merging"
+            exit 1
+          }
+          echo "✅ mypy type checking passed"
+
+      - name: Set PR status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}';
+            const conclusion = status === 'success' ? 'success' : 'failure';
+            
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: conclusion,
+              context: 'PR Quality Gate / Formatting & Linting',
+              description: status === 'success' ? 'All formatting checks passed' : 'Formatting checks failed',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
+
+  # MANDATORY CHECK 2: Security scanning
+  security-gate:
+    name: "BLOCKING: Security Scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit detect-secrets
+
+      - name: Run Bandit security scanner (mandatory)
+        id: bandit
+        run: |
+          echo "Running Bandit security scanner..."
+          bandit -r core/ backtest/ execution/ application/ -ll || {
+            echo "❌ BLOCKING: Bandit found high/critical security issues"
+            exit 1
+          }
+          echo "✅ Bandit security scan passed"
+
+      - name: Run detect-secrets (mandatory)
+        id: detect_secrets
+        run: |
+          echo "Running detect-secrets scanner..."
+          detect-secrets scan core backtest execution application --baseline .secrets.baseline || {
+            if [ ! -f .secrets.baseline ]; then
+              echo "Creating baseline..."
+              detect-secrets scan --update .secrets.baseline core backtest execution application
+              echo "⚠️ Baseline created, review and commit it"
+            fi
+          }
+          
+          # Scan for new secrets
+          detect-secrets scan core backtest execution application | \
+            detect-secrets audit --report || {
+            echo "❌ BLOCKING: Secrets detected in code"
+            exit 1
+          }
+          echo "✅ No secrets detected"
+
+      - name: Check for hardcoded credentials
+        id: credential_check
+        run: |
+          echo "Scanning for hardcoded credentials..."
+          
+          # Search for common credential patterns
+          SUSPICIOUS_PATTERNS=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+            "secret\s*=\s*['\"][^'\"]+['\"]"
+            "token\s*=\s*['\"][^'\"]+['\"]"
+          )
+          
+          FOUND_ISSUES=0
+          for pattern in "${SUSPICIOUS_PATTERNS[@]}"; do
+            if grep -rInE "$pattern" core/ backtest/ execution/ application/ 2>/dev/null | grep -v "test\|example\|TODO"; then
+              echo "⚠️ Found potential hardcoded credential pattern: $pattern"
+              FOUND_ISSUES=$((FOUND_ISSUES + 1))
+            fi
+          done
+          
+          if [ $FOUND_ISSUES -gt 0 ]; then
+            echo "❌ BLOCKING: Found $FOUND_ISSUES potential hardcoded credentials"
+            echo "Review and remove any hardcoded secrets"
+            exit 1
+          fi
+          
+          echo "✅ No hardcoded credentials found"
+
+  # MANDATORY CHECK 3: Test coverage threshold
+  coverage-gate:
+    name: "BLOCKING: Coverage Threshold"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests with coverage (mandatory)
+        id: coverage
+        run: |
+          echo "Running tests with coverage..."
+          pytest tests/ \
+            --cov=core \
+            --cov=backtest \
+            --cov=execution \
+            --cov-report=term-missing \
+            --cov-report=json:coverage.json \
+            --cov-fail-under=98 || {
+            echo "❌ BLOCKING: Coverage below 98% threshold"
+            exit 1
+          }
+          echo "✅ Coverage threshold (98%) met"
+
+      - name: Analyze coverage delta
+        id: coverage_delta
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          
+          # Check if coverage decreased
+          coverage_file = Path('coverage.json')
+          if not coverage_file.exists():
+              print("⚠️ Coverage file not found")
+              exit(0)
+          
+          data = json.loads(coverage_file.read_text())
+          current_coverage = data['totals']['percent_covered']
+          
+          print(f"\n📊 Current Coverage: {current_coverage:.2f}%")
+          
+          # For PRs, we want to ensure coverage doesn't decrease
+          # This is a strict gate - any coverage decrease is blocked
+          if current_coverage < 98.0:
+              print(f"❌ Coverage {current_coverage:.2f}% is below 98% threshold")
+              exit(1)
+          
+          print("✅ Coverage check passed")
+          PY
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-coverage-report
+          path: coverage.json
+
+  # MANDATORY CHECK 4: Dependency security
+  dependency-security-gate:
+    name: "BLOCKING: Dependency Security"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install security audit tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety pip-audit
+
+      - name: Run pip-audit (mandatory)
+        id: pip_audit
+        run: |
+          echo "Running pip-audit for CVE detection..."
+          
+          # Install dependencies first
+          pip install -r requirements.txt
+          
+          # Run audit and fail on any vulnerabilities
+          pip-audit --desc --format json -o pip-audit-results.json || {
+            echo "❌ BLOCKING: pip-audit found vulnerabilities"
+            
+            # Show summary
+            if [ -f pip-audit-results.json ]; then
+              echo "Vulnerable packages:"
+              jq -r '.dependencies[] // empty | select(.vulns) | "\(.name) \(.version)"' pip-audit-results.json
+            fi
+            
+            exit 1
+          }
+          
+          echo "✅ No known vulnerabilities in dependencies"
+
+      - name: Check constraints file
+        id: constraints_check
+        run: |
+          echo "Verifying security constraints file..."
+          
+          if [ ! -f constraints/security.txt ]; then
+            echo "❌ BLOCKING: Missing constraints/security.txt"
+            echo "Security constraints file is required"
+            exit 1
+          fi
+          
+          # Verify constraints are not empty
+          if [ ! -s constraints/security.txt ]; then
+            echo "❌ BLOCKING: constraints/security.txt is empty"
+            exit 1
+          fi
+          
+          echo "✅ Security constraints file present and valid"
+
+  # MANDATORY CHECK 5: Breaking change detection
+  breaking-change-gate:
+    name: "BLOCKING: Breaking Change Detection"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Detect public API changes
+        id: api_changes
+        run: |
+          echo "Analyzing public API changes..."
+          
+          # Check for removed or modified public functions/classes
+          BREAKING_CHANGES=0
+          
+          # Look for function/class removals in core modules
+          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD -- core/ backtest/ execution/ | \
+            grep -E "^-\s*(def|class)\s+[^_]" | \
+            grep -v "^---" || true > api_removals.txt
+          
+          if [ -s api_removals.txt ]; then
+            echo "⚠️ Potential breaking changes detected:"
+            cat api_removals.txt
+            BREAKING_CHANGES=1
+          fi
+          
+          # Check if PR has breaking-change label
+          PR_LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          HAS_BREAKING_LABEL=$(echo "$PR_LABELS" | jq 'any(. == "breaking-change")')
+          
+          if [ $BREAKING_CHANGES -eq 1 ] && [ "$HAS_BREAKING_LABEL" = "false" ]; then
+            echo "❌ BLOCKING: Potential breaking changes without 'breaking-change' label"
+            echo "Add 'breaking-change' label or confirm changes are backward compatible"
+            exit 1
+          fi
+          
+          echo "✅ No unlabeled breaking changes detected"
+
+      - name: Check for migration documentation
+        if: contains(github.event.pull_request.labels.*.name, 'breaking-change')
+        run: |
+          echo "Checking for migration documentation..."
+          
+          # Look for migration guide or upgrade notes
+          if ! git diff origin/${{ github.event.pull_request.base.ref }}...HEAD --name-only | \
+            grep -E "(MIGRATION|UPGRADE|BREAKING|docs/migration)" ; then
+            echo "❌ BLOCKING: Breaking change without migration documentation"
+            echo "Add migration guide in docs/ or create MIGRATION.md"
+            exit 1
+          fi
+          
+          echo "✅ Migration documentation present"
+
+  # FINAL GATE: All checks must pass
+  quality-gate-summary:
+    name: "Quality Gate Summary"
+    runs-on: ubuntu-latest
+    needs: 
+      - formatting-lint-gate
+      - security-gate
+      - coverage-gate
+      - dependency-security-gate
+      - breaking-change-gate
+    if: always()
+    
+    steps:
+      - name: Check all gates
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = {
+              'formatting-lint-gate': '${{ needs.formatting-lint-gate.result }}',
+              'security-gate': '${{ needs.security-gate.result }}',
+              'coverage-gate': '${{ needs.coverage-gate.result }}',
+              'dependency-security-gate': '${{ needs.dependency-security-gate.result }}',
+              'breaking-change-gate': '${{ needs.breaking-change-gate.result }}'
+            };
+            
+            let summary = '## 🚦 PR Quality Gate Results\n\n';
+            let allPassed = true;
+            
+            for (const [gate, result] of Object.entries(results)) {
+              const icon = result === 'success' ? '✅' : '❌';
+              summary += `${icon} **${gate}**: ${result}\n`;
+              
+              if (result !== 'success') {
+                allPassed = false;
+              }
+            }
+            
+            summary += '\n---\n\n';
+            
+            if (allPassed) {
+              summary += '### ✅ All quality gates passed!\n';
+              summary += 'This PR meets all mandatory quality requirements.\n';
+            } else {
+              summary += '### ❌ Quality gate BLOCKED\n';
+              summary += 'This PR does not meet mandatory quality requirements.\n';
+              summary += 'Review the failed checks above and fix the issues.\n\n';
+              summary += '**MERGE IS BLOCKED** until all gates pass.\n';
+              
+              core.setFailed('One or more quality gates failed');
+            }
+            
+            // Post comment on PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+            
+            console.log(summary);

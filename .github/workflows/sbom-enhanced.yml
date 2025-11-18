@@ -1,0 +1,501 @@
+name: Enhanced SBOM & Dependency Health
+
+# Comprehensive SBOM generation with vulnerability tracking and trend analysis
+# Generates SBOMs for all ecosystems and tracks dependency health over time
+# Principal System Architect: Complete supply chain visibility
+
+permissions:
+  contents: write
+  security-events: write
+  id-token: write
+  attestations: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'requirements*.txt'
+      - 'requirements*.lock'
+      - 'package*.json'
+      - 'Cargo.toml'
+      - 'go.mod'
+      - 'pyproject.toml'
+  release:
+    types: [published]
+  schedule:
+    # Daily SBOM generation and vulnerability scan
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sbom-enhanced-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-multi-ecosystem-sbom:
+    name: Generate Multi-Ecosystem SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    outputs:
+      sbom-generated: ${{ steps.sbom_check.outputs.generated }}
+      python-packages: ${{ steps.python_count.outputs.count }}
+      go-packages: ${{ steps.go_count.outputs.count }}
+      npm-packages: ${{ steps.npm_count.outputs.count }}
+      rust-packages: ${{ steps.rust_count.outputs.count }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install SBOM generation tools
+        run: |
+          # Install Syft (multi-ecosystem SBOM generator)
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Install CycloneDX tools
+          pip install cyclonedx-bom cyclonedx-python-lib
+          
+          # Verify installations
+          syft version
+          cyclonedx-py --version
+
+      - name: Generate Python SBOM (CycloneDX)
+        id: python_sbom
+        run: |
+          echo "Generating Python SBOM..."
+          mkdir -p sbom/artifacts
+          
+          # Generate from requirements files
+          if [ -f requirements.txt ]; then
+            cyclonedx-py requirements \
+              --input-file requirements.txt \
+              --output-format json \
+              --output-file sbom/artifacts/python-deps.json
+            
+            echo "✅ Python SBOM generated"
+          else
+            echo "⚠️  No requirements.txt found"
+          fi
+
+      - name: Generate comprehensive multi-ecosystem SBOM
+        id: syft_sbom
+        run: |
+          echo "Generating comprehensive SBOM with Syft..."
+          
+          # Generate SBOM for entire repository
+          syft packages dir:. \
+            --output spdx-json=sbom/artifacts/sbom-spdx.json \
+            --output cyclonedx-json=sbom/artifacts/sbom-cyclonedx.json \
+            --output syft-json=sbom/artifacts/sbom-syft.json \
+            -q
+          
+          echo "✅ Multi-ecosystem SBOM generated"
+
+      - name: Count packages by ecosystem
+        id: package_counts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          
+          syft_file = Path('sbom/artifacts/sbom-syft.json')
+          if not syft_file.exists():
+              print("SBOM file not found")
+              exit(1)
+          
+          data = json.loads(syft_file.read_text())
+          
+          # Count by ecosystem
+          ecosystems = {}
+          for artifact in data.get('artifacts', []):
+              pkg_type = artifact.get('type', 'unknown')
+              ecosystems[pkg_type] = ecosystems.get(pkg_type, 0) + 1
+          
+          print("\n📦 Package Count by Ecosystem:")
+          print("=" * 40)
+          total = 0
+          for ecosystem, count in sorted(ecosystems.items(), key=lambda x: x[1], reverse=True):
+              print(f"  {ecosystem:20s}: {count:4d}")
+              total += count
+          print("=" * 40)
+          print(f"  {'TOTAL':20s}: {total:4d}")
+          
+          # Save counts for later use
+          with open('sbom/package-counts.json', 'w') as f:
+              json.dump(ecosystems, f, indent=2)
+          
+          # Output for GitHub Actions
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"python_count={ecosystems.get('python', 0)}\n")
+              f.write(f"go_count={ecosystems.get('go-module', 0)}\n")
+              f.write(f"npm_count={ecosystems.get('npm', 0)}\n")
+              f.write(f"rust_count={ecosystems.get('rust', 0)}\n")
+          
+          import os
+          PY
+
+      - name: Generate SBOM metadata
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime
+          
+          metadata = {
+              'generated_at': datetime.utcnow().isoformat() + 'Z',
+              'commit_sha': '${{ github.sha }}',
+              'ref': '${{ github.ref }}',
+              'workflow_run': '${{ github.run_id }}',
+              'repository': '${{ github.repository }}',
+              'version': Path('VERSION').read_text().strip() if Path('VERSION').exists() else 'unknown'
+          }
+          
+          Path('sbom/artifacts/metadata.json').write_text(json.dumps(metadata, indent=2))
+          
+          print("✅ SBOM metadata generated")
+          PY
+
+      - name: Verify SBOM completeness
+        id: sbom_check
+        run: |
+          echo "Verifying SBOM artifacts..."
+          
+          REQUIRED_FILES=(
+            "sbom/artifacts/sbom-spdx.json"
+            "sbom/artifacts/sbom-cyclonedx.json"
+            "sbom/artifacts/metadata.json"
+          )
+          
+          ALL_PRESENT=true
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing: $file"
+              ALL_PRESENT=false
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+          
+          if [ "$ALL_PRESENT" = "true" ]; then
+            echo "generated=true" >> $GITHUB_OUTPUT
+            echo "✅ All SBOM artifacts generated successfully"
+          else
+            echo "generated=false" >> $GITHUB_OUTPUT
+            echo "❌ SBOM generation incomplete"
+            exit 1
+          fi
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-artifacts-${{ github.sha }}
+          path: sbom/artifacts/
+          retention-days: 90
+
+      - name: Commit SBOM to repository
+        if: github.event_name == 'push' || github.event_name == 'release'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create sbom directory if it doesn't exist
+          mkdir -p sbom/releases
+          
+          # Copy artifacts to releases with timestamp
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          cp sbom/artifacts/sbom-cyclonedx.json "sbom/releases/sbom-${TIMESTAMP}.json"
+          cp sbom/artifacts/sbom-spdx.json "sbom/releases/sbom-spdx-${TIMESTAMP}.json"
+          
+          # Keep latest symlink
+          ln -sf "sbom-${TIMESTAMP}.json" sbom/releases/sbom-latest.json
+          
+          git add sbom/releases/
+          git commit -m "chore: Update SBOM artifacts [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+
+  vulnerability-scan:
+    name: Vulnerability Scan & Tracking
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: generate-multi-ecosystem-sbom
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download SBOM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-artifacts-${{ github.sha }}
+          path: sbom/artifacts/
+
+      - name: Install Grype (vulnerability scanner)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype version
+
+      - name: Scan SBOM for vulnerabilities
+        id: grype_scan
+        run: |
+          echo "Scanning SBOM for vulnerabilities..."
+          
+          grype sbom:sbom/artifacts/sbom-cyclonedx.json \
+            --output json \
+            --file grype-results.json \
+            --fail-on critical || true
+          
+          # Generate human-readable report
+          grype sbom:sbom/artifacts/sbom-cyclonedx.json \
+            --output table \
+            --file grype-results.txt || true
+
+      - name: Analyze vulnerability results
+        id: vuln_analysis
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from collections import defaultdict
+          
+          results_file = Path('grype-results.json')
+          if not results_file.exists():
+              print("⚠️  Vulnerability scan results not found")
+              exit(0)
+          
+          data = json.loads(results_file.read_text())
+          
+          # Count vulnerabilities by severity
+          by_severity = defaultdict(int)
+          by_ecosystem = defaultdict(lambda: defaultdict(int))
+          critical_vulns = []
+          
+          for match in data.get('matches', []):
+              vuln = match.get('vulnerability', {})
+              severity = vuln.get('severity', 'Unknown')
+              by_severity[severity] += 1
+              
+              artifact = match.get('artifact', {})
+              pkg_type = artifact.get('type', 'unknown')
+              by_ecosystem[pkg_type][severity] += 1
+              
+              if severity == 'Critical':
+                  critical_vulns.append({
+                      'package': artifact.get('name', 'unknown'),
+                      'version': artifact.get('version', 'unknown'),
+                      'cve': vuln.get('id', 'unknown'),
+                      'description': vuln.get('description', '')[:100]
+                  })
+          
+          print("\n" + "=" * 80)
+          print("🔍 VULNERABILITY ANALYSIS")
+          print("=" * 80)
+          
+          print("\n📊 Vulnerabilities by Severity:")
+          for severity in ['Critical', 'High', 'Medium', 'Low', 'Negligible']:
+              count = by_severity.get(severity, 0)
+              icon = '🔴' if severity == 'Critical' else '🟠' if severity == 'High' else '🟡'
+              print(f"  {icon} {severity:12s}: {count:4d}")
+          
+          print(f"\n  {'TOTAL':14s}: {sum(by_severity.values()):4d}")
+          
+          if critical_vulns:
+              print("\n🚨 CRITICAL VULNERABILITIES:")
+              for vuln in critical_vulns[:10]:
+                  print(f"\n  Package: {vuln['package']} ({vuln['version']})")
+                  print(f"  CVE: {vuln['cve']}")
+                  print(f"  Description: {vuln['description']}")
+          
+          # Generate markdown report
+          with open('vulnerability-report.md', 'w') as f:
+              f.write("# 🔐 Vulnerability Scan Report\n\n")
+              f.write(f"**Scan Date:** {data.get('descriptor', {}).get('timestamp', 'unknown')}\n\n")
+              
+              f.write("## Summary\n\n")
+              f.write("| Severity | Count |\n")
+              f.write("|----------|-------|\n")
+              for severity in ['Critical', 'High', 'Medium', 'Low']:
+                  count = by_severity.get(severity, 0)
+                  f.write(f"| {severity} | {count} |\n")
+              
+              if critical_vulns:
+                  f.write("\n## 🚨 Critical Vulnerabilities\n\n")
+                  for vuln in critical_vulns:
+                      f.write(f"### {vuln['package']} {vuln['version']}\n")
+                      f.write(f"- **CVE:** {vuln['cve']}\n")
+                      f.write(f"- **Description:** {vuln['description']}\n\n")
+              
+              f.write("\n## Recommendations\n\n")
+              if critical_vulns:
+                  f.write("1. ⚠️  **URGENT:** Address critical vulnerabilities immediately\n")
+                  f.write("2. Review and update affected packages\n")
+                  f.write("3. Test thoroughly after updates\n")
+              else:
+                  f.write("✅ No critical vulnerabilities found\n")
+                  f.write("Continue monitoring for new vulnerabilities\n")
+          
+          # Save summary for GitHub output
+          with open('vuln-summary.txt', 'w') as f:
+              f.write(f"critical={by_severity.get('Critical', 0)}\n")
+              f.write(f"high={by_severity.get('High', 0)}\n")
+              f.write(f"medium={by_severity.get('Medium', 0)}\n")
+              f.write(f"low={by_severity.get('Low', 0)}\n")
+          PY
+
+      - name: Upload vulnerability reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-reports-${{ github.sha }}
+          path: |
+            grype-results.json
+            grype-results.txt
+            vulnerability-report.md
+
+      - name: Create issue for critical vulnerabilities
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read vulnerability report
+            let reportContent = '';
+            try {
+              reportContent = fs.readFileSync('vulnerability-report.md', 'utf8');
+            } catch (error) {
+              console.log('Could not read vulnerability report');
+              return;
+            }
+            
+            // Read summary
+            let vulnSummary = {};
+            try {
+              const summary = fs.readFileSync('vuln-summary.txt', 'utf8');
+              summary.split('\n').forEach(line => {
+                const [key, value] = line.split('=');
+                if (key && value) vulnSummary[key] = parseInt(value);
+              });
+            } catch (error) {
+              console.log('Could not read vulnerability summary');
+            }
+            
+            const criticalCount = vulnSummary.critical || 0;
+            const highCount = vulnSummary.high || 0;
+            
+            if (criticalCount > 0 || highCount > 0) {
+              const title = `🚨 Security Alert: ${criticalCount} Critical + ${highCount} High Severity Vulnerabilities`;
+              
+              const body = `${reportContent}
+              
+---
+
+**Automated Security Scan**
+- Scan Date: ${new Date().toISOString()}
+- Workflow Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+- SBOM Artifacts: Available in workflow artifacts
+
+**Action Required:**
+1. Review all critical vulnerabilities immediately
+2. Update affected dependencies
+3. Run tests to verify fixes
+4. Deploy updates ASAP
+
+cc: @security-team
+`;
+              
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'vulnerability', 'urgent']
+              });
+              
+              console.log('Created security issue for vulnerabilities');
+            } else {
+              console.log('No critical or high severity vulnerabilities found');
+            }
+
+  dependency-health-check:
+    name: Dependency Health & Freshness Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: generate-multi-ecosystem-sbom
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Check dependency freshness
+        id: freshness_check
+        run: |
+          python - <<'PY'
+          import subprocess
+          import json
+          from datetime import datetime, timedelta
+          from pathlib import Path
+          
+          print("\n" + "=" * 80)
+          print("📅 DEPENDENCY FRESHNESS CHECK")
+          print("=" * 80)
+          
+          # Install pip-outdated for checking updates
+          subprocess.run(['pip', 'install', 'pip-outdated'], check=True, capture_output=True)
+          
+          # Install current dependencies
+          subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True, capture_output=True)
+          
+          # Check for outdated packages
+          result = subprocess.run(['pip', 'list', '--outdated', '--format=json'], 
+                                 capture_output=True, text=True)
+          
+          if result.returncode == 0:
+              outdated = json.loads(result.stdout)
+              
+              print(f"\n📦 Found {len(outdated)} outdated packages:\n")
+              
+              critical_outdated = []
+              for pkg in outdated:
+                  print(f"  {pkg['name']}: {pkg['version']} → {pkg['latest_version']}")
+                  
+                  # Flag packages that are >6 months behind
+                  # This is a heuristic, in practice you'd want to check release dates
+                  if pkg.get('latest_fileuploaded'):
+                      critical_outdated.append(pkg)
+              
+              if critical_outdated:
+                  print(f"\n⚠️  {len(critical_outdated)} packages are significantly outdated")
+              else:
+                  print("\n✅ All packages are reasonably up-to-date")
+              
+              # Save report
+              with open('dependency-health.json', 'w') as f:
+                  json.dump({
+                      'outdated_count': len(outdated),
+                      'outdated_packages': outdated
+                  }, f, indent=2)
+          else:
+              print("⚠️  Could not check for outdated packages")
+          PY
+
+      - name: Upload dependency health report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-health-${{ github.sha }}
+          path: dependency-health.json

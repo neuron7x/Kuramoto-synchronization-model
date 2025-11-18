@@ -1,0 +1,423 @@
+name: Deep Coverage Analysis & Gap Identification
+
+# Comprehensive coverage analysis to identify gaps in critical paths
+# Generates recommendations for new tests to add
+# Principal System Architect: Strategic test coverage planning
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Run weekly on Sunday at 00:00 UTC for continuous monitoring
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: coverage-analysis-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-coverage-gaps:
+    name: Analyze Coverage Gaps
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
+
+      - name: Run comprehensive coverage analysis
+        id: coverage_run
+        run: |
+          echo "Running comprehensive test suite with coverage..."
+          pytest tests/ \
+            --cov=core \
+            --cov=backtest \
+            --cov=execution \
+            --cov=analytics \
+            --cov=application \
+            --cov-report=term-missing \
+            --cov-report=json:coverage-detailed.json \
+            --cov-report=html:coverage-html-detailed \
+            --cov-report=annotate:coverage-annotate \
+            -v
+
+      - name: Identify critical uncovered code paths
+        id: identify_gaps
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from collections import defaultdict
+          
+          # Load coverage data
+          coverage_file = Path('coverage-detailed.json')
+          if not coverage_file.exists():
+              print("❌ Coverage file not found")
+              exit(1)
+          
+          data = json.loads(coverage_file.read_text())
+          
+          # Define critical modules and their priority
+          critical_modules = {
+              'core/execution': 1,
+              'core/risk': 1,
+              'core/portfolio': 1,
+              'backtest/engine': 1,
+              'execution/order_manager': 1,
+              'execution/broker': 2,
+              'analytics/performance': 2,
+              'core/strategy': 2,
+          }
+          
+          print("=" * 80)
+          print("🔍 CRITICAL COVERAGE GAPS ANALYSIS")
+          print("=" * 80)
+          
+          gaps_by_priority = defaultdict(list)
+          
+          for file_path, file_data in data['files'].items():
+              # Check if file is in critical modules
+              for module, priority in critical_modules.items():
+                  if module in file_path:
+                      summary = file_data['summary']
+                      coverage_pct = (summary['covered_lines'] / summary['num_statements'] * 100) if summary['num_statements'] > 0 else 0
+                      
+                      if coverage_pct < 100:
+                          missing_lines = file_data.get('missing_lines', [])
+                          gaps_by_priority[priority].append({
+                              'file': file_path,
+                              'coverage': coverage_pct,
+                              'missing_lines': len(missing_lines),
+                              'module': module
+                          })
+          
+          # Generate report
+          recommendations = []
+          
+          print("\n📋 PRIORITY 1: Critical Execution Path Gaps\n")
+          if 1 in gaps_by_priority:
+              for gap in sorted(gaps_by_priority[1], key=lambda x: x['coverage']):
+                  print(f"  ⚠️  {gap['file']}")
+                  print(f"      Coverage: {gap['coverage']:.1f}% | Missing: {gap['missing_lines']} lines")
+                  
+                  # Generate test recommendation
+                  module_name = gap['file'].replace('/', '.').replace('.py', '')
+                  recommendations.append({
+                      'priority': 'HIGH',
+                      'module': module_name,
+                      'coverage': gap['coverage'],
+                      'test_type': 'Unit + Integration',
+                      'rationale': f"Critical execution path with {gap['missing_lines']} uncovered lines"
+                  })
+          else:
+              print("  ✅ All Priority 1 modules have 100% coverage")
+          
+          print("\n📋 PRIORITY 2: Important Business Logic Gaps\n")
+          if 2 in gaps_by_priority:
+              for gap in sorted(gaps_by_priority[2], key=lambda x: x['coverage'])[:10]:
+                  print(f"  ⚠️  {gap['file']}")
+                  print(f"      Coverage: {gap['coverage']:.1f}% | Missing: {gap['missing_lines']} lines")
+                  
+                  module_name = gap['file'].replace('/', '.').replace('.py', '')
+                  recommendations.append({
+                      'priority': 'MEDIUM',
+                      'module': module_name,
+                      'coverage': gap['coverage'],
+                      'test_type': 'Unit',
+                      'rationale': f"Important business logic with {gap['missing_lines']} uncovered lines"
+                  })
+          else:
+              print("  ✅ All Priority 2 modules have 100% coverage")
+          
+          # Generate top 20 test recommendations
+          print("\n" + "=" * 80)
+          print("🎯 TOP 20 RECOMMENDED TESTS TO ADD")
+          print("=" * 80)
+          
+          recommendations.sort(key=lambda x: (0 if x['priority'] == 'HIGH' else 1, x['coverage']))
+          
+          top_20 = recommendations[:20]
+          
+          for i, rec in enumerate(top_20, 1):
+              print(f"\n{i}. [{rec['priority']}] {rec['module']}")
+              print(f"   Current Coverage: {rec['coverage']:.1f}%")
+              print(f"   Test Type: {rec['test_type']}")
+              print(f"   Rationale: {rec['rationale']}")
+          
+          # Save recommendations to file
+          recommendations_file = Path('test-recommendations.json')
+          recommendations_file.write_text(json.dumps(top_20, indent=2))
+          
+          # Create markdown report
+          md_report = Path('coverage-gap-report.md')
+          with md_report.open('w') as f:
+              f.write("# 📊 Coverage Gap Analysis Report\n\n")
+              f.write(f"**Generated:** {Path('.').resolve()}\n\n")
+              
+              f.write("## Executive Summary\n\n")
+              overall_coverage = data['totals']['percent_covered']
+              f.write(f"- **Overall Coverage:** {overall_coverage:.2f}%\n")
+              f.write(f"- **Critical Gaps Identified:** {len(recommendations)}\n")
+              f.write(f"- **High Priority Tests Needed:** {len([r for r in recommendations if r['priority'] == 'HIGH'])}\n\n")
+              
+              f.write("## 🎯 Top 20 Recommended Tests\n\n")
+              f.write("| # | Priority | Module | Coverage | Test Type | Rationale |\n")
+              f.write("|---|----------|--------|----------|-----------|----------|\n")
+              
+              for i, rec in enumerate(top_20, 1):
+                  f.write(f"| {i} | {rec['priority']} | `{rec['module']}` | {rec['coverage']:.1f}% | {rec['test_type']} | {rec['rationale']} |\n")
+              
+              f.write("\n## 📝 Implementation Guide\n\n")
+              f.write("### High Priority Tests (Implement First)\n\n")
+              for rec in [r for r in top_20 if r['priority'] == 'HIGH'][:5]:
+                  f.write(f"#### {rec['module']}\n\n")
+                  f.write(f"- **Current Coverage:** {rec['coverage']:.1f}%\n")
+                  f.write(f"- **Test Type:** {rec['test_type']}\n")
+                  f.write(f"- **Why:** {rec['rationale']}\n\n")
+                  f.write("**Suggested Test Cases:**\n")
+                  f.write("- Happy path scenarios\n")
+                  f.write("- Error handling and edge cases\n")
+                  f.write("- Boundary conditions\n")
+                  f.write("- Integration with dependent modules\n\n")
+          
+          print("\n✅ Coverage gap analysis complete")
+          print(f"📄 Reports saved: test-recommendations.json, coverage-gap-report.md")
+          PY
+
+      - name: Identify untested critical functions
+        id: untested_functions
+        run: |
+          python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+          from typing import List, Dict
+          
+          # Find all function definitions in critical modules
+          critical_dirs = ['core/execution', 'core/risk', 'backtest/engine']
+          
+          print("\n" + "=" * 80)
+          print("🔍 UNTESTED CRITICAL FUNCTIONS")
+          print("=" * 80)
+          
+          # Load coverage data to cross-reference
+          coverage_file = Path('coverage-detailed.json')
+          coverage_data = json.loads(coverage_file.read_text()) if coverage_file.exists() else {}
+          
+          untested_functions = []
+          
+          for critical_dir in critical_dirs:
+              dir_path = Path(critical_dir)
+              if not dir_path.exists():
+                  continue
+              
+              for py_file in dir_path.rglob('*.py'):
+                  if py_file.name.startswith('test_') or '__pycache__' in str(py_file):
+                      continue
+                  
+                  try:
+                      source = py_file.read_text()
+                      tree = ast.parse(source)
+                      
+                      for node in ast.walk(tree):
+                          if isinstance(node, ast.FunctionDef):
+                              # Skip private functions and properties
+                              if node.name.startswith('_') and not node.name.startswith('__'):
+                                  continue
+                              
+                              # Check if function appears to be critical (not a property/helper)
+                              if len(node.body) > 3:  # Non-trivial function
+                                  func_line = node.lineno
+                                  
+                                  # Check coverage for this line
+                                  file_key = str(py_file)
+                                  if file_key in coverage_data.get('files', {}):
+                                      covered_lines = coverage_data['files'][file_key].get('executed_lines', [])
+                                      if func_line not in covered_lines:
+                                          untested_functions.append({
+                                              'file': str(py_file),
+                                              'function': node.name,
+                                              'line': func_line,
+                                              'complexity': len(node.body)
+                                          })
+                  except Exception as e:
+                      print(f"⚠️  Failed to analyze {py_file}: {e}")
+          
+          if untested_functions:
+              print(f"\n⚠️  Found {len(untested_functions)} potentially untested critical functions:\n")
+              
+              # Sort by complexity (most complex first)
+              untested_functions.sort(key=lambda x: x['complexity'], reverse=True)
+              
+              for func in untested_functions[:15]:
+                  print(f"  📍 {func['file']}:{func['line']}")
+                  print(f"     Function: {func['function']}")
+                  print(f"     Complexity: {func['complexity']} statements")
+                  print()
+          else:
+              print("\n✅ All critical functions appear to be tested")
+          
+          # Save to file
+          Path('untested-functions.json').write_text(json.dumps(untested_functions, indent=2))
+          PY
+
+      - name: Generate coverage heatmap data
+        id: heatmap
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          
+          coverage_file = Path('coverage-detailed.json')
+          if not coverage_file.exists():
+              print("Coverage file not found")
+              exit(0)
+          
+          data = json.loads(coverage_file.read_text())
+          
+          # Create heatmap data structure
+          heatmap = []
+          
+          for file_path, file_data in data['files'].items():
+              summary = file_data['summary']
+              if summary['num_statements'] > 0:
+                  coverage_pct = (summary['covered_lines'] / summary['num_statements']) * 100
+                  
+                  # Categorize by coverage level
+                  if coverage_pct >= 95:
+                      level = 'excellent'
+                  elif coverage_pct >= 90:
+                      level = 'good'
+                  elif coverage_pct >= 80:
+                      level = 'fair'
+                  else:
+                      level = 'poor'
+                  
+                  heatmap.append({
+                      'file': file_path,
+                      'coverage': round(coverage_pct, 2),
+                      'level': level,
+                      'statements': summary['num_statements']
+                  })
+          
+          # Sort by coverage (lowest first)
+          heatmap.sort(key=lambda x: x['coverage'])
+          
+          # Save heatmap
+          Path('coverage-heatmap.json').write_text(json.dumps(heatmap, indent=2))
+          
+          print("\n📊 Coverage Heatmap (Lowest Coverage First):\n")
+          for item in heatmap[:20]:
+              icon = '🔴' if item['level'] == 'poor' else '🟡' if item['level'] == 'fair' else '🟢'
+              print(f"{icon} {item['coverage']:>6.2f}% | {item['file']}")
+          PY
+
+      - name: Upload analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-analysis-detailed
+          path: |
+            coverage-detailed.json
+            coverage-html-detailed/
+            coverage-gap-report.md
+            test-recommendations.json
+            untested-functions.json
+            coverage-heatmap.json
+
+      - name: Create issue with recommendations
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read the coverage gap report
+            let reportContent = '';
+            try {
+              reportContent = fs.readFileSync('coverage-gap-report.md', 'utf8');
+            } catch (error) {
+              console.log('Could not read coverage gap report');
+              return;
+            }
+            
+            // Read recommendations
+            let recommendations = [];
+            try {
+              recommendations = JSON.parse(fs.readFileSync('test-recommendations.json', 'utf8'));
+            } catch (error) {
+              console.log('Could not read test recommendations');
+            }
+            
+            const highPriority = recommendations.filter(r => r.priority === 'HIGH').length;
+            
+            // Create or update issue
+            const title = `📊 Weekly Coverage Analysis: ${highPriority} High-Priority Tests Needed`;
+            
+            const body = `${reportContent}
+            
+---
+
+**Automated Report Generated by Coverage Analysis Workflow**
+- Workflow Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+- Detailed artifacts available in workflow run
+
+**Next Steps:**
+1. Review the Top 20 recommended tests
+2. Prioritize High Priority tests for immediate implementation
+3. Create tracking issues for each test suite
+4. Assign to appropriate team members
+
+**Note:** This issue is automatically generated weekly to track coverage improvement.
+`;
+            
+            // Search for existing coverage analysis issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'coverage-analysis,automated',
+              state: 'open'
+            });
+            
+            if (issues.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                title: title,
+                body: body
+              });
+              
+              console.log(`Updated issue #${issues[0].number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['coverage-analysis', 'automated', 'testing']
+              });
+              
+              console.log('Created new coverage analysis issue');
+            }

@@ -1,0 +1,404 @@
+name: CI/CD Health Monitoring
+
+# Monitor the health and performance of CI/CD pipelines
+# Track metrics, identify bottlenecks, and report on system health
+# Principal System Architect: CI/CD observability and optimization
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+on:
+  schedule:
+    # Run daily to monitor CI/CD health
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-health-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-workflow-health:
+    name: Analyze Workflow Health & Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Fetch workflow runs data
+        id: workflow_data
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            
+            // Get workflow runs from the last 7 days
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            console.log('Fetching workflow runs...');
+            
+            const workflows = [
+              'tests.yml',
+              'ci.yml',
+              'security.yml',
+              'regression-validation.yml',
+              'pr-quality-gate-strict.yml',
+              'coverage-analysis-deep.yml',
+              'sbom-enhanced.yml',
+            ];
+            
+            const workflowStats = {};
+            
+            for (const workflow of workflows) {
+              try {
+                const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                  owner,
+                  repo,
+                  workflow_id: workflow,
+                  per_page: 100,
+                  created: `>=${sevenDaysAgo.toISOString()}`
+                });
+                
+                const stats = {
+                  total_runs: runs.workflow_runs.length,
+                  successful: 0,
+                  failed: 0,
+                  cancelled: 0,
+                  total_duration: 0,
+                  avg_duration: 0,
+                  max_duration: 0,
+                  min_duration: Number.MAX_SAFE_INTEGER
+                };
+                
+                for (const run of runs.workflow_runs) {
+                  switch (run.conclusion) {
+                    case 'success':
+                      stats.successful++;
+                      break;
+                    case 'failure':
+                      stats.failed++;
+                      break;
+                    case 'cancelled':
+                      stats.cancelled++;
+                      break;
+                  }
+                  
+                  if (run.run_started_at && run.updated_at) {
+                    const duration = (new Date(run.updated_at) - new Date(run.run_started_at)) / 1000 / 60; // minutes
+                    stats.total_duration += duration;
+                    stats.max_duration = Math.max(stats.max_duration, duration);
+                    stats.min_duration = Math.min(stats.min_duration, duration);
+                  }
+                }
+                
+                if (stats.total_runs > 0) {
+                  stats.avg_duration = stats.total_duration / stats.total_runs;
+                  stats.success_rate = (stats.successful / stats.total_runs * 100).toFixed(2);
+                }
+                
+                if (stats.min_duration === Number.MAX_SAFE_INTEGER) {
+                  stats.min_duration = 0;
+                }
+                
+                workflowStats[workflow] = stats;
+                
+                console.log(`${workflow}: ${stats.total_runs} runs, ${stats.success_rate}% success rate`);
+              } catch (error) {
+                console.log(`Could not fetch data for ${workflow}: ${error.message}`);
+                workflowStats[workflow] = { error: error.message };
+              }
+            }
+            
+            // Save to file
+            fs.writeFileSync('workflow-stats.json', JSON.stringify(workflowStats, null, 2));
+            
+            return workflowStats;
+
+      - name: Generate health report
+        id: health_report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime
+          
+          # Load workflow stats
+          stats_file = Path('workflow-stats.json')
+          if not stats_file.exists():
+              print("⚠️ No workflow stats found")
+              exit(0)
+          
+          stats = json.loads(stats_file.read_text())
+          
+          print("\n" + "=" * 80)
+          print("📊 CI/CD HEALTH REPORT")
+          print("=" * 80)
+          print(f"Report Date: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+          print(f"Period: Last 7 days")
+          print("=" * 80)
+          
+          # Calculate overall health
+          total_runs = 0
+          total_success = 0
+          total_failed = 0
+          total_duration = 0
+          
+          workflow_health = []
+          
+          for workflow, data in stats.items():
+              if 'error' in data:
+                  continue
+              
+              total_runs += data.get('total_runs', 0)
+              total_success += data.get('successful', 0)
+              total_failed += data.get('failed', 0)
+              total_duration += data.get('total_duration', 0)
+              
+              health_score = float(data.get('success_rate', 0))
+              
+              # Determine health status
+              if health_score >= 95:
+                  status = '🟢 Healthy'
+              elif health_score >= 85:
+                  status = '🟡 Warning'
+              else:
+                  status = '🔴 Critical'
+              
+              workflow_health.append({
+                  'workflow': workflow,
+                  'runs': data.get('total_runs', 0),
+                  'success_rate': health_score,
+                  'avg_duration': data.get('avg_duration', 0),
+                  'status': status
+              })
+          
+          # Print summary
+          print("\n📈 OVERALL METRICS\n")
+          overall_success_rate = (total_success / total_runs * 100) if total_runs > 0 else 0
+          avg_duration = (total_duration / total_runs) if total_runs > 0 else 0
+          
+          print(f"  Total Workflow Runs: {total_runs}")
+          print(f"  Successful: {total_success} ({overall_success_rate:.1f}%)")
+          print(f"  Failed: {total_failed}")
+          print(f"  Average Duration: {avg_duration:.1f} minutes")
+          
+          # Print per-workflow health
+          print("\n📋 WORKFLOW HEALTH\n")
+          print(f"{'Workflow':<40} {'Runs':>6} {'Success':>8} {'Avg Time':>10} {'Status':<15}")
+          print("-" * 90)
+          
+          for wf in sorted(workflow_health, key=lambda x: x['success_rate']):
+              print(f"{wf['workflow']:<40} {wf['runs']:>6} {wf['success_rate']:>7.1f}% "
+                    f"{wf['avg_duration']:>9.1f}m {wf['status']:<15}")
+          
+          # Generate markdown report
+          md_report = Path('ci-health-report.md')
+          with md_report.open('w') as f:
+              f.write("# 📊 CI/CD Health Report\n\n")
+              f.write(f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC\n")
+              f.write(f"**Period:** Last 7 days\n\n")
+              
+              f.write("## Overall Health\n\n")
+              f.write(f"- **Total Runs:** {total_runs}\n")
+              f.write(f"- **Success Rate:** {overall_success_rate:.1f}%\n")
+              f.write(f"- **Failed Runs:** {total_failed}\n")
+              f.write(f"- **Average Duration:** {avg_duration:.1f} minutes\n\n")
+              
+              # Overall health indicator
+              if overall_success_rate >= 95:
+                  f.write("### 🟢 System Health: HEALTHY\n\n")
+                  f.write("CI/CD pipelines are operating within normal parameters.\n\n")
+              elif overall_success_rate >= 85:
+                  f.write("### 🟡 System Health: WARNING\n\n")
+                  f.write("Some workflows are experiencing issues. Investigation recommended.\n\n")
+              else:
+                  f.write("### 🔴 System Health: CRITICAL\n\n")
+                  f.write("CI/CD pipelines are experiencing significant issues. Immediate action required.\n\n")
+              
+              f.write("## Workflow Details\n\n")
+              f.write("| Workflow | Runs | Success Rate | Avg Duration | Status |\n")
+              f.write("|----------|------|--------------|--------------|--------|\n")
+              
+              for wf in sorted(workflow_health, key=lambda x: x['success_rate']):
+                  f.write(f"| `{wf['workflow']}` | {wf['runs']} | {wf['success_rate']:.1f}% | "
+                         f"{wf['avg_duration']:.1f}m | {wf['status']} |\n")
+              
+              # Add recommendations
+              f.write("\n## 🎯 Recommendations\n\n")
+              
+              critical_workflows = [wf for wf in workflow_health if float(wf['success_rate']) < 85]
+              if critical_workflows:
+                  f.write("### Critical Issues\n\n")
+                  for wf in critical_workflows:
+                      f.write(f"- **{wf['workflow']}**: Success rate {wf['success_rate']:.1f}% is below threshold\n")
+                      f.write(f"  - Review recent failures\n")
+                      f.write(f"  - Check for flaky tests\n")
+                      f.write(f"  - Consider timeout adjustments\n\n")
+              
+              slow_workflows = [wf for wf in workflow_health if wf['avg_duration'] > 30]
+              if slow_workflows:
+                  f.write("### Performance Optimization\n\n")
+                  for wf in slow_workflows:
+                      f.write(f"- **{wf['workflow']}**: Average duration {wf['avg_duration']:.1f}m\n")
+                      f.write(f"  - Consider parallelization\n")
+                      f.write(f"  - Review caching strategy\n")
+                      f.write(f"  - Optimize test execution\n\n")
+              
+              if not critical_workflows and not slow_workflows:
+                  f.write("✅ All workflows are performing well. No immediate action required.\n\n")
+              
+              f.write("## 📈 Trends to Monitor\n\n")
+              f.write("- Track success rate over time\n")
+              f.write("- Monitor duration trends\n")
+              f.write("- Watch for new failure patterns\n")
+              f.write("- Review cancellation rates\n")
+          
+          print(f"\n✅ Health report generated: ci-health-report.md")
+          
+          # Set health status for GitHub Actions
+          if overall_success_rate >= 95:
+              health_status = "healthy"
+          elif overall_success_rate >= 85:
+              health_status = "warning"
+          else:
+              health_status = "critical"
+          
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"health_status={health_status}\n")
+              f.write(f"success_rate={overall_success_rate:.1f}\n")
+          
+          import os
+          PY
+
+      - name: Check for flaky tests
+        id: flaky_tests
+        run: |
+          echo "Analyzing test flakiness..."
+          
+          # Placeholder for flaky test detection
+          # In practice, this would analyze test history to find intermittently failing tests
+          
+          echo "✅ Flaky test analysis complete (placeholder)"
+
+      - name: Upload health report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-health-report-${{ github.run_id }}
+          path: |
+            ci-health-report.md
+            workflow-stats.json
+
+      - name: Create or update health dashboard issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read health report
+            let reportContent = '';
+            try {
+              reportContent = fs.readFileSync('ci-health-report.md', 'utf8');
+            } catch (error) {
+              console.log('Could not read health report');
+              return;
+            }
+            
+            const healthStatus = '${{ steps.health_report.outputs.health_status }}';
+            const successRate = '${{ steps.health_report.outputs.success_rate }}';
+            
+            const title = `📊 CI/CD Health Dashboard - ${healthStatus.toUpperCase()}`;
+            
+            const body = `${reportContent}
+            
+---
+
+**Automated Health Report**
+- Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+- Next Update: Runs daily at 06:00 UTC
+
+**How to Use This Dashboard:**
+1. Monitor overall success rate (target: >95%)
+2. Review workflows with low success rates
+3. Investigate slow-running workflows
+4. Track trends over time
+
+_This issue is automatically updated daily by the CI Health Monitoring workflow._
+`;
+            
+            // Find existing dashboard issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'ci-health,dashboard',
+              state: 'open'
+            });
+            
+            if (issues.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                title: title,
+                body: body
+              });
+              
+              console.log(`Updated CI health dashboard issue #${issues[0].number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['ci-health', 'dashboard', 'automated']
+              });
+              
+              console.log('Created new CI health dashboard issue');
+            }
+
+      - name: Alert on critical health status
+        if: steps.health_report.outputs.health_status == 'critical'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const successRate = '${{ steps.health_report.outputs.success_rate }}';
+            
+            const body = `🚨 **CI/CD HEALTH ALERT**
+            
+The CI/CD pipeline success rate has dropped to ${successRate}%, which is below the critical threshold of 85%.
+
+**Immediate Actions Required:**
+1. Review failed workflow runs from the past 7 days
+2. Identify common failure patterns
+3. Address critical issues causing failures
+4. Monitor recovery
+
+**Health Dashboard:** Check the pinned CI/CD Health Dashboard issue for details.
+
+**Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+
+cc: @engineering-team
+`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 ALERT: CI/CD Health Critical',
+              body: body,
+              labels: ['urgent', 'ci-health', 'alert']
+            });
+            
+            console.log('Created critical health alert issue');
