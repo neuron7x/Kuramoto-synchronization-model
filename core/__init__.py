@@ -9,6 +9,7 @@ This package contains the fundamental building blocks for the TradePulse platfor
 - **messaging**: Event bus and message queue abstractions
 - **neuro**: Neural network components and training infrastructure
 - **neuroadaptive**: Neuroadaptive decision system with FSM-based gating
+- **heuristic_gate**: Heuristic gate system with strict validation and table-driven FSM
 - **utils**: Common utilities, caching, and helper functions
 - **energy**: Thermodynamic energy calculations for system optimization
 - **phase**: Market phase detection and analysis
