@@ -78,9 +78,7 @@ class IndicatorPipeline:
     def features(self) -> tuple[BaseFeature, ...]:
         return self._features
 
-    def _prepare_buffer(
-        self, data: np.ndarray | Sequence[float]
-    ) -> tuple[np.ndarray, bool]:
+    def _prepare_buffer(self, data: np.ndarray | Sequence[float]) -> tuple[np.ndarray, bool]:
         array = np.asarray(data)
         borrowed = False
         if array.dtype != self._dtype or not array.flags.c_contiguous:
@@ -126,9 +124,7 @@ class IndicatorPipeline:
                     raise RuntimeError("Parallel execution requires an executor")
                 tasks: list[Future[FeatureResult]] = []
                 for feature in self._features:
-                    tasks.append(
-                        self._executor.submit(_run_feature, feature, buffer, kwargs)
-                    )
+                    tasks.append(self._executor.submit(_run_feature, feature, buffer, kwargs))
                 for future in tasks:
                     result = future.result()
                     values[result.name] = result.value
@@ -161,9 +157,7 @@ class IndicatorPipeline:
     def __enter__(self) -> IndicatorPipeline:
         return self
 
-    def __exit__(
-        self, exc_type, exc, tb
-    ) -> None:  # noqa: ANN001 - context manager contract
+    def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001 - context manager contract
         self.close(wait=exc_type is None)
 
     def __del__(self) -> None:  # pragma: no cover - best effort cleanup

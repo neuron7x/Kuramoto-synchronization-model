@@ -109,7 +109,7 @@ def test_api_server_tls_settings_normalises_sequences(tmp_path: Path) -> None:
         cert_file=cert,
         key_file=key,
         client_ca_file=ca,
-        cipher_suites="ECDHE-RSA-AES256-GCM-SHA384,  ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES128-GCM-SHA256",
+        cipher_suites="ECDHE-RSA-AES256-GCM-SHA384,  ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES128-GCM-SHA256",  # noqa: E501
         alpn_protocols=["h2", "http/1.1", "h2"],
         require_client_certificate=False,
     )

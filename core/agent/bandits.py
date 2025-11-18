@@ -257,8 +257,7 @@ class ThompsonSampling:
 
         # Sample theta from Beta(α, β) for each arm
         samples = {
-            arm: self._sample_beta(self._alphas[arm], self._betas[arm])
-            for arm in self._alphas
+            arm: self._sample_beta(self._alphas[arm], self._betas[arm]) for arm in self._alphas
         }
 
         return max(samples, key=samples.get)  # type: ignore
@@ -317,13 +316,9 @@ class ThompsonSampling:
         if arm not in self._alphas:
             raise KeyError(f"Unknown arm '{arm}'")
 
-        return int(
-            self._alphas[arm] + self._betas[arm] - self._alpha_prior - self._beta_prior
-        )
+        return int(self._alphas[arm] + self._betas[arm] - self._alpha_prior - self._beta_prior)
 
-    def credible_interval(
-        self, arm: Arm, confidence: float = 0.95
-    ) -> tuple[float, float]:
+    def credible_interval(self, arm: Arm, confidence: float = 0.95) -> tuple[float, float]:
         """Compute Bayesian credible interval for arm's reward distribution.
 
         Args:

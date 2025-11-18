@@ -37,7 +37,7 @@ def _run_pip_audit(
 ) -> subprocess.CompletedProcess[str]:
     if shutil.which(pip_audit_bin) is None:
         raise DependencyAuditError(
-            "pip-audit is not installed. Install it via `pip install pip-audit` or use the development requirements."
+            "pip-audit is not installed. Install it via `pip install pip-audit` or use the development requirements."  # noqa: E501
         )
 
     cmd: list[str] = [pip_audit_bin, "--progress-spinner", "off", "--format", "json"]
@@ -122,7 +122,7 @@ def _print_summary(findings: Sequence[dict[str, object]]) -> None:
 
     print(
         "❌ Found "
-        f"{len(findings)} known vulnerabilities across {len({(f['name'], f['version']) for f in findings})} packages."
+        f"{len(findings)} known vulnerabilities across {len({(f['name'], f['version']) for f in findings})} packages."  # noqa: E501
     )
 
     grouped: defaultdict[tuple[str, str], list[dict[str, object]]] = defaultdict(list)
@@ -134,11 +134,7 @@ def _print_summary(findings: Sequence[dict[str, object]]) -> None:
         for vuln in grouped[(name, version)]:
             fix = ", ".join(vuln["fix_versions"]) or "no patched release available"
             aliases = ", ".join(vuln["aliases"]) or "no aliases"
-            description = (
-                vuln["description"].strip().splitlines()[0]
-                if vuln["description"]
-                else ""
-            )
+            description = vuln["description"].strip().splitlines()[0] if vuln["description"] else ""
             print(f"  - {vuln['id']} (aliases: {aliases})")
             print(f"    ↳ upgrade to: {fix}")
             if description:
@@ -178,7 +174,7 @@ def _write_report(findings: Sequence[dict[str, object]], destination: Path) -> N
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Run pip-audit across pinned dependency manifests and emit actionable summaries.",
+        description="Run pip-audit across pinned dependency manifests and emit actionable summaries.",  # noqa: E501
     )
     parser.add_argument(
         "-r",
@@ -219,7 +215,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--fail-on",
         choices=("none", "any"),
         default="any",
-        help="Control the exit status: 'any' (default) fails when vulnerabilities are present; 'none' always exits 0.",
+        help="Control the exit status: 'any' (default) fails when vulnerabilities are present; 'none' always exits 0.",  # noqa: E501
     )
 
     args = parser.parse_args(argv)

@@ -43,8 +43,7 @@ class LintRule(Protocol):
     name: str
     description: str
 
-    def check(self, path: Path, lines: Sequence[str]) -> Iterable[LintIssue]:
-        ...
+    def check(self, path: Path, lines: Sequence[str]) -> Iterable[LintIssue]: ...
 
 
 class HeadingFirstRule:
@@ -190,7 +189,9 @@ def _iter_markdown_files(targets: Sequence[Path]) -> list[Path]:
     return sorted({path for path in discovered})
 
 
-def lint_paths(targets: Sequence[Path], rules: Sequence[LintRule] = DEFAULT_RULES) -> list[LintIssue]:
+def lint_paths(
+    targets: Sequence[Path], rules: Sequence[LintRule] = DEFAULT_RULES
+) -> list[LintIssue]:
     issues: list[LintIssue] = []
     for path in _iter_markdown_files(targets):
         content = path.read_text(encoding="utf-8").splitlines()

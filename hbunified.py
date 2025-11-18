@@ -181,7 +181,9 @@ def infer(cfg_path: str, npz_path: str | None = None, window_json: str | None = 
             hydro = out["hydrology"].cpu().numpy()
             qual = out["water_quality"].cpu().numpy()
         for p, h, q in zip(probs, hydro, qual):
-            outs.append({"flood_prob": p.tolist(), "hydrology": h.tolist(), "water_quality": q.tolist()})
+            outs.append(
+                {"flood_prob": p.tolist(), "hydrology": h.tolist(), "water_quality": q.tolist()}
+            )
     elif window_json:
         W = np.array(json.loads(window_json), dtype=float)
         X = preprocess_window(W).to(device)

@@ -100,13 +100,9 @@ def test_facade_enforces_permissions_for_kill_switch(tmp_path: Path) -> None:
     controller = _write_policy(
         tmp_path,
         {
-            "subjects": {
-                "system": {"permissions": ["engage_kill_switch", "reset_kill_switch"]}
-            },
+            "subjects": {"system": {"permissions": ["engage_kill_switch", "reset_kill_switch"]}},
             "roles": {
-                "risk_team": {
-                    "permissions": ["engage_kill_switch", "reset_kill_switch"]
-                },
+                "risk_team": {"permissions": ["engage_kill_switch", "reset_kill_switch"]},
                 "operations": {"permissions": ["read_exchange_keys"]},
             },
         },

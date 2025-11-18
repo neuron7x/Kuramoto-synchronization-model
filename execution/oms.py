@@ -60,9 +60,7 @@ class OMSConfig:
         if ledger_path is not None and not isinstance(ledger_path, Path):
             ledger_path = Path(ledger_path)
         if ledger_path == DEFAULT_LEDGER_PATH:
-            ledger_path = (
-                self.state_path.parent / f"{self.state_path.stem}_ledger.jsonl"
-            )
+            ledger_path = self.state_path.parent / f"{self.state_path.stem}_ledger.jsonl"
         if ledger_path is not None:
             ledger_path.parent.mkdir(parents=True, exist_ok=True)
         object.__setattr__(self, "ledger_path", ledger_path)
@@ -164,26 +162,16 @@ class OrderManagementSystem:
                 item["correlation_id"],
                 self._restore_order(item["order"]),
                 int(item.get("attempts", 0)),
-                (
-                    str(item.get("last_error"))
-                    if item.get("last_error") is not None
-                    else None
-                ),
+                (str(item.get("last_error")) if item.get("last_error") is not None else None),
             )
             for item in payload.get("queue", [])
         )
-        self._processed = {
-            str(k): str(v) for k, v in payload.get("processed", {}).items()
-        }
-        self._correlations = {
-            str(k): str(v) for k, v in payload.get("correlations", {}).items()
-        }
+        self._processed = {str(k): str(v) for k, v in payload.get("processed", {}).items()}
+        self._correlations = {str(k): str(v) for k, v in payload.get("correlations", {}).items()}
         self._pending = {item.correlation_id: item.order for item in self._queue}
         raw_fingerprints = payload.get("fingerprints")
         if isinstance(raw_fingerprints, Mapping):
-            self._fingerprints = {
-                str(key): str(value) for key, value in raw_fingerprints.items()
-            }
+            self._fingerprints = {str(key): str(value) for key, value in raw_fingerprints.items()}
         else:
             self._fingerprints = {}
         if not self._fingerprints:
@@ -201,9 +189,7 @@ class OrderManagementSystem:
         else:
             self._lifecycle_sequences = {}
         self._active_orders = {
-            order_id: order
-            for order_id, order in self._orders.items()
-            if order.is_active
+            order_id: order for order_id, order in self._orders.items() if order.is_active
         }
         self._active_cache = tuple(self._active_orders.values())
         self._active_cache_dirty = False
@@ -331,40 +317,26 @@ class OrderManagementSystem:
             quantity=float(data["quantity"]),
             price=float(data["price"]) if data.get("price") is not None else None,
             order_type=str(data.get("order_type", "market")),
-            stop_price=(
-                float(data["stop_price"])
-                if data.get("stop_price") is not None
-                else None
-            ),
+            stop_price=(float(data["stop_price"]) if data.get("stop_price") is not None else None),
             iceberg_visible=(
-                float(data["iceberg_visible"])
-                if data.get("iceberg_visible") is not None
-                else None
+                float(data["iceberg_visible"]) if data.get("iceberg_visible") is not None else None
             ),
             order_id=str(data.get("order_id")) if data.get("order_id") else None,
             broker_order_id=(
-                str(data.get("broker_order_id"))
-                if data.get("broker_order_id")
-                else None
+                str(data.get("broker_order_id")) if data.get("broker_order_id") else None
             ),
             status=str(data.get("status", "pending")),
             filled_quantity=float(data.get("filled_quantity", 0.0)),
             average_price=(
-                float(data["average_price"])
-                if data.get("average_price") is not None
-                else None
+                float(data["average_price"]) if data.get("average_price") is not None else None
             ),
             rejection_reason=(
-                str(data.get("rejection_reason"))
-                if data.get("rejection_reason")
-                else None
+                str(data.get("rejection_reason")) if data.get("rejection_reason") else None
             ),
             created_at=created_at,
         )
         if data.get("updated_at"):
-            object.__setattr__(
-                order, "updated_at", datetime.fromisoformat(str(data["updated_at"]))
-            )
+            object.__setattr__(order, "updated_at", datetime.fromisoformat(str(data["updated_at"])))
         return order
 
     # ------------------------------------------------------------------
@@ -392,9 +364,7 @@ class OrderManagementSystem:
             if self._compliance is not None:
                 report = None
                 try:
-                    report = self._compliance.check(
-                        order.symbol, order.quantity, order.price
-                    )
+                    report = self._compliance.check(order.symbol, order.quantity, order.price)
                 except ComplianceViolation as exc:
                     report = exc.report
                     self._metrics.record_compliance_check(
@@ -431,9 +401,7 @@ class OrderManagementSystem:
                                 "blocked": True,
                             },
                         )
-                        raise ComplianceViolation(
-                            "Compliance check blocked order", report=report
-                        )
+                        raise ComplianceViolation("Compliance check blocked order", report=report)
 
             if self._circuit_breaker is not None:
                 if not self._circuit_breaker.can_execute():
@@ -453,16 +421,12 @@ class OrderManagementSystem:
                             "ttl_seconds": ttl,
                         },
                     )
-                    self._emit_risk_audit(
-                        order, correlation_id, reason, {"ttl_seconds": ttl}
-                    )
+                    self._emit_risk_audit(order, correlation_id, reason, {"ttl_seconds": ttl})
                     raise ComplianceViolation(reason)
 
             if self._risk_compliance is not None:
                 reference_price = (
-                    order.price
-                    if order.price is not None
-                    else max(order.average_price or 0.0, 1.0)
+                    order.price if order.price is not None else max(order.average_price or 0.0, 1.0)
                 )
 
                 positions = {}
@@ -473,8 +437,7 @@ class OrderManagementSystem:
                 if hasattr(self.risk, "current_position"):
                     try:
                         positions = {
-                            symbol: self.risk.current_position(symbol)
-                            for symbol in [order.symbol]
+                            symbol: self.risk.current_position(symbol) for symbol in [order.symbol]
                         }
                     except Exception:
                         pass
@@ -531,9 +494,7 @@ class OrderManagementSystem:
                     )
 
             reference_price = (
-                order.price
-                if order.price is not None
-                else max(order.average_price or 0.0, 1.0)
+                order.price if order.price is not None else max(order.average_price or 0.0, 1.0)
             )
             self.risk.validate_order(
                 order.symbol, order.side.value, order.quantity, reference_price
@@ -620,9 +581,7 @@ class OrderManagementSystem:
                 return future.result(timeout=timeout)
             except FuturesTimeoutError as exc:
                 future.cancel()
-                raise TimeoutError(
-                    f"Connector request exceeded {timeout:.3f}s timeout"
-                ) from exc
+                raise TimeoutError(f"Connector request exceeded {timeout:.3f}s timeout") from exc
 
     def process_next(self) -> Order:
         if not self._queue:
@@ -638,9 +597,7 @@ class OrderManagementSystem:
             item.attempts += 1
             try:
                 start = time.perf_counter()
-                submitted = self._place_order_with_timeout(
-                    item.order, item.correlation_id
-                )
+                submitted = self._place_order_with_timeout(item.order, item.correlation_id)
                 ack_latency = time.perf_counter() - start
             except retryable as exc:
                 item.last_error = str(exc)
@@ -733,9 +690,7 @@ class OrderManagementSystem:
             self._fingerprints[item.correlation_id] = updated_fingerprint
         self._update_active_order(submitted.order_id, submitted)
         if self._metrics.enabled:
-            exchange = getattr(
-                self.connector, "name", self.connector.__class__.__name__.lower()
-            )
+            exchange = getattr(self.connector, "name", self.connector.__class__.__name__.lower())
             self._metrics.record_order_ack_latency(
                 exchange, submitted.symbol, max(0.0, ack_latency)
             )
@@ -793,9 +748,7 @@ class OrderManagementSystem:
         self._update_active_order(order_id, order)
         self.risk.register_fill(order.symbol, order.side.value, quantity, price)
         if self._metrics.enabled:
-            exchange = getattr(
-                self.connector, "name", self.connector.__class__.__name__.lower()
-            )
+            exchange = getattr(self.connector, "name", self.connector.__class__.__name__.lower())
             now = datetime.now(timezone.utc)
             ack_ts = self._ack_timestamps.get(order_id)
             if ack_ts is not None:
@@ -825,9 +778,7 @@ class OrderManagementSystem:
         sequence = self._next_fill_sequence(order_id)
         sequence_hint = None if correlation_id is not None else sequence
         event = (
-            OrderEvent.FILL_FINAL
-            if order.status is OrderStatus.FILLED
-            else OrderEvent.FILL_PARTIAL
+            OrderEvent.FILL_FINAL if order.status is OrderStatus.FILLED else OrderEvent.FILL_PARTIAL
         )
         metadata: Dict[str, object] = {
             "fill_quantity": float(quantity),
@@ -886,10 +837,7 @@ class OrderManagementSystem:
             self._broker_lookup[stored.broker_order_id] = stored.order_id
 
         base_correlation = self._correlations.get(order.order_id)
-        if (
-            stored.status is OrderStatus.CANCELLED
-            and previous_status is not OrderStatus.CANCELLED
-        ):
+        if stored.status is OrderStatus.CANCELLED and previous_status is not OrderStatus.CANCELLED:
             self._record_lifecycle_event(
                 stored,
                 OrderEvent.CANCEL,
@@ -897,10 +845,7 @@ class OrderManagementSystem:
                 metadata={"source": "sync_remote_state"},
             )
             self._lifecycle_sequences.pop(order.order_id, None)
-        elif (
-            stored.status is OrderStatus.REJECTED
-            and previous_status is not OrderStatus.REJECTED
-        ):
+        elif stored.status is OrderStatus.REJECTED and previous_status is not OrderStatus.REJECTED:
             metadata: Dict[str, object] = {"source": "sync_remote_state"}
             if stored.rejection_reason:
                 metadata["reason"] = stored.rejection_reason
@@ -925,16 +870,12 @@ class OrderManagementSystem:
                         else OrderEvent.FILL_PARTIAL
                     )
                     price_reference = (
-                        order.average_price
-                        if order.average_price is not None
-                        else order.price
+                        order.average_price if order.average_price is not None else order.price
                     )
                     metadata = {
                         "source": "sync_remote_state",
                         "cumulative_filled": float(stored.filled_quantity),
-                        "delta_filled": float(
-                            max(0.0, stored.filled_quantity - previous_filled)
-                        ),
+                        "delta_filled": float(max(0.0, stored.filled_quantity - previous_filled)),
                     }
                     if price_reference is not None:
                         metadata["reference_price"] = float(price_reference)
@@ -1012,9 +953,7 @@ class OrderManagementSystem:
             return None
         return self._orders.get(order_id)
 
-    def adopt_open_order(
-        self, order: Order, *, correlation_id: str | None = None
-    ) -> None:
+    def adopt_open_order(self, order: Order, *, correlation_id: str | None = None) -> None:
         """Adopt an externally recovered order into the OMS state."""
 
         if order.order_id is None:

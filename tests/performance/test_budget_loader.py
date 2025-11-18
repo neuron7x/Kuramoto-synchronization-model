@@ -19,7 +19,7 @@ def budget_loader() -> BudgetLoader:
 def test_load_default_budget(budget_loader: BudgetLoader) -> None:
     """Test loading default budget."""
     budget = budget_loader.get_default_budget()
-    
+
     assert isinstance(budget, PerformanceBudget)
     assert budget.latency_median_ms > 0
     assert budget.latency_p95_ms > budget.latency_median_ms
@@ -31,10 +31,10 @@ def test_load_exchange_budget(budget_loader: BudgetLoader) -> None:
     coinbase_budget = budget_loader.get_exchange_budget("coinbase")
     binance_budget = budget_loader.get_exchange_budget("binance")
     default_budget = budget_loader.get_default_budget()
-    
+
     # Coinbase should have different thresholds than default
     assert coinbase_budget.latency_median_ms != default_budget.latency_median_ms
-    
+
     # Binance should have tighter latency requirements than Coinbase
     assert binance_budget.latency_median_ms < coinbase_budget.latency_median_ms
 
@@ -43,7 +43,7 @@ def test_load_scenario_budget(budget_loader: BudgetLoader) -> None:
     """Test loading scenario-specific budget."""
     flash_crash_budget = budget_loader.get_scenario_budget("flash_crash")
     stable_budget = budget_loader.get_scenario_budget("stable_market")
-    
+
     # Flash crash should allow higher latency and slippage
     assert flash_crash_budget.latency_median_ms > stable_budget.latency_median_ms
     assert flash_crash_budget.slippage_median_bps > stable_budget.slippage_median_bps
@@ -54,11 +54,11 @@ def test_load_environment_budget(budget_loader: BudgetLoader) -> None:
     prod_budget = budget_loader.get_environment_budget("production")
     staging_budget = budget_loader.get_environment_budget("staging")
     dev_budget = budget_loader.get_environment_budget("development")
-    
+
     # Production should have strictest requirements
     assert prod_budget.latency_median_ms < staging_budget.latency_median_ms
     assert staging_budget.latency_median_ms < dev_budget.latency_median_ms
-    
+
     # Production should require highest throughput
     assert prod_budget.throughput_min_tps > staging_budget.throughput_min_tps
 
@@ -67,10 +67,10 @@ def test_load_component_budget(budget_loader: BudgetLoader) -> None:
     """Test loading component-specific budget."""
     ingestion_budget = budget_loader.get_component_budget("ingestion")
     execution_budget = budget_loader.get_component_budget("execution")
-    
+
     # Execution should have tighter latency requirements
     assert execution_budget.latency_median_ms < ingestion_budget.latency_median_ms
-    
+
     # Execution should require higher throughput
     assert execution_budget.throughput_min_tps > ingestion_budget.throughput_min_tps
 
@@ -78,22 +78,16 @@ def test_load_component_budget(budget_loader: BudgetLoader) -> None:
 def test_budget_priority(budget_loader: BudgetLoader) -> None:
     """Test budget priority selection."""
     # Scenario should take priority over exchange
-    scenario_budget = budget_loader.get_budget(
-        exchange="coinbase",
-        scenario="flash_crash"
-    )
+    scenario_budget = budget_loader.get_budget(exchange="coinbase", scenario="flash_crash")
     flash_crash_only = budget_loader.get_scenario_budget("flash_crash")
-    
+
     # Should match scenario budget, not exchange
     assert scenario_budget.latency_median_ms == flash_crash_only.latency_median_ms
-    
+
     # Exchange should take priority over environment
-    exchange_budget = budget_loader.get_budget(
-        exchange="coinbase",
-        environment="production"
-    )
+    exchange_budget = budget_loader.get_budget(exchange="coinbase", environment="production")
     coinbase_only = budget_loader.get_exchange_budget("coinbase")
-    
+
     # Should match exchange budget
     assert exchange_budget.latency_median_ms == coinbase_only.latency_median_ms
 
@@ -102,14 +96,14 @@ def test_unknown_budget_returns_default(budget_loader: BudgetLoader) -> None:
     """Test that unknown budgets return default."""
     unknown_exchange = budget_loader.get_exchange_budget("unknown_exchange")
     default_budget = budget_loader.get_default_budget()
-    
+
     assert unknown_exchange.latency_median_ms == default_budget.latency_median_ms
 
 
 def test_list_exchanges(budget_loader: BudgetLoader) -> None:
     """Test listing configured exchanges."""
     exchanges = budget_loader.list_exchanges()
-    
+
     assert isinstance(exchanges, list)
     assert "coinbase" in exchanges
     assert "binance" in exchanges
@@ -119,7 +113,7 @@ def test_list_exchanges(budget_loader: BudgetLoader) -> None:
 def test_list_scenarios(budget_loader: BudgetLoader) -> None:
     """Test listing configured scenarios."""
     scenarios = budget_loader.list_scenarios()
-    
+
     assert isinstance(scenarios, list)
     assert "flash_crash" in scenarios
     assert "stable_market" in scenarios
@@ -129,7 +123,7 @@ def test_list_scenarios(budget_loader: BudgetLoader) -> None:
 def test_list_environments(budget_loader: BudgetLoader) -> None:
     """Test listing configured environments."""
     environments = budget_loader.list_environments()
-    
+
     assert isinstance(environments, list)
     assert "production" in environments
     assert "staging" in environments
@@ -139,7 +133,7 @@ def test_list_environments(budget_loader: BudgetLoader) -> None:
 def test_list_components(budget_loader: BudgetLoader) -> None:
     """Test listing configured components."""
     components = budget_loader.list_components()
-    
+
     assert isinstance(components, list)
     assert "ingestion" in components
     assert "execution" in components
@@ -149,7 +143,8 @@ def test_list_components(budget_loader: BudgetLoader) -> None:
 def test_budget_loader_with_custom_config(tmp_path: Path) -> None:
     """Test loading budget from custom config file."""
     config_path = tmp_path / "custom_budgets.yaml"
-    config_path.write_text("""
+    config_path.write_text(
+        """
 version: "1.0.0"
 
 default:
@@ -168,14 +163,16 @@ exchanges:
     throughput_min_tps: 5.0
     slippage_median_bps: 5.0
     slippage_p95_bps: 15.0
-""", encoding="utf-8")
-    
+""",
+        encoding="utf-8",
+    )
+
     loader = BudgetLoader(config_path)
-    
+
     # Check default
     default = loader.get_default_budget()
     assert default.latency_median_ms == 100.0
-    
+
     # Check custom exchange
     test_exchange = loader.get_exchange_budget("test_exchange")
     assert test_exchange.latency_median_ms == 50.0

@@ -26,6 +26,7 @@ def _safe_float(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
 
+
 _STATUS_MAP = {
     "NEW": OrderStatus.OPEN,
     "PARTIALLY_FILLED": OrderStatus.PARTIALLY_FILLED,
@@ -133,9 +134,7 @@ class BinanceExecutionConnector(AuthenticatedRESTExecutionConnector):
                 params=params,
                 idempotency_key=client_id,
             )
-        except (
-            httpx.HTTPStatusError
-        ) as exc:  # pragma: no cover - httpx raises with status context
+        except httpx.HTTPStatusError as exc:  # pragma: no cover - httpx raises with status context
             raise OrderError(str(exc)) from exc
         data = response.json()
         order_id = data.get("orderId")
@@ -344,9 +343,7 @@ class BinanceExecutionConnector(AuthenticatedRESTExecutionConnector):
         if executed:
             last_price = float(payload.get("avgPrice", 0) or 0)
             if not last_price and executed:
-                cumulative_quote = float(
-                    payload.get("cummulativeQuoteQty", payload.get("Z", 0))
-                )
+                cumulative_quote = float(payload.get("cummulativeQuoteQty", payload.get("Z", 0)))
                 if cumulative_quote:
                     last_price = cumulative_quote / executed
             if last_price:

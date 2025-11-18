@@ -85,13 +85,10 @@ class StressScenarioResult:
                 "pnl": float(self.pnl),
                 "relative_impact": float(self.relative_impact),
                 "description": self.description,
-                "reference_date": self.reference_date.isoformat()
-                if self.reference_date
-                else None,
+                "reference_date": self.reference_date.isoformat() if self.reference_date else None,
                 "missing_assets": list(self.missing_assets),
                 "contributions": [
-                    {"asset": item.asset, "pnl": float(item.pnl)}
-                    for item in self.contributions
+                    {"asset": item.asset, "pnl": float(item.pnl)} for item in self.contributions
                 ],
             }
         )
@@ -135,13 +132,9 @@ class VolatilityScenarioResult:
                 "volatility_multiplier": float(self.volatility_multiplier),
                 "horizon_days": int(self.horizon_days),
                 "baseline_var": float(self.baseline_var),
-                "baseline_expected_shortfall": float(
-                    self.baseline_expected_shortfall
-                ),
+                "baseline_expected_shortfall": float(self.baseline_expected_shortfall),
                 "projected_var": float(self.projected_var),
-                "projected_expected_shortfall": float(
-                    self.projected_expected_shortfall
-                ),
+                "projected_expected_shortfall": float(self.projected_expected_shortfall),
                 "description": self.description,
             }
         )
@@ -180,18 +173,13 @@ class PortfolioStressReport:
                 "portfolio_value": float(self.portfolio_value),
                 "risk_metrics": dict(self.risk_metrics.to_dict()),
                 "exposures": [
-                    {"asset": asset, "notional": float(amount)}
-                    for asset, amount in self.exposures
+                    {"asset": asset, "notional": float(amount)} for asset, amount in self.exposures
                 ],
-                "scenario_results": [
-                    dict(result.to_dict()) for result in self.scenario_results
-                ],
+                "scenario_results": [dict(result.to_dict()) for result in self.scenario_results],
                 "volatility_results": [
                     dict(result.to_dict()) for result in self.volatility_results
                 ],
-                "limit_breaches": [
-                    dict(breach.to_dict()) for breach in self.limit_breaches
-                ],
+                "limit_breaches": [dict(breach.to_dict()) for breach in self.limit_breaches],
             }
         )
 
@@ -206,13 +194,10 @@ class PortfolioStressReport:
         lines.append(f"- Portfolio value: ${self.portfolio_value:,.2f}")
         metrics = self.risk_metrics
         lines.append(
-            "- VaR (" +
-            f"{metrics.confidence_level:.2%}, {metrics.horizon_days}-day): ${metrics.var:,.2f}"
+            "- VaR ("
+            + f"{metrics.confidence_level:.2%}, {metrics.horizon_days}-day): ${metrics.var:,.2f}"
         )
-        lines.append(
-            "- Expected Shortfall: "
-            + f"${metrics.expected_shortfall:,.2f}"
-        )
+        lines.append("- Expected Shortfall: " + f"${metrics.expected_shortfall:,.2f}")
         if self.limit_breaches:
             lines.append("- Limit breaches detected:")
             for breach in self.limit_breaches:
@@ -236,9 +221,7 @@ class PortfolioStressReport:
             lines.append("| --- | ---: | ---: |")
             for result in self.scenario_results:
                 lines.append(
-                    "| "
-                    + result.name
-                    + f" | ${result.pnl:,.2f} | {result.relative_impact:.2%} |"
+                    "| " + result.name + f" | ${result.pnl:,.2f} | {result.relative_impact:.2%} |"
                 )
 
         if self.volatility_results:
@@ -253,7 +236,7 @@ class PortfolioStressReport:
                     "| "
                     + result.name
                     + f" | {result.volatility_multiplier:.2f} | {result.horizon_days}"
-                    + f" | ${result.projected_var:,.2f} | ${result.projected_expected_shortfall:,.2f} |"
+                    + f" | ${result.projected_var:,.2f} | ${result.projected_expected_shortfall:,.2f} |"  # noqa: E501
                 )
 
         return "\n".join(lines)
@@ -318,9 +301,7 @@ class PortfolioStressTester:
             return self._pnl
         return self._pnl.rolling(window=horizon_days).sum().dropna()
 
-    def compute_var_es(
-        self, *, confidence_level: float, horizon_days: int
-    ) -> PortfolioRiskMetrics:
+    def compute_var_es(self, *, confidence_level: float, horizon_days: int) -> PortfolioRiskMetrics:
         if not (0.0 < confidence_level < 1.0):
             raise ValueError("confidence_level must be between 0 and 1")
         aggregated = self._aggregate_pnl(horizon_days)
@@ -351,9 +332,7 @@ class PortfolioStressTester:
             shock_series = pd.Series(scenario.shocks, dtype=float)
             overlapping = shock_series.index.intersection(exposures.index)
             missing_assets = tuple(sorted(set(exposures.index).difference(overlapping)))
-            contributions = (
-                exposures.loc[overlapping] * shock_series.loc[overlapping]
-            )
+            contributions = exposures.loc[overlapping] * shock_series.loc[overlapping]
             pnl = float(contributions.sum())
             relative = pnl / portfolio_value
             contribution_objects = tuple(
@@ -429,9 +408,7 @@ class PortfolioStressTester:
 
         breaches: list[RiskLimitBreach] = []
         if var_limit is not None and risk_metrics.var > var_limit:
-            breaches.append(
-                RiskLimitBreach(metric="var", value=risk_metrics.var, limit=var_limit)
-            )
+            breaches.append(RiskLimitBreach(metric="var", value=risk_metrics.var, limit=var_limit))
         if (
             expected_shortfall_limit is not None
             and risk_metrics.expected_shortfall > expected_shortfall_limit
@@ -470,4 +447,3 @@ __all__ = [
     "VolatilityScenario",
     "VolatilityScenarioResult",
 ]
-

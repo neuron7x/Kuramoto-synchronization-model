@@ -173,9 +173,7 @@ class ExperimentConfig(BaseModel):
         normalized = value.upper()
         valid_levels = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"}
         if normalized not in valid_levels:
-            msg = (
-                "log_level must be one of CRITICAL, ERROR, WARNING, INFO, DEBUG, or NOTSET"
-            )
+            msg = "log_level must be one of CRITICAL, ERROR, WARNING, INFO, DEBUG, or NOTSET"
             raise ValueError(msg)
         return normalized
 

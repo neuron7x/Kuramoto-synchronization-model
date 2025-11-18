@@ -72,9 +72,7 @@ class StrategyEvaluationError(RuntimeError):
 
     def __init__(self, failures: Sequence[EvaluationResult]):
         message = ", ".join(f"{res.strategy.name}: {res.error}" for res in failures)
-        super().__init__(
-            f"Strategy evaluation failed for {len(failures)} strategy(ies): {message}"
-        )
+        super().__init__(f"Strategy evaluation failed for {len(failures)} strategy(ies): {message}")
         self.failures = list(failures)
 
 
@@ -221,16 +219,12 @@ class StrategyBatchEvaluator:
             return
 
         try:
-            collector.optimization_iterations.labels(
-                optimizer_type=self.optimizer_label
-            ).inc()
-            collector.optimization_duration.labels(
-                optimizer_type=self.optimizer_label
-            ).observe(duration)
+            collector.optimization_iterations.labels(optimizer_type=self.optimizer_label).inc()
+            collector.optimization_duration.labels(optimizer_type=self.optimizer_label).observe(
+                duration
+            )
             if error is not None:
-                collector.optimization_failures.labels(
-                    optimizer_type=self.optimizer_label
-                ).inc()
+                collector.optimization_failures.labels(optimizer_type=self.optimizer_label).inc()
             if error is None and score is not None and math.isfinite(score):
                 collector.set_strategy_score(strategy.name, score)
         except AttributeError:

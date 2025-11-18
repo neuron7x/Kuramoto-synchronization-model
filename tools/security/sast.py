@@ -57,7 +57,17 @@ def _ensure_directory(path: Path) -> None:
 def _run_bandit(paths: Sequence[str], *, config: Path | None, destination: Path) -> Path:
     with tempfile.NamedTemporaryFile("w+", suffix=".json", delete=False) as handle:
         temp_path = Path(handle.name)
-    command: list[str] = [sys.executable, "-m", "bandit", "-r", *paths, "-f", "json", "-o", str(temp_path)]
+    command: list[str] = [
+        sys.executable,
+        "-m",
+        "bandit",
+        "-r",
+        *paths,
+        "-f",
+        "json",
+        "-o",
+        str(temp_path),
+    ]
     if config is not None:
         command.extend(["-c", str(config)])
     env = os.environ.copy()
@@ -125,7 +135,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if _severity_fails(highest, args.fail_on_severity):
         print(
             (
-                f"Security scan failed: highest severity {highest} meets or exceeds threshold {args.fail_on_severity}."
+                f"Security scan failed: highest severity {highest} meets or exceeds threshold {args.fail_on_severity}."  # noqa: E501
             ),
             file=sys.stderr,
         )

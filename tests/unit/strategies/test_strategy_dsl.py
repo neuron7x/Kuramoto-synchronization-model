@@ -186,15 +186,20 @@ pipeline:
         window:
           value: {{ window }}
           type: int
-"""
-        .strip(),
+""".strip(),
         encoding="utf-8",
     )
 
     loader = StrategyDSLLoader(template_dirs=[template_dir])
     definition = loader.load(
         template_path,
-        context={"name": "templated", "seed": 101, "environment": "qa", "symbol": "ADA", "window": 25},
+        context={
+            "name": "templated",
+            "seed": 101,
+            "environment": "qa",
+            "symbol": "ADA",
+            "window": 25,
+        },
     )
 
     assert definition.metadata.name == "templated"

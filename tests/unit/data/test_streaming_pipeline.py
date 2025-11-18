@@ -257,8 +257,7 @@ async def test_pipeline_aggregator_operates_on_shared_cache() -> None:
 
     now = datetime.now(timezone.utc)
     ticks = [
-        _tick("BTCUSD", price=100 + idx, when=now + timedelta(seconds=idx))
-        for idx in range(3)
+        _tick("BTCUSD", price=100 + idx, when=now + timedelta(seconds=idx)) for idx in range(3)
     ]
 
     await pipeline.tick_handler(ticks)
@@ -411,9 +410,7 @@ def test_pipeline_omits_tick_handler_when_factory_only_accepts_lag() -> None:
     lag_handler = object()
     captured_lag_handler: object | None = None
 
-    def factory(
-        cfg: KafkaIngestionConfig, *, lag_handler: object | None
-    ) -> _StubKafkaService:
+    def factory(cfg: KafkaIngestionConfig, *, lag_handler: object | None) -> _StubKafkaService:
         nonlocal captured_lag_handler
         captured_lag_handler = lag_handler
         return _StubKafkaService(cfg)

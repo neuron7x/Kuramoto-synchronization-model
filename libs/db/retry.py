@@ -24,7 +24,9 @@ __all__ = ["RetryPolicy", "run_with_retry"]
 class RetryPolicy(BaseModel):
     """Retry configuration with exponential backoff and jitter."""
 
-    attempts: PositiveInt = Field(5, description="Maximum number of attempts before surfacing the error.")
+    attempts: PositiveInt = Field(
+        5, description="Maximum number of attempts before surfacing the error."
+    )
     initial_backoff: PositiveFloat = Field(
         0.05,
         description="Initial backoff interval in seconds before the first retry.",
@@ -65,7 +67,9 @@ class RetryPolicy(BaseModel):
         return False
 
 
-def run_with_retry(policy: RetryPolicy, logger: logging.Logger, operation: Callable[[], object]) -> object:
+def run_with_retry(
+    policy: RetryPolicy, logger: logging.Logger, operation: Callable[[], object]
+) -> object:
     """Execute *operation* applying the supplied retry policy."""
 
     retrying = policy.build(logger=logger)

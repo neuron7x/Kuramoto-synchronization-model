@@ -82,9 +82,7 @@ def test_event_dataclasses_support_expected_fields() -> None:
         ask_price=100.5,
         last_price=100.2,
         volume=1,
-        microstructure=TickMicrostructure(
-            bid_size=10, ask_size=12, trade_condition="@"
-        ),
+        microstructure=TickMicrostructure(bid_size=10, ask_size=12, trade_condition="@"),
     )
 
     assert bar.vwap == 1.2

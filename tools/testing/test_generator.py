@@ -114,7 +114,9 @@ def _collect_components(tree: ast.AST, module_name: str) -> List[ComponentAnalys
     return components
 
 
-def _analyse_function(node: ast.FunctionDef | ast.AsyncFunctionDef, module_name: str) -> ComponentAnalysis:
+def _analyse_function(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, module_name: str
+) -> ComponentAnalysis:
     signature = _format_function_signature(node)
     explanation = _build_function_explanation(node)
     return ComponentAnalysis(
@@ -155,17 +157,13 @@ def _format_function_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> 
     if node.args.posonlyargs:
         parts.append("/")
     if node.args.vararg:
-        parts.append(
-            f"*{node.args.vararg.arg}{_format_annotation(node.args.vararg.annotation)}"
-        )
+        parts.append(f"*{node.args.vararg.arg}{_format_annotation(node.args.vararg.annotation)}")
     elif node.args.kwonlyargs:
         parts.append("*")
     for arg, default in zip(node.args.kwonlyargs, node.args.kw_defaults):
         parts.append(_format_argument(arg, default))
     if node.args.kwarg:
-        parts.append(
-            f"**{node.args.kwarg.arg}{_format_annotation(node.args.kwarg.annotation)}"
-        )
+        parts.append(f"**{node.args.kwarg.arg}{_format_annotation(node.args.kwarg.annotation)}")
     joined = ", ".join(part for part in parts if part)
     signature = f"{node.name}({joined})"
     if node.returns is not None:
@@ -290,7 +288,9 @@ def _describe_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
 
 
 def _contains_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    return any(isinstance(child, ast.Return) and child.value is not None for child in ast.walk(node))
+    return any(
+        isinstance(child, ast.Return) and child.value is not None for child in ast.walk(node)
+    )
 
 
 def _contains_raise(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
@@ -348,15 +348,15 @@ def _render_component_test(component: ComponentAnalysis) -> str:
     explanation_comment = _format_explanation_comment(component.explanation)
     lines = [
         f"def test_{slug}_analysis() -> None:",
-        f"    \"\"\"Auto-generated behavioural overview for ``{component.name}``.\"\"\"",
-        f"    analysis = analyze_component(MODULE_UNDER_TEST, \"{component.name}\")",
+        f'    """Auto-generated behavioural overview for ``{component.name}``."""',
+        f'    analysis = analyze_component(MODULE_UNDER_TEST, "{component.name}")',
     ]
     lines.extend(explanation_comment)
     lines.extend(
         [
             "    assert analysis.module == MODULE_UNDER_TEST",
-            f"    assert analysis.name == \"{component.name}\"",
-            f"    assert analysis.kind == \"{component.kind}\"",
+            f'    assert analysis.name == "{component.name}"',
+            f'    assert analysis.kind == "{component.kind}"',
             f"    assert analysis.signature == {component.signature!r}",
             f"    assert analysis.explanation == {component.explanation!r}",
             f"    assert analysis.lineno == {component.lineno}",

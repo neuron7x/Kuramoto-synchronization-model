@@ -69,9 +69,7 @@ def test_indicator_pipeline_thread_execution_matches_sequential() -> None:
 
 def test_indicator_pipeline_close_reinitialises_executor() -> None:
     series = np.arange(16, dtype=np.float32)
-    pipeline = IndicatorPipeline(
-        [_SumFeature(name="sum")], execution="thread", max_workers=2
-    )
+    pipeline = IndicatorPipeline([_SumFeature(name="sum")], execution="thread", max_workers=2)
 
     first = pipeline.run(series)
     first.release()
@@ -107,9 +105,7 @@ def test_parallel_feature_block_process_uses_executor(
             return self._value
 
     class DummyExecutor:
-        def __init__(
-            self, *args, **kwargs
-        ) -> None:  # noqa: D401 - signature matches executor
+        def __init__(self, *args, **kwargs) -> None:  # noqa: D401 - signature matches executor
             self.args = args
             self.kwargs = kwargs
 
@@ -119,9 +115,7 @@ def test_parallel_feature_block_process_uses_executor(
         def __exit__(self, exc_type, exc, tb) -> None:
             return None
 
-        def submit(
-            self, fn, feature, data, kwargs
-        ):  # noqa: ANN001 - interface compatibility
+        def submit(self, fn, feature, data, kwargs):  # noqa: ANN001 - interface compatibility
             result = fn(feature, data, kwargs)
             captured.append(result)
             return ImmediateFuture(result)
@@ -161,9 +155,7 @@ def test_entropy_parallel_modes_match_cpu() -> None:
     gpu_fallback = entropy(series, bins=64, backend="gpu")
 
     assert process == pytest.approx(base_chunked, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
-    assert async_value == pytest.approx(
-        base_chunked, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert async_value == pytest.approx(base_chunked, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
     assert gpu_fallback == pytest.approx(
         entropy(series, bins=64), rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
     )
@@ -174,9 +166,7 @@ def test_mean_ricci_async_matches_sequential() -> None:
     graph = build_price_graph(prices, delta=0.01)
     sequential = mean_ricci(graph)
     async_result = mean_ricci(graph, parallel="async")
-    assert async_result == pytest.approx(
-        sequential, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert async_result == pytest.approx(sequential, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
 
 def test_mean_ricci_feature_async_metadata() -> None:

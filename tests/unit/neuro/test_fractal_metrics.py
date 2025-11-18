@@ -35,4 +35,3 @@ def test_fractal_summary_matches_dimension_relationship() -> None:
         "energy",
     }
     assert mapping["fractal_dim"] == fractal_dimension_from_hurst(mapping["hurst"])
-

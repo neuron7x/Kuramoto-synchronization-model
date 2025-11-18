@@ -41,10 +41,12 @@ def test_pipeline_generates_features_and_catalog_entries():
     consensus_payload["indicator"] = "GDP_CONS"
     consensus_payload["value"] = [99, 100, 101, 102]
 
-    client = FakeMacroClient({
-        "GDP": base_payload,
-        "GDP_CONS": consensus_payload,
-    })
+    client = FakeMacroClient(
+        {
+            "GDP": base_payload,
+            "GDP_CONS": consensus_payload,
+        }
+    )
 
     pipeline = MacroSignalPipeline(
         clients={"macros": client},

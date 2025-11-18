@@ -27,9 +27,13 @@ class NeuroplasticReinforcementEngine:
         self._success_rate: Dict[str, float] = defaultdict(lambda: 0.5)
         self._episodes: deque[Dict[str, Any]] = deque(maxlen=config.nre.max_memory_size)
         self._consolidated: list[Dict[str, Any]] = []
-        self._context_associations: Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
+        self._context_associations: Dict[str, Dict[str, float]] = defaultdict(
+            lambda: defaultdict(float)
+        )
 
-    def reinforce(self, strategy_id: str, outcome: TradeResult, context: Dict[str, Any]) -> Dict[str, Any]:
+    def reinforce(
+        self, strategy_id: str, outcome: TradeResult, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         previous_weight = self._weights[strategy_id]
         self._usage[strategy_id] += 1
 
@@ -136,12 +140,15 @@ class NeuroplasticReinforcementEngine:
             }
         )
 
-    def _update_context_association(self, strategy_id: str, context: Dict[str, Any], reinforcement: float) -> None:
+    def _update_context_association(
+        self, strategy_id: str, context: Dict[str, Any], reinforcement: float
+    ) -> None:
         regime = context.get("regime", "normal")
         volatility = float(context.get("volatility", 0.0))
         volatility_bucket = "low" if volatility < 0.2 else ("med" if volatility < 0.5 else "high")
         key = f"{regime}_{volatility_bucket}"
         alpha = 0.05
         current = self._context_associations[strategy_id][key]
-        self._context_associations[strategy_id][key] = current * (1 - alpha) + float(reinforcement) * alpha
-
+        self._context_associations[strategy_id][key] = (
+            current * (1 - alpha) + float(reinforcement) * alpha
+        )

@@ -7,7 +7,12 @@ from core.data.models import InstrumentType, PriceTick
 
 from src.data.event_bus import BrokerMessage
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.pipeline import CacheRoute, CacheWriterTickHandler, StaticTickRoutingStrategy, StreamingIngestionPipeline
+from src.data.pipeline import (
+    CacheRoute,
+    CacheWriterTickHandler,
+    StaticTickRoutingStrategy,
+    StreamingIngestionPipeline,
+)
 from src.data.kafka_ingestion import KafkaIngestionConfig
 
 

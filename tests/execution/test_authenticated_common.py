@@ -17,9 +17,7 @@ class _StaticCredentialProvider:
     def __init__(self) -> None:
         self._credentials = {"API_KEY": "key", "API_SECRET": "secret"}
 
-    def load(
-        self, *, force: bool = False
-    ) -> dict[str, str]:  # noqa: D401 - simple helper
+    def load(self, *, force: bool = False) -> dict[str, str]:  # noqa: D401 - simple helper
         return dict(self._credentials)
 
     def rotate(self, new_values: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -39,9 +37,7 @@ class DummyAuthenticatedConnector(AuthenticatedRESTExecutionConnector):
             http_client=client,
             credential_provider=_StaticCredentialProvider(),
             enable_stream=False,
-            backoff=HTTPBackoffController(
-                base_delay=0.01, max_delay=0.02, sleeper=lambda _: None
-            ),
+            backoff=HTTPBackoffController(base_delay=0.01, max_delay=0.02, sleeper=lambda _: None),
             circuit_breaker=kwargs.get("circuit_breaker"),
             duplicate_detector=kwargs.get("duplicate_detector"),
             max_retries=kwargs.get("max_retries", 3),
@@ -89,12 +85,8 @@ def test_circuit_breaker_opens_after_failures():
         failures["count"] += 1
         return httpx.Response(503, json={"error": "down"})
 
-    breaker = CircuitBreaker(
-        failure_threshold=2, recovery_timeout=60.0, clock=lambda: 0.0
-    )
-    connector = DummyAuthenticatedConnector(
-        handler, circuit_breaker=breaker, max_retries=2
-    )
+    breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=60.0, clock=lambda: 0.0)
+    connector = DummyAuthenticatedConnector(handler, circuit_breaker=breaker, max_retries=2)
     connector.connect({"API_KEY": "key", "API_SECRET": "secret"})
 
     with pytest.raises(httpx.HTTPStatusError):

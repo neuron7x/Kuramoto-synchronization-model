@@ -140,9 +140,7 @@ class PostmortemTemplate:
         lines.append("")
         lines.append("## Timeline")
         for label in self.timeline:
-            tag_repr = ", ".join(
-                f"{name}={value}" for name, value in sorted(label.tags.items())
-            )
+            tag_repr = ", ".join(f"{name}={value}" for name, value in sorted(label.tags.items()))
             payload = f" – {tag_repr}" if tag_repr else ""
             lines.append(f"- {label.timestamp.isoformat()} – {label.name}{payload}")
         lines.append("")
@@ -283,9 +281,7 @@ class ModelObservabilityOrchestrator:
             span_attributes.update({str(key): value for key, value in attributes.items()})
 
         self.label_event("inference.start", {"request_id": request_id})
-        span = pipeline_span(
-            f"model.{self._config.model_name}.inference", **span_attributes
-        )
+        span = pipeline_span(f"model.{self._config.model_name}.inference", **span_attributes)
         with span as active_span:
             error: BaseException | None = None
             try:
@@ -407,13 +403,13 @@ class ModelObservabilityOrchestrator:
                 entries=snapshot.cache_entries,
             )
             if snapshot.cache_hit_ratio is not None:
-                self._get_series(
-                    f"cache.hit_ratio.{snapshot.cache_name}"
-                ).append(now, snapshot.cache_hit_ratio)
+                self._get_series(f"cache.hit_ratio.{snapshot.cache_name}").append(
+                    now, snapshot.cache_hit_ratio
+                )
             if snapshot.cache_entries is not None:
-                self._get_series(
-                    f"cache.entries.{snapshot.cache_name}"
-                ).append(now, snapshot.cache_entries)
+                self._get_series(f"cache.entries.{snapshot.cache_name}").append(
+                    now, snapshot.cache_entries
+                )
             if snapshot.cache_evictions:
                 self._metrics.increment_model_cache_evictions(
                     self._config.model_name,
@@ -480,9 +476,7 @@ class ModelObservabilityOrchestrator:
         self._events.append(label)
         return label
 
-    def generate_postmortem_template(
-        self, event: DegradationSignal
-    ) -> PostmortemTemplate:
+    def generate_postmortem_template(self, event: DegradationSignal) -> PostmortemTemplate:
         """Build a structured postmortem template for *event*."""
 
         incident_id = event.incident.identifier if event.incident else "(untriaged)"
@@ -503,8 +497,7 @@ class ModelObservabilityOrchestrator:
         template = PostmortemTemplate(
             incident_id=incident_id,
             summary=(
-                f"{self._config.model_name} {event.metric} degradation detected:"
-                f" {event.reason}"
+                f"{self._config.model_name} {event.metric} degradation detected:" f" {event.reason}"
             ),
             started_at=event.timestamp,
             detected_by="model-observability-orchestrator",
@@ -590,9 +583,7 @@ class ModelObservabilityOrchestrator:
         self._check_latency_degradation(duration, now)
         self._check_error_rate_degradation(error_ratio, now)
 
-    def _update_inference_statistics(
-        self, now: float, success: bool
-    ) -> tuple[float, float]:
+    def _update_inference_statistics(self, now: float, success: bool) -> tuple[float, float]:
         window = float(self._config.throughput_window_seconds)
         self._inference_events.append((now, success))
         while self._inference_events and now - self._inference_events[0][0] > window:
@@ -649,8 +640,7 @@ class ModelObservabilityOrchestrator:
             return
 
         reason = (
-            "quality mean outside target band "
-            f"{baseline.target:.4f} ± {baseline.tolerance:.4f}"
+            "quality mean outside target band " f"{baseline.target:.4f} ± {baseline.tolerance:.4f}"
         )
         self._emit_degradation(metric, interval.mean, baseline.target, reason, now)
 
@@ -704,9 +694,7 @@ class ModelObservabilityOrchestrator:
     def _launch_triage(self, event: DegradationSignal) -> None:
         try:
             record = self._incident_manager.create(
-                title=(
-                    f"{self._config.model_name} {event.metric} degradation"
-                ),
+                title=(f"{self._config.model_name} {event.metric} degradation"),
                 description=(
                     f"Automated triage triggered due to {event.reason}.\n"
                     f"Observed value: {event.observed_value:.6f}."

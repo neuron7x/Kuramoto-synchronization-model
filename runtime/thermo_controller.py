@@ -1,4 +1,5 @@
 """Thermodynamic controller with crisis-aware adaptations."""
+
 from __future__ import annotations
 
 import hashlib
@@ -10,7 +11,18 @@ import warnings
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Deque, Dict, Iterable, List, Optional, Protocol, Tuple, runtime_checkable
+from typing import (
+    Any,
+    Callable,
+    Deque,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    runtime_checkable,
+)
 
 import networkx as nx
 import numpy as np
@@ -256,10 +268,7 @@ def gradient_descent_step(graph: nx.DiGraph, snap: MetricsSnapshot, lr: float = 
                 snap.coherency,
             )
             candidate_energy = (
-                non_bond_component
-                + total_bond_energy
-                - base_contribution
-                + candidate_contribution
+                non_bond_component + total_bond_energy - base_contribution + candidate_contribution
             )
 
             if candidate_energy < best_energy - improvement_threshold:
@@ -286,7 +295,9 @@ class ThermoController:
         os.environ.get("THERMO_AUDIT_LOG_PATH", "/var/log/tradepulse/thermo_audit.jsonl")
     )
 
-    def __init__(self, graph: nx.DiGraph, metrics_exporter: Optional[PrometheusMetrics] = None) -> None:
+    def __init__(
+        self, graph: nx.DiGraph, metrics_exporter: Optional[PrometheusMetrics] = None
+    ) -> None:
         self.graph = graph
         self.metrics = metrics_exporter or PrometheusMetrics()
 
@@ -397,10 +408,14 @@ class ThermoController:
             else:
                 tail_risk = 0.0
 
-            coverage_values = [float(m.get("coverage", 1.0)) for m in metrics_list if "coverage" in m]
+            coverage_values = [
+                float(m.get("coverage", 1.0)) for m in metrics_list if "coverage" in m
+            ]
             if coverage_values:
                 recent = coverage_values[-3:]
-                coverage_shortfall = max(0.0, binding.agent.target_coverage - float(np.mean(recent)))
+                coverage_shortfall = max(
+                    0.0, binding.agent.target_coverage - float(np.mean(recent))
+                )
             else:
                 coverage_shortfall = 0.0
 
@@ -426,7 +441,9 @@ class ThermoController:
             self.delta_f_hist = noop
             return
 
-        def _create(factory: Any, name: str, documentation: str, labelnames: Iterable[str] = ()) -> Any:
+        def _create(
+            factory: Any, name: str, documentation: str, labelnames: Iterable[str] = ()
+        ) -> Any:
             labels_tuple = tuple(labelnames)
             try:
                 return factory(name, documentation, labelnames=labels_tuple)
@@ -551,6 +568,7 @@ class ThermoController:
             action="cns_veto",
             topology_changes=[],
         )
+
     def control_step(self) -> None:
         if is_kill_switch_active():
             current_F = float(self.previous_F)
@@ -725,9 +743,8 @@ class ThermoController:
 
                     if proceed:
                         reward = -abs(crisis_result.proposed_F - current_F)
-                        if (
-                            crisis_result.new_topology is not None
-                            and self._apply_topology_changes(crisis_result.new_topology)
+                        if crisis_result.new_topology is not None and self._apply_topology_changes(
+                            crisis_result.new_topology
                         ):
                             self.current_topology = self._graph_to_topology(self.graph)
                             resulting_F = crisis_result.proposed_F
@@ -740,10 +757,7 @@ class ThermoController:
                             steps_in_crisis=self.crisis_step_count,
                         )
 
-                        if (
-                            not self.circuit_breaker_active
-                            and crisis_result.action is not None
-                        ):
+                        if not self.circuit_breaker_active and crisis_result.action is not None:
                             self.recovery_agent.update(
                                 crisis_result.state,
                                 crisis_result.action,
@@ -754,7 +768,9 @@ class ThermoController:
             control_state = crisis_mode if not self.circuit_breaker_active else CRITICAL_HALT_STATE
         else:
             self.crisis_step_count = 0
-            if not self.circuit_breaker_active and gradient_descent_step(self.graph, snapshot, lr=0.02):
+            if not self.circuit_breaker_active and gradient_descent_step(
+                self.graph, snapshot, lr=0.02
+            ):
                 self.current_topology = self._graph_to_topology(self.graph)
                 resulting_F = self._compute_free_energy(snapshot=snapshot)
             control_state = crisis_mode
@@ -953,7 +969,7 @@ class ThermoController:
             df = pd.DataFrame({"latency": latency_values, "coherency": coherency_values})
             filtered = self.vlpo_filter.filter(df, target_col="coherency")
             filtered = self._apply_stabilizer(filtered, ga_phase)
-            for (edge, latency, coherence) in zip(
+            for edge, latency, coherence in zip(
                 edges,
                 filtered["latency"].to_numpy(dtype=float),
                 filtered["coherency"].to_numpy(dtype=float),
@@ -961,7 +977,9 @@ class ThermoController:
                 latencies[edge] = float(latency)
                 coherency[edge] = float(np.clip(coherence, 0.0, 1.0))
 
-        resource_usage = sum(self.graph.nodes[node].get("cpu_norm", 0.1) for node in self.graph.nodes())
+        resource_usage = sum(
+            self.graph.nodes[node].get("cpu_norm", 0.1) for node in self.graph.nodes()
+        )
         resource_usage /= max(len(self.graph.nodes()), 1)
         entropy = estimate_entropy(self.graph)
 
@@ -1060,7 +1078,9 @@ class ThermoController:
 
     def _predict_recovery_window(self, F_new: float, window_size: int) -> List[float]:
         decay = 0.9
-        return [F_new * (decay ** i) + self.baseline_F * (1 - decay ** i) for i in range(1, window_size + 1)]
+        return [
+            F_new * (decay**i) + self.baseline_F * (1 - decay**i) for i in range(1, window_size + 1)
+        ]
 
     def _apply_topology_changes(self, new_topology: Topology) -> bool:
         changed = self._diff_topologies(self.current_topology, new_topology)
@@ -1254,7 +1274,9 @@ class FHMC:
             heavy_tail=float(root_cfg["mfs"].get("heavy_tail", 0.5)),
             base_dt=float(root_cfg["mfs"].get("base_dt_seconds", 60.0)),
         )
-        self.sleep_engine = SleepReplayEngine(dgr_ratio=float(root_cfg["sleep"].get("dgr_ratio", 0.25)))
+        self.sleep_engine = SleepReplayEngine(
+            dgr_ratio=float(root_cfg["sleep"].get("dgr_ratio", 0.25))
+        )
         self._ox = 0.5
         self._th = 0.3
 
@@ -1295,7 +1317,11 @@ class FHMC:
             tail = np.asarray(latents[-window:], dtype=float)
             slope = aperiodic_slope(tail, fs=float(fs_latents), f_lo=0.5, f_hi=40.0)
             self._slope_hist.append(slope)
-            if self.cfg["arousal"].get("slope_gate", False) and slope < -1.5 and self.state == "WAKE":
+            if (
+                self.cfg["arousal"].get("slope_gate", False)
+                and slope < -1.5
+                and self.state == "WAKE"
+            ):
                 self.state = "SLEEP"
 
     def compute_orexin(self, exp_return: float, novelty: float, load: float) -> float:
@@ -1344,7 +1370,9 @@ class FHMC:
 
     def threat_markers(self, returns: Iterable[float]) -> tuple[float, float]:
         series = list(returns)
-        cp_score = cusum_score(series, drift=0.0, threshold=self.cfg["threat"].get("cp_threshold", 5.0))
+        cp_score = cusum_score(
+            series, drift=0.0, threshold=self.cfg["threat"].get("cp_threshold", 5.0)
+        )
         vs = vol_shock(series, window=int(self.cfg["threat"].get("vol_window", 60)))
         return vs, cp_score
 

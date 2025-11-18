@@ -186,9 +186,7 @@ class ConvergenceDetector:
         self.config = config or ConvergenceConfig()
         self.config.validate()
 
-    def compute(
-        self, signals: Mapping[str, pd.Series] | pd.DataFrame
-    ) -> ConvergenceScores:
+    def compute(self, signals: Mapping[str, pd.Series] | pd.DataFrame) -> ConvergenceScores:
         """Evaluate convergence metrics for the provided signals."""
 
         cfg = self.config
@@ -230,7 +228,9 @@ class ConvergenceDetector:
 
         strength_diff = (majority_strength - opposing_strength).fillna(0.0)
 
-        return ConvergenceScores(alignment=alignment, support_ratio=support_ratio, strength_diff=strength_diff)
+        return ConvergenceScores(
+            alignment=alignment, support_ratio=support_ratio, strength_diff=strength_diff
+        )
 
 
 def compute_convergence(
@@ -282,4 +282,3 @@ __all__ = [
     "compute_convergence",
     "is_convergent",
 ]
-

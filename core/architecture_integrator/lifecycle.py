@@ -69,9 +69,7 @@ class LifecycleManager:
                 if self._on_error:
                     self._on_error(name, exc)
                 if stop_on_error:
-                    raise RuntimeError(
-                        f"Component initialization failed: {name}"
-                    ) from exc
+                    raise RuntimeError(f"Component initialization failed: {name}") from exc
 
         return initialized
 
@@ -104,9 +102,7 @@ class LifecycleManager:
                     started.append(name)
                     logger.info(f"Component {name} started successfully")
                 elif component.status != ComponentStatus.RUNNING:
-                    logger.warning(
-                        f"Component {name} not in INITIALIZED state, skipping start"
-                    )
+                    logger.warning(f"Component {name} not in INITIALIZED state, skipping start")
             except Exception as exc:
                 logger.error(f"Failed to start component {name}: {exc}")
                 if self._on_error:
@@ -176,9 +172,7 @@ class LifecycleManager:
                         f"Cannot initialize {name}: dependency {dep} is not initialized"
                     )
             elif not self._registry.has_capability(dep):
-                raise RuntimeError(
-                    f"Cannot initialize {name}: dependency {dep} is not available"
-                )
+                raise RuntimeError(f"Cannot initialize {name}: dependency {dep} is not available")
 
         component.initialize()
 
@@ -202,9 +196,7 @@ class LifecycleManager:
                     ComponentStatus.RUNNING,
                     ComponentStatus.DEGRADED,
                 }:
-                    raise RuntimeError(
-                        f"Cannot start {name}: dependency {dep} is not running"
-                    )
+                    raise RuntimeError(f"Cannot start {name}: dependency {dep} is not running")
 
         component.start()
 

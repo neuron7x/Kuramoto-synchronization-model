@@ -109,9 +109,7 @@ class PromptSanitizer:
     ) -> None:
         rules = tuple(blocked_patterns or self._DEFAULT_RULES)
         self._custom_rules = tuple(self._compile_rule(entry) for entry in rules)
-        self._security_rules = tuple(
-            self._compile_rule(entry) for entry in self._SECURITY_RULES
-        )
+        self._security_rules = tuple(self._compile_rule(entry) for entry in self._SECURITY_RULES)
         self._max_length = max_length
 
     @staticmethod
@@ -178,9 +176,7 @@ class PromptRunObserver:
     def on_render(self, record: PromptExecutionRecord) -> None:  # pragma: no cover - hook
         del record
 
-    def on_outcome(
-        self, record_id: str, outcome: PromptOutcome
-    ) -> None:  # pragma: no cover - hook
+    def on_outcome(self, record_id: str, outcome: PromptOutcome) -> None:  # pragma: no cover - hook
         del record_id, outcome
 
 
@@ -272,9 +268,7 @@ class PromptManager:
         try:
             family, variant = self._records[record_id]
         except KeyError as exc:
-            raise PromptTemplateNotFoundError(
-                f"Unknown record identifier '{record_id}'"
-            ) from exc
+            raise PromptTemplateNotFoundError(f"Unknown record identifier '{record_id}'") from exc
         try:
             rollback = self._library.record_outcome(family, variant, outcome)
             self._notify_outcome(record_id, outcome)
@@ -297,20 +291,15 @@ class PromptManager:
     # Internal helpers
     def _sanitize_context(self, context: PromptContext) -> PromptContext:
         sanitized_fragments = tuple(
-            self._sanitizer.sanitize_fragment(fragment)
-            for fragment in context.sorted_fragments()
+            self._sanitizer.sanitize_fragment(fragment) for fragment in context.sorted_fragments()
         )
         return PromptContext(fragments=sanitized_fragments, metadata=context.metadata)
 
-    def _render_template(
-        self, template: PromptTemplate, parameters: Mapping[str, str]
-    ) -> str:
+    def _render_template(self, template: PromptTemplate, parameters: Mapping[str, str]) -> str:
         try:
             return Template(template.content).substitute(parameters)
         except KeyError as exc:  # pragma: no cover - defensive branch
-            raise PromptGuardrailViolation(
-                f"Missing template placeholder: {exc.args[0]}"
-            ) from exc
+            raise PromptGuardrailViolation(f"Missing template placeholder: {exc.args[0]}") from exc
 
     def _assemble_prompt(
         self,
@@ -320,9 +309,7 @@ class PromptManager:
     ) -> tuple[str, tuple[ContextFragment, ...], tuple[ContextFragment, ...]]:
         prompt = base_prompt
         if len(prompt) > window.max_chars:
-            raise PromptGuardrailViolation(
-                "base prompt exceeds the configured context window"
-            )
+            raise PromptGuardrailViolation("base prompt exceeds the configured context window")
         included: list[ContextFragment] = []
         truncated: list[ContextFragment] = []
         current_length = len(prompt)
@@ -347,9 +334,7 @@ class PromptManager:
                 truncated.append(fragment.truncated(0))
                 continue
             truncated_fragment = fragment.truncated(available_for_content)
-            t_prefix, t_content = self._fragment_components(
-                truncated_fragment, window.separator
-            )
+            t_prefix, t_content = self._fragment_components(truncated_fragment, window.separator)
             total_additional = len(t_prefix) + len(t_content)
             if total_additional > max_additional:
                 excess = total_additional - max_additional
@@ -429,4 +414,3 @@ class PromptManager:
                 observer.on_outcome(record_id, outcome)
             except Exception:  # pragma: no cover - defensive branch
                 self._logger.exception("prompt.observer.outcome-failed")
-

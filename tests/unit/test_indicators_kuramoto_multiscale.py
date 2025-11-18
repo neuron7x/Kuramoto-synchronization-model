@@ -132,9 +132,7 @@ def test_fractal_resampler_resample_many_honours_fractal_ordering() -> None:
     assert stats["cached_timeframes"] == pytest.approx(3.0)
 
 
-def test_multiscale_analyzer_marks_skipped_timeframes_when_insufficient_samples() -> (
-    None
-):
+def test_multiscale_analyzer_marks_skipped_timeframes_when_insufficient_samples() -> None:
     df = _synth_dataframe(periods=90)
     analyzer = MultiScaleKuramoto(
         timeframes=(TimeFrame.M1, TimeFrame.M15),
@@ -178,9 +176,7 @@ def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
         def __init__(self) -> None:
             self.price_cols: list[str] = []
 
-        def analyze(
-            self, _: pd.DataFrame, *, price_col: str = "close"
-        ) -> MultiScaleResult:
+        def analyze(self, _: pd.DataFrame, *, price_col: str = "close") -> MultiScaleResult:
             self.price_cols.append(price_col)
             return MultiScaleResult(
                 consensus_R=0.55,
@@ -188,12 +184,8 @@ def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
                 dominant_scale=TimeFrame.M5,
                 adaptive_window=144,
                 timeframe_results={
-                    TimeFrame.M1: KuramotoResult(
-                        order_parameter=0.42, mean_phase=0.1, window=128
-                    ),
-                    TimeFrame.M5: KuramotoResult(
-                        order_parameter=0.68, mean_phase=0.3, window=144
-                    ),
+                    TimeFrame.M1: KuramotoResult(order_parameter=0.42, mean_phase=0.1, window=128),
+                    TimeFrame.M5: KuramotoResult(order_parameter=0.68, mean_phase=0.3, window=144),
                 },
                 skipped_timeframes=(TimeFrame.M15,),
             )
@@ -211,9 +203,7 @@ def test_multiscale_feature_reports_metadata_and_custom_price_column() -> None:
     assert outcome.metadata["cross_scale_coherence"] == pytest.approx(
         0.82, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
     )
-    assert outcome.metadata["R_M1"] == pytest.approx(
-        0.42, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert outcome.metadata["R_M1"] == pytest.approx(0.42, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
     assert outcome.metadata["window_M5"] == 144
     assert outcome.metadata["energy_profile"] == {}
 
@@ -247,14 +237,7 @@ def test_multiscale_analyzer_exposes_resampled_series() -> None:
     assert TimeFrame.M1 in result.timeframe_series
     assert TimeFrame.M5 in result.timeframe_series
 
-    expected = (
-        df["close"]
-        .sort_index()
-        .resample(TimeFrame.M5.pandas_freq)
-        .last()
-        .ffill()
-        .dropna()
-    )
+    expected = df["close"].sort_index().resample(TimeFrame.M5.pandas_freq).last().ffill().dropna()
     pd.testing.assert_series_equal(result.timeframe_series[TimeFrame.M5], expected)
 
 
@@ -286,7 +269,9 @@ def test_timeframe_cache_reuses_resampled_series(monkeypatch: pytest.MonkeyPatch
     feature = MultiScaleKuramotoFeature(analyzer=analyzer, cache=cache)
 
     def fail_resample(*_: object, **__: object) -> pd.Series:
-        raise AssertionError("_resample_prices should not be used when timeframe_series is populated")
+        raise AssertionError(
+            "_resample_prices should not be used when timeframe_series is populated"
+        )
 
     monkeypatch.setattr(feature.analyzer, "_resample_prices", fail_resample)
 

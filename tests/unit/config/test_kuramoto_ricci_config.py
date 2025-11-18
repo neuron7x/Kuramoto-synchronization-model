@@ -78,9 +78,7 @@ def test_loader_reads_yaml_values() -> None:
 
 def test_invalid_thresholds_raise_error() -> None:
     payload = {
-        "composite": {
-            "thresholds": {"R_proto_emergent": 0.8, "R_strong_emergent": 0.7}
-        },
+        "composite": {"thresholds": {"R_proto_emergent": 0.8, "R_strong_emergent": 0.7}},
     }
 
     with pytest.raises(ConfigError):

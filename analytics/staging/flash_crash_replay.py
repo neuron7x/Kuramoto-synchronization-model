@@ -1,4 +1,5 @@
 """Flash-crash replay for staging validation."""
+
 from __future__ import annotations
 
 import json
@@ -118,13 +119,17 @@ def simulate_flash_crash_replay(
 
     telemetry = list(controller.telemetry_history)
     monotonic_violations = controller.get_monotonic_violations_total()
-    circuit_breaker_triggered = any(bool(entry.get("circuit_breaker_active")) for entry in telemetry)
+    circuit_breaker_triggered = any(
+        bool(entry.get("circuit_breaker_active")) for entry in telemetry
+    )
     critical_steps = [
         idx
         for idx, entry in enumerate(telemetry)
         if entry.get("crisis_mode") in {CrisisMode.CRITICAL, CRITICAL_HALT_STATE}
     ]
-    manual_override_steps = [idx for idx, entry in enumerate(telemetry) if entry.get("manual_override")]
+    manual_override_steps = [
+        idx for idx, entry in enumerate(telemetry) if entry.get("manual_override")
+    ]
     tail_free_energy_mean_95 = _compute_tail_free_energy_mean(free_energy_series, alpha=0.05)
 
     metrics = FlashCrashMetrics(
@@ -145,7 +150,9 @@ def simulate_flash_crash_replay(
         tail_free_energy_mean_95=float(tail_free_energy_mean_95),
     )
 
-    return FlashCrashResult(metrics=metrics, telemetry=telemetry, free_energy_series=free_energy_series)
+    return FlashCrashResult(
+        metrics=metrics, telemetry=telemetry, free_energy_series=free_energy_series
+    )
 
 
 def write_staging_metrics(result: FlashCrashResult, path: Path | str) -> None:
@@ -185,7 +192,7 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
         "",
         "## Thermodynamic Response",
         f"- RL actions observed: {len(metrics.rl_actions)}",
-        f"- RL action changes: {metrics.rl_action_changes} (rate {metrics.rl_action_change_rate:.3f})",
+        f"- RL action changes: {metrics.rl_action_changes} (rate {metrics.rl_action_change_rate:.3f})",  # noqa: E501
         f"- RL policy stable: {'yes' if metrics.rl_stable else 'no'}",
         f"- Monotonic invariant violations: {metrics.monotonic_violations}",
         "",
@@ -196,13 +203,15 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
     ]
 
     if metrics.critical_steps:
-        report_lines.append(f"- CRITICAL mode entered at steps: {', '.join(map(str, metrics.critical_steps))}")
+        report_lines.append(
+            f"- CRITICAL mode entered at steps: {', '.join(map(str, metrics.critical_steps))}"
+        )
     else:
         report_lines.append("- CRITICAL mode was not triggered.")
 
     if metrics.manual_override_steps:
         report_lines.append(
-            f"- Manual override engaged at steps: {', '.join(map(str, metrics.manual_override_steps))}."
+            f"- Manual override engaged at steps: {', '.join(map(str, metrics.manual_override_steps))}."  # noqa: E501
         )
     else:
         report_lines.append("- Manual override was not required.")
@@ -215,10 +224,7 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
     report_lines.extend(
         [
             "## Synthetic Tail Metrics (Internal Benchmark)",
-            (
-                "- Tail free-energy mean (95% internal): "
-                f"{metrics.tail_free_energy_mean_95:.6f}"
-            ),
+            ("- Tail free-energy mean (95% internal): " f"{metrics.tail_free_energy_mean_95:.6f}"),
             (
                 "- Internal tail budget met: yes"
                 if metrics.tail_free_energy_mean_95 < 0.101
@@ -226,13 +232,15 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
             ),
             "",
             "## Link Activator Stability",
-            "- Protocol traces:"
+            "- Protocol traces:",
         ]
     )
 
     for edge, trace in metrics.link_activator_protocols.items():
         counts = Counter(trace)
-        summary = ", ".join(f"{protocol or 'none'} × {count}" for protocol, count in sorted(counts.items()))
+        summary = ", ".join(
+            f"{protocol or 'none'} × {count}" for protocol, count in sorted(counts.items())
+        )
         report_lines.append(f"  - {edge}: {summary}")
 
     report_lines.append(
@@ -245,7 +253,7 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
             "## Audit Guarantees",
             "- Thermodynamic decisions are streamed to `/var/log/tradepulse/thermo_audit.jsonl`",
             "  for 7-year retention, ensuring every deviation from invariants is reviewable.",
-            "- Circuit breaker blocks topology evolution until an authorised manual override clears",
+            "- Circuit breaker blocks topology evolution until an authorised manual override clears",  # noqa: E501
             "  the halt state.",
         ]
     )
@@ -305,7 +313,9 @@ def _update_graph_metrics(graph: nx.DiGraph, toxicity: float, rng: np.random.Gen
         noise = float(rng.normal(0, 0.02))
 
         data["latency_norm"] = max(base_latency * latency_scale + abs(noise), 0.05)
-        data["coherency"] = float(np.clip(base_coherency - coherency_penalty - abs(noise), 0.1, 0.99))
+        data["coherency"] = float(
+            np.clip(base_coherency - coherency_penalty - abs(noise), 0.1, 0.99)
+        )
 
     for node, attrs in graph.nodes(data=True):
         cpu = float(attrs.get("cpu_norm", 0.4))

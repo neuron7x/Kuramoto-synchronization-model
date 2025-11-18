@@ -26,7 +26,7 @@ from core.agent.strategy import PiAgent, Strategy
 
 def test_epsilon_greedy_prefers_best_arm_when_exploit() -> None:
     """Test that EpsilonGreedy selects the best-performing arm when exploiting.
-    
+
     With epsilon=0.0 (pure exploitation), the agent should always select
     the arm with the highest average reward.
     """
@@ -38,7 +38,7 @@ def test_epsilon_greedy_prefers_best_arm_when_exploit() -> None:
 
 def test_ucb1_selects_unseen_arm_first() -> None:
     """Test that UCB1 prioritizes arms that haven't been tried yet.
-    
+
     Upper Confidence Bound algorithm should explore untried arms first
     before refining estimates of known arms.
     """
@@ -120,9 +120,7 @@ def test_strategy_simulate_performance_within_expected_range() -> None:
 
 
 def test_pi_agent_detects_instability_and_repair() -> None:
-    agent = PiAgent(
-        strategy=Strategy(name="s", params={"alpha": 1.0, "beta": math.nan})
-    )
+    agent = PiAgent(strategy=Strategy(name="s", params={"alpha": 1.0, "beta": math.nan}))
     state = {"R": 0.8, "delta_H": -0.1, "kappa_mean": -0.05}
     assert agent.evaluate_and_adapt(state) == "enter"
     agent.repair()

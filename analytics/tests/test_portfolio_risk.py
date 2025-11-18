@@ -20,9 +20,7 @@ def _build_returns_frame(rows: int = 260) -> pd.DataFrame:
     asset_a = 0.01 * np.sin(angles)
     asset_b = 0.012 * np.cos(angles)
     asset_c = 0.008 * np.sin(angles * 1.5)
-    return pd.DataFrame(
-        {"AssetA": asset_a, "AssetB": asset_b, "AssetC": asset_c}, index=index
-    )
+    return pd.DataFrame({"AssetA": asset_a, "AssetB": asset_b, "AssetC": asset_c}, index=index)
 
 
 def test_stress_tester_generates_comprehensive_report() -> None:
@@ -62,9 +60,7 @@ def test_stress_tester_generates_comprehensive_report() -> None:
     assert report.risk_metrics.expected_shortfall >= report.risk_metrics.var
     assert report.scenario_results[0].name == "Covid-19 FX Shock"
     assert pytest.approx(report.scenario_results[0].pnl, rel=1e-6) == (
-        exposures["AssetA"] * -0.05
-        + exposures["AssetB"] * -0.07
-        + exposures["AssetC"] * -0.04
+        exposures["AssetA"] * -0.05 + exposures["AssetB"] * -0.07 + exposures["AssetC"] * -0.04
     )
 
     vol_result = report.volatility_results[0]
@@ -120,4 +116,3 @@ def test_historical_shocks_require_positive_portfolio_value() -> None:
 
     with pytest.raises(ValueError, match="portfolio_value must be positive"):
         tester.evaluate_historical_shocks([scenario], portfolio_value=-10.0)
-

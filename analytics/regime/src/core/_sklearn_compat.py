@@ -199,7 +199,9 @@ class TimeSeriesSplit:
         self.n_splits = int(n_splits)
         self.test_size = test_size
 
-    def split(self, X: ArrayLike | Iterable[object]) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
+    def split(
+        self, X: ArrayLike | Iterable[object]
+    ) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
         n_samples = len(X) if isinstance(X, np.ndarray) else len(list(X))
         indices = np.arange(n_samples)
         if self.n_splits >= n_samples:
@@ -290,7 +292,9 @@ def _pava(y: ArrayLike, weights: ArrayLike) -> ArrayLike:
             continue
 
         total_weight = weights[idx] + weights[idx + 1]
-        total_value = (weights[idx] * values[idx] + weights[idx + 1] * values[idx + 1]) / total_weight
+        total_value = (
+            weights[idx] * values[idx] + weights[idx + 1] * values[idx + 1]
+        ) / total_weight
 
         values[idx] = total_value
         weights[idx] = total_weight
@@ -318,4 +322,3 @@ __all__ = [
     "roc_auc_score",
     "average_precision_score",
 ]
-

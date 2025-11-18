@@ -143,9 +143,7 @@ class AutomationRunner:
         for step in self._steps:
             for dependency in step.dependencies:
                 if dependency not in self._step_map:
-                    raise ValueError(
-                        f"Step '{step.name}' depends on unknown step '{dependency}'"
-                    )
+                    raise ValueError(f"Step '{step.name}' depends on unknown step '{dependency}'")
 
     def _topological_order(self) -> list[str]:
         adjacency: dict[str, set[str]] = {step.name: set() for step in self._steps}
@@ -165,9 +163,7 @@ class AutomationRunner:
         while queue:
             current = queue.popleft()
             order.append(current)
-            for successor in sorted(
-                adjacency[current], key=lambda item: self._index_of(item)
-            ):
+            for successor in sorted(adjacency[current], key=lambda item: self._index_of(item)):
                 indegree[successor] -= 1
                 if indegree[successor] == 0:
                     queue.append(successor)
@@ -277,4 +273,3 @@ class AutomationRunner:
             started_at=started_at,
             completed_at=completed_at,
         )
-

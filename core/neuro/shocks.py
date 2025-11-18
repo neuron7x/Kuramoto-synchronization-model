@@ -58,7 +58,6 @@ if nn is not None and torch is not None and Normal is not None and F is not None
             std = torch.clamp(F.softplus(self._log_std), min=1e-3)
             return Normal(mean, std)
 
-
 else:
 
     class _ShockPolicy:
@@ -86,7 +85,9 @@ class ShockScenarioGenerator:
             ) from _IMPORT_ERROR
 
         self._device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
-        baseline_tensor = torch.tensor(list(baseline_shocks), dtype=torch.float32, device=self._device)
+        baseline_tensor = torch.tensor(
+            list(baseline_shocks), dtype=torch.float32, device=self._device
+        )
         if baseline_tensor.ndim != 2:
             raise ValueError("baseline_shocks must form a 2-D tensor")
         if baseline_tensor.size(0) < 2:
@@ -96,7 +97,9 @@ class ShockScenarioGenerator:
         if feature_dim == 0:
             raise ValueError("baseline_shocks must contain at least one feature")
 
-        self._feature_names = tuple(feature_names or (f"feature_{idx}" for idx in range(feature_dim)))
+        self._feature_names = tuple(
+            feature_names or (f"feature_{idx}" for idx in range(feature_dim))
+        )
         if len(self._feature_names) != feature_dim:
             raise ValueError("feature_names length must match baseline feature dimension")
 
@@ -177,7 +180,9 @@ class ShockScenarioGenerator:
         indices = torch.randint(0, self._baseline.size(0), (batch,), device=self._device)
         return self._baseline[indices]
 
-    def _evaluate(self, state: torch.Tensor, scenario: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    def _evaluate(
+        self, state: torch.Tensor, scenario: torch.Tensor
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         novelty = torch.tanh((scenario - state).abs().mean(dim=1))
         correlation = torch.abs(F.cosine_similarity(state, scenario, dim=1))
 
@@ -193,7 +198,9 @@ class ShockScenarioGenerator:
         metrics = {"novelty": novelty, "drawdown": drawdown, "correlation": correlation}
         return reward, metrics
 
-    def _capture_best(self, sample: torch.Tensor, metrics: Mapping[str, torch.Tensor], index: int) -> None:
+    def _capture_best(
+        self, sample: torch.Tensor, metrics: Mapping[str, torch.Tensor], index: int
+    ) -> None:
         scenario = self._build_scenario(sample, metrics, index)
         if self._best is None or scenario.novelty_score > self._best.novelty_score:
             self._best = scenario
@@ -204,10 +211,7 @@ class ShockScenarioGenerator:
         metrics: Mapping[str, torch.Tensor],
         index: int,
     ) -> ShockScenario:
-        values = {
-            name: float(sample[i].item())
-            for i, name in enumerate(self._feature_names)
-        }
+        values = {name: float(sample[i].item()) for i, name in enumerate(self._feature_names)}
         scenario = ShockScenario(
             values=values,
             predicted_drawdown=float(metrics["drawdown"][index].item()),

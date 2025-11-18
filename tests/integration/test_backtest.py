@@ -40,9 +40,7 @@ def test_walk_forward_with_latency_and_slippage() -> None:
         prices,
         long_signal,
         fee=0.0005,
-        latency=LatencyConfig(
-            signal_to_order=1, order_to_execution=1, execution_to_fill=1
-        ),
+        latency=LatencyConfig(signal_to_order=1, order_to_execution=1, execution_to_fill=1),
         order_book=OrderBookConfig(spread_bps=5.0, depth_profile=(0.5, 0.5)),
         slippage=SlippageConfig(per_unit_bps=10.0, depth_impact_bps=5.0),
     )

@@ -68,9 +68,7 @@ class TestCSVFuzzTests:
             max_size=50,
         )
     )
-    def test_csv_handles_malformed_data_gracefully(
-        self, rows: list[dict], tmp_path: Path
-    ) -> None:
+    def test_csv_handles_malformed_data_gracefully(self, rows: list[dict], tmp_path: Path) -> None:
         """CSV parser should handle malformed data without crashing."""
         csv_path = tmp_path / "fuzz.csv"
 
@@ -158,9 +156,7 @@ class TestCSVFuzzTests:
 
         assert len(records) == 1
         assert records[0].ts == pytest.approx(ts, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
-        assert float(records[0].price) == pytest.approx(
-            price, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-        )
+        assert float(records[0].price) == pytest.approx(price, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
         assert float(records[0].volume) == pytest.approx(
             volume, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
         )
@@ -216,9 +212,7 @@ class TestCSVFuzzTests:
 
             # Write valid rows
             for i in range(valid_rows):
-                writer.writerow(
-                    {"ts": str(i), "price": str(100 + i), "volume": str(10 * i)}
-                )
+                writer.writerow({"ts": str(i), "price": str(100 + i), "volume": str(10 * i)})
 
             # Write invalid rows
             for i in range(invalid_rows):
@@ -235,9 +229,7 @@ class TestCSVFuzzTests:
         """CSV with extra columns beyond required should work."""
         csv_path = tmp_path / "extra_cols.csv"
         with csv_path.open("w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(
-                f, fieldnames=["ts", "price", "volume", "open", "high", "low"]
-            )
+            writer = csv.DictWriter(f, fieldnames=["ts", "price", "volume", "open", "high", "low"])
             writer.writeheader()
             writer.writerow(
                 {
@@ -264,9 +256,7 @@ class TestCSVFuzzTests:
         with csv_path.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=["ts", "price", "volume", "symbol"])
             writer.writeheader()
-            writer.writerow(
-                {"ts": "1", "price": "100", "volume": "5", "symbol": "₿TC/USDT"}
-            )
+            writer.writerow({"ts": "1", "price": "100", "volume": "5", "symbol": "₿TC/USDT"})
 
         ingestor = DataIngestor()
         records: list[Ticker] = []
@@ -280,15 +270,9 @@ class TestTickerProperties:
 
     @settings(max_examples=100, deadline=None)
     @given(
-        ts=st.floats(
-            min_value=0.0, max_value=2e9, allow_nan=False, allow_infinity=False
-        ),
-        price=st.floats(
-            min_value=0.01, max_value=1e8, allow_nan=False, allow_infinity=False
-        ),
-        volume=st.floats(
-            min_value=0.0, max_value=1e10, allow_nan=False, allow_infinity=False
-        ),
+        ts=st.floats(min_value=0.0, max_value=2e9, allow_nan=False, allow_infinity=False),
+        price=st.floats(min_value=0.01, max_value=1e8, allow_nan=False, allow_infinity=False),
+        volume=st.floats(min_value=0.0, max_value=1e10, allow_nan=False, allow_infinity=False),
     )
     def test_ticker_creation(self, ts: float, price: float, volume: float) -> None:
         """Ticker should be created with provided values."""
@@ -307,7 +291,5 @@ class TestTickerProperties:
 
     def test_ticker_volume_defaults_to_zero(self) -> None:
         """Ticker volume should default to 0.0 if not provided."""
-        ticker = Ticker.create(
-            symbol="FUZZ", venue="TEST", price=100.0, timestamp=1234.5
-        )
+        ticker = Ticker.create(symbol="FUZZ", venue="TEST", price=100.0, timestamp=1234.5)
         assert ticker.volume == Decimal("0")

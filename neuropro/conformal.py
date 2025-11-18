@@ -33,9 +33,7 @@ class ConformalCQR:
         w /= w.sum()
         return w
 
-    def fit_calibrate(
-        self, L_cal: Iterable[float], U_cal: Iterable[float], y_cal: Iterable[float]
-    ):
+    def fit_calibrate(self, L_cal: Iterable[float], U_cal: Iterable[float], y_cal: Iterable[float]):
         L_arr = np.asarray(L_cal, dtype=float)
         U_arr = np.asarray(U_cal, dtype=float)
         y_arr = np.asarray(y_cal, dtype=float)

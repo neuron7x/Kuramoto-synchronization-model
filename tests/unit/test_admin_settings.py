@@ -16,9 +16,7 @@ def test_admin_settings_reads_environment(monkeypatch):
     monkeypatch.setenv("TRADEPULSE_ADMIN_SUBJECT", "env-operator")
     monkeypatch.setenv("TRADEPULSE_ADMIN_RATE_LIMIT_MAX_ATTEMPTS", "7")
     monkeypatch.setenv("TRADEPULSE_ADMIN_RATE_LIMIT_INTERVAL_SECONDS", "15")
-    monkeypatch.setenv(
-        "TRADEPULSE_AUDIT_WEBHOOK_URL", "https://audit.example.com/ingest"
-    )
+    monkeypatch.setenv("TRADEPULSE_AUDIT_WEBHOOK_URL", "https://audit.example.com/ingest")
 
     settings = AdminApiSettings()
 
@@ -233,9 +231,7 @@ def test_build_configuration_store_provisions_namespaces(tmp_path):
     master_key = SecretVault.generate_key().decode("utf-8")
     template_dir = tmp_path / "templates"
     template_dir.mkdir()
-    (template_dir / "config.yaml.j2").write_text(
-        "endpoint={{ endpoint }}\n", encoding="utf-8"
-    )
+    (template_dir / "config.yaml.j2").write_text("endpoint={{ endpoint }}\n", encoding="utf-8")
 
     settings = AdminApiSettings(
         audit_secret="audit-secret-value",

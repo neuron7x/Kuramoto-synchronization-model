@@ -1,4 +1,5 @@
 """Habitual policy head and adaptation utilities."""
+
 from __future__ import annotations
 
 import torch

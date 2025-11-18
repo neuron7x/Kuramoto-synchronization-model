@@ -56,9 +56,7 @@ class RiskService:
 
             return assessment
         except ValueError as exc:
-            raise ValidationError(
-                f"Invalid exposures for risk computation: {exc}"
-            ) from exc
+            raise ValidationError(f"Invalid exposures for risk computation: {exc}") from exc
 
 
 __all__ = ["RiskService"]

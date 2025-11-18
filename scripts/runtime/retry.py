@@ -10,9 +10,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 _DEFAULT_STATUSES = frozenset({429, 500, 502, 503, 504})
-_DEFAULT_METHODS = frozenset(
-    {"HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"}
-)
+_DEFAULT_METHODS = frozenset({"HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"})
 
 
 def create_resilient_session(

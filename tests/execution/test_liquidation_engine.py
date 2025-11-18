@@ -52,7 +52,9 @@ def test_plan_reduces_position_to_restore_margin() -> None:
             make_position("ETH-PERP", 1.0, 200.0, 0.4),  # maintenance: 80
         ],
     )
-    engine = LiquidationEngine(lambda *_args: None, config=LiquidationEngineConfig(target_margin_ratio=1.1))
+    engine = LiquidationEngine(
+        lambda *_args: None, config=LiquidationEngineConfig(target_margin_ratio=1.1)
+    )
 
     plan = engine.plan(account)
 

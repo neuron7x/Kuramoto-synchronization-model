@@ -45,9 +45,7 @@ def configure_deterministic_runtime(
     """Apply deterministic defaults for random seed and locale."""
 
     resolved_seed = (
-        seed
-        if seed is not None
-        else int(os.getenv("SCRIPTS_RANDOM_SEED", DEFAULT_SEED))
+        seed if seed is not None else int(os.getenv("SCRIPTS_RANDOM_SEED", DEFAULT_SEED))
     )
     resolved_locale = locale_name or os.getenv("SCRIPTS_LOCALE", DEFAULT_LOCALE)
 

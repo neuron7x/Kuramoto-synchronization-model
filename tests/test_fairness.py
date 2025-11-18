@@ -12,8 +12,18 @@ from src.risk import evaluate_fairness, write_fairness_report
 @pytest.mark.parametrize(
     "y_true,y_pred,groups,expected",
     [
-        ([1, 0, 1, 0], [1, 0, 1, 0], ["A", "A", "B", "B"], {"demographic_parity": 0.0, "equal_opportunity": 0.0}),
-        ([1, 1, 1, 1], [1, 1, 0, 0], ["A", "A", "B", "B"], {"demographic_parity": 1.0, "equal_opportunity": 1.0}),
+        (
+            [1, 0, 1, 0],
+            [1, 0, 1, 0],
+            ["A", "A", "B", "B"],
+            {"demographic_parity": 0.0, "equal_opportunity": 0.0},
+        ),
+        (
+            [1, 1, 1, 1],
+            [1, 1, 0, 0],
+            ["A", "A", "B", "B"],
+            {"demographic_parity": 1.0, "equal_opportunity": 1.0},
+        ),
     ],
 )
 def test_evaluate_fairness_outputs_expected_metrics(y_true, y_pred, groups, expected) -> None:

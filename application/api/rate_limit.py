@@ -192,9 +192,7 @@ class SlidingWindowRateLimiter:
                 return specific, f"subject:{subject}"
             return self._settings.default_policy, f"subject:{subject}"
         if ip_address:
-            policy = (
-                self._settings.unauthenticated_policy or self._settings.default_policy
-            )
+            policy = self._settings.unauthenticated_policy or self._settings.default_policy
             return policy, f"ip:{ip_address}"
         return self._settings.default_policy, "anonymous"
 
@@ -249,9 +247,7 @@ def build_rate_limiter(settings: ApiRateLimitSettings) -> SlidingWindowRateLimit
                 "Redis-backed rate limiting requires the 'redis' package to be installed."
             ) from exc
 
-        client = from_url(
-            str(settings.redis_url), encoding="utf-8", decode_responses=False
-        )
+        client = from_url(str(settings.redis_url), encoding="utf-8", decode_responses=False)
         backend: RateLimiterBackend = RedisSlidingWindowBackend(
             client, key_prefix=settings.redis_key_prefix
         )

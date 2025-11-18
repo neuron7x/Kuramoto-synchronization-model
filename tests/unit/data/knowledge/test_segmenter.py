@@ -26,9 +26,7 @@ def _make_document(*, document_id: str, content: str) -> Document:
 
 
 def test_segmenter_respects_token_window_and_overlap() -> None:
-    segmenter = DocumentSegmenter(
-        SegmentationConfig(max_segment_tokens=5, overlap_tokens=2)
-    )
+    segmenter = DocumentSegmenter(SegmentationConfig(max_segment_tokens=5, overlap_tokens=2))
     doc = _make_document(
         document_id="doc-1",
         content=" ".join(f"token-{i}" for i in range(12)),

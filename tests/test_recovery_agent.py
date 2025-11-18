@@ -1,4 +1,5 @@
 """Tests for the adaptive recovery agent."""
+
 import numpy as np
 
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryAction, RecoveryState
@@ -30,7 +31,9 @@ def test_choose_action_uses_epsilon_greedy() -> None:
 def test_q_update_improves_value() -> None:
     agent = AdaptiveRecoveryAgent(alpha=0.5)
     state = RecoveryState(F_current=0.11, F_baseline=0.10, latency_spike=2.0, steps_in_crisis=3)
-    next_state = RecoveryState(F_current=0.105, F_baseline=0.10, latency_spike=1.5, steps_in_crisis=4)
+    next_state = RecoveryState(
+        F_current=0.105, F_baseline=0.10, latency_spike=1.5, steps_in_crisis=4
+    )
     action = RecoveryAction.MEDIUM
     before = agent.Q[(agent.discretize_state(state), action)]
     agent.update(state, action, reward=0.002, next_state=next_state)

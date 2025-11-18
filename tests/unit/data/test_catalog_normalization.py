@@ -31,10 +31,7 @@ def test_normalize_symbol_spot_alias() -> None:
 
 
 def test_normalize_symbol_derivative_with_hint() -> None:
-    assert (
-        normalize_symbol("ethusdt", instrument_type_hint=InstrumentHint.FUTURE)
-        == "ETH-USDT"
-    )
+    assert normalize_symbol("ethusdt", instrument_type_hint=InstrumentHint.FUTURE) == "ETH-USDT"
 
 
 def test_normalize_symbol_with_string_hint() -> None:
@@ -54,10 +51,7 @@ def test_normalize_symbol_known_quote_split() -> None:
 
 
 def test_normalize_symbol_handles_custom_separator() -> None:
-    assert (
-        normalize_symbol("eth:usd", instrument_type_hint=InstrumentHint.SPOT)
-        == "ETH/USD"
-    )
+    assert normalize_symbol("eth:usd", instrument_type_hint=InstrumentHint.SPOT) == "ETH/USD"
 
 
 def test_normalize_symbol_handles_unknown_quote_suffix() -> None:

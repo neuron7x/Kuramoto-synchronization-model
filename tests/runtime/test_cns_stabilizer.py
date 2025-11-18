@@ -211,7 +211,9 @@ def test_hybrid_throttle_emits_event():
     stabilizer.delta_f_history = deque([0.0, 0.5, 1.5], maxlen=10)
     raw = np.linspace(-5.0, 5.0, 64)
     stabilizer.process_signals_sync(raw.tolist(), ga_phase="pre_evolve")
-    hybrid_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("type") == "hybrid"]
+    hybrid_events = [
+        evt for evt in stabilizer.get_eventlog() if evt["data"].get("type") == "hybrid"
+    ]
     assert hybrid_events
     throttle_event = hybrid_events[-1]
     assert throttle_event["data"].get("action") == "throttle"
@@ -239,7 +241,9 @@ def test_monotonic_violation_triggers_veto(monkeypatch):
     assert event["data"].get("type") == "monotonic"
     assert event["allowed"] is False
     assert event["mode"] == "PoR"
-    recovery_events = [evt for evt in stabilizer.get_eventlog() if evt["data"].get("action") == "micro_recovery"]
+    recovery_events = [
+        evt for evt in stabilizer.get_eventlog() if evt["data"].get("action") == "micro_recovery"
+    ]
     assert recovery_events
 
 

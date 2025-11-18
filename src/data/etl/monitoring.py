@@ -200,15 +200,24 @@ class DriftDetector:
             candidate_series = candidate[column].dropna().to_numpy()
             if baseline_series.size == 0 or candidate_series.size == 0:
                 reports.append(
-                    DriftReport(column=column, statistic=float("nan"), threshold=self._threshold, drifted=False)
+                    DriftReport(
+                        column=column,
+                        statistic=float("nan"),
+                        threshold=self._threshold,
+                        drifted=False,
+                    )
                 )
                 continue
             hist_range = (
                 min(baseline_series.min(), candidate_series.min()),
                 max(baseline_series.max(), candidate_series.max()),
             )
-            baseline_hist, _ = np.histogram(baseline_series, bins=self._bins, range=hist_range, density=True)
-            candidate_hist, _ = np.histogram(candidate_series, bins=self._bins, range=hist_range, density=True)
+            baseline_hist, _ = np.histogram(
+                baseline_series, bins=self._bins, range=hist_range, density=True
+            )
+            candidate_hist, _ = np.histogram(
+                candidate_series, bins=self._bins, range=hist_range, density=True
+            )
             divergence = float(jensenshannon(baseline_hist + 1e-12, candidate_hist + 1e-12))
             reports.append(
                 DriftReport(
@@ -307,7 +316,7 @@ class SLAMonitor:
             if entry.duration_seconds > self._max_duration.total_seconds():
                 message = (
                     f"SLA breach for segment {entry.segment}: "
-                    f"{entry.duration_seconds:.2f}s exceeds {self._max_duration.total_seconds():.2f}s"
+                    f"{entry.duration_seconds:.2f}s exceeds {self._max_duration.total_seconds():.2f}s"  # noqa: E501
                 )
                 self._breaches.append(message)
         return list(self._breaches)
@@ -316,7 +325,9 @@ class SLAMonitor:
 class AutoReporter:
     """Generate concise execution reports for stakeholders."""
 
-    def render(self, *, run_id: str, audit_entries: Iterable[AuditEntry], sla_findings: Iterable[str]) -> str:
+    def render(
+        self, *, run_id: str, audit_entries: Iterable[AuditEntry], sla_findings: Iterable[str]
+    ) -> str:
         entries = list(audit_entries)
         total_duration = sum(entry.duration_seconds for entry in entries)
         avg_duration = mean(entry.duration_seconds for entry in entries) if entries else 0.0
@@ -329,9 +340,7 @@ class AutoReporter:
             "Segment breakdown:",
         ]
         for entry in entries:
-            lines.append(
-                f"- {entry.segment} [{entry.status}] took {entry.duration_seconds:.2f}s"
-            )
+            lines.append(f"- {entry.segment} [{entry.status}] took {entry.duration_seconds:.2f}s")
         if sla_findings:
             lines.extend(["", "SLA findings:", *sla_findings])
         return "\n".join(lines)

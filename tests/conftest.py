@@ -21,18 +21,14 @@ os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
 os.environ.setdefault("THERMO_DUAL_SECRET", "test-secret")
 
 _fixture_path = Path(__file__).parent / "fixtures" / "conftest.py"
-spec = importlib.util.spec_from_file_location(
-    "tradepulse_tests_fixtures", _fixture_path
-)
+spec = importlib.util.spec_from_file_location("tradepulse_tests_fixtures", _fixture_path)
 if spec is None or spec.loader is None:
     raise ImportError(f"Unable to load fixtures from {_fixture_path}")
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
-globals().update(
-    {name: getattr(module, name) for name in dir(module) if not name.startswith("__")}
-)
+globals().update({name: getattr(module, name) for name in dir(module) if not name.startswith("__")})
 
 
 _LEVEL_DESCRIPTIONS: dict[str, str] = {
@@ -162,8 +158,9 @@ def _determine_level(root: Path, path: Path) -> str:
 
     raise pytest.UsageError(
         "Unable to classify test {path} with TradePulse level. "
-        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker."
-        .format(path=path)
+        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker.".format(
+            path=path
+        )
     )
 
 
@@ -190,9 +187,7 @@ def pytest_collection_modifyitems(  # type: ignore[override]
     root = _normalize(Path(config.rootpath))
     for item in items:
         existing_levels = [
-            mark.name
-            for mark in item.iter_markers()
-            if mark.name in _LEVEL_DESCRIPTIONS
+            mark.name for mark in item.iter_markers() if mark.name in _LEVEL_DESCRIPTIONS
         ]
 
         level_from_config = _determine_level(root, Path(item.fspath))
@@ -206,9 +201,10 @@ def pytest_collection_modifyitems(  # type: ignore[override]
             (declared_level,) = unique_levels
             if declared_level != level_from_config:
                 raise pytest.UsageError(
-                    "Test {nodeid} is marked as {declared} but mapped to {computed} in tests/test_levels.yaml. "
-                    "Update the marker or adjust the mapping."
-                    .format(nodeid=item.nodeid, declared=declared_level, computed=level_from_config)
+                    "Test {nodeid} is marked as {declared} but mapped to {computed} in tests/test_levels.yaml. "  # noqa: E501
+                    "Update the marker or adjust the mapping.".format(
+                        nodeid=item.nodeid, declared=declared_level, computed=level_from_config
+                    )
                 )
             level = declared_level
         else:
@@ -234,8 +230,10 @@ sensitive_headers = [
 sensitive_query = ["timestamp", "signature", "recvWindow"]
 sensitive_body_keys = ["apiKey", "secret", "signature", "passphrase"]
 
+
 def scrub_request(request):
     from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+
     u = urlsplit(request.uri)
     q = []
     for k, v in parse_qsl(u.query, keep_blank_values=True):
@@ -249,23 +247,31 @@ def scrub_request(request):
             request.headers[h] = "REDACTED"
     return request
 
+
 def scrub_response(response):
     import json
+
     ctype = response["headers"].get("Content-Type", [""])[0]
     if "application/json" in ctype:
         try:
             data = json.loads(response["body"]["string"])
+
             def cleanse(obj):
                 if isinstance(obj, dict):
-                    return {k: ("REDACTED" if k in sensitive_body_keys else cleanse(v)) for k, v in obj.items()}
+                    return {
+                        k: ("REDACTED" if k in sensitive_body_keys else cleanse(v))
+                        for k, v in obj.items()
+                    }
                 if isinstance(obj, list):
                     return [cleanse(x) for x in obj]
                 return obj
+
             data = cleanse(data)
             response["body"]["string"] = json.dumps(data).encode()
         except Exception:
             pass
     return response
+
 
 @pytest.fixture(autouse=True)
 def _vcr_adapter_tests(request):
@@ -276,7 +282,7 @@ def _vcr_adapter_tests(request):
             import vcr
         except ImportError:
             pytest.skip("vcrpy is required for adapter tests")
-        
+
         vcr_default = vcr.VCR(
             cassette_library_dir="tests/fixtures/recordings",
             record_mode=os.getenv("VCR_RECORD", "once"),
@@ -285,10 +291,11 @@ def _vcr_adapter_tests(request):
             before_record_response=scrub_response,
             decode_compressed_response=True,
         )
-        
-        cassette_name = request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
+
+        cassette_name = (
+            request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
+        )
         with vcr_default.use_cassette(cassette_name):
             yield
     else:
         yield
-

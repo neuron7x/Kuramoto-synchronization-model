@@ -21,9 +21,7 @@ def _format_version_entry(entry: dict[str, str]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render event schema catalogue")
-    parser.add_argument(
-        "--registry", default="schemas/events", help="Path to registry directory"
-    )
+    parser.add_argument("--registry", default="schemas/events", help="Path to registry directory")
     parser.add_argument(
         "--output",
         type=Path,

@@ -42,7 +42,9 @@ def integrate_macro_features(
     if macro_features.empty:
         return market_data.copy()
 
-    use_indicator_grouping = "indicator" in market_data.columns and "indicator" in macro_features.columns
+    use_indicator_grouping = (
+        "indicator" in market_data.columns and "indicator" in macro_features.columns
+    )
 
     if use_indicator_grouping:
         market = market_data.sort_values(["indicator", on]).reset_index(drop=True)
@@ -71,8 +73,7 @@ def integrate_macro_features(
                 col
                 for col in merged.columns
                 if col not in market.columns
-                or col
-                in {"release_date", "available_at", macro_time_column, "indicator"}
+                or col in {"release_date", "available_at", macro_time_column, "indicator"}
             ]
             mask = merged[timing_column].notna() & (merged[timing_column] > merged[on])
             merged.loc[mask, macro_columns] = pd.NA

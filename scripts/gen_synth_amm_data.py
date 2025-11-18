@@ -70,9 +70,7 @@ def write_csv(
     Returns:
         Path to the written CSV file
     """
-    LOGGER.info(
-        "Generating %d synthetic AMM samples (seed=%d) to %s", n, seed, output_path
-    )
+    LOGGER.info("Generating %d synthetic AMM samples (seed=%d) to %s", n, seed, output_path)
 
     x, R, kappa, H = generate_amm_data(n, seed)
 

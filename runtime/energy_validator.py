@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class MetricThreshold:
     """Configuration for a single metric threshold."""
-    
+
     name: str
     description: str
     threshold: float
@@ -39,25 +39,27 @@ class MetricThreshold:
 @dataclass(frozen=True)
 class EnergyConfig:
     """Configuration for energy validation."""
-    
+
     control_temperature: float = 0.60
     max_acceptable_energy: float = 1.35
-    
+
     # Metric thresholds as specified in docs/TACL.md
-    metrics: Tuple[MetricThreshold, ...] = field(default_factory=lambda: (
-        MetricThreshold("latency_p95", "95th percentile end-to-end latency", 85.0, 1.6, "ms"),
-        MetricThreshold("latency_p99", "99th percentile end-to-end latency", 120.0, 1.9, "ms"),
-        MetricThreshold("coherency_drift", "Fractional drift of shared state", 0.08, 1.2, ""),
-        MetricThreshold("cpu_burn", "CPU utilisation ratio", 0.75, 0.9, ""),
-        MetricThreshold("mem_cost", "Memory footprint per node", 6.5, 0.8, "GiB"),
-        MetricThreshold("queue_depth", "Queue length at activator ingress", 32.0, 0.7, ""),
-        MetricThreshold("packet_loss", "Control-plane packet loss ratio", 0.005, 1.4, ""),
-    ))
-    
+    metrics: Tuple[MetricThreshold, ...] = field(
+        default_factory=lambda: (
+            MetricThreshold("latency_p95", "95th percentile end-to-end latency", 85.0, 1.6, "ms"),
+            MetricThreshold("latency_p99", "99th percentile end-to-end latency", 120.0, 1.9, "ms"),
+            MetricThreshold("coherency_drift", "Fractional drift of shared state", 0.08, 1.2, ""),
+            MetricThreshold("cpu_burn", "CPU utilisation ratio", 0.75, 0.9, ""),
+            MetricThreshold("mem_cost", "Memory footprint per node", 6.5, 0.8, "GiB"),
+            MetricThreshold("queue_depth", "Queue length at activator ingress", 32.0, 0.7, ""),
+            MetricThreshold("packet_loss", "Control-plane packet loss ratio", 0.005, 1.4, ""),
+        )
+    )
+
     def get_total_weight(self) -> float:
         """Calculate total weight of all metrics."""
         return sum(m.weight for m in self.metrics)
-    
+
     def get_metric(self, name: str) -> Optional[MetricThreshold]:
         """Retrieve a metric configuration by name."""
         for metric in self.metrics:
@@ -69,7 +71,7 @@ class EnergyConfig:
 @dataclass(frozen=True)
 class MetricValue:
     """A measured metric value with timestamp."""
-    
+
     name: str
     value: float
     timestamp: float = field(default_factory=time.time)
@@ -78,7 +80,7 @@ class MetricValue:
 @dataclass(frozen=True)
 class EnergyValidationResult:
     """Result of energy validation computation."""
-    
+
     free_energy: float
     internal_energy: float
     stability: float
@@ -90,7 +92,7 @@ class EnergyValidationResult:
     passed: bool
     threshold: float
     margin: float
-    
+
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dictionary."""
         return {
@@ -106,7 +108,7 @@ class EnergyValidationResult:
             "threshold": self.threshold,
             "margin": self.margin,
         }
-    
+
     def to_json(self) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
@@ -114,14 +116,14 @@ class EnergyValidationResult:
 
 class EnergyValidator:
     """Validator for thermodynamic free energy compliance.
-    
+
     This class implements the energy validation logic described in docs/TACL.md,
     computing Helmholtz free energy and validating against acceptable thresholds.
     """
-    
+
     def __init__(self, config: Optional[EnergyConfig] = None) -> None:
         """Initialize the energy validator.
-        
+
         Args:
             config: Energy configuration. If None, uses default configuration.
         """
@@ -131,14 +133,14 @@ class EnergyValidator:
             f"EnergyValidator initialized with T={self.config.control_temperature}, "
             f"max_F={self.config.max_acceptable_energy}"
         )
-    
+
     def compute_penalty(self, metric_name: str, value: float) -> Tuple[float, float]:
         """Compute normalized penalty and headroom for a metric.
-        
+
         Args:
             metric_name: Name of the metric
             value: Measured value
-            
+
         Returns:
             Tuple of (penalty, headroom)
             - penalty: Weighted penalty contribution (0 if below threshold)
@@ -148,96 +150,95 @@ class EnergyValidator:
         if metric_config is None:
             logger.warning(f"Unknown metric: {metric_name}")
             return 0.0, 0.0
-        
+
         threshold = metric_config.threshold
         weight = metric_config.weight
         total_weight = self.config.get_total_weight()
-        
+
         # Compute penalty if above threshold
         if value > threshold:
             excess_ratio = (value - threshold) / threshold
             penalty = (weight / total_weight) * excess_ratio
         else:
             penalty = 0.0
-        
+
         # Compute headroom
         if threshold > 0:
             headroom = (threshold - value) / threshold
         else:
             headroom = 0.0 if value > 0 else 1.0
-        
+
         return penalty, headroom
-    
+
     def compute_internal_energy(
-        self,
-        metrics: Dict[str, float]
+        self, metrics: Dict[str, float]
     ) -> Tuple[float, Dict[str, float], Dict[str, float]]:
         """Compute internal energy U from metrics.
-        
+
         Args:
             metrics: Dictionary of metric name to measured value
-            
+
         Returns:
             Tuple of (internal_energy, penalties, headrooms)
         """
         base_energy = 0.0
         penalties: Dict[str, float] = {}
         headrooms: Dict[str, float] = {}
-        
+
         for metric_name, value in metrics.items():
             penalty, headroom = self.compute_penalty(metric_name, value)
             penalties[metric_name] = penalty
             headrooms[metric_name] = headroom
             base_energy += penalty
-        
+
         return base_energy, penalties, headrooms
-    
+
     def compute_stability(self, headrooms: Dict[str, float]) -> float:
         """Compute stability term S from headroom values.
-        
+
         Higher stability (more headroom) increases entropy, thus reducing free energy.
-        
+
         Args:
             headrooms: Dictionary of metric name to headroom value
-            
+
         Returns:
             Stability value (0-1 range typically)
         """
         if not headrooms:
             return 0.0
-        
+
         # Average headroom across all metrics
         # Only consider positive headroom (below threshold)
         positive_headrooms = [h for h in headrooms.values() if h > 0]
         if not positive_headrooms:
             return 0.0
-        
+
         return sum(positive_headrooms) / len(positive_headrooms)
-    
+
     def compute_free_energy(self, metrics: Dict[str, float]) -> EnergyValidationResult:
         """Compute Helmholtz free energy F = U - T·S.
-        
+
         Args:
             metrics: Dictionary of metric name to measured value
-            
+
         Returns:
             EnergyValidationResult with all computed values
         """
         # Compute internal energy and derived values
         internal_energy, penalties, headrooms = self.compute_internal_energy(metrics)
-        
+
         # Compute stability from headroom
         stability = self.compute_stability(headrooms)
-        
+
         # Compute free energy: F = U - T·S
         temperature = self.config.control_temperature
         free_energy = internal_energy - temperature * stability
-        
+
         # Check if validation passes
         threshold = self.config.max_acceptable_energy
         passed = free_energy <= threshold
         margin = threshold - free_energy
-        
+
         result = EnergyValidationResult(
             free_energy=free_energy,
             internal_energy=internal_energy,
@@ -251,10 +252,10 @@ class EnergyValidator:
             threshold=threshold,
             margin=margin,
         )
-        
+
         # Store in history
         self.validation_history.append(result)
-        
+
         # Log result
         status = "PASS" if passed else "FAIL"
         logger.info(
@@ -262,31 +263,31 @@ class EnergyValidator:
             f"U={internal_energy:.4f}, S={stability:.4f}, "
             f"threshold={threshold:.4f}, margin={margin:.4f}"
         )
-        
+
         return result
-    
+
     def validate(self, metrics: Dict[str, float]) -> bool:
         """Validate that metrics meet energy requirements.
-        
+
         Args:
             metrics: Dictionary of metric name to measured value
-            
+
         Returns:
             True if validation passes, False otherwise
         """
         result = self.compute_free_energy(metrics)
         return result.passed
-    
+
     def export_validation_report(self, output_path: Path) -> None:
         """Export validation results to JSON file.
-        
+
         Args:
             output_path: Path to output JSON file
         """
         if not self.validation_history:
             logger.warning("No validation history to export")
             return
-        
+
         report = {
             "config": {
                 "control_temperature": self.config.control_temperature,
@@ -311,23 +312,23 @@ class EnergyValidator:
                 "latest_passed": self.validation_history[-1].passed,
             },
         }
-        
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
-        
+
         logger.info(f"Validation report exported to {output_path}")
-    
+
     def get_latest_result(self) -> Optional[EnergyValidationResult]:
         """Get the most recent validation result.
-        
+
         Returns:
             Latest EnergyValidationResult or None if no validations performed
         """
         if not self.validation_history:
             return None
         return self.validation_history[-1]
-    
+
     def clear_history(self) -> None:
         """Clear validation history."""
         self.validation_history.clear()

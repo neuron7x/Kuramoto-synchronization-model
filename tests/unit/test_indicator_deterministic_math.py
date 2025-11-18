@@ -62,9 +62,7 @@ def test_mean_ricci_matches_average_edge_curvature_for_path_graph() -> None:
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        edge_curvatures = [
-            ricci_module.ricci_curvature_edge(G, u, v) for u, v in G.edges()
-        ]
+        edge_curvatures = [ricci_module.ricci_curvature_edge(G, u, v) for u, v in G.edges()]
         mean_curvature = ricci_module.mean_ricci(G)
 
     expected = float(np.mean(edge_curvatures))
@@ -110,9 +108,7 @@ def test_hurst_matches_manual_rescaled_range_regression() -> None:
     min_lag, max_lag = 2, 5
 
     manual = _manual_hurst(series, min_lag, max_lag)
-    implementation = hurst_module.hurst_exponent(
-        series, min_lag=min_lag, max_lag=max_lag
-    )
+    implementation = hurst_module.hurst_exponent(series, min_lag=min_lag, max_lag=max_lag)
 
     assert implementation == pytest.approx(manual, rel=1e-12)
 

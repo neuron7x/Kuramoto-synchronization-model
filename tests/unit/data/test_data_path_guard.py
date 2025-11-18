@@ -16,9 +16,7 @@ def temp_files(tmp_path: Path):
     return data_dir, target
 
 
-def test_guard_uses_environment_roots(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_guard_uses_environment_roots(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("TRADEPULSE_DATA_ROOTS", os.pathsep.join([str(tmp_path)]))
     guard = DataPathGuard()
     assert tmp_path in guard.allowed_roots
@@ -37,9 +35,7 @@ def test_guard_rejects_non_directory(tmp_path: Path) -> None:
         DataPathGuard([file_path])
 
 
-def test_guard_rejects_invalid_max_bytes(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_guard_rejects_invalid_max_bytes(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("TRADEPULSE_DATA_ROOTS", str(tmp_path))
     monkeypatch.setenv("TRADEPULSE_MAX_CSV_BYTES", "invalid")
     with pytest.raises(ValueError, match="TRADEPULSE_MAX_CSV_BYTES"):

@@ -7,38 +7,38 @@ The generated payload is consumed by ``compare_performance.py`` which compares
 against the ``main`` branch to detect regressions.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402
 
-import argparse
-import gc
-import json
-import time
-import tracemalloc
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Callable, Literal
+import argparse  # noqa: E402
+import gc  # noqa: E402
+import json  # noqa: E402
+import time  # noqa: E402
+import tracemalloc  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Any, Callable, Literal  # noqa: E402
 
-import sys
+import sys  # noqa: E402
 
-import numpy as np
-import pandas as pd
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backtest.engine import walk_forward
-from core.agent.strategy import Strategy
-from core.data.preprocess import normalize_df, scale_series
-from core.indicators.entropy import EntropyFeature
-from core.indicators.hierarchical_features import (
+from backtest.engine import walk_forward  # noqa: E402
+from core.agent.strategy import Strategy  # noqa: E402
+from core.data.preprocess import normalize_df, scale_series  # noqa: E402
+from core.indicators.entropy import EntropyFeature  # noqa: E402
+from core.indicators.hierarchical_features import (  # noqa: E402
     FeatureBufferCache,
     compute_hierarchical_features,
 )
-from core.indicators.hurst import HurstFeature
-from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase, kuramoto_order
-from core.indicators.pipeline import IndicatorPipeline
+from core.indicators.hurst import HurstFeature  # noqa: E402
+from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase, kuramoto_order  # noqa: E402
+from core.indicators.pipeline import IndicatorPipeline  # noqa: E402
 
 
 Category = Literal["memory", "cpu", "response"]
@@ -186,9 +186,7 @@ def _hierarchical_features_peak_memory() -> Metric:
 def _compute_phase_cpu_time() -> Metric:
     samples = np.random.default_rng(1337).normal(scale=1.0, size=131_072).astype(np.float32)
 
-    cpu_seconds = _measure_cpu_seconds(
-        lambda: compute_phase(samples, use_float32=True), rounds=10
-    )
+    cpu_seconds = _measure_cpu_seconds(lambda: compute_phase(samples, use_float32=True), rounds=10)
     return Metric(
         name="kuramoto.compute_phase.cpu_seconds",
         value=float(cpu_seconds),
@@ -200,9 +198,7 @@ def _compute_phase_cpu_time() -> Metric:
 
 def _kuramoto_order_cpu_time() -> Metric:
     phases = (
-        np.random.default_rng(31415)
-        .uniform(-np.pi, np.pi, size=(4_096, 12))
-        .astype(np.float32)
+        np.random.default_rng(31415).uniform(-np.pi, np.pi, size=(4_096, 12)).astype(np.float32)
     )
 
     cpu_seconds = _measure_cpu_seconds(lambda: kuramoto_order(phases), rounds=12)

@@ -41,9 +41,7 @@ class InMemoryCheckpointStore:
     def __init__(self) -> None:
         self._state: MutableMapping[str, Checkpoint] = {}
 
-    def load(
-        self, feature_view: str
-    ) -> Checkpoint | None:  # pragma: no cover - trivial
+    def load(self, feature_view: str) -> Checkpoint | None:  # pragma: no cover - trivial
         return self._state.get(feature_view)
 
     def save(self, checkpoint: Checkpoint) -> None:
@@ -53,9 +51,7 @@ class InMemoryCheckpointStore:
             return
         ids = set(current.checkpoint_ids)
         ids.update(checkpoint.checkpoint_ids)
-        self._state[checkpoint.feature_view] = Checkpoint(
-            checkpoint.feature_view, frozenset(ids)
-        )
+        self._state[checkpoint.feature_view] = Checkpoint(checkpoint.feature_view, frozenset(ids))
 
 
 class StreamMaterializer:
@@ -110,16 +106,12 @@ class StreamMaterializer:
 
         new_rows = self._filter_new_rows(deduped, history_keys)
         if new_rows.empty:
-            self._checkpoint_store.save(
-                Checkpoint(feature_view, frozenset({checkpoint_id}))
-            )
+            self._checkpoint_store.save(Checkpoint(feature_view, frozenset({checkpoint_id})))
             return
 
         self._writer(feature_view, new_rows.reset_index(drop=True))
         history_keys.update(self._iter_key_tuples(new_rows))
-        self._checkpoint_store.save(
-            Checkpoint(feature_view, frozenset({checkpoint_id}))
-        )
+        self._checkpoint_store.save(Checkpoint(feature_view, frozenset({checkpoint_id})))
 
     def _filter_new_rows(
         self,
@@ -135,9 +127,7 @@ class StreamMaterializer:
     def _deduplicate(self, frame: pd.DataFrame) -> pd.DataFrame:
         missing = set(self._dedup_keys) - set(frame.columns)
         if missing:
-            raise KeyError(
-                f"Unable to deduplicate batch missing columns: {sorted(missing)}"
-            )
+            raise KeyError(f"Unable to deduplicate batch missing columns: {sorted(missing)}")
         ordered = frame.sort_values(by=list(self._dedup_keys), kind="mergesort")
         deduped = ordered.drop_duplicates(list(self._dedup_keys), keep="last")
         return deduped.reset_index(drop=True)

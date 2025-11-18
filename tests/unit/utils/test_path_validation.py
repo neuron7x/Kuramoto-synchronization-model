@@ -1,4 +1,5 @@
 """Tests for path validation utilities."""
+
 import pytest
 import tempfile
 import os
@@ -40,7 +41,7 @@ class TestValidateSafePath:
         # Create a safe absolute path within tmp_path
         safe_path = tmp_path / "safe"
         safe_path.mkdir(exist_ok=True)
-        
+
         result = validate_safe_path(safe_path, tmp_path, allow_absolute=True)
         assert result == safe_path
 
@@ -54,7 +55,7 @@ class TestValidateSafePath:
         # Create a symlink that points outside base_dir
         with tempfile.TemporaryDirectory() as other_dir:
             link = tmp_path / "link"
-            if hasattr(os, 'symlink'):  # symlink not available on all platforms
+            if hasattr(os, "symlink"):  # symlink not available on all platforms
                 try:
                     os.symlink(other_dir, link)
                     with pytest.raises(PathTraversalError):
@@ -70,7 +71,7 @@ class TestValidateFilePath:
         """Test validation of existing file."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("data")
-        
+
         # Use relative path from base_dir
         result = validate_file_path("test.csv", tmp_path)
         assert result == test_file
@@ -89,7 +90,7 @@ class TestValidateFilePath:
         """Test that directory is rejected when file is expected."""
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-        
+
         with pytest.raises(ValueError, match="not a file"):
             validate_file_path("subdir", tmp_path, must_exist=True)
 
@@ -97,21 +98,21 @@ class TestValidateFilePath:
         """Test file extension validation."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("data")
-        
+
         # Valid extension
-        result = validate_file_path("test.csv", tmp_path, extensions=['.csv', '.json'])
+        result = validate_file_path("test.csv", tmp_path, extensions=[".csv", ".json"])
         assert result == test_file
-        
+
         # Invalid extension
         with pytest.raises(ValueError, match="Invalid file extension"):
-            validate_file_path("test.csv", tmp_path, extensions=['.json', '.txt'])
+            validate_file_path("test.csv", tmp_path, extensions=[".json", ".txt"])
 
     def test_extension_case_insensitive(self, tmp_path):
         """Test that extension validation is case-insensitive."""
         test_file = tmp_path / "test.CSV"
         test_file.write_text("data")
-        
-        result = validate_file_path("test.CSV", tmp_path, extensions=['.csv'])
+
+        result = validate_file_path("test.CSV", tmp_path, extensions=[".csv"])
         assert result == test_file
 
 
@@ -168,7 +169,7 @@ class TestEnsureDirectoryExists:
         """Test creation of new directory."""
         new_dir = tmp_path / "new_dir"
         result = ensure_directory_exists("new_dir", tmp_path)
-        
+
         assert result == new_dir
         assert new_dir.exists()
         assert new_dir.is_dir()
@@ -177,7 +178,7 @@ class TestEnsureDirectoryExists:
         """Test that existing directory is ok."""
         existing_dir = tmp_path / "existing"
         existing_dir.mkdir()
-        
+
         result = ensure_directory_exists("existing", tmp_path)
         assert result == existing_dir
 
@@ -185,7 +186,7 @@ class TestEnsureDirectoryExists:
         """Test creation of nested directories."""
         nested_dir = tmp_path / "level1" / "level2" / "level3"
         result = ensure_directory_exists("level1/level2/level3", tmp_path, create_parents=True)
-        
+
         assert result == nested_dir
         assert nested_dir.exists()
         assert nested_dir.is_dir()
@@ -194,7 +195,7 @@ class TestEnsureDirectoryExists:
         """Test that error is raised if path exists but is a file."""
         test_file = tmp_path / "file.txt"
         test_file.write_text("data")
-        
+
         with pytest.raises(ValueError, match="not a directory"):
             ensure_directory_exists("file.txt", tmp_path)
 

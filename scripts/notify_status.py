@@ -107,9 +107,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--branch", help="Git reference name associated with the run.")
     parser.add_argument("--commit", help="Commit SHA associated with the run.")
     parser.add_argument("--actor", help="GitHub actor that triggered the run.")
-    parser.add_argument(
-        "--environment", help="Target environment for deployment notifications."
-    )
+    parser.add_argument("--environment", help="Target environment for deployment notifications.")
     parser.add_argument(
         "--field",
         dest="fields",
@@ -243,9 +241,7 @@ def _prepare_arguments(namespace: argparse.Namespace) -> NotificationArguments:
         slack_channel=namespace.slack_channel,
         slack_username=namespace.slack_username,
         teams_webhook=namespace.teams_webhook,
-        teams_theme_color=_normalise_color(
-            namespace.status, namespace.teams_theme_color
-        ),
+        teams_theme_color=_normalise_color(namespace.status, namespace.teams_theme_color),
         timeout=namespace.timeout,
         dry_run=bool(namespace.dry_run),
     )

@@ -54,9 +54,7 @@ class CSVIngestionAdapter(IngestionAdapter):
 
         missing = set(required_fields) - set(rows[0].keys())
         if missing:
-            raise ValueError(
-                f"CSV missing required columns: {', '.join(sorted(missing))}"
-            )
+            raise ValueError(f"CSV missing required columns: {', '.join(sorted(missing))}")
 
         ticks: list[Ticker] = []
         for row in rows:

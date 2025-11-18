@@ -13,6 +13,7 @@ from analytics.regime.src.consensus.hncm_neuro import (
     AgentVote,
 )
 
+
 def ews_to_vote(agent_name: str, ews_result: object) -> AgentVote:
     score = 0.0
     if hasattr(ews_result, "probability") and ews_result.probability is not None:
@@ -39,11 +40,15 @@ def build_signal_with_neuro_consensus(
     rationale = f"Neuro consensus: score={decision.score:.4f}, action={decision.action}"
     metadata = {
         "weights": dict(decision.weights),
-        "votes": [{"agent": v.agent, "score": v.score, "confidence": v.confidence} for v in decision.votes],
+        "votes": [
+            {"agent": v.agent, "score": v.score, "confidence": v.confidence} for v in decision.votes
+        ],
         "neuro": {"tau": adapter.tau},
     }
-    return Signal(symbol=symbol,
-                  action=action_map[decision.action],
-                  confidence=decision.confidence,
-                  rationale=rationale,
-                  metadata=metadata)
+    return Signal(
+        symbol=symbol,
+        action=action_map[decision.action],
+        confidence=decision.confidence,
+        rationale=rationale,
+        metadata=metadata,
+    )

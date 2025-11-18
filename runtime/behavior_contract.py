@@ -44,7 +44,11 @@ MANDATES: Dict[str, ModuleMandate] = {
         escalation_policy={"A1": "log_only", "CRISIS": "no_A2"},
     ),
     "thermo_controller": ModuleMandate(
-        allowed_actions=(ActionClass.A0_OBSERVATION, ActionClass.A1_LOCAL_CORRECTION, ActionClass.A2_SYSTEMIC),
+        allowed_actions=(
+            ActionClass.A0_OBSERVATION,
+            ActionClass.A1_LOCAL_CORRECTION,
+            ActionClass.A2_SYSTEMIC,
+        ),
         allowed_states=(SystemState.NORMAL, SystemState.DEGRADED),
         allowed_scope=("topology", "metrics", "system_state"),
         escalation_policy={"A2": "dual_approval", "CRISIS": "downgrade_to_A1"},

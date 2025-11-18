@@ -138,7 +138,9 @@ def test_select_action_module_level_api(stack: BasalGangliaDecisionStack) -> Non
 
 
 def test_basal_ganglia_reset_and_gates(stack: BasalGangliaDecisionStack) -> None:
-    stack.select_action([0.1, 0.2], {"reward": 0.0, "value": 0.2, "next_value": 0.2, "volatility": 0.3})
+    stack.select_action(
+        [0.1, 0.2], {"reward": 0.0, "value": 0.2, "next_value": 0.2, "volatility": 0.3}
+    )
     stack.reset()
     assert stack.dopamine.last_rpe == 0.0
     result = stack.select_action(

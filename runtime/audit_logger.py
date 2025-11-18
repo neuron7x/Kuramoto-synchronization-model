@@ -8,7 +8,9 @@ import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-DEFAULT_AUDIT_PATH = Path(os.getenv("TRADEPULSE_AUDIT_PATH", "/var/log/tradepulse/thermo_audit.jsonl"))
+DEFAULT_AUDIT_PATH = Path(
+    os.getenv("TRADEPULSE_AUDIT_PATH", "/var/log/tradepulse/thermo_audit.jsonl")
+)
 
 
 @dataclass(slots=True)

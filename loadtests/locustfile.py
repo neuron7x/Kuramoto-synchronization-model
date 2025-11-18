@@ -96,7 +96,9 @@ class GrpcClient:
     def close(self) -> None:
         self._channel.close()
 
-    def place_order(self, order: trading_pb2.Order, *, scenario: MarketScenario) -> trading_pb2.OrderResponse:
+    def place_order(
+        self, order: trading_pb2.Order, *, scenario: MarketScenario
+    ) -> trading_pb2.OrderResponse:
         name = "TradingService.PlaceOrder"
         start = time.perf_counter()
         try:

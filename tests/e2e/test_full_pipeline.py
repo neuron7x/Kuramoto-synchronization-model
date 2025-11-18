@@ -124,9 +124,7 @@ def test_pipeline_from_scratch(tmp_path) -> None:
 
     assert len(signals) == len(prices_array)
     assert "### Backtest" in markdown_report
-    assert report_cfg.html_output_path.read_text(encoding="utf-8").startswith(
-        "<!doctype html>"
-    )
+    assert report_cfg.html_output_path.read_text(encoding="utf-8").startswith("<!doctype html>")
     pdf_bytes = report_cfg.pdf_output_path.read_bytes()
     assert pdf_bytes.startswith(b"%PDF")
     assert pdf_bytes.rstrip().endswith(b"%%EOF")

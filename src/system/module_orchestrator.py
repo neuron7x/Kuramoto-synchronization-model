@@ -174,10 +174,7 @@ class ModuleRunSummary:
                 launch_delay = result.launch_delay
                 total_wait = result.total_wait_time
 
-                if (
-                    result.started_at is not None
-                    and result.completed_at is not None
-                ):
+                if result.started_at is not None and result.completed_at is not None:
                     timelines.append(
                         ModuleTimelineEntry(
                             name=name,
@@ -225,9 +222,7 @@ class ModuleRunSummary:
         for moment, delta in events:
             if previous_time is not None and moment > previous_time:
                 duration = moment - previous_time
-                concurrency_durations[active] = (
-                    concurrency_durations.get(active, 0.0) + duration
-                )
+                concurrency_durations[active] = concurrency_durations.get(active, 0.0) + duration
             active += delta
             peak_concurrency = max(peak_concurrency, active)
             previous_time = moment
@@ -240,9 +235,7 @@ class ModuleRunSummary:
             average_concurrency = 0.0
             utilisation = 0.0
         else:
-            busy_time = sum(
-                level * duration for level, duration in concurrency_durations.items()
-            )
+            busy_time = sum(level * duration for level, duration in concurrency_durations.items())
 
             effective_runtime = total_runtime
             if peak_concurrency > 1 and module_runtime_sum > 0.0:
@@ -273,9 +266,7 @@ class ModuleRunSummary:
 
         concurrency_profile = MappingProxyType(dict(sorted(concurrency_durations.items())))
         total_queue_delay = sum(queue_delays)
-        average_queue_delay = (
-            total_queue_delay / len(queue_delays) if queue_delays else 0.0
-        )
+        average_queue_delay = total_queue_delay / len(queue_delays) if queue_delays else 0.0
         max_queue_delay = max(queue_delays) if queue_delays else 0.0
         total_idle_time = concurrency_profile.get(0, 0.0)
 
@@ -363,13 +354,9 @@ class ModuleOrchestrator:
                 f"{name}: {', '.join(sorted(missing))}"
                 for name, missing in sorted(missing_dependencies.items())
             ]
-            raise ValueError(
-                "Unknown module dependencies declared: " + "; ".join(messages)
-            )
+            raise ValueError("Unknown module dependencies declared: " + "; ".join(messages))
 
-        dependents: dict[str, set[str]] = {
-            name: set() for name in self._definitions
-        }
+        dependents: dict[str, set[str]] = {name: set() for name in self._definitions}
         indegree: dict[str, int] = {}
         for name, deps in dependencies.items():
             indegree[name] = len(deps)
@@ -392,8 +379,7 @@ class ModuleOrchestrator:
         if len(order) != len(self._definitions):
             unresolved = set(self._definitions) - set(order)
             raise ValueError(
-                "Circular module dependencies detected: "
-                + ", ".join(sorted(unresolved))
+                "Circular module dependencies detected: " + ", ".join(sorted(unresolved))
             )
 
         return tuple(order)
@@ -443,9 +429,7 @@ class ModuleOrchestrator:
                 required_modules.add(current)
                 stack.extend(self._definitions[current].after)
 
-        order = tuple(
-            name for name in resolved_order if name in required_modules
-        )
+        order = tuple(name for name in resolved_order if name in required_modules)
         if not order:
             return ModuleRunSummary(order=(), context=dict(context), results={})
 
@@ -461,9 +445,7 @@ class ModuleOrchestrator:
         for name, deps in dependencies.items():
             for dep in deps:
                 dependents[dep].add(name)
-        remaining_dependencies: dict[str, int] = {
-            name: len(dependencies[name]) for name in order
-        }
+        remaining_dependencies: dict[str, int] = {name: len(dependencies[name]) for name in order}
 
         order_index = {name: index for index, name in enumerate(order)}
         ready_heap: list[tuple[int, str]] = []
@@ -493,11 +475,7 @@ class ModuleOrchestrator:
         executor = ThreadPoolExecutor(max_workers=worker_cap)
         try:
             while (ready_heap or in_flight) and failure_details is None:
-                while (
-                    ready_heap
-                    and len(in_flight) < worker_cap
-                    and failure_details is None
-                ):
+                while ready_heap and len(in_flight) < worker_cap and failure_details is None:
                     _, name = heappop(ready_heap)
                     scheduled_time = perf_counter() - run_origin
                     scheduled_timestamps[name] = scheduled_time
@@ -576,9 +554,7 @@ class ModuleOrchestrator:
                     for follower in dependents[module_name]:
                         remaining_dependencies[follower] -= 1
                         if remaining_dependencies[follower] == 0:
-                            ready_timestamps.setdefault(
-                                follower, perf_counter() - run_origin
-                            )
+                            ready_timestamps.setdefault(follower, perf_counter() - run_origin)
                             heappush(ready_heap, (order_index[follower], follower))
 
                     next_to_finalize += 1
@@ -664,7 +640,9 @@ def _coerce_allocation(value: object, *, default: float, field: str) -> float:
         raise TypeError(f"Allocation field '{field}' must be numeric, received {value!r}") from exc
 
 
-def apply_neural_decision(decision: Mapping[str, object], risk_manager: "RiskManagerFacade") -> None:
+def apply_neural_decision(
+    decision: Mapping[str, object], risk_manager: "RiskManagerFacade"
+) -> None:
     """Normalise and forward neural-controller output to the risk facade."""
 
     action = str(decision.get("action", "hold"))
@@ -674,9 +652,7 @@ def apply_neural_decision(decision: Mapping[str, object], risk_manager: "RiskMan
     if isinstance(allocs, Mapping):
         alloc_main = _coerce_allocation(allocs.get("main"), default=alloc_main, field="allocs.main")
         alloc_alt = _coerce_allocation(allocs.get("alt"), default=alloc_alt, field="allocs.alt")
-    alloc_scale = _coerce_allocation(
-        decision.get("alloc_scale"), default=1.0, field="alloc_scale"
-    )
+    alloc_scale = _coerce_allocation(decision.get("alloc_scale"), default=1.0, field="alloc_scale")
     risk_manager.apply_neural_directive(
         action=action,
         alloc_main=alloc_main,
@@ -697,4 +673,3 @@ __all__ = [
     "ModuleTimelineEntry",
     "apply_neural_decision",
 ]
-

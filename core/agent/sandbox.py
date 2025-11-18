@@ -113,9 +113,7 @@ class StrategySandbox:
         return result
 
     # ------------------------------------------------------------------
-    def _wait_for_payload(
-        self, conn: Connection, timeout: float | None
-    ) -> Dict[str, Any] | None:
+    def _wait_for_payload(self, conn: Connection, timeout: float | None) -> Dict[str, Any] | None:
         if timeout is not None:
             timeout = max(0.0, float(timeout))
 
@@ -289,4 +287,3 @@ __all__ = [
     "StrategySandbox",
     "StrategySandboxError",
 ]
-

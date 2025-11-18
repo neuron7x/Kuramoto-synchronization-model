@@ -1,21 +1,22 @@
 """Generate validation metrics for CNSStabilizer v2.1."""
-from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass
-from pathlib import Path
-from typing import List
+from __future__ import annotations  # noqa: E402
 
-import numpy as np
-import pandas as pd
+import json  # noqa: E402
+from dataclasses import asdict, dataclass  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import List  # noqa: E402
 
-import sys
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+
+import sys  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from runtime.cns_stabilizer import CNSStabilizer
+from runtime.cns_stabilizer import CNSStabilizer  # noqa: E402
 
 
 np.random.seed(42)
@@ -98,7 +99,9 @@ def _evaluate_episode(name: str, prices: np.ndarray) -> EpisodeResult:
     confirmed = sum(1 for entry in audit_log if "confirmed" in entry)
     monotonic_rate = confirmed / max(len(audit_log), 1)
 
-    integrity_values = [evt["data"].get("integrity", stabilizer.get_integrity_ratio()) for evt in events]
+    integrity_values = [
+        evt["data"].get("integrity", stabilizer.get_integrity_ratio()) for evt in events
+    ]
     if integrity_values:
         integrity_ratio = float(np.mean([float(val) for val in integrity_values]))
     else:

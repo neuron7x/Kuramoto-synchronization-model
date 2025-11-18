@@ -23,7 +23,13 @@ def test_readme_composite_engine_example() -> None:
     assert hasattr(snapshot, "phase")
     assert hasattr(snapshot, "confidence")
     assert hasattr(snapshot, "entry_signal")
-    assert snapshot.phase.value in ["accumulation", "markup", "distribution", "markdown", "transition"]
+    assert snapshot.phase.value in [
+        "accumulation",
+        "markup",
+        "distribution",
+        "markdown",
+        "transition",
+    ]
     assert 0.0 <= snapshot.confidence <= 1.0
     assert -1.0 <= snapshot.entry_signal <= 1.0
 
@@ -81,7 +87,7 @@ def test_readme_volume_metrics_example() -> None:
 
     buys = np.array([100, 150, 200])
     sells = np.array([80, 120, 180])
-    
+
     cvd = cumulative_volume_delta(buys, sells)
     imb = imbalance(buys, sells)
 

@@ -50,9 +50,7 @@ class Microservice:
         self._last_error: str | None = None
         self._tracer = get_tracer(f"tradepulse.microservice.{name}")
         self._operation_stats: MutableMapping[str, _OperationStats] = {}
-        self._operation_contracts: MutableMapping[
-            str, ServiceInteractionContract
-        ] = {}
+        self._operation_contracts: MutableMapping[str, ServiceInteractionContract] = {}
 
     @property
     def name(self) -> str:
@@ -123,9 +121,7 @@ class Microservice:
         attributes: Mapping[str, Any] | None = None,
     ) -> Iterator[Any]:
         tracer_cm = getattr(self._tracer, "start_as_current_span", None)
-        context = (
-            tracer_cm(f"{self._name}.{operation}") if tracer_cm else nullcontext()
-        )
+        context = tracer_cm(f"{self._name}.{operation}") if tracer_cm else nullcontext()
         start = time.perf_counter()
         success = False
         error: Exception | None = None

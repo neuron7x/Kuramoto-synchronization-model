@@ -1,4 +1,5 @@
 """Tests for the runtime agent registry."""
+
 from __future__ import annotations
 
 import pytest

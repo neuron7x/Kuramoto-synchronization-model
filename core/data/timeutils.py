@@ -31,9 +31,7 @@ __all__ = [
 ]
 
 
-def _ensure_iterable(
-    values: Iterable[int] | None, *, default: Iterable[int]
-) -> FrozenSet[int]:
+def _ensure_iterable(values: Iterable[int] | None, *, default: Iterable[int]) -> FrozenSet[int]:
     if values is None:
         return frozenset(default)
     return frozenset(values)
@@ -64,9 +62,7 @@ class MarketCalendar:
     weekend_closure: Iterable[int] | None = None
     holidays: Iterable[date] | None = None
     calendar_name: str | None = None
-    _calendar: ExchangeCalendar | None = field(
-        default=None, init=False, repr=False, compare=False
-    )
+    _calendar: ExchangeCalendar | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not self.market:
@@ -238,9 +234,7 @@ def normalize_timestamp(
             try:
                 parsed = pd.Timestamp(candidate)
             except (TypeError, ValueError) as exc:  # pragma: no cover - defensive guard
-                raise ValueError(
-                    f"Unsupported timestamp string: {value!r}"
-                ) from exc
+                raise ValueError(f"Unsupported timestamp string: {value!r}") from exc
             if pd.isna(parsed):
                 raise ValueError(f"Unsupported timestamp string: {value!r}")
             value = parsed.to_pydatetime()
@@ -335,15 +329,11 @@ def validate_bar_alignment(
     try:
         start_loc = trading_minutes.get_loc(index[0])
     except KeyError as exc:
-        raise ValueError(
-            f"{index[0]} is not a valid trading minute for {market}"
-        ) from exc
+        raise ValueError(f"{index[0]} is not a valid trading minute for {market}") from exc
     try:
         end_loc = trading_minutes.get_loc(index[-1])
     except KeyError as exc:
-        raise ValueError(
-            f"{index[-1]} is not a valid trading minute for {market}"
-        ) from exc
+        raise ValueError(f"{index[-1]} is not a valid trading minute for {market}") from exc
 
     step = int(freq / one_minute)
     expected = trading_minutes[start_loc : end_loc + 1 : step]

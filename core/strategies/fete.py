@@ -36,7 +36,9 @@ def binary_entropy(probabilities: ArrayLike) -> NDArray[np.float64]:
 class FractalEMA:
     """Hierarchical exponential moving average with fractal weights."""
 
-    def __init__(self, shape: Tuple[int, ...] = (1,), *, levels: int = 5, base: float = 0.6) -> None:
+    def __init__(
+        self, shape: Tuple[int, ...] = (1,), *, levels: int = 5, base: float = 0.6
+    ) -> None:
         self.levels = levels
         self.rates = [float(base) ** (k + 1) for k in range(levels)]
         self.states = [np.zeros(shape, dtype=float) for _ in range(levels)]
@@ -290,7 +292,9 @@ class PositionSizer:
         q = 1.0 - p
         b = 1.0 / max(0.01, volatility)
         raw_kelly = (p * b - q) / b if b > 0 else 0.0
-        position = float(np.clip(raw_kelly, -1.0, 1.0)) * self.kelly_fraction * scale * self.leverage
+        position = (
+            float(np.clip(raw_kelly, -1.0, 1.0)) * self.kelly_fraction * scale * self.leverage
+        )
         return float(np.clip(position, -1.0, 1.0))
 
 

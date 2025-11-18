@@ -30,9 +30,7 @@ def _lag_matrix(values: np.ndarray, lag: int) -> np.ndarray:
     n = values.size
     if n <= lag:
         raise ValueError("insufficient observations for the requested lag")
-    return np.column_stack(
-        [values[(lag - k - 1) : n - (k + 1)] for k in range(lag)]
-    )
+    return np.column_stack([values[(lag - k - 1) : n - (k + 1)] for k in range(lag)])
 
 
 def _f_statistic(rss_restricted: float, rss_full: float, lag: int, samples: int) -> float:
@@ -109,4 +107,3 @@ def granger_causality(
 
 
 __all__ = ["GrangerResult", "granger_causality"]
-

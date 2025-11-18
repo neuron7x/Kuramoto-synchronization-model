@@ -1,4 +1,4 @@
-"""Compositional helpers for caching ticks while forming and sending TickBatchPersistedEvent notifications."""
+"""Compositional helpers for caching ticks while forming and sending TickBatchPersistedEvent notifications."""  # noqa: E501
 
 from __future__ import annotations
 
@@ -74,9 +74,9 @@ class CacheWriterTickHandler:
         if not ticks:
             return
 
-        buckets: Dict[
-            tuple[CacheRoute, str, str, InstrumentType], list[PriceTick]
-        ] = defaultdict(list)
+        buckets: Dict[tuple[CacheRoute, str, str, InstrumentType], list[PriceTick]] = defaultdict(
+            list
+        )
         for tick in ticks:
             route = self._routing_strategy.route(tick)
             if route is None:
@@ -124,11 +124,11 @@ class StreamingIngestionPipeline:
         tick_event_publisher: TickEventPublisher | None = None,
         tick_event_topic: str = "tradepulse.data.tick_batch.persisted",
         tick_header_factory: "HeaderFactory" | None = None,
-        kafka_service_factory: Callable[
-            [KafkaIngestionConfig], KafkaIngestionService
-        ]
-        | Callable[..., KafkaIngestionService]
-        | None = None,
+        kafka_service_factory: (
+            Callable[[KafkaIngestionConfig], KafkaIngestionService]
+            | Callable[..., KafkaIngestionService]
+            | None
+        ) = None,
         kafka_kwargs: Mapping[str, Any] | None = None,
     ) -> None:
         self._cache_service = cache_service or DataIngestionCacheService()
@@ -157,9 +157,7 @@ class StreamingIngestionPipeline:
         factory = kafka_service_factory or self._build_kafka_service
         kwargs: Dict[str, Any] = dict(kafka_kwargs or {})
         if "tick_handler" in kwargs or "lag_handler" in kwargs:
-            raise ValueError(
-                "tick_handler and lag_handler must not be provided in kafka_kwargs"
-            )
+            raise ValueError("tick_handler and lag_handler must not be provided in kafka_kwargs")
         supports = self._inspect_factory_support(factory)
         if supports is None:
             try:
@@ -190,7 +188,7 @@ class StreamingIngestionPipeline:
 
     @staticmethod
     def _inspect_factory_support(
-        factory: Callable[..., KafkaIngestionService]
+        factory: Callable[..., KafkaIngestionService],
     ) -> tuple[bool, bool] | None:
         try:
             signature = inspect.signature(factory)

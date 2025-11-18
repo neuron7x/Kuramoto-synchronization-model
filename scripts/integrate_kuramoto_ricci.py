@@ -51,9 +51,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=_path_default(
-            DEFAULT_CONFIG_ENV, Path("configs/kuramoto_ricci_composite.yaml")
-        ),
+        default=_path_default(DEFAULT_CONFIG_ENV, Path("configs/kuramoto_ricci_composite.yaml")),
         help=(
             "Configuration file for the composite engine. "
             f"Defaults to ${{{DEFAULT_CONFIG_ENV}}} or 'configs/kuramoto_ricci_composite.yaml'."
@@ -103,7 +101,7 @@ def _ensure_output_dir(path: Path, *, confirm: bool) -> None:
         contains_items = any(path.iterdir())
         if contains_items and not confirm:
             raise RuntimeError(
-                f"Output directory '{path}' is not empty. Use --yes to allow overwriting existing files."
+                f"Output directory '{path}' is not empty. Use --yes to allow overwriting existing files."  # noqa: E501
             )
     else:
         path.mkdir(parents=True, exist_ok=True)
@@ -155,9 +153,7 @@ def run_integration(
         "Entry: "
         f"{sig.entry_signal:.3f} | Exit: {sig.exit_signal:.3f} | Risk: {sig.risk_multiplier:.3f}"
     )
-    print(
-        f"Kuramoto R: {sig.kuramoto_R:.3f}, Coherence: {sig.cross_scale_coherence:.3f}"
-    )
+    print(f"Kuramoto R: {sig.kuramoto_R:.3f}, Coherence: {sig.cross_scale_coherence:.3f}")
     print(
         "Static κ: "
         f"{sig.static_ricci:.4f}, Temporal κ_t: {sig.temporal_ricci:.4f}, "

@@ -50,7 +50,7 @@ class ClickHouseIndex:
     granularity: int = 1
 
     def ddl(self) -> str:
-        return f"INDEX {self.name} {self.expression} TYPE {self.index_type} GRANULARITY {self.granularity}"
+        return f"INDEX {self.name} {self.expression} TYPE {self.index_type} GRANULARITY {self.granularity}"  # noqa: E501
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,18 +82,20 @@ class ClickHouseSchemaManager:
         columns.extend(column.ddl() for column in self.schema.metadata)
 
         ttl_parts = [
-            f"{self.schema.timestamp_column} + {_format_interval(self.retention.hot)} TO VOLUME 'hot'",
+            f"{self.schema.timestamp_column} + {_format_interval(self.retention.hot)} TO VOLUME 'hot'",  # noqa: E501
         ]
         if self.retention.warm:
             ttl_parts.append(
-                f"{self.schema.timestamp_column} + {_format_interval(self.retention.warm)} TO VOLUME 'warm'"
+                f"{self.schema.timestamp_column} + {_format_interval(self.retention.warm)} TO VOLUME 'warm'"  # noqa: E501
             )
         if self.retention.cold:
             ttl_parts.append(
-                f"{self.schema.timestamp_column} + {_format_interval(self.retention.cold)} TO VOLUME 'cold'"
+                f"{self.schema.timestamp_column} + {_format_interval(self.retention.cold)} TO VOLUME 'cold'"  # noqa: E501
             )
         if self.retention.drop:
-            ttl_parts.append(f"{self.schema.timestamp_column} + {_format_interval(self.retention.drop)} DELETE")
+            ttl_parts.append(
+                f"{self.schema.timestamp_column} + {_format_interval(self.retention.drop)} DELETE"
+            )
 
         parts = [
             f"CREATE TABLE IF NOT EXISTS {self.schema.fully_qualified_name}",
@@ -111,7 +113,9 @@ class ClickHouseSchemaManager:
             parts.append(f"SAMPLE BY {self.sample_by}")
         parts.append("TTL " + ", ".join(ttl_parts))
         if self.settings:
-            rendered_settings = ", ".join(f"{key} = {value}" for key, value in self.settings.items())
+            rendered_settings = ", ".join(
+                f"{key} = {value}" for key, value in self.settings.items()
+            )
             parts.append(f"SETTINGS {rendered_settings}")
         return "\n".join(parts)
 
@@ -121,9 +125,13 @@ class ClickHouseSchemaManager:
         target = self._qualified_rollup_name(rollup.name)
         columns = ["bucket DateTime64(6, 'UTC')"]
         columns.extend(column.ddl() for column in self.schema.dimensions)
-        columns.extend(f"{aggregation.alias} {aggregation.data_type}" for aggregation in rollup.aggregations)
+        columns.extend(
+            f"{aggregation.alias} {aggregation.data_type}" for aggregation in rollup.aggregations
+        )
         order_by_columns = ["bucket", *(dimension.name for dimension in self.schema.dimensions)]
-        ttl_horizon = self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
+        ttl_horizon = (
+            self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
+        )
         parts = [
             f"CREATE TABLE IF NOT EXISTS {target}",
             "(",
@@ -145,7 +153,8 @@ class ClickHouseSchemaManager:
         ]
         select_columns.extend(dimension.name for dimension in self.schema.dimensions)
         select_columns.extend(
-            f"{aggregation.expression} AS {aggregation.alias}" for aggregation in rollup.aggregations
+            f"{aggregation.expression} AS {aggregation.alias}"
+            for aggregation in rollup.aggregations
         )
 
         group_by = ["bucket", *(dimension.name for dimension in self.schema.dimensions)]
@@ -246,7 +255,11 @@ class ClickHouseQueryBuilder:
         limit: int = 10_000,
         filters: Mapping[str, str] | None = None,
     ) -> str:
-        table = self._schema.fully_qualified_name if rollup is None else self._qualified_rollup_name(rollup.name)
+        table = (
+            self._schema.fully_qualified_name
+            if rollup is None
+            else self._qualified_rollup_name(rollup.name)
+        )
         timeframe = _format_interval(rollup.interval if rollup else timedelta(minutes=1))
         dims = [dimension.name for dimension in self._schema.dimensions]
         filters = filters or {}
@@ -276,8 +289,7 @@ class ClickHouseQueryBuilder:
 
         query = ["SELECT", ",\n".join(select_lines), f"FROM {table}{prewhere}"]
         query.append(
-            "WHERE "
-            f"{timestamp_column} >= %(start_ts)s AND {timestamp_column} < %(end_ts)s"
+            "WHERE " f"{timestamp_column} >= %(start_ts)s AND {timestamp_column} < %(end_ts)s"
         )
         query.append(f"GROUP BY {group_by_clause}")
         query.append("ORDER BY bucket ASC")
@@ -310,7 +322,7 @@ class ClickHouseSLAManager:
             SLAMetric(
                 name="ingest_lag_seconds",
                 query=(
-                    "SELECT max(toUnixTimestamp(now64(6)) - toUnixTimestamp(timestamp)) AS ingest_lag "
+                    "SELECT max(toUnixTimestamp(now64(6)) - toUnixTimestamp(timestamp)) AS ingest_lag "  # noqa: E501
                     f"FROM {self._schema.fully_qualified_name}"
                 ),
                 threshold_ms=5_000.0,

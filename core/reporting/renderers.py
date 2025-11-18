@@ -53,16 +53,12 @@ def render_markdown_to_pdf(markdown: str, output_path: Path) -> None:
     stream = ("\n".join(stream_parts) + "\n").encode("utf-8")
 
     content = (
-        b"<< /Length "
-        + str(len(stream)).encode("ascii")
-        + b" >>\nstream\n"
-        + stream
-        + b"endstream"
+        b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"endstream"
     )
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",  # noqa: E501
         content,
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     ]

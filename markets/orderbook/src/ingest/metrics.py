@@ -63,4 +63,7 @@ class InMemoryMetricsRecorder(MetricsRecorder):
 
     def snapshot(self) -> Dict[str, MetricsSample]:
         with self._lock:
-            return {instrument: MetricsSample(**asdict(sample)) for instrument, sample in self._samples.items()}
+            return {
+                instrument: MetricsSample(**asdict(sample))
+                for instrument, sample in self._samples.items()
+            }

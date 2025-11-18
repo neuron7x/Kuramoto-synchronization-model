@@ -87,9 +87,7 @@ class DeadLetterQueue:
 
         self._items: Deque[DeadLetterItem] = deque(maxlen=max_items)
         self._max_items = max_items
-        self._persistent_path = (
-            Path(persistent_path) if persistent_path is not None else None
-        )
+        self._persistent_path = Path(persistent_path) if persistent_path is not None else None
         self._audit_path = Path(audit_path) if audit_path is not None else None
         self._toxicity_threshold = toxicity_threshold
         self._failure_counts: Counter[str] = Counter()
@@ -532,4 +530,3 @@ __all__ = [
     "DeadLetterReason",
     "DeadLetterReplayController",
 ]
-

@@ -10,7 +10,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Callable, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ValidationError(ValueError):
@@ -45,12 +45,10 @@ def validate_symbol(symbol: str, max_length: int = 20) -> str:
     symbol = symbol.strip().upper()
 
     if len(symbol) > max_length:
-        raise ValidationError(
-            f"Symbol too long (max {max_length} characters): {symbol}"
-        )
+        raise ValidationError(f"Symbol too long (max {max_length} characters): {symbol}")
 
     # Allow alphanumeric, dash, slash, underscore
-    if not re.match(r'^[A-Z0-9/_-]+$', symbol):
+    if not re.match(r"^[A-Z0-9/_-]+$", symbol):
         raise ValidationError(
             f"Symbol contains invalid characters: {symbol}. "
             "Only letters, numbers, /, -, and _ are allowed."
@@ -94,14 +92,10 @@ def validate_quantity(
         raise ValidationError("Quantity cannot be zero")
 
     if qty < Decimal(str(min_value)):
-        raise ValidationError(
-            f"Quantity {qty} is below minimum {min_value}"
-        )
+        raise ValidationError(f"Quantity {qty} is below minimum {min_value}")
 
     if max_value is not None and qty > Decimal(str(max_value)):
-        raise ValidationError(
-            f"Quantity {qty} exceeds maximum {max_value}"
-        )
+        raise ValidationError(f"Quantity {qty} exceeds maximum {max_value}")
 
     return qty
 
@@ -174,14 +168,10 @@ def validate_percentage(
         raise ValidationError(f"Percentage must be finite: {pct}")
 
     if pct < Decimal(str(min_value)):
-        raise ValidationError(
-            f"Percentage {pct} is below minimum {min_value}%"
-        )
+        raise ValidationError(f"Percentage {pct} is below minimum {min_value}%")
 
     if pct > Decimal(str(max_value)):
-        raise ValidationError(
-            f"Percentage {pct} exceeds maximum {max_value}%"
-        )
+        raise ValidationError(f"Percentage {pct} exceeds maximum {max_value}%")
 
     return pct
 
@@ -203,16 +193,16 @@ def validate_order_side(side: str) -> str:
 
     side = side.strip().lower()
 
-    if side not in ('buy', 'sell', 'long', 'short'):
+    if side not in ("buy", "sell", "long", "short"):
         raise ValidationError(
             f"Invalid order side: '{side}'. Must be 'buy', 'sell', 'long', or 'short'."
         )
 
     # Normalize to buy/sell
-    if side == 'long':
-        side = 'buy'
-    elif side == 'short':
-        side = 'sell'
+    if side == "long":
+        side = "buy"
+    elif side == "short":
+        side = "sell"
 
     return side
 
@@ -234,12 +224,11 @@ def validate_order_type(order_type: str) -> str:
 
     order_type = order_type.strip().lower()
 
-    valid_types = ('market', 'limit', 'stop', 'stop_limit', 'trailing_stop')
+    valid_types = ("market", "limit", "stop", "stop_limit", "trailing_stop")
 
     if order_type not in valid_types:
         raise ValidationError(
-            f"Invalid order type: '{order_type}'. "
-            f"Must be one of: {', '.join(valid_types)}"
+            f"Invalid order type: '{order_type}'. " f"Must be one of: {', '.join(valid_types)}"
         )
 
     return order_type
@@ -263,7 +252,7 @@ def validate_timeframe(timeframe: str) -> str:
     timeframe = timeframe.strip().lower()
 
     # Valid timeframe pattern: number followed by unit
-    if not re.match(r'^\d+[smhdwMy]$', timeframe):
+    if not re.match(r"^\d+[smhdwMy]$", timeframe):
         raise ValidationError(
             f"Invalid timeframe format: '{timeframe}'. "
             "Expected format: number + unit (s/m/h/d/w/M/y), e.g., '5m', '1h', '1d'"
@@ -298,14 +287,10 @@ def validate_string_length(
     length = len(value)
 
     if length < min_length:
-        raise ValidationError(
-            f"{field_name} too short (min {min_length} characters): got {length}"
-        )
+        raise ValidationError(f"{field_name} too short (min {min_length} characters): got {length}")
 
     if length > max_length:
-        raise ValidationError(
-            f"{field_name} too long (max {max_length} characters): got {length}"
-        )
+        raise ValidationError(f"{field_name} too long (max {max_length} characters): got {length}")
 
     return value
 
@@ -370,16 +355,14 @@ def sanitize_sql_identifier(identifier: str, max_length: int = 63) -> str:
         raise ValidationError("Identifier must be a non-empty string")
 
     # SQL identifiers: letters, digits, underscores, starting with letter/underscore
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', identifier):
+    if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", identifier):
         raise ValidationError(
             f"Invalid SQL identifier: '{identifier}'. "
             "Must start with letter or underscore, contain only letters, digits, and underscores."
         )
 
     if len(identifier) > max_length:
-        raise ValidationError(
-            f"Identifier too long (max {max_length} characters): {identifier}"
-        )
+        raise ValidationError(f"Identifier too long (max {max_length} characters): {identifier}")
 
     return identifier
 

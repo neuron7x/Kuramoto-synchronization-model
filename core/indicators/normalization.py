@@ -70,7 +70,9 @@ def _zscore_normalize(values: Array1D, *, epsilon: float) -> Array1D:
     return (values - mean) / std
 
 
-def _minmax_normalize(values: Array1D, *, epsilon: float, feature_range: Tuple[float, float]) -> Array1D:
+def _minmax_normalize(
+    values: Array1D, *, epsilon: float, feature_range: Tuple[float, float]
+) -> Array1D:
     low, high = feature_range
     min_val = float(np.min(values))
     max_val = float(np.max(values))
@@ -125,7 +127,9 @@ def normalize_indicator_series(
 
 
 def resolve_indicator_normalizer(
-    normalizer: Optional[Union[str, NormalizationMode, IndicatorNormalizer, IndicatorNormalizationConfig]]
+    normalizer: Optional[
+        Union[str, NormalizationMode, IndicatorNormalizer, IndicatorNormalizationConfig]
+    ],
 ) -> IndicatorNormalizer:
     """Resolve ``normalizer`` into a callable that normalises indicator series."""
 
@@ -140,6 +144,7 @@ def resolve_indicator_normalizer(
         return config
 
     if callable(normalizer):
+
         def _wrapper(series: ArrayLike) -> Array1D:
             values = normalizer(series)
             array = np.asarray(values, dtype=float)
@@ -160,4 +165,3 @@ __all__ = [
     "normalize_indicator_series",
     "resolve_indicator_normalizer",
 ]
-

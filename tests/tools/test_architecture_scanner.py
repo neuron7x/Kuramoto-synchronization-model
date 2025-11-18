@@ -38,7 +38,10 @@ def test_scanner_detects_dependencies(tmp_path: Path) -> None:
     report = scanner.scan()
 
     assert "package.module_a" in report.dependencies
-    assert report.dependencies["package.module_a"] == {"package.module_b", "package.nested.module_c"}
+    assert report.dependencies["package.module_a"] == {
+        "package.module_b",
+        "package.nested.module_c",
+    }
     assert report.reverse_dependencies["package.module_b"] == {"package.module_a"}
 
 

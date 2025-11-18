@@ -41,9 +41,7 @@ def test_phase_flags_respect_custom_thresholds() -> None:
         neutral_band=(0.3, 0.55),
     )
 
-    proto_state = phase_flags(
-        R=0.29, dH=-0.01, kappa_mean=-0.01, H=0.9, thresholds=thresholds
-    )
+    proto_state = phase_flags(R=0.29, dH=-0.01, kappa_mean=-0.01, H=0.9, thresholds=thresholds)
     emergent_state = phase_flags(
         R=0.7,
         dH=-0.08,

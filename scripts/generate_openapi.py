@@ -38,9 +38,7 @@ def main() -> None:
     schema = app.openapi()
     output_path: Path = args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        json.dumps(schema, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    output_path.write_text(json.dumps(schema, indent=2, sort_keys=True), encoding="utf-8")
 
 
 if __name__ == "__main__":

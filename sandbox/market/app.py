@@ -65,6 +65,10 @@ def create_app(service: MarketService | None = None) -> FastAPI:
             message=f"price_snapshot::{symbol.lower()}",
             payload={"count": len(points)},
         )
-        return {"symbol": symbol.lower(), "points": [point.model_dump() for point in points], "audit_id": event.created_at.isoformat()}
+        return {
+            "symbol": symbol.lower(),
+            "points": [point.model_dump() for point in points],
+            "audit_id": event.created_at.isoformat(),
+        }
 
     return app

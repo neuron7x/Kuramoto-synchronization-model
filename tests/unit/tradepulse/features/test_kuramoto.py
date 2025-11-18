@@ -8,9 +8,10 @@ import pytest
 
 # Import directly from module file to avoid package __init__
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
     "kuramoto",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/kuramoto.py"
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/kuramoto.py",
 )
 kuramoto_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(kuramoto_module)
@@ -83,10 +84,7 @@ class TestKuramotoSynchrony:
         assert len(result["R"]) == n_steps
 
         # Should have some CHAOTIC or CAUTION labels
-        assert (
-            (result["labels"] == "CHAOTIC").any()
-            or (result["labels"] == "CAUTION").any()
-        )
+        assert (result["labels"] == "CHAOTIC").any() or (result["labels"] == "CAUTION").any()
 
     def test_insufficient_data(self):
         """Test with insufficient data points."""

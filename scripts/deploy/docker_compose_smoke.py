@@ -26,7 +26,9 @@ PROMETHEUS_RUNTIME_TEMPLATE = "http://localhost:{port}/api/v1/status/runtimeinfo
 PROMETHEUS_UP_TEMPLATE = "http://localhost:{port}/api/v1/query?query=up"
 
 
-def _run(command: Iterable[str], *, check: bool = True, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: Iterable[str], *, check: bool = True, capture_output: bool = False
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         list(command),
         check=check,
@@ -45,13 +47,10 @@ def _wait_for_service(project: str, compose_file: Path, service: str, timeout: f
     deadline = time.monotonic() + timeout
     last_status = "unknown"
     while time.monotonic() < deadline:
-        container_id = (
-            _run(
-                _compose_cmd(compose_file, project, "ps", "-q", service),
-                capture_output=True,
-            )
-            .stdout.strip()
-        )
+        container_id = _run(
+            _compose_cmd(compose_file, project, "ps", "-q", service),
+            capture_output=True,
+        ).stdout.strip()
         if not container_id:
             time.sleep(2.0)
             continue
@@ -216,7 +215,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         try:
             health_payload = _fetch_json(args.health_url, timeout=args.http_timeout)
         except (HTTPError, URLError, TimeoutError) as exc:
-            raise RuntimeError(f"Failed to fetch service health from {args.health_url}: {exc}") from exc
+            raise RuntimeError(
+                f"Failed to fetch service health from {args.health_url}: {exc}"
+            ) from exc
 
         _write_artifact(
             artifact_dir / "api-health.json",
@@ -295,12 +296,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--health-url",
         default=default_health,
-        help="HTTP URL used to validate API health. Can be overridden by TRADEPULSE_HTTP_PORT env var or --health-url.",
+        help="HTTP URL used to validate API health. Can be overridden by TRADEPULSE_HTTP_PORT env var or --health-url.",  # noqa: E501
     )
     parser.add_argument(
         "--metrics-url",
         default=default_metrics,
-        help="HTTP URL used to download API metrics for diagnostics. Can be overridden by TRADEPULSE_HTTP_PORT env var or --metrics-url.",
+        help="HTTP URL used to download API metrics for diagnostics. Can be overridden by TRADEPULSE_HTTP_PORT env var or --metrics-url.",  # noqa: E501
     )
     parser.add_argument(
         "--prometheus-runtime-url",

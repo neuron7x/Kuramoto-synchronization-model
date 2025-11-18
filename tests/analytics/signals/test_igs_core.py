@@ -42,7 +42,7 @@ def _valid_config_kwargs() -> dict:
         "max_update_ms": 0.0,
         "signal_epr_q": 0.7,
         "signal_flux_min": 0.0,
-}
+    }
 
 
 @pytest.mark.parametrize(
@@ -304,7 +304,9 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
     assert metric_fluxless is not None
 
     assert math.isclose(metric_equal.regime_score, expected_equal, rel_tol=1e-12, abs_tol=1e-12)
-    assert math.isclose(metric_fluxless.regime_score, expected_fluxless, rel_tol=1e-12, abs_tol=1e-12)
+    assert math.isclose(
+        metric_fluxless.regime_score, expected_fluxless, rel_tol=1e-12, abs_tol=1e-12
+    )
     assert metric_fluxless.regime_score < metric_equal.regime_score
 
 
@@ -319,7 +321,7 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
         ({"perm_tau": 0}, "perm_tau must be >= 1"),
         (
             {"window": 4, "min_counts": 4, "perm_emb_dim": 5, "perm_tau": 1},
-            r"window must be >= \(perm_emb_dim - 1\) \* perm_tau \+ 1 to compute permutation entropy",
+            r"window must be >= \(perm_emb_dim - 1\) \* perm_tau \+ 1 to compute permutation entropy",  # noqa: E501
         ),
         ({"k_min": 1}, "k_min must be >= 2"),
         ({"k_min": 10, "k_max": 5}, "k_min must be <= k_max"),

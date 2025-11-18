@@ -31,11 +31,11 @@ class DatabasePoolConfig(BaseModel):
     timeout: float | None = Field(
         5.0,
         ge=0.0,
-        description="Seconds to wait when acquiring a pooled connection before failing. Use null for unlimited wait.",
+        description="Seconds to wait when acquiring a pooled connection before failing. Use null for unlimited wait.",  # noqa: E501
     )
     recycle: PositiveFloat = Field(
         1_800.0,
-        description="Seconds after which idle connections are recycled to avoid server-side disconnects.",
+        description="Seconds after which idle connections are recycled to avoid server-side disconnects.",  # noqa: E501
     )
     use_lifo: bool = Field(
         True,
@@ -49,7 +49,7 @@ class DatabaseRuntimeConfig(BaseModel):
     application_name: str = Field(
         "tradepulse",
         min_length=1,
-        description="Identifier visible in PostgreSQL monitoring views for tracking client activity.",
+        description="Identifier visible in PostgreSQL monitoring views for tracking client activity.",  # noqa: E501
     )
     connect_timeout_seconds: PositiveFloat = Field(
         5.0,
@@ -57,12 +57,12 @@ class DatabaseRuntimeConfig(BaseModel):
     )
     statement_timeout_ms: PositiveInt = Field(
         5_000,
-        description="Upper bound, in milliseconds, for individual SQL statements executed by the service.",
+        description="Upper bound, in milliseconds, for individual SQL statements executed by the service.",  # noqa: E501
     )
     target_session_attrs: str | None = Field(
         default=None,
         description=(
-            "Optional libpq target_session_attrs setting (e.g. 'read-write') enforced when establishing connections."
+            "Optional libpq target_session_attrs setting (e.g. 'read-write') enforced when establishing connections."  # noqa: E501
         ),
     )
 
@@ -70,7 +70,9 @@ class DatabaseRuntimeConfig(BaseModel):
 class DatabaseSettings(BaseModel):
     """Complete database access configuration describing writer and reader endpoints."""
 
-    writer_dsn: str = Field(..., description="Primary connection string used for write transactions.")
+    writer_dsn: str = Field(
+        ..., description="Primary connection string used for write transactions."
+    )
     reader_dsns: Tuple[str, ...] = Field(
         default_factory=tuple,
         description="Optional additional connection strings used for read-only workloads.",
@@ -83,7 +85,7 @@ class DatabaseSettings(BaseModel):
     runtime: DatabaseRuntimeConfig = Field(default_factory=DatabaseRuntimeConfig)
     echo_statements: bool = Field(
         False,
-        description="Enable SQLAlchemy statement logging. Should remain disabled in production for performance reasons.",
+        description="Enable SQLAlchemy statement logging. Should remain disabled in production for performance reasons.",  # noqa: E501
     )
 
     @model_validator(mode="after")

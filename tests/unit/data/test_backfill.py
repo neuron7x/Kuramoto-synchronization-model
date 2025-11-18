@@ -16,9 +16,7 @@ from core.data.backfill import (
 )
 
 
-def _sample_frame(
-    start: str = "2024-01-01 00:00:00", *, periods: int = 4
-) -> pd.DataFrame:
+def _sample_frame(start: str = "2024-01-01 00:00:00", *, periods: int = 4) -> pd.DataFrame:
     index = pd.date_range(start=start, periods=periods, freq="1min", tz=UTC)
     return pd.DataFrame({"value": range(periods)}, index=index)
 

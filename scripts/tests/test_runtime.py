@@ -209,9 +209,7 @@ def test_automation_runner_retries_on_failure() -> None:
             raise RuntimeError("transient failure")
         return "ok"
 
-    runner = AutomationRunner(
-        [AutomationStep("flaky", flaky, retry_attempts=1)]
-    )
+    runner = AutomationRunner([AutomationStep("flaky", flaky, retry_attempts=1)])
 
     report = runner.run()
     result = report.results["flaky"]

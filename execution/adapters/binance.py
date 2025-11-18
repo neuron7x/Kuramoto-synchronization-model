@@ -61,9 +61,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         http_client=None,
         ws_factory=None,
     ) -> None:
-        base_url = (
-            "https://testnet.binance.vision" if sandbox else "https://api.binance.com"
-        )
+        base_url = "https://testnet.binance.vision" if sandbox else "https://api.binance.com"
         stream_base = "wss://stream.binance.com:9443/ws"
         if sandbox:
             stream_base = "wss://testnet.binance.vision/ws"
@@ -116,14 +114,10 @@ class BinanceRESTConnector(RESTWebSocketConnector):
 
     # ------------------------------------------------------------------
     # Abstract hook implementations
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         supplied = {str(k).lower(): str(v) for k, v in (credentials or {}).items()}
         api_key = (
-            supplied.get("api_key")
-            or os.getenv("BINANCE_API_KEY")
-            or os.getenv("BINANCE_KEY")
+            supplied.get("api_key") or os.getenv("BINANCE_API_KEY") or os.getenv("BINANCE_KEY")
         )
         api_secret = (
             supplied.get("api_secret")
@@ -165,9 +159,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         self._ensure_time_sync()
         params.setdefault("timestamp", str(self._timestamp_ms()))
         recv_window = (
-            self._credentials.get("recv_window")
-            if hasattr(self, "_credentials")
-            else None
+            self._credentials.get("recv_window") if hasattr(self, "_credentials") else None
         )
         if recv_window and "recvWindow" not in params:
             params["recvWindow"] = str(recv_window)
@@ -181,20 +173,14 @@ class BinanceRESTConnector(RESTWebSocketConnector):
     def _order_endpoint(self) -> str:
         return "/api/v3/order"
 
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> Dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> Dict[str, Any]:
         order_type = order.order_type
         binance_type = order_type.value.upper()
         if order_type is OrderType.STOP:
-            binance_type = (
-                "STOP_LOSS" if order.side is OrderSide.SELL else "TAKE_PROFIT"
-            )
+            binance_type = "STOP_LOSS" if order.side is OrderSide.SELL else "TAKE_PROFIT"
         elif order_type is OrderType.STOP_LIMIT:
             binance_type = (
-                "STOP_LOSS_LIMIT"
-                if order.side is OrderSide.SELL
-                else "TAKE_PROFIT_LIMIT"
+                "STOP_LOSS_LIMIT" if order.side is OrderSide.SELL else "TAKE_PROFIT_LIMIT"
             )
         payload: Dict[str, Any] = {
             "symbol": order.symbol.upper(),
@@ -202,10 +188,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             "type": binance_type,
             "quantity": f"{order.quantity:.10f}",
         }
-        if (
-            order_type in {OrderType.LIMIT, OrderType.STOP_LIMIT}
-            and order.price is not None
-        ):
+        if order_type in {OrderType.LIMIT, OrderType.STOP_LIMIT} and order.price is not None:
             payload["price"] = f"{order.price:.10f}"
             payload["timeInForce"] = "GTC"
         if order.stop_price is not None:
@@ -216,19 +199,20 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             payload["newClientOrderId"] = idempotency_key
         return payload
 
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         symbol_value = _first_present(payload, "symbol")
         symbol = (str(symbol_value).strip() if symbol_value is not None else "") or (
             original.symbol if original else ""
         )
         if not symbol:
             raise ValueError("Order payload did not include symbol")
-        side = str(
-            _first_present(payload, "side", "S")
-            or (original.side.value if original else "buy")
-        ).strip().lower()
+        side = (
+            str(
+                _first_present(payload, "side", "S") or (original.side.value if original else "buy")
+            )
+            .strip()
+            .lower()
+        )
         order_type = self._coerce_order_type(
             str(
                 _first_present(payload, "type", "o")
@@ -265,16 +249,12 @@ class BinanceRESTConnector(RESTWebSocketConnector):
                 average_price = cumulative_quote / filled
             except ZeroDivisionError:  # pragma: no cover - defensive guard
                 average_price = None
-        status_value = str(
-            _first_present(payload, "status", "X") or "NEW"
-        ).strip().upper()
+        status_value = str(_first_present(payload, "status", "X") or "NEW").strip().upper()
         status = _STATUS_MAP.get(status_value, OrderStatus.OPEN)
         return Order(
             symbol=symbol,
             side=OrderSide(side),
-            quantity=(
-                quantity if quantity > 0 else (original.quantity if original else 0.0)
-            ),
+            quantity=(quantity if quantity > 0 else (original.quantity if original else 0.0)),
             price=price,
             order_type=order_type,
             order_id=order_id,
@@ -301,9 +281,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         raw_balances = payload.get("balances", [])
         if isinstance(raw_balances, Mapping):
             balances_iter: Iterable[Any] = raw_balances.values()
-        elif isinstance(raw_balances, Iterable) and not isinstance(
-            raw_balances, (str, bytes)
-        ):
+        elif isinstance(raw_balances, Iterable) and not isinstance(raw_balances, (str, bytes)):
             balances_iter = raw_balances
         else:
             balances_iter = []
@@ -317,15 +295,11 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             qty = free_qty + locked_qty
             if qty <= 0 or not asset:
                 continue
-            positions.append(
-                {"symbol": asset, "qty": qty, "side": "long", "price": 0.0}
-            )
+            positions.append({"symbol": asset, "qty": qty, "side": "long", "price": 0.0})
         return positions
 
     def _stream_url(self) -> str | None:
-        response = self._request(
-            "POST", "/api/v3/userDataStream", params={}, signed=False
-        )
+        response = self._request("POST", "/api/v3/userDataStream", params={}, signed=False)
         listen_key = response.get("listenKey")
         if not isinstance(listen_key, str) or not listen_key:
             raise ValueError("Binance userDataStream did not return listenKey")
@@ -434,9 +408,7 @@ class BinanceRESTConnector(RESTWebSocketConnector):
             params=payload,
             signed=True,
         )
-        order_payload = (
-            response.get("newOrderResponse") if isinstance(response, Mapping) else None
-        )
+        order_payload = response.get("newOrderResponse") if isinstance(response, Mapping) else None
         if not isinstance(order_payload, Mapping):
             order_payload = response
         parsed = self._parse_order(order_payload, original=new_order)
@@ -468,17 +440,13 @@ class BinanceRESTConnector(RESTWebSocketConnector):
                         extra={"error": str(exc)},
                     )
                     try:
-                        response = self._http_client.post(
-                            "/api/v3/userDataStream", params={}
-                        )
+                        response = self._http_client.post("/api/v3/userDataStream", params={})
                         response.raise_for_status()
                         new_key = response.json().get("listenKey")
                         if isinstance(new_key, str) and new_key:
                             self._listen_key = new_key
                             self._restart_stream(new_key)
-                    except (
-                        Exception
-                    ) as inner_exc:  # pragma: no cover - defensive logging
+                    except Exception as inner_exc:  # pragma: no cover - defensive logging
                         self._logger.error(
                             "Failed to reacquire Binance listen key",
                             extra={"error": str(inner_exc)},
@@ -529,9 +497,7 @@ def _self_test() -> AdapterDiagnostic:
             )
         )
     except Exception as exc:  # pragma: no cover - defensive guard
-        checks.append(
-            AdapterCheckResult(name="instantiate", status="failed", detail=str(exc))
-        )
+        checks.append(AdapterCheckResult(name="instantiate", status="failed", detail=str(exc)))
     return AdapterDiagnostic(adapter_id="binance.spot", checks=tuple(checks))
 
 

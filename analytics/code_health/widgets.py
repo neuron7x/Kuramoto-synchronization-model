@@ -32,4 +32,3 @@ def render_widget(context: dict) -> str:
 
     template = Environment(autoescape=True).from_string(_TEMPLATE)
     return template.render(**context)
-

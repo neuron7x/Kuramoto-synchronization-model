@@ -50,4 +50,3 @@ def test_granger_causality_detects_linear_dependence() -> None:
 
     assert result.causes
     assert 0.0 <= result.p_value <= 0.05
-

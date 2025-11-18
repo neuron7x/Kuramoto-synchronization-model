@@ -42,9 +42,7 @@ class FeatureCatalog:
 
     def _write_entries(self, entries: Iterable[Dict[str, object]]) -> None:
         payload = {"artifacts": list(entries)}
-        self.path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        self.path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     def register(
         self,

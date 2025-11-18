@@ -9,12 +9,16 @@ from ..models import PricePoint, PriceSeries, SignalDirection, TradingSignal
 
 
 class MarketDataProviderProtocol:
-    async def fetch(self, symbol: str, window: int) -> PriceSeries:  # pragma: no cover - protocol definition
+    async def fetch(
+        self, symbol: str, window: int
+    ) -> PriceSeries:  # pragma: no cover - protocol definition
         raise NotImplementedError
 
 
 class SignalEngine:
-    def __init__(self, provider: MarketDataProviderProtocol, *, sensitivity: float, window: int) -> None:
+    def __init__(
+        self, provider: MarketDataProviderProtocol, *, sensitivity: float, window: int
+    ) -> None:
         self._provider = provider
         self._sensitivity = sensitivity
         self._window = window

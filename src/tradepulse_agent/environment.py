@@ -101,13 +101,9 @@ class TradingAgentEnvironment:
         target_position = self._position
         cfg = self._env_config
         if action is AgentAction.BUY:
-            target_position = min(
-                self._position + cfg.position_increment, cfg.max_position
-            )
+            target_position = min(self._position + cfg.position_increment, cfg.max_position)
         elif action is AgentAction.SELL:
-            target_position = max(
-                self._position - cfg.position_increment, -cfg.max_position
-            )
+            target_position = max(self._position - cfg.position_increment, -cfg.max_position)
 
         delta = target_position - self._position
         trade_value = delta * current_price

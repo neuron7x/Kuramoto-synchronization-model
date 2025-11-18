@@ -63,7 +63,9 @@ def plot_metrics(
     post_tail = _upper_tail_mean(post_target)
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    bars = ax.bar(["pre_snr", "post_snr", "pre_tail", "post_tail"], [pre_snr, post_snr, pre_tail, post_tail])
+    bars = ax.bar(
+        ["pre_snr", "post_snr", "pre_tail", "post_tail"], [pre_snr, post_snr, pre_tail, post_tail]
+    )
     ax.bar_label(bars, fmt="%.4f")
     ax.set_title("VLPO filter metrics")
     fig.tight_layout()

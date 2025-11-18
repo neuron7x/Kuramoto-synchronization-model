@@ -86,9 +86,7 @@ def require_roles(
 def _resolve_audit_secret() -> str:
     secret = os.getenv(_AUDIT_SECRET_ENV)
     if secret is None:
-        raise RuntimeError(
-            "TRADEPULSE_RBAC_AUDIT_SECRET must be set to enable audit logging"
-        )
+        raise RuntimeError("TRADEPULSE_RBAC_AUDIT_SECRET must be set to enable audit logging")
     candidate = secret.strip()
     if not candidate:
         raise RuntimeError("RBAC audit secret cannot be empty or whitespace")
@@ -118,8 +116,12 @@ def require_permission(
     action: str,
     *,
     identity_dependency: Callable[..., Awaitable[AdminIdentity]] | None = None,
-    attributes_provider: Callable[[Request, AdminIdentity], Mapping[str, Any] | Awaitable[Mapping[str, Any] | None] | None]
-    | None = None,
+    attributes_provider: (
+        Callable[
+            [Request, AdminIdentity], Mapping[str, Any] | Awaitable[Mapping[str, Any] | None] | None
+        ]
+        | None
+    ) = None,
     gateway_dependency: Callable[[], AuthorizationGateway] | None = None,
 ) -> Callable[[Request, AdminIdentity, AuthorizationGateway], Awaitable[AdminIdentity]]:
     """Return a dependency enforcing granular RBAC permissions."""

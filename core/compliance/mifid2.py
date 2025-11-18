@@ -105,7 +105,9 @@ class MiFID2Reporter:
         self._abuse_signals: list[MarketAbuseSignal] = []
         self._synchronised_at: datetime | None = None
 
-    def record_order(self, *, order_id: str, payload: Mapping[str, object], venue: str, actor: str) -> None:
+    def record_order(
+        self, *, order_id: str, payload: Mapping[str, object], venue: str, actor: str
+    ) -> None:
         entry = OrderAuditTrail(
             order_id=order_id,
             timestamp=datetime.now(UTC),
@@ -212,7 +214,9 @@ class MiFID2Reporter:
             "execution_quality": [quality.__dict__ for quality in snapshot.execution_quality],
             "market_abuse_signals": [signal.__dict__ for signal in self._abuse_signals],
         }
-        target = self._storage_path / f"{prefix}-{snapshot.generated_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+        target = (
+            self._storage_path / f"{prefix}-{snapshot.generated_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+        )
         target.write_text(json.dumps(payload, indent=2))
         self._apply_retention()
         return target
@@ -221,7 +225,9 @@ class MiFID2Reporter:
         cutoff = datetime.now(UTC) - self._retention.retention_delta()
         for artefact in list(self._storage_path.glob("*.json")):
             try:
-                timestamp = datetime.strptime(artefact.stem.split("-")[-1], "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
+                timestamp = datetime.strptime(
+                    artefact.stem.split("-")[-1], "%Y%m%dT%H%M%SZ"
+                ).replace(tzinfo=UTC)
             except ValueError:
                 continue
             if timestamp < cutoff:
@@ -234,13 +240,19 @@ class MiFID2Reporter:
             return
         if payload.get("action") == "cancel" and size > 1_000_000:
             self._abuse_signals.append(
-                MarketAbuseSignal(order_id=entry.order_id, actor=entry.actor, reason="suspicious large cancellation"),
+                MarketAbuseSignal(
+                    order_id=entry.order_id,
+                    actor=entry.actor,
+                    reason="suspicious large cancellation",
+                ),
             )
 
     def generate_regulatory_report(self) -> Mapping[str, object]:
         return {
             "health": self.health_summary(),
-            "best_execution_breaches": [quality.__dict__ for quality in self.best_execution_breaches()],
+            "best_execution_breaches": [
+                quality.__dict__ for quality in self.best_execution_breaches()
+            ],
             "market_abuse_signals": [signal.__dict__ for signal in self._abuse_signals],
         }
 
@@ -254,4 +266,3 @@ __all__ = [
     "OrderAuditTrail",
     "TransactionReport",
 ]
-

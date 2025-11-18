@@ -96,7 +96,9 @@ class TestQualityAnalyzer(ast.NodeVisitor):
             self._detect_test_smells(node)
 
         # Check for fixture usage
-        if any(dec.id == "pytest.fixture" for dec in node.decorator_list if isinstance(dec, ast.Name)):
+        if any(
+            dec.id == "pytest.fixture" for dec in node.decorator_list if isinstance(dec, ast.Name)
+        ):
             self.metrics.has_fixtures = True
 
         # Check for parametrize usage
@@ -113,16 +115,12 @@ class TestQualityAnalyzer(ast.NodeVisitor):
         # Smell 1: Too many assertions (indicates test doing too much)
         assertions = [n for n in ast.walk(node) if isinstance(n, ast.Assert)]
         if len(assertions) > 10:
-            self.metrics.test_smells.append(
-                f"{node.name}: Too many assertions ({len(assertions)})"
-            )
+            self.metrics.test_smells.append(f"{node.name}: Too many assertions ({len(assertions)})")
 
         # Smell 2: No assertions at all
         if len(assertions) == 0:
             # Check if it's not using pytest.raises or similar
-            has_pytest_raises = any(
-                isinstance(n, ast.With) for n in ast.walk(node)
-            )
+            has_pytest_raises = any(isinstance(n, ast.With) for n in ast.walk(node))
             if not has_pytest_raises:
                 self.metrics.test_smells.append(f"{node.name}: No assertions found")
 
@@ -130,9 +128,7 @@ class TestQualityAnalyzer(ast.NodeVisitor):
         prints = [
             n
             for n in ast.walk(node)
-            if isinstance(n, ast.Call)
-            and isinstance(n.func, ast.Name)
-            and n.func.id == "print"
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "print"
         ]
         if prints:
             self.metrics.test_smells.append(
@@ -148,16 +144,12 @@ class TestQualityAnalyzer(ast.NodeVisitor):
             and n.func.attr == "sleep"
         ]
         if sleeps:
-            self.metrics.test_smells.append(
-                f"{node.name}: Contains sleep calls ({len(sleeps)})"
-            )
+            self.metrics.test_smells.append(f"{node.name}: Contains sleep calls ({len(sleeps)})")
 
         # Smell 5: Hardcoded values that should be parametrized
         # Check for similar test names (indication that tests should be parametrized)
         if "_1" in node.name or "_2" in node.name or "_test1" in node.name:
-            self.metrics.test_smells.append(
-                f"{node.name}: Might benefit from parametrization"
-            )
+            self.metrics.test_smells.append(f"{node.name}: Might benefit from parametrization")
 
 
 class TestQualityValidator:
@@ -268,7 +260,9 @@ class TestQualityValidator:
         print("=" * 70)
         print(f"\nTotal Test Files: {summary['total_test_files']}")
         print(f"Total Tests: {summary['total_tests']}")
-        print(f"Documented Tests: {summary['documented_tests']} ({summary['documentation_rate']:.1%})")
+        print(
+            f"Documented Tests: {summary['documented_tests']} ({summary['documentation_rate']:.1%})"
+        )
         print(f"Total Test Smells: {summary['total_smells']}")
         print(f"Average Quality Score: {summary['avg_quality_score']:.1f}/100")
 
@@ -341,9 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     # Check threshold
     avg_score = report["summary"]["avg_quality_score"]
     if args.fail_under and avg_score < args.threshold:
-        print(
-            f"\n❌ Quality score {avg_score:.1f} is below threshold {args.threshold:.1f}"
-        )
+        print(f"\n❌ Quality score {avg_score:.1f} is below threshold {args.threshold:.1f}")
         return 1
 
     return 0

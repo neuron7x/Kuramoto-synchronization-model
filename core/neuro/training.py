@@ -244,7 +244,9 @@ class TrainingProfiler:
             return {"steps": 0}
 
         wall_times = [snap.wall_time for snap in self._snapshots if not math.isnan(snap.wall_time)]
-        memory_peaks = [snap.memory_peak_bytes for snap in self._snapshots if snap.memory_peak_bytes]
+        memory_peaks = [
+            snap.memory_peak_bytes for snap in self._snapshots if snap.memory_peak_bytes
+        ]
         io_times = [snap.io_time for snap in self._snapshots]
 
         return {
@@ -278,9 +280,13 @@ def _normalise_sample(item: Any) -> TrainingSample:
         metadata = dict(item.get("metadata", {}))
         priority = item.get("priority")
         if "inputs" in item and "target" in item:
-            return TrainingSample(inputs=item["inputs"], target=item["target"], metadata=metadata, priority=priority)
+            return TrainingSample(
+                inputs=item["inputs"], target=item["target"], metadata=metadata, priority=priority
+            )
         if "input" in item and "label" in item:
-            return TrainingSample(inputs=item["input"], target=item["label"], metadata=metadata, priority=priority)
+            return TrainingSample(
+                inputs=item["input"], target=item["label"], metadata=metadata, priority=priority
+            )
         raise ValueError("Mapping sample must contain 'inputs'/'target' keys")
 
     if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
@@ -358,9 +364,7 @@ class _MaterialisedDataset:
         count = 0
         for item in self._dataset:
             sample = _normalise_sample(item)
-            if self._cache_enabled and (
-                self._cache_limit is None or count < self._cache_limit
-            ):
+            if self._cache_enabled and (self._cache_limit is None or count < self._cache_limit):
                 produced.append(_clone_sample(sample))
                 count += 1
             elif self._cache_enabled:
@@ -444,7 +448,10 @@ class AsyncDataLoader:
                         max_length=self._sequence_length,
                         enable_padding=self._enable_padding,
                     )
-                if isinstance(sample.target, (np.ndarray, list, tuple)) and self._sequence_length is not None:
+                if (
+                    isinstance(sample.target, (np.ndarray, list, tuple))
+                    and self._sequence_length is not None
+                ):
                     sample.target = _limit_sequence_length(
                         sample.target,
                         max_length=self._sequence_length,
@@ -570,7 +577,7 @@ class CheckpointManager:
             entries = self._load_index()
             entries.append(checkpoint_path.name)
             if len(entries) > self._keep_last:
-                for obsolete in entries[:-self._keep_last]:
+                for obsolete in entries[: -self._keep_last]:
                     obsolete_path = self._directory / obsolete
                     if obsolete_path.exists():
                         obsolete_path.unlink()
@@ -715,4 +722,3 @@ class TrainingEngine:
             checkpoints=checkpoints,
         )
         return summary
-

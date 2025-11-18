@@ -1,4 +1,5 @@
 """Train the FHMC actor-critic agent in the toy market environment."""
+
 from __future__ import annotations
 
 import argparse

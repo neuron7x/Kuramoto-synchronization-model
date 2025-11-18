@@ -310,9 +310,7 @@ class DataIngestionCacheService:
             end = frame.index.max().to_pydatetime()
             rows = int(frame.shape[0])
         timestamp = self._clock()
-        return CacheEntrySnapshot(
-            key=key, rows=rows, start=start, end=end, last_updated=timestamp
-        )
+        return CacheEntrySnapshot(key=key, rows=rows, start=start, end=end, last_updated=timestamp)
 
     def _snapshot_from_entry(self, key: CacheKey, entry: CacheEntry) -> CacheEntrySnapshot:
         rows = int(entry.frame.shape[0])
@@ -337,9 +335,7 @@ class DataIngestionCacheService:
         timeframe: str,
         instrument_type: InstrumentType,
     ) -> CacheKey:
-        canonical_symbol = normalize_symbol(
-            symbol, instrument_type_hint=instrument_type
-        )
+        canonical_symbol = normalize_symbol(symbol, instrument_type_hint=instrument_type)
         canonical_venue = normalize_venue(venue)
         return CacheKey(
             layer=layer,

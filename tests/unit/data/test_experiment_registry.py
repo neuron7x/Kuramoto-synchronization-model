@@ -57,7 +57,10 @@ def test_register_run_persists_payload(tmp_path: Path) -> None:
     assert payload["metrics"] == {"loss": pytest.approx(0.42)}
     assert payload["artifacts"][0]["uri"] == "s3://bucket/model.pt"
     assert record.param_hash
-    assert registry.get_run(record.run_id, experiment_name="volatility-model").model_dump() == record.model_dump()
+    assert (
+        registry.get_run(record.run_id, experiment_name="volatility-model").model_dump()
+        == record.model_dump()
+    )
 
 
 def test_list_runs_is_sorted_by_creation_time(tmp_path: Path) -> None:

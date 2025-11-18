@@ -48,9 +48,7 @@ class AccessPolicy:
     """Immutable representation of the access policy table."""
 
     def __init__(self, nodes: Mapping[str, _PolicyNode]) -> None:
-        self._nodes: dict[str, _PolicyNode] = {
-            key.lower(): value for key, value in nodes.items()
-        }
+        self._nodes: dict[str, _PolicyNode] = {key.lower(): value for key, value in nodes.items()}
 
     @classmethod
     def load(cls, path: Path) -> "AccessPolicy":
@@ -77,21 +75,16 @@ class AccessPolicy:
                 if not isinstance(name, str) or not name.strip():
                     raise ValueError("Policy entries must use non-empty string keys")
                 if not isinstance(definition, Mapping):
-                    raise ValueError(
-                        f"Policy entry '{name}' must be defined using a mapping"
-                    )
+                    raise ValueError(f"Policy entry '{name}' must be defined using a mapping")
                 permissions = tuple(
-                    _parse_permission(item, name)
-                    for item in definition.get("permissions", [])
+                    _parse_permission(item, name) for item in definition.get("permissions", [])
                 )
                 inherits = tuple(
                     str(entry).strip().lower()
                     for entry in definition.get("inherits", [])
                     if str(entry).strip()
                 )
-                nodes[name.lower()] = _PolicyNode(
-                    permissions=permissions, inherits=inherits
-                )
+                nodes[name.lower()] = _PolicyNode(permissions=permissions, inherits=inherits)
 
         return cls(nodes)
 
@@ -170,18 +163,14 @@ class AccessController:
         if self.is_allowed(action, actor=actor, roles=roles, resource=resource):
             return
         subject = actor or self._fallback or "unknown"
-        raise AccessDeniedError(
-            f"Actor '{subject}' is not permitted to perform '{action}'"
-        )
+        raise AccessDeniedError(f"Actor '{subject}' is not permitted to perform '{action}'")
 
 
 def _parse_permission(value: object, context: str) -> Permission:
     if isinstance(value, str):
         action = value.strip().lower()
         if not action:
-            raise ValueError(
-                f"Permission entries for '{context}' must not be empty strings"
-            )
+            raise ValueError(f"Permission entries for '{context}' must not be empty strings")
         return Permission(action=action, resources=frozenset({"*"}))
 
     if isinstance(value, Mapping):
@@ -198,15 +187,10 @@ def _parse_permission(value: object, context: str) -> Permission:
                 items = [resources_value]
             else:
                 items = list(resources_value)
-            cleaned = {
-                str(item).strip().lower()
-                for item in items
-                if str(item).strip()
-            }
+            cleaned = {str(item).strip().lower() for item in items if str(item).strip()}
             resources = frozenset(cleaned or {"*"})
         return Permission(action=raw_action, resources=resources)
 
     raise ValueError(
         f"Permissions for '{context}' must be strings or mappings, got {type(value)!r}"
     )
-

@@ -109,9 +109,7 @@ class RiskManagerFacade:
         """Return the current kill-switch status."""
 
         if self._access_controller is not None:
-            self._require_permission(
-                "read_kill_switch_state", actor=actor, roles=roles
-            )
+            self._require_permission("read_kill_switch_state", actor=actor, roles=roles)
         kill_switch = self._risk_manager.kill_switch
         return KillSwitchState(
             engaged=kill_switch.is_triggered(),

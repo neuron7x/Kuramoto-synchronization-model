@@ -334,7 +334,9 @@ class LogisticIsotonicTrainer:
         self._config = config or ModelTrainingConfig()
 
     @staticmethod
-    def _standardize(train: np.ndarray, test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _standardize(
+        train: np.ndarray, test: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         mean = train.mean(axis=0)
         std = train.std(axis=0) + 1e-9
         return mean, std, (train - mean) / std, (test - mean) / std
@@ -363,7 +365,9 @@ class LogisticIsotonicTrainer:
 
         oof = np.full(len(labels), np.nan, dtype=float)
         for train_idx, test_idx in tscv.split(features):
-            mean, std, train_std, test_std = self._standardize(features[train_idx], features[test_idx])
+            mean, std, train_std, test_std = self._standardize(
+                features[train_idx], features[test_idx]
+            )
             model = self._fit_logistic(train_std, labels[train_idx], cfg, rng)
             raw = model.decision_function(test_std)
             oof[test_idx] = 1.0 / (1.0 + np.exp(-raw))
@@ -478,7 +482,9 @@ class RegimeHMMAdapter:
     def adjust(self, probabilities: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         cfg = self._config
         eps = 1e-8
-        logits = np.log(np.clip(probabilities, eps, 1 - eps)) - np.log(np.clip(1 - probabilities, eps, 1 - eps))
+        logits = np.log(np.clip(probabilities, eps, 1 - eps)) - np.log(
+            np.clip(1 - probabilities, eps, 1 - eps)
+        )
         slopes = np.array(cfg.slope, dtype=float)
         biases = np.array(cfg.bias, dtype=float)
 
@@ -497,7 +503,9 @@ class RegimeHMMAdapter:
                 biases = np.pad(biases, (0, cfg.states - biases.size), mode="edge")
         else:
             biases = biases[: cfg.states]
-        transition = np.full((cfg.states, cfg.states), (1.0 - cfg.stay_probability) / max(cfg.states - 1, 1))
+        transition = np.full(
+            (cfg.states, cfg.states), (1.0 - cfg.stay_probability) / max(cfg.states - 1, 1)
+        )
         np.fill_diagonal(transition, cfg.stay_probability)
         log_transition = np.log(transition)
         log_pi = np.log(np.full(cfg.states, 1.0 / cfg.states))
@@ -740,7 +748,9 @@ class TradePulseV21Pipeline:
         base_probs = 1.0 / (1.0 + np.exp(-raw))
         calibrated = artifacts.isotonic.predict(base_probs)
         hmm_probs, path = self._hmm.adjust(calibrated)
-        final_probs = self._ensemble.lambda_base * calibrated + (1.0 - self._ensemble.lambda_base) * hmm_probs
+        final_probs = (
+            self._ensemble.lambda_base * calibrated + (1.0 - self._ensemble.lambda_base) * hmm_probs
+        )
 
         probability_outputs = ProbabilityOutputs(
             base=calibrated.astype(float),
@@ -780,7 +790,9 @@ def _feature_drift_guard(frame: pd.DataFrame) -> Dict[str, Dict[str, float]]:
     return drift
 
 
-def _population_stability_index(reference: np.ndarray, current: np.ndarray, bins: int = 10) -> float:
+def _population_stability_index(
+    reference: np.ndarray, current: np.ndarray, bins: int = 10
+) -> float:
     quantiles = np.linspace(0, 1, bins + 1)
     edges = np.unique(np.quantile(reference, quantiles))
     if len(edges) < 3:
@@ -813,4 +825,3 @@ def result_to_json(result: PipelineResult) -> str:
     """Serialize :class:`PipelineResult` to a human-readable JSON string."""
 
     return json.dumps(result.to_dict(), indent=2)
-

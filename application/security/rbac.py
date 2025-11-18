@@ -374,9 +374,7 @@ class AuthorizationGateway:
             attribute_mismatch = True
 
         reason = "attribute_mismatch" if attribute_mismatch else "missing_role"
-        required_roles = self._policy.roles_granting(
-            normalised_resource, normalised_action
-        )
+        required_roles = self._policy.roles_granting(normalised_resource, normalised_action)
         return AuthorizationDecision(
             allowed=False,
             resource=normalised_resource,
@@ -501,9 +499,7 @@ class AuthorizationGateway:
                 "roles": sorted(identity.role_set),
                 "failure_reason": decision.failure_reason,
                 "required_roles": list(decision.required_roles),
-                "attributes": {
-                    key: sorted(value) for key, value in decision.attributes.items()
-                },
+                "attributes": {key: sorted(value) for key, value in decision.attributes.items()},
             },
         )
 
@@ -526,9 +522,7 @@ def _parse_attribute_constraints(
         values: Iterable[Any]
         if isinstance(raw_value, str):
             values = [raw_value]
-        elif isinstance(raw_value, Iterable) and not isinstance(
-            raw_value, (bytes, bytearray)
-        ):
+        elif isinstance(raw_value, Iterable) and not isinstance(raw_value, (bytes, bytearray)):
             values = raw_value
         else:
             values = [raw_value]
@@ -574,9 +568,7 @@ def _parse_role(name: str, payload: Mapping[str, Any]) -> RoleDefinition:
     if not isinstance(permissions_payload, Sequence) or not permissions_payload:
         raise ValueError(f"Role {name} must define at least one permission")
     permissions = tuple(
-        _parse_permission(entry)
-        for entry in permissions_payload
-        if isinstance(entry, Mapping)
+        _parse_permission(entry) for entry in permissions_payload if isinstance(entry, Mapping)
     )
     inherits_payload = payload.get("inherits", ())
     if isinstance(inherits_payload, str):
@@ -599,11 +591,13 @@ def _parse_temporary_grant(payload: Mapping[str, Any]) -> TemporaryAccessGrant:
     except KeyError as exc:
         raise ValueError("Temporary grants require subject, resource, action, expires_at") from exc
 
-    permission = _parse_permission({
-        "resource": resource,
-        "action": action,
-        "attributes": payload.get("attributes"),
-    })
+    permission = _parse_permission(
+        {
+            "resource": resource,
+            "action": action,
+            "attributes": payload.get("attributes"),
+        }
+    )
     return TemporaryAccessGrant(
         subject=subject,
         permission=permission,
@@ -657,4 +651,3 @@ def build_authorization_gateway(
     )
     gateway.register_temporary_grants(configuration.temporary_grants)
     return gateway
-

@@ -88,7 +88,9 @@ class OrderBookIngestService:
                 self._snapshot_requester(diff.instrument, "baseline missing")
             return None
 
-        self._diff_since_snapshot[diff.instrument] = self._diff_since_snapshot.get(diff.instrument, 0) + 1
+        self._diff_since_snapshot[diff.instrument] = (
+            self._diff_since_snapshot.get(diff.instrument, 0) + 1
+        )
         latency = diff.ts_arrival - diff.ts_event
         now = utc_now()
         freshness = now - diff.ts_event

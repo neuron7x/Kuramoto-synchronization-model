@@ -58,7 +58,7 @@ def _confidence_scale(confidence: float) -> float:
         ValueError: If confidence is outside valid range or produces non-finite quantile
     """
     if not MIN_CONFIDENCE < confidence < MAX_CONFIDENCE:
-        msg = f"confidence must be between {MIN_CONFIDENCE} and {MAX_CONFIDENCE} (exclusive), got {confidence}"
+        msg = f"confidence must be between {MIN_CONFIDENCE} and {MAX_CONFIDENCE} (exclusive), got {confidence}"  # noqa: E501
         raise ValueError(msg)
 
     quantile = NormalDist().inv_cdf(confidence)
@@ -69,9 +69,7 @@ def _confidence_scale(confidence: float) -> float:
     return quantile
 
 
-def compute_risk(
-    exposures: Iterable[Exposure], settings: RiskSettings
-) -> RiskAssessment:
+def compute_risk(exposures: Iterable[Exposure], settings: RiskSettings) -> RiskAssessment:
     """Compute portfolio risk score and associated metrics.
 
     Args:
@@ -83,9 +81,7 @@ def compute_risk(
     """
     exposures = list(exposures)
     if not exposures:
-        return RiskAssessment(
-            score=0.0, value_at_risk=0.0, stressed_var=(), breached=()
-        )
+        return RiskAssessment(score=0.0, value_at_risk=0.0, stressed_var=(), breached=())
 
     aggregate_var = 0.0
     stress_results: list[float] = []

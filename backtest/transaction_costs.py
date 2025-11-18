@@ -37,9 +37,7 @@ class TransactionCostModel:
         del price, side
         return 0.0
 
-    def get_slippage(
-        self, volume: float, price: float, side: str | None = None
-    ) -> float:
+    def get_slippage(self, volume: float, price: float, side: str | None = None) -> float:
         """Return the slippage adjustment in price terms for the given trade."""
 
         del volume, price, side
@@ -258,9 +256,7 @@ def _import_from_string(path: str) -> Callable[..., Any]:
         raise ValueError(f"'{attr}' is not defined in module '{module_name}'") from exc
 
 
-def _instantiate(
-    spec: Any, params: Mapping[str, Any] | None = None
-) -> TransactionCostModel:
+def _instantiate(spec: Any, params: Mapping[str, Any] | None = None) -> TransactionCostModel:
     if isinstance(spec, TransactionCostModel):
         return spec
 
@@ -290,23 +286,17 @@ def _build_commission(entry: Mapping[str, Any]) -> TransactionCostModel | None:
             if alias in {"fixed_bps", "bps"}:
                 value = params.get("bps", params.get("value"))
                 if value is None:
-                    raise ValueError(
-                        "'commission_params.bps' is required for fixed_bps model"
-                    )
+                    raise ValueError("'commission_params.bps' is required for fixed_bps model")
                 return FixedBpsCommission(value)
             if alias in {"percent", "percentage", "percent_volume"}:
                 value = params.get("percent", params.get("value"))
                 if value is None:
-                    raise ValueError(
-                        "'commission_params.percent' is required for percent model"
-                    )
+                    raise ValueError("'commission_params.percent' is required for percent model")
                 return PercentVolumeCommission(value)
             if alias in {"per_unit", "fixed", "per_contract"}:
                 value = params.get("per_unit", params.get("value"))
                 if value is None:
-                    raise ValueError(
-                        "'commission_params.per_unit' is required for per_unit model"
-                    )
+                    raise ValueError("'commission_params.per_unit' is required for per_unit model")
                 return PerUnitCommission(value)
         return _instantiate(model_spec, params)
 
@@ -334,16 +324,12 @@ def _build_spread(entry: Mapping[str, Any]) -> TransactionCostModel | None:
             if alias in {"fixed", "absolute"}:
                 value = params.get("value")
                 if value is None:
-                    raise ValueError(
-                        "'spread_params.value' is required for fixed spread model"
-                    )
+                    raise ValueError("'spread_params.value' is required for fixed spread model")
                 return FixedSpread(value)
             if alias in {"bps", "percent"}:
                 value = params.get("bps", params.get("value"))
                 if value is None:
-                    raise ValueError(
-                        "'spread_params.bps' is required for bps spread model"
-                    )
+                    raise ValueError("'spread_params.bps' is required for bps spread model")
                 return BpsSpread(value)
         return _instantiate(model_spec, params)
 
@@ -365,9 +351,7 @@ def _build_slippage(entry: Mapping[str, Any]) -> TransactionCostModel | None:
             if alias == "fixed":
                 value = params.get("value")
                 if value is None:
-                    raise ValueError(
-                        "'slippage_params.value' is required for fixed model"
-                    )
+                    raise ValueError("'slippage_params.value' is required for fixed model")
                 return FixedSlippage(value)
             if alias in {"square_root", "sqrt"}:
                 return SquareRootSlippage(**params)
@@ -411,9 +395,7 @@ def _build_financing(entry: Mapping[str, Any]) -> TransactionCostModel | None:
                 periods = params.get("periods_per_year")
                 kwargs: dict[str, Any] = {
                     "long_rate_bps": long_rate or 0.0,
-                    "short_rate_bps": (
-                        short_rate if short_rate is not None else long_rate or 0.0
-                    ),
+                    "short_rate_bps": (short_rate if short_rate is not None else long_rate or 0.0),
                 }
                 if exponent is not None:
                     kwargs["exponent"] = exponent

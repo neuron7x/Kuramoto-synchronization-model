@@ -166,9 +166,7 @@ async def test_csv_adapter_stream(tmp_path: Path) -> None:
     stream = adapter.stream(path=csv_path, symbol="ETHUSD", venue="CSV")
     ticks = [tick async for tick in stream]
     assert len(ticks) == 2
-    assert float(ticks[1].price) == pytest.approx(
-        101.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert float(ticks[1].price) == pytest.approx(101.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
 
 class _StubExchange:

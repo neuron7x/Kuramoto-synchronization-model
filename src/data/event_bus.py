@@ -24,7 +24,9 @@ class MessageBroker(Protocol):
     async def stop(self) -> None:  # pragma: no cover - protocol definition
         """Release broker resources and close network connections."""
 
-    async def publish(self, message: BrokerMessage) -> None:  # pragma: no cover - protocol definition
+    async def publish(
+        self, message: BrokerMessage
+    ) -> None:  # pragma: no cover - protocol definition
         """Publish ``message`` to the broker."""
 
 

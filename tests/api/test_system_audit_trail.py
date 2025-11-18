@@ -23,7 +23,9 @@ def test_system_access_records_audit_event(tmp_path) -> None:
     )
     identity = AdminIdentity(subject="audit-user", roles=("foundation:viewer",))
 
-    access._log("info", "system.test.event", identity=identity, secret_token="value", action="update")
+    access._log(
+        "info", "system.test.event", identity=identity, secret_token="value", action="update"
+    )
 
     payloads = [
         json.loads(line)

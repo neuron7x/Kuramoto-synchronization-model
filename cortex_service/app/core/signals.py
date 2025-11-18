@@ -68,9 +68,7 @@ def _rescale(value: float, settings: SignalSettings) -> float:
     """
     span = settings.rescale_max - settings.rescale_min
     midpoint = settings.rescale_min + span / 2
-    scaled = max(
-        settings.rescale_min, min(settings.rescale_max, midpoint + value * (span / 2))
-    )
+    scaled = max(settings.rescale_min, min(settings.rescale_max, midpoint + value * (span / 2)))
     return scaled
 
 

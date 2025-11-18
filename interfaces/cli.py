@@ -109,9 +109,7 @@ def signal_from_indicators(
             else:
                 futures = {
                     "entropy": executor.submit(entropy, window_prices),
-                    "delta_entropy": executor.submit(
-                        delta_entropy, prefix, window=window
-                    ),
+                    "delta_entropy": executor.submit(delta_entropy, prefix, window=window),
                     "ricci": executor.submit(_compute_ricci, window_prices),
                 }
                 H = futures["entropy"].result()
@@ -240,102 +238,116 @@ def cmd_analyze(args):
         the ``--gpu`` flag is set and the CuPy-backed implementation is available.
     """
     args = _apply_config(args)
-    
+
     # Validate CSV file exists
     csv_path = Path(args.csv).expanduser().resolve()
     if not csv_path.exists():
         print(
-            json.dumps({
-                "error": "FileNotFoundError",
-                "message": f"CSV file not found: {csv_path}",
-                "suggestion": "Check that the file path is correct and the file exists."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "FileNotFoundError",
+                    "message": f"CSV file not found: {csv_path}",
+                    "suggestion": "Check that the file path is correct and the file exists.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     try:
         df = pd.read_csv(csv_path)
     except Exception as e:
         print(
-            json.dumps({
-                "error": type(e).__name__,
-                "message": f"Failed to read CSV file: {str(e)}",
-                "suggestion": "Ensure the file is a valid CSV with proper formatting."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": type(e).__name__,
+                    "message": f"Failed to read CSV file: {str(e)}",
+                    "suggestion": "Ensure the file is a valid CSV with proper formatting.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     # Validate required columns
     if args.price_col not in df.columns:
         print(
-            json.dumps({
-                "error": "ValueError",
-                "message": f"Column '{args.price_col}' not found in CSV",
-                "available_columns": list(df.columns),
-                "suggestion": f"Use --price-col to specify the correct column name, or ensure your CSV has a '{args.price_col}' column."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "ValueError",
+                    "message": f"Column '{args.price_col}' not found in CSV",
+                    "available_columns": list(df.columns),
+                    "suggestion": f"Use --price-col to specify the correct column name, or ensure your CSV has a '{args.price_col}' column.",  # noqa: E501
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     prices = df[args.price_col].to_numpy()
-    
+
     # Validate data quality
     if len(prices) < args.window:
         print(
-            json.dumps({
-                "error": "ValueError",
-                "message": f"Insufficient data: {len(prices)} rows < window size {args.window}",
-                "suggestion": f"Provide a dataset with at least {args.window} rows or reduce the --window parameter."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "ValueError",
+                    "message": f"Insufficient data: {len(prices)} rows < window size {args.window}",
+                    "suggestion": f"Provide a dataset with at least {args.window} rows or reduce the --window parameter.",  # noqa: E501
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     # Check for NaN values
     nan_count = np.isnan(prices).sum()
     if nan_count > 0:
         print(
-            json.dumps({
-                "warning": "Data contains NaN values",
-                "nan_count": int(nan_count),
-                "total_rows": len(prices),
-                "suggestion": "Consider cleaning your data before analysis."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "warning": "Data contains NaN values",
+                    "nan_count": int(nan_count),
+                    "total_rows": len(prices),
+                    "suggestion": "Consider cleaning your data before analysis.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         # Remove NaN values
         prices = prices[~np.isnan(prices)]
-    
+
     # Check for constant prices
     if np.std(prices) == 0:
         print(
-            json.dumps({
-                "error": "ValueError",
-                "message": "Price data has no variation (all values are constant)",
-                "suggestion": "Verify that your data contains actual price movements."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "ValueError",
+                    "message": "Price data has no variation (all values are constant)",
+                    "suggestion": "Verify that your data contains actual price movements.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     try:
         from core.indicators.kuramoto import compute_phase_gpu
-        
-        phases = (
-            compute_phase_gpu(prices)
-            if getattr(args, "gpu", False)
-            else compute_phase(prices)
-        )
+
+        phases = compute_phase_gpu(prices) if getattr(args, "gpu", False) else compute_phase(prices)
         R = kuramoto_order(phases[-args.window :])
         H = entropy(prices[-args.window :], bins=args.bins)
         dH = delta_entropy(prices, window=args.window, bins_range=(10, 50))
         kappa = mean_ricci(build_price_graph(prices[-args.window :], delta=args.delta))
         Hs = hurst_exponent(prices[-args.window :])
         phase = phase_flags(R, dH, kappa, H)
-        
+
         print(
             json.dumps(
                 _enrich_with_trace(
@@ -351,8 +363,8 @@ def cmd_analyze(args):
                             "data_points": len(prices),
                             "bins": args.bins,
                             "delta": args.delta,
-                            "gpu_enabled": getattr(args, "gpu", False)
-                        }
+                            "gpu_enabled": getattr(args, "gpu", False),
+                        },
                     }
                 ),
                 indent=2,
@@ -360,12 +372,15 @@ def cmd_analyze(args):
         )
     except Exception as e:
         print(
-            json.dumps({
-                "error": type(e).__name__,
-                "message": f"Error computing indicators: {str(e)}",
-                "suggestion": "Check that your data is valid and all dependencies are properly installed."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": type(e).__name__,
+                    "message": f"Error computing indicators: {str(e)}",
+                    "suggestion": "Check that your data is valid and all dependencies are properly installed.",  # noqa: E501
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
 
@@ -392,107 +407,125 @@ def cmd_backtest(args):
         same implementation invoked by automation in ``docs/runbook_live_trading.md``.
     """
     args = _apply_config(args)
-    
+
     # Validate CSV file
     csv_path = Path(args.csv).expanduser().resolve()
     if not csv_path.exists():
         print(
-            json.dumps({
-                "error": "FileNotFoundError",
-                "message": f"CSV file not found: {csv_path}",
-                "suggestion": "Check that the file path is correct and the file exists."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "FileNotFoundError",
+                    "message": f"CSV file not found: {csv_path}",
+                    "suggestion": "Check that the file path is correct and the file exists.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     try:
         df = pd.read_csv(csv_path)
     except Exception as e:
         print(
-            json.dumps({
-                "error": type(e).__name__,
-                "message": f"Failed to read CSV file: {str(e)}",
-                "suggestion": "Ensure the file is a valid CSV with proper formatting."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": type(e).__name__,
+                    "message": f"Failed to read CSV file: {str(e)}",
+                    "suggestion": "Ensure the file is a valid CSV with proper formatting.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     # Validate column exists
     if args.price_col not in df.columns:
         print(
-            json.dumps({
-                "error": "ValueError",
-                "message": f"Column '{args.price_col}' not found in CSV",
-                "available_columns": list(df.columns),
-                "suggestion": "Use --price-col to specify the correct column name."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "ValueError",
+                    "message": f"Column '{args.price_col}' not found in CSV",
+                    "available_columns": list(df.columns),
+                    "suggestion": "Use --price-col to specify the correct column name.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     prices = df[args.price_col].to_numpy()
-    
+
     # Data quality checks
     if len(prices) < args.window * 2:
         print(
-            json.dumps({
-                "error": "ValueError",
-                "message": f"Insufficient data for backtesting: {len(prices)} rows < {args.window * 2} (2x window)",
-                "suggestion": f"Provide more data or reduce the --window parameter. Recommended: at least {args.window * 3} rows."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": "ValueError",
+                    "message": f"Insufficient data for backtesting: {len(prices)} rows < {args.window * 2} (2x window)",  # noqa: E501
+                    "suggestion": f"Provide more data or reduce the --window parameter. Recommended: at least {args.window * 3} rows.",  # noqa: E501
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
-    
+
     # Remove NaN values
     nan_count = np.isnan(prices).sum()
     if nan_count > 0:
         print(
-            json.dumps({
-                "warning": f"Removed {nan_count} NaN values from data",
-                "original_length": len(prices),
-                "cleaned_length": len(prices) - nan_count
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "warning": f"Removed {nan_count} NaN values from data",
+                    "original_length": len(prices),
+                    "cleaned_length": len(prices) - nan_count,
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         prices = prices[~np.isnan(prices)]
-    
+
     try:
         sig = signal_from_indicators(prices, window=args.window)
         res = walk_forward(prices, lambda _: sig, fee=args.fee)
-        
+
         # Calculate additional statistics
-        sharpe = res.sharpe_ratio if hasattr(res, 'sharpe_ratio') else None
-        win_rate = res.win_rate if hasattr(res, 'win_rate') else None
-        
+        sharpe = res.sharpe_ratio if hasattr(res, "sharpe_ratio") else None
+        win_rate = res.win_rate if hasattr(res, "win_rate") else None
+
         out = {
-            "pnl": res.pnl, 
-            "max_dd": res.max_dd, 
+            "pnl": res.pnl,
+            "max_dd": res.max_dd,
             "trades": res.trades,
             "metadata": {
                 "window_size": args.window,
                 "fee": args.fee,
                 "data_points": len(prices),
-            }
+            },
         }
-        
+
         if sharpe is not None:
             out["sharpe_ratio"] = sharpe
         if win_rate is not None:
             out["win_rate"] = win_rate
-        
+
         print(json.dumps(_enrich_with_trace(out), indent=2))
-        
+
     except Exception as e:
         print(
-            json.dumps({
-                "error": type(e).__name__,
-                "message": f"Error during backtesting: {str(e)}",
-                "suggestion": "Verify data quality and ensure all indicators can be computed."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": type(e).__name__,
+                    "message": f"Error during backtesting: {str(e)}",
+                    "suggestion": "Verify data quality and ensure all indicators can be computed.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
 
@@ -546,9 +579,7 @@ def _run_with_trace_context(cmd_name: str, args: argparse.Namespace) -> None:
         tracing as outlined in ``docs/monitoring.md``.
     """
     tracer = get_tracer("tradepulse.cli")
-    inbound = getattr(args, "traceparent", None) or os.environ.get(
-        "TRADEPULSE_TRACEPARENT"
-    )
+    inbound = getattr(args, "traceparent", None) or os.environ.get("TRADEPULSE_TRACEPARENT")
     with activate_traceparent(inbound):
         with tracer.start_as_current_span(
             f"cli.{cmd_name}",
@@ -570,7 +601,7 @@ def _run_with_trace_context(cmd_name: str, args: argparse.Namespace) -> None:
 
 def main():
     """Main entry point for the TradePulse CLI.
-    
+
     Provides three main commands:
     - analyze: Compute market indicators from price data
     - backtest: Run walk-forward backtesting with indicator signals
@@ -578,16 +609,11 @@ def main():
     """
     p = argparse.ArgumentParser(
         prog="tradepulse",
-        description="TradePulse - Advanced Algorithmic Trading Framework with Geometric Market Indicators",
+        description="TradePulse - Advanced Algorithmic Trading Framework with Geometric Market Indicators",  # noqa: E501
         epilog="For detailed documentation, visit https://github.com/neuron7x/TradePulse",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sub = p.add_subparsers(
-        dest="cmd", 
-        required=True,
-        help="Available commands",
-        metavar="COMMAND"
-    )
+    sub = p.add_subparsers(dest="cmd", required=True, help="Available commands", metavar="COMMAND")
 
     trace_arg_help = "W3C traceparent header used to join an existing trace"
 
@@ -604,51 +630,38 @@ Analyze market data using TradePulse's suite of geometric indicators including:
 
 Outputs comprehensive JSON analysis suitable for pipelines and auditing.
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     pa.add_argument(
-        "--csv", 
-        required=True,
-        help="Path to CSV file containing price data (required)"
+        "--csv", required=True, help="Path to CSV file containing price data (required)"
     )
     pa.add_argument(
-        "--price-col", 
+        "--price-col",
         default="price",
-        help="Name of the column containing price values (default: 'price')"
+        help="Name of the column containing price values (default: 'price')",
     )
     pa.add_argument(
-        "--window", 
-        type=int, 
+        "--window",
+        type=int,
         default=200,
-        help="Analysis window size in periods (default: 200, recommended: 100-300)"
+        help="Analysis window size in periods (default: 200, recommended: 100-300)",
     )
     pa.add_argument(
-        "--bins", 
-        type=int, 
-        default=30,
-        help="Number of bins for entropy calculation (default: 30)"
+        "--bins", type=int, default=30, help="Number of bins for entropy calculation (default: 30)"
     )
     pa.add_argument(
-        "--delta", 
-        type=float, 
+        "--delta",
+        type=float,
         default=0.005,
-        help="Step size for Ricci curvature calculation (default: 0.005)"
+        help="Step size for Ricci curvature calculation (default: 0.005)",
     )
+    pa.add_argument("--config", help="Path to YAML configuration file (optional)", default=None)
     pa.add_argument(
-        "--config", 
-        help="Path to YAML configuration file (optional)", 
-        default=None
-    )
-    pa.add_argument(
-        "--gpu", 
+        "--gpu",
         action="store_true",
-        help="Enable GPU acceleration for phase computation (requires CUDA)"
+        help="Enable GPU acceleration for phase computation (requires CUDA)",
     )
-    pa.add_argument(
-        "--traceparent", 
-        default=None, 
-        help=trace_arg_help
-    )
+    pa.add_argument("--traceparent", default=None, help=trace_arg_help)
     pa.set_defaults(func=cmd_analyze)
 
     # Backtest command
@@ -662,45 +675,31 @@ entropy measures, and geometric curvature indicators.
 
 Outputs performance metrics including PnL, max drawdown, and trade count.
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     pb.add_argument(
-        "--csv", 
-        required=True,
-        help="Path to CSV file containing historical price data (required)"
+        "--csv", required=True, help="Path to CSV file containing historical price data (required)"
     )
     pb.add_argument(
-        "--price-col", 
+        "--price-col",
         default="price",
-        help="Name of the column containing price values (default: 'price')"
+        help="Name of the column containing price values (default: 'price')",
     )
     pb.add_argument(
-        "--window", 
-        type=int, 
+        "--window",
+        type=int,
         default=200,
-        help="Lookback window for indicator calculation (default: 200)"
+        help="Lookback window for indicator calculation (default: 200)",
     )
     pb.add_argument(
-        "--fee", 
-        type=float, 
+        "--fee",
+        type=float,
         default=0.0005,
-        help="Transaction fee as a fraction (default: 0.0005 = 0.05%%)"
+        help="Transaction fee as a fraction (default: 0.0005 = 0.05%%)",
     )
-    pb.add_argument(
-        "--config", 
-        help="Path to YAML configuration file (optional)", 
-        default=None
-    )
-    pb.add_argument(
-        "--gpu", 
-        action="store_true",
-        help="Enable GPU acceleration (requires CUDA)"
-    )
-    pb.add_argument(
-        "--traceparent", 
-        default=None, 
-        help=trace_arg_help
-    )
+    pb.add_argument("--config", help="Path to YAML configuration file (optional)", default=None)
+    pb.add_argument("--gpu", action="store_true", help="Enable GPU acceleration (requires CUDA)")
+    pb.add_argument("--traceparent", default=None, help=trace_arg_help)
     pb.set_defaults(func=cmd_backtest)
 
     # Live trading command
@@ -716,18 +715,18 @@ Bootstrap the live trading system with comprehensive risk controls:
 
 Requires proper configuration including venue credentials and risk parameters.
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     pl.add_argument(
         "--config",
         default="configs/live/default.toml",
-        help="Path to TOML configuration file describing venues and risk limits (default: configs/live/default.toml)",
+        help="Path to TOML configuration file describing venues and risk limits (default: configs/live/default.toml)",  # noqa: E501
     )
     pl.add_argument(
         "--venue",
         action="append",
         default=None,
-        help="Restrict execution to specific venue(s). Can be specified multiple times. Example: --venue binance --venue coinbase",
+        help="Restrict execution to specific venue(s). Can be specified multiple times. Example: --venue binance --venue coinbase",  # noqa: E501
     )
     pl.add_argument(
         "--state-dir",
@@ -745,11 +744,7 @@ Requires proper configuration including venue credentials and risk parameters.
         default=None,
         help="Port to expose Prometheus metrics on (optional)",
     )
-    pl.add_argument(
-        "--traceparent", 
-        default=None, 
-        help=trace_arg_help
-    )
+    pl.add_argument("--traceparent", default=None, help=trace_arg_help)
     pl.set_defaults(func=cmd_live)
 
     # Parse and execute
@@ -761,12 +756,15 @@ Requires proper configuration including venue credentials and risk parameters.
         sys.exit(130)
     except Exception as e:
         print(
-            json.dumps({
-                "error": type(e).__name__,
-                "message": str(e),
-                "suggestion": "Run 'tradepulse COMMAND --help' for usage information."
-            }, indent=2),
-            file=sys.stderr
+            json.dumps(
+                {
+                    "error": type(e).__name__,
+                    "message": str(e),
+                    "suggestion": "Run 'tradepulse COMMAND --help' for usage information.",
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
         )
         sys.exit(1)
 

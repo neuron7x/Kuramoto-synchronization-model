@@ -74,9 +74,7 @@ def test_end_to_end_trading_cycle(tmp_path: Path) -> None:
     # Round-trip through DTO conversion to ensure metadata survives transport.
     payloads = system.signals_to_dtos([latest_signal])
     assert payloads[0]["symbol"] == "BTCUSDT"
-    assert payloads[0]["metadata"]["score"] == pytest.approx(
-        latest_signal.metadata["score"]
-    )
+    assert payloads[0]["metadata"]["score"] == pytest.approx(latest_signal.metadata["score"])
 
     loop = system.ensure_live_loop()
     system.submit_signal(
@@ -104,9 +102,7 @@ def test_end_to_end_trading_cycle(tmp_path: Path) -> None:
     else:
         expected_position = -fill_qty
 
-    assert system.risk_manager.current_position("BTCUSDT") == pytest.approx(
-        expected_position
-    )
+    assert system.risk_manager.current_position("BTCUSDT") == pytest.approx(expected_position)
     assert system.risk_manager.current_notional("BTCUSDT") == pytest.approx(
         abs(expected_position * latest_price)
     )
@@ -114,4 +110,3 @@ def test_end_to_end_trading_cycle(tmp_path: Path) -> None:
     assert system.last_execution_submission_at is not None
     assert system.last_execution_error is None
     assert not list(connector.open_orders())  # Filled orders should not remain active.
-

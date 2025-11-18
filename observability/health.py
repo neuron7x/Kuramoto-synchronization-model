@@ -23,9 +23,7 @@ class _HealthState:
         with self._lock:
             self.live = live
 
-    def update_component(
-        self, name: str, healthy: bool, message: str | None = None
-    ) -> None:
+    def update_component(self, name: str, healthy: bool, message: str | None = None) -> None:
         payload: Dict[str, object] = {"healthy": bool(healthy)}
         if message:
             payload["message"] = message
@@ -46,9 +44,7 @@ class HealthServer:
 
     def __init__(self, host: str = "0.0.0.0", port: int = 8085) -> None:
         self._state = _HealthState()
-        self._server = ThreadingHTTPServer(
-            (host, port), self._handler_factory(self._state)
-        )
+        self._server = ThreadingHTTPServer((host, port), self._handler_factory(self._state))
         self._thread = threading.Thread(
             target=self._server.serve_forever, name="health-server", daemon=True
         )
@@ -125,9 +121,7 @@ class HealthServer:
     def set_live(self, live: bool = True) -> None:
         self._state.set_live(live)
 
-    def update_component(
-        self, name: str, healthy: bool, message: str | None = None
-    ) -> None:
+    def update_component(self, name: str, healthy: bool, message: str | None = None) -> None:
         self._state.update_component(name, healthy, message)
 
     def __enter__(self) -> "HealthServer":

@@ -345,16 +345,12 @@ def _resolve_streaming_components(
     """Return coherent streaming and caching components."""
 
     if streaming_pipeline is not None and streaming_settings is not None:
-        raise ValueError(
-            "Provide either streaming_pipeline or streaming_settings, not both"
-        )
+        raise ValueError("Provide either streaming_pipeline or streaming_settings, not both")
 
     if streaming_pipeline is not None:
         pipeline_cache = streaming_pipeline.cache_service
         if cache_service is not None and cache_service is not pipeline_cache:
-            raise ValueError(
-                "cache_service must match the streaming pipeline cache_service"
-            )
+            raise ValueError("cache_service must match the streaming pipeline cache_service")
         return streaming_pipeline, pipeline_cache
 
     resolved_cache_service = cache_service or DataIngestionCacheService(
@@ -385,9 +381,7 @@ def _resolve_audit_logger(
 
     if audit_logger is not None:
         if audit_secret is not None or audit_secret_resolver is not None:
-            raise ValueError(
-                "Do not provide audit credentials when supplying an audit_logger"
-            )
+            raise ValueError("Do not provide audit credentials when supplying an audit_logger")
         return audit_logger
 
     if audit_secret is None and audit_secret_resolver is None:

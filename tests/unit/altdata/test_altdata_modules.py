@@ -20,15 +20,11 @@ from core.altdata import (
 
 
 def _ts(offset: int) -> dt.datetime:
-    return dt.datetime(2024, 1, 1, 12, 0, tzinfo=dt.timezone.utc) + dt.timedelta(
-        minutes=offset
-    )
+    return dt.datetime(2024, 1, 1, 12, 0, tzinfo=dt.timezone.utc) + dt.timedelta(minutes=offset)
 
 
 def test_news_feature_builder_aggregates_sentiment():
-    analyzer = NewsSentimentAnalyzer(
-        positive_tokens=["growth"], negative_tokens=["fraud"]
-    )
+    analyzer = NewsSentimentAnalyzer(positive_tokens=["growth"], negative_tokens=["fraud"])
     builder = NewsFeatureBuilder(analyzer)
     items = [
         NewsItem(timestamp=_ts(0), headline="Company reports growth"),
@@ -73,12 +69,8 @@ def test_onchain_feature_builder_creates_deltas():
 
 def test_altdata_fusion_engine_combines_frames():
     engine = AltDataFusionEngine(FusionConfig(join_horizon="1min"))
-    market = pd.DataFrame(
-        {"close": [1.0, 1.1]}, index=pd.DatetimeIndex([_ts(0), _ts(1)])
-    )
-    news = pd.DataFrame(
-        {"news_count": [1, 2]}, index=pd.DatetimeIndex([_ts(0), _ts(1)])
-    )
+    market = pd.DataFrame({"close": [1.0, 1.1]}, index=pd.DatetimeIndex([_ts(0), _ts(1)]))
+    news = pd.DataFrame({"news_count": [1, 2]}, index=pd.DatetimeIndex([_ts(0), _ts(1)]))
     sentiment = pd.DataFrame(
         {"sentiment_vwap": [0.1, 0.2]}, index=pd.DatetimeIndex([_ts(0), _ts(1)])
     )

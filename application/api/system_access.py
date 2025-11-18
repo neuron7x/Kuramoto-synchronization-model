@@ -117,9 +117,7 @@ class StatusResponse(BaseModel):
 
     status: str = Field(..., description="Operational state of the system.")
     uptime_seconds: float = Field(..., ge=0.0, description="Service uptime in seconds.")
-    version: str = Field(
-        ..., min_length=1, description="Semantic version of the deployment."
-    )
+    version: str = Field(..., min_length=1, description="Semantic version of the deployment.")
 
 
 class PositionSnapshot(BaseModel):
@@ -157,7 +155,7 @@ class OrderRequest(BaseModel):
     reference_price: float | None = Field(
         default=None,
         gt=0.0,
-        description="Reference market price used for risk validation when no limit price is provided.",
+        description="Reference market price used for risk validation when no limit price is provided.",  # noqa: E501
     )
     venue: str | None = Field(
         default=None,
@@ -186,18 +184,14 @@ class OrderRequest(BaseModel):
     @model_validator(mode="after")
     def _validate_reference_price(self) -> "OrderRequest":
         if self.price is None and self.reference_price is None:
-            raise ValueError(
-                "reference_price must be supplied when no price is provided"
-            )
+            raise ValueError("reference_price must be supplied when no price is provided")
         return self
 
 
 class OrderResponse(BaseModel):
     """Subset of order lifecycle data returned to REST clients."""
 
-    order_id: str | None = Field(
-        default=None, description="Venue supplied order identifier."
-    )
+    order_id: str | None = Field(default=None, description="Venue supplied order identifier.")
     status: str = Field(..., description="Latest known status of the order.")
     filled_quantity: float = Field(..., ge=0.0)
     average_price: float | None = Field(default=None, ge=0.0)
@@ -333,9 +327,7 @@ class SystemAccess:
         **fields: Any,
     ) -> None:
         logger_method = getattr(self._logger, level, None)
-        if (
-            logger_method is None
-        ):  # pragma: no cover - defensive guard for invalid level
+        if logger_method is None:  # pragma: no cover - defensive guard for invalid level
             raise AttributeError(f"Unsupported log level requested: {level}")
         audit_subject = identity.subject if identity is not None else None
         logger_payload = {"event": message, **fields}
@@ -343,10 +335,7 @@ class SystemAccess:
             logger_payload.setdefault("subject", audit_subject)
         logger_method(message, extra=logger_payload)
 
-        if (
-            self._audit_trail is not None
-            and level.lower() in self._auditable_levels
-        ):
+        if self._audit_trail is not None and level.lower() in self._auditable_levels:
             try:
                 self._audit_trail.record(
                     message,
@@ -371,9 +360,7 @@ class SystemAccess:
     ) -> None:
         if self._notifier is None:
             return
-        await self._notifier.dispatch(
-            event, subject=subject, message=message, metadata=metadata
-        )
+        await self._notifier.dispatch(event, subject=subject, message=message, metadata=metadata)
 
     @staticmethod
     def _actor(identity: AdminIdentity | None) -> str:
@@ -393,9 +380,7 @@ class SystemAccess:
             uptime_seconds=uptime,
             kill_switch_engaged=kill_switch,
         )
-        return StatusResponse(
-            status=status_value, uptime_seconds=uptime, version=self._version
-        )
+        return StatusResponse(status=status_value, uptime_seconds=uptime, version=self._version)
 
     def _default_venue(self) -> str:
         names = self._system.connector_names
@@ -403,22 +388,16 @@ class SystemAccess:
             raise RuntimeError("TradePulseSystem has no configured execution venues")
         return names[0]
 
-    def _ensure_connected(
-        self, venue: str, *, identity: AdminIdentity | None = None
-    ) -> None:
+    def _ensure_connected(self, venue: str, *, identity: AdminIdentity | None = None) -> None:
         key = venue.lower()
         if key in self._connected:
-            self._log(
-                "debug", "system.connector.cached", identity=identity, venue=venue
-            )
+            self._log("debug", "system.connector.cached", identity=identity, venue=venue)
             return
         connector = self._system.get_connector(venue)
         actor = self._actor(identity)
         roles = identity.roles if identity is not None else ()
         try:
-            credentials = self._system.connector_credentials(
-                venue, actor=actor, roles=roles
-            )
+            credentials = self._system.connector_credentials(venue, actor=actor, roles=roles)
         except AccessDeniedError as exc:
             self._log(
                 "warning",
@@ -445,9 +424,7 @@ class SystemAccess:
         self._connected.add(key)
         self._log("info", "system.connector.connected", identity=identity, venue=venue)
 
-    async def list_positions(
-        self, *, identity: AdminIdentity | None = None
-    ) -> PositionsResponse:
+    async def list_positions(self, *, identity: AdminIdentity | None = None) -> PositionsResponse:
         self._log("info", "system.positions.fetch", identity=identity)
         snapshots: list[PositionSnapshot] = []
         for venue in self._system.connector_names:
@@ -556,9 +533,7 @@ class SystemAccess:
 
             placed: Order
             try:
-                placed = connector.place_order(
-                    order, idempotency_key=request.client_order_id
-                )
+                placed = connector.place_order(order, idempotency_key=request.client_order_id)
             except Exception as exc:
                 self._log(
                     "error",
@@ -584,16 +559,14 @@ class SystemAccess:
                             float(fill_price),
                         )
                     except Exception:  # pragma: no cover - defensive
-                        # Risk updates are best-effort; surfacing the order response takes precedence.
+  # noqa: E501, Risk updates are best-effort; surfacing the order response takes precedence.
                         pass
 
             dto = order_to_dto(placed)
             response = OrderResponse(
                 order_id=dto.get("order_id"),
                 status=str(dto.get("status", placed.status.value)),
-                filled_quantity=float(
-                    dto.get("filled_quantity", placed.filled_quantity)
-                ),
+                filled_quantity=float(dto.get("filled_quantity", placed.filled_quantity)),
                 average_price=_coerce_float(dto.get("average_price")),
             )
 
@@ -658,9 +631,7 @@ def _resolve_ip(request: Request) -> str:
 def create_system_app(
     system: TradePulseSystem,
     *,
-    identity_dependency: (
-        Callable[..., Awaitable[AdminIdentity] | AdminIdentity] | None
-    ) = None,
+    identity_dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity] | None = None,
     reader_roles: Sequence[str] = ("foundation:viewer",),
     trader_roles: Sequence[str] = ("trading:operator",),
     authorization_gateway: AuthorizationGateway | None = None,
@@ -725,9 +696,7 @@ def create_system_app(
     resolved_rate_limit_settings = rate_limit_settings or ApiRateLimitSettings()
     limiter = rate_limiter or build_rate_limiter(resolved_rate_limit_settings)
 
-    notifier = notification_dispatcher or _build_notification_dispatcher(
-        notification_settings
-    )
+    notifier = notification_dispatcher or _build_notification_dispatcher(notification_settings)
     logger = logging.getLogger("tradepulse.system_access")
     access = SystemAccess(
         system,
@@ -750,9 +719,7 @@ def create_system_app(
         capture_headers=("x-request-id", "x-correlation-id", "traceparent"),
     )
 
-    inspector = VariableInspector(
-        redact_patterns=runtime_settings.redact_pattern_values()
-    )
+    inspector = VariableInspector(redact_patterns=runtime_settings.redact_pattern_values())
     if runtime_settings.inspect_variables:
         inspector.register(
             "environment",
@@ -812,9 +779,11 @@ def create_system_app(
             )
 
     def _wrap_with_rate_limit(
-        dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity]
+        dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity],
     ) -> Callable[..., Awaitable[AdminIdentity]]:
-        async def _precheck_rate_limit(request: Request) -> Callable[[AdminIdentity | None], Awaitable[None]]:
+        async def _precheck_rate_limit(
+            request: Request,
+        ) -> Callable[[AdminIdentity | None], Awaitable[None]]:
             ip_address = _resolve_ip(request)
             await limiter.check(subject=None, ip_address=ip_address)
 
@@ -830,7 +799,9 @@ def create_system_app(
 
         async def _rate_limited_dependency(
             request: Request,
-            finalize: Callable[[AdminIdentity | None], Awaitable[None]] = Depends(_precheck_rate_limit),
+            finalize: Callable[[AdminIdentity | None], Awaitable[None]] = Depends(
+                _precheck_rate_limit
+            ),
             identity: AdminIdentity = Depends(dependency),
         ) -> AdminIdentity:
             await finalize(identity)

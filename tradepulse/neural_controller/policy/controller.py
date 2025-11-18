@@ -12,7 +12,9 @@ class BasalGangliaController:
         self.temp = float(temp)
         self.tau_E_amber = float(tau_E_amber)
 
-    def decide(self, state: Dict[str, float], mode: str, RPE: float) -> Tuple[str, Dict[str, float]]:
+    def decide(
+        self, state: Dict[str, float], mode: str, RPE: float
+    ) -> Tuple[str, Dict[str, float]]:
         float(state.get("H", state.get("H_est", 0.5)))
         M = float(state.get("M", state.get("M_est", 0.8)))
         E = float(state.get("E", state.get("E_est", 0.1)))

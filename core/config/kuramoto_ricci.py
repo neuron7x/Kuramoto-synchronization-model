@@ -26,9 +26,7 @@ from core.indicators.multiscale_kuramoto import TimeFrame
 
 AliasChoices = getattr(pydantic, "AliasChoices", None)
 
-if (
-    AliasChoices is None
-):  # pragma: no cover - exercised implicitly via configuration parsing
+if AliasChoices is None:  # pragma: no cover - exercised implicitly via configuration parsing
 
     class AliasChoices(tuple):
         """Lightweight stand-in for :mod:`pydantic`'s ``AliasChoices`` helper."""
@@ -317,9 +315,7 @@ class KuramotoRicciIntegrationConfig(BaseModel):
     composite: CompositeConfig = Field(default_factory=CompositeConfig)
 
     @classmethod
-    def from_mapping(
-        cls, data: Mapping[str, Any] | None
-    ) -> "KuramotoRicciIntegrationConfig":
+    def from_mapping(cls, data: Mapping[str, Any] | None) -> "KuramotoRicciIntegrationConfig":
         try:
             return cls.model_validate(data or {})
         except ValidationError as exc:  # pragma: no cover - error propagation
@@ -364,9 +360,7 @@ class YamlSettingsSource(PydanticBaseSettingsSource):
         self._env_source = env_source
         self._dotenv_source = dotenv_source
 
-    def __call__(
-        self, settings_cls: type[BaseSettings] | None = None
-    ) -> dict[str, Any]:
+    def __call__(self, settings_cls: type[BaseSettings] | None = None) -> dict[str, Any]:
         if settings_cls is not None:
             self.settings_cls = settings_cls
         config_path = self._resolve_path()
@@ -383,14 +377,10 @@ class YamlSettingsSource(PydanticBaseSettingsSource):
                 f"failed to parse YAML configuration at {config_path}: {exc}"
             ) from exc
         if not isinstance(payload, Mapping):
-            raise SettingsError(
-                f"configuration file {config_path} must define a mapping"
-            )
+            raise SettingsError(f"configuration file {config_path} must define a mapping")
         return dict(payload)
 
-    def get_field_value(
-        self, field: FieldInfo, field_name: str
-    ) -> tuple[Any, str, bool]:
+    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
         return None, field_name, False
 
     def _resolve_path(self) -> Path | None:
@@ -447,9 +437,7 @@ class TradePulseSettings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        yaml_source = YamlSettingsSource(
-            settings_cls, init_settings, env_settings, dotenv_settings
-        )
+        yaml_source = YamlSettingsSource(settings_cls, init_settings, env_settings, dotenv_settings)
         return (
             init_settings,
             env_settings,

@@ -31,10 +31,7 @@ def test_session_events_return_local_and_utc(coordinator: MarketCalendarCoordina
 
     events = coordinator.session_events(start, end)
 
-    assert [
-        (event.market, event.kind)
-        for event in events
-    ] == [
+    assert [(event.market, event.kind) for event in events] == [
         ("NYSE", "open"),
         ("LSE", "close"),
         ("NYSE", "close"),
@@ -93,9 +90,7 @@ def test_filter_helpers(coordinator: MarketCalendarCoordinator) -> None:
     ]
 
     assert coordinator.filter_timestamps(timestamps, mode="union") == timestamps[:2]
-    assert coordinator.filter_timestamps(timestamps, mode="intersection") == [
-        timestamps[1]
-    ]
+    assert coordinator.filter_timestamps(timestamps, mode="intersection") == [timestamps[1]]
 
     @dataclass
     class Signal:

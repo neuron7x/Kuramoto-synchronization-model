@@ -32,10 +32,7 @@ def test_watermark_backlog_orders_streams_and_filters_expired() -> None:
     assert backlog.observe("alpha", _dt(2), payload={"price": 101}, arrival_time=_dt(3))
     assert backlog.observe("beta", _dt(1), payload={"price": 100}, arrival_time=_dt(3))
     assert backlog.observe("alpha", _dt(5), payload={"price": 102}, arrival_time=_dt(6))
-    assert (
-        backlog.observe("beta", _dt(-10), payload={"price": 90}, arrival_time=_dt(1))
-        is None
-    )
+    assert backlog.observe("beta", _dt(-10), payload={"price": 90}, arrival_time=_dt(1)) is None
     assert backlog.observe("beta", _dt(4), payload={"price": 103}, arrival_time=_dt(6))
 
     ready = backlog.drain_ready()
@@ -188,4 +185,3 @@ def test_pruned_sources_are_removed_from_lag_and_delay_views() -> None:
 
     assert "beta" not in backlog.lag_summary()
     assert "beta" not in backlog.delay_series()
-

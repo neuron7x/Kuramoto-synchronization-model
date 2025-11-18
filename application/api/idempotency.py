@@ -103,9 +103,7 @@ class IdempotencyCache:
             if existing is not None and existing.payload_hash != payload_hash:
                 raise IdempotencyConflictError(key)
             if len(self._entries) >= self._max_entries:
-                oldest_key = min(
-                    self._entries, key=lambda name: self._entries[name].stored_at
-                )
+                oldest_key = min(self._entries, key=lambda name: self._entries[name].stored_at)
                 self._entries.pop(oldest_key, None)
             self._entries[key] = record
         return record
@@ -131,4 +129,3 @@ __all__ = [
     "IdempotencyRecord",
     "IdempotencySnapshot",
 ]
-

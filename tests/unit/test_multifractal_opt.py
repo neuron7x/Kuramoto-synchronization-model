@@ -1,13 +1,13 @@
 """Unit tests for fractional Lévy updates used by FHMC agents."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402
 
-import numpy as np
-import pytest
+import numpy as np  # noqa: E402
+import pytest  # noqa: E402
 
 torch = pytest.importorskip("torch")
 
-from neuropro.multifractal_opt import fractional_update
+from neuropro.multifractal_opt import fractional_update  # noqa: E402
 
 
 def test_fractional_update_descends_without_noise() -> None:

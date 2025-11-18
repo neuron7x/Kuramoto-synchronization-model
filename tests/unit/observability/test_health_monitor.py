@@ -21,9 +21,7 @@ class _StubHealthServer:
     def set_ready(self, ready: bool) -> None:
         self.ready = ready
 
-    def update_component(
-        self, name: str, healthy: bool, message: str | None = None
-    ) -> None:
+    def update_component(self, name: str, healthy: bool, message: str | None = None) -> None:
         self.components[name] = (healthy, message)
 
 
@@ -33,16 +31,12 @@ def test_periodic_health_monitor_records_metrics(monkeypatch) -> None:
     from core.utils.metrics import MetricsCollector
 
     collector = MetricsCollector(registry)
-    monkeypatch.setattr(
-        "observability.health_monitor.get_metrics_collector", lambda: collector
-    )
+    monkeypatch.setattr("observability.health_monitor.get_metrics_collector", lambda: collector)
 
     server = _StubHealthServer()
 
     checks: list[HealthCheck] = [
-        HealthCheck(
-            name="healthy", probe=lambda: HealthCheckResult(True, "ok"), interval=1.0
-        ),
+        HealthCheck(name="healthy", probe=lambda: HealthCheckResult(True, "ok"), interval=1.0),
         HealthCheck(
             name="unhealthy",
             probe=lambda: HealthCheckResult(False, "failure"),

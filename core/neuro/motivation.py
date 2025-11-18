@@ -67,9 +67,7 @@ class FractalMotivationEngine:
         self.state_dim = state_dim
         self.temporal_scales = (1, 4, 16, 64)
         self._latest_summary: FractalSummary | None = None
-        self.strategy_bandit = FractalBandit(
-            ("exploit", "explore", "deepen", "broaden")
-        )
+        self.strategy_bandit = FractalBandit(("exploit", "explore", "deepen", "broaden"))
 
     @property
     def latest_fractal_metrics(self) -> Mapping[str, float]:
@@ -84,9 +82,7 @@ class FractalMotivationEngine:
             }
         return dict(self._latest_summary.as_mapping())
 
-    def _compute_information_gain(
-        self, current: np.ndarray, previous: np.ndarray | None
-    ) -> float:
+    def _compute_information_gain(self, current: np.ndarray, previous: np.ndarray | None) -> float:
         current_tensor = torch.as_tensor(current, dtype=torch.float32)
         current_probs = F.softmax(current_tensor, dim=-1)
         if previous is None:
@@ -335,7 +331,9 @@ class FractalMotivationController:
             previous=previous,
         )
         projected_next = (
-            self._coerce_state(next_state) if next_state is not None else self._project_next_state(state_vec, signals)
+            self._coerce_state(next_state)
+            if next_state is not None
+            else self._project_next_state(state_vec, signals)
         )
         intrinsic_reward, allostatic = self.compute_intrinsic_reward(
             state_vec, projected_next, motivation_signal

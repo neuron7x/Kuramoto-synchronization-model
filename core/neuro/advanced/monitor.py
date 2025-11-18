@@ -33,10 +33,13 @@ class NeuroStateMonitor:
         for key, value in data.items():
             if not isinstance(value, (int, float)):
                 continue
-            stats = metric.setdefault(key, {"current": 0.0, "average": 0.0, "min": value, "max": value, "count": 0})
+            stats = metric.setdefault(
+                key, {"current": 0.0, "average": 0.0, "min": value, "max": value, "count": 0}
+            )
             stats["current"] = float(value)
-            stats["average"] = (stats["average"] * stats["count"] + float(value)) / (stats["count"] + 1)
+            stats["average"] = (stats["average"] * stats["count"] + float(value)) / (
+                stats["count"] + 1
+            )
             stats["count"] += 1
             stats["min"] = min(stats["min"], float(value))
             stats["max"] = max(stats["max"], float(value))
-

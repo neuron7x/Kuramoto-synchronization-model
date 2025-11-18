@@ -122,9 +122,7 @@ class AlpacaIngestionAdapter(IngestionAdapter):
                 "secret": self._api_secret,
             }
         )
-        subscribe_payload = json.dumps(
-            {"action": "subscribe", "trades": list(channels)}
-        )
+        subscribe_payload = json.dumps({"action": "subscribe", "trades": list(channels)})
 
         while True:
             try:

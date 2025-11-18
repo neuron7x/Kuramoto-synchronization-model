@@ -46,12 +46,8 @@ def test_generator_reproducible() -> None:
     for scenario_a, scenario_b in zip(first, second):
         np.testing.assert_allclose(scenario_a.prices, scenario_b.prices)
         np.testing.assert_allclose(scenario_a.returns, scenario_b.returns)
-        np.testing.assert_allclose(
-            scenario_a.volatility_series, scenario_b.volatility_series
-        )
-        np.testing.assert_allclose(
-            scenario_a.liquidity_series, scenario_b.liquidity_series
-        )
+        np.testing.assert_allclose(scenario_a.volatility_series, scenario_b.volatility_series)
+        np.testing.assert_allclose(scenario_a.liquidity_series, scenario_b.liquidity_series)
         assert scenario_a.seed == scenario_b.seed
 
 
@@ -114,12 +110,8 @@ def test_structural_break_changes_drift_and_volatility() -> None:
     break_event = StructuralBreak(start=3, new_drift=0.05, new_volatility=0.1)
 
     scenario = generator.generate(structural_breaks=[break_event])[0]
-    np.testing.assert_allclose(
-        scenario.volatility_series[:3], np.full(3, config.volatility)
-    )
-    np.testing.assert_allclose(
-        scenario.volatility_series[3:], np.full(config.length - 4, 0.1)
-    )
+    np.testing.assert_allclose(scenario.volatility_series[:3], np.full(3, config.volatility))
+    np.testing.assert_allclose(scenario.volatility_series[3:], np.full(config.length - 4, 0.1))
     post_returns = scenario.returns[3:]
     pre_returns = scenario.returns[:3]
     assert np.all(post_returns > 0.0)
@@ -139,9 +131,7 @@ def test_controlled_experiments_evaluate_strategies() -> None:
         }
     )
 
-    experiments = generator.run_controlled_experiments(
-        strategies=strategies, scenarios=[scenario]
-    )
+    experiments = generator.run_controlled_experiments(strategies=strategies, scenarios=[scenario])
     assert len(experiments) == 1
     experiment = experiments[0]
     assert experiment.scenario is scenario

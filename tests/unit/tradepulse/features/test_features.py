@@ -11,8 +11,7 @@ import importlib.util
 
 # Import RicciCurvatureGraph
 spec = importlib.util.spec_from_file_location(
-    "ricci",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/ricci.py"
+    "ricci", Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/ricci.py"
 )
 ricci_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ricci_module)
@@ -20,8 +19,7 @@ RicciCurvatureGraph = ricci_module.RicciCurvatureGraph
 
 # Import TopoSentinel
 spec = importlib.util.spec_from_file_location(
-    "topo",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/topo.py"
+    "topo", Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/topo.py"
 )
 topo_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(topo_module)
@@ -30,7 +28,7 @@ TopoSentinel = topo_module.TopoSentinel
 # Import CausalGuard
 spec = importlib.util.spec_from_file_location(
     "causal",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/causal.py"
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/causal.py",
 )
 causal_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(causal_module)
@@ -90,9 +88,7 @@ class TestTopoSentinel:
         dates = pd.date_range("2024-01-01", periods=n_steps, freq="1h")
 
         returns = pd.DataFrame(
-            {
-                f"asset{i}": np.random.randn(n_steps) * 0.02 for i in range(5)
-            },
+            {f"asset{i}": np.random.randn(n_steps) * 0.02 for i in range(5)},
             index=dates,
         )
 
@@ -236,9 +232,7 @@ class TestCausalGuard:
     def test_insufficient_data(self):
         """Test with insufficient data."""
         dates = pd.date_range("2024-01-01", periods=5, freq="1h")
-        df = pd.DataFrame(
-            {"target": [1, 2, 3, 4, 5], "driver": [5, 4, 3, 2, 1]}, index=dates
-        )
+        df = pd.DataFrame({"target": [1, 2, 3, 4, 5], "driver": [5, 4, 3, 2, 1]}, index=dates)
 
         detector = CausalGuard(max_lag=5)
         result = detector.fit_transform(df, target="target")

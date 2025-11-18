@@ -108,19 +108,25 @@ class RegimeAdaptiveExposureGuard:
         self._cooldown = cooldown_seconds
         self._states: MutableMapping[str, _RegimeState] = {}
 
-    def observe(self, symbol: str, return_value: float, timestamp: float | None = None) -> VolatilityRegime:
+    def observe(
+        self, symbol: str, return_value: float, timestamp: float | None = None
+    ) -> VolatilityRegime:
         """Record a return observation and update the symbol's volatility regime."""
 
         state = self._states.setdefault(symbol, _RegimeState())
         abs_return = abs(float(return_value))
-        observation_time = float(timestamp) if timestamp is not None else datetime.now(timezone.utc).timestamp()
+        observation_time = (
+            float(timestamp) if timestamp is not None else datetime.now(timezone.utc).timestamp()
+        )
         if state.samples == 0:
             state.ewma_abs_return = abs_return
         else:
             previous_timestamp = state.last_timestamp or observation_time
             delta = max(0.0, observation_time - previous_timestamp)
-            decay_factor = self._decay ** delta
-            state.ewma_abs_return = (state.ewma_abs_return * decay_factor) + ((1.0 - decay_factor) * abs_return)
+            decay_factor = self._decay**delta
+            state.ewma_abs_return = (state.ewma_abs_return * decay_factor) + (
+                (1.0 - decay_factor) * abs_return
+            )
 
         state.samples += 1
         state.last_timestamp = observation_time
@@ -134,10 +140,7 @@ class RegimeAdaptiveExposureGuard:
             current_severity = self._severity(regime)
             if current_severity > previous_severity:
                 state.cooldown_until = observation_time + self._cooldown
-            elif (
-                current_severity < previous_severity
-                and observation_time < state.cooldown_until
-            ):
+            elif current_severity < previous_severity and observation_time < state.cooldown_until:
                 regime = previous_regime
 
         state.last_regime = regime
@@ -233,7 +236,9 @@ class KellyCriterionPositionSizer:
 class VolatilityAdjustedSizer:
     """Scale position sizes inversely with realised volatility."""
 
-    def __init__(self, target_volatility: float = 0.15, floor: float = 0.05, ceiling: float = 5.0) -> None:
+    def __init__(
+        self, target_volatility: float = 0.15, floor: float = 0.05, ceiling: float = 5.0
+    ) -> None:
         if target_volatility <= 0:
             raise ValueError("target_volatility must be positive")
         self._target = target_volatility
@@ -256,11 +261,7 @@ class RiskMetricsCalculator:
         self._confidence = confidence
 
     def _loss_distribution(self, returns: Sequence[float]) -> list[float]:
-        losses = [
-            -float(r)
-            for r in returns
-            if r < 0
-        ]
+        losses = [-float(r) for r in returns if r < 0]
         return sorted(losses)
 
     def value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
@@ -273,7 +274,9 @@ class RiskMetricsCalculator:
         index = min(index, len(losses) - 1)
         return losses[index] * math.sqrt(max(1, horizon_days))
 
-    def conditional_value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
+    def conditional_value_at_risk(
+        self, returns: Sequence[float], *, horizon_days: int = 1
+    ) -> float:
         if not returns:
             return 0.0
         losses = self._loss_distribution(returns)
@@ -311,7 +314,9 @@ class MarginMonitor:
 class CorrelationLimitGuard:
     """Ensure portfolio exposure accounts for inter-asset correlation."""
 
-    def __init__(self, correlation_matrix: Mapping[tuple[str, str], float], max_exposure: float) -> None:
+    def __init__(
+        self, correlation_matrix: Mapping[tuple[str, str], float], max_exposure: float
+    ) -> None:
         self._correlations = dict(correlation_matrix)
         self._max_exposure = max_exposure
 
@@ -372,7 +377,7 @@ class TimeWeightedExposureTracker:
             self._exposure = abs(notional)
         else:
             delta = max(0.0, timestamp - self._last_timestamp)
-            decay_factor = self._decay ** delta
+            decay_factor = self._decay**delta
             self._exposure = (self._exposure * decay_factor) + abs(notional)
         self._last_timestamp = timestamp
         return self._exposure
@@ -389,16 +394,15 @@ class RiskParityAllocator:
         total = sum(inv_vols.values())
         if total == 0:
             return {symbol: 0.0 for symbol in volatilities}
-        return {
-            symbol: max(self._min_weight, value / total)
-            for symbol, value in inv_vols.items()
-        }
+        return {symbol: max(self._min_weight, value / total) for symbol, value in inv_vols.items()}
 
 
 class LiquidationCascadePreventer:
     """Limit exposures relative to estimated market liquidity."""
 
-    def __init__(self, liquidity_provider: Callable[[str], float], max_fraction: float = 0.1) -> None:
+    def __init__(
+        self, liquidity_provider: Callable[[str], float], max_fraction: float = 0.1
+    ) -> None:
         self._liquidity_provider = liquidity_provider
         self._max_fraction = max(0.0, min(1.0, max_fraction))
 
@@ -534,4 +538,3 @@ class AdvancedRiskController:
         if self._regime_guard is None:
             raise RuntimeError("RegimeAdaptiveExposureGuard is not configured")
         return self._regime_guard.regime(symbol)
-

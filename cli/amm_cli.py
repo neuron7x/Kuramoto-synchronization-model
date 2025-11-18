@@ -102,9 +102,7 @@ async def stream_csv(
                 + ". Expected headers: x, R, kappa and optional H."
             )
 
-        for line_no, row in enumerate(
-            reader, start=2
-        ):  # start=2 accounts for header line
+        for line_no, row in enumerate(reader, start=2):  # start=2 accounts for header line
             x = _parse_required(row, "x", line_no)
             R = _parse_required(row, "R", line_no)
             kappa = _parse_required(row, "kappa", line_no)

@@ -36,7 +36,9 @@ class AgencyControlNetwork:
 
         if trade.outcome == TradeOutcome.LOSS:
             penalty = abs(trade.loss_magnitude) * actual_control * 0.6
-            self._insula_activation = float(np.clip(0.9 * self._insula_activation + 0.1 * penalty, 0.0, 1.0))
+            self._insula_activation = float(
+                np.clip(0.9 * self._insula_activation + 0.1 * penalty, 0.0, 1.0)
+            )
             self._loss_aversion = min(2.6, self._loss_aversion * 1.02)
             self._win_rate *= 0.95
         elif trade.outcome == TradeOutcome.WIN:
@@ -96,7 +98,9 @@ class AgencyControlNetwork:
         base = float(trade.signal_strength) / max(trade.strategy_complexity, 1e-6)
         trend_factor = 1.0 - min(abs(market_context.trend_strength) * 0.3, 0.9)
         volatility_factor = 1.0 - min(market_context.volatility * 0.2, 0.95)
-        return float(np.clip(base * trend_factor * volatility_factor * market_context.liquidity, 0.0, 1.0))
+        return float(
+            np.clip(base * trend_factor * volatility_factor * market_context.liquidity, 0.0, 1.0)
+        )
 
     @staticmethod
     def _trend(values: Iterable[float]) -> float:
@@ -106,4 +110,3 @@ class AgencyControlNetwork:
         x_axis = np.arange(len(series))
         slope = float(np.polyfit(x_axis, series, 1)[0])
         return slope
-

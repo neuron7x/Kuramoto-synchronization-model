@@ -164,9 +164,7 @@ def test_slo_suite_thresholds(tmp_path: Path) -> None:
                         "latency_threshold_ms": 100.0,
                         "min_requests": 10,
                         "evaluation_period": "5m",
-                        "burn_rates": [
-                            {"window": "5m", "max_burn_rate": 2.0}
-                        ],
+                        "burn_rates": [{"window": "5m", "max_burn_rate": 2.0}],
                     }
                 ]
             }

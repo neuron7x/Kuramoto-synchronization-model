@@ -163,9 +163,9 @@ class ApiArtifactGenerator:
             param_signature = ", " + param_signature
         request_builder = self._render_python_request_builder(route, path_params)
         doc_lines = self._render_method_docstring(route)
-        docstring = "    \"\"\"" + doc_lines.replace("\n", "\n    ") + "\n    \"\"\""
+        docstring = '    """' + doc_lines.replace("\n", "\n    ") + '\n    """'
         signature = (
-            f"def {method_name}(self{param_signature}, *, payload: Mapping[str, Any] | None = None, "
+            f"def {method_name}(self{param_signature}, *, payload: Mapping[str, Any] | None = None, "  # noqa: E501
             "headers: Mapping[str, str] | None = None) -> httpx.Response:"
         )
         return "\n".join([signature, docstring, request_builder])
@@ -179,7 +179,7 @@ class ApiArtifactGenerator:
         if route.idempotency.required:
             ttl = f" ttl={route.idempotency.ttl_seconds}s" if route.idempotency.ttl_seconds else ""
             lines.append(
-                f"Idempotency: required via {route.idempotency.header or self._registry.metadata.idempotency_header}{ttl}"
+                f"Idempotency: required via {route.idempotency.header or self._registry.metadata.idempotency_header}{ttl}"  # noqa: E501
             )
         else:
             lines.append("Idempotency: optional")
@@ -189,24 +189,24 @@ class ApiArtifactGenerator:
         path_expr = route.path
         for name in path_params:
             path_expr = path_expr.replace(f"{{{name}}}", "{" + name + "}")
-        path_format = f"f\"{path_expr}\""
+        path_format = f'f"{path_expr}"'
         has_body = route.method.upper() in {"POST", "PUT", "PATCH"}
         lines = [
             "request_headers = dict(self._default_headers)",
             "if headers:",
             "    request_headers.update(headers)",
-            "request_kwargs: dict[str, Any] = {\"headers\": request_headers}",
+            'request_kwargs: dict[str, Any] = {"headers": request_headers}',
         ]
         if has_body:
             lines.extend(
                 [
                     "if payload is not None:",
-                    "    request_kwargs[\"json\"] = payload",
+                    '    request_kwargs["json"] = payload',
                 ]
             )
         response_lines = [
             "response = self._client.request(",
-            f"    \"{route.method.upper()}\",",
+            f'    "{route.method.upper()}",',
             f"    {path_format},",
             "    **request_kwargs,",
             ")",
@@ -269,16 +269,16 @@ export class TradePulseClient {
             request_path = request_path.replace(f"{{{name}}}", f"${{{name}}}")
         has_body = route.method.upper() in {"POST", "PUT", "PATCH"}
         lines = [
-            f"async {method_name}(options: RequestOptions = {{}}{args_signature}): Promise<Response> {{",
+            f"async {method_name}(options: RequestOptions = {{}}{args_signature}): Promise<Response> {{",  # noqa: E501
             "    const headers = { ...this.defaultHeaders, ...(options.headers || {}) };",
             f"    const requestUrl = `${{this.baseUrl}}{request_path}`;",
             "    const response = await fetch(requestUrl, {",
-            f"        method: \"{route.method.upper()}\",",
+            f'        method: "{route.method.upper()}",',
             "        headers,",
         ]
         if has_body:
             lines.append(
-                "        body: options.payload !== undefined ? JSON.stringify(options.payload) : undefined,"
+                "        body: options.payload !== undefined ? JSON.stringify(options.payload) : undefined,"  # noqa: E501
             )
         lines.extend(
             [
@@ -319,7 +319,8 @@ export class TradePulseClient {
             * Documentation: {metadata.docs_base_url}
             * Default signature algorithm: `{metadata.default_signature_algorithm}`
             * Default idempotency header: `{metadata.idempotency_header}`
-            * Compatibility tier: `{metadata.compatibility.default}` (support window {metadata.compatibility.support_window_days} days)
+            * Compatibility tier: `{metadata.compatibility.default}` 
+              (support window {metadata.compatibility.support_window_days} days)
             """
         ).strip()
 
@@ -347,12 +348,16 @@ export class TradePulseClient {
         ]
         rows = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
         for route in self._registry.routes:
-            cache = f"{route.cache.strategy}; max-age={route.cache.max_age}; swr={route.cache.stale_while_revalidate}"
+            cache = f"{route.cache.strategy}; max-age={route.cache.max_age}; swr={route.cache.stale_while_revalidate}"  # noqa: E501
             rate_limit = _format_rate_limit(route.rate_limit)
             throttle = f"burst={route.throttle.burst} / {route.throttle.period_seconds}s"
             if route.idempotency.required:
-                ttl = f" ttl={route.idempotency.ttl_seconds}s" if route.idempotency.ttl_seconds else ""
-                idempotency = f"required ({route.idempotency.header or self._registry.metadata.idempotency_header}{ttl})"
+                ttl = (
+                    f" ttl={route.idempotency.ttl_seconds}s"
+                    if route.idempotency.ttl_seconds
+                    else ""
+                )
+                idempotency = f"required ({route.idempotency.header or self._registry.metadata.idempotency_header}{ttl})"  # noqa: E501
             else:
                 idempotency = "optional"
             signature = "required" if route.signatures.required else "optional"
@@ -403,11 +408,17 @@ export class TradePulseClient {
     def _render_compatibility_section(self) -> str:
         guards = self._registry.compatibility
         if not guards:
-            return "## Compatibility\n\n_The registry does not define additional compatibility guards._"
-        rows = ["| Route | Minimum client version | Status | Comments |", "| --- | --- | --- | --- |"]
+            return (
+                "# Compatibility\n\n"
+                "_The registry does not define additional compatibility guards._"
+            )
+        rows = [
+            "| Route | Minimum client version | Status | Comments |",
+            "| --- | --- | --- | --- |",
+        ]
         for guard in guards:
             rows.append(
-                f"| {guard.route} | {guard.minimum_client_version} | {guard.status} | {guard.comments or '—'} |"
+                f"| {guard.route} | {guard.minimum_client_version} | {guard.status} | {guard.comments or '—'} |"  # noqa: E501
             )
         return "## Compatibility\n\n" + "\n".join(rows)
 
@@ -415,7 +426,9 @@ export class TradePulseClient {
         maintainers = self._registry.metadata.maintainers
         if not maintainers:
             return "## Maintainers\n\n_No maintainer records available._"
-        bullet_lines = [f"- **{maintainer.name}** — {maintainer.contact}" for maintainer in maintainers]
+        bullet_lines = [
+            f"- **{maintainer.name}** — {maintainer.contact}" for maintainer in maintainers
+        ]
         return "## Maintainers\n\n" + "\n".join(bullet_lines)
 
     def _generate_route_index(self, path: Path) -> Path:
@@ -448,7 +461,8 @@ export class TradePulseClient {
                 },
                 "idempotency": {
                     "required": route.idempotency.required,
-                    "header": route.idempotency.header or self._registry.metadata.idempotency_header,
+                    "header": route.idempotency.header
+                    or self._registry.metadata.idempotency_header,
                     "ttl_seconds": route.idempotency.ttl_seconds,
                 },
                 "request_schema": self._normalise_schema_reference(route.request_schema),
@@ -473,7 +487,7 @@ export class TradePulseClient {
                 )
             )
             lines.append(
-                f"- Signature: `{webhook.signature_header}` via `{webhook.signature_algorithm}` (version {webhook.signature_version})"
+                f"- Signature: `{webhook.signature_header}` via `{webhook.signature_algorithm}` (version {webhook.signature_version})"  # noqa: E501
             )
             lines.append("")
         content = "\n".join(lines).rstrip() + "\n"
@@ -548,17 +562,23 @@ export class TradePulseClient {
         return path
 
     def _generate_visualization(self, path: Path) -> Path:
-        lines = ["digraph TradePulseAPI {", "    rankdir=LR;", "    node [shape=box, style=rounded, fontname=Helvetica];"]
+        lines = [
+            "digraph TradePulseAPI {",
+            "    rankdir=LR;",
+            "    node [shape=box, style=rounded, fontname=Helvetica];",
+        ]
         for route in self._registry.routes:
             label = f"{route.method.upper()}\\n{route.path}"
-            lines.append(f"    \"{route.name}\" [label=\"{label}\"];")
+            lines.append(f'    "{route.name}" [label="{label}"];')
         for webhook in self._registry.webhooks:
-            lines.append(f"    \"{webhook.name}\" [shape=ellipse, style=filled, fillcolor=lightgrey];")
+            lines.append(
+                f'    "{webhook.name}" [shape=ellipse, style=filled, fillcolor=lightgrey];'
+            )
         for route in self._registry.routes:
             if not route.webhooks:
                 continue
             for webhook in route.webhooks:
-                lines.append(f"    \"{route.name}\" -> \"{webhook}\";")
+                lines.append(f'    "{route.name}" -> "{webhook}";')
         lines.append("}")
         content = "\n".join(lines) + "\n"
         _write_if_changed(path, content)
@@ -578,6 +598,7 @@ export class TradePulseClient {
 # ----------------------------------------------------------------------
 # Helper utilities
 # ----------------------------------------------------------------------
+
 
 def _write_if_changed(path: Path, content: str) -> None:
     existing = path.read_text(encoding="utf-8") if path.exists() else None

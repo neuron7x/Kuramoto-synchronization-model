@@ -79,7 +79,9 @@ class CentralConfigurationStore:
         self._rotator = rotator or SecretRotator(vault=vault, clock=clock_fn)
         self._namespaces: dict[str, NamespaceDefinition] = {}
         self._namespace_secrets: dict[str, set[str]] = {}
-        self._policy = access_policy or SecretAccessPolicy({"system": {"read": {"*"}, "write": {"*"}}})
+        self._policy = access_policy or SecretAccessPolicy(
+            {"system": {"read": {"*"}, "write": {"*"}}}
+        )
         self._vault.register_policy(self._policy)
 
     # ------------------------------------------------------------------
@@ -426,7 +428,11 @@ class CentralConfigurationStore:
             raise ConfigurationStoreError(
                 f"Actor '{actor}' is not permitted to write namespace '{definition.name}'"
             )
-        if not for_write and normalized not in allowed_readers and normalized not in allowed_writers:
+        if (
+            not for_write
+            and normalized not in allowed_readers
+            and normalized not in allowed_writers
+        ):
             raise ConfigurationStoreError(
                 f"Actor '{actor}' is not permitted to read namespace '{definition.name}'"
             )

@@ -137,9 +137,7 @@ async def test_social_listening_pipeline_publishes_payloads() -> None:
         snapshot_interval=timedelta(minutes=1),
     )
     processor = SocialListeningProcessor(config=config)
-    publication = SocialPublicationConfig(
-        features_topic="features", snapshot_topic="snapshots"
-    )
+    publication = SocialPublicationConfig(features_topic="features", snapshot_topic="snapshots")
     pipeline = SocialListeningPipeline(
         clients=[client],
         processor=processor,

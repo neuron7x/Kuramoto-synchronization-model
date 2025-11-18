@@ -166,27 +166,17 @@ class PortfolioAttributionReport:
             {
                 "generated_at": self.generated_at.isoformat(),
                 "total_pnl": float(self.total_pnl),
-                "strategy_breakdown": [
-                    dict(item.to_dict()) for item in self.strategy_breakdown
-                ],
-                "factor_breakdown": [
-                    dict(item.to_dict()) for item in self.factor_breakdown
-                ],
+                "strategy_breakdown": [dict(item.to_dict()) for item in self.strategy_breakdown],
+                "factor_breakdown": [dict(item.to_dict()) for item in self.factor_breakdown],
                 "instrument_breakdown": [
                     dict(item.to_dict()) for item in self.instrument_breakdown
                 ],
-                "factor_exposures": [
-                    dict(item.to_dict()) for item in self.factor_exposures
-                ],
+                "factor_exposures": [dict(item.to_dict()) for item in self.factor_exposures],
                 "instrument_exposures": [
                     dict(item.to_dict()) for item in self.instrument_exposures
                 ],
-                "hedge_effectiveness": [
-                    dict(item.to_dict()) for item in self.hedge_effectiveness
-                ],
-                "regime_stability": [
-                    dict(item.to_dict()) for item in self.regime_stability
-                ],
+                "hedge_effectiveness": [dict(item.to_dict()) for item in self.hedge_effectiveness],
+                "regime_stability": [dict(item.to_dict()) for item in self.regime_stability],
                 "alerts": [dict(alert.to_dict()) for alert in self.alerts],
             }
         )
@@ -227,8 +217,7 @@ class PortfolioAttributionReport:
             lines.append("| --- | ---: | ---: |")
             for item in items:
                 lines.append(
-                    "| "
-                    f"{item.name} | {item.exposure:,.6f} | {item.share_of_total:.2%} |"
+                    "| " f"{item.name} | {item.exposure:,.6f} | {item.share_of_total:.2%} |"
                 )
 
         _render_exposure("Factor Exposures", self.factor_exposures)
@@ -364,13 +353,10 @@ class PortfolioAttributionEngine:
                 detail = []
                 if missing:
                     detail.append(
-                        "missing exposures for instruments: "
-                        + ", ".join(sorted(missing))
+                        "missing exposures for instruments: " + ", ".join(sorted(missing))
                     )
                 if extra:
-                    detail.append(
-                        "unexpected exposure columns: " + ", ".join(sorted(extra))
-                    )
+                    detail.append("unexpected exposure columns: " + ", ".join(sorted(extra)))
                 message = "instrument_exposures columns must match instrument_pnl columns"
                 if detail:
                     message = f"{message} ({'; '.join(detail)})"
@@ -386,7 +372,10 @@ class PortfolioAttributionEngine:
             raise ValueError("factor_exposures contains NaN values")
         if self._factor_returns.isnull().any().any():
             raise ValueError("factor_returns contains NaN values")
-        if self._instrument_exposures is not None and self._instrument_exposures.isnull().any().any():
+        if (
+            self._instrument_exposures is not None
+            and self._instrument_exposures.isnull().any().any()
+        ):
             raise ValueError("instrument_exposures contains NaN values")
 
     def _breakdown_from_dataframe(self, df: pd.DataFrame) -> tuple[AttributionBreakdown, ...]:
@@ -614,4 +603,3 @@ __all__ = [
     "RegimeMetric",
     "StrategyRegimeStability",
 ]
-

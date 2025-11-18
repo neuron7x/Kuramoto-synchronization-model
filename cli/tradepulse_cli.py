@@ -116,9 +116,7 @@ def _existing_digest(path: Path) -> str | None:
     return _hash_bytes(path.read_bytes())
 
 
-def _write_bytes(
-    destination: Path, payload: bytes, *, command: str
-) -> Tuple[str, bool]:
+def _write_bytes(destination: Path, payload: bytes, *, command: str) -> Tuple[str, bool]:
     existing = _existing_digest(destination)
     digest = _hash_bytes(payload)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -143,9 +141,7 @@ def _resolve_kubectl_binary(base: Path, target: Path | str) -> Path:
         return candidate
 
     target_str = str(target)
-    has_dir_component = any(
-        sep and sep in target_str for sep in (os.sep, os.path.altsep)
-    )
+    has_dir_component = any(sep and sep in target_str for sep in (os.sep, os.path.altsep))
     if has_dir_component:
         return (base / candidate).resolve()
 
@@ -251,7 +247,7 @@ def _load_prices(cfg: IngestConfig | BacktestConfig | ExecConfig) -> pd.DataFram
             frame = read_dataframe(Path(data_cfg.path), allow_json_fallback=False)
         except MissingParquetDependencyError as exc:
             raise ArtifactError(
-                "Parquet sources require either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."
+                "Parquet sources require either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."  # noqa: E501
             ) from exc
     if data_cfg.timestamp_field not in frame.columns:
         raise ConfigError("Timestamp column missing from data source")
@@ -266,11 +262,7 @@ def _load_prices(cfg: IngestConfig | BacktestConfig | ExecConfig) -> pd.DataFram
         # already holds.
         frame = frame.sort_values(timestamp_field)
     index = frame.index
-    if not (
-        isinstance(index, pd.RangeIndex)
-        and index.start == 0
-        and index.step == 1
-    ):
+    if not (isinstance(index, pd.RangeIndex) and index.start == 0 and index.step == 1):
         frame = frame.reset_index(drop=True)
     return frame
 
@@ -289,7 +281,7 @@ def _load_feature_frame(source: FeatureFrameSourceConfig) -> pd.DataFrame:
             frame = read_dataframe(source.path, allow_json_fallback=False)
         except MissingParquetDependencyError as exc:
             raise ArtifactError(
-                "Parquet sources require either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."
+                "Parquet sources require either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."  # noqa: E501
             ) from exc
     else:  # pragma: no cover - guarded by Pydantic literal
         raise ConfigError(f"Unsupported feature source format '{fmt}'")
@@ -328,9 +320,7 @@ def _build_parity_spec(spec_cfg: FeatureParitySpecConfig) -> FeatureParitySpec:
         numeric_tolerance=spec_cfg.numeric_tolerance,
         max_clock_skew=spec_cfg.max_clock_skew,
         allow_schema_evolution=spec_cfg.allow_schema_evolution,
-        value_columns=None
-        if spec_cfg.value_columns is None
-        else tuple(spec_cfg.value_columns),
+        value_columns=None if spec_cfg.value_columns is None else tuple(spec_cfg.value_columns),
     )
 
 
@@ -346,9 +336,7 @@ def _resolve_strategy(
     return _wrapped
 
 
-def _write_frame(
-    frame: pd.DataFrame, destination: Path, *, command: str = "cli"
-) -> str:
+def _write_frame(frame: pd.DataFrame, destination: Path, *, command: str = "cli") -> str:
     suffix = destination.suffix.lower()
     if suffix in {".csv", ""}:
         payload = frame.to_csv(index=False).encode("utf-8")
@@ -357,7 +345,7 @@ def _write_frame(
             payload = dataframe_to_parquet_bytes(frame, index=False)
         except MissingParquetDependencyError as exc:
             raise ConfigError(
-                "Writing parquet outputs requires either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."
+                "Writing parquet outputs requires either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."  # noqa: E501
             ) from exc
     else:
         raise ConfigError(f"Unsupported destination format '{suffix}'")
@@ -401,9 +389,13 @@ def _load_feature_dataset(path: Path) -> v21.StrictCausalFeatures:
         frame = frame.set_index(ts_col).sort_index()
     if "y" not in frame.columns:
         raise ComputeError("Features CSV must contain a 'y' label column.")
-    feature_cols = [c for c in ("dr", "ricci_mean", "topo_intensity", "causal_strength") if c in frame.columns]
+    feature_cols = [
+        c for c in ("dr", "ricci_mean", "topo_intensity", "causal_strength") if c in frame.columns
+    ]
     if len(feature_cols) != 4:
-        raise ComputeError("Features CSV must include dr, ricci_mean, topo_intensity and causal_strength columns.")
+        raise ComputeError(
+            "Features CSV must include dr, ricci_mean, topo_intensity and causal_strength columns."
+        )
     features = frame[feature_cols]
     labels = frame["y"].astype(int).to_numpy()
     return v21.StrictCausalFeatures(features=features, labels=labels)
@@ -447,9 +439,7 @@ def completion(shell: str) -> None:
     type=click.Path(exists=True, path_type=Path),
     help="Path to ingest YAML config.",
 )
-@click.option(
-    "--generate-config", is_flag=True, help="Write the default ingest config template."
-)
+@click.option("--generate-config", is_flag=True, help="Write the default ingest config template.")
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
@@ -468,9 +458,7 @@ def ingest(
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("ingest", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -504,9 +492,7 @@ def ingest(
                 click.echo(f"[{command}] • catalog checksum={entry.checksum}")
             with step_logger(command, "snapshot version"):
                 version_mgr = DataVersionManager(cfg.versioning)
-                version_mgr.snapshot(
-                    cfg.destination, metadata={"records": record_count}
-                )
+                version_mgr.snapshot(cfg.destination, metadata={"records": record_count})
 
             result.clear()
             result.update(
@@ -531,9 +517,7 @@ def ingest(
             if not stop_event.is_set():
                 stop_event.wait()
 
-    with Watchdog(
-        name="ingest-cli", monitor_interval=0.25, health_url=None
-    ) as watchdog:
+    with Watchdog(name="ingest-cli", monitor_interval=0.25, health_url=None) as watchdog:
         watchdog.register("ingest-worker", _ingest_worker, args=(watchdog.stop_event,))
 
         while True:
@@ -541,18 +525,14 @@ def ingest(
                 break
             if fatal_event.is_set():
                 watchdog.stop()
-                exc = (
-                    fatal_error[0]
-                    if fatal_error
-                    else RuntimeError("ingest worker failed")
-                )
+                exc = fatal_error[0] if fatal_error else RuntimeError("ingest worker failed")
                 raise exc
 
     if not result:
         raise RuntimeError("ingest worker terminated without producing a result")
 
     click.echo(
-        f"[{command}] completed records={result['records']} dest={result['destination']} sha256={result['digest']}"
+        f"[{command}] completed records={result['records']} dest={result['destination']} sha256={result['digest']}"  # noqa: E501
     )
 
 
@@ -645,9 +625,7 @@ def backtest(
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("backtest", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -710,9 +688,7 @@ def _emit_optimize_output(
     if output_format == "jsonl":
         click.echo(json.dumps({"metric": "best_score", "value": payload["best_score"]}))
         if payload["best_params"]:
-            click.echo(
-                json.dumps({"metric": "best_params", "value": payload["best_params"]})
-            )
+            click.echo(json.dumps({"metric": "best_params", "value": payload["best_params"]}))
         for trial in payload["trials"]:
             click.echo(json.dumps({"metric": "trial", "value": trial}))
         return
@@ -760,9 +736,7 @@ def optimize(
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("optimize", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -791,9 +765,7 @@ def optimize(
             trial_result = _run_backtest(trial_cfg)
             returns = np.asarray(trial_result["returns"], dtype=float)
             score = float(objective_fn(returns))
-            trials.append(
-                {"params": params, "score": score, "stats": trial_result["stats"]}
-            )
+            trials.append({"params": params, "score": score, "stats": trial_result["stats"]})
             if score > best_score:
                 best_score = score
                 best_params = params
@@ -844,9 +816,7 @@ def _emit_exec_output(
     type=click.Path(exists=True, path_type=Path),
     help="Path to exec YAML config.",
 )
-@click.option(
-    "--generate-config", is_flag=True, help="Write the default exec config template."
-)
+@click.option("--generate-config", is_flag=True, help="Write the default exec config template.")
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
@@ -872,9 +842,7 @@ def exec(  # noqa: A001
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("exec", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -929,9 +897,7 @@ def _emit_report_output(
     if output_format == "jsonl":
         for idx, path in enumerate(cfg.inputs, start=1):
             click.echo(json.dumps({"section": idx, "source": str(path)}))
-        click.echo(
-            json.dumps({"metric": "line_count", "value": len(report_text.splitlines())})
-        )
+        click.echo(json.dumps({"metric": "line_count", "value": len(report_text.splitlines())}))
         return
     if output_format == "parquet":
         frame = pd.DataFrame(
@@ -949,7 +915,7 @@ def _emit_report_output(
 def _emit_parity_summary(report: FeatureParityReport, *, command: str) -> None:
     click.echo(
         f"[{command}] • feature_view={report.feature_view} "
-        f"inserted={report.inserted_rows} updated={report.updated_rows} dropped={report.dropped_rows}"
+        f"inserted={report.inserted_rows} updated={report.updated_rows} dropped={report.dropped_rows}"  # noqa: E501
     )
     integrity = report.integrity
     click.echo(
@@ -960,18 +926,11 @@ def _emit_parity_summary(report: FeatureParityReport, *, command: str) -> None:
     if report.max_value_drift is not None:
         click.echo(f"[{command}] • max_value_drift={report.max_value_drift:.6g}")
     if report.clock_skew is not None:
-        click.echo(
-            f"[{command}] • clock_skew={report.clock_skew} "
-            f"abs={report.clock_skew_abs}"
-        )
+        click.echo(f"[{command}] • clock_skew={report.clock_skew} " f"abs={report.clock_skew_abs}")
     if report.columns_added:
-        click.echo(
-            f"[{command}] • columns_added={', '.join(report.columns_added)}"
-        )
+        click.echo(f"[{command}] • columns_added={', '.join(report.columns_added)}")
     if report.columns_removed:
-        click.echo(
-            f"[{command}] • columns_removed={', '.join(report.columns_removed)}"
-        )
+        click.echo(f"[{command}] • columns_removed={', '.join(report.columns_removed)}")
 
 
 @cli.command()
@@ -980,9 +939,7 @@ def _emit_parity_summary(report: FeatureParityReport, *, command: str) -> None:
     type=click.Path(exists=True, path_type=Path),
     help="Path to report YAML config.",
 )
-@click.option(
-    "--generate-config", is_flag=True, help="Write the default report config template."
-)
+@click.option("--generate-config", is_flag=True, help="Write the default report config template.")
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
@@ -1008,9 +965,7 @@ def report(
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("report", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -1074,9 +1029,7 @@ def deploy(
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("deploy", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -1170,9 +1123,8 @@ def deploy(
         click.echo(f"[{command}] • wrote deployment summary to {summary_path}")
 
     click.echo(
-        f"[{command}] completed environment={cfg.environment.value} deployment={cfg.deployment_name}"
+        f"[{command}] completed environment={cfg.environment.value} deployment={cfg.deployment_name}"  # noqa: E501
     )
-
 
 
 @cli.command()
@@ -1204,9 +1156,7 @@ def parity(
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
-            raise click.UsageError(
-                "--template-output must be provided when generating a template"
-            )
+            raise click.UsageError("--template-output must be provided when generating a template")
         manager.render("parity", template_output)
         click.echo(f"[{command}] template written to {template_output}")
         return
@@ -1305,16 +1255,25 @@ def fete_backtest(
 @click.option(
     "--returns-csv",
     type=click.Path(exists=True, path_type=Path),
-    help="CSV file with log returns; must include ticker columns and optionally a timestamp column.",
+    help="CSV file with log returns; must include ticker columns and optionally a timestamp column.",  # noqa: E501
 )
 @click.option(
     "--features-csv",
     type=click.Path(exists=True, path_type=Path),
     help="CSV file with precomputed features and labels.",
 )
-@click.option("--window", default=252, show_default=True, help="Rolling window length for feature generation.")
-@click.option("--horizon", default=5, show_default=True, help="Forward horizon (in periods) for labels.")
-@click.option("--lambda-base", default=0.6, show_default=True, help="Ensemble weight for the base calibrated probability.")
+@click.option(
+    "--window", default=252, show_default=True, help="Rolling window length for feature generation."
+)
+@click.option(
+    "--horizon", default=5, show_default=True, help="Forward horizon (in periods) for labels."
+)
+@click.option(
+    "--lambda-base",
+    default=0.6,
+    show_default=True,
+    help="Ensemble weight for the base calibrated probability.",
+)
 @click.option("--hmm-states", type=click.Choice(["2", "3"]), default="2", show_default=True)
 @click.option(
     "--output",
@@ -1391,4 +1350,3 @@ DEFAULT_OVERLAY_NAMES = {
     "stage": "staging",
     "prod": "production",
 }
-

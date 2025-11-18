@@ -146,9 +146,7 @@ class TestTemporalRicci:
 
 class TestCompositeIndicator:
     def test_phase_detection_strong_emergent(self) -> None:
-        composite = KuramotoRicciComposite(
-            R_strong_emergent=0.8, ricci_negative_threshold=-0.3
-        )
+        composite = KuramotoRicciComposite(R_strong_emergent=0.8, ricci_negative_threshold=-0.3)
         phase = composite._determine_phase(
             R=0.85,
             temporal_ricci=-0.25,
@@ -373,9 +371,7 @@ class TestCompositeEngine:
         engine.analyze_market(df)
         engine.analyze_market(df)  # retry with identical payload should not duplicate
 
-        extended_index = df.index.append(
-            pd.Index([df.index[-1] + pd.Timedelta(minutes=1)])
-        )
+        extended_index = df.index.append(pd.Index([df.index[-1] + pd.Timedelta(minutes=1)]))
         extended_prices = np.append(prices, prices[-1] + 0.1)
         extended_volumes = np.append(volumes, volumes[-1])
         df_extended = pd.DataFrame(

@@ -100,7 +100,7 @@ class TestHPCActiveInferenceModule:
         """Test metastable transition gate."""
         # Low PWPE, low change -> should not trigger
         gate1 = hpc_ai_model.metastable_transition_gate(0.1, 0.01)
-        
+
         # High PWPE, high change -> may trigger
         gate2 = hpc_ai_model.metastable_transition_gate(0.5, 0.3)
 
@@ -191,10 +191,7 @@ class TestHPCActiveInferenceModule:
         hpc_ai_model.metastable_transition_gate = lambda pwpe, d: False
 
         dummy_data = pd.DataFrame({"close": [1.0], "volume": [1.0]})
-        actions = {
-            hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0)
-            for _ in range(20)
-        }
+        actions = {hpc_ai_model.decide_action(dummy_data, prev_pwpe=0.0) for _ in range(20)}
 
         assert len(actions) > 1
 
@@ -223,7 +220,7 @@ class TestValidationUtils:
         assert len(data) == 100
         assert isinstance(data.index, pd.DatetimeIndex)
         assert all(col in data.columns for col in ["open", "high", "low", "close", "volume"])
-        
+
         # Check OHLC constraints
         assert (data["high"] >= data["low"]).all()
         assert (data["high"] >= data["open"]).all()
@@ -303,13 +300,13 @@ class TestIntegration:
         # Run multiple steps
         for i in range(5):
             window_data = synthetic_data.iloc[i * 20 : (i + 1) * 20 + 80]
-            
+
             action = hpc_ai_model.decide_action(window_data, prev_pwpe)
             actions.append(action)
-            
+
             pwpe = hpc_ai_model.get_pwpe(window_data)
             pwpes.append(pwpe)
-            
+
             prev_pwpe = pwpe
 
         # Validate results

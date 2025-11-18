@@ -78,7 +78,9 @@ class HybridSearchEngine:
             freshness_score = self._freshness.score(segment.metadata, query.freshness_horizon)
             if freshness_score <= 0:
                 continue
-            source_weight = self._prioritizer.weight(segment.metadata.source) * segment.metadata.priority
+            source_weight = (
+                self._prioritizer.weight(segment.metadata.source) * segment.metadata.priority
+            )
             tag_weight = self._score_tags(segment.metadata.tags, query.tags)
             authority = self._authority_bonus(segment.document_id)
             composite = score * freshness_score * source_weight * tag_weight * authority

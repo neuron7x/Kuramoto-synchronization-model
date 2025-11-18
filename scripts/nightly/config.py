@@ -57,13 +57,9 @@ class MetricThreshold:
 
         violations: list[str] = []
         if self.min_value is not None and actual < self.min_value:
-            violations.append(
-                f"value {actual:.6g} below minimum {self.min_value:.6g}"
-            )
+            violations.append(f"value {actual:.6g} below minimum {self.min_value:.6g}")
         if self.max_value is not None and actual > self.max_value:
-            violations.append(
-                f"value {actual:.6g} above maximum {self.max_value:.6g}"
-            )
+            violations.append(f"value {actual:.6g} above maximum {self.max_value:.6g}")
 
         if self.higher_is_better:
             absolute_degradation = max(0.0, baseline - actual)
@@ -140,12 +136,8 @@ class BaselineStore:
                 if not isinstance(scenario_value, Mapping):
                     continue
                 baseline = self._coerce_metrics(scenario_value.get("baseline", {}))
-                thresholds = self._coerce_thresholds(
-                    scenario_value.get("thresholds", {})
-                )
-                parsed_stage[str(scenario)] = BaselineEntry(
-                    metrics=baseline, thresholds=thresholds
-                )
+                thresholds = self._coerce_thresholds(scenario_value.get("thresholds", {}))
+                parsed_stage[str(scenario)] = BaselineEntry(metrics=baseline, thresholds=thresholds)
             self._entries[str(stage)] = parsed_stage
 
     @staticmethod

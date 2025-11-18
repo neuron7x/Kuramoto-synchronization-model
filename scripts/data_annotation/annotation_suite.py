@@ -4,6 +4,7 @@ This module provides the building blocks necessary to run high quality
 annotation programs in a single place.  The design favours composable classes
 that can be reused inside notebooks, pipelines, or thin orchestration layers.
 """
+
 from __future__ import annotations
 
 from collections import Counter, defaultdict
@@ -72,7 +73,8 @@ class AnnotationProject:
     def add_record(self, record: AnnotationRecord) -> None:
         self.records.append(record)
         self.audit_log.log(
-            "annotation", {"item_id": record.item_id, "annotator_id": record.annotator_id, "label": record.label}
+            "annotation",
+            {"item_id": record.item_id, "annotator_id": record.annotator_id, "label": record.label},
         )
 
     def get_records_for_item(self, item_id: str) -> List[AnnotationRecord]:
@@ -101,15 +103,26 @@ class AnnotationInterface:
                 return item_id
         return None
 
-    def submit(self, item_id: str, annotator_id: str, label: str, score: Optional[float] = None, **metadata: Any) -> None:
-        record = AnnotationRecord(item_id=item_id, annotator_id=annotator_id, label=label, score=score, metadata=metadata)
+    def submit(
+        self,
+        item_id: str,
+        annotator_id: str,
+        label: str,
+        score: Optional[float] = None,
+        **metadata: Any,
+    ) -> None:
+        record = AnnotationRecord(
+            item_id=item_id, annotator_id=annotator_id, label=label, score=score, metadata=metadata
+        )
         self.project.add_record(record)
 
 
 class QualityChecker:
     """Evaluates annotation quality metrics."""
 
-    def __init__(self, reference_labels: MutableMapping[str, str], *, positive_label: str = "positive") -> None:
+    def __init__(
+        self, reference_labels: MutableMapping[str, str], *, positive_label: str = "positive"
+    ) -> None:
         self.reference_labels = reference_labels
         self.positive_label = positive_label
 
@@ -151,7 +164,9 @@ class InterraterAgreementCalculator:
         kappas: Dict[Tuple[str, str], float] = {}
         for i, left in enumerate(annotators):
             for right in annotators[i + 1 :]:
-                kappas[(left, right)] = self._pairwise_kappa(items_by_annotator[left], items_by_annotator[right])
+                kappas[(left, right)] = self._pairwise_kappa(
+                    items_by_annotator[left], items_by_annotator[right]
+                )
         return kappas
 
     @staticmethod
@@ -200,7 +215,7 @@ class InterraterAgreementCalculator:
             sum_sq = sum((counts[label] / m) ** 2 for label in label_set)
             p_bar += sum_sq
         p_bar /= n
-        pe = sum(value ** 2 for value in p.values())
+        pe = sum(value**2 for value in p.values())
         if math.isclose(1 - pe, 0.0):
             return float("nan")
         return (p_bar - pe) / (1 - pe)
@@ -212,7 +227,9 @@ class ActiveLearningSampler:
     def __init__(self, strategy: str = "uncertainty") -> None:
         self.strategy = strategy
 
-    def select(self, scored_items: Sequence[Tuple[str, Sequence[float]]], batch_size: int) -> List[str]:
+    def select(
+        self, scored_items: Sequence[Tuple[str, Sequence[float]]], batch_size: int
+    ) -> List[str]:
         if self.strategy == "uncertainty":
             scored = sorted(scored_items, key=lambda item: self._entropy(item[1]), reverse=True)
         elif self.strategy == "margin":
@@ -239,7 +256,9 @@ class InstructionTemplateManager:
     def __init__(self) -> None:
         self.templates: Dict[str, InstructionTemplate] = {}
 
-    def register(self, name: str, body: str, version: str, metadata: Optional[Dict[str, Any]] = None) -> InstructionTemplate:
+    def register(
+        self, name: str, body: str, version: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> InstructionTemplate:
         template_id = str(uuid.uuid4())
         template = InstructionTemplate(
             template_id=template_id,
@@ -270,7 +289,9 @@ class DatasetManager:
         self.versions: Dict[str, DatasetVersion] = {}
         self.audit_log = AuditLog(project_id="dataset_manager")
 
-    def create_version(self, name: str, records: Sequence[MutableMapping[str, Any]], description: str) -> DatasetVersion:
+    def create_version(
+        self, name: str, records: Sequence[MutableMapping[str, Any]], description: str
+    ) -> DatasetVersion:
         version_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         path = self.storage_dir / f"{name}_{version_id}.json"
         path.write_text(json.dumps(list(records), indent=2))
@@ -286,7 +307,9 @@ class DatasetManager:
         self.audit_log.log("create_version", dataset_version.__dict__)
         return dataset_version
 
-    def update_version(self, version_id: str, updated_records: Sequence[MutableMapping[str, Any]], description: str) -> DatasetVersion:
+    def update_version(
+        self, version_id: str, updated_records: Sequence[MutableMapping[str, Any]], description: str
+    ) -> DatasetVersion:
         if version_id not in self.versions:
             raise KeyError(f"Unknown dataset version: {version_id}")
         path = self.versions[version_id].data_path
@@ -315,12 +338,14 @@ class AuditLog:
         self.events: List[Dict[str, Any]] = []
 
     def log(self, action: str, details: Dict[str, Any]) -> None:
-        self.events.append({
-            "project_id": self.project_id,
-            "action": action,
-            "details": details,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self.events.append(
+            {
+                "project_id": self.project_id,
+                "action": action,
+                "details": details,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     def export(self) -> List[Dict[str, Any]]:
         return list(self.events)
@@ -424,13 +449,18 @@ class AccessController:
         self.permissions[role] = set(permissions)
 
     def can(self, user_id: str, permission: str) -> bool:
-        return any(permission in self.permissions.get(role, set()) for role in self.roles.get(user_id, set()))
+        return any(
+            permission in self.permissions.get(role, set())
+            for role in self.roles.get(user_id, set())
+        )
 
 
 class MetricReporter:
     """Produces metric reports for dashboards."""
 
-    def __init__(self, quality_checker: QualityChecker, agreement_calculator: InterraterAgreementCalculator) -> None:
+    def __init__(
+        self, quality_checker: QualityChecker, agreement_calculator: InterraterAgreementCalculator
+    ) -> None:
         self.quality_checker = quality_checker
         self.agreement_calculator = agreement_calculator
 
@@ -464,7 +494,12 @@ class AlertService:
             if value < threshold:
                 self.alert_callback(
                     "quality_threshold_breach",
-                    {"metric": metric, "value": value, "threshold": threshold, "generated_at": report["generated_at"]},
+                    {
+                        "metric": metric,
+                        "value": value,
+                        "threshold": threshold,
+                        "generated_at": report["generated_at"],
+                    },
                 )
 
 

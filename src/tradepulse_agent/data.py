@@ -34,9 +34,7 @@ class AgentDataLoader:
         resolved = config.resolve_path()
         frame = pd.read_csv(resolved)
         if config.timestamp_field not in frame.columns:
-            raise KeyError(
-                f"Timestamp field '{config.timestamp_field}' missing from {resolved}"
-            )
+            raise KeyError(f"Timestamp field '{config.timestamp_field}' missing from {resolved}")
 
         timestamp_series = pd.to_datetime(
             frame[config.timestamp_field], unit=config.timestamp_unit, utc=True
@@ -52,7 +50,9 @@ class AgentDataLoader:
             raise KeyError(f"Missing required columns: {missing}")
 
         numeric_market = market.apply(pd.to_numeric, errors="coerce")
-        all_nan_columns = [col for col in numeric_market.columns if numeric_market[col].isna().all()]
+        all_nan_columns = [
+            col for col in numeric_market.columns if numeric_market[col].isna().all()
+        ]
         if all_nan_columns:
             problematic_required = [
                 col for col in all_nan_columns if col in required_set or col == config.price_field

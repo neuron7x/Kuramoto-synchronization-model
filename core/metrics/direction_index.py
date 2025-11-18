@@ -12,8 +12,6 @@ def skewness(x: np.ndarray) -> float:
     return float(np.mean(z**3))
 
 
-def direction_index(
-    skew: float, delta_curv: float, bias: float, lambdas=(0.5, 0.3, 0.2)
-) -> float:
+def direction_index(skew: float, delta_curv: float, bias: float, lambdas=(0.5, 0.3, 0.2)) -> float:
     l1, l2, l3 = lambdas
     return float(l1 * skew + l2 * delta_curv + l3 * bias)

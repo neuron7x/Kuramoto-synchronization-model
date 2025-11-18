@@ -213,9 +213,7 @@ class EEPFractalRegulator:
                 mid = len(data) // 2
                 first_half_mean = np.mean(data[:mid])
                 second_half_mean = np.mean(data[mid:])
-                regime_shift = abs(first_half_mean - second_half_mean) / (
-                    volatility + 1e-10
-                )
+                regime_shift = abs(first_half_mean - second_half_mean) / (volatility + 1e-10)
                 regime_component = np.exp(-regime_shift)
             else:
                 regime_component = 1.0

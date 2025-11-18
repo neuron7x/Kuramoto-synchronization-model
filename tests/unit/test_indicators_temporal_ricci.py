@@ -75,9 +75,7 @@ def test_temporal_ricci_analyzer_reports_metrics() -> None:
     )
     volumes = np.abs(np.sin(np.linspace(0, 4 * np.pi, prices.size - 1))) + 0.1
     dates = pd.date_range("2024-01-01", periods=prices.size, freq="1min")
-    df = pd.DataFrame(
-        {"close": prices, "volume": np.append(volumes, volumes[-1])}, index=dates
-    )
+    df = pd.DataFrame({"close": prices, "volume": np.append(volumes, volumes[-1])}, index=dates)
 
     analyzer = TemporalRicciAnalyzer(window_size=32, n_snapshots=5, n_levels=8)
     result = analyzer.analyze(df)
@@ -139,8 +137,7 @@ def test_temporal_transition_score_reacts_to_regime_change() -> None:
     volatile_result = analyzer.analyze(volatile_df)
 
     assert (
-        volatile_result.topological_transition_score
-        >= steady_result.topological_transition_score
+        volatile_result.topological_transition_score >= steady_result.topological_transition_score
     )
 
 

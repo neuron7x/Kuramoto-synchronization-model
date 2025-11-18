@@ -78,9 +78,7 @@ class Strategy:
 
         self.validate_params()
 
-        def _update_diagnostics(
-            equity_curve: np.ndarray, positions: np.ndarray
-        ) -> None:
+        def _update_diagnostics(equity_curve: np.ndarray, positions: np.ndarray) -> None:
             if equity_curve.size == 0:
                 self.params["last_equity_curve"] = []
                 self.params["max_drawdown"] = 0.0
@@ -90,9 +88,7 @@ class Strategy:
             peak = np.maximum.accumulate(np.concatenate([[0.0], equity_curve]))[1:]
             drawdown = equity_curve - peak
             self.params["last_equity_curve"] = equity_curve.tolist()
-            self.params["max_drawdown"] = (
-                float(drawdown.min()) if drawdown.size else 0.0
-            )
+            self.params["max_drawdown"] = float(drawdown.min()) if drawdown.size else 0.0
             self.params["trades"] = (
                 int(np.count_nonzero(np.diff(positions))) if positions.size else 0
             )
@@ -117,9 +113,7 @@ class Strategy:
             series = series.replace([np.inf, -np.inf], np.nan)
             if series.isna().all():
                 self.score = 0.0
-                _update_diagnostics(
-                    np.array([], dtype=float), np.array([], dtype=float)
-                )
+                _update_diagnostics(np.array([], dtype=float), np.array([], dtype=float))
                 return self.score
             series = series.ffill().bfill()
 
@@ -127,9 +121,7 @@ class Strategy:
             returns = returns.replace([np.inf, -np.inf], np.nan).dropna()
             if returns.empty:
                 self.score = 0.0
-                _update_diagnostics(
-                    np.array([], dtype=float), np.array([], dtype=float)
-                )
+                _update_diagnostics(np.array([], dtype=float), np.array([], dtype=float))
                 return self.score
 
             lookback = int(self.params.get("lookback", 20))
@@ -147,9 +139,7 @@ class Strategy:
             effective_lookback = max(1, min(lookback, len(returns)))
 
             rolling_mean = (
-                returns.rolling(
-                    window=effective_lookback, min_periods=effective_lookback
-                )
+                returns.rolling(window=effective_lookback, min_periods=effective_lookback)
                 .mean()
                 .fillna(0.0)
             )
@@ -161,12 +151,8 @@ class Strategy:
                 .bfill()
                 .fillna(1e-6)
             )
-            zscore = (
-                (rolling_mean / rolling_vol).replace([np.inf, -np.inf], 0.0).fillna(0.0)
-            )
-            signal = np.where(
-                zscore > threshold, -1.0, np.where(zscore < -threshold, 1.0, 0.0)
-            )
+            zscore = (rolling_mean / rolling_vol).replace([np.inf, -np.inf], 0.0).fillna(0.0)
+            signal = np.where(zscore > threshold, -1.0, np.where(zscore < -threshold, 1.0, 0.0))
             if signal.size:
                 position = np.concatenate(([0.0], signal[:-1])) * risk_budget
             else:
@@ -217,9 +203,7 @@ class PiAgent:
         )
         self._instability_score = 0.7 * self._instability_score + 0.3 * score
         threshold = self.strategy.params.get("instability_threshold", 0.2)
-        triggered = (
-            hard_trigger or self._instability_score > threshold
-        ) and self._cooldown == 0
+        triggered = (hard_trigger or self._instability_score > threshold) and self._cooldown == 0
         if triggered:
             self._cooldown = 3
         elif self._cooldown > 0:

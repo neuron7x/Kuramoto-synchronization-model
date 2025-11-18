@@ -152,9 +152,7 @@ def test_default_partition_resolver_uses_symbol_path_parameter() -> None:
     result = router.route_request(GatewayRequest(path="/stream/ETHUSD", method="GET"))
 
     assert result.envelope.partition_key == "ETHUSD"
-    assert json.loads(result.envelope.headers["x-gateway-path-params"]) == {
-        "symbol": "ETHUSD"
-    }
+    assert json.loads(result.envelope.headers["x-gateway-path-params"]) == {"symbol": "ETHUSD"}
 
 
 def test_default_partition_resolver_falls_back_to_request_path() -> None:

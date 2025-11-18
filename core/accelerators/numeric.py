@@ -97,9 +97,7 @@ def sliding_windows_rust_backend(
 ) -> "np.ndarray":
     """Rust-accelerated implementation of :func:`sliding_windows`."""
 
-    if not (
-        numpy_available() and rust_available() and _rust_sliding_windows is not None
-    ):
+    if not (numpy_available() and rust_available() and _rust_sliding_windows is not None):
         raise RuntimeError("Rust backend requested but the extension is not available")
     arr = _ensure_vector_numpy(data)
     return _rust_sliding_windows(arr, int(window), int(step))
@@ -118,9 +116,7 @@ def _sliding_windows_numpy(arr: "np.ndarray", window: int, step: int) -> "np.nda
     return np.array(view, copy=True)
 
 
-def _sliding_windows_python(
-    arr: list[float], window: int, step: int
-) -> list[list[float]]:
+def _sliding_windows_python(arr: list[float], window: int, step: int) -> list[list[float]]:
     if window <= 0:
         raise ValueError("window must be greater than zero")
     if step <= 0:
@@ -287,15 +283,9 @@ def _convolve_python(
         raise ValueError("convolution signal must not be empty")
     if not kernel:
         raise ValueError("convolution kernel must not be empty")
-    if any(
-        isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray))
-        for v in signal
-    ):
+    if any(isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray)) for v in signal):
         raise ValueError("convolution inputs must be 1-dimensional")
-    if any(
-        isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray))
-        for v in kernel
-    ):
+    if any(isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray)) for v in kernel):
         raise ValueError("convolution inputs must be 1-dimensional")
     n = len(signal)
     m = len(kernel)

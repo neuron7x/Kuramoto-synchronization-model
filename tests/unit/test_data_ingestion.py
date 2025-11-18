@@ -177,9 +177,7 @@ def test_binance_ws_logs_warning_on_invalid_payload(
         ws.kline_callback({"k": {"T": "bad-ts", "c": "not-a-number"}})  # type: ignore[operator]
 
     assert captured == []
-    assert any(
-        "Failed to parse websocket payload" in message for message in caplog.messages
-    )
+    assert any("Failed to parse websocket payload" in message for message in caplog.messages)
     ws.stream_handle.close()  # type: ignore[attr-defined]
 
 
@@ -229,16 +227,10 @@ def test_historical_csv_skips_malformed_rows(
 def test_historical_csv_supports_custom_columns(tmp_path: Path) -> None:
     csv_path = tmp_path / "history_custom.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["timestamp", "close", "trade_volume", "ignored"]
-        )
+        writer = csv.DictWriter(f, fieldnames=["timestamp", "close", "trade_volume", "ignored"])
         writer.writeheader()
-        writer.writerow(
-            {"timestamp": "1", "close": "100", "trade_volume": "5", "ignored": "x"}
-        )
-        writer.writerow(
-            {"timestamp": "2", "close": "101", "trade_volume": "6", "ignored": "y"}
-        )
+        writer.writerow({"timestamp": "1", "close": "100", "trade_volume": "5", "ignored": "x"})
+        writer.writerow({"timestamp": "2", "close": "101", "trade_volume": "6", "ignored": "y"})
 
     ingestor = DataIngestor()
     collected: list[Ticker] = []
@@ -287,9 +279,7 @@ def test_historical_csv_rejects_symlink(tmp_path: Path) -> None:
 
 def test_historical_csv_enforces_size_limit(tmp_path: Path) -> None:
     csv_path = tmp_path / "large.csv"
-    csv_path.write_text(
-        "ts,price\n" + "\n".join("1,1" for _ in range(40)), encoding="utf-8"
-    )
+    csv_path.write_text("ts,price\n" + "\n".join("1,1" for _ in range(40)), encoding="utf-8")
 
     ingestor = DataIngestor(allowed_roots=[tmp_path], max_csv_bytes=32)
 

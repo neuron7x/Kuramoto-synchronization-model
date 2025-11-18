@@ -4,23 +4,24 @@ import grpc
 
 from . import trading_pb2 as trading__pb2
 
-GRPC_GENERATED_VERSION = '1.76.0'
+GRPC_GENERATED_VERSION = "1.76.0"
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
 try:
     from grpc._utilities import first_version_is_lower
+
     _version_not_supported = first_version_is_lower(GRPC_VERSION, GRPC_GENERATED_VERSION)
 except ImportError:
     _version_not_supported = True
 
 if _version_not_supported:
     raise RuntimeError(
-        f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in trading_pb2_grpc.py depends on'
-        + f' grpcio>={GRPC_GENERATED_VERSION}.'
-        + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
-        + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
+        f"The grpc package installed is at version {GRPC_VERSION},"
+        + " but the generated code in trading_pb2_grpc.py depends on"
+        + f" grpcio>={GRPC_GENERATED_VERSION}."
+        + f" Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}"
+        + f" or downgrade your generated code using grpcio-tools<={GRPC_VERSION}."
     )
 
 
@@ -34,25 +35,29 @@ class TradingServiceStub(object):
             channel: A grpc.Channel.
         """
         self.PlaceOrder = channel.unary_unary(
-                '/loadtests.trading.v1.TradingService/PlaceOrder',
-                request_serializer=trading__pb2.Order.SerializeToString,
-                response_deserializer=trading__pb2.OrderResponse.FromString,
-                _registered_method=True)
+            "/loadtests.trading.v1.TradingService/PlaceOrder",
+            request_serializer=trading__pb2.Order.SerializeToString,
+            response_deserializer=trading__pb2.OrderResponse.FromString,
+            _registered_method=True,
+        )
         self.CancelOrder = channel.unary_unary(
-                '/loadtests.trading.v1.TradingService/CancelOrder',
-                request_serializer=trading__pb2.OrderID.SerializeToString,
-                response_deserializer=trading__pb2.CancelResponse.FromString,
-                _registered_method=True)
+            "/loadtests.trading.v1.TradingService/CancelOrder",
+            request_serializer=trading__pb2.OrderID.SerializeToString,
+            response_deserializer=trading__pb2.CancelResponse.FromString,
+            _registered_method=True,
+        )
         self.GetPositions = channel.unary_unary(
-                '/loadtests.trading.v1.TradingService/GetPositions',
-                request_serializer=trading__pb2.Empty.SerializeToString,
-                response_deserializer=trading__pb2.PositionList.FromString,
-                _registered_method=True)
+            "/loadtests.trading.v1.TradingService/GetPositions",
+            request_serializer=trading__pb2.Empty.SerializeToString,
+            response_deserializer=trading__pb2.PositionList.FromString,
+            _registered_method=True,
+        )
         self.StreamTickers = channel.unary_stream(
-                '/loadtests.trading.v1.TradingService/StreamTickers',
-                request_serializer=trading__pb2.SymbolList.SerializeToString,
-                response_deserializer=trading__pb2.Ticker.FromString,
-                _registered_method=True)
+            "/loadtests.trading.v1.TradingService/StreamTickers",
+            request_serializer=trading__pb2.SymbolList.SerializeToString,
+            response_deserializer=trading__pb2.Ticker.FromString,
+            _registered_method=True,
+        )
 
 
 class TradingServiceServicer(object):
@@ -61,76 +66,81 @@ class TradingServiceServicer(object):
     def PlaceOrder(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def CancelOrder(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def GetPositions(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def StreamTickers(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_TradingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'PlaceOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.PlaceOrder,
-                    request_deserializer=trading__pb2.Order.FromString,
-                    response_serializer=trading__pb2.OrderResponse.SerializeToString,
-            ),
-            'CancelOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.CancelOrder,
-                    request_deserializer=trading__pb2.OrderID.FromString,
-                    response_serializer=trading__pb2.CancelResponse.SerializeToString,
-            ),
-            'GetPositions': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetPositions,
-                    request_deserializer=trading__pb2.Empty.FromString,
-                    response_serializer=trading__pb2.PositionList.SerializeToString,
-            ),
-            'StreamTickers': grpc.unary_stream_rpc_method_handler(
-                    servicer.StreamTickers,
-                    request_deserializer=trading__pb2.SymbolList.FromString,
-                    response_serializer=trading__pb2.Ticker.SerializeToString,
-            ),
+        "PlaceOrder": grpc.unary_unary_rpc_method_handler(
+            servicer.PlaceOrder,
+            request_deserializer=trading__pb2.Order.FromString,
+            response_serializer=trading__pb2.OrderResponse.SerializeToString,
+        ),
+        "CancelOrder": grpc.unary_unary_rpc_method_handler(
+            servicer.CancelOrder,
+            request_deserializer=trading__pb2.OrderID.FromString,
+            response_serializer=trading__pb2.CancelResponse.SerializeToString,
+        ),
+        "GetPositions": grpc.unary_unary_rpc_method_handler(
+            servicer.GetPositions,
+            request_deserializer=trading__pb2.Empty.FromString,
+            response_serializer=trading__pb2.PositionList.SerializeToString,
+        ),
+        "StreamTickers": grpc.unary_stream_rpc_method_handler(
+            servicer.StreamTickers,
+            request_deserializer=trading__pb2.SymbolList.FromString,
+            response_serializer=trading__pb2.Ticker.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'loadtests.trading.v1.TradingService', rpc_method_handlers)
+        "loadtests.trading.v1.TradingService", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('loadtests.trading.v1.TradingService', rpc_method_handlers)
+    server.add_registered_method_handlers(
+        "loadtests.trading.v1.TradingService", rpc_method_handlers
+    )
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class TradingService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def PlaceOrder(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def PlaceOrder(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/loadtests.trading.v1.TradingService/PlaceOrder',
+            "/loadtests.trading.v1.TradingService/PlaceOrder",
             trading__pb2.Order.SerializeToString,
             trading__pb2.OrderResponse.FromString,
             options,
@@ -141,23 +151,26 @@ class TradingService(object):
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def CancelOrder(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def CancelOrder(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/loadtests.trading.v1.TradingService/CancelOrder',
+            "/loadtests.trading.v1.TradingService/CancelOrder",
             trading__pb2.OrderID.SerializeToString,
             trading__pb2.CancelResponse.FromString,
             options,
@@ -168,23 +181,26 @@ class TradingService(object):
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def GetPositions(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def GetPositions(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/loadtests.trading.v1.TradingService/GetPositions',
+            "/loadtests.trading.v1.TradingService/GetPositions",
             trading__pb2.Empty.SerializeToString,
             trading__pb2.PositionList.FromString,
             options,
@@ -195,23 +211,26 @@ class TradingService(object):
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def StreamTickers(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def StreamTickers(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/loadtests.trading.v1.TradingService/StreamTickers',
+            "/loadtests.trading.v1.TradingService/StreamTickers",
             trading__pb2.SymbolList.SerializeToString,
             trading__pb2.Ticker.FromString,
             options,
@@ -222,4 +241,5 @@ class TradingService(object):
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )

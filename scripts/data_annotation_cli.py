@@ -1,4 +1,5 @@
 """Command line helpers for the data annotation toolkit."""
+
 from __future__ import annotations
 
 import argparse
@@ -44,8 +45,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     metrics = sub.add_parser("metrics", help="Build a metrics report from annotation records")
-    metrics.add_argument("records", type=Path, help="Path to JSON records exported from the interface")
-    metrics.add_argument("reference", type=Path, help="Reference labels JSON mapping item_id -> label")
+    metrics.add_argument(
+        "records", type=Path, help="Path to JSON records exported from the interface"
+    )
+    metrics.add_argument(
+        "reference", type=Path, help="Reference labels JSON mapping item_id -> label"
+    )
     metrics.add_argument(
         "--positive-label",
         default="positive",
@@ -112,7 +117,10 @@ def handle_anonymize(args: argparse.Namespace) -> None:
     if isinstance(data, list):
         processed = [privacy.enforce(entry) for entry in data]
     elif isinstance(data, dict):
-        processed = {key: privacy.enforce(value) if isinstance(value, dict) else value for key, value in data.items()}
+        processed = {
+            key: privacy.enforce(value) if isinstance(value, dict) else value
+            for key, value in data.items()
+        }
     else:
         raise SystemExit("Unsupported JSON structure for anonymization")
     args.input.write_text(json.dumps(processed, indent=2))

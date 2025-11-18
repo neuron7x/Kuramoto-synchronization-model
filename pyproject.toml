@@ -275,3 +275,6 @@ showcontent = true
 directory = "chore"
 name = "🧰 Chores"
 showcontent = true
+
+[tool.ruff.lint.per-file-ignores]
+"loadtests/proto/trading_pb2.py" = ["E501"]  # Auto-generated protobuf file

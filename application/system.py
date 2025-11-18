@@ -80,16 +80,13 @@ class TradePulseSystemConfig:
     """Bundle settings required to assemble a :class:`TradePulseSystem`."""
 
     venues: Sequence[ExchangeAdapterConfig]
-    feature_pipeline: FeaturePipelineConfig = field(
-        default_factory=FeaturePipelineConfig
-    )
+    feature_pipeline: FeaturePipelineConfig = field(default_factory=FeaturePipelineConfig)
     risk_limits: RiskLimits = field(default_factory=RiskLimits)
     live_settings: LiveLoopSettings = field(default_factory=LiveLoopSettings)
     allowed_data_roots: Iterable[str | Path] | None = None
     max_csv_bytes: int | None = None
     market_data_connectors: (
-        Mapping[str, BaseMarketDataConnector | Callable[[], BaseMarketDataConnector]]
-        | None
+        Mapping[str, BaseMarketDataConnector | Callable[[], BaseMarketDataConnector]] | None
     ) = None
 
 
@@ -313,9 +310,7 @@ class TradePulseSystem:
         self._last_ingestion_duration_seconds = duration
         self._metrics.record_tick_processed("csv", symbol, len(records))
         if duration > 0:
-            self._metrics.set_ingestion_throughput(
-                "csv", symbol, len(records) / duration
-            )
+            self._metrics.set_ingestion_throughput("csv", symbol, len(records) / duration)
         self._last_symbol = symbol
         self._last_venue = venue
         return frame
@@ -378,9 +373,7 @@ class TradePulseSystem:
         strategy_name = getattr(strategy, "__name__", strategy.__class__.__name__)
         resolved_symbol = symbol or self._last_symbol
         if resolved_symbol is None:
-            raise ValueError(
-                "symbol must be provided when no ingestion has been performed"
-            )
+            raise ValueError("symbol must be provided when no ingestion has been performed")
 
         price_col = self._pipeline.config.price_col
         if price_col not in feature_frame.columns:
@@ -396,9 +389,7 @@ class TradePulseSystem:
             try:
                 raw_scores = np.asarray(strategy(prices), dtype=float)
                 if raw_scores.shape[0] != aligned.shape[0]:
-                    raise ValueError(
-                        "Strategy output length must match feature frame rows"
-                    )
+                    raise ValueError("Strategy output length must match feature frame rows")
 
                 valid_mask = np.isfinite(raw_scores)
                 if not valid_mask.all():
@@ -458,9 +449,7 @@ class TradePulseSystem:
         if self._live_loop is None:
             credentials = self._credentials or None
             config = self._config.live_settings.build_config(credentials=credentials)
-            self._live_loop = LiveExecutionLoop(
-                self._connectors, self._risk_manager, config=config
-            )
+            self._live_loop = LiveExecutionLoop(self._connectors, self._risk_manager, config=config)
         return self._live_loop
 
     @property
@@ -509,13 +498,10 @@ class TradePulseSystem:
 
         loop = self.ensure_live_loop()
         derived_correlation = (
-            correlation_id
-            or f"{signal.symbol}-{int(signal.timestamp.timestamp() * 1e9)}"
+            correlation_id or f"{signal.symbol}-{int(signal.timestamp.timestamp() * 1e9)}"
         )
         try:
-            submitted = loop.submit_order(
-                venue_key, order, correlation_id=derived_correlation
-            )
+            submitted = loop.submit_order(venue_key, order, correlation_id=derived_correlation)
         except Exception as exc:
             self._last_execution_error = str(exc)
             raise

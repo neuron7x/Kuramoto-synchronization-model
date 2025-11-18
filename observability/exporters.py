@@ -15,9 +15,7 @@ except Exception:  # pragma: no cover - prometheus_client is optional
     _PROM_AVAILABLE = False
 
 
-def _run_prometheus_exporter(
-    port: int, addr: str, ready: multiprocessing.Event
-) -> None:
+def _run_prometheus_exporter(port: int, addr: str, ready: multiprocessing.Event) -> None:
     if not _PROM_AVAILABLE or start_http_server is None:  # pragma: no cover - defensive
         return
     start_http_server(port, addr)
@@ -29,9 +27,7 @@ def _run_prometheus_exporter(
         return
 
 
-def start_prometheus_exporter_process(
-    port: int = 8000, addr: str = ""
-) -> multiprocessing.Process:
+def start_prometheus_exporter_process(port: int = 8000, addr: str = "") -> multiprocessing.Process:
     """Spawn a dedicated process that serves Prometheus metrics."""
 
     if not _PROM_AVAILABLE:

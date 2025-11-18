@@ -53,9 +53,7 @@ class OrderEvent(Event):
     quantity: float
     order_type: str = "market"
 
-    def __init__(
-        self, symbol: str, quantity: float, step: int, order_type: str = "market"
-    ) -> None:
+    def __init__(self, symbol: str, quantity: float, step: int, order_type: str = "market") -> None:
         Event.__init__(self, type="ORDER", step=step)
         self.symbol = symbol
         self.quantity = float(quantity)

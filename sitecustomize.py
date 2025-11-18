@@ -63,9 +63,7 @@ def _patch_pip_symlink_extraction() -> None:
     set_mode = unpacking.set_extracted_file_to_default_mode_plus_executable
     split_leading_dir = unpacking.split_leading_dir
 
-    def _is_symlink_target_in_tar(
-        tar: tarfile.TarFile, tarinfo: tarfile.TarInfo
-    ) -> bool:
+    def _is_symlink_target_in_tar(tar: tarfile.TarFile, tarinfo: tarfile.TarInfo) -> bool:
         linkname = os.path.join(os.path.dirname(tarinfo.name), tarinfo.linkname)
         linkname = os.path.normpath(linkname)
         # Normalise backslashes so Windows style separators are handled.
@@ -104,9 +102,7 @@ def _patch_pip_symlink_extraction() -> None:
                         "The tar file ({}) has a file ({}) trying to install "
                         "outside target directory ({})"
                     )
-                    raise installation_error(
-                        message.format(filename, member.name, member.linkname)
-                    )
+                    raise installation_error(message.format(filename, member.name, member.linkname))
                 try:
                     tar._extract_member(member, path)
                 except Exception as exc:  # pragma: no cover - mirrors pip logic.

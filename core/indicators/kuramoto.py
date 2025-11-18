@@ -67,18 +67,14 @@ def _broadcast_weights(weights: np.ndarray | Sequence[float], shape: tuple[int, 
         elif weight_array.size == shape[1]:
             weight_array = np.broadcast_to(weight_array[None, :], shape).copy()
         else:
-            raise ValueError(
-                "weights must match number of oscillators or time steps"
-            )
+            raise ValueError("weights must match number of oscillators or time steps")
     elif weight_array.ndim == 2:
         if weight_array.shape != shape:
             raise ValueError("weights must match the phase matrix shape")
     else:
         raise ValueError("weights must be one- or two-dimensional")
 
-    weight_array = np.nan_to_num(
-        weight_array, nan=0.0, posinf=0.0, neginf=0.0, copy=False
-    )
+    weight_array = np.nan_to_num(weight_array, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
     np.clip(weight_array, 0.0, None, out=weight_array)
     return weight_array
 
@@ -147,13 +143,9 @@ def compute_phase(
             raise ValueError("compute_phase expects 1D array")
         if not np.all(np.isfinite(x)):
             x = np.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
-        hilbert_module = (
-            getattr(hilbert, "__module__", "") if hilbert is not None else ""
-        )
+        hilbert_module = getattr(hilbert, "__module__", "") if hilbert is not None else ""
         use_scipy_fastpath = (
-            _scipy_fft is not None
-            and hilbert is not None
-            and hilbert_module.startswith("scipy.")
+            _scipy_fft is not None and hilbert is not None and hilbert_module.startswith("scipy.")
         )
         if use_scipy_fastpath:
             n = x.size
@@ -389,9 +381,7 @@ def compute_phase_gpu(x):
         computation defaults to ``float32`` to minimise device-host transfer
         overhead.
     """
-    with _logger.operation(
-        "compute_phase_gpu", data_size=len(x), has_cupy=cp is not None
-    ):
+    with _logger.operation("compute_phase_gpu", data_size=len(x), has_cupy=cp is not None):
         if cp is None:
             _logger.info("CuPy not available, falling back to CPU compute_phase")
             return compute_phase(np.asarray(x))

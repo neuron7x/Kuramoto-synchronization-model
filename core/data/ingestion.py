@@ -46,14 +46,10 @@ class BinanceStreamHandle:
         self._ws = ws
         self._active = False
 
-    def start(
-        self, *, symbol: str, interval: str, callback: Callable[[dict], None]
-    ) -> None:
+    def start(self, *, symbol: str, interval: str, callback: Callable[[dict], None]) -> None:
         self._active = True
         self._ws.start()
-        self._ws.kline(
-            symbol=symbol.lower(), id=1, interval=interval, callback=callback
-        )
+        self._ws.kline(symbol=symbol.lower(), id=1, interval=interval, callback=callback)
 
     def close(self) -> None:
         if self._active:
@@ -115,13 +111,9 @@ class DataIngestor(DataIngestionService):
                     raise ValueError("CSV file must include a header row")
                 required = set(required_fields or ())
                 required.update({timestamp_field, price_field})
-                missing = [
-                    field for field in sorted(required) if field not in reader.fieldnames
-                ]
+                missing = [field for field in sorted(required) if field not in reader.fieldnames]
                 if missing:
-                    raise ValueError(
-                        f"CSV missing required columns: {', '.join(missing)}"
-                    )
+                    raise ValueError(f"CSV missing required columns: {', '.join(missing)}")
                 for row_number, row in enumerate(reader, start=2):
                     try:
                         ts_raw = float(row[timestamp_field])
@@ -137,9 +129,7 @@ class DataIngestor(DataIngestionService):
                             instrument_type=instrument_type,
                         )
                     except (TypeError, ValueError, InvalidOperation) as exc:
-                        logger.warning(
-                            "Skipping malformed row %s in %s: %s", row_number, path, exc
-                        )
+                        logger.warning("Skipping malformed row %s in %s: %s", row_number, path, exc)
                         continue
                     on_tick(tick)
 

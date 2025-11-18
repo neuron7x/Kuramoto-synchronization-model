@@ -57,9 +57,7 @@ def normalize_df(
                     timestamps, unit="s", errors="coerce", utc=True
                 )
             else:
-                normalized[timestamp_col] = pd.to_datetime(
-                    timestamps, errors="coerce", utc=True
-                )
+                normalized[timestamp_col] = pd.to_datetime(timestamps, errors="coerce", utc=True)
             normalized = normalized.sort_values(timestamp_col)
 
         normalized = normalized.drop_duplicates()
@@ -79,9 +77,7 @@ def normalize_df(
         return normalized.reset_index(drop=True)
 
 
-def scale_series(
-    x: ArrayLike, method: str = "zscore", *, use_float32: bool = False
-) -> np.ndarray:
+def scale_series(x: ArrayLike, method: str = "zscore", *, use_float32: bool = False) -> np.ndarray:
     """Scale a 1-D array according to the requested ``method``.
 
     Currently supported scaling methods are ``"zscore"`` (default) and
@@ -198,9 +194,7 @@ def normalize_numeric_columns(
         else:
             candidate_columns = list(columns)
 
-        target_columns = [
-            column for column in candidate_columns if column not in exclude_set
-        ]
+        target_columns = [column for column in candidate_columns if column not in exclude_set]
 
         for column in target_columns:
             if column not in normalized.columns:
@@ -208,9 +202,7 @@ def normalize_numeric_columns(
 
             series = normalized[column]
             if not is_numeric_dtype(series.dtype):
-                raise TypeError(
-                    f"Column {column!r} has non-numeric dtype {series.dtype}"
-                )
+                raise TypeError(f"Column {column!r} has non-numeric dtype {series.dtype}")
 
             values = series.to_numpy(dtype=np.float32 if use_float32 else float, copy=True)
 

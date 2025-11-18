@@ -121,9 +121,7 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
         hypertable_lines = [
             "SELECT create_hypertable(" + raw_literal + ", 'ts',",
             " partitioning_column => 'symbol',",
-            " chunk_time_interval => INTERVAL '"
-            + str(cfg.chunk_interval_hours)
-            + " hour',",
+            " chunk_time_interval => INTERVAL '" + str(cfg.chunk_interval_hours) + " hour',",
             " if_not_exists => TRUE);",
         ]
         create_hypertable = WarehouseStatement(
@@ -134,11 +132,15 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
         policy_lines = [
             "CREATE INDEX IF NOT EXISTS " + ids.raw_table + "_symbol_ts_idx",
             "    ON " + ids.raw_qualified + " (symbol, ts DESC);",
-            "SELECT add_retention_policy(" + raw_literal + ", INTERVAL '"
+            "SELECT add_retention_policy("
+            + raw_literal
+            + ", INTERVAL '"
             + str(cfg.retention_days)
             + " days');",
             "ALTER TABLE " + ids.raw_qualified + " SET (timescaledb.compress);",
-            "ALTER TABLE " + ids.raw_qualified + " SET (timescaledb.compress_segmentby = 'symbol');",
+            "ALTER TABLE "
+            + ids.raw_qualified
+            + " SET (timescaledb.compress_segmentby = 'symbol');",
             "SELECT add_compression_policy(" + raw_literal + ", INTERVAL '7 days');",
         ]
         raw_policies = WarehouseStatement(
@@ -172,7 +174,9 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
             "    start_offset => INTERVAL '2 days',",
             "    end_offset => INTERVAL '5 minutes',",
             "    schedule_interval => INTERVAL '1 minute');",
-            "SELECT add_retention_policy(" + rollup_literal + ", INTERVAL '"
+            "SELECT add_retention_policy("
+            + rollup_literal
+            + ", INTERVAL '"
             + str(cfg.rollup_retention_days)
             + " days');",
         ]
@@ -316,7 +320,7 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
             ),
             BackupStep(
                 description="Restore via point-in-time recovery",
-                command="pg_ctl restore -D /var/lib/postgresql/data --target='last backup timestamp'",
+                command="pg_ctl restore -D /var/lib/postgresql/data --target='last backup timestamp'",  # noqa: E501
             ),
         )
 

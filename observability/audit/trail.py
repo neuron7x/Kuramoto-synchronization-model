@@ -71,9 +71,7 @@ class AuditTrail:
     def path(self) -> Path:
         return self._path
 
-    def register_listener(
-        self, listener: Callable[[dict[str, object]], None]
-    ) -> None:
+    def register_listener(self, listener: Callable[[dict[str, object]], None]) -> None:
         """Subscribe *listener* to be notified whenever a new event is recorded."""
 
         with self._lock:
@@ -109,9 +107,7 @@ class AuditTrail:
             with self._lock:
                 with self._path.open("a", encoding="utf-8") as handle:
                     handle.write(serialized + "\n")
-                listeners: Iterable[
-                    Callable[[dict[str, object]], None]
-                ] = tuple(self._listeners)
+                listeners: Iterable[Callable[[dict[str, object]], None]] = tuple(self._listeners)
         except OSError as exc:  # pragma: no cover - filesystem errors are rare
             self._logger.error(
                 "audit.trail.write_failed",

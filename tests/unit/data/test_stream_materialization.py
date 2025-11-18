@@ -140,9 +140,9 @@ def test_backfill_only_updates_checkpoint(stream_payload: pd.DataFrame) -> None:
     checkpoint_store = InMemoryCheckpointStore()
     writes: list[pd.DataFrame] = []
 
-    deduped = stream_payload.sort_values(
-        by=["entity_id", "ts"], kind="mergesort"
-    ).drop_duplicates(["entity_id", "ts"], keep="last")
+    deduped = stream_payload.sort_values(by=["entity_id", "ts"], kind="mergesort").drop_duplicates(
+        ["entity_id", "ts"], keep="last"
+    )
 
     materializer = StreamMaterializer(
         lambda _name, frame: writes.append(frame.copy()),

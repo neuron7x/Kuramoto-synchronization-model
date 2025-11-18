@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
-from decimal import Decimal
+from datetime import UTC, datetime, timedelta  # noqa: E402
+from decimal import Decimal  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
 hypothesis = pytest.importorskip("hypothesis")
-from hypothesis import given, settings
-from hypothesis import strategies as st
+from hypothesis import given, settings  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
 
-import src.data.kafka_ingestion as kafka_ingestion
-from core.data.models import InstrumentType, PriceTick
-from src.data.kafka_ingestion import HotSymbolCache
+import src.data.kafka_ingestion as kafka_ingestion  # noqa: E402
+from core.data.models import InstrumentType, PriceTick  # noqa: E402
+from src.data.kafka_ingestion import HotSymbolCache  # noqa: E402
 
 BASE_TS = datetime(2024, 1, 1, tzinfo=UTC)
 
@@ -83,7 +83,11 @@ def test_hot_symbol_cache_flushes_overflow_when_exceeding_max_ticks(
 
     snapshot = cache.snapshot("BTC/USDT", "BINANCE")
     assert snapshot is not None
-    assert [tick.price for tick in snapshot.ticks] == [ticks[1].price, ticks[2].price, ticks[3].price]
+    assert [tick.price for tick in snapshot.ticks] == [
+        ticks[1].price,
+        ticks[2].price,
+        ticks[3].price,
+    ]
 
 
 def test_hot_symbol_cache_flushes_when_reaching_flush_size(

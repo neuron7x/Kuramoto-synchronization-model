@@ -83,9 +83,7 @@ class TestStrategyProperties:
             ),
         )
     )
-    def test_simulate_performance_returns_finite_score(
-        self, prices: np.ndarray
-    ) -> None:
+    def test_simulate_performance_returns_finite_score(self, prices: np.ndarray) -> None:
         """simulate_performance should return a finite score for valid data."""
         strategy = Strategy(
             name="test",
@@ -115,9 +113,7 @@ class TestStrategyProperties:
             ),
         )
     )
-    def test_simulate_performance_sets_metrics_in_params(
-        self, prices: np.ndarray
-    ) -> None:
+    def test_simulate_performance_sets_metrics_in_params(self, prices: np.ndarray) -> None:
         """simulate_performance should add max_drawdown and trades to params."""
         strategy = Strategy(name="test", params={"lookback": 20})
         df = pd.DataFrame({"close": prices})
@@ -144,9 +140,7 @@ class TestPiAgentProperties:
         self, R: float, delta_H: float, kappa_mean: float
     ) -> None:
         """detect_instability should return a boolean value."""
-        agent = PiAgent(
-            strategy=Strategy(name="test", params={"instability_threshold": 0.5})
-        )
+        agent = PiAgent(strategy=Strategy(name="test", params={"instability_threshold": 0.5}))
         state = {"R": R, "delta_H": delta_H, "kappa_mean": kappa_mean}
         result = agent.detect_instability(state)
         assert isinstance(result, bool)
@@ -168,9 +162,7 @@ class TestPiAgentProperties:
 
     def test_mutate_creates_different_agent(self) -> None:
         """mutate should create a new agent with different strategy."""
-        agent = PiAgent(
-            strategy=Strategy(name="original", params={"alpha": 1.0, "beta": 2.0})
-        )
+        agent = PiAgent(strategy=Strategy(name="original", params={"alpha": 1.0, "beta": 2.0}))
         mutant = agent.mutate()
 
         assert isinstance(mutant, PiAgent)
@@ -185,9 +177,7 @@ class TestPiAgentProperties:
     )
     def test_repair_fixes_nan(self, alpha: float, beta: float) -> None:
         """repair should convert NaN values to 0.0."""
-        agent = PiAgent(
-            strategy=Strategy(name="test", params={"alpha": alpha, "beta": beta})
-        )
+        agent = PiAgent(strategy=Strategy(name="test", params={"alpha": alpha, "beta": beta}))
         agent.repair()
 
         # After repair, no NaN should remain
@@ -197,9 +187,7 @@ class TestPiAgentProperties:
     def test_cooldown_prevents_rapid_triggers(self) -> None:
         """Cooldown mechanism should prevent immediate re-triggers."""
         agent = PiAgent(
-            strategy=Strategy(
-                name="test", params={"instability_threshold": 0.1, "hysteresis": 0.0}
-            )
+            strategy=Strategy(name="test", params={"instability_threshold": 0.1, "hysteresis": 0.0})
         )
 
         # High instability state

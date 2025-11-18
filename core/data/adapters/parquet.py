@@ -55,7 +55,7 @@ class ParquetIngestionAdapter(IngestionAdapter):
             df = await self._run_with_policy(lambda: self._read_parquet(path, columns))
         except MissingParquetDependencyError as exc:
             raise RuntimeError(
-                "Parquet ingestion requires either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."
+                "Parquet ingestion requires either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."  # noqa: E501
             ) from exc
         if timestamp_field not in df.columns or price_field not in df.columns:
             missing = {timestamp_field, price_field} - set(df.columns)

@@ -72,7 +72,11 @@ def _load_coverage_map(report_path: Path) -> Mapping[str, CoverageSnapshot]:
     root = tree.getroot()
 
     sources_element = root.find("sources")
-    sources = [Path(elem.text or "") for elem in sources_element.findall("source")] if sources_element is not None else []
+    sources = (
+        [Path(elem.text or "") for elem in sources_element.findall("source")]
+        if sources_element is not None
+        else []
+    )
 
     coverage_by_path: dict[str, CoverageSnapshot] = {}
     packages_element = root.find("packages")
@@ -117,9 +121,7 @@ def _evaluate_targets(
                 break
         if metrics is None:
             success = False
-            print(
-                f"✗ {target.path.as_posix()} — no coverage data found in {report_path}"
-            )
+            print(f"✗ {target.path.as_posix()} — no coverage data found in {report_path}")
             continue
 
         line_rate = metrics.line_rate
@@ -127,24 +129,26 @@ def _evaluate_targets(
         if line_rate + 1e-9 < threshold:
             success = False
             print(
-                f"✗ {target.path.as_posix()} — line coverage {line_rate:.2f}% < required {threshold:.2f}%"
+                f"✗ {target.path.as_posix()} — line coverage {line_rate:.2f}% < required {threshold:.2f}%"  # noqa: E501
             )
             continue
 
-        print(f"✓ {target.path.as_posix()} — line coverage {line_rate:.2f}% (threshold {threshold:.2f}%)")
+        print(
+            f"✓ {target.path.as_posix()} — line coverage {line_rate:.2f}% (threshold {threshold:.2f}%)"  # noqa: E501
+        )
 
     return 0 if success else 1
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Validate that reliability-critical modules maintain the expected coverage levels.",
+        description="Validate that reliability-critical modules maintain the expected coverage levels.",  # noqa: E501
     )
     parser.add_argument(
         "--config",
         type=Path,
         default=Path("configs/quality/critical_surface.toml"),
-        help="Path to the coverage guardrail configuration (default: configs/quality/critical_surface.toml).",
+        help="Path to the coverage guardrail configuration (default: configs/quality/critical_surface.toml).",  # noqa: E501
     )
     parser.add_argument(
         "--coverage",

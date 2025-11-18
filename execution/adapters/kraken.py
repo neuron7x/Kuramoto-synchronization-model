@@ -77,9 +77,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
 
     # ------------------------------------------------------------------
     # RESTWebSocketConnector hooks
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         supplied = {str(k).lower(): str(v) for k, v in (credentials or {}).items()}
         api_key = supplied.get("api_key") or os.getenv("KRAKEN_API_KEY")
         api_secret = supplied.get("api_secret") or os.getenv("KRAKEN_API_SECRET")
@@ -136,9 +134,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
     def _order_endpoint(self) -> str:
         return "/0/private/AddOrder"
 
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> Dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> Dict[str, Any]:
         order_type = order.order_type
         kraken_type = order_type.value.replace("_", "-")
         if order_type is OrderType.STOP:
@@ -161,9 +157,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             payload["userref"] = idempotency_key
         return payload
 
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         data = self._extract_order_payload(payload)
         symbol_value = _first_present(data, "pair", "symbol")
         symbol = str(symbol_value).strip().upper() if symbol_value is not None else ""
@@ -171,9 +165,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             symbol = original.symbol
         if not symbol:
             raise ValueError("Order payload missing symbol")
-        side_value = str(
-            _first_present(data, "type", "side") or "buy"
-        ).strip().lower()
+        side_value = str(_first_present(data, "type", "side") or "buy").strip().lower()
         order_type = self._coerce_order_type(
             str(_first_present(data, "ordertype", "type")), original
         )
@@ -206,9 +198,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             price = float(original.price) if original.price is not None else None
         avg_price_value = _first_present(data, "avg_price", "price")
         average_price = _coerce_optional_float(avg_price_value)
-        status_value = str(
-            _first_present(data, "status", "state") or "open"
-        ).strip().lower()
+        status_value = str(_first_present(data, "status", "state") or "open").strip().lower()
         status = _STATUS_MAP.get(status_value, OrderStatus.OPEN)
         if filled_quantity and filled_quantity < quantity and status is OrderStatus.FILLED:
             status = OrderStatus.PARTIALLY_FILLED

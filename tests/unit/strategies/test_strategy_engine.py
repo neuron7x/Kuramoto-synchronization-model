@@ -35,7 +35,13 @@ class _StubModule:
 
 
 class _BlockingRiskPolicy:
-    def __init__(self, approved: bool, *, adjustments: Mapping[str, object] | None = None, reason: str | None = None) -> None:
+    def __init__(
+        self,
+        approved: bool,
+        *,
+        adjustments: Mapping[str, object] | None = None,
+        reason: str | None = None,
+    ) -> None:
         self._assessment = RiskAssessment(
             approved=approved,
             reason=reason,
@@ -131,7 +137,11 @@ def test_engine_blocks_signal_when_risk_denies() -> None:
         advice_messages.append(advice.message)
 
     policy = _BlockingRiskPolicy(False, reason="limit breached")
-    engine = StrategyEngine(risk_policy=policy, risk_advice_sink=sink, signal_router=lambda *_: (_ for _ in ()).throw(RuntimeError))
+    engine = StrategyEngine(
+        risk_policy=policy,
+        risk_advice_sink=sink,
+        signal_router=lambda *_: (_ for _ in ()).throw(RuntimeError),
+    )
     module = _StubModule(
         name="stub",
         input_contract=IOContract(required={"prices": list}),

@@ -74,7 +74,6 @@ if torch is not None and nn is not None:
             activated = self._activation(combined)
             return activated.mean(dim=0)
 
-
     class AdvancedNeuroEconCore(nn.Module):  # type: ignore[misc]
         """Graph-based actor-critic core inspired by cortico-striatal circuitry."""
 
@@ -95,7 +94,9 @@ if torch is not None and nn is not None:
         ) -> None:
             super().__init__()
             if torch is None or nn is None:
-                raise ModuleNotFoundError("PyTorch is required for AdvancedNeuroEconCore") from _IMPORT_ERROR
+                raise ModuleNotFoundError(
+                    "PyTorch is required for AdvancedNeuroEconCore"
+                ) from _IMPORT_ERROR
 
             self.gamma = float(gamma)
             self.alpha = float(alpha)
@@ -174,9 +175,7 @@ if torch is not None and nn is not None:
                 else DecisionOption.from_mapping(option)
             )
             adjusted_reward = (
-                decision.reward
-                * (1.0 + self.risk_tolerance * decision.risk)
-                * self.psychiatric_mod
+                decision.reward * (1.0 + self.risk_tolerance * decision.risk) * self.psychiatric_mod
             )
             adjusted_cost = decision.cost * (1.0 - self.uncertainty_reduction)
             return adjusted_reward - adjusted_cost
@@ -220,8 +219,10 @@ if torch is not None and nn is not None:
             current_estimate = self._q_values.get(key, 0.0)
             next_estimate = self._q_values.get(next_key, 0.0)
 
-            return float(reward) + self.gamma * (next_estimate + critic_next) - (
-                current_estimate + critic_current
+            return (
+                float(reward)
+                + self.gamma * (next_estimate + critic_next)
+                - (current_estimate + critic_current)
             )
 
         def update_Q(
@@ -300,14 +301,15 @@ if torch is not None and nn is not None:
                 history.append(delta)
             return history
 
-
 else:
 
     class AdvancedNeuroEconCore:
         """Fallback that raises a descriptive error when PyTorch is unavailable."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:  # noqa: D401 - simple guard
-            raise ModuleNotFoundError("PyTorch is required for AdvancedNeuroEconCore") from _IMPORT_ERROR
+            raise ModuleNotFoundError(
+                "PyTorch is required for AdvancedNeuroEconCore"
+            ) from _IMPORT_ERROR
 
 
 __all__ = ["AdvancedNeuroEconCore", "DecisionOption"]

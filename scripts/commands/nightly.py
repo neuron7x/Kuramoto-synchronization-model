@@ -121,9 +121,7 @@ def handle(args: argparse.Namespace) -> int:
     except ValueError as exc:  # pragma: no cover - defensive
         raise CommandError(f"Invalid baseline configuration: {exc}") from exc
 
-    artifact_manager = create_artifact_manager(
-        "nightly_regression", root=args.artifact_root
-    )
+    artifact_manager = create_artifact_manager("nightly_regression", root=args.artifact_root)
     incident_manager = IncidentManager(args.incident_root)
     dispatcher = _build_dispatcher(args)
 

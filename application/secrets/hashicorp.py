@@ -48,7 +48,9 @@ def _utc_now() -> datetime:
 class VaultRequestError(RuntimeError):
     """Raised when Vault returns a non-successful response."""
 
-    def __init__(self, message: str, *, status_code: int, payload: Mapping[str, Any] | None = None) -> None:
+    def __init__(
+        self, message: str, *, status_code: int, payload: Mapping[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.payload = dict(payload or {})
@@ -274,7 +276,12 @@ class VaultClient:
         data = payload.get("data", {})
         if version == 2:
             data = data.get("data", {})
-        self._audit("vault.kv.read", actor=actor, ip_address=ip_address, details={"mount": mount, "path": path})
+        self._audit(
+            "vault.kv.read",
+            actor=actor,
+            ip_address=ip_address,
+            details={"mount": mount, "path": path},
+        )
         return MappingProxyType(dict(data))
 
     def write_kv_secret(
@@ -417,7 +424,9 @@ class VaultClient:
         payload = self._request("GET", "/v1/sys/policies/acl")
         return tuple(payload.get("policies", []))
 
-    def enable_audit_device(self, name: str, *, path: str, options: Mapping[str, Any] | None = None) -> None:
+    def enable_audit_device(
+        self, name: str, *, path: str, options: Mapping[str, Any] | None = None
+    ) -> None:
         body: MutableMapping[str, Any] = {"type": name, "options": dict(options or {})}
         self._request("POST", f"/v1/sys/audit/{path}", json=body)
 
@@ -447,7 +456,9 @@ class VaultClient:
         auth = payload.get("auth", {})
         token = auth.get("client_token")
         if not token:
-            raise VaultRequestError("Vault did not return a client token", status_code=500, payload=payload)
+            raise VaultRequestError(
+                "Vault did not return a client token", status_code=500, payload=payload
+            )
         lease_duration = auth.get("lease_duration")
         return VaultToken(
             token,

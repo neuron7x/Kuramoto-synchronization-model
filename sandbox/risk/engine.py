@@ -6,7 +6,15 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from threading import Lock
 
-from ..models import AuditEvent, KillSwitchState, OrderSide, OrderTicket, RiskDecision, SignalDirection, TradingSignal
+from ..models import (
+    AuditEvent,
+    KillSwitchState,
+    OrderSide,
+    OrderTicket,
+    RiskDecision,
+    SignalDirection,
+    TradingSignal,
+)
 
 
 class KillSwitchProviderProtocol:
@@ -45,7 +53,9 @@ class RiskEngine:
         state = await self._kill_switch.state()
         now = datetime.now(timezone.utc)
         if state.engaged:
-            decision = RiskDecision(approved=False, reason=state.reason or "kill_switch_engaged", limit_consumption=1.0)
+            decision = RiskDecision(
+                approved=False, reason=state.reason or "kill_switch_engaged", limit_consumption=1.0
+            )
             await self._audit.emit(
                 AuditEvent(
                     source="risk-engine",
@@ -73,7 +83,9 @@ class RiskEngine:
         if (signal.direction is SignalDirection.BUY and order.side is not OrderSide.BUY) or (
             signal.direction is SignalDirection.SELL and order.side is not OrderSide.SELL
         ):
-            decision = RiskDecision(approved=False, reason="signal_direction_mismatch", limit_consumption=0.0)
+            decision = RiskDecision(
+                approved=False, reason="signal_direction_mismatch", limit_consumption=0.0
+            )
             await self._audit.emit(
                 AuditEvent(
                     source="risk-engine",
@@ -95,10 +107,14 @@ class RiskEngine:
             notional_consumption = min(notional / self._limits.max_notional, 1.0)
             limit_consumption = max(position_consumption, notional_consumption)
             if abs(proposed) > self._limits.max_position or notional > self._limits.max_notional:
-                decision = RiskDecision(approved=False, reason="limits_exceeded", limit_consumption=limit_consumption)
+                decision = RiskDecision(
+                    approved=False, reason="limits_exceeded", limit_consumption=limit_consumption
+                )
             else:
                 self._positions[order.symbol] = proposed
-                decision = RiskDecision(approved=True, reason="approved", limit_consumption=limit_consumption)
+                decision = RiskDecision(
+                    approved=True, reason="approved", limit_consumption=limit_consumption
+                )
 
         await self._audit.emit(
             AuditEvent(

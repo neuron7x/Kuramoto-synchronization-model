@@ -78,9 +78,7 @@ class MacrosynergyClient:
         payload = response.json()
         data = payload.get("data")
         if not data:
-            return pd.DataFrame(
-                columns=["release_date", "period_end", "value", "indicator"]
-            )
+            return pd.DataFrame(columns=["release_date", "period_end", "value", "indicator"])
 
         frame = pd.DataFrame(data)
         expected_columns = {"release_date", "period_end", "value"}
@@ -106,6 +104,10 @@ class MacrosynergyClient:
             "release_date",
             "period_end",
             "value",
-        ] + [col for col in frame.columns if col not in {"indicator", "release_date", "period_end", "value"}]
+        ] + [
+            col
+            for col in frame.columns
+            if col not in {"indicator", "release_date", "period_end", "value"}
+        ]
 
         return frame[ordered_columns]

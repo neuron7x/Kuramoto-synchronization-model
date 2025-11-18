@@ -53,9 +53,7 @@ class CacheEntry:
     start: pd.Timestamp
     end: pd.Timestamp
 
-    def slice(
-        self, start: Optional[pd.Timestamp], end: Optional[pd.Timestamp]
-    ) -> pd.DataFrame:
+    def slice(self, start: Optional[pd.Timestamp], end: Optional[pd.Timestamp]) -> pd.DataFrame:
         view = self.frame
         if start is not None:
             view = view[view.index >= start]
@@ -71,7 +69,9 @@ class LayerCache:
         self._entries: MutableMapping[CacheKey, CacheEntry] = {}
         self._lock = threading.RLock()
 
-    def _normalize_payload(self, frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.Timestamp, pd.Timestamp]:
+    def _normalize_payload(
+        self, frame: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.Timestamp, pd.Timestamp]:
         if frame.empty:
             raise ValueError("Cannot cache empty frame")
         if not isinstance(frame.index, pd.DatetimeIndex):
@@ -434,9 +434,7 @@ class BackfillPlanner:
         self._segment_size = segment_size
         self._max_retries = max_retries
         self._limiter = (
-            _ThroughputLimiter(throughput_per_second)
-            if throughput_per_second is not None
-            else None
+            _ThroughputLimiter(throughput_per_second) if throughput_per_second is not None else None
         )
         self._checksum_func = checksum_func
         self._logger = logger or logging.getLogger(__name__)
@@ -573,9 +571,7 @@ class BackfillPlanner:
     ) -> List[BackfillSegment]:
         segments: list[BackfillSegment] = []
         for gap in gaps:
-            gap_index = expected_index[
-                (expected_index >= gap.start) & (expected_index < gap.end)
-            ]
+            gap_index = expected_index[(expected_index >= gap.start) & (expected_index < gap.end)]
             if gap_index.empty:
                 continue
             for chunk_start in range(0, len(gap_index), self._segment_size):
@@ -604,9 +600,7 @@ class BackfillPlanner:
         return segment.priority - int(1e6) * segment.attempts
 
     @staticmethod
-    def _validate_payload(
-        frame: pd.DataFrame, expected_index: pd.DatetimeIndex
-    ) -> None:
+    def _validate_payload(frame: pd.DataFrame, expected_index: pd.DatetimeIndex) -> None:
         if frame.empty:
             raise ValueError("Backfill loader returned an empty frame")
         if not isinstance(frame.index, pd.DatetimeIndex):
@@ -645,18 +639,14 @@ class CacheRegistry:
         return getattr(self, layer)
 
 
-def normalise_index(
-    frame: pd.DataFrame, *, market: Optional[str] = None
-) -> pd.DataFrame:
+def normalise_index(frame: pd.DataFrame, *, market: Optional[str] = None) -> pd.DataFrame:
     """Ensure the index is tz-aware and normalised through ``normalize_timestamp``."""
 
     if frame.empty:
         return frame
     if not isinstance(frame.index, pd.DatetimeIndex):
         raise TypeError("frame must use a DatetimeIndex")
-    normalized = [
-        normalize_timestamp(ts.to_pydatetime(), market=market) for ts in frame.index
-    ]
+    normalized = [normalize_timestamp(ts.to_pydatetime(), market=market) for ts in frame.index]
     result = frame.copy()
     result.index = pd.DatetimeIndex(normalized, tz=UTC)
     return result

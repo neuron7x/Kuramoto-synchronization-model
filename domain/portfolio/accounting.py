@@ -236,8 +236,7 @@ class PortfolioAccounting:
                 position.average_price = fill_price
             else:
                 position.average_price = (
-                    (position.average_price * abs(previous_qty) + fill_price * qty)
-                    / total_abs
+                    (position.average_price * abs(previous_qty) + fill_price * qty) / total_abs
                     if abs(previous_qty) > 0
                     else fill_price
                 )
@@ -246,9 +245,7 @@ class PortfolioAccounting:
             closing_qty = min(abs(previous_qty), qty)
             direction = Decimal("1") if previous_qty > 0 else Decimal("-1")
             realized_local = closing_qty * (fill_price - position.average_price) * direction
-            realized_base = self.fx_rates.convert(
-                realized_local, currency, self.base_currency
-            )
+            realized_base = self.fx_rates.convert(realized_local, currency, self.base_currency)
             position.realized_pnl_base += realized_base
             self._realized_pnl_base += realized_base
             net_qty = previous_qty + signed_qty

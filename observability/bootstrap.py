@@ -111,9 +111,7 @@ class MetricsSetup:
     """Configuration for metrics validation and tagging."""
 
     metrics_path: Path = Path("observability/metrics.json")
-    required_tags: Sequence[str] = field(
-        default_factory=lambda: ("service", "environment")
-    )
+    required_tags: Sequence[str] = field(default_factory=lambda: ("service", "environment"))
     max_labels_per_metric: int = 8
     cardinality_limits: Mapping[str, int] = field(
         default_factory=lambda: {"service": 10, "environment": 5, "strategy": 50}
@@ -141,9 +139,7 @@ class MetricsSetup:
                 issues.append(
                     MetricsValidationIssue(
                         metric=metric.name,
-                        message=(
-                            "missing required tags: " + ", ".join(sorted(missing))
-                        ),
+                        message=("missing required tags: " + ", ".join(sorted(missing))),
                     )
                 )
 
@@ -152,9 +148,7 @@ class MetricsSetup:
                     issues.append(
                         MetricsValidationIssue(
                             metric=metric.name,
-                            message=(
-                                f"label '{label}' lacks a configured cardinality limit"
-                            ),
+                            message=(f"label '{label}' lacks a configured cardinality limit"),
                         )
                     )
 
@@ -481,14 +475,14 @@ class PostmortemTemplateBuilder:
 
         lines = ["# Postmortem Template", ""]
         guidance: dict[str, str] = {
-            "Summary": "- Capture a concise description of the incident, affected systems, and customer impact.",
-            "Timeline": "- List the key timestamps from detection through resolution with responsible owners.",
-            "Impact": "- Quantify user-facing impact, financial exposure, and any regulatory considerations.",
-            "Detection": "- Explain how the issue was detected and where monitoring succeeded or failed.",
-            "Root Cause": "- Document the technical and organizational contributors that allowed the issue to occur.",
-            "Mitigations": "- Outline containment actions taken during the incident and their effectiveness.",
-            "Follow-up Actions": "- Define remediation tasks with owners and due dates to prevent recurrence.",
-            "Lessons Learned": "- Summarize key takeaways to improve processes, tooling, and communication.",
+            "Summary": "- Capture a concise description of the incident, affected systems, and customer impact.",  # noqa: E501
+            "Timeline": "- List the key timestamps from detection through resolution with responsible owners.",  # noqa: E501
+            "Impact": "- Quantify user-facing impact, financial exposure, and any regulatory considerations.",  # noqa: E501
+            "Detection": "- Explain how the issue was detected and where monitoring succeeded or failed.",  # noqa: E501
+            "Root Cause": "- Document the technical and organizational contributors that allowed the issue to occur.",  # noqa: E501
+            "Mitigations": "- Outline containment actions taken during the incident and their effectiveness.",  # noqa: E501
+            "Follow-up Actions": "- Define remediation tasks with owners and due dates to prevent recurrence.",  # noqa: E501
+            "Lessons Learned": "- Summarize key takeaways to improve processes, tooling, and communication.",  # noqa: E501
         }
         default_note = "- Record the most relevant facts, decisions, and outstanding questions."
         for section in self.sections:
@@ -522,9 +516,7 @@ class ObservabilityBootstrapper:
 
     def run(self) -> dict[str, Any]:
         formatter = self.logging.apply()
-        LOGGER.debug(
-            "Logging configured", extra={"formatter": formatter.__class__.__name__}
-        )
+        LOGGER.debug("Logging configured", extra={"formatter": formatter.__class__.__name__})
 
         metrics_report = self.metrics.validate()
         if metrics_report.issues:

@@ -1,12 +1,12 @@
 """CI gate ensuring thermodynamic monotonicity invariants hold."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402
 
-import sys
-from pathlib import Path
-from typing import Tuple
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Tuple  # noqa: E402
 
-import networkx as nx
+import networkx as nx  # noqa: E402
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[0]
@@ -17,7 +17,7 @@ if str(SCRIPT_DIR) in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from runtime.thermo_controller import MetricsSnapshot, ThermoController
+from runtime.thermo_controller import MetricsSnapshot, ThermoController  # noqa: E402
 
 
 def _compute_epsilon_spike(controller: ThermoController, F_old: float) -> float:
@@ -38,7 +38,9 @@ def _build_reference_graph() -> nx.DiGraph:
     return graph
 
 
-def _degrade_topology(controller: ThermoController) -> Tuple[MetricsSnapshot, list[tuple[str, str, str]]]:
+def _degrade_topology(
+    controller: ThermoController,
+) -> Tuple[MetricsSnapshot, list[tuple[str, str, str]]]:
     snapshot = MetricsSnapshot(
         latencies=dict(controller._latest_snapshot.latencies),
         coherency=dict(controller._latest_snapshot.coherency),

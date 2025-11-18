@@ -53,9 +53,7 @@ class _StaticCredentialProvider:
     def load(self, *, force: bool = False) -> Mapping[str, str]:  # noqa: D401
         return dict(self._credentials)
 
-    def rotate(
-        self, new_values: Mapping[str, str] | None = None
-    ) -> Mapping[str, str]:
+    def rotate(self, new_values: Mapping[str, str] | None = None) -> Mapping[str, str]:
         if new_values is not None:
             self._credentials = dict(new_values)
         return self.load(force=True)
@@ -99,9 +97,7 @@ class _ChaosHandler:
 
         if event.name == "dns_failure":
             self._clock.advance(0.05)
-            raise httpx.ConnectError(
-                OSError("Name or service not known"), request=request
-            )
+            raise httpx.ConnectError(OSError("Name or service not known"), request=request)
         if event.name == "packet_loss":
             self._clock.advance(0.05)
             raise httpx.ReadError("Simulated packet loss", request=request)

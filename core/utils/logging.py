@@ -59,11 +59,7 @@ class JSONFormatter(logging.Formatter):
                 context = None
             if context:
                 is_valid_attr = getattr(context, "is_valid", None)
-                is_valid = (
-                    bool(is_valid_attr())
-                    if callable(is_valid_attr)
-                    else bool(is_valid_attr)
-                )
+                is_valid = bool(is_valid_attr()) if callable(is_valid_attr) else bool(is_valid_attr)
                 if is_valid:
                     trace_id = getattr(context, "trace_id", 0)
                     span_id = getattr(context, "span_id", 0)
@@ -227,9 +223,7 @@ class StructuredLogger:
                     )
 
 
-def configure_logging(
-    level: str = "INFO", use_json: bool = True, stream: Any = None
-) -> None:
+def configure_logging(level: str = "INFO", use_json: bool = True, stream: Any = None) -> None:
     """Configure application-wide logging.
 
     Args:
@@ -261,9 +255,7 @@ def configure_logging(
         json_formatter: logging.Formatter = JSONFormatter()
         handler.setFormatter(json_formatter)
     else:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
     handler._tradepulse_managed = True  # type: ignore[attr-defined]
     root_logger.addHandler(handler)

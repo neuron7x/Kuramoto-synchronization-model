@@ -62,9 +62,7 @@ class EmailSender:
         email["To"] = ", ".join(self._recipients)
         body = message
         if metadata:
-            details = "\n".join(
-                f"- {key}: {value}" for key, value in sorted(metadata.items())
-            )
+            details = "\n".join(f"- {key}: {value}" for key, value in sorted(metadata.items()))
             body = f"{message}\n\nDetails:\n{details}"
         email.set_content(body)
         await asyncio.to_thread(self._deliver, email)
@@ -122,18 +120,14 @@ class SlackNotifier:
     ) -> None:
         text = f"*{subject}*\n{message}" if subject else message
         if metadata:
-            details = "\n".join(
-                f"• {key}: `{value}`" for key, value in sorted(metadata.items())
-            )
+            details = "\n".join(f"• {key}: `{value}`" for key, value in sorted(metadata.items()))
             text = f"{text}\n{details}"
         payload: dict[str, Any] = {"text": text}
         if self._channel:
             payload["channel"] = self._channel
         if self._username:
             payload["username"] = self._username
-        response = await self._client.post(
-            self._webhook_url, json=payload, timeout=self._timeout
-        )
+        response = await self._client.post(self._webhook_url, json=payload, timeout=self._timeout)
         response.raise_for_status()
 
     async def aclose(self) -> None:
@@ -185,9 +179,7 @@ class TeamsNotifier:
                     "markdown": True,
                 }
             )
-        response = await self._client.post(
-            self._webhook_url, json=payload, timeout=self._timeout
-        )
+        response = await self._client.post(self._webhook_url, json=payload, timeout=self._timeout)
         response.raise_for_status()
 
     async def aclose(self) -> None:

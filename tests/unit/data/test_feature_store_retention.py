@@ -78,9 +78,7 @@ def sqlite_encryption_config() -> SQLiteEncryptionConfig:
 def test_redis_ttl_retention(base_frame: pd.DataFrame) -> None:
     clock = _MutableClock(pd.Timestamp("2024-01-01 00:00:00", tz=UTC))
     policy = RetentionPolicy(ttl=pd.Timedelta(hours=1))
-    store = RedisOnlineFeatureStore(
-        client=_DictClient(), retention_policy=policy, clock=clock.now
-    )
+    store = RedisOnlineFeatureStore(client=_DictClient(), retention_policy=policy, clock=clock.now)
 
     store.sync("demo.fv", base_frame, mode="overwrite", validate=False)
     stored = store.load("demo.fv")
@@ -144,9 +142,7 @@ def test_offline_validator_detects_mismatch(tmp_path, base_frame: pd.DataFrame) 
         validator.run()
 
 
-def test_offline_validator_respects_interval(
-    tmp_path, base_frame: pd.DataFrame
-) -> None:
+def test_offline_validator_respects_interval(tmp_path, base_frame: pd.DataFrame) -> None:
     offline_path = tmp_path / "delta"
     write_dataframe(base_frame, offline_path, allow_json_fallback=True)
     source = DeltaLakeSource(offline_path)
@@ -169,9 +165,7 @@ def test_offline_validator_respects_interval(
     assert validator.should_run() is True
 
 
-def test_offline_validator_numeric_type_equivalence(
-    tmp_path, base_frame: pd.DataFrame
-) -> None:
+def test_offline_validator_numeric_type_equivalence(tmp_path, base_frame: pd.DataFrame) -> None:
     offline_path = tmp_path / "delta"
     offline_payload = base_frame.copy()
     offline_payload.loc[:, "value"] = offline_payload["value"].astype("Int64")
@@ -264,9 +258,7 @@ def test_sqlite_append_validates_schema(
     base_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     store.sync("demo.fv", base_frame, mode="overwrite")
 
     with pytest.raises(ValueError):
@@ -278,9 +270,7 @@ def test_sqlite_append_combines_rows(
     base_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     initial = store.sync("demo.fv", base_frame, mode="overwrite")
     assert initial.offline_rows == base_frame.shape[0]
 

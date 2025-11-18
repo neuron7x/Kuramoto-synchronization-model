@@ -80,13 +80,9 @@ class AgentTradeOrchestrator:
 
         target_position = observation.position
         if action is AgentAction.BUY:
-            target_position = min(
-                observation.position + cfg.position_increment, cfg.max_position
-            )
+            target_position = min(observation.position + cfg.position_increment, cfg.max_position)
         elif action is AgentAction.SELL:
-            target_position = max(
-                observation.position - cfg.position_increment, -cfg.max_position
-            )
+            target_position = max(observation.position - cfg.position_increment, -cfg.max_position)
 
         quantity = abs(target_position - observation.position)
         if quantity <= cfg.flatten_threshold and not cfg.execute_hold:

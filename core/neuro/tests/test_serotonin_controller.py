@@ -18,8 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 # Direct import to avoid dependency issues in tests
 spec = importlib.util.spec_from_file_location(
-    "serotonin_controller",
-    Path(__file__).parent.parent / "serotonin" / "serotonin_controller.py"
+    "serotonin_controller", Path(__file__).parent.parent / "serotonin" / "serotonin_controller.py"
 )
 serotonin_module = importlib.util.module_from_spec(spec)
 sys.modules["serotonin_controller"] = serotonin_module
@@ -91,7 +90,7 @@ def test_aversive_state(controller):
     # - tanh saturation
     vol_contribution = 0.42 * math.sqrt(1.0)
     fe_contribution = 0.28 * 0.5
-    loss_contribution = 0.32 * (0.2 + 0.5 * 0.2 ** 2)
+    loss_contribution = 0.32 * (0.2 + 0.5 * 0.2**2)
     rho_contribution = 0.18 * (1 - (-0.90))
     release = vol_contribution + fe_contribution + loss_contribution + rho_contribution
     expected = 3.0 * math.tanh(release / 3.0)
@@ -171,7 +170,7 @@ def test_modulate_action_prob(controller):
         za_bias=-0.33,
     )
     # v2.4.0 uses quadratic inhibition for progressive effect
-    inhibition_strength = ser ** 2
+    inhibition_strength = ser**2
     inhibition_factor = 1.0 - inhibition_strength * 0.8
     inhibited = 0.9 * max(0.0, inhibition_factor)
     # Negative bias with sigmoid-like application
@@ -194,7 +193,7 @@ def test_apply_internal_shift(controller):
         beta_temper=0.12,
     )
     # v2.4.0 uses power-law tempering (power 1.5) for smoother transitions
-    tempering_curve = ser ** 1.5
+    tempering_curve = ser**1.5
     tempering_factor = 1.0 - 0.12 * tempering_curve
     expected = grad * max(0.0, tempering_factor)
     assert shifted == pytest.approx(expected, rel=1e-3)
@@ -469,9 +468,7 @@ def test_check_cooldown_guard_overrides(controller):
 
 def test_step_basic_api(controller):
     """Test the step() API with basic inputs."""
-    hold, veto, cooldown_s, level = controller.step(
-        stress=1.2, drawdown=-0.03, novelty=0.8
-    )
+    hold, veto, cooldown_s, level = controller.step(stress=1.2, drawdown=-0.03, novelty=0.8)
     assert isinstance(hold, bool)
     assert isinstance(veto, bool)
     assert isinstance(cooldown_s, float)
@@ -590,9 +587,7 @@ def test_step_with_overrides(controller):
         rho_loss=-0.5,  # Override
     )
 
-    hold2, _, _, level2 = controller.step(
-        stress=1.0, drawdown=-0.05, novelty=0.5  # No overrides
-    )
+    hold2, _, _, level2 = controller.step(stress=1.0, drawdown=-0.05, novelty=0.5)  # No overrides
 
     # Results should differ due to overrides
     assert level1 != level2 or hold1 != hold2
@@ -677,23 +672,23 @@ def test_save_and_load_state(controller, tmp_path):
     # Build up some state
     for _ in range(30):
         controller.step(stress=2.0, drawdown=-0.05, novelty=1.0)
-    
+
     original_state = controller.to_dict()
     state_file = tmp_path / "serotonin_state.json"
-    
+
     # Save state
     controller.save_state(str(state_file))
     assert state_file.exists()
-    
+
     # Reset controller
     controller.reset()
     assert controller.serotonin_level == 0.0
     assert controller.tonic_level == 0.0
-    
+
     # Load state
     controller.load_state(str(state_file))
     restored_state = controller.to_dict()
-    
+
     # Verify key state is restored
     assert abs(restored_state["serotonin_level"] - original_state["serotonin_level"]) < 0.01
     assert abs(restored_state["tonic_level"] - original_state["tonic_level"]) < 0.01
@@ -711,14 +706,14 @@ def test_reset_state(controller):
     # Build up state
     for _ in range(50):
         controller.step(stress=2.5, drawdown=-0.08, novelty=1.5)
-    
+
     # State should be non-zero
     assert controller.serotonin_level > 0.0
     assert controller.tonic_level > 0.0
-    
+
     # Reset
     controller.reset()
-    
+
     # All state should be zeroed
     assert controller.serotonin_level == 0.0
     assert controller.tonic_level == 0.0
@@ -733,7 +728,7 @@ def test_health_check_normal(controller):
     # Run a few normal steps
     for _ in range(10):
         controller.step(stress=1.0, drawdown=-0.02, novelty=0.5)
-    
+
     health = controller.health_check()
     assert "healthy" in health
     assert "issues" in health
@@ -747,7 +742,7 @@ def test_health_check_detects_stuck_hold(controller, tmp_path):
     # Manually set stuck state (simulate long HOLD)
     controller._hold_state = True
     controller._cooldown_start_time = time() - 3700  # Over 1 hour ago
-    
+
     health = controller.health_check()
     assert not health["healthy"]
     assert len(health["issues"]) > 0
@@ -758,7 +753,7 @@ def test_health_check_warns_low_sensitivity(controller):
     """Test health_check warns about low sensitivity."""
     # Force low sensitivity
     controller.sensitivity = 0.15
-    
+
     health = controller.health_check()
     assert len(health["warnings"]) > 0
     assert any("Low sensitivity" in warning for warning in health["warnings"])
@@ -771,15 +766,15 @@ def test_get_performance_metrics(controller):
     assert metrics["step_count"] == 0
     assert metrics["veto_count"] == 0
     assert metrics["veto_rate"] == 0.0
-    
+
     # Run some steps
     for _ in range(20):
         controller.step(stress=1.0, drawdown=-0.02, novelty=0.5)
-    
+
     # Trigger HOLD
     for _ in range(30):
         controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
-    
+
     metrics = controller.get_performance_metrics()
     assert metrics["step_count"] == 50
     assert metrics["veto_count"] > 0
@@ -791,9 +786,9 @@ def test_diagnose_output(controller):
     # Build some state
     for _ in range(20):
         controller.step(stress=1.5, drawdown=-0.04, novelty=0.8)
-    
+
     report = controller.diagnose()
-    
+
     # Check report contains key information
     assert "SerotoninController Diagnostic Report" in report
     assert "Serotonin Level:" in report
@@ -807,7 +802,7 @@ def test_context_manager(controller):
     with controller as ctrl:
         assert ctrl is controller
         ctrl.step(stress=1.0, drawdown=-0.02, novelty=0.5)
-    
+
     # Context manager should not affect state
     assert controller.serotonin_level >= 0.0
 
@@ -826,17 +821,17 @@ def test_performance_tracking_accuracy(controller):
     # Run exactly 10 steps
     for i in range(10):
         controller.step(stress=0.5, drawdown=-0.01, novelty=0.3)
-    
+
     metrics = controller.get_performance_metrics()
     assert metrics["step_count"] == 10
-    
+
     # Now trigger HOLD
     for i in range(40):
         controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
-    
+
     metrics = controller.get_performance_metrics()
     assert metrics["step_count"] == 50
-    
+
     # Check veto tracking
     if metrics["veto_count"] > 0:
         assert metrics["veto_rate"] == metrics["veto_count"] / metrics["step_count"]
@@ -847,15 +842,16 @@ def test_state_persistence_includes_metadata(controller, tmp_path):
     # Run some steps
     for _ in range(25):
         controller.step(stress=1.5, drawdown=-0.03, novelty=0.7)
-    
+
     state_file = tmp_path / "state_with_metadata.json"
     controller.save_state(str(state_file))
-    
+
     # Load raw JSON to check metadata
     import json
+
     with open(state_file, "r") as f:
         state = json.load(f)
-    
+
     assert "_metadata" in state
     assert "timestamp" in state["_metadata"]
     assert "config_path" in state["_metadata"]
@@ -867,12 +863,12 @@ def test_reset_preserves_config(controller):
     """Test reset() preserves configuration."""
     original_alpha = controller.config["alpha"]
     original_threshold = controller.config["cooldown_threshold"]
-    
+
     # Build state and reset
     for _ in range(20):
         controller.step(stress=2.0, drawdown=-0.05, novelty=1.0)
     controller.reset()
-    
+
     # Config should be unchanged
     assert controller.config["alpha"] == original_alpha
     assert controller.config["cooldown_threshold"] == original_threshold
@@ -882,7 +878,7 @@ def test_health_check_detects_config_issues(controller):
     """Test health_check detects invalid config state."""
     # Manually corrupt config
     controller.config["decay_rate"] = 1.5  # Invalid (should be ≤1.0)
-    
+
     health = controller.health_check()
     assert not health["healthy"]
     assert any("decay_rate" in issue for issue in health["issues"])

@@ -116,9 +116,7 @@ def test_cache_indicator_decorator(tmp_path: Path) -> None:
 
 class TrackingAnalyzer(MultiScaleKuramoto):
     def __init__(self) -> None:
-        super().__init__(
-            timeframes=(TimeFrame.M1,), use_adaptive_window=False, base_window=64
-        )
+        super().__init__(timeframes=(TimeFrame.M1,), use_adaptive_window=False, base_window=64)
         self.calls = 0
 
     def analyze(self, df: pd.DataFrame, *, price_col: str = "close"):

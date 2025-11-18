@@ -92,7 +92,11 @@ class PERBuffer:
     def __len__(self) -> int:
         return len(self.storage)
 
-    def add(self, transition: Tuple[np.ndarray, int, float, np.ndarray, bool], priority: Optional[float] = None) -> None:
+    def add(
+        self,
+        transition: Tuple[np.ndarray, int, float, np.ndarray, bool],
+        priority: Optional[float] = None,
+    ) -> None:
         if priority is None:
             priority = max(self.priorities, default=1.0)
         priority = float(abs(priority) + self.eps)
@@ -204,7 +208,9 @@ class MisanthropicAgent:
             nn.Sequential(nn.Linear(state_size, 32), nn.ReLU(), nn.Linear(32, 1)).to(self.device)
             for _ in range(5)
         ]
-        self.ensemble_optimizers = [optim.Adam(model.parameters(), lr=1e-3) for model in self.ensemble]
+        self.ensemble_optimizers = [
+            optim.Adam(model.parameters(), lr=1e-3) for model in self.ensemble
+        ]
 
         self.history: Deque[float] = deque(maxlen=5000)
         self.last_state: Optional[np.ndarray] = None
@@ -214,7 +220,9 @@ class MisanthropicAgent:
         elif metrics_path is not None:
             metrics_location = Path(metrics_path)
         else:
-            metrics_location = Path(os.environ.get("TP_AGENT_METRICS_PATH", "logs/misanthropic_agent_metrics.jsonl"))
+            metrics_location = Path(
+                os.environ.get("TP_AGENT_METRICS_PATH", "logs/misanthropic_agent_metrics.jsonl")
+            )
         self.metrics_path = metrics_location
 
     # ------------------------------------------------------------------
@@ -224,7 +232,9 @@ class MisanthropicAgent:
     def compute_ofi(delta_ask: np.ndarray, delta_bid: np.ndarray, levels: int = 10) -> float:
         return float(np.sum(delta_ask - delta_bid) / max(levels, 1))
 
-    def _threat_index(self, ofi: float, depth: float, z_vol: float, run_length: int, skew: float) -> float:
+    def _threat_index(
+        self, ofi: float, depth: float, z_vol: float, run_length: int, skew: float
+    ) -> float:
         indicator_cp = 1.0 if run_length < self.change_point_horizon else 0.0
         features = [abs(ofi) / max(depth, 1e-6), z_vol, indicator_cp, skew]
         return float(np.dot(self.threat_weights, features))
@@ -291,7 +301,10 @@ class MisanthropicAgent:
     # OOD helper
     # ------------------------------------------------------------------
     def _ood_score(self) -> float:
-        if len(self.state_window) < self.state_window.maxlen or len(self.reference_window) < self.reference_window.maxlen:
+        if (
+            len(self.state_window) < self.state_window.maxlen
+            or len(self.reference_window) < self.reference_window.maxlen
+        ):
             return 0.0
         recent = np.asarray(self.state_window, dtype=float)
         reference = np.asarray(self.reference_window, dtype=float)
@@ -319,7 +332,9 @@ class MisanthropicAgent:
         sorted_dist, _ = torch.sort(distribution, dim=1)
         return sorted_dist[:, :k].mean(dim=1)
 
-    def _position_size(self, threat: float, uncertainty: float, cvar_hat: float, ood_score: float) -> float:
+    def _position_size(
+        self, threat: float, uncertainty: float, cvar_hat: float, ood_score: float
+    ) -> float:
         gate_uncertainty = np.exp(-uncertainty)
         gate_risk = 1.0 if cvar_hat > self.cvar_floor else 0.0
         gate_ood = 1.0 / (1.0 + 3.0 * ood_score)
@@ -478,26 +493,35 @@ class MisanthropicAgent:
         states, actions, rewards, next_states, dones = zip(*batch)
 
         states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
-        next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
+        next_states_tensor = torch.tensor(
+            np.array(next_states), dtype=torch.float32, device=self.device
+        )
         actions_tensor = torch.tensor(actions, dtype=torch.long, device=self.device).unsqueeze(1)
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device).unsqueeze(1)
         dones_tensor = torch.tensor(dones, dtype=torch.float32, device=self.device).unsqueeze(1)
-        weights_tensor = torch.tensor(importance_weights, dtype=torch.float32, device=self.device).unsqueeze(1)
+        weights_tensor = torch.tensor(
+            importance_weights, dtype=torch.float32, device=self.device
+        ).unsqueeze(1)
 
         tau = torch.rand(self.batch_size, self.quantiles, device=states_tensor.device)
         tau, _ = tau.sort(dim=1)
 
         self.model.train()
         all_q = self.model(states_tensor)
-        q_dist = all_q.gather(1, actions_tensor.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(1)
+        q_dist = all_q.gather(1, actions_tensor.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(
+            1
+        )
 
         with torch.no_grad():
             next_all_q = self.target_model(next_states_tensor)
             next_actions = next_all_q.mean(dim=2).argmax(dim=1).unsqueeze(1)
-            next_dist = next_all_q.gather(1, next_actions.unsqueeze(-1).repeat(1, 1, self.quantiles)).squeeze(1)
-            target_dist = rewards_tensor.repeat(1, self.quantiles) + (
-                1 - dones_tensor.repeat(1, self.quantiles)
-            ) * self.discount * next_dist
+            next_dist = next_all_q.gather(
+                1, next_actions.unsqueeze(-1).repeat(1, 1, self.quantiles)
+            ).squeeze(1)
+            target_dist = (
+                rewards_tensor.repeat(1, self.quantiles)
+                + (1 - dones_tensor.repeat(1, self.quantiles)) * self.discount * next_dist
+            )
 
         elementwise = quantile_huber_elementwise(target_dist, tau, q_dist)
         per_sample_loss = elementwise.sum(dim=1, keepdim=True) / self.quantiles
@@ -536,7 +560,9 @@ class MisanthropicAgent:
     def train(self, env, episodes: int = 100, *, save_artifacts: bool = True) -> None:
         for episode in range(episodes):
             state_dict = env.reset()
-            state, meta = self._prepare_state(state_dict["lob_data"], state_dict["price"], update_trackers=True)
+            state, meta = self._prepare_state(
+                state_dict["lob_data"], state_dict["price"], update_trackers=True
+            )
             done = False
             episode_reward = 0.0
 
@@ -558,13 +584,21 @@ class MisanthropicAgent:
                 episode_reward += float(reward)
 
                 with torch.no_grad():
-                    tensor_state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+                    tensor_state = torch.tensor(
+                        state, dtype=torch.float32, device=self.device
+                    ).unsqueeze(0)
                     prediction = self.model(tensor_state).mean().item()
                 self.residuals.append(float(reward - prediction))
 
                 if done:
                     next_state = np.zeros_like(state)
-                    next_meta = {"threat": 0.0, "uncertainty": 0.0, "coverage": self.conformal_coverage(), "ood_score": 0.0, "ofi": 0.0}
+                    next_meta = {
+                        "threat": 0.0,
+                        "uncertainty": 0.0,
+                        "coverage": self.conformal_coverage(),
+                        "ood_score": 0.0,
+                        "ofi": 0.0,
+                    }
                 else:
                     next_state, next_meta = self._prepare_state(
                         next_state_dict["lob_data"], next_state_dict["price"], update_trackers=True
@@ -638,8 +672,12 @@ class MisanthropicAgent:
                 current_position = 0.0
 
             if last_price is not None:
-                pnl.append(pnl[-1] + current_position * (price - last_price) - fee * abs(current_position))
-                ofi_values.append(self.compute_ofi(lob_data["delta_ask_vol"], lob_data["delta_bid_vol"]))
+                pnl.append(
+                    pnl[-1] + current_position * (price - last_price) - fee * abs(current_position)
+                )
+                ofi_values.append(
+                    self.compute_ofi(lob_data["delta_ask_vol"], lob_data["delta_bid_vol"])
+                )
                 price_changes.append(price - last_price)
 
             prices.append(price)

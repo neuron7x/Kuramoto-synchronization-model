@@ -1,4 +1,5 @@
 """Simple data generator replay utility used in FHMC tests."""
+
 from __future__ import annotations
 
 import numpy as np

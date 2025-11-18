@@ -149,7 +149,9 @@ def test_evaluate_license_compliance_classifies(tmp_path: Path) -> None:
     policy_path.write_text(json.dumps(policy_payload), encoding="utf-8")
     policy = supply_chain.load_license_policy(policy_path)
 
-    issues = supply_chain.evaluate_license_compliance(dependencies, sbom, policy, now=datetime(2025, 1, 1, tzinfo=timezone.utc))
+    issues = supply_chain.evaluate_license_compliance(
+        dependencies, sbom, policy, now=datetime(2025, 1, 1, tzinfo=timezone.utc)
+    )
 
     classifications = {issue.dependency.canonical_name: issue.classification for issue in issues}
     assert "lib-ok" not in classifications

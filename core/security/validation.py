@@ -386,7 +386,7 @@ class CommandValidator:
                 if re.search(pattern, str(arg)):
                     raise ValidationError(
                         field=field_name,
-                        message=f"Command argument contains potentially dangerous pattern: {pattern}",
+                        message=f"Command argument contains potentially dangerous pattern: {pattern}",  # noqa: E501
                         value=command,
                     )
 

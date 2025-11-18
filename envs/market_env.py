@@ -67,7 +67,9 @@ class ToyMarketEnv:
 
         embeddings_a = self._rng.standard_normal((32, 16))
         embeddings_b = self._rng.standard_normal((32, 16))
-        novelty, fd = fractal_gcl_novelty(_toy_graph(32, 0.1, self._rng), embeddings_a, embeddings_b)
+        novelty, fd = fractal_gcl_novelty(
+            _toy_graph(32, 0.1, self._rng), embeddings_a, embeddings_b
+        )
 
         info = {
             "latent": float(self.latent),
@@ -126,7 +128,9 @@ class RegimeShiftEnv(ToyMarketEnv):
 
         embeddings_a = self._rng.standard_normal((32, 16))
         embeddings_b = self._rng.standard_normal((32, 16))
-        novelty, fd = fractal_gcl_novelty(_toy_graph(32, 0.15, self._rng), embeddings_a, embeddings_b)
+        novelty, fd = fractal_gcl_novelty(
+            _toy_graph(32, 0.15, self._rng), embeddings_a, embeddings_b
+        )
 
         info = {
             "latent": float(self.latent),

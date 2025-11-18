@@ -58,7 +58,7 @@ def _extract_imports(tree: ast.AST, module_name: str) -> set[str]:
             base_module = node.module or ""
             current_parts = module_name.split(".") if module_name else []
             if node.level:
-                prefix = current_parts[:-node.level] if node.level <= len(current_parts) else []
+                prefix = current_parts[: -node.level] if node.level <= len(current_parts) else []
             else:
                 prefix = []
             base_parts = base_module.split(".") if base_module else []
@@ -106,9 +106,7 @@ def _extract_typeddicts(tree: ast.AST) -> dict[str, set[str]]:
     for node in tree.body if isinstance(tree, ast.Module) else []:
         if isinstance(node, ast.ClassDef):
             base_names = {
-                getattr(base, "id", None)
-                for base in node.bases
-                if isinstance(base, ast.Name)
+                getattr(base, "id", None) for base in node.bases if isinstance(base, ast.Name)
             }
             if "TypedDict" in base_names:
                 keys: set[str] = set()
@@ -208,7 +206,9 @@ class ArchitectureAudit:
         cycles = self._detect_cycles(modules)
         conflicts = self._detect_conflicts(modules)
         dangling = self._detect_dangling_dependencies(modules)
-        return ArchitectureReport(modules=modules, cycles=cycles, conflicts=conflicts, dangling_dependencies=dangling)
+        return ArchitectureReport(
+            modules=modules, cycles=cycles, conflicts=conflicts, dangling_dependencies=dangling
+        )
 
     @staticmethod
     def _detect_cycles(modules: dict[str, ModuleInfo]) -> list[list[str]]:
@@ -242,7 +242,12 @@ class ArchitectureAudit:
     def _detect_conflicts(modules: dict[str, ModuleInfo]) -> list[Conflict]:
         conflicts: list[Conflict] = []
 
-        def process(definitions: dict[str, list[tuple[str, set[str]]]], *, conflict_type: str, entity_label: str) -> None:
+        def process(
+            definitions: dict[str, list[tuple[str, set[str]]]],
+            *,
+            conflict_type: str,
+            entity_label: str,
+        ) -> None:
             for name, entries in definitions.items():
                 signature_sets = {frozenset(fields) for _, fields in entries}
                 if len(signature_sets) > 1:

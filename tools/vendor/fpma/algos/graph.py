@@ -18,9 +18,7 @@ def build_dep_graph(root: Path):
     fus = discover_fu(root)
     adj = {n: set() for n, _ in fus}
 
-    py_import = re.compile(
-        r"^\s*(?:from\s+([a-zA-Z0-9_\.]+)\s+import|import\s+([a-zA-Z0-9_\.]+))"
-    )
+    py_import = re.compile(r"^\s*(?:from\s+([a-zA-Z0-9_\.]+)\s+import|import\s+([a-zA-Z0-9_\.]+))")
     js_import = re.compile(
         r"^\s*(?:import\s+.*?from\s+[\'\"]([^\'\"]+)[\'\"]|require\(\s*[\'\"]([^\'\"]+)[\'\"]\s*\))"
     )

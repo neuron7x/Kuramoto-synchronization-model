@@ -126,9 +126,7 @@ class MarketCalendar:
                 search_dt.date() - timedelta(days=1), time(23, 59, 59, 999999)
             )
 
-    def sessions_between(
-        self, start: datetime, end: datetime
-    ) -> list[tuple[datetime, datetime]]:
+    def sessions_between(self, start: datetime, end: datetime) -> list[tuple[datetime, datetime]]:
         """Enumerate sessions intersecting the inclusive ``[start, end]`` window."""
 
         if end < start:
@@ -354,9 +352,7 @@ class MarketCalendarCoordinator:
             last_ts = max(last_ts, timestamp)
 
         if condition() and last_ts < end_utc:
-            windows.append(
-                TradingWindow(start=last_ts, end=end_utc, markets=frozenset(active))
-            )
+            windows.append(TradingWindow(start=last_ts, end=end_utc, markets=frozenset(active)))
 
         return windows
 
@@ -451,9 +447,7 @@ class MarketCalendarCoordinator:
             return any(calendar.is_open(timestamp) for calendar in calendars.values())
         return all(calendar.is_open(timestamp) for calendar in calendars.values())
 
-    def _select_markets(
-        self, markets: Iterable[str] | None
-    ) -> Mapping[str, MarketCalendar]:
+    def _select_markets(self, markets: Iterable[str] | None) -> Mapping[str, MarketCalendar]:
         if markets is None:
             return self._calendars
         subset = {name: self._calendars[name] for name in markets}

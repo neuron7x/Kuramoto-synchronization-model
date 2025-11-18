@@ -261,21 +261,13 @@ class RegimeDetector:
 
         liquidity_high = _finite_quantile(liquidity_scores, liquidity_high_quantile)
         liquidity_low = _finite_quantile(liquidity_scores, liquidity_low_quantile)
-        if (
-            liquidity_high is None
-            or liquidity_low is None
-            or liquidity_high <= liquidity_low
-        ):
+        if liquidity_high is None or liquidity_low is None or liquidity_high <= liquidity_low:
             liquidity_high = self.config.liquidity_score_high
             liquidity_low = self.config.liquidity_score_low
 
         if correlation_values:
-            correlation_high = _finite_quantile(
-                correlation_values, correlation_high_quantile
-            )
-            correlation_low = _finite_quantile(
-                correlation_values, correlation_low_quantile
-            )
+            correlation_high = _finite_quantile(correlation_values, correlation_high_quantile)
+            correlation_low = _finite_quantile(correlation_values, correlation_low_quantile)
             if correlation_high is not None:
                 correlation_high = float(np.clip(correlation_high, 0.0, 1.0))
             if correlation_low is not None:
@@ -316,9 +308,7 @@ class RegimeDetector:
         window_prices = prices.tail(window)
         window_returns = returns.tail(max(window - 1, 1))
 
-        cumulative_return = (
-            window_prices.iloc[-1] / window_prices.iloc[0] - 1.0
-        ).astype(float)
+        cumulative_return = (window_prices.iloc[-1] / window_prices.iloc[0] - 1.0).astype(float)
         mean_cum_return = float(cumulative_return.mean())
         volatility = float(window_returns.std(ddof=0).replace(0.0, np.nan).mean())
         volatility = max(volatility, 1e-8)

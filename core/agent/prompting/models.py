@@ -46,9 +46,7 @@ class PromptGuardrail:
     def __init__(self, description: str | None = None) -> None:
         self.description = description or self.__class__.__name__
 
-    def validate(
-        self, parameters: Mapping[str, str], context: "PromptContext"
-    ) -> None:
+    def validate(self, parameters: Mapping[str, str], context: "PromptContext") -> None:
         """Validate *parameters* and *context*.
 
         Sub-classes should raise :class:`PromptGuardrailViolation` when validation
@@ -120,22 +118,16 @@ class PromptTemplate:
         allowed = set(spec.name for spec in self.parameters)
         extra = provided.keys() - allowed
         if extra:
-            raise PromptGuardrailViolation(
-                f"Unexpected parameter(s): {', '.join(sorted(extra))}"
-            )
+            raise PromptGuardrailViolation(f"Unexpected parameter(s): {', '.join(sorted(extra))}")
 
         for spec in self.parameters:
             value = provided.get(spec.name)
             if value is None:
                 continue
             if not spec.allow_empty and not value.strip():
-                raise PromptGuardrailViolation(
-                    f"Parameter '{spec.name}' must not be empty"
-                )
+                raise PromptGuardrailViolation(f"Parameter '{spec.name}' must not be empty")
 
-    def apply_guardrails(
-        self, parameters: Mapping[str, str], context: "PromptContext"
-    ) -> None:
+    def apply_guardrails(self, parameters: Mapping[str, str], context: "PromptContext") -> None:
         """Execute guardrails registered on the template."""
 
         for guardrail in self.guardrails:
@@ -164,7 +156,7 @@ class ContextFragment:
 
         if max_chars < self.min_chars:
             max_chars = self.min_chars
-        truncated_content = self.content[:max(0, max_chars)].rstrip()
+        truncated_content = self.content[: max(0, max_chars)].rstrip()
         return ContextFragment(
             label=self.label,
             content=truncated_content,
@@ -204,7 +196,9 @@ class PromptContextWindow:
     def __post_init__(self) -> None:
         if self.max_chars <= 0:
             raise ValueError("max_chars must be positive")
-        if self.soft_chars is not None and (self.soft_chars <= 0 or self.soft_chars > self.max_chars):
+        if self.soft_chars is not None and (
+            self.soft_chars <= 0 or self.soft_chars > self.max_chars
+        ):
             raise ValueError("soft_chars must be positive and <= max_chars")
         if not self.separator:
             raise ValueError("separator must be non-empty")
@@ -275,4 +269,3 @@ class PromptRenderResult:
     context: PromptContext
     record: PromptExecutionRecord
     truncated_fragments: tuple[ContextFragment, ...]
-

@@ -37,10 +37,10 @@ from execution.risk import (
 
 def test_order_defaults_to_market_type() -> None:
     """Test that Order objects default to MARKET type when not specified.
-    
+
     Market orders execute immediately at current market price, which
     is the default behavior when no order type is specified.
-    
+
     Validates:
     - Default order type is MARKET
     - Price field is None for market orders
@@ -52,10 +52,10 @@ def test_order_defaults_to_market_type() -> None:
 
 def test_position_sizing_never_exceeds_balance() -> None:
     """Test that position sizing respects maximum balance constraints.
-    
+
     Position sizing must ensure that the total cost of a position
     never exceeds available capital, even with maximum risk allocation.
-    
+
     Validates:
     - Calculated size doesn't exceed balance/price
     - Result is always non-negative
@@ -71,10 +71,10 @@ def test_position_sizing_never_exceeds_balance() -> None:
 
 def test_portfolio_heat_sums_absolute_exposure() -> None:
     """Test that portfolio heat correctly calculates total exposure.
-    
+
     Portfolio heat measures total capital at risk across all positions,
     considering both long and short positions as positive exposure.
-    
+
     Validates:
     - Long and short positions both contribute to heat
     - Calculation uses absolute values
@@ -86,18 +86,18 @@ def test_portfolio_heat_sums_absolute_exposure() -> None:
     ]
     heat = portfolio_heat(positions)
     expected = abs(2.0 * 100.0) + abs(-1.0 * 50.0)
-    assert heat == pytest.approx(expected, rel=1e-12), (
-        f"Heat calculation incorrect: expected {expected}, got {heat}"
-    )
+    assert heat == pytest.approx(
+        expected, rel=1e-12
+    ), f"Heat calculation incorrect: expected {expected}, got {heat}"
 
 
 class _TimeStub:
     """Controllable time source for deterministic time-dependent testing.
-    
+
     Allows tests to control the passage of time without actual delays,
     making tests faster and deterministic.
     """
-    
+
     def __init__(self) -> None:
         self._now = 0.0
 
@@ -112,10 +112,10 @@ class _TimeStub:
 
 def test_risk_manager_enforces_position_and_notional_caps() -> None:
     """Test that risk manager prevents positions exceeding configured limits.
-    
+
     Risk manager must enforce both position size (quantity) and notional
     value (quantity * price) limits to prevent over-exposure.
-    
+
     Validates:
     - Position limits are enforced on new orders
     - Notional limits prevent excessive capital allocation
@@ -134,9 +134,9 @@ def test_risk_manager_enforces_position_and_notional_caps() -> None:
     # Successfully place and fill an order within limits
     manager.validate_order("BTC", "buy", qty=2.0, price=20.0)
     manager.register_fill("BTC", "buy", qty=2.0, price=20.0)
-    assert manager.current_position("BTC") == pytest.approx(2.0), (
-        "Position should be tracked correctly"
-    )
+    assert manager.current_position("BTC") == pytest.approx(
+        2.0
+    ), "Position should be tracked correctly"
 
     # Attempt to exceed position limit
     with pytest.raises(LimitViolation, match="[Pp]osition"):
@@ -149,12 +149,12 @@ def test_risk_manager_enforces_position_and_notional_caps() -> None:
 
 def test_risk_manager_rate_limiter_blocks_excess_orders() -> None:
     """Test that order rate limiting prevents excessive trading activity.
-    
+
     Rate limiting is critical for:
     - Preventing accidental order floods from bugs
     - Complying with exchange rate limits
     - Reducing transaction costs
-    
+
     Validates:
     - Rate limiter counts orders within time window
     - Excess orders are rejected with OrderRateExceeded
@@ -172,7 +172,7 @@ def test_risk_manager_rate_limiter_blocks_excess_orders() -> None:
     # First two orders should succeed
     manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
     manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
-    
+
     # Third order exceeds rate limit
     with pytest.raises(OrderRateExceeded, match="[Rr]ate|[Ee]xceeded"):
         manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
@@ -182,15 +182,13 @@ def test_risk_manager_rate_limiter_blocks_excess_orders() -> None:
     manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
 
 
-def test_risk_manager_does_not_accumulate_submissions_when_throttling_disabled() -> (
-    None
-):
+def test_risk_manager_does_not_accumulate_submissions_when_throttling_disabled() -> None:
     """Test that disabling throttling prevents memory accumulation.
-    
+
     When rate limiting is disabled (max_orders_per_interval=0),
     the risk manager should not accumulate submission timestamps
     to avoid memory leaks.
-    
+
     Validates:
     - Disabled throttling doesn't track submissions
     - Memory doesn't grow with order count
@@ -211,17 +209,17 @@ def test_risk_manager_does_not_accumulate_submissions_when_throttling_disabled()
         clock.advance(0.1)
 
     # Verify submissions list doesn't accumulate
-    assert len(manager._submissions) == 0, (
-        "Submissions should not accumulate when throttling is disabled"
-    )
+    assert (
+        len(manager._submissions) == 0
+    ), "Submissions should not accumulate when throttling is disabled"
 
 
 def test_kill_switch_blocks_all_orders() -> None:
     """Test that triggered kill switch prevents all trading activity.
-    
+
     The kill switch is an emergency stop mechanism that immediately
     halts all trading when triggered by severe violations or manual intervention.
-    
+
     Validates:
     - Kill switch can be manually triggered
     - All orders are rejected when kill switch is active
@@ -229,18 +227,18 @@ def test_kill_switch_blocks_all_orders() -> None:
     """
     manager = RiskManager(RiskLimits(max_notional=100.0, max_position=10.0))
     manager.kill_switch.trigger("test")
-    
+
     with pytest.raises(RiskError, match="[Kk]ill.*[Ss]witch"):
         manager.validate_order("BTC", "buy", qty=1.0, price=10.0)
 
 
 def test_risk_manager_trips_kill_switch_on_severe_violation(tmp_path) -> None:
     """Test that severe risk violations automatically trigger kill switch.
-    
+
     Critical risk violations (exceeding limits by configured threshold)
     should automatically trigger the kill switch to prevent cascading failures.
     This behavior is essential for preventing large losses from bugs or attacks.
-    
+
     Validates:
     - Severe violations trigger automatic kill switch
     - Kill switch reason is recorded
@@ -263,21 +261,17 @@ def test_risk_manager_trips_kill_switch_on_severe_violation(tmp_path) -> None:
 
     # Verify kill switch was triggered
     assert manager.kill_switch.is_triggered(), "Kill switch should be triggered"
-    assert "Position cap exceeded" in manager.kill_switch.reason, (
-        "Reason should mention position cap"
-    )
+    assert (
+        "Position cap exceeded" in manager.kill_switch.reason
+    ), "Reason should mention position cap"
 
     # Verify audit log captured the event
-    entries = [
-        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
-    ]
-    kill_events = [
-        entry for entry in entries if entry.get("event") == "kill_switch_triggered"
-    ]
+    entries = [json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()]
+    kill_events = [entry for entry in entries if entry.get("event") == "kill_switch_triggered"]
     assert kill_events, "Kill switch event should be in audit log"
-    assert kill_events[0]["violation_type"] == "position_limit", (
-        "Event should specify violation type"
-    )
+    assert (
+        kill_events[0]["violation_type"] == "position_limit"
+    ), "Event should specify violation type"
 
 
 def test_risk_manager_trips_kill_switch_after_repeated_throttling(tmp_path) -> None:
@@ -333,11 +327,7 @@ def test_risk_manager_drawdown_kill_switch(tmp_path) -> None:
     assert "drawdown" in reason
     assert "paper" in reason
 
-    entries = [
-        json.loads(line)
-        for line in audit_path.read_text().splitlines()
-        if line.strip()
-    ]
+    entries = [json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()]
     breach = [entry for entry in entries if entry.get("event") == "portfolio_drawdown_breach"]
     assert breach
     last = breach[-1]
@@ -354,6 +344,7 @@ def test_update_portfolio_equity_rejects_invalid_values() -> None:
 
     with pytest.raises(ValueError):
         manager.update_portfolio_equity(-1.0)
+
 
 def test_risk_manager_normalises_symbol_aliases() -> None:
     manager = RiskManager(RiskLimits(max_notional=1_000.0, max_position=10.0))

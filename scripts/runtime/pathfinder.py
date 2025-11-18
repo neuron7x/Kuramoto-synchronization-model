@@ -18,9 +18,7 @@ def _iter_roots(roots: Sequence[str | Path] | None) -> Iterable[Path]:
         yield path
 
 
-def find_resources(
-    pattern: str, roots: Sequence[str | Path] | None = None
-) -> Iterator[Path]:
+def find_resources(pattern: str, roots: Sequence[str | Path] | None = None) -> Iterator[Path]:
     """Yield files matching *pattern* using :meth:`Path.rglob` for robustness."""
 
     seen: set[Path] = set()

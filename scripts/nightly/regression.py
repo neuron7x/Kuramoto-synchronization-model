@@ -147,7 +147,9 @@ class NightlyRegressionRunner:
 
         timestamp = datetime.now(timezone.utc)
         artifact_dir = self._artifact_manager.directory
-        self._logger.info("Starting nightly regression run", extra={"artifact_dir": str(artifact_dir)})
+        self._logger.info(
+            "Starting nightly regression run", extra={"artifact_dir": str(artifact_dir)}
+        )
 
         backtest_results = self._execute_backtests(artifact_dir)
         e2e_results = self._execute_e2e(artifact_dir)
@@ -245,7 +247,8 @@ class NightlyRegressionRunner:
                 shutil.copy2(source, destination)
             except OSError:
                 self._logger.warning(
-                    "Failed to copy artefact", extra={"source": str(source), "destination": str(destination)}
+                    "Failed to copy artefact",
+                    extra={"source": str(source), "destination": str(destination)},
                 )
 
     def _evaluate_results(
@@ -274,7 +277,9 @@ class NightlyRegressionRunner:
             )
         return deviations
 
-    def _compare_with_baseline(self, stage: str, outcome: BacktestOutcome | E2EOutcome) -> list[RegressionDeviation]:
+    def _compare_with_baseline(
+        self, stage: str, outcome: BacktestOutcome | E2EOutcome
+    ) -> list[RegressionDeviation]:
         entry = self._baseline_store.get_entry(stage, outcome.name)
         if entry is None:
             self._logger.debug(
@@ -392,7 +397,9 @@ class NightlyRegressionRunner:
         subject = "Nightly regression: PASS" if summary.success else "Nightly regression: FAIL"
         message = (
             f"Backtests: {len(backtests)} scenarios, E2E: {len(e2e_results)} scenarios."
-            " Deviations detected." if not summary.success else " All thresholds respected."
+            " Deviations detected."
+            if not summary.success
+            else " All thresholds respected."
         )
         metadata = {
             "artifact_dir": str(summary.artifact_dir),
@@ -465,12 +472,18 @@ def _moving_average_signal(prices: np.ndarray, fast: int = 10, slow: int = 40) -
 
 def _run_moving_average_backtest() -> BacktestOutcome:
     prices = np.loadtxt("data/sample.csv", delimiter=",", skiprows=1, usecols=1)
-    result = walk_forward(prices, _moving_average_signal, fee=0.0005, strategy_name="nightly-moving-average")
+    result = walk_forward(
+        prices, _moving_average_signal, fee=0.0005, strategy_name="nightly-moving-average"
+    )
     performance = result.performance
     metrics = {
         "pnl": float(result.pnl),
         "max_drawdown": float(result.max_dd),
-        "sharpe_ratio": float(performance.sharpe_ratio) if performance and performance.sharpe_ratio is not None else 0.0,
+        "sharpe_ratio": (
+            float(performance.sharpe_ratio)
+            if performance and performance.sharpe_ratio is not None
+            else 0.0
+        ),
         "trades": float(result.trades),
     }
     details = {
@@ -483,7 +496,9 @@ def _run_moving_average_backtest() -> BacktestOutcome:
     artifacts: dict[str, Path] = {}
     if result.report_path and result.report_path.exists():
         artifacts["performance_report"] = result.report_path
-    return BacktestOutcome(name="moving_average", metrics=metrics, details=details, artifacts=artifacts)
+    return BacktestOutcome(
+        name="moving_average", metrics=metrics, details=details, artifacts=artifacts
+    )
 
 
 def _volatility_breakout_signal(prices: np.ndarray) -> np.ndarray:
@@ -533,7 +548,11 @@ def _run_volatility_breakout_backtest() -> BacktestOutcome:
     metrics = {
         "pnl": float(result.pnl),
         "max_drawdown": float(result.max_dd),
-        "sharpe_ratio": float(performance.sharpe_ratio) if performance and performance.sharpe_ratio is not None else 0.0,
+        "sharpe_ratio": (
+            float(performance.sharpe_ratio)
+            if performance and performance.sharpe_ratio is not None
+            else 0.0
+        ),
         "trades": float(result.trades),
     }
     details = {

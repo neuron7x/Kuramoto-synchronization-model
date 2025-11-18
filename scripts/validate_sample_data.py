@@ -166,7 +166,9 @@ def _parse_artifact_specs(
             raise ValidationError(f"artifacts[{index}] has invalid 'path'")
         if not isinstance(checksum_value, str) or not checksum_value.strip():
             raise ValidationError(f"artifacts[{index}] has invalid 'checksum'")
-        algorithm, digest = _normalise_checksum(checksum_value, algorithm_value if isinstance(algorithm_value, str) else None)
+        algorithm, digest = _normalise_checksum(
+            checksum_value, algorithm_value if isinstance(algorithm_value, str) else None
+        )
 
         size_bytes: int | None
         if size_value is None:
@@ -191,9 +193,7 @@ def _parse_artifact_specs(
     return tuple(specs)
 
 
-def _resolve_artifact_path(
-    spec: ArtifactSpec, *, contract_path: Path, repo_root: Path
-) -> Path:
+def _resolve_artifact_path(spec: ArtifactSpec, *, contract_path: Path, repo_root: Path) -> Path:
     """Resolve an artifact path within the repository root."""
 
     candidates = []
@@ -242,7 +242,9 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
         specs = _parse_artifact_specs(path, front_matter)
     except ValidationError as exc:
         errors.append(str(exc))
-        return ContractReport(path=path, artifacts=tuple(artifacts), errors=tuple(errors), warnings=tuple(warnings))
+        return ContractReport(
+            path=path, artifacts=tuple(artifacts), errors=tuple(errors), warnings=tuple(warnings)
+        )
 
     for spec in specs:
         artifact_errors: list[str] = []
@@ -306,9 +308,7 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
     )
 
 
-def discover_contracts(
-    directories: Sequence[Path] | None = None, *, repo_root: Path
-) -> list[Path]:
+def discover_contracts(directories: Sequence[Path] | None = None, *, repo_root: Path) -> list[Path]:
     """Return all markdown contracts from the provided directories."""
 
     dirs = directories if directories is not None else DEFAULT_CONTRACT_DIRS
@@ -368,7 +368,9 @@ def _render_json_report(reports: Sequence[ContractReport]) -> str:
             "artifacts": [
                 {
                     "path": str(artifact.spec.path),
-                    "resolved_path": str(artifact.resolved_path) if artifact.resolved_path else None,
+                    "resolved_path": (
+                        str(artifact.resolved_path) if artifact.resolved_path else None
+                    ),
                     "algorithm": artifact.spec.algorithm,
                     "expected_digest": artifact.spec.digest,
                     "actual_checksum": artifact.actual_checksum,
@@ -428,7 +430,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(output)
 
     treat_warnings_as_errors = args.fail_on_warning
-    if reports and all(report.valid(treat_warnings_as_errors=treat_warnings_as_errors) for report in reports):
+    if reports and all(
+        report.valid(treat_warnings_as_errors=treat_warnings_as_errors) for report in reports
+    ):
         return 0
     if not reports:
         # No contracts found is treated as success to keep the script usable in new repositories.

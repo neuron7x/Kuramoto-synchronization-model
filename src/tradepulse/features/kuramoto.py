@@ -67,9 +67,7 @@ class KuramotoSynchrony:
         self.R_high = R_threshold_high
         self.R_low = R_threshold_low
 
-    def fit_transform(
-        self, prices: DataFrame
-    ) -> dict[str, Series]:
+    def fit_transform(self, prices: DataFrame) -> dict[str, Series]:
         """Compute Kuramoto synchrony from price data.
 
         Parameters
@@ -155,9 +153,9 @@ class KuramotoSynchrony:
 
         # Adaptive thresholds using rolling statistics
         R_median = R.rolling(self.window * 3, min_periods=self.window).median()
-        R_iqr = R.rolling(self.window * 3, min_periods=self.window).quantile(
-            0.75
-        ) - R.rolling(self.window * 3, min_periods=self.window).quantile(0.25)
+        R_iqr = R.rolling(self.window * 3, min_periods=self.window).quantile(0.75) - R.rolling(
+            self.window * 3, min_periods=self.window
+        ).quantile(0.25)
 
         # Use fixed thresholds initially, then adaptive
         R_high_adaptive = R_median + R_iqr
@@ -172,9 +170,7 @@ class KuramotoSynchrony:
         labels.loc[R < R_low_adaptive] = "CHAOTIC"
 
         # Add transition labels based on ΔR
-        delta_R_threshold = delta_R.rolling(
-            self.window * 2, min_periods=self.window
-        ).std()
+        delta_R_threshold = delta_R.rolling(self.window * 2, min_periods=self.window).std()
         delta_R_threshold = delta_R_threshold.fillna(0.1)
 
         labels.loc[delta_R.abs() > 2 * delta_R_threshold] = "TRANSITION"

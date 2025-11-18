@@ -76,9 +76,7 @@ class ArchitectureValidator:
         self._registry = registry
         self._custom_rules: list[Callable[[ComponentRegistry], list[ValidationIssue]]] = []
 
-    def add_custom_rule(
-        self, rule: Callable[[ComponentRegistry], list[ValidationIssue]]
-    ) -> None:
+    def add_custom_rule(self, rule: Callable[[ComponentRegistry], list[ValidationIssue]]) -> None:
         """Add a custom validation rule.
 
         Args:

@@ -148,7 +148,9 @@ def test_propose_trade_requires_context(tmp_path: Path) -> None:
     sdk = TradePulseSDK(system, config)
 
     with pytest.raises(LookupError):
-        signal = type("_S", (), {"symbol": "BTCUSDT", "action": SignalAction.BUY, "confidence": 0.5})()
+        signal = type(
+            "_S", (), {"symbol": "BTCUSDT", "action": SignalAction.BUY, "confidence": 0.5}
+        )()
         sdk.propose_trade(signal)  # type: ignore[arg-type]
 
 
@@ -193,4 +195,3 @@ def test_exit_flat_position_raises(tmp_path: Path, monkeypatch) -> None:
 
     with pytest.raises(ValueError):
         sdk.propose_trade(exit_signal)
-

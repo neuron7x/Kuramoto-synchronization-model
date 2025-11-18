@@ -185,7 +185,7 @@ def test_build_bundle_quotes_special_yaml_strings(tmp_path: Path) -> None:
                     "rules": [
                         {
                             "alert": "LatencySLOViolation",
-                            "expr": "histogram_quantile(0.99, tradepulse_latency_seconds_bucket) > 1.5",
+                            "expr": "histogram_quantile(0.99, tradepulse_latency_seconds_bucket) > 1.5",  # noqa: E501
                             "annotations": {
                                 "summary": "Latency: 99th percentile breached",
                                 "description": "Investigate upstream: dependency #1",

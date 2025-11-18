@@ -133,8 +133,7 @@ class ECSInspiredRegulator:
 
         # Apply EMA smoothing for homeostasis
         self.stress_level = (
-            self.smoothing_alpha * self.stress_level
-            + (1 - self.smoothing_alpha) * combined_stress
+            self.smoothing_alpha * self.stress_level + (1 - self.smoothing_alpha) * combined_stress
         )
 
         # Map to TACL free energy proxy
@@ -240,9 +239,7 @@ class ECSInspiredRegulator:
 
         return float(self.kalman_state)
 
-    def decide_action(
-        self, signal_strength: float, context_phase: str = "stable"
-    ) -> int:
+    def decide_action(self, signal_strength: float, context_phase: str = "stable") -> int:
         """Decide trading action based on filtered signal and context.
 
         Applies Kalman filtering, compensatory modulation, and conformal

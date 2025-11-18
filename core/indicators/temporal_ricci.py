@@ -228,9 +228,7 @@ class PriceLevelGraph:
         self.volume_mode = volume_mode
         self.volume_floor = float(max(volume_floor, 0.0))
 
-    def build(
-        self, prices: np.ndarray, volumes: Optional[np.ndarray] = None
-    ) -> LightGraph:
+    def build(self, prices: np.ndarray, volumes: Optional[np.ndarray] = None) -> LightGraph:
         price_array = np.asarray(prices, dtype=float)
         if price_array.size == 0:
             return LightGraph(self.n_levels)
@@ -392,8 +390,7 @@ class TemporalRicciAnalyzer:
         metrics: List[List[float]] = []
         for snapshot in self.history:
             degrees = [
-                len(snapshot.graph.neighbors(i))
-                for i in range(snapshot.graph.number_of_nodes())
+                len(snapshot.graph.neighbors(i)) for i in range(snapshot.graph.number_of_nodes())
             ]
             active = [deg for deg in degrees if deg > 0]
             metrics.append(
@@ -414,13 +411,9 @@ class TemporalRicciAnalyzer:
         normalised = diffs / normaliser
         base_score = float(np.mean(normalised))
 
-        curvatures = np.array(
-            [snap.avg_curvature for snap in self.history], dtype=float
-        )
+        curvatures = np.array([snap.avg_curvature for snap in self.history], dtype=float)
         curvature_component = (
-            float(np.clip(np.std(np.diff(curvatures)), 0.0, 1.0))
-            if curvatures.size >= 2
-            else 0.0
+            float(np.clip(np.std(np.diff(curvatures)), 0.0, 1.0)) if curvatures.size >= 2 else 0.0
         )
 
         volatility_series = [
@@ -445,9 +438,7 @@ class TemporalRicciAnalyzer:
             transition = float(np.clip(0.5 + 0.5 * (base_score - midpoint), 0.0, 1.0))
         else:
             transition = float(1.0 / (1.0 + np.exp(-beta * (base_score - midpoint))))
-        return float(
-            np.clip(transition + 0.2 * curvature_component + 0.2 * vol_diff, 0.0, 1.0)
-        )
+        return float(np.clip(transition + 0.2 * curvature_component + 0.2 * vol_diff, 0.0, 1.0))
 
     def _stability(self) -> float:
         if len(self.history) < 2:
@@ -497,7 +488,7 @@ class TemporalRicciAnalyzer:
                 self._avg_curvature_ema = None
             elif self.history and df.index[0] <= self.history[-1].timestamp:
                 warnings.warn(
-                    "TemporalRicciAnalyzer received non-monotonic timestamps; resetting history buffer",
+                    "TemporalRicciAnalyzer received non-monotonic timestamps; resetting history buffer",  # noqa: E501
                     RuntimeWarning,
                     stacklevel=2,
                 )
@@ -579,18 +570,16 @@ class TemporalRicciAnalyzer:
             _metrics.record_indicator_value("temporal_ricci.structural_stability", stability)
             _metrics.record_indicator_value("temporal_ricci.edge_persistence", persistence)
             if self.history:
-                _metrics.record_indicator_value("temporal_ricci.avg_curvature", self.history[-1].avg_curvature)
+                _metrics.record_indicator_value(
+                    "temporal_ricci.avg_curvature", self.history[-1].avg_curvature
+                )
 
             if attempts:
-                ratio_metrics["snapshot_coverage"] = float(
-                    snapshots_built / max(1, attempts)
-                )
+                ratio_metrics["snapshot_coverage"] = float(snapshots_built / max(1, attempts))
             else:
                 ratio_metrics.setdefault("snapshot_coverage", 0.0)
             if volume_segments:
-                ratio_metrics["volume_coverage"] = float(
-                    positive_volume_segments / volume_segments
-                )
+                ratio_metrics["volume_coverage"] = float(positive_volume_segments / volume_segments)
             elif volume_col and volume_col in df.columns:
                 ratio_metrics.setdefault("volume_coverage", 0.0)
 

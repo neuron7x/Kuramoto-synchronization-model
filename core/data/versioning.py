@@ -55,25 +55,19 @@ class DataVersionManager:
 
         version_path = self._resolve_version_path(artifact_path)
         version_path.parent.mkdir(parents=True, exist_ok=True)
-        version_path.write_text(
-            json.dumps(info, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        version_path.write_text(json.dumps(info, indent=2, sort_keys=True), encoding="utf-8")
         return info
 
     # ------------------------------------------------------------------
     # Helpers
     def _resolve_repo_root(self) -> Path:
         if self.config.repo_path is None:
-            raise VersioningError(
-                "repo_path is required when backend is configured for versioning"
-            )
+            raise VersioningError("repo_path is required when backend is configured for versioning")
         repo_root = Path(self.config.repo_path).expanduser().resolve()
         if not repo_root.exists():
             raise VersioningError(f"Repository path {repo_root!s} does not exist")
         if not repo_root.is_dir():
-            raise VersioningError(
-                f"Repository path {repo_root!s} is not a directory"
-            )
+            raise VersioningError(f"Repository path {repo_root!s} is not a directory")
         return repo_root
 
     def _relative_to_repo(self, path: Path, repo_root: Path) -> str | None:

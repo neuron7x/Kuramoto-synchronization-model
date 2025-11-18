@@ -53,9 +53,7 @@ def validate_safe_path(
 
     # Check for absolute paths if not allowed
     if not allow_absolute and path.is_absolute():
-        raise PathTraversalError(
-            f"Absolute paths are not allowed: {path}"
-        )
+        raise PathTraversalError(f"Absolute paths are not allowed: {path}")
 
     # Resolve the full path
     if path.is_absolute():
@@ -107,10 +105,9 @@ def validate_file_path(
     if extensions:
         # Normalize extensions to lowercase with leading dot
         normalized_extensions = {
-            ext if ext.startswith('.') else f'.{ext}'
-            for ext in (e.lower() for e in extensions)
+            ext if ext.startswith(".") else f".{ext}" for ext in (e.lower() for e in extensions)
         }
-        
+
         if validated_path.suffix.lower() not in normalized_extensions:
             raise ValueError(
                 f"Invalid file extension '{validated_path.suffix}'. "
@@ -141,21 +138,21 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
         raise ValueError("Filename cannot be empty")
 
     # Remove null bytes
-    filename = filename.replace('\0', '')
+    filename = filename.replace("\0", "")
 
     # Dangerous characters to replace (including dots which can be used in path traversal)
-    dangerous_chars = ['/', '\\', '<', '>', ':', '"', '|', '?', '*', '\n', '\r', '\t', '.']
-    
+    dangerous_chars = ["/", "\\", "<", ">", ":", '"', "|", "?", "*", "\n", "\r", "\t", "."]
+
     sanitized = filename
     for char in dangerous_chars:
         sanitized = sanitized.replace(char, replacement)
 
     # Remove leading/trailing underscores and spaces
-    sanitized = sanitized.strip('_ ')
+    sanitized = sanitized.strip("_ ")
 
     # Ensure the result is not empty
     if not sanitized:
-        sanitized = 'unnamed_file'
+        sanitized = "unnamed_file"
 
     return sanitized
 

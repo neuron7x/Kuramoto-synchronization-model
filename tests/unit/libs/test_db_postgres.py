@@ -15,9 +15,7 @@ from libs.db.postgres import create_postgres_connection
 class _FakePsycopgModule(SimpleNamespace):
     """Collect the arguments used to construct a connection."""
 
-    def __call__(
-        self, **kwargs: Any
-    ) -> object:  # pragma: no cover - compatibility shim.
+    def __call__(self, **kwargs: Any) -> object:  # pragma: no cover - compatibility shim.
         return self.connect(**kwargs)
 
     def connect(self, **kwargs: Any) -> object:

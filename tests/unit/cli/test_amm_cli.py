@@ -104,15 +104,11 @@ async def test_stream_csv_rejects_invalid_numbers(tmp_path: Path) -> None:
 
 
 @pytest.mark.anyio
-async def test_run_publishes_metrics(
-    monkeypatch: pytest.MonkeyPatch, sample_csv: Path
-) -> None:
+async def test_run_publishes_metrics(monkeypatch: pytest.MonkeyPatch, sample_csv: Path) -> None:
     ports: list[int] = []
     monkeypatch.setattr(amm_cli, "start_http_server", lambda port: ports.append(port))
 
-    published: list[
-        tuple[str, str, dict[str, float | None], dict[str, float | None]]
-    ] = []
+    published: list[tuple[str, str, dict[str, float | None], dict[str, float | None]]] = []
 
     def fake_publish(symbol: str, tf: str, out, **kwargs):
         published.append((symbol, tf, out, kwargs))

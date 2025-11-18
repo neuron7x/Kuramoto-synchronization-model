@@ -139,36 +139,37 @@ class HPCActiveInferenceModuleV4(nn.Module):
             from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
 
             engine = TradePulseCompositeEngine()
-            
+
             # Ensure DatetimeIndex
             if not isinstance(data.index, pd.DatetimeIndex):
-                if 'timestamp' in data.columns:
-                    data = data.set_index('timestamp')
-                elif 'date' in data.columns:
-                    data = data.set_index('date')
+                if "timestamp" in data.columns:
+                    data = data.set_index("timestamp")
+                elif "date" in data.columns:
+                    data = data.set_index("date")
                 else:
                     # Create dummy index
-                    data.index = pd.date_range(
-                        start='2020-01-01', periods=len(data), freq='D'
-                    )
-            
+                    data.index = pd.date_range(start="2020-01-01", periods=len(data), freq="D")
+
             # Analyze market and extract signal
             signal = engine.analyze_market(data)
-            
+
             # Extract features from signal
-            features = pd.DataFrame({
-                'close': data['close'].iloc[-1] if 'close' in data.columns else 0.0,
-                'volume': data['volume'].iloc[-1] if 'volume' in data.columns else 0.0,
-                'kuramoto_R': signal.kuramoto_R,
-                'consensus_R': signal.consensus_R,
-                'coherence': signal.cross_scale_coherence,
-                'static_ricci': signal.static_ricci,
-                'temporal_ricci': signal.temporal_ricci,
-                'topological_transition': signal.topological_transition,
-                'entry_signal': signal.entry_signal,
-                'risk_multiplier': signal.risk_multiplier,
-            }, index=[0])
-            
+            features = pd.DataFrame(
+                {
+                    "close": data["close"].iloc[-1] if "close" in data.columns else 0.0,
+                    "volume": data["volume"].iloc[-1] if "volume" in data.columns else 0.0,
+                    "kuramoto_R": signal.kuramoto_R,
+                    "consensus_R": signal.consensus_R,
+                    "coherence": signal.cross_scale_coherence,
+                    "static_ricci": signal.static_ricci,
+                    "temporal_ricci": signal.temporal_ricci,
+                    "topological_transition": signal.topological_transition,
+                    "entry_signal": signal.entry_signal,
+                    "risk_multiplier": signal.risk_multiplier,
+                },
+                index=[0],
+            )
+
         except Exception as e:
             warnings.warn(
                 f"Failed to use TradePulseCompositeEngine: {e}. Using fallback.",
@@ -176,12 +177,12 @@ class HPCActiveInferenceModuleV4(nn.Module):
                 stacklevel=2,
             )
             # Fallback: use basic features
-            required_cols = ['open', 'high', 'low', 'close', 'volume']
+            required_cols = ["open", "high", "low", "close", "volume"]
             features = data[required_cols].iloc[-1:].copy()
-            
+
             # Pad to 10 dimensions
             for i in range(len(features.columns), self.input_dim):
-                features[f'feature_{i}'] = 0.0
+                features[f"feature_{i}"] = 0.0
 
         # Convert to tensor
         features_array = features.values.astype(np.float32)
@@ -191,14 +192,14 @@ class HPCActiveInferenceModuleV4(nn.Module):
             features_array = np.concatenate([features_array, padding], axis=1)
         elif features_array.shape[1] > self.input_dim:
             # Truncate
-            features_array = features_array[:, :self.input_dim]
+            features_array = features_array[:, : self.input_dim]
 
         features_tensor = torch.tensor(features_array, dtype=torch.float32).to(self.device)
-        
+
         # Embed and encode
         embedded = self.input_embedding(features_tensor.unsqueeze(0))
         state = self.afferent_encoder(embedded).mean(dim=1)
-        
+
         return state
 
     def hpc_forward(self, state: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -223,29 +224,31 @@ class HPCActiveInferenceModuleV4(nn.Module):
             pred, _ = self.hpc_predictions[i](top_down)
             # Apply residual skip to last timestep
             pred_last = pred[:, -1, :]
-            pred_res = pred_last + self.residual_skips[i](state.squeeze(1) if state.dim() > 2 else state)
+            pred_res = pred_last + self.residual_skips[i](
+                state.squeeze(1) if state.dim() > 2 else state
+            )
             predictions.append(pred_res)
             # For next level, project back to state_dim and expand to sequence
-            pred_state = pred_res[:, :self.state_dim] if pred_res.shape[-1] > self.state_dim else pred_res
+            pred_state = (
+                pred_res[:, : self.state_dim] if pred_res.shape[-1] > self.state_dim else pred_res
+            )
             top_down = pred_state.unsqueeze(1).repeat(1, seq_length, 1)
 
         # Bottom-up precision-weighted prediction errors
         pwpes = []
         bottom_up = state.squeeze(1) if state.dim() > 2 else state
 
-        for i, (error_layer, precision) in enumerate(
-            zip(self.hpc_errors, self.precision_weights)
-        ):
+        for i, (error_layer, precision) in enumerate(zip(self.hpc_errors, self.precision_weights)):
             pred = predictions[self.hpc_levels - 1 - i]
-            
+
             # Prediction error (project pred to state_dim if needed)
-            pred_state = pred[:, :self.state_dim] if pred.shape[-1] > self.state_dim else pred
+            pred_state = pred[:, : self.state_dim] if pred.shape[-1] > self.state_dim else pred
             pe = bottom_up - pred_state
-            
+
             # Precision-weighted prediction error
             pwpe = precision * pe
             pwpes.append(torch.norm(pwpe))
-            
+
             # Update bottom-up with error correction
             error_input = torch.cat([pwpe, bottom_up], dim=-1)
             bottom_up = error_layer(error_input) + bottom_up
@@ -255,9 +258,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
 
         return predictions[0], total_pwpe
 
-    def compute_self_reward(
-        self, expert_metrics: torch.Tensor, pwpe: float
-    ) -> float:
+    def compute_self_reward(self, expert_metrics: torch.Tensor, pwpe: float) -> float:
         """
         Compute self-reward with blending and uncertainty modulation.
 
@@ -305,16 +306,16 @@ class HPCActiveInferenceModuleV4(nn.Module):
         # Actor loss with perturbation rectification
         perturbation = torch.randn_like(state) * self.perturbation_scale
         perturbed_state = state + perturbation
-        
+
         action_logits = self.actor(state)
         perturbed_logits = self.actor(perturbed_state)
-        
+
         action_probs = F.softmax(action_logits, dim=-1)
         perturbed_probs = F.softmax(perturbed_logits, dim=-1)
-        
+
         selected_prob = action_probs.gather(1, action.unsqueeze(1).long()).squeeze()
         perturbed_selected = perturbed_probs.gather(1, action.unsqueeze(1).long()).squeeze()
-        
+
         actor_loss = (
             -torch.log(selected_prob + 1e-8) * td_error.detach()
             + 0.5 * (selected_prob - perturbed_selected).pow(2).mean()
@@ -325,9 +326,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
 
         # Reward prediction loss
         expert_reward = torch.tensor([[reward]], dtype=torch.float32).to(self.device)
-        reward_input = torch.tensor([[reward, 0.0, 0.0]], dtype=torch.float32).to(
-            self.device
-        )
+        reward_input = torch.tensor([[reward, 0.0, 0.0]], dtype=torch.float32).to(self.device)
         reward_loss = F.mse_loss(self.reward_predictor(reward_input), expert_reward)
 
         # L1 regularization on blending alpha
@@ -344,9 +343,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
 
         return td_error.item()
 
-    def metastable_transition_gate(
-        self, pwpe: float, d_pwpe_dt: float
-    ) -> bool:
+    def metastable_transition_gate(self, pwpe: float, d_pwpe_dt: float) -> bool:
         """
         Detect metastable phase transitions.
 
@@ -357,9 +354,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
         Returns:
             True if metastable transition detected (should hold)
         """
-        gate_input = torch.tensor([pwpe, d_pwpe_dt], dtype=torch.float32).to(
-            self.device
-        )
+        gate_input = torch.tensor([pwpe, d_pwpe_dt], dtype=torch.float32).to(self.device)
         gate_input = self.dropout(gate_input)
         gate_value = torch.sigmoid(self.pwpe_threshold_base * gate_input.mean())
         return gate_value.item() > 0.5
@@ -401,9 +396,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
 
         return y
 
-    def decide_action(
-        self, data: pd.DataFrame, prev_pwpe: float = 0.0
-    ) -> int:
+    def decide_action(self, data: pd.DataFrame, prev_pwpe: float = 0.0) -> int:
         """
         Decide trading action based on market data.
 
@@ -425,7 +418,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
 
             # Action selection with Gumbel-Softmax
             action_logits = self.actor(state)
-            
+
             if pwpe.item() > 0.15:
                 # High uncertainty: explore with higher temperature and stochasticity
                 action_sample = self.gumbel_softmax_sample(

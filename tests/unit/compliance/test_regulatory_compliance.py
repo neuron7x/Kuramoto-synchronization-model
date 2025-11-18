@@ -168,9 +168,7 @@ def test_validator_requires_audit_frequency(sample_metadata: dict[str, object]) 
     assert any("Audit cadence" in issue.message for issue in report.issues)
 
 
-def test_validator_accepts_string_remediation_reference(
-    sample_metadata: dict[str, object]
-) -> None:
+def test_validator_accepts_string_remediation_reference(sample_metadata: dict[str, object]) -> None:
     """Plain string remediation notes should count as both alignment and reference."""
 
     sample_metadata["remediation_alignment"] = " aligned "
@@ -181,9 +179,7 @@ def test_validator_accepts_string_remediation_reference(
     assert report.metadata["user_request_process"].startswith("https://")
 
 
-def test_validator_skips_attested_privacy_requirements(
-    sample_metadata: dict[str, object]
-) -> None:
+def test_validator_skips_attested_privacy_requirements(sample_metadata: dict[str, object]) -> None:
     """Explicit GDPR/CCPA flags should satisfy the regulatory checklist."""
 
     sample_metadata["privacy_regulations"] = []
@@ -194,7 +190,7 @@ def test_validator_skips_attested_privacy_requirements(
 
 
 def test_validator_flags_missing_confidentiality_and_license(
-    sample_metadata: dict[str, object]
+    sample_metadata: dict[str, object],
 ) -> None:
     """Absence of key metadata should yield direct validation errors."""
 
@@ -225,10 +221,7 @@ def test_validator_accepts_compliant_metadata(sample_metadata: dict[str, object]
     report = validator.validate(sample_metadata)
     assert report.compliant
     assert report.issues == ()
-    assert (
-        report.metadata["license"]
-        == "TradePulse Proprietary License Agreement (TPLA)"
-    )
+    assert report.metadata["license"] == "TradePulse Proprietary License Agreement (TPLA)"
     assert "GDPR" in report.metadata["privacy_regimes"]
 
 

@@ -68,7 +68,9 @@ class DecisionMetricsExporter:
         metrics = {
             "tail_ES95": self._tail_es(),
             "prop_RED": self._ratio(self._red_decisions, self._decisions),
-            "prop_increase_risk_in_RED": self._ratio(self._red_increase, max(1, self._red_decisions)),
+            "prop_increase_risk_in_RED": self._ratio(
+                self._red_increase, max(1, self._red_decisions)
+            ),
             "avg_alloc_scale": self._ratio(self._alloc_scale_sum, self._decisions),
             "rpe_mean": self._ratio(self._rpe_sum, self._decisions),
         }
@@ -95,4 +97,3 @@ class DecisionMetricsExporter:
         if denom == 0:
             return 0.0
         return float(num) / float(denom)
-

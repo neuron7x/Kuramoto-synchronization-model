@@ -7,6 +7,7 @@ behaviour so unit tests and production telemetry remain predictable.
 It follows a three-tier fallback hierarchy for each bond type and keeps
 track of activation history for observability.
 """
+
 from __future__ import annotations
 
 import logging
@@ -68,9 +69,7 @@ class LinkActivator:
         self.enable_rdma = enable_rdma
         self.enable_crdt = enable_crdt
         self._activation_history: List[Dict[str, Any]] = []
-        logger.debug(
-            "LinkActivator initialised with RDMA=%s, CRDT=%s", enable_rdma, enable_crdt
-        )
+        logger.debug("LinkActivator initialised with RDMA=%s, CRDT=%s", enable_rdma, enable_crdt)
 
     # Public API ---------------------------------------------------------
     def apply(
@@ -217,7 +216,9 @@ class LinkActivator:
             metadata=metadata,
         )
 
-    def _grpc_stream(self, src: str, dst: str, ttl_seconds: Optional[int] = None) -> ActivationResult:
+    def _grpc_stream(
+        self, src: str, dst: str, ttl_seconds: Optional[int] = None
+    ) -> ActivationResult:
         metadata = {"stream_id": f"{src}-{dst}", "ttl_seconds": ttl_seconds}
         return ActivationResult(
             success=True,

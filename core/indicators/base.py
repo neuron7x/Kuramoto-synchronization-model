@@ -45,16 +45,12 @@ class BaseFeature(ABC):
     def transform(self, data: FeatureInput, **kwargs: Any) -> FeatureResult:
         """Produce a feature result from raw input."""
 
-    def transform_with_metrics(
-        self, data: FeatureInput, **kwargs: Any
-    ) -> FeatureResult:
+    def transform_with_metrics(self, data: FeatureInput, **kwargs: Any) -> FeatureResult:
         """Transform with automatic metrics collection."""
         metrics = get_metrics_collector()
         feature_type = kwargs.get("feature_type", "generic")
 
-        with pipeline_span(
-            "features.transform", feature_name=self.name, feature_type=feature_type
-        ):
+        with pipeline_span("features.transform", feature_name=self.name, feature_type=feature_type):
             with metrics.measure_feature_transform(self.name, feature_type):
                 result = self.transform(data, **kwargs)
 
@@ -114,18 +110,14 @@ class FeatureBlock(BaseBlock):
 
         if isinstance(features, str):
             if block_name is not None:
-                raise TypeError(
-                    "features must be an iterable of BaseFeature instances or None"
-                )
+                raise TypeError("features must be an iterable of BaseFeature instances or None")
             block_name = features
             feature_sequence = None
         elif features is None:
             feature_sequence = None
         else:
             if not isinstance(features, Iterable):
-                raise TypeError(
-                    "features must be an iterable of BaseFeature instances or None"
-                )
+                raise TypeError("features must be an iterable of BaseFeature instances or None")
             feature_sequence = tuple(features)
 
         if feature_sequence is not None and any(
@@ -144,28 +136,18 @@ class FeatureBlock(BaseBlock):
             except Exception as exc:  # noqa: BLE001 - we re-raise with context
                 raise FeatureExecutionError(feature=feature, block=self.name, cause=exc) from exc
 
-    def evaluate(
-        self, data: FeatureInput, **kwargs: Any
-    ) -> Mapping[str, FeatureResult]:
+    def evaluate(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, FeatureResult]:
         """Run all features and return their full :class:`FeatureResult`s."""
 
-        return {
-            result.name: result
-            for result in self._iter_results(data, kwargs)
-        }
+        return {result.name: result for result in self._iter_results(data, kwargs)}
 
-    def transform_all(
-        self, data: FeatureInput, **kwargs: Any
-    ) -> Mapping[str, FeatureResult]:
+    def transform_all(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, FeatureResult]:
         """Alias for :meth:`evaluate` to align with the public documentation."""
 
         return self.evaluate(data, **kwargs)
 
     def run(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
-        return {
-            name: result.value
-            for name, result in self.evaluate(data, **kwargs).items()
-        }
+        return {name: result.value for name, result in self.evaluate(data, **kwargs).items()}
 
 
 class ParallelFeatureBlock(BaseBlock):
@@ -208,8 +190,7 @@ class ParallelFeatureBlock(BaseBlock):
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             transform = partial(_process_transform, block_name=self.name)
             futures = [
-                executor.submit(transform, feature, data, kwargs)
-                for feature in self.features
+                executor.submit(transform, feature, data, kwargs) for feature in self.features
             ]
             results = [future.result() for future in futures]
         return {result.name: result.value for result in results}

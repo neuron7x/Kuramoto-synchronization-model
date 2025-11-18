@@ -6,9 +6,7 @@ from execution.risk import KillSwitch
 
 def test_canary_controller_triggers_on_drawdown():
     kill_switch = KillSwitch()
-    config = CanaryConfig(
-        max_relative_drawdown=0.1, grace_period=1, cooldown_seconds=0.0
-    )
+    config = CanaryConfig(max_relative_drawdown=0.1, grace_period=1, cooldown_seconds=0.0)
     controller = CanaryController(
         config, kill_switch=kill_switch, time_source=itertools.count().__next__
     )

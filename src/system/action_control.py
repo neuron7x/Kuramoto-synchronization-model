@@ -86,9 +86,7 @@ class TaclGate:
 
         return TaclDecision(
             allowed=False,
-            reason=(
-                "projected free energy increases without a guaranteed recovery path"
-            ),
+            reason=("projected free energy increases without a guaranteed recovery path"),
         )
 
 
@@ -122,9 +120,7 @@ class Mandate:
     module: str
     allowed_classes: frozenset[ActionClass]
     object_scope: frozenset[str] = frozenset()
-    state_permissions: Mapping[SystemState, StatePermission] = field(
-        default_factory=dict
-    )
+    state_permissions: Mapping[SystemState, StatePermission] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.module or not self.module.strip():
@@ -161,9 +157,7 @@ class Mandate:
         if intent.action_class not in permission.allowed_classes:
             return MandateDecision(
                 allowed=False,
-                reason=(
-                    f"action class {intent.action_class.value} not permitted in state"
-                ),
+                reason=(f"action class {intent.action_class.value} not permitted in state"),
                 engaged_corridor=False,
             )
 
@@ -259,15 +253,17 @@ class AuditLoggerActionSink:
             "tacl_allowed": None if tacl is None else tacl.allowed,
             "tacl_reason": None if tacl is None else tacl.reason,
             "tacl_requires_recovery": None if tacl is None else tacl.requires_recovery,
-            "forecast": None
-            if forecast is None
-            else {
-                "current": forecast.current,
-                "projected": forecast.projected,
-                "recovery_path": forecast.recovery_path,
-                "recovery_window": forecast.recovery_window,
-                "guarantees_descent": forecast.guarantees_descent,
-            },
+            "forecast": (
+                None
+                if forecast is None
+                else {
+                    "current": forecast.current,
+                    "projected": forecast.projected,
+                    "recovery_path": forecast.recovery_path,
+                    "recovery_window": forecast.recovery_window,
+                    "guarantees_descent": forecast.guarantees_descent,
+                }
+            ),
             "allowed": decision.allowed,
             "decision_reason": decision.reason,
         }
@@ -330,9 +326,7 @@ class ActionGovernor:
                 reason = mandate_decision.reason
             else:
                 if forecast is None:
-                    raise ValueError(
-                        "Free energy forecast required for non-passive actions"
-                    )
+                    raise ValueError("Free energy forecast required for non-passive actions")
                 tacl_decision = self._tacl_gate.evaluate(forecast)
                 if tacl_decision.allowed:
                     allowed = True
@@ -372,4 +366,3 @@ __all__ = [
     "TaclDecision",
     "TaclGate",
 ]
-

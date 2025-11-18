@@ -165,16 +165,16 @@ class ArchitectureScanner:
         dependencies: Dict[str, Set[str]] = defaultdict(set)
         reverse_dependencies: Dict[str, Set[str]] = defaultdict(set)
 
-        module_paths = {
-            self._module_name(path): path for path in self._iter_python_files()
-        }
+        module_paths = {self._module_name(path): path for path in self._iter_python_files()}
         module_names = {name for name in module_paths.keys() if name}
 
         for name, path in module_paths.items():
             if not name:
                 continue
             internal, external = self._collect_imports(name, path, module_names)
-            modules[name] = ModuleInfo(name=name, path=path, internal_imports=internal, external_imports=external)
+            modules[name] = ModuleInfo(
+                name=name, path=path, internal_imports=internal, external_imports=external
+            )
             for dep in internal:
                 dependencies[name].add(dep)
                 reverse_dependencies[dep].add(name)
@@ -299,7 +299,9 @@ class ArchitectureScanner:
                 results.add(alias.name)
         return results
 
-    def _detect_cycles(self, modules: Iterable[str], dependencies: Mapping[str, Set[str]]) -> List[List[str]]:
+    def _detect_cycles(
+        self, modules: Iterable[str], dependencies: Mapping[str, Set[str]]
+    ) -> List[List[str]]:
         cycles: List[List[str]] = []
         temp_mark: Set[str] = set()
         perm_mark: Set[str] = set()

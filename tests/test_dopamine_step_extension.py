@@ -118,9 +118,15 @@ def test_dopamine_step_executes_full_pipeline(controller: DopamineController) ->
     assert result["go"] is (expected_da > cfg_before["invigoration_threshold"])
     assert result["no_go"] is (expected_da < cfg_before["no_go_threshold"])
 
-    assert controller.config["learning_rate_v"] == pytest.approx(cfg_before["learning_rate_v"] * 1.01, rel=1e-6)
-    assert controller.config["delta_gain"] == pytest.approx(cfg_before["delta_gain"] * 1.01, rel=1e-6)
-    assert controller.config["base_temperature"] == pytest.approx(cfg_before["base_temperature"] * 0.99, rel=1e-6)
+    assert controller.config["learning_rate_v"] == pytest.approx(
+        cfg_before["learning_rate_v"] * 1.01, rel=1e-6
+    )
+    assert controller.config["delta_gain"] == pytest.approx(
+        cfg_before["delta_gain"] * 1.01, rel=1e-6
+    )
+    assert controller.config["base_temperature"] == pytest.approx(
+        cfg_before["base_temperature"] * 0.99, rel=1e-6
+    )
 
     metrics = controller._captured_metrics  # type: ignore[attr-defined]
     assert "dopamine_temperature" in metrics

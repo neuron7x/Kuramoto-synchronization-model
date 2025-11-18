@@ -33,9 +33,7 @@ _metrics = get_metrics_collector()
 _DEFAULT_MIN_LAG = 2
 _DEFAULT_MAX_LAG = 50
 _DEFAULT_LAGS = np.arange(_DEFAULT_MIN_LAG, _DEFAULT_MAX_LAG + 1, dtype=int)
-_DEFAULT_DESIGN = np.vstack(
-    [np.ones_like(_DEFAULT_LAGS, dtype=float), np.log(_DEFAULT_LAGS)]
-).T
+_DEFAULT_DESIGN = np.vstack([np.ones_like(_DEFAULT_LAGS, dtype=float), np.log(_DEFAULT_LAGS)]).T
 _DEFAULT_PSEUDO = np.linalg.pinv(_DEFAULT_DESIGN)
 
 _NUMBA_AUTO_THRESHOLD = 50_000
@@ -93,6 +91,7 @@ else:  # pragma: no cover - executed when Numba missing
 
 
 if _cuda_available():  # pragma: no cover - requires GPU runtime
+
     @cuda.jit
     def _compute_tau_cuda_kernel(
         x: np.ndarray,

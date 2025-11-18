@@ -165,9 +165,7 @@ class DatabaseMonitor:
         try:
             if dialect.startswith("postgres"):
                 with self._engine.connect() as connection:
-                    result = connection.execute(
-                        text("SELECT pg_database_size(current_database())")
-                    )
+                    result = connection.execute(text("SELECT pg_database_size(current_database())"))
                     value = result.scalar_one()
                 return float(value)
 

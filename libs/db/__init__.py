@@ -62,7 +62,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BenchmarkWorkload": ("libs.db.timeseries.config", "BenchmarkWorkload"),
     "ClickHouseBackupPlanner": ("libs.db.timeseries.clickhouse", "ClickHouseBackupPlanner"),
     "ClickHouseIndex": ("libs.db.timeseries.clickhouse", "ClickHouseIndex"),
-    "ClickHouseIngestionConnector": ("libs.db.timeseries.clickhouse", "ClickHouseIngestionConnector"),
+    "ClickHouseIngestionConnector": (
+        "libs.db.timeseries.clickhouse",
+        "ClickHouseIngestionConnector",
+    ),
     "ClickHouseQueryBuilder": ("libs.db.timeseries.clickhouse", "ClickHouseQueryBuilder"),
     "ClickHouseSchemaManager": ("libs.db.timeseries.clickhouse", "ClickHouseSchemaManager"),
     "ClickHouseSLAManager": ("libs.db.timeseries.clickhouse", "ClickHouseSLAManager"),

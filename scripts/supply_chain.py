@@ -427,7 +427,9 @@ def load_allowlist(path: Path) -> list[AllowlistEntry]:
         try:
             specifier = SpecifierSet(specifier_text) if specifier_text else None
         except Exception as exc:  # pragma: no cover - defensive parsing
-            LOGGER.warning("Ignoring allowlist entry for %s due to invalid specifier: %s", name, exc)
+            LOGGER.warning(
+                "Ignoring allowlist entry for %s due to invalid specifier: %s", name, exc
+            )
             continue
         allow_unpinned = bool(item.get("allow_unpinned", False))
         allow_multiple_versions = bool(item.get("allow_multiple_versions", False))
@@ -546,7 +548,9 @@ def load_license_policy(path: Path) -> LicensePolicy:
             normalized_license, display_license = _normalise_license_value(license_name, alias_map)
             if not normalized_license:
                 LOGGER.debug(
-                    "Unable to normalise license '%s' for exception involving %s", license_name, package
+                    "Unable to normalise license '%s' for exception involving %s",
+                    license_name,
+                    package,
                 )
         reason = raw.get("reason") or "Exception approved by compliance team."
         expires_text = raw.get("expires")
@@ -574,7 +578,9 @@ def load_license_policy(path: Path) -> LicensePolicy:
     )
 
 
-def build_license_inventory(sbom: Mapping[str, Any]) -> dict[tuple[str, str | None], tuple[str, ...]]:
+def build_license_inventory(
+    sbom: Mapping[str, Any],
+) -> dict[tuple[str, str | None], tuple[str, ...]]:
     components = sbom.get("components", []) if isinstance(sbom, Mapping) else []
     inventory: dict[tuple[str, str | None], tuple[str, ...]] = {}
     if not isinstance(components, Iterable):
@@ -773,8 +779,7 @@ def _evaluate_single_dependency_license(
     if unknown:
         message = (
             "Unable to determine licence information for "
-            f"{dependency.name}. Observed tokens: "
-            + ", ".join(sorted({name for name in unknown}))
+            f"{dependency.name}. Observed tokens: " + ", ".join(sorted({name for name in unknown}))
         )
         return LicenseIssue(
             dependency=dependency,

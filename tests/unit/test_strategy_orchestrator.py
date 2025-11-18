@@ -82,9 +82,7 @@ def test_orchestrator_prevents_conflicting_flows() -> None:
         max_parallel=1,
         evaluator_factory=lambda: RecordingEvaluator([], delay=0.05),
     )
-    flow = StrategyFlow(
-        name="alpha", strategies=[_make_strategy("s1")], dataset="alpha"
-    )
+    flow = StrategyFlow(name="alpha", strategies=[_make_strategy("s1")], dataset="alpha")
 
     future = orchestrator.submit_flow(flow)
     with pytest.raises(RuntimeError):
@@ -102,9 +100,7 @@ def test_orchestrator_collects_results_and_flags_raise_on_error() -> None:
         evaluator_factory=lambda: RecordingEvaluator(calls),
     )
     flows = [
-        StrategyFlow(
-            name="alpha", strategies=[_make_strategy("s1")], dataset="payload"
-        ),
+        StrategyFlow(name="alpha", strategies=[_make_strategy("s1")], dataset="payload"),
         StrategyFlow(
             name="beta",
             strategies=[_make_strategy("s2")],
@@ -152,9 +148,7 @@ def test_orchestrator_cancels_pending_flows_after_failure() -> None:
     orchestrator = StrategyOrchestrator(
         max_parallel=1,
         max_queue_size=5,
-        evaluator_factory=lambda: RecordingEvaluator(
-            calls, delay=0.2, fail_on={"fail"}
-        ),
+        evaluator_factory=lambda: RecordingEvaluator(calls, delay=0.2, fail_on={"fail"}),
     )
 
     flows = [
@@ -281,9 +275,7 @@ def test_orchestrator_isolates_evaluator_state() -> None:
     )
 
     flows = [
-        StrategyFlow(
-            name=f"flow-{idx}", strategies=[_make_strategy(f"s{idx}")], dataset=idx
-        )
+        StrategyFlow(name=f"flow-{idx}", strategies=[_make_strategy(f"s{idx}")], dataset=idx)
         for idx in range(3)
     ]
 

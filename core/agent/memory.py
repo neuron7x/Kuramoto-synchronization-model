@@ -17,7 +17,7 @@ implementing a form of case-based reasoning for trading.
 Example:
     >>> from core.agent.memory import StrategyMemory, StrategySignature
     >>> memory = StrategyMemory(capacity=1000)
-    >>> sig = StrategySignature(R=0.95, delta_H=0.05, kappa_mean=0.3, 
+    >>> sig = StrategySignature(R=0.95, delta_H=0.05, kappa_mean=0.3,
     ...                         entropy=2.1, instability=0.1)
     >>> memory.store("momentum_strategy", sig, score=0.85)
 """
@@ -80,9 +80,7 @@ class StrategyMemory:
         score: float,
     ) -> None:
         sig = (
-            signature
-            if isinstance(signature, StrategySignature)
-            else StrategySignature(*signature)
+            signature if isinstance(signature, StrategySignature) else StrategySignature(*signature)
         )
         key = sig.key()
         existing_index = next(
@@ -103,9 +101,7 @@ class StrategyMemory:
 
     def cleanup(self, min_score: float = 0.0) -> None:
         self._records = [
-            record
-            for record in self._records
-            if self._decayed_score(record) > min_score
+            record for record in self._records if self._decayed_score(record) > min_score
         ]
 
     def _evict(self) -> None:

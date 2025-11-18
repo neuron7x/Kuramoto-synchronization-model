@@ -80,9 +80,7 @@ def test_parse_args_defaults() -> None:
 
 def test_parse_args_custom_values() -> None:
     """Test that parse_args correctly parses custom arguments."""
-    args = gen_synth_amm_data.parse_args(
-        ["-o", "custom.csv", "-n", "1000", "-s", "42", "-v"]
-    )
+    args = gen_synth_amm_data.parse_args(["-o", "custom.csv", "-n", "1000", "-s", "42", "-v"])
 
     assert args.output == Path("custom.csv")
     assert args.num_samples == 1000
@@ -107,9 +105,7 @@ def test_main_with_verbose_logging(tmp_path: Path) -> None:
     """Test that verbose flag is accepted without error."""
     output_path = tmp_path / "verbose_test.csv"
 
-    exit_code = gen_synth_amm_data.main(
-        ["-o", str(output_path), "-n", "10", "-s", "1", "-v"]
-    )
+    exit_code = gen_synth_amm_data.main(["-o", str(output_path), "-n", "10", "-s", "1", "-v"])
 
     assert exit_code == 0
     assert output_path.exists()

@@ -10,6 +10,7 @@ import requests
 
 DEFAULT_TIMEOUT = 15
 
+
 class HttpClient:
     def __init__(self, base, headers=None, params=None):
         self.base = base.rstrip("/")
@@ -42,18 +43,22 @@ class HttpClient:
         r.raise_for_status()
         return r.json()
 
+
 def _binance_http():
     return HttpClient("https://api.binance.com")
+
 
 def _coinbase_http():
     return HttpClient("https://api.coinbase.com/api/v3")
 
+
 def _kraken_http():
     return HttpClient("https://api.kraken.com/0")
 
+
 def load_adapter_or_http_client(exchange: str):
     """Load an HTTP client for the exchange.
-    
+
     For canary tests, we use simple HTTP clients rather than full adapters
     to avoid credential and instantiation complexity.
     """
@@ -64,6 +69,7 @@ def load_adapter_or_http_client(exchange: str):
     if exchange == "kraken":
         return _kraken_http()
     raise ValueError(f"Unsupported exchange {exchange}")
+
 
 def get_server_time(subject) -> int:
     for name in ("get_server_time", "server_time_ms", "time", "now_ms"):
@@ -82,6 +88,7 @@ def get_server_time(subject) -> int:
             j = subject.get("/public/Time")
             return int(float(j["result"]["unixtime"])) * 1000
     raise RuntimeError("Cannot obtain server time")
+
 
 def get_exchange_info_or_symbols(subject):
     for name in ("get_exchange_info", "exchange_info", "symbols", "list_symbols"):
@@ -109,6 +116,7 @@ def get_exchange_info_or_symbols(subject):
             return {"raw": j, "symbols": symbols}
     raise RuntimeError("Cannot obtain exchange info/symbols")
 
+
 def get_authenticated_balance(subject):
     for name in ("get_balance", "balances", "account_balances", "spot_balance"):
         f = getattr(subject, name, None)
@@ -124,7 +132,11 @@ def get_authenticated_balance(subject):
             query = f"timestamp={ts}&recvWindow=5000"
             sig = hmac.new(secret.encode(), query.encode(), hashlib.sha256).hexdigest()
             headers = {"X-MBX-APIKEY": key}
-            data = subject.get("/api/v3/account", params={"timestamp": ts, "recvWindow": 5000, "signature": sig}, headers=headers)
+            data = subject.get(
+                "/api/v3/account",
+                params={"timestamp": ts, "recvWindow": 5000, "signature": sig},
+                headers=headers,
+            )
             # Remove commission fields to keep response focused on balances
             data.pop("makerCommission", None)
             data.pop("takerCommission", None)
@@ -140,18 +152,29 @@ def get_authenticated_balance(subject):
             method = "GET"
             path = "/api/v3/brokerage/accounts"
             prehash = ts + method + path
-            sig = base64.b64encode(hmac.new(base64.b64decode(secret), prehash.encode(), hashlib.sha256).digest()).decode()
+            sig = base64.b64encode(
+                hmac.new(base64.b64decode(secret), prehash.encode(), hashlib.sha256).digest()
+            ).decode()
             headers = {
                 "CB-ACCESS-KEY": key,
                 "CB-ACCESS-SIGN": sig,
                 "CB-ACCESS-TIMESTAMP": ts,
                 "CB-ACCESS-PASSPHRASE": passphrase,
             }
-            # Use a separate client with the base URL (subject.base points to api.coinbase.com/api/v3)
+  # noqa: E501, Use a separate client with the base URL (subject.base points to api.coinbase.com/api/v3)
             auth_client = HttpClient("https://api.coinbase.com")
             data = auth_client.get(path, headers=headers)
             accounts = data.get("accounts", [])
-            return {"accounts": [{"uuid": a.get("uuid"), "currency": a.get("currency"), "available_balance": a.get("available_balance")} for a in accounts]}
+            return {
+                "accounts": [
+                    {
+                        "uuid": a.get("uuid"),
+                        "currency": a.get("currency"),
+                        "available_balance": a.get("available_balance"),
+                    }
+                    for a in accounts
+                ]
+            }
 
         if subject.base == "https://api.kraken.com/0":
             key = os.getenv("KRAKEN_API_KEY")
@@ -164,7 +187,9 @@ def get_authenticated_balance(subject):
             postdata_str = urlencode(postdata)
             sha256 = hashlib.sha256((nonce + postdata_str).encode()).digest()
             message = path.encode() + sha256
-            sig = base64.b64encode(hmac.new(base64.b64decode(secret), message, hashlib.sha512).digest()).decode()
+            sig = base64.b64encode(
+                hmac.new(base64.b64decode(secret), message, hashlib.sha512).digest()
+            ).decode()
             headers = {
                 "API-Key": key,
                 "API-Sign": sig,

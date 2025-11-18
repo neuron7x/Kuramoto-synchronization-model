@@ -74,7 +74,9 @@ class RicciFlowRebalancer:
 
         candidate = prev + self._config.step_size * gradient
         candidate = _project_simplex(candidate, lower_bound=self._config.minimum_weight)
-        weights = (1.0 - self._config.turnover_penalty) * candidate + self._config.turnover_penalty * prev
+        weights = (
+            1.0 - self._config.turnover_penalty
+        ) * candidate + self._config.turnover_penalty * prev
         weights = _project_simplex(weights, lower_bound=self._config.minimum_weight)
 
         objective = (
@@ -156,4 +158,3 @@ def _project_simplex(vector: Iterable[float], *, lower_bound: float = 0.0) -> np
     # numerical guard in case of small floating-point drift
     projected /= projected.sum()
     return projected
-

@@ -73,6 +73,8 @@ class CFGWO:
         best_score = float(self.objective(best))
         return best, best_score
 
-    def _rank(self, wolves: np.ndarray, fitness: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _rank(
+        self, wolves: np.ndarray, fitness: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         indices = np.argsort(fitness)
         return wolves[indices[0]], wolves[indices[1]], wolves[indices[2]]

@@ -43,9 +43,9 @@ def _single_document(path: Path) -> dict[str, object]:
 def test_kustomize_overlays_include_logging_addon(overlay_path: Path) -> None:
     doc = _single_document(overlay_path)
     resources: Iterable[str] = doc.get("resources", [])  # type: ignore[assignment]
-    assert "../../addons/logging" in set(resources), (
-        f"{overlay_path} must include the centralized logging addon"
-    )
+    assert "../../addons/logging" in set(
+        resources
+    ), f"{overlay_path} must include the centralized logging addon"
 
 
 def test_logging_addon_kustomization_wires_configmaps() -> None:
@@ -158,9 +158,7 @@ def test_filebeat_kubernetes_config_filters_tradepulse_workloads() -> None:
     processors = input_config["processors"]
     drop_event = next(proc for proc in processors if "drop_event" in proc)
     filter_condition = drop_event["drop_event"]["when"]["not"]["equals"]
-    assert (
-        filter_condition["kubernetes.labels.app_kubernetes_io/part-of"] == "tradepulse"
-    )
+    assert filter_condition["kubernetes.labels.app_kubernetes_io/part-of"] == "tradepulse"
 
     add_fields = next(proc for proc in processors if "add_fields" in proc)
     tradepulse_fields = add_fields["add_fields"]["fields"]
@@ -182,11 +180,11 @@ def test_backend_deployments_emit_filebeat_hints(deployment_path: Path) -> None:
 
 
 def test_logstash_pipeline_prefers_api_key_authentication() -> None:
-    pipeline_source = (
-        REPO_ROOT / "observability/logstash/pipeline/logstash.conf"
-    ).read_text(encoding="utf-8")
-    api_key_condition = "if \"${ELASTICSEARCH_API_KEY}\" != \"\""
-    username_condition = "else if \"${ELASTICSEARCH_USERNAME}\" != \"\""
+    pipeline_source = (REPO_ROOT / "observability/logstash/pipeline/logstash.conf").read_text(
+        encoding="utf-8"
+    )
+    api_key_condition = 'if "${ELASTICSEARCH_API_KEY}" != ""'
+    username_condition = 'else if "${ELASTICSEARCH_USERNAME}" != ""'
     assert pipeline_source.index(api_key_condition) < pipeline_source.index(username_condition)
 
     assert "stdout" in pipeline_source, "Logstash pipeline must keep stdout debugging output"

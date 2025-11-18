@@ -251,9 +251,7 @@ def init_repo(name: str, license_id="MIT", include_ci=True, include_bazel=True):
 
     (root / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
     (root / "README.md").write_text(ROOT_README.format(name=name), encoding="utf-8")
-    (root / "LICENSE").write_text(
-        LICENSES.get(license_id, LICENSES["MIT"]), encoding="utf-8"
-    )
+    (root / "LICENSE").write_text(LICENSES.get(license_id, LICENSES["MIT"]), encoding="utf-8")
     (root / "docs" / "spec.md").write_text(SPEC_TEXT, encoding="utf-8")
 
     if include_ci:
@@ -266,9 +264,7 @@ def init_repo(name: str, license_id="MIT", include_ci=True, include_bazel=True):
         (root / ".github" / "workflows" / "complexity-gate.yml").write_text(
             COMPLEXITY_GATE, encoding="utf-8"
         )
-        (root / ".github" / "workflows" / "perf-gate.yml").write_text(
-            PERF_GATE, encoding="utf-8"
-        )
+        (root / ".github" / "workflows" / "perf-gate.yml").write_text(PERF_GATE, encoding="utf-8")
 
     if include_bazel:
         (root / "WORKSPACE").write_text(

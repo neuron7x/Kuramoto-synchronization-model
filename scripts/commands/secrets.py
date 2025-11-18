@@ -30,9 +30,13 @@ def build_parser(subparsers: _SubParsersAction[object]) -> None:
 
 
 def _configure_issue_dynamic(parser: ArgumentParser) -> None:
-    parser.add_argument("--address", required=True, help="Vault base URL (e.g. https://vault.service:8200)")
+    parser.add_argument(
+        "--address", required=True, help="Vault base URL (e.g. https://vault.service:8200)"
+    )
     parser.add_argument("--namespace", default=None, help="Optional Vault namespace")
-    parser.add_argument("--mount", default="database", help="Secret engine mount path (default: database)")
+    parser.add_argument(
+        "--mount", default="database", help="Secret engine mount path (default: database)"
+    )
     parser.add_argument("--role", required=True, help="Dynamic credential role name")
     parser.add_argument(
         "--auth-method",
@@ -175,4 +179,3 @@ def handle_issue_dynamic(args: object) -> int:
     finally:
         if client is not None:
             client.close()
-

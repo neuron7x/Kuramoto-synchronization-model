@@ -198,11 +198,7 @@ class AdaptiveRiskManager:
 
         # Sortino Ratio
         downside_returns = returns[returns < 0]
-        downside_std = (
-            np.std(downside_returns, ddof=1)
-            if len(downside_returns) > 1
-            else volatility
-        )
+        downside_std = np.std(downside_returns, ddof=1) if len(downside_returns) > 1 else volatility
         sortino_ratio = mean_return / downside_std if downside_std > 0 else 0.0
 
         # Maximum Drawdown
@@ -264,8 +260,7 @@ class AdaptiveRiskManager:
         position_limit = PositionLimit(
             symbol=symbol,
             max_position_size=base_position_size * multiplier,
-            max_leverage=2.0
-            / (1.0 + annual_vol),  # Менше плече при високій волатильності
+            max_leverage=2.0 / (1.0 + annual_vol),  # Менше плече при високій волатильності
             stop_loss_pct=stop_loss_pct,
             take_profit_pct=stop_loss_pct * 2.0,  # 2:1 reward-to-risk
         )
@@ -323,17 +318,13 @@ class AdaptiveRiskManager:
             Об'єкт PortfolioRisk
         """
         # Розрахунок загальної експозиції
-        total_exposure = sum(
-            abs(qty * prices.get(sym, 0.0)) for sym, qty in positions.items()
-        )
+        total_exposure = sum(abs(qty * prices.get(sym, 0.0)) for sym, qty in positions.items())
 
         # Максимальна дозволена експозиція
         max_exposure = self.base_capital * 2.0  # 200% з урахуванням плеча
 
         # Відсоток використання
-        utilization_pct = (
-            (total_exposure / max_exposure) * 100 if max_exposure > 0 else 0.0
-        )
+        utilization_pct = (total_exposure / max_exposure) * 100 if max_exposure > 0 else 0.0
 
         # Визначення рівня ризику
         if utilization_pct < 30:
@@ -397,9 +388,7 @@ class AdaptiveRiskManager:
             # Динамічна адаптація мультиплікатора волатильності
             # При високій волатильності зменшуємо розмір позицій
             base_vol = 0.01  # 1% денна волатільність як базова
-            self._volatility_multiplier = min(
-                1.5, max(0.5, base_vol / (volatility + 1e-8))
-            )
+            self._volatility_multiplier = min(1.5, max(0.5, base_vol / (volatility + 1e-8)))
 
     def get_risk_summary(self) -> Dict:
         """

@@ -202,10 +202,13 @@ def test_inventory_manager_respects_buffers_and_costs() -> None:
     snapshot, plan = manager.propose_rebalance("BTCUSDT", targets)
     assert plan is not None
     assert len(plan.transfers) == 2
-    amounts = {(
-        leg.source_exchange,
-        leg.target_exchange,
-    ): leg for leg in plan.transfers}
+    amounts = {
+        (
+            leg.source_exchange,
+            leg.target_exchange,
+        ): leg
+        for leg in plan.transfers
+    }
     first_leg = amounts[("EX1", "EX3")]
     assert first_leg.amount == Decimal("3")
     assert first_leg.unit_cost == Decimal("0.03")
@@ -219,7 +222,4 @@ def test_inventory_manager_raises_for_unknown_symbol() -> None:
     ledger = _build_ledger()
     manager = InventoryManager(ledger, {"ETHUSDT": ("ETH", "USDT")})
     with pytest.raises(InventoryError):
-        manager.propose_rebalance(
-            "BTCUSDT", {"EX1": InventoryTarget(target_weight=Decimal("1"))}
-        )
-
+        manager.propose_rebalance("BTCUSDT", {"EX1": InventoryTarget(target_weight=Decimal("1"))})

@@ -47,9 +47,7 @@ class _SetWithTTLClient:
     def get(self, key: str):  # pragma: no cover - simple delegation
         return self.payloads.get(key)
 
-    def set(
-        self, key: str, value: bytes
-    ) -> None:  # pragma: no cover - defensive fallback
+    def set(self, key: str, value: bytes) -> None:  # pragma: no cover - defensive fallback
         self.payloads[key] = value
 
     def delete(self, key: str) -> None:  # pragma: no cover - defensive fallback
@@ -141,9 +139,7 @@ def test_sqlite_encryption_config_validates_identifiers() -> None:
         SQLiteEncryptionConfig(key_id=too_long, key_material="secret")
 
     with pytest.raises(ValueError, match="fallback key identifiers cannot be empty"):
-        SQLiteEncryptionConfig(
-            key_id="v1", key_material="secret", fallback_keys={"": b"a"}
-        )
+        SQLiteEncryptionConfig(key_id="v1", key_material="secret", fallback_keys={"": b"a"})
 
     with pytest.raises(ValueError, match="fallback key identifiers must not exceed"):
         SQLiteEncryptionConfig(
@@ -280,9 +276,7 @@ def test_redis_online_store_rejects_conflicting_client_arguments() -> None:
             return InMemoryKeyValueClient()
 
     with pytest.raises(FeatureStoreConfigurationError):
-        RedisOnlineFeatureStore(
-            client=InMemoryKeyValueClient(), client_config=_StubConfig()
-        )
+        RedisOnlineFeatureStore(client=InMemoryKeyValueClient(), client_config=_StubConfig())
 
 
 def test_redis_sync_orders_columns_for_append(sample_frame: pd.DataFrame) -> None:
@@ -320,9 +314,7 @@ def test_redis_load_applies_retention_and_persists() -> None:
     client = _TrackingClient()
     clock = _TestClock(pd.Timestamp("2024-01-01T01:00:00", tz=UTC))
     policy = RetentionPolicy(ttl=pd.Timedelta(minutes=10))
-    store = RedisOnlineFeatureStore(
-        client=client, retention_policy=policy, clock=clock.now
-    )
+    store = RedisOnlineFeatureStore(client=client, retention_policy=policy, clock=clock.now)
     frame = pd.DataFrame(
         {
             "entity_id": ["a", "b"],
@@ -421,9 +413,7 @@ def test_online_store_append_concatenates_and_validates(
     assert report.hash_differs is False
 
 
-def test_online_store_append_without_existing(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_online_store_append_without_existing(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     store = OnlineFeatureStore(tmp_path)
     report = store.sync("demo.view", sample_frame, mode="append", validate=False)
     assert report.offline_rows == sample_frame.shape[0]
@@ -455,22 +445,16 @@ def test_online_store_sync_rejects_mismatched_columns(
     store = OnlineFeatureStore(tmp_path)
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
     with pytest.raises(ValueError):
-        store.sync(
-            "demo.view", sample_frame.assign(extra=1), mode="append", validate=False
-        )
+        store.sync("demo.view", sample_frame.assign(extra=1), mode="append", validate=False)
 
 
-def test_online_store_sync_rejects_invalid_mode(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_online_store_sync_rejects_invalid_mode(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     store = OnlineFeatureStore(tmp_path)
     with pytest.raises(ValueError, match="mode"):
         store.sync("demo.view", sample_frame, mode="invalid", validate=False)  # type: ignore[arg-type]
 
 
-def test_online_store_append_empty_delta(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_online_store_append_empty_delta(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     store = OnlineFeatureStore(tmp_path)
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
     empty = sample_frame.iloc[0:0]
@@ -478,9 +462,7 @@ def test_online_store_append_empty_delta(
     assert report.online_rows == 0
 
 
-def test_online_store_purge_removes_artifacts(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_online_store_purge_removes_artifacts(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     store = OnlineFeatureStore(tmp_path)
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
     assert store.load("demo.view").empty is False
@@ -523,9 +505,7 @@ def test_sqlite_store_purge_and_missing_load(
     sample_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     assert store.load("missing").empty
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
     store.purge("demo.view")
@@ -570,9 +550,7 @@ def test_sqlite_sync_rejects_invalid_mode(
     sample_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     with pytest.raises(ValueError, match="mode"):
         store.sync("demo.view", sample_frame, mode="invalid", validate=False)  # type: ignore[arg-type]
 
@@ -582,9 +560,7 @@ def test_sqlite_append_without_existing(
     sample_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     report = store.sync("demo.view", sample_frame, mode="append", validate=False)
     assert report.offline_rows == sample_frame.shape[0]
 
@@ -594,9 +570,7 @@ def test_sqlite_append_empty_delta(
     sample_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
     empty = sample_frame.iloc[0:0]
     report = store.sync("demo.view", empty, mode="append", validate=False)
@@ -609,9 +583,7 @@ def test_sqlite_store_requires_encryption(tmp_path: Path) -> None:
 
 
 def test_sqlite_envelope_plaintext_handling() -> None:
-    strict = _SQLiteEncryptionEnvelope(
-        SQLiteEncryptionConfig(key_id="v1", key_material="alpha")
-    )
+    strict = _SQLiteEncryptionEnvelope(SQLiteEncryptionConfig(key_id="v1", key_material="alpha"))
     with pytest.raises(FeatureStoreConfigurationError):
         strict.decrypt(b"plaintext")
 
@@ -626,9 +598,7 @@ def test_sqlite_envelope_plaintext_handling() -> None:
 
 
 def test_sqlite_envelope_validates_structure() -> None:
-    envelope = _SQLiteEncryptionEnvelope(
-        SQLiteEncryptionConfig(key_id="v1", key_material="alpha")
-    )
+    envelope = _SQLiteEncryptionEnvelope(SQLiteEncryptionConfig(key_id="v1", key_material="alpha"))
 
     with pytest.raises(FeatureStoreConfigurationError, match="header is truncated"):
         envelope.decrypt(_ENVELOPE_PREFIX)
@@ -641,9 +611,7 @@ def test_sqlite_envelope_validates_structure() -> None:
 
 
 def test_sqlite_envelope_unknown_key_identifier() -> None:
-    envelope = _SQLiteEncryptionEnvelope(
-        SQLiteEncryptionConfig(key_id="v1", key_material="alpha")
-    )
+    envelope = _SQLiteEncryptionEnvelope(SQLiteEncryptionConfig(key_id="v1", key_material="alpha"))
     payload = envelope.encrypt(b"secret")
     header_len = len(_ENVELOPE_PREFIX)
     key_len = payload[header_len]
@@ -658,9 +626,7 @@ def test_sqlite_payload_is_encrypted(
     sample_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
     with sqlite3.connect(tmp_path / "store.db") as connection:
         payload = connection.execute(
@@ -676,9 +642,7 @@ def test_sqlite_store_fallback_key(
     sample_frame: pd.DataFrame,
     sqlite_encryption_config: SQLiteEncryptionConfig,
 ) -> None:
-    store = SQLiteOnlineFeatureStore(
-        tmp_path / "store.db", encryption=sqlite_encryption_config
-    )
+    store = SQLiteOnlineFeatureStore(tmp_path / "store.db", encryption=sqlite_encryption_config)
     store.sync("demo.view", sample_frame, mode="overwrite", validate=False)
 
     rotated = SQLiteEncryptionConfig(
@@ -709,17 +673,13 @@ def test_sqlite_reencrypt_payloads(tmp_path: Path, sample_frame: pd.DataFrame) -
     pd.testing.assert_frame_equal(loaded, sample_frame.reset_index(drop=True))
 
 
-def test_sqlite_reencrypt_from_plaintext(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_sqlite_reencrypt_from_plaintext(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     path = tmp_path / "store.db"
     with sqlite3.connect(path) as connection:
         connection.execute(
             "CREATE TABLE IF NOT EXISTS feature_views (name TEXT PRIMARY KEY, payload BLOB)"
         )
-        payload = sample_frame.to_json(
-            orient="table", index=False, date_unit="ns"
-        ).encode("utf-8")
+        payload = sample_frame.to_json(orient="table", index=False, date_unit="ns").encode("utf-8")
         connection.execute(
             "REPLACE INTO feature_views (name, payload) VALUES (?, ?)",
             ("demo.view", payload),
@@ -748,9 +708,7 @@ def test_sqlite_reencrypt_missing_file(tmp_path: Path) -> None:
         )
 
 
-def test_sqlite_reencrypt_creates_backup(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_sqlite_reencrypt_creates_backup(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     original = SQLiteEncryptionConfig(key_id="v1", key_material="alpha")
     rotated = SQLiteEncryptionConfig(key_id="v2", key_material="beta")
     path = tmp_path / "store.db"
@@ -788,9 +746,7 @@ def test_sqlite_reencrypt_rejects_non_bytes_payload(tmp_path: Path) -> None:
         )
 
 
-def test_offline_validator_non_enforcing(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_offline_validator_non_enforcing(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     offline_path = tmp_path / "offline"
     write_dataframe(sample_frame, offline_path, allow_json_fallback=True)
     validator = OfflineStoreValidator(
@@ -817,9 +773,7 @@ def test_offline_validator_rejects_non_positive_interval(
         )
 
 
-def test_delta_and_iceberg_sources_roundtrip(
-    tmp_path: Path, sample_frame: pd.DataFrame
-) -> None:
+def test_delta_and_iceberg_sources_roundtrip(tmp_path: Path, sample_frame: pd.DataFrame) -> None:
     delta_path = tmp_path / "delta"
     iceberg_path = tmp_path / "iceberg"
     write_dataframe(sample_frame, delta_path, allow_json_fallback=True)

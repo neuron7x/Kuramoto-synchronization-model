@@ -1,4 +1,5 @@
 """SMT-based proof of bounded free energy growth."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -86,7 +87,9 @@ def run_proof(output_path: Optional[Path] = None) -> ProofResult:
     ]
 
     if status == unsat:
-        certificate_lines.append("Result: UNSAT – no unbounded growth exists under the transition rules.")
+        certificate_lines.append(
+            "Result: UNSAT – no unbounded growth exists under the transition rules."
+        )
     elif status == sat:
         certificate_lines.append("Result: SAT – counterexample exists.")
         model = solver.model()

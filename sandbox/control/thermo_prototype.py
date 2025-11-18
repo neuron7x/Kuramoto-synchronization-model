@@ -346,19 +346,23 @@ def run_backtest_on_synthetic_crises(
 
     # Calculate performance metrics
     true_positives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true != CrisisMode.NORMAL and pred != CrisisMode.NORMAL
     )
     false_positives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true == CrisisMode.NORMAL and pred != CrisisMode.NORMAL
     )
     true_negatives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true == CrisisMode.NORMAL and pred == CrisisMode.NORMAL
     )
     false_negatives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true != CrisisMode.NORMAL and pred == CrisisMode.NORMAL
     )
 
@@ -375,11 +379,7 @@ def run_backtest_on_synthetic_crises(
         if (true_positives + false_negatives) > 0
         else 0.0
     )
-    f1_score = (
-        2 * (precision * recall) / (precision + recall)
-        if (precision + recall) > 0
-        else 0.0
-    )
+    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
 
     false_positive_rate = (
         false_positives / (false_positives + true_negatives)

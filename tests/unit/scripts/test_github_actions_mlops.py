@@ -47,7 +47,9 @@ def test_orchestrate_pipeline_creates_expected_artifacts(pipeline_config: Pipeli
     ).exists(), "registry directory must be created"
 
 
-def test_pipeline_copies_dataset_when_present(tmp_path: Path, pipeline_config: PipelineConfig) -> None:
+def test_pipeline_copies_dataset_when_present(
+    tmp_path: Path, pipeline_config: PipelineConfig
+) -> None:
     dataset = tmp_path / "dataset.csv"
     closes = "\n".join(str(100 + idx * 0.1) for idx in range(80))
     dataset.write_text(f"close\n{closes}\n", encoding="utf-8")
@@ -73,7 +75,6 @@ def test_pipeline_is_deterministic_for_same_inputs(pipeline_config: PipelineConf
     second_summary = orchestrate_pipeline(pipeline_config)
 
     assert first_summary["metrics"] == second_summary["metrics"]
-    assert (
-        _derive_seed(pipeline_config)
-        == _derive_seed(pipeline_config)
+    assert _derive_seed(pipeline_config) == _derive_seed(
+        pipeline_config
     ), "seed generation must be deterministic"

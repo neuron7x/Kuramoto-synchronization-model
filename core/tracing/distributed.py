@@ -61,9 +61,7 @@ def _default_correlation_id() -> str:
     return uuid4().hex
 
 
-_CORRELATION_ID_VAR: ContextVar[str | None] = ContextVar(
-    "tradepulse_correlation_id", default=None
-)
+_CORRELATION_ID_VAR: ContextVar[str | None] = ContextVar("tradepulse_correlation_id", default=None)
 
 _CORRELATION_ID_FACTORY: Callable[[], str] = _default_correlation_id
 
@@ -75,9 +73,7 @@ _BAGGAGE_HEADER_LOWER = _BAGGAGE_HEADER_NAME.lower()
 _DEFAULT_TRACER_NAME = "tradepulse.distributed"
 
 
-_LOCAL_BAGGAGE: ContextVar[Mapping[str, str]] = ContextVar(
-    "tradepulse_local_baggage", default={}
-)
+_LOCAL_BAGGAGE: ContextVar[Mapping[str, str]] = ContextVar("tradepulse_local_baggage", default={})
 
 
 if _TRACE_AVAILABLE:
@@ -104,10 +100,12 @@ if _TRACE_AVAILABLE:
     _DICT_GETTER = _DictGetter()
     _W3C_PROPAGATOR = TraceContextTextMapPropagator()
     _BAGGAGE_PROPAGATOR = BaggagePropagator()
-    _GLOBAL_PROPAGATOR = CompositeTextMapPropagator([
-        _W3C_PROPAGATOR,
-        _BAGGAGE_PROPAGATOR,
-    ])
+    _GLOBAL_PROPAGATOR = CompositeTextMapPropagator(
+        [
+            _W3C_PROPAGATOR,
+            _BAGGAGE_PROPAGATOR,
+        ]
+    )
 else:  # pragma: no cover - tracing stack unavailable
     _DICT_SETTER = _DICT_GETTER = None  # type: ignore[assignment]
     _W3C_PROPAGATOR = None  # type: ignore[assignment]
@@ -449,11 +447,7 @@ def activate_distributed_context(
 
     trace_token = None
     baggage_token: Token | None = None
-    if (
-        _TRACE_AVAILABLE
-        and otel_context
-        and context.trace_context is not None
-    ):
+    if _TRACE_AVAILABLE and otel_context and context.trace_context is not None:
         trace_token = otel_context.attach(context.trace_context)
     if context.baggage and (not _TRACE_AVAILABLE or context.trace_context is None):
         baggage_token = _LOCAL_BAGGAGE.set(dict(context.baggage))

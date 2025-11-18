@@ -9,7 +9,9 @@ import os
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, required=False, help="CSV with dd, liq, reg, m_proxy(optional), ret")
+    parser.add_argument(
+        "--data", type=str, required=False, help="CSV with dd, liq, reg, m_proxy(optional), ret"
+    )
     parser.add_argument("--out", type=str, default="artifacts/calibration.json")
     args = parser.parse_args()
 

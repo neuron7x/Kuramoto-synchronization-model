@@ -22,9 +22,12 @@ class NeuroTradePulseConfig:
     - min_confidence: gate below which actions are suppressed (social-stress control analogue).
     - negative_curvature_gate: if static Ricci curvature is too negative, actions are suppressed.
     - warmup: first N samples return 0 (avoid early noise while composite stabilises).
-    - motivation_scale: scales the modulation effect of the motivation signal on the action sign.
-    - motivation_threshold: minimum absolute motivation value required for action; below this, signals suppressed.
-    - state_scaling_factor: scaling factor applied to state vectors in hidden state construction.
+    - motivation_scale: scales the modulation effect of the motivation signal on the
+      action sign.
+    - motivation_threshold: minimum absolute motivation value required for action;
+      below this, signals suppressed.
+    - state_scaling_factor: scaling factor applied to state vectors in hidden state
+      construction.
     """
 
     discount_rate: float = 0.95
@@ -76,13 +79,17 @@ class NeuroTradePulseStrategy:
             delta = np.zeros_like(state_vec)
         else:
             delta = state_vec - prev
-        return np.vstack([
-            state_vec,
-            self.cfg.state_scaling_factor * state_vec,
-            np.tanh(delta),
-        ])
+        return np.vstack(
+            [
+                state_vec,
+                self.cfg.state_scaling_factor * state_vec,
+                np.tanh(delta),
+            ]
+        )
 
-    def _gate_and_modulate(self, sig: CompositeSignal, state_vec: np.ndarray, hidden: np.ndarray) -> float:
+    def _gate_and_modulate(
+        self, sig: CompositeSignal, state_vec: np.ndarray, hidden: np.ndarray
+    ) -> float:
         # Base decision from composite
         base = float(np.sign(sig.entry_signal)) if np.isfinite(sig.entry_signal) else 0.0
 
@@ -110,7 +117,9 @@ class NeuroTradePulseStrategy:
 
         return float(np.sign(base * (1.0 + self.cfg.motivation_scale * m))) if base != 0.0 else 0.0
 
-    def generate_signals(self, bars: pd.DataFrame, price_col: str = "close", volume_col: str = "volume") -> pd.Series:
+    def generate_signals(
+        self, bars: pd.DataFrame, price_col: str = "close", volume_col: str = "volume"
+    ) -> pd.Series:
         """Return a series of actions (+1/0/−1) aligned to bars.index.
 
         Notes:

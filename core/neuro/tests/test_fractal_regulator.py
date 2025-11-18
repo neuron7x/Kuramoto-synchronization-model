@@ -45,9 +45,7 @@ class TestEEPFractalRegulatorInit:
 
     def test_invalid_crisis_threshold(self) -> None:
         """Test that invalid threshold is rejected."""
-        with pytest.raises(
-            ValueError, match="crisis_threshold must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="crisis_threshold must be between 0 and 1"):
             EEPFractalRegulator(crisis_threshold=1.5)
 
     def test_invalid_energy_damping(self) -> None:

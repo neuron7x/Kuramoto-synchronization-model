@@ -141,9 +141,7 @@ class BlueGreenRolloutOrchestrator:
 
     def _monitor_step(self, step: RolloutStep, previous_share: float) -> None:
         start = self._time()
-        deadline = (
-            start + step.max_duration if step.max_duration is not None else None
-        )
+        deadline = start + step.max_duration if step.max_duration is not None else None
 
         while True:
             metrics = self._metrics_provider()

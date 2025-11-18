@@ -111,10 +111,7 @@ def test_a1_action_blocked_when_energy_increases_without_recovery() -> None:
 
     assert decision.allowed is False
     assert decision.tacl is not None and decision.tacl.allowed is False
-    assert (
-        decision.reason
-        == "projected free energy increases without a guaranteed recovery path"
-    )
+    assert decision.reason == "projected free energy increases without a guaranteed recovery path"
     details = _latest_details(store)
     assert details["allowed"] is False
     assert details["tacl_allowed"] is False
@@ -215,10 +212,7 @@ def test_tacl_gate_rejects_non_positive_recovery_window() -> None:
     decision = gate.evaluate(forecast)
 
     assert decision.allowed is False
-    assert (
-        decision.reason
-        == "recovery window must be positive when guarantees_descent is true"
-    )
+    assert decision.reason == "recovery window must be positive when guarantees_descent is true"
 
 
 def test_mandate_rejects_target_outside_object_scope() -> None:

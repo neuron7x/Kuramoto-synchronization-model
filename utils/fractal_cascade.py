@@ -5,6 +5,7 @@ multiplicative cascades and coloured noise series used in adaptive sleep/wake
 scheduling.  The implementation favours clarity over micro-optimisation so it
 can be reused in research notebooks as well as production control loops.
 """
+
 from __future__ import annotations
 
 import numpy as np

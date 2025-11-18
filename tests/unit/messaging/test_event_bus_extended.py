@@ -25,9 +25,7 @@ def stub_aiokafka(monkeypatch):
     """Inject a lightweight aiokafka stub for KafkaEventBus tests."""
 
     class DummyKafkaMessage:
-        def __init__(
-            self, *, key: bytes, value: bytes, headers: list[tuple[str, bytes]]
-        ) -> None:
+        def __init__(self, *, key: bytes, value: bytes, headers: list[tuple[str, bytes]]) -> None:
             self.key = key
             self.value = value
             self.headers = headers
@@ -55,9 +53,7 @@ def stub_aiokafka(monkeypatch):
             key: bytes,
             headers: list[tuple[str, bytes]],
         ) -> None:
-            self.sent.append(
-                {"topic": topic, "value": value, "key": key, "headers": headers}
-            )
+            self.sent.append({"topic": topic, "value": value, "key": key, "headers": headers})
 
     class DummyAIOKafkaConsumer:
         instances: List["DummyAIOKafkaConsumer"] = []
@@ -213,9 +209,7 @@ def stub_nats(monkeypatch):
         dummy_module.latest_client = client
         return client
 
-    dummy_module = type(
-        "nats", (), {"connect": connect, "DummyNATSMessage": DummyNATSMessage}
-    )
+    dummy_module = type("nats", (), {"connect": connect, "DummyNATSMessage": DummyNATSMessage})
     monkeypatch.setitem(sys.modules, "nats", dummy_module)
     try:
         yield dummy_module
@@ -224,9 +218,7 @@ def stub_nats(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_kafka_start_and_stop_initialises_producer(
-    stub_aiokafka, kafka_tls
-) -> None:
+async def test_kafka_start_and_stop_initialises_producer(stub_aiokafka, kafka_tls) -> None:
     config = EventBusConfig(
         backend=EventBusBackend.KAFKA,
         bootstrap_servers="kafka:9092",
@@ -245,9 +237,7 @@ async def test_kafka_start_and_stop_initialises_producer(
 
 
 @pytest.mark.asyncio
-async def test_kafka_subscribe_processes_message_and_commits(
-    stub_aiokafka, kafka_tls
-) -> None:
+async def test_kafka_subscribe_processes_message_and_commits(stub_aiokafka, kafka_tls) -> None:
     config = EventBusConfig(
         backend=EventBusBackend.KAFKA,
         bootstrap_servers="kafka:9092",
@@ -266,9 +256,7 @@ async def test_kafka_subscribe_processes_message_and_commits(
         ("content_type", b"application/avro"),
         ("occurred_at", b"2024-01-01T00:00:00"),
     ]
-    message = stub_aiokafka.DummyKafkaMessage(
-        key=b"AAPL", value=b"payload", headers=headers
-    )
+    message = stub_aiokafka.DummyKafkaMessage(key=b"AAPL", value=b"payload", headers=headers)
     stub_aiokafka.AIOKafkaConsumer.queued_messages = [message]
 
     received: list[EventEnvelope] = []
@@ -457,12 +445,8 @@ def test_envelope_serialisation_round_trip(stub_aiokafka) -> None:
         schema_version="3.0.0",
         headers={"extra": "value"},
     )
-    headers = [
-        (key, value.encode("utf-8")) for key, value in envelope.as_message().items()
-    ]
-    message = stub_aiokafka.DummyKafkaMessage(
-        key=b"AAPL", value=b"payload", headers=headers
-    )
+    headers = [(key, value.encode("utf-8")) for key, value in envelope.as_message().items()]
+    message = stub_aiokafka.DummyKafkaMessage(key=b"AAPL", value=b"payload", headers=headers)
     reconstructed = _envelope_from_kafka_message(message)
     assert reconstructed.event_id == envelope.event_id
     assert reconstructed.headers["extra"] == "value"

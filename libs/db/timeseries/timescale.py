@@ -50,19 +50,22 @@ class TimescaleSchemaManager:
     def create_table_sql(self) -> str:
         columns = [f"{self.schema.timestamp_column} TIMESTAMPTZ NOT NULL"]
         columns.extend(
-            f"{dimension.name} {self._normalize_type(dimension.data_type)}" + ("" if dimension.nullable else " NOT NULL")
+            f"{dimension.name} {self._normalize_type(dimension.data_type)}"
+            + ("" if dimension.nullable else " NOT NULL")
             for dimension in self.schema.dimensions
         )
-        columns.extend(f"{measure.name} {self._postgres_type(measure.data_type)}" for measure in self.schema.measures)
         columns.extend(
-            f"{column.name} {self._normalize_type(column.data_type)}" + ("" if column.nullable else " NOT NULL")
+            f"{measure.name} {self._postgres_type(measure.data_type)}"
+            for measure in self.schema.measures
+        )
+        columns.extend(
+            f"{column.name} {self._normalize_type(column.data_type)}"
+            + ("" if column.nullable else " NOT NULL")
             for column in self.schema.metadata
         )
         return (
             f"CREATE TABLE IF NOT EXISTS {self.schema.table} ("
-            "\n    "
-            + ",\n    ".join(columns)
-            + "\n);"
+            "\n    " + ",\n    ".join(columns) + "\n);"
         )
 
     def hypertable_sql(self) -> str:
@@ -78,7 +81,7 @@ class TimescaleSchemaManager:
         statements = []
         for dimension in self.schema.dimensions:
             statements.append(
-                f"CREATE INDEX IF NOT EXISTS ON {self.schema.table} ({dimension.name}, {self.schema.timestamp_column} DESC);"
+                f"CREATE INDEX IF NOT EXISTS ON {self.schema.table} ({dimension.name}, {self.schema.timestamp_column} DESC);"  # noqa: E501
             )
         statements.append(
             f"CREATE INDEX IF NOT EXISTS ON {self.schema.table} ({self.schema.timestamp_column});"
@@ -89,7 +92,7 @@ class TimescaleSchemaManager:
         statements: list[str] = []
         if self.retention.warm:
             statements.append(
-                f"ALTER TABLE {self.schema.table} SET (timescaledb.compress, timescaledb.compress_segmentby = '"
+                f"ALTER TABLE {self.schema.table} SET (timescaledb.compress, timescaledb.compress_segmentby = '"  # noqa: E501
                 + ",".join(dimension.name for dimension in self.schema.dimensions)
                 + "');"
             )
@@ -100,10 +103,11 @@ class TimescaleSchemaManager:
         return tuple(statements)
 
     def retention_sql(self) -> str:
-        horizon = self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
+        horizon = (
+            self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
+        )
         return (
-            "SELECT add_retention_policy("
-            f"'{self.schema.table}', {_format_interval(horizon)});"
+            "SELECT add_retention_policy(" f"'{self.schema.table}', {_format_interval(horizon)});"
         )
 
     def continuous_aggregate_sql(self, rollup: RollupMaterialization) -> tuple[str, ...]:
@@ -111,7 +115,10 @@ class TimescaleSchemaManager:
         bucket_select = f"time_bucket({bucket_interval}, {self.schema.timestamp_column}) AS bucket"
         select_columns = [bucket_select]
         select_columns.extend(dimension.name for dimension in self.schema.dimensions)
-        select_columns.extend(f"{aggregation.expression} AS {aggregation.alias}" for aggregation in rollup.aggregations)
+        select_columns.extend(
+            f"{aggregation.expression} AS {aggregation.alias}"
+            for aggregation in rollup.aggregations
+        )
         group_by = ["bucket", *(dimension.name for dimension in self.schema.dimensions)]
         view_name = rollup.materialized_view_name or f"{rollup.name}_cagg"
         definition = (
@@ -123,13 +130,9 @@ class TimescaleSchemaManager:
         refresh = (
             "SELECT add_continuous_aggregate_policy("
             f"'{view_name}',"
-            " start_offset => "
-            + _format_interval(rollup.refresh_lag)
-            + ","
+            " start_offset => " + _format_interval(rollup.refresh_lag) + ","
             " end_offset => INTERVAL '0 seconds',"
-            " schedule_interval => "
-            + _format_interval(rollup.interval)
-            + ");"
+            " schedule_interval => " + _format_interval(rollup.interval) + ");"
         )
         return (definition, refresh)
 
@@ -173,10 +176,14 @@ class TimescaleIngestionConnector:
         columns = self._schema.column_order()
         placeholders = ", ".join(["%s"] * len(columns))
         statement = (
-            f"INSERT INTO {self._schema.table} (" + ", ".join(columns) + f") VALUES ({placeholders})"
+            f"INSERT INTO {self._schema.table} ("
+            + ", ".join(columns)
+            + f") VALUES ({placeholders})"
         )
         with self._connection.cursor() as cursor:
-            cursor.executemany(statement, [tuple(row.get(column) for column in columns) for row in rows])
+            cursor.executemany(
+                statement, [tuple(row.get(column) for column in columns) for row in rows]
+            )
         self._connection.commit()
         return len(rows)
 
@@ -194,11 +201,16 @@ class TimescaleQueryBuilder:
         limit: int = 10_000,
         filters: Mapping[str, str] | None = None,
     ) -> str:
-        source = rollup.materialized_view_name or f"{rollup.name}_cagg" if rollup else self._schema.table
+        source = (
+            rollup.materialized_view_name or f"{rollup.name}_cagg" if rollup else self._schema.table
+        )
         interval = _format_interval(rollup.interval if rollup else timedelta(minutes=1))
         dims = [dimension.name for dimension in self._schema.dimensions]
         filters = filters or {}
-        where_clauses = [f"{self._schema.timestamp_column} >= %(start_ts)s", f"{self._schema.timestamp_column} < %(end_ts)s"]
+        where_clauses = [
+            f"{self._schema.timestamp_column} >= %(start_ts)s",
+            f"{self._schema.timestamp_column} < %(end_ts)s",
+        ]
         where_clauses.extend(f"{key} = %({key})s" for key in filters)
         price_column = self._resolve_measure("price", "last_price", "close")
         volume_column = self._try_resolve_measure("volume", "qty", "quantity")
@@ -256,7 +268,9 @@ class TimescaleSLAManager:
             SLAMetric(
                 name="timescale_ingest_lag_seconds",
                 query=(
-                    "SELECT EXTRACT(EPOCH FROM now() - max(" + self._schema.timestamp_column + ")) * 1000 AS ingest_lag_ms "
+                    "SELECT EXTRACT(EPOCH FROM now() - max("
+                    + self._schema.timestamp_column
+                    + ")) * 1000 AS ingest_lag_ms "
                     f"FROM {self._schema.table}"
                 ),
                 threshold_ms=6_000.0,
@@ -273,12 +287,12 @@ class TimescaleBackupPlanner:
     retention_days: int = 30
 
     def full_backup_command(self) -> str:
-        return f"pg_dump --no-owner --clean --table={self.schema.table} --file=/backups/{self.schema.table}_full.sql"
+        return f"pg_dump --no-owner --clean --table={self.schema.table} --file=/backups/{self.schema.table}_full.sql"  # noqa: E501
 
     def incremental_backup_command(self) -> str:
         return (
             "pg_dump --no-owner --clean --table="
-            f"{self.schema.table} --snapshot=consistent --file=/backups/{self.schema.table}_incremental.sql"
+            f"{self.schema.table} --snapshot=consistent --file=/backups/{self.schema.table}_incremental.sql"  # noqa: E501
         )
 
     def verify_command(self) -> str:

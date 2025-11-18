@@ -84,10 +84,7 @@ class CacheWarmupSpec:
             raise ValueError("max_cold_requests must be non-negative")
         if not 0.0 < self.target_hit_rate <= 1.0:
             raise ValueError("target_hit_rate must be in the (0.0, 1.0] interval")
-        if (
-            self.max_cold_latency_seconds is not None
-            and self.max_cold_latency_seconds <= 0
-        ):
+        if self.max_cold_latency_seconds is not None and self.max_cold_latency_seconds <= 0:
             raise ValueError("max_cold_latency_seconds must be positive when set")
 
 
@@ -151,9 +148,7 @@ class CacheWarmupStatus:
             payload.update(
                 {
                     "warmed_at": self.last_result.warmed_at,
-                    "last_duration_seconds": round(
-                        self.last_result.duration_seconds, 4
-                    ),
+                    "last_duration_seconds": round(self.last_result.duration_seconds, 4),
                     "last_rows": self.last_result.rows,
                     "last_strategy": self.last_result.strategy,
                     "last_detail": self.last_result.detail,
@@ -189,8 +184,7 @@ class CacheWarmupController:
         self._metrics = get_metrics_collector()
         self._min_samples_for_hit_rate = max(1, int(min_samples_for_hit_rate))
         self._statuses: MutableMapping[str, CacheWarmupStatus] = {
-            name: CacheWarmupStatus(spec=spec)
-            for name, spec in self._specs.items()
+            name: CacheWarmupStatus(spec=spec) for name, spec in self._specs.items()
         }
 
     # ------------------------------------------------------------------
@@ -200,9 +194,7 @@ class CacheWarmupController:
 
         return [self.warmup(name, strategy=strategy) for name in self._order]
 
-    def warmup(
-        self, cache_name: str, *, strategy: str = "manual"
-    ) -> CacheWarmupResult:
+    def warmup(self, cache_name: str, *, strategy: str = "manual") -> CacheWarmupResult:
         """Execute the warm-up callable associated with ``cache_name``."""
 
         status = self._get_status(cache_name)
@@ -280,9 +272,7 @@ class CacheWarmupController:
 
         return result
 
-    def _evaluate_readiness(
-        self, spec: CacheWarmupSpec
-    ) -> tuple[bool, str | None]:
+    def _evaluate_readiness(self, spec: CacheWarmupSpec) -> tuple[bool, str | None]:
         probe = spec.readiness_probe
         if probe is None:
             return True, None
@@ -323,9 +313,7 @@ class CacheWarmupController:
         status.stats.cold_latencies.append(max(0.0, float(latency_seconds)))
         percentile = _percentile(status.stats.cold_latencies, 0.95)
         status.cold_latency_p95 = percentile
-        self._metrics.observe_cache_cold_latency(
-            status.spec.name, float(latency_seconds)
-        )
+        self._metrics.observe_cache_cold_latency(status.spec.name, float(latency_seconds))
         self._evaluate_degradations(status)
 
     def record_access(
@@ -381,11 +369,7 @@ class CacheWarmupController:
     def overall_ready(self) -> bool:
         """Return ``True`` when all critical caches are ready."""
 
-        return all(
-            status.ready
-            for status in self._statuses.values()
-            if status.spec.critical
-        )
+        return all(status.ready for status in self._statuses.values() if status.spec.critical)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -402,17 +386,11 @@ class CacheWarmupController:
         if spec.critical and not status.ready:
             reasons.add("not_ready")
 
-        if (
-            status.last_result is not None
-            and not status.last_result.warmed
-        ):
+        if status.last_result is not None and not status.last_result.warmed:
             reasons.add("warmup_failed")
 
         total = status.stats.total_accesses()
-        if (
-            total >= self._min_samples_for_hit_rate
-            and status.hit_rate < spec.target_hit_rate
-        ):
+        if total >= self._min_samples_for_hit_rate and status.hit_rate < spec.target_hit_rate:
             reasons.add("hit_rate")
 
         if (
@@ -439,4 +417,3 @@ __all__ = [
     "CacheWarmupSpec",
     "CacheWarmupStatus",
 ]
-

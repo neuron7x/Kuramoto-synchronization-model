@@ -70,8 +70,9 @@ class ManagedSecret:
                 f"Secret '{config.name}' must provide a fallback value or managed path."
             )
         if config.path is not None or config.resolver is not None:
-            # Attempt an eager refresh so missing files are detected on startup. If the refresh fails but a fallback value is
-            # available we continue using the fallback and log the failure so operators can investigate.
+            # Attempt an eager refresh so missing files are detected on
+            # startup. If the refresh fails but a fallback value is
+  # noqa: E501, available we continue using the fallback and log the failure so operators can investigate.
             try:
                 self._refresh(force=True)
             except SecretManagerError as exc:
@@ -148,9 +149,7 @@ class ManagedSecret:
                 if self._value is not None:
                     self._last_refresh = now
                     return
-                raise SecretManagerError(
-                    f"Secret '{self._config.name}' resolver failed"
-                ) from exc
+                raise SecretManagerError(f"Secret '{self._config.name}' resolver failed") from exc
             if not secret:
                 self._logger.warning(
                     "Managed secret resolver returned empty value",
@@ -159,9 +158,7 @@ class ManagedSecret:
                 if self._value is not None:
                     self._last_refresh = now
                     return
-                raise SecretManagerError(
-                    f"Secret '{self._config.name}' resolved empty value"
-                )
+                raise SecretManagerError(f"Secret '{self._config.name}' resolved empty value")
         try:
             assert secret is not None
             self._ensure_min_length(secret)
@@ -185,7 +182,7 @@ class ManagedSecret:
     def _ensure_min_length(self, secret: str) -> None:
         if len(secret) < self._config.min_length:
             raise SecretManagerError(
-                f"Secret '{self._config.name}' must be at least {self._config.min_length} characters."
+                f"Secret '{self._config.name}' must be at least {self._config.min_length} characters."  # noqa: E501
             )
 
     @property
@@ -235,9 +232,7 @@ class SecretManager:
         self._audit_logger: AuditLogger | None = None
         self._access_controller = access_controller
         if audit_logger is not None and audit_logger_factory is not None:
-            raise ValueError(
-                "Provide either audit_logger or audit_logger_factory, not both"
-            )
+            raise ValueError("Provide either audit_logger or audit_logger_factory, not both")
         if audit_logger is not None:
             self._audit_logger = audit_logger
         elif audit_logger_factory is not None:
@@ -276,13 +271,9 @@ class SecretManager:
                 self._enforce_access(secret)
                 value = secret.get_secret()
             except SecretManagerError:
-                self._audit_operation(
-                    name=name, operation="provider_access", status="error"
-                )
+                self._audit_operation(name=name, operation="provider_access", status="error")
                 raise
-            self._audit_operation(
-                name=name, operation="provider_access", status="success"
-            )
+            self._audit_operation(name=name, operation="provider_access", status="success")
             return value
 
         return _resolver
@@ -290,9 +281,7 @@ class SecretManager:
     def force_refresh(self, name: str) -> None:
         secret = self._secrets.get(name)
         if secret is None:
-            self._audit_operation(
-                name=name, operation="force_refresh", status="missing"
-            )
+            self._audit_operation(name=name, operation="force_refresh", status="missing")
             raise SecretManagerError(f"Unknown secret '{name}'")
         try:
             secret.force_refresh()
@@ -335,9 +324,7 @@ class SecretManager:
         finally:
             setattr(self._audit_state, "active", False)
 
-    def _describe_secret(
-        self, name: str, secret: ManagedSecret | None
-    ) -> dict[str, Any]:
+    def _describe_secret(self, name: str, secret: ManagedSecret | None) -> dict[str, Any]:
         if secret is None:
             return {"name": name, "managed": False}
         metadata = secret.describe()
@@ -376,9 +363,7 @@ _SECRET_CALLER_CONTEXT: ContextVar[dict[str, object]] = ContextVar(
 
 
 @contextmanager
-def secret_caller_context(
-    *, actor: str, ip_address: str, **extra: object
-) -> Iterator[None]:
+def secret_caller_context(*, actor: str, ip_address: str, **extra: object) -> Iterator[None]:
     """Temporarily override the caller context for secret access auditing."""
 
     current = dict(_SECRET_CALLER_CONTEXT.get())

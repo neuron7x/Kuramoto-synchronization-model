@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tradepulse.core.neuro.dopamine.ddm_adapter import DDMAdjustment, adapt_ddm_parameters, ddm_thresholds
+from tradepulse.core.neuro.dopamine.ddm_adapter import (
+    DDMAdjustment,
+    adapt_ddm_parameters,
+    ddm_thresholds,
+)
 
 
 CONFIG = yaml.safe_load(Path("config/dopamine.yaml").read_text(encoding="utf-8"))

@@ -36,9 +36,7 @@ class DriftAssessment:
 class DistributionDriftMonitor:
     """Assess population drift for alternative data feature streams."""
 
-    def __init__(
-        self, *, method: str = "psi", threshold: float = 0.2, bins: int = 10
-    ) -> None:
+    def __init__(self, *, method: str = "psi", threshold: float = 0.2, bins: int = 10) -> None:
         self._method = method.lower()
         if self._method not in {"psi", "ks"}:
             raise ValueError("method must be either 'psi' or 'ks'")
@@ -55,9 +53,7 @@ class DistributionDriftMonitor:
         quantiles = np.linspace(0, 1, self._bins + 1)
         edges = np.unique(np.quantile(reference, quantiles))
         if len(edges) < 2:
-            return DriftAssessment(
-                "psi", 0.0, self._threshold, False, {"bins": len(edges)}
-            )
+            return DriftAssessment("psi", 0.0, self._threshold, False, {"bins": len(edges)})
         ref_hist, _ = np.histogram(reference, bins=edges)
         cur_hist, _ = np.histogram(current, bins=edges)
         ref_pct = np.clip(ref_hist / ref_hist.sum(), 1e-6, None)
@@ -92,9 +88,7 @@ class DistributionDriftMonitor:
             "ks", float(statistic), self._threshold, drifted, {"pvalue": float(pvalue)}
         )
 
-    def assess(
-        self, reference: Iterable[float], current: Iterable[float]
-    ) -> DriftAssessment:
+    def assess(self, reference: Iterable[float], current: Iterable[float]) -> DriftAssessment:
         """Evaluate drift between reference and current samples."""
 
         ref_series = self._ensure_series(reference)
@@ -107,9 +101,7 @@ class DistributionDriftMonitor:
 __all__ = ["DistributionDriftMonitor", "DriftAssessment"]
 
 
-def _ks_2samp_fallback(
-    reference: np.ndarray, current: np.ndarray
-) -> tuple[float, float]:
+def _ks_2samp_fallback(reference: np.ndarray, current: np.ndarray) -> tuple[float, float]:
     """Compute a two-sample KS test using only NumPy primitives.
 
     The implementation mirrors the asymptotic formulation used by SciPy and is

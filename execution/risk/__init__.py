@@ -32,4 +32,3 @@ __all__ = sorted(
         "VolatilityAdjustedSizer",
     }
 )
-

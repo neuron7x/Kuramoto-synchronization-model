@@ -81,8 +81,7 @@ class SocialListeningPipeline:
             for client in self._clients:
                 await _maybe_call(client, "start")
             tasks = [
-                loop.create_task(self._consume(client, external_stop))
-                for client in self._clients
+                loop.create_task(self._consume(client, external_stop)) for client in self._clients
             ]
             if not tasks:
                 await external_stop.wait()
@@ -207,16 +206,12 @@ class SocialListeningPipeline:
         return json.dumps(records, separators=(",", ":")).encode("utf-8")
 
     @staticmethod
-    def _default_snapshot_encoder(
-        snapshot: Mapping[str, dict[str, float]]
-    ) -> bytes:
+    def _default_snapshot_encoder(snapshot: Mapping[str, dict[str, float]]) -> bytes:
         if not snapshot:
             return b"{}"
         normalised: dict[str, dict[str, float]] = {}
         for symbol, metrics in snapshot.items():
-            normalised[symbol] = {
-                key: float(value) for key, value in metrics.items()
-            }
+            normalised[symbol] = {key: float(value) for key, value in metrics.items()}
         return json.dumps(normalised, separators=(",", ":")).encode("utf-8")
 
 

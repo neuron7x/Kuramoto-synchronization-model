@@ -50,9 +50,7 @@ def test_hasbrouck_information_impulse_handles_signed_root() -> None:
         np.dot(transformed, centered_returns)
         / (np.linalg.norm(transformed) * np.linalg.norm(centered_returns))
     )
-    assert hasbrouck_information_impulse(returns, signed_volume) == pytest.approx(
-        expected
-    )
+    assert hasbrouck_information_impulse(returns, signed_volume) == pytest.approx(expected)
 
 
 def test_hasbrouck_information_impulse_zero_when_no_information() -> None:

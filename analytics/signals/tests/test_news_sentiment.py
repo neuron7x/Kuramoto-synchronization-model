@@ -37,7 +37,9 @@ class DummyModel:
                     SentimentLabel.POSITIVE: 0.05,
                 }
                 predictions.append(
-                    DummyPrediction(label=SentimentLabel.NEGATIVE, score=0.8, probabilities=probabilities)
+                    DummyPrediction(
+                        label=SentimentLabel.NEGATIVE, score=0.8, probabilities=probabilities
+                    )
                 )
             else:
                 probabilities = {
@@ -46,13 +48,17 @@ class DummyModel:
                     SentimentLabel.POSITIVE: 0.85,
                 }
                 predictions.append(
-                    DummyPrediction(label=SentimentLabel.POSITIVE, score=0.85, probabilities=probabilities)
+                    DummyPrediction(
+                        label=SentimentLabel.POSITIVE, score=0.85, probabilities=probabilities
+                    )
                 )
         return predictions
 
 
 class DummyPrediction:
-    def __init__(self, *, label: SentimentLabel, score: float, probabilities: dict[SentimentLabel, float]) -> None:
+    def __init__(
+        self, *, label: SentimentLabel, score: float, probabilities: dict[SentimentLabel, float]
+    ) -> None:
         self.label = label
         self.score = score
         self.probabilities = probabilities
@@ -78,7 +84,9 @@ def test_pipeline_scores_articles() -> None:
         ),
     ]
 
-    pipeline = NewsSentimentPipeline(collector=DummyCollector(articles), model=DummyModel(), batch_size=8)
+    pipeline = NewsSentimentPipeline(
+        collector=DummyCollector(articles), model=DummyModel(), batch_size=8
+    )
     scored = pipeline.run(since=datetime(2025, 10, 1, 0, 0, tzinfo=timezone.utc))
 
     assert not scored.empty
@@ -190,7 +198,9 @@ def test_pipeline_deduplicates_articles_by_identifier() -> None:
         ),
     ]
 
-    pipeline = NewsSentimentPipeline(collector=DummyCollector(articles), model=DummyModel(), batch_size=4)
+    pipeline = NewsSentimentPipeline(
+        collector=DummyCollector(articles), model=DummyModel(), batch_size=4
+    )
     scored = pipeline.run(since=datetime(2025, 10, 3, 9, 0, tzinfo=timezone.utc))
 
     assert len(scored) == 1
@@ -246,4 +256,3 @@ def test_aggregate_sentiment_deduplicates_duplicate_articles() -> None:
     expected_signal = (-0.4 + 0.5) / 2
     assert row["sentiment_signal"] == pytest.approx(expected_signal)
     assert row["article_count"] == 2
-

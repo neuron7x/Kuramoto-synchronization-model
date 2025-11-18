@@ -26,14 +26,10 @@ pytestmark = pytest.mark.filterwarnings(
 class _StubPipeline:
     """Lightweight pipeline stub used to bypass the heavy feature pipeline."""
 
-    def __init__(
-        self, transform_fn: Callable[[pd.DataFrame], pd.DataFrame] | None = None
-    ) -> None:
+    def __init__(self, transform_fn: Callable[[pd.DataFrame], pd.DataFrame] | None = None) -> None:
         self._transform_fn = transform_fn or (lambda frame: frame)
 
-    def transform(
-        self, frame: pd.DataFrame
-    ) -> pd.DataFrame:  # pragma: no cover - trivial
+    def transform(self, frame: pd.DataFrame) -> pd.DataFrame:  # pragma: no cover - trivial
         return self._transform_fn(frame)
 
 

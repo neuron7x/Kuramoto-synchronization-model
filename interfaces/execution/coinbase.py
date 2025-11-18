@@ -86,9 +86,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
         else:
             payload = json.dumps(body, separators=(",", ":"))
         message = f"{timestamp}{method.upper()}{request_path}{payload}"
-        digest = hmac.new(
-            creds["API_SECRET"].encode(), message.encode(), hashlib.sha256
-        ).digest()
+        digest = hmac.new(creds["API_SECRET"].encode(), message.encode(), hashlib.sha256).digest()
         signature = base64.b64encode(digest).decode()
         headers.update(
             {
@@ -109,9 +107,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
         if self._signer is None:
             raise CredentialError("Connector must be connected before placing orders")
         if idempotency_key:
-            reconciled = self._idempotency_store.reconcile(
-                idempotency_key, self._reconcile_remote
-            )
+            reconciled = self._idempotency_store.reconcile(idempotency_key, self._reconcile_remote)
             if reconciled is not None:
                 return self._to_order(order, reconciled)
         client_id = idempotency_key or self._generate_client_id()
@@ -156,17 +152,12 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
             raise OrderError(str(exc)) from exc
 
     def fetch_order(self, order_id: str) -> Order:
-        response = self._request(
-            "GET", f"/api/v3/brokerage/orders/historical/{order_id}"
-        )
+        response = self._request("GET", f"/api/v3/brokerage/orders/historical/{order_id}")
         return self._to_order_from_remote(response.json())
 
     def open_orders(self) -> list[Order]:
         response = self._request("GET", "/api/v3/brokerage/orders/historical/best")
-        return [
-            self._to_order_from_remote(item)
-            for item in response.json().get("orders", [])
-        ]
+        return [self._to_order_from_remote(item) for item in response.json().get("orders", [])]
 
     def get_positions(self) -> list[dict[str, Any]]:
         response = self._request("GET", "/api/v3/brokerage/accounts")
@@ -184,9 +175,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
         if not order_id:
             return None
         try:
-            response = self._request(
-                "GET", f"/api/v3/brokerage/orders/historical/{order_id}"
-            )
+            response = self._request("GET", f"/api/v3/brokerage/orders/historical/{order_id}")
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 404:
                 return None
@@ -216,9 +205,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
                 }
                 self._event_queue.put(normalized)
                 handled = True
-            elif event_type in {"snapshot", "balance_update", "account"} or event.get(
-                "balances"
-            ):
+            elif event_type in {"snapshot", "balance_update", "account"} or event.get("balances"):
                 balances: list[dict[str, Any]] = []
                 raw_balances = event.get("balances") or event.get("balance_updates")
                 if isinstance(raw_balances, Mapping):
@@ -229,10 +216,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
                     if not isinstance(entry, Mapping):
                         continue
                     currency = str(
-                        entry.get("currency")
-                        or entry.get("asset")
-                        or entry.get("symbol")
-                        or ""
+                        entry.get("currency") or entry.get("asset") or entry.get("symbol") or ""
                     ).upper()
                     if not currency:
                         continue
@@ -311,9 +295,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
         status = payload.get("status") or payload.get("order_status")
         if status:
             order.status = _STATUS_MAP.get(status.upper(), OrderStatus.PENDING)
-        filled = float(
-            payload.get("filled_size", 0) or payload.get("filled_size_sum", 0) or 0
-        )
+        filled = float(payload.get("filled_size", 0) or payload.get("filled_size_sum", 0) or 0)
         price = payload.get("average_filled_price") or payload.get("avg_price")
         if filled:
             fill_price = float(price) if price else order.price or 0.0
@@ -330,9 +312,7 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
         if not product_id:
             raise OrderError("Coinbase order payload missing product identifier")
         quantity = (
-            payload.get("order_configuration", {})
-            .get("limit_limit_gtc", {})
-            .get("base_size")
+            payload.get("order_configuration", {}).get("limit_limit_gtc", {}).get("base_size")
         )
         if quantity is None:
             quantity = payload.get("filled_size") or payload.get("base_size") or 0

@@ -86,7 +86,9 @@ class StrategyRegistry:
         if name in self._strategies and not override:
             raise ValueError(f"Strategy '{name}' already registered.")
 
-        self._strategies[name] = StrategySpec(name=name, entrypoint=entrypoint, description=description)
+        self._strategies[name] = StrategySpec(
+            name=name, entrypoint=entrypoint, description=description
+        )
 
     def unregister(self, name: str) -> None:
         """Remove a strategy from the registry if present."""
@@ -170,4 +172,3 @@ __all__ = [
     "register_strategy",
     "resolve_strategy",
 ]
-

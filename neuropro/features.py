@@ -12,7 +12,9 @@ import pandas as pd
 class FeatureStore:
     """Streaming feature accumulator."""
 
-    def __init__(self, fracdiff_d: float = 0.4, ofi_window: int = 20, buf_maxlen: int = 600) -> None:
+    def __init__(
+        self, fracdiff_d: float = 0.4, ofi_window: int = 20, buf_maxlen: int = 600
+    ) -> None:
         self.d = fracdiff_d
         self.ofi_window = ofi_window
         self.buf: Deque[dict[str, float]] = deque(maxlen=int(buf_maxlen))

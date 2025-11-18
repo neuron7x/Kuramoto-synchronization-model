@@ -9,7 +9,12 @@ import numpy as np
 import pandas as pd
 
 from .causal import GrangerResult, granger_causality
-from .quantum import QuantumBeliefUpdate, quantum_active_update, quantum_relative_entropy, to_density_matrix
+from .quantum import (
+    QuantumBeliefUpdate,
+    quantum_active_update,
+    quantum_relative_entropy,
+    to_density_matrix,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,4 +226,3 @@ __all__ = [
     "DivergenceOutput",
     "compute_divergence_convergence_phi",
 ]
-

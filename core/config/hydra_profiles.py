@@ -59,8 +59,7 @@ class ExperimentProfileRegistry:
         if profile_name not in self.profiles:
             available = ", ".join(self.names()) or "<none>"
             msg = (
-                f"Unknown experiment profile '{profile_name}'. "
-                f"Available profiles: {available}."
+                f"Unknown experiment profile '{profile_name}'. " f"Available profiles: {available}."
             )
             raise ExperimentProfileError(msg)
 

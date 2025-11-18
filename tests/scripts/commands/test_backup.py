@@ -64,7 +64,9 @@ def test_handle_uses_env_when_missing_database_url(
     assert config.database_url == "postgresql://env@db/tradepulse"
 
 
-def test_handle_missing_database_url(backup_args: argparse.Namespace, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_missing_database_url(
+    backup_args: argparse.Namespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
     backup_args.database_url = None
     monkeypatch.delenv("DATABASE_URL", raising=False)
 

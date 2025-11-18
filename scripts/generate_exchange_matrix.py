@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 
 ADAPTERS_PKG = "execution.adapters"
 
+
 def discover_adapters() -> List[str]:
     try:
         pkg = importlib.import_module(ADAPTERS_PKG)
@@ -18,6 +19,7 @@ def discover_adapters() -> List[str]:
             found.append(name)
     return sorted(found)
 
+
 def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
     try:
         mod = importlib.import_module(mod_name)
@@ -26,10 +28,15 @@ def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
     funcs = {k for k, v in vars(mod).items() if callable(v)}
     caps = {
         "time": any(n in funcs for n in ("get_server_time", "server_time_ms", "time", "now_ms")),
-        "exchangeInfo_or_symbols": any(n in funcs for n in ("get_exchange_info", "exchange_info", "symbols", "list_symbols")),
-        "balance": any(n in funcs for n in ("get_balance", "balances", "account_balances", "spot_balance")),
+        "exchangeInfo_or_symbols": any(
+            n in funcs for n in ("get_exchange_info", "exchange_info", "symbols", "list_symbols")
+        ),
+        "balance": any(
+            n in funcs for n in ("get_balance", "balances", "account_balances", "spot_balance")
+        ),
     }
     return caps
+
 
 def render_markdown(rows: List[Dict[str, Any]]) -> str:
     header = """<!-- AUTO-GENERATED FILE. DO NOT EDIT. -->
@@ -37,10 +44,16 @@ def render_markdown(rows: List[Dict[str, Any]]) -> str:
 
 This document is generated daily by CI.
 """
-    table = ["| Adapter | /time | /exchangeInfo/symbols | Balance (auth) |", "|---|:---:|:---:|:---:|"]
+    table = [
+        "| Adapter | /time | /exchangeInfo/symbols | Balance (auth) |",
+        "|---|:---:|:---:|:---:|",
+    ]
     for r in rows:
-        table.append(f"| `{r['name']}` | {'✅' if r['time'] else '❌'} | {'✅' if r['exchangeInfo_or_symbols'] else '❌'} | {'✅' if r['balance'] else '❌'} |")
+        table.append(
+            f"| `{r['name']}` | {'✅' if r['time'] else '❌'} | {'✅' if r['exchangeInfo_or_symbols'] else '❌'} | {'✅' if r['balance'] else '❌'} |"  # noqa: E501
+        )
     return header + "\n".join(table) + "\n"
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -58,6 +71,7 @@ def main():
     content = render_markdown(rows)
     with open(args.write, "w", encoding="utf-8") as f:
         f.write(content)
+
 
 if __name__ == "__main__":
     main()

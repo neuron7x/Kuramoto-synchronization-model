@@ -45,7 +45,9 @@ def ensure_secure_postgres_uri(uri: str) -> str:
         raise ValueError(msg)
 
     if sslmode not in ALLOWED_POSTGRES_SSLMODES:
-        msg = f"sslmode '{sslmode}' is not permitted; use one of {sorted(ALLOWED_POSTGRES_SSLMODES)}"
+        msg = (
+            f"sslmode '{sslmode}' is not permitted; use one of {sorted(ALLOWED_POSTGRES_SSLMODES)}"
+        )
         raise ValueError(msg)
 
     return uri

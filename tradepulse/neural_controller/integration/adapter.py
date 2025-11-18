@@ -62,9 +62,7 @@ class MarketDataAdapter:
         reg_norm = reg_raw / max(self.reg_thr, self.eps)
         vol_norm = vol_obs / max(self.hist_max_vol, self.eps)
 
-        reward = float(
-            np.tanh((reward_obs - self.risk_free) / max(abs(vol_obs), self.eps))
-        )
+        reward = float(np.tanh((reward_obs - self.risk_free) / max(abs(vol_obs), self.eps)))
 
         var_breach = bool(loss > var_limit)
 

@@ -23,17 +23,13 @@ class _ConstantFeature(BaseFeature):
         super().__init__(name="constant")
         self._value = value
 
-    def transform(
-        self, data, **kwargs
-    ):  # noqa: ANN001 - interface defined by BaseFeature
-        return FeatureResult(
-            name=self.name, value=self._value, metadata={"data_id": id(data)}
-        )
+    def transform(self, data, **kwargs):  # noqa: ANN001 - interface defined by BaseFeature
+        return FeatureResult(name=self.name, value=self._value, metadata={"data_id": id(data)})
 
 
 def test_feature_transform_with_metrics(monkeypatch):
     """Test that feature transformation integrates with metrics collection.
-    
+
     Validates:
     - Metrics collector is called during transformation
     - Feature values are recorded correctly
@@ -64,10 +60,10 @@ def test_feature_transform_with_metrics(monkeypatch):
 
 def test_functional_feature_with_metadata() -> None:
     """Test that FunctionalFeature preserves metadata through transformation.
-    
+
     This test focuses on metadata handling, complementing the test in
     test_indicators_base.py which focuses on callable wrapping behavior.
-    
+
     Validates:
     - Metadata is preserved during transformation
     - Feature name is correctly set

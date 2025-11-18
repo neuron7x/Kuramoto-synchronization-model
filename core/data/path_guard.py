@@ -39,9 +39,7 @@ class DataPathGuard:
             if not root.exists():
                 raise FileNotFoundError(f"Allowed data root does not exist: {root}")
             if not root.is_dir():
-                raise NotADirectoryError(
-                    f"Allowed data root is not a directory: {root}"
-                )
+                raise NotADirectoryError(f"Allowed data root is not a directory: {root}")
             resolved_roots.append(root)
 
         if not resolved_roots:
@@ -56,9 +54,7 @@ class DataPathGuard:
                 try:
                     max_bytes = int(max_bytes_env)
                 except ValueError as exc:  # pragma: no cover - defensive
-                    raise ValueError(
-                        "TRADEPULSE_MAX_CSV_BYTES must be an integer"
-                    ) from exc
+                    raise ValueError("TRADEPULSE_MAX_CSV_BYTES must be an integer") from exc
             else:
                 max_bytes = self._DEFAULT_MAX_BYTES
 
@@ -100,15 +96,11 @@ class DataPathGuard:
         candidate = Path(path).expanduser()
 
         if candidate.is_symlink() and not self._follow_symlinks:
-            raise PermissionError(
-                f"Refusing to read {description} via symlink: {candidate}"
-            )
+            raise PermissionError(f"Refusing to read {description} via symlink: {candidate}")
 
         resolved = candidate.resolve(strict=False)
 
-        if not any(
-            self._is_within_root(resolved, root) for root in self._allowed_roots
-        ):
+        if not any(self._is_within_root(resolved, root) for root in self._allowed_roots):
             allowed = ", ".join(str(root) for root in self._allowed_roots)
             raise PermissionError(
                 f"{description.capitalize()} {candidate} is outside allowed directories: {allowed}"
@@ -123,7 +115,7 @@ class DataPathGuard:
         size = resolved.stat().st_size
         if size > self._max_bytes:
             raise ValueError(
-                f"{description.capitalize()} {resolved} exceeds allowed size {self._max_bytes} bytes (got {size})"
+                f"{description.capitalize()} {resolved} exceeds allowed size {self._max_bytes} bytes (got {size})"  # noqa: E501
             )
 
         return resolved

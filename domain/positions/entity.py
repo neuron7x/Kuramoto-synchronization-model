@@ -52,8 +52,7 @@ class Position:
                 self.entry_price = price
             else:
                 self.entry_price = (
-                    (self.entry_price * abs(previous_qty) + price * quantity)
-                    / total_abs
+                    (self.entry_price * abs(previous_qty) + price * quantity) / total_abs
                     if abs(previous_qty) > 0
                     else price
                 )
@@ -89,9 +88,7 @@ class Position:
             self.unrealized_pnl = 0.0
             return
         direction = 1.0 if self.quantity > 0 else -1.0
-        self.unrealized_pnl = (
-            direction * abs(self.quantity) * (price - self.entry_price)
-        )
+        self.unrealized_pnl = direction * abs(self.quantity) * (price - self.entry_price)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize into primitives for upper layers."""

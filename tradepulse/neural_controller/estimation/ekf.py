@@ -31,9 +31,7 @@ class EMHEKF:
     def _d_proxy(self, obs: Dict[str, float]) -> float:
         return float(
             np.clip(
-                0.5 * obs.get("dd", 0.0)
-                + 0.3 * obs.get("liq", 0.0)
-                + 0.2 * obs.get("reg", 0.0),
+                0.5 * obs.get("dd", 0.0) + 0.3 * obs.get("liq", 0.0) + 0.2 * obs.get("reg", 0.0),
                 0.0,
                 1.0,
             )

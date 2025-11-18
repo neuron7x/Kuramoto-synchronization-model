@@ -55,7 +55,9 @@ def create_engine(settings: ExecutionSettings) -> ExecutionEngine:
     )
 
 
-def create_app(settings: ExecutionSettings | None = None, engine: ExecutionEngine | None = None) -> FastAPI:
+def create_app(
+    settings: ExecutionSettings | None = None, engine: ExecutionEngine | None = None
+) -> FastAPI:
     config = settings or execution_settings()
     execution_engine = engine or create_engine(config)
 

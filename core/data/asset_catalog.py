@@ -153,9 +153,7 @@ class AssetCatalog:
         else:
             existing = self._symbol_index.get(key)
             if existing is not None and existing != asset.asset_id:
-                raise ValueError(
-                    f"symbol {symbol!r} already registered for asset {existing}"
-                )
+                raise ValueError(f"symbol {symbol!r} already registered for asset {existing}")
             self._symbol_index[key] = asset.asset_id
         asset.record_symbol(symbol)
 
@@ -335,9 +333,7 @@ class AssetCatalog:
             if not matches:
                 raise KeyError(f"symbol {symbol!r} is not registered")
             if len(matches) > 1:
-                raise LookupError(
-                    f"symbol {symbol!r} maps to multiple assets: {sorted(matches)}"
-                )
+                raise LookupError(f"symbol {symbol!r} maps to multiple assets: {sorted(matches)}")
             return self._assets[next(iter(matches))]
 
         raise KeyError(f"symbol {symbol!r} is not registered")
@@ -359,4 +355,3 @@ class AssetCatalog:
         for asset in self._assets.values():
             if status is None or asset.status == status:
                 yield asset
-

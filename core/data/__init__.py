@@ -97,9 +97,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency gua
         )
 
     MarketCalendar = MarketCalendarRegistry = object  # type: ignore
-    convert_timestamp = get_market_calendar = get_timezone = is_market_open = (
-        _missing_dependency
-    )
+    convert_timestamp = get_market_calendar = get_timezone = is_market_open = _missing_dependency
     normalize_timestamp = to_utc = validate_bar_alignment = _missing_dependency
 
 __all__ = [

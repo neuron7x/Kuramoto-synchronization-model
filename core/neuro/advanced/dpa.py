@@ -46,7 +46,9 @@ class DopaminePredictionNetwork:
 
         dopamine_signal = float(np.tanh(prediction_error * (2.5 if prediction_error > 0 else 1.5)))
         current_level = self._dopamine_levels.get(key, 0.5)
-        new_level = float(np.clip(current_level * self._decay + dopamine_signal * (1 - self._decay), 0.0, 1.0))
+        new_level = float(
+            np.clip(current_level * self._decay + dopamine_signal * (1 - self._decay), 0.0, 1.0)
+        )
         self._dopamine_levels[key] = new_level
 
         if prediction_error < 0:
@@ -97,4 +99,3 @@ class DopaminePredictionNetwork:
             "serotonin_level": self._serotonin,
             "norepinephrine_level": self._norepinephrine,
         }
-

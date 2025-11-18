@@ -53,9 +53,7 @@ def _test_settings() -> CortexSettings:
             var_confidence=0.95,
             stress_scenarios=(0.8, 0.5),
         ),
-        regime=RegimeSettings(
-            decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1
-        ),
+        regime=RegimeSettings(decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1),
     )
 
 
@@ -249,9 +247,7 @@ class TestRegimeCache:
         from cortex_service.app.modulation.regime import RegimeState
 
         cache = RegimeCache(ttl_seconds=1.0)
-        state = RegimeState(
-            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC)
-        )
+        state = RegimeState(label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC))
         cache.set(state)
         retrieved = cache.get()
         assert retrieved is not None
@@ -261,9 +257,7 @@ class TestRegimeCache:
         from cortex_service.app.modulation.regime import RegimeState
 
         cache = RegimeCache(ttl_seconds=0.05)  # Very short TTL
-        state = RegimeState(
-            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC)
-        )
+        state = RegimeState(label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC))
         cache.set(state)
         time.sleep(0.1)  # Wait for expiration
         assert cache.get() is None
@@ -272,9 +266,7 @@ class TestRegimeCache:
         from cortex_service.app.modulation.regime import RegimeState
 
         cache = RegimeCache(ttl_seconds=10.0)
-        state = RegimeState(
-            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC)
-        )
+        state = RegimeState(label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC))
         cache.set(state)
         cache.invalidate()
         assert cache.get() is None

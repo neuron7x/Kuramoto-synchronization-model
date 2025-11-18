@@ -57,4 +57,3 @@ async def test_integrated_system_updates_learning_state() -> None:
     assert "updates" in updates
     assert "dpa" in updates["updates"]
     assert "alerts" in updates
-

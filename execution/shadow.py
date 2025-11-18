@@ -291,8 +291,7 @@ class ShadowDeploymentOrchestrator:
             deviation = SignalDeviation(
                 action_mismatch=candidate_signal.action != baseline_signal.action,
                 confidence_delta=abs(
-                    float(candidate_signal.confidence)
-                    - float(baseline_signal.confidence)
+                    float(candidate_signal.confidence) - float(baseline_signal.confidence)
                 ),
                 action_delta=abs(
                     _action_to_numeric(candidate_signal.action)

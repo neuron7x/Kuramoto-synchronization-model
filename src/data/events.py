@@ -46,7 +46,9 @@ class TickBatchPersistedEvent:
 class TickEventPublisher(Protocol):
     """Publish events describing pipeline activity."""
 
-    async def publish_batch(self, event: TickBatchPersistedEvent) -> None:  # pragma: no cover - protocol definition
+    async def publish_batch(
+        self, event: TickBatchPersistedEvent
+    ) -> None:  # pragma: no cover - protocol definition
         """Publish ``event`` to downstream consumers."""
 
 

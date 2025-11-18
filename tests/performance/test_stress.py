@@ -103,9 +103,7 @@ class TestMemoryUsage:
         """Backtest should not require excessive memory for large datasets."""
         # Generate data in chunks to test memory efficiency
         chunk_size = 10_000
-        prices = np.concatenate(
-            [np.random.randn(chunk_size) * 5 + 100 + i * 10 for i in range(5)]
-        )
+        prices = np.concatenate([np.random.randn(chunk_size) * 5 + 100 + i * 10 for i in range(5)])
 
         def signal_fn(p: np.ndarray) -> np.ndarray:
             return np.ones_like(p) * 0.5
@@ -123,8 +121,7 @@ class TestConcurrentExecution:
         df = pd.DataFrame({"close": prices})
 
         strategies = [
-            Strategy(name=f"strat_{i}", params={"lookback": 20 + i * 10})
-            for i in range(10)
+            Strategy(name=f"strat_{i}", params={"lookback": 20 + i * 10}) for i in range(10)
         ]
 
         start = time.time()
@@ -178,9 +175,7 @@ class TestCrossValidationStress:
         periods = 120_000
         frame = pd.DataFrame(
             {
-                "timestamp": pd.date_range(
-                    "2023-01-01", periods=periods, freq="min", tz="UTC"
-                ),
+                "timestamp": pd.date_range("2023-01-01", periods=periods, freq="min", tz="UTC"),
                 "label_end": pd.date_range(
                     "2023-01-01 00:05", periods=periods, freq="min", tz="UTC"
                 ),
@@ -213,9 +208,7 @@ class TestCrossValidationStress:
         n_rows = 60_000
         frame = pd.DataFrame(
             {
-                "timestamp": pd.date_range(
-                    "2023-01-01", periods=n_rows, freq="min", tz="UTC"
-                ),
+                "timestamp": pd.date_range("2023-01-01", periods=n_rows, freq="min", tz="UTC"),
                 "label_end": pd.date_range(
                     "2023-01-01 00:30", periods=n_rows, freq="min", tz="UTC"
                 ),

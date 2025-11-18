@@ -28,9 +28,7 @@ def _ensure_identifier(value: str, *, label: str) -> str:
     if not value:
         raise ValueError(f"{label} must be a non-empty identifier")
     if not _IDENTIFIER_RE.fullmatch(value):
-        raise ValueError(
-            f"{label} must match {_IDENTIFIER_RE.pattern!r}: {value!r}"
-        )
+        raise ValueError(f"{label} must match {_IDENTIFIER_RE.pattern!r}: {value!r}")
     return value
 
 
@@ -187,9 +185,7 @@ class RollupMaterialization:
             raise ValueError("At least one aggregation must be provided")
         if self.materialized_view_name is not None:
             if not self.materialized_view_name:
-                raise ValueError(
-                    "materialized_view_name must be a non-empty string when provided"
-                )
+                raise ValueError("materialized_view_name must be a non-empty string when provided")
             _ensure_identifier(
                 self.materialized_view_name,
                 label="materialized view name",
@@ -245,4 +241,3 @@ class BenchmarkWorkload:
             raise ValueError("query_iterations must be positive")
         if self.warmup_iterations < 0:
             raise ValueError("warmup_iterations must be non-negative")
-

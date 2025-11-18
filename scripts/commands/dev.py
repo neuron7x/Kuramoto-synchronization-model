@@ -20,9 +20,7 @@ def _ensure_docker_available() -> None:
 
 
 def build_parser(subparsers: _SubParsersAction[object]) -> None:
-    up = subparsers.add_parser(
-        "dev-up", help="Start local services defined in docker-compose.yml"
-    )
+    up = subparsers.add_parser("dev-up", help="Start local services defined in docker-compose.yml")
     up.set_defaults(command="dev-up", handler=handle_up)
 
     down = subparsers.add_parser(

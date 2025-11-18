@@ -16,7 +16,9 @@ from tests.property.utils import property_settings, regression_note
 
 # Hypothesis struggles with NaN/Inf comparisons for these helpers, so we
 # constrain to finite numbers that still span a wide dynamic range.
-_floats = st.floats(min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False, width=64)
+_floats = st.floats(
+    min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False, width=64
+)
 
 
 @given(
@@ -104,9 +106,7 @@ def test_ema_is_convex_combination(prev: float, value: float, alpha: float) -> N
     offset=_floats,
 )
 @settings(**property_settings("test_ema_translation_invariance"))
-def test_ema_translation_invariance(
-    prev: float, value: float, alpha: float, offset: float
-) -> None:
+def test_ema_translation_invariance(prev: float, value: float, alpha: float, offset: float) -> None:
     baseline = ema(prev, value, alpha)
     shifted = ema(prev + offset, value + offset, alpha)
     regression_note(

@@ -48,7 +48,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "sources",
         nargs="+",
-        help="Source URLs or file paths. Directories are walked recursively when used with --pattern.",
+        help="Source URLs or file paths. Directories are walked recursively when used with --pattern.",  # noqa: E501
     )
     parser.add_argument(
         "--pattern",
@@ -104,9 +104,7 @@ def _resolve_sources(raw_sources: list[str], pattern: str) -> list[ResolvedSourc
         parsed = urlparse(raw)
         if parsed.scheme in {"http", "https", "file"}:
             name = _destination_name(raw)
-            resolved.append(
-                ResolvedSource(source=raw, destination_key=name, checksum_keys=(raw,))
-            )
+            resolved.append(ResolvedSource(source=raw, destination_key=name, checksum_keys=(raw,)))
             continue
         path = Path(raw)
         if path.is_file():
@@ -209,9 +207,7 @@ def _transfer_one(
                 checksum=checksum,
                 status=f"transfer_error:{exc}",
             )
-    return SyncResult(
-        source=source, destination=destination, checksum=checksum, status="ok"
-    )
+    return SyncResult(source=source, destination=destination, checksum=checksum, status="ok")
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -226,9 +222,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         print(str(exc), file=sys.stderr)
         return EXIT_CODES["invalid_arguments"]
 
-    manager: ArtifactManager = create_artifact_manager(
-        args.script_name, root=args.artifact_root
-    )
+    manager: ArtifactManager = create_artifact_manager(args.script_name, root=args.artifact_root)
     resolved_sources = _resolve_sources(args.sources, args.pattern)
     if not resolved_sources:
         print("No matching sources found.", file=sys.stderr)
@@ -262,9 +256,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         for spec, checksum_value, future in futures:
             try:
                 result = future.result()
-            except (
-                Exception
-            ) as exc:  # pragma: no cover - defensive catch for unexpected failures
+            except Exception as exc:  # pragma: no cover - defensive catch for unexpected failures
                 results.append(
                     SyncResult(
                         source=spec.source,
@@ -281,9 +273,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         if result.status != "ok":
             has_failures = True
         status_message = "✅" if result.status == "ok" else "❌"
-        print(
-            f"{status_message} {result.source} → {result.destination} ({result.status})"
-        )
+        print(f"{status_message} {result.source} → {result.destination} ({result.status})")
 
     if args.json:
         payload = [

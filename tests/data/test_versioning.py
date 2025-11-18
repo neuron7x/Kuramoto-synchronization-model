@@ -88,7 +88,9 @@ def test_access_gates_enforced() -> None:
         kind="dataset",
         version="3.0.0",
         contract=contract,
-        access_gates=[AccessGate(name="region.eu", condition=lambda ctx: ctx.get("region") == "eu")],
+        access_gates=[
+            AccessGate(name="region.eu", condition=lambda ctx: ctx.get("region") == "eu")
+        ],
     )
 
     registry.promote("orders-dataset", "3.0.0", target_state=LifecycleState.STAGING)
@@ -176,4 +178,3 @@ def test_lifecycle_transitions_and_rollbacks() -> None:
 
     with pytest.raises(Exception):
         registry.promote("forecaster", "2.1.0", target_state=LifecycleState.DRAFT)
-

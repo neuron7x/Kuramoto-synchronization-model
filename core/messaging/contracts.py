@@ -88,7 +88,7 @@ def _validate_record_schema(
             )
         if not avro_optional and not has_default and not model_required:
             raise SchemaContractError(
-                f"{field_context}: schema marks the field as required but model treats it as optional"
+                f"{field_context}: schema marks the field as required but model treats it as optional"  # noqa: E501
             )
         avro_type = _strip_null(field_schema["type"], field_context)
         _validate_type_compatibility(avro_type, model_field.annotation, field_context)
@@ -174,7 +174,7 @@ def _validate_enum(avro_enum: MappingABC[str, Any], enum_cls: Type[Enum], contex
     enum_values = {member.value for member in enum_cls}
     if symbols != enum_values:
         raise SchemaContractError(
-            f"{context}: enum values mismatch, schema has {sorted(symbols)}, model has {sorted(enum_values)}"
+            f"{context}: enum values mismatch, schema has {sorted(symbols)}, model has {sorted(enum_values)}"  # noqa: E501
         )
 
 
@@ -221,9 +221,7 @@ def _as_model_class(annotation: Any, context: str) -> type[BaseModel]:
 def _as_enum_class(annotation: Any, context: str) -> type[Enum]:
     if isinstance(annotation, type) and issubclass(annotation, Enum):
         return annotation
-    raise SchemaContractError(
-        f"{context}: expected Enum for enum field, got {annotation!r}"
-    )
+    raise SchemaContractError(f"{context}: expected Enum for enum field, got {annotation!r}")
 
 
 def _unwrap_optional(annotation: Any) -> Tuple[Any, bool]:
@@ -248,9 +246,7 @@ def _strip_null(avro_type: Any, context: str) -> Any:
 
 
 def _is_null(member: Any) -> bool:
-    return member == "null" or (
-        isinstance(member, MappingABC) and member.get("type") == "null"
-    )
+    return member == "null" or (isinstance(member, MappingABC) and member.get("type") == "null")
 
 
 def _is_nullable(field_schema: MappingABC[str, Any]) -> bool:

@@ -27,9 +27,7 @@ __all__ = [
 class ComplianceViolation(NormalizationError):
     """Raised when an order violates venue-level minimums."""
 
-    def __init__(
-        self, message: str, *, report: "ComplianceReport" | None = None
-    ) -> None:
+    def __init__(self, message: str, *, report: "ComplianceReport" | None = None) -> None:
         super().__init__(message)
         self.report = report
 
@@ -77,13 +75,9 @@ class ComplianceMonitor:
         self._strict = strict
         self._auto_round = auto_round
 
-    def check(
-        self, symbol: str, quantity: float, price: float | None = None
-    ) -> ComplianceReport:
+    def check(self, symbol: str, quantity: float, price: float | None = None) -> ComplianceReport:
         normalized_qty = (
-            self._normalizer.round_quantity(symbol, quantity)
-            if self._auto_round
-            else quantity
+            self._normalizer.round_quantity(symbol, quantity) if self._auto_round else quantity
         )
         normalized_price = (
             (None if price is None else self._normalizer.round_price(symbol, price))
@@ -105,16 +99,12 @@ class ComplianceMonitor:
             requested_quantity=float(quantity),
             requested_price=None if price is None else float(price),
             normalized_quantity=float(normalized_qty),
-            normalized_price=(
-                None if normalized_price is None else float(normalized_price)
-            ),
+            normalized_price=(None if normalized_price is None else float(normalized_price)),
             violations=tuple(violations),
             blocked=blocked,
         )
         if violation_exc is not None and self._strict:
-            raise ComplianceViolation(
-                str(violation_exc), report=report
-            ) from violation_exc
+            raise ComplianceViolation(str(violation_exc), report=report) from violation_exc
         return report
 
 
@@ -248,7 +238,7 @@ class RiskCompliance:
             if self._config.max_notional_per_order > 0:
                 if notional > self._config.max_notional_per_order:
                     reasons.append(
-                        f"Order notional {notional:.2f} exceeds max {self._config.max_notional_per_order:.2f}"
+                        f"Order notional {notional:.2f} exceeds max {self._config.max_notional_per_order:.2f}"  # noqa: E501
                     )
                     breached["max_notional_per_order"] = notional
 
@@ -271,32 +261,32 @@ class RiskCompliance:
                 if self._config.per_symbol_position_cap_type == "units":
                     if abs(new_position) > cap:
                         reasons.append(
-                            f"Position {abs(new_position):.4f} would exceed cap {cap:.4f} for {order.symbol}"
+                            f"Position {abs(new_position):.4f} would exceed cap {cap:.4f} for {order.symbol}"  # noqa: E501
                         )
                         breached["per_symbol_position_cap"] = abs(new_position)
                 else:
                     new_notional = abs(new_position * price)
                     if new_notional > cap:
                         reasons.append(
-                            f"Position notional {new_notional:.2f} would exceed cap {cap:.2f} for {order.symbol}"
+                            f"Position notional {new_notional:.2f} would exceed cap {cap:.2f} for {order.symbol}"  # noqa: E501
                         )
                         breached["per_symbol_position_cap_notional"] = new_notional
 
             gross_exposure = float(portfolio_state.get("gross_exposure", 0.0))
             position_notional_before = abs(current_position * price)
             position_notional_after = abs(new_position * price)
-            projected_gross = (
-                gross_exposure + position_notional_after - position_notional_before
-            )
+            projected_gross = gross_exposure + position_notional_after - position_notional_before
             if self._config.max_gross_exposure > 0:
                 if projected_gross > self._config.max_gross_exposure:
                     reasons.append(
-                        f"Gross exposure {projected_gross:.2f} would exceed limit {self._config.max_gross_exposure:.2f}"
+                        f"Gross exposure {projected_gross:.2f} would exceed limit {self._config.max_gross_exposure:.2f}"  # noqa: E501
                     )
                     breached["max_gross_exposure"] = projected_gross
 
             self._record_metric(
-                lambda collector, exposure=projected_gross: collector.record_gross_exposure(exposure)
+                lambda collector, exposure=projected_gross: collector.record_gross_exposure(
+                    exposure
+                )
             )
 
             if self._config.daily_max_drawdown_threshold > 0:
@@ -321,7 +311,7 @@ class RiskCompliance:
                     if self._config.daily_max_drawdown_mode == "percent":
                         if drawdown > self._config.daily_max_drawdown_threshold:
                             reasons.append(
-                                f"Daily drawdown {drawdown*100:.2f}% exceeds threshold {self._config.daily_max_drawdown_threshold*100:.2f}%"
+                                f"Daily drawdown {drawdown*100:.2f}% exceeds threshold {self._config.daily_max_drawdown_threshold*100:.2f}%"  # noqa: E501
                             )
                             breached["daily_max_drawdown"] = drawdown
                         drawdown_metric_value = drawdown
@@ -329,20 +319,22 @@ class RiskCompliance:
                         dd_notional = self._daily_high_equity - equity
                         if dd_notional > self._config.daily_max_drawdown_threshold:
                             reasons.append(
-                                f"Daily drawdown ${dd_notional:.2f} exceeds threshold ${self._config.daily_max_drawdown_threshold:.2f}"
+                                f"Daily drawdown ${dd_notional:.2f} exceeds threshold ${self._config.daily_max_drawdown_threshold:.2f}"  # noqa: E501
                             )
                             breached["daily_max_drawdown_notional"] = dd_notional
                         drawdown_metric_value = dd_notional
 
                     if drawdown_metric_value is not None:
                         self._record_metric(
-                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(value, mode=mode)
+                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(  # noqa: E501
+                                value, mode=mode
+                            )
                         )
 
             if self._config.max_open_orders_per_account > 0:
                 if self._open_orders_count >= self._config.max_open_orders_per_account:
                     reasons.append(
-                        f"Open orders {self._open_orders_count} at or exceeds limit {self._config.max_open_orders_per_account}"
+                        f"Open orders {self._open_orders_count} at or exceeds limit {self._config.max_open_orders_per_account}"  # noqa: E501
                     )
                     breached["max_open_orders"] = float(self._open_orders_count)
 
@@ -386,7 +378,9 @@ class RiskCompliance:
                 "daily_max_drawdown_mode": self._config.daily_max_drawdown_mode,
                 "daily_high_equity": self._daily_high_equity,
                 "last_trip_reason": self._last_trip_reason,
-                "last_trip_time": self._last_trip_time.isoformat() if self._last_trip_time else None,
+                "last_trip_time": (
+                    self._last_trip_time.isoformat() if self._last_trip_time else None
+                ),
                 "open_orders_count": self._open_orders_count,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
@@ -405,9 +399,7 @@ class RiskCompliance:
             lambda collector, count=self._open_orders_count: collector.record_open_orders(count)
         )
 
-    def _record_rejections(
-        self, breached: Mapping[str, float], reasons: Iterable[str]
-    ) -> None:
+    def _record_rejections(self, breached: Mapping[str, float], reasons: Iterable[str]) -> None:
         labels = list(breached.keys())
         if not labels:
             reason_text = "; ".join(reasons)
@@ -415,18 +407,13 @@ class RiskCompliance:
             if normalised:
                 labels = [normalised]
         for label in labels:
-            self._record_metric(
-                lambda collector, reason=label: collector.record_rejection(reason)
-            )
+            self._record_metric(lambda collector, reason=label: collector.record_rejection(reason))
 
     @staticmethod
     def _normalise_rejection_reason(reason: str) -> str:
         if not reason:
             return "unspecified"
-        cleaned = [
-            ch.lower() if ch.isalnum() else "_"
-            for ch in reason
-        ]
+        cleaned = [ch.lower() if ch.isalnum() else "_" for ch in reason]
         normalised = "".join(cleaned).strip("_")
         while "__" in normalised:
             normalised = normalised.replace("__", "_")
@@ -442,6 +429,7 @@ class RiskCompliance:
     def _next_daily_reset(self, from_time: datetime) -> datetime:
         """Calculate next daily reset time."""
         from datetime import timedelta
+
         next_day = from_time + timedelta(days=1)
         return datetime(
             next_day.year,

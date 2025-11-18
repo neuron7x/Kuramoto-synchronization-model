@@ -21,9 +21,7 @@ def _load_exchange_factory(exchange_id: str) -> Callable[[dict[str, Any]], Any]:
     try:
         import ccxt.async_support as ccxt_async
     except ImportError as exc:  # pragma: no cover - defensive guard
-        raise RuntimeError(
-            "ccxt must be installed to use the CCXTIngestionAdapter"
-        ) from exc
+        raise RuntimeError("ccxt must be installed to use the CCXTIngestionAdapter") from exc
 
     exchange_id = exchange_id.lower()
     if not hasattr(ccxt_async, exchange_id):
@@ -76,9 +74,7 @@ class CCXTIngestionAdapter(IngestionAdapter):
                 timestamp=normalize_timestamp(ts / 1000 if ts > 1e12 else ts),
             )
             ticks.append(tick)
-        logger.debug(
-            "ccxt_fetch", exchange=self._exchange_id, symbol=symbol, count=len(ticks)
-        )
+        logger.debug("ccxt_fetch", exchange=self._exchange_id, symbol=symbol, count=len(ticks))
         return ticks
 
     async def stream(
@@ -102,9 +98,7 @@ class CCXTIngestionAdapter(IngestionAdapter):
 
         while True:
             try:
-                async with websockets.connect(
-                    url, ping_interval=20, ping_timeout=20
-                ) as ws:
+                async with websockets.connect(url, ping_interval=20, ping_timeout=20) as ws:
                     attempt = 0
                     logger.info("ccxt_ws_connected", url=url, symbol=symbol)
                     while True:
@@ -130,9 +124,7 @@ class CCXTIngestionAdapter(IngestionAdapter):
                         yield tick
             except Exception as exc:
                 attempt += 1
-                logger.warning(
-                    "ccxt_ws_reconnect", url=url, attempt=attempt, error=str(exc)
-                )
+                logger.warning("ccxt_ws_reconnect", url=url, attempt=attempt, error=str(exc))
                 await self._sleep_backoff(attempt)
 
     async def aclose(self) -> None:

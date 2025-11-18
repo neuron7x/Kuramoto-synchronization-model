@@ -158,7 +158,9 @@ class CrisisAwareGA:
 
         choices: Sequence[str] = ("metallic", "ionic", "covalent", "hydrogen", "vdw")
         while len(new_population) < config.population_size:
-            candidate_indices = self._rng.choice(len(population), size=config.tournament_size, replace=False)
+            candidate_indices = self._rng.choice(
+                len(population), size=config.tournament_size, replace=False
+            )
             candidate_fitness = fitnesses[candidate_indices]
             winner_idx = int(candidate_indices[int(np.argmin(candidate_fitness))])
             child = deepcopy(population[winner_idx])

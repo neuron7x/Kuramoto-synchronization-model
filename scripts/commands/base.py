@@ -69,7 +69,7 @@ def run_subprocess(
     )
     if check and result.returncode != 0:
         raise CommandError(
-            f"Command '{command[0]}' exited with status {result.returncode}. See logs above for details."
+            f"Command '{command[0]}' exited with status {result.returncode}. See logs above for details."  # noqa: E501
         )
     return result
 

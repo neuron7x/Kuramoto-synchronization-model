@@ -3,6 +3,7 @@
 This module provides SLI/SLO definitions, metrics collection,
 and monitoring utilities following SRE best practices.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,7 +13,7 @@ from typing import Callable, Optional
 
 class AlertSeverity(Enum):
     """Alert severity levels following SRE practices."""
-    
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -21,12 +22,12 @@ class AlertSeverity(Enum):
 @dataclass(frozen=True)
 class SLI:
     """Service Level Indicator definition."""
-    
+
     name: str
     description: str
     unit: str
     good_event_condition: str  # Human-readable condition for "good" events
-    
+
     def __str__(self) -> str:
         return f"SLI({self.name}): {self.description} [{self.unit}]"
 
@@ -34,23 +35,23 @@ class SLI:
 @dataclass(frozen=True)
 class SLO:
     """Service Level Objective with error budget."""
-    
+
     sli: SLI
     target: float  # Target percentage (e.g., 99.5 for 99.5%)
     window: str  # Time window (e.g., "30d", "7d")
-    
+
     @property
     def error_budget(self) -> float:
         """Calculate error budget percentage."""
         return 100.0 - self.target
-    
+
     def is_met(self, actual: float) -> bool:
         """Check if actual performance meets SLO."""
         return actual >= self.target
-    
+
     def budget_consumed(self, actual: float) -> float:
         """Calculate percentage of error budget consumed.
-        
+
         Returns:
             0.0 = no budget consumed (perfect)
             1.0 = entire budget consumed (at SLO threshold)
@@ -58,15 +59,15 @@ class SLO:
         """
         if actual >= self.target:
             return 0.0
-        
+
         error_rate = 100.0 - actual
         budget = self.error_budget
-        
+
         if budget <= 0:
-            return float('inf')
-        
+            return float("inf")
+
         return error_rate / budget
-    
+
     def __str__(self) -> str:
         return f"SLO({self.sli.name}): {self.target}% over {self.window}"
 
@@ -139,13 +140,13 @@ SEROTONIN_SLOS = {
 @dataclass(frozen=True)
 class Alert:
     """Alert definition for monitoring."""
-    
+
     name: str
     description: str
     severity: AlertSeverity
     condition: str
     remediation: str
-    
+
     def __str__(self) -> str:
         return f"Alert[{self.severity.value}]({self.name}): {self.condition}"
 
@@ -157,73 +158,73 @@ SEROTONIN_ALERTS = {
         description="Serotonin level elevated above warning threshold",
         severity=AlertSeverity.WARNING,
         condition="level > 1.2 for 5 consecutive minutes",
-        remediation="Review recent market events and trading activity. Consider manual intervention if level approaches 1.4.",
+        remediation="Review recent market events and trading activity. Consider manual intervention if level approaches 1.4.",  # noqa: E501
     ),
     "extended_hold_state": Alert(
         name="serotonin_extended_hold_state",
         description="Controller in hold state for extended period",
         severity=AlertSeverity.WARNING,
         condition="hold_state = True for > 30 minutes",
-        remediation="Investigate market conditions. Verify stress inputs are accurate. May indicate market crisis or data issue.",
+        remediation="Investigate market conditions. Verify stress inputs are accurate. May indicate market crisis or data issue.",  # noqa: E501
     ),
     "state_validation_failure": Alert(
         name="serotonin_state_validation_failure",
         description="State validation check failed",
         severity=AlertSeverity.CRITICAL,
         condition="validate_state() returns False",
-        remediation="IMMEDIATE: Stop trading. Investigate state corruption. Review recent inputs and config changes. Restart controller with reset().",
+        remediation="IMMEDIATE: Stop trading. Investigate state corruption. Review recent inputs and config changes. Restart controller with reset().",  # noqa: E501
     ),
     "slo_violation_latency": Alert(
         name="serotonin_slo_violation_latency",
         description="Step latency SLO violation",
         severity=AlertSeverity.WARNING,
         condition="P95 latency > 500μs over 30-day window",
-        remediation="Profile step() execution. Check for performance regressions. Consider optimization or infrastructure upgrade.",
+        remediation="Profile step() execution. Check for performance regressions. Consider optimization or infrastructure upgrade.",  # noqa: E501
     ),
     "error_budget_critical": Alert(
         name="serotonin_error_budget_critical",
         description="Error budget critically depleted",
         severity=AlertSeverity.CRITICAL,
         condition="Error budget consumption > 80%",
-        remediation="FREEZE: Stop non-critical changes. Focus on stability. Conduct incident review. Defer feature work until budget recovers.",
+        remediation="FREEZE: Stop non-critical changes. Focus on stability. Conduct incident review. Defer feature work until budget recovers.",  # noqa: E501
     ),
     "desensitization_excessive": Alert(
         name="serotonin_desensitization_excessive",
         description="Desensitization level near maximum",
         severity=AlertSeverity.WARNING,
         condition="desensitization > 0.7 (approaching max_desensitization)",
-        remediation="Extended high-stress period detected. Review market conditions and risk exposure. Consider manual stress assessment.",
+        remediation="Extended high-stress period detected. Review market conditions and risk exposure. Consider manual stress assessment.",  # noqa: E501
     ),
 }
 
 
 class SerotoninMonitor:
     """Monitoring and alerting for SerotoninController.
-    
+
     Provides SRE-style observability including:
     - SLI/SLO tracking
     - Error budget calculation
     - Alert evaluation
     - Anomaly detection
     """
-    
+
     def __init__(
         self,
         alert_callback: Optional[Callable[[Alert, float], None]] = None,
     ) -> None:
         """Initialize monitor.
-        
+
         Args:
             alert_callback: Optional callback for alert notifications.
                             Called with (alert, current_value).
         """
         self._alert_callback = alert_callback or (lambda alert, value: None)
-        
+
         # Tracking state
         self._high_stress_ticks = 0
         self._hold_state_ticks = 0
         self._last_hold_state = False
-    
+
     def check_alerts(
         self,
         level: float,
@@ -232,80 +233,80 @@ class SerotoninMonitor:
         validation_ok: bool,
     ) -> list[Alert]:
         """Evaluate alert conditions and return triggered alerts.
-        
+
         Args:
             level: Current serotonin level
             hold: Current hold state
             desensitization: Current desensitization level
             validation_ok: Result of validate_state()
-        
+
         Returns:
             List of triggered alerts
         """
         triggered = []
-        
+
         # Track consecutive ticks
         if level > 1.2:
             self._high_stress_ticks += 1
         else:
             self._high_stress_ticks = 0
-        
+
         if hold and self._last_hold_state:
             self._hold_state_ticks += 1
         else:
             self._hold_state_ticks = 0
-        
+
         self._last_hold_state = hold
-        
+
         # Evaluate alert conditions
         if self._high_stress_ticks >= 300:  # 5 minutes at 1 tick/second
             alert = SEROTONIN_ALERTS["high_stress_level"]
             triggered.append(alert)
             self._alert_callback(alert, level)
-        
+
         if self._hold_state_ticks >= 1800:  # 30 minutes
             alert = SEROTONIN_ALERTS["extended_hold_state"]
             triggered.append(alert)
             self._alert_callback(alert, float(self._hold_state_ticks))
-        
+
         if not validation_ok:
             alert = SEROTONIN_ALERTS["state_validation_failure"]
             triggered.append(alert)
             self._alert_callback(alert, 0.0)
-        
+
         if desensitization > 0.7:
             alert = SEROTONIN_ALERTS["desensitization_excessive"]
             triggered.append(alert)
             self._alert_callback(alert, desensitization)
-        
+
         return triggered
-    
+
     def reset_tracking(self) -> None:
         """Reset internal tracking counters."""
         self._high_stress_ticks = 0
         self._hold_state_ticks = 0
         self._last_hold_state = False
-    
+
     @staticmethod
     def format_slo_report(slo_name: str, actual: float) -> str:
         """Format SLO status report.
-        
+
         Args:
             slo_name: Name of SLO to report on
             actual: Actual measured value (percentage)
-        
+
         Returns:
             Formatted report string
         """
         if slo_name not in SEROTONIN_SLOS:
             return f"Unknown SLO: {slo_name}"
-        
+
         slo = SEROTONIN_SLOS[slo_name]
         budget_consumed = slo.budget_consumed(actual)
         is_met = slo.is_met(actual)
-        
+
         status = "✓ PASS" if is_met else "✗ FAIL"
-        
+
         report = [
             f"SLO Report: {slo.sli.name}",
             f"Status: {status}",
@@ -314,22 +315,22 @@ class SerotoninMonitor:
             f"Error Budget: {slo.error_budget:.2f}%",
             f"Budget Consumed: {budget_consumed * 100:.1f}%",
         ]
-        
+
         if budget_consumed > 0.8:
             report.append("⚠️  WARNING: Error budget critically depleted!")
         elif budget_consumed > 0.5:
             report.append("⚠️  CAUTION: Error budget > 50% consumed")
-        
+
         return "\n".join(report)
 
 
 def create_prometheus_metrics() -> str:
     """Generate Prometheus metrics exposition format.
-    
+
     Returns example metrics that should be exposed by the controller.
     This is a reference implementation - actual integration would
     use prometheus_client library.
-    
+
     Returns:
         Prometheus metrics format string (for documentation/reference)
     """
@@ -378,7 +379,7 @@ serotonin_hold_transitions_total{transition="exit"} 0
 
 def create_grafana_dashboard_json() -> dict:
     """Generate Grafana dashboard configuration.
-    
+
     Returns:
         Dashboard JSON structure (simplified reference)
     """

@@ -40,9 +40,7 @@ class ChecksumManifest(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),
         description="Timestamp when checksum was created",
     )
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class IntegrityVerifier:
@@ -111,9 +109,7 @@ class IntegrityVerifier:
 
             return hasher.hexdigest()
         except Exception as e:
-            raise IntegrityError(
-                f"Failed to compute checksum for {file_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Failed to compute checksum for {file_path}: {e}") from e
 
     @classmethod
     def verify_file_checksum(
@@ -139,13 +135,9 @@ class IntegrityVerifier:
             actual_checksum = cls.compute_file_checksum(file_path, algorithm)
 
             # Constant-time comparison to prevent timing attacks
-            return hmac.compare_digest(
-                actual_checksum.lower(), expected_checksum.lower()
-            )
+            return hmac.compare_digest(actual_checksum.lower(), expected_checksum.lower())
         except Exception as e:
-            raise IntegrityError(
-                f"Checksum verification failed for {file_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Checksum verification failed for {file_path}: {e}") from e
 
     @classmethod
     def create_manifest(
@@ -187,9 +179,7 @@ class IntegrityVerifier:
         return manifest
 
     @classmethod
-    def verify_manifest(
-        cls, artifact_path: Path, manifest: ChecksumManifest
-    ) -> bool:
+    def verify_manifest(cls, artifact_path: Path, manifest: ChecksumManifest) -> bool:
         """Verify artifact against its manifest.
 
         Args:
@@ -202,9 +192,7 @@ class IntegrityVerifier:
         Raises:
             IntegrityError: If verification fails
         """
-        if not cls.verify_file_checksum(
-            artifact_path, manifest.checksum, manifest.algorithm
-        ):
+        if not cls.verify_file_checksum(artifact_path, manifest.checksum, manifest.algorithm):
             raise IntegrityError(
                 f"Checksum mismatch for {artifact_path}. "
                 f"Expected: {manifest.checksum}, "
@@ -251,9 +239,7 @@ class IntegrityVerifier:
 
             return ChecksumManifest(**data)
         except Exception as e:
-            raise IntegrityError(
-                f"Failed to load manifest from {manifest_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Failed to load manifest from {manifest_path}: {e}") from e
 
 
 class HMACVerifier:
@@ -405,13 +391,9 @@ class ModelIntegrityChecker:
             manifest = IntegrityVerifier.load_manifest(manifest_path)
             return IntegrityVerifier.verify_manifest(model_path, manifest)
         elif expected_checksum is not None:
-            return IntegrityVerifier.verify_file_checksum(
-                model_path, expected_checksum
-            )
+            return IntegrityVerifier.verify_file_checksum(model_path, expected_checksum)
         else:
-            raise ValueError(
-                "Either manifest_path or expected_checksum must be provided"
-            )
+            raise ValueError("Either manifest_path or expected_checksum must be provided")
 
     @staticmethod
     def create_model_manifest(

@@ -49,7 +49,9 @@ def generate_yangtze_npz(
         last = X[n, -1].mean(axis=0)
         y_hydro[n, 0] = last[0]
         y_hydro[n, 1] = np.clip(last[1], 10000.0, 50000.0)
-        y_qual[n] = np.array([7.2, max(2.0, last[4]), min(500.0, last[3]), 3.0, 1.0], dtype=np.float32)
+        y_qual[n] = np.array(
+            [7.2, max(2.0, last[4]), min(500.0, last[3]), 3.0, 1.0], dtype=np.float32
+        )
 
     os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
     np.savez(save_path, X=X, y_flood=y_flood, y_hydro=y_hydro, y_qual=y_qual)

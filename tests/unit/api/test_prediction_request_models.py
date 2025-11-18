@@ -48,9 +48,7 @@ def test_prediction_request_defaults_to_five_minute_horizon() -> None:
 
 @pytest.mark.parametrize("horizon", [60, 600, 3600])
 def test_prediction_request_accepts_horizon_within_bounds(horizon: int) -> None:
-    request = PredictionRequest(
-        symbol="ETH-USD", bars=_sample_bars(), horizon_seconds=horizon
-    )
+    request = PredictionRequest(symbol="ETH-USD", bars=_sample_bars(), horizon_seconds=horizon)
 
     assert request.horizon_seconds == horizon
 
@@ -58,6 +56,4 @@ def test_prediction_request_accepts_horizon_within_bounds(horizon: int) -> None:
 @pytest.mark.parametrize("horizon", [1, 30, 59, 3601, 7200])
 def test_prediction_request_rejects_out_of_bounds_horizon(horizon: int) -> None:
     with pytest.raises(ValidationError):
-        PredictionRequest(
-            symbol="SOL-USD", bars=_sample_bars(), horizon_seconds=horizon
-        )
+        PredictionRequest(symbol="SOL-USD", bars=_sample_bars(), horizon_seconds=horizon)

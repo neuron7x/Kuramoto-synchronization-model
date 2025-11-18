@@ -171,9 +171,7 @@ def build_verify_parser(subparsers: _SubParsersAction[object]) -> None:
         "--report",
         type=Path,
         default=DEFAULT_REPORT_PATH,
-        help=(
-            "Path to write a JSON transparency report. Use '-' to disable file output."
-        ),
+        help=("Path to write a JSON transparency report. Use '-' to disable file output."),
     )
     verify.set_defaults(action="verify")
 
@@ -183,7 +181,9 @@ def build_sign_parser(subparsers: _SubParsersAction[object]) -> None:
         "sign-image",
         help="Sign a container image with cosign to guarantee provenance.",
     )
-    sign.add_argument("image", help="Fully-qualified container image reference (e.g., repo/image:tag).")
+    sign.add_argument(
+        "image", help="Fully-qualified container image reference (e.g., repo/image:tag)."
+    )
     sign.add_argument(
         "--key",
         default=None,
@@ -452,7 +452,7 @@ def _handle_verify(namespace: Namespace) -> int:
 
     if report.has_failures():
         raise CommandError(
-            "Dependency verification failed. Review the issues above and the optional report if generated."
+            "Dependency verification failed. Review the issues above and the optional report if generated."  # noqa: E501
         )
 
     LOGGER.info(
@@ -562,12 +562,10 @@ def _handle_compliance_report(namespace: Namespace) -> int:
             reasons.append("license policy violations")
         if vulnerabilities_blocking:
             reasons.append("vulnerabilities detected")
-        raise CommandError(
-            "Compliance report contains blocking findings: " + ", ".join(reasons)
-        )
+        raise CommandError("Compliance report contains blocking findings: " + ", ".join(reasons))
 
     LOGGER.info(
-        "Compliance report generated for %d dependencies (dependency issues: %d, license issues: %d, vulnerabilities: %d).",
+        "Compliance report generated for %d dependencies (dependency issues: %d, license issues: %d, vulnerabilities: %d).",  # noqa: E501
         len(dependency_report.dependencies),
         len(dependency_report.issues),
         len(license_issues),

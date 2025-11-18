@@ -107,9 +107,7 @@ class AgentCoordinator:
     забезпечує узгоджену роботу та розв'язує конфлікти.
     """
 
-    def __init__(
-        self, max_concurrent_tasks: int = 10, enable_conflict_resolution: bool = True
-    ):
+    def __init__(self, max_concurrent_tasks: int = 10, enable_conflict_resolution: bool = True):
         """
         Ініціалізація координатора
 
@@ -197,9 +195,7 @@ class AgentCoordinator:
         if agent_id in self._agents:
             # Скасувати всі активні задачі агента
             tasks_to_remove = [
-                task_id
-                for task_id, task in self._active_tasks.items()
-                if task.agent_id == agent_id
+                task_id for task_id, task in self._active_tasks.items() if task.agent_id == agent_id
             ]
             for task_id in tasks_to_remove:
                 del self._active_tasks[task_id]
@@ -355,9 +351,7 @@ class AgentCoordinator:
         # На основі task_type та payload
         return {"status": "completed", "task_id": task.task_id}
 
-    def make_decision(
-        self, decision_type: str, context: Dict[str, Any]
-    ) -> CoordinationDecision:
+    def make_decision(self, decision_type: str, context: Dict[str, Any]) -> CoordinationDecision:
         """
         Прийняття координаційного рішення
 
@@ -490,17 +484,13 @@ class AgentCoordinator:
             for a in self._agents.values()
             if a.status == AgentStatus.ACTIVE or a.status == AgentStatus.BUSY
         )
-        error_agents = sum(
-            1 for a in self._agents.values() if a.status == AgentStatus.ERROR
-        )
+        error_agents = sum(1 for a in self._agents.values() if a.status == AgentStatus.ERROR)
 
         # Обчислюємо health score
         health_score = 100.0
         if total_agents > 0:
             health_score -= (error_agents / total_agents) * 50
-            health_score -= (
-                len(self._task_queue) / max(self.max_concurrent_tasks, 1)
-            ) * 25
+            health_score -= (len(self._task_queue) / max(self.max_concurrent_tasks, 1)) * 25
 
         health_score = max(0.0, min(100.0, health_score))
 
@@ -508,9 +498,7 @@ class AgentCoordinator:
             "health_score": f"{health_score:.1f}",
             "total_agents": total_agents,
             "active_agents": active_agents,
-            "idle_agents": sum(
-                1 for a in self._agents.values() if a.status == AgentStatus.IDLE
-            ),
+            "idle_agents": sum(1 for a in self._agents.values() if a.status == AgentStatus.IDLE),
             "error_agents": error_agents,
             "queued_tasks": len(self._task_queue),
             "active_tasks": len(self._active_tasks),

@@ -63,7 +63,9 @@ def fixture_env() -> SyntheticMarketEnv:
     return SyntheticMarketEnv(num_steps=24, seed=99)
 
 
-def test_step_returns_valid_action_and_size(agent: MisanthropicAgent, env: SyntheticMarketEnv) -> None:
+def test_step_returns_valid_action_and_size(
+    agent: MisanthropicAgent, env: SyntheticMarketEnv
+) -> None:
     state = env.reset()
     action, size = agent.step(state["lob_data"], state["price"])
     assert action in {0, 1, 2}

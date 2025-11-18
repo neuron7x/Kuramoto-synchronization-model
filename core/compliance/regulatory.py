@@ -123,8 +123,7 @@ class RegulatoryComplianceValidator:
         self._required_iso = _to_lower_set(required_iso_controls or {"iso27001", "iso27701"})
         self._required_nist = _to_lower_set(required_nist_controls or {"nist-csf", "nist-800-53"})
         self._restricted_licenses = _to_lower_set(
-            restricted_licenses
-            or {"proprietary", "internal use only", "restricted", "unlicensed"}
+            restricted_licenses or {"proprietary", "internal use only", "restricted", "unlicensed"}
         )
         self._restricted_domains = _to_lower_set(
             restricted_domains
@@ -136,8 +135,7 @@ class RegulatoryComplianceValidator:
             }
         )
         self._allowed_confidentiality = _to_lower_set(
-            allowed_confidentiality_levels
-            or {"public", "internal", "confidential", "restricted"}
+            allowed_confidentiality_levels or {"public", "internal", "confidential", "restricted"}
         )
         self._minimum_training_restrictions = max(1, int(minimum_training_restrictions))
         self._maximum_audit_interval_days = max(1, int(maximum_audit_interval_days))

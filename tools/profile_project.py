@@ -1,16 +1,16 @@
 """CLI utility to profile representative TradePulse workflows."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402
 
-import argparse
-import json
-import sys
-import warnings
-from pathlib import Path
-from typing import Any
+import argparse  # noqa: E402
+import json  # noqa: E402
+import sys  # noqa: E402
+import warnings  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Any  # noqa: E402
 
-import numpy as np
-import pandas as pd
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -18,17 +18,17 @@ if str(ROOT) not in sys.path:
 
 warnings.filterwarnings(
     "ignore",
-    message="Field name \"schema\" in \"QualityGateConfig\" shadows",
+    message='Field name "schema" in "QualityGateConfig" shadows',
 )
 warnings.filterwarnings(
     "ignore",
     message="SciPy unavailable; using discrete Wasserstein approximation",
 )
 
-from core.indicators.entropy import delta_entropy, entropy
-from core.indicators.kuramoto import compute_phase, kuramoto_order
-from core.indicators.ricci import build_price_graph, mean_ricci
-from observability.profiling import ProfileCollector
+from core.indicators.entropy import delta_entropy, entropy  # noqa: E402
+from core.indicators.kuramoto import compute_phase, kuramoto_order  # noqa: E402
+from core.indicators.ricci import build_price_graph, mean_ricci  # noqa: E402
+from observability.profiling import ProfileCollector  # noqa: E402
 
 
 def _default_dataset_path() -> Path:
@@ -71,7 +71,9 @@ def profile_analytics_pipeline(
 
     dataset_info = dict(dataset_meta)
 
-    with collector.section("compute-phase", {"series_length": dataset_info["series_length"]}) as meta:
+    with collector.section(
+        "compute-phase", {"series_length": dataset_info["series_length"]}
+    ) as meta:
         phases = compute_phase(prices)
         meta["phase_samples"] = int(len(phases))
 

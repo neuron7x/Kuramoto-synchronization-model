@@ -102,7 +102,7 @@ def main():
     print(f"  Final Capital: ${backtest_results['final_capital']:.2f}")
     print()
     print("Action Distribution:")
-    dist = backtest_results['action_distribution']
+    dist = backtest_results["action_distribution"]
     print(f"  Hold: {dist['hold']:.1%}")
     print(f"  Buy:  {dist['buy']:.1%}")
     print(f"  Sell: {dist['sell']:.1%}")
@@ -121,7 +121,7 @@ def main():
     action = model.decide_action(latest_window, prev_pwpe=0.0)
     pwpe = model.get_pwpe(latest_window)
     state = model.get_state_representation(latest_window)
-    
+
     action_names = {0: "HOLD", 1: "BUY", 2: "SELL"}
     print(f"Latest price: ${data.iloc[-1]['close']:.2f}")
     print(f"Decision: {action_names[action]}")

@@ -66,9 +66,7 @@ class AllocationConstraints:
         if self.max_allocation_per_pipeline is not None and (
             self.max_allocation_per_pipeline <= 0.0
         ):
-            raise ValueError(
-                "max_allocation_per_pipeline must be positive when provided"
-            )
+            raise ValueError("max_allocation_per_pipeline must be positive when provided")
         if self.min_allocation_per_pipeline < 0.0:
             raise ValueError("min_allocation_per_pipeline must be non-negative")
 
@@ -132,8 +130,7 @@ class CapitalAllocationOptimizer:
     def optimise(
         self,
         metrics: Mapping[str, PipelineMetrics],
-        correlations: Mapping[tuple[str, str], float]
-        | Mapping[str, Mapping[str, float]],
+        correlations: Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]],
         *,
         target_profile: TargetProfile | None = None,
         previous_allocation: Mapping[str, float] | None = None,
@@ -158,13 +155,9 @@ class CapitalAllocationOptimizer:
 
         if constraints is not None:
             if constraints.max_allocation_per_pipeline is not None:
-                upper_bounds = np.minimum(
-                    upper_bounds, constraints.max_allocation_per_pipeline
-                )
+                upper_bounds = np.minimum(upper_bounds, constraints.max_allocation_per_pipeline)
             if constraints.min_allocation_per_pipeline:
-                lower_bounds = np.maximum(
-                    lower_bounds, constraints.min_allocation_per_pipeline
-                )
+                lower_bounds = np.maximum(lower_bounds, constraints.min_allocation_per_pipeline)
 
         if np.any(lower_bounds > upper_bounds + 1e-12):
             raise ValueError("Lower bounds exceed upper bounds for one or more pipelines")
@@ -248,8 +241,7 @@ class CapitalAllocationOptimizer:
     def reallocate(
         self,
         metrics: Mapping[str, PipelineMetrics],
-        correlations: Mapping[tuple[str, str], float]
-        | Mapping[str, Mapping[str, float]],
+        correlations: Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]],
         *,
         target_profile: TargetProfile | None = None,
         previous_allocation: Mapping[str, float] | None = None,
@@ -270,8 +262,7 @@ class CapitalAllocationOptimizer:
         self,
         names: list[str],
         metrics: Mapping[str, PipelineMetrics],
-        correlations: Mapping[tuple[str, str], float]
-        | Mapping[str, Mapping[str, float]],
+        correlations: Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]],
         volatility: np.ndarray,
     ) -> np.ndarray:
         size = len(names)
@@ -366,7 +357,9 @@ class CapitalAllocationOptimizer:
 
         previous_vec = None
         if previous_allocation:
-            previous_vec = np.fromiter((previous_allocation.get(name, 0.0) for name in names), float)
+            previous_vec = np.fromiter(
+                (previous_allocation.get(name, 0.0) for name in names), float
+            )
             previous_vec = self._project(previous_vec, lower, upper)
 
         for iteration in range(self._max_iterations):
@@ -538,4 +531,3 @@ __all__ = [
     "AllocationResult",
     "CapitalAllocationOptimizer",
 ]
-

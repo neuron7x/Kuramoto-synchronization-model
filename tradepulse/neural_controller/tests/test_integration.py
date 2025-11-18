@@ -53,7 +53,9 @@ class DummyKuramoto(KuramotoSync):
 
 @pytest.fixture()
 def controller() -> NeuralMarketController:
-    return NeuralMarketController(Params(), EKFConfig(), PolicyConfig(), RiskConfig(), HomeoConfig())
+    return NeuralMarketController(
+        Params(), EKFConfig(), PolicyConfig(), RiskConfig(), HomeoConfig()
+    )
 
 
 def test_emh_state_bounds() -> None:
@@ -101,7 +103,9 @@ def test_go_no_go_amber_requires_energy() -> None:
         ]["increase_risk"]
         assert probs == 0.0
     assert (
-        ctrl.decide({**energetic_state, "E": 0.6}, "AMBER", -0.2)[1]["action_probs"]["increase_risk"]
+        ctrl.decide({**energetic_state, "E": 0.6}, "AMBER", -0.2)[1]["action_probs"][
+            "increase_risk"
+        ]
         == 0.0
     )
 
@@ -189,7 +193,9 @@ def test_market_adapter_extremes() -> None:
 def test_metrics_exporter_tracks_tail() -> None:
     exporter = DecisionMetricsExporter(tail_window=4)
     for reward in (-0.05, -0.02, 0.01, 0.02):
-        metrics = exporter.update({"reward": reward, "mode": "GREEN", "action": "hold", "alloc_scale": 1.0, "RPE": 0.0})
+        metrics = exporter.update(
+            {"reward": reward, "mode": "GREEN", "action": "hold", "alloc_scale": 1.0, "RPE": 0.0}
+        )
     assert "tail_ES95" in metrics
     assert metrics["tail_ES95"] >= 0.0
 
@@ -215,7 +221,11 @@ def test_decision_logging_contains_required_fields(
     obs = dict(dd=0.2, liq=0.3, reg=0.4, vol=0.6, reward=0.01, var_breach=False, m_proxy=0.6)
     with caplog.at_level(logging.INFO, logger="tradepulse.neural_controller.decision"):
         bridge.step(obs)
-    records = [record for record in caplog.records if record.name == "tradepulse.neural_controller.decision"]
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "tradepulse.neural_controller.decision"
+    ]
     assert records, "expected at least one decision log record"
     payload = json.loads(records[-1].message)
     for key in (
@@ -235,5 +245,3 @@ def test_decision_logging_contains_required_fields(
     ):
         assert key in payload
     assert 0.0 <= payload["sync_order"] <= 1.0
-
-

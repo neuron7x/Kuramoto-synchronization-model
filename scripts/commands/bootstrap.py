@@ -181,7 +181,9 @@ def _create_virtualenv(python: Path, venv_path: Path, recreate: bool) -> None:
 
 def _upgrade_pip(venv_python: Path) -> None:
     LOGGER.info("Upgrading pip, setuptools, and wheel…")
-    run_subprocess((str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"))
+    run_subprocess(
+        (str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel")
+    )
 
 
 def _install_from_requirements(venv_python: Path, files: Sequence[Path]) -> None:
@@ -236,7 +238,9 @@ def _select_package_manager(frontend_path: Path) -> Sequence[str]:
 def _install_frontend_dependencies(frontend_path: Path, reinstall: bool) -> None:
     package_json = frontend_path / "package.json"
     if not package_json.exists():
-        raise CommandError(f"package.json not found in {frontend_path}; cannot install frontend dependencies.")
+        raise CommandError(
+            f"package.json not found in {frontend_path}; cannot install frontend dependencies."
+        )
 
     node_modules = frontend_path / "node_modules"
     if node_modules.exists() and not reinstall:
@@ -320,4 +324,3 @@ def handle(args: Namespace) -> int:
     execute(config)
     LOGGER.info("Bootstrap completed successfully.")
     return 0
-

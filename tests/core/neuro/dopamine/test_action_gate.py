@@ -81,7 +81,9 @@ def _make_serotonin_snapshot(
 @pytest.fixture()
 def controller(tmp_path: Path) -> DopamineController:
     cfg_target = tmp_path / "dopamine.yaml"
-    cfg_target.write_text(Path("config/dopamine.yaml").read_text(encoding="utf-8"), encoding="utf-8")
+    cfg_target.write_text(
+        Path("config/dopamine.yaml").read_text(encoding="utf-8"), encoding="utf-8"
+    )
     ctrl = DopamineController(str(cfg_target))
     ctrl.dopamine_level = 0.7
     return ctrl

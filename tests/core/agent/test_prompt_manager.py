@@ -159,4 +159,3 @@ def test_record_outcome_cannot_be_recorded_twice(
 
     with pytest.raises(PromptTemplateNotFoundError):
         manager.record_outcome(result.record.record_id, outcome)
-

@@ -30,7 +30,9 @@ class _DummyConnector(ExecutionConnector):
         super().__init__(sandbox=sandbox)
         self.token = token
 
-    def place_order(self, order, *, idempotency_key: str | None = None):  # pragma: no cover - dummy implementation
+    def place_order(
+        self, order, *, idempotency_key: str | None = None
+    ):  # pragma: no cover - dummy implementation
         raise NotImplementedError
 
     def cancel_order(self, order_id: str) -> bool:  # pragma: no cover - dummy implementation
@@ -63,9 +65,7 @@ def test_registry_register_and_self_test() -> None:
     def _self_test() -> AdapterDiagnostic:
         return AdapterDiagnostic(
             adapter_id="dummy.test",
-            checks=(
-                AdapterCheckResult(name="init", status="passed", detail="Constructed"),
-            ),
+            checks=(AdapterCheckResult(name="init", status="passed", detail="Constructed"),),
         )
 
     plugin = AdapterPlugin(
@@ -116,9 +116,7 @@ def test_registry_discover_entry_points(monkeypatch: pytest.MonkeyPatch) -> None
             return _EntryPoints([ep for ep in self if ep.group == group])
 
     entry_points = _EntryPoints([_EntryPoint("dummy", "tradepulse.execution.adapters")])
-    monkeypatch.setattr(
-        adapter_plugin_module.metadata, "entry_points", lambda: entry_points
-    )
+    monkeypatch.setattr(adapter_plugin_module.metadata, "entry_points", lambda: entry_points)
 
     registry.discover()
     assert "dummy.discovered" in registry.identifiers()

@@ -21,7 +21,10 @@ class VariableInspector:
         *,
         redact_patterns: Iterable[str] | None = None,
     ) -> None:
-        patterns = tuple(pattern.lower() for pattern in (redact_patterns or ("secret", "token", "key", "password")))
+        patterns = tuple(
+            pattern.lower()
+            for pattern in (redact_patterns or ("secret", "token", "key", "password"))
+        )
         # Preserve order while normalising duplicates.
         self._redact_patterns: tuple[str, ...] = tuple(dict.fromkeys(patterns))
         self._providers: dict[str, Callable[[], Any | Awaitable[Any]]] = {}

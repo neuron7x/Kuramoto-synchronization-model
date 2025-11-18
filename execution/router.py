@@ -264,6 +264,7 @@ class ResilientExecutionRouter:
                 return route.normalize(route.connector.fetch_order(order_id))
 
         _, route = self._resolve_route(route_name)
+
         def _place(active_route: ExecutionRoute, connector: ExecutionConnector) -> Order:
             adjusted = active_route.apply_slippage(order)
             return connector.place_order(adjusted, idempotency_key=idempotency_key)

@@ -1,4 +1,5 @@
 """Composable building blocks for the TradePulse smoke E2E pipeline."""
+
 from __future__ import annotations
 
 import json

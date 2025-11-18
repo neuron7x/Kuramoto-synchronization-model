@@ -113,9 +113,7 @@ def test_shadow_orchestrator_rejects_on_guardrail_breach() -> None:
     decision: ShadowDecision | None = None
     for index in range(4):
         timestamp = datetime(2024, 2, 1, tzinfo=timezone.utc) + timedelta(seconds=index)
-        decision = orchestrator.process({"timestamp": timestamp, "symbol": "ETHUSDT"})[
-            "noisy"
-        ]
+        decision = orchestrator.process({"timestamp": timestamp, "symbol": "ETHUSDT"})["noisy"]
         if decision.action != "continue":
             break
 

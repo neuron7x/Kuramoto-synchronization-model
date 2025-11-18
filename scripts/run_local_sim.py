@@ -234,9 +234,7 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
     LOGGER.info("Starting offline simulation", extra={"event": "sim.start"})
 
     prices = _load_prices(cfg)
-    LOGGER.info(
-        "Loaded price series", extra={"event": "sim.prices_loaded", "rows": len(prices)}
-    )
+    LOGGER.info("Loaded price series", extra={"event": "sim.prices_loaded", "rows": len(prices)})
 
     composite, signal = _build_signal(prices, cfg)
     LOGGER.info(
@@ -282,7 +280,9 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
                 "Kill-switch blocked order",
                 extra={"event": "sim.risk_block", "reason": str(exc)},
             )
-            risk_result = RiskCheckResult(status="blocked", reason=str(exc), kill_switch_engaged=True)
+            risk_result = RiskCheckResult(
+                status="blocked", reason=str(exc), kill_switch_engaged=True
+            )
         else:
             risk_result = RiskCheckResult(status="passed", kill_switch_engaged=False)
             engine = PaperTradingEngine(

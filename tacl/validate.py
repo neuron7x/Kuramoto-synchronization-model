@@ -74,11 +74,7 @@ def run_validation(mode: str, *, scenarios: Mapping[str, EnergyMetrics]) -> int:
             summary["nominal_entropy"] = round(result.entropy, 6)
 
     if mode == "ci":
-        degradations = {
-            name: metrics
-            for name, metrics in scenarios.items()
-            if name != "nominal"
-        }
+        degradations = {name: metrics for name, metrics in scenarios.items() if name != "nominal"}
         for name, metrics in degradations.items():
             try:
                 validator.validate(metrics)

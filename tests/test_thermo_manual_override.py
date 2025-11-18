@@ -16,7 +16,9 @@ def _build_simple_controller() -> ThermoController:
     graph.add_node("b", cpu_norm=0.5)
     graph.add_edge("a", "b", type="vdw", latency_norm=0.8, coherency=0.7)
     controller = ThermoController(graph)
-    token = DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+    token = DualApprovalManager(secret="test-secret").issue_service_token(
+        action_id="thermo_topology"
+    )
     controller.set_dual_approval_token(token)
     return controller
 

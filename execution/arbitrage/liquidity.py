@@ -66,9 +66,7 @@ class LiquidityLedger:
                 self._balances[key] = state
             else:
                 if state.base_reserved > base_available or state.quote_reserved > quote_available:
-                    raise LiquidityError(
-                        "cannot set balances below outstanding reservations"
-                    )
+                    raise LiquidityError("cannot set balances below outstanding reservations")
                 state.base_available = base_available
                 state.quote_available = quote_available
 
@@ -142,9 +140,7 @@ class LiquidityLedger:
             key = (reservation.exchange_id, reservation.symbol)
             state = self._balances.get(key)
             if state is None:
-                raise LiquidityError(
-                    f"Balance missing for reservation {reservation_id}"
-                )
+                raise LiquidityError(f"Balance missing for reservation {reservation_id}")
             if reservation.base_amount > state.base_reserved:
                 raise LiquidityError("reserved base less than reservation")
             if reservation.quote_amount > state.quote_reserved:

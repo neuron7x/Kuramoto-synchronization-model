@@ -39,8 +39,7 @@ class SymbolNormalizer:
             self._canonical(k): v for k, v in (symbol_map or {}).items()
         }
         self._specs: Dict[str, SymbolSpecification] = {
-            self._canonical(spec.symbol): spec
-            for spec in (specifications or {}).values()
+            self._canonical(spec.symbol): spec for spec in (specifications or {}).values()
         }
 
     @staticmethod
@@ -127,9 +126,7 @@ class SymbolNormalizer:
             return price
         return self._round(price, spec.tick_size)
 
-    def validate(
-        self, symbol: str, quantity: float, price: float | None = None
-    ) -> None:
+    def validate(self, symbol: str, quantity: float, price: float | None = None) -> None:
         spec = self.specification(symbol)
         if spec is None:
             return

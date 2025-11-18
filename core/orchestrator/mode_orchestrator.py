@@ -280,4 +280,3 @@ class ModeOrchestrator:
                 (metrics.kappa, metrics.var, metrics.max_drawdown, metrics.heat),
             )
         )
-

@@ -39,7 +39,9 @@ def load_wbs() -> Dict[str, Dict[str, Any]]:
             if duration is None:
                 raise ValueError(f"Leaf task {code} missing duration")
             if duration <= 0 or duration > 1:
-                raise ValueError(f"Leaf task {code} has invalid duration {duration}; expected 0<duration<=1")
+                raise ValueError(
+                    f"Leaf task {code} has invalid duration {duration}; expected 0<duration<=1"
+                )
             if not node.get("deliverables"):
                 raise ValueError(f"Leaf task {code} missing deliverables")
             if not node.get("test_refs"):

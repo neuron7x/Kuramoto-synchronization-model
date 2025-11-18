@@ -40,9 +40,7 @@ class TestEndToEndPipeline:
         assert len(tickers) == 100
 
         # Convert to DataFrame for strategy
-        df = pd.DataFrame(
-            [{"close": float(t.price), "volume": float(t.volume)} for t in tickers]
-        )
+        df = pd.DataFrame([{"close": float(t.price), "volume": float(t.volume)} for t in tickers])
 
         # Create and evaluate strategy
         strategy = Strategy(name="test", params={"lookback": 20, "threshold": 0.5})
@@ -183,9 +181,7 @@ class TestErrorRecovery:
 
     def test_agent_repairs_corrupted_state(self) -> None:
         """Agent should repair NaN values in parameters."""
-        agent = PiAgent(
-            strategy=Strategy(name="corrupt", params={"alpha": np.nan, "beta": 1.0})
-        )
+        agent = PiAgent(strategy=Strategy(name="corrupt", params={"alpha": np.nan, "beta": 1.0}))
 
         agent.repair()
 
@@ -215,9 +211,7 @@ class TestErrorRecovery:
             writer = csv.DictWriter(f, fieldnames=["ts", "price", "volume"])
             writer.writeheader()
             writer.writerow({"ts": "1", "price": "100", "volume": "10"})
-            writer.writerow(
-                {"ts": "1000000", "price": "101", "volume": "20"}
-            )  # Huge gap
+            writer.writerow({"ts": "1000000", "price": "101", "volume": "20"})  # Huge gap
             writer.writerow({"ts": "1000001", "price": "102", "volume": "30"})
 
         ingestor = DataIngestor()

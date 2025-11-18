@@ -143,17 +143,10 @@ def compute_edge_latency(edge_attributes: Mapping[str, float]) -> float:
 def total_latency(graph: nx.Graph) -> float:
     """Aggregate latency across all edges of the graph."""
 
-    return float(
-        sum(
-            compute_edge_latency(edge_data)
-            for _, _, edge_data in graph.edges(data=True)
-        )
-    )
+    return float(sum(compute_edge_latency(edge_data) for _, _, edge_data in graph.edges(data=True)))
 
 
-def compute_potential_energy(
-    graph: nx.Graph, *, constant: float = COULOMB_CONSTANT
-) -> float:
+def compute_potential_energy(graph: nx.Graph, *, constant: float = COULOMB_CONSTANT) -> float:
     """Compute the Coulomb-style potential energy of the graph."""
 
     potential = 0.0
@@ -191,8 +184,7 @@ class ThermodynamicSystem:
         if timestamp is None:
             timestamp = time.time()
         latencies = [
-            compute_edge_latency(edge_data)
-            for _, _, edge_data in self.graph.edges(data=True)
+            compute_edge_latency(edge_data) for _, _, edge_data in self.graph.edges(data=True)
         ]
         self.buffer.extend(timestamp, latencies)
 
@@ -254,4 +246,3 @@ __all__ = [
     "measure_entropy",
     "total_latency",
 ]
-

@@ -159,9 +159,7 @@ def test_quality_interval_and_degradation(metrics_registry: CollectorRegistry, t
         monotonic=clock.monotonic,
         now=clock.now,
     )
-    orchestrator.configure_quality_baseline(
-        "accuracy", target=0.9, tolerance=0.02, min_samples=5
-    )
+    orchestrator.configure_quality_baseline("accuracy", target=0.9, tolerance=0.02, min_samples=5)
 
     values = [0.91, 0.9, 0.86, 0.84, 0.83]
     interval = None
@@ -268,7 +266,9 @@ def test_correlation_metrics(metrics_registry: CollectorRegistry, tmp_path) -> N
     assert gauge_value == pytest.approx(coefficient)
 
 
-def test_postmortem_template_contains_timeline(metrics_registry: CollectorRegistry, tmp_path) -> None:
+def test_postmortem_template_contains_timeline(
+    metrics_registry: CollectorRegistry, tmp_path
+) -> None:
     clock = FakeClock()
     config = ModelObservabilityConfig(
         model_name="delta",
@@ -283,17 +283,13 @@ def test_postmortem_template_contains_timeline(metrics_registry: CollectorRegist
         now=clock.now,
     )
     orchestrator.label_event("initialised", {"build": "2024.01"})
-    orchestrator.configure_quality_baseline(
-        "f1_score", target=0.7, tolerance=0.05, min_samples=3
-    )
+    orchestrator.configure_quality_baseline("f1_score", target=0.7, tolerance=0.05, min_samples=3)
 
     for value in (0.71, 0.7, 0.5):
         clock.advance(0.3)
         orchestrator.record_quality_metric("f1_score", value)
 
-    event = next(
-        evt for evt in orchestrator.latest_degradations if evt.metric == "f1_score"
-    )
+    event = next(evt for evt in orchestrator.latest_degradations if evt.metric == "f1_score")
     template = orchestrator.generate_postmortem_template(event)
     rendered = template.render()
 

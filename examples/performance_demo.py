@@ -48,9 +48,7 @@ def benchmark_entropy():
         start = time.time()
         h_baseline = entropy(data, bins=50)
         time_baseline = time.time() - start
-        print(
-            f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}"
-        )
+        print(f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}")
 
         # Float32 only
         start = time.time()
@@ -58,7 +56,7 @@ def benchmark_entropy():
         time_float32 = time.time() - start
         speedup_float32 = time_baseline / time_float32
         print(
-            f"  Float32:                      {time_float32:.3f}s  H={h_float32:.4f}  ({speedup_float32:.2f}x)"
+            f"  Float32:                      {time_float32:.3f}s  H={h_float32:.4f}  ({speedup_float32:.2f}x)"  # noqa: E501
         )
 
         # Chunking only (if dataset is large enough)
@@ -68,7 +66,7 @@ def benchmark_entropy():
             time_chunked = time.time() - start
             speedup_chunked = time_baseline / time_chunked
             print(
-                f"  Chunked (10K chunks):         {time_chunked:.3f}s  H={h_chunked:.4f}  ({speedup_chunked:.2f}x)"
+                f"  Chunked (10K chunks):         {time_chunked:.3f}s  H={h_chunked:.4f}  ({speedup_chunked:.2f}x)"  # noqa: E501
             )
 
         # Both optimizations
@@ -78,7 +76,7 @@ def benchmark_entropy():
             time_both = time.time() - start
             speedup_both = time_baseline / time_both
             print(
-                f"  Float32 + Chunked:            {time_both:.3f}s  H={h_both:.4f}  ({speedup_both:.2f}x)"
+                f"  Float32 + Chunked:            {time_both:.3f}s  H={h_both:.4f}  ({speedup_both:.2f}x)"  # noqa: E501
             )
 
 
@@ -98,9 +96,7 @@ def benchmark_hurst():
         start = time.time()
         h_baseline = hurst_exponent(data, max_lag=50)
         time_baseline = time.time() - start
-        print(
-            f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}"
-        )
+        print(f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}")
 
         # Float32
         start = time.time()
@@ -108,7 +104,7 @@ def benchmark_hurst():
         time_float32 = time.time() - start
         speedup = time_baseline / time_float32
         print(
-            f"  Float32:                      {time_float32:.3f}s  H={h_float32:.4f}  ({speedup:.2f}x)"
+            f"  Float32:                      {time_float32:.3f}s  H={h_float32:.4f}  ({speedup:.2f}x)"  # noqa: E501
         )
 
 
@@ -135,9 +131,7 @@ def benchmark_ricci():
         start = time.time()
         r_baseline = mean_ricci(G)
         time_baseline = time.time() - start
-        print(
-            f"  Baseline (float64):           {time_baseline:.3f}s  κ={r_baseline:.4f}"
-        )
+        print(f"  Baseline (float64):           {time_baseline:.3f}s  κ={r_baseline:.4f}")
 
         # Float32 only
         start = time.time()
@@ -145,7 +139,7 @@ def benchmark_ricci():
         time_float32 = time.time() - start
         speedup_float32 = time_baseline / time_float32
         print(
-            f"  Float32:                      {time_float32:.3f}s  κ={r_float32:.4f}  ({speedup_float32:.2f}x)"
+            f"  Float32:                      {time_float32:.3f}s  κ={r_float32:.4f}  ({speedup_float32:.2f}x)"  # noqa: E501
         )
 
         # Chunking only
@@ -155,7 +149,7 @@ def benchmark_ricci():
             time_chunked = time.time() - start
             speedup_chunked = time_baseline / time_chunked
             print(
-                f"  Chunked (100 edges/chunk):    {time_chunked:.3f}s  κ={r_chunked:.4f}  ({speedup_chunked:.2f}x)"
+                f"  Chunked (100 edges/chunk):    {time_chunked:.3f}s  κ={r_chunked:.4f}  ({speedup_chunked:.2f}x)"  # noqa: E501
             )
 
         # Both
@@ -165,7 +159,7 @@ def benchmark_ricci():
             time_both = time.time() - start
             speedup_both = time_baseline / time_both
             print(
-                f"  Float32 + Chunked:            {time_both:.3f}s  κ={r_both:.4f}  ({speedup_both:.2f}x)"
+                f"  Float32 + Chunked:            {time_both:.3f}s  κ={r_both:.4f}  ({speedup_both:.2f}x)"  # noqa: E501
             )
 
 

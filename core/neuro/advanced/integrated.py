@@ -104,7 +104,7 @@ class MultiscaleFractalAnalyzer:
             slope, intercept = np.polyfit(log_scales, log_vols, 1)
             scaling_exponent = float(np.clip(slope, -0.2, 1.2))
             deviation = abs(scaling_exponent - 0.5)
-            stability = float(np.exp(-(deviation / 0.25) ** 2))
+            stability = float(np.exp(-((deviation / 0.25) ** 2)))
 
         return {
             "scales": realised_scales,
@@ -118,8 +118,14 @@ class MultiscaleFractalAnalyzer:
             raise ValueError("Cannot aggregate empty feature mapping")
 
         items = list(features.items())
-        volatilities = np.asarray([max(1e-12, item[1]["volatility"]) for item in items], dtype=float)
-        weights = volatilities / volatilities.sum() if float(volatilities.sum()) > 0 else np.full_like(volatilities, 1.0 / len(items))
+        volatilities = np.asarray(
+            [max(1e-12, item[1]["volatility"]) for item in items], dtype=float
+        )
+        weights = (
+            volatilities / volatilities.sum()
+            if float(volatilities.sum()) > 0
+            else np.full_like(volatilities, 1.0 / len(items))
+        )
 
         def _weighted(field: str) -> float:
             values = np.asarray([item[1][field] for item in items], dtype=float)
@@ -218,7 +224,11 @@ class CandidateGenerator:
             edge_trend = float(abs(trend)) * 0.03 * persistence_bias
             edge_mean_reversion = float(
                 (1.0 - abs(trend)) * 0.02 * stability_bias
-                + (0.015 if features.get("regime", aggregated_features.get("regime")) == "choppy" else 0.0)
+                + (
+                    0.015
+                    if features.get("regime", aggregated_features.get("regime")) == "choppy"
+                    else 0.0
+                )
             )
 
             if "fractal_momentum" in strategies:
@@ -273,7 +283,10 @@ class NeuroRiskManager:
         if asset:
             asset_context = market_context.get("asset_contexts", {}).get(asset)
         damping *= self._fractal_damping_factor(market_context, asset_context)
-        if confidence < self._cfg.slo_gate_confidence_min and volatility > self._cfg.slo_gate_max_volatility:
+        if (
+            confidence < self._cfg.slo_gate_confidence_min
+            and volatility > self._cfg.slo_gate_max_volatility
+        ):
             damping *= self._cfg.slo_emergency_downscale
 
         bounds = self._cfg.policy_bounds
@@ -298,7 +311,13 @@ class NeuroRiskManager:
             context.update(asset_context)
 
         scaling = float(context.get("fractal_scaling", market_context.get("fractal_scaling", 0.5)))
-        stability = float(np.clip(context.get("fractal_stability", market_context.get("fractal_stability", 0.5)), 0.0, 1.0))
+        stability = float(
+            np.clip(
+                context.get("fractal_stability", market_context.get("fractal_stability", 0.5)),
+                0.0,
+                1.0,
+            )
+        )
         dimension = float(context.get("fractal_dim", market_context.get("fractal_dim", 1.5)))
 
         persistence = float(np.clip(1.0 + (scaling - 0.5) * 1.4, 0.6, 1.4))
@@ -394,12 +413,19 @@ class EnhancedFractalNeuroeconomicCore:
             raise ValueError("market_data does not contain any price series")
         asset_features, fractal = await self._analyzer.analyze_assets(asset_series)
         assets = list(asset_series.keys())
-        base_strategies = portfolio.get("strategies") or ["fractal_momentum", "fractal_mean_reversion"]
+        base_strategies = portfolio.get("strategies") or [
+            "fractal_momentum",
+            "fractal_mean_reversion",
+        ]
         dynamics = fractal.get("dynamics", {})
         asset_contexts = {
             asset: {
-                "fractal_scaling": data.get("dynamics", {}).get("scaling_exponent", fractal.get("fractal_scaling", 0.5)),
-                "fractal_stability": data.get("dynamics", {}).get("stability", fractal.get("fractal_stability", 0.5)),
+                "fractal_scaling": data.get("dynamics", {}).get(
+                    "scaling_exponent", fractal.get("fractal_scaling", 0.5)
+                ),
+                "fractal_stability": data.get("dynamics", {}).get(
+                    "stability", fractal.get("fractal_stability", 0.5)
+                ),
                 "fractal_dim": data.get("fractal_dim", fractal.get("fractal_dim", 1.5)),
                 "volatility": data.get("volatility", fractal.get("volatility", 0.0)),
                 "trend_strength": data.get("trend_strength", fractal.get("trend_strength", 0.0)),
@@ -420,7 +446,9 @@ class EnhancedFractalNeuroeconomicCore:
             "volatility_dispersion": fractal.get("volatility_dispersion", 0.0),
         }
 
-        neuro_context = await self._build_neuro_context(assets, base_strategies, fractal, asset_features)
+        neuro_context = await self._build_neuro_context(
+            assets, base_strategies, fractal, asset_features
+        )
         motivation_state = self._motivation.recommend(
             state=[
                 fractal["volatility"],
@@ -448,7 +476,9 @@ class EnhancedFractalNeuroeconomicCore:
             strategy_weight = float(self._nre.get_strategy_weight(strategy))
 
             adjusted = dict(candidate)
-            adjusted["position_size"] = float(adjusted["position_size"] * size_mod * strategy_weight)
+            adjusted["position_size"] = float(
+                adjusted["position_size"] * size_mod * strategy_weight
+            )
             adjusted["risk_level"] = float(
                 np.clip(
                     adjusted["risk_level"] * dopamine_risk,
@@ -456,7 +486,9 @@ class EnhancedFractalNeuroeconomicCore:
                     self._cfg.policy_bounds.max_risk,
                 )
             )
-            adjusted["confidence"] = float(adjusted["confidence"] * neuro_context["overall_confidence"])
+            adjusted["confidence"] = float(
+                adjusted["confidence"] * neuro_context["overall_confidence"]
+            )
             adjusted["neuro_modulation"] = {
                 "dopamine_effect": float(dopamine_risk),
                 "agency_effect": float(size_mod),
@@ -495,7 +527,9 @@ class EnhancedFractalNeuroeconomicCore:
         realized_rewards: list[float] = []
         for trade_data in trades:
             trade = self._parse_trade(trade_data)
-            self._dpa.update(trade.asset, trade.strategy, trade.pnl_percentage, trade.expected_reward)
+            self._dpa.update(
+                trade.asset, trade.strategy, trade.pnl_percentage, trade.expected_reward
+            )
             self._aic.update(trade, market_context)
             self._nre.reinforce(trade.strategy, trade, learning_context)
             realized_rewards.append(trade.pnl_percentage)
@@ -512,7 +546,9 @@ class EnhancedFractalNeuroeconomicCore:
         dopamine_states: Dict[str, float] = {}
         for asset in assets:
             for strategy in strategies:
-                dopamine_states[f"{asset}_{strategy}"] = self._dpa.get_risk_modulation(asset, strategy)
+                dopamine_states[f"{asset}_{strategy}"] = self._dpa.get_risk_modulation(
+                    asset, strategy
+                )
         size_modulator = self._aic.size_modulator()
         return {
             "dopamine_states": dopamine_states,
@@ -522,7 +558,9 @@ class EnhancedFractalNeuroeconomicCore:
             "trend_strength": float(fractal["trend_strength"]),
             "regime": fractal["regime"],
             "fractal_scaling": float(
-                fractal.get("dynamics", {}).get("scaling_exponent", fractal.get("fractal_scaling", 0.5))
+                fractal.get("dynamics", {}).get(
+                    "scaling_exponent", fractal.get("fractal_scaling", 0.5)
+                )
             ),
             "fractal_stability": float(
                 fractal.get("dynamics", {}).get("stability", fractal.get("fractal_stability", 0.5))
@@ -548,9 +586,11 @@ class EnhancedFractalNeuroeconomicCore:
             pnl_percentage=float(trade_data.get("pnl_percentage", 0.0)),
             signal_strength=float(trade_data.get("signal_strength", 0.6)),
             strategy_complexity=float(trade_data.get("strategy_complexity", 1.0)),
-            loss_magnitude=float(abs(trade_data.get("pnl_percentage", 0.0)))
-            if trade_data.get("pnl_percentage", 0.0) < 0
-            else 0.0,
+            loss_magnitude=(
+                float(abs(trade_data.get("pnl_percentage", 0.0)))
+                if trade_data.get("pnl_percentage", 0.0) < 0
+                else 0.0
+            ),
             expected_reward=float(trade_data.get("expected_reward", 0.0)),
             profit_magnitude=float(max(0.0, trade_data.get("pnl_percentage", 0.0))),
         )
@@ -804,4 +844,3 @@ __all__ = [
     "TradeOutcome",
     "TradeResult",
 ]
-

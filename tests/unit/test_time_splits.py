@@ -61,9 +61,7 @@ def test_purged_walk_forward_removes_overlaps():
     )
     for train_idx, test_idx in splitter.split(frame):
         test_end = frame.loc[test_idx, "label_end"].max()
-        train_overlaps = (
-            frame.loc[train_idx, "label_end"] >= frame.loc[test_idx, "timestamp"].min()
-        )
+        train_overlaps = frame.loc[train_idx, "label_end"] >= frame.loc[test_idx, "timestamp"].min()
         assert not train_overlaps.any()
         assert frame.loc[train_idx, "timestamp"].max() < test_end
 
@@ -128,9 +126,8 @@ def test_purged_kfold_with_label_overlap_purges_training_frame():
         test_end = frame.loc[test_idx, "label_end"].max()
         # Purging should remove any training observation whose label extends into the
         # beginning of the test fold, preventing look-ahead leakage.
-        overlaps = (
-            (frame.loc[train_idx, "label_end"] >= test_start)
-            & (frame.loc[train_idx, "timestamp"] <= test_end)
+        overlaps = (frame.loc[train_idx, "label_end"] >= test_start) & (
+            frame.loc[train_idx, "timestamp"] <= test_end
         )
         assert not overlaps.any(), "Purging failed to remove overlapping labels"
 
@@ -153,9 +150,7 @@ def test_walk_forward_with_overlapping_tests_has_no_leakage():
         assert len(test_idx) > 0
         train_last = frame.loc[train_idx, "timestamp"].max()
         test_start = frame.loc[test_idx, "timestamp"].min()
-        assert (
-            train_last < test_start
-        ), "Training window must strictly precede the test window"
+        assert train_last < test_start, "Training window must strictly precede the test window"
 
 
 @pytest.mark.parametrize(

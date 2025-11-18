@@ -22,9 +22,7 @@ class MockMarketDataGenerator:
         for index in range(self._window):
             timestamp = now - timedelta(minutes=self._window - index)
             price = self._base_price + self._oscillation(symbol, index)
-            points.append(
-                PricePoint(symbol=symbol, timestamp=timestamp, price=round(price, 2))
-            )
+            points.append(PricePoint(symbol=symbol, timestamp=timestamp, price=round(price, 2)))
         return PriceSeries(symbol=symbol, points=points)
 
     def _oscillation(self, symbol: str, index: int) -> float:

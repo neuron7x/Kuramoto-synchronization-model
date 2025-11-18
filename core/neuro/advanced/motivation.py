@@ -196,11 +196,13 @@ class FractalMotivationController:
             raise ValueError("state must be a 1D sequence")
         if state_array.size != self._value_weights.size:
             raise ValueError(
-                f"state dimension {state_array.size} does not match value_weights {self._value_weights.size}"
+                f"state dimension {state_array.size} does not match value_weights {self._value_weights.size}"  # noqa: E501
             )
         return float(self._value_weights @ state_array)
 
-    def get_recommended_action(self, state: Sequence[float], signals: Mapping[str, float | bool]) -> str:
+    def get_recommended_action(
+        self, state: Sequence[float], signals: Mapping[str, float | bool]
+    ) -> str:
         """Return the next action recommendation based on the provided signals."""
 
         risk_ok = bool(signals.get("risk_ok", True))
@@ -209,7 +211,7 @@ class FractalMotivationController:
         state_array = np.asarray(state, dtype=float)
         if state_array.size != self._value_weights.size:
             raise ValueError(
-                f"state dimension {state_array.size} does not match value_weights {self._value_weights.size}"
+                f"state dimension {state_array.size} does not match value_weights {self._value_weights.size}"  # noqa: E501
             )
         self._tracker.update(state_array)
 
@@ -294,4 +296,3 @@ __all__ = [
     "FractalSignalTracker",
     "UCBState",
 ]
-

@@ -61,9 +61,7 @@ class ServiceTLSSettings:
 
     def __post_init__(self) -> None:
         """Validate TLS configuration after initialization."""
-        self.cert_file = _ensure_file(
-            Path(self.cert_file), description="TLS certificate"
-        )
+        self.cert_file = _ensure_file(Path(self.cert_file), description="TLS certificate")
         self.key_file = _ensure_file(Path(self.key_file), description="TLS private key")
         if self.client_ca_file is not None:
             self.client_ca_file = _ensure_file(
@@ -133,15 +131,11 @@ class DatabaseTLSSettings:
     key_file: Path
 
     def __post_init__(self) -> None:
-        self.ca_file = _ensure_file(
-            Path(self.ca_file), description="PostgreSQL CA bundle"
-        )
+        self.ca_file = _ensure_file(Path(self.ca_file), description="PostgreSQL CA bundle")
         self.cert_file = _ensure_file(
             Path(self.cert_file), description="PostgreSQL client certificate"
         )
-        self.key_file = _ensure_file(
-            Path(self.key_file), description="PostgreSQL client key"
-        )
+        self.key_file = _ensure_file(Path(self.key_file), description="PostgreSQL client key")
 
 
 @dataclass(slots=True)
@@ -243,9 +237,7 @@ def _load_yaml_config(config_path: Path) -> dict[str, Any]:
         try:
             return yaml.safe_load(handle) or {}
         except yaml.YAMLError as exc:  # pragma: no cover - defensive branch
-            raise ConfigurationError(
-                f"Failed to parse configuration file {config_path}"
-            ) from exc
+            raise ConfigurationError(f"Failed to parse configuration file {config_path}") from exc
 
 
 def load_settings(config_path: str | os.PathLike[str] | None = None) -> CortexSettings:

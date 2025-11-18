@@ -26,7 +26,12 @@ from libs.db.repository import KillSwitchStateRepository
 from libs.db.session import SessionManager
 from src.audit.audit_logger import AuditLogger, SiemAuditSink
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagRecord, LagReport
+from src.data.kafka_ingestion import (
+    KafkaIngestionConfig,
+    KafkaIngestionService,
+    LagRecord,
+    LagReport,
+)
 from src.data.pipeline import (
     CacheRoute,
     StaticTickRoutingStrategy,
@@ -38,7 +43,9 @@ class _FlakyKillSwitchStateRepository(KillSwitchStateRepository):
     """Repository that fails once to exercise retry/backoff logic."""
 
     def __init__(self, session_manager: SessionManager, *, retry_policy: RetryPolicy) -> None:
-        super().__init__(session_manager, retry_policy=retry_policy, logger=logging.getLogger("test.flaky_repo"))
+        super().__init__(
+            session_manager, retry_policy=retry_policy, logger=logging.getLogger("test.flaky_repo")
+        )
         self.attempts = 0
 
     def upsert(self, *, engaged: bool, reason: str):  # type: ignore[override]
@@ -163,7 +170,9 @@ class _FakeKafkaProducer:
     async def begin_transaction(self) -> None:
         self.begin_calls += 1
 
-    async def send_offsets_to_transaction(self, offsets: Mapping[_TopicPartition, int], group_id: str) -> None:
+    async def send_offsets_to_transaction(
+        self, offsets: Mapping[_TopicPartition, int], group_id: str
+    ) -> None:
         self.offset_commits.append((dict(offsets), group_id))
 
     async def commit_transaction(self) -> None:
@@ -174,7 +183,12 @@ class _FakeKafkaProducer:
 
 
 class _FakeKafkaConsumer:
-    def __init__(self, batches: deque[dict[_TopicPartition, list[_FakeMessage]]], *, end_offsets: dict[_TopicPartition, int]) -> None:
+    def __init__(
+        self,
+        batches: deque[dict[_TopicPartition, list[_FakeMessage]]],
+        *,
+        end_offsets: dict[_TopicPartition, int],
+    ) -> None:
         self._batches = batches
         self._assignment = {tp for batch in batches for tp in batch}
         self._end_offsets = end_offsets
@@ -189,7 +203,9 @@ class _FakeKafkaConsumer:
     async def stop(self) -> None:
         self.stopped += 1
 
-    async def getmany(self, timeout_ms: int, max_records: int) -> dict[_TopicPartition, list[_FakeMessage]]:
+    async def getmany(
+        self, timeout_ms: int, max_records: int
+    ) -> dict[_TopicPartition, list[_FakeMessage]]:
         if not self._batches:
             self.drained.set()
             await asyncio.sleep(timeout_ms / 1000)
@@ -227,7 +243,9 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(tmp_
             ("venue", b"BINANCE"),
             ("occurred_at", occurred_at.isoformat().encode("utf-8")),
         ]
-        return _FakeMessage(offset=offset, value=json.dumps(payload).encode("utf-8"), headers=headers)
+        return _FakeMessage(
+            offset=offset, value=json.dumps(payload).encode("utf-8"), headers=headers
+        )
 
     topic_partition = _TopicPartition(topic="tradepulse.market.ticks", partition=0)
     batches: deque[dict[_TopicPartition, list[_FakeMessage]]] = deque(
@@ -313,7 +331,9 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(tmp_
     assert frame.shape[0] == 1
     assert pytest.approx(frame["price"].iloc[0]) == 102.0
 
-    hot_snapshot = pipeline.kafka_service.hot_cache.snapshot("BTCUSD", "BINANCE", InstrumentType.SPOT)
+    hot_snapshot = pipeline.kafka_service.hot_cache.snapshot(
+        "BTCUSD", "BINANCE", InstrumentType.SPOT
+    )
     assert hot_snapshot is None or not hot_snapshot.ticks
 
     assert lag_reports

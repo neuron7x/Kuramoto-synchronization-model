@@ -14,9 +14,7 @@ from core.utils.security import SecretDetector, check_for_hardcoded_secrets
 def test_secret_detector_masks_findings() -> None:
     workspace = Path(tempfile.mkdtemp(prefix="secretdetector"))
     target = workspace / "config.py"
-    target.write_text(
-        "API_KEY = 'abcd1234'\npassword='verysecretvalue'\n", encoding="utf-8"
-    )
+    target.write_text("API_KEY = 'abcd1234'\npassword='verysecretvalue'\n", encoding="utf-8")
 
     detector = SecretDetector()
     findings = detector.scan_file(target)
@@ -77,9 +75,7 @@ def test_scan_file_handles_unreadable_file(
 
 def test_scan_directory_respects_extension_filter() -> None:
     repo = Path(tempfile.mkdtemp(prefix="secdir"))
-    (repo / "config.yaml").write_text(
-        "secret: 'should-be-detected'\n", encoding="utf-8"
-    )
+    (repo / "config.yaml").write_text("secret: 'should-be-detected'\n", encoding="utf-8")
     (repo / "image.png").write_bytes(b"binary-data")
 
     detector = SecretDetector()

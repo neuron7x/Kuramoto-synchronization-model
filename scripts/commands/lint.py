@@ -101,9 +101,7 @@ def _discover_python_targets() -> list[str]:
     targets = sorted(candidates)
 
     if not targets:
-        LOGGER.info(
-            "No Python file changes detected – skipping formatter and linter checks."
-        )
+        LOGGER.info("No Python file changes detected – skipping formatter and linter checks.")
     else:
         LOGGER.debug("Python lint targets: %s", ", ".join(targets))
 

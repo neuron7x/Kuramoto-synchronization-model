@@ -215,9 +215,7 @@ class MarketRegimeAnalyzer:
         except Exception:
             return 0.0, 1.0
 
-    def calculate_trend_strength(
-        self, prices: np.ndarray
-    ) -> Tuple[float, TrendStrength]:
+    def calculate_trend_strength(self, prices: np.ndarray) -> Tuple[float, TrendStrength]:
         """
         Розрахунок сили тренду
 
@@ -329,11 +327,7 @@ class MarketRegimeAnalyzer:
             regime_scores[RegimeType.CALM] = 1.0 - annual_vol / 0.15
 
         # Choppy (без чіткого тренду, середня волатильність)
-        if (
-            abs(trend_value) < 0.3
-            and 0.45 <= hurst <= 0.55
-            and 0.15 <= annual_vol <= 0.3
-        ):
+        if abs(trend_value) < 0.3 and 0.45 <= hurst <= 0.55 and 0.15 <= annual_vol <= 0.3:
             regime_scores[RegimeType.CHOPPY] = 0.7
 
         # Визначаємо режим з найвищим score
@@ -389,9 +383,7 @@ class MarketRegimeAnalyzer:
         """
         return self._regime_probabilities.copy()
 
-    def get_transition_history(
-        self, limit: Optional[int] = None
-    ) -> List[RegimeTransition]:
+    def get_transition_history(self, limit: Optional[int] = None) -> List[RegimeTransition]:
         """
         Отримання історії переходів режимів
 
@@ -405,9 +397,7 @@ class MarketRegimeAnalyzer:
             return self._transition_history.copy()
         return self._transition_history[-limit:]
 
-    def recommend_strategy_parameters(
-        self, regime_metrics: RegimeMetrics
-    ) -> Dict[str, float]:
+    def recommend_strategy_parameters(self, regime_metrics: RegimeMetrics) -> Dict[str, float]:
         """
         Рекомендації параметрів стратегії на основі режиму
 

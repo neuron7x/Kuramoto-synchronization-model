@@ -49,7 +49,9 @@ class SessionManager:
             )
             for engine in self._reader_engines
         )
-        self._reader_cycle = itertools.cycle(self._reader_factories) if self._reader_factories else None
+        self._reader_cycle = (
+            itertools.cycle(self._reader_factories) if self._reader_factories else None
+        )
         self._lock = Lock()
         self._owns_engines = owns_engines
         self._closed = False

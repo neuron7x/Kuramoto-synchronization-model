@@ -18,10 +18,14 @@ class KillSwitchRequest(BaseModel):
 
 
 def create_state(settings: ControlSettings) -> ControlState:
-    return ControlState(health_targets={name: str(url) for name, url in settings.health_targets.items()})
+    return ControlState(
+        health_targets={name: str(url) for name, url in settings.health_targets.items()}
+    )
 
 
-def create_app(settings: ControlSettings | None = None, state: ControlState | None = None) -> FastAPI:
+def create_app(
+    settings: ControlSettings | None = None, state: ControlState | None = None
+) -> FastAPI:
     config = settings or control_settings()
     control_state = state or create_state(config)
 

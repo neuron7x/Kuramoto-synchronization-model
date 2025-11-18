@@ -19,9 +19,7 @@ try:  # pragma: no cover - optional import for live connectors
         CoinbaseRESTConnector,
         KrakenRESTConnector,
     )
-except (
-    Exception
-):  # pragma: no cover - adapters may not be available in minimal installs
+except Exception:  # pragma: no cover - adapters may not be available in minimal installs
     BinanceRESTConnector = None  # type: ignore[assignment]
     CoinbaseRESTConnector = None  # type: ignore[assignment]
     KrakenRESTConnector = None  # type: ignore[assignment]

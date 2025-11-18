@@ -83,13 +83,9 @@ class _RetentionManager:
             missing = {"entity_id", "ts"} - set(result.columns)
             if missing:
                 joined = ", ".join(sorted(missing))
-                raise KeyError(
-                    "Retention policy with max_versions requires columns: " f"{joined}"
-                )
+                raise KeyError("Retention policy with max_versions requires columns: " f"{joined}")
             ordered = result.sort_values(by=["entity_id", "ts"], kind="mergesort")
-            limited = ordered.groupby("entity_id", as_index=False).tail(
-                self._policy.max_versions
-            )
+            limited = ordered.groupby("entity_id", as_index=False).tail(self._policy.max_versions)
             result = limited.sort_values(by=["entity_id", "ts"], kind="mergesort")
 
         return result.reset_index(drop=True)
@@ -101,9 +97,7 @@ class _RetentionManager:
             return None
 
         total_seconds = self._policy.ttl.total_seconds()
-        if (
-            total_seconds <= 0
-        ):  # pragma: no cover - RetentionPolicy enforces positive TTL
+        if total_seconds <= 0:  # pragma: no cover - RetentionPolicy enforces positive TTL
             return None
 
         return max(1, math.ceil(total_seconds))
@@ -256,17 +250,14 @@ class RedisOnlineFeatureStore:
 
         if mode == "overwrite":
             stored = self._write(feature_view, offline_frame)
-            report = OnlineFeatureStore._build_report(
-                feature_view, offline_frame, stored
-            )
+            report = OnlineFeatureStore._build_report(feature_view, offline_frame, stored)
         else:
             existing = self.load(feature_view)
             if not existing.empty:
                 missing = set(existing.columns) ^ set(offline_frame.columns)
                 if missing:
                     raise ValueError(
-                        "Cannot append payload with mismatched columns: "
-                        f"{sorted(missing)}"
+                        "Cannot append payload with mismatched columns: " f"{sorted(missing)}"
                     )
                 offline_frame = offline_frame[existing.columns]
                 combined = OnlineFeatureStore._append_frames(existing, offline_frame)
@@ -278,9 +269,7 @@ class RedisOnlineFeatureStore:
                 online_delta = stored.tail(delta_rows).reset_index(drop=True)
             else:
                 online_delta = stored.iloc[0:0]
-            report = OnlineFeatureStore._build_report(
-                feature_view, offline_frame, online_delta
-            )
+            report = OnlineFeatureStore._build_report(feature_view, offline_frame, online_delta)
 
         if validate:
             report.ensure_valid()
@@ -347,9 +336,7 @@ class SQLiteEncryptionConfig:
             if not encoded:
                 raise ValueError("fallback key identifiers cannot be empty")
             if len(encoded) > 255:
-                raise ValueError(
-                    "fallback key identifiers must not exceed 255 bytes when encoded"
-                )
+                raise ValueError("fallback key identifiers must not exceed 255 bytes when encoded")
 
 
 class _SQLiteEncryptionEnvelope:
@@ -368,29 +355,21 @@ class _SQLiteEncryptionEnvelope:
     def encrypt(self, payload: bytes) -> bytes:
         nonce = os.urandom(_NONCE_SIZE)
         ciphertext = self._primary_key.encrypt(nonce, payload, self._key_id_bytes)
-        header = (
-            _ENVELOPE_PREFIX + bytes([len(self._key_id_bytes)]) + self._key_id_bytes
-        )
+        header = _ENVELOPE_PREFIX + bytes([len(self._key_id_bytes)]) + self._key_id_bytes
         return header + nonce + ciphertext
 
     def decrypt(self, payload: bytes, *, allow_plaintext: bool | None = None) -> bytes:
-        allow_plaintext = (
-            self._allow_plaintext if allow_plaintext is None else allow_plaintext
-        )
+        allow_plaintext = self._allow_plaintext if allow_plaintext is None else allow_plaintext
         if payload.startswith(_ENVELOPE_PREFIX):
             cursor = len(_ENVELOPE_PREFIX)
             if cursor >= len(payload):
-                raise FeatureStoreConfigurationError(
-                    "Encrypted payload header is truncated"
-                )
+                raise FeatureStoreConfigurationError("Encrypted payload header is truncated")
 
             key_id_length = payload[cursor]
             cursor += 1
             key_id_bytes = payload[cursor : cursor + key_id_length]
             if len(key_id_bytes) != key_id_length:
-                raise FeatureStoreConfigurationError(
-                    "Encrypted payload missing key identifier"
-                )
+                raise FeatureStoreConfigurationError("Encrypted payload missing key identifier")
             cursor += key_id_length
 
             if len(payload) < cursor + _NONCE_SIZE:
@@ -443,9 +422,7 @@ def reencrypt_sqlite_payloads(
         shutil.copy2(db_path, backup_path)
 
     source_envelope = (
-        _SQLiteEncryptionEnvelope(current_encryption)
-        if current_encryption is not None
-        else None
+        _SQLiteEncryptionEnvelope(current_encryption) if current_encryption is not None else None
     )
     target_envelope = _SQLiteEncryptionEnvelope(target_encryption)
 
@@ -459,9 +436,7 @@ def reencrypt_sqlite_payloads(
     transformed: list[tuple[str, bytes]] = []
     for name, payload in rows:
         if not isinstance(payload, (bytes, bytearray)):
-            raise FeatureStoreConfigurationError(
-                "Stored payload must be bytes for migration"
-            )
+            raise FeatureStoreConfigurationError("Stored payload must be bytes for migration")
         raw: bytes
         if source_envelope is None:
             raw = bytes(payload)
@@ -507,9 +482,7 @@ class SQLiteOnlineFeatureStore:
 
     def purge(self, feature_view: str) -> None:
         with self._connection:
-            self._connection.execute(
-                "DELETE FROM feature_views WHERE name = ?", (feature_view,)
-            )
+            self._connection.execute("DELETE FROM feature_views WHERE name = ?", (feature_view,))
 
     def load(self, feature_view: str) -> pd.DataFrame:
         cursor = self._connection.execute(
@@ -540,17 +513,14 @@ class SQLiteOnlineFeatureStore:
 
         if mode == "overwrite":
             stored = self._write(feature_view, offline_frame)
-            report = OnlineFeatureStore._build_report(
-                feature_view, offline_frame, stored
-            )
+            report = OnlineFeatureStore._build_report(feature_view, offline_frame, stored)
         else:
             existing = self.load(feature_view)
             if not existing.empty:
                 missing = set(existing.columns) ^ set(offline_frame.columns)
                 if missing:
                     raise ValueError(
-                        "Cannot append payload with mismatched columns: "
-                        f"{sorted(missing)}"
+                        "Cannot append payload with mismatched columns: " f"{sorted(missing)}"
                     )
                 offline_frame = offline_frame[existing.columns]
                 combined = OnlineFeatureStore._append_frames(existing, offline_frame)
@@ -562,9 +532,7 @@ class SQLiteOnlineFeatureStore:
                 online_delta = stored.tail(delta_rows).reset_index(drop=True)
             else:
                 online_delta = stored.iloc[0:0]
-            report = OnlineFeatureStore._build_report(
-                feature_view, offline_frame, online_delta
-            )
+            report = OnlineFeatureStore._build_report(feature_view, offline_frame, online_delta)
 
         if validate:
             report.ensure_valid()
@@ -763,8 +731,7 @@ class OnlineFeatureStore:
                 missing = set(existing.columns) ^ set(offline_frame.columns)
                 if missing:
                     raise ValueError(
-                        "Cannot append payload with mismatched columns: "
-                        f"{sorted(missing)}"
+                        "Cannot append payload with mismatched columns: " f"{sorted(missing)}"
                     )
                 offline_frame = offline_frame[existing.columns]
             stored = self._append_frames(existing, offline_frame)
@@ -780,9 +747,7 @@ class OnlineFeatureStore:
             report.ensure_valid()
         return report
 
-    def compute_integrity(
-        self, feature_view: str, frame: pd.DataFrame
-    ) -> IntegrityReport:
+    def compute_integrity(self, feature_view: str, frame: pd.DataFrame) -> IntegrityReport:
         """Compare ``frame`` against the currently persisted dataset."""
 
         online = self.load(feature_view)
@@ -798,9 +763,7 @@ class OnlineFeatureStore:
         )
         return combined
 
-    def _write_frame(
-        self, feature_view: str, path: Path, frame: pd.DataFrame
-    ) -> pd.DataFrame:
+    def _write_frame(self, feature_view: str, path: Path, frame: pd.DataFrame) -> pd.DataFrame:
         prepared = frame.reset_index(drop=True)
         written = write_dataframe(prepared, path, index=False, allow_json_fallback=True)
 

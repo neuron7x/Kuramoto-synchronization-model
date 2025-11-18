@@ -1,4 +1,5 @@
 """Regression tests for the CI workflow's container publication job."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -35,9 +36,7 @@ def _get_step(job: Dict[str, Any], *, uses: str) -> Dict[str, Any]:
         raise AssertionError("publish-containers job must define a steps list")
 
     matching = [
-        step
-        for step in steps
-        if isinstance(step, dict) and step.get("uses", "").startswith(uses)
+        step for step in steps if isinstance(step, dict) and step.get("uses", "").startswith(uses)
     ]
     if not matching:
         raise AssertionError(f"Expected a step using {uses!r}")
@@ -116,7 +115,9 @@ def test_build_and_push_step_pushes_multi_arch_images() -> None:
     steps: List[Dict[str, Any]] = job["steps"]  # type: ignore[assignment]
 
     build_steps = [
-        step for step in steps if isinstance(step, dict) and step.get("uses") == "docker/build-push-action@v5"
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("uses") == "docker/build-push-action@v5"
     ]
     assert build_steps, "Expected docker/build-push-action@v5 step"
     build_step = build_steps[0]
@@ -148,6 +149,6 @@ def test_prepare_step_generates_expected_outputs() -> None:
     step = _get_step_by_id(job, step_id="image-targets")
     assert step["shell"] == "bash"
     run_script = step["run"]
-    assert "targets=(\"${GHCR_IMAGE}\")" in run_script
-    assert "targets+=(\"docker.io/${DOCKERHUB_IMAGE}\")" in run_script
+    assert 'targets=("${GHCR_IMAGE}")' in run_script
+    assert 'targets+=("docker.io/${DOCKERHUB_IMAGE}")' in run_script
     assert "GITHUB_OUTPUT" in run_script

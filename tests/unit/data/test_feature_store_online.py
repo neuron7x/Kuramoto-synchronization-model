@@ -8,9 +8,7 @@ from core.utils import dataframe_io
 
 
 def _frame(values: list[int]) -> pd.DataFrame:
-    return pd.DataFrame(
-        {"timestamp": values, "alpha": [float(v) * 0.1 for v in values]}
-    )
+    return pd.DataFrame({"timestamp": values, "alpha": [float(v) * 0.1 for v in values]})
 
 
 def test_overwrite_mode_purges_existing_store(tmp_path):
@@ -22,9 +20,7 @@ def test_overwrite_mode_purges_existing_store(tmp_path):
     store.sync("live.features", new_payload, mode="overwrite")
 
     stored = store.load("live.features")
-    pd.testing.assert_frame_equal(
-        stored.reset_index(drop=True), new_payload.reset_index(drop=True)
-    )
+    pd.testing.assert_frame_equal(stored.reset_index(drop=True), new_payload.reset_index(drop=True))
 
 
 def test_integrity_report_detects_row_and_hash_mismatches(tmp_path):
@@ -73,9 +69,7 @@ def test_polars_fallback_without_pyarrow(monkeypatch, tmp_path):
     store.sync("alt.features", payload, mode="overwrite")
 
     stored = store.load("alt.features")
-    pd.testing.assert_frame_equal(
-        stored.reset_index(drop=True), payload.reset_index(drop=True)
-    )
+    pd.testing.assert_frame_equal(stored.reset_index(drop=True), payload.reset_index(drop=True))
 
     parquet_path = (tmp_path / "alt.features").with_suffix(".parquet")
     assert parquet_path.exists()
@@ -95,9 +89,7 @@ def test_json_fallback_when_no_parquet_backend(monkeypatch, tmp_path):
     store.sync("json.features", payload, mode="overwrite")
 
     stored = store.load("json.features")
-    pd.testing.assert_frame_equal(
-        stored.reset_index(drop=True), payload.reset_index(drop=True)
-    )
+    pd.testing.assert_frame_equal(stored.reset_index(drop=True), payload.reset_index(drop=True))
 
     json_path = store._resolve_path("json.features").with_suffix(".json")
     assert json_path.exists()

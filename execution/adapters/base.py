@@ -155,9 +155,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
     # ------------------------------------------------------------------
     # Abstract hooks for subclasses
     @abstractmethod
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         """Normalise credentials supplied either programmatically or via env."""
 
     @abstractmethod
@@ -177,15 +175,11 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         """Endpoint used for order submission requests."""
 
     @abstractmethod
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> Dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> Dict[str, Any]:
         """Serialise an :class:`Order` into the venue's REST payload format."""
 
     @abstractmethod
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         """Convert REST/WS payloads back into :class:`Order` objects."""
 
     @abstractmethod
@@ -264,9 +258,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
     ) -> Mapping[str, Any] | list:
         if not self._connected or self._http_client is None:
             raise RuntimeError("Connector is not connected")
-        request_weight = (
-            weight if weight is not None else self._weight_for(method, path)
-        )
+        request_weight = weight if weight is not None else self._weight_for(method, path)
         self._rate_limiter.acquire(max(1, int(request_weight)))
         request_params = dict(params or {})
         request_json = dict(json_payload) if json_payload is not None else None
@@ -304,9 +296,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         if response.status_code == 429:
             raise TransientOrderError("HTTP 429: rate limited")
         if 500 <= response.status_code < 600:
-            raise TransientOrderError(
-                f"HTTP {response.status_code}: transient server error"
-            )
+            raise TransientOrderError(f"HTTP {response.status_code}: transient server error")
         if response.is_error:
             raise OrderError(f"HTTP {response.status_code}: {response.text}")
         try:
@@ -323,9 +313,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         if idempotency_key and idempotency_key in self._idempotency_cache:
             return self._idempotency_cache[idempotency_key]
         payload = self._build_place_payload(order, idempotency_key)
-        response = self._request(
-            "POST", self._order_endpoint(), params=payload, signed=True
-        )
+        response = self._request("POST", self._order_endpoint(), params=payload, signed=True)
         submitted = self._parse_order(response, original=order)
         with self._lock:
             self._orders[submitted.order_id or ""] = submitted
@@ -401,9 +389,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         try:
             from websockets.asyncio.client import connect
         except Exception as exc:  # pragma: no cover - optional dependency guard
-            raise RuntimeError(
-                "websockets>=15.0 is required for market data streaming"
-            ) from exc
+            raise RuntimeError("websockets>=15.0 is required for market data streaming") from exc
         return connect(
             url,
             ping_interval=20.0,
@@ -433,9 +419,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                     backoff = 1.0
                     while not self._ws_stop.is_set():
                         try:
-                            message = await asyncio.wait_for(
-                                websocket.recv(), timeout=1.0
-                            )
+                            message = await asyncio.wait_for(websocket.recv(), timeout=1.0)
                         except asyncio.TimeoutError:
                             continue
                         except Exception as exc:  # pragma: no cover - defensive

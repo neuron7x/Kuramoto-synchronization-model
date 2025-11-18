@@ -70,7 +70,11 @@ def run_validation(steps: int = 500) -> Tuple[pd.DataFrame, Dict[str, float]]:
         "std_reward": float(np.std(rets)) if rets else 0.0,
         "tail_ES95": tail_es95,
         "prop_RED": float(np.mean(df["mode"] == "RED")) if not df.empty else 0.0,
-        "prop_increase_risk_in_RED": float(np.mean((df["mode"] == "RED") & (df["action"] == "increase_risk"))) if not df.empty else 0.0,
+        "prop_increase_risk_in_RED": (
+            float(np.mean((df["mode"] == "RED") & (df["action"] == "increase_risk")))
+            if not df.empty
+            else 0.0
+        ),
         "avg_alloc_scale": float(np.mean(df["alloc_scale"])) if not df.empty else 0.0,
     }
     return df, metrics

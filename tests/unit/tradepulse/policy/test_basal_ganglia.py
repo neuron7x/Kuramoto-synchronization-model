@@ -7,8 +7,7 @@ import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     "basal_ganglia",
-    Path(__file__).parent.parent.parent.parent.parent
-    / "src/tradepulse/policy/basal_ganglia.py",
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/policy/basal_ganglia.py",
 )
 basal_ganglia_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(basal_ganglia_module)
@@ -61,9 +60,7 @@ class TestBasalGangliaPolicy:
 
         # High R
         state_high = {"R": 0.9}
-        action_high, size_high = policy.decide(
-            state_high, ews_state="EMERGENT", risk_state="OK"
-        )
+        action_high, size_high = policy.decide(state_high, ews_state="EMERGENT", risk_state="OK")
         assert action_high == "GO"
         assert abs(size_high - 0.95) < 0.01
         assert size_high > size_low

@@ -39,9 +39,7 @@ def _orders_drained(loop: LiveExecutionLoop, venue: str) -> bool:
     return not any(order.is_active for order in context.oms.outstanding())
 
 
-def run_backtest_and_export_signals(
-    config: Mapping[str, Any], out_path: Path
-) -> dict[str, Any]:
+def run_backtest_and_export_signals(config: Mapping[str, Any], out_path: Path) -> dict[str, Any]:
     data_path = Path(config["data_path"])
     if not data_path.exists():
         raise FileNotFoundError(f"data source missing: {data_path}")
@@ -109,9 +107,7 @@ def run_backtest_and_export_signals(
         for idx in range(len(signals))
     ]
 
-    equity_curve = (
-        result.equity_curve.tolist() if result.equity_curve is not None else None
-    )
+    equity_curve = result.equity_curve.tolist() if result.equity_curve is not None else None
     report = {
         "pnl": float(result.pnl),
         "max_drawdown": float(result.max_dd),
@@ -270,9 +266,7 @@ def run_live_runner_with_fake_exchange(
         pnl_total = float(pnl_steps.sum()) if pnl_steps.size else 0.0
         drawdowns = equity_curve - np.maximum.accumulate(equity_curve)
         max_drawdown = float(drawdowns.min()) if drawdowns.size else 0.0
-        max_position_observed = (
-            float(np.max(np.abs(positions_np))) if positions_np.size else 0.0
-        )
+        max_position_observed = float(np.max(np.abs(positions_np))) if positions_np.size else 0.0
 
         risk_summary = {
             "kill_switch_engaged": risk_manager.kill_switch.is_triggered(),
@@ -325,9 +319,9 @@ def compare_reports(
     live_dd = float(live_report.get("max_drawdown", 0.0))
     allowed_dd = abs(back_dd) * drawdown_tolerance + 1e-6
     dd_gap = abs(abs(live_dd) - abs(back_dd))
-    assert dd_gap <= allowed_dd, (
-        f"Drawdown mismatch {dd_gap:.4f} exceeds tolerance {allowed_dd:.4f}"
-    )
+    assert (
+        dd_gap <= allowed_dd
+    ), f"Drawdown mismatch {dd_gap:.4f} exceeds tolerance {allowed_dd:.4f}"
 
     positions = np.asarray(live_report.get("positions", []), dtype=float)
     assert positions.shape == signals.shape

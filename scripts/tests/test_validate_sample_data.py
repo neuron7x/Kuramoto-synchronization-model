@@ -123,4 +123,3 @@ def test_discover_contracts_skips_missing_directories(tmp_path: Path) -> None:
     repo_root = tmp_path
     contracts = validate_sample_data.discover_contracts(repo_root=repo_root)
     assert contracts == []
-

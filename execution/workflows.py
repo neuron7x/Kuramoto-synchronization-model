@@ -41,7 +41,9 @@ class WorkflowAssessment:
 
     @property
     def compliance_reports(self) -> tuple[ComplianceReport, ...]:
-        return tuple(assessment.compliance_report for assessment in (*self.accepted, *self.rejected))
+        return tuple(
+            assessment.compliance_report for assessment in (*self.accepted, *self.rejected)
+        )
 
     @property
     def passed(self) -> bool:
@@ -62,9 +64,7 @@ class RiskComplianceWorkflow:
         rejected: list[OrderAssessment] = []
         for order in orders:
             try:
-                report = self._compliance.check(
-                    order.symbol, order.quantity, order.price
-                )
+                report = self._compliance.check(order.symbol, order.quantity, order.price)
             except ComplianceViolation as exc:
                 report = exc.report
                 if report is None:

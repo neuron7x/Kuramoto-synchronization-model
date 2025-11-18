@@ -60,13 +60,9 @@ class SerotoninConfig(BaseModel):
     alpha: float = Field(..., ge=0.0, description="Weight for market volatility")
     beta: float = Field(..., ge=0.0, description="Weight for free energy term")
     gamma: float = Field(..., ge=0.0, description="Weight for cumulative losses")
-    delta_rho: float = Field(
-        ..., description="Weight for rho-loss complement", ge=0.0, le=5.0
-    )
+    delta_rho: float = Field(..., description="Weight for rho-loss complement", ge=0.0, le=5.0)
     k: float = Field(..., gt=0.0, description="Logistic steepness parameter")
-    theta: float = Field(
-        ..., description="Logistic mid-point for tonic level", ge=-5.0, le=5.0
-    )
+    theta: float = Field(..., description="Logistic mid-point for tonic level", ge=-5.0, le=5.0)
     delta: float = Field(..., ge=0.0, le=5.0, description="Inhibition multiplier")
     za_bias: float = Field(
         ..., ge=-1.0, le=1.0, description="Zero-action bias applied post inhibition"
@@ -84,32 +80,18 @@ class SerotoninConfig(BaseModel):
         ..., ge=0.0, le=1.0, description="Recovery rate when below threshold"
     )
     target_dd: float = Field(..., description="Target drawdown for meta-adapt")
-    target_sharpe: float = Field(
-        ..., description="Target Sharpe for meta-adapt", gt=0.0
-    )
-    beta_temper: float = Field(
-        ..., ge=0.0, le=1.0, description="Gradient tempering coefficient"
-    )
+    target_sharpe: float = Field(..., description="Target Sharpe for meta-adapt", gt=0.0)
+    beta_temper: float = Field(..., ge=0.0, le=1.0, description="Gradient tempering coefficient")
     phase_threshold: float = Field(
         ..., ge=0.0, description="Threshold for triggering phasic bursts"
     )
-    phase_kappa: float = Field(
-        ..., gt=0.0, description="Smoothing factor for phasic gate sigmoid"
-    )
-    burst_factor: float = Field(
-        ..., ge=0.0, description="Scaling factor for phasic component"
-    )
-    mod_t_max: float = Field(
-        ..., gt=0.0, description="Time constant for modulation saturation"
-    )
+    phase_kappa: float = Field(..., gt=0.0, description="Smoothing factor for phasic gate sigmoid")
+    burst_factor: float = Field(..., ge=0.0, description="Scaling factor for phasic component")
+    mod_t_max: float = Field(..., gt=0.0, description="Time constant for modulation saturation")
     mod_t_half: float = Field(..., gt=0.0, description="Half-life for modulation decay")
     mod_k: float = Field(..., description="Modulation gain", ge=-5.0, le=5.0)
-    max_desens_counter: int = Field(
-        ..., ge=1, description="Maximum desensitisation counter"
-    )
-    desens_gain: float = Field(
-        ..., gt=0.0, description="Gain applied during desensitisation"
-    )
+    max_desens_counter: int = Field(..., ge=1, description="Maximum desensitisation counter")
+    desens_gain: float = Field(..., gt=0.0, description="Gain applied during desensitisation")
     gate_veto: float = Field(
         0.9,
         ge=0.0,
@@ -165,9 +147,7 @@ def _generate_config_table(schema: dict) -> str:
         if key in required:
             constraints_parts.append("required")
         description = meta.get("description", "")
-        rows.append(
-            f"| {key} | {typ} | {'; '.join(constraints_parts) or '—'} | {description} |"
-        )
+        rows.append(f"| {key} | {typ} | {'; '.join(constraints_parts) or '—'} | {description} |")
     return "\n".join(rows)
 
 
@@ -273,9 +253,7 @@ class SerotoninController:
                 cfg["decay_rate"],
             )
         if cfg.get("decay_rate") is None:
-            raise KeyError(
-                "decay_rate must be provided when tau_5ht_ms/step_ms are absent"
-            )
+            raise KeyError("decay_rate must be provided when tau_5ht_ms/step_ms are absent")
         floor_min = cfg["temperature_floor_min"]
         floor_max = cfg["temperature_floor_max"]
         if floor_min > floor_max:
@@ -288,9 +266,7 @@ class SerotoninController:
             self._tick_hours,
         )
 
-    def set_tacl_guard(
-        self, guard_fn: Callable[[str, Mapping[str, float]], bool]
-    ) -> None:
+    def set_tacl_guard(self, guard_fn: Callable[[str, Mapping[str, float]], bool]) -> None:
         """Inject a TACL guard to prevent free-energy regressions."""
 
         self._tacl_guard = guard_fn
@@ -341,9 +317,7 @@ class SerotoninController:
         if stress < 0:
             raise ValueError("stress must be non-negative")
         if drawdown > 0:
-            raise ValueError(
-                "drawdown should be negative or zero (e.g., -0.05 for 5% loss)"
-            )
+            raise ValueError("drawdown should be negative or zero (e.g., -0.05 for 5% loss)")
         if novelty < 0:
             raise ValueError("novelty must be non-negative")
 
@@ -444,9 +418,7 @@ class SerotoninController:
         Enhanced with non-linear transformations for biological plausibility.
         """
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
-            raise ValueError(
-                "market_vol, free_energy and cum_losses must be non-negative"
-            )
+            raise ValueError("market_vol, free_energy and cum_losses must be non-negative")
 
         cfg = self.config
         if override_weights is not None:
@@ -478,9 +450,7 @@ class SerotoninController:
         rho_contribution = delta_rho * (1.0 - rho_loss)
 
         # Weighted sum with saturation
-        release = (
-            vol_contribution + fe_contribution + loss_contribution + rho_contribution
-        )
+        release = vol_contribution + fe_contribution + loss_contribution + rho_contribution
 
         # Apply soft saturation to prevent unbounded growth
         # Using tanh-based saturation for smooth asymptotic behavior
@@ -546,21 +516,17 @@ class SerotoninController:
                     desens_factor = 1.0 + 0.5 * (self.desens_counter / max_counter)
                     self.sensitivity = max(
                         0.1,
-                        self.sensitivity
-                        * math.exp(-cfg["desens_gain"] * sig * desens_factor),
+                        self.sensitivity * math.exp(-cfg["desens_gain"] * sig * desens_factor),
                     )
             else:
                 # Exponential recovery with temperature-dependent rate
                 # Faster recovery when well below threshold
                 recovery_boost = 1.0 + 0.5 * max(
                     0.0,
-                    (cfg["cooldown_threshold"] - self.tonic_level)
-                    / cfg["cooldown_threshold"],
+                    (cfg["cooldown_threshold"] - self.tonic_level) / cfg["cooldown_threshold"],
                 )
                 recovery_rate = cfg["desens_rate"] * recovery_boost
-                self.desens_counter = max(
-                    0, self.desens_counter - 2
-                )  # Gradual counter decay
+                self.desens_counter = max(0, self.desens_counter - 2)  # Gradual counter decay
                 self.sensitivity = min(1.0, self.sensitivity + recovery_rate)
 
             # Final serotonin level with sensitivity modulation
@@ -571,9 +537,7 @@ class SerotoninController:
             floor_max = cfg["temperature_floor_max"]
             # Use cubic interpolation for smoother transitions
             level_cubed = self.serotonin_level**3
-            self.temperature_floor = float(
-                floor_min + (floor_max - floor_min) * level_cubed
-            )
+            self.temperature_floor = float(floor_min + (floor_max - floor_min) * level_cubed)
             return self.serotonin_level
 
     def modulate_action_prob(
@@ -607,9 +571,7 @@ class SerotoninController:
             # This creates a smooth transition from action to rest
             delta = cfg["delta"]
             # Transform linear signal to sigmoidal inhibition
-            inhibition_strength = (
-                serotonin_signal**2
-            )  # Quadratic for progressive effect
+            inhibition_strength = serotonin_signal**2  # Quadratic for progressive effect
             inhibition_factor = 1.0 - inhibition_strength * delta
 
             # Apply inhibition
@@ -653,17 +615,13 @@ class SerotoninController:
             if self._hold_state:
                 # When in HOLD, require signal to drop below threshold - margin to exit
                 # This prevents premature exit from rest state
-                serotonin_threshold = cfg["cooldown_threshold"] * (
-                    1.0 - hysteresis_margin
-                )
+                serotonin_threshold = cfg["cooldown_threshold"] * (1.0 - hysteresis_margin)
                 phasic_threshold = cfg["phasic_veto"] * (1.0 - hysteresis_margin)
                 gate_threshold = cfg["gate_veto"] * (1.0 - hysteresis_margin)
             else:
                 # When active, require signal to exceed threshold + margin to enter HOLD
                 # This prevents premature entry to rest state
-                serotonin_threshold = cfg["cooldown_threshold"] * (
-                    1.0 + hysteresis_margin
-                )
+                serotonin_threshold = cfg["cooldown_threshold"] * (1.0 + hysteresis_margin)
                 phasic_threshold = cfg["phasic_veto"] * (1.0 + hysteresis_margin)
                 gate_threshold = cfg["gate_veto"] * (1.0 + hysteresis_margin)
 
@@ -987,14 +945,12 @@ class SerotoninController:
             # Check desensitization counter
             if self.desens_counter > 0.8 * self.config["max_desens_counter"]:
                 warnings.append(
-                    f"High desens counter: {self.desens_counter}/{self.config['max_desens_counter']}"
+                    f"High desens counter: {self.desens_counter}/{self.config['max_desens_counter']}"  # noqa: E501
                 )
 
             # Check serotonin level
             if self.serotonin_level > 0.95:
-                warnings.append(
-                    f"Very high serotonin level: {self.serotonin_level:.3f}"
-                )
+                warnings.append(f"Very high serotonin level: {self.serotonin_level:.3f}")
 
             # Check config validity
             if self.config["decay_rate"] <= 0 or self.config["decay_rate"] > 1:

@@ -15,9 +15,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when dependency miss
     BaseModel = None  # type: ignore[assignment]
 
 
-def dataclass_to_json_schema(
-    cls: Type[Any], title: str | None = None
-) -> Dict[str, Any]:
+def dataclass_to_json_schema(cls: Type[Any], title: str | None = None) -> Dict[str, Any]:
     """Convert a dataclass to JSON Schema.
 
     Args:
@@ -188,9 +186,7 @@ def generate_all_schemas() -> Dict[str, Dict[str, Any]]:
     schemas = {}
 
     # Core schemas
-    schemas["FeatureResult"] = dataclass_to_json_schema(
-        FeatureResult, title="FeatureResult"
-    )
+    schemas["FeatureResult"] = dataclass_to_json_schema(FeatureResult, title="FeatureResult")
     schemas["FeatureResult"]["description"] = (
         "Result from a feature/indicator transformation. Contains the computed "
         "value, metadata, and feature name."

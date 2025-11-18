@@ -129,19 +129,17 @@ def test_json_schema_backward_and_forward_compatibility() -> None:
     version_schemas: list[tuple[SemanticVersion, dict[str, dict[str, Any]]]] = []
     for version, path in versions:
         files = {
-            file.name: _load_schema(file)
-            for file in path.glob("*.schema.json")
-            if file.is_file()
+            file.name: _load_schema(file) for file in path.glob("*.schema.json") if file.is_file()
         }
         version_schemas.append((version, files))
 
-    for (previous_version, previous_files), (current_version, current_files) in pairwise(version_schemas):
+    for (previous_version, previous_files), (current_version, current_files) in pairwise(
+        version_schemas
+    ):
         for name, previous_schema in previous_files.items():
             current_schema = current_files.get(name)
             if current_schema is None:
-                assert (
-                    current_version.major > previous_version.major
-                ), (
+                assert current_version.major > previous_version.major, (
                     f"Schema {name} removed without major version bump: "
                     f"{previous_version} -> {current_version}"
                 )

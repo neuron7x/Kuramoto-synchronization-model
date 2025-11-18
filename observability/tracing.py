@@ -156,11 +156,7 @@ def configure_tracing(config: TracingConfig | None = None) -> bool:
 
     endpoint = cfg.exporter_endpoint or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
     insecure_env = os.environ.get("OTEL_EXPORTER_OTLP_INSECURE")
-    insecure = (
-        cfg.exporter_insecure
-        if insecure_env is None
-        else insecure_env.lower() == "true"
-    )
+    insecure = cfg.exporter_insecure if insecure_env is None else insecure_env.lower() == "true"
 
     sampler = _build_sampler(cfg)
     provider = TracerProvider(resource=Resource.create(resource_attrs), sampler=sampler)
@@ -203,11 +199,7 @@ def _build_sampler(config: TracingConfig):
     hot_ratio = max(0.0, min(1.0, float(config.hot_path_sample_ratio)))
     default_ratio = max(0.0, min(1.0, float(config.default_sample_ratio)))
 
-    if (
-        config.hot_path_globs
-        or hot_ratio not in (0.0, 1.0)
-        or default_ratio not in (0.0, 1.0)
-    ):
+    if config.hot_path_globs or hot_ratio not in (0.0, 1.0) or default_ratio not in (0.0, 1.0):
         return SelectiveSampler(
             hot_path_globs=config.hot_path_globs,
             attribute_flag=config.hot_path_attribute,
@@ -283,19 +275,11 @@ def current_traceparent() -> str | None:
 def activate_traceparent(traceparent: str | None) -> Iterator[bool]:
     """Temporarily activate the provided ``traceparent`` header."""
 
-    if not (
-        _TRACE_AVAILABLE
-        and traceparent
-        and otel_context
-        and _W3C_PROPAGATOR
-        and _DICT_GETTER
-    ):
+    if not (_TRACE_AVAILABLE and traceparent and otel_context and _W3C_PROPAGATOR and _DICT_GETTER):
         yield False
         return
 
-    context = _W3C_PROPAGATOR.extract(
-        {_TRACEPARENT_HEADER: traceparent}, getter=_DICT_GETTER
-    )
+    context = _W3C_PROPAGATOR.extract({_TRACEPARENT_HEADER: traceparent}, getter=_DICT_GETTER)
     token = otel_context.attach(context)
     try:
         yield True
@@ -337,14 +321,10 @@ def chaos_span(experiment: str, **attributes: Any) -> Iterator[Any]:
 class _NoOpSpan:
     """Minimal span used when OpenTelemetry is not installed."""
 
-    def set_attributes(
-        self, _attrs: Mapping[str, Any]
-    ) -> None:  # pragma: no cover - trivial
+    def set_attributes(self, _attrs: Mapping[str, Any]) -> None:  # pragma: no cover - trivial
         return
 
-    def record_exception(
-        self, _exc: BaseException
-    ) -> None:  # pragma: no cover - trivial
+    def record_exception(self, _exc: BaseException) -> None:  # pragma: no cover - trivial
         return
 
     def set_status(self, _status: Any) -> None:  # pragma: no cover - trivial
@@ -452,9 +432,7 @@ if _TRACE_AVAILABLE:
                 return True
             return any(pattern.match(key) for pattern in self._patterns)
 
-        def on_start(
-            self, span: Any, parent_context: Any
-        ) -> None:  # pragma: no cover - no-op
+        def on_start(self, span: Any, parent_context: Any) -> None:  # pragma: no cover - no-op
             return None
 
         def on_end(self, span: Any) -> None:

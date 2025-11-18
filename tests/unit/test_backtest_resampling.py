@@ -31,9 +31,7 @@ def test_bootstrap_confidence_interval_contains_point_estimate() -> None:
     assert sharpe.ci_lower is not None and sharpe.ci_upper is not None
     assert sharpe.ci_lower <= sharpe.ci_upper
     if sharpe.point_estimate is not None:
-        assert (
-            sharpe.ci_lower - 1e-12 <= sharpe.point_estimate <= sharpe.ci_upper + 1e-12
-        )
+        assert sharpe.ci_lower - 1e-12 <= sharpe.point_estimate <= sharpe.ci_upper + 1e-12
 
 
 def test_bootstrap_rejects_unknown_metric_name() -> None:

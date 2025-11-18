@@ -72,9 +72,7 @@ def test_normalize_ohlcv_interpolates_prices() -> None:
         index=index,
     )
 
-    config = MarketNormalizationConfig(
-        kind="ohlcv", frequency="1min", fill_method="interpolate"
-    )
+    config = MarketNormalizationConfig(kind="ohlcv", frequency="1min", fill_method="interpolate")
     result = normalize_market_data(frame, config=config)
 
     expected_index = pd.date_range(

@@ -13,9 +13,22 @@ from typing import Any, Awaitable, Callable, MutableMapping, Sequence
 import pandas as pd
 import pandera as pa
 from pandera.errors import SchemaError, SchemaErrors
-from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from .monitoring import AutoReporter, DistributionProfiler, DriftDetector, DriftReport, ProfileSummary, SLAMonitor
+from .monitoring import (
+    AutoReporter,
+    DistributionProfiler,
+    DriftDetector,
+    DriftReport,
+    ProfileSummary,
+    SLAMonitor,
+)
 from .stores import (
     AuditEntry,
     AuditLog,
@@ -50,7 +63,9 @@ class RetryPolicy:
     base: float = 1.0
     max_wait: float = 30.0
 
-    async def run(self, func: Callable[..., Awaitable[Any] | Any], *args: Any, **kwargs: Any) -> Any:
+    async def run(
+        self, func: Callable[..., Awaitable[Any] | Any], *args: Any, **kwargs: Any
+    ) -> Any:
         retrying = AsyncRetrying(
             retry=retry_if_exception_type(Exception),
             stop=stop_after_attempt(self.attempts),
@@ -177,7 +192,9 @@ class ETLPipeline:
     def quarantine_store(self) -> QuarantineStore:
         return self._quarantine
 
-    async def run(self, config: PipelineRunConfig, *, allow_rerun: bool = False) -> PipelineRunResult:
+    async def run(
+        self, config: PipelineRunConfig, *, allow_rerun: bool = False
+    ) -> PipelineRunResult:
         """Execute pipeline segments with resilience features."""
 
         if not allow_rerun and not self._idempotency_store.check_and_register(config.run_id):
@@ -265,7 +282,9 @@ class ETLPipeline:
             report=report,
             context_snapshot={
                 "metadata": dict(context.metadata),
-                "segment_outputs": {k: v.copy(deep=True) for k, v in context.segment_outputs.items()},
+                "segment_outputs": {
+                    k: v.copy(deep=True) for k, v in context.segment_outputs.items()
+                },
             },
         )
         self._run_cache[config.run_id] = result
@@ -277,15 +296,13 @@ class ETLPipeline:
         frame = await _maybe_await(segment.extract(context))
         if not isinstance(frame, pd.DataFrame):  # pragma: no cover - guard rail
             raise TypeError(
-                f"Segment {segment.name} extractor returned {type(frame)!r}, expected pandas.DataFrame"
+                f"Segment {segment.name} extractor returned {type(frame)!r}, expected pandas.DataFrame"  # noqa: E501
             )
 
         if segment.deduplicate_on:
             duplicates = frame.duplicated(subset=list(segment.deduplicate_on), keep="first")
             if duplicates.any():
-                self._quarantine.append(
-                    f"deduplicated:{segment.name}", frame.loc[duplicates]
-                )
+                self._quarantine.append(f"deduplicated:{segment.name}", frame.loc[duplicates])
                 frame = frame.loc[~duplicates].copy()
 
         if segment.schema is not None:
@@ -302,7 +319,7 @@ class ETLPipeline:
             frame = await _maybe_await(transform(frame, context))
             if not isinstance(frame, pd.DataFrame):
                 raise TypeError(
-                    f"Transform in segment {segment.name} must return DataFrame, got {type(frame)!r}"
+                    f"Transform in segment {segment.name} must return DataFrame, got {type(frame)!r}"  # noqa: E501
                 )
 
         for validator in segment.validators:
@@ -494,7 +511,8 @@ class PipelineScheduler:
         positional = [
             p
             for p in params
-            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            if p.kind
+            in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
         ]
         if any(p.kind is inspect.Parameter.VAR_POSITIONAL for p in params):
             return True

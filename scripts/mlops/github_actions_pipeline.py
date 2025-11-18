@@ -71,10 +71,7 @@ def _dataset_path(config: PipelineConfig) -> Path:
     # Resolve repository sample dataset relative to this module.
     candidate = (Path(__file__).resolve().parents[2] / DEFAULT_DATASET).resolve()
     if not candidate.exists():
-        msg = (
-            "Default dataset not found. Provide --dataset-path when invoking the "
-            "pipeline."
-        )
+        msg = "Default dataset not found. Provide --dataset-path when invoking the " "pipeline."
         raise FileNotFoundError(msg)
     return candidate
 
@@ -139,7 +136,9 @@ def _prepare_regression(prices: np.ndarray, lookback: int) -> tuple[np.ndarray, 
     return design, targets
 
 
-def _fit_linear_model(features: np.ndarray, targets: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:
+def _fit_linear_model(
+    features: np.ndarray, targets: np.ndarray
+) -> tuple[np.ndarray, float, np.ndarray]:
     ones = np.ones((features.shape[0], 1), dtype=float)
     X = np.concatenate([ones, features], axis=1)
     solution, *_ = np.linalg.lstsq(X, targets, rcond=None)
@@ -149,7 +148,9 @@ def _fit_linear_model(features: np.ndarray, targets: np.ndarray) -> tuple[np.nda
     return coefficients, intercept, predictions
 
 
-def _compute_metrics_from_predictions(targets: np.ndarray, predictions: np.ndarray) -> dict[str, float]:
+def _compute_metrics_from_predictions(
+    targets: np.ndarray, predictions: np.ndarray
+) -> dict[str, float]:
     residuals = predictions - targets
     mse = float(np.mean(residuals**2))
     mae = float(np.mean(np.abs(residuals)))
@@ -374,9 +375,11 @@ def _build_config(args: argparse.Namespace) -> PipelineConfig:
         experiment=str(args.experiment),
         commit_sha=str(args.commit_sha),
         environment=str(args.environment),
-        dataset_path=Path(args.dataset_path).expanduser().resolve()
-        if getattr(args, "dataset_path", None)
-        else None,
+        dataset_path=(
+            Path(args.dataset_path).expanduser().resolve()
+            if getattr(args, "dataset_path", None)
+            else None
+        ),
     )
 
 

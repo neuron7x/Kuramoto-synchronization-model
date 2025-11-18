@@ -44,9 +44,7 @@ def test_composite_thresholds_are_ordered() -> None:
     thresholds = config["composite"]["thresholds"]
     assert 0.0 < thresholds["R_proto_emergent"] < thresholds["R_strong_emergent"] <= 1.0
     assert thresholds["coherence_min"] <= thresholds["R_strong_emergent"]
-    assert (
-        thresholds["ricci_negative"] < 0 < thresholds["topological_transition"] <= 1.0
-    )
+    assert thresholds["ricci_negative"] < 0 < thresholds["topological_transition"] <= 1.0
     assert thresholds["temporal_ricci"] < 0
 
 

@@ -61,7 +61,9 @@ class _FakeRedisPipeline:
     async def __aexit__(self, exc_type, exc, tb) -> bool:
         return False
 
-    def xadd(self, stream_key: str, payload: dict[str, str], *, maxlen: int, approximate: bool) -> "_FakeRedisPipeline":
+    def xadd(
+        self, stream_key: str, payload: dict[str, str], *, maxlen: int, approximate: bool
+    ) -> "_FakeRedisPipeline":
         self._operations.append(("xadd", (stream_key, payload)))
         return self
 
@@ -94,7 +96,9 @@ class _FakeRedis:
     async def get(self, key: str) -> str | None:
         return self.store.get(key)
 
-    async def xread(self, *, streams: dict[str, str], count: int, block: int) -> list[tuple[str, list[tuple[str, dict[bytes, bytes]]]]]:
+    async def xread(
+        self, *, streams: dict[str, str], count: int, block: int
+    ) -> list[tuple[str, list[tuple[str, dict[bytes, bytes]]]]]:
         response: list[tuple[str, list[tuple[str, dict[bytes, bytes]]]]] = []
         for stream_key, last_id in streams.items():
             entries = self.streams.get(stream_key, [])
@@ -222,9 +226,7 @@ class _FakeConnection:
                 and record.entity_id == entity_id
             ]
             if cutoff is not None:
-                candidates = [
-                    record for record in candidates if record.event_ts <= cutoff
-                ]
+                candidates = [record for record in candidates if record.event_ts <= cutoff]
             if not candidates:
                 return None
             latest = max(candidates, key=lambda record: record.event_ts)
@@ -292,7 +294,9 @@ async def test_streaming_pipeline_emits_broker_events_on_tick_batches() -> None:
     broker = _FakeBroker()
     captured_service: _CapturingKafkaService | None = None
 
-    def factory(config: KafkaIngestionConfig, *, tick_handler, lag_handler=None) -> _CapturingKafkaService:
+    def factory(
+        config: KafkaIngestionConfig, *, tick_handler, lag_handler=None
+    ) -> _CapturingKafkaService:
         nonlocal captured_service
         captured_service = _CapturingKafkaService(
             config, tick_handler=tick_handler, lag_handler=lag_handler
@@ -390,12 +394,15 @@ async def test_polygon_adapter_fetches_data_with_authorised_requests() -> None:
     assert isinstance(tick, PriceTick)
     assert tick.metadata.symbol == "BTC/USD"
     assert tick.metadata.venue == "POLYGON"
-    assert tick.price == PriceTick.create(
-        symbol="BTCUSD",
-        venue="POLYGON",
-        price=101.25,
-        timestamp=datetime.fromtimestamp(1_700_000_000, tz=timezone.utc),
-    ).price
+    assert (
+        tick.price
+        == PriceTick.create(
+            symbol="BTCUSD",
+            venue="POLYGON",
+            price=101.25,
+            timestamp=datetime.fromtimestamp(1_700_000_000, tz=timezone.utc),
+        ).price
+    )
 
 
 @pytest.mark.asyncio
@@ -460,4 +467,3 @@ async def test_feature_store_persists_records_to_redis_and_timescale() -> None:
     )
 
     assert cache_key in redis.store
-

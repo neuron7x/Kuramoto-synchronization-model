@@ -95,11 +95,13 @@ class AutoTriageConfig:
     default_owner: str = "sre@tradepulse.io"
     ticket_project: str = "INC"
     ticket_template: str = "model-degradation-triage"
-    severity_map: Mapping[str, str] = field(default_factory=lambda: {
-        "critical": "critical",
-        "major": "major",
-        "minor": "minor",
-    })
+    severity_map: Mapping[str, str] = field(
+        default_factory=lambda: {
+            "critical": "critical",
+            "major": "major",
+            "minor": "minor",
+        }
+    )
     escalation_policy: Mapping[str, Sequence[str]] = field(default_factory=dict)
     communication_templates: Mapping[str, str] = field(default_factory=dict)
     recovery_actions: Sequence[str] = field(default_factory=tuple)
@@ -308,9 +310,7 @@ class AutoTriageOrchestrator:
             if self._SEVERITY_ORDER[severity] > self._SEVERITY_ORDER[highest_severity]:
                 highest_severity = severity
 
-            reasons.append(
-                f"{threshold.name} {value:.4g} vs {boundary:.4g} ({severity})"
-            )
+            reasons.append(f"{threshold.name} {value:.4g} vs {boundary:.4g} ({severity})")
 
         if not violations:
             return DetectionResult(
@@ -530,15 +530,13 @@ class AutoTriageOrchestrator:
             "owner": owner,
             "context": dict(context),
             "created_at": self._now().isoformat(),
-            "escalation_contacts": list(
-                self._config.escalation_policy.get(detection.severity, ())
-            ),
-            "communication_template": self._config.communication_templates.get(
-                detection.severity
-            ),
+            "escalation_contacts": list(self._config.escalation_policy.get(detection.severity, ())),
+            "communication_template": self._config.communication_templates.get(detection.severity),
         }
         ticket_path = ticket_dir / f"{ticket_id}.json"
-        ticket_path.write_text(json.dumps(ticket_payload, indent=2, sort_keys=True), encoding="utf-8")
+        ticket_path.write_text(
+            json.dumps(ticket_payload, indent=2, sort_keys=True), encoding="utf-8"
+        )
         return ticket_path
 
     def _write_resources(
@@ -557,7 +555,10 @@ class AutoTriageOrchestrator:
         return TriageStepReport(
             name="knowledge",
             status="completed",
-            details={"runbooks": len(self._config.runbook_links), "dashboards": len(self._config.dashboard_links)},
+            details={
+                "runbooks": len(self._config.runbook_links),
+                "dashboards": len(self._config.dashboard_links),
+            },
             artifacts=(path,),
         )
 
@@ -586,22 +587,22 @@ class AutoTriageOrchestrator:
                     *timeline,
                     "",
                     "## Impact",
-                    "- Describe the user, business, and regulatory impact with measurable indicators.",
+                    "- Describe the user, business, and regulatory impact with measurable indicators.",  # noqa: E501
                     "",
                     "## Detection",
-                    "- Explain the signals, monitors, or reports that identified the incident and any detection gaps.",
+                    "- Explain the signals, monitors, or reports that identified the incident and any detection gaps.",  # noqa: E501
                     "",
                     "## Root Cause",
-                    "- Summarize the technical fault and contributing process gaps validated by the response team.",
+                    "- Summarize the technical fault and contributing process gaps validated by the response team.",  # noqa: E501
                     "",
                     "## Mitigations",
-                    "- Summarize containment steps taken, their effectiveness, and outstanding risks.",
+                    "- Summarize containment steps taken, their effectiveness, and outstanding risks.",  # noqa: E501
                     "",
                     "## Follow-up Actions",
-                    "- List remediation tasks with accountable owners, due dates, and validation checkpoints.",
+                    "- List remediation tasks with accountable owners, due dates, and validation checkpoints.",  # noqa: E501
                     "",
                     "## Lessons Learned",
-                    "- Capture decisions, surprises, and improvements to tooling, process, or staffing.",
+                    "- Capture decisions, surprises, and improvements to tooling, process, or staffing.",  # noqa: E501
                     "",
                     "## Related Links",
                     *[f"- {link}" for link in self._config.runbook_links],
@@ -625,7 +626,9 @@ class AutoTriageOrchestrator:
             "actions": list(self._config.recovery_actions),
             "generated_at": self._now().isoformat(),
         }
-        recovery_path.write_text(json.dumps(recovery_payload, indent=2, sort_keys=True), encoding="utf-8")
+        recovery_path.write_text(
+            json.dumps(recovery_payload, indent=2, sort_keys=True), encoding="utf-8"
+        )
         status = "completed" if self._config.recovery_actions else "skipped"
         return TriageStepReport(
             name="recovery",

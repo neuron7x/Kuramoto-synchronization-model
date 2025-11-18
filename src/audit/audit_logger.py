@@ -49,9 +49,7 @@ def _canonical_json(payload: Mapping[str, Any]) -> str:
         payload,
         sort_keys=True,
         separators=(",", ":"),
-        default=lambda value: (
-            value.isoformat() if isinstance(value, datetime) else value
-        ),
+        default=lambda value: (value.isoformat() if isinstance(value, datetime) else value),
     )
 
 
@@ -91,9 +89,7 @@ class AuditRecord(BaseModel):
     details: dict[str, Any] = Field(
         default_factory=dict, description="Additional structured context for the event."
     )
-    signature: str = Field(
-        ..., description="HMAC-SHA256 signature of the event payload."
-    )
+    signature: str = Field(..., description="HMAC-SHA256 signature of the event payload.")
 
     model_config = ConfigDict(frozen=True)
 
@@ -154,8 +150,7 @@ class AuditLogger:
             # only ``NullHandler`` instances as effectively "unconfigured" and
             # re-enable propagation so the audit events can be captured.
             has_real_handler = any(
-                not isinstance(handler, logging.NullHandler)
-                for handler in resolved_logger.handlers
+                not isinstance(handler, logging.NullHandler) for handler in resolved_logger.handlers
             )
             if not has_real_handler and not resolved_logger.propagate:
                 resolved_logger.propagate = True
@@ -433,9 +428,7 @@ class SiemAuditSink:
         payload = record.model_dump(mode="json")
         response: httpx.Response | None = None
         try:
-            response = self._client.post(
-                self._endpoint, json=payload, timeout=self._timeout
-            )
+            response = self._client.post(self._endpoint, json=payload, timeout=self._timeout)
             response.raise_for_status()
         except Exception as exc:
             status_code = None
@@ -478,9 +471,7 @@ class SiemAuditSink:
         )
         pending_path = self._restore_pending_path(original_path, inflight_path)
         if attempts > self._max_retries:
-            self._move_to_dead_letter(
-                pending_path, reason="max-retries", envelope=updated
-            )
+            self._move_to_dead_letter(pending_path, reason="max-retries", envelope=updated)
             return
         retry_delay = self._compute_backoff(attempts)
         self._rewrite_envelope(pending_path, updated)

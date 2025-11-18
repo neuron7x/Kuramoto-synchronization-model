@@ -386,13 +386,9 @@ class LiveExecutionLoop:
                 # Replay ledger from last_offset to catch up
                 # Aggregate replay from all venue OMS ledgers
                 for context in self._contexts.values():
-                    for record in context.oms.replay_ledger_from(
-                        last_offset + 1, verify=False
-                    ):
+                    for record in context.oms.replay_ledger_from(last_offset + 1, verify=False):
                         evt = (
-                            record.event
-                            if hasattr(record, "event")
-                            else record.get("event") or {}
+                            record.event if hasattr(record, "event") else record.get("event") or {}
                         )
                         # Pass sequence number to track ledger offset
                         seq = record.sequence if hasattr(record, "sequence") else None
@@ -448,9 +444,7 @@ class LiveExecutionLoop:
             payload["checksum"] = f"sha256:{checksum}"
 
             fname = snapshot_dir / f"oms_snapshot_{int(now)}.json"
-            fname.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            fname.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
             self._last_snapshot_ts = now
             self._logger.debug(
@@ -622,9 +616,7 @@ class LiveExecutionLoop:
 
         for order_id in orphan_on_oms:
             order = venue_orders[order_id]
-            correlation = (
-                context.oms.correlation_for(order_id) or f"recovered-{order_id}"
-            )
+            correlation = context.oms.correlation_for(order_id) or f"recovered-{order_id}"
             context.oms.adopt_open_order(order, correlation_id=correlation)
             self._order_connector[order_id] = context.name
             self._last_reported_fill[order_id] = order.filled_quantity
@@ -652,9 +644,7 @@ class LiveExecutionLoop:
             self._refresh_risk_state_from_connectors()
 
     def _capture_session_snapshot(self) -> None:
-        connectors = {
-            name: context.connector for name, context in self._contexts.items()
-        }
+        connectors = {name: context.connector for name, context in self._contexts.items()}
         if not connectors:
             raise SessionSnapshotError("no connectors configured for snapshot")
         preloaded: dict[str, tuple[Sequence[Mapping[str, object]], Sequence[str]]] = {}
@@ -753,13 +743,9 @@ class LiveExecutionLoop:
                     else None
                 )
                 new_price = (
-                    notional / abs(quantity)
-                    if abs(quantity) > 1e-12 and notional > 0.0
-                    else None
+                    notional / abs(quantity) if abs(quantity) > 1e-12 and notional > 0.0 else None
                 )
-                price_candidates = [
-                    p for p in (existing_price, new_price) if p is not None
-                ]
+                price_candidates = [p for p in (existing_price, new_price) if p is not None]
                 if price_candidates:
                     combined_notional = max(
                         combined_notional,
@@ -1022,19 +1008,14 @@ class LiveExecutionLoop:
             return True
         return False
 
-    def _handle_stream_event(
-        self, context: _VenueContext, event: Mapping[str, Any]
-    ) -> None:
+    def _handle_stream_event(self, context: _VenueContext, event: Mapping[str, Any]) -> None:
         event_type = str(event.get("type") or "").lower()
         if not event_type:
             return
 
         if event_type == "fill":
             order_id = str(
-                event.get("order_id")
-                or event.get("client_order_id")
-                or event.get("i")
-                or ""
+                event.get("order_id") or event.get("client_order_id") or event.get("i") or ""
             ).strip()
             if not order_id:
                 return
@@ -1080,9 +1061,7 @@ class LiveExecutionLoop:
             )
             status = self._map_stream_status(event.get("status"))
             if status is not None or cumulative is not None or avg_price is not None:
-                self._apply_stream_status(
-                    context, order_id, status, cumulative, avg_price
-                )
+                self._apply_stream_status(context, order_id, status, cumulative, avg_price)
             return
 
         if event_type in {"balance", "account"}:
@@ -1213,15 +1192,9 @@ class LiveExecutionLoop:
             )
             if not asset:
                 continue
-            free = self._extract_balance_value(
-                entry, "free", "available", "available_balance"
-            )
-            locked = self._extract_balance_value(
-                entry, "locked", "hold", "locked_balance"
-            )
-            delta = self._extract_balance_value(
-                entry, "delta", "change", "balance_delta"
-            )
+            free = self._extract_balance_value(entry, "free", "available", "available_balance")
+            locked = self._extract_balance_value(entry, "locked", "hold", "locked_balance")
+            delta = self._extract_balance_value(entry, "delta", "change", "balance_delta")
             payload: dict[str, float] = {}
             if free is not None:
                 payload["free"] = free
@@ -1238,9 +1211,7 @@ class LiveExecutionLoop:
                 result[asset] = payload
         return result
 
-    def _extract_balance_value(
-        self, entry: Mapping[str, Any], *keys: str
-    ) -> float | None:
+    def _extract_balance_value(self, entry: Mapping[str, Any], *keys: str) -> float | None:
         for key in keys:
             value = entry.get(key)
             if isinstance(value, Mapping):
@@ -1266,10 +1237,7 @@ class LiveExecutionLoop:
             # Periodically persist OMS snapshot
             self._persist_oms_snapshot_if_needed()
 
-            if (
-                self._risk_manager.kill_switch.is_triggered()
-                and not self._kill_notified
-            ):
+            if self._risk_manager.kill_switch.is_triggered() and not self._kill_notified:
                 reason = self._risk_manager.kill_switch.reason
                 self._logger.error(
                     "Kill-switch triggered, stopping live loop",
@@ -1389,9 +1357,7 @@ class LiveExecutionLoop:
     ) -> None:
         positions_list = list(positions)
         for position in positions_list:
-            symbol = str(
-                position.get("symbol") or position.get("instrument") or "unknown"
-            )
+            symbol = str(position.get("symbol") or position.get("instrument") or "unknown")
             try:
                 quantity = float(position.get("qty") or position.get("quantity") or 0.0)
             except (TypeError, ValueError):  # pragma: no cover - defensive

@@ -109,9 +109,7 @@ class ChaosContext:
     steady_state: SteadyStateVerifier
     sleep: Callable[[float], None] = time.sleep
     clock: Callable[[], float] = time.perf_counter
-    logger: logging.Logger = field(
-        default_factory=lambda: logging.getLogger("chaos.experiments")
-    )
+    logger: logging.Logger = field(default_factory=lambda: logging.getLogger("chaos.experiments"))
 
     def log(self, message: str, **extra: Any) -> None:
         """Emit a structured log entry for the running experiment."""
@@ -258,8 +256,7 @@ def recovery_time_metric(max_seconds: float = 300.0) -> MetricCheck:
     return MetricCheck(
         name="recovery-time",
         description=description,
-        evaluator=lambda context: context.monitoring.recovery_time_seconds()
-        <= max_seconds,
+        evaluator=lambda context: context.monitoring.recovery_time_seconds() <= max_seconds,
     )
 
 
@@ -273,8 +270,7 @@ def exchange_survival_metric(min_ratio: float = 0.5) -> MetricCheck:
     return MetricCheck(
         name="exchange-survival",
         description=description,
-        evaluator=lambda context: context.monitoring.exchange_survival_ratio()
-        >= min_ratio,
+        evaluator=lambda context: context.monitoring.exchange_survival_ratio() >= min_ratio,
     )
 
 

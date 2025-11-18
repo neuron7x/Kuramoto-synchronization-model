@@ -118,7 +118,9 @@ def _is_component_sequence(value: Any) -> bool:
     return all(isinstance(item, Mapping) and "id" in item for item in value)
 
 
-def _merge_component_lists(existing: Sequence[Mapping[str, Any]], incoming: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+def _merge_component_lists(
+    existing: Sequence[Mapping[str, Any]], incoming: Sequence[Mapping[str, Any]]
+) -> list[Mapping[str, Any]]:
     merged: dict[str, Mapping[str, Any]] = {str(item["id"]): dict(item) for item in existing}
     for item in incoming:
         identifier = str(item["id"])
@@ -133,7 +135,9 @@ def _merge_component_lists(existing: Sequence[Mapping[str, Any]], incoming: Sequ
     return list(merged.values())
 
 
-def _deep_merge(base: MutableMapping[str, Any], incoming: Mapping[str, Any]) -> MutableMapping[str, Any]:
+def _deep_merge(
+    base: MutableMapping[str, Any], incoming: Mapping[str, Any]
+) -> MutableMapping[str, Any]:
     """Recursively merge ``incoming`` into ``base`` (mutating ``base``)."""
 
     for key, value in incoming.items():
@@ -428,7 +432,7 @@ class StrategyPipelineDefinition(BaseModel):
                     f"### {component.id} ({component.kind})",
                     f"- Entry point: `{component.entrypoint}`",
                     f"- Enabled: `{component.enabled}`",
-                    f"- Depends on: {', '.join(component.depends_on) if component.depends_on else 'none'}",
+                    f"- Depends on: {', '.join(component.depends_on) if component.depends_on else 'none'}",  # noqa: E501
                     f"- Preset: {component.preset or 'n/a'}",
                     f"- Template: {component.template or 'n/a'}",
                 ]
@@ -508,9 +512,7 @@ class StrategyPipeline:
 
     def materialise(self) -> dict[str, Any]:
         self.runtime.apply()
-        return {
-            component.component_id: component.create() for component in self.components
-        }
+        return {component.component_id: component.create() for component in self.components}
 
 
 # ---------------------------------------------------------------------------
@@ -571,7 +573,9 @@ class StrategyDSLLoader:
                 lstrip_blocks=True,
             )
 
-    def load(self, path: Path, *, context: Mapping[str, Any] | None = None) -> StrategyPipelineDefinition:
+    def load(
+        self, path: Path, *, context: Mapping[str, Any] | None = None
+    ) -> StrategyPipelineDefinition:
         text = self._render(path, context=context)
         data = yaml.safe_load(text)
         if not isinstance(data, Mapping):
@@ -595,11 +599,17 @@ class StrategyDSLLoader:
                     lstrip_blocks=True,
                 )
             template = env.get_template(path.name)
-            render_context = {"env": dict(os.environ), **(context or {}), "base_path": str(path.parent)}
+            render_context = {
+                "env": dict(os.environ),
+                **(context or {}),
+                "base_path": str(path.parent),
+            }
             return template.render(**render_context)
         return path.read_text(encoding="utf-8")
 
-    def _apply_includes(self, data: Mapping[str, Any], *, base_path: Path | None) -> Mapping[str, Any]:
+    def _apply_includes(
+        self, data: Mapping[str, Any], *, base_path: Path | None
+    ) -> Mapping[str, Any]:
         extends = data.get("extends")
         merged: dict[str, Any] = {}
         inherited_presets: list[str] = []
@@ -657,4 +667,3 @@ def load_strategy_pipeline(
 ) -> StrategyPipelineDefinition:
     loader = StrategyDSLLoader(preset_dirs=preset_dirs, template_dirs=template_dirs)
     return loader.load(Path(path), context=context)
-

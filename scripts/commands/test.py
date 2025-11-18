@@ -14,9 +14,7 @@ DEFAULT_TEST_ROOTS = (Path("domains"), Path("tests"))
 
 
 def build_parser(subparsers: _SubParsersAction[object]) -> None:
-    parser = subparsers.add_parser(
-        "test", help="Run automated tests across supported stacks"
-    )
+    parser = subparsers.add_parser("test", help="Run automated tests across supported stacks")
     parser.set_defaults(command="test", handler=handle)
     parser.add_argument(
         "--pytest-args",

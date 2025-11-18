@@ -42,9 +42,7 @@ def test_resource_usage_sample_validation() -> None:
     with pytest.raises(ValueError):
         ResourceUsageSample(resource_id="x", timestamp=timestamp, cost=-1.0)
     with pytest.raises(ValueError):
-        ResourceUsageSample(
-            resource_id="x", timestamp=timestamp, cost=1.0, usage={"cpu": -0.5}
-        )
+        ResourceUsageSample(resource_id="x", timestamp=timestamp, cost=1.0, usage={"cpu": -0.5})
 
 
 def test_budget_alerts_trigger_and_reset() -> None:
@@ -355,10 +353,11 @@ def test_generate_cost_optimisation_plan_systemic_actions() -> None:
     assert idle_recs, "Expected idle shutdown recommendation"
 
     governance_recs = [rec for rec in plan.recommendations if rec.category == "governance"]
-    assert governance_recs[0].metadata["next_review"].startswith(str(plan.review_schedule[0].date()))
+    assert (
+        governance_recs[0].metadata["next_review"].startswith(str(plan.review_schedule[0].date()))
+    )
 
     overspend = [rec for rec in plan.recommendations if rec.category == "overspend_alert"]
     assert overspend[0].resource_id == "research"
 
     assert len(plan.review_schedule) == 4
-

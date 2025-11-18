@@ -1,4 +1,5 @@
 """Core module build and release orchestration pipeline."""
+
 from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
@@ -133,7 +134,9 @@ def _ensure_git_clean(root: Path) -> None:
     except FileNotFoundError as exc:  # pragma: no cover - environment guard
         raise CommandError("git executable is required for release automation") from exc
     if result.stdout.strip():
-        raise CommandError("Working tree has uncommitted changes. Commit or stash before releasing.")
+        raise CommandError(
+            "Working tree has uncommitted changes. Commit or stash before releasing."
+        )
 
 
 def _ensure_version_ahead(previous: Version, target: Version) -> None:
@@ -155,7 +158,9 @@ def _ensure_tag_absent(root: Path, tag_name: str) -> None:
     except FileNotFoundError as exc:  # pragma: no cover - environment guard
         raise CommandError("git executable is required for release automation") from exc
     if result.stdout.strip():
-        raise CommandError(f"Tag '{tag_name}' already exists. Choose a different version or delete the tag.")
+        raise CommandError(
+            f"Tag '{tag_name}' already exists. Choose a different version or delete the tag."
+        )
 
 
 def _verify_api_contracts(pipeline: BuildPipeline) -> None:
@@ -188,7 +193,9 @@ def _update_version_file(pipeline: BuildPipeline) -> None:
 
     pipeline.register_rollback(rollback)
     if context.dry_run:
-        pipeline.register_cleanup(lambda: context.version_file.write_text(previous_text, encoding="utf-8"))
+        pipeline.register_cleanup(
+            lambda: context.version_file.write_text(previous_text, encoding="utf-8")
+        )
 
 
 def _run_linters(pipeline: BuildPipeline) -> None:
@@ -503,7 +510,9 @@ def handle(args: argparse.Namespace) -> int:
     elif release_type:
         target_version = _bump_version(previous_version, release_type)
     else:
-        raise CommandError("Provide either --release-type or --new-version to determine release version")
+        raise CommandError(
+            "Provide either --release-type or --new-version to determine release version"
+        )
 
     _ensure_version_ahead(previous_version, target_version)
 
@@ -537,9 +546,7 @@ def handle(args: argparse.Namespace) -> int:
     if not context.core_path.exists():
         raise CommandError(f"Core module path not found: {context.core_path}")
     if not context.schema_registry_dir.exists():
-        raise CommandError(
-            f"Schema registry directory not found: {context.schema_registry_dir}"
-        )
+        raise CommandError(f"Schema registry directory not found: {context.schema_registry_dir}")
     context.artifact_root.mkdir(parents=True, exist_ok=True)
 
     steps: Sequence[ReleaseStep] = (

@@ -63,9 +63,7 @@ async def test_email_sender_constructs_message(monkeypatch: pytest.MonkeyPatch) 
         use_ssl=False,
     )
 
-    await sender.send(
-        "TradePulse Alert", "Order executed", metadata={"order_id": "abc"}
-    )
+    await sender.send("TradePulse Alert", "Order executed", metadata={"order_id": "abc"})
 
     instance: _DummySMTP = captured["instance"]
     assert instance.started_tls is True
@@ -88,9 +86,7 @@ async def test_slack_notifier_posts_payload() -> None:
         def __init__(self) -> None:
             self.closed = False
 
-        async def post(
-            self, url: str, *, json: dict[str, Any], timeout: float
-        ) -> _DummyResponse:
+        async def post(self, url: str, *, json: dict[str, Any], timeout: float) -> _DummyResponse:
             events.append({"url": url, "payload": json, "timeout": timeout})
             return _DummyResponse()
 
@@ -129,9 +125,7 @@ async def test_teams_notifier_posts_payload() -> None:
         def __init__(self) -> None:
             self.closed = False
 
-        async def post(
-            self, url: str, *, json: dict[str, Any], timeout: float
-        ) -> _DummyResponse:
+        async def post(self, url: str, *, json: dict[str, Any], timeout: float) -> _DummyResponse:
             events.append({"url": url, "payload": json, "timeout": timeout})
             return _DummyResponse()
 
@@ -146,9 +140,7 @@ async def test_teams_notifier_posts_payload() -> None:
         client=client,
     )
 
-    await notifier.send(
-        "Deploy", "Deployment completed", metadata={"environment": "staging"}
-    )
+    await notifier.send("Deploy", "Deployment completed", metadata={"environment": "staging"})
     await notifier.aclose()
 
     assert events, "expected webhook payload to be posted"

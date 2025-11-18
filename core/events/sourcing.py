@@ -330,7 +330,11 @@ class OrderAggregate(AggregateRoot):
         else:
             avg_price = (self.average_price * self.filled_quantity + price * quantity) / new_total
 
-        status = OrderStatus.FILLED if abs(new_total - self.quantity) < 1e-9 else OrderStatus.PARTIALLY_FILLED
+        status = (
+            OrderStatus.FILLED
+            if abs(new_total - self.quantity) < 1e-9
+            else OrderStatus.PARTIALLY_FILLED
+        )
         self._raise_event(
             OrderFilled(
                 order_id=self.id,
@@ -445,7 +449,9 @@ class PositionAggregate(AggregateRoot):
         self.is_closed: bool = False
 
     @classmethod
-    def open(cls, *, position_id: str, symbol: str, quantity: float, average_price: float) -> "PositionAggregate":
+    def open(
+        cls, *, position_id: str, symbol: str, quantity: float, average_price: float
+    ) -> "PositionAggregate":
         if quantity == 0:
             raise ValueError("Position quantity must be non-zero on open")
         if average_price <= 0:
@@ -589,7 +595,9 @@ class PortfolioAggregate(AggregateRoot):
     @classmethod
     def create(cls, *, portfolio_id: str, base_currency: str) -> "PortfolioAggregate":
         aggregate = cls(portfolio_id)
-        aggregate._raise_event(PortfolioCreated(portfolio_id=portfolio_id, base_currency=base_currency))
+        aggregate._raise_event(
+            PortfolioCreated(portfolio_id=portfolio_id, base_currency=base_currency)
+        )
         return aggregate
 
     def deposit_cash(self, amount: float) -> None:
@@ -676,7 +684,9 @@ class ConcurrencyError(RuntimeError):
 class PostgresEventStore:
     """Event store persisting events and snapshots in PostgreSQL."""
 
-    def __init__(self, engine: Engine, *, schema: str = "public", table_prefix: str = "es_") -> None:
+    def __init__(
+        self, engine: Engine, *, schema: str = "public", table_prefix: str = "es_"
+    ) -> None:
         self._engine = engine
         self._schema = schema
         self._metadata = MetaData(schema=schema)
@@ -701,8 +711,12 @@ class PostgresEventStore:
             Column("metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
             Column("payload", JSONB, nullable=False),
             Column("occurred_at", DateTime(timezone=True), nullable=False),
-            Column("recorded_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-            UniqueConstraint("aggregate_id", "aggregate_type", "version", name="uq_event_stream_version"),
+            Column(
+                "recorded_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+            ),
+            UniqueConstraint(
+                "aggregate_id", "aggregate_type", "version", name="uq_event_stream_version"
+            ),
             Index("ix_event_store_stream", "aggregate_type", "aggregate_id"),
         )
 
@@ -756,7 +770,9 @@ class PostgresEventStore:
 
         metadata_payload = dict(metadata or {})
         with self._session() as session:
-            current_version = self._current_stream_version(session, aggregate.id, aggregate.aggregate_type)
+            current_version = self._current_stream_version(
+                session, aggregate.id, aggregate.aggregate_type
+            )
             if expected_version is not None and current_version != expected_version:
                 raise ConcurrencyError(
                     f"Expected version {expected_version} but stream is at {current_version}"
@@ -861,7 +877,9 @@ class PostgresEventStore:
                     last_id = row.id
                 yield envelopes
 
-    def _current_stream_version(self, session: Session, aggregate_id: str, aggregate_type: str) -> int:
+    def _current_stream_version(
+        self, session: Session, aggregate_id: str, aggregate_type: str
+    ) -> int:
         stmt = select(func.max(self._events.c.version)).where(
             and_(
                 self._events.c.aggregate_id == aggregate_id,
@@ -906,7 +924,9 @@ class PostgresEventStore:
             )
             session.execute(upsert)
 
-    def load_latest_snapshot(self, *, aggregate_id: str, aggregate_type: str) -> AggregateSnapshot | None:
+    def load_latest_snapshot(
+        self, *, aggregate_id: str, aggregate_type: str
+    ) -> AggregateSnapshot | None:
         with self._session() as session:
             stmt = (
                 select(self._snapshots)
@@ -954,7 +974,9 @@ class EventReplay:
             since_version = 0
 
         envelopes = self._store.load_stream(
-            aggregate_id=aggregate_id, aggregate_type=aggregate.aggregate_type, since_version=since_version
+            aggregate_id=aggregate_id,
+            aggregate_type=aggregate.aggregate_type,
+            since_version=since_version,
         )
         aggregate.load_from_history([envelope.payload for envelope in envelopes])
         return aggregate
@@ -967,9 +989,7 @@ class EventReplay:
         timeline: list[str] = []
         for envelope in envelopes:
             payload_repr = json.dumps(envelope.payload.to_dict(), default=str)
-            timeline_entry = (
-                f"{envelope.stored_at.isoformat()} | v{envelope.version} | {envelope.event_type} | {payload_repr}"
-            )
+            timeline_entry = f"{envelope.stored_at.isoformat()} | v{envelope.version} | {envelope.event_type} | {payload_repr}"  # noqa: E501
             timeline.append(timeline_entry)
         return timeline
 
@@ -1068,4 +1088,3 @@ def restore_from_snapshot(
     aggregate = aggregate_cls(snapshot.aggregate_id, version=snapshot.version)
     aggregate.load_snapshot(snapshot.state)
     return aggregate
-

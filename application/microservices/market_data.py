@@ -144,9 +144,7 @@ class MarketDataService(Microservice):
             metadata["last_symbol"] = self._last_source.symbol
             metadata["last_venue"] = self._last_source.venue
         if self._system.last_ingestion_duration_seconds is not None:
-            metadata["last_duration_seconds"] = (
-                self._system.last_ingestion_duration_seconds
-            )
+            metadata["last_duration_seconds"] = self._system.last_ingestion_duration_seconds
         if self._system.last_ingestion_error is not None:
             metadata["last_error"] = self._system.last_ingestion_error
         return metadata or None

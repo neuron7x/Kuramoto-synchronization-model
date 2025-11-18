@@ -77,9 +77,7 @@ class AtomicCapitalMover:
                     if amount == Decimal("0"):
                         continue
                     if amount < Decimal("0"):
-                        raise CapitalMovementError(
-                            "Transfer amounts must be non-negative per leg"
-                        )
+                        raise CapitalMovementError("Transfer amounts must be non-negative per leg")
                     token = await asyncio.wait_for(
                         gateway.reserve(exchange_id, asset, amount, plan.transfer_id),
                         timeout=self._timeout,

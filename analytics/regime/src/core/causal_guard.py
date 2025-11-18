@@ -89,4 +89,3 @@ def _to_frame(data: Mapping[str, Mapping[str, float]] | pd.DataFrame) -> pd.Data
     if frame.shape[0] != frame.shape[1]:
         frame = frame.reindex(index=frame.columns, columns=frame.columns, fill_value=0.0)
     return frame.fillna(0.0)
-

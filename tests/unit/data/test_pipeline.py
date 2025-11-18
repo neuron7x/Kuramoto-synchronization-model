@@ -54,9 +54,7 @@ def _fallback_source() -> SourceOfTruthSpec:
 
 
 def _build_frame() -> pd.DataFrame:
-    timestamps = pd.date_range(
-        "2024-01-01T00:00:00Z", periods=8, freq="1min", tz=UTC
-    )
+    timestamps = pd.date_range("2024-01-01T00:00:00Z", periods=8, freq="1min", tz=UTC)
     payload = pd.DataFrame(
         {
             "timestamp": timestamps,
@@ -117,13 +115,12 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
         price_column="price",
         anomaly_threshold=2.0,
         anomaly_window=3,
-        range_checks=(
-            RangeCheck(column="volume", min_value=0, max_value=20),
-        ),
+        range_checks=(RangeCheck(column="volume", min_value=0, max_value=20),),
         max_quarantine_fraction=0.5,
     )
 
     queue = DeadLetterQueue(max_items=128, toxicity_threshold=2)
+
     class StubBackfillPlanner:
         def __init__(self) -> None:
             self.invocations = 0
@@ -157,9 +154,7 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
 
     offline_sink: dict[str, dict[str, object]] = {}
 
-    def offline_writer(
-        dataset: str, payload: pd.DataFrame, *, metadata: dict[str, object]
-    ) -> None:
+    def offline_writer(dataset: str, payload: pd.DataFrame, *, metadata: dict[str, object]) -> None:
         offline_sink[dataset] = {"frame": payload.copy(), "metadata": dict(metadata)}
 
     online_store = OnlineFeatureStore(tmp_path / "online")
@@ -170,9 +165,13 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
         schema_registry={"ohlcv": schema},
         quality_gates={"ohlcv": gate},
         toxicity_filter=ToxicityFilterConfig(column="toxicity_score", threshold=3.0),
-        anonymization_rules=(AnonymizationRule(column="pii", salt=b"unit-test", keep_last_chars=2),),
+        anonymization_rules=(
+            AnonymizationRule(column="pii", salt=b"unit-test", keep_last_chars=2),
+        ),
         balance=BalanceConfig(column="label"),
-        stratified_split=StratifiedSplitConfig(column="label", splits={"train": 0.5, "validation": 0.25}),
+        stratified_split=StratifiedSplitConfig(
+            column="label", splits={"train": 0.5, "validation": 0.25}
+        ),
         synthetic=SyntheticAugmentationConfig(samples=2, noise_scale=0.05),
         drift_detector=DriftDetector(psi_threshold=0.2, ks_confidence=0.9, bins=4),
         dead_letter=queue,
@@ -247,4 +246,3 @@ def test_pipeline_end_to_end(tmp_path: Path, strict_sla: bool) -> None:
 
     assert result.sla_met is True
     assert result.metadata["symbol"] == "BTCUSDT"
-

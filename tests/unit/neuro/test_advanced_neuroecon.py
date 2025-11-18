@@ -99,13 +99,14 @@ def test_policy_distribution_temperature_controls_entropy() -> None:
 
 @pytest.mark.skipif(torch is None, reason="PyTorch is required for AdvancedNeuroEconCore")
 def test_evaluate_option_accepts_dataclass_instance() -> None:
-    core = AdvancedNeuroEconCore(risk_tolerance=0.6, uncertainty_reduction=0.1, psychiatric_mod=0.85)
+    core = AdvancedNeuroEconCore(
+        risk_tolerance=0.6, uncertainty_reduction=0.1, psychiatric_mod=0.85
+    )
     option = DecisionOption(reward=150.0, risk=0.4, cost=25.0)
 
     value = core.evaluate_option(option)
-    manual = (
-        option.reward * (1.0 + core.risk_tolerance * option.risk) * core.psychiatric_mod
-        - option.cost * (1.0 - core.uncertainty_reduction)
-    )
+    manual = option.reward * (
+        1.0 + core.risk_tolerance * option.risk
+    ) * core.psychiatric_mod - option.cost * (1.0 - core.uncertainty_reduction)
 
     assert math.isclose(value, manual, rel_tol=1e-6)

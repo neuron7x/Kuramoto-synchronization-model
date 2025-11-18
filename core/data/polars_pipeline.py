@@ -127,9 +127,7 @@ def _resolve_partitioned_sources(
                 candidates.append(str(file))
 
     if not candidates:
-        raise FileNotFoundError(
-            f"No parquet files matched the partition filters at {base_path!s}"
-        )
+        raise FileNotFoundError(f"No parquet files matched the partition filters at {base_path!s}")
     return sorted(candidates)
 
 
@@ -222,9 +220,7 @@ def lazy_column_zero_copy(
     if pa is None:  # pragma: no cover - optional dependency guard
         raise RuntimeError("pyarrow is required for zero-copy column extraction")
     _logger.debug("Extracting zero-copy column", column=column, streaming=streaming)
-    arrow_table = (
-        lazy_frame.select(module.col(column)).collect(streaming=streaming).to_arrow()
-    )
+    arrow_table = lazy_frame.select(module.col(column)).collect(streaming=streaming).to_arrow()
     if arrow_table.num_columns != 1:
         raise ValueError("Expected a single-column selection for zero-copy extraction")
     return arrow_table.column(0).to_numpy(zero_copy_only=True)

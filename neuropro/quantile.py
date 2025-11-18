@@ -8,16 +8,10 @@ from sklearn.ensemble import GradientBoostingRegressor
 
 class QuantileModels:
     def __init__(self, low_q: float = 0.2, high_q: float = 0.8, seed: int = 7) -> None:
-        self.low = GradientBoostingRegressor(
-            loss="quantile", alpha=low_q, random_state=seed
-        )
+        self.low = GradientBoostingRegressor(loss="quantile", alpha=low_q, random_state=seed)
         # Використовуємо 0.5-квантиль для медіани задля узгодженості з CQR
-        self.med = GradientBoostingRegressor(
-            loss="quantile", alpha=0.5, random_state=seed
-        )
-        self.high = GradientBoostingRegressor(
-            loss="quantile", alpha=high_q, random_state=seed
-        )
+        self.med = GradientBoostingRegressor(loss="quantile", alpha=0.5, random_state=seed)
+        self.high = GradientBoostingRegressor(loss="quantile", alpha=high_q, random_state=seed)
         self.cols: list[str] | None = None
         self.fitted = False
 

@@ -96,7 +96,9 @@ def test_regime_detector_calibration_updates_thresholds():
         ]
     )
     assert calibrated.liquidity_score_high > calibrated.liquidity_score_low
-    assert 0.0 <= calibrated.correlation_low_threshold <= calibrated.correlation_high_threshold <= 1.0
+    assert (
+        0.0 <= calibrated.correlation_low_threshold <= calibrated.correlation_high_threshold <= 1.0
+    )
 
 
 def test_regime_detector_calibration_requires_history():
@@ -191,7 +193,9 @@ def test_ews_aggregator_combines_scores():
         causal_strength=pd.Series([0.1, 0.2], index=["a", "b"]),
     )
 
-    ews = EarlyWarningSignal(EWSConfig(weight_fk=0.6, weight_ricci=0.4, weight_topo=0.3, weight_causal=0.2))
+    ews = EarlyWarningSignal(
+        EWSConfig(weight_fk=0.6, weight_ricci=0.4, weight_topo=0.3, weight_causal=0.2)
+    )
     result = ews.aggregate(
         fk,
         ricci,
@@ -203,4 +207,3 @@ def test_ews_aggregator_combines_scores():
 
     assert 0.0 <= result.probability <= 1.0
     assert result.kill_switch_recommended is True
-

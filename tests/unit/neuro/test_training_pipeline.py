@@ -38,7 +38,7 @@ class QuadraticComponent(TrainingComponent):
         self.sequence_lengths.append(inputs.shape[-1])
         preds = inputs @ self.weights
         diff = preds - targets
-        loss = float(np.mean(diff ** 2))
+        loss = float(np.mean(diff**2))
         grad = (inputs.T @ diff) / inputs.shape[0]
         self._grad += grad.astype(np.float32)
         self.forward_calls += 1
@@ -147,7 +147,11 @@ def test_checkpointing_creates_files(tmp_path: Path) -> None:
 
 def test_priority_queue_orders_batches() -> None:
     samples = [
-        TrainingSample(inputs=np.array([priority], dtype=np.float32), target=0.0, metadata={"priority": priority})
+        TrainingSample(
+            inputs=np.array([priority], dtype=np.float32),
+            target=0.0,
+            metadata={"priority": priority},
+        )
         for priority in (0.1, 0.5, 0.3, 0.9)
     ]
     loader = AsyncDataLoader(

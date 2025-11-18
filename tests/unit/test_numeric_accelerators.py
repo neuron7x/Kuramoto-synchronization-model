@@ -65,9 +65,7 @@ def test_python_backends_match_public_api() -> None:
     expected_convolve = convolve(data, [1.0, -1.0], mode="full", use_rust=False)
 
     np.testing.assert_allclose(np.asarray(windows_py, dtype=float), expected_windows)
-    np.testing.assert_allclose(
-        np.asarray(quantiles_py, dtype=float), expected_quantiles
-    )
+    np.testing.assert_allclose(np.asarray(quantiles_py, dtype=float), expected_quantiles)
     np.testing.assert_allclose(np.asarray(conv_py, dtype=float), expected_convolve)
 
 

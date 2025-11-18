@@ -103,7 +103,9 @@ class MacroSignalPipeline:
 
         return features
 
-    def _harmonise_frequency(self, frame: pd.DataFrame, indicator: MacroIndicatorConfig) -> pd.DataFrame:
+    def _harmonise_frequency(
+        self, frame: pd.DataFrame, indicator: MacroIndicatorConfig
+    ) -> pd.DataFrame:
         if frame.empty:
             return frame
 
@@ -183,9 +185,7 @@ class MacroSignalPipeline:
 
         return result
 
-    def _register_dataset(
-        self, features: pd.DataFrame, run_id: str, started_at: datetime
-    ) -> None:
+    def _register_dataset(self, features: pd.DataFrame, run_id: str, started_at: datetime) -> None:
         signature = dataframe_signature(features)
         entry = CatalogEntry(
             name="macro_features",

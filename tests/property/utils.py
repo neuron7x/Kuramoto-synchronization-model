@@ -119,4 +119,3 @@ __all__ = [
     "property_seed",
     "regression_note",
 ]
-

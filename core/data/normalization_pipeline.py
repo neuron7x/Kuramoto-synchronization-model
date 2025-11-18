@@ -208,9 +208,7 @@ def _prepare_frame(frame: pd.DataFrame, config: MarketNormalizationConfig) -> pd
     prepared = frame.copy()
     if not isinstance(prepared.index, pd.DatetimeIndex):
         if config.timestamp_col not in prepared.columns:
-            raise KeyError(
-                f"Frame must have a DatetimeIndex or '{config.timestamp_col}' column"
-            )
+            raise KeyError(f"Frame must have a DatetimeIndex or '{config.timestamp_col}' column")
         prepared[config.timestamp_col] = pd.to_datetime(
             prepared[config.timestamp_col], utc=config.expect_utc
         )
@@ -238,9 +236,7 @@ def _resolve_frequency(index: pd.DatetimeIndex, explicit: str | None) -> tuple[s
         return explicit, False
     inferred = pd.infer_freq(index)
     if inferred is None:
-        raise ValueError(
-            "Unable to infer frequency from index. Provide `frequency` explicitly."
-        )
+        raise ValueError("Unable to infer frequency from index. Provide `frequency` explicitly.")
     return inferred, True
 
 
@@ -272,9 +268,7 @@ def _fill_gaps(frame: pd.DataFrame, method: FillMethod) -> pd.DataFrame:
     return filled
 
 
-def _from_ticks(
-    frame: pd.DataFrame, config: MarketNormalizationConfig, freq: str
-) -> pd.DataFrame:
+def _from_ticks(frame: pd.DataFrame, config: MarketNormalizationConfig, freq: str) -> pd.DataFrame:
     required = {config.price_col}
     missing = required - set(frame.columns)
     if missing:
@@ -303,9 +297,7 @@ def _from_ticks(
         l1.loc[empty_bins, "mid_price"] = np.nan
         l1.loc[empty_bins, "last_size"] = 0.0
 
-    ohlcv = resample_l1_to_ohlcv(
-        l1, freq=freq, price_col="mid_price", size_col="last_size"
-    )
+    ohlcv = resample_l1_to_ohlcv(l1, freq=freq, price_col="mid_price", size_col="last_size")
 
     if config.volume_col in frame.columns:
         volume = (
@@ -324,9 +316,7 @@ def _from_ticks(
 
 def _ensure_ohlcv_columns(frame: pd.DataFrame) -> pd.DataFrame:
     expected_columns = ["open", "high", "low", "close", "volume"]
-    missing_columns = [
-        column for column in expected_columns if column not in frame.columns
-    ]
+    missing_columns = [column for column in expected_columns if column not in frame.columns]
     aligned = frame.copy()
     for column in missing_columns:
         aligned[column] = 0.0 if column == "volume" else np.nan
@@ -360,4 +350,3 @@ __all__ = [
     "NormalisationKind",
     "normalize_market_data",
 ]
-

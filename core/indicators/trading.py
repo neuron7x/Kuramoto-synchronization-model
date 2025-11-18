@@ -35,9 +35,7 @@ _metrics = get_metrics_collector()
 _WEIGHTING_MODES = {"none", "linear", "sqrt", "log"}
 
 
-def _prepare_weight_series(
-    values: Iterable[float], *, expected_size: int, mode: str
-) -> np.ndarray:
+def _prepare_weight_series(values: Iterable[float], *, expected_size: int, mode: str) -> np.ndarray:
     series = np.array(values, dtype=float, copy=True)
     if series.ndim != 1:
         raise ValueError("volumes must be one-dimensional")
@@ -57,9 +55,7 @@ def _prepare_weight_series(
     return series
 
 
-def _apply_exponential_smoothing(
-    values: np.ndarray, valid: np.ndarray, alpha: float
-) -> np.ndarray:
+def _apply_exponential_smoothing(values: np.ndarray, valid: np.ndarray, alpha: float) -> np.ndarray:
     if not (0.0 < alpha < 1.0) or values.size == 0:
         return values
 
@@ -287,7 +283,6 @@ if _numba_available():  # pragma: no cover - compiled at import time
             slope = 1.0
         return slope
 
-
     @njit(parallel=True, cache=True, fastmath=True)
     def _rolling_hurst_numba(
         series: np.ndarray,
@@ -358,9 +353,7 @@ class KuramotoIndicator:
         if not (0.0 <= self.smoothing < 1.0):
             raise ValueError("smoothing must be within [0, 1)")
         if self.volume_weighting not in _WEIGHTING_MODES:
-            raise ValueError(
-                f"Unsupported volume_weighting '{self.volume_weighting}'"
-            )
+            raise ValueError(f"Unsupported volume_weighting '{self.volume_weighting}'")
 
     def compute(
         self, prices: Iterable[float], volumes: Iterable[float] | None = None
@@ -401,9 +394,7 @@ class KuramotoIndicator:
             weight_series: np.ndarray | None = None
             if self.volume_weighting != "none":
                 if volumes is None:
-                    raise ValueError(
-                        "volumes must be provided when volume_weighting is enabled"
-                    )
+                    raise ValueError("volumes must be provided when volume_weighting is enabled")
                 weight_series = _prepare_weight_series(
                     volumes, expected_size=series.size, mode=self.volume_weighting
                 )
@@ -412,9 +403,7 @@ class KuramotoIndicator:
                 totals = _rolling_sum(
                     complex_phase * weight_series, self.window, backend=self.backend
                 )
-                denominators = _rolling_sum(
-                    weight_series, self.window, backend=self.backend
-                )
+                denominators = _rolling_sum(weight_series, self.window, backend=self.backend)
                 valid = base_mask & (denominators > 0.0)
                 result = np.zeros_like(series, dtype=float)
                 if valid.any():
@@ -464,9 +453,7 @@ class HurstIndicator:
     min_lag: int = 2
     max_lag: int | None = None
     backend: Literal["cpu", "auto", "numpy", "numba", "cuda", "gpu"] = "auto"
-    _buffers: _HurstBufferPool = field(
-        init=False, repr=False, default_factory=_HurstBufferPool
-    )
+    _buffers: _HurstBufferPool = field(init=False, repr=False, default_factory=_HurstBufferPool)
 
     def __post_init__(self) -> None:
         if self.window <= 0:
@@ -580,18 +567,10 @@ class VPINIndicator:
                 ctx["diagnostics"] = diagnostics
                 return np.empty(0, dtype=float)
             if array.ndim != 2 or array.shape[1] < 3:
-                raise ValueError(
-                    "volume_data must have columns [volume, buy_volume, sell_volume]"
-                )
-            total = np.clip(
-                np.nan_to_num(array[:, 0], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-            )
-            buy = np.clip(
-                np.nan_to_num(array[:, 1], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-            )
-            sell = np.clip(
-                np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-            )
+                raise ValueError("volume_data must have columns [volume, buy_volume, sell_volume]")
+            total = np.clip(np.nan_to_num(array[:, 0], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
+            buy = np.clip(np.nan_to_num(array[:, 1], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
+            sell = np.clip(np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
 
             if self.use_signed_imbalance:
                 imbalance = buy - sell

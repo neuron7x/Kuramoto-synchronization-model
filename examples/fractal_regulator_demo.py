@@ -115,9 +115,7 @@ def demo_parameter_sensitivity():
 
     print("\nTesting different crisis thresholds:")
     for threshold in thresholds:
-        regulator = EEPFractalRegulator(
-            window_size=100, crisis_threshold=threshold, seed=42
-        )
+        regulator = EEPFractalRegulator(window_size=100, crisis_threshold=threshold, seed=42)
 
         results = regulator.simulate_trade_cycle(signals)
         crisis_count = sum(1 for m in results if m.csi < threshold)

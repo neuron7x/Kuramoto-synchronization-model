@@ -51,10 +51,7 @@ class RecordingPipeline:
             async with self._lock:
                 self._active -= 1
                 self.completed.append(config.run_id)
-                if (
-                    self._expected_total is not None
-                    and len(self.completed) >= self._expected_total
-                ):
+                if self._expected_total is not None and len(self.completed) >= self._expected_total:
                     self._done_event.set()
 
 
@@ -82,9 +79,7 @@ async def test_scheduler_scales_without_cancellation() -> None:
     total_runs = 6
     pipeline.set_expected_total(total_runs)
     for idx in range(total_runs):
-        await scheduler.submit(
-            PipelineRunConfig(run_id=f"run-{idx}", partition_key=str(idx))
-        )
+        await scheduler.submit(PipelineRunConfig(run_id=f"run-{idx}", partition_key=str(idx)))
 
     await pipeline.wait_for_expected()
     await scheduler.shutdown()
@@ -107,9 +102,7 @@ async def test_scheduler_downscales_and_recovers() -> None:
     first_batch = 3
     pipeline.set_expected_total(first_batch)
     for idx in range(first_batch):
-        await scheduler.submit(
-            PipelineRunConfig(run_id=f"first-{idx}", partition_key=str(idx))
-        )
+        await scheduler.submit(PipelineRunConfig(run_id=f"first-{idx}", partition_key=str(idx)))
 
     await pipeline.wait_for_expected()
     await _wait_for(lambda: len(scheduler._workers) == 0)
@@ -117,9 +110,7 @@ async def test_scheduler_downscales_and_recovers() -> None:
     second_batch = 2
     pipeline.set_expected_total(first_batch + second_batch)
     for idx in range(second_batch):
-        await scheduler.submit(
-            PipelineRunConfig(run_id=f"second-{idx}", partition_key=str(idx))
-        )
+        await scheduler.submit(PipelineRunConfig(run_id=f"second-{idx}", partition_key=str(idx)))
 
     await pipeline.wait_for_expected()
     await scheduler.shutdown()

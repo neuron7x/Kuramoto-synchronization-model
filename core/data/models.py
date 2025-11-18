@@ -98,9 +98,7 @@ class _FrozenModel(BaseModel):
 class MarketMetadata(_FrozenModel):
     """Common metadata shared by all market data payloads."""
 
-    symbol: StrictStr = Field(
-        ..., min_length=1, description="Instrument symbol, e.g. BTCUSD"
-    )
+    symbol: StrictStr = Field(..., min_length=1, description="Instrument symbol, e.g. BTCUSD")
     venue: StrictStr = Field(..., min_length=1, description="Market venue identifier")
     instrument_type: InstrumentType = Field(
         default=InstrumentType.SPOT,
@@ -191,12 +189,8 @@ class PriceTick(MarketDataPoint):
     """Tick-level price update."""
 
     price: Decimal = Field(..., description="Last traded price")
-    volume: Decimal = Field(
-        default=Decimal("0"), description="Trade volume at the tick"
-    )
-    trade_id: Optional[str] = Field(
-        default=None, description="Exchange trade identifier"
-    )
+    volume: Decimal = Field(default=Decimal("0"), description="Trade volume at the tick")
+    trade_id: Optional[str] = Field(default=None, description="Exchange trade identifier")
     kind: Literal[DataKind.TICK] = DataKind.TICK
 
     @field_validator("price", mode="before")
@@ -261,9 +255,7 @@ class PriceTick(MarketDataPoint):
     ) -> "PriceTick":
         """Factory helper that builds the metadata block for convenience."""
 
-        meta = MarketMetadata(
-            symbol=symbol, venue=venue, instrument_type=instrument_type
-        )
+        meta = MarketMetadata(symbol=symbol, venue=venue, instrument_type=instrument_type)
         return cls(
             metadata=meta,
             timestamp=timestamp,

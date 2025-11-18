@@ -41,22 +41,19 @@ LOGGER = logging.getLogger(__name__)
 class ParameterSampler(Protocol):
     """Callable responsible for sampling hyperparameters for a trial."""
 
-    def __call__(self, trial: optuna.trial.Trial) -> Mapping[str, Any]:
-        ...
+    def __call__(self, trial: optuna.trial.Trial) -> Mapping[str, Any]: ...
 
 
 class ObjectiveFunction(Protocol):
     """Objective used during optimisation returning a scalar score."""
 
-    def __call__(self, params: Mapping[str, Any], *, data: Any) -> float:
-        ...
+    def __call__(self, params: Mapping[str, Any], *, data: Any) -> float: ...
 
 
 class StrategyFactory(Protocol):
     """Factory producing :class:`~core.agent.strategy.Strategy` instances."""
 
-    def __call__(self, params: Mapping[str, Any], *, name: str) -> "Strategy":
-        ...
+    def __call__(self, params: Mapping[str, Any], *, name: str) -> "Strategy": ...
 
 
 @dataclass(slots=True)
@@ -89,8 +86,7 @@ class OptunaSearchConfig:
             msg = "n_startup_trials must not be negative"
             raise ValueError(msg)
         if (
-            self.objective is None
-            and self.strategy_factory is None
+            self.objective is None and self.strategy_factory is None
         ):  # pragma: no cover - configuration guard
             msg = "Either objective or strategy_factory must be provided"
             raise ValueError(msg)
@@ -451,9 +447,8 @@ class StrategyHyperparameterSearch:
         }
 
         trial_history = [
-            _coerce_json_serialisable(history) for history in sorted(
-                self._trial_history, key=lambda item: int(item["number"])
-            )
+            _coerce_json_serialisable(history)
+            for history in sorted(self._trial_history, key=lambda item: int(item["number"]))
         ]
 
         summary_path = artifact_dir / "study_summary.json"

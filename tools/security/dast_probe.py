@@ -1,21 +1,21 @@
 """Dynamic application security smoke tests for the TradePulse API."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402
 
-import argparse
-import asyncio
-import contextlib
-import io
-import json
-import logging
-import sys
-import warnings
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Sequence
+import argparse  # noqa: E402
+import asyncio  # noqa: E402
+import contextlib  # noqa: E402
+import io  # noqa: E402
+import json  # noqa: E402
+import logging  # noqa: E402
+import sys  # noqa: E402
+import warnings  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
+from typing import Any, Sequence  # noqa: E402
 
-import httpx
-from httpx import ASGITransport
+import httpx  # noqa: E402
+from httpx import ASGITransport  # noqa: E402
 
 _WARNING_FILTERS: tuple[dict[str, object], ...] = (
     {"message": r'Field name "schema" in "QualityGateConfig"', "category": UserWarning},
@@ -35,7 +35,7 @@ _WARNING_FILTERS: tuple[dict[str, object], ...] = (
 for filter_kwargs in _WARNING_FILTERS:
     warnings.filterwarnings("ignore", **filter_kwargs)
 
-from application.settings import BackendRuntimeSettings
+from application.settings import BackendRuntimeSettings  # noqa: E402
 
 DEFAULT_REPORT_PATH = Path("reports/security/dast_report.json")
 
@@ -92,7 +92,7 @@ def _build_silent_logger() -> logging.Logger:
 
 @contextlib.contextmanager
 def _suppress_audit_logging() -> Any:
-    from src.audit import audit_logger as audit_module
+    from src.audit import audit_logger as audit_module  # noqa: E402
 
     original_class = audit_module.AuditLogger
 
@@ -116,7 +116,8 @@ def _create_app() -> Any:
     )
     _silence_expected_warnings()
     logging.getLogger("httpx").setLevel(logging.CRITICAL)
-    from application.api.service import create_app
+    from application.api.service import create_app  # noqa: E402
+
     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
         return create_app(runtime_settings=runtime)
 
@@ -167,7 +168,9 @@ async def _check_unauthorised_features(client: httpx.AsyncClient, report: dict[s
         raise AssertionError("Unexpected error code for unauthorised feature request")
 
 
-async def _check_trusted_host(client: httpx.AsyncClient, *, host: str, report: dict[str, Any]) -> None:
+async def _check_trusted_host(
+    client: httpx.AsyncClient, *, host: str, report: dict[str, Any]
+) -> None:
     response = await client.get("/health", headers={"host": host})
     report["trusted_host"] = {
         "status_code": response.status_code,
@@ -215,7 +218,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "status": "failed",
             "reason": str(exc),
         }
-        report_path.write_text(json.dumps(failure_report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        report_path.write_text(
+            json.dumps(failure_report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         print(f"DAST checks failed: {exc}")
         return 1
 

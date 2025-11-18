@@ -58,9 +58,7 @@ class MacroFeatureBuilder:
         if "consensus" in frame.columns:
             frame["surprise"] = frame["value"] - frame["consensus"]
 
-        frame["release_gap_days"] = (
-            (frame["release_date"] - frame["period_end"]).dt.days
-        )
+        frame["release_gap_days"] = (frame["release_date"] - frame["period_end"]).dt.days
 
         meta_columns = self._extract_meta_columns(frame)
         ordered_cols = [
@@ -76,9 +74,7 @@ class MacroFeatureBuilder:
         if "surprise" in frame.columns:
             ordered_cols.append("surprise")
         extra_columns = [
-            col
-            for col in frame.columns
-            if col not in ordered_cols and col not in meta_columns
+            col for col in frame.columns if col not in ordered_cols and col not in meta_columns
         ]
         ordered_cols += sorted(extra_columns)
         ordered_cols += sorted(meta_columns - set(ordered_cols))

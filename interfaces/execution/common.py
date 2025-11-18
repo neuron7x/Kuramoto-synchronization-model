@@ -119,9 +119,7 @@ class CredentialProvider:
     def rotate(self, new_values: Mapping[str, str] | None = None) -> Mapping[str, str]:
         if new_values is not None:
             normalized = {k.upper(): v for k, v in new_values.items()}
-            missing = [
-                key for key in self.required_keys if key.upper() not in normalized
-            ]
+            missing = [key for key in self.required_keys if key.upper() not in normalized]
             if missing:
                 raise CredentialError(
                     "Cannot rotate credentials because required keys are missing: "
@@ -146,9 +144,7 @@ class HMACSigner:
         self.algorithm = algorithm
 
     def sign(self, payload: str) -> str:
-        digest = hmac.new(
-            self.secret, payload.encode(), getattr(hashlib, self.algorithm)
-        )
+        digest = hmac.new(self.secret, payload.encode(), getattr(hashlib, self.algorithm))
         return digest.hexdigest()
 
 
@@ -189,9 +185,7 @@ class HTTPBackoffController:
     def backoff(self, response: httpx.Response | None = None) -> None:
         with self._lock:
             self._attempts += 1
-            exponential = min(
-                self.base_delay * (2 ** (self._attempts - 1)), self.max_delay
-            )
+            exponential = min(self.base_delay * (2 ** (self._attempts - 1)), self.max_delay)
             delay = random.uniform(self.base_delay, exponential)
             if response is not None:
                 retry_after = response.headers.get("Retry-After")
@@ -312,9 +306,7 @@ class DuplicateResponseDetector:
         self._lock = threading.Lock()
         self._records: "OrderedDict[str, _DuplicateRecord]" = OrderedDict()
 
-    def register(
-        self, fingerprint: str, response: httpx.Response
-    ) -> tuple[bool, float | None]:
+    def register(self, fingerprint: str, response: httpx.Response) -> tuple[bool, float | None]:
         payload = response.content
         digest = hashlib.sha256(payload).hexdigest()
         now = self._clock()
@@ -334,11 +326,7 @@ class DuplicateResponseDetector:
 
     def _purge(self, now: float) -> None:
         expiration = now - self._ttl
-        expired = [
-            key
-            for key, record in self._records.items()
-            if record.last_seen < expiration
-        ]
+        expired = [key for key, record in self._records.items() if record.last_seen < expiration]
         for key in expired:
             self._records.pop(key, None)
 
@@ -406,16 +394,10 @@ def parse_server_time(response: httpx.Response) -> float | None:
             parsed = None
         if parsed is not None:
             return parsed.timestamp()
-    server_time = response.headers.get("X-Server-Time") or response.headers.get(
-        "Server-Time"
-    )
+    server_time = response.headers.get("X-Server-Time") or response.headers.get("Server-Time")
     if server_time:
         try:
-            return (
-                float(server_time) / 1000
-                if len(server_time) > 11
-                else float(server_time)
-            )
+            return float(server_time) / 1000 if len(server_time) > 11 else float(server_time)
         except ValueError:
             return None
     return None
@@ -464,9 +446,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
     ) -> None:
         super().__init__(sandbox=sandbox)
         self.env_prefix = env_prefix
-        self._base_url = (sandbox_url if sandbox and sandbox_url else base_url).rstrip(
-            "/"
-        )
+        self._base_url = (sandbox_url if sandbox and sandbox_url else base_url).rstrip("/")
         self._ws_url = sandbox_ws_url if sandbox and sandbox_ws_url else ws_url
         self._timeout = timeout
         self._transport = transport
@@ -562,8 +542,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             }
         if isinstance(value, (list, tuple, set)):
             return [
-                AuthenticatedRESTExecutionConnector._normalise_component(item)
-                for item in value
+                AuthenticatedRESTExecutionConnector._normalise_component(item) for item in value
             ]
         if isinstance(value, (bytes, bytearray)):
             try:
@@ -617,13 +596,9 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         headers = dict(headers or {})
         request_kwargs = dict(kwargs)
         timeout_override = (
-            request_timeout
-            if request_timeout is not None
-            else request_kwargs.pop("timeout", None)
+            request_timeout if request_timeout is not None else request_kwargs.pop("timeout", None)
         )
-        effective_timeout = (
-            timeout_override if timeout_override is not None else self._timeout
-        )
+        effective_timeout = timeout_override if timeout_override is not None else self._timeout
         normalized_method = method.upper()
         if idempotent is None:
             idempotent = normalized_method in {
@@ -704,9 +679,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             self._rotation_attempted = False
             self._backoff.reset()
             self._circuit_breaker.record_success()
-            duplicate, first_seen = self._duplicate_detector.register(
-                fingerprint, response
-            )
+            duplicate, first_seen = self._duplicate_detector.register(fingerprint, response)
             response.extensions["tradepulse_duplicate"] = duplicate
             if duplicate and first_seen is not None:
                 response.extensions["tradepulse_duplicate_first_seen"] = first_seen
@@ -741,9 +714,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         try:
             from websockets.sync.client import connect
         except Exception as exc:  # pragma: no cover - optional dependency guard
-            raise RuntimeError(
-                "websockets library is required for streaming support"
-            ) from exc
+            raise RuntimeError("websockets library is required for streaming support") from exc
         return connect(url)
 
     def _ws_loop(self) -> None:

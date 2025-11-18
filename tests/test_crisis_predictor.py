@@ -62,8 +62,7 @@ class TestCrisisPredictorBacktest:
 
         # Extract crisis scenario indices
         crisis_indices = [
-            i for i, label in enumerate(result.crisis_labels)
-            if label != CrisisMode.NORMAL
+            i for i, label in enumerate(result.crisis_labels) if label != CrisisMode.NORMAL
         ]
 
         for idx in crisis_indices:
@@ -79,8 +78,7 @@ class TestCrisisPredictorBacktest:
 
         # Extract normal scenario indices
         normal_indices = [
-            i for i, label in enumerate(result.crisis_labels)
-            if label == CrisisMode.NORMAL
+            i for i, label in enumerate(result.crisis_labels) if label == CrisisMode.NORMAL
         ]
 
         for idx in normal_indices:
@@ -134,9 +132,7 @@ class TestCrisisPredictorNegativeCases:
 
     def test_low_false_positive_rate_on_stable_conditions(self) -> None:
         """Verify false positive rate is low when conditions are stable."""
-        result = run_backtest_on_synthetic_crises(
-            seed=42, num_scenarios=100, crisis_threshold=0.1
-        )
+        result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=100, crisis_threshold=0.1)
 
         # False positive rate should be reasonably low (< 30%)
         # This ensures we don't over-trigger on stable systems
@@ -150,13 +146,11 @@ class TestCrisisPredictorNegativeCases:
         result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=60)
 
         normal_indices = [
-            i for i, label in enumerate(result.crisis_labels)
-            if label == CrisisMode.NORMAL
+            i for i, label in enumerate(result.crisis_labels) if label == CrisisMode.NORMAL
         ]
 
         correct_normal_predictions = sum(
-            1 for idx in normal_indices
-            if result.predicted_labels[idx] == CrisisMode.NORMAL
+            1 for idx in normal_indices if result.predicted_labels[idx] == CrisisMode.NORMAL
         )
 
         classification_rate = correct_normal_predictions / len(normal_indices)
@@ -171,28 +165,24 @@ class TestCrisisPredictorNegativeCases:
         result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=50)
 
         crisis_predictions = sum(
-            1 for label in result.predicted_labels
-            if label != CrisisMode.NORMAL
+            1 for label in result.predicted_labels if label != CrisisMode.NORMAL
         )
 
         # Should not predict crisis for all scenarios
-        assert crisis_predictions < len(result.predicted_labels), (
-            "Predictor always predicts crisis - likely degenerate model"
-        )
+        assert crisis_predictions < len(
+            result.predicted_labels
+        ), "Predictor always predicts crisis - likely degenerate model"
 
     def test_predictor_does_not_always_predict_normal(self) -> None:
         """Verify predictor doesn't degenerate to always predicting normal."""
         result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=50)
 
         crisis_predictions = sum(
-            1 for label in result.predicted_labels
-            if label != CrisisMode.NORMAL
+            1 for label in result.predicted_labels if label != CrisisMode.NORMAL
         )
 
         # Should predict at least some crisis scenarios
-        assert crisis_predictions > 0, (
-            "Predictor never predicts crisis - likely degenerate model"
-        )
+        assert crisis_predictions > 0, "Predictor never predicts crisis - likely degenerate model"
 
 
 class TestCrisisPredictorEdgeCases:
@@ -207,29 +197,23 @@ class TestCrisisPredictorEdgeCases:
 
     def test_zero_crisis_threshold_behavior(self) -> None:
         """Verify backtest handles zero threshold edge case."""
-        result = run_backtest_on_synthetic_crises(
-            seed=42, num_scenarios=20, crisis_threshold=0.0
-        )
+        result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=20, crisis_threshold=0.0)
 
         # With zero threshold, even tiny deviations are crises
         # Most predictions should be crisis
         crisis_predictions = sum(
-            1 for label in result.predicted_labels
-            if label != CrisisMode.NORMAL
+            1 for label in result.predicted_labels if label != CrisisMode.NORMAL
         )
         assert crisis_predictions >= len(result.predicted_labels) // 2
 
     def test_very_high_crisis_threshold_behavior(self) -> None:
         """Verify backtest handles very high threshold."""
-        result = run_backtest_on_synthetic_crises(
-            seed=42, num_scenarios=20, crisis_threshold=10.0
-        )
+        result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=20, crisis_threshold=10.0)
 
         # With very high threshold, almost nothing is a crisis
         # Most predictions should be normal
         normal_predictions = sum(
-            1 for label in result.predicted_labels
-            if label == CrisisMode.NORMAL
+            1 for label in result.predicted_labels if label == CrisisMode.NORMAL
         )
         assert normal_predictions > 0
 
@@ -243,8 +227,8 @@ class TestCrisisPredictorEdgeCases:
 
         # F1 score should be harmonic mean of precision and recall
         if result.precision > 0 and result.recall > 0:
-            expected_f1 = 2 * (result.precision * result.recall) / (
-                result.precision + result.recall
+            expected_f1 = (
+                2 * (result.precision * result.recall) / (result.precision + result.recall)
             )
             assert np.isclose(result.f1_score, expected_f1, rtol=1e-6)
 
@@ -270,28 +254,23 @@ class TestCrisisPredictorFalsifiability:
 
         # Should have at least some misclassifications
         # Count actual crisis and normal scenarios
-        num_crisis = sum(
-            1 for label in result.crisis_labels if label != CrisisMode.NORMAL
-        )
+        num_crisis = sum(1 for label in result.crisis_labels if label != CrisisMode.NORMAL)
         num_normal = len(result.crisis_labels) - num_crisis
 
         # Calculate total errors based on actual counts
         total_errors = (
-            result.false_positive_rate * num_normal
-            + result.false_negative_rate * num_crisis
+            result.false_positive_rate * num_normal + result.false_negative_rate * num_crisis
         )
-        assert total_errors > 0, (
-            "Model has zero errors - fails falsifiability test"
-        )
+        assert total_errors > 0, "Model has zero errors - fails falsifiability test"
 
     def test_crisis_detector_statistical_properties(self) -> None:
         """Verify crisis detector has reasonable statistical properties."""
         result = run_backtest_on_synthetic_crises(seed=42, num_scenarios=100)
 
         # Accuracy should be better than random guessing (> 0.5)
-        assert result.accuracy > 0.5, (
-            f"Accuracy {result.accuracy:.2%} is no better than random guessing"
-        )
+        assert (
+            result.accuracy > 0.5
+        ), f"Accuracy {result.accuracy:.2%} is no better than random guessing"
 
         # At least one of precision or recall should be reasonable
         assert result.precision > 0.3 or result.recall > 0.3, (
@@ -311,15 +290,12 @@ class TestCrisisPredictorFalsifiability:
         # Accuracy should be reasonably consistent (std dev < 0.2)
         std_dev = np.std(results)
         assert std_dev < 0.2, (
-            f"Accuracy varies too much across seeds (std: {std_dev:.3f}). "
-            "Model may be unstable."
+            f"Accuracy varies too much across seeds (std: {std_dev:.3f}). " "Model may be unstable."
         )
 
         # Mean accuracy should be > 0.5 (better than random)
         mean_accuracy = np.mean(results)
-        assert mean_accuracy > 0.5, (
-            f"Mean accuracy {mean_accuracy:.2%} is no better than random"
-        )
+        assert mean_accuracy > 0.5, f"Mean accuracy {mean_accuracy:.2%} is no better than random"
 
     def test_expected_result_distribution(self) -> None:
         """Verify distribution of results matches expected patterns.
@@ -331,12 +307,10 @@ class TestCrisisPredictorFalsifiability:
 
         # Separate metrics by ground truth label
         crisis_indices = [
-            i for i, label in enumerate(result.crisis_labels)
-            if label != CrisisMode.NORMAL
+            i for i, label in enumerate(result.crisis_labels) if label != CrisisMode.NORMAL
         ]
         normal_indices = [
-            i for i, label in enumerate(result.crisis_labels)
-            if label == CrisisMode.NORMAL
+            i for i, label in enumerate(result.crisis_labels) if label == CrisisMode.NORMAL
         ]
 
         crisis_latencies = [result.latency_means[i] for i in crisis_indices]

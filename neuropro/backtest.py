@@ -23,13 +23,9 @@ class BacktesterCAL:
     def __init__(self, cfg: dict) -> None:
         self.cfg = cfg
         self.lookbacks = cfg["features"]["lookbacks"]
-        self.fs = FeatureStore(
-            cfg["features"]["fracdiff_d"], cfg["features"].get("ofi_window", 20)
-        )
+        self.fs = FeatureStore(cfg["features"]["fracdiff_d"], cfg["features"].get("ofi_window", 20))
         self.reg = RegimeModel(tuple(cfg["regime"]["bins"]))
-        self.qm = QuantileModels(
-            cfg["quantile"]["low_q"], cfg["quantile"]["high_q"]
-        )
+        self.qm = QuantileModels(cfg["quantile"]["low_q"], cfg["quantile"]["high_q"])
         self.cqr = ConformalCQR(
             cfg["conformal"]["alpha"],
             cfg["conformal"]["decay"],
@@ -133,15 +129,11 @@ class BacktesterCAL:
             self.logger.log_metric("alpha_eff", self.cqr.alpha, step=i)
 
             notional_frac = min(1.0, abs(1.0 - pos))
-            costs = self.exec.costs(
-                df[spread_col].iloc[i], rv_t, notional_frac=notional_frac
-            )
+            costs = self.exec.costs(df[spread_col].iloc[i], rv_t, notional_frac=notional_frac)
             self.logger.log_metric("qhat", self.cqr.qhat or 0.0, step=i)
             self.logger.log_metric("costs", costs, step=i)
 
-            proposed = self.policy.decide(
-                Lc, M, Uc, costs, self.buffer_frac, self._ret_hist
-            )
+            proposed = self.policy.decide(Lc, M, Uc, costs, self.buffer_frac, self._ret_hist)
             checks = self.guard.check(
                 equity,
                 feats.get("rv", 0.0),
@@ -150,13 +142,11 @@ class BacktesterCAL:
                 proposed,
             )
             target = checks["throttle"] * checks["pos_cap"]
-            fill_price = self.exec.fill(
-                feats["mid"], df[spread_col].iloc[i], target, pos
-            )
+            fill_price = self.exec.fill(feats["mid"], df[spread_col].iloc[i], target, pos)
 
-            pnl = (target - pos) * (df["mid"].iloc[i + 1] - fill_price) - abs(
-                target - pos
-            ) * (costs * feats["mid"])
+            pnl = (target - pos) * (df["mid"].iloc[i + 1] - fill_price) - abs(target - pos) * (
+                costs * feats["mid"]
+            )
             pos = target
             eq += pnl
             equity.append(eq)
@@ -186,9 +176,7 @@ class BacktesterCAL:
 
             if i % 500 == 0 and i > 0:
                 self.logger.log_metric("equity", eq, step=i)
-                self.logger.log_metric(
-                    "sharpe_partial", sharpe(np.diff(np.array(equity))), step=i
-                )
+                self.logger.log_metric("sharpe_partial", sharpe(np.diff(np.array(equity))), step=i)
 
             if self.online_update and self.horizon > 0 and i >= self.horizon:
                 idx = i - self.horizon

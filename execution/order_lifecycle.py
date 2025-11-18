@@ -158,9 +158,7 @@ class OrderLifecycleStore:
         """Create the journal table if it does not exist."""
 
         if self._dialect == "postgres" and self._schema is not None:
-            schema_sql = (
-                f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(self._schema)}"
-            )
+            schema_sql = f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(self._schema)}"
             self._dal.execute(schema_sql, ())
 
         create_sql = self._build_create_table_sql()
@@ -214,9 +212,7 @@ class OrderLifecycleStore:
 
     def _build_insert_sql(self) -> str:
         details_placeholder = (
-            f"{self._placeholder}::jsonb"
-            if self._dialect == "postgres"
-            else self._placeholder
+            f"{self._placeholder}::jsonb" if self._dialect == "postgres" else self._placeholder
         )
         values = ", ".join(
             [
@@ -328,12 +324,10 @@ class OrderLifecycleStore:
                 stored = self._row_to_transition(self._coerce_row(existing))
                 if stored.event != event or stored.to_status != to_status:
                     raise ValueError(
-                        "Idempotency violation: correlation_id already recorded with different transition"
+                        "Idempotency violation: correlation_id already recorded with different transition"  # noqa: E501
                     )
                 if stored.from_status != from_status:
-                    raise ValueError(
-                        "Inconsistent transition replay detected for correlation_id"
-                    )
+                    raise ValueError("Inconsistent transition replay detected for correlation_id")
                 return stored
 
             cursor.execute(latest_sql, (order_id,))
@@ -360,9 +354,7 @@ class OrderLifecycleStore:
                 "Idempotency violation: correlation_id already recorded with different transition"
             )
         if stored.from_status != from_status:
-            raise ValueError(
-                "Inconsistent transition replay detected for correlation_id"
-            )
+            raise ValueError("Inconsistent transition replay detected for correlation_id")
         return stored
 
     def get(self, order_id: str, correlation_id: str) -> OrderTransition | None:
@@ -519,7 +511,7 @@ class OrderLifecycle:
             if existing is not None:
                 if existing.event != event:
                     raise ValueError(
-                        "Idempotency violation: correlation_id already recorded with different event"
+                        "Idempotency violation: correlation_id already recorded with different event"  # noqa: E501
                     )
                 return existing
             current = self._store.last_transition(order_id)
@@ -552,9 +544,7 @@ class OrderLifecycle:
 
     # ------------------------------------------------------------------
     # Internal helpers
-    def _resolve_transition(
-        self, from_status: OrderStatus, event: OrderEvent
-    ) -> OrderStatus:
+    def _resolve_transition(self, from_status: OrderStatus, event: OrderEvent) -> OrderStatus:
         try:
             return self._TRANSITIONS[(from_status, event)]
         except KeyError as exc:
@@ -683,9 +673,7 @@ class OMSState:
         with self._lock:
             venue_map = self._orders.get(venue, {})
             return [
-                e.order
-                for e in venue_map.values()
-                if e.status in {"submitted", "ack", "adopted"}
+                e.order for e in venue_map.values() if e.status in {"submitted", "ack", "adopted"}
             ]
 
     def adopt(self, venue: str, orders: Sequence[Any]) -> None:
@@ -727,9 +715,7 @@ class OMSState:
                     # Serialize order object safely
                     try:
                         # Try to use to_dict() method if available
-                        if hasattr(entry.order, "to_dict") and callable(
-                            entry.order.to_dict
-                        ):
+                        if hasattr(entry.order, "to_dict") and callable(entry.order.to_dict):
                             o_payload = entry.order.to_dict()
                         elif hasattr(entry.order, "__dict__"):
                             # Filter out methods and private attributes
@@ -745,14 +731,11 @@ class OMSState:
                             o_payload = {
                                 k: getattr(entry.order, k)
                                 for k in dir(entry.order)
-                                if not k.startswith("_")
-                                and not callable(getattr(entry.order, k))
+                                if not k.startswith("_") and not callable(getattr(entry.order, k))
                             }
                     except Exception:
                         # Fallback to empty dict if serialization fails
-                        o_payload = {
-                            "symbol": str(getattr(entry.order, "symbol", "unknown"))
-                        }
+                        o_payload = {"symbol": str(getattr(entry.order, "symbol", "unknown"))}
 
                     venues[venue][oid] = {
                         "status": entry.status,

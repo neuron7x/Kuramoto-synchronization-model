@@ -47,9 +47,7 @@ class StubConsumer:
     async def stop(self) -> None:
         self._started = False
 
-    async def getmany(
-        self, *, timeout_ms: int, max_records: int
-    ) -> dict[Any, list[StubMessage]]:
+    async def getmany(self, *, timeout_ms: int, max_records: int) -> dict[Any, list[StubMessage]]:
         if not self._started:
             raise RuntimeError("Consumer must be started before polling")
         results: dict[Any, list[StubMessage]] = {}
@@ -71,9 +69,7 @@ class StubConsumer:
     def assignment(self) -> set[TopicPartition]:
         return set(self._buffers.keys())
 
-    async def end_offsets(
-        self, partitions: Iterable[TopicPartition]
-    ) -> dict[TopicPartition, int]:
+    async def end_offsets(self, partitions: Iterable[TopicPartition]) -> dict[TopicPartition, int]:
         end_offsets: dict[TopicPartition, int] = {}
         for tp in partitions:
             messages = self._all_messages.get(tp, [])
@@ -122,9 +118,7 @@ class StubProducer:
     async def begin_transaction(self) -> None:
         self.transactions_started += 1
 
-    async def send_offsets_to_transaction(
-        self, offsets: dict[Any, int], group_id: str
-    ) -> None:
+    async def send_offsets_to_transaction(self, offsets: dict[Any, int], group_id: str) -> None:
         self._pending_offsets = dict(offsets)
 
     async def commit_transaction(self) -> None:
@@ -138,9 +132,7 @@ class StubProducer:
         self._pending_offsets = None
 
 
-def _build_message(
-    tp: TopicPartition, offset: int, *, event_id: str | None = None
-) -> StubMessage:
+def _build_message(tp: TopicPartition, offset: int, *, event_id: str | None = None) -> StubMessage:
     payload = {
         "symbol": "AAPL",
         "venue": "NASDAQ",
@@ -264,13 +256,9 @@ async def test_gap_detection_triggers_seek_and_lag_report() -> None:
     await asyncio.sleep(0.1)
     await service.stop()
 
-    assert (
-        consumer.seek_calls
-    ), "Expected the service to reconcile partition gaps via seek"
+    assert consumer.seek_calls, "Expected the service to reconcile partition gaps via seek"
     gap_offsets = {offset for _, offset in consumer.seek_calls}
     assert 1 in gap_offsets
     assert producer.aborts >= 1
-    assert any(
-        record.reason == "gap" for report in reports for record in report.records
-    )
+    assert any(record.reason == "gap" for report in reports for record in report.records)
     assert sorted(processed) == [100.0, 101.0, 102.0]

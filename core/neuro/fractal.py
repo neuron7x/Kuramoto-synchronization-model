@@ -61,7 +61,9 @@ def rescaled_range(series: ArrayLike, window: int) -> float:
     return float(np.mean(rs))
 
 
-def hurst_exponent(series: ArrayLike, *, min_window: int = 8, max_window: int | None = None) -> float:
+def hurst_exponent(
+    series: ArrayLike, *, min_window: int = 8, max_window: int | None = None
+) -> float:
     """Estimate the Hurst exponent using a log–log regression of R/S statistics."""
 
     data = _validate_series(series)
@@ -145,7 +147,7 @@ def summarise_fractal_properties(series: ArrayLike) -> FractalSummary:
     fractal_dim = fractal_dimension_from_hurst(hurst)
     volatility = float(np.std(data))
     scaling_exponent = hurst
-    stability = float(np.exp(-((hurst - 0.5) / 0.2) ** 2))
+    stability = float(np.exp(-(((hurst - 0.5) / 0.2) ** 2)))
     energy = multiscale_energy(data)
     return FractalSummary(
         hurst=hurst,
@@ -165,4 +167,3 @@ __all__ = [
     "rescaled_range",
     "summarise_fractal_properties",
 ]
-

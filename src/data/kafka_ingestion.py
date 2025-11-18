@@ -41,18 +41,14 @@ class TickDecoder(Protocol):
 class TickBatchHandler(Protocol):
     """Handle decoded ticks in-order."""
 
-    async def __call__(
-        self, ticks: Sequence[PriceTick]
-    ) -> None:  # pragma: no cover - protocol
+    async def __call__(self, ticks: Sequence[PriceTick]) -> None:  # pragma: no cover - protocol
         ...
 
 
 class LagHandler(Protocol):
     """Handle lag reconciliation reports."""
 
-    async def __call__(
-        self, report: "LagReport"
-    ) -> None:  # pragma: no cover - protocol
+    async def __call__(self, report: "LagReport") -> None:  # pragma: no cover - protocol
         ...
 
 
@@ -152,9 +148,7 @@ class HotSymbolCache:
         self._max_ticks = max_ticks
         self._flush_size = flush_size
         self._clock = clock or time.monotonic
-        self._entries: OrderedDict[tuple[str, str, InstrumentType], _HotSymbolEntry] = (
-            OrderedDict()
-        )
+        self._entries: OrderedDict[tuple[str, str, InstrumentType], _HotSymbolEntry] = OrderedDict()
 
     def update(self, tick: PriceTick) -> list[HotSymbolSnapshot]:
         key = (tick.symbol, tick.venue, tick.instrument_type)
@@ -206,9 +200,7 @@ class HotSymbolCache:
                             venue=key[1],
                             instrument_type=key[2],
                             ticks=tuple(entry.ticks),
-                            last_seen=datetime.fromtimestamp(
-                                entry.last_seen, tz=timezone.utc
-                            ),
+                            last_seen=datetime.fromtimestamp(entry.last_seen, tz=timezone.utc),
                         )
                     )
                 entry.ticks = []
@@ -258,9 +250,7 @@ class HotSymbolCache:
                         venue=key[1],
                         instrument_type=key[2],
                         ticks=tuple(entry.ticks),
-                        last_seen=datetime.fromtimestamp(
-                            entry.last_seen, tz=timezone.utc
-                        ),
+                        last_seen=datetime.fromtimestamp(entry.last_seen, tz=timezone.utc),
                     )
                 )
         return drained
@@ -350,9 +340,7 @@ class KafkaIngestionService:
 
     async def stop(self) -> None:
         self._stop_event.set()
-        tasks = [
-            task for task in (self._consume_task, self._lag_task) if task is not None
-        ]
+        tasks = [task for task in (self._consume_task, self._lag_task) if task is not None]
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
@@ -373,9 +361,7 @@ class KafkaIngestionService:
                     timeout_ms=self._config.poll_timeout_ms,
                     max_records=self._config.max_batch_size,
                 )
-            except (
-                asyncio.CancelledError
-            ):  # pragma: no cover - cooperative cancellation
+            except asyncio.CancelledError:  # pragma: no cover - cooperative cancellation
                 raise
             except Exception:  # pragma: no cover - defensive logging
                 logger.exception("Kafka ingestion poll failed")
@@ -387,9 +373,7 @@ class KafkaIngestionService:
             try:
                 await producer.begin_transaction()
             except AttributeError as exc:  # pragma: no cover - misconfigured producer
-                raise RuntimeError(
-                    "Kafka producer does not support transactions"
-                ) from exc
+                raise RuntimeError("Kafka producer does not support transactions") from exc
             processed_offsets: Dict[Any, int] = {}
             ticks: list[PriceTick] = []
             committable_event_ids: list[str] = []
@@ -408,9 +392,7 @@ class KafkaIngestionService:
                     state.pending_event_ids = []
                 for message in messages:
                     headers = _coerce_headers(getattr(message, "headers", []))
-                    event_id = (
-                        headers.get("event_id") or f"{key[0]}:{key[1]}:{message.offset}"
-                    )
+                    event_id = headers.get("event_id") or f"{key[0]}:{key[1]}:{message.offset}"
                     expected = (
                         state.expected_offset
                         if state.expected_offset is not None
@@ -445,17 +427,12 @@ class KafkaIngestionService:
                         state.advance(message.offset)
                         processed_offsets[tp] = message.offset + 1
                         continue
-                    if (
-                        event_id in current_event_ids
-                        or self._idempotency.was_processed(event_id)
-                    ):
+                    if event_id in current_event_ids or self._idempotency.was_processed(event_id):
                         state.advance(message.offset)
                         processed_offsets[tp] = message.offset + 1
                         continue
                     try:
-                        tick = self._decoder(
-                            key=message.key, value=message.value, headers=headers
-                        )
+                        tick = self._decoder(key=message.key, value=message.value, headers=headers)
                     except Exception:
                         logger.exception("Failed to decode tick payload")
                         state.advance(message.offset)
@@ -478,9 +455,7 @@ class KafkaIngestionService:
                 except (
                     Exception
                 ):  # pragma: no cover - handler errors logged but offsets still committed
-                    logger.exception(
-                        "Tick handler failed; offsets will not be committed"
-                    )
+                    logger.exception("Tick handler failed; offsets will not be committed")
                     try:
                         await producer.abort_transaction()
                     except Exception:
@@ -488,9 +463,7 @@ class KafkaIngestionService:
                     await asyncio.sleep(0.5)
                     continue
             try:
-                await producer.send_offsets_to_transaction(
-                    processed_offsets, self._config.group_id
-                )
+                await producer.send_offsets_to_transaction(processed_offsets, self._config.group_id)
                 await producer.commit_transaction()
                 for event_id in committable_event_ids:
                     self._idempotency.mark_processed(event_id)
@@ -525,11 +498,7 @@ class KafkaIngestionService:
         for tp in assignment:
             key = (getattr(tp, "topic"), getattr(tp, "partition"))
             state = self._partition_state.get(key)
-            expected = (
-                state.expected_offset
-                if state and state.expected_offset is not None
-                else 0
-            )
+            expected = state.expected_offset if state and state.expected_offset is not None else 0
             end_offset = end_offsets.get(tp, 0)
             lag = max(0, end_offset - expected)
             if lag >= self._config.lag_detection_threshold:
@@ -595,9 +564,7 @@ class KafkaIngestionService:
         if protocol not in {"SSL", "SASL_SSL"}:
             raise ValueError("Kafka security_protocol must be 'SSL' or 'SASL_SSL'")
         if not self._config.ssl_cafile:
-            raise ValueError(
-                "ssl_cafile must be configured for secure Kafka connections"
-            )
+            raise ValueError("ssl_cafile must be configured for secure Kafka connections")
         cafile_path = self._config.ssl_cafile
         context = ssl.create_default_context(cafile=cafile_path)
         if self._config.ssl_certfile and self._config.ssl_keyfile:
@@ -651,9 +618,7 @@ def _default_tick_decoder(
         raise ValueError("Tick payload must contain symbol and venue")
     instrument_value = payload.get("instrument_type") or headers.get("instrument_type")
     instrument_type = (
-        InstrumentType(str(instrument_value))
-        if instrument_value
-        else InstrumentType.SPOT
+        InstrumentType(str(instrument_value)) if instrument_value else InstrumentType.SPOT
     )
     timestamp = payload.get("timestamp") or headers.get("occurred_at")
     if timestamp is None:

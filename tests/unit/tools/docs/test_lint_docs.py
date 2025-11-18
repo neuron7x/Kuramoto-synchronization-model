@@ -76,7 +76,9 @@ def test_forbidden_phrase_detection(tmp_path: Path) -> None:
 
 
 def test_forbidden_phrase_ignored_in_code(tmp_path: Path) -> None:
-    document = """# Title\n\n`reports/todo.md` should not alert.\n\n```python\n# TODO: sample\n```\n"""
+    document = (
+        """# Title\n\n`reports/todo.md` should not alert.\n\n```python\n# TODO: sample\n```\n"""
+    )
     path = _write(tmp_path, "code.md", document)
 
     issues = list(ForbiddenPhraseRule().check(path, document.splitlines()))

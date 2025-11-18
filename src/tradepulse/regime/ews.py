@@ -34,12 +34,8 @@ class EWSConfig:
         ricci_kill_threshold: float = -0.3,
     ):
         # Load from environment or use defaults
-        self.dr_threshold = dr_threshold or float(
-            os.getenv("TP_EWS_DR_THRESHOLD", "0.1")
-        )
-        self.topo_threshold = topo_threshold or float(
-            os.getenv("TP_EWS_TOPO_THRESHOLD", "0.15")
-        )
+        self.dr_threshold = dr_threshold or float(os.getenv("TP_EWS_DR_THRESHOLD", "0.1"))
+        self.topo_threshold = topo_threshold or float(os.getenv("TP_EWS_TOPO_THRESHOLD", "0.15"))
         self.ricci_kill_threshold = ricci_kill_threshold
 
 
@@ -171,9 +167,7 @@ class EWSAggregator:
 
         # Otherwise, CAUTION (default state)
         # Compute confidence based on distance from boundaries
-        caution_confidence = self._compute_caution_confidence(
-            R, dR, kappa_min, topo_score, te_pass
-        )
+        caution_confidence = self._compute_caution_confidence(R, dR, kappa_min, topo_score, te_pass)
 
         return "CAUTION", caution_confidence
 

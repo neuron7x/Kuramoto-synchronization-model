@@ -180,7 +180,9 @@ class PaperTradingEngine:
             )
         )
 
-        filled = self._connector.apply_fill(placed.order_id or "", executed_quantity, execution_price)
+        filled = self._connector.apply_fill(
+            placed.order_id or "", executed_quantity, execution_price
+        )
         telemetry.append(
             self._record_event(
                 "order.fill",
@@ -211,12 +213,10 @@ class PaperTradingEngine:
         issues: list[str] = []
         if final_order.status is not OrderStatus.FILLED:
             issues.append(
-                f"Order {final_order.order_id or '<unknown>'} ended in status {final_order.status.value}"
+                f"Order {final_order.order_id or '<unknown>'} ended in status {final_order.status.value}"  # noqa: E501
             )
         if abs(final_order.filled_quantity - executed_quantity) > 1e-9:
-            issues.append(
-                "Filled quantity does not match executed_quantity"
-            )
+            issues.append("Filled quantity does not match executed_quantity")
 
         fill_event = FillEvent(
             quantity=executed_quantity,
@@ -237,4 +237,3 @@ class PaperTradingEngine:
             ),
             stability_issues=tuple(issues),
         )
-

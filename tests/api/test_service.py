@@ -8,6 +8,7 @@ from typing import Callable, Sequence
 import httpx
 import jwt
 import pytest
+
 pytest.importorskip("strawberry")
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -18,9 +19,7 @@ from jwt.algorithms import RSAAlgorithm
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
 os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://issuer.tradepulse.test")
 os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
-os.environ.setdefault(
-    "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
-)
+os.environ.setdefault("TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks")
 os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "test-rbac-secret")
 
 from application.api import security as security_module
@@ -483,9 +482,7 @@ def test_websocket_stream_broadcasts_updates(
         assert initial["signals"] == []
 
         feature_payload = _build_payload()
-        feature_response = client.post(
-            _api_v1("/features"), json=feature_payload, headers=headers
-        )
+        feature_response = client.post(_api_v1("/features"), json=feature_payload, headers=headers)
         assert feature_response.status_code == 200
         feature_event = websocket.receive_json()
         assert feature_event["type"] == "feature"
@@ -559,9 +556,7 @@ def test_feature_endpoint_supports_pagination_and_filters(
     token = security_context(subject="feature-user")
     headers = _auth_headers(token)
 
-    first_page = client.post(
-        "/features?limit=3&featurePrefix=macd", json=payload, headers=headers
-    )
+    first_page = client.post("/features?limit=3&featurePrefix=macd", json=payload, headers=headers)
     assert first_page.status_code == 200
     first_body = first_page.json()
     assert first_body["pagination"]["limit"] == 3
@@ -592,9 +587,7 @@ def test_feature_filter_returns_404_for_unknown_prefix(
     token = security_context(subject="feature-user")
     headers = _auth_headers(token)
 
-    response = client.post(
-        "/features?featurePrefix=does-not-exist", json=payload, headers=headers
-    )
+    response = client.post("/features?featurePrefix=does-not-exist", json=payload, headers=headers)
     assert response.status_code == 404
     error = response.json()["error"]
     assert error["code"] == "ERR_FEATURES_FILTER_MISMATCH"
@@ -613,9 +606,7 @@ def test_prediction_endpoint_filters_by_action_and_confidence(
     baseline_body = baseline.json()
     assert baseline_body["pagination"]["limit"] == 5
     sample_action = baseline_body["items"][0]["signal"]["action"]
-    confidence_threshold = max(
-        0.0, baseline_body["items"][0]["signal"]["confidence"] - 0.05
-    )
+    confidence_threshold = max(0.0, baseline_body["items"][0]["signal"]["confidence"] - 0.05)
 
     filtered = client.post(
         f"/predictions?limit=5&action={sample_action}&minConfidence={confidence_threshold}",
@@ -625,9 +616,7 @@ def test_prediction_endpoint_filters_by_action_and_confidence(
     assert filtered.status_code == 200
     filtered_body = filtered.json()
     assert filtered_body["filters"]["actions"] == [sample_action]
-    assert filtered_body["filters"]["min_confidence"] == pytest.approx(
-        confidence_threshold
-    )
+    assert filtered_body["filters"]["min_confidence"] == pytest.approx(confidence_threshold)
     for item in filtered_body["items"]:
         assert item["signal"]["action"] == sample_action
         assert item["signal"]["confidence"] >= confidence_threshold
@@ -655,9 +644,7 @@ def test_prediction_endpoint_rejects_invalid_confidence_filter(
     token = security_context(subject="prediction-user")
     headers = _auth_headers(token)
 
-    response = client.post(
-        "/predictions?minConfidence=2.5", json=payload, headers=headers
-    )
+    response = client.post("/predictions?minConfidence=2.5", json=payload, headers=headers)
     assert response.status_code == 422
     error = response.json()["error"]
     assert error["code"] == "ERR_INVALID_CONFIDENCE"
@@ -733,9 +720,7 @@ def test_admin_endpoints_require_two_factor(
     payload = {"reason": "manual intervention"}
 
     missing_headers = _auth_headers(token, client_cert=True)
-    response = client.post(
-        "/admin/kill-switch", headers=missing_headers, json=payload
-    )
+    response = client.post("/admin/kill-switch", headers=missing_headers, json=payload)
     assert response.status_code == 401
     body = response.json()
     assert body["error"]["code"] == "ERR_AUTH_REQUIRED"
@@ -744,12 +729,8 @@ def test_admin_endpoints_require_two_factor(
     valid_code = generate_totp_code(TWO_FACTOR_SECRET)
     replacement_digit = "0" if valid_code[0] != "0" else "1"
     invalid_code = replacement_digit + valid_code[1:]
-    invalid_headers = _auth_headers(
-        token, client_cert=True, two_factor_code=invalid_code
-    )
-    response = client.post(
-        "/admin/kill-switch", headers=invalid_headers, json=payload
-    )
+    invalid_headers = _auth_headers(token, client_cert=True, two_factor_code=invalid_code)
+    response = client.post("/admin/kill-switch", headers=invalid_headers, json=payload)
     assert response.status_code == 401
     body = response.json()
     assert body["error"]["code"] == "ERR_AUTH_REQUIRED"
@@ -773,9 +754,7 @@ def test_admin_endpoint_rejects_wrong_audience(
 def test_client_rate_limit_is_enforced(security_context: Callable[..., str]) -> None:
     rate_settings = ApiRateLimitSettings(
         default_policy=RateLimitPolicy(max_requests=5, window_seconds=60),
-        client_policies={
-            "feature-user": RateLimitPolicy(max_requests=1, window_seconds=60)
-        },
+        client_policies={"feature-user": RateLimitPolicy(max_requests=1, window_seconds=60)},
     )
     limiter = SlidingWindowRateLimiter(InMemorySlidingWindowBackend(), rate_settings)
     app = create_app(
@@ -790,15 +769,11 @@ def test_client_rate_limit_is_enforced(security_context: Callable[..., str]) -> 
     response_ok = client.post("/features", json=payload, headers=_auth_headers(token))
     assert response_ok.status_code == 200
 
-    response_limited = client.post(
-        "/features", json=payload, headers=_auth_headers(token)
-    )
+    response_limited = client.post("/features", json=payload, headers=_auth_headers(token))
     assert response_limited.status_code == 429
 
     other_token = security_context(subject="different-user")
-    recovery = client.post(
-        "/features", json=payload, headers=_auth_headers(other_token)
-    )
+    recovery = client.post("/features", json=payload, headers=_auth_headers(other_token))
     assert recovery.status_code == 200
 
 
@@ -831,9 +806,7 @@ def test_health_probe_emits_metrics_when_collector_present(
     assert duration >= 0
 
     assert collector.status_flags.get("api.overall") is True
-    component_keys = {
-        name for name in collector.status_flags if name.startswith("component.")
-    }
+    component_keys = {name for name in collector.status_flags if name.startswith("component.")}
     assert component_keys, "Component health metrics should be recorded"
 
 
@@ -871,9 +844,7 @@ def test_health_probe_reflects_kill_switch(configured_app: FastAPI) -> None:
 
 def test_health_probe_flags_dependency_failure() -> None:
     probes = {
-        "postgres": lambda: DependencyProbeResult(
-            healthy=False, detail="connection refused"
-        ),
+        "postgres": lambda: DependencyProbeResult(healthy=False, detail="connection refused"),
     }
     app = create_app(
         settings=AdminApiSettings(audit_secret="unit-audit-secret"),
@@ -900,9 +871,7 @@ def test_trusted_host_middleware_blocks_unlisted_hosts(
         oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
         trusted_hosts=["api.tradepulse.test"],
     )
-    monkeypatch.setattr(
-        security_module, "_default_settings_loader", lambda: restricted_settings
-    )
+    monkeypatch.setattr(security_module, "_default_settings_loader", lambda: restricted_settings)
     if hasattr(security_module.get_api_security_settings, "_instance"):
         delattr(security_module.get_api_security_settings, "_instance")
 
@@ -930,9 +899,7 @@ def test_payload_guard_rejects_large_and_suspicious_bodies(
         trusted_hosts=["testserver"],
         max_request_bytes=512,
     )
-    monkeypatch.setattr(
-        security_module, "_default_settings_loader", lambda: tuned_settings
-    )
+    monkeypatch.setattr(security_module, "_default_settings_loader", lambda: tuned_settings)
     if hasattr(security_module.get_api_security_settings, "_instance"):
         delattr(security_module.get_api_security_settings, "_instance")
 
@@ -978,9 +945,7 @@ async def test_shutdown_hook_marks_app_unhealthy_and_closes_streams() -> None:
     shutdown_executed = False
     transport = httpx.ASGITransport(app=app)
 
-    async with httpx.AsyncClient(
-        transport=transport, base_url="http://testserver"
-    ) as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         ready_response = await client.get("/health")
         assert ready_response.status_code == 200
 

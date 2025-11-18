@@ -95,16 +95,12 @@ def main() -> None:
     y_true = test_df[y_col].iloc[: len(res)].values if len(res) > 0 else np.array([])
     L_hat = res["L"].values if len(res) > 0 else np.array([])
     U_hat = res["U"].values if len(res) > 0 else np.array([])
-    coverage = (
-        float(np.mean((y_true >= L_hat) & (y_true <= U_hat))) if len(res) > 0 else 0.0
-    )
+    coverage = float(np.mean((y_true >= L_hat) & (y_true <= U_hat))) if len(res) > 0 else 0.0
     coverage_info = {
         "empirical_coverage": coverage,
         "target_alpha0": cfg["conformal"]["alpha"],
     }
-    assert (
-        coverage >= 1.0 - cfg["conformal"]["alpha"] - 0.03
-    ), "Coverage below expected tolerance"
+    assert coverage >= 1.0 - cfg["conformal"]["alpha"] - 0.03, "Coverage below expected tolerance"
 
     exec_sim = Execution(
         cfg["execution"]["fee_bps"],

@@ -135,7 +135,11 @@ class Requirement:
         return f"{self.identifier}: {self.description[:120]}"
 
     def jira_description(self) -> str:
-        lines = [self.description, "", f"Джерело: {self.source_section}:{self.source_line} (стор. {self.page})"]
+        lines = [
+            self.description,
+            "",
+            f"Джерело: {self.source_section}:{self.source_line} (стор. {self.page})",
+        ]
         if self.acceptance_criteria:
             lines.append("Критерії приймання:")
             for criterion in self.acceptance_criteria:
@@ -167,7 +171,9 @@ class RequirementExtractor:
     def run(self) -> ExtractionResult:
         if not self.markdown_path.exists():
             LOGGER.warning("Markdown specification not found: %s", self.markdown_path)
-            return ExtractionResult([], {}, [f"Відсутній файл {self.markdown_path.name}"], self.markdown_path)
+            return ExtractionResult(
+                [], {}, [f"Відсутній файл {self.markdown_path.name}"], self.markdown_path
+            )
 
         text = self.markdown_path.read_text(encoding="utf-8")
         lines = text.splitlines()

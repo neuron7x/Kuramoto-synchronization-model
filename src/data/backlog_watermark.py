@@ -118,9 +118,7 @@ class WatermarkBacklog:
         self._latest_event_time: Dict[str, datetime] = {}
         self._progress: Dict[str, datetime] = {}
         self._last_index: Dict[str, int] = {}
-        self._progress_history: Deque[WatermarkProgress] = deque(
-            maxlen=max_progress_markers
-        )
+        self._progress_history: Deque[WatermarkProgress] = deque(maxlen=max_progress_markers)
         self._delay_samples: Dict[str, Deque[DelaySample]] = defaultdict(
             lambda: deque(maxlen=max_delay_samples)
         )
@@ -311,4 +309,3 @@ __all__ = [
     "WatermarkBacklog",
     "WatermarkProgress",
 ]
-

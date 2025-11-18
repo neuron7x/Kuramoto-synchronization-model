@@ -126,7 +126,9 @@ def test_okx_snapshot_and_updates_indexed_by_time() -> None:
         requests.append((instrument, reason))
 
     service = OrderBookIngestService(
-        config=IngestConfig(snapshot_interval=timedelta(seconds=1), snapshot_depth=2, max_snapshots=8),
+        config=IngestConfig(
+            snapshot_interval=timedelta(seconds=1), snapshot_depth=2, max_snapshots=8
+        ),
         metrics=metrics,
         snapshot_requester=capture_request,
     )

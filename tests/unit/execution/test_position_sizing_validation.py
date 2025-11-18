@@ -80,9 +80,7 @@ class TestPositionSizingValidation:
         """Risk > 1.0 should be clamped to 1.0 for safety."""
         size_high = calculate_position_size(balance=1000.0, risk=2.0, price=100.0)
         size_normal = calculate_position_size(balance=1000.0, risk=1.0, price=100.0)
-        assert (
-            abs(size_high - size_normal) < 1e-9
-        ), "Risk > 1.0 should be clamped to 1.0"
+        assert abs(size_high - size_normal) < 1e-9, "Risk > 1.0 should be clamped to 1.0"
 
 
 class TestPositionSizingBehavior:
@@ -135,10 +133,10 @@ class TestPositionSizingBehavior:
         size = calculate_position_size(balance=balance, risk=risk, price=price)
         assert size >= 0.0, "Size should be non-negative"
         assert not math.isinf(size), "Size should not be infinite"
-        
+
         cost = size * price
         risk_budget = balance * risk
-        
+
         if expected_within_budget:
             assert cost <= risk_budget * 1.01, f"Cost {cost} exceeds budget {risk_budget}"
 
@@ -170,12 +168,8 @@ class TestPositionSizingWrapper:
 
     def test_wrapper_accepts_leverage_parameter(self) -> None:
         """Wrapper should accept and forward max_leverage parameter."""
-        size1 = position_sizing(
-            balance=1000.0, risk=1.0, price=50.0, max_leverage=2.0
-        )
-        size2 = position_sizing(
-            balance=1000.0, risk=1.0, price=50.0, max_leverage=5.0
-        )
+        size1 = position_sizing(balance=1000.0, risk=1.0, price=50.0, max_leverage=2.0)
+        size2 = position_sizing(balance=1000.0, risk=1.0, price=50.0, max_leverage=5.0)
         # With higher leverage, size should be larger (or equal due to risk budget)
         assert size2 >= size1, "Higher leverage should allow larger positions"
 
@@ -215,35 +209,25 @@ class TestPositionSizingEdgeCases:
 
     def test_extremely_high_leverage(self) -> None:
         """Test with unreasonably high leverage values."""
-        size = calculate_position_size(
-            balance=1000.0, risk=0.1, price=100.0, max_leverage=100.0
-        )
+        size = calculate_position_size(balance=1000.0, risk=0.1, price=100.0, max_leverage=100.0)
         # Risk budget is 100, so max size is 1.0
         assert size >= 0.0 and size <= 1.0 * 1.01, "Size should be bounded by risk budget"
 
     def test_leverage_exactly_one(self) -> None:
         """Test with leverage = 1.0 (no leverage)."""
-        size = calculate_position_size(
-            balance=1000.0, risk=0.5, price=100.0, max_leverage=1.0
-        )
+        size = calculate_position_size(balance=1000.0, risk=0.5, price=100.0, max_leverage=1.0)
         # With max_leverage=1, position is capped by balance/price
         max_size = 1000.0 / 100.0  # = 10
-        assert (
-            size <= max_size * 1.01
-        ), "Position should be capped by leverage constraint"
+        assert size <= max_size * 1.01, "Position should be capped by leverage constraint"
 
     def test_risk_exactly_one(self) -> None:
         """Test with risk = 1.0 (use entire balance)."""
         balance = 1000.0
         price = 100.0
-        size = calculate_position_size(
-            balance=balance, risk=1.0, price=price, max_leverage=5.0
-        )
+        size = calculate_position_size(balance=balance, risk=1.0, price=price, max_leverage=5.0)
         # With risk=1.0, can use entire balance
         max_size_by_balance = balance / price  # = 10
-        assert (
-            size <= max_size_by_balance * 1.01
-        ), "Size should not exceed what balance allows"
+        assert size <= max_size_by_balance * 1.01, "Size should not exceed what balance allows"
 
     def test_matching_risk_and_leverage(self) -> None:
         """Test when risk budget and leverage limit are equal."""

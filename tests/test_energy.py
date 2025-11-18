@@ -188,8 +188,7 @@ def test_gradient_descent_step_preserves_best_local_improvement():
     )
 
     best_single_edge_energy = min(
-        energy({**bonds_before, ("node_a", "node_b"): candidate})
-        for candidate in bond_types
+        energy({**bonds_before, ("node_a", "node_b"): candidate}) for candidate in bond_types
     )
 
     changed = thermo_module.gradient_descent_step(graph, snapshot)
@@ -246,7 +245,9 @@ def test_circuit_breaker_blocks_unbounded_spike(caplog):
     def choose_stub(self, state):  # type: ignore[unused-argument]
         return RecoveryAction.SLOW
 
-    controller.recovery_agent.choose_action = types.MethodType(choose_stub, controller.recovery_agent)
+    controller.recovery_agent.choose_action = types.MethodType(
+        choose_stub, controller.recovery_agent
+    )
 
     def update_stub(self, state, action, reward, next_state):  # type: ignore[unused-argument]
         call_counts["update"] += 1

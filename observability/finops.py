@@ -66,9 +66,7 @@ class ResourceUsageSample:
             raise ValueError("cost must be a finite, non-negative number")
         for key, value in self.usage.items():
             if value < 0.0 or not math.isfinite(value):
-                raise ValueError(
-                    f"usage metric '{key}' must be a finite, non-negative number"
-                )
+                raise ValueError(f"usage metric '{key}' must be a finite, non-negative number")
 
 
 @dataclass(slots=True, frozen=True)
@@ -223,7 +221,7 @@ class NotificationAlertSink:
         subject = f"[FinOps] Budget {budget.name} {status}"
         message = (
             f"Budget '{budget.name}' is at {utilisation_pct}% of its limit"
-            f" ({budget.currency} {alert.total_cost:.2f} spent of {budget.currency} {budget.limit:.2f})."
+            f" ({budget.currency} {alert.total_cost:.2f} spent of {budget.currency} {budget.limit:.2f})."  # noqa: E501
         )
         if alert.breached:
             message += " Limit exceeded; immediate action required."
@@ -253,13 +251,9 @@ class FinOpsController:
     ) -> None:
         self._alert_sink = alert_sink
         self._clock = clock or (lambda: datetime.now(timezone.utc))
-        self._usage_by_resource: MutableMapping[str, list[ResourceUsageSample]] = (
-            defaultdict(list)
-        )
+        self._usage_by_resource: MutableMapping[str, list[ResourceUsageSample]] = defaultdict(list)
         self._budgets: MutableMapping[str, Budget] = {}
-        self._budget_ledgers: MutableMapping[
-            str, list[tuple[datetime, float]]
-        ] = defaultdict(list)
+        self._budget_ledgers: MutableMapping[str, list[tuple[datetime, float]]] = defaultdict(list)
         self._budget_thresholds: MutableMapping[str, float] = defaultdict(float)
 
     # ------------------------------------------------------------------
@@ -325,9 +319,7 @@ class FinOpsController:
         max_sample_cost = 0.0
 
         for resource_id, samples in self._usage_by_resource.items():
-            relevant_samples = self._slice_samples(
-                samples, window_start, as_of, metadata_filter
-            )
+            relevant_samples = self._slice_samples(samples, window_start, as_of, metadata_filter)
             resource_sum = 0.0
             for sample in relevant_samples:
                 resource_sum += sample.cost
@@ -393,7 +385,7 @@ class FinOpsController:
                         OptimizationRecommendation(
                             resource_id=resource_id,
                             message=(
-                                "Resource exhibits sustained low utilisation; consider rightsizing or scheduling shutdowns."
+                                "Resource exhibits sustained low utilisation; consider rightsizing or scheduling shutdowns."  # noqa: E501
                             ),
                             severity="medium",
                             metadata={
@@ -412,7 +404,7 @@ class FinOpsController:
                     recommendations.append(
                         OptimizationRecommendation(
                             resource_id=resource_id,
-                            message="Latest cost sample spikes above historical trend; investigate anomalies or misconfigurations.",
+                            message="Latest cost sample spikes above historical trend; investigate anomalies or misconfigurations.",  # noqa: E501
                             severity="high",
                             metadata={
                                 "latest_cost": round(latest, 2),
@@ -477,7 +469,7 @@ class FinOpsController:
                         OptimizationRecommendation(
                             resource_id=profile.resource_id,
                             message=(
-                                "Duplicate workload detected across resources; consolidate deployments to eliminate redundant spend."
+                                "Duplicate workload detected across resources; consolidate deployments to eliminate redundant spend."  # noqa: E501
                             ),
                             severity="medium",
                             metadata={
@@ -497,9 +489,7 @@ class FinOpsController:
         additional_recommendations.extend(cloud_highlights)
 
         budget_statuses = self._collect_budget_statuses(as_of, metadata_filter)
-        additional_recommendations.extend(
-            self._derive_budget_recommendations(budget_statuses)
-        )
+        additional_recommendations.extend(self._derive_budget_recommendations(budget_statuses))
 
         review_schedule = self._build_weekly_review_schedule(as_of)
         if review_schedule:
@@ -507,7 +497,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id="finops-governance",
                     message=(
-                        "Institute weekly savings reviews to track realised optimisations and recalibrate forecasts."
+                        "Institute weekly savings reviews to track realised optimisations and recalibrate forecasts."  # noqa: E501
                     ),
                     severity="low",
                     metadata={"next_review": review_schedule[0].isoformat()},
@@ -528,9 +518,7 @@ class FinOpsController:
             window_start=window_start,
             window_end=as_of,
             cloud_costs={key: round(value, 2) for key, value in cloud_costs_map.items()},
-            instance_costs={
-                key: round(value, 2) for key, value in instance_costs_map.items()
-            },
+            instance_costs={key: round(value, 2) for key, value in instance_costs_map.items()},
             resource_profiles=resource_profiles_sorted,
             recommendations=tuple(combined_recommendations),
             budget_statuses=budget_statuses,
@@ -540,9 +528,7 @@ class FinOpsController:
     # ------------------------------------------------------------------
     # Budget status queries
     # ------------------------------------------------------------------
-    def get_budget_status(
-        self, name: str, *, as_of: datetime | None = None
-    ) -> BudgetStatus:
+    def get_budget_status(self, name: str, *, as_of: datetime | None = None) -> BudgetStatus:
         """Return the current status of a budget."""
 
         if name not in self._budgets:
@@ -563,9 +549,7 @@ class FinOpsController:
             breached=total_cost >= budget.limit,
         )
 
-    def iter_budget_statuses(
-        self, *, as_of: datetime | None = None
-    ) -> Sequence[BudgetStatus]:
+    def iter_budget_statuses(self, *, as_of: datetime | None = None) -> Sequence[BudgetStatus]:
         """Return statuses for all budgets."""
 
         as_of = as_of or self._clock()
@@ -595,9 +579,7 @@ class FinOpsController:
                 if 0.0 <= value <= 1.0 and math.isfinite(value):
                     utilisation_values.append(value)
 
-        average_utilisation = (
-            statistics.fmean(utilisation_values) if utilisation_values else None
-        )
+        average_utilisation = statistics.fmean(utilisation_values) if utilisation_values else None
 
         metadata_snapshot: dict[str, str] = {}
         for sample in samples:
@@ -659,7 +641,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Large utilisation swings observed; deploy autoscaling policies to match demand curves."
+                        "Large utilisation swings observed; deploy autoscaling policies to match demand curves."  # noqa: E501
                     ),
                     severity=severity,
                     metadata={
@@ -681,7 +663,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Spend pattern is steady; evaluate reserved instances or savings plans to lock in lower rates."
+                        "Spend pattern is steady; evaluate reserved instances or savings plans to lock in lower rates."  # noqa: E501
                     ),
                     severity="high",
                     metadata={
@@ -696,7 +678,9 @@ class FinOpsController:
         spot_eligible = self._is_truthy_metadata(
             metadata, ("spot_eligible", "use_spot", "preemptible", "fault_tolerant")
         )
-        workload_type = (metadata.get("workload_type") or metadata.get("service_type") or "").lower()
+        workload_type = (
+            metadata.get("workload_type") or metadata.get("service_type") or ""
+        ).lower()
         if (
             purchase not in {"spot", "preemptible"}
             and profile.total_cost >= 20.0
@@ -706,7 +690,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Workload tolerates interruption; migrate a portion to spot/preemptible capacity for cost relief."
+                        "Workload tolerates interruption; migrate a portion to spot/preemptible capacity for cost relief."  # noqa: E501
                     ),
                     severity="medium",
                     metadata={
@@ -735,7 +719,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "GPU capacity is underutilised; introduce time-slicing or shared job queues to increase occupancy."
+                        "GPU capacity is underutilised; introduce time-slicing or shared job queues to increase occupancy."  # noqa: E501
                     ),
                     severity="medium",
                     metadata={
@@ -761,7 +745,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Model footprint is heavy relative to throughput; pursue weight compression, quantisation, or distillation."
+                        "Model footprint is heavy relative to throughput; pursue weight compression, quantisation, or distillation."  # noqa: E501
                     ),
                     severity="medium",
                     metadata={
@@ -774,12 +758,16 @@ class FinOpsController:
             )
 
         # Idle shutdown recommendation
-        if average_utilisation is not None and average_utilisation < 0.05 and profile.total_cost > 0.0:
+        if (
+            average_utilisation is not None
+            and average_utilisation < 0.05
+            and profile.total_cost > 0.0
+        ):
             recommendations.append(
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Resource spends most of the window idle; enforce shutdown or scale-to-zero policies."
+                        "Resource spends most of the window idle; enforce shutdown or scale-to-zero policies."  # noqa: E501
                     ),
                     severity="high",
                     metadata={
@@ -817,7 +805,7 @@ class FinOpsController:
             OptimizationRecommendation(
                 resource_id=f"cloud:{top_cloud}",
                 message=(
-                    "Cloud spend profile updated; validate placement and leverage provider-native cost optimisation programmes."
+                    "Cloud spend profile updated; validate placement and leverage provider-native cost optimisation programmes."  # noqa: E501
                 ),
                 severity="medium",
                 metadata={"cloud": top_cloud, "total_cost": round(top_cost, 2)},
@@ -830,7 +818,7 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id="cloud:long_tail",
                     message=(
-                        "Fragmented tail spend detected across secondary clouds; review consolidation or shared services."
+                        "Fragmented tail spend detected across secondary clouds; review consolidation or shared services."  # noqa: E501
                     ),
                     severity="low",
                     metadata={"tail_cost": round(tail_cost, 2)},
@@ -844,7 +832,9 @@ class FinOpsController:
     ) -> tuple[BudgetStatus, ...]:
         statuses = []
         for status in self.iter_budget_statuses(as_of=as_of):
-            if metadata_filter and not self._scope_matches_filter(status.budget.scope, metadata_filter):
+            if metadata_filter and not self._scope_matches_filter(
+                status.budget.scope, metadata_filter
+            ):
                 continue
             statuses.append(status)
         return tuple(sorted(statuses, key=lambda status: status.budget.name))
@@ -866,7 +856,7 @@ class FinOpsController:
                     OptimizationRecommendation(
                         resource_id=status.budget.name,
                         message=(
-                            "Budget utilisation nearing limit; enforce guardrails, reprioritise workloads, or rebalance reservations."
+                            "Budget utilisation nearing limit; enforce guardrails, reprioritise workloads, or rebalance reservations."  # noqa: E501
                         ),
                         severity=severity,
                         metadata=metadata,
@@ -878,7 +868,7 @@ class FinOpsController:
                     OptimizationRecommendation(
                         resource_id=status.budget.name,
                         message=(
-                            "Budget usage within thresholds; keep monitoring with automated guardrails enabled."
+                            "Budget usage within thresholds; keep monitoring with automated guardrails enabled."  # noqa: E501
                         ),
                         severity="low",
                         metadata=metadata,
@@ -891,7 +881,7 @@ class FinOpsController:
                     OptimizationRecommendation(
                         resource_id=status.budget.name,
                         message=(
-                            "Budget breached; trigger overspend playbook and notify accountable owners immediately."
+                            "Budget breached; trigger overspend playbook and notify accountable owners immediately."  # noqa: E501
                         ),
                         severity="critical",
                         metadata=metadata,
@@ -957,9 +947,7 @@ class FinOpsController:
             return None
 
     @staticmethod
-    def _is_truthy_metadata(
-        metadata: Mapping[str, str], keys: Sequence[str]
-    ) -> bool:
+    def _is_truthy_metadata(metadata: Mapping[str, str], keys: Sequence[str]) -> bool:
         truthy_values = {"1", "true", "yes", "y", "on", "enabled"}
         for key in keys:
             value = metadata.get(key)
@@ -1089,4 +1077,3 @@ class FinOpsController:
                 continue
             result.append(sample)
         return result
-

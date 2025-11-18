@@ -74,7 +74,9 @@ async def test_kafka_message_broker_falls_back_to_send() -> None:
         def __init__(self) -> None:
             self.calls: list[tuple[str, bytes, tuple[tuple[str, bytes], ...]]] = []
 
-        async def send(self, topic: str, payload: bytes, *, headers: tuple[tuple[str, bytes], ...]) -> None:
+        async def send(
+            self, topic: str, payload: bytes, *, headers: tuple[tuple[str, bytes], ...]
+        ) -> None:
             self.calls.append((topic, payload, headers))
 
     producer = _Producer()
@@ -137,8 +139,12 @@ class _FakeExchangeType:
 
 
 @pytest.mark.asyncio
-async def test_rabbitmq_message_broker_declares_and_publishes(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = SimpleNamespace(Message=_FakeMessage, ExchangeType=SimpleNamespace(TOPIC=_FakeExchangeType.TOPIC))
+async def test_rabbitmq_message_broker_declares_and_publishes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = SimpleNamespace(
+        Message=_FakeMessage, ExchangeType=SimpleNamespace(TOPIC=_FakeExchangeType.TOPIC)
+    )
     monkeypatch.setattr("src.data.event_bus._import_aio_pika", lambda: module)
 
     connection = _FakeConnection()
@@ -174,7 +180,9 @@ async def test_rabbitmq_message_broker_declares_and_publishes(monkeypatch: pytes
 
 @pytest.mark.asyncio
 async def test_rabbitmq_message_broker_passive_declaration(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = SimpleNamespace(Message=_FakeMessage, ExchangeType=SimpleNamespace(TOPIC=_FakeExchangeType.TOPIC))
+    module = SimpleNamespace(
+        Message=_FakeMessage, ExchangeType=SimpleNamespace(TOPIC=_FakeExchangeType.TOPIC)
+    )
     monkeypatch.setattr("src.data.event_bus._import_aio_pika", lambda: module)
 
     connection = _FakeConnection()
@@ -196,7 +204,9 @@ async def test_rabbitmq_message_broker_passive_declaration(monkeypatch: pytest.M
 
 @pytest.mark.asyncio
 async def test_rabbitmq_message_broker_requires_start(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = SimpleNamespace(Message=_FakeMessage, ExchangeType=SimpleNamespace(TOPIC=_FakeExchangeType.TOPIC))
+    module = SimpleNamespace(
+        Message=_FakeMessage, ExchangeType=SimpleNamespace(TOPIC=_FakeExchangeType.TOPIC)
+    )
     monkeypatch.setattr("src.data.event_bus._import_aio_pika", lambda: module)
 
     broker = RabbitMQMessageBroker(

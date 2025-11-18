@@ -118,9 +118,7 @@ class NaKControllerV4_2:
         dd_soft = self.cfg.dd_soft_base * regime_mult
         vol_ref = self.cfg.vol_ref_base * regime_mult
         danger = (
-            (-drawdown / max(1e-6, dd_soft))
-            + 0.5 * math.log1p(v / max(1e-6, vol_ref))
-            + hpa_tone
+            (-drawdown / max(1e-6, dd_soft)) + 0.5 * math.log1p(v / max(1e-6, vol_ref)) + hpa_tone
         )
         gate = 1.0 / (1.0 + math.exp(danger - 1.2))
         gate = max(self.cfg.min_gate, min(1.0, gate))

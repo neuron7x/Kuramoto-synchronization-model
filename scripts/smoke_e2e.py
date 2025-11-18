@@ -15,9 +15,7 @@ from core.pipelines import SmokeE2EConfig, SmokeE2EPipeline  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Run the TradePulse smoke E2E pipeline."
-    )
+    parser = argparse.ArgumentParser(description="Run the TradePulse smoke E2E pipeline.")
     parser.add_argument(
         "--csv",
         type=Path,

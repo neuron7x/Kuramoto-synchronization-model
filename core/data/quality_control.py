@@ -40,9 +40,7 @@ class RangeCheck(BaseModel):
 
     model_config = ConfigDict(frozen=True, strict=True)
 
-    column: StrictStr = Field(
-        ..., min_length=1, description="Column subject to the range guard"
-    )
+    column: StrictStr = Field(..., min_length=1, description="Column subject to the range guard")
     min_value: StrictFloat | StrictInt | None = Field(
         default=None,
         description="Lower bound allowed for the column. ``None`` disables the guard.",
@@ -61,9 +59,7 @@ class RangeCheck(BaseModel):
     @model_validator(mode="after")
     def _ensure_bounds(self) -> "RangeCheck":
         if self.min_value is None and self.max_value is None:
-            raise QualityGateError(
-                "RangeCheck must define at least a minimum or maximum bound"
-            )
+            raise QualityGateError("RangeCheck must define at least a minimum or maximum bound")
         if (
             self.min_value is not None
             and self.max_value is not None
@@ -103,9 +99,7 @@ class TemporalContract(BaseModel):
         description="Maximum allowed delay between now and the last timestamp",
     )
 
-    @field_validator(
-        "earliest", "latest", "expected_start", "expected_end", mode="before"
-    )
+    @field_validator("earliest", "latest", "expected_start", "expected_end", mode="before")
     @classmethod
     def _coerce_timestamp(cls, value: object) -> pd.Timestamp | None:
         if value is None:
@@ -115,9 +109,7 @@ class TemporalContract(BaseModel):
         try:
             return pd.Timestamp(value)
         except (TypeError, ValueError) as exc:  # pragma: no cover - defensive path
-            raise QualityGateError(
-                f"Unable to parse timestamp value: {value!r}"
-            ) from exc
+            raise QualityGateError(f"Unable to parse timestamp value: {value!r}") from exc
 
     @field_validator("tolerance", mode="before")
     @classmethod
@@ -131,9 +123,7 @@ class TemporalContract(BaseModel):
         try:
             return pd.Timedelta(value)
         except (TypeError, ValueError) as exc:  # pragma: no cover - defensive path
-            raise QualityGateError(
-                f"Unable to parse timedelta value: {value!r}"
-            ) from exc
+            raise QualityGateError(f"Unable to parse timedelta value: {value!r}") from exc
 
     @field_validator("max_lag", mode="before")
     @classmethod
@@ -147,20 +137,12 @@ class TemporalContract(BaseModel):
         try:
             return pd.Timedelta(value)
         except (TypeError, ValueError) as exc:  # pragma: no cover - defensive path
-            raise QualityGateError(
-                f"Unable to parse timedelta value: {value!r}"
-            ) from exc
+            raise QualityGateError(f"Unable to parse timedelta value: {value!r}") from exc
 
     @model_validator(mode="after")
     def _validate_expectations(self) -> "TemporalContract":
-        if (
-            self.expected_start
-            and self.earliest
-            and self.expected_start < self.earliest
-        ):
-            raise QualityGateError(
-                "expected_start must not be before the earliest bound"
-            )
+        if self.expected_start and self.earliest and self.expected_start < self.earliest:
+            raise QualityGateError("expected_start must not be before the earliest bound")
         if self.expected_end and self.latest and self.expected_end > self.latest:
             raise QualityGateError("expected_end must not exceed the latest bound")
         return self
@@ -256,9 +238,7 @@ class QualityReport:
         detail = "; ".join(reasons) or "Batch blocked by quality gate"
         raise QualityGateError(detail)
 
-    def summarise(
-        self, gate: "QualityGateConfig" | None = None
-    ) -> "QualitySummary":
+    def summarise(self, gate: "QualityGateConfig" | None = None) -> "QualitySummary":
         """Return structured quality metrics for observability and reporting."""
 
         return summarise_quality(self, gate)
@@ -322,10 +302,7 @@ class QualitySummary:
                 }
                 for outcome in self.validator_outcomes
             ],
-            "range_limits": {
-                column: dict(limits)
-                for column, limits in self.range_limits.items()
-            },
+            "range_limits": {column: dict(limits) for column, limits in self.range_limits.items()},
             "anomaly_threshold": self.anomaly_threshold,
             "anomaly_window": self.anomaly_window,
         }
@@ -376,9 +353,7 @@ def summarise_quality(
             f" {len(gate.validation_schema.value_columns)} value columns"
         )
         validator_outcomes.append(
-            ValidatorOutcome(
-                name="schema", category="syntax", status="pass", detail=syntax_detail
-            )
+            ValidatorOutcome(name="schema", category="syntax", status="pass", detail=syntax_detail)
         )
     else:
         validator_outcomes.append(
@@ -405,9 +380,7 @@ def summarise_quality(
     if spike_rows > 0:
         if semantics_status != "fail":
             semantics_status = "warn"
-        semantics_notes.append(
-            f"{spike_rows} anomalous points quarantined by z-score guard"
-        )
+        semantics_notes.append(f"{spike_rows} anomalous points quarantined by z-score guard")
 
     if report.blocked:
         blocked_note = "Batch blocked by quality gate"
@@ -418,8 +391,7 @@ def summarise_quality(
             and not report.quarantined.empty
         ):
             blocked_note = (
-                "Batch blocked by quality gate after sanitised share exceeded policy"
-                " threshold"
+                "Batch blocked by quality gate after sanitised share exceeded policy" " threshold"
             )
         if blocked_note not in semantics_notes:
             semantics_notes.append(blocked_note)
@@ -519,14 +491,10 @@ def _apply_range_checks(
         mask = pd.Series(False, index=frame.index)
         if check.min_value is not None:
             min_value = float(check.min_value)
-            mask |= (
-                series <= min_value if not check.inclusive_min else series < min_value
-            )
+            mask |= series <= min_value if not check.inclusive_min else series < min_value
         if check.max_value is not None:
             max_value = float(check.max_value)
-            mask |= (
-                series >= max_value if not check.inclusive_max else series > max_value
-            )
+            mask |= series >= max_value if not check.inclusive_max else series > max_value
         mask &= series.notna()
         if mask.any():
             payload = frame.loc[mask].copy()
@@ -545,9 +513,7 @@ def _enforce_temporal_contract(
     last = timestamps.iloc[-1]
     tz = getattr(last, "tz", None)
 
-    def _align_contract_timestamp(
-        value: pd.Timestamp | None, *, field: str
-    ) -> pd.Timestamp | None:
+    def _align_contract_timestamp(value: pd.Timestamp | None, *, field: str) -> pd.Timestamp | None:
         if value is None:
             return None
         value_tz = getattr(value, "tz", None)
@@ -566,16 +532,10 @@ def _enforce_temporal_contract(
 
     earliest = _align_contract_timestamp(contract.earliest, field="earliest")
     latest = _align_contract_timestamp(contract.latest, field="latest")
-    expected_start = _align_contract_timestamp(
-        contract.expected_start, field="expected_start"
-    )
-    expected_end = _align_contract_timestamp(
-        contract.expected_end, field="expected_end"
-    )
+    expected_start = _align_contract_timestamp(contract.expected_start, field="expected_start")
+    expected_end = _align_contract_timestamp(contract.expected_end, field="expected_end")
     if earliest is not None and first < earliest:
-        breaches.append(
-            f"First timestamp {first} is earlier than allowed earliest {earliest}"
-        )
+        breaches.append(f"First timestamp {first} is earlier than allowed earliest {earliest}")
         blocked = True
     if latest is not None and last > latest:
         breaches.append(f"Last timestamp {last} exceeds allowed latest {latest}")
@@ -605,9 +565,7 @@ def _enforce_temporal_contract(
     return tuple(breaches), blocked
 
 
-def validate_and_quarantine(
-    frame: pd.DataFrame, gate: QualityGateConfig
-) -> QualityReport:
+def validate_and_quarantine(frame: pd.DataFrame, gate: QualityGateConfig) -> QualityReport:
     """Validate a DataFrame and quarantine anomalies according to the configured gates."""
 
     config = gate.validation_schema
@@ -627,9 +585,7 @@ def validate_and_quarantine(
     )
 
     clean = buckets["clean"].reset_index()
-    quarantined = pd.concat(
-        [buckets["spikes"], buckets["duplicates"]]
-    ).drop_duplicates()
+    quarantined = pd.concat([buckets["spikes"], buckets["duplicates"]]).drop_duplicates()
     quarantined = pd.concat(
         [quarantined, duplicates.set_index(timestamp_col)], axis=0
     ).drop_duplicates()

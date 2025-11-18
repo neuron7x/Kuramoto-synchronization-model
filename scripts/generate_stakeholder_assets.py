@@ -328,9 +328,7 @@ def compute_sha256(path: Path) -> str:
 
 def describe_repo_state(root: Path) -> dict[str, str]:
     try:
-        rev = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=root, text=True
-        ).strip()
+        rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     except Exception:
         rev = "unknown"
     return {"git_rev": rev}
@@ -346,7 +344,9 @@ def dump_manifest(manifest_path: Path, files: Sequence[Path], extras: dict[str, 
             }
         )
     payload = {"artifacts": records, **extras}
-    manifest_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def build_entries() -> List[StakeholderEntry]:
@@ -354,12 +354,12 @@ def build_entries() -> List[StakeholderEntry]:
         StakeholderEntry(
             name="Responsible AI Council",
             role=(
-                "Крос-функціональний орган нагляду, що представляє ризик-менеджмент, продукт, платформу, безпеку, юристів та "
+                "Крос-функціональний орган нагляду, що представляє ризик-менеджмент, продукт, платформу, безпеку, юристів та "  # noqa: E501
                 "незалежну етику"
             ),
             interests="Єдине керування програмою, відповідність регуляторним вимогам і аудитам",
             influence=5,
-            expectations="Затверджувати мандат, процедури ескалації та призначати власників робочих потоків",
+            expectations="Затверджувати мандат, процедури ескалації та призначати власників робочих потоків",  # noqa: E501
             channels="Засідання ради, протоколи, ескалаційні процедури",
             frequency="Частота засідань, визначена мандатом",
             power="High",
@@ -373,10 +373,10 @@ def build_entries() -> List[StakeholderEntry]:
         ),
         StakeholderEntry(
             name="Risk & Compliance Teams",
-            role="Функції ризику та комплаєнсу, що координують інвентаризацію ризиків і отримують прозорі звіти",
+            role="Функції ризику та комплаєнсу, що координують інвентаризацію ризиків і отримують прозорі звіти",  # noqa: E501
             interests="Карта ризиків, контроль небезпек і своєчасні оновлення комплаєнсу",
             influence=4,
-            expectations="Будувати карту ризиків, брати участь у порталі звітності та інтеграції результатів",
+            expectations="Будувати карту ризиків, брати участь у порталі звітності та інтеграції результатів",  # noqa: E501
             channels="Risk-дашборди, централізований портал, інцидентні ескалації",
             frequency="Щоквартальні звіти та регулярні оновлення карти ризиків",
             power="Medium",
@@ -392,7 +392,7 @@ def build_entries() -> List[StakeholderEntry]:
             role="Продуктові лідери та борд, які узгоджують roadmap і впроваджують gate review",
             interests="Відповідність продукту політикам та інтеграція уроків у розвиток",
             influence=4,
-            expectations="Синхронізувати roadmap із картами ризиків і правовими рев’ю, додати gate review",
+            expectations="Синхронізувати roadmap із картами ризиків і правовими рев’ю, додати gate review",  # noqa: E501
             channels="Product governance сесії, roadmap оновлення",
             frequency="Відповідно до дорожньої карти (цикли 1–12 тижнів)",
             power="High",
@@ -405,10 +405,10 @@ def build_entries() -> List[StakeholderEntry]:
         ),
         StakeholderEntry(
             name="MLOps & Platform Team",
-            role="Команди MLOps та платформи, що впроваджують перевірки в CI/CD та підтримують пайплайни",
-            interests="Інтеграція перевірок упередженості, приватності та explainability у пайплайни",
+            role="Команди MLOps та платформи, що впроваджують перевірки в CI/CD та підтримують пайплайни",  # noqa: E501
+            interests="Інтеграція перевірок упередженості, приватності та explainability у пайплайни",  # noqa: E501
             influence=4,
-            expectations="Додати стадії перевірок до CI/CD, підтримувати реєстр активів та артефактів",
+            expectations="Додати стадії перевірок до CI/CD, підтримувати реєстр активів та артефактів",  # noqa: E501
             channels="CI/CD пайплайни, інвентаризаційні реєстри",
             frequency="Безперервно з контрольними точками згідно дорожньої карти",
             power="High",
@@ -440,7 +440,7 @@ def build_entries() -> List[StakeholderEntry]:
             role="Юридичний напрям, що забезпечує правові рев’ю та комунікацію з регуляторами",
             interests="Юридична відповідність продуктів і даних",
             influence=4,
-            expectations="Проводити правові перегляди, вести реєстр рішень та узгоджувати комунікації",
+            expectations="Проводити правові перегляди, вести реєстр рішень та узгоджувати комунікації",  # noqa: E501
             channels="Юридичні рев’ю, реєстри рішень, регуляторні канали",
             frequency="Регулярні правові перегляди та DPIA перед запуском високоризикових функцій",
             power="High",
@@ -468,7 +468,7 @@ def build_entries() -> List[StakeholderEntry]:
             role="Команда, що визначає та впроваджує політики даних, приватності й мінімізації",
             interests="Захист даних, контроль доступу та оцінка постачальників",
             influence=4,
-            expectations="Затвердити політики, класифікувати дані та оцінити сторонніх постачальників",
+            expectations="Затвердити політики, класифікувати дані та оцінити сторонніх постачальників",  # noqa: E501
             channels="Каталог даних, політики доступу, оцінки постачальників",
             frequency="Постійний контроль із пріоритетними хвилями на тижнях 5–6",
             power="High",
@@ -575,7 +575,7 @@ def build_entries() -> List[StakeholderEntry]:
         ),
         StakeholderEntry(
             name="Training & Enablement",
-            role="Команди навчання, що розробляють тренінги для інженерів, дата-сайентістів і операторів",
+            role="Команди навчання, що розробляють тренінги для інженерів, дата-сайентістів і операторів",  # noqa: E501
             interests="Підготовка персоналу до політик та інструментів програми",
             influence=3,
             expectations="Розробити тренінги й забезпечити охоплення ролей",
@@ -602,7 +602,7 @@ def build_entries() -> List[StakeholderEntry]:
             role="Міждисциплінарна red team (безпека, data science, продукт, юридичний відділ)",
             interests="Виявлення вразливостей і підтвердження стійкості",
             influence=4,
-            expectations="Розробляти сценарії атак, проводити щоквартальні випробування та інтегрувати результати",
+            expectations="Розробляти сценарії атак, проводити щоквартальні випробування та інтегрувати результати",  # noqa: E501
             channels="Red team сценарії, звіти про знахідки",
             frequency="Щоквартальні симульовані атаки",
             power="Medium",
@@ -646,7 +646,9 @@ def build_entries() -> List[StakeholderEntry]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate stakeholder matrix and RACI from RLHF/RLAIF strategy doc")
+    parser = argparse.ArgumentParser(
+        description="Generate stakeholder matrix and RACI from RLHF/RLAIF strategy doc"
+    )
     parser.add_argument(
         "--source",
         type=Path,

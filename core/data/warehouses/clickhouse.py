@@ -113,7 +113,11 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "    volume Decimal64(10),",
             "    trade_id String DEFAULT '',",
             "    ingest_id UUID DEFAULT generateUUIDv4(),",
-            "    ingest_ts DateTime64(6, " + timezone_literal + ") DEFAULT now(" + timezone_literal + ")",
+            "    ingest_ts DateTime64(6, "
+            + timezone_literal
+            + ") DEFAULT now("
+            + timezone_literal
+            + ")",
             "    , INDEX idx_symbol symbol TYPE set(0) GRANULARITY 1",
             ")",
             "ENGINE = MergeTree",
@@ -140,7 +144,11 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "    close_price Decimal64(10),",
             "    volume Decimal64(12),",
             "    trade_count UInt64,",
-            "    ingest_ts DateTime64(6, " + timezone_literal + ") DEFAULT now(" + timezone_literal + ")",
+            "    ingest_ts DateTime64(6, "
+            + timezone_literal
+            + ") DEFAULT now("
+            + timezone_literal
+            + ")",
             "    , INDEX idx_rollup_symbol symbol TYPE set(0) GRANULARITY 1",
             ")",
             "ENGINE = MergeTree",
@@ -159,7 +167,9 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             "CREATE MATERIALIZED VIEW IF NOT EXISTS " + ids.mv_rollup,
             "TO " + ids.rollup_qualified + " AS",
             "SELECT",
-            "    toStartOfInterval(ts, INTERVAL 1 MINUTE, " + timezone_literal + ") AS window_start,",
+            "    toStartOfInterval(ts, INTERVAL 1 MINUTE, "
+            + timezone_literal
+            + ") AS window_start,",
             "    symbol,",
             "    venue,",
             "    instrument_type,",

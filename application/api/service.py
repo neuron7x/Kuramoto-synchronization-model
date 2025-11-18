@@ -146,23 +146,17 @@ class TTLCache:
         async with self._lock:
             if len(self._entries) >= self._max_entries:
                 # Drop the stalest entry deterministically (smallest expiry).
-                oldest_key = min(
-                    self._entries, key=lambda item: self._entries[item].expires_at
-                )
+                oldest_key = min(self._entries, key=lambda item: self._entries[item].expires_at)
                 self._entries.pop(oldest_key, None)
             expires = datetime.now(timezone.utc) + timedelta(seconds=self._ttl)
-            self._entries[key] = _CacheEntry(
-                payload=payload, expires_at=expires, etag=etag
-            )
+            self._entries[key] = _CacheEntry(payload=payload, expires_at=expires, etag=etag)
 
     async def snapshot(self) -> CacheSnapshot:
         """Return cache occupancy metrics for readiness probes."""
 
         async with self._lock:
             now = datetime.now(timezone.utc)
-            expired = [
-                key for key, entry in self._entries.items() if entry.expires_at <= now
-            ]
+            expired = [key for key, entry in self._entries.items() if entry.expires_at <= now]
             for key in expired:
                 self._entries.pop(key, None)
             return CacheSnapshot(
@@ -355,9 +349,7 @@ def _parse_confidence_param(raw: str | None) -> float | None:
 
 
 def get_feature_query_params(
-    limit: int = Query(
-        1, ge=1, le=500, description="Number of feature snapshots to return."
-    ),
+    limit: int = Query(1, ge=1, le=500, description="Number of feature snapshots to return."),
     cursor: str | None = Query(
         None, description="Pagination cursor (exclusive) encoded as ISO 8601 timestamp."
     ),
@@ -443,9 +435,7 @@ def _ensure_timezone(ts: datetime) -> datetime:
 class MarketBar(BaseModel):
     """Representation of a single OHLCV bar for online inference."""
 
-    timestamp: datetime = Field(
-        ..., description="Timestamp of the bar in ISO 8601 format."
-    )
+    timestamp: datetime = Field(..., description="Timestamp of the bar in ISO 8601 format.")
     open: float | None = Field(None, description="Opening price for the interval.")
     high: float = Field(..., description="High price for the interval.")
     low: float = Field(..., description="Low price for the interval.")
@@ -803,9 +793,7 @@ class OnlineSignalForecaster:
         features = self._pipeline.transform(frame)
         return features
 
-    def _normalise_feature_row(
-        self, row: pd.Series, *, strict: bool
-    ) -> pd.Series | None:
+    def _normalise_feature_row(self, row: pd.Series, *, strict: bool) -> pd.Series | None:
         required_macd_columns = ("macd", "macd_signal", "macd_histogram")
         missing_columns = [col for col in required_macd_columns if col not in row.index]
         if missing_columns:
@@ -831,8 +819,7 @@ class OnlineSignalForecaster:
                     detail={
                         "code": ApiErrorCode.FEATURES_INVALID.value,
                         "message": (
-                            "Unavailable MACD features: "
-                            f"{', '.join(sorted(invalid_columns))}"
+                            "Unavailable MACD features: " f"{', '.join(sorted(invalid_columns))}"
                         ),
                     },
                 )
@@ -860,9 +847,7 @@ class OnlineSignalForecaster:
             if normalised is None:
                 continue
             python_ts = (
-                timestamp.to_pydatetime()
-                if hasattr(timestamp, "to_pydatetime")
-                else timestamp
+                timestamp.to_pydatetime() if hasattr(timestamp, "to_pydatetime") else timestamp
             )
             rows.append((_ensure_timezone(python_ts), normalised))
         return rows
@@ -993,9 +978,7 @@ class OnlineSignalForecaster:
         # MACD legs fanning out. Using a compact vector representation keeps the
         # transformations easy to audit while letting us express richer
         # interactions than a single scalar average.
-        divergence_vector = np.array(
-            [macd_trend_component, macd_histogram_component], dtype=float
-        )
+        divergence_vector = np.array([macd_trend_component, macd_histogram_component], dtype=float)
         divergence_strength = float(np.mean(divergence_vector))
         divergence_energy = float(
             np.linalg.norm(divergence_vector) / np.sqrt(divergence_vector.size)
@@ -1024,11 +1007,7 @@ class OnlineSignalForecaster:
         # raw values imply divergence dominance and yield a negative correction;
         # negative values indicate healthy agreement and therefore earn a
         # positive contribution.
-        raw_balance = (
-            magnitude_pressure
-            + 0.75 * directional_tension
-            - 1.0 * alignment
-        )
+        raw_balance = magnitude_pressure + 0.75 * directional_tension - 1.0 * alignment
 
         # When both legs are quiet we do not want the balance leg to oscillate
         # unnecessarily, hence the neutraliser softly damps the correction.
@@ -1094,9 +1073,7 @@ def _filter_feature_values(
     return values
 
 
-def _hash_payload(
-    prefix: str, payload: BaseModel, extra: Mapping[str, Any] | None = None
-) -> str:
+def _hash_payload(prefix: str, payload: BaseModel, extra: Mapping[str, Any] | None = None) -> str:
     body = payload.model_dump(mode="json")
     if extra:
         body["__query__"] = extra
@@ -1153,9 +1130,7 @@ class PayloadGuardMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._max_body_bytes = max_body_bytes
         self._suspicious_keys = {key.lower() for key in suspicious_keys}
-        self._suspicious_substrings = tuple(
-            sub.lower() for sub in suspicious_substrings
-        )
+        self._suspicious_substrings = tuple(sub.lower() for sub in suspicious_substrings)
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
@@ -1183,9 +1158,7 @@ class PayloadGuardMiddleware(BaseHTTPMiddleware):
                     content={"detail": "Request body exceeds configured limit."},
                 )
 
-            content_type = (
-                request.headers.get("content-type", "").split(";")[0].strip().lower()
-            )
+            content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
             if content_type in {"application/json", "application/problem+json", ""}:
                 if body:
                     try:
@@ -1302,8 +1275,7 @@ def configure_openapi(app: FastAPI) -> None:
             "Idempotency-Key",
             {
                 "description": (
-                    "Idempotency key echoed on responses. Keys are valid for 15 "
-                    "minutes."
+                    "Idempotency key echoed on responses. Keys are valid for 15 " "minutes."
                 ),
                 "schema": {"type": "string", "maxLength": 128},
             },
@@ -1332,40 +1304,30 @@ def configure_openapi(app: FastAPI) -> None:
             },
         )
 
-        admin_security: list[dict[str, list[str]]] = [
-            {"OAuth2Bearer": [], "MutualTLS": []}
-        ]
+        admin_security: list[dict[str, list[str]]] = [{"OAuth2Bearer": [], "MutualTLS": []}]
         admin_error_responses = {
             "401": {
                 "description": "Authentication token missing or invalid.",
                 "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
-                    }
+                    "application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}
                 },
             },
             "403": {
                 "description": "Authenticated caller lacks sufficient privileges.",
                 "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
-                    }
+                    "application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}
                 },
             },
             "429": {
                 "description": "Administrator exceeded configured rate limits.",
                 "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
-                    }
+                    "application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}
                 },
             },
             "500": {
                 "description": "Unexpected server-side failure.",
                 "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/ErrorResponse"}
-                    }
+                    "application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}
                 },
             },
         }
@@ -1420,9 +1382,7 @@ def create_app(
     runtime_settings = runtime_settings or BackendRuntimeSettings()
     resolved_log_level = runtime_settings.resolve_log_level()
     root_logger = logging.getLogger()
-    if runtime_settings.should_configure_logging(
-        handlers_installed=bool(root_logger.handlers)
-    ):
+    if runtime_settings.should_configure_logging(handlers_installed=bool(root_logger.handlers)):
         configure_logging(level=resolved_log_level)
     else:
         root_logger.setLevel(resolved_log_level)
@@ -1477,9 +1437,7 @@ def create_app(
             if error.get("type") == "missing"
         ]
         joined = ", ".join(sorted(set(missing))) or "OAuth configuration values"
-        raise RuntimeError(
-            ("Missing required OAuth configuration: {}.").format(joined)
-        ) from exc
+        raise RuntimeError(("Missing required OAuth configuration: {}.").format(joined)) from exc
     if security_settings is not None:
         setattr(get_api_security_settings, "_instance", resolved_security_settings)
         setattr(get_api_security_settings, "_manual_override", True)
@@ -1510,9 +1468,7 @@ def create_app(
 
     audit_logger = secret_manager.audit_logger
     if audit_logger is None:
-        audit_logger = AuditLogger(
-            secret_resolver=audit_secret_provider, sink=audit_sink
-        )
+        audit_logger = AuditLogger(secret_resolver=audit_secret_provider, sink=audit_sink)
 
     kill_switch_store_settings = resolved_settings.kill_switch_postgres
     if kill_switch_store_settings is not None:
@@ -1533,9 +1489,7 @@ def create_app(
             backoff_multiplier=float(kill_switch_store_settings.backoff_multiplier),
         )
     else:
-        kill_switch_store = SQLiteKillSwitchStateStore(
-            resolved_settings.kill_switch_store_path
-        )
+        kill_switch_store = SQLiteKillSwitchStateStore(resolved_settings.kill_switch_store_path)
     risk_manager_facade = RiskManagerFacade(
         RiskManager(RiskLimits(), kill_switch_store=kill_switch_store),
         access_controller=access_controller,
@@ -1616,10 +1570,7 @@ def create_app(
 
     metrics_module = __import__("core.utils.metrics", fromlist=["MetricsCollector"])
     metrics_collector = get_metrics_collector(metrics_registry)
-    if (
-        metrics_registry is not None
-        and getattr(metrics_collector, "registry", None) is None
-    ):
+    if metrics_registry is not None and getattr(metrics_collector, "registry", None) is None:
         refreshed_metrics = metrics_module.MetricsCollector(metrics_registry)
         metrics_collector.__dict__.update(refreshed_metrics.__dict__)
         setattr(metrics_module, "_collector", metrics_collector)
@@ -1679,9 +1630,7 @@ def create_app(
         PayloadGuardMiddleware,
         max_body_bytes=int(resolved_security_settings.max_request_bytes),
         suspicious_keys=set(resolved_security_settings.suspicious_json_keys),
-        suspicious_substrings=tuple(
-            resolved_security_settings.suspicious_json_substrings
-        ),
+        suspicious_substrings=tuple(resolved_security_settings.suspicious_json_substrings),
     )
 
     app.include_router(
@@ -1706,9 +1655,7 @@ def create_app(
     app.state.idempotency_cache = idempotency_cache
     app.state.dependency_probes = dependency_probe_map
     app.state.health_server = health_server
-    inspector = VariableInspector(
-        redact_patterns=runtime_settings.redact_pattern_values()
-    )
+    inspector = VariableInspector(redact_patterns=runtime_settings.redact_pattern_values())
     if runtime_settings.inspect_variables:
         inspector.register(
             "environment",
@@ -1872,9 +1819,7 @@ def create_app(
             response.headers.setdefault("Pragma", "no-cache")
             _append_vary_header(response, "Authorization")
         else:
-            response.headers["Cache-Control"] = (
-                f"private, max-age={ttl_cache.ttl_seconds}"
-            )
+            response.headers["Cache-Control"] = f"private, max-age={ttl_cache.ttl_seconds}"
         _append_vary_header(response, "Accept")
         return response
 
@@ -1896,9 +1841,7 @@ def create_app(
         kill_metrics = {"kill_switch_engaged": kill_engaged}
         if kill_switch.reason:
             kill_metrics["reason"] = kill_switch.reason
-        kill_detail = (
-            kill_switch.reason if kill_engaged and kill_switch.reason else None
-        )
+        kill_detail = kill_switch.reason if kill_engaged and kill_switch.reason else None
         components["risk_manager"] = ComponentHealth(
             healthy=not kill_engaged,
             status="operational" if not kill_engaged else "failed",
@@ -1942,10 +1885,7 @@ def create_app(
         }
         client_healthy = True
         client_status = "operational"
-        if (
-            client_snapshot.max_utilization is not None
-            and client_snapshot.max_utilization >= 0.9
-        ):
+        if client_snapshot.max_utilization is not None and client_snapshot.max_utilization >= 0.9:
             client_healthy = False
             client_status = "degraded"
         if client_snapshot.saturated_keys:
@@ -1977,8 +1917,7 @@ def create_app(
             "saturated_identifiers": list(admin_snapshot.saturated_identifiers),
         }
         admin_healthy = (
-            admin_snapshot.max_utilization < 1.0
-            and not admin_snapshot.saturated_identifiers
+            admin_snapshot.max_utilization < 1.0 and not admin_snapshot.saturated_identifiers
         )
         components["admin_rate_limiter"] = ComponentHealth(
             healthy=admin_healthy,
@@ -2039,9 +1978,7 @@ def create_app(
         health_payload = HealthResponse(status=severity, components=components)
 
         probe_status = (
-            status.HTTP_200_OK
-            if severity == "ready"
-            else status.HTTP_503_SERVICE_UNAVAILABLE
+            status.HTTP_200_OK if severity == "ready" else status.HTTP_503_SERVICE_UNAVAILABLE
         )
         response.status_code = probe_status
 
@@ -2059,13 +1996,9 @@ def create_app(
         if metrics_collector and metrics_collector.enabled:
             duration = perf_counter() - overall_start
             metrics_collector.observe_health_check_latency("api.overall", duration)
-            metrics_collector.set_health_check_status(
-                "api.overall", severity == "ready"
-            )
+            metrics_collector.set_health_check_status("api.overall", severity == "ready")
             for name, component in components.items():
-                metrics_collector.set_health_check_status(
-                    f"component.{name}", component.healthy
-                )
+                metrics_collector.set_health_check_status(f"component.{name}", component.healthy)
 
         return health_payload
 
@@ -2306,10 +2239,7 @@ def create_app(
             )
             if query.actions and signal.action not in query.actions:
                 continue
-            if (
-                query.min_confidence is not None
-                and float(signal.confidence) < query.min_confidence
-            ):
+            if query.min_confidence is not None and float(signal.confidence) < query.min_confidence:
                 continue
             python_ts = (
                 row_timestamp.to_pydatetime()
@@ -2606,15 +2536,9 @@ def bootstrap_application() -> FastAPI:
     bootstrap_logger = logging.getLogger("tradepulse.bootstrap")
 
     if strategy in _LAZY_STRATEGIES:
-        bootstrap_logger.info(
-            "Skipping TradePulse API bootstrap (strategy=%s).", strategy
-        )
+        bootstrap_logger.info("Skipping TradePulse API bootstrap (strategy=%s).", strategy)
         return _build_degraded_application(
-            reason=(
-                "Bootstrap disabled via TRADEPULSE_BOOTSTRAP_STRATEGY={}.".format(
-                    strategy
-                )
-            )
+            reason=("Bootstrap disabled via TRADEPULSE_BOOTSTRAP_STRATEGY={}.".format(strategy))
         )
 
     try:

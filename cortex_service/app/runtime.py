@@ -30,9 +30,7 @@ def run() -> None:
         log_level=settings.service.log_level.lower(),
         ssl_certfile=str(tls_settings.cert_file),
         ssl_keyfile=str(tls_settings.key_file),
-        ssl_ca_certs=(
-            str(tls_settings.client_ca_file) if tls_settings.client_ca_file else None
-        ),
+        ssl_ca_certs=(str(tls_settings.client_ca_file) if tls_settings.client_ca_file else None),
         ssl_cert_reqs=(
             ssl.CERT_REQUIRED
             if tls_settings.require_client_certificate

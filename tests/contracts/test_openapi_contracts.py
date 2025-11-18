@@ -6,9 +6,7 @@ import pytest
 
 os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://issuer.tradepulse.test")
 os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
-os.environ.setdefault(
-    "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
-)
+os.environ.setdefault("TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "import-audit-secret")
 os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "import-rbac-secret")
 

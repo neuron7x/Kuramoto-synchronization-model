@@ -216,8 +216,9 @@ class RegimeDetector:
         features: pd.DataFrame,
         probabilities: np.ndarray,
     ) -> pd.DataFrame:
-        regime_columns = {f"prob_{name}": probabilities[:, comp]
-                          for comp, name in self._regime_labels.items()}
+        regime_columns = {
+            f"prob_{name}": probabilities[:, comp] for comp, name in self._regime_labels.items()
+        }
         dominant = np.argmax(probabilities, axis=1)
         regimes = [self._regime_labels.get(int(idx), "range_bound") for idx in dominant]
         frame = features.copy()

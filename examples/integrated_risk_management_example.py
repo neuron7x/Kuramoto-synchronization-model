@@ -8,7 +8,6 @@ Integrated Risk Management Example
 - Agent Coordinator
 """
 
-
 import numpy as np
 
 from modules.adaptive_risk_manager import AdaptiveRiskManager
@@ -36,9 +35,7 @@ def main():
 
     # Initialize components
     print("🔧 Initializing components...")
-    risk_manager = AdaptiveRiskManager(
-        base_capital=100000.0, risk_tolerance=0.02, var_window=100
-    )
+    risk_manager = AdaptiveRiskManager(base_capital=100000.0, risk_tolerance=0.02, var_window=100)
 
     regime_analyzer = MarketRegimeAnalyzer(regime_window=50, transition_threshold=0.7)
 
@@ -103,9 +100,7 @@ def main():
     # Get strategy recommendations based on regime
     recommendations = regime_analyzer.recommend_strategy_parameters(regime_metrics)
     print("📋 Strategy Recommendations:")
-    print(
-        f"   Position Size Multiplier: {recommendations['position_size_multiplier']:.2f}"
-    )
+    print(f"   Position Size Multiplier: {recommendations['position_size_multiplier']:.2f}")
     print(f"   Stop Loss Multiplier: {recommendations['stop_loss_multiplier']:.2f}")
     print(f"   Take Profit Multiplier: {recommendations['take_profit_multiplier']:.2f}")
     print(f"   Holding Period Target: {recommendations['holding_period_target']} bars")

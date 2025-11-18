@@ -165,9 +165,7 @@ def test_market_data_point_enforce_utc_rejects_invalid_timezone() -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
         tick._enforce_utc()
 
-    object.__setattr__(
-        tick, "timestamp", datetime(2024, 1, 1, tzinfo=timezone(timedelta(hours=1)))
-    )
+    object.__setattr__(tick, "timestamp", datetime(2024, 1, 1, tzinfo=timezone(timedelta(hours=1))))
     with pytest.raises(ValueError, match="normalised to UTC"):
         tick._enforce_utc()
 

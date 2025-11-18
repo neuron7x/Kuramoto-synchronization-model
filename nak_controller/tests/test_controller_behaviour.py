@@ -65,8 +65,7 @@ def test_controller_reset_with_seed_rewinds_rng() -> None:
     assert controller.states == {}
     replay = controller.step("s", local, global_obs, bases)
     assert (
-        pytest.approx(replay["risk_per_trade_factor"], rel=1e-9)
-        == first["risk_per_trade_factor"]
+        pytest.approx(replay["risk_per_trade_factor"], rel=1e-9) == first["risk_per_trade_factor"]
     )
 
     controller.reset(seed=2024)
@@ -189,9 +188,7 @@ def test_update_energy_includes_unexpected_reward() -> None:
         params.E_max,
     )
 
-    energy_observed = update_energy(
-        state, params, dict(obs), NA=NA, DA=DA, da_unexp=da_unexp
-    )
+    energy_observed = update_energy(state, params, dict(obs), NA=NA, DA=DA, da_unexp=da_unexp)
     assert energy_observed == pytest.approx(energy_expected)
 
 
@@ -236,9 +233,7 @@ def test_controller_uses_seed_from_environment(monkeypatch: pytest.MonkeyPatch) 
     env_result = env_controller.step("env", local, global_obs, bases)
     monkeypatch.delenv("NAK_SEED", raising=False)
     direct = NaKController(CONFIG_PATH, seed=2001).step("env", local, global_obs, bases)
-    assert env_result["risk_per_trade_factor"] == pytest.approx(
-        direct["risk_per_trade_factor"]
-    )
+    assert env_result["risk_per_trade_factor"] == pytest.approx(direct["risk_per_trade_factor"])
 
 
 def test_controller_rejects_invalid_seed_env(monkeypatch: pytest.MonkeyPatch) -> None:

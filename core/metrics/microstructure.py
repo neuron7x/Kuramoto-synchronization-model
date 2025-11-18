@@ -109,9 +109,7 @@ def build_symbol_microstructure_report(
     rows = []
     for symbol, group in grouped:
         qi = queue_imbalance(group[bid_col].to_numpy(), group[ask_col].to_numpy())
-        k_lambda = kyles_lambda(
-            group[returns_col].to_numpy(), group[signed_volume_col].to_numpy()
-        )
+        k_lambda = kyles_lambda(group[returns_col].to_numpy(), group[signed_volume_col].to_numpy())
         impulse = hasbrouck_information_impulse(
             group[returns_col].to_numpy(), group[signed_volume_col].to_numpy()
         )

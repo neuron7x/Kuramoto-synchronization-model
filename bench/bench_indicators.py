@@ -33,9 +33,7 @@ def benchmark_indicator(
     repeat: int,
     warmup: int,
 ) -> None:
-    cold_samples = _time_function(
-        lambda: compute(RNG.standard_normal(WINDOW)), repeat=repeat
-    )
+    cold_samples = _time_function(lambda: compute(RNG.standard_normal(WINDOW)), repeat=repeat)
 
     shared_data = RNG.standard_normal(WINDOW)
     for _ in range(warmup):
@@ -52,12 +50,8 @@ def benchmark_indicator(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--repeat", type=int, default=5, help="number of measured iterations"
-    )
-    parser.add_argument(
-        "--warmup", type=int, default=3, help="warmup runs before hot timings"
-    )
+    parser.add_argument("--repeat", type=int, default=5, help="number of measured iterations")
+    parser.add_argument("--warmup", type=int, default=3, help="warmup runs before hot timings")
     args = parser.parse_args()
 
     def run_entropy(data: np.ndarray) -> None:

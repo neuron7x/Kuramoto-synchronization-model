@@ -105,12 +105,8 @@ def evaluate_execution_health(
             metrics["watchdog_live_probe_ok"] = probe_ok
             return HealthCheckResult(False, "Watchdog live probe failed", metrics)
         workers = snapshot.get("workers", {})
-        worker_states = {
-            name: bool(state.get("alive")) for name, state in workers.items()
-        }
-        worker_restarts = {
-            name: int(state.get("restarts", 0)) for name, state in workers.items()
-        }
+        worker_states = {name: bool(state.get("alive")) for name, state in workers.items()}
+        worker_restarts = {name: int(state.get("restarts", 0)) for name, state in workers.items()}
         metrics["worker_alive"] = worker_states
         metrics["worker_restarts"] = worker_restarts
         unhealthy = [name for name, alive in worker_states.items() if not alive]
@@ -125,9 +121,7 @@ def evaluate_execution_health(
         age = (now - last_submission).total_seconds()
         metrics["seconds_since_last_submission"] = round(age, 2)
         if age > stale_after_seconds:
-            return HealthCheckResult(
-                False, f"No order submissions in {int(age)}s", metrics
-            )
+            return HealthCheckResult(False, f"No order submissions in {int(age)}s", metrics)
 
     return HealthCheckResult(True, metrics=metrics)
 

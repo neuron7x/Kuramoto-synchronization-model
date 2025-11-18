@@ -29,9 +29,7 @@ def create_postgres_connection(
 
     try:
         import psycopg
-    except (
-        ImportError
-    ) as exc:  # pragma: no cover - defensive guard when dependency is missing.
+    except ImportError as exc:  # pragma: no cover - defensive guard when dependency is missing.
         msg = "psycopg must be installed to create PostgreSQL connections"
         raise RuntimeError(msg) from exc
 

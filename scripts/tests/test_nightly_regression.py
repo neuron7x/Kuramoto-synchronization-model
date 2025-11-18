@@ -43,7 +43,9 @@ def _write_baseline(tmp_path: Path, payload: dict) -> Path:
 
 
 def test_metric_threshold_evaluation() -> None:
-    threshold = MetricThreshold(higher_is_better=True, max_relative_change=0.1, max_absolute_change=5.0)
+    threshold = MetricThreshold(
+        higher_is_better=True, max_relative_change=0.1, max_absolute_change=5.0
+    )
     result_ok = threshold.evaluate(100.0, 95.5)
     assert result_ok.passed
     assert result_ok.message is None
@@ -53,7 +55,9 @@ def test_metric_threshold_evaluation() -> None:
     assert result_fail.relative_degradation is not None
     assert result_fail.relative_degradation > 0.1
 
-    dd_threshold = MetricThreshold(higher_is_better=False, max_relative_change=0.2, max_absolute_change=1.0)
+    dd_threshold = MetricThreshold(
+        higher_is_better=False, max_relative_change=0.2, max_absolute_change=1.0
+    )
     drawdown_ok = dd_threshold.evaluate(-4.0, -4.5)
     assert drawdown_ok.passed
     drawdown_fail = dd_threshold.evaluate(-4.0, -5.8)

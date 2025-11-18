@@ -96,5 +96,3 @@ def test_backfill_planner_validates_loader_payload() -> None:
     assert not result.success
     assert result.failed_segments
     assert any("missing timestamps" in error.message for error in result.errors)
-
-

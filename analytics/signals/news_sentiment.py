@@ -102,7 +102,9 @@ class FinBERTSentimentModel:
     the heavy model artefacts lazily.
     """
 
-    def __init__(self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None) -> None:
+    def __init__(
+        self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None
+    ) -> None:
         try:  # pragma: no cover - guarded import
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
         except ImportError as exc:  # pragma: no cover - import-time guard
@@ -122,14 +124,14 @@ class FinBERTSentimentModel:
         # Use a specific revision hash for production deployments
         model_revision = "main"  # TODO: Pin to specific commit hash in production
         self._tokenizer = AutoTokenizer.from_pretrained(
-            model_name, 
+            model_name,
             revision=model_revision,
-            trust_remote_code=False  # Security: Never execute remote code
+            trust_remote_code=False,  # Security: Never execute remote code
         )
         self._model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
             revision=model_revision,
-            trust_remote_code=False  # Security: Never execute remote code
+            trust_remote_code=False,  # Security: Never execute remote code
         )
 
         if device is None:
@@ -147,7 +149,9 @@ class FinBERTSentimentModel:
             for index, label in self._model.config.id2label.items()
         }
 
-    def predict(self, texts: Sequence[str]) -> Sequence[SentimentPrediction]:  # pragma: no cover - heavy inference
+    def predict(
+        self, texts: Sequence[str]
+    ) -> Sequence[SentimentPrediction]:  # pragma: no cover - heavy inference
         if not texts:
             return []
 
@@ -202,7 +206,9 @@ class NewsSentimentPipeline:
         since_utc = ensure_utc_timestamp(since)
         articles = list(self.collector.collect(since=since_utc.to_pydatetime()))
         if not articles:
-            _LOGGER.info("No news articles collected for sentiment pipeline", extra={"since": since_utc})
+            _LOGGER.info(
+                "No news articles collected for sentiment pipeline", extra={"since": since_utc}
+            )
             return pd.DataFrame(
                 columns=[
                     "article_id",
@@ -377,7 +383,9 @@ def aggregate_sentiment(
     if "article_id" in frame.columns:
         frame = frame.dropna(subset=["article_id"])
         if frame.empty:
-            return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
+            return pd.DataFrame(
+                columns=["symbol", "timestamp", "sentiment_signal", "article_count"]
+            )
         frame = frame.sort_values(["article_id", "symbol", "published_at"])
         frame = frame.drop_duplicates(subset=["article_id", "symbol"], keep="last")
 
@@ -407,4 +415,3 @@ __all__ = [
     "SentimentLabel",
     "aggregate_sentiment",
 ]
-

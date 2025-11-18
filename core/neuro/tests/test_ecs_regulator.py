@@ -16,8 +16,7 @@ import importlib.util
 
 # Load the module directly
 spec = importlib.util.spec_from_file_location(
-    "ecs_regulator",
-    Path(__file__).parent.parent / "ecs_regulator.py"
+    "ecs_regulator", Path(__file__).parent.parent / "ecs_regulator.py"
 )
 ecs_module = importlib.util.module_from_spec(spec)
 sys.modules["ecs_regulator"] = ecs_module
@@ -60,14 +59,10 @@ class TestECSInspiredRegulatorInit:
 
     def test_invalid_risk_threshold(self) -> None:
         """Test that invalid risk threshold is rejected."""
-        with pytest.raises(
-            ValueError, match="initial_risk_threshold must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="initial_risk_threshold must be between 0 and 1"):
             ECSInspiredRegulator(initial_risk_threshold=0.0)
 
-        with pytest.raises(
-            ValueError, match="initial_risk_threshold must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="initial_risk_threshold must be between 0 and 1"):
             ECSInspiredRegulator(initial_risk_threshold=1.5)
 
     def test_invalid_smoothing_alpha(self) -> None:
@@ -188,9 +183,7 @@ class TestAdaptParameters:
 
     def test_adapt_under_high_stress(self) -> None:
         """Test adaptation during high stress."""
-        regulator = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.05
-        )
+        regulator = ECSInspiredRegulator(initial_risk_threshold=0.05, stress_threshold=0.05)
 
         # Induce high stress
         regulator.update_stress(np.array([0.1, -0.1]), 0.2)
@@ -228,12 +221,8 @@ class TestAdaptParameters:
 
     def test_adapt_context_dependent(self) -> None:
         """Test context-dependent adaptation."""
-        reg_stable = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.05
-        )
-        reg_chaotic = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.05
-        )
+        reg_stable = ECSInspiredRegulator(initial_risk_threshold=0.05, stress_threshold=0.05)
+        reg_chaotic = ECSInspiredRegulator(initial_risk_threshold=0.05, stress_threshold=0.05)
 
         # High stress for both
         reg_stable.update_stress(np.array([0.1, -0.1]), 0.2)
@@ -247,9 +236,7 @@ class TestAdaptParameters:
 
     def test_adapt_recovery(self) -> None:
         """Test parameter recovery during low stress."""
-        regulator = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.1
-        )
+        regulator = ECSInspiredRegulator(initial_risk_threshold=0.05, stress_threshold=0.1)
 
         # High stress first
         regulator.update_stress(np.array([0.2, -0.2]), 0.3)
@@ -286,9 +273,7 @@ class TestKalmanFilter:
         true_signal = 0.5
         noisy_signals = true_signal + rng.normal(0, 0.1, 20)
 
-        filtered_signals = [
-            regulator.kalman_filter_signal(sig) for sig in noisy_signals
-        ]
+        filtered_signals = [regulator.kalman_filter_signal(sig) for sig in noisy_signals]
 
         # Later filtered values should be closer to true signal
         early_error = abs(filtered_signals[5] - true_signal)
@@ -483,9 +468,7 @@ class TestIntegrationScenarios:
 
     def test_acute_stress_scenario(self) -> None:
         """Test regulator behavior under acute stress."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.05, chronic_threshold=10, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.05, chronic_threshold=10, seed=42)
         rng = np.random.default_rng(42)
 
         actions = []
@@ -504,9 +487,7 @@ class TestIntegrationScenarios:
 
     def test_chronic_stress_scenario(self) -> None:
         """Test regulator behavior under chronic stress."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.05, chronic_threshold=5, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.05, chronic_threshold=5, seed=42)
         rng = np.random.default_rng(42)
 
         # Prolonged high volatility (chronic stress)
@@ -567,7 +548,9 @@ class TestIntegrationScenarios:
 
         # Count actions
         action_counts = np.bincount(np.array(actions) + 1)
-        print(f"Actions: sells={action_counts[0]}, holds={action_counts[1]}, buys={action_counts[2]}")
+        print(
+            f"Actions: sells={action_counts[0]}, holds={action_counts[1]}, buys={action_counts[2]}"
+        )
 
         # Verify reasonable action distribution
         assert action_counts[1] > n_steps * 0.5  # Mostly holds expected

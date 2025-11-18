@@ -83,7 +83,7 @@ def _compare(
         ref_requirement = reference[key]
         if requirement.specifier != ref_requirement.specifier:
             divergent.append(
-                f"{_format_requirement(requirement)} (pyproject declares {_format_requirement(ref_requirement)})"
+                f"{_format_requirement(requirement)} (pyproject declares {_format_requirement(ref_requirement)})"  # noqa: E501
             )
 
     return missing, divergent

@@ -184,10 +184,7 @@ class HybridIndex:
         removed = 0
         if replaced_documents:
             for segment_id, segment in list(self._segments.items()):
-                if (
-                    segment.document_id in replaced_documents
-                    and segment_id not in known_ids
-                ):
+                if segment.document_id in replaced_documents and segment_id not in known_ids:
                     self.remove(segment_id)
                     removed += 1
         return IndexMaintenanceReport(

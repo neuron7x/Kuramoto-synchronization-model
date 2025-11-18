@@ -28,6 +28,7 @@ API_V1_PREFIX = "/api/v1"
 def _api_v1(path: str) -> str:
     return f"{API_V1_PREFIX}{path}"
 
+
 BASELINE_DIR = Path("schemas/http/json/1.0.0")
 
 

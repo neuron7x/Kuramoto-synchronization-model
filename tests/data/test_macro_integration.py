@@ -1,4 +1,3 @@
-
 import pandas as pd
 
 from src.data.macro.integration import integrate_macro_features
@@ -7,9 +6,7 @@ from src.data.macro.integration import integrate_macro_features
 def test_integrate_macro_features_prevents_leakage():
     market = pd.DataFrame(
         {
-            "timestamp": pd.to_datetime(
-                ["2023-02-10", "2023-02-20"], utc=True
-            ),
+            "timestamp": pd.to_datetime(["2023-02-10", "2023-02-20"], utc=True),
             "price": [100.0, 101.5],
         }
     )

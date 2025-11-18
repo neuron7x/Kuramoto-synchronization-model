@@ -88,9 +88,7 @@ class RecordingFactory:
         self.connections: list[FakeConnection] = []
 
     def __call__(self) -> FakeConnection:
-        cursor = self.cursor_factory(
-            fetchone_result=self.fetchone, fetchall_result=self.fetchall
-        )
+        cursor = self.cursor_factory(fetchone_result=self.fetchone, fetchall_result=self.fetchall)
         connection = FakeConnection(cursor)
         self.connections.append(connection)
         return connection

@@ -66,17 +66,13 @@ class RetryConfig:
     multiplier: float = 0.5
     max_backoff: float = 15.0
     jitter: float = 0.1
-    exceptions: tuple[type[BaseException], ...] = field(
-        default_factory=_default_retry_exceptions
-    )
+    exceptions: tuple[type[BaseException], ...] = field(default_factory=_default_retry_exceptions)
     _rng: SystemRandom = field(default_factory=SystemRandom, init=False, repr=False)
 
     def compute_backoff(self, attempt_number: int) -> float:
         """Return the exponential backoff for a given retry attempt."""
 
-        base_delay = min(
-            self.max_backoff, self.multiplier * (2 ** max(0, attempt_number - 1))
-        )
+        base_delay = min(self.max_backoff, self.multiplier * (2 ** max(0, attempt_number - 1)))
         if self.jitter <= 0:
             return base_delay
         jitter_delta = self._rng.uniform(0, base_delay * self.jitter)
@@ -137,9 +133,7 @@ class FaultTolerancePolicy:
         retry = self.retry
 
         async for attempt in AsyncRetrying(
-            wait=wait_random_exponential(
-                multiplier=retry.multiplier, max=retry.max_backoff
-            ),
+            wait=wait_random_exponential(multiplier=retry.multiplier, max=retry.max_backoff),
             stop=stop_after_attempt(retry.attempts),
             retry=retry_if_exception_type(retry.exceptions),
             reraise=True,
@@ -171,9 +165,7 @@ class IngestionAdapter(ABC):
         rate_limit: Optional[RateLimitConfig] = None,
         timeout: Optional[TimeoutConfig] = None,
     ) -> None:
-        self._policy = FaultTolerancePolicy(
-            retry=retry, rate_limit=rate_limit, timeout=timeout
-        )
+        self._policy = FaultTolerancePolicy(retry=retry, rate_limit=rate_limit, timeout=timeout)
 
     async def _run_with_policy(self, operation: Callable[[], Awaitable[T]]) -> T:
         return await self._policy.run(operation)

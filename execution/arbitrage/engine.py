@@ -41,8 +41,7 @@ class ArbitrageOpportunity:
 class QuoteStream(Protocol):
     """Protocol implemented by exchange quote sources."""
 
-    async def stream_quotes(self, symbols: Sequence[str]) -> AsyncIterator[Quote]:
-        ...
+    async def stream_quotes(self, symbols: Sequence[str]) -> AsyncIterator[Quote]: ...
 
 
 class CrossExchangeArbitrageEngine:
@@ -102,12 +101,8 @@ class CrossExchangeArbitrageEngine:
         self._stop_requested.clear()
         async with asyncio.TaskGroup() as task_group:
             for exchange_id, provider in self._providers.items():
-                task_group.create_task(
-                    self._consume_quotes(exchange_id, provider, symbols)
-                )
-            task_group.create_task(
-                self._process_quotes(symbols, opportunity_callback)
-            )
+                task_group.create_task(self._consume_quotes(exchange_id, provider, symbols))
+            task_group.create_task(self._process_quotes(symbols, opportunity_callback))
         self._running.clear()
 
     async def stop(self) -> None:
@@ -238,8 +233,7 @@ class CrossExchangeArbitrageEngine:
         if net_profit < self._min_profit:
             return None
         latency_snapshot = {
-            exchange_id: tracker.percentile(50)
-            for exchange_id, tracker in self._latencies.items()
+            exchange_id: tracker.percentile(50) for exchange_id, tracker in self._latencies.items()
         }
         return ArbitrageOpportunity(
             symbol=symbol,
@@ -261,8 +255,14 @@ class CrossExchangeArbitrageEngine:
         plan = CapitalTransferPlan(
             transfer_id=f"arb-{opportunity.symbol}-{int(opportunity.generated_at.timestamp())}",
             legs={
-                (opportunity.buy_exchange, self._pair_config[opportunity.symbol][1]): opportunity.notional,
-                (opportunity.sell_exchange, self._pair_config[opportunity.symbol][0]): opportunity.base_size,
+                (
+                    opportunity.buy_exchange,
+                    self._pair_config[opportunity.symbol][1],
+                ): opportunity.notional,
+                (
+                    opportunity.sell_exchange,
+                    self._pair_config[opportunity.symbol][0],
+                ): opportunity.base_size,
             },
             initiated_at=datetime.now(timezone.utc),
             metadata={

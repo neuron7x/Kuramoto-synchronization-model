@@ -152,10 +152,12 @@ class IdempotencyCoordinator(Generic[T]):
                 self._append_audit(
                     record,
                     "collision",
-                    {"expected": record.payload_fingerprint, "actual": fingerprint} | dict(metadata or {}),
+                    {"expected": record.payload_fingerprint, "actual": fingerprint}
+                    | dict(metadata or {}),
                 )
                 LOGGER.warning(
-                    "Idempotency collision detected", extra={"operation_id": key.operation_id, "service": key.service}
+                    "Idempotency collision detected",
+                    extra={"operation_id": key.operation_id, "service": key.service},
                 )
                 raise IdempotencyConflictError(
                     "Idempotency key collision detected.",
@@ -343,9 +345,7 @@ class IdempotencyCoordinator(Generic[T]):
     def _purge_locked(self, now: float) -> None:
         cutoff = now - self._record_ttl
         expired = [
-            op_id
-            for op_id, record in self._records.items()
-            if record.last_seen_monotonic < cutoff
+            op_id for op_id, record in self._records.items() if record.last_seen_monotonic < cutoff
         ]
         for op_id in expired:
             del self._records[op_id]

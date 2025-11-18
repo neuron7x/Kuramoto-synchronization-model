@@ -101,9 +101,7 @@ def serve(address: str, scenario: MarketScenario) -> grpc.Server:
     """Start the load-test trading service and return the running server."""
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
-    trading_pb2_grpc.add_TradingServiceServicer_to_server(
-        LoadTestTradingService(scenario), server
-    )
+    trading_pb2_grpc.add_TradingServiceServicer_to_server(LoadTestTradingService(scenario), server)
     server.add_insecure_port(address)
     server.start()
     return server

@@ -139,7 +139,12 @@ def test_pipeline_runs_end_to_end() -> None:
     assert 0.0 <= result.artifacts.performance.pr_auc <= 1.0
     assert result.backtest is not None
     assert result.drift_guard is not None
-    assert set(result.drift_guard.keys()) == {"dr", "ricci_mean", "topo_intensity", "causal_strength"}
+    assert set(result.drift_guard.keys()) == {
+        "dr",
+        "ricci_mean",
+        "topo_intensity",
+        "causal_strength",
+    }
 
 
 def test_pipeline_without_backtest() -> None:

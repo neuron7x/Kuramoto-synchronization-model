@@ -63,15 +63,15 @@ from observability.drift import DriftDetector, FeatureDriftSummary, FeatureSnaps
 class OfflineWriter(Protocol):
     """Minimal protocol for persisting processed datasets offline."""
 
-    def __call__(self, dataset: str, frame: pd.DataFrame, *, metadata: Mapping[str, Any]) -> None: ...
+    def __call__(
+        self, dataset: str, frame: pd.DataFrame, *, metadata: Mapping[str, Any]
+    ) -> None: ...
 
 
 class OnlineWriter(Protocol):
     """Protocol abstraction mirroring ``OnlineFeatureStore.sync`` semantics."""
 
-    def __call__(
-        self, feature_view: str, frame: pd.DataFrame, *, mode: str = "append"
-    ) -> None: ...
+    def __call__(self, feature_view: str, frame: pd.DataFrame, *, mode: str = "append") -> None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -355,9 +355,7 @@ class DataPipeline:
                 return frame.copy(), spec.name
         raise PipelineExecutionError(f"No non-empty sources yielded data for dataset '{dataset}'")
 
-    def _validate(
-        self, frame: pd.DataFrame, schema: TimeSeriesValidationConfig
-    ) -> pd.DataFrame:
+    def _validate(self, frame: pd.DataFrame, schema: TimeSeriesValidationConfig) -> pd.DataFrame:
         timestamp_col = schema.timestamp_column
         if timestamp_col not in frame.columns:
             raise PipelineExecutionError(
@@ -428,13 +426,9 @@ class DataPipeline:
         clean = report.clean
         clean = clean.drop_duplicates(subset=gate.validation_schema.timestamp_column, keep="last")
         summary = report.summarise(gate)
-        return DataPipeline._QualityOutcome(
-            clean.reset_index(drop=True), quarantined, summary
-        )
+        return DataPipeline._QualityOutcome(clean.reset_index(drop=True), quarantined, summary)
 
-    def _apply_toxicity_filter(
-        self, frame: pd.DataFrame
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def _apply_toxicity_filter(self, frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
         cfg = self._config.toxicity_filter
         if cfg is None or cfg.column not in frame.columns:
             empty = frame.iloc[0:0].copy()
@@ -474,14 +468,11 @@ class DataPipeline:
         if target <= 0:
             return frame
 
-        sampled = (
-            grouped.sample(
-                n=target,
-                replace=False,
-                random_state=int(self._rng.integers(0, np.iinfo(np.int32).max)),
-            )
-            .reset_index(drop=True)
-        )
+        sampled = grouped.sample(
+            n=target,
+            replace=False,
+            random_state=int(self._rng.integers(0, np.iinfo(np.int32).max)),
+        ).reset_index(drop=True)
 
         return sampled.sample(
             frac=1.0,
@@ -496,9 +487,7 @@ class DataPipeline:
         splits = tuple(cfg.normalised_splits().items())
         empty_template = frame.iloc[0:0].copy()
 
-        collected_indices: dict[str, list[np.ndarray]] = {
-            name: [] for name, _ in splits
-        }
+        collected_indices: dict[str, list[np.ndarray]] = {name: [] for name, _ in splits}
         remainder_indices: list[np.ndarray] = []
 
         column = frame[cfg.column]
@@ -556,9 +545,7 @@ class DataPipeline:
 
         return results
 
-    def _augment_with_synthetic(
-        self, frame: pd.DataFrame
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def _augment_with_synthetic(self, frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
         cfg = self._config.synthetic
         if frame.empty or cfg.samples <= 0:
             return frame, frame.iloc[0:0].copy()
@@ -574,10 +561,9 @@ class DataPipeline:
         synthetic = sample.copy()
         synthetic.loc[:, numeric_cols] = sample.loc[:, numeric_cols] + noise
         synthetic["synthetic"] = True
-        augmented = (
-            pd.concat([frame.reset_index(drop=True), synthetic], ignore_index=True)
-            .reset_index(drop=True)
-        )
+        augmented = pd.concat(
+            [frame.reset_index(drop=True), synthetic], ignore_index=True
+        ).reset_index(drop=True)
         return augmented, synthetic
 
     # ------------------------------------------------------------------
@@ -715,4 +701,3 @@ __all__ = [
     "ToxicityFilterConfig",
     "build_online_writer",
 ]
-

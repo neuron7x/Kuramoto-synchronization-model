@@ -18,9 +18,13 @@ class DPAConfig(BaseModel):
     @field_validator("risk_modulation_max")
     @classmethod
     def _check_bounds(cls, value: float, info):
-        min_value = info.data.get("risk_modulation_min", cls.model_fields["risk_modulation_min"].default)
+        min_value = info.data.get(
+            "risk_modulation_min", cls.model_fields["risk_modulation_min"].default
+        )
         if value < min_value:
-            raise ValueError("risk_modulation_max must be greater than or equal to risk_modulation_min")
+            raise ValueError(
+                "risk_modulation_max must be greater than or equal to risk_modulation_min"
+            )
         return value
 
 
@@ -88,4 +92,3 @@ class NeuroAdvancedConfig(BaseModel):
 
     def merged_alert_thresholds(self) -> Dict[str, float]:
         return self.alert_thresholds.model_dump()
-

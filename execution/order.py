@@ -495,6 +495,7 @@ class ConstrainedPositionSizer(RiskAwarePositionSizer):
             notes=notes,
         )
 
+
 def position_sizing(
     balance: float,
     risk: float,

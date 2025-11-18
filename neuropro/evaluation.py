@@ -15,9 +15,9 @@ def sharpe(r):
 def deflated_sharpe(sr: float, n: int, trials: int = 50) -> float:
     if n <= 2:
         return 0.0
-    emax = np.sqrt(2 * np.log(trials)) - (
-        np.log(np.log(trials)) + np.log(4 * np.pi)
-    ) / (2 * np.sqrt(2 * np.log(trials)))
+    emax = np.sqrt(2 * np.log(trials)) - (np.log(np.log(trials)) + np.log(4 * np.pi)) / (
+        2 * np.sqrt(2 * np.log(trials))
+    )
     return (abs(sr) - emax) * np.sqrt((n - 1) / (n - 2))
 
 

@@ -1,4 +1,5 @@
 """Neuro-inspired CNS stabiliser for the TACL control loop."""
+
 from __future__ import annotations
 
 import asyncio
@@ -84,7 +85,9 @@ class CNSStabilizer:
         self._last_audit_status = "confirmed"
         self.system_mode = "PoR"
 
-    async def process_signals(self, raw_signals: List[float], *, ga_phase: str = "pre_evolve") -> List[float]:
+    async def process_signals(
+        self, raw_signals: List[float], *, ga_phase: str = "pre_evolve"
+    ) -> List[float]:
         """Process a batch of raw signals asynchronously.
 
         Parameters
@@ -331,7 +334,9 @@ class CNSStabilizer:
 
         return aligned_chunk
 
-    def process_signals_sync(self, raw_signals: List[float], *, ga_phase: str = "pre_evolve") -> List[float]:
+    def process_signals_sync(
+        self, raw_signals: List[float], *, ga_phase: str = "pre_evolve"
+    ) -> List[float]:
         """Synchronous helper for environments without an event loop."""
 
         try:

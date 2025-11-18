@@ -34,14 +34,10 @@ class DummyConnector:
 
 
 class DummyRiskController:
-    def validate_order(
-        self, symbol: str, side: str, quantity: float, price: float | None
-    ) -> None:
+    def validate_order(self, symbol: str, side: str, quantity: float, price: float | None) -> None:
         return None
 
-    def register_fill(
-        self, symbol: str, side: str, quantity: float, price: float
-    ) -> None:
+    def register_fill(self, symbol: str, side: str, quantity: float, price: float) -> None:
         return None
 
 
@@ -138,9 +134,7 @@ def test_oms_writes_and_recovers_from_order_ledger(tmp_path: Path, simple_order:
     assert replayed_events[-1].metadata["source"] == "ledger"
 
 
-def test_order_ledger_snapshotting_and_indexing(
-    tmp_path: Path, simple_order: Order
-) -> None:
+def test_order_ledger_snapshotting_and_indexing(tmp_path: Path, simple_order: Order) -> None:
     ledger_path = tmp_path / "snapshot-ledger.jsonl"
     config = OrderLedgerConfig(
         snapshot_interval=1,

@@ -54,7 +54,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -75,7 +80,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
         assert decision.allowed
@@ -101,7 +111,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -122,7 +137,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -287,7 +307,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -420,9 +445,7 @@ class TestRiskCompliance:
         value, mode, _env = metrics.daily_drawdowns[-1]
         assert mode == "percent"
         assert value == pytest.approx(0.10, rel=1e-6)
-        assert {"max_notional_per_order", "daily_max_drawdown"}.issubset(
-            set(metrics.rejections)
-        )
+        assert {"max_notional_per_order", "daily_max_drawdown"}.issubset(set(metrics.rejections))
 
     def test_update_config_validates_keys(self):
         """Partial config updates should be validated and applied atomically."""

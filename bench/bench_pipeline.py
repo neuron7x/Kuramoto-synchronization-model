@@ -56,9 +56,7 @@ def run_signal_generation() -> None:
 
 def run_order_submission() -> None:
     engine = MatchingEngine(latency_model=lambda order: 25)
-    engine.add_passive_liquidity(
-        "BTC-USD", OrderSide.SELL, price=20_500, qty=5.0, timestamp=0
-    )
+    engine.add_passive_liquidity("BTC-USD", OrderSide.SELL, price=20_500, qty=5.0, timestamp=0)
     order = Order(
         id="bench-1",
         symbol="BTC-USD",

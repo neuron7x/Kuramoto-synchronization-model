@@ -131,9 +131,7 @@ class TickStreamAggregator:
 
         frames = [
             existing,
-            self._coerce_to_frame(
-                historical, canonical_key, instrument_type, market_hint
-            ),
+            self._coerce_to_frame(historical, canonical_key, instrument_type, market_hint),
             self._coerce_to_frame(live, canonical_key, instrument_type, market_hint),
         ]
 
@@ -151,16 +149,12 @@ class TickStreamAggregator:
         window = self._resolve_window(cached, start, end, market_hint)
         if window is None:
             plan = BackfillPlan()
-            return AggregationResult(
-                key=canonical_key, frame=cached, backfill_plan=plan
-            )
+            return AggregationResult(key=canonical_key, frame=cached, backfill_plan=plan)
 
         expected_index = self._build_expected_index(*window, market=market_hint)
         if expected_index.empty:
             plan = BackfillPlan()
-            return AggregationResult(
-                key=canonical_key, frame=cached, backfill_plan=plan
-            )
+            return AggregationResult(key=canonical_key, frame=cached, backfill_plan=plan)
 
         planner = self._get_planner()
         plan = planner.plan(
@@ -171,9 +165,7 @@ class TickStreamAggregator:
         if plan.gaps and gap_fetcher is not None:
             gap_frames: list[pd.DataFrame] = []
             for gap in plan.gaps:
-                payload = gap_fetcher(
-                    gap.start.to_pydatetime(), gap.end.to_pydatetime()
-                )
+                payload = gap_fetcher(gap.start.to_pydatetime(), gap.end.to_pydatetime())
                 gap_frame = self._coerce_to_frame(
                     payload, canonical_key, instrument_type, market_hint
                 )
@@ -202,9 +194,7 @@ class TickStreamAggregator:
 
     # ------------------------------------------------------------------
     # Internal helpers
-    def _resolve_frequency(
-        self, value: str | pd.Timedelta | BaseOffset
-    ) -> pd.Timedelta:
+    def _resolve_frequency(self, value: str | pd.Timedelta | BaseOffset) -> pd.Timedelta:
         try:
             freq = pd.to_timedelta(value)
         except (TypeError, ValueError) as exc:  # pragma: no cover - defensive guard
@@ -219,9 +209,7 @@ class TickStreamAggregator:
         venue: str,
         instrument_type: InstrumentType,
     ) -> CacheKey:
-        canonical_symbol = normalize_symbol(
-            symbol, instrument_type_hint=instrument_type
-        )
+        canonical_symbol = normalize_symbol(symbol, instrument_type_hint=instrument_type)
         canonical_venue = normalize_venue(venue)
         return CacheKey(
             layer=self._layer,
@@ -253,9 +241,7 @@ class TickStreamAggregator:
             return self._empty_frame()
         self._validate_tick_metadata(ticks, key, instrument_type)
 
-        timestamps = [
-            self._normalise_tick_timestamp(tick.timestamp, market) for tick in ticks
-        ]
+        timestamps = [self._normalise_tick_timestamp(tick.timestamp, market) for tick in ticks]
         index = pd.DatetimeIndex(pd.to_datetime(timestamps, utc=True))
         index.name = "timestamp"
         frame = pd.DataFrame(
@@ -268,9 +254,7 @@ class TickStreamAggregator:
         return normalise_index(frame, market=market).sort_index()
 
     def _merge_frames(self, frames: Sequence[pd.DataFrame]) -> pd.DataFrame:
-        candidates = [
-            frame for frame in frames if frame is not None and not frame.empty
-        ]
+        candidates = [frame for frame in frames if frame is not None and not frame.empty]
         if not candidates:
             return self._empty_frame()
         combined = pd.concat(candidates)
@@ -313,9 +297,7 @@ class TickStreamAggregator:
         else:
             end_ts = end_ts.tz_convert(UTC)
 
-        base_index = pd.date_range(
-            start=start_ts, end=end_ts, freq=self._frequency, tz=UTC
-        )
+        base_index = pd.date_range(start=start_ts, end=end_ts, freq=self._frequency, tz=UTC)
         base_index.name = "timestamp"
         if base_index.empty or not market:
             return base_index
@@ -350,12 +332,8 @@ class TickStreamAggregator:
                 return pd.DatetimeIndex([], tz=UTC, name="timestamp")
 
             gaps = np.flatnonzero(np.diff(minute_values) > minute.value) + 1
-            segments = (
-                np.split(trading_minutes, gaps) if gaps.size else [trading_minutes]
-            )
-            selected_segments = [
-                segment[::stride] for segment in segments if not segment.empty
-            ]
+            segments = np.split(trading_minutes, gaps) if gaps.size else [trading_minutes]
+            selected_segments = [segment[::stride] for segment in segments if not segment.empty]
             if not selected_segments:
                 return pd.DatetimeIndex([], tz=UTC, name="timestamp")
             resampled = (

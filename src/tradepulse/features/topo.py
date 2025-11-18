@@ -111,8 +111,7 @@ class TopoSentinel:
 
         if numeric.shape[1] < 2:
             logger.warning(
-                "TopoSentinel found fewer than two assets with non-zero variance; "
-                "returning 0.0"
+                "TopoSentinel found fewer than two assets with non-zero variance; " "returning 0.0"
             )
             return {"topo_score": 0.0}
 

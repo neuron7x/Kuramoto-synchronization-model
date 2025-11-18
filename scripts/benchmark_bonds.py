@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import argparse
-import statistics
-import sys
-import time
-from pathlib import Path
+import argparse  # noqa: E402
+import statistics  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
+from pathlib import Path  # noqa: E402
 
-import networkx as nx
+import networkx as nx  # noqa: E402
 
 # ``python scripts/benchmark_bonds.py`` sets ``sys.path[0]`` to the ``scripts``
 # directory, which omits the project root and shadows the top-level ``runtime``
@@ -22,8 +22,8 @@ script_dir_str = str(SCRIPT_DIR)
 if script_dir_str in sys.path:
     sys.path.remove(script_dir_str)
 
-from core.energy import delta_free_energy
-from runtime.thermo_controller import ThermoController
+from core.energy import delta_free_energy  # noqa: E402
+from runtime.thermo_controller import ThermoController  # noqa: E402
 
 
 def run_benchmark(iterations: int = 200) -> dict[str, float | int]:
@@ -80,9 +80,7 @@ def main() -> None:
 
     mean_abs = abs(metrics["dFdt_mean"])
     if mean_abs > args.target_dF:
-        raise SystemExit(
-            f"dF/dt gate failed. mean_abs={mean_abs} > target={args.target_dF}"
-        )
+        raise SystemExit(f"dF/dt gate failed. mean_abs={mean_abs} > target={args.target_dF}")
 
 
 if __name__ == "__main__":

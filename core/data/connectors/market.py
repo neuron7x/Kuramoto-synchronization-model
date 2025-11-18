@@ -42,9 +42,7 @@ class BaseMarketDataConnector:
     ) -> None:
         self._adapter = adapter
         self._dead_letters = dead_letter_queue or DeadLetterQueue()
-        self._registry = schema_registry or EventSchemaRegistry.from_directory(
-            DEFAULT_SCHEMA_ROOT
-        )
+        self._registry = schema_registry or EventSchemaRegistry.from_directory(DEFAULT_SCHEMA_ROOT)
         schema_info = self._registry.latest(event_type, SchemaFormat.AVRO)
         self._schema_version = schema_info.version_str
         schema_doc = schema_info.load()
@@ -70,9 +68,7 @@ class BaseMarketDataConnector:
             try:
                 event = self._convert_tick(tick)
                 self._validate_event(event)
-            except (
-                Exception
-            ) as exc:  # pragma: no cover - resilience path exercised in tests
+            except Exception as exc:  # pragma: no cover - resilience path exercised in tests
                 logger.warning(
                     "tick_conversion_failed",
                     error=str(exc),
@@ -117,9 +113,7 @@ class BaseMarketDataConnector:
                         )
                         continue
                     yield event
-            except (
-                Exception
-            ) as exc:  # pragma: no cover - exercised in tests via dummy adapters
+            except Exception as exc:  # pragma: no cover - exercised in tests via dummy adapters
                 attempt += 1
                 logger.warning(
                     "stream_restart",

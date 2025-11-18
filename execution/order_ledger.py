@@ -160,6 +160,8 @@ class LedgerSnapshot:
                     "Snapshot integrity check failed: state hash mismatch",
                 )
         return state
+
+
 @dataclass(frozen=True, slots=True)
 class OrderLedgerEvent:
     """Single append-only entry within the order ledger."""
@@ -369,9 +371,7 @@ class OrderLedger:
             min_sequence=None,
         )
 
-    def replay_from(
-        self, sequence: int, *, verify: bool = True
-    ) -> Iterator[OrderLedgerEvent]:
+    def replay_from(self, sequence: int, *, verify: bool = True) -> Iterator[OrderLedgerEvent]:
         """Replay events starting from the first entry with ``sequence`` or greater."""
 
         if sequence < 1:
@@ -424,9 +424,7 @@ class OrderLedger:
         with self._lock:
             return [snapshot.sequence for snapshot in self._snapshots]
 
-    def load_snapshot(
-        self, sequence: int | None = None
-    ) -> MutableMapping[str, Any] | None:
+    def load_snapshot(self, sequence: int | None = None) -> MutableMapping[str, Any] | None:
         """Load a snapshot by sequence, defaulting to the most recent."""
 
         with self._lock:
@@ -467,9 +465,7 @@ class OrderLedger:
                 if verify:
                     content = dict(payload)
                     del content["digest"]
-                    computed = sha256(
-                        _canonical_dumps(content).encode("utf-8")
-                    ).hexdigest()
+                    computed = sha256(_canonical_dumps(content).encode("utf-8")).hexdigest()
                     expected_previous = content.get("previous_digest")
                     if computed != digest:
                         raise ValueError(
@@ -509,7 +505,10 @@ class OrderLedger:
     ) -> None:
         if state_payload is None:
             return
-        if self._snapshots and sequence - self._snapshots[-1].sequence < self._config.snapshot_interval:
+        if (
+            self._snapshots
+            and sequence - self._snapshots[-1].sequence < self._config.snapshot_interval
+        ):
             return
         self._create_snapshot(sequence, timestamp, digest, state_hash, state_payload)
 
@@ -551,7 +550,7 @@ class OrderLedger:
     def _enforce_snapshot_retention(self) -> None:
         if len(self._snapshots) <= self._config.snapshot_retention:
             return
-        excess = self._snapshots[:-self._config.snapshot_retention]
+        excess = self._snapshots[: -self._config.snapshot_retention]
         for snapshot in excess:
             with contextlib.suppress(FileNotFoundError):
                 snapshot.path.unlink()
@@ -568,9 +567,11 @@ class OrderLedger:
         if latest_snapshot.sequence <= self._metadata.compacted_through:
             return False
         events_since_compaction = (
-            (self._metadata.next_sequence - 1) - self._metadata.compacted_through
+            self._metadata.next_sequence - 1
+        ) - self._metadata.compacted_through
+        size_exceeded = (
+            self._path.exists() and self._path.stat().st_size > self._config.max_journal_size
         )
-        size_exceeded = self._path.exists() and self._path.stat().st_size > self._config.max_journal_size
         threshold_exceeded = events_since_compaction >= self._config.compaction_threshold_events
         if not size_exceeded and not threshold_exceeded:
             return False
@@ -579,9 +580,7 @@ class OrderLedger:
     def _compact(self, base_snapshot: LedgerSnapshot) -> bool:
         if not self._path.exists():
             return False
-        archive_name = (
-            f"ledger_{base_snapshot.sequence}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}"
-        )
+        archive_name = f"ledger_{base_snapshot.sequence}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}"  # noqa: E501
         archive_path = self._archives_dir / f"{archive_name}.jsonl.gz"
         tmp_path = self._path.with_suffix(self._path.suffix + ".tmp")
         removed = False
@@ -619,7 +618,7 @@ class OrderLedger:
         archives = sorted(self._archives_dir.glob("*.jsonl.gz"))
         if len(archives) <= self._config.archive_retention:
             return
-        for path in archives[:-self._config.archive_retention]:
+        for path in archives[: -self._config.archive_retention]:
             with contextlib.suppress(FileNotFoundError):
                 path.unlink()
 
@@ -634,9 +633,7 @@ class OrderLedger:
                 break
         return offset, previous
 
-    def _append_index_entry(
-        self, sequence: int, offset: int, previous_digest: str | None
-    ) -> None:
+    def _append_index_entry(self, sequence: int, offset: int, previous_digest: str | None) -> None:
         entry = {
             "sequence": sequence,
             "offset": offset,
@@ -660,7 +657,9 @@ class OrderLedger:
     def _write_metadata(self) -> None:
         tmp_path = self._metadata_path.with_suffix(self._metadata_path.suffix + ".tmp")
         with tmp_path.open("w", encoding="utf-8") as handle:
-            json.dump(self._metadata.to_dict(), handle, sort_keys=True, ensure_ascii=False, indent=2)
+            json.dump(
+                self._metadata.to_dict(), handle, sort_keys=True, ensure_ascii=False, indent=2
+            )
         tmp_path.replace(self._metadata_path)
 
     def _read_metadata_file(self) -> LedgerMetadata | None:
@@ -712,9 +711,7 @@ class OrderLedger:
                     digest = str(payload.get("digest"))
                     content = dict(payload)
                     content.pop("digest", None)
-                    computed = sha256(
-                        _canonical_dumps(content).encode("utf-8")
-                    ).hexdigest()
+                    computed = sha256(_canonical_dumps(content).encode("utf-8")).hexdigest()
                     if computed != digest:
                         handle.seek(offset)
                         handle.truncate()
@@ -733,10 +730,7 @@ class OrderLedger:
                     sequence = int(content["sequence"])
                     last_sequence = sequence
                     last_timestamp = str(content.get("timestamp", last_timestamp))
-                    if (
-                        event_count == 1
-                        or event_count % self._config.index_stride == 0
-                    ):
+                    if event_count == 1 or event_count % self._config.index_stride == 0:
                         offsets.append((sequence, offset, previous))
                     state_snapshot = payload.get("state_snapshot")
                     if state_snapshot is not None:
@@ -767,12 +761,8 @@ class OrderLedger:
         self._last_state_event = last_state_event
         self._write_index_full()
         self._snapshots = self._load_snapshot_catalog()
-        if (
-            last_state_event is not None
-            and (
-                not self._snapshots
-                or self._snapshots[-1].sequence < last_state_event[0]
-            )
+        if last_state_event is not None and (
+            not self._snapshots or self._snapshots[-1].sequence < last_state_event[0]
         ):
             self._create_snapshot(
                 last_state_event[0],
@@ -808,9 +798,7 @@ class OrderLedger:
                 if state is None:
                     raise ValueError("missing state payload")
                 if state_hash:
-                    computed = sha256(
-                        _canonical_dumps(state).encode("utf-8")
-                    ).hexdigest()
+                    computed = sha256(_canonical_dumps(state).encode("utf-8")).hexdigest()
                     if computed != state_hash:
                         raise ValueError("state hash mismatch")
             except Exception:
@@ -828,9 +816,8 @@ class OrderLedger:
             )
         snapshots.sort(key=lambda snapshot: snapshot.sequence)
         if len(snapshots) > self._config.snapshot_retention:
-            for stale in snapshots[:-self._config.snapshot_retention]:
+            for stale in snapshots[: -self._config.snapshot_retention]:
                 with contextlib.suppress(FileNotFoundError):
                     stale.path.unlink()
             snapshots = snapshots[-self._config.snapshot_retention :]
         return snapshots
-

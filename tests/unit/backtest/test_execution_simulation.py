@@ -21,9 +21,7 @@ def engine():
 
 def test_latency_delays_execution(engine):
     engine.latency_model = lambda order: 100
-    engine.add_passive_liquidity(
-        "BTC-USD", OrderSide.SELL, price=100.0, qty=5.0, timestamp=0
-    )
+    engine.add_passive_liquidity("BTC-USD", OrderSide.SELL, price=100.0, qty=5.0, timestamp=0)
 
     order = Order(
         id="o-1",
@@ -46,9 +44,7 @@ def test_latency_delays_execution(engine):
 
 def test_queue_and_partial_fill(engine):
     engine.latency_model = lambda order: 0
-    engine.add_passive_liquidity(
-        "ETH-USD", OrderSide.SELL, price=100.0, qty=6.0, timestamp=0
-    )
+    engine.add_passive_liquidity("ETH-USD", OrderSide.SELL, price=100.0, qty=6.0, timestamp=0)
 
     first = Order(
         id="o-1",
@@ -88,9 +84,7 @@ def test_market_halt_delay_and_resume():
         return MarketHalt(mode=HaltMode.OPEN)
 
     engine = MatchingEngine(latency_model=lambda order: 0, halt_model=halt_model)
-    engine.add_passive_liquidity(
-        "BTC-USD", OrderSide.SELL, price=50_000, qty=1.0, timestamp=0
-    )
+    engine.add_passive_liquidity("BTC-USD", OrderSide.SELL, price=50_000, qty=1.0, timestamp=0)
 
     order = Order(
         id="o-1",
@@ -112,9 +106,7 @@ def test_market_halt_delay_and_resume():
 
 def test_fok_requires_full_liquidity(engine):
     engine.latency_model = lambda order: 0
-    engine.add_passive_liquidity(
-        "BTC-USD", OrderSide.SELL, price=25_000, qty=5.0, timestamp=0
-    )
+    engine.add_passive_liquidity("BTC-USD", OrderSide.SELL, price=25_000, qty=5.0, timestamp=0)
 
     order = Order(
         id="o-1",
@@ -136,9 +128,7 @@ def test_fok_requires_full_liquidity(engine):
 
 def test_ioc_partial_fill_cancels_remaining(engine):
     engine.latency_model = lambda order: 0
-    engine.add_passive_liquidity(
-        "BTC-USD", OrderSide.SELL, price=50_000, qty=3.0, timestamp=0
-    )
+    engine.add_passive_liquidity("BTC-USD", OrderSide.SELL, price=50_000, qty=3.0, timestamp=0)
 
     order = Order(
         id="o-1",

@@ -11,9 +11,7 @@ def test_metrics_module_imports_without_numpy(monkeypatch: pytest.MonkeyPatch) -
     """Ensure metrics module gracefully degrades when numpy is unavailable."""
 
     metrics_path = Path(__file__).resolve().parents[2] / "core" / "utils" / "metrics.py"
-    spec = importlib.util.spec_from_file_location(
-        "core.utils.metrics_no_numpy", metrics_path
-    )
+    spec = importlib.util.spec_from_file_location("core.utils.metrics_no_numpy", metrics_path)
     module = importlib.util.module_from_spec(spec)
     loader = spec.loader
     assert loader is not None
@@ -34,9 +32,7 @@ def test_metrics_module_imports_without_numpy(monkeypatch: pytest.MonkeyPatch) -
     assert module._NUMPY_AVAILABLE is False
     assert module.np is None
 
-    quantiles = module._fallback_quantiles(
-        [0.0, 0.25, 0.5, 0.75, 1.0], (0.5, 0.95, 0.99)
-    )
+    quantiles = module._fallback_quantiles([0.0, 0.25, 0.5, 0.75, 1.0], (0.5, 0.95, 0.99))
     assert quantiles[0.5] == pytest.approx(0.5)
     assert quantiles[0.95] == pytest.approx(0.95, rel=1e-9)
     assert quantiles[0.99] == pytest.approx(0.99, rel=1e-9)

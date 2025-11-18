@@ -50,9 +50,7 @@ def validate(stats_path: Path) -> None:
             f"Throughput below threshold: {requests_per_second:.2f} < {MIN_REQUESTS_PER_SECOND:.2f}"
         )
     if error_rate > MAX_ERROR_RATE:
-        raise SystemExit(
-            f"Error rate exceeded: {error_rate:.4f} > {MAX_ERROR_RATE:.4f}"
-        )
+        raise SystemExit(f"Error rate exceeded: {error_rate:.4f} > {MAX_ERROR_RATE:.4f}")
 
 
 if __name__ == "__main__":

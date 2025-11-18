@@ -116,9 +116,7 @@ class TestAutomatedRiskTester:
 
     def test_tester_initialization_with_custom_params(self):
         """Test tester initialization with custom parameters."""
-        tester = AutomatedRiskTester(
-            es_limit=0.05, var_alpha=0.95, f_max=0.8, seed=42
-        )
+        tester = AutomatedRiskTester(es_limit=0.05, var_alpha=0.95, f_max=0.8, seed=42)
 
         assert tester.es_limit == 0.05
         assert tester.var_alpha == 0.95
@@ -286,15 +284,9 @@ class TestScenarioGenerators:
 
         assert len(scenarios) > 0
         assert all(isinstance(s, RiskScenario) for s in scenarios)
-        assert any(
-            s.scenario_type == ScenarioType.NORMAL_MARKET for s in scenarios
-        )
-        assert any(
-            s.scenario_type == ScenarioType.VOLATILE_MARKET for s in scenarios
-        )
-        assert any(
-            s.scenario_type == ScenarioType.TRENDING_MARKET for s in scenarios
-        )
+        assert any(s.scenario_type == ScenarioType.NORMAL_MARKET for s in scenarios)
+        assert any(s.scenario_type == ScenarioType.VOLATILE_MARKET for s in scenarios)
+        assert any(s.scenario_type == ScenarioType.TRENDING_MARKET for s in scenarios)
         assert all(len(s.returns) == 100 for s in scenarios)
 
     def test_generate_liquidity_crisis_scenarios(self):
@@ -303,22 +295,16 @@ class TestScenarioGenerators:
 
         assert len(scenarios) > 0
         assert all(isinstance(s, RiskScenario) for s in scenarios)
-        assert all(
-            s.scenario_type == ScenarioType.LIQUIDITY_CRISIS for s in scenarios
-        )
+        assert all(s.scenario_type == ScenarioType.LIQUIDITY_CRISIS for s in scenarios)
         assert all(len(s.returns) == 100 for s in scenarios)
 
     def test_generate_flash_crash_scenarios(self):
         """Test flash crash scenario generation."""
-        scenarios = generate_flash_crash_scenarios(
-            num_days=100, crash_magnitude=0.15, seed=42
-        )
+        scenarios = generate_flash_crash_scenarios(num_days=100, crash_magnitude=0.15, seed=42)
 
         assert len(scenarios) > 0
         assert all(isinstance(s, RiskScenario) for s in scenarios)
-        assert all(
-            s.scenario_type == ScenarioType.FLASH_CRASH for s in scenarios
-        )
+        assert all(s.scenario_type == ScenarioType.FLASH_CRASH for s in scenarios)
         assert all(len(s.returns) == 100 for s in scenarios)
 
         # Check that crashes are present
@@ -459,9 +445,7 @@ class TestIntegrationScenarios:
             tester.add_scenario(scenario)
 
         # Add liquidity crisis scenarios
-        crisis_scenarios = generate_liquidity_crisis_scenarios(
-            num_days=252, seed=42
-        )
+        crisis_scenarios = generate_liquidity_crisis_scenarios(num_days=252, seed=42)
         for scenario in crisis_scenarios:
             tester.add_scenario(scenario)
 

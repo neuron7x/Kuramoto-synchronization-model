@@ -249,13 +249,13 @@ class RealTimeFeatureStore:
             return
         ttl_ms = descriptor.ttl_milliseconds
         async with self._db_pool.acquire() as conn:
-            await conn.execute(
+            await conn.execute(  # noqa: E501
                 """
                 INSERT INTO feature_registry (feature_name, feature_version, entity, ttl_ms, schema, description)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (feature_name, feature_version, entity)
                 DO UPDATE SET ttl_ms = EXCLUDED.ttl_ms, schema = EXCLUDED.schema, description = EXCLUDED.description;
-                """,
+                """,  # noqa: E501
                 descriptor.name,
                 descriptor.version,
                 descriptor.entity,
@@ -264,7 +264,12 @@ class RealTimeFeatureStore:
                 descriptor.description,
             )
         self._registered_descriptors[key] = descriptor
-        _LOGGER.debug("Registered feature %s v%s for entity %s", descriptor.name, descriptor.version, descriptor.entity)
+        _LOGGER.debug(
+            "Registered feature %s v%s for entity %s",
+            descriptor.name,
+            descriptor.version,
+            descriptor.entity,
+        )
 
     async def publish_incremental_update(
         self,
@@ -279,7 +284,13 @@ class RealTimeFeatureStore:
 
         await self.register_feature(descriptor)
         event_ts = (event_ts or datetime.now(timezone.utc)).astimezone(timezone.utc)
-        record = FeatureRecord(descriptor=descriptor, entity_id=entity_id, value=dict(value), event_ts=event_ts, lineage=lineage)
+        record = FeatureRecord(
+            descriptor=descriptor,
+            entity_id=entity_id,
+            value=dict(value),
+            event_ts=event_ts,
+            lineage=lineage,
+        )
         redis_payload = record.to_redis_payload()
         ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
 
@@ -333,12 +344,12 @@ class RealTimeFeatureStore:
     async def _write_to_timescale(self, record: FeatureRecord) -> bool:
         lineage_json = json.dumps(record.lineage.asdict()) if record.lineage else None
         async with self._db_pool.acquire() as conn:
-            command_tag = await conn.execute(
+            command_tag = await conn.execute(  # noqa: E501
                 """
                 INSERT INTO feature_values (feature_name, feature_version, entity_id, event_ts, value, lineage)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (feature_name, feature_version, entity_id, event_ts) DO NOTHING;
-                """,
+                """,  # noqa: E501
                 record.descriptor.name,
                 record.descriptor.version,
                 record.entity_id,
@@ -355,10 +366,10 @@ class RealTimeFeatureStore:
     async def _delete_from_timescale(self, record: FeatureRecord) -> None:
         async with self._db_pool.acquire() as conn:
             await conn.execute(
-                """
+                """  # noqa: E501
                 DELETE FROM feature_values
                 WHERE feature_name = $1 AND feature_version = $2 AND entity_id = $3 AND event_ts = $4;
-                """,
+                """,  # noqa: E501
                 record.descriptor.name,
                 record.descriptor.version,
                 record.entity_id,
@@ -392,7 +403,9 @@ class RealTimeFeatureStore:
         assert last_error is not None
         raise last_error
 
-    async def get_feature(self, descriptor: FeatureDescriptor, entity_id: str) -> FeatureRecord | None:
+    async def get_feature(
+        self, descriptor: FeatureDescriptor, entity_id: str
+    ) -> FeatureRecord | None:
         """Retrieve the most recent feature value for an entity."""
 
         cache_key = descriptor.cache_key(entity_id)
@@ -465,7 +478,7 @@ class RealTimeFeatureStore:
                 WHERE feature_name = $1 AND feature_version = $2 AND entity_id = $3 AND event_ts <= $4
                 ORDER BY event_ts DESC
                 LIMIT 1;
-                """,
+                """,  # noqa: E501
                 descriptor.name,
                 descriptor.version,
                 entity_id,
@@ -540,9 +553,13 @@ class RealTimeFeatureStore:
                         lineage=lineage,
                     )
                     payload = record.to_redis_payload()
-                    ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
+                    ttl_ms = descriptor.ttl_milliseconds or int(
+                        self._default_ttl.total_seconds() * 1000
+                    )
                     await self._write_to_redis(descriptor, record.entity_id, payload, ttl_ms)
-                    await self._microcache.set(descriptor.cache_key(record.entity_id), record, ttl_ms)
+                    await self._microcache.set(
+                        descriptor.cache_key(record.entity_id), record, ttl_ms
+                    )
 
     async def run_batch_precomputation(
         self,
@@ -550,7 +567,9 @@ class RealTimeFeatureStore:
         entity_ids: Sequence[str],
         window_start: datetime,
         window_end: datetime,
-        compute_fn: Callable[[Sequence[str], datetime, datetime], Awaitable[Mapping[str, Mapping[str, Any]]]],
+        compute_fn: Callable[
+            [Sequence[str], datetime, datetime], Awaitable[Mapping[str, Mapping[str, Any]]]
+        ],
         *,
         batch_size: int = 500,
     ) -> None:
@@ -589,7 +608,11 @@ class RealTimeFeatureStore:
             for entry_id, payload in entries:
                 payload_str: dict[str, str] = {}
                 for key, value in payload.items():
-                    key_str = key.decode("utf-8") if isinstance(key, (bytes, bytearray, memoryview)) else key
+                    key_str = (
+                        key.decode("utf-8")
+                        if isinstance(key, (bytes, bytearray, memoryview))
+                        else key
+                    )
                     if isinstance(value, (bytes, bytearray, memoryview)):
                         payload_str[key_str] = bytes(value).decode("utf-8")
                     else:
@@ -598,6 +621,8 @@ class RealTimeFeatureStore:
                 records.append(record)
                 _LOGGER.debug("Consumed stream entry %s for %s", entry_id, descriptor.name)
         return records
+
+
 def _chunked(iterable: Sequence[T], size: int) -> Iterable[Sequence[T]]:
     if size <= 0:
         raise ValueError("chunk size must be positive")

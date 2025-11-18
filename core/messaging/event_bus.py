@@ -191,10 +191,7 @@ class KafkaEventBus(BaseEventBus):
         if self._producer is None:
             raise RuntimeError("KafkaEventBus.start() must be called before publish()")
         key = envelope.partition_key.encode("utf-8")
-        headers = [
-            (name, value.encode("utf-8"))
-            for name, value in envelope.as_message().items()
-        ]
+        headers = [(name, value.encode("utf-8")) for name, value in envelope.as_message().items()]
         await self._producer.send_and_wait(
             topic.metadata.name, envelope.payload, key=key, headers=headers
         )
@@ -237,9 +234,7 @@ class KafkaEventBus(BaseEventBus):
             finally:
                 await consumer.stop()
 
-        task = asyncio.create_task(
-            _consume(), name=f"kafka-consumer-{topic.metadata.name}"
-        )
+        task = asyncio.create_task(_consume(), name=f"kafka-consumer-{topic.metadata.name}")
         self._consumer_tasks[topic.metadata.name] = task
 
     def _get_security_kwargs(self) -> Dict[str, object]:
@@ -256,9 +251,7 @@ class KafkaEventBus(BaseEventBus):
 
         cafile = self._config.ssl_cafile
         if not cafile:
-            raise ValueError(
-                "ssl_cafile must be configured for secure Kafka connections"
-            )
+            raise ValueError("ssl_cafile must be configured for secure Kafka connections")
         cafile_path = Path(cafile)
         if not cafile_path.is_file():
             raise FileNotFoundError(f"ssl_cafile not found at {cafile}")
@@ -291,9 +284,7 @@ class KafkaEventBus(BaseEventBus):
 
         if protocol == "SASL_SSL":
             if not self._config.sasl_username or not self._config.sasl_password:
-                raise ValueError(
-                    "SASL credentials must be supplied for SASL_SSL protocol"
-                )
+                raise ValueError("SASL credentials must be supplied for SASL_SSL protocol")
             mechanism = self._config.sasl_mechanism or "PLAIN"
             kwargs.update(
                 {
@@ -305,9 +296,7 @@ class KafkaEventBus(BaseEventBus):
 
         return kwargs
 
-    async def _publish_retry_or_dlq(
-        self, topic: EventTopic, envelope: EventEnvelope
-    ) -> None:
+    async def _publish_retry_or_dlq(self, topic: EventTopic, envelope: EventEnvelope) -> None:
         if self._producer is None:
             return
         attempt = int(envelope.headers.get("retry-attempt", "0")) + 1
@@ -317,18 +306,14 @@ class KafkaEventBus(BaseEventBus):
                 topic.metadata.retry_topic,
                 envelope.payload,
                 key=envelope.partition_key.encode("utf-8"),
-                headers=[
-                    (k, v.encode("utf-8")) for k, v in envelope.as_message().items()
-                ],
+                headers=[(k, v.encode("utf-8")) for k, v in envelope.as_message().items()],
             )
         else:
             await self._producer.send_and_wait(
                 topic.metadata.dlq_topic,
                 envelope.payload,
                 key=envelope.partition_key.encode("utf-8"),
-                headers=[
-                    (k, v.encode("utf-8")) for k, v in envelope.as_message().items()
-                ],
+                headers=[(k, v.encode("utf-8")) for k, v in envelope.as_message().items()],
             )
 
 
@@ -427,9 +412,7 @@ class NATSEventBus(BaseEventBus):
                     exc,
                 )
 
-    async def _publish_retry_or_dlq(
-        self, topic: EventTopic, envelope: EventEnvelope
-    ) -> None:
+    async def _publish_retry_or_dlq(self, topic: EventTopic, envelope: EventEnvelope) -> None:
         if not self._nc or not self._js:
             return
         attempt = int(envelope.headers.get("retry-attempt", "0")) + 1
@@ -480,7 +463,5 @@ def _envelope_from_nats_message(message) -> EventEnvelope:  # type: ignore[no-un
         content_type=headers.get("content_type", "application/octet-stream"),
         schema_version=headers.get("schema_version", "0.0.0"),
         occurred_at=occurred_at,
-        headers={
-            k: (v if isinstance(v, str) else json.dumps(v)) for k, v in headers.items()
-        },
+        headers={k: (v if isinstance(v, str) else json.dumps(v)) for k, v in headers.items()},
     )

@@ -129,9 +129,7 @@ def test_full_cli_flow(tmp_path: Path, sample_prices: Path) -> None:
     manager.render("optimize", optimize_cfg_path)
     optimize_cfg = _load_yaml(optimize_cfg_path)
     optimize_cfg["metadata"]["backtest"]["data"]["path"] = str(sample_prices)
-    optimize_cfg["metadata"]["backtest"]["results_path"] = str(
-        tmp_path / "opt_backtest.json"
-    )
+    optimize_cfg["metadata"]["backtest"]["results_path"] = str(tmp_path / "opt_backtest.json")
     optimize_cfg["results_path"] = str(tmp_path / "optimize.json")
     optimize_cfg["versioning"] = {"backend": "dvc", "repo_path": str(repo_path)}
     _write_yaml(optimize_cfg_path, optimize_cfg)
@@ -175,9 +173,7 @@ def test_deploy_cli_applies_manifests(tmp_path: Path) -> None:
     config_data["kubectl"]["extra_args"] = []
     manifests_cfg = config_data.setdefault("manifests", {})
     manifests_cfg.pop("name", None)
-    manifests_cfg["path"] = str(
-        Path("deploy/kustomize/overlays/staging").resolve()
-    )
+    manifests_cfg["path"] = str(Path("deploy/kustomize/overlays/staging").resolve())
 
     log_path = tmp_path / "kubectl.log"
     kubectl_stub = tmp_path / "kubectl"
@@ -222,14 +218,8 @@ with open(log, "a", encoding="utf-8") as handle:
     assert summary["artifact"] == config_data["artifact"]
     assert summary["strategy"] == config_data["strategy"]
     assert summary["environment"] == config_data["environment"]
-    assert (
-        summary["annotations"]["tradepulse.dev/artifact-digest"]
-        == config_data["artifact"]
-    )
-    assert (
-        summary["annotations"]["tradepulse.dev/strategy-id"]
-        == config_data["strategy"]
-    )
+    assert summary["annotations"]["tradepulse.dev/artifact-digest"] == config_data["artifact"]
+    assert summary["annotations"]["tradepulse.dev/strategy-id"] == config_data["strategy"]
 
 
 def test_parity_cli_synchronizes_store(tmp_path: Path) -> None:

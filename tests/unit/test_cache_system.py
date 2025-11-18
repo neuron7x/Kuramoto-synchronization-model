@@ -185,4 +185,3 @@ def test_warmup_populates_region(tmp_path) -> None:
     cache.register_region("samples", layers=[layer], warmup_source=warmup_source)
 
     assert cache.get("hello", region="samples") == "world"
-

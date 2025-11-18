@@ -143,9 +143,7 @@ class NaKController:
 
         unexpected_reward = float(global_view.get("unexpected_reward", 0.0))
         DA = dopamine(unexpected_reward, params.beta_DA)
-        NA = noradrenaline(
-            float(global_view.get("global_vol", 0.0)), params.na_vol_gain
-        )
+        NA = noradrenaline(float(global_view.get("global_vol", 0.0)), params.na_vol_gain)
         HT = serotonin(float(global_view.get("portfolio_dd", 0.0)), params.ht_dd_gain)
         ACh = acetylcholine(float(global_view.get("exposure", 0.0)), params.eta_ACh)
 
@@ -167,9 +165,7 @@ class NaKController:
             band_AMBER=params.band_AMBER,
             band_RED=params.band_RED,
         )
-        error, integrator, rate_raw = pi_control(
-            state, params, band_expand=band_expansion
-        )
+        error, integrator, rate_raw = pi_control(state, params, band_expand=band_expansion)
 
         rate_local = modulate_risk_da(
             rate_raw, DA, params.da_gain, r_min=params.r_min, r_max=params.r_max

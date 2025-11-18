@@ -53,13 +53,9 @@ class AltDataFusionEngine:
         sentiment = self._prepare(
             sentiment_features, prefix=prefixes.get("sentiment", "sentiment_")
         )
-        onchain = self._prepare(
-            onchain_features, prefix=prefixes.get("onchain", "onchain_")
-        )
+        onchain = self._prepare(onchain_features, prefix=prefixes.get("onchain", "onchain_"))
 
-        frames = [
-            frame for frame in (market, news, sentiment, onchain) if not frame.empty
-        ]
+        frames = [frame for frame in (market, news, sentiment, onchain) if not frame.empty]
         if not frames:
             return pd.DataFrame()
 

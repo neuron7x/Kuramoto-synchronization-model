@@ -174,7 +174,7 @@ class TestE2ERiskControls:
         assert "notional" in str(exc_info.value).lower()
 
     def test_order_blocked_by_gross_exposure(self, oms):
-        """Test that orders exceeding gross exposure are blocked when mock gross exposure is high."""
+        """Test that orders exceeding gross exposure are blocked when mock gross exposure is high."""  # noqa: E501
         oms.risk._gross_notional = 140000.0
 
         order = Order(

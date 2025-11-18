@@ -24,9 +24,12 @@ except Exception:  # pragma: no cover - markdown is optional
 
 
 if markdown is None:  # pragma: no cover - fallback for environments without markdown
+
     def _markdown_to_html(source: str) -> str:
         return "<pre>" + source.replace("<", "&lt;").replace(">", "&gt;") + "</pre>"
+
 else:  # pragma: no cover - executed when markdown package is available
+
     def _markdown_to_html(source: str) -> str:
         return markdown.markdown(source, extensions=["tables", "fenced_code"])
 
@@ -62,7 +65,9 @@ class NullExperimentTracker:
     def log_metrics(self, metrics: Mapping[str, Any]) -> None:  # noqa: D401
         return
 
-    def record_status(self, status: str, payload: Mapping[str, Any] | None = None) -> None:  # noqa: D401
+    def record_status(
+        self, status: str, payload: Mapping[str, Any] | None = None
+    ) -> None:  # noqa: D401
         return
 
     def log_artifact(self, path: Path, alias: str | None = None) -> None:  # noqa: D401
@@ -71,7 +76,9 @@ class NullExperimentTracker:
     def log_metadata(self, metadata: Any) -> None:  # noqa: D401
         return
 
-    def finalize(self, results: Mapping[str, Any] | None, error: BaseException | None) -> None:  # noqa: D401
+    def finalize(
+        self, results: Mapping[str, Any] | None, error: BaseException | None
+    ) -> None:  # noqa: D401
         return
 
 
@@ -189,9 +196,11 @@ class ExperimentTracker:
         if self._tracking.versioning.backend != "none":
             record["versioning"] = {
                 "backend": self._tracking.versioning.backend,
-                "repo_path": str(self._tracking.versioning.repo_path)
-                if self._tracking.versioning.repo_path
-                else None,
+                "repo_path": (
+                    str(self._tracking.versioning.repo_path)
+                    if self._tracking.versioning.repo_path
+                    else None
+                ),
                 "message": self._tracking.versioning.message,
             }
         self._data_version = record

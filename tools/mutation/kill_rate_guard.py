@@ -80,7 +80,7 @@ def _render_summary(summary: MutationSummary) -> str:
     kill_percentage = summary.kill_rate * 100.0
     return (
         "Mutation summary: "
-        f"kill_rate={kill_percentage:.2f}% (killed={summary.killed}/counted={summary.counted}, total={summary.total}); "
+        f"kill_rate={kill_percentage:.2f}% (killed={summary.killed}/counted={summary.counted}, total={summary.total}); "  # noqa: E501
         f"breakdown: {status_section}"
     )
 
@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if summary.counted == 0:
         print(
-            "All mutants were marked as 'not checked'; mutation suite must be executed before enforcing the gate.",
+            "All mutants were marked as 'not checked'; mutation suite must be executed before enforcing the gate.",  # noqa: E501
             file=sys.stderr,
         )
         return 3
@@ -153,8 +153,13 @@ def main(argv: list[str] | None = None) -> int:
             if summary.status_counts.get(name, 0)
         }
         if failing_statuses:
-            details = ", ".join(f"{name}={count}" for name, count in sorted(failing_statuses.items()))
-            print(f"Mutation kill rate below threshold; unresolved mutants: {details}", file=sys.stderr)
+            details = ", ".join(
+                f"{name}={count}" for name, count in sorted(failing_statuses.items())
+            )
+            print(
+                f"Mutation kill rate below threshold; unresolved mutants: {details}",
+                file=sys.stderr,
+            )
         else:
             print("Mutation kill rate below threshold.", file=sys.stderr)
         return 1

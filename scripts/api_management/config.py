@@ -260,7 +260,9 @@ def _load_metadata(raw: Mapping[str, object]) -> ApiMetadata:
 
 
 def _load_environment(raw: Mapping[str, object]) -> EnvironmentConfig:
-    return EnvironmentConfig(name=str(_require(raw, "name")), base_url=str(_require(raw, "base_url")))
+    return EnvironmentConfig(
+        name=str(_require(raw, "name")), base_url=str(_require(raw, "base_url"))
+    )
 
 
 def _load_cache(raw: Mapping[str, object]) -> CachePolicy:
@@ -272,7 +274,9 @@ def _load_cache(raw: Mapping[str, object]) -> CachePolicy:
 
 
 def _load_throttle(raw: Mapping[str, object]) -> ThrottlePolicy:
-    return ThrottlePolicy(burst=int(_require(raw, "burst")), period_seconds=int(_require(raw, "period_seconds")))
+    return ThrottlePolicy(
+        burst=int(_require(raw, "burst")), period_seconds=int(_require(raw, "period_seconds"))
+    )
 
 
 def _load_rate_limit(raw: Mapping[str, object]) -> RateLimitPolicy:

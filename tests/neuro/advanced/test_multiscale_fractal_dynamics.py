@@ -31,9 +31,7 @@ async def test_scaling_exponent_detects_persistence() -> None:
     analyzer = MultiscaleFractalAnalyzer()
     rng = np.random.default_rng(321)
 
-    persistent_prices = np.maximum(
-        1.0, 50.0 + np.cumsum(0.3 + rng.normal(0.0, 0.05, size=256))
-    )
+    persistent_prices = np.maximum(1.0, 50.0 + np.cumsum(0.3 + rng.normal(0.0, 0.05, size=256)))
     noise_prices = np.maximum(1.0, 50.0 + np.cumsum(rng.normal(0.0, 0.3, size=256)))
 
     persistent_features = await analyzer.analyze(persistent_prices)
@@ -91,9 +89,13 @@ def test_candidate_generator_uses_asset_features() -> None:
     candidates = generator.generate(asset_features, aggregated)
 
     assert {c["asset"] for c in candidates} == set(asset_features.keys())
-    eur_momentum = next(c for c in candidates if c["asset"] == "EURUSD" and c["strategy"] == "fractal_momentum")
+    eur_momentum = next(
+        c for c in candidates if c["asset"] == "EURUSD" and c["strategy"] == "fractal_momentum"
+    )
     gbp_mean_rev = next(
-        c for c in candidates if c["asset"] == "GBPUSD" and c["strategy"] == "fractal_mean_reversion"
+        c
+        for c in candidates
+        if c["asset"] == "GBPUSD" and c["strategy"] == "fractal_mean_reversion"
     )
 
     assert eur_momentum["expected_edge"] > gbp_mean_rev["expected_edge"]
@@ -143,9 +145,15 @@ async def test_fractal_dynamics_adjust_risk_scaling() -> None:
             }
         },
     }
-    antipersistent_adjusted = await manager.apply(decision, neuro_context, antipersistent_market_context)
+    antipersistent_adjusted = await manager.apply(
+        decision, neuro_context, antipersistent_market_context
+    )
 
     assert persistent_adjusted["position_size"] > base_adjusted["position_size"]
     assert antipersistent_adjusted["position_size"] < base_adjusted["position_size"]
-    assert persistent_adjusted["risk_params"]["sl_dist"] == pytest.approx(base_adjusted["risk_params"]["sl_dist"])
-    assert persistent_adjusted["risk_params"]["tp_dist"] == pytest.approx(base_adjusted["risk_params"]["tp_dist"])
+    assert persistent_adjusted["risk_params"]["sl_dist"] == pytest.approx(
+        base_adjusted["risk_params"]["sl_dist"]
+    )
+    assert persistent_adjusted["risk_params"]["tp_dist"] == pytest.approx(
+        base_adjusted["risk_params"]["tp_dist"]
+    )

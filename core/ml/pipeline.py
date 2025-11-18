@@ -130,7 +130,9 @@ class OptunaTuner:
         self._objective = objective
         self._n_trials = n_trials
 
-    def optimise(self, search_space: Callable[["optuna.trial.Trial"], Mapping[str, Any]]) -> Mapping[str, Any]:
+    def optimise(
+        self, search_space: Callable[["optuna.trial.Trial"], Mapping[str, Any]]
+    ) -> Mapping[str, Any]:
         if optuna is None:
             LOGGER.warning("Optuna not installed; using default parameters")
             return search_space(MockTrial())
@@ -181,7 +183,9 @@ class ModelDriftDetector:
     def __init__(self, threshold: float = 0.2) -> None:
         self._threshold = threshold
 
-    def psi(self, expected: Sequence[float], observed: Sequence[float], *, buckets: int = 10) -> float:
+    def psi(
+        self, expected: Sequence[float], observed: Sequence[float], *, buckets: int = 10
+    ) -> float:
         if buckets <= 0:
             raise ValueError("buckets must be positive")
         if not expected or not observed:
@@ -268,10 +272,14 @@ class MLPipeline:
             manager.log_params(params)
             model, metrics = self._train_fn(context, params)
 
-            if self._drift_detector and {
-                "baseline_scores",
-                "observed_scores",
-            } <= context.params.keys():
+            if (
+                self._drift_detector
+                and {
+                    "baseline_scores",
+                    "observed_scores",
+                }
+                <= context.params.keys()
+            ):
                 expected = context.params["baseline_scores"]
                 observed = context.params["observed_scores"]
                 drifted, psi_value = detect_model_drift(
@@ -298,7 +306,9 @@ class MLPipeline:
         return PipelineResult(model=model, metrics=metrics, params=params)
 
 
-def shadow_mode_inference(model_a: Any, model_b: Any, inputs: Iterable[Any]) -> list[dict[str, Any]]:
+def shadow_mode_inference(
+    model_a: Any, model_b: Any, inputs: Iterable[Any]
+) -> list[dict[str, Any]]:
     """Run model B in shadow mode alongside model A and capture divergences."""
 
     results = []
@@ -310,7 +320,9 @@ def shadow_mode_inference(model_a: Any, model_b: Any, inputs: Iterable[Any]) -> 
     return results
 
 
-def record_online_learning_event(storage: MutableMapping[str, Any], *, model_id: str, payload: Mapping[str, Any]) -> None:
+def record_online_learning_event(
+    storage: MutableMapping[str, Any], *, model_id: str, payload: Mapping[str, Any]
+) -> None:
     """Persist an online-learning event for replay."""
 
     events = storage.setdefault(model_id, [])
@@ -343,4 +355,3 @@ __all__ = [
     "record_online_learning_event",
     "shadow_mode_inference",
 ]
-

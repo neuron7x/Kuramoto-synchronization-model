@@ -171,9 +171,7 @@ def test_market_order_requires_reference_price(client: TestClient) -> None:
 
     assert response.status_code == 422
     detail = response.json()
-    assert any(
-        "reference_price" in error.get("msg", "") for error in detail.get("detail", [])
-    )
+    assert any("reference_price" in error.get("msg", "") for error in detail.get("detail", []))
 
 
 def test_market_order_uses_reference_price_for_risk_validation(

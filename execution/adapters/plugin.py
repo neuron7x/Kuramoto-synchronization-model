@@ -65,9 +65,7 @@ class AdapterContract:
         if not self.identifier:
             raise ValueError("AdapterContract.identifier must be non-empty")
         if "." not in self.identifier:
-            raise ValueError(
-                "AdapterContract.identifier should be namespaced, e.g. 'binance.spot'"
-            )
+            raise ValueError("AdapterContract.identifier should be namespaced, e.g. 'binance.spot'")
         if not self.version:
             raise ValueError("AdapterContract.version must be provided")
         # Materialize tuples for credential collections for immutability
@@ -147,21 +145,21 @@ class AdapterPlugin:
                 adapter_id=self.contract.identifier,
                 checks=(
                     AdapterCheckResult(
-                        name="self-test", status="skipped", detail="Adapter did not provide self-test"
+                        name="self-test",
+                        status="skipped",
+                        detail="Adapter did not provide self-test",
                     ),
                 ),
             )
         try:
             result = self.self_test()
         except Exception as exc:  # pragma: no cover - defensive guard
-            logger.exception("Adapter self-test failed", extra={"adapter": self.contract.identifier})
+            logger.exception(
+                "Adapter self-test failed", extra={"adapter": self.contract.identifier}
+            )
             return AdapterDiagnostic(
                 adapter_id=self.contract.identifier,
-                checks=(
-                    AdapterCheckResult(
-                        name="self-test", status="failed", detail=str(exc)
-                    ),
-                ),
+                checks=(AdapterCheckResult(name="self-test", status="failed", detail=str(exc)),),
             )
         if result.adapter_id != self.contract.identifier:
             result = replace(result, adapter_id=self.contract.identifier)
@@ -240,7 +238,9 @@ class AdapterRegistry:
             }
 
     # -- discovery --------------------------------------------------------
-    def discover(self, group: str = "tradepulse.execution.adapters", *, reload: bool = False) -> None:
+    def discover(
+        self, group: str = "tradepulse.execution.adapters", *, reload: bool = False
+    ) -> None:
         """Discover adapters via ``importlib.metadata`` entry points."""
 
         if not reload and group in self._discovered_groups:
@@ -262,9 +262,7 @@ class AdapterRegistry:
             try:
                 plugin = entry_point.load()
             except Exception as exc:  # pragma: no cover - defensive guard
-                logger.warning(
-                    "Failed to load adapter entry point %s", entry_point, exc_info=exc
-                )
+                logger.warning("Failed to load adapter entry point %s", entry_point, exc_info=exc)
                 continue
             if not isinstance(plugin, AdapterPlugin):
                 logger.warning(
@@ -292,7 +290,7 @@ class AdapterRegistry:
         module_name, _, attr = dotted_path.rpartition(".")
         if not module_name:
             raise LookupError(
-                f"Unable to resolve adapter '{dotted_path}'. Provide a registered identifier or module path."
+                f"Unable to resolve adapter '{dotted_path}'. Provide a registered identifier or module path."  # noqa: E501
             )
         module = __import__(module_name, fromlist=[attr])
         factory = getattr(module, attr)

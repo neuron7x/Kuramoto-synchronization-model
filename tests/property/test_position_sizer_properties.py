@@ -68,7 +68,9 @@ def _risk_aware_reference(balance: float, risk: float, price: float, max_leverag
     _finite_floats(min_value=1e-9, max_value=1e6),
     _finite_floats(min_value=1.0, max_value=50.0),
 )
-def test_risk_aware_matches_reference(balance: float, risk: float, price: float, leverage: float) -> None:
+def test_risk_aware_matches_reference(
+    balance: float, risk: float, price: float, leverage: float
+) -> None:
     sizer = RiskAwarePositionSizer()
     expected = _risk_aware_reference(balance, risk, price, leverage)
     actual = sizer.size(balance, risk, price, max_leverage=leverage)
@@ -136,7 +138,9 @@ def _portfolio_state_request(
 
     budget_source = draw(st.one_of(st.none(), st.just("fixed"), st.just("absent")))
     if budget_source == "fixed":
-        risk_budgets = {key: draw(_finite_floats(min_value=0.0, max_value=1.0)) for key in positions}
+        risk_budgets = {
+            key: draw(_finite_floats(min_value=0.0, max_value=1.0)) for key in positions
+        }
     elif budget_source is None:
         risk_budgets = None
     else:
@@ -162,7 +166,9 @@ def _portfolio_state_request(
         risk_exposures=risk_exposures,
     )
 
-    leverage_limit = draw(st.one_of(st.none(), _finite_floats(min_value=0.5, max_value=constraints.max_leverage)))
+    leverage_limit = draw(
+        st.one_of(st.none(), _finite_floats(min_value=0.5, max_value=constraints.max_leverage))
+    )
     risk_fraction = draw(_finite_floats(min_value=-0.5, max_value=1.5))
     confidence = draw(_finite_floats(min_value=0.0, max_value=1.0))
     edge = draw(st.one_of(st.none(), _finite_floats(min_value=-0.5, max_value=0.5)))
@@ -189,7 +195,9 @@ def _portfolio_state_request(
 
 
 @seed(property_seed("test_constrained_matches_risk_aware_when_unbounded"))
-@settings(**property_settings("test_constrained_matches_risk_aware_when_unbounded", max_examples=120))
+@settings(
+    **property_settings("test_constrained_matches_risk_aware_when_unbounded", max_examples=120)
+)
 @given(
     _finite_floats(min_value=0.0, max_value=1e9),
     _finite_floats(min_value=-0.5, max_value=1.5),
@@ -235,7 +243,7 @@ def test_constrained_matches_risk_aware_when_unbounded(
 @settings(**property_settings("test_constrained_sizer_respects_invariants", max_examples=140))
 @given(_portfolio_state_request())
 def test_constrained_sizer_respects_invariants(
-    payload: tuple[PositionSizingRequest, PortfolioState, PositionSizingConstraints]
+    payload: tuple[PositionSizingRequest, PortfolioState, PositionSizingConstraints],
 ) -> None:
     request, state, constraints = payload
     assume(request.price > 0.0)
@@ -279,10 +287,12 @@ def test_constrained_sizer_respects_invariants(
 
     if state.equity > 0.0:
         assert abs(result.applied_fraction) <= constraints.max_leverage + 1e-9
-        assert abs(result.target_position * request.price) <= state.equity * constraints.max_leverage + 1e-6
+        assert (
+            abs(result.target_position * request.price)
+            <= state.equity * constraints.max_leverage + 1e-6
+        )
 
     if request.direction > 0:
         assert result.applied_fraction >= -1e-12
     elif request.direction < 0:
         assert result.applied_fraction <= 1e-12
-

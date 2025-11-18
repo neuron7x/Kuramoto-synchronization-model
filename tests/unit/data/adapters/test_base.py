@@ -131,6 +131,4 @@ async def test_sleep_for_attempt_uses_retry_backoff(
     )
 
     await policy.sleep_for_attempt(4)
-    assert math.isclose(
-        recorded["delay"], policy.retry.compute_backoff(4), rel_tol=1e-9
-    )
+    assert math.isclose(recorded["delay"], policy.retry.compute_backoff(4), rel_tol=1e-9)

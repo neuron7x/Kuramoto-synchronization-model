@@ -1,12 +1,12 @@
 """Smoke tests for HydroBrainV2 output shapes."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
 torch = pytest.importorskip("torch")
 
-from hydrobrain_v2.model import HydroBrainV2
+from hydrobrain_v2.model import HydroBrainV2  # noqa: E402
 
 
 def test_forward_shapes() -> None:

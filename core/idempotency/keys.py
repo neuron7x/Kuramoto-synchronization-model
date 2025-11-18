@@ -103,7 +103,9 @@ class IdempotencyKeyFactory:
         request_uuid = uuid5(service_namespace, f"{operation}:{fingerprint}")
         attempt_source: str | None
         if nonce is not None:
-            attempt_source = f"nonce:{nonce}" if attempt is None else f"nonce:{nonce}:attempt:{attempt}"
+            attempt_source = (
+                f"nonce:{nonce}" if attempt is None else f"nonce:{nonce}:attempt:{attempt}"
+            )
         elif attempt is not None:
             attempt_source = f"attempt:{attempt}"
         else:

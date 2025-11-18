@@ -38,7 +38,9 @@ class BenchmarkMetrics:
 class BenchmarkRunner:
     """Runs deterministic ingestion/query workloads for regression testing."""
 
-    def __init__(self, schema: TimeSeriesSchema, *, clock: Callable[[], float] | None = None) -> None:
+    def __init__(
+        self, schema: TimeSeriesSchema, *, clock: Callable[[], float] | None = None
+    ) -> None:
         self._schema = schema
         self._clock = clock or perf_counter
 
@@ -75,15 +77,9 @@ class BenchmarkRunner:
         query_sorted = sorted(query_latencies)
         total_ingest_ms = sum(ingest_sorted)
         total_query_ms = sum(query_sorted)
-        ingest_throughput = (
-            (total_rows / total_ingest_ms) * 1_000 if total_ingest_ms > 0 else 0.0
-        )
+        ingest_throughput = (total_rows / total_ingest_ms) * 1_000 if total_ingest_ms > 0 else 0.0
         query_throughput = (
-            (
-                workload.query_iterations / total_query_ms
-                if workload.query_iterations > 0
-                else 0.0
-            )
+            (workload.query_iterations / total_query_ms if workload.query_iterations > 0 else 0.0)
             * 1_000
             if total_query_ms > 0
             else 0.0
@@ -98,9 +94,7 @@ class BenchmarkRunner:
             query_throughput_qps=query_throughput,
         )
 
-    def _generate_batch(
-        self, batch_size: int, *, offset: int
-    ) -> Iterable[Mapping[str, object]]:
+    def _generate_batch(self, batch_size: int, *, offset: int) -> Iterable[Mapping[str, object]]:
         timestamp_column = self._schema.timestamp_column
         dimensions = [dimension.name for dimension in self._schema.dimensions]
         measures = [measure.name for measure in self._schema.measures]

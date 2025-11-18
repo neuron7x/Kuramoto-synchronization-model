@@ -12,47 +12,47 @@ from typing import Any, Dict, Tuple, Optional
 import torch
 import torch.nn as nn
 
-_MS_TO_SECONDS = 1000.0           # Conversion factor
+_MS_TO_SECONDS = 1000.0  # Conversion factor
 
 
 @dataclass
 class GateParams:
     v_rest: float = -70.0
     v_threshold: float = -55.0
-    tau_gaba_a_ms: float = 8.0        # fast inhibition (~GABA_A)
-    tau_gaba_b_ms: float = 100.0      # slow inhibition (~GABA_B)
+    tau_gaba_a_ms: float = 8.0  # fast inhibition (~GABA_A)
+    tau_gaba_b_ms: float = 100.0  # slow inhibition (~GABA_B)
     gamma_hz: float = 40.0
     theta_hz: float = 8.0
-    k_inhibit: float = 0.4            # inhibition gain
+    k_inhibit: float = 0.4  # inhibition gain
     stdp_a_plus: float = 0.008
     stdp_a_minus: float = 0.006
     stdp_tau_plus_ms: float = 16.8
     stdp_tau_minus_ms: float = 33.7
     ltp_theta: float = 0.3
     ltd_theta: float = 0.1
-    dt_ms: float = 0.1                # default simulation step in milliseconds
-    min_dt_ms: float = 1e-3           # minimum allowed dt for stability
-    max_dt_ms: float = 250.0          # cap dt to avoid numerical blowups
-    risk_min: float = 0.5             # clamp for risk weight
+    dt_ms: float = 0.1  # default simulation step in milliseconds
+    min_dt_ms: float = 1e-3  # minimum allowed dt for stability
+    max_dt_ms: float = 250.0  # cap dt to avoid numerical blowups
+    risk_min: float = 0.5  # clamp for risk weight
     risk_max: float = 1.5
     cycle_modulation: bool = True
-    enforce_mfd: bool = True          # MFD guarantee: gated action ≤ input action magnitude
-    vix_norm: float = 40.0            # VIX baseline for normalization
-    vix_clip_max: float = 1.5         # Maximum normalized VIX
-    gaba_drive_scale: float = 0.5     # Scale factor for volatility->GABA conversion
-    gaba_slow_weight: float = 0.5     # Weight of slow GABA_B in total level
-    gaba_max_level: float = 2.0       # Maximum combined GABA level
-    firing_proxy_max: float = 10.0    # Maximum action magnitude for inhibition
+    enforce_mfd: bool = True  # MFD guarantee: gated action ≤ input action magnitude
+    vix_norm: float = 40.0  # VIX baseline for normalization
+    vix_clip_max: float = 1.5  # Maximum normalized VIX
+    gaba_drive_scale: float = 0.5  # Scale factor for volatility->GABA conversion
+    gaba_slow_weight: float = 0.5  # Weight of slow GABA_B in total level
+    gaba_max_level: float = 2.0  # Maximum combined GABA level
+    firing_proxy_max: float = 10.0  # Maximum action magnitude for inhibition
     gamma_cycle_amplitude: float = 0.2
     theta_cycle_amplitude: float = 0.15
-    ltp_strength: float = 0.01        # LTP weight increment
-    ltd_strength: float = 0.008       # LTD weight decrement
-    max_inhibition: float = 0.95      # Upper bound for inhibition factor
-    hedge_fast_boost: float = 0.5     # Fast GABA boost factor in hedge
-    hedge_slow_boost: float = 0.25    # Slow GABA boost factor in hedge
-    hedge_risk_damp: float = 0.25     # Risk-weight damping factor during hedge
+    ltp_strength: float = 0.01  # LTP weight increment
+    ltd_strength: float = 0.008  # LTD weight decrement
+    max_inhibition: float = 0.95  # Upper bound for inhibition factor
+    hedge_fast_boost: float = 0.5  # Fast GABA boost factor in hedge
+    hedge_slow_boost: float = 0.25  # Slow GABA boost factor in hedge
+    hedge_risk_damp: float = 0.25  # Risk-weight damping factor during hedge
     risk_decay_tau_ms: float = 500.0  # Relax risk weight back to baseline
-    rpe_sensitivity: float = 0.05     # Reward prediction error effect on plasticity
+    rpe_sensitivity: float = 0.05  # Reward prediction error effect on plasticity
     position_sensitivity: float = 0.02  # Exposure-based dampener
 
     def __post_init__(self) -> None:
@@ -133,10 +133,10 @@ class GateParams:
 
 @dataclass
 class GateState:
-    gaba_fast: torch.Tensor            # fast component (A)
-    gaba_slow: torch.Tensor            # slow component (B)
-    risk_weight: torch.Tensor          # multiplicative scaler for action
-    t_ms: torch.Tensor                 # internal time base (ms)
+    gaba_fast: torch.Tensor  # fast component (A)
+    gaba_slow: torch.Tensor  # slow component (B)
+    risk_weight: torch.Tensor  # multiplicative scaler for action
+    t_ms: torch.Tensor  # internal time base (ms)
 
 
 @dataclass
@@ -204,12 +204,8 @@ class GABAInhibitionGate(nn.Module):
         if not self.p.cycle_modulation:
             return torch.tensor(1.0, device=self.device)
         t_seconds = t_ms / _MS_TO_SECONDS
-        gamma = self.p.gamma_cycle_amplitude * torch.sin(
-            2 * math.pi * self.p.gamma_hz * t_seconds
-        )
-        theta = self.p.theta_cycle_amplitude * torch.sin(
-            2 * math.pi * self.p.theta_hz * t_seconds
-        )
+        gamma = self.p.gamma_cycle_amplitude * torch.sin(2 * math.pi * self.p.gamma_hz * t_seconds)
+        theta = self.p.theta_cycle_amplitude * torch.sin(2 * math.pi * self.p.theta_hz * t_seconds)
         return 1.0 + gamma + theta
 
     def _refresh_precomputed_buffers(self) -> None:
@@ -226,19 +222,19 @@ class GABAInhibitionGate(nn.Module):
         self, market_state: Dict[str, torch.Tensor], action: torch.Tensor
     ) -> Tuple[torch.Tensor, GateMetrics]:
         """Apply GABA inhibition gate to action.
-        
+
         Parameters
         ----------
         market_state : Dict[str, torch.Tensor]
             Market state with keys: 'vix', 'vol', 'ret', 'pos', 'rpe', 'delta_t_ms'
         action : torch.Tensor
             Proposed action vector
-            
+
         Returns
         -------
         Tuple[torch.Tensor, GateMetrics]
             Gated action and metrics
-            
+
         Raises
         ------
         KeyError
@@ -247,28 +243,28 @@ class GABAInhibitionGate(nn.Module):
             If tensors have invalid values (NaN, Inf)
         """
         # Validate inputs
-        required_keys = ['vix', 'vol', 'ret', 'pos', 'rpe', 'delta_t_ms']
+        required_keys = ["vix", "vol", "ret", "pos", "rpe", "delta_t_ms"]
         missing_keys = [k for k in required_keys if k not in market_state]
         if missing_keys:
             raise KeyError(f"Missing required keys in market_state: {missing_keys}")
-        
+
         # Validate market_state tensors for NaN/Inf
         for k in required_keys:
             t = market_state[k].to(self.device)
             if torch.isnan(t).any() or torch.isinf(t).any():
                 raise ValueError(f"{k} contains NaN or Inf values")
-        
+
         # Ensure device/shape
         action = action.to(self.device)
         if torch.isnan(action).any() or torch.isinf(action).any():
             raise ValueError("action contains NaN or Inf values")
-            
-        vix = market_state['vix'].to(self.device).reshape(1)
-        vol = market_state['vol'].to(self.device).reshape(1)
-        ret = market_state['ret'].to(self.device).reshape(1)
-        rpe = market_state['rpe'].to(self.device).reshape(1)
-        pos = market_state['pos'].to(self.device).reshape(1)
-        delta_t_ms = market_state['delta_t_ms'].to(self.device).reshape(1)
+
+        vix = market_state["vix"].to(self.device).reshape(1)
+        vol = market_state["vol"].to(self.device).reshape(1)
+        ret = market_state["ret"].to(self.device).reshape(1)
+        rpe = market_state["rpe"].to(self.device).reshape(1)
+        pos = market_state["pos"].to(self.device).reshape(1)
+        delta_t_ms = market_state["delta_t_ms"].to(self.device).reshape(1)
         dt_ms = self._clamp_dt(delta_t_ms)
 
         # 1) GABA release ~ threat proxy (volatility) with dual time constants
@@ -305,15 +301,11 @@ class GABAInhibitionGate(nn.Module):
         delta_t_scalar = delta_t_ms.squeeze()
         if (delta_t_scalar > 0).item():
             stdp_component = (
-                self.p.stdp_a_plus
-                * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms)
-                * gaba_level
+                self.p.stdp_a_plus * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms) * gaba_level
             )
         else:
             stdp_component = (
-                -self.p.stdp_a_minus
-                * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms)
-                * gaba_level
+                -self.p.stdp_a_minus * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms) * gaba_level
             )
         # LTP/LTD gated by vol*ret (pre*post)
         pre_post = vol * ret
@@ -335,7 +327,7 @@ class GABAInhibitionGate(nn.Module):
 
         # 5) Apply gating
         gated = action * (1 - inhibition) * self.risk_weight * cyc
-        
+
         # 6) MFD guarantee: if GABA is elevated, ensure gated action doesn't exceed input
         if self.p.enforce_mfd and (gaba_level > 0.1).item():
             gated = torch.where(gated.abs() > action.abs(), action, gated)
@@ -352,7 +344,7 @@ class GABAInhibitionGate(nn.Module):
 
     def get_state(self) -> GateState:
         """Get current gate state.
-        
+
         Returns
         -------
         GateState
@@ -362,9 +354,9 @@ class GABAInhibitionGate(nn.Module):
             gaba_fast=self.gaba_fast.clone(),
             gaba_slow=self.gaba_slow.clone(),
             risk_weight=self.risk_weight.clone(),
-            t_ms=self.t_ms.clone()
+            t_ms=self.t_ms.clone(),
         )
-    
+
     def set_state(self, state: GateState) -> None:
         """Set gate state.
 
@@ -400,7 +392,7 @@ class GABAInhibitionGate(nn.Module):
         """
         if not 0.0 <= strength <= 2.0:
             raise ValueError(f"strength must be in [0, 2], got {strength}")
-        
+
         boost = torch.tensor(strength, device=self.device)
         boosted_fast = torch.clamp(
             self.gaba_fast * (1 + self.p.hedge_fast_boost * boost),

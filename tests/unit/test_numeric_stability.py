@@ -71,6 +71,4 @@ def test_kuramoto_order_accepts_complex_inputs_without_warning() -> None:
 
     assert not caught
     real_value = kuramoto_order(phases)
-    assert complex_value == pytest.approx(
-        real_value, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert complex_value == pytest.approx(real_value, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)

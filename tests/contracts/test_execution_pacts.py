@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import socket
-import time
-from typing import Any, Mapping
+import socket  # noqa: E402
+import time  # noqa: E402
+from typing import Any, Mapping  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
 pactman = pytest.importorskip("pactman", reason="pactman is required for contract tests")
 mock_module = pytest.importorskip(
@@ -15,8 +15,8 @@ Consumer = pactman.Consumer
 Provider = pactman.Provider
 mock_server = mock_module.mock_server
 
-from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.adapters.base import RESTWebSocketConnector
+from domain import Order, OrderSide, OrderStatus, OrderType  # noqa: E402
+from execution.adapters.base import RESTWebSocketConnector  # noqa: E402
 
 
 def _allocate_port() -> int:
@@ -81,7 +81,9 @@ class _PactExecutionConnector(RESTWebSocketConnector):
         order_id = str(payload.get("orderId") or payload.get("id") or "")
         symbol = str(payload.get("symbol") or original.symbol if original else "")
         side_value = str(payload.get("side") or (original.side.value if original else "buy"))
-        type_value = str(payload.get("type") or (original.order_type.value if original else "market"))
+        type_value = str(
+            payload.get("type") or (original.order_type.value if original else "market")
+        )
         status_value = str(payload.get("status") or (original.status.value if original else "open"))
         quantity_raw = payload.get("quantity")
         price_raw = payload.get("price")

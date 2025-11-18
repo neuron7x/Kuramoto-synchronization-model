@@ -29,7 +29,9 @@ def cleanup_service_module() -> None:
     sys.modules.pop(MODULE_PATH, None)
 
 
-def test_bootstrap_lazy_strategy_skips_application_construction(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_bootstrap_lazy_strategy_skips_application_construction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Lazy strategy should return the degraded placeholder without calling create_app."""
 
     service = _reload_service_module(monkeypatch)

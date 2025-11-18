@@ -160,8 +160,7 @@ class EnergyModel:
     def internal_energy(self, metrics: EnergyMetrics) -> float:
         penalties = self.diagnostics(metrics)
         weighted_penalty = sum(
-            penalties[name] * self._normalised_weights[name]
-            for name in penalties
+            penalties[name] * self._normalised_weights[name] for name in penalties
         )
         return self._base_internal_energy + weighted_penalty
 
@@ -174,16 +173,16 @@ class EnergyModel:
         entropy = max(self._entropy_floor, aggregate)
         return entropy
 
-    def free_energy(self, metrics: EnergyMetrics) -> tuple[float, float, float, Mapping[str, float]]:
+    def free_energy(
+        self, metrics: EnergyMetrics
+    ) -> tuple[float, float, float, Mapping[str, float]]:
         penalties = self.diagnostics(metrics)
         internal = self.internal_energy(metrics)
         entropy = self.entropy(metrics)
         free_energy = internal - self._temperature * entropy
         return free_energy, internal, entropy, penalties
 
-    def evaluate(
-        self, metrics: EnergyMetrics, *, max_free_energy: float
-    ) -> EnergyValidationResult:
+    def evaluate(self, metrics: EnergyMetrics, *, max_free_energy: float) -> EnergyValidationResult:
         free_energy, internal, entropy, penalties = self.free_energy(metrics)
         passed = free_energy <= max_free_energy
         reason = None

@@ -5,7 +5,12 @@ import pytest
 
 @pytest.fixture()
 def requirements_path() -> pathlib.Path:
-    return pathlib.Path(__file__).resolve().parents[2] / "docs" / "agent_integration" / "agent_trading_requirements.md"
+    return (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "docs"
+        / "agent_integration"
+        / "agent_trading_requirements.md"
+    )
 
 
 def test_requirements_document_exists(requirements_path: pathlib.Path) -> None:
@@ -28,6 +33,8 @@ def test_requirements_document_exists(requirements_path: pathlib.Path) -> None:
         "## 11. Next Steps",
     ],
 )
-def test_requirements_document_contains_sections(requirements_path: pathlib.Path, heading: str) -> None:
+def test_requirements_document_contains_sections(
+    requirements_path: pathlib.Path, heading: str
+) -> None:
     content = requirements_path.read_text(encoding="utf-8")
     assert heading in content, f"Heading '{heading}' missing from requirements document."

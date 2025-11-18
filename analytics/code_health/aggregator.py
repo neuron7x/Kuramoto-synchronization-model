@@ -40,7 +40,9 @@ class CodeMetricAggregator:
         self.repo_root = Path(repo_root)
         self.file_globs = file_globs
         self.thresholds = thresholds or Thresholds()
-        self.history_file = Path(history_file) if history_file else self.repo_root / ".code_metrics_history.json"
+        self.history_file = (
+            Path(history_file) if history_file else self.repo_root / ".code_metrics_history.json"
+        )
         self.git = GitHistoryAnalyzer(self.repo_root)
 
     # ------------------------------------------------------------------
@@ -202,10 +204,10 @@ class CodeMetricAggregator:
             if not file_metrics:
                 continue
             lines.append(f"**{file}**")
-            lines.append(
-                "- Risk score: "
-                f"{file_metrics.risk_profile.risk_score:.2f} ({', '.join(file_metrics.risk_profile.contributing_factors) or 'stable'})"
-            )
+            # Format risk score with contributing factors  # noqa: E501
+            factors = ', '.join(file_metrics.risk_profile.contributing_factors) or 'stable'
+            risk_line = f"- Risk score: {file_metrics.risk_profile.risk_score:.2f} ({factors})"
+            lines.append(risk_line)
             violations = file_metrics.exceeding_thresholds(metrics.thresholds)
             if violations:
                 lines.append("- Threshold alerts:")
@@ -327,7 +329,11 @@ class CodeMetricAggregator:
         return result
 
     def _identify_hotspots(self, file_metrics: Mapping[str, FileMetrics]) -> List[FileMetrics]:
-        candidates = [fm for fm in file_metrics.values() if fm.hot_spot_score > self.thresholds.max_hotspot_churn]
+        candidates = [
+            fm
+            for fm in file_metrics.values()
+            if fm.hot_spot_score > self.thresholds.max_hotspot_churn
+        ]
         return sorted(candidates, key=lambda fm: fm.risk_profile.risk_score, reverse=True)
 
     def _serialize_file_metric(self, metric: FileMetrics) -> Dict[str, object]:
@@ -367,4 +373,3 @@ class CodeMetricAggregator:
         if result.returncode != 0:
             return []
         return [line.strip() for line in result.stdout.splitlines() if line.strip().endswith(".py")]
-

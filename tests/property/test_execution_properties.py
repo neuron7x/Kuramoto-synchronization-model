@@ -46,9 +46,7 @@ class TestPositionSizingProperties:
         balance=st.floats(min_value=100.0, max_value=10_000.0),
         price=st.floats(min_value=0.01, max_value=1000.0),
     )
-    def test_position_size_increases_with_risk(
-        self, balance: float, price: float
-    ) -> None:
+    def test_position_size_increases_with_risk(self, balance: float, price: float) -> None:
         """Higher risk should yield larger position sizes."""
         size_low = position_sizing(balance, 0.1, price)
         size_high = position_sizing(balance, 0.5, price)
@@ -120,9 +118,7 @@ class TestPortfolioHeatProperties:
         long_pos = [{"qty": 10.0, "price": 100.0, "side": "long"}]
         short_pos = [{"qty": -10.0, "price": 100.0, "side": "short"}]
 
-        assert portfolio_heat(long_pos) == pytest.approx(
-            portfolio_heat(short_pos), rel=1e-9
-        )
+        assert portfolio_heat(long_pos) == pytest.approx(portfolio_heat(short_pos), rel=1e-9)
 
 
 class TestOrderProperties:

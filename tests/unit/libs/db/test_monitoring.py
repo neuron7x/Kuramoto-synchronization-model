@@ -66,7 +66,9 @@ def test_instrument_engine_metrics_records_queries(monkeypatch: pytest.MonkeyPat
     assert error_total == 1.0
 
 
-def test_database_monitor_collects_sqlite_size(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_database_monitor_collects_sqlite_size(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     registry = CollectorRegistry()
     collector = MetricsCollector(registry)
     monkeypatch.setattr(metrics_module, "_collector", collector, raising=False)
@@ -75,7 +77,9 @@ def test_database_monitor_collects_sqlite_size(tmp_path: Path, monkeypatch: pyte
     engine = create_engine(f"sqlite+pysqlite:///{db_path}", future=True)
     try:
         with engine.begin() as connection:
-            connection.execute(text("CREATE TABLE metrics_test (id INTEGER PRIMARY KEY, value TEXT)"))
+            connection.execute(
+                text("CREATE TABLE metrics_test (id INTEGER PRIMARY KEY, value TEXT)")
+            )
             connection.execute(text("INSERT INTO metrics_test(value) VALUES ('alpha')"))
 
         monitor = DatabaseMonitor(engine, interval_seconds=0.1)

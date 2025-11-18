@@ -19,6 +19,7 @@ import json
 
 # ----- helpers -----
 
+
 def clamp(x: float, lo: float, hi: float) -> float:
     """Clamp ``x`` into the inclusive ``[lo, hi]`` interval."""
 
@@ -30,24 +31,30 @@ def ema(prev: float, value: float, alpha: float) -> float:
 
     return alpha * value + (1.0 - alpha) * prev
 
+
 Action = Literal["BUY", "SELL", "HOLD"]
+
 
 @dataclass(slots=True, frozen=True)
 class AgentVote:
     """Окремий голос агента."""
+
     agent: str
-    score: float           # [-1, 1]; >0 -> buy, <0 -> sell
+    score: float  # [-1, 1]; >0 -> buy, <0 -> sell
     confidence: float = 1.0  # [0, 1]
     rationale: str = ""
+
 
 @dataclass(slots=True, frozen=True)
 class ConsensusDecision:
     """Рішення консенсусу."""
+
     action: Action
     score: float
     confidence: float
     weights: Mapping[str, float]
     votes: Tuple[AgentVote, ...]
+
 
 class _StateStore:
     """Проста JSON-пам'ять для нагород/ваг (атомарний запис)."""
@@ -104,6 +111,7 @@ class _StateStore:
         tmp.write_text(payload)
         tmp.replace(self.path)
 
+
 class HNCMConsensusAdapter:
     """Адаптивний консенсус (HNCM v1.1 логіка) для TradePulse.
 
@@ -131,7 +139,9 @@ class HNCMConsensusAdapter:
         self.base_weights: Dict[str, float] = self._validate_base_weights(base_weights or {})
         self.alpha = self._validate_alpha(alpha)
         self.store = _StateStore(state_path)
-        self.buy_threshold, self.sell_threshold = self._validate_thresholds(buy_threshold, sell_threshold)
+        self.buy_threshold, self.sell_threshold = self._validate_thresholds(
+            buy_threshold, sell_threshold
+        )
 
     # ---------- aggregation ----------
 
@@ -214,7 +224,9 @@ class HNCMConsensusAdapter:
 
     # ---------- online learning ----------
 
-    def update_feedback(self, realized: float, agent_scores: Mapping[str, float]) -> Dict[str, float]:
+    def update_feedback(
+        self, realized: float, agent_scores: Mapping[str, float]
+    ) -> Dict[str, float]:
         """Оновити EMA-нагороди агентів згідно з реалізованим результатом.
 
         realized: нормалізований результат у [-1,1] (знакований PnL/accuracy)
@@ -258,9 +270,13 @@ class HNCMConsensusAdapter:
         )
         action = self.score_to_action(score)
         conf = self.confidence_from_score(score)
-        return ConsensusDecision(action=action, score=score, confidence=conf, weights=weights, votes=v)
+        return ConsensusDecision(
+            action=action, score=score, confidence=conf, weights=weights, votes=v
+        )
+
 
 # ---------- EWS → AgentVote ----------
+
 
 def ews_to_vote(agent_name: str, ews_result: Any, *, use_probability: bool = True) -> AgentVote:
     """Перетворити :class:`EWSResult` у голос агента."""

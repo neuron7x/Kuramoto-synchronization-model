@@ -91,12 +91,8 @@ class StrategyEngineMode(str, Enum):
 class IOContract:
     """Declarative contract describing module inputs or outputs."""
 
-    required: Mapping[str, type | tuple[type, ...] | None] = field(
-        default_factory=dict
-    )
-    optional: Mapping[str, type | tuple[type, ...] | None] = field(
-        default_factory=dict
-    )
+    required: Mapping[str, type | tuple[type, ...] | None] = field(default_factory=dict)
+    optional: Mapping[str, type | tuple[type, ...] | None] = field(default_factory=dict)
     description: str | None = None
 
     def __post_init__(self) -> None:
@@ -109,9 +105,7 @@ class IOContract:
         missing = [field for field in self.required if field not in payload]
         if missing:
             joined = ", ".join(sorted(missing))
-            raise ValueError(
-                f"Missing required inputs for {contract_name!r}: [{joined}]"
-            )
+            raise ValueError(f"Missing required inputs for {contract_name!r}: [{joined}]")
 
         for field_name, expected in self.required.items():
             if expected is None:
@@ -248,9 +242,7 @@ class RiskAssessment:
         if "strength" in self.adjustments:
             updated = replace(updated, strength=float(self.adjustments["strength"]))
         if "confidence" in self.adjustments:
-            updated = replace(
-                updated, confidence=float(self.adjustments["confidence"])
-            )
+            updated = replace(updated, confidence=float(self.adjustments["confidence"]))
         if "metadata" in self.adjustments:
             merged: MutableMapping[str, Any] = dict(updated.metadata)
             metadata_update = self.adjustments["metadata"]
@@ -267,18 +259,14 @@ class RiskAssessment:
 class RiskPolicy(Protocol):
     """Contract for evaluating signals prior to OMS routing."""
 
-    def assess(
-        self, signal: StrategySignal, *, mode: StrategyEngineMode
-    ) -> RiskAssessment:
+    def assess(self, signal: StrategySignal, *, mode: StrategyEngineMode) -> RiskAssessment:
         """Return the risk assessment for ``signal``."""
 
 
 class AcceptAllRiskPolicy:
     """Default risk policy that approves every signal."""
 
-    def assess(
-        self, signal: StrategySignal, *, mode: StrategyEngineMode
-    ) -> RiskAssessment:
+    def assess(self, signal: StrategySignal, *, mode: StrategyEngineMode) -> RiskAssessment:
         return RiskAssessment(approved=True)
 
 
@@ -289,7 +277,9 @@ class StrategyModule(Protocol):
     input_contract: IOContract
     output_contract: IOContract
 
-    def process(self, context: StrategyContext) -> Iterable[StrategyEngineEvent] | StrategyEngineEvent | None:
+    def process(
+        self, context: StrategyContext
+    ) -> Iterable[StrategyEngineEvent] | StrategyEngineEvent | None:
         """Produce zero or more :class:`StrategyEngineEvent` objects."""
 
 
@@ -419,9 +409,7 @@ class StrategyEngine:
     # ---------------------------------------------------------------------
     # Internal helpers
 
-    def _handle_event(
-        self, event: StrategyEngineEvent
-    ) -> tuple[StrategyEngineEvent, ...]:
+    def _handle_event(self, event: StrategyEngineEvent) -> tuple[StrategyEngineEvent, ...]:
         self._validate_event(event)
         self._validate_output_contract(event)
         if event.type is StrategyEventType.SIGNAL:
@@ -436,9 +424,7 @@ class StrategyEngine:
             return (event,)
         return ()
 
-    def _handle_signal(
-        self, event: StrategyEngineEvent
-    ) -> tuple[StrategyEngineEvent, ...]:
+    def _handle_signal(self, event: StrategyEngineEvent) -> tuple[StrategyEngineEvent, ...]:
         signal_payload = event.payload
         if not isinstance(signal_payload, StrategySignal):
             msg = "Signal events must carry StrategySignal payloads"
@@ -493,27 +479,19 @@ class StrategyEngine:
         return tuple(dispatched)
 
     def _validate_event(self, event: StrategyEngineEvent) -> None:
-        if event.type is StrategyEventType.SIGNAL and not isinstance(
-            event.payload, StrategySignal
-        ):
+        if event.type is StrategyEventType.SIGNAL and not isinstance(event.payload, StrategySignal):
             raise TypeError("Signal events must carry StrategySignal payloads")
-        if event.type is StrategyEventType.CANCEL and not isinstance(
-            event.payload, StrategyCancel
-        ):
+        if event.type is StrategyEventType.CANCEL and not isinstance(event.payload, StrategyCancel):
             raise TypeError("Cancel events must carry StrategyCancel payloads")
         if event.type is StrategyEventType.RISK_ADVICE and not isinstance(
             event.payload, RiskAdvice
         ):
-            raise TypeError(
-                "Risk-advice events must carry RiskAdvice payloads"
-            )
+            raise TypeError("Risk-advice events must carry RiskAdvice payloads")
 
     def _validate_output_contract(self, event: StrategyEngineEvent) -> None:
         module = self._modules.get(event.module)
         if module is None:
-            raise StrategyEngineError(
-                f"Event references unknown strategy module {event.module!r}"
-            )
+            raise StrategyEngineError(f"Event references unknown strategy module {event.module!r}")
         contract = module.output_contract
         if not contract.required and not contract.optional:
             return
@@ -546,4 +524,3 @@ __all__ = [
     "AcceptAllRiskPolicy",
     "IOContract",
 ]
-

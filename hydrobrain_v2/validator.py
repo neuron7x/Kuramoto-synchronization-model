@@ -18,8 +18,12 @@ class GBStandardValidator:
             "bact_max": 10000.0,
         }
 
-    def validate_hydrology(self, pred: torch.Tensor, true: torch.Tensor) -> dict[str, float | bool | str]:
-        level_rel = torch.mean(torch.abs(pred[:, 0] - true[:, 0]) / (true[:, 0].abs() + 1e-6)).item()
+    def validate_hydrology(
+        self, pred: torch.Tensor, true: torch.Tensor
+    ) -> dict[str, float | bool | str]:
+        level_rel = torch.mean(
+            torch.abs(pred[:, 0] - true[:, 0]) / (true[:, 0].abs() + 1e-6)
+        ).item()
         flow_rel = torch.mean(torch.abs(pred[:, 1] - true[:, 1]) / (true[:, 1].abs() + 1e-6)).item()
         ok = (level_rel <= self.h_tol["water_level_rel"]) and (flow_rel <= self.h_tol["flow_rel"])
         return {
@@ -30,7 +34,12 @@ class GBStandardValidator:
         }
 
     def validate_water_quality(self, pred: torch.Tensor) -> dict[str, float | bool | str]:
-        ph_ok = ((pred[:, 0] >= self.wq_limits["pH"][0]) & (pred[:, 0] <= self.wq_limits["pH"][1])).float().mean().item()
+        ph_ok = (
+            ((pred[:, 0] >= self.wq_limits["pH"][0]) & (pred[:, 0] <= self.wq_limits["pH"][1]))
+            .float()
+            .mean()
+            .item()
+        )
         do_ok = (pred[:, 1] >= self.wq_limits["DO_min"]).float().mean().item()
         turb_ok = (pred[:, 2] <= self.wq_limits["turb_max"]).float().mean().item()
         nit_ok = (pred[:, 3] <= self.wq_limits["nit_max"]).float().mean().item()
@@ -56,6 +65,8 @@ class GBStandardValidator:
         if targets and ("hydrology" in outputs) and ("y_hydro" in targets):
             res["hydrology"] = self.validate_hydrology(outputs["hydrology"], targets["y_hydro"])
         res["overall_compliance"] = all(
-            v.get("compliance", True) if isinstance(v, dict) else True for v in res.values() if v is not None
+            v.get("compliance", True) if isinstance(v, dict) else True
+            for v in res.values()
+            if v is not None
         )
         return res

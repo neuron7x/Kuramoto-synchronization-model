@@ -215,9 +215,7 @@ class PromptTemplateLibrary:
 
     def start_experiment(self, family: str, experiment: PromptExperiment) -> None:
         suite = self._require_suite(family)
-        missing = [
-            variant for variant in experiment.allocations if variant not in suite.templates
-        ]
+        missing = [variant for variant in experiment.allocations if variant not in suite.templates]
         if missing:
             raise PromptExperimentError(
                 f"Experiment variants not registered: {', '.join(sorted(missing))}"
@@ -234,16 +232,12 @@ class PromptTemplateLibrary:
         suite = self._require_suite(family)
         suite.rollback_to_control(reason)
 
-    def select_template(
-        self, family: str, *, assignment: float | None = None
-    ) -> PromptTemplate:
+    def select_template(self, family: str, *, assignment: float | None = None) -> PromptTemplate:
         suite = self._require_suite(family)
         variant = suite.select_variant(assignment)
         return suite.get_variant(variant)
 
-    def record_outcome(
-        self, family: str, variant: str, outcome: PromptOutcome
-    ) -> bool:
+    def record_outcome(self, family: str, variant: str, outcome: PromptOutcome) -> bool:
         suite = self._require_suite(family)
         if suite.experiment and suite.experiment.active:
             rollback_required = suite.experiment.record_outcome(variant, outcome)
@@ -259,4 +253,3 @@ class PromptTemplateLibrary:
             raise PromptTemplateNotFoundError(
                 f"Prompt family '{family}' has not been registered"
             ) from exc
-

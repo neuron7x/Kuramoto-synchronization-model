@@ -43,9 +43,7 @@ class IncidentManager:
 
         date_prefix = timestamp.strftime("%Y%m%d")
         existing = sorted(
-            path
-            for path in year_directory.glob(f"INC-{date_prefix}-*")
-            if path.is_dir()
+            path for path in year_directory.glob(f"INC-{date_prefix}-*") if path.is_dir()
         )
         identifier = f"INC-{date_prefix}-{len(existing) + 1:03d}"
         incident_dir = year_directory / identifier
@@ -61,4 +59,6 @@ class IncidentManager:
             "metadata": dict(metadata or {}),
         }
         summary_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        return IncidentRecord(identifier=identifier, directory=incident_dir, summary_path=summary_path)
+        return IncidentRecord(
+            identifier=identifier, directory=incident_dir, summary_path=summary_path
+        )

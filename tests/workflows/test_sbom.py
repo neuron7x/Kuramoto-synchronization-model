@@ -1,4 +1,5 @@
 """Regression tests for the CycloneDX SBOM workflow configuration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -89,7 +90,7 @@ def test_signing_steps_skip_during_pull_requests() -> None:
     assert signing_step.get("if") == "github.event_name != 'pull_request'"
     assert (
         verification_step.get("if")
-        == "${{ github.event_name != 'pull_request' && secrets.COSIGN_CERTIFICATE_IDENTITY != '' && secrets.COSIGN_CERTIFICATE_OIDC_ISSUER != '' }}"
+        == "${{ github.event_name != 'pull_request' && secrets.COSIGN_CERTIFICATE_IDENTITY != '' && secrets.COSIGN_CERTIFICATE_OIDC_ISSUER != '' }}"  # noqa: E501
     )
 
 

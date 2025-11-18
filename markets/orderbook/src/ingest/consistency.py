@@ -27,7 +27,9 @@ class ConsistencyError(Exception):
 class ConsistencyValidator:
     """Performs strict validation of exchange payloads before applying."""
 
-    def __init__(self, *, min_price: Decimal | None = None, min_quantity: Decimal | None = None) -> None:
+    def __init__(
+        self, *, min_price: Decimal | None = None, min_quantity: Decimal | None = None
+    ) -> None:
         self._min_price = min_price
         self._min_quantity = min_quantity
 
@@ -37,8 +39,12 @@ class ConsistencyValidator:
         self._validate_timestamps(snapshot.ts_event, snapshot.ts_arrival)
 
     def validate_diff(self, diff: OrderBookDiff) -> None:
-        self._validate_levels(diff.instrument, diff.sequence_end, diff.bids, Side.BUY, allow_zero=True)
-        self._validate_levels(diff.instrument, diff.sequence_end, diff.asks, Side.SELL, allow_zero=True)
+        self._validate_levels(
+            diff.instrument, diff.sequence_end, diff.bids, Side.BUY, allow_zero=True
+        )
+        self._validate_levels(
+            diff.instrument, diff.sequence_end, diff.asks, Side.SELL, allow_zero=True
+        )
         self._validate_timestamps(diff.ts_event, diff.ts_arrival)
 
     @staticmethod
@@ -73,9 +79,13 @@ class ConsistencyValidator:
                 raise ConsistencyError("zero quantity in snapshot", instrument, sequence)
             if prev_price is not None and not allow_zero:
                 if side is Side.BUY and price >= prev_price:
-                    raise ConsistencyError("bid levels not strictly descending", instrument, sequence)
+                    raise ConsistencyError(
+                        "bid levels not strictly descending", instrument, sequence
+                    )
                 if side is Side.SELL and price <= prev_price:
-                    raise ConsistencyError("ask levels not strictly ascending", instrument, sequence)
+                    raise ConsistencyError(
+                        "ask levels not strictly ascending", instrument, sequence
+                    )
             prev_price = price
 
 

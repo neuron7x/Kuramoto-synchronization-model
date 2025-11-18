@@ -64,18 +64,18 @@ class TopoSentinel:
             components = _estimate_components(adjacency)
             euler = node_count - edge_count + components
             euler_values.append(euler)
-            barcode_lengths.append(max(threshold - dist[edges].mean() if edge_count > 0 else 0.0, 0.0))
+            barcode_lengths.append(
+                max(threshold - dist[edges].mean() if edge_count > 0 else 0.0, 0.0)
+            )
 
-        euler_curve = pd.Series(euler_values, index=pd.Index(thresholds, name="threshold"), name="euler")
+        euler_curve = pd.Series(
+            euler_values, index=pd.Index(thresholds, name="threshold"), name="euler"
+        )
         barcode_array = np.array(barcode_lengths)
         entropy = _entropy(barcode_array)
         count_long = int(np.sum(barcode_array > np.median(barcode_array)))
         euler_area = float(np.trapezoid(euler_curve.values, thresholds))
-        topo_score = float(
-            (count_long / max(len(thresholds), 1))
-            + entropy
-            + euler_area
-        )
+        topo_score = float((count_long / max(len(thresholds), 1)) + entropy + euler_area)
 
         return TopoSentinelResult(
             topo_score=topo_score,

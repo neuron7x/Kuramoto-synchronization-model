@@ -105,7 +105,4 @@ async def test_merge_streams_continues_after_stream_failure(
 
     prices = [str(tick.price) for tick in received]
     assert prices.count("1500.0") == 1
-    assert any(
-        "Async stream terminated with error" in record.message
-        for record in caplog.records
-    )
+    assert any("Async stream terminated with error" in record.message for record in caplog.records)

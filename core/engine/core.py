@@ -91,7 +91,9 @@ class DataFeed(Protocol):
 class SignalGenerator(Protocol):
     """Transforms :class:`MarketData` into actionable :class:`Signal` objects."""
 
-    def generate(self, data: MarketData, context: EngineContext) -> Iterable[Signal] | Signal | None:
+    def generate(
+        self, data: MarketData, context: EngineContext
+    ) -> Iterable[Signal] | Signal | None:
         """Produce zero or more signals for the supplied market data."""
 
 
@@ -107,7 +109,9 @@ class RiskManager(Protocol):
 class ExecutionClient(Protocol):
     """Handles interaction with trading venues, brokers, or downstream systems."""
 
-    def execute(self, signal: Signal, decision: RiskDecision, context: EngineContext) -> ExecutionOutcome:
+    def execute(
+        self, signal: Signal, decision: RiskDecision, context: EngineContext
+    ) -> ExecutionOutcome:
         """Execute the signal in accordance with the supplied risk decision."""
 
 
@@ -219,9 +223,7 @@ class CoreEngine:
                 approved_count = sum(1 for decision in decisions if decision.approved)
                 rejected_count = received_count - approved_count
 
-                signal_decision_pairs = tuple(
-                    zip(generated_signals, decisions, strict=True)
-                )
+                signal_decision_pairs = tuple(zip(generated_signals, decisions, strict=True))
                 if self._config.drop_rejected_signals:
                     filtered_pairs = tuple(
                         (signal, decision)

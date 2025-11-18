@@ -45,5 +45,10 @@ def build_signal_with_consensus(
         ],
     }
 
-    return Signal(symbol=symbol, action=action_map[decision.action], confidence=decision.confidence,
-                  rationale=rationale, metadata=metadata)
+    return Signal(
+        symbol=symbol,
+        action=action_map[decision.action],
+        confidence=decision.confidence,
+        rationale=rationale,
+        metadata=metadata,
+    )

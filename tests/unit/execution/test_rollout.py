@@ -100,9 +100,7 @@ def test_rollout_aborts_and_rolls_back_on_guardrail_breach() -> None:
     metrics_snapshot = {"pnl": 0.95, "latency_p95": 25.0}
     rollback_events: list[tuple[str, dict[str, float], CanaryDecision]] = []
 
-    def record_rollback(
-        reason: str, metrics: dict[str, float], decision: CanaryDecision
-    ) -> None:
+    def record_rollback(reason: str, metrics: dict[str, float], decision: CanaryDecision) -> None:
         rollback_events.append((reason, dict(metrics), decision))
 
     orchestrator = BlueGreenRolloutOrchestrator(

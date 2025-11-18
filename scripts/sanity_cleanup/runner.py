@@ -40,9 +40,7 @@ def _write_summary(result: CleanupResult) -> Path | None:
                 "status": report.status.value,
                 "summary": report.summary,
                 "details": list(report.details),
-                "artifacts": {
-                    key: str(value) for key, value in (report.artifacts or {}).items()
-                },
+                "artifacts": {key: str(value) for key, value in (report.artifacts or {}).items()},
             }
             for report in result.reports
         ],
@@ -51,7 +49,9 @@ def _write_summary(result: CleanupResult) -> Path | None:
     output_path = result.root / "reports" / "sanity_cleanup_summary.json"
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        output_path.write_text(
+            json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
     except Exception:  # pragma: no cover - best effort reporting
         LOGGER.exception("Unable to write summary to %s", output_path)
         return None
@@ -99,10 +99,7 @@ def run_all(root: Path, options: CleanupOptions | None = None) -> CleanupResult:
         tasks.archive_legacy_content,
     )
 
-    reports = [
-        _execute_task(func, context)
-        for func in task_functions
-    ]
+    reports = [_execute_task(func, context) for func in task_functions]
 
     result = CleanupResult(root=resolved_root, reports=tuple(reports))
     summary_path = _write_summary(result)

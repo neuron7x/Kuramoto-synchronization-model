@@ -81,7 +81,9 @@ class YahooFinanceDataFetcher:
             try:
                 import yfinance as yf
             except ImportError as exc:  # pragma: no cover - exercised in tests via stub
-                raise RuntimeError("yfinance must be installed to use the default downloader") from exc
+                raise RuntimeError(
+                    "yfinance must be installed to use the default downloader"
+                ) from exc
             downloader = yf.download
 
         frame = downloader(symbol, start=start, end=end, progress=False)
@@ -257,10 +259,14 @@ class PaperTradingAccount:
         if price <= 0:
             raise ValueError("price must be positive")
 
-        fill_price = price * (1.0 + self.slippage) if side is OrderSide.BUY else price * (
-            1.0 - self.slippage
+        fill_price = (
+            price * (1.0 + self.slippage)
+            if side is OrderSide.BUY
+            else price * (1.0 - self.slippage)
         )
-        transaction_multiplier = 1.0 + self.transaction_cost if side is OrderSide.BUY else 1.0 - self.transaction_cost
+        transaction_multiplier = (
+            1.0 + self.transaction_cost if side is OrderSide.BUY else 1.0 - self.transaction_cost
+        )
 
         notional = quantity * fill_price
         if side is OrderSide.BUY:
@@ -426,7 +432,9 @@ class RiskGuard:
 
         return True, None
 
-    def check_position_size(self, value: float, equity: float, *, timestamp: datetime) -> tuple[bool, str | None]:
+    def check_position_size(
+        self, value: float, equity: float, *, timestamp: datetime
+    ) -> tuple[bool, str | None]:
         limit = equity * self.max_position_fraction
         if value > limit + 1e-9:
             self._record_event(
@@ -437,7 +445,9 @@ class RiskGuard:
             return False, "position_limit"
         return True, None
 
-    def stop_loss_triggered(self, position: Position | None, price: float, *, timestamp: datetime) -> bool:
+    def stop_loss_triggered(
+        self, position: Position | None, price: float, *, timestamp: datetime
+    ) -> bool:
         if position is None or position.quantity == 0:
             return False
         if position.entry_price <= 0:
@@ -554,7 +564,9 @@ class FETEBacktestEngine:
             raise ValueError("timestamps length must match prices")
 
         self._account.reset()
-        initial_equity = self._account.equity({symbol: float(price_array[0])}, timestamp=timestamps[0], record=False)
+        initial_equity = self._account.equity(
+            {symbol: float(price_array[0])}, timestamp=timestamps[0], record=False
+        )
         self._risk.reset(initial_equity, timestamp=timestamps[0])
 
         returns = np.zeros_like(price_array)
@@ -585,7 +597,9 @@ class FETEBacktestEngine:
 
             if not self._risk.circuit_breaker_active:
                 pos_value = abs(target_fraction) * float(equity_before)
-                ok_size, size_reason = self._risk.check_position_size(pos_value, float(equity_before), timestamp=ts)
+                ok_size, size_reason = self._risk.check_position_size(
+                    pos_value, float(equity_before), timestamp=ts
+                )
                 if not ok_size:
                     # Clamp to the allowed band instead of flat rejection.
                     target_fraction = float(
@@ -600,7 +614,11 @@ class FETEBacktestEngine:
                     target_fraction = 0.0
 
             target_fraction = float(
-                np.clip(target_fraction, -self._risk.max_position_fraction, self._risk.max_position_fraction)
+                np.clip(
+                    target_fraction,
+                    -self._risk.max_position_fraction,
+                    self._risk.max_position_fraction,
+                )
             )
 
             trade = self._account.rebalance_to_fraction(
@@ -641,9 +659,7 @@ class FETEBacktestEngine:
         realized_pnls = [trade.realized_pnl for trade in trades]
         wins = [pnl for pnl in realized_pnls if pnl > 0]
         losses = [pnl for pnl in realized_pnls if pnl < 0]
-        profit_factor = (
-            sum(wins) / abs(sum(losses)) if losses else float("inf") if wins else 0.0
-        )
+        profit_factor = sum(wins) / abs(sum(losses)) if losses else float("inf") if wins else 0.0
 
         report = BacktestReport(
             symbol=symbol,

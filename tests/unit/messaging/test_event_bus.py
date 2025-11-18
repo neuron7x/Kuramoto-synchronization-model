@@ -21,16 +21,12 @@ class DummyProducer:
     async def send_and_wait(
         self, topic: str, value: bytes, *, key: bytes, headers: list[tuple[str, bytes]]
     ) -> None:
-        self.calls.append(
-            {"topic": topic, "value": value, "key": key, "headers": headers}
-        )
+        self.calls.append({"topic": topic, "value": value, "key": key, "headers": headers})
 
 
 @pytest.mark.asyncio
 async def test_kafka_publish_uses_symbol_partition_key() -> None:
-    config = EventBusConfig(
-        backend=EventBusBackend.KAFKA, bootstrap_servers="kafka:9092"
-    )
+    config = EventBusConfig(backend=EventBusBackend.KAFKA, bootstrap_servers="kafka:9092")
     bus = KafkaEventBus(config)
     producer = DummyProducer()
     bus._producer = producer  # type: ignore[attr-defined]

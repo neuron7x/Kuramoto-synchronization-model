@@ -15,9 +15,7 @@ class PortfolioExposure(Base):
 
     __tablename__ = "cortex_portfolio_exposures"
     __table_args__ = (
-        UniqueConstraint(
-            "portfolio_id", "instrument", "as_of", name="uq_cortex_exposure"
-        ),
+        UniqueConstraint("portfolio_id", "instrument", "as_of", name="uq_cortex_exposure"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

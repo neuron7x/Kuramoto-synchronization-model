@@ -58,9 +58,7 @@ class RealTimeStreamManager:
             try:
                 await connection.close(code=code)
             except Exception:  # pragma: no cover - defensive
-                LOGGER.debug(
-                    "Failed to close realtime websocket connection", exc_info=True
-                )
+                LOGGER.debug("Failed to close realtime websocket connection", exc_info=True)
 
 
 class AnalyticsStore:
@@ -144,10 +142,7 @@ class AnalyticsStore:
 
     async def recent_predictions(self, *, limit: int = 20) -> list[BaseModel]:
         async with self._lock:
-            return [
-                entry.model_copy(deep=True)
-                for entry in list(self._prediction_history)[:limit]
-            ]
+            return [entry.model_copy(deep=True) for entry in list(self._prediction_history)[:limit]]
 
 
 def _iso(value: Any) -> str | None:

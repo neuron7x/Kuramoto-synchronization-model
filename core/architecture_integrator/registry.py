@@ -84,11 +84,7 @@ class ComponentRegistry:
 
     def get_by_tag(self, tag: str) -> Sequence[Component]:
         """Return all components with the specified tag."""
-        return [
-            comp
-            for comp in self._components.values()
-            if tag in comp.metadata.tags
-        ]
+        return [comp for comp in self._components.values() if tag in comp.metadata.tags]
 
     def get_by_capability(self, capability: str) -> Sequence[Component]:
         """Return all components that provide a specific capability."""
@@ -125,9 +121,7 @@ class ComponentRegistry:
             for dep in component.get_dependencies():
                 # Check if dependency is satisfied by component name or capability
                 if not self.has_component(dep) and not self.has_capability(dep):
-                    errors.append(
-                        f"Component '{name}' depends on '{dep}' which is not available"
-                    )
+                    errors.append(f"Component '{name}' depends on '{dep}' which is not available")
         return errors
 
     def get_initialization_order(self) -> Sequence[str]:

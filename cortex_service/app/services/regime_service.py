@@ -117,9 +117,7 @@ class RegimeService:
             )
 
         # Update regime
-        updated_state = self._modulator.update(
-            previous_state, feedback, volatility, as_of
-        )
+        updated_state = self._modulator.update(previous_state, feedback, volatility, as_of)
 
         # Persist to database
         start = time.perf_counter()
@@ -129,9 +127,7 @@ class RegimeService:
             updated_state.confidence,
             updated_state.as_of,
         )
-        DB_OPERATION_LATENCY.labels(operation="store_regime").observe(
-            time.perf_counter() - start
-        )
+        DB_OPERATION_LATENCY.labels(operation="store_regime").observe(time.perf_counter() - start)
 
         # Update cache
         self._cache.set(updated_state)

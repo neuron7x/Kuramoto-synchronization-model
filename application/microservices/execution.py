@@ -41,9 +41,7 @@ class ExecutionService(Microservice):
             )
         except KeyError:  # pragma: no cover - defensive
             pass
-        self._idempotency_store = InMemoryEventIdempotencyStore(
-            ttl_seconds=idempotency_ttl_seconds
-        )
+        self._idempotency_store = InMemoryEventIdempotencyStore(ttl_seconds=idempotency_ttl_seconds)
         self._replay_cache: MutableMapping[str, tuple[Order, float]] = {}
         self._idempotency_ttl = float(idempotency_ttl_seconds)
 

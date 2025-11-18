@@ -5,7 +5,14 @@ import contextlib
 import numpy as np
 import pytest
 
-from backtest.execution_simulation import HaltMode, MarketHalt, MatchingEngine, Order, OrderSide, OrderType
+from backtest.execution_simulation import (
+    HaltMode,
+    MarketHalt,
+    MatchingEngine,
+    Order,
+    OrderSide,
+    OrderType,
+)
 from observability.tracing import chaos_span
 
 
@@ -21,7 +28,9 @@ def resilient_engine(monkeypatch):
 
     def halt_model(symbol: str, timestamp: int) -> MarketHalt | None:
         if symbol == "XBTUSD" and timestamp >= 5:
-            return MarketHalt(mode=HaltMode.PARTIAL, resume_time=timestamp + 2, liquidity_factor=0.7)
+            return MarketHalt(
+                mode=HaltMode.PARTIAL, resume_time=timestamp + 2, liquidity_factor=0.7
+            )
         return None
 
     engine = MatchingEngine(

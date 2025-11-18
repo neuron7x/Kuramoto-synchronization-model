@@ -37,7 +37,9 @@ def test_fete_backtest_output_shapes() -> None:
     n = 400
     log_returns = rng.normal(0.0005, 0.015, size=n)
     prices = np.cumprod(1.0 + log_returns)
-    probs = 0.5 + 0.15 * np.sin(np.arange(prices.size) / 50.0) + rng.normal(0, 0.08, size=prices.size)
+    probs = (
+        0.5 + 0.15 * np.sin(np.arange(prices.size) / 50.0) + rng.normal(0, 0.08, size=prices.size)
+    )
     engine = FETE(FETEConfig())
     result = engine.backtest(prices, probs)
     assert "equity" in result and result["equity"].shape[0] == prices.size - 1

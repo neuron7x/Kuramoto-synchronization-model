@@ -136,9 +136,7 @@ class StrategyRunSnapshot:
             cleaned_metrics[str(key)] = numeric
         object.__setattr__(self, "metrics", MappingProxyType(dict(sorted(cleaned_metrics.items()))))
 
-        cleaned_metadata = {
-            str(key): value for key, value in dict(self.metadata).items()
-        }
+        cleaned_metadata = {str(key): value for key, value in dict(self.metadata).items()}
         object.__setattr__(self, "metadata", MappingProxyType(cleaned_metadata))
 
     @classmethod
@@ -158,11 +156,9 @@ class StrategyRunSnapshot:
 
         metrics: MutableMapping[str, float] = {}
         if hasattr(report, "as_dict"):
-            metrics.update({
-                key: float(value)
-                for key, value in report.as_dict().items()
-                if value is not None
-            })
+            metrics.update(
+                {key: float(value) for key, value in report.as_dict().items() if value is not None}
+            )
 
         if extra_metrics:
             for key, value in extra_metrics.items():
@@ -264,14 +260,13 @@ class EnvironmentParityReport:
             parts.append(f"Missing environments: {missing}")
         if self.missing_metrics:
             detail = ", ".join(
-                f"{env}({', '.join(metrics)})"
-                for env, metrics in self.missing_metrics.items()
+                f"{env}({', '.join(metrics)})" for env, metrics in self.missing_metrics.items()
             )
             parts.append(f"Missing metrics: {detail}")
         if self.metric_deviations:
             sample = self.metric_deviations[0]
             parts.append(
-                f"Deviation {sample.metric} {sample.comparison_label} = {sample.absolute_difference:.4g}"
+                f"Deviation {sample.metric} {sample.comparison_label} = {sample.absolute_difference:.4g}"  # noqa: E501
             )
         if self.metadata_drift:
             drift_keys = ", ".join(sorted(self.metadata_drift.keys()))
@@ -309,9 +304,7 @@ class EnvironmentParityChecker:
             raise ValueError("Snapshots must refer to the same strategy")
         strategy = strategy_names.pop()
 
-        missing_envs = tuple(
-            env for env in config.required_environments if env not in env_map
-        )
+        missing_envs = tuple(env for env in config.required_environments if env not in env_map)
 
         baseline_snapshot = env_map.get(config.baseline_environment)
 
@@ -336,14 +329,10 @@ class EnvironmentParityChecker:
             if snapshot is None:
                 continue
             missing = sorted(
-                metric
-                for metric in required_metrics
-                if metric not in snapshot.metrics
+                metric for metric in required_metrics if metric not in snapshot.metrics
             )
             optional_absent = sorted(
-                metric
-                for metric in optional
-                if metric not in snapshot.metrics
+                metric for metric in optional if metric not in snapshot.metrics
             )
             if missing:
                 missing_metrics[environment] = tuple(missing)
@@ -398,12 +387,8 @@ class EnvironmentParityChecker:
                         )
                     )
 
-        code_digests = {
-            env: snapshot.code_digest for env, snapshot in env_map.items()
-        }
-        parameter_digests = {
-            env: snapshot.parameters_digest for env, snapshot in env_map.items()
-        }
+        code_digests = {env: snapshot.code_digest for env, snapshot in env_map.items()}
+        parameter_digests = {env: snapshot.parameters_digest for env, snapshot in env_map.items()}
 
         if config.metadata_keys:
             metadata_keys = set(config.metadata_keys)

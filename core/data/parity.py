@@ -78,9 +78,7 @@ class FeatureParityCoordinator:
         )
 
         keys = list(spec.entity_columns) + [spec.timestamp_column]
-        columns_added, columns_removed = self._diff_columns(
-            offline_frame, online_existing, keys
-        )
+        columns_added, columns_removed = self._diff_columns(offline_frame, online_existing, keys)
 
         if (
             not spec.allow_schema_evolution
@@ -95,22 +93,15 @@ class FeatureParityCoordinator:
         clock_skew_abs: pd.Timedelta | None = None
         if clock_skew is not None:
             clock_skew_abs = abs(clock_skew)
-            if (
-                spec.max_clock_skew is not None
-                and clock_skew_abs > spec.max_clock_skew
-            ):
+            if spec.max_clock_skew is not None and clock_skew_abs > spec.max_clock_skew:
                 raise FeatureTimeSkewError(
                     "Clock skew exceeds configured tolerance for feature view "
                     f"{spec.feature_view!r}: {clock_skew_abs} > {spec.max_clock_skew}"
                 )
 
-        inserted_keys, removed_keys = self._diff_keys(
-            offline_frame, online_existing, keys
-        )
+        inserted_keys, removed_keys = self._diff_keys(offline_frame, online_existing, keys)
 
-        value_columns = self._resolve_value_columns(
-            offline_frame, online_existing, keys, spec
-        )
+        value_columns = self._resolve_value_columns(offline_frame, online_existing, keys, spec)
 
         max_value_drift, updated_keys = self._compute_value_drift(
             offline_frame, online_existing, keys, value_columns, spec
@@ -141,9 +132,7 @@ class FeatureParityCoordinator:
         inserted_rows = write_frame.shape[0]
         updated_rows = len(updated_keys)
 
-        integrity = self._store.sync(
-            spec.feature_view, write_frame, mode=mode, validate=True
-        )
+        integrity = self._store.sync(spec.feature_view, write_frame, mode=mode, validate=True)
 
         return FeatureParityReport(
             feature_view=spec.feature_view,
@@ -241,12 +230,12 @@ class FeatureParityCoordinator:
         if spec.value_columns is not None:
             candidates = tuple(spec.value_columns)
         else:
-            candidates = tuple(
-                column for column in offline_frame.columns if column not in keys
-            )
+            candidates = tuple(column for column in offline_frame.columns if column not in keys)
         online_columns = set(online_frame.columns)
         resolved = tuple(
-            column for column in candidates if column in offline_frame.columns and column in online_columns
+            column
+            for column in candidates
+            if column in offline_frame.columns and column in online_columns
         )
         return resolved
 
@@ -270,9 +259,7 @@ class FeatureParityCoordinator:
         if merged.empty:
             return None, set()
 
-        tolerance = (
-            float("inf") if spec.numeric_tolerance is None else spec.numeric_tolerance
-        )
+        tolerance = float("inf") if spec.numeric_tolerance is None else spec.numeric_tolerance
 
         max_drift: float | None = None
         updated: set[tuple[object, ...]] = set()

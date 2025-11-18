@@ -169,11 +169,7 @@ def analyze_csv(
         timestamp_gap_stats = _summarize_timestamp_gaps(df[timestamp_column])
 
     per_column_nan = (
-        df.isna()
-        .mean()
-        .loc[lambda series: series.gt(0)]
-        .sort_values(ascending=False)
-        .to_dict()
+        df.isna().mean().loc[lambda series: series.gt(0)].sort_values(ascending=False).to_dict()
     )
 
     spike_counts = _compute_spike_counts(df, threshold=spike_threshold)
@@ -190,9 +186,7 @@ def analyze_csv(
     )
 
 
-def _format_column_nan_ratios(
-    column_nan_ratios: dict[str, float], limit: int
-) -> str | None:
+def _format_column_nan_ratios(column_nan_ratios: dict[str, float], limit: int) -> str | None:
     if not column_nan_ratios:
         return None
 
@@ -212,9 +206,7 @@ def format_analysis(analysis: CSVAnalysis, *, max_column_details: int = 5) -> st
         f"- NaN ratio (avg): {analysis.nan_ratio:.4f}",
     ]
 
-    column_details = _format_column_nan_ratios(
-        analysis.column_nan_ratios, max_column_details
-    )
+    column_details = _format_column_nan_ratios(analysis.column_nan_ratios, max_column_details)
     if column_details:
         report_lines.append(f"- column NaN ratios: {column_details}")
 
@@ -239,8 +231,7 @@ def format_analysis(analysis: CSVAnalysis, *, max_column_details: int = 5) -> st
 
     if analysis.spike_counts:
         spike_details = ", ".join(
-            f"{column}={count}"
-            for column, count in sorted(analysis.spike_counts.items())
+            f"{column}={count}" for column, count in sorted(analysis.spike_counts.items())
         )
         report_lines.append(f"- spikes: {spike_details}")
 
@@ -316,17 +307,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.timestamp_column,
                 spike_threshold=spike_threshold,
             )
-        except (
-            Exception
-        ) as exc:  # pragma: no cover - defensive: pandas error message varies
+        except Exception as exc:  # pragma: no cover - defensive: pandas error message varies
             analyses.append(f"# File: {csv_file}\n- ERROR: {exc}")
             if args.fail_on_error:
                 exit_code = 1
         else:
             analyses.append(
-                format_analysis(
-                    analysis, max_column_details=max(1, args.max_column_details)
-                )
+                format_analysis(analysis, max_column_details=max(1, args.max_column_details))
             )
 
     print("\n\n".join(analyses))

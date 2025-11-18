@@ -72,4 +72,3 @@ def test_gradient_descent_step_reduces_potential_energy() -> None:
 
     assert after <= before
     assert graph.edges["a", "b"]["distance"] >= MIN_DISTANCE
-

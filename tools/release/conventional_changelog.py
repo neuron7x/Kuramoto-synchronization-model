@@ -136,9 +136,7 @@ def render_section(title: str, commits: Sequence[CommitInfo]) -> str:
     return "\n".join(lines)
 
 
-def render_changelog(
-    version: str, commits: list[CommitInfo], date: dt.date | None = None
-) -> str:
+def render_changelog(version: str, commits: list[CommitInfo], date: dt.date | None = None) -> str:
     date = date or dt.date.today()
     header = f"## {version} - {date.isoformat()}"
     grouped = group_commits(commits)
@@ -170,12 +168,8 @@ def update_changelog(path: Path, new_entry: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate a Conventional Commit changelog entry."
-    )
-    parser.add_argument(
-        "--current-tag", required=True, help="Tag that marks the release."
-    )
+    parser = argparse.ArgumentParser(description="Generate a Conventional Commit changelog entry.")
+    parser.add_argument("--current-tag", required=True, help="Tag that marks the release.")
     parser.add_argument("--previous-tag", help="Previous tag to diff against.")
     parser.add_argument(
         "--output", type=Path, required=True, help="Where to write the release notes."

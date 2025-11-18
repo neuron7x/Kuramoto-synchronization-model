@@ -39,7 +39,7 @@ def handle_check(args: object) -> int:  # noqa: ARG001 - required signature
 def _invoke_runner(mode: str) -> int:
     if not TOOL_PATH.exists():
         raise CommandError(
-            "tools/fpma_runner.py is missing. Ensure the repository is complete before running this command."
+            "tools/fpma_runner.py is missing. Ensure the repository is complete before running this command."  # noqa: E501
         )
     LOGGER.info("Running fpma_runner.py with mode '%s'…", mode)
     run_subprocess([sys.executable, str(TOOL_PATH), mode])

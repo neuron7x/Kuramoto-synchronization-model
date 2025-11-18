@@ -66,9 +66,7 @@ class TradePulseSDK:
             last_price = float(feature_frame[self._price_column].iloc[-1])
 
         venue_key = self._resolve_venue(market_state.symbol, market_state.venue)
-        self._contexts[market_state.symbol] = _SymbolContext(
-            venue=venue_key, last_price=last_price
-        )
+        self._contexts[market_state.symbol] = _SymbolContext(venue=venue_key, last_price=last_price)
         return signal
 
     def propose_trade(self, signal: Signal) -> SuggestedOrder:
@@ -88,9 +86,7 @@ class TradePulseSDK:
             raise ValueError("Position sizer must return a non-zero quantity")
 
         try:
-            current_position = float(
-                self._system.risk_manager.current_position(signal.symbol)
-            )
+            current_position = float(self._system.risk_manager.current_position(signal.symbol))
         except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
             raise ValueError(
                 f"Risk manager returned invalid position for symbol {signal.symbol!r}"
@@ -98,9 +94,7 @@ class TradePulseSDK:
 
         if signal.action is SignalAction.EXIT:
             if isnan(current_position) or isclose(current_position, 0.0, abs_tol=1e-9):
-                raise ValueError(
-                    f"Cannot exit flat position for symbol {signal.symbol!r}"
-                )
+                raise ValueError(f"Cannot exit flat position for symbol {signal.symbol!r}")
             side = OrderSide.SELL if current_position > 0 else OrderSide.BUY
         elif signal.action is SignalAction.SELL:
             side = OrderSide.SELL
@@ -201,9 +195,7 @@ class TradePulseSDK:
         if state.approved is None:
             result = self.risk_check(order)
             if not result.approved:
-                raise RuntimeError(
-                    "Order failed risk validation and cannot be executed"
-                )
+                raise RuntimeError("Order failed risk validation and cannot be executed")
             state = self._sessions[session_id]
 
         if state.approved is False:
@@ -275,4 +267,3 @@ class TradePulseSDK:
             if override:
                 return override.lower()
         return declared.lower()
-

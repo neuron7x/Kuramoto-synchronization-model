@@ -61,7 +61,7 @@ def _load_baselines() -> dict[str, float]:
         data = json.loads(_BASELINES_PATH.read_text())
     except FileNotFoundError as exc:  # pragma: no cover - configuration error
         raise RuntimeError(
-            "Benchmark baseline file is missing. Generate baselines before running performance tests."
+            "Benchmark baseline file is missing. Generate baselines before running performance tests."  # noqa: E501
         ) from exc
     if not isinstance(data, dict):  # pragma: no cover - defensive
         raise RuntimeError(
@@ -161,7 +161,7 @@ def benchmark_guard(
         if record.exceeds_budget:
             raise AssertionError(
                 (
-                    f"Benchmark '{baseline_key}' regressed: median {median:.6f}s vs baseline {baseline:.6f}s "
+                    f"Benchmark '{baseline_key}' regressed: median {median:.6f}s vs baseline {baseline:.6f}s "  # noqa: E501
                     f"(+{(record.regression_ratio - 1.0):.1%} > allowed {record.threshold:.1%})."
                 )
             )
@@ -195,9 +195,7 @@ def _persist_benchmark_artifacts(records: list[_BenchmarkRecord]) -> None:
         "generated_at": timestamp.isoformat(),
         "records": [_serialize_record(record) for record in records],
     }
-    artifact_path = (
-        artifact_dir / f"benchmark-summary-{timestamp.strftime('%Y%m%dT%H%M%SZ')}.json"
-    )
+    artifact_path = artifact_dir / f"benchmark-summary-{timestamp.strftime('%Y%m%dT%H%M%SZ')}.json"
     artifact_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
     if _ARTIFACT_TTL_DAYS <= 0:
@@ -206,10 +204,7 @@ def _persist_benchmark_artifacts(records: list[_BenchmarkRecord]) -> None:
     cutoff = timestamp - timedelta(days=_ARTIFACT_TTL_DAYS)
     for existing in artifact_dir.glob("benchmark-summary-*.json"):
         try:
-            if (
-                datetime.fromtimestamp(existing.stat().st_mtime, tz=timezone.utc)
-                < cutoff
-            ):
+            if datetime.fromtimestamp(existing.stat().st_mtime, tz=timezone.utc) < cutoff:
                 existing.unlink()
         except OSError:  # pragma: no cover - best-effort cleanup
             continue
@@ -228,7 +223,7 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: int) -> None:
         delta_pct = (record.regression_ratio - 1.0) * 100.0
         status = "FAIL" if record.exceeds_budget else "OK"
         terminalreporter.write_line(
-            f"{record.name:40} {record.observed:12.6f} {record.baseline:14.6f} {delta_pct:8.2f}% {status:>8}"
+            f"{record.name:40} {record.observed:12.6f} {record.baseline:14.6f} {delta_pct:8.2f}% {status:>8}"  # noqa: E501
         )
 
     failures = _monitor.iter_failures()
@@ -236,7 +231,7 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: int) -> None:
         terminalreporter.write_sep("-", "benchmark regressions detected")
         for record in failures:
             terminalreporter.write_line(
-                f"{record.test_id}: {record.name} exceeded threshold by {(record.regression_ratio - 1.0):.1%}"
+                f"{record.test_id}: {record.name} exceeded threshold by {(record.regression_ratio - 1.0):.1%}"  # noqa: E501
             )
 
     _persist_benchmark_artifacts(_monitor.records)

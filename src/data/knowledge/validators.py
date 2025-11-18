@@ -30,7 +30,11 @@ class CitationBuilder:
 
     def build(self, metadata: DocumentMetadata) -> Citation | None:
         url = metadata.attributes.get("url") if metadata.attributes else None
-        title = metadata.attributes.get("title", metadata.document_id) if metadata.attributes else metadata.document_id
+        title = (
+            metadata.attributes.get("title", metadata.document_id)
+            if metadata.attributes
+            else metadata.document_id
+        )
         if not url or not self._link_validator.is_valid(url):
             return None
         return Citation(

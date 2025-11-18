@@ -103,13 +103,15 @@ def _validate_routes(
                     validator = schema_cache.validator_for(route.response_schema)
                     validator.validate(simulator.body)
                     report.add_check(
-                        f"Simulator for {route.name} ({simulator.status_code}) matches {route.response_schema.name}."
+                        f"Simulator for {route.name} ({simulator.status_code}) matches {route.response_schema.name}."  # noqa: E501
                     )
                 except FileNotFoundError:
-                    report.add_error(f"Missing response schema for route {route.name}: {route.response_schema}.")
+                    report.add_error(
+                        f"Missing response schema for route {route.name}: {route.response_schema}."
+                    )
                 except JsonSchemaValidationError as exc:
                     report.add_error(
-                        f"Simulator payload for {route.name} ({simulator.status_code}) violates schema: {exc.message}."
+                        f"Simulator payload for {route.name} ({simulator.status_code}) violates schema: {exc.message}."  # noqa: E501
                     )
         else:
             report.add_warning(f"Route {route.name} lacks response simulators.")
@@ -118,7 +120,7 @@ def _validate_routes(
             for test in route.smoke_tests:
                 if test.expected_status < 100 or test.expected_status > 599:
                     report.add_error(
-                        f"Smoke test {test.name} for {route.name} has invalid status {test.expected_status}."
+                        f"Smoke test {test.name} for {route.name} has invalid status {test.expected_status}."  # noqa: E501
                     )
                 if not test.response_schema.exists():
                     report.add_error(
@@ -131,7 +133,9 @@ def _validate_routes(
 
 def _validate_route_policies(route: ApiRoute, report: ApiValidationReport) -> None:
     if route.cache.max_age < 0 or route.cache.stale_while_revalidate < 0:
-        report.add_error(f"Cache max-age/stale-while-revalidate must be non-negative for {route.name}.")
+        report.add_error(
+            f"Cache max-age/stale-while-revalidate must be non-negative for {route.name}."
+        )
     if route.throttle.burst <= 0 or route.throttle.period_seconds <= 0:
         report.add_error(f"Throttle policy must be positive for {route.name}.")
     for name, value in (
@@ -141,7 +145,11 @@ def _validate_route_policies(route: ApiRoute, report: ApiValidationReport) -> No
     ):
         if value is not None and value <= 0:
             report.add_error(f"Rate limit {name} must be positive for {route.name}.")
-    if route.rate_limit.per_minute is None and route.rate_limit.per_hour is None and route.rate_limit.per_day is None:
+    if (
+        route.rate_limit.per_minute is None
+        and route.rate_limit.per_hour is None
+        and route.rate_limit.per_day is None
+    ):
         report.add_warning(f"Route {route.name} does not specify rate limits.")
     if route.idempotency.required and not route.idempotency.header:
         report.add_error(f"Route {route.name} requires idempotency but no header is configured.")
@@ -155,9 +163,13 @@ def _validate_route_policies(route: ApiRoute, report: ApiValidationReport) -> No
 
 def _validate_route_schemas(route: ApiRoute, report: ApiValidationReport) -> None:
     if route.request_schema and not route.request_schema.exists():
-        report.add_error(f"Route {route.name} references missing request schema {route.request_schema}.")
+        report.add_error(
+            f"Route {route.name} references missing request schema {route.request_schema}."
+        )
     if not route.response_schema.exists():
-        report.add_error(f"Route {route.name} references missing response schema {route.response_schema}.")
+        report.add_error(
+            f"Route {route.name} references missing response schema {route.response_schema}."
+        )
 
 
 def _validate_webhooks(registry: ApiRegistry, report: ApiValidationReport) -> None:
@@ -192,7 +204,9 @@ def _validate_cross_references(registry: ApiRegistry, report: ApiValidationRepor
     for migration in registry.migrations:
         for route in migration.applies_to:
             if route not in route_names:
-                report.add_error(f"Migration {migration.identifier} references unknown route {route}.")
+                report.add_error(
+                    f"Migration {migration.identifier} references unknown route {route}."
+                )
     for notice in registry.deprecations:
         if notice.route not in route_names:
             report.add_error(f"Deprecation references unknown route {notice.route}.")
@@ -204,7 +218,7 @@ def _validate_changelog(registry: ApiRegistry, report: ApiValidationReport) -> N
         report.add_error("Duplicate versions detected in changelog.")
     if versions and registry.metadata.release not in versions:
         report.add_warning(
-            f"Metadata release {registry.metadata.release} not found in changelog entries ({', '.join(versions)})."
+            f"Metadata release {registry.metadata.release} not found in changelog entries ({', '.join(versions)})."  # noqa: E501
         )
     if sorted(versions, reverse=True) != versions:
         report.add_warning("Changelog entries are not sorted in descending order.")

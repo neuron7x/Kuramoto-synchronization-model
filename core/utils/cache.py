@@ -313,9 +313,7 @@ class CacheMetrics:
 
     def identify_cold_regions(self, *, threshold: float, min_requests: int) -> list[str]:
         cold_regions: list[str] = []
-        regions = {
-            region for (_, region) in {**self.hits, **self.misses}
-        }
+        regions = {region for (_, region) in {**self.hits, **self.misses}}
         for region in regions:
             hits = sum(count for (layer, reg), count in self.hits.items() if reg == region)
             misses = sum(count for (layer, reg), count in self.misses.items() if reg == region)
@@ -357,7 +355,9 @@ class CacheLayer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set(self, key: Any, value: Any, *, metadata: Mapping[str, Any] | None = None) -> None:  # pragma: no cover - interface
+    def set(
+        self, key: Any, value: Any, *, metadata: Mapping[str, Any] | None = None
+    ) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
     @abstractmethod
@@ -507,7 +507,9 @@ class VectorIndexLayer:
         self._records: list[VectorRecord] = []
         self._lock = RLock()
 
-    def add(self, key: Any, vector: np.ndarray, value: Any, *, metadata: Mapping[str, Any] | None = None) -> None:
+    def add(
+        self, key: Any, vector: np.ndarray, value: Any, *, metadata: Mapping[str, Any] | None = None
+    ) -> None:
         normalized_key = CacheKeyNormalizer.normalize(key)
         record = VectorRecord(
             key=normalized_key,
@@ -566,7 +568,9 @@ class VectorIndexLayer:
         with self._lock:
             self._enforce_capacity(max_records)
 
-    def warmup(self, records: Iterable[tuple[Any, np.ndarray, Any, Mapping[str, Any] | None]]) -> None:
+    def warmup(
+        self, records: Iterable[tuple[Any, np.ndarray, Any, Mapping[str, Any] | None]]
+    ) -> None:
         for key, vector, value, metadata in records:
             self.add(key, vector, value, metadata=metadata)
 
@@ -738,4 +742,3 @@ __all__ = [
     "VectorRecord",
     "build_default_cache_system",
 ]
-

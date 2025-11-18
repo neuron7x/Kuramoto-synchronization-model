@@ -39,9 +39,7 @@ def test_tick_to_ohlcv_alignment() -> None:
     l1 = resample_ticks_to_l1(ticks, freq="1min")
     bars = resample_l1_to_ohlcv(l1, freq="5min")
 
-    expected_index = pd.date_range(
-        "2024-01-02T09:30:00Z", periods=2, freq="5min", tz="UTC"
-    )
+    expected_index = pd.date_range("2024-01-02T09:30:00Z", periods=2, freq="5min", tz="UTC")
     expected = pd.DataFrame(
         {
             "open": [101.0, 103.0],
@@ -73,6 +71,6 @@ def test_multi_timeframe_alignment_preserves_reference_calendar() -> None:
     for name, frame in aligned.items():
         assert frame.index.equals(ref_index), name
 
-    # Forward-filled values must agree with the latest known observation at the reference timestamps.
+  # noqa: E501, Forward-filled values must agree with the latest known observation at the reference timestamps.
     assert np.isclose(aligned["l1"].loc[ref_index[-1], "mid_price"], 103.0)
     assert np.isclose(aligned["ticks"].loc[ref_index[-1], "price"], 103.0)

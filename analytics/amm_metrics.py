@@ -42,9 +42,7 @@ _g_prec = Gauge("amm_precision", "AMM precision", ["symbol", "tf"])
 _g_gain = Gauge("amm_gain", "AMM adaptive gain k", ["symbol", "tf"])
 _g_theta = Gauge("amm_threshold", "AMM adaptive threshold theta", ["symbol", "tf"])
 _c_burst = Counter("amm_bursts_total", "AMM high-pulse bursts", ["symbol", "tf"])
-_h_update = Histogram(
-    "amm_update_seconds", "AMM update latency seconds", ["symbol", "tf"]
-)
+_h_update = Histogram("amm_update_seconds", "AMM update latency seconds", ["symbol", "tf"])
 
 
 @contextmanager

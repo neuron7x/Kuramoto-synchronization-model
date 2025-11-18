@@ -35,7 +35,9 @@ def test_contract_passes_monotonic_descent() -> None:
 
 
 def test_contract_blocks_action_potential_without_approval() -> None:
-    contract = BehavioralContract(rest_potential=0.9, action_potential=1.2, monotonic_tolerance=1e-4)
+    contract = BehavioralContract(
+        rest_potential=0.9, action_potential=1.2, monotonic_tolerance=1e-4
+    )
 
     with pytest.raises(BehavioralContractViolation) as exc:
         contract.enforce([_result(1.18), _result(1.26), _result(1.19)])
@@ -84,7 +86,10 @@ def test_validator_bridge_enforces_contract() -> None:
     with pytest.raises(BehavioralContractViolation) as exc:
         validator.enforce_contract(metrics_sequence, contract)
 
-    assert any(isinstance(breach, ContractBreach) and breach.kind == "action_potential" for breach in exc.value.report.breaches)
+    assert any(
+        isinstance(breach, ContractBreach) and breach.kind == "action_potential"
+        for breach in exc.value.report.breaches
+    )
 
 
 def test_validator_bridge_preserves_free_energy_bound() -> None:

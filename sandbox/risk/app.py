@@ -66,7 +66,9 @@ def create_app(settings: RiskSettings | None = None, engine: RiskEngine | None =
             order = OrderTicket.model_validate(payload["order"])
             signal = TradingSignal.model_validate(payload["signal"])
         except KeyError as error:
-            raise HTTPException(status_code=422, detail=f"Missing field: {error.args[0]}") from error
+            raise HTTPException(
+                status_code=422, detail=f"Missing field: {error.args[0]}"
+            ) from error
         decision = await risk_engine.evaluate(order, signal)
         return decision.model_dump()
 

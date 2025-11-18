@@ -68,7 +68,9 @@ def test_orchestrator_run_executes_dependencies_and_updates_context() -> None:
 def test_orchestrator_targets_include_transitive_dependencies_only() -> None:
     orchestrator = ModuleOrchestrator()
     orchestrator.register("alpha", lambda _: {"alpha": 1})
-    orchestrator.register("beta", lambda ctx: {"beta": ctx["alpha"] + 1}, after=("alpha",), requires={"alpha"})
+    orchestrator.register(
+        "beta", lambda ctx: {"beta": ctx["alpha"] + 1}, after=("alpha",), requires={"alpha"}
+    )
     orchestrator.register(
         "gamma", lambda ctx: {"gamma": ctx["beta"] + 1}, after=("beta",), requires={"beta"}
     )
@@ -219,4 +221,3 @@ def test_apply_neural_decision_rejects_non_numeric_allocations() -> None:
 
     with pytest.raises(TypeError, match="Allocation field 'alloc_scale' must be numeric"):
         apply_neural_decision({"alloc_scale": object()}, manager)
-
