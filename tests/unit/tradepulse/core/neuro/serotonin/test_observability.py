@@ -1,22 +1,9 @@
 """Tests for serotonin controller observability module."""
 
-from __future__ import annotations  # noqa: E402
+from __future__ import annotations
 
-import sys  # noqa: E402
-from pathlib import Path  # noqa: E402
-
-# Add specific module path to avoid importing full tradepulse package
-module_path = (
-    Path(__file__).parent.parent.parent.parent.parent.parent
-    / "src"
-    / "tradepulse"
-    / "core"
-    / "neuro"
-    / "serotonin"
-)
-sys.path.insert(0, str(module_path))
-
-from observability import (  # noqa: E402 - type: ignore
+# Import directly from the tradepulse package
+from tradepulse.core.neuro.serotonin.observability import (
     Alert,
     AlertSeverity,
     SerotoninMonitor,
@@ -174,8 +161,9 @@ def test_monitor_extended_hold_alert():
     """Test that extended hold state triggers alert."""
     monitor = SerotoninMonitor()
 
-    # Simulate 1800 ticks (30 minutes) of hold
-    for _ in range(1799):
+    # Simulate 1801 ticks - first tick initializes state, then 1800 counted ticks
+    # (30 minutes at 1 tick/second)
+    for _ in range(1800):
         alerts = monitor.check_alerts(
             level=0.8,
             hold=True,
@@ -185,7 +173,7 @@ def test_monitor_extended_hold_alert():
         # Should not trigger yet
         assert len([a for a in alerts if a.name == "serotonin_extended_hold_state"]) == 0
 
-    # 1800th tick should trigger
+    # 1801st tick should trigger (1800 counted ticks)
     alerts = monitor.check_alerts(
         level=0.8,
         hold=True,
@@ -265,7 +253,7 @@ def test_slo_report_formatting():
 
 def test_prometheus_metrics_format():
     """Test Prometheus metrics format generation."""
-    from observability import create_prometheus_metrics  # noqa: E402 - type: ignore
+    from tradepulse.core.neuro.serotonin.observability import create_prometheus_metrics
 
     metrics = create_prometheus_metrics()
 
@@ -279,7 +267,9 @@ def test_prometheus_metrics_format():
 
 def test_grafana_dashboard_structure():
     """Test Grafana dashboard JSON structure."""
-    from observability import create_grafana_dashboard_json  # noqa: E402 - type: ignore
+    from tradepulse.core.neuro.serotonin.observability import (
+        create_grafana_dashboard_json,
+    )
 
     dashboard = create_grafana_dashboard_json()
 
