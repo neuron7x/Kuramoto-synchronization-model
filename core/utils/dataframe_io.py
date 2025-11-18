@@ -49,7 +49,7 @@ def _pyarrow_available() -> bool:
 
 
 @lru_cache(maxsize=1)
-def _load_polars() -> object:
+def _load_polars():  # type: ignore[no-untyped-def]
     import polars as pl
 
     return pl
@@ -89,10 +89,10 @@ def _polars_backend() -> _Backend:
         else:
             payload = frame.reset_index(drop=True)
         try:
-            return pl.from_pandas(payload)
+            return pl.from_pandas(payload)  # type: ignore[attr-defined]
         except (ImportError, ModuleNotFoundError):
             data = payload.to_dict(orient="list")
-            return pl.DataFrame(data, strict=False)
+            return pl.DataFrame(data, strict=False)  # type: ignore[attr-defined]
 
     def _write(frame: pd.DataFrame, path: Path, index: bool) -> None:
         buffer = io.BytesIO()
@@ -109,7 +109,7 @@ def _polars_backend() -> _Backend:
         return pd.DataFrame(materialized, columns=list(materialized.keys()))
 
     def _read(path: Path) -> pd.DataFrame:
-        dataset = pl.read_parquet(path)
+        dataset = pl.read_parquet(path)  # type: ignore[attr-defined]
         try:
             return dataset.to_pandas(use_pyarrow=False)
         except ModuleNotFoundError as exc:
@@ -202,7 +202,7 @@ def write_dataframe(
     names_path = base.with_suffix(".index.names.json")
     if index and backend.name == "polars":
         index_frame = frame.index.to_frame(index=False)
-        _json_backend().write_fn(index_frame, index_path, index=False)
+        _json_backend().write_fn(index_frame, index_path, False)  # type: ignore[call-arg]
         if isinstance(frame.index, pd.MultiIndex):
             names = list(frame.index.names)
         else:

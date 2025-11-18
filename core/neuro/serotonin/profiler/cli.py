@@ -17,6 +17,8 @@ from pathlib import Path
 def load_module_directly(module_name: str, file_path: Path):
     """Load a Python module directly from file path."""
     spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module {module_name} from {file_path}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)

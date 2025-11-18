@@ -150,8 +150,8 @@ class ModeOrchestrator:
 
         return {
             "state": self._state.value,
-            "state_entered_at": self._state_entered_at,
-            "last_timestamp": self._last_timestamp,
+            "state_entered_at": self._state_entered_at if self._state_entered_at is not None else 0.0,
+            "last_timestamp": self._last_timestamp if self._last_timestamp is not None else 0.0,
         }
 
     # ------------------------------------------------------------------

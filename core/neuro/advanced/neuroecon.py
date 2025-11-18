@@ -19,9 +19,9 @@ try:  # pragma: no cover - optional dependency guard
 except Exception as exc:  # pragma: no cover - optional dependency guard
     torch = None
     Tensor = nn = Categorical = None
-    _IMPORT_ERROR = exc
+    _IMPORT_ERROR: Exception | None = exc
 else:
-    _IMPORT_ERROR = None
+    _IMPORT_ERROR: Exception | None = None
 
 
 if torch is not None and nn is not None:
@@ -44,7 +44,7 @@ if torch is not None and nn is not None:
                 cost=float(option.get("cost", 0.0)),
             )
 
-    class _NeuroGraphEncoder(nn.Module):  # type: ignore[misc]
+    class _NeuroGraphEncoder(nn.Module):
         """Single message passing step over a fixed cortico-striatal graph."""
 
         def __init__(self, adjacency: Tensor, hidden_dim: int) -> None:
@@ -75,7 +75,7 @@ if torch is not None and nn is not None:
             return activated.mean(dim=0)
 
 
-    class AdvancedNeuroEconCore(nn.Module):  # type: ignore[misc]
+    class AdvancedNeuroEconCore(nn.Module):
         """Graph-based actor-critic core inspired by cortico-striatal circuitry."""
 
         def __init__(
@@ -303,7 +303,7 @@ if torch is not None and nn is not None:
 
 else:
 
-    class AdvancedNeuroEconCore:
+    class AdvancedNeuroEconCore:  # type: ignore[no-redef]
         """Fallback that raises a descriptive error when PyTorch is unavailable."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:  # noqa: D401 - simple guard

@@ -86,7 +86,16 @@ class StrategyMemory:
         )
         key = sig.key()
         existing_index = next(
-            (i for i, rec in enumerate(self._records) if rec.signature.key() == key),
+            (
+                i
+                for i, rec in enumerate(self._records)
+                if (
+                    rec.signature.key()
+                    if isinstance(rec.signature, StrategySignature)
+                    else rec.signature
+                )
+                == key
+            ),
             None,
         )
         record = StrategyRecord(name=name, signature=sig, score=score)
