@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
-from decimal import Decimal, localcontext
 import math
+from decimal import Decimal, localcontext
+
 import pytest
 
 try:  # pragma: no cover - optional dependency boundary

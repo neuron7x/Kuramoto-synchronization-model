@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from core.neuro.amm import AMMConfig, AdaptiveMarketMind
+from core.neuro.amm import AdaptiveMarketMind, AMMConfig
 
 from ..advanced import IntegratedNeuroTradingSystem, NeuroAdvancedConfig
 

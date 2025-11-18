@@ -1,11 +1,10 @@
 """Tests for risk core module."""
 
+# Import directly from module file
+import importlib.util
 from pathlib import Path
 
 import numpy as np
-
-# Import directly from module file
-import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     "risk_core",

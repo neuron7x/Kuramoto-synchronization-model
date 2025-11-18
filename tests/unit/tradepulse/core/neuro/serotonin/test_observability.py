@@ -4,13 +4,13 @@ from __future__ import annotations
 
 # Import directly from the tradepulse package
 from tradepulse.core.neuro.serotonin.observability import (
+    SEROTONIN_ALERTS,
+    SEROTONIN_SLOS,
+    SLI,
+    SLO,
     Alert,
     AlertSeverity,
     SerotoninMonitor,
-    SLI,
-    SLO,
-    SEROTONIN_ALERTS,
-    SEROTONIN_SLOS,
 )
 
 

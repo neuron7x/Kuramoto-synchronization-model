@@ -7,8 +7,8 @@ import importlib
 import itertools
 import json
 import os
-import shutil
 import shlex
+import shutil
 import subprocess
 import sys
 import threading

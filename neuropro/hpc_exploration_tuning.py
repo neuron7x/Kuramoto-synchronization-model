@@ -9,11 +9,13 @@ Tunes τ (temperature) in range [1.0, 100.0] to optimize:
 Tests on both synthetic and real data.
 """
 
+from dataclasses import dataclass
+from typing import Dict, List
+
 import numpy as np
 import pandas as pd
 import torch
-from dataclasses import dataclass
-from typing import List, Dict
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
     generate_synthetic_data,

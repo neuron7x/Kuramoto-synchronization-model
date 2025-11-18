@@ -6,10 +6,10 @@ import pytest
 
 from modules.agent_coordinator import (
     AgentCoordinator,
-    AgentType,
-    AgentStatus,
-    Priority,
     AgentMetadata,
+    AgentStatus,
+    AgentType,
+    Priority,
 )
 
 

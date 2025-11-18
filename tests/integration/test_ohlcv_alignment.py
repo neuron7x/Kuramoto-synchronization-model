@@ -71,6 +71,6 @@ def test_multi_timeframe_alignment_preserves_reference_calendar() -> None:
     for name, frame in aligned.items():
         assert frame.index.equals(ref_index), name
 
-  # noqa: E501, Forward-filled values must agree with the latest known observation at the reference timestamps.
+    # noqa: E501, Forward-filled values must agree with the latest known observation at the reference timestamps.
     assert np.isclose(aligned["l1"].loc[ref_index[-1], "mid_price"], 103.0)
     assert np.isclose(aligned["ticks"].loc[ref_index[-1], "price"], 103.0)

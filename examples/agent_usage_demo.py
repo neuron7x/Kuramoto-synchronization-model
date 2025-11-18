@@ -23,7 +23,7 @@ def demo_bandits():
     print("Multi-Armed Bandits Demo")
     print("=" * 60)
 
-    from core.agent.bandits import EpsilonGreedy, UCB1
+    from core.agent.bandits import UCB1, EpsilonGreedy
 
     # Define strategy arms
     strategies = ["momentum", "mean_reversion", "breakout"]
@@ -145,7 +145,7 @@ def demo_orchestration():
     print("Strategy Orchestration Demo")
     print("=" * 60)
 
-    from core.agent import StrategyOrchestrator, StrategyFlow, Strategy
+    from core.agent import Strategy, StrategyFlow, StrategyOrchestrator
 
     # Create synthetic data for different instruments
     data_spy = pd.DataFrame({"close": 100 + np.cumsum(np.random.normal(0, 1, 100))})
@@ -197,8 +197,9 @@ def demo_scheduling():
     print("Job Scheduling Demo")
     print("=" * 60)
 
-    from core.agent import StrategyScheduler, StrategyJob, Strategy
     import time
+
+    from core.agent import Strategy, StrategyJob, StrategyScheduler
 
     # Create simple strategies
     strategies = [Strategy(name="test_strategy", params={"lookback": 20})]

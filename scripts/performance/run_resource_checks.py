@@ -12,14 +12,13 @@ from __future__ import annotations  # noqa: E402
 import argparse  # noqa: E402
 import gc  # noqa: E402
 import json  # noqa: E402
+import sys  # noqa: E402
 import time  # noqa: E402
 import tracemalloc  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Any, Callable, Literal  # noqa: E402
-
-import sys  # noqa: E402
 
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -37,9 +36,12 @@ from core.indicators.hierarchical_features import (  # noqa: E402
     compute_hierarchical_features,
 )
 from core.indicators.hurst import HurstFeature  # noqa: E402
-from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase, kuramoto_order  # noqa: E402
+from core.indicators.kuramoto import (  # noqa: E402
+    KuramotoOrderFeature,
+    compute_phase,
+    kuramoto_order,
+)
 from core.indicators.pipeline import IndicatorPipeline  # noqa: E402
-
 
 Category = Literal["memory", "cpu", "response"]
 

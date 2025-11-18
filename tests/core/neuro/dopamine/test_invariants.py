@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-
 import pytest
 
 try:
-    from hypothesis import given, strategies as st
+    from hypothesis import given
+    from hypothesis import strategies as st
 
     HAS_HYPOTHESIS = True
 except ImportError:

@@ -8,11 +8,11 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-import numpy as np
-import pytest
-
 # Direct import to avoid dependency issues in tests
 import importlib.util
+
+import numpy as np
+import pytest
 
 # Load the module directly
 spec = importlib.util.spec_from_file_location(

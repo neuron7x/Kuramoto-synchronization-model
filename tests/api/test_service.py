@@ -29,6 +29,7 @@ from application.api.rate_limit import (
     SlidingWindowRateLimiter,
 )
 from application.api.service import DependencyProbeResult, create_app
+from application.security.two_factor import generate_totp_code
 from application.settings import (
     AdminApiSettings,
     ApiRateLimitSettings,
@@ -36,9 +37,7 @@ from application.settings import (
     KillSwitchPostgresSettings,
     RateLimitPolicy,
 )
-from application.security.two_factor import generate_totp_code
 from core.config.cli_models import PostgresTLSConfig
-
 
 API_V1_PREFIX = "/api/v1"
 TWO_FACTOR_HEADER = "X-Admin-OTP"

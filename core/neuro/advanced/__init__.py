@@ -1,14 +1,20 @@
 """Advanced neurobiological trading components."""
 
 from .aic import AgencyControlNetwork
+from .causal import GrangerResult, granger_causality
 from .config import (
     AICConfig,
     AlertThresholds,
-    DPAConfig,
     DecisionIntegratorWeights,
+    DPAConfig,
     NeuroAdvancedConfig,
     NREConfig,
     PolicyBounds,
+)
+from .divergence import (
+    DivergenceConfig,
+    DivergenceOutput,
+    compute_divergence_convergence_phi,
 )
 from .dpa import DopaminePredictionNetwork
 from .integrated import (
@@ -27,11 +33,6 @@ from .monitor import NeuroStateMonitor
 from .motivation import FractalMotivationController, FractalSignalTracker
 from .neuroecon import AdvancedNeuroEconCore, DecisionOption
 from .nre import NeuroplasticReinforcementEngine
-from .divergence import (
-    DivergenceConfig,
-    DivergenceOutput,
-    compute_divergence_convergence_phi,
-)
 from .quantum import (
     QuantumBeliefUpdate,
     quantum_active_update,
@@ -39,7 +40,6 @@ from .quantum import (
     to_density_matrix,
     von_neumann_entropy,
 )
-from .causal import GrangerResult, granger_causality
 
 __all__ = [
     "AgencyControlNetwork",

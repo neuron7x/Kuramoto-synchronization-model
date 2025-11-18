@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-
 BenchmarkMap = dict[str, "BenchmarkResult"]
 ResourceMap = dict[str, "ResourceMetric"]
 

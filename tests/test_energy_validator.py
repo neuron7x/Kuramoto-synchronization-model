@@ -8,8 +8,8 @@ import pytest
 
 from runtime.energy_validator import (
     EnergyConfig,
-    EnergyValidator,
     EnergyValidationResult,
+    EnergyValidator,
     MetricThreshold,
 )
 

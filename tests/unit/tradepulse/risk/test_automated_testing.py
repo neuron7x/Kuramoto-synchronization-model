@@ -1,12 +1,11 @@
 """Tests for automated risk testing module."""
 
+# Import directly from module file to avoid torch dependency issues
+import importlib.util
 import sys
 from pathlib import Path
 
 import numpy as np
-
-# Import directly from module file to avoid torch dependency issues
-import importlib.util
 
 # First load risk_core
 risk_core_spec = importlib.util.spec_from_file_location(

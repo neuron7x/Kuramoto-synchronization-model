@@ -287,18 +287,18 @@ The ECS-Inspired Regulator can be integrated with TradePulse components:
    - Store in TradePulse feature store
 
 Example integration code:
-    
+
     from core.neuro import ECSInspiredRegulator, FractalMotivationController
-    
+
     # Initialize
     ecs_reg = ECSInspiredRegulator()
     motivation = FractalMotivationController(actions=["buy", "sell", "hold"])
-    
+
     # Trading loop
     ecs_reg.update_stress(returns, drawdown)
     ecs_reg.adapt_parameters(phase)
     ecs_action = ecs_reg.decide_action(signal, phase)
-    
+
     # Combine with motivation system
     motivation_decision = motivation.recommend(
         state=[ecs_reg.stress_level, signal],

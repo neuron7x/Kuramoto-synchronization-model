@@ -42,7 +42,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-
 __all__ = [
     "DigitalGovernanceFramework",
     "ComplianceLevel",

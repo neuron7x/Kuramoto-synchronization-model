@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import base64
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
-
-import base64
 
 import jwt
 import pytest
@@ -26,11 +25,10 @@ from application.api.security import (
     require_two_factor,
     verify_request_identity,
 )
-from application.settings import ApiSecuritySettings
 from application.secrets.manager import SecretManagerError
 from application.security.two_factor import generate_totp_code
+from application.settings import ApiSecuritySettings
 from src.admin.remote_control import AdminIdentity
-
 
 TWO_FACTOR_HEADER = "X-Admin-OTP"
 TWO_FACTOR_SECRET = os.environ["TRADEPULSE_TWO_FACTOR_SECRET"]

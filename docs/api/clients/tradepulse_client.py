@@ -6,7 +6,6 @@ from typing import Any, Mapping
 
 import httpx
 
-
 API_V1_BASE = "/api/v1"
 
 

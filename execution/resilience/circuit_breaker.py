@@ -9,12 +9,12 @@ asynchronous contexts (with thread offloading for blocking work).
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass, field
-from enum import Enum
 import math
 import threading
 import time
+from collections import deque
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Callable, Deque, Dict, Optional, Protocol, Tuple
 
 

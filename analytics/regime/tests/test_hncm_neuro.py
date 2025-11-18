@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
-from analytics.regime.src.consensus.hncm_neuro import NeuroConsensusAdapter, AgentVote
+from analytics.regime.src.consensus.hncm_neuro import AgentVote, NeuroConsensusAdapter
 
 
 class DummyEWS:

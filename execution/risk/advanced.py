@@ -9,10 +9,10 @@ allocation pressure.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum, auto
-import math
 from statistics import fmean
 from typing import Callable, Iterable, Mapping, MutableMapping, Sequence
 

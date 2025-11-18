@@ -16,8 +16,8 @@ from analytics.regime.src.core import (
     FKDetector,
     FKDetectorConfig,
     RegimeDetector,
-    RicciFlowRebalancer,
     RicciFlowConfig,
+    RicciFlowRebalancer,
     TopoSentinel,
     TopoSentinelConfig,
 )

@@ -12,14 +12,15 @@ Theoretical foundations:
 - Metastable phase transitions for market regime detection
 """
 
+import warnings
+from typing import Tuple
+
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pandas as pd
-import numpy as np
 from torch.optim import Adam
-from typing import Tuple
-import warnings
 
 
 class HPCActiveInferenceModuleV4(nn.Module):

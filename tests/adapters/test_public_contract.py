@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import pytest
+
 from tests.util.exchanges import (
-    load_adapter_or_http_client,
-    get_server_time,
     get_exchange_info_or_symbols,
+    get_server_time,
+    load_adapter_or_http_client,
 )
 
 EXCHANGES = ("binance", "coinbase", "kraken")

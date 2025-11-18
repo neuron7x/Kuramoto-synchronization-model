@@ -9,11 +9,10 @@ sharing common post-conditions that encode the project's resilience objectives.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import logging
 import time
+from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, Protocol, Sequence
-
 
 # ---------------------------------------------------------------------------
 # Controller protocols

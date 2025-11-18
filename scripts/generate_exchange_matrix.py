@@ -3,7 +3,7 @@
 import argparse
 import importlib
 import pkgutil
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 ADAPTERS_PKG = "execution.adapters"
 

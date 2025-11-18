@@ -5,18 +5,19 @@ Integrates with TradePulse backtest/event_driven.py framework for realistic trad
 Compares HPC-AI against baseline strategies (TACL, Buy-and-Hold).
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
+import numpy as np
+import pandas as pd
 
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 
 try:
     from backtest.event_driven import ArrayDataHandler, EventDrivenBacktestEngine  # noqa: F401
-    from backtest.events import SignalEvent, MarketEvent
+    from backtest.events import MarketEvent, SignalEvent
     from backtest.performance import compute_performance_metrics  # noqa: F401
 
     BACKTEST_AVAILABLE = True

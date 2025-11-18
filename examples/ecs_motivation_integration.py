@@ -10,8 +10,9 @@ from pathlib import Path
 # Direct imports to avoid dependency issues
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import numpy as np
 import importlib.util
+
+import numpy as np
 
 # Load ECS regulator
 spec_ecs = importlib.util.spec_from_file_location(

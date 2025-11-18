@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from contextlib import contextmanager
 from collections.abc import Iterable
+from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,7 +72,7 @@ class ManagedSecret:
         if config.path is not None or config.resolver is not None:
             # Attempt an eager refresh so missing files are detected on
             # startup. If the refresh fails but a fallback value is
-  # noqa: E501, available we continue using the fallback and log the failure so operators can investigate.
+            # noqa: E501, available we continue using the fallback and log the failure so operators can investigate.
             try:
                 self._refresh(force=True)
             except SecretManagerError as exc:

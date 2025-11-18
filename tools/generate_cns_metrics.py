@@ -3,6 +3,7 @@
 from __future__ import annotations  # noqa: E402
 
 import json  # noqa: E402
+import sys  # noqa: E402
 from dataclasses import asdict, dataclass  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import List  # noqa: E402
@@ -10,14 +11,11 @@ from typing import List  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-import sys  # noqa: E402
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from runtime.cns_stabilizer import CNSStabilizer  # noqa: E402
-
 
 np.random.seed(42)
 

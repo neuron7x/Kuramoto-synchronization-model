@@ -6,8 +6,8 @@ import pytest
 
 from modules.dynamic_position_sizer import (
     DynamicPositionSizer,
-    SizingMethod,
     PositionSizeResult,
+    SizingMethod,
 )
 
 

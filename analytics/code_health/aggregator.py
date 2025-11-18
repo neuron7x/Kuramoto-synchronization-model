@@ -205,7 +205,7 @@ class CodeMetricAggregator:
                 continue
             lines.append(f"**{file}**")
             # Format risk score with contributing factors  # noqa: E501
-            factors = ', '.join(file_metrics.risk_profile.contributing_factors) or 'stable'
+            factors = ", ".join(file_metrics.risk_profile.contributing_factors) or "stable"
             risk_line = f"- Risk score: {file_metrics.risk_profile.risk_score:.2f} ({factors})"
             lines.append(risk_line)
             violations = file_metrics.exceeding_thresholds(metrics.thresholds)

@@ -16,7 +16,6 @@ from typing import Optional, Protocol, Tuple, Union, runtime_checkable
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-
 Array1D = NDArray[np.float_]
 
 

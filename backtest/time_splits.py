@@ -16,7 +16,6 @@ from typing import Iterator, Optional, Sequence, Tuple
 import numpy as np
 import pandas as pd
 
-
 _CANONICAL_FREQUENCY_UNITS = {
     "H": "h",
     "HR": "h",

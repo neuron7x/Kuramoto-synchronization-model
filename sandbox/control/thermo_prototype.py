@@ -24,8 +24,8 @@ import networkx as nx
 import numpy as np
 
 from core.energy import system_free_energy
-from runtime.thermo_controller import estimate_entropy
 from evolution.crisis_ga import CrisisMode
+from runtime.thermo_controller import estimate_entropy
 
 
 @dataclass(frozen=True)

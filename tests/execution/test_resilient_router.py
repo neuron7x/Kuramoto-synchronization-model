@@ -7,11 +7,6 @@ import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import ExecutionConnector, OrderError, TransientOrderError
-from execution.router import (
-    ExecutionRoute,
-    ResilientExecutionRouter,
-    SlippageModel,
-)
 from execution.resilience.circuit_breaker import (
     AdaptiveThrottler,
     Bulkhead,
@@ -20,6 +15,11 @@ from execution.resilience.circuit_breaker import (
     ExchangeResilienceProfile,
     LeakyBucketRateLimiter,
     TokenBucketRateLimiter,
+)
+from execution.router import (
+    ExecutionRoute,
+    ResilientExecutionRouter,
+    SlippageModel,
 )
 
 

@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import time
-import concurrent.futures
-from concurrent.futures import TimeoutError as FuturesTimeoutError
 from collections import deque
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path

@@ -25,11 +25,12 @@ serotonin_path = (
 sys.path.insert(0, str(serotonin_path))
 
 from serotonin_controller import SerotoninController  # noqa: E402 - type: ignore
+
 from observability import (  # noqa: E402 - type: ignore
+    SEROTONIN_ALERTS,
+    SEROTONIN_SLOS,
     Alert,
     SerotoninMonitor,
-    SEROTONIN_SLOS,
-    SEROTONIN_ALERTS,
 )
 
 

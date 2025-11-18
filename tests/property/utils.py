@@ -9,10 +9,10 @@ even in large CI matrices where log volume is constrained.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import asdict, is_dataclass
 import hashlib
 import json
+from collections.abc import Mapping
+from dataclasses import asdict, is_dataclass
 from typing import Any
 
 import numpy as np

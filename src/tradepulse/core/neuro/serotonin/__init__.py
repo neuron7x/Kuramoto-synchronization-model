@@ -1,16 +1,16 @@
 """Serotonin controller package with SRE observability."""
 
-from .serotonin_controller import SerotoninConfig, SerotoninController
 from .observability import (
-    Alert,
-    AlertSeverity,
-    SerotoninMonitor,
-    SLI,
-    SLO,
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
     SEROTONIN_SLOS,
+    SLI,
+    SLO,
+    Alert,
+    AlertSeverity,
+    SerotoninMonitor,
 )
+from .serotonin_controller import SerotoninConfig, SerotoninController
 
 __all__ = [
     "SerotoninConfig",

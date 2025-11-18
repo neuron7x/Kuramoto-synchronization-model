@@ -3,9 +3,10 @@ Additional tests to achieve 98% coverage for HPC-AI v4.
 Targets specific uncovered lines in afferent_synthesis.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 
 

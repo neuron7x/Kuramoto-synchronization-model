@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Mapping
 import numpy as np
 import yaml
 
+from ..config import load_default_config
 from ..core.emh_model import EMHSSM
 from ..core.params import (
     EKFConfig,
@@ -27,7 +28,6 @@ from ..homeostasis.homeo import HomeostaticModule
 from ..policy.controller import BasalGangliaController
 from ..risk.cvar import CVARGate
 from ..telemetry.metrics import DecisionMetricsExporter, MetricsEmitter
-from ..config import load_default_config
 from ..util.logging import log_decision
 
 log = logging.getLogger(__name__)
@@ -67,8 +67,9 @@ class TACLSystem:
             log.warning("Unknown TACL provider %s", provider)
         if provider == "runtime":
             try:
-                from runtime.thermo_controller import ThermoController
                 import networkx as nx
+
+                from runtime.thermo_controller import ThermoController
 
                 return ThermoController(nx.DiGraph())
             except Exception as exc:  # pragma: no cover - best effort

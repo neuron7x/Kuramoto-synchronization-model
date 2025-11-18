@@ -15,11 +15,11 @@ documentation and automated health checks.
 
 from __future__ import annotations
 
+import argparse
+import ast
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-import ast
-import argparse
-from collections import defaultdict
 from typing import Dict, Iterable, List, Mapping, Sequence, Set
 
 

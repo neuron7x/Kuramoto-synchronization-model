@@ -17,7 +17,7 @@ response.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import Iterable, Mapping, MutableMapping, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Mapping, MutableMapping
 
 if TYPE_CHECKING:
     from .behavioral_contract import BehavioralContract, BehavioralContractReport

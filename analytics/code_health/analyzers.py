@@ -16,7 +16,6 @@ import networkx as nx
 
 from .models import DeveloperMetrics, RiskProfile
 
-
 _AST_COMPLEXITY_NODES = (
     ast.If,
     ast.For,

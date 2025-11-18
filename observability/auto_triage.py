@@ -15,13 +15,13 @@ automated follow-ups reproducible and auditable.
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
 import json
 import shutil
 import subprocess
+
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 

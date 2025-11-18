@@ -9,15 +9,16 @@ Measures impact on PWPE, Sharpe ratio, and action diversity.
 Includes statistical significance tests (t-test).
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 from scipy import stats
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
     generate_synthetic_data,
-    validate_hpc_ai,
     simple_backtest,
+    validate_hpc_ai,
 )
 
 

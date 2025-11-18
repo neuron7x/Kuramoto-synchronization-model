@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum
 from collections.abc import Mapping, Sequence
+from enum import Enum
 from http import HTTPStatus
 from typing import Any
 

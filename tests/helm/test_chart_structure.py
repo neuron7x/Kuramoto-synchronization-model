@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 import yaml
 
-
 HELM_BASE = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "tradepulse"
 
 

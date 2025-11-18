@@ -15,7 +15,6 @@ from .liquidity import LiquidityLedger
 from .metrics import LatencyTracker
 from .models import ExchangePriceState, Quote
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from execution.risk import RiskManager
-
 from src.security import AccessController, AccessDeniedError
 
 __all__ = ["RiskManagerFacade", "KillSwitchState"]

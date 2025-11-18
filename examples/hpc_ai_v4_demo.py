@@ -7,11 +7,11 @@ with Active Inference (HPC-AI v4) module for adaptive trading.
 
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
-    generate_synthetic_data,
     calibrate_perturbation_scale,
-    validate_hpc_ai,
-    simple_backtest,
     format_validation_report,
+    generate_synthetic_data,
+    simple_backtest,
+    validate_hpc_ai,
 )
 
 

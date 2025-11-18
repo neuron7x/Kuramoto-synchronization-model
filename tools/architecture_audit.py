@@ -22,7 +22,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Iterator, Sequence
 
-
 PYTHON_FILE_SUFFIXES: tuple[str, ...] = (".py", ".pyi")
 STDLIB_MODULES: set[str] = set(getattr(sys, "stdlib_module_names", ()))
 

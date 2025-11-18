@@ -10,15 +10,15 @@ from starlette.routing import Route
 from starlette.testclient import TestClient
 
 from application.api.service import (
+    FeatureRequest,
+    MarketBar,
     PayloadGuardMiddleware,
     _filter_feature_frame,
     _filter_feature_values,
     _hash_payload,
     _paginate_frame,
-    _validate_idempotency_key,
     _resolve_ip,
-    FeatureRequest,
-    MarketBar,
+    _validate_idempotency_key,
 )
 
 

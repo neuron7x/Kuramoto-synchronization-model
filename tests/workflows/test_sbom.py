@@ -7,7 +7,6 @@ from typing import Any, Dict, Iterable
 
 import yaml
 
-
 WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "sbom.yml"
 
 

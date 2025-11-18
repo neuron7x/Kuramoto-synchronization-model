@@ -11,7 +11,6 @@ from typing import Dict, Mapping, Protocol, runtime_checkable
 
 from .models import CapitalTransferPlan, TransferResult
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

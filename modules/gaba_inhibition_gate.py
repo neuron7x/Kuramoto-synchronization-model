@@ -5,9 +5,10 @@
 # Bi & Poo (1998); Bowery et al. (2002)
 
 from __future__ import annotations
+
 import math
 from dataclasses import asdict, dataclass, fields
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn

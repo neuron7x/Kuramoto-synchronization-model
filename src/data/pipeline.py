@@ -24,8 +24,8 @@ from .ingestion_service import DataIngestionCacheService
 from .kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagHandler
 
 if TYPE_CHECKING:
-    from .streaming_aggregator import TickStreamAggregator
     from .events import HeaderFactory
+    from .streaming_aggregator import TickStreamAggregator
 
 
 class TickRoutingStrategy(Protocol):

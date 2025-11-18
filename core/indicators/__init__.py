@@ -8,16 +8,16 @@ from .cache import (
     hash_input_data,
     make_fingerprint,
 )
+from .ensemble_divergence import (
+    EnsembleDivergenceResult,
+    IndicatorDivergenceSignal,
+    compute_ensemble_divergence,
+)
 from .hierarchical_features import (
     FeatureBufferCache,
     HierarchicalFeatureResult,
     TimeFrameSpec,
     compute_hierarchical_features,
-)
-from .ensemble_divergence import (
-    EnsembleDivergenceResult,
-    IndicatorDivergenceSignal,
-    compute_ensemble_divergence,
 )
 from .kuramoto import (
     KuramotoOrderFeature,
@@ -47,6 +47,7 @@ from .normalization import (
     normalize_indicator_series,
     resolve_indicator_normalizer,
 )
+from .pipeline import IndicatorPipeline, PipelineResult
 from .pivot_detection import (
     DivergenceClass,
     DivergenceKind,
@@ -55,7 +56,6 @@ from .pivot_detection import (
     detect_pivot_divergences,
     detect_pivots,
 )
-from .pipeline import IndicatorPipeline, PipelineResult
 from .temporal_ricci import TemporalRicciAnalyzer
 from .trading import HurstIndicator, KuramotoIndicator, VPINIndicator
 

@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 import yaml
 
-
 WORKFLOW_PATH = (
     Path(__file__).resolve().parents[2] / ".github" / "workflows" / "pin-terraform-version.yml"
 )

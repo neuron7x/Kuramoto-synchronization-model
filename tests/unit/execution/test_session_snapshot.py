@@ -6,8 +6,8 @@ import json
 import pytest
 
 from execution.connectors import ExecutionConnector
-from execution.session_snapshot import ExecutionMode, SessionSnapshotter
 from execution.risk import RiskLimits, RiskManager
+from execution.session_snapshot import ExecutionMode, SessionSnapshotter
 
 
 class StaticConnector(ExecutionConnector):

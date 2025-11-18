@@ -11,12 +11,11 @@ from pathlib import Path
 from typing import Callable, Deque, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
-from numpy.random import Generator, default_rng
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from numpy.random import Generator, default_rng
 from scipy.stats import ks_2samp, zscore
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

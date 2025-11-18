@@ -30,32 +30,32 @@ import pandas as pd
 import torch
 import yaml
 
-from evolution import bond_evolver
 from core.energy import (
-    BondType,
     ENERGY_SCALE,
+    BondType,
     bond_internal_energy,
     delta_free_energy,
     system_free_energy,
 )
+from core.indicators.multiscale_kuramoto import fractal_gcl_novelty, multiscale_kuramoto
+from core.metrics.aperiodic import aperiodic_slope
+from core.metrics.dfa import dfa_alpha
+from evolution import bond_evolver
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
-from runtime.link_activator import LinkActivator
-from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
-from runtime.filters.vlpo_core_filter import VLPOCoreFilter
-from runtime.cns_stabilizer import CNSStabilizer
+from rl.replay.sleep_engine import SleepReplayEngine
 from runtime.behavior_contract import (
     ActionClass,
     get_current_state,
     tacl_gate,
 )
+from runtime.cns_stabilizer import CNSStabilizer
 from runtime.dual_approval import DualApprovalManager
+from runtime.filters.vlpo_core_filter import VLPOCoreFilter
 from runtime.kill_switch import is_kill_switch_active
-from utils.fractal_cascade import DyadicPMCascade, pink_noise
-from core.metrics.dfa import dfa_alpha
-from core.metrics.aperiodic import aperiodic_slope
-from core.indicators.multiscale_kuramoto import multiscale_kuramoto, fractal_gcl_novelty
+from runtime.link_activator import LinkActivator
+from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
 from utils.change_point import cusum_score, vol_shock
-from rl.replay.sleep_engine import SleepReplayEngine
+from utils.fractal_cascade import DyadicPMCascade, pink_noise
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
@@ -432,7 +432,7 @@ class ThermoController:
 
     def _init_homeostasis_metrics(self) -> None:
         try:
-            from prometheus_client import Counter, Gauge, Histogram, REGISTRY
+            from prometheus_client import REGISTRY, Counter, Gauge, Histogram
         except Exception:  # pragma: no cover - optional dependency not installed
             noop = _NoopMetric()
             self.integrity_ratio = noop

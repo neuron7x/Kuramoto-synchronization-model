@@ -4,9 +4,10 @@ Extended edge case tests for HPC-AI v4 to achieve 98% coverage.
 Tests high volatility, NaN handling, unstable model states, and robustness.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 

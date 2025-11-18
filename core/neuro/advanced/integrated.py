@@ -11,13 +11,13 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from ..motivation import FractalMotivationController, MotivationDecision
 from .aic import AgencyControlNetwork
 from .config import NeuroAdvancedConfig
 from .dpa import DopaminePredictionNetwork
 from .monitor import NeuroStateMonitor
 from .nre import NeuroplasticReinforcementEngine
 from .types import MarketContext, TradeOutcome, TradeResult
-from ..motivation import FractalMotivationController, MotivationDecision
 
 logger = logging.getLogger(__name__)
 

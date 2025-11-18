@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-
 import logging
 import os
 import shutil

@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import tempfile
+
 import yaml
 
 
@@ -273,8 +274,9 @@ def example_5_batch_processing():
     print("EXAMPLE 5: Batch Processing for Backtesting")
     print("=" * 70)
 
-    from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
     import time
+
+    from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
     config = {
         "tonic_beta": 0.15,

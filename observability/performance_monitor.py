@@ -6,10 +6,10 @@ metrics collection, bottleneck detection, and performance regression tracking.
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 

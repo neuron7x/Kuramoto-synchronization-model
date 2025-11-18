@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import deque
 from concurrent.futures import (
     FIRST_COMPLETED,
@@ -10,7 +11,6 @@ from concurrent.futures import (
     wait,
 )
 from dataclasses import dataclass
-import os
 from heapq import heappop, heappush
 from time import perf_counter
 from types import MappingProxyType

@@ -8,8 +8,8 @@ import pytest
 
 from core.events.models import SignalDirection
 from core.strategies.engine import (
-    IOContract,
     InvalidModeTransition,
+    IOContract,
     RiskAdviceLevel,
     RiskAssessment,
     StrategyContext,

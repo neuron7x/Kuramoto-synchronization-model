@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from application.system import (
     ExchangeAdapterConfig,
@@ -19,7 +20,6 @@ from core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
 from execution.connectors import BinanceConnector
 from src.security import AccessController, AccessDeniedError, AccessPolicy
-import yaml
 
 
 def _build_controller(tmp_path: Path, payload: dict[str, object]) -> AccessController:

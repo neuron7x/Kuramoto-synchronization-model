@@ -319,7 +319,7 @@ export class TradePulseClient {
             * Documentation: {metadata.docs_base_url}
             * Default signature algorithm: `{metadata.default_signature_algorithm}`
             * Default idempotency header: `{metadata.idempotency_header}`
-            * Compatibility tier: `{metadata.compatibility.default}` 
+            * Compatibility tier: `{metadata.compatibility.default}`
               (support window {metadata.compatibility.support_window_days} days)
             """
         ).strip()

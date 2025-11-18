@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-from secrets import SystemRandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from secrets import SystemRandom
 from typing import Any, AsyncIterator, Awaitable, Callable, Optional, TypeVar
 
 from aiolimiter import AsyncLimiter

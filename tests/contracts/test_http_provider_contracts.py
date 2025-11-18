@@ -21,7 +21,6 @@ from application.settings import AdminApiSettings
 from domain import Signal, SignalAction
 from src.admin.remote_control import AdminIdentity
 
-
 API_V1_PREFIX = "/api/v1"
 
 

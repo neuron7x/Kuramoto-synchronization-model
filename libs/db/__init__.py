@@ -123,10 +123,10 @@ if TYPE_CHECKING:  # pragma: no cover - import-time type checking only
         RollupAggregation,
         RollupMaterialization,
         SLAMetric,
-        TimeSeriesSchema,
         TimescaleBackupPlanner,
         TimescaleIngestionConnector,
         TimescaleQueryBuilder,
         TimescaleSchemaManager,
         TimescaleSLAManager,
+        TimeSeriesSchema,
     )
