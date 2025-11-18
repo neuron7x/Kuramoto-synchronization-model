@@ -3,8 +3,8 @@
 
 import pytest
 
-from core.data.market_feed_generator import SyntheticMarketFeedGenerator
 from core.data.market_feed import validate_recording
+from core.data.market_feed_generator import SyntheticMarketFeedGenerator
 
 
 class TestSyntheticMarketFeedGenerator:

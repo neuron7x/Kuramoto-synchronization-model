@@ -25,7 +25,6 @@ from .performance_artifacts import (
     PerformanceRun,
 )
 
-
 # Load budgets from configuration
 _budget_loader = BudgetLoader()
 

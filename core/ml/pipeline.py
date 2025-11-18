@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+import math
+import statistics
 from bisect import bisect_right
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import logging
-import math
-import statistics
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 
 LOGGER = logging.getLogger(__name__)

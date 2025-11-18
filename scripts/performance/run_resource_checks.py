@@ -12,14 +12,13 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import sys
 import time
 import tracemalloc
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Literal
-
-import sys
 
 import numpy as np
 import pandas as pd
@@ -39,7 +38,6 @@ from core.indicators.hierarchical_features import (
 from core.indicators.hurst import HurstFeature
 from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase, kuramoto_order
 from core.indicators.pipeline import IndicatorPipeline
-
 
 Category = Literal["memory", "cpu", "response"]
 

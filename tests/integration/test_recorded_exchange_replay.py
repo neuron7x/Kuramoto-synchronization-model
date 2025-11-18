@@ -15,7 +15,6 @@ from execution import (
 )
 from observability.release_gates import ReleaseGateEvaluator
 
-
 DATASET = (
     Path(__file__).resolve().parent.parent / "fixtures" / "recordings" / "coinbase_btcusd.jsonl"
 )

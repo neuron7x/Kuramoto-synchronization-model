@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import pytest
 
 from core.data.models import InstrumentType
-
 from tradepulse_agent import AgentDataFeedConfig, AgentDataLoader
 
 from .utils import build_system, write_sample_ohlc

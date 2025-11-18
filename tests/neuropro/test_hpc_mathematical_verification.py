@@ -5,10 +5,11 @@ Verifies PWPE and TD-loss calculations against literature (Friston 2008, Mathys 
 Uses sympy for analytical checks and torch.autograd for gradient tests.
 """
 
+import numpy as np
 import pytest
 import torch
 import torch.nn.functional as F
-import numpy as np
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 

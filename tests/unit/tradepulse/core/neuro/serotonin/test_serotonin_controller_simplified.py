@@ -42,8 +42,8 @@ def serotonin_config():
 def serotonin_controller(serotonin_config):
     """Create a serotonin controller instance."""
     # Import here to avoid issues with module loading
-    import sys
     import importlib.util
+    import sys
     
     controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
     spec = importlib.util.spec_from_file_location("serotonin_controller", controller_path)
@@ -443,8 +443,8 @@ class TestConfigValidation:
     
     def test_missing_config_keys_raises_error(self, serotonin_config):
         """Test that missing config keys raise an error."""
-        import sys
         import importlib.util
+        import sys
         import tempfile
         
         controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
@@ -468,8 +468,8 @@ class TestConfigValidation:
     
     def test_invalid_config_values_raise_error(self, serotonin_config):
         """Test that invalid config values raise an error."""
-        import sys
         import importlib.util
+        import sys
         import tempfile
         
         controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"

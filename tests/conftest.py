@@ -235,7 +235,7 @@ sensitive_query = ["timestamp", "signature", "recvWindow"]
 sensitive_body_keys = ["apiKey", "secret", "signature", "passphrase"]
 
 def scrub_request(request):
-    from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
     u = urlsplit(request.uri)
     q = []
     for k, v in parse_qsl(u.query, keep_blank_values=True):

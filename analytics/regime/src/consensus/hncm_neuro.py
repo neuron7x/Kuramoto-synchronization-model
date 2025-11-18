@@ -17,11 +17,11 @@ No external deps beyond stdlib. Compatible with TradePulse EWSResult and domain 
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, Iterable, Mapping, Optional, Tuple, Literal
 import json
 import math
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Iterable, Literal, Mapping, Optional, Tuple
 
 Action = Literal["BUY", "SELL", "HOLD"]
 

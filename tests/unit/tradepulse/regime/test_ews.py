@@ -1,10 +1,10 @@
 """Tests for EWS aggregator."""
 
+# Import directly from module file to avoid package __init__
+import importlib.util
 import sys
 from pathlib import Path
 
-# Import directly from module file to avoid package __init__
-import importlib.util
 spec = importlib.util.spec_from_file_location(
     "ews",
     Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/regime/ews.py"

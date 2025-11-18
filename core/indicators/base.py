@@ -13,8 +13,8 @@ import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, MutableSequence, Sequence
 from concurrent.futures import ProcessPoolExecutor
-from functools import partial
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Any, Callable, Literal
 
 from core.utils.metrics import get_metrics_collector

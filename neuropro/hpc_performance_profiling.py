@@ -11,11 +11,13 @@ Profiles:
 Uses torch.profiler for detailed analysis.
 """
 
+import time
+
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.profiler import profile, record_function, ProfilerActivity
-import numpy as np
-import time
+from torch.profiler import ProfilerActivity, profile, record_function
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 

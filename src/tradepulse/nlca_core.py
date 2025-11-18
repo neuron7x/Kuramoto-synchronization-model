@@ -1,18 +1,19 @@
-import time
+import argparse
 import logging
+import queue
+import threading
+import time
 from pathlib import Path
+
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from scipy import integrate
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import queue
-import threading
-import argparse
+import torch
+import torch.nn as nn
+import torch.optim as optim
 import yaml
+from scipy import integrate
 
 try:
     from binance.client import Client
@@ -23,9 +24,9 @@ except Exception:
 
 try:
     import dash
+    import plotly.graph_objs as go
     from dash import dcc, html
     from dash.dependencies import Input, Output, State
-    import plotly.graph_objs as go
 except Exception:
     dash = None
     dcc = None

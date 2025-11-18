@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass, replace as dataclass_replace
+from dataclasses import dataclass
+from dataclasses import replace as dataclass_replace
 from datetime import datetime, timezone
 from typing import Callable, Iterable, Mapping, Optional
 
 from domain import Order, OrderSide
 
-from .normalization import NormalizationError, SymbolNormalizer
 from .metrics import RiskMetrics, get_risk_metrics
+from .normalization import NormalizationError, SymbolNormalizer
 
 LOGGER = logging.getLogger(__name__)
 

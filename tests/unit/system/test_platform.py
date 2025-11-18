@@ -16,7 +16,6 @@ from application.system import (
 from application.system_orchestrator import MarketDataSource
 from core.data.models import InstrumentType, PriceTick
 from execution.connectors import SimulatedExchangeConnector
-
 from src.audit.audit_logger import AuditLogger
 from src.data.ingestion_service import DataIngestionCacheService
 from src.data.kafka_ingestion import KafkaIngestionConfig

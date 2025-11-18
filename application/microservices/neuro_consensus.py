@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from typing import Mapping, Optional
 
-from domain.signals import Signal, SignalAction
-
 # Local import path in repository context:
 from analytics.regime.src.consensus.hncm_neuro import (
-    NeuroConsensusAdapter,
     AgentVote,
+    NeuroConsensusAdapter,
 )
+from domain.signals import Signal, SignalAction
+
 
 def ews_to_vote(agent_name: str, ews_result: object) -> AgentVote:
     score = 0.0

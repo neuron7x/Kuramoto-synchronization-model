@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any, Protocol, TypeVar, runtime_checkable
 
-
 _T = TypeVar("_T")
 
 

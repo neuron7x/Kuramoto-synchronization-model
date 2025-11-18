@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-import time
 import argparse
+import time
 from pathlib import Path
+
 
 def main():
     ap = argparse.ArgumentParser()

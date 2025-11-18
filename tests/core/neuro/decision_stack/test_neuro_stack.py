@@ -5,9 +5,9 @@ import random
 import pytest
 
 from tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
+from tradepulse.core.neuro.gaba.gaba_inhibition_gate import GABAInhibitionGate
 from tradepulse.core.neuro.na_ach.neuromods import NAACHNeuromodulator
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
-from tradepulse.core.neuro.gaba.gaba_inhibition_gate import GABAInhibitionGate
 from tradepulse.policy.basal_ganglia import (
     BasalGangliaDecisionStack,
     BasalGangliaPolicy,

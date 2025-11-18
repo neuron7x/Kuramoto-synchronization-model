@@ -33,7 +33,6 @@ from core.strategies.fete import FETE
 from domain.order import OrderSide
 from domain.position import Position
 
-
 # ---------------------------------------------------------------------------
 # Data acquisition helpers
 # ---------------------------------------------------------------------------

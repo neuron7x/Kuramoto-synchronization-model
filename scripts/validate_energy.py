@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from runtime.energy_validator import EnergyValidator, EnergyConfig
+from runtime.energy_validator import EnergyConfig, EnergyValidator
 
 
 def load_metrics_from_json(path: Path) -> List[Dict[str, float]]:

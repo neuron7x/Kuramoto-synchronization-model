@@ -1,5 +1,7 @@
 """Tests for Kuramoto synchrony feature."""
 
+# Import directly from module file to avoid package __init__
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -7,8 +9,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# Import directly from module file to avoid package __init__
-import importlib.util
 spec = importlib.util.spec_from_file_location(
     "kuramoto",
     Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/kuramoto.py"

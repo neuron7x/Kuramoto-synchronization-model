@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import numpy as np
 import networkx as nx
+import numpy as np
 
-from core.indicators.multiscale_kuramoto import multiscale_kuramoto, fractal_gcl_novelty
+from core.indicators.multiscale_kuramoto import fractal_gcl_novelty, multiscale_kuramoto
 from utils.change_point import cusum_score, vol_shock
 
 

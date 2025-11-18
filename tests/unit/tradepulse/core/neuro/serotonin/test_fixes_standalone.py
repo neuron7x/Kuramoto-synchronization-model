@@ -11,11 +11,12 @@ This script validates all the fixes made to the simplified serotonin controller:
 
 Can be run directly without pytest dependencies.
 """
+import importlib.util
 import sys
 import tempfile
-import yaml
 from pathlib import Path
-import importlib.util
+
+import yaml
 
 
 def load_controller():

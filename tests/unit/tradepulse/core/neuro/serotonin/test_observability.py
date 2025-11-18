@@ -9,14 +9,14 @@ module_path = Path(__file__).parent.parent.parent.parent.parent.parent / "src" /
 sys.path.insert(0, str(module_path))
 
 from observability import (  # type: ignore
-    Alert,
-    AlertSeverity,
-    SerotoninMonitor,
-    SLI,
-    SLO,
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
     SEROTONIN_SLOS,
+    SLI,
+    SLO,
+    Alert,
+    AlertSeverity,
+    SerotoninMonitor,
 )
 
 

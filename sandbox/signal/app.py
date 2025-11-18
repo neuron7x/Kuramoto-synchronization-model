@@ -7,9 +7,9 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 
+from ..clients import MarketClient
 from ..models import PricePoint, PriceSeries
 from ..settings import SignalSettings, signal_settings
-from ..clients import MarketClient
 from .engine import SignalEngine
 
 

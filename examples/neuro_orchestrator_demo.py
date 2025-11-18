@@ -16,6 +16,7 @@ sys.path.insert(0, str(src_path))
 
 # Import directly from module to avoid triggering full app initialization
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
     "neuro_orchestrator",
     src_path / "tradepulse" / "core" / "neuro" / "neuro_orchestrator.py"

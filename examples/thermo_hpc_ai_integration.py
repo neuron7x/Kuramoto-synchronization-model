@@ -6,8 +6,9 @@ for thermodynamic-aware adaptive trading.
 """
 
 import networkx as nx
-from runtime.thermo_controller import ThermoController
+
 from neuropro.hpc_validation import generate_synthetic_data
+from runtime.thermo_controller import ThermoController
 
 
 def create_sample_graph():

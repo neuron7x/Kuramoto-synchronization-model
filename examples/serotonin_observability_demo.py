@@ -24,11 +24,12 @@ serotonin_path = Path(__file__).parent.parent / "src" / "tradepulse" / "core" / 
 sys.path.insert(0, str(serotonin_path))
 
 from serotonin_controller import SerotoninController  # type: ignore
+
 from observability import (  # type: ignore
+    SEROTONIN_ALERTS,
+    SEROTONIN_SLOS,
     Alert,
     SerotoninMonitor,
-    SEROTONIN_SLOS,
-    SEROTONIN_ALERTS,
 )
 
 

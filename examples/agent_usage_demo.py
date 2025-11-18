@@ -10,9 +10,10 @@ This example shows how to use the various components of the agent system:
 - Scheduling for periodic execution
 """
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
 # Note: This is a demonstration script showing the API usage.
 # In production, ensure all dependencies are installed.
@@ -24,7 +25,7 @@ def demo_bandits():
     print("Multi-Armed Bandits Demo")
     print("=" * 60)
     
-    from core.agent.bandits import EpsilonGreedy, UCB1
+    from core.agent.bandits import UCB1, EpsilonGreedy
     
     # Define strategy arms
     strategies = ["momentum", "mean_reversion", "breakout"]
@@ -142,7 +143,7 @@ def demo_orchestration():
     print("Strategy Orchestration Demo")
     print("=" * 60)
     
-    from core.agent import StrategyOrchestrator, StrategyFlow, Strategy
+    from core.agent import Strategy, StrategyFlow, StrategyOrchestrator
     
     # Create synthetic data for different instruments
     data_spy = pd.DataFrame({"close": 100 + np.cumsum(np.random.normal(0, 1, 100))})
@@ -196,8 +197,9 @@ def demo_scheduling():
     print("Job Scheduling Demo")
     print("=" * 60)
     
-    from core.agent import StrategyScheduler, StrategyJob, Strategy
     import time
+
+    from core.agent import Strategy, StrategyJob, StrategyScheduler
     
     # Create simple strategies
     strategies = [

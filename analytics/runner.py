@@ -35,7 +35,6 @@ from core.indicators.entropy import delta_entropy, entropy
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 from core.indicators.ricci import build_price_graph, mean_ricci
 
-
 REDACTED_PLACEHOLDER: str = _config_sanitizer._REDACTED_PLACEHOLDER
 
 

@@ -11,7 +11,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 def load_audit_entries(log_path: Path, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:

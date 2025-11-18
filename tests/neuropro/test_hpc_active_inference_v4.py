@@ -2,19 +2,21 @@
 Tests for HPC-AI v4 module.
 """
 
+from typing import Tuple
+
+import numpy as np
+import pandas as pd
 import pytest
 import torch
 import torch.nn as nn
-import pandas as pd
-import numpy as np
-from typing import Tuple
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
-    generate_synthetic_data,
     calibrate_perturbation_scale,
-    validate_hpc_ai,
-    simple_backtest,
     format_validation_report,
+    generate_synthetic_data,
+    simple_backtest,
+    validate_hpc_ai,
 )
 
 

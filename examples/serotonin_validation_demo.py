@@ -10,23 +10,24 @@ Usage:
     python examples/serotonin_validation_demo.py
 """
 
-import sys
-from pathlib import Path
-import time
 import json
 import math
+import sys
+import time
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import numpy as np
+# Make Optional available globally for Pydantic
+import builtins
 
 # Direct import to avoid torch dependency in core.neuro.__init__
 import importlib.util
 from typing import Optional
 
-# Make Optional available globally for Pydantic
-import builtins
+import numpy as np
+
 builtins.Optional = Optional
 
 spec = importlib.util.spec_from_file_location(
@@ -276,8 +277,8 @@ def scenario_6_state_persistence():
     """Scenario 6: State persistence - save and recover."""
     print_section("Scenario 6: State Persistence")
     
-    import tempfile
     import os
+    import tempfile
     
     # Create controller and build state
     controller1 = SerotoninController("configs/serotonin.yaml")

@@ -5,8 +5,9 @@ Demonstrates how to use the EnergyValidator to validate system metrics
 against TACL thermodynamic thresholds.
 """
 
-from runtime.energy_validator import EnergyValidator, EnergyConfig
 from pathlib import Path
+
+from runtime.energy_validator import EnergyConfig, EnergyValidator
 
 
 def example_basic_validation():

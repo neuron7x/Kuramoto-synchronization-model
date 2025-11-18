@@ -4,14 +4,13 @@ This script demonstrates how to use the automated risk testing module
 to validate risk management systems with various market scenarios.
 """
 
+# Import directly from module files to avoid dependency issues
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
-
-# Import directly from module files to avoid dependency issues
-import importlib.util
 
 # Load risk_core first
 risk_core_spec = importlib.util.spec_from_file_location(

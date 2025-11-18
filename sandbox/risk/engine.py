@@ -6,7 +6,15 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from threading import Lock
 
-from ..models import AuditEvent, KillSwitchState, OrderSide, OrderTicket, RiskDecision, SignalDirection, TradingSignal
+from ..models import (
+    AuditEvent,
+    KillSwitchState,
+    OrderSide,
+    OrderTicket,
+    RiskDecision,
+    SignalDirection,
+    TradingSignal,
+)
 
 
 class KillSwitchProviderProtocol:

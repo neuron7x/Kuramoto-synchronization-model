@@ -5,7 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from ..models import AuditEvent, ExecutionFill, ExecutionReport, OrderSide, OrderTicket, RiskDecision, TradingSignal
+from ..models import (
+    AuditEvent,
+    ExecutionFill,
+    ExecutionReport,
+    OrderSide,
+    OrderTicket,
+    RiskDecision,
+    TradingSignal,
+)
 from ..risk.engine import AuditLoggerProtocol
 
 

@@ -9,8 +9,8 @@ import numpy as np
 import torch
 
 from .model import HydroBrainV2
-from .validator import GBStandardValidator
 from .utils import AnomalyDetector, DataImputer, preprocess_window
+from .validator import GBStandardValidator
 
 
 class RealTimeMonitor:

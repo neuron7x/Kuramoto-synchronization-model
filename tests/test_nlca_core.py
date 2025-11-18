@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-from tradepulse.nlca_core import NLCA, StateSimulator, MarketRecorder
+from tradepulse.nlca_core import NLCA, MarketRecorder, StateSimulator
 
 
 def _fake_tick(ts: float):

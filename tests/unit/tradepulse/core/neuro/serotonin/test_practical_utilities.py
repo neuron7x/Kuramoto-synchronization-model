@@ -11,11 +11,12 @@ Tests the new helper methods for real-world integration:
 - step_batch()
 - get_performance_stats()
 """
+import importlib.util
 import sys
 import tempfile
-import yaml
 from pathlib import Path
-import importlib.util
+
+import yaml
 
 
 def load_controller():

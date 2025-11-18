@@ -1,7 +1,7 @@
 """Core analytics exports."""
 
 from .causal_guard import CausalGuard, CausalGuardConfig, CausalGuardResult
-from .ews import EWSConfig, EWSResult, EarlyWarningSignal, KillSwitchPolicy
+from .ews import EarlyWarningSignal, EWSConfig, EWSResult, KillSwitchPolicy
 from .fk_detector import (
     FKDetector,
     FKDetectorCalibration,
@@ -35,9 +35,9 @@ from .tradepulse_v21 import (
     ProbabilityOutputs,
     RegimeHMMAdapter,
     RegimeHMMConfig,
+    StressTestSummary,
     StrictCausalFeatureBuilder,
     StrictCausalFeatures,
-    StressTestSummary,
     TradePulseV21Pipeline,
     result_to_json,
 )

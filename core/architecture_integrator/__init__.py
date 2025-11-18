@@ -22,20 +22,20 @@ Example:
     >>> health = integrator.aggregate_health()
 """
 
-from core.architecture_integrator.integrator import ArchitectureIntegrator
 from core.architecture_integrator.component import (
     Component,
     ComponentHealth,
-    ComponentStatus,
     ComponentMetadata,
+    ComponentStatus,
 )
-from core.architecture_integrator.registry import ComponentRegistry
+from core.architecture_integrator.integrator import ArchitectureIntegrator
 from core.architecture_integrator.lifecycle import LifecycleManager
+from core.architecture_integrator.registry import ComponentRegistry
 from core.architecture_integrator.validator import (
     ArchitectureValidator,
     ValidationIssue,
-    ValidationSeverity,
     ValidationResult,
+    ValidationSeverity,
 )
 
 __all__ = [

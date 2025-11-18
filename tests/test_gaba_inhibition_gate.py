@@ -1,10 +1,11 @@
 import pytest
 import torch
+
 from modules.gaba_inhibition_gate import (
     GABAInhibitionGate,
+    GateMetrics,
     GateParams,
     GateState,
-    GateMetrics,
 )
 
 

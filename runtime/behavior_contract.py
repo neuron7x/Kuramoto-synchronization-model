@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, Iterable, Tuple
 
-from runtime.kill_switch import is_kill_switch_active
 from runtime.dual_approval import requires_dual_approval
+from runtime.kill_switch import is_kill_switch_active
 
 
 class ActionClass(Enum):

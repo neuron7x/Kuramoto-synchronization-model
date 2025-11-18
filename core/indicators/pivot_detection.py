@@ -34,6 +34,7 @@ from .normalization import (
     resolve_indicator_normalizer,
 )
 
+
 @dataclass(frozen=True, slots=True)
 class PivotPoint:
     """Represents a confirmed local extremum in a time series."""
