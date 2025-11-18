@@ -25,7 +25,7 @@ except ImportError:
     except ImportError:
         import sys
         from pathlib import Path
-        
+
         # Try to import from absolute path
         risk_core_path = Path(__file__).parent / "risk_core.py"
         if risk_core_path.exists():

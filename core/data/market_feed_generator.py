@@ -22,7 +22,7 @@ MarketRegime = Literal["trending_up", "trending_down", "mean_reverting", "volati
 
 class SyntheticMarketFeedGenerator:
     """Generate synthetic market feeds with realistic properties."""
-    
+
     def __init__(
         self,
         seed: int = 42,
@@ -48,11 +48,11 @@ class SyntheticMarketFeedGenerator:
         self.tick_interval_ms = tick_interval_ms
         self.latency_mean_ms = latency_mean_ms
         self.latency_std_ms = latency_std_ms
-        
+
         # Initialize random generators
         self.rng = np.random.default_rng(seed)
         random.seed(seed)
-    
+
     def generate(
         self,
         num_records: int,
@@ -76,14 +76,14 @@ class SyntheticMarketFeedGenerator:
         if start_time is None:
             # Use fixed epoch for reproducibility
             start_time = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        
+
         # Adjust parameters based on regime
         drift, volatility = self._adjust_for_regime(regime, drift, volatility)
-        
+
         records = []
         current_price = self.base_price
         current_time = start_time
-        
+
         for i in range(num_records):
             # Generate price movement
             price_change = (
@@ -91,35 +91,35 @@ class SyntheticMarketFeedGenerator:
                 self.rng.normal(0, volatility * current_price)
             )
             current_price = max(current_price + price_change, 1.0)  # Ensure positive
-            
+
             # Generate spread (widens with volatility)
             spread_multiplier = 1.0 + abs(self.rng.normal(0, 0.3))
             spread = current_price * (self.base_spread_bps / 10000) * spread_multiplier
-            
+
             # Generate bid/ask
             half_spread = spread / 2
             mid_price = current_price
             bid = mid_price - half_spread
             ask = mid_price + half_spread
-            
+
             # Last price is within spread, slightly biased to mid
             last_offset = self.rng.normal(0, half_spread * 0.3)
             last = mid_price + last_offset
             last = max(bid, min(ask, last))  # Clamp to spread
-            
+
             # Generate volume (lognormal distribution)
             volume = float(self.rng.lognormal(mean=-1.0, sigma=0.5))
-            
+
             # Generate timestamps
             tick_interval = self.rng.exponential(self.tick_interval_ms / 1000.0)
             current_time += timedelta(seconds=tick_interval)
-            
+
             latency = max(
                 0.001,  # Minimum 1ms latency
                 self.rng.normal(self.latency_mean_ms, self.latency_std_ms) / 1000.0
             )
             ingest_time = current_time + timedelta(seconds=latency)
-            
+
             # Create record
             record = MarketFeedRecord(
                 exchange_ts=current_time,
@@ -130,7 +130,7 @@ class SyntheticMarketFeedGenerator:
                 volume=Decimal(str(round(volume, 4))),
             )
             records.append(record)
-        
+
         # Create metadata
         metadata = MarketFeedMetadata(
             symbol="BTCUSD",
@@ -142,9 +142,9 @@ class SyntheticMarketFeedGenerator:
             description=f"Synthetic {regime} market feed",
             tags=["synthetic", regime, f"seed_{self.seed}"],
         )
-        
+
         return MarketFeedRecording(records, metadata)
-    
+
     def _adjust_for_regime(
         self,
         regime: MarketRegime,
@@ -163,7 +163,7 @@ class SyntheticMarketFeedGenerator:
             return drift, volatility * 3.0  # High volatility
         else:  # stable
             return drift, volatility
-    
+
     def generate_flash_crash(
         self,
         num_records: int,
@@ -187,12 +187,12 @@ class SyntheticMarketFeedGenerator:
         if start_time is None:
             # Use fixed epoch for reproducibility
             start_time = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        
+
         crash_index = int(num_records * crash_position)
         records = []
         current_price = self.base_price
         current_time = start_time
-        
+
         for i in range(num_records):
             # Calculate crash effect
             if i == crash_index:
@@ -204,40 +204,40 @@ class SyntheticMarketFeedGenerator:
                 recovery_factor = recovery_progress ** (1 / recovery_speed)
                 target_price = self.base_price
                 current_price += (target_price - current_price) * recovery_factor * 0.1
-            
+
             # Add normal noise
             noise = self.rng.normal(0, 0.0005 * current_price)
             current_price = max(current_price + noise, 1.0)
-            
+
             # Generate spread (widens during crash)
             if abs(i - crash_index) < 5:
                 spread_multiplier = 3.0  # Wide spread during crash
             else:
                 spread_multiplier = 1.0
-            
+
             spread = current_price * (self.base_spread_bps / 10000) * spread_multiplier
             half_spread = spread / 2
-            
+
             bid = current_price - half_spread
             ask = current_price + half_spread
             last = current_price
-            
+
             # Volume spikes during crash
             if abs(i - crash_index) < 3:
                 volume = float(self.rng.lognormal(mean=1.0, sigma=0.8))
             else:
                 volume = float(self.rng.lognormal(mean=-1.0, sigma=0.5))
-            
+
             # Generate timestamps
             tick_interval = self.rng.exponential(self.tick_interval_ms / 1000.0)
             current_time += timedelta(seconds=tick_interval)
-            
+
             latency = max(
                 0.001,
                 self.rng.normal(self.latency_mean_ms, self.latency_std_ms) / 1000.0
             )
             ingest_time = current_time + timedelta(seconds=latency)
-            
+
             record = MarketFeedRecord(
                 exchange_ts=current_time,
                 ingest_ts=ingest_time,
@@ -247,7 +247,7 @@ class SyntheticMarketFeedGenerator:
                 volume=Decimal(str(round(volume, 4))),
             )
             records.append(record)
-        
+
         metadata = MarketFeedMetadata(
             symbol="BTCUSD",
             venue="synthetic",
@@ -258,9 +258,9 @@ class SyntheticMarketFeedGenerator:
             description=f"Flash crash at position {crash_position}, magnitude {crash_magnitude}",
             tags=["synthetic", "flash_crash", f"seed_{self.seed}"],
         )
-        
+
         return MarketFeedRecording(records, metadata)
-    
+
     def generate_regime_transition(
         self,
         num_records: int,
@@ -281,18 +281,18 @@ class SyntheticMarketFeedGenerator:
         """
         if transition_points is None:
             transition_points = [i / len(regimes) for i in range(1, len(regimes))]
-        
+
         if len(transition_points) != len(regimes) - 1:
             raise ValueError(
                 f"Need {len(regimes) - 1} transition points for {len(regimes)} regimes"
             )
-        
+
         all_records = []
         current_time = start_time or datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        
+
         transition_indices = [int(p * num_records) for p in transition_points] + [num_records]
         start_idx = 0
-        
+
         for regime, end_idx in zip(regimes, transition_indices):
             segment_size = end_idx - start_idx
             if segment_size > 0:
@@ -305,19 +305,19 @@ class SyntheticMarketFeedGenerator:
                     latency_mean_ms=self.latency_mean_ms,
                     latency_std_ms=self.latency_std_ms,
                 )
-                
+
                 recording = generator.generate(
                     segment_size,
                     start_time=current_time,
                     regime=regime,
                 )
-                
+
                 all_records.extend(recording.records)
                 if all_records:
                     current_time = all_records[-1].exchange_ts
-            
+
             start_idx = end_idx
-        
+
         metadata = MarketFeedMetadata(
             symbol="BTCUSD",
             venue="synthetic",
@@ -328,5 +328,5 @@ class SyntheticMarketFeedGenerator:
             description=f"Regime transitions: {' -> '.join(regimes)}",
             tags=["synthetic", "regime_transition", f"seed_{self.seed}"],
         )
-        
+
         return MarketFeedRecording(all_records, metadata)

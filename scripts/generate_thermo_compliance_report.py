@@ -18,13 +18,13 @@ def load_audit_entries(log_path: Path, start_date: datetime, end_date: datetime)
     """Load audit log entries for the specified date range."""
     start_ts = start_date.timestamp()
     end_ts = end_date.timestamp()
-    
+
     entries = []
-    
+
     if not log_path.exists():
         print(f"Warning: Audit log not found at {log_path}")
         return entries
-    
+
     with log_path.open('r') as f:
         for line in f:
             try:
@@ -34,7 +34,7 @@ def load_audit_entries(log_path: Path, start_date: datetime, end_date: datetime)
                     entries.append(entry)
             except json.JSONDecodeError:
                 continue
-    
+
     return entries
 
 
@@ -50,9 +50,9 @@ def analyze_compliance(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
             "avg_free_energy": 0,
             "max_free_energy": 0,
         }
-    
+
     F_values = [e.get('F_new', 0) for e in entries]
-    
+
     return {
         "total_decisions": len(entries),
         "monotonic_violations": sum(1 for e in entries if e.get('action') == 'rejected'),
@@ -72,7 +72,7 @@ def generate_text_report(
     output_path: Path
 ) -> None:
     """Generate text-based compliance report."""
-    
+
     report_lines = [
         "=" * 70,
         "THERMODYNAMICS COMPLIANCE REPORT",
@@ -110,19 +110,19 @@ def generate_text_report(
         "=" * 70,
         "",
     ]
-    
+
     # Determine compliance status
     compliance_issues = []
-    
+
     if analysis['max_free_energy'] > 1.35:
         compliance_issues.append(f"❌ Maximum free energy ({analysis['max_free_energy']:.4f}) exceeded threshold (1.35)")
-    
+
     if analysis['energy_threshold_breaches'] > 0:
         compliance_issues.append(f"⚠️  {analysis['energy_threshold_breaches']} energy threshold breaches detected")
-    
+
     if analysis['monotonic_violations'] > len(entries) * 0.01:  # More than 1% violations
         compliance_issues.append(f"⚠️  High violation rate: {analysis['monotonic_violations']} violations")
-    
+
     if compliance_issues:
         report_lines.append("Status: ⚠️  NON-COMPLIANT\n")
         report_lines.append("Issues:")
@@ -134,7 +134,7 @@ def generate_text_report(
         report_lines.append(f"  ✓ Free energy within threshold (max: {analysis['max_free_energy']:.6f})")
         report_lines.append(f"  ✓ Violation rate acceptable ({analysis['monotonic_violations']} violations)")
         report_lines.append("  ✓ System operated within safety parameters")
-    
+
     report_lines.extend([
         "",
         "=" * 70,
@@ -148,14 +148,14 @@ def generate_text_report(
         "",
         "=" * 70,
     ])
-    
+
     report_text = "\n".join(report_lines)
-    
+
     # Write to file
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open('w') as f:
         f.write(report_text)
-    
+
     print(report_text)
 
 
@@ -163,28 +163,28 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate thermodynamics compliance report"
     )
-    
+
     parser.add_argument(
         "--start",
         type=str,
         required=True,
         help="Start date (YYYY-MM-DD)"
     )
-    
+
     parser.add_argument(
         "--end",
         type=str,
         required=True,
         help="End date (YYYY-MM-DD)"
     )
-    
+
     parser.add_argument(
         "--log-path",
         type=Path,
         default=Path("/var/log/tradepulse/thermo_audit.jsonl"),
         help="Path to audit log file"
     )
-    
+
     parser.add_argument(
         "--output",
         "-o",
@@ -192,9 +192,9 @@ def main():
         required=True,
         help="Output file path (.txt or .pdf)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Parse dates
     try:
         start_date = datetime.fromisoformat(args.start)
@@ -203,21 +203,21 @@ def main():
         print(f"Error parsing dates: {e}")
         print("Use format: YYYY-MM-DD")
         return 1
-    
+
     # Load audit entries
     print(f"Loading audit entries from {start_date.date()} to {end_date.date()}...")
     global entries
     entries = load_audit_entries(args.log_path, start_date, end_date)
-    
+
     if not entries:
         print("No audit entries found for the specified period.")
         return 1
-    
+
     print(f"Loaded {len(entries)} audit entries")
-    
+
     # Analyze compliance
     analysis = analyze_compliance(entries)
-    
+
     # Generate report
     if args.output.suffix == '.txt':
         generate_text_report(analysis, start_date, end_date, args.output)
@@ -233,7 +233,7 @@ def main():
     else:
         print(f"Error: Unsupported output format '{args.output.suffix}'. Use .txt or .pdf")
         return 1
-    
+
     return 0
 
 

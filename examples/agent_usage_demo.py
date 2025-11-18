@@ -24,17 +24,17 @@ def demo_bandits():
     print("=" * 60)
     print("Multi-Armed Bandits Demo")
     print("=" * 60)
-    
+
     from core.agent.bandits import UCB1, EpsilonGreedy
-    
+
     # Define strategy arms
     strategies = ["momentum", "mean_reversion", "breakout"]
-    
+
     # Epsilon-Greedy Algorithm
     print("\n1. Epsilon-Greedy Algorithm")
     print("-" * 40)
     eg_bandit = EpsilonGreedy(strategies, epsilon=0.1)
-    
+
     # Simulate exploration and exploitation
     for i in range(10):
         arm = eg_bandit.select()
@@ -44,12 +44,12 @@ def demo_bandits():
         print(f"  Round {i+1}: Selected {arm}, Reward: {reward:.3f}, "
               f"Estimate: {eg_bandit.estimate(arm):.3f}, "
               f"Pulls: {eg_bandit.pulls(arm)}")
-    
+
     # UCB1 Algorithm
     print("\n2. UCB1 Algorithm")
     print("-" * 40)
     ucb_bandit = UCB1(strategies)
-    
+
     for i in range(10):
         arm = ucb_bandit.select()
         reward = np.random.normal(0.5, 0.2)
@@ -64,14 +64,14 @@ def demo_strategy_evaluation():
     print("\n" + "=" * 60)
     print("Strategy Evaluation Demo")
     print("=" * 60)
-    
+
     from core.agent import Strategy, evaluate_strategies
-    
+
     # Create synthetic market data
     dates = pd.date_range(start="2024-01-01", periods=252, freq="D")
     prices = 100 + np.cumsum(np.random.normal(0.001, 0.02, len(dates)))
     data = pd.DataFrame({"close": prices}, index=dates)
-    
+
     # Define strategies with different parameters
     strategies = [
         Strategy(name="momentum_short", params={"lookback": 10, "threshold": 0.3}),
@@ -79,9 +79,9 @@ def demo_strategy_evaluation():
         Strategy(name="momentum_long", params={"lookback": 50, "threshold": 0.7}),
         Strategy(name="mean_reversion", params={"lookback": 30, "threshold": 0.4}),
     ]
-    
+
     print(f"\nEvaluating {len(strategies)} strategies on {len(data)} days of data...")
-    
+
     # Evaluate strategies
     results = evaluate_strategies(
         strategies,
@@ -89,7 +89,7 @@ def demo_strategy_evaluation():
         max_workers=2,
         chunk_size=4,
     )
-    
+
     # Display results
     print("\nResults:")
     print("-" * 60)
@@ -105,12 +105,12 @@ def demo_strategy_memory():
     print("\n" + "=" * 60)
     print("Strategy Memory Demo")
     print("=" * 60)
-    
+
     from core.agent.memory import StrategyMemory, StrategySignature
-    
+
     # Initialize memory
     memory = StrategyMemory(max_records=10, decay_lambda=1e-6)
-    
+
     # Simulate storing strategies with market signatures
     strategies_data = [
         ("momentum_bull", (0.95, 0.05, 0.3, 2.1, 0.1), 0.85),
@@ -119,7 +119,7 @@ def demo_strategy_memory():
         ("momentum_bear", (0.90, -0.10, -0.1, 1.5, 0.25), 0.90),
         ("trend_following", (0.85, 0.08, 0.35, 2.0, 0.12), 0.80),
     ]
-    
+
     print("\nStoring strategies with market signatures:")
     print("-" * 60)
     for name, sig_tuple, score in strategies_data:
@@ -127,7 +127,7 @@ def demo_strategy_memory():
         memory.add(name, sig, score)
         print(f"  Added: {name:20s} Score: {score:.2f} "
               f"R={sig.R:.2f} ΔH={sig.delta_H:.2f}")
-    
+
     # Retrieve top performers
     print("\nTop 3 strategies:")
     print("-" * 60)
@@ -142,24 +142,24 @@ def demo_orchestration():
     print("\n" + "=" * 60)
     print("Strategy Orchestration Demo")
     print("=" * 60)
-    
+
     from core.agent import Strategy, StrategyFlow, StrategyOrchestrator
-    
+
     # Create synthetic data for different instruments
     data_spy = pd.DataFrame({"close": 100 + np.cumsum(np.random.normal(0, 1, 100))})
     data_qqq = pd.DataFrame({"close": 200 + np.cumsum(np.random.normal(0, 1.5, 100))})
-    
+
     # Create strategy batches
     spy_strategies = [
         Strategy(name=f"spy_strat_{i}", params={"lookback": 20 + i*10})
         for i in range(3)
     ]
-    
+
     qqq_strategies = [
         Strategy(name=f"qqq_strat_{i}", params={"lookback": 15 + i*10})
         for i in range(3)
     ]
-    
+
     # Create flows
     flows = [
         StrategyFlow(
@@ -175,13 +175,13 @@ def demo_orchestration():
             priority=2,
         ),
     ]
-    
+
     print(f"\nOrchestrating {len(flows)} flows...")
-    
+
     # Execute flows concurrently
     with StrategyOrchestrator(max_parallel=2) as orchestrator:
         results = orchestrator.run_flows(flows)
-    
+
     print("\nFlow Results:")
     print("-" * 60)
     for flow_name, evaluations in results.items():
@@ -196,23 +196,23 @@ def demo_scheduling():
     print("\n" + "=" * 60)
     print("Job Scheduling Demo")
     print("=" * 60)
-    
+
     import time
 
     from core.agent import Strategy, StrategyJob, StrategyScheduler
-    
+
     # Create simple strategies
     strategies = [
         Strategy(name="test_strategy", params={"lookback": 20})
     ]
-    
+
     def data_provider():
         """Simulate fetching latest data."""
         return pd.DataFrame({"close": np.random.randn(50) + 100})
-    
+
     # Create scheduler
     scheduler = StrategyScheduler(max_sleep=1.0, idle_sleep=0.5)
-    
+
     # Interval-based job
     job = StrategyJob(
         name="quick_eval",
@@ -220,28 +220,28 @@ def demo_scheduling():
         data_provider=data_provider,
         interval=2.0,  # Every 2 seconds
     )
-    
+
     print("\nAdding interval-based job...")
     scheduler.add_job(job, run_immediately=True)
-    
+
     # Start scheduler
     print("Starting scheduler for 5 seconds...")
     scheduler.start()
-    
+
     # Let it run for a bit
     time.sleep(5)
-    
+
     # Stop scheduler
     scheduler.stop(timeout=2.0)
-    
+
     # Get job status
     status = scheduler.get_status("quick_eval")
-    print(f"\nJob Status:")
+    print("\nJob Status:")
     print(f"  Name: {status.name}")
     print(f"  Enabled: {status.enabled}")
     print(f"  Last run: {status.last_run_at is not None}")
     print(f"  Result count: {status.result_count}")
-    
+
     # Get results
     results = scheduler.get_last_results("quick_eval")
     if results:
@@ -253,9 +253,9 @@ def demo_pi_agent():
     print("\n" + "=" * 60)
     print("PI Agent Demo")
     print("=" * 60)
-    
+
     from core.agent import PiAgent, Strategy
-    
+
     # Create strategy
     strategy = Strategy(
         name="adaptive_momentum",
@@ -265,10 +265,10 @@ def demo_pi_agent():
             "instability_threshold": 0.2,
         }
     )
-    
+
     # Create PI agent
     agent = PiAgent(strategy=strategy, hysteresis=0.05)
-    
+
     # Simulate market states
     market_states = [
         {"R": 0.60, "delta_H": 0.05, "kappa_mean": 0.3, "transition_score": 0.1},
@@ -276,13 +276,13 @@ def demo_pi_agent():
         {"R": 0.85, "delta_H": -0.10, "kappa_mean": -0.2, "transition_score": 0.4},
         {"R": 0.70, "delta_H": 0.03, "kappa_mean": 0.2, "transition_score": 0.1},
     ]
-    
+
     print("\nSimulating market regime changes:")
     print("-" * 60)
     for i, state in enumerate(market_states, 1):
         is_unstable = agent.detect_instability(state)
         action = agent.evaluate_and_adapt(state)
-        
+
         print(f"\n  Time {i}:")
         print(f"    Market: R={state['R']:.2f}, ΔH={state['delta_H']:.2f}, "
               f"κ={state['kappa_mean']:.2f}")
@@ -298,7 +298,7 @@ def main():
     print("║" + "  TradePulse Core Agent Module - Usage Demonstration".center(58) + "║")
     print("║" + " " * 58 + "║")
     print("╚" + "=" * 58 + "╝")
-    
+
     try:
         demo_bandits()
         demo_strategy_evaluation()
@@ -306,12 +306,12 @@ def main():
         demo_orchestration()
         demo_scheduling()
         demo_pi_agent()
-        
+
         print("\n" + "=" * 60)
         print("All demonstrations completed successfully! ✓")
         print("=" * 60)
         print()
-        
+
     except ImportError as e:
         print(f"\n⚠️  Import Error: {e}")
         print("Please ensure all dependencies are installed:")

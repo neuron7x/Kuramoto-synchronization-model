@@ -29,19 +29,19 @@ class BudgetLoader:
                 / "configs"
                 / "performance_budgets.yaml"
             )
-        
+
         self.config_path = config_path
         self._config: dict = {}
         self._load_config()
-    
+
     def _load_config(self) -> None:
         """Load configuration from YAML file."""
         if not self.config_path.exists():
             raise FileNotFoundError(f"Budget config not found: {self.config_path}")
-        
+
         with open(self.config_path, "r", encoding="utf-8") as f:
             self._config = yaml.safe_load(f)
-    
+
     def get_default_budget(self) -> PerformanceBudget:
         """Get the default performance budget.
         
@@ -49,7 +49,7 @@ class BudgetLoader:
             Default performance budget
         """
         return self._create_budget(self._config.get("default", {}))
-    
+
     def get_exchange_budget(self, exchange: str) -> PerformanceBudget:
         """Get performance budget for specific exchange.
         
@@ -63,7 +63,7 @@ class BudgetLoader:
         if exchange in exchanges:
             return self._create_budget(exchanges[exchange])
         return self.get_default_budget()
-    
+
     def get_scenario_budget(self, scenario: str) -> PerformanceBudget:
         """Get performance budget for specific scenario.
         
@@ -77,7 +77,7 @@ class BudgetLoader:
         if scenario in scenarios:
             return self._create_budget(scenarios[scenario])
         return self.get_default_budget()
-    
+
     def get_environment_budget(self, environment: str) -> PerformanceBudget:
         """Get performance budget for specific environment.
         
@@ -91,7 +91,7 @@ class BudgetLoader:
         if environment in environments:
             return self._create_budget(environments[environment])
         return self.get_default_budget()
-    
+
     def get_component_budget(self, component: str) -> PerformanceBudget:
         """Get performance budget for specific component.
         
@@ -105,7 +105,7 @@ class BudgetLoader:
         if component in components:
             return self._create_budget(components[component])
         return self.get_default_budget()
-    
+
     def get_budget(
         self,
         exchange: str | None = None,
@@ -135,24 +135,24 @@ class BudgetLoader:
             scenarios = self._config.get("scenarios", {})
             if scenario in scenarios:
                 return self._create_budget(scenarios[scenario])
-        
+
         if exchange:
             exchanges = self._config.get("exchanges", {})
             if exchange in exchanges:
                 return self._create_budget(exchanges[exchange])
-        
+
         if environment:
             environments = self._config.get("environments", {})
             if environment in environments:
                 return self._create_budget(environments[environment])
-        
+
         if component:
             components = self._config.get("components", {})
             if component in components:
                 return self._create_budget(components[component])
-        
+
         return self.get_default_budget()
-    
+
     def list_exchanges(self) -> list[str]:
         """List all configured exchanges.
         
@@ -160,7 +160,7 @@ class BudgetLoader:
             List of exchange names
         """
         return list(self._config.get("exchanges", {}).keys())
-    
+
     def list_scenarios(self) -> list[str]:
         """List all configured scenarios.
         
@@ -168,7 +168,7 @@ class BudgetLoader:
             List of scenario names
         """
         return list(self._config.get("scenarios", {}).keys())
-    
+
     def list_environments(self) -> list[str]:
         """List all configured environments.
         
@@ -176,7 +176,7 @@ class BudgetLoader:
             List of environment names
         """
         return list(self._config.get("environments", {}).keys())
-    
+
     def list_components(self) -> list[str]:
         """List all configured components.
         
@@ -184,7 +184,7 @@ class BudgetLoader:
             List of component names
         """
         return list(self._config.get("components", {}).keys())
-    
+
     @staticmethod
     def _create_budget(config: Mapping) -> PerformanceBudget:
         """Create PerformanceBudget from configuration dict.

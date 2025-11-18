@@ -42,7 +42,7 @@ class TestValidateSymbol:
         """Test that invalid characters are rejected."""
         with pytest.raises(ValidationError, match="invalid characters"):
             validate_symbol("BTC@USDT")
-        
+
         with pytest.raises(ValidationError):
             validate_symbol("BTC USDT")  # space not allowed
 
@@ -147,7 +147,7 @@ class TestValidatePercentage:
     def test_custom_range(self):
         """Test custom percentage range."""
         assert validate_percentage(150, max_value=200) == Decimal("150")
-        
+
         with pytest.raises(ValidationError):
             validate_percentage(250, max_value=200)
 
@@ -207,7 +207,7 @@ class TestValidateTimeframe:
         """Test that invalid timeframe is rejected."""
         with pytest.raises(ValidationError, match="Invalid timeframe"):
             validate_timeframe("5minutes")
-        
+
         with pytest.raises(ValidationError):
             validate_timeframe("1x")
 
@@ -251,14 +251,14 @@ class TestValidateEnum:
     def test_case_sensitive_when_enabled(self):
         """Test case-sensitive validation."""
         allowed = ['USD', 'EUR', 'GBP']
-        
+
         with pytest.raises(ValidationError):
             validate_enum('usd', allowed, case_sensitive=True)
 
     def test_invalid_value_rejected(self):
         """Test that invalid value is rejected."""
         allowed = ['USD', 'EUR', 'GBP']
-        
+
         with pytest.raises(ValidationError, match="Invalid"):
             validate_enum('JPY', allowed)
 
@@ -281,7 +281,7 @@ class TestSanitizeSqlIdentifier:
         """Test that invalid characters are rejected."""
         with pytest.raises(ValidationError):
             sanitize_sql_identifier("table-name")
-        
+
         with pytest.raises(ValidationError):
             sanitize_sql_identifier("table name")
 

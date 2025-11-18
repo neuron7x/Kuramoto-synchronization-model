@@ -14,7 +14,7 @@ except ImportError:
     # Dummy decorators for when hypothesis is not available
     def given(*args, **kwargs):
         return lambda f: pytest.mark.skip(reason="hypothesis not installed")(f)
-    
+
     class st:
         @staticmethod
         def floats(*args, **kwargs):
@@ -223,12 +223,12 @@ class TestCheckMonotonicThresholds:
     def test_monotonic_property(self, go: float, hold: float, no_go: float) -> None:
         """Property: output should always satisfy go >= hold >= no_go and be in [0, 1]."""
         go_out, hold_out, no_go_out = check_monotonic_thresholds(go, hold, no_go)
-        
+
         # All in valid range
         assert 0.0 <= go_out <= 1.0
         assert 0.0 <= hold_out <= 1.0
         assert 0.0 <= no_go_out <= 1.0
-        
+
         # Monotonic constraint
         assert go_out >= hold_out - 1e-9  # Small epsilon for floating point
         assert hold_out >= no_go_out - 1e-9

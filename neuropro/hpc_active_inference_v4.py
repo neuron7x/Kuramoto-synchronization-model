@@ -140,7 +140,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
             from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
 
             engine = TradePulseCompositeEngine()
-            
+
             # Ensure DatetimeIndex
             if not isinstance(data.index, pd.DatetimeIndex):
                 if 'timestamp' in data.columns:
@@ -152,10 +152,10 @@ class HPCActiveInferenceModuleV4(nn.Module):
                     data.index = pd.date_range(
                         start='2020-01-01', periods=len(data), freq='D'
                     )
-            
+
             # Analyze market and extract signal
             signal = engine.analyze_market(data)
-            
+
             # Extract features from signal
             features = pd.DataFrame({
                 'close': data['close'].iloc[-1] if 'close' in data.columns else 0.0,
@@ -169,7 +169,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
                 'entry_signal': signal.entry_signal,
                 'risk_multiplier': signal.risk_multiplier,
             }, index=[0])
-            
+
         except Exception as e:
             warnings.warn(
                 f"Failed to use TradePulseCompositeEngine: {e}. Using fallback.",
@@ -179,7 +179,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
             # Fallback: use basic features
             required_cols = ['open', 'high', 'low', 'close', 'volume']
             features = data[required_cols].iloc[-1:].copy()
-            
+
             # Pad to 10 dimensions
             for i in range(len(features.columns), self.input_dim):
                 features[f'feature_{i}'] = 0.0
@@ -195,11 +195,11 @@ class HPCActiveInferenceModuleV4(nn.Module):
             features_array = features_array[:, :self.input_dim]
 
         features_tensor = torch.tensor(features_array, dtype=torch.float32).to(self.device)
-        
+
         # Embed and encode
         embedded = self.input_embedding(features_tensor.unsqueeze(0))
         state = self.afferent_encoder(embedded).mean(dim=1)
-        
+
         return state
 
     def hpc_forward(self, state: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -238,15 +238,15 @@ class HPCActiveInferenceModuleV4(nn.Module):
             zip(self.hpc_errors, self.precision_weights)
         ):
             pred = predictions[self.hpc_levels - 1 - i]
-            
+
             # Prediction error (project pred to state_dim if needed)
             pred_state = pred[:, :self.state_dim] if pred.shape[-1] > self.state_dim else pred
             pe = bottom_up - pred_state
-            
+
             # Precision-weighted prediction error
             pwpe = precision * pe
             pwpes.append(torch.norm(pwpe))
-            
+
             # Update bottom-up with error correction
             error_input = torch.cat([pwpe, bottom_up], dim=-1)
             bottom_up = error_layer(error_input) + bottom_up
@@ -306,16 +306,16 @@ class HPCActiveInferenceModuleV4(nn.Module):
         # Actor loss with perturbation rectification
         perturbation = torch.randn_like(state) * self.perturbation_scale
         perturbed_state = state + perturbation
-        
+
         action_logits = self.actor(state)
         perturbed_logits = self.actor(perturbed_state)
-        
+
         action_probs = F.softmax(action_logits, dim=-1)
         perturbed_probs = F.softmax(perturbed_logits, dim=-1)
-        
+
         selected_prob = action_probs.gather(1, action.unsqueeze(1).long()).squeeze()
         perturbed_selected = perturbed_probs.gather(1, action.unsqueeze(1).long()).squeeze()
-        
+
         actor_loss = (
             -torch.log(selected_prob + 1e-8) * td_error.detach()
             + 0.5 * (selected_prob - perturbed_selected).pow(2).mean()
@@ -426,7 +426,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
 
             # Action selection with Gumbel-Softmax
             action_logits = self.actor(state)
-            
+
             if pwpe.item() > 0.15:
                 # High uncertainty: explore with higher temperature and stochasticity
                 action_sample = self.gumbel_softmax_sample(

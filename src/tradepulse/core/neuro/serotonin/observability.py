@@ -12,7 +12,7 @@ from typing import Callable, Optional
 
 class AlertSeverity(Enum):
     """Alert severity levels following SRE practices."""
-    
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -21,12 +21,12 @@ class AlertSeverity(Enum):
 @dataclass(frozen=True)
 class SLI:
     """Service Level Indicator definition."""
-    
+
     name: str
     description: str
     unit: str
     good_event_condition: str  # Human-readable condition for "good" events
-    
+
     def __str__(self) -> str:
         return f"SLI({self.name}): {self.description} [{self.unit}]"
 
@@ -34,20 +34,20 @@ class SLI:
 @dataclass(frozen=True)
 class SLO:
     """Service Level Objective with error budget."""
-    
+
     sli: SLI
     target: float  # Target percentage (e.g., 99.5 for 99.5%)
     window: str  # Time window (e.g., "30d", "7d")
-    
+
     @property
     def error_budget(self) -> float:
         """Calculate error budget percentage."""
         return 100.0 - self.target
-    
+
     def is_met(self, actual: float) -> bool:
         """Check if actual performance meets SLO."""
         return actual >= self.target
-    
+
     def budget_consumed(self, actual: float) -> float:
         """Calculate percentage of error budget consumed.
         
@@ -58,15 +58,15 @@ class SLO:
         """
         if actual >= self.target:
             return 0.0
-        
+
         error_rate = 100.0 - actual
         budget = self.error_budget
-        
+
         if budget <= 0:
             return float('inf')
-        
+
         return error_rate / budget
-    
+
     def __str__(self) -> str:
         return f"SLO({self.sli.name}): {self.target}% over {self.window}"
 
@@ -139,13 +139,13 @@ SEROTONIN_SLOS = {
 @dataclass(frozen=True)
 class Alert:
     """Alert definition for monitoring."""
-    
+
     name: str
     description: str
     severity: AlertSeverity
     condition: str
     remediation: str
-    
+
     def __str__(self) -> str:
         return f"Alert[{self.severity.value}]({self.name}): {self.condition}"
 
@@ -206,7 +206,7 @@ class SerotoninMonitor:
     - Alert evaluation
     - Anomaly detection
     """
-    
+
     def __init__(
         self,
         alert_callback: Optional[Callable[[Alert, float], None]] = None,
@@ -218,12 +218,12 @@ class SerotoninMonitor:
                             Called with (alert, current_value).
         """
         self._alert_callback = alert_callback or (lambda alert, value: None)
-        
+
         # Tracking state
         self._high_stress_ticks = 0
         self._hold_state_ticks = 0
         self._last_hold_state = False
-    
+
     def check_alerts(
         self,
         level: float,
@@ -243,49 +243,49 @@ class SerotoninMonitor:
             List of triggered alerts
         """
         triggered = []
-        
+
         # Track consecutive ticks
         if level > 1.2:
             self._high_stress_ticks += 1
         else:
             self._high_stress_ticks = 0
-        
+
         if hold and self._last_hold_state:
             self._hold_state_ticks += 1
         else:
             self._hold_state_ticks = 0
-        
+
         self._last_hold_state = hold
-        
+
         # Evaluate alert conditions
         if self._high_stress_ticks >= 300:  # 5 minutes at 1 tick/second
             alert = SEROTONIN_ALERTS["high_stress_level"]
             triggered.append(alert)
             self._alert_callback(alert, level)
-        
+
         if self._hold_state_ticks >= 1800:  # 30 minutes
             alert = SEROTONIN_ALERTS["extended_hold_state"]
             triggered.append(alert)
             self._alert_callback(alert, float(self._hold_state_ticks))
-        
+
         if not validation_ok:
             alert = SEROTONIN_ALERTS["state_validation_failure"]
             triggered.append(alert)
             self._alert_callback(alert, 0.0)
-        
+
         if desensitization > 0.7:
             alert = SEROTONIN_ALERTS["desensitization_excessive"]
             triggered.append(alert)
             self._alert_callback(alert, desensitization)
-        
+
         return triggered
-    
+
     def reset_tracking(self) -> None:
         """Reset internal tracking counters."""
         self._high_stress_ticks = 0
         self._hold_state_ticks = 0
         self._last_hold_state = False
-    
+
     @staticmethod
     def format_slo_report(slo_name: str, actual: float) -> str:
         """Format SLO status report.
@@ -299,13 +299,13 @@ class SerotoninMonitor:
         """
         if slo_name not in SEROTONIN_SLOS:
             return f"Unknown SLO: {slo_name}"
-        
+
         slo = SEROTONIN_SLOS[slo_name]
         budget_consumed = slo.budget_consumed(actual)
         is_met = slo.is_met(actual)
-        
+
         status = "✓ PASS" if is_met else "✗ FAIL"
-        
+
         report = [
             f"SLO Report: {slo.sli.name}",
             f"Status: {status}",
@@ -314,12 +314,12 @@ class SerotoninMonitor:
             f"Error Budget: {slo.error_budget:.2f}%",
             f"Budget Consumed: {budget_consumed * 100:.1f}%",
         ]
-        
+
         if budget_consumed > 0.8:
             report.append("⚠️  WARNING: Error budget critically depleted!")
         elif budget_consumed > 0.5:
             report.append("⚠️  CAUTION: Error budget > 50% consumed")
-        
+
         return "\n".join(report)
 
 

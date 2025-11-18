@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 
 class ComplianceLevel(str, Enum):
     """Regulatory compliance levels."""
-    
+
     SEC = "SEC"
     FINRA = "FINRA"
     EU_AI_ACT = "EU_AI_ACT"
@@ -71,7 +71,7 @@ class ComplianceLevel(str, Enum):
 
 class GovernanceViolation(RuntimeError):
     """Raised when a governance rule is violated."""
-    
+
     def __init__(
         self,
         message: str,
@@ -88,7 +88,7 @@ class GovernanceViolation(RuntimeError):
 @dataclass(frozen=True)
 class DigitalAuditRecord:
     """Structured audit record for digital trail compliance (Requirement #4, #13)."""
-    
+
     event_id: str = field(default_factory=lambda: str(uuid4()))
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     event_type: str = ""
@@ -99,20 +99,20 @@ class DigitalAuditRecord:
     result: Dict[str, Any] = field(default_factory=dict)
     trace_id: Optional[str] = None
     parent_event_id: Optional[str] = None
-    
+
     # Regulatory fields
     compliance_level: List[ComplianceLevel] = field(
         default_factory=lambda: [ComplianceLevel.SEC, ComplianceLevel.FINRA]
     )
     retention_years: int = 7
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         data = asdict(self)
         data["timestamp"] = self.timestamp.isoformat()
         data["compliance_level"] = [c.value for c in self.compliance_level]
         return data
-    
+
     def to_json(self) -> str:
         """Serialize to JSON for audit log."""
         return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
@@ -121,7 +121,7 @@ class DigitalAuditRecord:
 @dataclass
 class DataQualityCheck:
     """Data quality check result (Requirement #11)."""
-    
+
     check_type: str
     passed: bool
     metric_name: str
@@ -134,11 +134,11 @@ class DataQualityCheck:
 
 class SchemaValidationProtocol(Protocol):
     """Protocol for schema validators (Requirement #10)."""
-    
+
     def validate(self, data: Dict[str, Any], schema_name: str) -> bool:
         """Validate data against schema."""
         ...
-    
+
     def get_schema_version(self, schema_name: str) -> str:
         """Get schema version."""
         ...
@@ -150,18 +150,18 @@ class SchemaValidator:
     Validates all market events against schemas in schemas/events/json/1.0.0/
     Supported event types: ticks, bars, orders, fills, signals, prediction_completed
     """
-    
+
     def __init__(self, schema_dir: Optional[Path] = None) -> None:
         self.schema_dir = schema_dir or Path("schemas/events/json/1.0.0")
         self._schemas: Dict[str, Dict[str, Any]] = {}
         self._load_schemas()
-    
+
     def _load_schemas(self) -> None:
         """Load all JSON schemas from schema directory."""
         if not self.schema_dir.exists():
             logger.warning(f"Schema directory not found: {self.schema_dir}")
             return
-        
+
         for schema_file in self.schema_dir.glob("*.schema.json"):
             schema_name = schema_file.stem.replace(".schema", "")
             try:
@@ -170,7 +170,7 @@ class SchemaValidator:
                 logger.info(f"Loaded schema: {schema_name}")
             except Exception as e:
                 logger.error(f"Failed to load schema {schema_file}: {e}")
-    
+
     def validate(self, data: Dict[str, Any], schema_name: str) -> bool:
         """Validate data against schema.
         
@@ -191,13 +191,13 @@ class SchemaValidator:
                 severity="ERROR",
                 context={"schema_name": schema_name},
             )
-        
+
         schema = self._schemas[schema_name]
-        
+
         # Basic validation - check required fields
         required_fields = schema.get("required", [])
         missing_fields = [f for f in required_fields if f not in data]
-        
+
         if missing_fields:
             raise GovernanceViolation(
                 f"Missing required fields: {missing_fields}",
@@ -205,7 +205,7 @@ class SchemaValidator:
                 severity="ERROR",
                 context={"schema": schema_name, "missing": missing_fields},
             )
-        
+
         # Validate event_id presence (Requirement #4)
         if "event_id" not in data:
             raise GovernanceViolation(
@@ -214,9 +214,9 @@ class SchemaValidator:
                 severity="ERROR",
                 context={"schema": schema_name},
             )
-        
+
         return True
-    
+
     def get_schema_version(self, schema_name: str) -> str:
         """Get version of schema."""
         schema = self._schemas.get(schema_name, {})
@@ -233,28 +233,28 @@ class TACLMetricsCollector:
     - Latency metrics
     - Neuromodulator levels (serotonin, dopamine, GABA, NAK)
     """
-    
+
     def __init__(self) -> None:
         self._metrics: Dict[str, float] = {}
         self._counters: Dict[str, int] = {}
-    
+
     def record_metric(self, name: str, value: float) -> None:
         """Record a TACL metric."""
         self._metrics[name] = value
         logger.debug(f"TACL metric: {name}={value}")
-    
+
     def increment_counter(self, name: str, amount: int = 1) -> None:
         """Increment a counter."""
         self._counters[name] = self._counters.get(name, 0) + amount
-    
+
     def get_metrics(self) -> Dict[str, float]:
         """Get all current metrics."""
         return self._metrics.copy()
-    
+
     def get_counters(self) -> Dict[str, int]:
         """Get all counters."""
         return self._counters.copy()
-    
+
     def check_thresholds(
         self,
         free_energy_max: float = 1.0,
@@ -267,23 +267,23 @@ class TACLMetricsCollector:
             List of threshold violations
         """
         violations = []
-        
+
         free_energy = self._metrics.get("tacl_free_energy", 0.0)
         if free_energy > free_energy_max:
             violations.append(
                 f"Free energy {free_energy:.3f} exceeds max {free_energy_max}"
             )
-        
+
         rpe = self._metrics.get("dopamine_rpe", 0.0)
         if abs(rpe) > rpe_max:
             violations.append(f"RPE {rpe:.3f} exceeds max {rpe_max}")
-        
+
         latency = self._metrics.get("latency_p99_ms", 0.0)
         if latency > latency_p99_max_ms:
             violations.append(
                 f"Latency P99 {latency:.1f}ms exceeds max {latency_p99_max_ms}ms"
             )
-        
+
         return violations
 
 
@@ -295,17 +295,17 @@ class SecretManager:
     - Proper .env usage
     - SECURITY.md compliance
     """
-    
+
     SENSITIVE_KEYWORDS = {
         "token", "secret", "password", "key", "credential", "api_key",
         "private_key", "access_token", "auth", "bearer"
     }
-    
+
     def __init__(self, env_file: Optional[Path] = None) -> None:
         self.env_file = env_file or Path(".env")
         self._secrets: Dict[str, str] = {}
         self._load_secrets()
-    
+
     def _load_secrets(self) -> None:
         """Load secrets from .env file."""
         if self.env_file.exists():
@@ -315,17 +315,17 @@ class SecretManager:
                     if line and not line.startswith("#") and "=" in line:
                         key, value = line.split("=", 1)
                         self._secrets[key.strip()] = value.strip()
-    
+
     def get_secret(self, key: str) -> Optional[str]:
         """Get secret value."""
         # First check environment variables
         value = os.environ.get(key)
         if value:
             return value
-        
+
         # Then check loaded secrets
         return self._secrets.get(key)
-    
+
     def validate_no_hardcoded_secrets(self, code: str) -> List[str]:
         """Validate that code doesn't contain hard-coded secrets.
         
@@ -334,12 +334,12 @@ class SecretManager:
         """
         violations = []
         lines = code.split("\n")
-        
+
         for i, line in enumerate(lines, 1):
             # Skip comments
             if line.strip().startswith("#"):
                 continue
-            
+
             # Check for potential secrets
             lower_line = line.lower()
             for keyword in self.SENSITIVE_KEYWORDS:
@@ -349,7 +349,7 @@ class SecretManager:
                         violations.append(
                             f"Line {i}: Potential hard-coded {keyword}"
                         )
-        
+
         return violations
 
 
@@ -359,7 +359,7 @@ class DigitalGovernanceFramework:
     This class provides the central governance layer that enforces all
     digitalization requirements across the TradePulse system.
     """
-    
+
     def __init__(
         self,
         schema_dir: Optional[Path] = None,
@@ -377,23 +377,23 @@ class DigitalGovernanceFramework:
         self.tacl_metrics = TACLMetricsCollector()
         self.secret_manager = SecretManager()
         self.enable_strict_mode = enable_strict_mode
-        
+
         # Audit logging (Requirement #4, #13)
         self.audit_log_path = audit_log_path or Path("/var/log/tradepulse/audit.jsonl")
         self.audit_log_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Track violations
         self._violations: List[GovernanceViolation] = []
-        
+
         # Data quality checks
         self._quality_checks: List[DataQualityCheck] = []
-        
+
         logger.info("Digital Governance Framework initialized")
-    
+
     # =========================================================================
     # Requirement #1: Market & Operational Data Digitization
     # =========================================================================
-    
+
     def validate_market_event(
         self,
         event_type: str,
@@ -408,11 +408,11 @@ class DigitalGovernanceFramework:
         except GovernanceViolation as e:
             self._handle_violation(e)
             return False
-    
+
     # =========================================================================
     # Requirement #4: Digital Trail & Tracing
     # =========================================================================
-    
+
     def log_audit_event(
         self,
         event_type: str,
@@ -438,20 +438,20 @@ class DigitalGovernanceFramework:
             trace_id=trace_id,
             parent_event_id=parent_event_id,
         )
-        
+
         # Write to audit log
         try:
             with self.audit_log_path.open("a") as f:
                 f.write(record.to_json() + "\n")
         except Exception as e:
             logger.error(f"Failed to write audit log: {e}")
-        
+
         return record
-    
+
     # =========================================================================
     # Requirement #9: Data Normalization
     # =========================================================================
-    
+
     def normalize_timestamp(self, timestamp: Any) -> int:
         """Normalize timestamp to unix microseconds.
         
@@ -468,11 +468,11 @@ class DigitalGovernanceFramework:
                 requirement_id=9,
                 severity="ERROR",
             )
-    
+
     # =========================================================================
     # Requirement #11: Active Data Quality Management
     # =========================================================================
-    
+
     def check_data_quality(
         self,
         data_name: str,
@@ -489,7 +489,7 @@ class DigitalGovernanceFramework:
         - Shifts in distribution
         """
         checks = []
-        
+
         if not values:
             check = DataQualityCheck(
                 check_type="empty_data",
@@ -503,11 +503,11 @@ class DigitalGovernanceFramework:
             checks.append(check)
             self._quality_checks.append(check)
             return checks
-        
+
         import numpy as np
-        
+
         values_arr = np.array(values)
-        
+
         # Check for NaN/Inf
         if np.isnan(values_arr).any() or np.isinf(values_arr).any():
             check = DataQualityCheck(
@@ -521,16 +521,16 @@ class DigitalGovernanceFramework:
             )
             checks.append(check)
             self._quality_checks.append(check)
-        
+
         # Detect spikes
         if detect_spikes and len(values_arr) > 1:
             mean = np.mean(values_arr)
             std = np.std(values_arr)
-            
+
             if std > 0:
                 z_scores = np.abs((values_arr - mean) / std)
                 spike_count = int((z_scores > spike_threshold_std).sum())
-                
+
                 if spike_count > 0:
                     check = DataQualityCheck(
                         check_type="spikes",
@@ -543,25 +543,25 @@ class DigitalGovernanceFramework:
                     )
                     checks.append(check)
                     self._quality_checks.append(check)
-        
+
         return checks
-    
+
     # =========================================================================
     # Requirement #12: Observability via TACL
     # =========================================================================
-    
+
     def record_tacl_metric(self, name: str, value: float) -> None:
         """Record TACL observability metric."""
         self.tacl_metrics.record_metric(name, value)
-    
+
     def get_tacl_metrics(self) -> Dict[str, float]:
         """Get all TACL metrics."""
         return self.tacl_metrics.get_metrics()
-    
+
     # =========================================================================
     # Requirement #19: Digital Compliance & TACL Boundaries
     # =========================================================================
-    
+
     def enforce_tacl_boundaries(
         self,
         free_energy_max: float = 1.0,
@@ -578,7 +578,7 @@ class DigitalGovernanceFramework:
             rpe_max=rpe_max,
             latency_p99_max_ms=latency_p99_max_ms,
         )
-        
+
         if violations:
             for violation_msg in violations:
                 violation = GovernanceViolation(
@@ -588,13 +588,13 @@ class DigitalGovernanceFramework:
                 )
                 self._handle_violation(violation)
             return False
-        
+
         return True
-    
+
     # =========================================================================
     # Requirement #20: Digital Security
     # =========================================================================
-    
+
     def validate_code_security(self, code: str) -> List[str]:
         """Validate code for security issues.
         
@@ -603,32 +603,32 @@ class DigitalGovernanceFramework:
         - Injection vulnerabilities (basic check)
         """
         violations = []
-        
+
         # Check for hard-coded secrets
         secret_violations = self.secret_manager.validate_no_hardcoded_secrets(code)
         violations.extend(secret_violations)
-        
+
         # Basic injection checks
         dangerous_patterns = ["exec(", "eval(", "os.system(", "subprocess.call("]
         for pattern in dangerous_patterns:
             if pattern in code:
                 violations.append(f"Potentially dangerous pattern: {pattern}")
-        
+
         return violations
-    
+
     # =========================================================================
     # Violation Handling
     # =========================================================================
-    
+
     def _handle_violation(self, violation: GovernanceViolation) -> None:
         """Handle a governance violation."""
         self._violations.append(violation)
-        
+
         logger.error(
             f"Governance violation (Req #{violation.requirement_id}): "
             f"{violation} [severity={violation.severity}]"
         )
-        
+
         # Log to audit trail
         self.log_audit_event(
             event_type="governance_violation",
@@ -642,19 +642,19 @@ class DigitalGovernanceFramework:
                 "message": str(violation),
             },
         )
-        
+
         # In strict mode, raise exception for errors
         if self.enable_strict_mode and violation.severity in ("ERROR", "CRITICAL"):
             raise violation
-    
+
     def get_violations(self) -> List[GovernanceViolation]:
         """Get all recorded violations."""
         return self._violations.copy()
-    
+
     def get_quality_checks(self) -> List[DataQualityCheck]:
         """Get all data quality checks."""
         return self._quality_checks.copy()
-    
+
     def generate_compliance_report(self) -> Dict[str, Any]:
         """Generate comprehensive compliance report.
         

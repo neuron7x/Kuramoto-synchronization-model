@@ -121,14 +121,14 @@ def check_monotonic_thresholds(
     go = clamp(go, 0.0, 1.0)
     hold = clamp(hold, 0.0, 1.0)
     no_go = clamp(no_go, 0.0, 1.0)
-    
+
     # Sort to enforce monotonic order: go >= hold >= no_go
     # This is the most straightforward way to ensure all constraints
     values = sorted([go, hold, no_go], reverse=True)
     go_out = values[0]
     hold_out = values[1]
     no_go_out = values[2]
-    
+
     return go_out, hold_out, no_go_out
 
 
@@ -148,8 +148,8 @@ def rate_limited_change(
     """
     delta = target - current
     max_delta = max_rate * dt
-    
+
     if abs(delta) <= max_delta:
         return target
-    
+
     return current + math.copysign(max_delta, delta)

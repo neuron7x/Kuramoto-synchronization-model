@@ -252,18 +252,18 @@ class GABAInhibitionGate(nn.Module):
         missing_keys = [k for k in required_keys if k not in market_state]
         if missing_keys:
             raise KeyError(f"Missing required keys in market_state: {missing_keys}")
-        
+
         # Validate market_state tensors for NaN/Inf
         for k in required_keys:
             t = market_state[k].to(self.device)
             if torch.isnan(t).any() or torch.isinf(t).any():
                 raise ValueError(f"{k} contains NaN or Inf values")
-        
+
         # Ensure device/shape
         action = action.to(self.device)
         if torch.isnan(action).any() or torch.isinf(action).any():
             raise ValueError("action contains NaN or Inf values")
-            
+
         vix = market_state['vix'].to(self.device).reshape(1)
         vol = market_state['vol'].to(self.device).reshape(1)
         ret = market_state['ret'].to(self.device).reshape(1)
@@ -336,7 +336,7 @@ class GABAInhibitionGate(nn.Module):
 
         # 5) Apply gating
         gated = action * (1 - inhibition) * self.risk_weight * cyc
-        
+
         # 6) MFD guarantee: if GABA is elevated, ensure gated action doesn't exceed input
         if self.p.enforce_mfd and (gaba_level > 0.1).item():
             gated = torch.where(gated.abs() > action.abs(), action, gated)
@@ -365,7 +365,7 @@ class GABAInhibitionGate(nn.Module):
             risk_weight=self.risk_weight.clone(),
             t_ms=self.t_ms.clone()
         )
-    
+
     def set_state(self, state: GateState) -> None:
         """Set gate state.
 
@@ -401,7 +401,7 @@ class GABAInhibitionGate(nn.Module):
         """
         if not 0.0 <= strength <= 2.0:
             raise ValueError(f"strength must be in [0, 2], got {strength}")
-        
+
         boost = torch.tensor(strength, device=self.device)
         boosted_fast = torch.clamp(
             self.gaba_fast * (1 + self.p.hedge_fast_boost * boost),

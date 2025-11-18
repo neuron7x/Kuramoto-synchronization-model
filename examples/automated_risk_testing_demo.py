@@ -98,7 +98,7 @@ def demo_market_stress_testing():
     results = tester.run_all_scenarios()
 
     # Display results
-    print(f"\nStress Test Results:")
+    print("\nStress Test Results:")
     print("-" * 80)
     for result in results:
         status = "✓ PASS" if result.passed else "✗ FAIL"
@@ -109,7 +109,7 @@ def demo_market_stress_testing():
 
     # Generate summary
     summary = tester.generate_summary_report()
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total Scenarios: {summary['total_scenarios']}")
     print(f"  Passed: {summary['passed']}")
     print(f"  Failed: {summary['failed']}")
@@ -144,7 +144,7 @@ def demo_crisis_scenarios():
     results = tester.run_all_scenarios()
 
     # Display detailed results
-    print(f"\nCrisis Scenario Results:")
+    print("\nCrisis Scenario Results:")
     print("-" * 80)
     for result in results:
         status = "✓ PASS" if result.passed else "✗ FAIL"
@@ -156,7 +156,7 @@ def demo_crisis_scenarios():
         print(f"  Risk Breach: {result.risk_breach}")
 
         if result.validation_errors:
-            print(f"  Validation Errors:")
+            print("  Validation Errors:")
             for error in result.validation_errors:
                 print(f"    - {error}")
 
@@ -180,7 +180,7 @@ def demo_monte_carlo_simulation():
         seed=42,
     )
 
-    print(f"\nMonte Carlo Configuration:")
+    print("\nMonte Carlo Configuration:")
     print(f"  Simulations: {config.num_simulations}")
     print(f"  Periods per simulation: {config.num_periods}")
     print(f"  Expected daily return: {config.mu:.4%}")
@@ -197,22 +197,22 @@ def demo_monte_carlo_simulation():
     kellys = [r.kelly_fraction for r in results]
     breaches = sum(1 for r in results if r.risk_breach == "BREACH")
 
-    print(f"\nMonte Carlo Results:")
-    print(f"  VaR Statistics:")
+    print("\nMonte Carlo Results:")
+    print("  VaR Statistics:")
     print(f"    Mean: {np.mean(vars):.6f}")
     print(f"    Std: {np.std(vars):.6f}")
     print(f"    Min: {np.min(vars):.6f}")
     print(f"    Max: {np.max(vars):.6f}")
     print(f"    Median: {np.median(vars):.6f}")
 
-    print(f"\n  ES Statistics:")
+    print("\n  ES Statistics:")
     print(f"    Mean: {np.mean(ess):.6f}")
     print(f"    Std: {np.std(ess):.6f}")
     print(f"    Min: {np.min(ess):.6f}")
     print(f"    Max: {np.max(ess):.6f}")
     print(f"    Median: {np.median(ess):.6f}")
 
-    print(f"\n  Kelly Fraction Statistics:")
+    print("\n  Kelly Fraction Statistics:")
     print(f"    Mean: {np.mean(kellys):.6f}")
     print(f"    Std: {np.std(kellys):.6f}")
     print(f"    Min: {np.min(kellys):.6f}")
@@ -273,7 +273,7 @@ def demo_comprehensive_report():
     print(f"Failed: {summary['failed']}")
     print(f"Pass Rate: {summary['pass_rate']:.1%}")
 
-    print(f"\nAggregate Risk Metrics:")
+    print("\nAggregate Risk Metrics:")
     print(f"  VaR: {summary['metrics']['var']['mean']:.6f} ± "
           f"{summary['metrics']['var']['std']:.6f}")
     print(f"  ES: {summary['metrics']['es']['mean']:.6f} ± "

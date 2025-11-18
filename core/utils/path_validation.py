@@ -111,7 +111,7 @@ def validate_file_path(
             ext if ext.startswith('.') else f'.{ext}'
             for ext in (e.lower() for e in extensions)
         }
-        
+
         if validated_path.suffix.lower() not in normalized_extensions:
             raise ValueError(
                 f"Invalid file extension '{validated_path.suffix}'. "
@@ -146,7 +146,7 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
 
     # Dangerous characters to replace (including dots which can be used in path traversal)
     dangerous_chars = ['/', '\\', '<', '>', ':', '"', '|', '?', '*', '\n', '\r', '\t', '.']
-    
+
     sanitized = filename
     for char in dangerous_chars:
         sanitized = sanitized.replace(char, replacement)

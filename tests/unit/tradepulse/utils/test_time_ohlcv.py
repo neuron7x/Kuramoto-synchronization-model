@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 import importlib.util
 
 spec = importlib.util.spec_from_file_location(
-    "time_utils", 
+    "time_utils",
     Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/utils/time.py"
 )
 time_utils = importlib.util.module_from_spec(spec)

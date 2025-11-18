@@ -34,7 +34,7 @@ def demo_basic_usage():
     print("=" * 80)
     print("DEMO 1: Basic Orchestrator Usage")
     print("=" * 80)
-    
+
     # Create a trading scenario
     scenario = TradingScenario(
         market="BTC/USDT",
@@ -43,16 +43,16 @@ def demo_basic_usage():
         capital=100000.0,
         max_position_size=0.2,
     )
-    
+
     # Initialize orchestrator
     orchestrator = NeuroOrchestrator(
         free_energy_threshold=1.4,
         enable_tacl_validation=True,
     )
-    
+
     # Generate orchestration
     output = orchestrator.orchestrate(scenario)
-    
+
     # Display JSON output
     print("\nGenerated Orchestration (JSON):")
     print(output.to_json())
@@ -64,19 +64,19 @@ def demo_risk_profiles():
     print("=" * 80)
     print("DEMO 2: Different Risk Profiles")
     print("=" * 80)
-    
+
     profiles = ["conservative", "moderate", "aggressive"]
-    
+
     for profile in profiles:
         print(f"\n{profile.upper()} Profile:")
         print("-" * 40)
-        
+
         output = create_orchestration_from_scenario(
             market="ETH/USDT",
             timeframe="5m",
             risk_profile=profile,
         )
-        
+
         print(f"Learning Rate: {output.parameters['learning_rate']}")
         print(f"Discount Gamma: {output.parameters['discount_gamma']}")
         print(f"Exposure Limit: {output.parameters['exposure_limit']}")
@@ -90,16 +90,16 @@ def demo_module_sequence():
     print("\n" + "=" * 80)
     print("DEMO 3: Module Execution Sequence")
     print("=" * 80)
-    
+
     output = create_orchestration_from_scenario(
         market="SOL/USDT",
         timeframe="15m",
         risk_profile="moderate",
     )
-    
+
     print("\nModule Execution Order (Biological Pathway):")
     print("-" * 40)
-    
+
     for i, module in enumerate(output.module_sequence, 1):
         print(f"\n{i}. {module.module_name.upper()}")
         print(f"   Operation: {module.operation}")
@@ -112,31 +112,31 @@ def demo_neuromodulator_config():
     print("\n" + "=" * 80)
     print("DEMO 4: Neuromodulator Configuration")
     print("=" * 80)
-    
+
     output = create_orchestration_from_scenario(
         market="BTC/USDT",
         timeframe="1h",
         risk_profile="moderate",
     )
-    
+
     print("\nNeuromodulator Settings:")
     print("-" * 40)
-    
+
     # Dopamine (reward prediction)
     print("\nDOPAMINE (Action Selection & Learning):")
     for key, value in output.parameters["dopamine"].items():
         print(f"  {key}: {value}")
-    
+
     # Serotonin (stress response)
     print("\nSEROTONIN (Stress & Risk Management):")
     for key, value in output.parameters["serotonin"].items():
         print(f"  {key}: {value}")
-    
+
     # GABA (inhibition)
     print("\nGABA (Impulse Inhibition):")
     for key, value in output.parameters["gaba"].items():
         print(f"  {key}: {value}")
-    
+
     # NA/ACh (arousal/attention)
     print("\nNA/ACh (Arousal & Attention):")
     for key, value in output.parameters["na_ach"].items():
@@ -148,23 +148,23 @@ def demo_tacl_integration():
     print("\n" + "=" * 80)
     print("DEMO 5: TACL (Thermodynamic Autonomic Control Layer)")
     print("=" * 80)
-    
+
     output = create_orchestration_from_scenario(
         market="BTC/USDT",
         timeframe="1h",
         risk_profile="moderate",
     )
-    
+
     print("\nTACL Configuration:")
     print("-" * 40)
-    
+
     tacl_config = output.parameters["tacl"]
     print(f"Monotonic Descent Enforced: {tacl_config['monotonic_descent']}")
     print(f"Free Energy Threshold: {output.parameters['free_energy_threshold']}")
     print(f"Epsilon Tolerance: {tacl_config['epsilon_tolerance']}")
     print(f"Crisis Detection: {tacl_config['crisis_detection']}")
     print(f"Protocol Options: {', '.join(tacl_config['protocol_options'])}")
-    
+
     print("\nTACL ensures:")
     print("  • Monotonic free-energy descent (no action increases system F without override)")
     print("  • Hot-swapping of communication protocols (RDMA, CRDT, gRPC, etc.)")
@@ -177,25 +177,25 @@ def demo_learning_loop():
     print("\n" + "=" * 80)
     print("DEMO 6: Dopamine Learning Loop (TD-based)")
     print("=" * 80)
-    
+
     output = create_orchestration_from_scenario(
         market="BTC/USDT",
         timeframe="1h",
         risk_profile="moderate",
     )
-    
+
     print("\nLearning Loop Specification:")
     print("-" * 40)
-    
+
     loop = output.learning_loop
     print(f"Algorithm: {loop.algorithm}")
     print(f"Discount Gamma (γ): {loop.discount_gamma}")
     print(f"Learning Rate (α): {loop.learning_rate}")
     print(f"Prediction Window: {loop.prediction_window} step(s)")
     print(f"Error Metric: {loop.error_metric}")
-    print(f"\nUpdate Rule:")
+    print("\nUpdate Rule:")
     print(f"  {loop.update_rule}")
-    
+
     print("\nBiological Mapping:")
     print("  Dopamine → Reward Prediction Error (RPE)")
     print("  TD(0) → Phasic dopamine burst on unexpected reward")
@@ -207,13 +207,13 @@ def demo_custom_parameters():
     print("\n" + "=" * 80)
     print("DEMO 7: Custom Parameter Overrides")
     print("=" * 80)
-    
+
     scenario = TradingScenario(
         market="BTC/USDT",
         timeframe="1h",
         risk_profile="moderate",
     )
-    
+
     custom_params = {
         "learning_rate": 0.025,
         "temperature": 1.5,
@@ -223,10 +223,10 @@ def demo_custom_parameters():
             "invigoration_threshold": 0.7,
         },
     }
-    
+
     orchestrator = NeuroOrchestrator()
     output = orchestrator.orchestrate(scenario, custom_parameters=custom_params)
-    
+
     print("\nCustom Parameters Applied:")
     print("-" * 40)
     print(f"Learning Rate: {output.parameters['learning_rate']}")
@@ -240,15 +240,15 @@ def demo_validation_constraints():
     print("\n" + "=" * 80)
     print("DEMO 8: TACL Validation Constraints")
     print("=" * 80)
-    
+
     scenario = TradingScenario(
         market="BTC/USDT",
         timeframe="1h",
         risk_profile="moderate",
     )
-    
+
     orchestrator = NeuroOrchestrator(enable_tacl_validation=True)
-    
+
     # Valid configuration
     print("\nAttempting valid configuration...")
     try:
@@ -257,7 +257,7 @@ def demo_validation_constraints():
         print(f"  Free Energy Threshold: {output.parameters['free_energy_threshold']}")
     except ValueError as e:
         print(f"✗ Configuration rejected: {e}")
-    
+
     # Invalid: high free-energy threshold
     print("\nAttempting invalid configuration (high free-energy threshold)...")
     try:
@@ -266,7 +266,7 @@ def demo_validation_constraints():
         print("✗ Invalid configuration should have been rejected!")
     except ValueError as e:
         print(f"✓ Configuration correctly rejected: {e}")
-    
+
     # Invalid: high temperature
     print("\nAttempting invalid configuration (excessive temperature)...")
     try:
@@ -275,7 +275,7 @@ def demo_validation_constraints():
         print("✗ Invalid configuration should have been rejected!")
     except ValueError as e:
         print(f"✓ Configuration correctly rejected: {e}")
-    
+
     # Invalid: disabled monotonic descent
     print("\nAttempting invalid configuration (monotonic descent disabled)...")
     try:
@@ -296,7 +296,7 @@ def main():
     print("║" + " " * 78 + "║")
     print("╚" + "=" * 78 + "╝")
     print()
-    
+
     demo_basic_usage()
     demo_risk_profiles()
     demo_module_sequence()
@@ -305,7 +305,7 @@ def main():
     demo_learning_loop()
     demo_custom_parameters()
     demo_validation_constraints()
-    
+
     print("\n" + "=" * 80)
     print("All demos completed successfully!")
     print("=" * 80)
