@@ -250,7 +250,7 @@ class SerotoninMonitor:
         else:
             self._high_stress_ticks = 0
         
-        if hold and self._last_hold_state:
+        if hold:
             self._hold_state_ticks += 1
         else:
             self._hold_state_ticks = 0
