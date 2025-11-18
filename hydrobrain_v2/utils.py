@@ -49,7 +49,8 @@ def load_checkpoint(
     optimizer: torch.optim.Optimizer | None = None,
     scheduler: torch.optim.lr_scheduler._LRScheduler | None = None,
 ) -> dict:
-    obj = torch.load(path, map_location="cpu")
+    # Security: Use weights_only=True to prevent arbitrary code execution
+    obj = torch.load(path, map_location="cpu", weights_only=True)
     if model:
         model.load_state_dict(obj["model"], strict=False)
     if optimizer and "optimizer" in obj:

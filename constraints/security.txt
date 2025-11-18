@@ -12,7 +12,9 @@
 certifi==2025.10.5
 charset-normalizer==3.4.4
 idna==3.11
+# CVE fixes: GHSA-9wx4-h78v-vm56, GHSA-9hjg-9r4m-mvj7
 requests==2.32.5
+# CVE fixes: GHSA-34jh-p97f-mpxf, GHSA-pq67-6m6q-mj2v
 urllib3==2.5.0
 
 # ============================================================================
@@ -61,3 +63,9 @@ configobj>=5.0.9
 setuptools>=78.1.1
 # twisted: Fix XSS and request ordering vulnerabilities PYSEC-2024-75, GHSA-c8m8-j448-xjx7
 twisted>=24.7.0
+
+# ============================================================================
+# XML Parsing - Security hardening
+# ============================================================================
+# defusedxml: Secure XML parsing to prevent entity expansion attacks
+defusedxml>=0.7.1

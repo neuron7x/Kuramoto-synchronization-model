@@ -109,6 +109,10 @@ def manual_override(request: ManualOverrideRequest) -> Dict[str, object]:
 
 
 if __name__ == "__main__":  # pragma: no cover
+    import os
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    # Security: Allow binding configuration via env var, default to localhost
+    host = os.getenv("THERMO_API_HOST", "127.0.0.1")
+    port = int(os.getenv("THERMO_API_PORT", "8080"))
+    uvicorn.run(app, host=host, port=port)

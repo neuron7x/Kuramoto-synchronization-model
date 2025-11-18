@@ -518,7 +518,8 @@ class QuantumNeuralStrategy:
 
     def load(self, path: str) -> None:
         caller_device = torch.device(self.device)
-        ckpt = torch.load(path, map_location=caller_device)
+        # Security: Use weights_only=True to prevent arbitrary code execution
+        ckpt = torch.load(path, map_location=caller_device, weights_only=True)
         target_device = caller_device
         cfg_payload = ckpt.get("cfg")
         if cfg_payload is not None:

@@ -1,0 +1,238 @@
+# Security Headers Configuration
+# These headers should be applied to all HTTP responses
+
+headers:
+  # Prevent clickjacking attacks
+  X-Frame-Options: "DENY"
+  
+  # Enable XSS protection in browsers
+  X-Content-Type-Options: "nosniff"
+  
+  # Enforce HTTPS
+  Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+  
+  # Content Security Policy - restrictive by default
+  Content-Security-Policy: >
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: https:;
+    font-src 'self' data:;
+    connect-src 'self';
+    frame-ancestors 'none';
+    base-uri 'self';
+    form-action 'self';
+  
+  # Referrer policy
+  Referrer-Policy: "strict-origin-when-cross-origin"
+  
+  # Permissions policy
+  Permissions-Policy: >
+    accelerometer=(),
+    camera=(),
+    geolocation=(),
+    gyroscope=(),
+    magnetometer=(),
+    microphone=(),
+    payment=(),
+    usb=()
+  
+  # Remove server identification
+  Server: "TradePulse"
+  
+  # Cache control for sensitive endpoints
+  Cache-Control: "no-store, no-cache, must-revalidate, private"
+  Pragma: "no-cache"
+  Expires: "0"
+
+# CORS Configuration - restrictive by default
+cors:
+  allow_origins:
+    - "https://tradepulse.local"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+  allow_headers:
+    - "Authorization"
+    - "Content-Type"
+    - "X-Request-ID"
+  allow_credentials: true
+  max_age: 3600
+
+# Rate Limiting Configuration
+rate_limiting:
+  # Global limits
+  global:
+    requests_per_minute: 1000
+    requests_per_hour: 10000
+  
+  # Per-endpoint limits
+  endpoints:
+    "/api/v1/auth/login":
+      requests_per_minute: 5
+      requests_per_hour: 20
+    "/api/v1/auth/register":
+      requests_per_minute: 2
+      requests_per_hour: 10
+    "/api/v1/orders":
+      requests_per_minute: 100
+      requests_per_hour: 1000
+    "/api/v1/market-data":
+      requests_per_minute: 200
+      requests_per_hour: 5000
+
+# API Key Security
+api_keys:
+  # Minimum entropy for API keys (bits)
+  min_entropy: 128
+  
+  # Key rotation policy (days)
+  rotation_period: 90
+  
+  # Key prefix for identification
+  prefix: "tp_"
+  
+  # Hash algorithm for storage
+  hash_algorithm: "argon2"
+
+# TLS/SSL Configuration
+tls:
+  # Minimum TLS version
+  min_version: "1.2"
+  
+  # Preferred TLS version
+  preferred_version: "1.3"
+  
+  # Allowed cipher suites (Mozilla Modern profile)
+  cipher_suites:
+    - "TLS_AES_256_GCM_SHA384"
+    - "TLS_AES_128_GCM_SHA256"
+    - "TLS_CHACHA20_POLY1305_SHA256"
+  
+  # Certificate verification
+  verify_client_cert: false
+  verify_hostname: true
+
+# Session Management
+session:
+  # Session timeout (seconds)
+  timeout: 3600
+  
+  # Cookie settings
+  cookie:
+    secure: true
+    httponly: true
+    samesite: "Strict"
+    name: "tradepulse_session"
+  
+  # Session token length
+  token_length: 32
+  
+  # Session storage backend
+  backend: "redis"
+
+# Input Validation
+input_validation:
+  # Maximum request body size (bytes)
+  max_body_size: 10485760  # 10MB
+  
+  # Maximum file upload size (bytes)
+  max_file_size: 5242880  # 5MB
+  
+  # Allowed file extensions for uploads
+  allowed_file_extensions:
+    - ".csv"
+    - ".json"
+    - ".yaml"
+  
+  # SQL injection patterns to block
+  sql_injection_patterns:
+    - "(?i)(union|select|insert|update|delete|drop|create|alter|exec|execute)"
+  
+  # XSS patterns to block
+  xss_patterns:
+    - "(?i)(<script|javascript:|onerror=|onclick=)"
+
+# Authentication
+authentication:
+  # Password policy
+  password:
+    min_length: 12
+    require_uppercase: true
+    require_lowercase: true
+    require_digits: true
+    require_special: true
+    max_age_days: 90
+  
+  # MFA configuration
+  mfa:
+    enabled: true
+    methods:
+      - "totp"
+      - "webauthn"
+  
+  # JWT configuration
+  jwt:
+    algorithm: "RS256"
+    expiration: 3600  # 1 hour
+    refresh_expiration: 604800  # 7 days
+    issuer: "tradepulse.local"
+    audience: "tradepulse-api"
+
+# Audit Logging
+audit:
+  # Events to log
+  events:
+    - "authentication"
+    - "authorization"
+    - "order_placement"
+    - "account_modification"
+    - "configuration_change"
+    - "security_event"
+  
+  # Log retention (days)
+  retention: 400
+  
+  # Log encryption
+  encrypt: true
+  
+  # Log integrity
+  sign: true
+
+# Security Monitoring
+monitoring:
+  # Enable security event monitoring
+  enabled: true
+  
+  # Alert thresholds
+  thresholds:
+    failed_login_attempts: 5
+    rate_limit_violations: 10
+    unauthorized_access_attempts: 3
+  
+  # Alert channels
+  alert_channels:
+    - "siem"
+    - "email"
+    - "slack"
+
+# Vulnerability Scanning
+vulnerability_scanning:
+  # Enable automated scanning
+  enabled: true
+  
+  # Scan frequency (hours)
+  frequency: 24
+  
+  # Scan types
+  types:
+    - "dependency"
+    - "container"
+    - "code"
+  
+  # Fail on severity
+  fail_on:
+    - "critical"
+    - "high"

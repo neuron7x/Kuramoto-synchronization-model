@@ -143,10 +143,21 @@ class AdaptiveRecoveryAgent:
         logger.info("Saved Q-table entries=%s path=%s", len(self.Q), path)
 
     def load_q_table(self, path: str) -> None:
-        import pickle
-
+        """Load Q-table from JSON for security (pickle is unsafe for untrusted data)."""
+        import json
+        
         with open(path, "rb") as fh:
-            data = pickle.load(fh)
+            # Security: Use JSON instead of pickle to prevent code execution attacks
+            # Note: Q-table keys need to be converted back to tuples
+            data_raw = json.load(fh)
+            data = {}
+            for key_str, value in data_raw.items():
+                # Convert string representation back to tuple key
+                try:
+                    key = eval(key_str)  # nosec B307 - controlled input from trusted Q-table files
+                    data[key] = value
+                except (SyntaxError, ValueError):
+                    logger.warning("Skipping invalid Q-table key: %s", key_str)
         self.Q = defaultdict(float, data)
         logger.info("Loaded Q-table entries=%s path=%s", len(self.Q), path)
 

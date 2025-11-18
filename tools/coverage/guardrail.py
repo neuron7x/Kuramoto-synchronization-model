@@ -5,10 +5,18 @@ from __future__ import annotations
 import argparse
 import sys
 import tomllib
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping
+
+# Security: Use defusedxml to prevent XML entity expansion attacks
+try:
+    import defusedxml.ElementTree as ET
+except ImportError:
+    # Fallback to standard library if defusedxml not available
+    import xml.etree.ElementTree as ET
+    import warnings
+    warnings.warn("defusedxml not installed. Install it for better XML security.", stacklevel=2)
 
 
 @dataclass(frozen=True)
