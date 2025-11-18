@@ -64,6 +64,18 @@ def bond_internal_energy(
     latencies: Dict[Tuple[str, str], float],
     coherency: Dict[Tuple[str, str], float],
 ) -> float:
+    """Calculate internal energy of a single bond between services.
+    
+    Args:
+        src: Source service name
+        dst: Destination service name
+        kind: Bond type (covalent, ionic, metallic, vdw, hydrogen)
+        latencies: Dictionary mapping (src, dst) tuples to latency values
+        coherency: Dictionary mapping (src, dst) tuples to coherency values (0-1)
+    
+    Returns:
+        Internal energy of the bond in dimensionless units
+    """
     params = BOND_LIBRARY[kind]
 
     latency = float(latencies.get((src, dst), 1.0))
@@ -86,6 +98,21 @@ def system_free_energy(
     resource_usage: float,
     entropy: float,
 ) -> float:
+    """Calculate total free energy of the system topology.
+    
+    Free energy combines internal bond energies, resource costs, and entropy:
+    F = U + resource_term + T*S
+    
+    Args:
+        bonds: Dictionary mapping (src, dst) service pairs to bond types
+        latencies: Dictionary mapping (src, dst) tuples to latency values
+        coherency: Dictionary mapping (src, dst) tuples to coherency values (0-1)
+        resource_usage: System resource utilization (0-1)
+        entropy: System entropy measure
+    
+    Returns:
+        Total system free energy scaled to physically plausible units (~10⁻¹⁸ J)
+    """
     internal_energy = 0.0
     for (src, dst), kind in bonds.items():
         internal_energy += bond_internal_energy(src, dst, kind, latencies, coherency)
@@ -98,6 +125,19 @@ def system_free_energy(
 
 
 def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
+    """Calculate rate of change of free energy (dF/dt).
+    
+    Used for detecting energy descent violations and crisis conditions.
+    
+    Args:
+        F_prev: Previous free energy value
+        F_now: Current free energy value
+        dt_seconds: Time interval in seconds
+    
+    Returns:
+        Rate of change of free energy (dF/dt). Negative values indicate
+        energy descent (desirable), positive values indicate energy increase.
+    """
     if dt_seconds <= 0:
         return 0.0
     return (F_now - F_prev) / dt_seconds

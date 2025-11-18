@@ -5,6 +5,16 @@ import numpy as np
 
 
 def box_counting_dim(signal: np.ndarray, eps_list: np.ndarray | None = None) -> float:
+    """Estimate fractal dimension using box counting method.
+    
+    Args:
+        signal: Input time series or signal array
+        eps_list: Array of epsilon values for box sizes. If None, uses default
+                  logarithmically spaced values from 10⁻³ to 10⁻¹
+    
+    Returns:
+        Estimated fractal dimension (typically between 1 and 2 for time series)
+    """
     values = np.asarray(signal, dtype=float)
     if eps_list is None:
         eps_list = np.logspace(-3, -1, 8)
