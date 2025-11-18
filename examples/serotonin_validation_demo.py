@@ -10,8 +10,6 @@ Usage:
     python examples/serotonin_validation_demo.py
 """
 
-import json
-import math
 import sys
 import time
 from pathlib import Path

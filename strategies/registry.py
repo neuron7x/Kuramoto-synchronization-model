@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any, Callable, Dict, Iterable, Mapping, MutableMapping, Tuple
+from typing import Any, Callable, Dict, Mapping, MutableMapping, Tuple
 
 
 class UnknownStrategyError(LookupError):

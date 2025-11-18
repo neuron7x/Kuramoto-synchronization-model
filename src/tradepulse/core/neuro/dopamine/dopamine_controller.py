@@ -6,7 +6,7 @@ from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
-from ._invariants import assert_no_nan_inf, check_monotonic_thresholds, clamp
+from ._invariants import check_monotonic_thresholds
 from .ddm_adapter import DDMThresholds, ddm_thresholds
 
 

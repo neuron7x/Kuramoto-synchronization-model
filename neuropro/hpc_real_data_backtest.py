@@ -7,7 +7,7 @@ Compares HPC-AI against baseline strategies (TACL, Buy-and-Hold).
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd

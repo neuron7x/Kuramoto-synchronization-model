@@ -5,12 +5,11 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from threading import Event
 from typing import Any, Mapping
 
 import pytest
 
-from domain import Order, OrderSide, OrderStatus, OrderType
+from domain import Order, OrderSide, OrderType
 from execution.connectors import ExecutionConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.order_lifecycle import IdempotentSubmitter

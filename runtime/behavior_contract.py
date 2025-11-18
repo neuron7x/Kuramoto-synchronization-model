@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum, auto
-from typing import Dict, Iterable, Tuple
+from enum import Enum
+from typing import Dict, Tuple
 
 from runtime.dual_approval import requires_dual_approval
 from runtime.kill_switch import is_kill_switch_active

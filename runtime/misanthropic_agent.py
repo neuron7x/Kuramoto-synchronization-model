@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from numpy.random import Generator, default_rng
-from scipy.stats import ks_2samp, norm, zscore
+from scipy.stats import ks_2samp, zscore
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

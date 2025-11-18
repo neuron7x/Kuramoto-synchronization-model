@@ -32,7 +32,6 @@ Version: 1.0.0
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
@@ -40,10 +39,9 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Set
+from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-import yaml
 
 __all__ = [
     "DigitalGovernanceFramework",

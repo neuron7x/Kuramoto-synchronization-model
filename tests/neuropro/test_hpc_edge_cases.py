@@ -5,7 +5,6 @@ Tests high volatility, NaN handling, unstable model states, and robustness.
 """
 
 import numpy as np
-import pandas as pd
 import pytest
 import torch
 

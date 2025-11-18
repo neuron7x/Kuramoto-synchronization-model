@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 
 def test_readme_composite_engine_example() -> None:

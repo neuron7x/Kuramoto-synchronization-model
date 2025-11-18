@@ -19,8 +19,6 @@ import torch
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
     generate_synthetic_data,
-    simple_backtest,
-    validate_hpc_ai,
 )
 
 

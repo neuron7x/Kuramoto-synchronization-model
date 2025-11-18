@@ -10,7 +10,6 @@ sys.path.insert(0, str(module_path))
 
 from observability import (  # type: ignore
     SEROTONIN_ALERTS,
-    SEROTONIN_SLIS,
     SEROTONIN_SLOS,
     SLI,
     SLO,

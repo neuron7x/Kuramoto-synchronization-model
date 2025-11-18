@@ -5,10 +5,7 @@ Autonomic Control Layer including self-diagnosis, auto-tuning, and self-healing.
 """
 
 import time
-from typing import Dict, List
-from unittest.mock import MagicMock, patch
 
-import networkx as nx
 import pytest
 
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryAction, RecoveryState

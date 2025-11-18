@@ -15,7 +15,6 @@ import time
 
 import numpy as np
 import torch
-import torch.nn as nn
 from torch.profiler import ProfilerActivity, profile, record_function
 
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4

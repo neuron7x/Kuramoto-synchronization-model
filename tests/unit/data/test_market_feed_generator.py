@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Tests for synthetic market feed generator."""
 
-import pytest
 
 from core.data.market_feed import validate_recording
 from core.data.market_feed_generator import SyntheticMarketFeedGenerator
