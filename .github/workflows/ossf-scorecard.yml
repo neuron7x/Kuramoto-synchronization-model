@@ -54,6 +54,21 @@ jobs:
           name: ossf-scorecard-results
           path: ossf-scorecard-results.sarif
 
+  enforce-thresholds:
+    name: Enforce Security Thresholds
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: ossf-scorecard
+    
+    permissions:
+      contents: read
+      
+    steps:
+      - name: Download scorecard results
+        uses: actions/download-artifact@v4
+        with:
+          name: ossf-scorecard-results
+      
       - name: Parse scorecard results and enforce thresholds
         run: |
           # Install jq for JSON parsing
@@ -94,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    needs: ossf-scorecard
+    needs: enforce-thresholds
     if: github.event_name == 'pull_request'
     permissions:
       issues: write
