@@ -19,9 +19,24 @@ from .models import (
     PromptRenderResult,
     PromptTemplate,
 )
+from .system_architect_prompt import (
+    ADRTemplate,
+    ATAMTemplate,
+    ArchitecturalFramework,
+    ConfidenceLevel,
+    NFRTemplate,
+    STPATemplate,
+    SystemArchitectPromptTemplate,
+    create_system_architect_prompt,
+)
 
 __all__ = [
+    "ADRTemplate",
+    "ATAMTemplate",
+    "ArchitecturalFramework",
+    "ConfidenceLevel",
     "ContextFragment",
+    "NFRTemplate",
     "ParameterSpec",
     "PromptContext",
     "PromptContextWindow",
@@ -39,4 +54,7 @@ __all__ = [
     "PromptTemplate",
     "PromptTemplateLibrary",
     "PromptTemplateNotFoundError",
+    "STPATemplate",
+    "SystemArchitectPromptTemplate",
+    "create_system_architect_prompt",
 ]
