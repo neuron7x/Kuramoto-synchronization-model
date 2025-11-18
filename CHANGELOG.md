@@ -7,6 +7,11 @@
 <!-- towncrier release notes start -->
 
 ## [Unreleased]
+### Added
+- DOC PR COPILOT v2: LLM-based documentation agent for automated documentation review and patch generation in Pull Requests.
+- Agent configuration system in `.github/agents/` with system prompts, integration guides, and examples.
+- 4C Principles documentation (Clarity, Conciseness, Correctness, Consistency) for documentation standards.
+
 ### Changed
 - Hardened Release Drafter automation (v6 workflow, semantic version resolver, metrics summary).
 - Refactored cache key normalisation to use deterministic ``repr`` tuples, trimming redundant recursion and improving synthetic throughput by ~19%; systems with non-deterministic ``__repr__`` implementations on cache keys should validate behaviour.

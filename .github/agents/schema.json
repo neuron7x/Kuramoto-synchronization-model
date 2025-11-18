@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Configuration Schema",
+  "description": "Schema for LLM agent configuration files in the repository",
+  "type": "object",
+  "properties": {
+    "agent": {
+      "type": "object",
+      "required": ["name", "version", "role", "scope"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Agent name (e.g., DOC PR COPILOT)"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v?\\d+\\.\\d+(\\.\\d+)?$",
+          "description": "Agent version (e.g., v2.0.0)"
+        },
+        "role": {
+          "type": "string",
+          "description": "Primary role and responsibility of the agent"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of file types and areas the agent operates on"
+        },
+        "principles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Core principles the agent follows"
+        },
+        "workflow": {
+          "type": "object",
+          "properties": {
+            "plan": {
+              "type": "string",
+              "description": "Planning phase description"
+            },
+            "act": {
+              "type": "string",
+              "description": "Action phase description"
+            },
+            "reflect": {
+              "type": "string",
+              "description": "Reflection phase description"
+            }
+          }
+        },
+        "output_format": {
+          "type": "object",
+          "description": "Expected output structure from the agent",
+          "properties": {
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
