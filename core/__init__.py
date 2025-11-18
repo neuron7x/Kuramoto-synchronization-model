@@ -8,6 +8,7 @@ This package contains the fundamental building blocks for the TradePulse platfor
 - **strategies**: Base trading strategy contracts and implementations
 - **messaging**: Event bus and message queue abstractions
 - **neuro**: Neural network components and training infrastructure
+- **neuroadaptive**: Neuroadaptive decision system with FSM-based gating
 - **utils**: Common utilities, caching, and helper functions
 - **energy**: Thermodynamic energy calculations for system optimization
 - **phase**: Market phase detection and analysis
