@@ -110,9 +110,9 @@ class BenchmarkRunner:
             for dimension in dimensions:
                 base[dimension] = f"value_{dimension}_{(offset + idx) % 5}"
             for measure in measures:
-                base[measure] = float(offset + idx)
+                base[measure] = float(offset + idx)  # type: ignore[assignment]
             for column in metadata:
-                base[column] = f"meta_{column}"
+                base[column] = f"meta_{column}"  # type: ignore[assignment]
             yield base
 
     def _query_parameters(self, total_rows: int) -> Mapping[str, object]:

@@ -84,14 +84,17 @@ class VariableInspector:
 
         if isinstance(value, Mapping):
             return {
-                str(item_key): self._sanitise(path + (str(item_key),), item_value)
+                str(item_key): self._sanitise(tuple(list(path) + [str(item_key)]), item_value)
                 for item_key, item_value in value.items()
             }
 
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
-            return [self._sanitise(path + (str(index),), item) for index, item in enumerate(value)]
+            return [self._sanitise(tuple(list(path) + [str(index)]), item) for index, item in enumerate(value)]
 
         if is_dataclass(value):
+            # Type narrowing for dataclass instances
+            if isinstance(value, type):
+                raise TypeError(f"Expected dataclass instance, got class: {value}")
             return self._sanitise(path, asdict(value))
 
         model_dump = getattr(value, "model_dump", None)

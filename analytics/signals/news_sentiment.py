@@ -102,7 +102,23 @@ class FinBERTSentimentModel:
     the heavy model artefacts lazily.
     """
 
-    def __init__(self, model_name: str = "ProsusAI/finbert", *, device: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        model_name: str = "ProsusAI/finbert",
+        *,
+        device: Optional[str] = None,
+        model_revision: Optional[str] = None,
+    ) -> None:
+        """Initialize FinBERT sentiment model.
+        
+        Args:
+            model_name: Hugging Face model identifier
+            device: Target device (None for auto-detection, 'cpu', 'cuda', etc.)
+            model_revision: Git revision hash or branch name for the model.
+                For production deployments, use a specific commit hash (e.g., 
+                'ed6b87a0c7f8ab8ef3c6fcda6f5e51ab4a8f9c12') to prevent supply
+                chain attacks. Defaults to 'main' for development.
+        """
         try:  # pragma: no cover - guarded import
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
         except ImportError as exc:  # pragma: no cover - import-time guard
@@ -119,16 +135,17 @@ class FinBERTSentimentModel:
             ) from exc
 
         # Security: Pin model revision to prevent supply chain attacks
-        # Use a specific revision hash for production deployments
-        model_revision = "main"  # TODO: Pin to specific commit hash in production
+        # For production, pass a specific commit hash via model_revision parameter
+        revision = model_revision if model_revision is not None else "main"
+        
         self._tokenizer = AutoTokenizer.from_pretrained(
             model_name, 
-            revision=model_revision,
+            revision=revision,
             trust_remote_code=False  # Security: Never execute remote code
         )
         self._model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
-            revision=model_revision,
+            revision=revision,
             trust_remote_code=False  # Security: Never execute remote code
         )
 

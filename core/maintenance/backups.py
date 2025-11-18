@@ -25,7 +25,11 @@ def _default_runner(
     handling ``CompletedProcess.returncode`` when ``check`` is disabled.
     """
 
-    return subprocess.run(list(command), env=None if env is None else dict(env), check=True)
+    # Cast to int return type - we don't capture output, so we only care about return code
+    result: subprocess.CompletedProcess[int] = subprocess.run(  # type: ignore[assignment]
+        list(command), env=None if env is None else dict(env), check=True
+    )
+    return result
 
 
 def _default_clock() -> datetime:
