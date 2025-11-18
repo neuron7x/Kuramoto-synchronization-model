@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: load-test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   load-test:
     name: Locust (HTTP + gRPC)
