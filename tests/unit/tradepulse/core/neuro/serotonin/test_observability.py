@@ -1,14 +1,7 @@
 """Tests for serotonin controller observability module."""
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Add specific module path to avoid importing full tradepulse package
-module_path = Path(__file__).parent.parent.parent.parent.parent.parent / "src" / "tradepulse" / "core" / "neuro" / "serotonin"
-sys.path.insert(0, str(module_path))
-
-from observability import (  # type: ignore
+from src.tradepulse.core.neuro.serotonin.observability import (
     Alert,
     AlertSeverity,
     SerotoninMonitor,
@@ -17,6 +10,8 @@ from observability import (  # type: ignore
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
     SEROTONIN_SLOS,
+    create_grafana_dashboard_json,
+    create_prometheus_metrics,
 )
 
 
@@ -258,8 +253,6 @@ def test_slo_report_formatting():
 
 def test_prometheus_metrics_format():
     """Test Prometheus metrics format generation."""
-    from observability import create_prometheus_metrics  # type: ignore
-    
     metrics = create_prometheus_metrics()
     
     # Check for key metrics
@@ -272,8 +265,6 @@ def test_prometheus_metrics_format():
 
 def test_grafana_dashboard_structure():
     """Test Grafana dashboard JSON structure."""
-    from observability import create_grafana_dashboard_json  # type: ignore
-    
     dashboard = create_grafana_dashboard_json()
     
     assert "dashboard" in dashboard

@@ -41,22 +41,14 @@ def serotonin_config():
 @pytest.fixture
 def serotonin_controller(serotonin_config):
     """Create a serotonin controller instance."""
-    # Import here to avoid issues with module loading
-    import sys
-    import importlib.util
-    
-    controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
-    spec = importlib.util.spec_from_file_location("serotonin_controller", controller_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["serotonin_controller_test"] = module
-    spec.loader.exec_module(module)
+    from src.tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
     
     # Create temporary config file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
         yaml.dump(serotonin_config, f)
         config_path = f.name
     
-    controller = module.SerotoninController(config_path)
+    controller = SerotoninController(config_path)
     
     yield controller
     
@@ -443,15 +435,7 @@ class TestConfigValidation:
     
     def test_missing_config_keys_raises_error(self, serotonin_config):
         """Test that missing config keys raise an error."""
-        import sys
-        import importlib.util
-        import tempfile
-        
-        controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
-        spec = importlib.util.spec_from_file_location("serotonin_controller", controller_path)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["serotonin_controller_validation"] = module
-        spec.loader.exec_module(module)
+        from src.tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
         
         # Remove a required key
         incomplete_config = serotonin_config.copy()
@@ -462,21 +446,13 @@ class TestConfigValidation:
             config_path = f.name
         
         with pytest.raises(ValueError, match="Missing serotonin config keys"):
-            module.SerotoninController(config_path)
+            SerotoninController(config_path)
         
         Path(config_path).unlink()
     
     def test_invalid_config_values_raise_error(self, serotonin_config):
         """Test that invalid config values raise an error."""
-        import sys
-        import importlib.util
-        import tempfile
-        
-        controller_path = Path(__file__).parents[6] / "src" / "tradepulse" / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
-        spec = importlib.util.spec_from_file_location("serotonin_controller", controller_path)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["serotonin_controller_validation2"] = module
-        spec.loader.exec_module(module)
+        from src.tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
         
         # Invalid beta (> 1.0)
         invalid_config = serotonin_config.copy()
@@ -487,6 +463,6 @@ class TestConfigValidation:
             config_path = f.name
         
         with pytest.raises(ValueError):
-            module.SerotoninController(config_path)
+            SerotoninController(config_path)
         
         Path(config_path).unlink()
