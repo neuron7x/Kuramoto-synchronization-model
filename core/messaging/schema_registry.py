@@ -47,7 +47,10 @@ class SchemaVersionInfo:
 
         if self.format in (SchemaFormat.AVRO, SchemaFormat.JSON):
             with self.path.open("r", encoding="utf-8") as handle:
-                return json.load(handle)
+                result = json.load(handle)
+                if not isinstance(result, dict):
+                    raise TypeError(f"Schema must be a dictionary, got {type(result)}")
+                return result
         raise ValueError(f"Unsupported load operation for {self.format}")
 
 

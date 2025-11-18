@@ -102,7 +102,7 @@ class HealthServer:
 
     @property
     def port(self) -> int:
-        host, port = self._server.server_address
+        _, port = self._server.server_address
         return int(port)
 
     def start(self) -> None:

@@ -535,7 +535,7 @@ def default_resilience_profile(
     bulkhead = Bulkhead(bulkhead_concurrency)
 
     fallbacks: Tuple[FallbackStrategy, ...]
-    fallback_list = []
+    fallback_list: list[FallbackStrategy] = []
     if cache_provider is not None:
         fallback_list.append(CachedDataFallback(cache_provider))
     if degraded_factory is not None:

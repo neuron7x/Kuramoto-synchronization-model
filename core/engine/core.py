@@ -381,8 +381,11 @@ class CoreEngine:
         )
         log_entries = len(entries)
         for entry in entries:
-            entry.context["log_entries"] = log_entries
-            self._log_sink.emit(entry, context)
+            # Create mutable context dict with log_entries added
+            updated_context = dict(entry.context)
+            updated_context["log_entries"] = log_entries
+            updated_entry = replace(entry, context=updated_context)
+            self._log_sink.emit(updated_entry, context)
         return entries
 
     def _collect_and_validate(

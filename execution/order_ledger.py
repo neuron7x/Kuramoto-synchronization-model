@@ -152,6 +152,8 @@ class LedgerSnapshot:
         state = payload.get("state")
         if state is None:
             raise ValueError(f"Snapshot {self.path} missing state payload")
+        if not isinstance(state, dict):
+            raise TypeError(f"State must be a dictionary, got {type(state)}")
         expected_hash = payload.get("state_hash")
         if expected_hash:
             computed = sha256(_canonical_dumps(state).encode("utf-8")).hexdigest()
@@ -443,7 +445,11 @@ class OrderLedger:
             if target is None:
                 return None
             state = target.load_state()
-            return json.loads(json.dumps(state, ensure_ascii=False))
+            # Ensure we return a MutableMapping by converting through JSON
+            result = json.loads(json.dumps(state, ensure_ascii=False))
+            if not isinstance(result, dict):
+                raise TypeError(f"State must be a dictionary, got {type(result)}")
+            return result
 
     def _iter_events(
         self,

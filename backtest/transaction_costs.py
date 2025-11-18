@@ -253,7 +253,8 @@ def _import_from_string(path: str) -> Callable[..., Any]:
         raise ValueError(f"Invalid import path '{path}'")
     module = importlib.import_module(module_name)
     try:
-        return getattr(module, attr)
+        result = getattr(module, attr)
+        return result  # type: ignore[no-any-return]
     except AttributeError as exc:  # pragma: no cover - defensive guard
         raise ValueError(f"'{attr}' is not defined in module '{module_name}'") from exc
 
@@ -265,17 +266,21 @@ def _instantiate(
         return spec
 
     if inspect.isclass(spec) and issubclass(spec, TransactionCostModel):
-        return spec(**(params or {}))
+        result: TransactionCostModel = spec(**(params or {}))
+        return result
 
     if callable(spec):
-        return spec(**(params or {}))
+        result = spec(**(params or {}))
+        return result  # type: ignore[no-any-return]
 
     if isinstance(spec, str):
         target = _import_from_string(spec)
         if inspect.isclass(target) and issubclass(target, TransactionCostModel):
-            return target(**(params or {}))
+            result = target(**(params or {}))
+            return result  # type: ignore[no-any-return]
         if callable(target):
-            return target(**(params or {}))
+            result = target(**(params or {}))
+            return result  # type: ignore[no-any-return]
         raise TypeError(f"Resolved object '{spec}' is not callable")
 
     raise TypeError(f"Unsupported model specification: {spec!r}")
@@ -431,16 +436,16 @@ def _build_financing(entry: Mapping[str, Any]) -> TransactionCostModel | None:
         long_rate = entry.get("funding_long_bps", 0.0)
         short_rate = entry.get("funding_short_bps", long_rate)
         exponent = entry.get("funding_exponent")
-        kwargs: dict[str, Any] = {
+        funding_kwargs: dict[str, Any] = {
             "long_rate_bps": long_rate,
             "short_rate_bps": short_rate,
         }
         if exponent is not None:
-            kwargs["exponent"] = exponent
+            funding_kwargs["exponent"] = exponent
         periods = entry.get("funding_periods_per_year")
         if periods is not None:
-            kwargs["periods_per_year"] = periods
-        return BorrowFinancing(**kwargs)
+            funding_kwargs["periods_per_year"] = periods
+        return BorrowFinancing(**funding_kwargs)
 
     return None
 

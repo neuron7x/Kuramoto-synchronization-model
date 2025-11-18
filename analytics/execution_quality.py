@@ -50,24 +50,30 @@ def _coerce_fill(
         qty_key = "quantity" if "quantity" in fill else "qty"
         price_key = "price"
         fees_key = "fees" if "fees" in fill else None
-        quantity = float(fill[qty_key])
-        price = float(fill[price_key])
-        fees = float(fill.get(fees_key, 0.0)) if fees_key else 0.0
+        quantity_val = fill[qty_key]
+        price_val = fill[price_key]
+        fees_val = fill.get(fees_key, 0.0) if fees_key else 0.0
+        quantity = float(quantity_val) if not isinstance(quantity_val, float) else quantity_val
+        price = float(price_val) if not isinstance(price_val, float) else price_val
+        fees = float(fees_val) if not isinstance(fees_val, float) else fees_val
         return FillSample(quantity=quantity, price=price, fees=fees)
 
-    quantity = float(getattr(fill, "quantity"))
-    price = float(getattr(fill, "price"))
-    fees = float(getattr(fill, "fees", 0.0))
+    quantity_attr = getattr(fill, "quantity")
+    price_attr = getattr(fill, "price")
+    fees_attr = getattr(fill, "fees", 0.0)
+    quantity = float(quantity_attr) if not isinstance(quantity_attr, float) else quantity_attr
+    price = float(price_attr) if not isinstance(price_attr, float) else price_attr
+    fees = float(fees_attr) if not isinstance(fees_attr, float) else fees_attr
     return FillSample(quantity=quantity, price=price, fees=fees)
 
 
-def vwap(fills: Sequence[Mapping[str, float] | FillSample] | Sequence[object]) -> float:
+def vwap(fills: Sequence[Mapping[str, float] | FillSample | Mapping[str, object] | object]) -> float:
     """Compute the volume-weighted average price for a collection of fills."""
 
     total_qty = 0.0
     total_value = 0.0
     for raw_fill in fills:
-        fill = _coerce_fill(raw_fill)
+        fill = _coerce_fill(raw_fill)  # type: ignore[arg-type]
         if fill.quantity <= 0:
             continue
         total_qty += fill.quantity
