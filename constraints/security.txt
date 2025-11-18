@@ -1,12 +1,60 @@
-# Pin vetted versions of security-critical HTTP stack dependencies.
+# Pin vetted versions of security-critical dependencies.
+# This file MUST be used with pip install -c constraints/security.txt
 # Update via pip-audit guidance documented in DEPLOYMENT.md.
+#
+# CRITICAL: This file enforces exact versions for security-sensitive packages
+# to prevent vulnerable versions from being installed. All packages with known
+# CVEs or security implications MUST be pinned here with exact versions (==).
+
+# ============================================================================
+# HTTP Stack - Network security critical
+# ============================================================================
 certifi==2025.10.5
 charset-normalizer==3.4.4
 idna==3.11
 requests==2.32.5
 urllib3==2.5.0
 
-# Security fixes for known vulnerabilities (2025-11-10)
+# ============================================================================
+# Cryptography & Authentication - CRITICAL security packages
+# ============================================================================
+# cryptography: Core crypto library, has critical CVEs in versions < 42.0.0
+# CVE-2023-50782, CVE-2024-26130, CVE-2024-0727 in older versions
+cryptography==46.0.3
+
+# PyJWT: Authentication token handling, critical for API security
+# CVE-2022-29217 (key confusion) fixed in 2.4.0
+PyJWT==2.10.1
+
+# ============================================================================
+# Template & Serialization - XSS and injection prevention
+# ============================================================================
+# Jinja2: Template engine, XSS vulnerabilities in older versions
+# CVE-2024-34064 (XSS) fixed in 3.1.4
+Jinja2==3.1.6
+
+# PyYAML: YAML parser, arbitrary code execution risks in older versions
+# CVE-2020-14343 (arbitrary code execution) fixed in 5.4
+PyYAML==6.0.3
+
+# ============================================================================
+# Data Validation & ORM - SQL injection and data integrity
+# ============================================================================
+# SQLAlchemy: ORM for SQL databases, SQL injection prevention
+# Multiple security fixes in 2.0 series
+SQLAlchemy==2.0.44
+
+# pydantic: Data validation, critical for API input validation
+# Security fixes for ReDoS and validation bypass
+pydantic==2.12.4
+pydantic-settings==2.12.0
+
+# pandera: DataFrame validation, data quality and security
+pandera==0.26.1
+
+# ============================================================================
+# System packages - Known vulnerability fixes
+# ============================================================================
 # configobj: Fix ReDoS vulnerability GHSA-c33w-24p9-8m24
 configobj>=5.0.9
 # setuptools: Fix path traversal and RCE vulnerabilities PYSEC-2025-49, GHSA-cx63-2mw6-8hw5
