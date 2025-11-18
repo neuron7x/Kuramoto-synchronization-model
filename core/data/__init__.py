@@ -5,8 +5,6 @@ import numpy as _np
 
 if not hasattr(_np, "string_"):
     _np.string_ = _np.bytes_
-if not hasattr(_np, "float_"):
-    _np.float_ = _np.float64
 
 from .asset_catalog import AssetCatalog, AssetRecord, AssetStatus
 from .catalog import normalize_symbol, normalize_venue
