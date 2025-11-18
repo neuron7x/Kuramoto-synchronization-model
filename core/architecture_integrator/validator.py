@@ -9,9 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
-from core.architecture_integrator.component import Component, ComponentStatus
+from core.architecture_integrator.component import ComponentStatus
 from core.architecture_integrator.registry import ComponentRegistry
 
 

@@ -76,6 +76,7 @@ feature_store = [
     "polars>=1.34.0",
 ]
 neuro_advanced = [
+    "torch>=2.1.0",
     "gudhi>=3.10.0",
     "POT>=0.9.5",
     "statsmodels>=0.14.0",

@@ -15,11 +15,7 @@ import torch
 from dataclasses import dataclass
 from typing import List, Dict
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
-from neuropro.hpc_validation import (
-    generate_synthetic_data,
-    validate_hpc_ai,
-    simple_backtest,
-)
+from neuropro.hpc_validation import generate_synthetic_data
 
 
 @dataclass

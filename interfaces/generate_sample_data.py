@@ -12,7 +12,7 @@ Usage:
 """
 
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -41,8 +41,8 @@ def generate_trending_prices(
     """
     rng = np.random.default_rng(seed)
     
-    # Create trend component
-    trend_component = np.linspace(0, trend * n, n)
+    # Create trend component (unused but kept for clarity)
+    _ = np.linspace(0, trend * n, n)
     
     # Create noise component
     noise = rng.normal(0, volatility, n)

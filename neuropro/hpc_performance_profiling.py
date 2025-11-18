@@ -12,7 +12,6 @@ Uses torch.profiler for detailed analysis.
 """
 
 import torch
-import torch.nn as nn
 from torch.profiler import profile, record_function, ProfilerActivity
 import numpy as np
 import time

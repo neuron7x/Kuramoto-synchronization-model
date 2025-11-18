@@ -30,7 +30,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 from functools import lru_cache
-from typing import Optional
+
 
 import pandas as pd
 

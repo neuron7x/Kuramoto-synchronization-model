@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable, TypeVar
+from typing import Callable, TypeVar
 
 T = TypeVar('T')
 

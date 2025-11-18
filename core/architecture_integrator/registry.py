@@ -6,9 +6,9 @@ and their relationships within the system architecture.
 
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Sequence
 
-from core.architecture_integrator.component import Component, ComponentMetadata
+from core.architecture_integrator.component import Component
 
 
 class ComponentRegistry:
