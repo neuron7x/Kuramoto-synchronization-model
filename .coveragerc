@@ -20,8 +20,6 @@ omit =
     src/**
     tools/**
     conftest.py
-    backtest/**
-    execution/**
     core/accelerators/**
     core/agent/**
     core/altdata/**
@@ -30,7 +28,6 @@ omit =
     core/indicators/**
     core/messaging/**
     core/metrics/**
-    core/neuro/**
     core/reporting/**
     core/strategies/**
     core/utils/**
@@ -57,8 +54,6 @@ omit =
     src/**
     tools/**
     conftest.py
-    backtest/**
-    execution/**
     core/accelerators/**
     core/agent/**
     core/altdata/**
@@ -67,7 +62,6 @@ omit =
     core/indicators/**
     core/messaging/**
     core/metrics/**
-    core/neuro/**
     core/reporting/**
     core/strategies/**
     core/utils/**
