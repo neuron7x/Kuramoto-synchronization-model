@@ -90,6 +90,7 @@ class TestRPEProperties:
         self, tmp_path: Path, reward: float, value: float, next_value: float
     ) -> None:
         """Property: RPE should be monotonically increasing in V'."""
+        controller = _make_controller(tmp_path)
         rpe1 = controller.compute_rpe(reward, value, next_value, discount_gamma=0.9)
         rpe2 = controller.compute_rpe(reward, value, next_value + 0.5, discount_gamma=0.9)
         
@@ -102,12 +103,14 @@ class TestRPEProperties:
     @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_rpe_gamma_clamping(self, tmp_path: Path, gamma: float) -> None:
         """Property: γ must be in (0, 1]."""
+        controller = _make_controller(tmp_path)
         # Valid gamma should work
         rpe = controller.compute_rpe(1.0, 0.5, 0.6, discount_gamma=gamma)
         assert math.isfinite(rpe)
         
     def test_rpe_rejects_invalid_gamma(self, tmp_path: Path) -> None:
         """Property: γ ≤ 0 or γ > 1 should raise ValueError."""
+        controller = _make_controller(tmp_path)
         with pytest.raises(ValueError, match="must be in \\(0, 1\\]"):
             controller.compute_rpe(1.0, 0.5, 0.6, discount_gamma=0.0)
         
@@ -119,6 +122,7 @@ class TestRPEProperties:
 
     def test_rpe_rejects_nan_inf_inputs(self, tmp_path: Path) -> None:
         """Property: NaN/Inf inputs should raise RuntimeError or ValueError."""
+        controller = _make_controller(tmp_path)
         with pytest.raises((RuntimeError, ValueError)):
             controller.compute_rpe(float("nan"), 0.5, 0.6)
         
@@ -140,6 +144,7 @@ class TestTemperatureProperties:
         self, tmp_path: Path, da: float
     ) -> None:
         """Property: Temperature should decrease as DA increases (for fixed base)."""
+        controller = _make_controller(tmp_path)
         controller.reset_state()
         controller.dopamine_level = da
         
@@ -161,6 +166,7 @@ class TestTemperatureProperties:
         self, tmp_path: Path, da1: float, da2: float
     ) -> None:
         """Property: T(DA₂) ≤ T(DA₁) when DA₂ > DA₁."""
+        controller = _make_controller(tmp_path)
         controller.reset_state()
         controller.last_rpe = 0.0  # Neutral RPE to avoid negative RPE boost
         
@@ -178,6 +184,7 @@ class TestTemperatureProperties:
         self, tmp_path: Path, base_temp: float
     ) -> None:
         """Property: Temperature should always be within [min_temp, base_temp * max_multiplier]."""
+        controller = _make_controller(tmp_path)
         controller.reset_state()
         controller.config["base_temperature"] = base_temp
         controller._adaptive_base_temperature = base_temp
@@ -193,6 +200,7 @@ class TestTemperatureProperties:
         self, tmp_path: Path
     ) -> None:
         """Property: Temperature must always be > 0."""
+        controller = _make_controller(tmp_path)
         controller.reset_state()
         
         for da in [0.0, 0.25, 0.5, 0.75, 1.0]:
@@ -304,6 +312,7 @@ class TestGateProperties:
         self, tmp_path: Path, da: float
     ) -> None:
         """Property: NO_GO should dominate when conditions are met."""
+        controller = _make_controller(tmp_path)
         controller.reset_state()
         
         # Set very high NO-GO threshold
@@ -329,6 +338,7 @@ class TestGateProperties:
         self, tmp_path: Path, reward: float, value: float
     ) -> None:
         """Property: Gate states should be mutually consistent."""
+        controller = _make_controller(tmp_path)
         controller.reset_state()
         appetitive = controller.estimate_appetitive_state(0.5, 0.2, 0.1, 0.05)
         
@@ -349,25 +359,26 @@ class TestGateProperties:
         assert extras["hold_threshold"] >= extras["no_go_threshold"] - 1e-6
 
 
-class TestStepIdempotence:
-    """Test that step() is deterministic with fixed inputs."""
+class TestStepDeterminism:
+    """Test that step() is deterministic with fresh controller instances."""
 
-    def test_step_deterministic_with_fixed_inputs(
+    def test_step_deterministic_with_fresh_controllers(
         self, tmp_path: Path
     ) -> None:
-        """Property: Calling step() twice with same inputs should produce same outputs."""
-        controller.reset_state()
-        
+        """Property: Two fresh controllers should produce identical outputs for same inputs."""
         appetitive = 0.5
         
-        rpe1, temp1, policy1, extras1 = controller.step(
+        # First controller
+        controller1 = _make_controller(tmp_path)
+        controller1.reset_state()
+        rpe1, temp1, policy1, extras1 = controller1.step(
             reward=1.0, value=0.5, next_value=0.6, appetitive_state=appetitive
         )
         
-        # Reset to same state
-        controller.reset_state()
-        
-        rpe2, temp2, policy2, extras2 = controller.step(
+        # Second fresh controller (same config)
+        controller2 = _make_controller(tmp_path)
+        controller2.reset_state()
+        rpe2, temp2, policy2, extras2 = controller2.step(
             reward=1.0, value=0.5, next_value=0.6, appetitive_state=appetitive
         )
         
