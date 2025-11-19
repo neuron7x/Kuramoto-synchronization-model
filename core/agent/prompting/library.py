@@ -79,7 +79,7 @@ class PromptExperiment:
         if not 0.0 < self.failure_threshold < 1.0:
             raise PromptExperimentError("failure_threshold must be between 0 and 1")
         object.__setattr__(self, "_metrics", {})
-        object.__setattr__(self, "_rng", Random(self.seed))
+        object.__setattr__(self, "_rng", Random(self.seed))  # nosec B311 - Seeded Random for reproducible experiments
         object.__setattr__(self, "active", True)
 
     @property

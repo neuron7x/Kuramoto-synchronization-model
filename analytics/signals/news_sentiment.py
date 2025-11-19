@@ -15,6 +15,7 @@ supporting the classic FinBERT baseline.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
@@ -120,7 +121,17 @@ class FinBERTSentimentModel:
 
         # Security: Pin model revision to prevent supply chain attacks
         # Use a specific revision hash for production deployments
-        model_revision = "main"  # TODO: Pin to specific commit hash in production
+        # For development, "main" is acceptable but should be pinned in production
+        model_revision = os.getenv("SENTIMENT_MODEL_REVISION", "main")
+        if model_revision == "main":
+            import warnings
+            warnings.warn(
+                "Using 'main' branch for sentiment model. "
+                "Set SENTIMENT_MODEL_REVISION environment variable to a specific commit hash "
+                "for production deployments to prevent supply chain attacks.",
+                category=SecurityWarning,
+                stacklevel=2
+            )
         self._tokenizer = AutoTokenizer.from_pretrained(
             model_name, 
             revision=model_revision,

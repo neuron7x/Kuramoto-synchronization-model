@@ -7,7 +7,7 @@ from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
 from enum import Enum
 import math
-import random
+import secrets
 import time
 from typing import Any, Callable, Iterator, Mapping, MutableMapping, Sequence, TypeVar
 
@@ -205,7 +205,9 @@ class Microservice:
             except Exception:
                 if attempt >= policy.max_attempts:
                     raise
-                sleep_for = delay + random.uniform(0.0, policy.jitter_seconds)
+                # Use secrets for jitter to prevent timing attacks
+                jitter = secrets.SystemRandom().uniform(0.0, policy.jitter_seconds)
+                sleep_for = delay + jitter
                 time.sleep(max(sleep_for, 0.0))
                 delay = min(delay * policy.backoff_multiplier, max_interval)
 

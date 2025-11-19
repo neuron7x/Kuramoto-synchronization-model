@@ -368,7 +368,7 @@ class ThompsonSampling:
         # Generate seed from SystemRandom for reproducibility with security
         import random
 
-        temp_rng = random.Random(self._rng.getrandbits(256))
+        temp_rng = random.Random(self._rng.getrandbits(256))  # nosec B311 - Seeded from SystemRandom
         return temp_rng.betavariate(alpha, beta)
 
 

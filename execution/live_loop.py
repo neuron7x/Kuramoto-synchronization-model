@@ -6,7 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import random
+import secrets
 import threading
 import time
 from collections import defaultdict
@@ -46,7 +46,8 @@ def _full_jitter_backoff(base: float, attempt: int, cap: float) -> float:
     Returns:
         Delay in seconds with full jitter
     """
-    return float(random.uniform(0.0, min(cap, base * (2 ** max(0, attempt)))))
+    # Use secrets.SystemRandom for cryptographically secure jitter
+    return float(secrets.SystemRandom().uniform(0.0, min(cap, base * (2 ** max(0, attempt)))))
 
 
 class Signal:

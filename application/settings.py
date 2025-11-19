@@ -241,7 +241,10 @@ class ApiServerTLSSettings(BaseModel):
 class ApiServerSettings(BaseSettings):
     """Runtime configuration for the HTTPS listener."""
 
-    host: str = Field("0.0.0.0", description="Network interface bound by the API server.")
+    host: str = Field(
+        "0.0.0.0",  # nosec B104 - Binding to 0.0.0.0 is intentional for containerized deployments
+        description="Network interface bound by the API server. Use 127.0.0.1 for local-only access."
+    )
     port: PositiveInt = Field(8000, description="TCP port exposed by the API server.")
     allow_plaintext: bool = Field(
         False,
