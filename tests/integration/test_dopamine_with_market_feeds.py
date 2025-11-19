@@ -12,7 +12,7 @@ from typing import List
 import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from tradepulse.core.neuro.dopamine import DopamineController, adapt_ddm_parameters
 
 
 # Path to test fixtures

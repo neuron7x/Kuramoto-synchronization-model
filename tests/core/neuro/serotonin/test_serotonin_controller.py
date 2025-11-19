@@ -91,7 +91,7 @@ def test_estimate_aversive_state_matches_formula(serotonin_controller):
     losses = 0.8
     rho = 0.1
 
-    result = ctrl.estimate_aversive_state(market_vol, free_energy, losses, rho)
+    result = ctrl.estimate_aversive_state(market_vol, free_energy, losses, rho_loss=rho)
 
     expected_release = (
         cfg["alpha"] * math.sqrt(market_vol)
@@ -108,8 +108,8 @@ def test_estimate_aversive_state_with_override_weights(serotonin_controller):
     ctrl = serotonin_controller
     overrides = {"alpha": ctrl.config["alpha"] * 2}
 
-    baseline = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, 0.0)
-    overridden = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, 0.0, overrides)
+    baseline = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, rho_loss=0.0)
+    overridden = ctrl.estimate_aversive_state(1.0, 0.5, 0.5, rho_loss=0.0, override_weights=overrides)
 
     assert overridden > baseline
 
@@ -117,11 +117,11 @@ def test_estimate_aversive_state_with_override_weights(serotonin_controller):
 def test_estimate_aversive_state_rejects_negative_inputs(serotonin_controller):
     ctrl = serotonin_controller
     with pytest.raises(ValueError):
-        ctrl.estimate_aversive_state(-0.1, 0.2, 0.3, 0.0)
+        ctrl.estimate_aversive_state(-0.1, 0.2, 0.3, rho_loss=0.0)
     with pytest.raises(ValueError):
-        ctrl.estimate_aversive_state(0.1, -0.2, 0.3, 0.0)
+        ctrl.estimate_aversive_state(0.1, -0.2, 0.3, rho_loss=0.0)
     with pytest.raises(ValueError):
-        ctrl.estimate_aversive_state(0.1, 0.2, -0.3, 0.0)
+        ctrl.estimate_aversive_state(0.1, 0.2, -0.3, rho_loss=0.0)
 
 
 def test_compute_serotonin_signal_updates_floor(serotonin_controller):
@@ -384,8 +384,8 @@ def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_c
     result = ctrl.estimate_aversive_state(
         market_vol=2.0,
         free_energy=0.3,
-        losses=0.5,
-        rho=0.2
+        cum_losses=0.5,
+        rho_loss=0.2
     )
     assert isinstance(result, float)
     assert result >= 0.0
