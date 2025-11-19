@@ -22,7 +22,7 @@ class TimeFrameSpec:
     frequency: str
 
 
-@dataclass
+@dataclass(slots=True)
 class FeatureBufferCache:
     """Cache float32 buffers to avoid repeated allocations."""
 

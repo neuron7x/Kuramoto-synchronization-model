@@ -71,7 +71,7 @@ class EventTopic(Enum):
         return self.value
 
 
-@dataclass
+@dataclass(slots=True)
 class EventEnvelope:
     """Transport-agnostic wrapper for payloads."""
 

@@ -45,7 +45,7 @@ class CacheKey:
     timeframe: str
 
 
-@dataclass
+@dataclass(slots=True)
 class CacheEntry:
     """Cache metadata and payload."""
 

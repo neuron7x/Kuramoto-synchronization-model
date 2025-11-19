@@ -12,7 +12,7 @@ from typing import Dict, Iterable, List, Optional
 from core.config.cli_models import CatalogConfig, TradePulseBaseConfig
 
 
-@dataclass
+@dataclass(slots=True)
 class CatalogEntry:
     """Represents a stored artifact in the feature catalog."""
 

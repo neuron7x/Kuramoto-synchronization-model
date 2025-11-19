@@ -42,7 +42,7 @@ import pandas as pd
 from observability.tracing import pipeline_span
 
 
-@dataclass
+@dataclass(slots=True)
 class Strategy:
     name: str
     params: Dict[str, Any]

@@ -51,7 +51,7 @@ class StrategySignature:
         return (rounded[0], rounded[1], rounded[2], rounded[3], rounded[4])
 
 
-@dataclass
+@dataclass(slots=True)
 class StrategyRecord:
     name: str
     signature: Union[StrategySignature, Tuple[float, float, float, float, float]]
