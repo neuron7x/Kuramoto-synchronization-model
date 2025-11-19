@@ -15,9 +15,9 @@ TECH_DEBT_REPORT:
 
 * Scope: PR / Module: core/strategies / File: momentum_v2.py
 
-* Summary: 
-  New momentum trading strategy introduced with signal calculation logic. 
-  Contains complexity and observability debt in core trading path. 
+* Summary:
+  New momentum trading strategy introduced with signal calculation logic.
+  Contains complexity and observability debt in core trading path.
   Changes affect risk calculation domain.
 
 * Findings:
@@ -47,13 +47,13 @@ TECH_DEBT_REPORT:
 * SuggestedChanges:
 
   * Change 1:
-    
+
     * Target: L4 / core/strategies/momentum_v2.py / lines 45-98
-    
-    * Rationale: 
+
+    * Rationale:
       Зменшити цикломатичну складність через екстракцію sub-функцій.
       Захищає інваріант: читабельність та тестованість торгової логіки.
-    
+
     * Patch:
 ```python
 # BEFORE (complexity: 18)
@@ -63,16 +63,16 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
             raise ValueError("Insufficient data")
         else:
             return 0.0
-    
+
     momentum = prices.pct_change(self.lookback_period)
-    
+
     if self.use_volume_filter:
         if volume.mean() < self.volume_threshold:
             if self.volume_mode == "strict":
                 return 0.0
             else:
                 momentum *= 0.5
-    
+
     if self.risk_adjust:
         volatility = prices.std()
         if volatility > self.max_volatility:
@@ -80,12 +80,12 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
                 return 0.0
             else:
                 momentum /= volatility
-    
+
     signal = np.tanh(momentum * self.signal_strength)
-    
+
     if abs(signal) < self.min_signal_threshold:
         return 0.0
-    
+
     return signal
 
 # AFTER (complexity: 5)
@@ -94,12 +94,12 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
     # Extract sub-functions for clarity
     if not self._validate_data(prices):
         return 0.0
-    
+
     momentum = self._calculate_base_momentum(prices)
     momentum = self._apply_volume_filter(momentum, volume)
     momentum = self._apply_risk_adjustment(momentum, prices)
     signal = self._normalize_signal(momentum)
-    
+
     return signal if abs(signal) >= self.min_signal_threshold else 0.0
 
 def _validate_data(self, prices: pd.DataFrame) -> bool:
@@ -118,22 +118,22 @@ def _apply_volume_filter(self, momentum: float, volume: pd.DataFrame) -> float:
     """Apply volume-based filtering to momentum signal."""
     if not self.use_volume_filter:
         return momentum
-    
+
     avg_volume = volume.mean()
     if avg_volume < self.volume_threshold:
         return 0.0 if self.volume_mode == "strict" else momentum * 0.5
-    
+
     return momentum
 
 def _apply_risk_adjustment(self, momentum: float, prices: pd.DataFrame) -> float:
     """Apply risk-based adjustments to momentum signal."""
     if not self.risk_adjust:
         return momentum
-    
+
     volatility = prices.std()
     if volatility > self.max_volatility:
         return 0.0 if self.risk_mode == "skip" else momentum / volatility
-    
+
     return momentum
 
 def _normalize_signal(self, momentum: float) -> float:
@@ -142,13 +142,13 @@ def _normalize_signal(self, momentum: float) -> float:
 ```
 
   * Change 2:
-    
+
     * Target: L4 / core/strategies/momentum_v2.py / lines 45-150
-    
+
     * Rationale:
       Додати структуроване логування для спостережуваності торгової логіки.
       Захищає інваріант: можливість діагностики та моніторингу в продакшн.
-    
+
     * Patch:
 ```python
 import logging
@@ -167,23 +167,23 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
                 "strict_mode": self.strict_mode,
             }
         )
-        
+
         if not self._validate_data(prices):
             logger.warning("Data validation failed", extra={"prices_len": len(prices)})
             trading_metrics.increment("momentum_signal_validation_failed")
             return 0.0
-        
+
         momentum = self._calculate_base_momentum(prices)
         logger.debug(f"Base momentum calculated: {momentum:.6f}")
-        
+
         momentum = self._apply_volume_filter(momentum, volume)
         logger.debug(f"Volume-filtered momentum: {momentum:.6f}")
-        
+
         momentum = self._apply_risk_adjustment(momentum, prices)
         logger.debug(f"Risk-adjusted momentum: {momentum:.6f}")
-        
+
         signal = self._normalize_signal(momentum)
-        
+
         logger.info(
             "Momentum signal generated",
             extra={
@@ -192,22 +192,22 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
                 "signal_strength": self.signal_strength,
             }
         )
-        
+
         trading_metrics.histogram("momentum_signal_value", signal)
-        
+
         return signal if abs(signal) >= self.min_signal_threshold else 0.0
 ```
 
   * Change 3:
-    
+
     * Target: L3 / core/strategies/momentum_v2.py / full class
-    
+
     * Rationale:
       Розділити клас на окремі компоненти (signal, risk, execution).
       Захищає інваріант: модульність та тестованість.
       Note: Це STANDARD-режимний рефакторинг. Для AGGRESSIVE режиму можна
       повністю реструктурувати на окремі модулі.
-    
+
     * Patch:
 ```python
 # Рекомендація: поступове розділення відповідальності
@@ -234,7 +234,7 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
 * RiskAssessment:
 
   * RiskLevel: Medium
-  
+
   * Notes:
     - Рефакторинг торгової логіки завжди несе ризик зміни поведінки
     - ОБОВ'ЯЗКОВО: порівняти backtest results до/після змін
@@ -248,12 +248,12 @@ def calculate_momentum_signal(self, prices: pd.DataFrame, volume: pd.DataFrame) 
 * DecisionHint:
 
   * Рекомендація: **merge + follow-up**
-  
+
   * Обґрунтування:
     - Change 1 (complexity reduction) можна мерджити після валідації тестами
     - Change 2 (observability) можна мерджити після перевірки performance overhead
     - Change 3 (class split) потребує окремого PR з детальним планом
-  
+
   * Наступні кроки:
     1. Імплементувати Change 1 + Change 2 в поточному PR
     2. Додати тести (Required section)
@@ -285,13 +285,13 @@ GITHUB_REVIEW_COMMENTS:
   * Line: 34
   * Body: |
     [SECURITY_DEBT][CRITICAL] SQL injection vulnerability
-    
+
     Використання f-string для побудови SQL-запиту небезпечне.
-    
+
     ```python
     # UNSAFE
     query = f"SELECT * FROM trades WHERE symbol = '{symbol}'"
-    
+
     # SAFE
     query = "SELECT * FROM trades WHERE symbol = %s"
     cursor.execute(query, (symbol,))
@@ -302,7 +302,7 @@ GITHUB_REVIEW_COMMENTS:
   * Line: 89
   * Body: |
     [COMPLEXITY_DEBT][MEDIUM] Висока цикломатична складність (15)
-    
+
     Розглянути екстракцію логіки у окремі методи для покращення читабельності.
 
 * Comment 3:
@@ -310,7 +310,7 @@ GITHUB_REVIEW_COMMENTS:
   * Line: 12
   * Body: |
     [TESTING_DEBT][HIGH] Відсутні тести для граничних кейсів
-    
+
     Додати тести для:
     - Нульовий/негативний capital
     - Extreme leverage values
@@ -321,7 +321,7 @@ GITHUB_REVIEW_COMMENTS:
   * Line: 156
   * Body: |
     [OBSERVABILITY_DEBT][MEDIUM] Відсутнє логування перед execution
-    
+
     Додати structured logging для execution decisions:
     ```python
     logger.info("Executing trade", extra={
@@ -350,9 +350,9 @@ index abc123..def456 100644
 --- a/core/risk/limits.py
 +++ b/core/risk/limits.py
 @@ -12,11 +12,16 @@ from typing import Dict
- 
+
  logger = logging.getLogger(__name__)
- 
+
 +# Risk limits configuration
 +MAX_POSITION_SIZE_RATIO = 0.1  # Maximum 10% of portfolio in single position
 +MAX_LEVERAGE = 3.0  # Maximum 3x leverage allowed
@@ -427,7 +427,7 @@ TECH_DEBT_REPORT:
 
 * SuggestedChanges:
   [Due to space, showing priority order only]
-  
+
   Priority 1 (CRITICAL): Fix security issue in data/fetcher.py
   Priority 2 (HIGH): Add data validation schemas
   Priority 3 (HIGH): Add tests for data transformation invariants

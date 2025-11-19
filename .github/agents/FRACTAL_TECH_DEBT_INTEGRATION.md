@@ -27,19 +27,19 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Get PR diff
         id: diff
         run: |
           git fetch origin ${{ github.base_ref }}
           git diff origin/${{ github.base_ref }}...HEAD > pr.diff
-      
+
       - name: Load Fractal Tech Debt Engine configuration
         id: agent-config
         run: |
@@ -48,7 +48,7 @@ jobs:
           echo "agent_prompt<<EOF" >> $GITHUB_OUTPUT
           echo "$AGENT_PROMPT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
       - name: Analyze technical debt
         id: analyze
         uses: your-org/llm-action@v1
@@ -56,19 +56,19 @@ jobs:
           system_prompt: ${{ steps.agent-config.outputs.agent_prompt }}
           user_input: |
             Проаналізуй цей Pull Request для виявлення технічного боргу:
-            
+
             PR Title: ${{ github.event.pull_request.title }}
             PR Description: ${{ github.event.pull_request.body }}
-            
+
             Режим роботи: STANDARD
-            
+
             Diff:
             $(cat pr.diff)
-            
+
             Надай аналіз у форматі TECH_DEBT_REPORT.
           model: "gpt-4"
           temperature: 0.1
-      
+
       - name: Post tech debt report
         uses: actions/github-script@v7
         with:
@@ -99,7 +99,7 @@ For different aggressiveness levels, you can customize the workflow:
           else
             echo "mode=STANDARD" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Analyze technical debt with mode
         id: analyze
         uses: your-org/llm-action@v1
@@ -107,12 +107,12 @@ For different aggressiveness levels, you can customize the workflow:
           system_prompt: ${{ steps.agent-config.outputs.agent_prompt }}
           user_input: |
             Проаналізуй цей Pull Request для виявлення технічного боргу:
-            
+
             Режим роботи: ${{ steps.mode.outputs.mode }}
-            
+
             Diff:
             $(cat pr.diff)
-            
+
             Надай аналіз у форматі TECH_DEBT_REPORT.
           model: "gpt-4"
           temperature: 0.1
@@ -130,16 +130,16 @@ Focus on HIGH/CRITICAL technical debt:
           system_prompt: ${{ steps.agent-config.outputs.agent_prompt }}
           user_input: |
             Проаналізуй цей Pull Request з фокусом на HIGH/CRITICAL технічний борг:
-            
+
             Пріоритетні домени:
             - Security-проблеми
             - Код, що обробляє гроші, позиції, ордери, PnL
             - Risk-модулі та розрахунки ризику
             - Data-пайплайни, які впливають на якість сигналів
-            
+
             Diff:
             $(cat pr.diff)
-            
+
             Надай аналіз у форматі TECH_DEBT_REPORT з фокусом на HIGH/CRITICAL пріоритети.
           model: "gpt-4"
           temperature: 0.1
@@ -285,7 +285,7 @@ Direct diff patches ready to apply.
   run: |
     # Run analysis
     python .github/agents/validate-fractal-tech-debt.py
-    
+
     # Block if HIGH/CRITICAL issues found
     if grep -q "HIGH/CRITICAL" tech_debt_report.txt; then
       echo "❌ HIGH/CRITICAL technical debt detected. Review required."
@@ -307,7 +307,7 @@ jobs:
     steps:
       - name: Run tech debt analysis
         # Analyze and create issues for follow-up
-      
+
       - name: Update tech debt dashboard
         # Update metrics and visualizations
 ```
