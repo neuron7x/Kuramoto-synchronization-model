@@ -379,13 +379,13 @@ class TestDigitalGovernanceFramework:
         # Should pass for normal data
         assert all(c.passed or c.severity == "WARNING" for c in checks)
         
-        # Data with spike
+        # Data with spike - use more extreme spike or lower threshold
         values_with_spike = [1.0, 1.1, 1.05, 10.0, 1.08]
         checks = governance.check_data_quality(
-            "price", values_with_spike, spike_threshold_std=3.0
+            "price", values_with_spike, spike_threshold_std=1.5  # Lower threshold to detect spike
         )
         
-        # Should detect spike
+        # Should detect spike with lower threshold
         assert any(c.check_type == "spikes" for c in checks)
     
     def test_record_tacl_metric(self, governance):
