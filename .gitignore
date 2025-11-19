@@ -80,3 +80,23 @@ dist/
 # <<< SANITY CLEANUP
 
 actionlint
+
+# Obsolete files - prevent from being committed
+bandit-report.json
+bandit-full-report.json
+staging_report.json
+*_report.json
+PR_BODY.md
+PR_TITLE.txt
+apply-fixes.sh
+=*.*.0
+=*.*.*
+# Temporary task completion summaries should not be committed
+*COMPLETION*.md
+PR_*SUMMARY*.md
+PR_*FIXES*.md
+PR_*OPTIMIZATION*.md
+QUICK_FIX*.md
+REVIEW_RESPONSE*.md
+TASK_COMPLETION*.md
+*_SUMMARY_*.md
