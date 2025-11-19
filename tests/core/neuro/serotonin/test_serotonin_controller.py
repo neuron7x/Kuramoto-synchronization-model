@@ -380,12 +380,12 @@ def test_dual_compatibility_config_loads_successfully(serotonin_cls, serotonin_c
     assert ctrl.tonic_level == 0.0
     assert ctrl.sensitivity == 1.0
     
-    # Test basic functionality
+    # Test basic functionality - use correct parameter names for v2.4.0 API
     result = ctrl.estimate_aversive_state(
         market_vol=2.0,
         free_energy=0.3,
-        losses=0.5,
-        rho=0.2
+        cum_losses=0.5,
+        rho_loss=0.2
     )
     assert isinstance(result, float)
     assert result >= 0.0

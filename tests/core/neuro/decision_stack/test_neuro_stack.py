@@ -106,13 +106,20 @@ def test_na_risk_budget_scales_with_volatility() -> None:
 def test_serotonin_hysteresis_and_release() -> None:
     ctrl = SerotoninController("configs/serotonin.yaml")
     state = {}
+    # Build up stress to trigger hold state
     for _ in range(4):
         state = ctrl.step(stress=1.0, drawdown=0.5, novelty=0.3)
     assert state["hold"] >= 0.5
     desens_before = state["desensitization"]
-    for _ in range(5):
+    
+    # Reduce stress to zero and wait for hold release
+    # Need enough steps to: (1) decay below exit threshold, (2) complete cooldown period
+    # With cooldown_ticks=3, need at least 6-7 steps total
+    for _ in range(7):
         state = ctrl.step(stress=0.0, drawdown=0.0, novelty=0.0)
-    assert state["hold"] < 0.5
+    
+    # After sufficient recovery time, hold should be released
+    assert state["hold"] < 0.5, f"Expected hold < 0.5, got {state['hold']}"
     assert ctrl.temperature_floor >= ctrl.config.floor_min
     assert ctrl.temperature_floor <= ctrl.config.floor_max
     assert state["desensitization"] <= desens_before

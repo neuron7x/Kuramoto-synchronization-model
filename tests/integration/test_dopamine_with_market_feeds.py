@@ -13,10 +13,35 @@ import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
 from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
 
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
+
+
+def calculate_simple_reward(records: List[MarketFeedRecord]) -> List[float]:
+    """Calculate simple reward signal from price changes.
+    
+    Returns positive reward for price increase, negative for decrease.
+    """
+    if not records:
+        return []
+    
+    rewards = [0.0]  # First record has no previous price
+    
+    for i in range(1, len(records)):
+        prev_price = float(records[i - 1].price)
+        curr_price = float(records[i].price)
+        
+        # Simple reward: percentage price change
+        if prev_price > 0:
+            price_change = (curr_price - prev_price) / prev_price
+            rewards.append(price_change)
+        else:
+            rewards.append(0.0)
+    
+    return rewards
 
 
 class TestDopamineTD0RPE:
