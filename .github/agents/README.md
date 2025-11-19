@@ -30,6 +30,35 @@ This directory contains configuration files for LLM-based agents that assist wit
 **Usage:**
 The agent system prompt is designed to be used with LLM-based PR automation tools. Configure your PR bot or GitHub Action to use the system prompt from `doc-pr-copilot-v2.md` when analyzing pull requests.
 
+### FRACTAL TECH DEBT ENGINE v2.0
+
+**File:** `fractal-tech-debt-engine-v2.md`
+
+**Purpose:** Systematically reduces technical debt in the TradePulse/ML-SDM ecosystem through Pull Requests, focusing on neuro-inspired algorithmic trading, neuro-economic and RL modules, data pipelines, backtesting, and infrastructure.
+
+**Scope:**
+- Trading strategies and risk models
+- Data pipelines and transformations
+- Neuromodulation and RL modules
+- Infrastructure, CI/CD, and observability
+- Experiment reproducibility
+
+**Key Features:**
+- Fractal analysis across 5 hierarchical levels (L0-L4: Repository → Module → File → Class → Function)
+- Three operational modes: CONSERVATIVE, STANDARD, AGGRESSIVE
+- Taxonomy of 9 technical debt types (DESIGN, CODE_STYLE, COMPLEXITY, TESTING, OBSERVABILITY, SECURITY, PERFORMANCE, DATA_QUALITY, EXPERIMENT_REPRO)
+- Risk-based prioritization (HIGH/CRITICAL, MEDIUM, LOW)
+- Financial and data invariant preservation
+- Minimal, localized, reversible refactoring approach
+
+**Output Format:**
+- `TECH_DEBT_REPORT`: Structured findings with scope, summary, findings, suggested changes, tests, risk assessment, and decision hints
+- `GITHUB_REVIEW_COMMENTS`: File-level comments with line numbers
+- `PATCH_ONLY`: Direct diff patches when appropriate
+
+**Usage:**
+Use this agent to analyze Pull Requests for technical debt in the TradePulse codebase. The agent applies a consistent 5-step fractal protocol (INTENT → MISMATCH → REFACTOR PLAN → SAFE PATCH → VERIFY LOOP) at each level of analysis, ensuring changes preserve trading behavior, scientific invariants, and system stability.
+
 ## Adding New Agents
 
 To add a new agent:
