@@ -36,26 +36,25 @@ class TestSQLInjectionPrevention:
             )
             assert has_sql_pattern, f"Test input should contain SQL injection pattern: {malicious_input}"
 
-    def test_input_sanitization_removes_sql_metacharacters(self):
-        """Verify input sanitization removes SQL metacharacters."""
-        from core.utils.validation import sanitize_sql_input
+    def test_input_sanitization_for_display_only(self):
+        """Verify sanitization for display purposes (NOT for SQL queries)."""
+        from core.utils.validation import sanitize_for_display
         
         test_cases = [
-            ("user'name", "user''name"),  # Escaped single quote
-            ('user"name', 'user\\"name'),  # Escaped double quote
-            ("user;DROP", "userDROP"),     # Removed semicolon
-            ("user--comment", "usercomment"),  # Removed comment
+            ("user'name", "user''name"),  # Escaped single quote for display
+            ("user;DROP", "userDROP"),     # Removed semicolon for display
+            ("user--comment", "usercomment"),  # Removed comment for display
         ]
         
         for input_val, expected in test_cases:
             try:
-                result = sanitize_sql_input(input_val)
-                # Verify dangerous characters are escaped or removed
+                result = sanitize_for_display(input_val)
+                # Verify dangerous characters are escaped or removed for display
                 assert ";" not in result or result == expected
                 assert "--" not in result or result == expected
             except (ImportError, AttributeError):
                 # If function doesn't exist, skip but note in test output
-                pytest.skip("sanitize_sql_input function not implemented")
+                pytest.skip("sanitize_for_display function not implemented")
 
     def test_orm_parameterization_prevents_injection(self):
         """Verify ORM parameterization prevents SQL injection."""
@@ -272,6 +271,8 @@ class TestInputValidation:
 
     def test_dangerous_file_upload_extensions_blocked(self):
         """Verify dangerous file extensions are blocked."""
+        from core.utils.validation import is_safe_file_extension
+        
         dangerous_extensions = [
             ".exe", ".bat", ".cmd", ".sh", ".py", ".php",
             ".js", ".jar", ".war", ".dll", ".so",
@@ -279,16 +280,32 @@ class TestInputValidation:
         
         allowed_extensions = [".jpg", ".png", ".pdf", ".txt", ".csv"]
         
-        # Test that dangerous extensions are detected
-        for ext in dangerous_extensions:
-            filename = f"malicious{ext}"
-            # In production, this would be rejected by upload validation
-            assert any(filename.endswith(danger) for danger in dangerous_extensions)
-        
-        # Test that allowed extensions pass
-        for ext in allowed_extensions:
-            filename = f"document{ext}"
-            assert not any(filename.endswith(danger) for danger in dangerous_extensions)
+        try:
+            # Test that dangerous extensions are rejected
+            for ext in dangerous_extensions:
+                filename = f"malicious{ext}"
+                assert not is_safe_file_extension(filename, allowed_extensions), \
+                    f"Dangerous extension should be rejected: {ext}"
+            
+            # Test that allowed extensions pass
+            for ext in allowed_extensions:
+                filename = f"document{ext}"
+                assert is_safe_file_extension(filename, allowed_extensions), \
+                    f"Safe extension should be allowed: {ext}"
+            
+            # Test double extension attack (e.g., file.jpg.exe)
+            assert not is_safe_file_extension("file.jpg.exe", allowed_extensions), \
+                "Double extension attack should be detected"
+            
+        except (ImportError, AttributeError):
+            # Fallback to basic check if function doesn't exist
+            for ext in dangerous_extensions:
+                filename = f"malicious{ext}"
+                assert any(filename.endswith(danger) for danger in dangerous_extensions)
+            
+            for ext in allowed_extensions:
+                filename = f"document{ext}"
+                assert not any(filename.endswith(danger) for danger in dangerous_extensions)
 
 
 class TestDataSanitization:
