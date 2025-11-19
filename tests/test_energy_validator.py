@@ -258,9 +258,12 @@ class TestEnergyValidatorEdgeCases:
         """Test with unknown metric name."""
         validator = EnergyValidator()
         metrics = {"unknown_metric": 100.0}
-        # Should ignore unknown metrics
+        # Unknown metrics are tracked with zero penalty and a warning is logged
         result = validator.compute_free_energy(metrics)
-        assert "unknown_metric" not in result.penalties
+        assert "unknown_metric" in result.penalties
+        assert result.penalties["unknown_metric"] == 0.0
+        # Free energy should be zero since no penalties
+        assert result.free_energy == 0.0
     
     def test_mixed_metrics(self):
         """Test with mix of known and unknown metrics."""
