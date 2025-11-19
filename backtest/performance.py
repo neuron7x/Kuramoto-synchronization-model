@@ -7,11 +7,26 @@ import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy import stats
+
+if TYPE_CHECKING:
+    from scipy import stats
+else:
+    # Lazy import scipy to improve module load time
+    stats = None
+
+
+def _get_scipy_stats():
+    """Lazy load scipy.stats on first use."""
+    global stats
+    if stats is None:
+        from scipy import stats as _stats
+        stats = _stats
+    return stats
+
 
 _PERIODS_PER_YEAR = 252
 _DEFAULT_ALPHA = 0.05
@@ -126,7 +141,8 @@ def compute_performance_metrics(
             n_obs = excess_returns.size
             if n_obs > 1:
                 t_stat = sr_periodic * math.sqrt(n_obs)
-                sharpe_p_value = float(2.0 * stats.t.sf(abs(t_stat), n_obs - 1))
+                scipy_stats = _get_scipy_stats()
+                sharpe_p_value = float(2.0 * scipy_stats.t.sf(abs(t_stat), n_obs - 1))
 
                 centered = excess_returns - mean_excess
                 m2 = float(np.mean(centered**2)) if centered.size else 0.0
@@ -146,7 +162,8 @@ def compute_performance_metrics(
                             * math.sqrt(n_obs - 1)
                             / math.sqrt(denom_term)
                         )
-                        probabilistic_sharpe_ratio = float(stats.norm.cdf(z_score))
+                        scipy_stats = _get_scipy_stats()
+                        probabilistic_sharpe_ratio = float(scipy_stats.norm.cdf(z_score))
 
     sortino_ratio: float | None = None
     if returns.size:

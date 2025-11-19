@@ -56,7 +56,7 @@ class GapDetectionError(ValueError):
         self.gaps = gaps or []
 
 
-@dataclass
+@dataclass(slots=True)
 class GapValidatorConfig:
     """Configuration for time series gap validation.
     

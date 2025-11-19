@@ -223,7 +223,7 @@ def detect_gaps(
     return gaps
 
 
-@dataclass
+@dataclass(slots=True)
 class BackfillPlan:
     """Description of the windows that need to be requested."""
 
@@ -269,7 +269,7 @@ class GapFillPlanner:
         self._cache.merge(key, frame)
 
 
-@dataclass
+@dataclass(slots=True)
 class BackfillPayload:
     """Result returned by an upstream loader."""
 
@@ -277,7 +277,7 @@ class BackfillPayload:
     checksum: Optional[str] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class BackfillSegment:
     """Atomic unit of work representing a backfill slice."""
 
@@ -388,7 +388,7 @@ class SegmentError:
     message: str
 
 
-@dataclass
+@dataclass(slots=True)
 class BackfillResult:
     """Execution result returned by :class:`BackfillPlanner`."""
 
