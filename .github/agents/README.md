@@ -59,6 +59,11 @@ The agent system prompt is designed to be used with LLM-based PR automation tool
 **Usage:**
 Use this agent to analyze Pull Requests for technical debt in the TradePulse codebase. The agent applies a consistent 5-step fractal protocol (INTENT → MISMATCH → REFACTOR PLAN → SAFE PATCH → VERIFY LOOP) at each level of analysis, ensuring changes preserve trading behavior, scientific invariants, and system stability.
 
+**Resources:**
+- [Integration Guide](FRACTAL_TECH_DEBT_INTEGRATION.md) - Detailed workflow examples and best practices
+- [Example Outputs](fractal-tech-debt-example-output.md) - Sample reports and comments
+- [Validation Script](validate-fractal-tech-debt.py) - Configuration validation tool
+
 ## Adding New Agents
 
 To add a new agent:
