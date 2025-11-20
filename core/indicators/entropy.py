@@ -230,9 +230,16 @@ def entropy(
                 _LAST_ENTROPY_BACKEND = "cpu"
                 return 0.0
 
-            probs = total_counts[total_counts > 0] / float(total_weight)
+            # Compute probabilities with float64 precision for chunked results
+            nonzero_counts = total_counts[total_counts > 0]
+            probs = nonzero_counts.astype(np.float64, copy=False) / float(total_weight)
+            
+            # Stable entropy calculation
+            log_probs = np.log(probs)
+            entropy_value = -float(np.dot(probs, log_probs))
+            
             _LAST_ENTROPY_BACKEND = "cpu"
-            return float(-(probs * np.log(probs)).sum())
+            return entropy_value
 
         # Standard single-pass processing
         # Normalize to [-1, 1] for numerical stability
@@ -246,10 +253,24 @@ def entropy(
             _LAST_ENTROPY_BACKEND = "cpu"
             return 0.0
 
-        # Calculate Shannon entropy
-        p = counts[counts > 0] / total
+        # Calculate Shannon entropy: H = -Σ p_i * log(p_i)
+        # Filter out zero bins to avoid log(0)
+        nonzero_counts = counts[counts > 0]
+        
+        # Compute probabilities with explicit float64 for precision
+        # Critical for financial applications where small probability differences matter
+        p = nonzero_counts.astype(np.float64, copy=False) / float(total)
+        
+        # Use natural logarithm (base e) as standard for Shannon entropy
+        # log(p) is always negative for 0 < p < 1, so -p*log(p) is positive
+        log_p = np.log(p)
+        
+        # Compute entropy using stable dot product
+        # This is more numerically stable than (p * log_p).sum() for large bin counts
+        entropy_value = -float(np.dot(p, log_p))
+        
         _LAST_ENTROPY_BACKEND = "cpu"
-        return float(-(p * np.log(p)).sum())
+        return entropy_value
 
 
 def _cuda_available() -> bool:

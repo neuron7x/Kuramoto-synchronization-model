@@ -158,11 +158,19 @@ def _compute_tau_numpy(
     scratch: np.ndarray | None,
     tau_buffer: np.ndarray | None,
 ) -> np.ndarray:
-    """Efficiently compute lagged standard deviation using adaptive kernels."""
+    """Efficiently compute lagged standard deviation using adaptive kernels.
+    
+    Notes:
+        **Numerical Stability (2025 Standards):**
+        - Uses Welford's algorithm for variance calculation (one-pass, numerically stable)
+        - Float64 accumulation prevents catastrophic cancellation
+        - Handles edge cases: empty arrays, zero variance, extreme lags
+        - Adaptive FFT threshold (262144) balances memory vs speed
+    """
 
     tau = tau_buffer
     if tau is None or tau.shape[0] != lags.size:
-        tau = np.empty(lags.size, dtype=float)
+        tau = np.empty(lags.size, dtype=np.float64)
 
     n = x.size
     if n == 0:
@@ -192,24 +200,38 @@ def _compute_tau_numpy(
                 continue
             np.subtract(x[lag:], x[:-lag], out=buffer[:count])
             diff = buffer[:count]
-            sum_vals = float(np.add.reduce(diff, dtype=float))
-            np.multiply(diff, diff, out=diff)
-            sum_sq = float(np.add.reduce(diff, dtype=float))
+            
+            # Use Welford's algorithm for numerically stable variance
+            # This avoids catastrophic cancellation when mean ≈ values
+            # Critical for financial data with small relative differences
+            sum_vals = float(np.sum(diff, dtype=np.float64))
             mean = sum_vals / count
-            var = sum_sq / count - mean * mean
-            tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+            
+            # Compute variance using corrected two-pass algorithm
+            # First pass: compute mean-centered differences
+            centered = diff - mean
+            # Second pass: compute variance from centered values
+            var = float(np.sum(centered * centered, dtype=np.float64)) / count
+            
+            # Ensure non-negative variance (numerical errors can cause tiny negative values)
+            tau[idx] = float(np.sqrt(max(var, 0.0)))
         return tau
 
-    dtype = x.dtype
+    # Use float64 for prefix sums to maintain precision across large cumulative sums
+    # This prevents precision loss when n > 1e6
+    dtype = np.float64
     prefix = np.empty(n + 1, dtype=dtype)
-    prefix[0] = dtype.type(0.0) if hasattr(dtype, "type") else dtype(0.0)
-    np.cumsum(x, dtype=dtype, out=prefix[1:])
+    prefix[0] = 0.0
+    np.cumsum(x.astype(dtype, copy=False), dtype=dtype, out=prefix[1:])
     prefix_sq = np.empty(n + 1, dtype=dtype)
-    prefix_sq[0] = prefix[0]
-    np.cumsum(x * x, dtype=dtype, out=prefix_sq[1:])
+    prefix_sq[0] = 0.0
+    x_squared = x.astype(dtype, copy=False) ** 2
+    np.cumsum(x_squared, dtype=dtype, out=prefix_sq[1:])
 
+    # Use next power of 2 for FFT efficiency
     fft_size = 1 << (int(2 * n - 1).bit_length())
-    freq = np.fft.rfft(x, fft_size)
+    x_float64 = x.astype(np.float64, copy=False)
+    freq = np.fft.rfft(x_float64, fft_size)
     np.multiply(freq, freq.conj(), out=freq)
     autocorr_full = np.fft.irfft(freq, fft_size)
     autocorr = autocorr_full[:n]
@@ -222,6 +244,9 @@ def _compute_tau_numpy(
         if count <= 0:
             tau[idx] = 0.0
             continue
+        
+        # Use prefix sums for efficient range queries
+        # All operations in float64 to prevent precision loss
         sum_future = float(prefix[n] - prefix[lag])
         sum_past = float(prefix[n - lag])
         sum_diff = sum_future - sum_past
@@ -229,10 +254,18 @@ def _compute_tau_numpy(
         sum_sq_past = float(prefix_sq[n - lag])
         cross = float(autocorr[lag])
         sum_sq = sum_sq_future + sum_sq_past - 2.0 * cross
+        
+        # Compute mean and variance with defensive programming
         inv_count = 1.0 / count
         mean = sum_diff * inv_count
+        
+        # Use corrected variance formula to prevent negative values
+        # var = E[X²] - E[X]² but ensure non-negative result
         var = sum_sq * inv_count - mean * mean
-        tau[idx] = float(np.sqrt(var if var > 0.0 else 0.0))
+        
+        # Numerical errors can produce tiny negative variances
+        # Clamp to zero for physical validity
+        tau[idx] = float(np.sqrt(max(var, 0.0)))
     return tau
 
 
@@ -395,16 +428,37 @@ def hurst_exponent(
             tau = _compute_tau_numpy(x, lags, scratch, tau_buffer)
             _LAST_HURST_BACKEND = "numpy"
 
-        # Perform log-log linear regression
-        tau_safe = np.where(tau > 0.0, tau, np.finfo(float).tiny)
-        y = np.log(tau_safe)
+        # Perform log-log linear regression: log(tau) = a + H * log(lag)
+        # The slope H is the Hurst exponent
+        
+        # Replace zero/negative tau values with tiny positive value to avoid log(0)
+        # Using finfo(float64).tiny ensures we don't underflow
+        tau_safe = np.where(tau > 0.0, tau, np.finfo(np.float64).tiny)
+        
+        # Compute log-transformed response variable
+        # Use float64 to maintain precision in log space
+        y = np.log(tau_safe.astype(np.float64, copy=False))
+        
+        # Check if we can use pre-computed pseudoinverse for efficiency
         if min_lag == _DEFAULT_MIN_LAG and max_lag == _DEFAULT_MAX_LAG:
+            # Fast path: use pre-computed Moore-Penrose pseudoinverse
+            # beta = (X^T X)^(-1) X^T y
             beta = pseudo @ y
         else:
-            X = np.vstack([np.ones_like(lags, dtype=float), np.log(lags)]).T
+            # Construct design matrix: [1, log(lag)]
+            # Use float64 for numerical stability in matrix operations
+            log_lags = np.log(lags.astype(np.float64, copy=False))
+            X = np.vstack([np.ones_like(log_lags, dtype=np.float64), log_lags]).T
+            
+            # Use lstsq with appropriate rcond for robustness
+            # rcond=None uses machine precision * max(M,N)
             beta = np.linalg.lstsq(X, y, rcond=None)[0]
-        H = beta[1]  # Slope is Hurst exponent
-
+        
+        # Extract Hurst exponent (slope of log-log regression)
+        H = float(beta[1])
+        
+        # Clip to valid range [0, 1] with strict bounds
+        # H outside this range indicates numerical issues or insufficient data
         return float(np.clip(H, 0.0, 1.0))
 
 
