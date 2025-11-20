@@ -23,7 +23,7 @@ def _as_float_array(values: Iterable[float]) -> np.ndarray:
 
 def mean_absolute_error(y_true: Iterable[float], y_pred: Iterable[float]) -> float:
     """Return the mean absolute error between two equally shaped sequences.
-    
+
     Notes:
         **Numerical Stability (2025 Standards):**
         - Uses float64 for all operations to prevent precision loss
@@ -35,7 +35,7 @@ def mean_absolute_error(y_true: Iterable[float], y_pred: Iterable[float]) -> flo
     pred = _as_float_array(y_pred)
     if true.shape != pred.shape:
         raise ValueError("y_true and y_pred must share the same shape")
-    
+
     # Use float64 accumulation for mean to prevent drift
     errors = np.abs(true - pred)
     return float(np.mean(errors, dtype=np.float64))
@@ -43,7 +43,7 @@ def mean_absolute_error(y_true: Iterable[float], y_pred: Iterable[float]) -> flo
 
 def mean_squared_error(y_true: Iterable[float], y_pred: Iterable[float]) -> float:
     """Return the mean squared error between targets and predictions.
-    
+
     Notes:
         **Numerical Stability (2025 Standards):**
         - Float64 accumulation prevents overflow for large errors
@@ -55,7 +55,7 @@ def mean_squared_error(y_true: Iterable[float], y_pred: Iterable[float]) -> floa
     pred = _as_float_array(y_pred)
     if true.shape != pred.shape:
         raise ValueError("y_true and y_pred must share the same shape")
-    
+
     diff = true - pred
     # Use float64 for mean to handle large squared values accurately
     squared_errors = np.square(diff)
@@ -75,7 +75,7 @@ def mean_absolute_percentage_error(
     epsilon: float = 1e-8,
 ) -> float:
     """Return the MAPE while guarding against division-by-zero.
-    
+
     Notes:
         **Numerical Stability (2025 Standards):**
         - Epsilon clipping prevents division by zero or near-zero
@@ -88,14 +88,14 @@ def mean_absolute_percentage_error(
     pred = _as_float_array(y_pred)
     if true.shape != pred.shape:
         raise ValueError("y_true and y_pred must share the same shape")
-    
+
     # Clip absolute true values to epsilon to prevent division by zero
     # This makes MAPE undefined for zero true values, but provides stable fallback
     safe_true = np.clip(np.abs(true), epsilon, None)
-    
+
     # Compute percentage errors with float64 precision
     percentage_errors = np.abs((true - pred) / safe_true)
-    
+
     # Mean with float64 accumulation
     return float(np.mean(percentage_errors, dtype=np.float64))
 
@@ -107,7 +107,7 @@ def symmetric_mean_absolute_percentage_error(
     epsilon: float = 1e-8,
 ) -> float:
     """Return sMAPE with optional epsilon to stabilise near-zero targets.
-    
+
     Notes:
         **Numerical Stability (2025 Standards):**
         - Symmetric formulation: treats over/under-prediction equally
@@ -121,24 +121,24 @@ def symmetric_mean_absolute_percentage_error(
     pred = _as_float_array(y_pred)
     if true.shape != pred.shape:
         raise ValueError("y_true and y_pred must share the same shape")
-    
+
     # Compute denominator: |y_true| + |y_pred|, clipped to epsilon
     # This makes the metric symmetric and prevents division by zero
     abs_true = np.abs(true)
     abs_pred = np.abs(pred)
     denom = np.maximum(abs_true + abs_pred, epsilon)
-    
+
     # sMAPE = 2 * mean(|y_true - y_pred| / (|y_true| + |y_pred|))
     # Factor of 2 normalizes to 0-200% range (0-2 in decimal)
     errors = np.abs(true - pred) / denom
-    
+
     # Mean with float64 accumulation, then multiply by 2
     return float(np.mean(errors, dtype=np.float64) * 2.0)
 
 
 def r2_score(y_true: Iterable[float], y_pred: Iterable[float]) -> float:
     """Return the coefficient of determination (R²).
-    
+
     Notes:
         **Numerical Stability (2025 Standards):**
         - Uses Welford-style two-pass algorithm for variance
@@ -152,15 +152,15 @@ def r2_score(y_true: Iterable[float], y_pred: Iterable[float]) -> float:
     pred = _as_float_array(y_pred)
     if true.shape != pred.shape:
         raise ValueError("y_true and y_pred must share the same shape")
-    
+
     # Compute mean with float64 precision
     mean_true = np.mean(true, dtype=np.float64)
-    
+
     # Total sum of squares: variance * n
     # Use centered differences to avoid catastrophic cancellation
     centered_true = true - mean_true
     ss_tot = np.sum(np.square(centered_true), dtype=np.float64)
-    
+
     # Check for degenerate case: constant target sequence
     # Use small epsilon to account for numerical errors
     eps = np.finfo(np.float64).eps * max(np.abs(mean_true), 1.0) * true.size
@@ -169,11 +169,11 @@ def r2_score(y_true: Iterable[float], y_pred: Iterable[float]) -> float:
         # by returning zero when predictions deviate from the constant value.
         residual = np.max(np.abs(true - pred))
         return 0.0 if residual > eps else 1.0
-    
+
     # Residual sum of squares
     residuals = true - pred
     ss_res = np.sum(np.square(residuals), dtype=np.float64)
-    
+
     # R² = 1 - (SS_res / SS_tot)
     # Can be negative for very poor fits (worse than horizontal line)
     r2 = 1.0 - (ss_res / ss_tot)

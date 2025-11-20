@@ -185,9 +185,11 @@ class NodeDistribution:
     positions: np.ndarray
 
     def __post_init__(self) -> None:
-        if self.support.ndim != 1 or self.probabilities.ndim != 1 or self.positions.ndim != 1:
+        if (self.support.ndim != 1 or self.probabilities.ndim != 1
+                or self.positions.ndim != 1):
             raise ValueError("NodeDistribution arrays must be one-dimensional")
-        if self.support.shape != self.probabilities.shape or self.support.shape != self.positions.shape:
+        if (self.support.shape != self.probabilities.shape
+                or self.support.shape != self.positions.shape):
             raise ValueError("NodeDistribution arrays must share the same shape")
         total = float(self.probabilities.sum())
         if not np.isfinite(total) or total <= 0.0:
@@ -242,7 +244,9 @@ def _normalized_neighbor_weights(G: nx.Graph, node: int) -> tuple[np.ndarray, np
     return np.asarray(neighbors, dtype=int), w_arr
 
 
-def _build_node_distribution(G: nx.Graph, node: int, offset: float, scale: float) -> NodeDistribution:
+def _build_node_distribution(
+    G: nx.Graph, node: int, offset: float, scale: float
+) -> NodeDistribution:
     support, weights = _normalized_neighbor_weights(G, node)
     support_idx = np.asarray(support, dtype=int)
     support_arr = support_idx.astype(float, copy=True)
@@ -623,7 +627,7 @@ def _w1_fallback(
 
     Returns:
         float: The 1-Wasserstein distance computed on the shared 1-D support.
-        
+
     Notes:
         **Numerical Stability (2025 Standards):**
         - Uses float64 throughout to prevent precision loss
@@ -691,31 +695,31 @@ def _w1_fallback(
     cdf_a = np.cumsum(mass_a, dtype=np.float64)
     cdf_b = np.cumsum(mass_b, dtype=np.float64)
     cdf_diff = np.abs(cdf_a - cdf_b)
-    
+
     # Calculate position deltas
     deltas = np.diff(positions)
     if deltas.size == 0:
         return 0.0
-    
+
     # Use Kahan summation for the Wasserstein integral to prevent drift
     # This is critical for high-resolution graphs with >10k nodes
     w1_distance = 0.0
     compensation = 0.0
-    
+
     for i in range(deltas.size):
         term = cdf_diff[i] * deltas[i]
         corrected = term - compensation
         new_sum = w1_distance + corrected
         compensation = (new_sum - w1_distance) - corrected
         w1_distance = new_sum
-    
+
     # Ensure non-negative result (mathematical guarantee)
     result = max(w1_distance, 0.0)
-    
+
     # Validate finiteness before returning
     if not np.isfinite(result):
         return 0.0
-    
+
     return float(result)
 
 

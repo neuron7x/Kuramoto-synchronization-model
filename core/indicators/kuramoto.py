@@ -127,7 +127,7 @@ def compute_phase(
         described in ``docs/documentation_governance.md``. When ``use_float32``
         is enabled the returned phases are numerically stable for windows up to
         ~1e6 samples; beyond that, prefer ``float64`` to avoid precision loss.
-        
+
         **Numerical Stability (2025 Standards):**
         - Uses atan2 for phase calculation (stable for all quadrants)
         - FFT operations use appropriate precision based on input size
@@ -152,11 +152,11 @@ def compute_phase(
                 raise ValueError("out array dtype must match requested precision")
         if x.ndim != 1:
             raise ValueError("compute_phase expects 1D array")
-        
+
         # Enhanced input validation: check for degenerate cases
         if not np.all(np.isfinite(x)):
             x = np.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
-        
+
         # Check for constant signal (Hilbert transform is undefined)
         if x.size > 1:
             x_range = np.ptp(x)  # peak-to-peak range
@@ -166,7 +166,7 @@ def compute_phase(
                     target.fill(0.0)
                     return target
                 return np.zeros_like(x, dtype=dtype)
-        
+
         hilbert_module = (
             getattr(hilbert, "__module__", "") if hilbert is not None else ""
         )
@@ -208,7 +208,7 @@ def compute_phase(
             # Use float64 internally for FFT to maximize precision
             working = x.astype(np.float64, copy=False)
             spectrum = np.fft.fft(working)
-            
+
             # Construct Hilbert filter: H(0)=1, H(nyquist)=1, H(positive)=2, H(negative)=0
             h = np.zeros(n, dtype=np.float64)
             if n % 2 == 0:
@@ -217,12 +217,12 @@ def compute_phase(
             else:
                 h[0] = 1.0
                 h[1 : (n + 1) // 2] = 2.0
-            
+
             # Apply filter and inverse transform
             analytic = np.fft.ifft(spectrum * h)
             real = analytic.real.astype(dtype, copy=False)
             imag = analytic.imag.astype(dtype, copy=False)
-        
+
         # Compute phase using atan2 for full quadrant accuracy
         if target is not None:
             np.arctan2(imag, real, out=target)
@@ -269,7 +269,7 @@ def kuramoto_order(
         to balance performance and stability for large ensembles; clipping at
         ``1e-8`` enforces the governance rule that de-synchronised states report
         exactly zero rather than a denormal.
-        
+
         **Numerical Stability (2025 Standards):**
         - Uses compensated summation for large ensembles to prevent drift
         - Float64 for trigonometric operations ensures sub-ULP accuracy

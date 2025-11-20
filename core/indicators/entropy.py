@@ -233,11 +233,11 @@ def entropy(
             # Compute probabilities with float64 precision for chunked results
             nonzero_counts = total_counts[total_counts > 0]
             probs = nonzero_counts.astype(np.float64, copy=False) / float(total_weight)
-            
+
             # Stable entropy calculation
             log_probs = np.log(probs)
             entropy_value = -float(np.dot(probs, log_probs))
-            
+
             _LAST_ENTROPY_BACKEND = "cpu"
             return entropy_value
 
@@ -256,19 +256,19 @@ def entropy(
         # Calculate Shannon entropy: H = -Σ p_i * log(p_i)
         # Filter out zero bins to avoid log(0)
         nonzero_counts = counts[counts > 0]
-        
+
         # Compute probabilities with explicit float64 for precision
         # Critical for financial applications where small probability differences matter
         p = nonzero_counts.astype(np.float64, copy=False) / float(total)
-        
+
         # Use natural logarithm (base e) as standard for Shannon entropy
         # log(p) is always negative for 0 < p < 1, so -p*log(p) is positive
         log_p = np.log(p)
-        
+
         # Compute entropy using stable dot product
         # This is more numerically stable than (p * log_p).sum() for large bin counts
         entropy_value = -float(np.dot(p, log_p))
-        
+
         _LAST_ENTROPY_BACKEND = "cpu"
         return entropy_value
 
