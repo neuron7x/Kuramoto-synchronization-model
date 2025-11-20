@@ -33,7 +33,7 @@ class BacktestingService(Microservice):
         self,
         system: TradePulseSystem,
         *,
-        market_data_service: "MarketDataService | None" = None,
+        market_data_service: MarketDataService | None = None,
         contracts: IntegrationContractRegistry | None = None,
     ) -> None:
         super().__init__(name="backtesting")
@@ -49,7 +49,7 @@ class BacktestingService(Microservice):
             pass
 
     @property
-    def market_data_service(self) -> "MarketDataService":
+    def market_data_service(self) -> MarketDataService:
         from application.microservices.market_data import MarketDataService
 
         if self._market_data_service is None:
