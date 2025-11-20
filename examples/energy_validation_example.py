@@ -5,8 +5,9 @@ Demonstrates how to use the EnergyValidator to validate system metrics
 against TACL thermodynamic thresholds.
 """
 
-from runtime.energy_validator import EnergyValidator, EnergyConfig
 from pathlib import Path
+
+from runtime.energy_validator import EnergyConfig, EnergyValidator
 
 
 def example_basic_validation():
@@ -20,13 +21,13 @@ def example_basic_validation():
 
     # Example metrics (all below threshold - should pass)
     metrics_good = {
-        "latency_p95": 75.0,      # Threshold: 85.0 ms
-        "latency_p99": 100.0,     # Threshold: 120.0 ms
+        "latency_p95": 75.0,  # Threshold: 85.0 ms
+        "latency_p99": 100.0,  # Threshold: 120.0 ms
         "coherency_drift": 0.05,  # Threshold: 0.08
-        "cpu_burn": 0.65,         # Threshold: 0.75
-        "mem_cost": 5.5,          # Threshold: 6.5 GiB
-        "queue_depth": 25.0,      # Threshold: 32.0
-        "packet_loss": 0.003,     # Threshold: 0.005
+        "cpu_burn": 0.65,  # Threshold: 0.75
+        "mem_cost": 5.5,  # Threshold: 6.5 GiB
+        "queue_depth": 25.0,  # Threshold: 32.0
+        "packet_loss": 0.003,  # Threshold: 0.005
     }
 
     result = validator.compute_free_energy(metrics_good)
@@ -57,13 +58,13 @@ def example_threshold_violation():
 
     # Metrics with violations (should fail)
     metrics_bad = {
-        "latency_p95": 95.0,      # ABOVE threshold (85.0)
-        "latency_p99": 130.0,     # ABOVE threshold (120.0)
+        "latency_p95": 95.0,  # ABOVE threshold (85.0)
+        "latency_p99": 130.0,  # ABOVE threshold (120.0)
         "coherency_drift": 0.05,  # Below threshold (OK)
-        "cpu_burn": 0.80,         # ABOVE threshold (0.75)
-        "mem_cost": 5.0,          # Below threshold (OK)
-        "queue_depth": 35.0,      # ABOVE threshold (32.0)
-        "packet_loss": 0.007,     # ABOVE threshold (0.005)
+        "cpu_burn": 0.80,  # ABOVE threshold (0.75)
+        "mem_cost": 5.0,  # Below threshold (OK)
+        "queue_depth": 35.0,  # ABOVE threshold (32.0)
+        "packet_loss": 0.007,  # ABOVE threshold (0.005)
     }
 
     result = validator.compute_free_energy(metrics_bad)
@@ -126,8 +127,10 @@ def example_time_series_validation():
         result = validator.compute_free_energy(full_metrics)
         status = "PASS ✓" if result.passed else "FAIL ✗"
 
-        print(f"{i + 1:<6} {result.free_energy:<10.6f} {result.internal_energy:<10.6f} "
-              f"{result.stability:<10.6f} {status:<10}")
+        print(
+            f"{i + 1:<6} {result.free_energy:<10.6f} {result.internal_energy:<10.6f} "
+            f"{result.stability:<10.6f} {status:<10}"
+        )
 
     print("\nSummary:")
     print(f"  Total validations: {len(validator.validation_history)}")
@@ -198,7 +201,7 @@ def example_custom_configuration():
             MetricThreshold("latency_p95", "95th percentile latency", 75.0, 1.8, "ms"),
             MetricThreshold("latency_p99", "99th percentile latency", 110.0, 2.0, "ms"),
             MetricThreshold("cpu_burn", "CPU utilization", 0.70, 1.0, ""),
-        )
+        ),
     )
 
     validator = EnergyValidator(config=custom_config)

@@ -5,7 +5,9 @@ from decimal import Decimal
 from domain import CurrencyExposureSnapshot, OrderSide, PortfolioAccounting
 
 
-def _exposure_by_currency(snapshot: tuple[CurrencyExposureSnapshot, ...], currency: str) -> CurrencyExposureSnapshot:
+def _exposure_by_currency(
+    snapshot: tuple[CurrencyExposureSnapshot, ...], currency: str
+) -> CurrencyExposureSnapshot:
     for exposure in snapshot:
         if exposure.currency == currency:
             return exposure

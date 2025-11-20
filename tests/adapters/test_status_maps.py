@@ -3,7 +3,8 @@ import importlib
 import inspect
 import pkgutil
 import re
-from typing import Dict, Any, Set
+from typing import Any, Dict, Set
+
 import pytest
 
 ADAPTERS_PKG = "execution.adapters"
@@ -18,9 +19,18 @@ def _collect_canonical_statuses() -> Set[str]:
         interfaces = importlib.import_module(INTERFACES_PKG)
     except Exception:
         # Fallback to common status names found in domain.Order.OrderStatus
-        return {"open", "partially_filled", "filled", "cancelled", "rejected", "pending"}
+        return {
+            "open",
+            "partially_filled",
+            "filled",
+            "cancelled",
+            "rejected",
+            "pending",
+        }
 
-    for _, name, ispkg in pkgutil.walk_packages(interfaces.__path__, interfaces.__name__ + "."):
+    for _, name, ispkg in pkgutil.walk_packages(
+        interfaces.__path__, interfaces.__name__ + "."
+    ):
         try:
             mod = importlib.import_module(name)
         except Exception:
@@ -33,7 +43,14 @@ def _collect_canonical_statuses() -> Set[str]:
                 for it in obj:
                     if isinstance(it, str):
                         names.add(it.lower())
-    return names or {"open", "partially_filled", "filled", "cancelled", "rejected", "pending"}
+    return names or {
+        "open",
+        "partially_filled",
+        "filled",
+        "cancelled",
+        "rejected",
+        "pending",
+    }
 
 
 CANONICAL_STATUS_NAMES = _collect_canonical_statuses()
@@ -47,7 +64,9 @@ def _iter_adapter_modules():
         yield name
 
 
-STATUS_MAP_NAME_RE = re.compile(r".*(ORDER|EXEC|STATUS).*(MAP|MAPPING).*", re.IGNORECASE)
+STATUS_MAP_NAME_RE = re.compile(
+    r".*(ORDER|EXEC|STATUS).*(MAP|MAPPING).*", re.IGNORECASE
+)
 
 
 def _find_status_maps(mod) -> Dict[str, Dict[Any, Any]]:
@@ -82,4 +101,6 @@ def test_status_maps_values_are_canonical():
 
 def test_status_maps_cover_common_states():
     typical = {"open", "partially_filled", "filled", "cancelled", "rejected"}
-    assert typical.issubset(CANONICAL_STATUS_NAMES), "Canonical statuses missing typical names"
+    assert typical.issubset(
+        CANONICAL_STATUS_NAMES
+    ), "Canonical statuses missing typical names"

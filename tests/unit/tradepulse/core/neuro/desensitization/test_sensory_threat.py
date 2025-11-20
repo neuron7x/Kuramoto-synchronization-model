@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from tradepulse.core.neuro.desensitization import SensoryHabituation, SensoryHabituationConfig, ThreatGate
+from tradepulse.core.neuro.desensitization import (
+    SensoryHabituation,
+    SensoryHabituationConfig,
+    ThreatGate,
+)
 
 
 def test_sensory_habituation_recovers_on_new_context() -> None:

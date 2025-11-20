@@ -274,12 +274,14 @@ class TestOptimizedTelemetryManager:
         manager = OptimizedTelemetryManager()
 
         for i in range(10):
-            manager.record({
-                "F": 1.0 + i * 0.1,
-                "dF_dt": 0.01,
-                "circuit_breaker_active": i > 5,
-                "topology_changes": [{"change": i}],
-            })
+            manager.record(
+                {
+                    "F": 1.0 + i * 0.1,
+                    "dF_dt": 0.01,
+                    "circuit_breaker_active": i > 5,
+                    "topology_changes": [{"change": i}],
+                }
+            )
 
         stats = manager.compute_statistics()
         assert stats["count"] == 10
@@ -356,6 +358,7 @@ class TestPerformanceMonitor:
 
     def test_timed_decorator(self):
         """Test timed decorator."""
+
         @timed("test_function")
         def slow_function():
             time.sleep(0.01)
@@ -413,6 +416,7 @@ class TestBenchmark:
 
     def test_benchmark_function(self):
         """Test benchmarking a function."""
+
         def test_func(x):
             return x * 2
 
@@ -430,6 +434,7 @@ class TestBenchmark:
 
     def test_compare_implementations(self):
         """Test comparing multiple implementations."""
+
         def impl1(n):
             return sum(range(n))
 

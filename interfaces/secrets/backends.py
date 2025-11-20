@@ -63,9 +63,7 @@ def _read_optional_file(path: str | None) -> str | None:
         return None
     file_path = Path(path)
     if not file_path.exists():
-        raise SecretBackendConfigurationError(
-            f"Secret file {file_path} does not exist"
-        )
+        raise SecretBackendConfigurationError(f"Secret file {file_path} does not exist")
     return file_path.read_text(encoding="utf-8").strip()
 
 
@@ -78,8 +76,7 @@ class _VaultKeyValueClient(Protocol):
         version: int = 2,
         actor: str | None = None,
         ip_address: str | None = None,
-    ) -> Mapping[str, Any]:
-        ...
+    ) -> Mapping[str, Any]: ...
 
 
 @dataclass(slots=True)
@@ -196,8 +193,9 @@ def _normalise_vault_path(path: str, default_mount: str | None) -> tuple[str, st
 def build_hashicorp_vault_resolver(
     config: HashicorpVaultBackendConfig,
     *,
-    client_factory: Callable[[HashicorpVaultBackendConfig], _VaultKeyValueClient]
-    | None = None,
+    client_factory: (
+        Callable[[HashicorpVaultBackendConfig], _VaultKeyValueClient] | None
+    ) = None,
     context_provider: Callable[[], Mapping[str, str]] | None = None,
 ) -> VaultResolver:
     """Return a resolver that fetches secrets from HashiCorp Vault."""
@@ -214,9 +212,7 @@ def build_hashicorp_vault_resolver(
         mount, secret_path = _normalise_vault_path(path, config.default_mount)
         context: Mapping[str, str] = context_provider() if context_provider else {}
         actor = context.get("actor") if isinstance(context, Mapping) else None
-        ip_address = (
-            context.get("ip_address") if isinstance(context, Mapping) else None
-        )
+        ip_address = context.get("ip_address") if isinstance(context, Mapping) else None
         with lock:
             try:
                 payload = client.read_kv_secret(
@@ -319,7 +315,9 @@ def build_aws_secrets_manager_resolver(
             if config.endpoint_url:
                 client_kwargs["endpoint_url"] = config.endpoint_url
             client = session.client("secretsmanager", **client_kwargs)
-        except BotoCoreError as exc:  # pragma: no cover - relies on boto3 runtime errors
+        except (
+            BotoCoreError
+        ) as exc:  # pragma: no cover - relies on boto3 runtime errors
             raise SecretBackendError(
                 f"Failed to create AWS Secrets Manager client: {exc}"
             ) from exc
@@ -337,9 +335,7 @@ def build_aws_secrets_manager_resolver(
         if "SecretString" in response and response["SecretString"] is not None:
             secret_string = response["SecretString"]
             if not isinstance(secret_string, str):
-                raise SecretBackendError(
-                    "SecretString payload must be a string value"
-                )
+                raise SecretBackendError("SecretString payload must be a string value")
             try:
                 parsed = json.loads(secret_string)
             except json.JSONDecodeError:

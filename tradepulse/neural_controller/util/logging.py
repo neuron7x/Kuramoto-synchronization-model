@@ -95,7 +95,9 @@ class _JsonLogFormatter(logging.Formatter):
     default_time_format = "%Y-%m-%dT%H:%M:%S"
     default_msec_format = "%s.%03dZ"
 
-    def format(self, record: logging.LogRecord) -> str:  # noqa: D401 - inherited docstring
+    def format(
+        self, record: logging.LogRecord
+    ) -> str:  # noqa: D401 - inherited docstring
         payload: Dict[str, Any] = {
             "ts": self.formatTime(record, self.default_time_format),
             "level": record.levelname,

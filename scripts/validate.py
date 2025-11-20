@@ -121,7 +121,9 @@ def main() -> None:
         low_b = res["L"].iloc[i]
         high_b = res["U"].iloc[i]
         width = max(1e-9, high_b - low_b)
-        target = np.sign(m_hat) * min(1.0, abs(m_hat) / width) if abs(m_hat) > 0 else 0.0
+        target = (
+            np.sign(m_hat) * min(1.0, abs(m_hat) / width) if abs(m_hat) > 0 else 0.0
+        )
         costs = exec_sim.costs(res["spread"].iloc[i], test_df["vol10"].iloc[i])
         fill_p = exec_sim.fill(mid, res["spread"].iloc[i], target, pos)
         nxt = res["mid"].iloc[i + 1]

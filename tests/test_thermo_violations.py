@@ -5,8 +5,8 @@ from __future__ import annotations
 import networkx as nx
 from fastapi.testclient import TestClient
 
-from runtime.thermo_controller import ThermoController, ToleranceCheck
 from runtime import thermo_api
+from runtime.thermo_controller import ThermoController, ToleranceCheck
 
 
 def _build_graph() -> nx.DiGraph:

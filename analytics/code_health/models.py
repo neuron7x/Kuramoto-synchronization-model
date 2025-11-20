@@ -128,6 +128,6 @@ class RepositoryMetrics:
         return self.files.values()
 
     def most_risky(self, limit: int = 10) -> List[FileMetrics]:
-        return sorted(self.risk_hotspots, key=lambda fm: fm.risk_profile.risk_score, reverse=True)[
-            :limit
-        ]
+        return sorted(
+            self.risk_hotspots, key=lambda fm: fm.risk_profile.risk_score, reverse=True
+        )[:limit]

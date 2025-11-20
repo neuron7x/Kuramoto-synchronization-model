@@ -27,24 +27,36 @@ class ConsistencyError(Exception):
 class ConsistencyValidator:
     """Performs strict validation of exchange payloads before applying."""
 
-    def __init__(self, *, min_price: Decimal | None = None, min_quantity: Decimal | None = None) -> None:
+    def __init__(
+        self, *, min_price: Decimal | None = None, min_quantity: Decimal | None = None
+    ) -> None:
         self._min_price = min_price
         self._min_quantity = min_quantity
 
     def validate_snapshot(self, snapshot: OrderBookSnapshot) -> None:
-        self._validate_levels(snapshot.instrument, snapshot.sequence, snapshot.bids, Side.BUY)
-        self._validate_levels(snapshot.instrument, snapshot.sequence, snapshot.asks, Side.SELL)
+        self._validate_levels(
+            snapshot.instrument, snapshot.sequence, snapshot.bids, Side.BUY
+        )
+        self._validate_levels(
+            snapshot.instrument, snapshot.sequence, snapshot.asks, Side.SELL
+        )
         self._validate_timestamps(snapshot.ts_event, snapshot.ts_arrival)
 
     def validate_diff(self, diff: OrderBookDiff) -> None:
-        self._validate_levels(diff.instrument, diff.sequence_end, diff.bids, Side.BUY, allow_zero=True)
-        self._validate_levels(diff.instrument, diff.sequence_end, diff.asks, Side.SELL, allow_zero=True)
+        self._validate_levels(
+            diff.instrument, diff.sequence_end, diff.bids, Side.BUY, allow_zero=True
+        )
+        self._validate_levels(
+            diff.instrument, diff.sequence_end, diff.asks, Side.SELL, allow_zero=True
+        )
         self._validate_timestamps(diff.ts_event, diff.ts_arrival)
 
     @staticmethod
     def _validate_timestamps(ts_event: datetime, ts_arrival: datetime) -> None:
         if ts_arrival < ts_event:
-            raise ConsistencyError("arrival timestamp earlier than event", "<unknown>", None)
+            raise ConsistencyError(
+                "arrival timestamp earlier than event", "<unknown>", None
+            )
 
     def _validate_levels(
         self,
@@ -61,21 +73,31 @@ class ConsistencyValidator:
             qty = level.quantity
             if self._min_price is not None and price < self._min_price:
                 raise ConsistencyError(
-                    f"price {price} below minimum {self._min_price}", instrument, sequence
+                    f"price {price} below minimum {self._min_price}",
+                    instrument,
+                    sequence,
                 )
             if self._min_quantity is not None and qty < self._min_quantity and qty != 0:
                 raise ConsistencyError(
-                    f"quantity {qty} below minimum {self._min_quantity}", instrument, sequence
+                    f"quantity {qty} below minimum {self._min_quantity}",
+                    instrument,
+                    sequence,
                 )
             if qty < 0:
                 raise ConsistencyError(f"negative quantity {qty}", instrument, sequence)
             if not allow_zero and qty == 0:
-                raise ConsistencyError("zero quantity in snapshot", instrument, sequence)
+                raise ConsistencyError(
+                    "zero quantity in snapshot", instrument, sequence
+                )
             if prev_price is not None and not allow_zero:
                 if side is Side.BUY and price >= prev_price:
-                    raise ConsistencyError("bid levels not strictly descending", instrument, sequence)
+                    raise ConsistencyError(
+                        "bid levels not strictly descending", instrument, sequence
+                    )
                 if side is Side.SELL and price <= prev_price:
-                    raise ConsistencyError("ask levels not strictly ascending", instrument, sequence)
+                    raise ConsistencyError(
+                        "ask levels not strictly ascending", instrument, sequence
+                    )
             prev_price = price
 
 

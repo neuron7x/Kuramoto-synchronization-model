@@ -21,12 +21,9 @@ class MockMetricsCollector:
         self.counters: Dict[str, int] = {}
 
     def record_metric(self, name: str, value: float, tags: Dict = None):
-        self.metrics.append({
-            "name": name,
-            "value": value,
-            "tags": tags or {},
-            "timestamp": time.time()
-        })
+        self.metrics.append(
+            {"name": name, "value": value, "tags": tags or {}, "timestamp": time.time()}
+        )
 
     def set_gauge(self, name: str, value: float):
         self.gauges[name] = value
@@ -168,19 +165,21 @@ class TestAnomalyDetection:
         import numpy as np
 
         # Generate time series with anomaly
-        data = np.concatenate([
-            np.random.normal(100, 5, 50),  # Normal
-            [150],  # Anomaly
-            np.random.normal(100, 5, 50)   # Normal
-        ])
+        data = np.concatenate(
+            [
+                np.random.normal(100, 5, 50),  # Normal
+                [150],  # Anomaly
+                np.random.normal(100, 5, 50),  # Normal
+            ]
+        )
 
         # Calculate moving average
         window = 10
-        ma = np.convolve(data, np.ones(window) / window, mode='valid')
+        ma = np.convolve(data, np.ones(window) / window, mode="valid")
 
         # Find anomalies (simple threshold)
         threshold = 2 * np.std(ma)
-        anomalies = np.abs(data[window - 1:] - ma) > threshold
+        anomalies = np.abs(data[window - 1 :] - ma) > threshold
 
         assert np.any(anomalies)  # Should detect the spike
 
@@ -190,10 +189,9 @@ class TestAnomalyDetection:
 
         # Generate data with sudden rate change
         t = np.linspace(0, 10, 100)
-        data = np.concatenate([
-            t[:50] * 0.1,  # Slow growth
-            50 + (t[50:] - 5) * 2  # Rapid growth
-        ])
+        data = np.concatenate(
+            [t[:50] * 0.1, 50 + (t[50:] - 5) * 2]  # Slow growth  # Rapid growth
+        )
 
         # Calculate rate of change
         rate = np.diff(data)
@@ -230,7 +228,7 @@ class TestLoadTestingInstrumentation:
         error_rate = failed_requests / total_requests
 
         assert error_rate == 0.025  # 2.5% error rate
-        assert error_rate < 0.05    # Below 5% threshold
+        assert error_rate < 0.05  # Below 5% threshold
 
     def test_response_time_percentiles(self):
         """Test calculation of response time percentiles."""
@@ -314,17 +312,13 @@ class TestEndToEndTelemetry:
         trace_id = "abc123"
         span_id = "def456"
 
-        context = {
-            "trace_id": trace_id,
-            "span_id": span_id,
-            "parent_id": None
-        }
+        context = {"trace_id": trace_id, "span_id": span_id, "parent_id": None}
 
         # Child span inherits context
         child_context = {
             "trace_id": context["trace_id"],
             "span_id": "ghi789",
-            "parent_id": context["span_id"]
+            "parent_id": context["span_id"],
         }
 
         assert child_context["trace_id"] == trace_id

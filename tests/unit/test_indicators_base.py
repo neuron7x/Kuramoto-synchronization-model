@@ -102,9 +102,10 @@ def test_feature_block_extend() -> None:
     block = FeatureBlock()
     block.extend([DoubleFeature(name="double"), IncrementFeature(increment=0.5)])
     outputs = block(4)
-    assert outputs == {"double": 8.0, "increment": 4.5}, (
-        "All extended features should execute"
-    )
+    assert outputs == {
+        "double": 8.0,
+        "increment": 4.5,
+    }, "All extended features should execute"
 
 
 def test_feature_block_supports_positional_name_and_alias_methods() -> None:
@@ -134,9 +135,9 @@ def test_feature_block_transform_all_returns_feature_results() -> None:
     results = block.transform_all(2)
     assert set(results.keys()) == {"double"}, "All features should be present"
     result = results["double"]
-    assert isinstance(result, FeatureResult), (
-        "Results should be FeatureResult objects, not raw values"
-    )
+    assert isinstance(
+        result, FeatureResult
+    ), "Results should be FeatureResult objects, not raw values"
     assert result.value == 4.0
 
 

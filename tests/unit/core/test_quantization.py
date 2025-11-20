@@ -25,7 +25,9 @@ def test_post_training_int8_quantization_high_fidelity() -> None:
 
 def test_dynamic_quantization_without_calibration() -> None:
     values = np.linspace(-1.5, 1.5, num=33, dtype=np.float32)
-    quantizer = UniformAffineQuantizer(QuantizationConfig(target_dtype="int8", scheme="dynamic"))
+    quantizer = UniformAffineQuantizer(
+        QuantizationConfig(target_dtype="int8", scheme="dynamic")
+    )
 
     result = quantizer.quantize(values)
 

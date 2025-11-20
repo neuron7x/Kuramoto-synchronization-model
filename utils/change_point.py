@@ -1,4 +1,5 @@
 """Change point detection utilities used by the FHMC controller."""
+
 from __future__ import annotations
 
 import numpy as np

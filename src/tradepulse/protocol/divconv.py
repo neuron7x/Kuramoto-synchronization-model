@@ -198,7 +198,9 @@ def compute_divergence_functional(
     return float(delta @ metric_array @ delta)
 
 
-def compute_threshold_tau_d(divergence_series: ArrayLike, *, alpha: float = 0.95) -> float:
+def compute_threshold_tau_d(
+    divergence_series: ArrayLike, *, alpha: float = 0.95
+) -> float:
     """High-side divergence threshold (``τ_d``) via quantiles."""
 
     if not 0.0 < alpha < 1.0:
@@ -210,7 +212,9 @@ def compute_threshold_tau_d(divergence_series: ArrayLike, *, alpha: float = 0.95
     return float(np.quantile(series, alpha))
 
 
-def compute_threshold_tau_c(divergence_series: ArrayLike, *, beta: float = 0.05) -> float:
+def compute_threshold_tau_c(
+    divergence_series: ArrayLike, *, beta: float = 0.05
+) -> float:
     """Low-side convergence threshold (``τ_c``) via quantiles."""
 
     if not 0.0 < beta < 1.0:

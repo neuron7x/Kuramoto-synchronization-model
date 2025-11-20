@@ -6,14 +6,15 @@ isolation, and fallback strategies in a cohesive toolkit. The implementation is
 thread-safe and intentionally lightweight so it can be used from synchronous or
 asynchronous contexts (with thread offloading for blocking work).
 """
+
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass, field
-from enum import Enum
 import math
 import threading
 import time
+from collections import deque
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Callable, Deque, Dict, Optional, Protocol, Tuple
 
 
@@ -65,7 +66,10 @@ class CircuitBreaker:
                 else:
                     return False
 
-            if self._state is CircuitBreakerState.HALF_OPEN and self._half_open_calls >= self._config.half_open_max_calls:
+            if (
+                self._state is CircuitBreakerState.HALF_OPEN
+                and self._half_open_calls >= self._config.half_open_max_calls
+            ):
                 return False
 
             if self._state is CircuitBreakerState.HALF_OPEN:
@@ -135,7 +139,10 @@ class CircuitBreaker:
                     self._transition_to_half_open()
                     return True
                 return False
-            return self._state in (CircuitBreakerState.CLOSED, CircuitBreakerState.HALF_OPEN)
+            return self._state in (
+                CircuitBreakerState.CLOSED,
+                CircuitBreakerState.HALF_OPEN,
+            )
 
     def get_last_trip_reason(self) -> Optional[str]:
         """Get the reason for the last trip."""
@@ -283,7 +290,9 @@ class AdaptiveThrottler:
         baseline = self.target_p95_ms or 1.0
         ratio = p95 / baseline
         desired_multiplier = max(self.min_multiplier, min(self.max_multiplier, ratio))
-        self._multiplier = (self.smoothing * desired_multiplier) + ((1 - self.smoothing) * self._multiplier)
+        self._multiplier = (self.smoothing * desired_multiplier) + (
+            (1 - self.smoothing) * self._multiplier
+        )
 
 
 class FallbackStrategy(Protocol):
@@ -445,7 +454,9 @@ class ExchangeResilienceProfile:
 
         return True
 
-    def release(self, success: bool, latency_ms: float, error: Optional[Exception] = None) -> None:
+    def release(
+        self, success: bool, latency_ms: float, error: Optional[Exception] = None
+    ) -> None:
         self.bulkhead.release()
         if success:
             self.circuit_breaker.record_success()
@@ -479,7 +490,9 @@ class ExchangeResilienceProfile:
                     continue
                 try:
                     return fallback.execute(exchange, operation, *args, **kwargs)
-                except Exception:  # noqa: BLE001 - fallback errors should not mask original
+                except (
+                    Exception
+                ):  # noqa: BLE001 - fallback errors should not mask original
                     continue
             raise
 
@@ -504,7 +517,10 @@ class ExchangeResilienceManager:
         return self._profiles[exchange]
 
     def health_report(self) -> Dict[str, Dict[str, object]]:
-        return {exchange: profile.health.snapshot() for exchange, profile in self._profiles.items()}
+        return {
+            exchange: profile.health.snapshot()
+            for exchange, profile in self._profiles.items()
+        }
 
 
 def default_resilience_profile(
@@ -529,7 +545,9 @@ def default_resilience_profile(
             half_open_max_calls=half_open_max_calls,
         )
     )
-    token_bucket = TokenBucketRateLimiter(token_bucket_capacity, token_bucket_refill_per_sec)
+    token_bucket = TokenBucketRateLimiter(
+        token_bucket_capacity, token_bucket_refill_per_sec
+    )
     leaky_bucket = LeakyBucketRateLimiter(leaky_bucket_capacity, leaky_bucket_leak_rate)
     throttler = AdaptiveThrottler()
     bulkhead = Bulkhead(bulkhead_concurrency)

@@ -9,7 +9,9 @@ from ..models import OrderBookDiff, OrderBookSnapshot, PriceLevel
 
 
 def _levels(entries: Iterable[Sequence[str | float]]) -> tuple[PriceLevel, ...]:
-    return tuple(PriceLevel.from_raw(price, quantity) for price, quantity, *_ in entries)
+    return tuple(
+        PriceLevel.from_raw(price, quantity) for price, quantity, *_ in entries
+    )
 
 
 def parse(

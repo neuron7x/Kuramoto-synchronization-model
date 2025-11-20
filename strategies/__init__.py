@@ -9,9 +9,11 @@ from .registry import (
     StrategyRegistry,
     StrategySpec,
     UnknownStrategyError,
-    available_strategies as _available_strategies,
     register_strategy,
     resolve_strategy,
+)
+from .registry import (
+    available_strategies as _available_strategies,
 )
 
 
@@ -22,7 +24,9 @@ def get_strategy(name: str, config: Dict[str, Any] | None = None) -> Any:
         return resolve_strategy(name, config)
     except UnknownStrategyError as exc:  # pragma: no cover - defensive guard
         available = ", ".join(spec.name for spec in _available_strategies())
-        raise ValueError(f"Unknown strategy '{name}'. Available: [{available}]") from exc
+        raise ValueError(
+            f"Unknown strategy '{name}'. Available: [{available}]"
+        ) from exc
 
 
 def list_strategies() -> Tuple[StrategySpec, ...]:

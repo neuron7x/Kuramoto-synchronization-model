@@ -70,15 +70,25 @@ class MarketDataAdapter:
 
         payload: Dict[str, float | bool] = {
             "dd": _clamp_unit(np.nan_to_num(dd_norm, nan=0.0, posinf=1.0, neginf=0.0)),
-            "liq": _clamp_unit(np.nan_to_num(liq_norm, nan=0.0, posinf=1.0, neginf=0.0)),
-            "reg": _clamp_unit(np.nan_to_num(reg_norm, nan=0.0, posinf=1.0, neginf=0.0)),
-            "vol": _clamp_unit(np.nan_to_num(vol_norm, nan=0.0, posinf=1.0, neginf=0.0)),
+            "liq": _clamp_unit(
+                np.nan_to_num(liq_norm, nan=0.0, posinf=1.0, neginf=0.0)
+            ),
+            "reg": _clamp_unit(
+                np.nan_to_num(reg_norm, nan=0.0, posinf=1.0, neginf=0.0)
+            ),
+            "vol": _clamp_unit(
+                np.nan_to_num(vol_norm, nan=0.0, posinf=1.0, neginf=0.0)
+            ),
             "reward": reward,
             "var_breach": var_breach,
-            "m_proxy": _clamp_unit(np.nan_to_num(m_proxy, nan=0.5, posinf=1.0, neginf=0.0)),
+            "m_proxy": _clamp_unit(
+                np.nan_to_num(m_proxy, nan=0.5, posinf=1.0, neginf=0.0)
+            ),
         }
 
-        numeric_values = [value for value in payload.values() if isinstance(value, float)]
+        numeric_values = [
+            value for value in payload.values() if isinstance(value, float)
+        ]
         if any(np.isnan(value) or np.isinf(value) for value in numeric_values):
             log.warning(
                 "adapter produced invalid payload",  # noqa: TRY400 - structured logging

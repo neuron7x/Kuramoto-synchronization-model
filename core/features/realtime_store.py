@@ -16,7 +16,14 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from collections.abc import Awaitable, Callable, Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Awaitable,
+    Callable,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Final, TypedDict, TypeVar
@@ -107,7 +114,9 @@ class FeatureRecord:
             "value": json.dumps(self.value, separators=(",", ":")),
         }
         if self.lineage is not None:
-            payload["lineage"] = json.dumps(self.lineage.asdict(), separators=(",", ":"))
+            payload["lineage"] = json.dumps(
+                self.lineage.asdict(), separators=(",", ":")
+            )
         return payload
 
     @classmethod
@@ -130,7 +139,9 @@ class FeatureRecord:
             descriptor=descriptor,
             entity_id=payload["entity_id"],
             value=json.loads(payload["value"]),
-            event_ts=datetime.fromisoformat(payload["event_ts"]).astimezone(timezone.utc),
+            event_ts=datetime.fromisoformat(payload["event_ts"]).astimezone(
+                timezone.utc
+            ),
             lineage=lineage,
         )
 
@@ -260,11 +271,20 @@ class RealTimeFeatureStore:
                 descriptor.version,
                 descriptor.entity,
                 ttl_ms,
-                json.dumps(descriptor.schema) if descriptor.schema is not None else None,
+                (
+                    json.dumps(descriptor.schema)
+                    if descriptor.schema is not None
+                    else None
+                ),
                 descriptor.description,
             )
         self._registered_descriptors[key] = descriptor
-        _LOGGER.debug("Registered feature %s v%s for entity %s", descriptor.name, descriptor.version, descriptor.entity)
+        _LOGGER.debug(
+            "Registered feature %s v%s for entity %s",
+            descriptor.name,
+            descriptor.version,
+            descriptor.entity,
+        )
 
     async def publish_incremental_update(
         self,
@@ -279,9 +299,17 @@ class RealTimeFeatureStore:
 
         await self.register_feature(descriptor)
         event_ts = (event_ts or datetime.now(timezone.utc)).astimezone(timezone.utc)
-        record = FeatureRecord(descriptor=descriptor, entity_id=entity_id, value=dict(value), event_ts=event_ts, lineage=lineage)
+        record = FeatureRecord(
+            descriptor=descriptor,
+            entity_id=entity_id,
+            value=dict(value),
+            event_ts=event_ts,
+            lineage=lineage,
+        )
         redis_payload = record.to_redis_payload()
-        ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
+        ttl_ms = descriptor.ttl_milliseconds or int(
+            self._default_ttl.total_seconds() * 1000
+        )
 
         timescale_applied = await self._execute_with_retries(
             lambda: self._write_to_timescale(record),
@@ -290,7 +318,9 @@ class RealTimeFeatureStore:
         )
         try:
             await self._execute_with_retries(
-                lambda: self._write_to_redis(descriptor, entity_id, redis_payload, ttl_ms),
+                lambda: self._write_to_redis(
+                    descriptor, entity_id, redis_payload, ttl_ms
+                ),
                 attempts=self._write_retry_attempts,
                 op_name="redis write",
             )
@@ -298,7 +328,9 @@ class RealTimeFeatureStore:
             if timescale_applied:
                 try:
                     await self._delete_from_timescale(record)
-                except Exception as rollback_error:  # pragma: no cover - defensive logging
+                except (
+                    Exception
+                ) as rollback_error:  # pragma: no cover - defensive logging
                     _LOGGER.error(
                         "Failed to rollback Timescale write for %s/%s after Redis error: %s",  # noqa: TRY400
                         descriptor.name,
@@ -392,7 +424,9 @@ class RealTimeFeatureStore:
         assert last_error is not None
         raise last_error
 
-    async def get_feature(self, descriptor: FeatureDescriptor, entity_id: str) -> FeatureRecord | None:
+    async def get_feature(
+        self, descriptor: FeatureDescriptor, entity_id: str
+    ) -> FeatureRecord | None:
         """Retrieve the most recent feature value for an entity."""
 
         cache_key = descriptor.cache_key(entity_id)
@@ -408,7 +442,9 @@ class RealTimeFeatureStore:
                 payload_text = payload_json
             payload = json.loads(payload_text)
             record = FeatureRecord.from_redis_payload(descriptor, payload)
-            ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
+            ttl_ms = descriptor.ttl_milliseconds or int(
+                self._default_ttl.total_seconds() * 1000
+            )
             await self._microcache.set(cache_key, record, ttl_ms)
             return record
 
@@ -444,7 +480,9 @@ class RealTimeFeatureStore:
             event_ts=row["event_ts"].astimezone(timezone.utc),
             lineage=lineage,
         )
-        ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
+        ttl_ms = descriptor.ttl_milliseconds or int(
+            self._default_ttl.total_seconds() * 1000
+        )
         await self._microcache.set(cache_key, record, ttl_ms)
         return record
 
@@ -540,9 +578,15 @@ class RealTimeFeatureStore:
                         lineage=lineage,
                     )
                     payload = record.to_redis_payload()
-                    ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
-                    await self._write_to_redis(descriptor, record.entity_id, payload, ttl_ms)
-                    await self._microcache.set(descriptor.cache_key(record.entity_id), record, ttl_ms)
+                    ttl_ms = descriptor.ttl_milliseconds or int(
+                        self._default_ttl.total_seconds() * 1000
+                    )
+                    await self._write_to_redis(
+                        descriptor, record.entity_id, payload, ttl_ms
+                    )
+                    await self._microcache.set(
+                        descriptor.cache_key(record.entity_id), record, ttl_ms
+                    )
 
     async def run_batch_precomputation(
         self,
@@ -550,7 +594,10 @@ class RealTimeFeatureStore:
         entity_ids: Sequence[str],
         window_start: datetime,
         window_end: datetime,
-        compute_fn: Callable[[Sequence[str], datetime, datetime], Awaitable[Mapping[str, Mapping[str, Any]]]],
+        compute_fn: Callable[
+            [Sequence[str], datetime, datetime],
+            Awaitable[Mapping[str, Mapping[str, Any]]],
+        ],
         *,
         batch_size: int = 500,
     ) -> None:
@@ -589,14 +636,20 @@ class RealTimeFeatureStore:
             for entry_id, payload in entries:
                 payload_str: dict[str, str] = {}
                 for key, value in payload.items():
-                    key_str = key.decode("utf-8") if isinstance(key, (bytes, bytearray, memoryview)) else key
+                    key_str = (
+                        key.decode("utf-8")
+                        if isinstance(key, (bytes, bytearray, memoryview))
+                        else key
+                    )
                     if isinstance(value, (bytes, bytearray, memoryview)):
                         payload_str[key_str] = bytes(value).decode("utf-8")
                     else:
                         payload_str[key_str] = value
                 record = FeatureRecord.from_redis_payload(descriptor, payload_str)
                 records.append(record)
-                _LOGGER.debug("Consumed stream entry %s for %s", entry_id, descriptor.name)
+                _LOGGER.debug(
+                    "Consumed stream entry %s for %s", entry_id, descriptor.name
+                )
         return records
 
 

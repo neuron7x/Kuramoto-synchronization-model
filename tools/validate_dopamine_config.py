@@ -18,7 +18,10 @@ import yaml
 try:
     from jsonschema import Draft7Validator
 except ImportError:
-    print("Error: jsonschema package required. Install with: pip install jsonschema", file=sys.stderr)
+    print(
+        "Error: jsonschema package required. Install with: pip install jsonschema",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 
@@ -34,7 +37,9 @@ def load_config(config_path: Path) -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
-def validate_config(config: dict[str, Any], schema: dict[str, Any]) -> tuple[bool, list[str]]:
+def validate_config(
+    config: dict[str, Any], schema: dict[str, Any]
+) -> tuple[bool, list[str]]:
     """Validate config against schema.
 
     Returns:
@@ -71,7 +76,9 @@ def validate_semantic_rules(config: dict[str, Any]) -> tuple[bool, list[str]]:
     # Check: ddm_min_temperature_scale <= ddm_max_temperature_scale
     if "ddm_min_temperature_scale" in config and "ddm_max_temperature_scale" in config:
         if config["ddm_min_temperature_scale"] > config["ddm_max_temperature_scale"]:
-            errors.append("ddm_min_temperature_scale must be <= ddm_max_temperature_scale")
+            errors.append(
+                "ddm_min_temperature_scale must be <= ddm_max_temperature_scale"
+            )
 
     # Note: go >= hold >= no_go is enforced at runtime by check_monotonic_thresholds
     # We document but don't validate here since it's a soft constraint

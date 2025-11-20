@@ -87,7 +87,9 @@ def test_runner_cold_start_and_reconciliation(tmp_path: Path) -> None:
     runner.start(cold_start=False)
 
     try:
-        second_start_snapshots = sorted((state_dir / "session_snapshots").glob("*.json"))
+        second_start_snapshots = sorted(
+            (state_dir / "session_snapshots").glob("*.json")
+        )
         assert len(second_start_snapshots) > len(first_start_snapshots)
 
         def adopted() -> bool:

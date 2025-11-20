@@ -21,13 +21,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 try:  # pragma: no cover - optional dependency import guarded at runtime
-    from opentelemetry import context as otel_context
     from opentelemetry import baggage as otel_baggage
+    from opentelemetry import context as otel_context
     from opentelemetry import trace
     from opentelemetry.exporter.jaeger.thrift import JaegerExporter
     from opentelemetry.propagate import get_global_textmap, set_global_textmap
-    from opentelemetry.propagators.composite import CompositeTextMapPropagator
     from opentelemetry.propagators.baggage import BaggagePropagator
+    from opentelemetry.propagators.composite import CompositeTextMapPropagator
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor

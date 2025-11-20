@@ -11,10 +11,12 @@ Profiles:
 Uses torch.profiler for detailed analysis.
 """
 
-import torch
-from torch.profiler import profile, record_function, ProfilerActivity
-import numpy as np
 import time
+
+import numpy as np
+import torch
+from torch.profiler import ProfilerActivity, profile, record_function
+
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 
@@ -42,7 +44,7 @@ def estimate_flops_forward(model, input_size=(1, 10)):
     flops_transformer = 3 * (4 * state_dim**2 * seq_len)
 
     # HPC GRU layers (3 levels, bidirectional)
-    flops_gru = 3 * (3 * (hidden_dim * 2)**2 * seq_len)
+    flops_gru = 3 * (3 * (hidden_dim * 2) ** 2 * seq_len)
 
     # Residual skips
     flops_residual = 3 * (state_dim * hidden_dim * 2)
@@ -50,7 +52,9 @@ def estimate_flops_forward(model, input_size=(1, 10)):
     # Error layers
     flops_error = 3 * ((hidden_dim * 2 + state_dim) * state_dim)
 
-    total_flops = flops_embed + flops_transformer + flops_gru + flops_residual + flops_error
+    total_flops = (
+        flops_embed + flops_transformer + flops_gru + flops_residual + flops_error
+    )
     return total_flops
 
 
@@ -74,13 +78,13 @@ def profile_forward_pass(model, data, num_runs=100):
             latencies.append((end - start) * 1000)  # Convert to ms
 
     return {
-        'mean_ms': np.mean(latencies),
-        'std_ms': np.std(latencies),
-        'min_ms': np.min(latencies),
-        'max_ms': np.max(latencies),
-        'p50_ms': np.percentile(latencies, 50),
-        'p95_ms': np.percentile(latencies, 95),
-        'p99_ms': np.percentile(latencies, 99),
+        "mean_ms": np.mean(latencies),
+        "std_ms": np.std(latencies),
+        "min_ms": np.min(latencies),
+        "max_ms": np.max(latencies),
+        "p50_ms": np.percentile(latencies, 50),
+        "p95_ms": np.percentile(latencies, 95),
+        "p99_ms": np.percentile(latencies, 99),
     }
 
 
@@ -108,13 +112,13 @@ def profile_training_step(model, data, num_runs=50):
         latencies.append((end - start) * 1000)
 
     return {
-        'mean_ms': np.mean(latencies),
-        'std_ms': np.std(latencies),
-        'min_ms': np.min(latencies),
-        'max_ms': np.max(latencies),
-        'p50_ms': np.percentile(latencies, 50),
-        'p95_ms': np.percentile(latencies, 95),
-        'p99_ms': np.percentile(latencies, 99),
+        "mean_ms": np.mean(latencies),
+        "std_ms": np.std(latencies),
+        "min_ms": np.min(latencies),
+        "max_ms": np.max(latencies),
+        "p50_ms": np.percentile(latencies, 50),
+        "p95_ms": np.percentile(latencies, 95),
+        "p99_ms": np.percentile(latencies, 99),
     }
 
 
@@ -165,8 +169,8 @@ def profile_memory(model, data):
         memory_reserved = torch.cuda.max_memory_reserved() / 1024**2
 
         return {
-            'allocated_mb': memory_allocated,
-            'reserved_mb': memory_reserved,
+            "allocated_mb": memory_allocated,
+            "reserved_mb": memory_reserved,
         }
     else:
         # CPU memory estimation (rough)
@@ -178,8 +182,8 @@ def profile_memory(model, data):
         activation_memory = param_memory * 2  # Rule of thumb
 
         return {
-            'param_mb': param_memory,
-            'estimated_total_mb': param_memory + activation_memory,
+            "param_mb": param_memory,
+            "estimated_total_mb": param_memory + activation_memory,
         }
 
 
@@ -229,7 +233,7 @@ def run_comprehensive_profile():
     print(f"P99:  {forward_stats['p99_ms']:.2f} ms")
 
     # Check if meets <1ms target
-    if forward_stats['mean_ms'] < 1.0:
+    if forward_stats["mean_ms"] < 1.0:
         print("✓ Meets <1ms target for forward pass")
     else:
         print(f"⚠ Forward pass ({forward_stats['mean_ms']:.2f}ms) exceeds 1ms target")
@@ -262,26 +266,26 @@ def run_comprehensive_profile():
     # 7. Throughput estimation
     print("\n7. Throughput Estimation")
     print("-" * 80)
-    throughput_forward = 1000.0 / forward_stats['mean_ms']  # decisions/second
-    throughput_train = 1000.0 / train_stats['mean_ms']  # training steps/second
+    throughput_forward = 1000.0 / forward_stats["mean_ms"]  # decisions/second
+    throughput_train = 1000.0 / train_stats["mean_ms"]  # training steps/second
     print(f"Forward pass throughput: {throughput_forward:.2f} decisions/second")
     print(f"Training throughput: {throughput_train:.2f} steps/second")
 
     # 8. Optimization recommendations
     print("\n8. Optimization Recommendations")
     print("-" * 80)
-    if forward_stats['mean_ms'] > 1.0:
+    if forward_stats["mean_ms"] > 1.0:
         print("⚠ Forward latency > 1ms:")
         print("  - Consider FlashAttention for TransformerEncoder")
         print("  - Try int8 quantization for inference")
         print("  - Profile with CUDA/GPU for better performance")
 
-    if train_stats['mean_ms'] > 100.0:
+    if train_stats["mean_ms"] > 100.0:
         print("⚠ Training step > 100ms:")
         print("  - Consider gradient accumulation")
         print("  - Use mixed precision training (fp16)")
 
-    if mem_stats.get('estimated_total_mb', 0) > 500:
+    if mem_stats.get("estimated_total_mb", 0) > 500:
         print("⚠ High memory usage:")
         print("  - Consider model pruning")
         print("  - Use gradient checkpointing")
@@ -291,11 +295,11 @@ def run_comprehensive_profile():
     print("=" * 80)
 
     return {
-        'forward': forward_stats,
-        'training': train_stats,
-        'memory': mem_stats,
-        'params': {'total': total_params, 'trainable': trainable_params},
-        'flops': estimated_flops,
+        "forward": forward_stats,
+        "training": train_stats,
+        "memory": mem_stats,
+        "params": {"total": total_params, "trainable": trainable_params},
+        "flops": estimated_flops,
     }
 
 

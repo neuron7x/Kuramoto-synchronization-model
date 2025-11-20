@@ -1,4 +1,5 @@
 """Sleep-inspired replay buffer with novelty-aware prioritisation."""
+
 from __future__ import annotations
 
 from collections import deque, namedtuple

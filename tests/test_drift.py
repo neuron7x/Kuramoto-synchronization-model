@@ -11,6 +11,7 @@ Test Coverage:
 - Drift detector: Comprehensive drift monitoring
 - Edge cases: empty inputs, insufficient data, non-numeric columns
 """
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -46,9 +47,9 @@ def test_js_divergence(data1, data2, expected):
     - Computed values match expected theoretical values
     """
     result = compute_js_divergence(np.asarray(data1), np.asarray(data2))
-    assert pytest.approx(result, rel=1e-3, abs=1e-6) == expected, (
-        f"JS divergence mismatch: expected {expected}, got {result}"
-    )
+    assert (
+        pytest.approx(result, rel=1e-3, abs=1e-6) == expected
+    ), f"JS divergence mismatch: expected {expected}, got {result}"
 
 
 def test_js_divergence_empty_inputs():
@@ -58,9 +59,7 @@ def test_js_divergence_empty_inputs():
     function should return NaN rather than raising an exception.
     """
     result = compute_js_divergence([], [])
-    assert np.isnan(result), (
-        f"Expected NaN for empty inputs, but got {result}"
-    )
+    assert np.isnan(result), f"Expected NaN for empty inputs, but got {result}"
 
 
 def test_js_divergence_different_lengths_samples():
@@ -97,8 +96,7 @@ def test_ks_test(data1, data2, drifted):
     result = compute_ks_test(np.array(data1), np.array(data2))
     assert result.valid, f"KS test should be valid but got: {result.message}"
     assert (result.pvalue < 0.05) == drifted, (
-        f"Expected drift={drifted} but p-value={result.pvalue:.4f} "
-        f"(threshold=0.05)"
+        f"Expected drift={drifted} but p-value={result.pvalue:.4f} " f"(threshold=0.05)"
     )
 
 
@@ -110,9 +108,9 @@ def test_ks_test_insufficient_data():
     """
     result = compute_ks_test(np.array([1.0]), np.array([2.0]))
     assert not result.valid, "KS test should be invalid for single samples"
-    assert np.isnan(result.statistic), (
-        f"Expected NaN statistic for insufficient data, got {result.statistic}"
-    )
+    assert np.isnan(
+        result.statistic
+    ), f"Expected NaN statistic for insufficient data, got {result.statistic}"
 
 
 @pytest.mark.parametrize(
@@ -136,9 +134,9 @@ def test_compute_psi(baseline, current, expected):
     - Computed PSI matches expected values
     """
     result = compute_psi(np.array(baseline), np.array(current), bins=3)
-    assert pytest.approx(result, rel=1e-3, abs=1e-6) == expected, (
-        f"PSI mismatch: expected {expected}, got {result}"
-    )
+    assert (
+        pytest.approx(result, rel=1e-3, abs=1e-6) == expected
+    ), f"PSI mismatch: expected {expected}, got {result}"
 
 
 def test_parallel_drift():
@@ -155,12 +153,14 @@ def test_parallel_drift():
     """
     base, drift = generate_synthetic_data(200, 3, 0.5, seed=42)
     results = compute_parallel_drift(base, drift)
-    assert set(results.keys()) == {"f0", "f1", "f2"}, (
-        f"Expected features f0, f1, f2 but got {set(results.keys())}"
-    )
-    assert any(metric.drifted for metric in results.values()), (
-        "Expected at least one feature to show drift with drift_ratio=0.5"
-    )
+    assert set(results.keys()) == {
+        "f0",
+        "f1",
+        "f2",
+    }, f"Expected features f0, f1, f2 but got {set(results.keys())}"
+    assert any(
+        metric.drifted for metric in results.values()
+    ), "Expected at least one feature to show drift with drift_ratio=0.5"
 
 
 def test_parallel_drift_handles_non_numeric_columns():
@@ -179,20 +179,21 @@ def test_parallel_drift_handles_non_numeric_columns():
     drift = pd.DataFrame({"f0": [0.5, 1.5, 2.5], "category": ["B", "C", "B"]})
     results = compute_parallel_drift(base, drift)
 
-    assert set(results.keys()) == {"f0", "category"}, (
-        f"Expected columns f0 and category, got {set(results.keys())}"
-    )
+    assert set(results.keys()) == {
+        "f0",
+        "category",
+    }, f"Expected columns f0 and category, got {set(results.keys())}"
     cat_metric = results["category"]
-    assert np.isnan(cat_metric.js_divergence), (
-        f"Expected NaN JS divergence for categorical column, got {cat_metric.js_divergence}"
-    )
+    assert np.isnan(
+        cat_metric.js_divergence
+    ), f"Expected NaN JS divergence for categorical column, got {cat_metric.js_divergence}"
     assert not cat_metric.ks.valid, "KS test should be invalid for categorical data"
-    assert cat_metric.ks.message == "non-numeric column", (
-        f"Expected 'non-numeric column' message, got '{cat_metric.ks.message}'"
-    )
-    assert np.isnan(cat_metric.psi), (
-        f"Expected NaN PSI for categorical column, got {cat_metric.psi}"
-    )
+    assert (
+        cat_metric.ks.message == "non-numeric column"
+    ), f"Expected 'non-numeric column' message, got '{cat_metric.ks.message}'"
+    assert np.isnan(
+        cat_metric.psi
+    ), f"Expected NaN PSI for categorical column, got {cat_metric.psi}"
 
 
 def test_parallel_drift_coerces_numeric_strings():
@@ -212,12 +213,10 @@ def test_parallel_drift_coerces_numeric_strings():
 
     metric = results["num"]
     assert metric.ks.valid, "KS test should be valid after numeric coercion"
-    assert np.isfinite(metric.js_divergence), (
-        f"Expected finite JS divergence, got {metric.js_divergence}"
-    )
-    assert np.isfinite(metric.psi), (
-        f"Expected finite PSI, got {metric.psi}"
-    )
+    assert np.isfinite(
+        metric.js_divergence
+    ), f"Expected finite JS divergence, got {metric.js_divergence}"
+    assert np.isfinite(metric.psi), f"Expected finite PSI, got {metric.psi}"
 
 
 def test_parallel_drift_filters_coerced_nans():
@@ -238,15 +237,13 @@ def test_parallel_drift_filters_coerced_nans():
 
     metric = results["num"]
     assert metric.ks.valid, "KS test should be valid after filtering NaNs"
-    assert np.isfinite(metric.js_divergence), (
-        f"Expected finite JS divergence, got {metric.js_divergence}"
-    )
-    assert np.isfinite(metric.psi), (
-        f"Expected finite PSI, got {metric.psi}"
-    )
-    assert metric.js_divergence > 0, (
-        "Expected positive divergence for different distributions"
-    )
+    assert np.isfinite(
+        metric.js_divergence
+    ), f"Expected finite JS divergence, got {metric.js_divergence}"
+    assert np.isfinite(metric.psi), f"Expected finite PSI, got {metric.psi}"
+    assert (
+        metric.js_divergence > 0
+    ), "Expected positive divergence for different distributions"
 
 
 def test_drift_detector_summary():
@@ -264,12 +261,13 @@ def test_drift_detector_summary():
     thresholds = DriftThresholds(default_jsd=0.05, default_ks=0.05)
     detector = DriftDetector(thresholds=thresholds)
     summary = detector.summary(detector.compare(base, drift))
-    assert summary.keys() == {"f0", "f1"}, (
-        f"Expected features f0 and f1 in summary, got {summary.keys()}"
-    )
-    assert all("jsd" in value and "psi" in value for value in summary.values()), (
-        "Each feature summary should contain 'jsd' and 'psi' metrics"
-    )
+    assert summary.keys() == {
+        "f0",
+        "f1",
+    }, f"Expected features f0 and f1 in summary, got {summary.keys()}"
+    assert all(
+        "jsd" in value and "psi" in value for value in summary.values()
+    ), "Each feature summary should contain 'jsd' and 'psi' metrics"
 
 
 def test_generate_synthetic_data_categorical():
@@ -284,12 +282,12 @@ def test_generate_synthetic_data_categorical():
     - Categorical column exists in both datasets
     """
     base, drift = generate_synthetic_data(100, 2, 0.3, seed=7, include_categorical=True)
-    assert "category" in base.columns, (
-        f"Expected 'category' column in baseline, got columns: {list(base.columns)}"
-    )
-    assert base.shape == drift.shape, (
-        f"Shape mismatch: baseline {base.shape} vs drift {drift.shape}"
-    )
+    assert (
+        "category" in base.columns
+    ), f"Expected 'category' column in baseline, got columns: {list(base.columns)}"
+    assert (
+        base.shape == drift.shape
+    ), f"Shape mismatch: baseline {base.shape} vs drift {drift.shape}"
 
 
 def test_load_thresholds_empty_yaml(tmp_path):
@@ -306,12 +304,12 @@ def test_load_thresholds_empty_yaml(tmp_path):
     cfg_path = tmp_path / "thresholds.yaml"
     cfg_path.write_text("")
     thresholds = load_thresholds(cfg_path)
-    assert thresholds.default_jsd == 0.1, (
-        f"Expected default JSD threshold of 0.1, got {thresholds.default_jsd}"
-    )
-    assert thresholds.default_ks == 0.05, (
-        f"Expected default KS threshold of 0.05, got {thresholds.default_ks}"
-    )
+    assert (
+        thresholds.default_jsd == 0.1
+    ), f"Expected default JSD threshold of 0.1, got {thresholds.default_jsd}"
+    assert (
+        thresholds.default_ks == 0.05
+    ), f"Expected default KS threshold of 0.05, got {thresholds.default_ks}"
 
 
 def test_load_thresholds_requires_mapping(tmp_path):

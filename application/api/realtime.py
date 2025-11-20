@@ -140,7 +140,10 @@ class AnalyticsStore:
 
     async def recent_features(self, *, limit: int = 20) -> list[BaseModel]:
         async with self._lock:
-            return [entry.model_copy(deep=True) for entry in list(self._feature_history)[:limit]]
+            return [
+                entry.model_copy(deep=True)
+                for entry in list(self._feature_history)[:limit]
+            ]
 
     async def recent_predictions(self, *, limit: int = 20) -> list[BaseModel]:
         async with self._lock:

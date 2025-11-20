@@ -14,20 +14,16 @@ class MetricsRecorder(ABC):
     """Abstract sink for ingest metrics."""
 
     @abstractmethod
-    def observe_latency(self, instrument: str, latency: timedelta) -> None:
-        ...
+    def observe_latency(self, instrument: str, latency: timedelta) -> None: ...
 
     @abstractmethod
-    def observe_freshness(self, instrument: str, freshness: timedelta) -> None:
-        ...
+    def observe_freshness(self, instrument: str, freshness: timedelta) -> None: ...
 
     @abstractmethod
-    def increment_gap(self, instrument: str) -> None:
-        ...
+    def increment_gap(self, instrument: str) -> None: ...
 
     @abstractmethod
-    def mark_snapshot(self, instrument: str, ts_event: datetime) -> None:
-        ...
+    def mark_snapshot(self, instrument: str, ts_event: datetime) -> None: ...
 
 
 @dataclass(slots=True)
@@ -67,4 +63,7 @@ class InMemoryMetricsRecorder(MetricsRecorder):
 
     def snapshot(self) -> Dict[str, MetricsSample]:
         with self._lock:
-            return {instrument: MetricsSample(**asdict(sample)) for instrument, sample in self._samples.items()}
+            return {
+                instrument: MetricsSample(**asdict(sample))
+                for instrument, sample in self._samples.items()
+            }

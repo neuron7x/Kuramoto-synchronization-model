@@ -55,11 +55,7 @@ class StreamingEventReplayer:
 
         while True:
             # Симуляція запиту до БД (замініть на реальний код)
-            events = self._fetch_batch(
-                aggregate_id,
-                aggregate_type,
-                last_version
-            )
+            events = self._fetch_batch(aggregate_id, aggregate_type, last_version)
 
             if not events:
                 break
@@ -71,10 +67,7 @@ class StreamingEventReplayer:
             yield events
 
     def _fetch_batch(
-        self,
-        aggregate_id: str,
-        aggregate_type: str,
-        since_version: int
+        self, aggregate_id: str, aggregate_type: str, since_version: int
     ) -> List[Dict]:
         """Симуляція fetch з БД з batch limit."""
         # TODO: Замінити на реальний SQLAlchemy код
@@ -101,8 +94,8 @@ class StreamingEventReplayer:
 class AdaptivePollingConfig:
     """Конфігурація для adaptive polling."""
 
-    min_interval: float = 0.1   # 100ms при активності
-    max_interval: float = 2.0   # 2s при idle
+    min_interval: float = 0.1  # 100ms при активності
+    max_interval: float = 2.0  # 2s при idle
     ramp_up_threshold: int = 5  # Скільки idle циклів до збільшення
     ramp_down_threshold: int = 1  # Скільки активних циклів до зменшення
 
@@ -176,24 +169,22 @@ class AdaptivePoller:
         # Поступово збільшуємо інтервал при idle
         if self._idle_cycles >= self.config.ramp_up_threshold:
             self._current_interval = min(
-                self._current_interval * 1.5,
-                self.config.max_interval
+                self._current_interval * 1.5, self.config.max_interval
             )
 
     def _update_avg_interval(self):
         """Оновлює середній інтервал для метрик."""
         alpha = 0.1  # Exponential moving average
         self._stats["avg_interval"] = (
-            alpha * self._current_interval +
-            (1 - alpha) * self._stats["avg_interval"]
+            alpha * self._current_interval + (1 - alpha) * self._stats["avg_interval"]
         )
 
     def get_stats(self) -> Dict[str, Any]:
         """Статистика для моніторингу."""
         stats = self._stats.copy()
         stats["current_interval"] = self._current_interval
-        stats["idle_ratio"] = (
-            self._stats["idle_polls"] / max(self._stats["total_polls"], 1)
+        stats["idle_ratio"] = self._stats["idle_polls"] / max(
+            self._stats["total_polls"], 1
         )
         return stats
 
@@ -212,10 +203,7 @@ class IndicatorCache:
     """
 
     def __init__(
-        self,
-        max_size: int = 1000,
-        ttl_seconds: float = 60.0,
-        enable_stats: bool = True
+        self, max_size: int = 1000, ttl_seconds: float = 60.0, enable_stats: bool = True
     ):
         self._cache: Dict[str, Tuple[Any, float]] = {}
         self._access_order: deque = deque()  # For LRU
@@ -223,19 +211,23 @@ class IndicatorCache:
         self._ttl = ttl_seconds
         self._lock = RLock()
 
-        self._stats = {
-            "hits": 0,
-            "misses": 0,
-            "evictions": 0,
-            "expirations": 0,
-        } if enable_stats else None
+        self._stats = (
+            {
+                "hits": 0,
+                "misses": 0,
+                "evictions": 0,
+                "expirations": 0,
+            }
+            if enable_stats
+            else None
+        )
 
     def get_or_compute(
         self,
         key: str,
         data: np.ndarray,
         compute_fn: Callable[[], Any],
-        params: Optional[Dict] = None
+        params: Optional[Dict] = None,
     ) -> Any:
         """
         Отримати з кешу або обчислити.
@@ -285,17 +277,11 @@ class IndicatorCache:
             return value
 
     def _make_cache_key(
-        self,
-        key: str,
-        data: np.ndarray,
-        params: Optional[Dict]
+        self, key: str, data: np.ndarray, params: Optional[Dict]
     ) -> str:
         """Створює ключ кешу з даних та параметрів."""
         # Hash даних (швидкий для numpy)
-        data_hash = hashlib.blake2b(
-            data.tobytes(),
-            digest_size=16
-        ).hexdigest()
+        data_hash = hashlib.blake2b(data.tobytes(), digest_size=16).hexdigest()
 
         # Hash параметрів
         if params:
@@ -347,8 +333,7 @@ class IndicatorCache:
         with self._lock:
             total_requests = self._stats["hits"] + self._stats["misses"]
             hit_rate = (
-                self._stats["hits"] / total_requests
-                if total_requests > 0 else 0.0
+                self._stats["hits"] / total_requests if total_requests > 0 else 0.0
             )
 
             return {
@@ -382,7 +367,7 @@ class AsyncMetricsWriter:
         self,
         batch_size: int = 100,
         flush_interval: float = 1.0,
-        max_queue_size: int = 10000
+        max_queue_size: int = 10000,
     ):
         self._queue: Queue = Queue(maxsize=max_queue_size)
         self._batch_size = batch_size
@@ -415,10 +400,7 @@ class AsyncMetricsWriter:
         logger.info("AsyncMetricsWriter stopped")
 
     def record(
-        self,
-        metric_name: str,
-        value: float,
-        labels: Optional[Dict[str, str]] = None
+        self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None
     ):
         """
         Додає метрику в чергу для асинхронного запису.
@@ -429,19 +411,13 @@ class AsyncMetricsWriter:
             labels: Додаткові labels
         """
         try:
-            self._queue.put_nowait((
-                metric_name,
-                value,
-                labels or {},
-                time.time()
-            ))
+            self._queue.put_nowait((metric_name, value, labels or {}, time.time()))
             self._stats["total_recorded"] += 1
         except:
             # Queue full - краще drop ніж blocking
             self._stats["total_dropped"] += 1
             logger.warning(
-                "Metrics queue full, dropping metric",
-                extra={"metric": metric_name}
+                "Metrics queue full, dropping metric", extra={"metric": metric_name}
             )
 
     def _worker(self):
@@ -459,9 +435,8 @@ class AsyncMetricsWriter:
                 # 1. Batch заповнений, або
                 # 2. Минув час flush_interval
                 now = time.time()
-                should_flush = (
-                    len(batch) >= self._batch_size or
-                    (now - last_flush >= self._flush_interval and batch)
+                should_flush = len(batch) >= self._batch_size or (
+                    now - last_flush >= self._flush_interval and batch
                 )
 
                 if should_flush:
@@ -495,22 +470,17 @@ class AsyncMetricsWriter:
             self._stats["flush_count"] += 1
 
             logger.debug(
-                f"Flushed {len(batch)} metrics",
-                extra={"batch_size": len(batch)}
+                f"Flushed {len(batch)} metrics", extra={"batch_size": len(batch)}
             )
         except Exception as e:
-            logger.error(
-                f"Failed to flush metrics batch: {e}",
-                exc_info=True
-            )
+            logger.error(f"Failed to flush metrics batch: {e}", exc_info=True)
 
     def get_stats(self) -> Dict[str, Any]:
         """Статистика writer."""
         stats = self._stats.copy()
         stats["queue_size"] = self._queue.qsize()
-        stats["drop_rate"] = (
-            self._stats["total_dropped"] /
-            max(self._stats["total_recorded"], 1)
+        stats["drop_rate"] = self._stats["total_dropped"] / max(
+            self._stats["total_recorded"], 1
         )
         return stats
 
@@ -520,10 +490,7 @@ class AsyncMetricsWriter:
 # ============================================================================
 
 
-def monitor_performance(
-    metric_name: str,
-    enable_profiling: bool = False
-):
+def monitor_performance(metric_name: str, enable_profiling: bool = False):
     """
     Decorator для моніторингу продуктивності функцій.
 
@@ -537,6 +504,7 @@ def monitor_performance(
         def my_indicator(data):
             ...
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -545,6 +513,7 @@ def monitor_performance(
             # Опціональний профайлер
             if enable_profiling:
                 import cProfile
+
                 profiler = cProfile.Profile()
                 profiler.enable()
 
@@ -554,9 +523,7 @@ def monitor_performance(
 
                 # Запис метрики успіху
                 _record_metric(
-                    f"{metric_name}_duration_seconds",
-                    duration,
-                    {"status": "success"}
+                    f"{metric_name}_duration_seconds", duration, {"status": "success"}
                 )
 
                 return result
@@ -568,7 +535,7 @@ def monitor_performance(
                 _record_metric(
                     f"{metric_name}_duration_seconds",
                     duration,
-                    {"status": "error", "error_type": type(e).__name__}
+                    {"status": "error", "error_type": type(e).__name__},
                 )
 
                 raise
@@ -578,12 +545,14 @@ def monitor_performance(
                     profiler.disable()
                     # Зберегти профіль
                     import pstats
+
                     stats = pstats.Stats(profiler)
                     stats.dump_stats(
                         f"/tmp/profile_{metric_name}_{int(time.time())}.prof"
                     )
 
         return wrapper
+
     return decorator
 
 
@@ -603,8 +572,7 @@ def example_streaming_replay():
 
     # Обробка подій батчами
     for batch in replayer.replay_events_streaming(
-        aggregate_id="order-123",
-        aggregate_type="Order"
+        aggregate_id="order-123", aggregate_type="Order"
     ):
         # Обробити батч
         for event in batch:
@@ -612,15 +580,14 @@ def example_streaming_replay():
 
     # Статистика
     stats = replayer.get_stats()
-    print(f"Processed {stats['total_events']} events in {stats['batches_processed']} batches")
+    print(
+        f"Processed {stats['total_events']} events in {stats['batches_processed']} batches"
+    )
 
 
 def example_adaptive_polling():
     """Приклад використання adaptive polling."""
-    config = AdaptivePollingConfig(
-        min_interval=0.1,
-        max_interval=2.0
-    )
+    config = AdaptivePollingConfig(min_interval=0.1, max_interval=2.0)
     poller = AdaptivePoller(config)
 
     def check_for_orders():
@@ -655,14 +622,14 @@ def example_indicator_cache():
     result1 = cache.get_or_compute(
         key="mean_indicator",
         data=data,
-        compute_fn=lambda: compute_expensive_indicator(data)
+        compute_fn=lambda: compute_expensive_indicator(data),
     )
 
     # Другий виклик на тих самих даних - hit
     result2 = cache.get_or_compute(
         key="mean_indicator",
         data=data,
-        compute_fn=lambda: compute_expensive_indicator(data)
+        compute_fn=lambda: compute_expensive_indicator(data),
     )
 
     # Статистика
@@ -672,19 +639,14 @@ def example_indicator_cache():
 
 def example_async_metrics():
     """Приклад використання async metrics writer."""
-    writer = AsyncMetricsWriter(
-        batch_size=100,
-        flush_interval=1.0
-    )
+    writer = AsyncMetricsWriter(batch_size=100, flush_interval=1.0)
     writer.start()
 
     try:
         # Запис метрик
         for i in range(1000):
             writer.record(
-                "order_latency_ms",
-                np.random.exponential(10.0),
-                {"exchange": "binance"}
+                "order_latency_ms", np.random.exponential(10.0), {"exchange": "binance"}
             )
 
         # Дочекатися flush

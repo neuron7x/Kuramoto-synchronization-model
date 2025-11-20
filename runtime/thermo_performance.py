@@ -25,7 +25,7 @@ class PerformanceMetrics:
     operation_name: str
     call_count: int = 0
     total_time: float = 0.0
-    min_time: float = float('inf')
+    min_time: float = float("inf")
     max_time: float = 0.0
     times: List[float] = field(default_factory=list)
 
@@ -74,7 +74,9 @@ class PerformanceMetrics:
             "call_count": self.call_count,
             "total_time_ms": self.total_time * 1000,
             "avg_time_ms": self.avg_time * 1000,
-            "min_time_ms": self.min_time * 1000 if self.min_time != float('inf') else 0.0,
+            "min_time_ms": (
+                self.min_time * 1000 if self.min_time != float("inf") else 0.0
+            ),
             "max_time_ms": self.max_time * 1000,
             "std_time_ms": self.std_time * 1000,
             "p95_time_ms": self.p95_time * 1000,
@@ -89,9 +91,9 @@ class PerformanceMonitor:
     thermodynamic operations for analysis and optimization.
     """
 
-    _instance: Optional['PerformanceMonitor'] = None
+    _instance: Optional["PerformanceMonitor"] = None
 
-    def __new__(cls) -> 'PerformanceMonitor':
+    def __new__(cls) -> "PerformanceMonitor":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
@@ -129,10 +131,7 @@ class PerformanceMonitor:
                 return self.metrics[operation].to_dict()
             return {}
 
-        return {
-            name: metrics.to_dict()
-            for name, metrics in self.metrics.items()
-        }
+        return {name: metrics.to_dict() for name, metrics in self.metrics.items()}
 
     def get_summary(self) -> Dict[str, Any]:
         """Get summary of all performance metrics."""
@@ -161,12 +160,10 @@ class PerformanceMonitor:
             "total_calls": total_calls,
             "total_time_ms": total_time * 1000,
             "slowest_operations": [
-                {"name": name, "avg_time_ms": time * 1000}
-                for name, time in slowest_ops
+                {"name": name, "avg_time_ms": time * 1000} for name, time in slowest_ops
             ],
             "most_called_operations": [
-                {"name": name, "call_count": count}
-                for name, count in most_called_ops
+                {"name": name, "call_count": count} for name, count in most_called_ops
             ],
         }
 
@@ -199,6 +196,7 @@ def timed(operation_name: Optional[str] = None):
             # ... computation ...
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         op_name = operation_name or func.__name__
 
@@ -213,6 +211,7 @@ def timed(operation_name: Optional[str] = None):
                 _monitor.record_timing(op_name, duration)
 
         return wrapper
+
     return decorator
 
 
@@ -261,7 +260,7 @@ class PerformanceProfiler:
         self.profiler.disable()
         self.is_active = False
 
-    def get_stats(self, sort_by: str = 'cumulative', top_n: int = 20) -> str:
+    def get_stats(self, sort_by: str = "cumulative", top_n: int = 20) -> str:
         """Get profiling statistics.
 
         Args:

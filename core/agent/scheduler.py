@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import math
-from secrets import SystemRandom
 import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from secrets import SystemRandom
 from typing import Any, Callable, Dict, Iterable, Sequence
 
 from .evaluator import EvaluationResult, StrategyBatchEvaluator

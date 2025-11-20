@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+import base64
+import hashlib
+import hmac
 import os
 import time
-import hmac
-import hashlib
-import base64
 from urllib.parse import urlencode
 
 import requests
@@ -39,7 +39,9 @@ class HttpClient:
         h.update(self.headers)
         if headers:
             h.update(headers)
-        r = requests.post(self.base + path, data=data, params=p, headers=h, timeout=DEFAULT_TIMEOUT)
+        r = requests.post(
+            self.base + path, data=data, params=p, headers=h, timeout=DEFAULT_TIMEOUT
+        )
         r.raise_for_status()
         return r.json()
 
@@ -102,7 +104,11 @@ def get_exchange_info_or_symbols(subject):
     if isinstance(subject, HttpClient):
         if subject.base == "https://api.binance.com":
             j = subject.get("/api/v3/exchangeInfo")
-            symbols = [s["symbol"] for s in j.get("symbols", []) if s.get("status") == "TRADING"]
+            symbols = [
+                s["symbol"]
+                for s in j.get("symbols", [])
+                if s.get("status") == "TRADING"
+            ]
             return {"raw": j, "symbols": symbols}
         if subject.base == "https://api.coinbase.com/api/v3":
             j = subject.get("/brokerage/products", params={"limit": 250})
@@ -132,7 +138,11 @@ def get_authenticated_balance(subject):
             query = f"timestamp={ts}&recvWindow=5000"
             sig = hmac.new(secret.encode(), query.encode(), hashlib.sha256).hexdigest()
             headers = {"X-MBX-APIKEY": key}
-            data = subject.get("/api/v3/account", params={"timestamp": ts, "recvWindow": 5000, "signature": sig}, headers=headers)
+            data = subject.get(
+                "/api/v3/account",
+                params={"timestamp": ts, "recvWindow": 5000, "signature": sig},
+                headers=headers,
+            )
             # Remove commission fields to keep response focused on balances
             data.pop("makerCommission", None)
             data.pop("takerCommission", None)
@@ -148,7 +158,11 @@ def get_authenticated_balance(subject):
             method = "GET"
             path = "/api/v3/brokerage/accounts"
             prehash = ts + method + path
-            sig = base64.b64encode(hmac.new(base64.b64decode(secret), prehash.encode(), hashlib.sha256).digest()).decode()
+            sig = base64.b64encode(
+                hmac.new(
+                    base64.b64decode(secret), prehash.encode(), hashlib.sha256
+                ).digest()
+            ).decode()
             headers = {
                 "CB-ACCESS-KEY": key,
                 "CB-ACCESS-SIGN": sig,
@@ -159,7 +173,16 @@ def get_authenticated_balance(subject):
             auth_client = HttpClient("https://api.coinbase.com")
             data = auth_client.get(path, headers=headers)
             accounts = data.get("accounts", [])
-            return {"accounts": [{"uuid": a.get("uuid"), "currency": a.get("currency"), "available_balance": a.get("available_balance")} for a in accounts]}
+            return {
+                "accounts": [
+                    {
+                        "uuid": a.get("uuid"),
+                        "currency": a.get("currency"),
+                        "available_balance": a.get("available_balance"),
+                    }
+                    for a in accounts
+                ]
+            }
 
         if subject.base == "https://api.kraken.com/0":
             key = os.getenv("KRAKEN_API_KEY")
@@ -172,7 +195,9 @@ def get_authenticated_balance(subject):
             postdata_str = urlencode(postdata)
             sha256 = hashlib.sha256((nonce + postdata_str).encode()).digest()
             message = path.encode() + sha256
-            sig = base64.b64encode(hmac.new(base64.b64decode(secret), message, hashlib.sha512).digest()).decode()
+            sig = base64.b64encode(
+                hmac.new(base64.b64decode(secret), message, hashlib.sha512).digest()
+            ).decode()
             headers = {
                 "API-Key": key,
                 "API-Sign": sig,

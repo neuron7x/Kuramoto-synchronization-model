@@ -52,7 +52,9 @@ class ThermoCache:
         self.ttl_seconds = ttl_seconds
         self.time_bucket_size = time_bucket_size
 
-        self._energy_cache: Dict[CacheKey, Tuple[float, float]] = {}  # (value, timestamp)
+        self._energy_cache: Dict[CacheKey, Tuple[float, float]] = (
+            {}
+        )  # (value, timestamp)
         self._topology_cache: Dict[str, Tuple[Any, float]] = {}  # (topology, timestamp)
         self._metrics_cache: Dict[str, Tuple[Any, float]] = {}  # (metrics, timestamp)
 
@@ -64,17 +66,19 @@ class ThermoCache:
     def _compute_topology_hash(self, topology: Any) -> str:
         """Compute a stable hash for a topology."""
         # Convert topology to a stable string representation
-        if hasattr(topology, '__iter__'):
-            topology_str = '|'.join(sorted(str(t) for t in topology))
+        if hasattr(topology, "__iter__"):
+            topology_str = "|".join(sorted(str(t) for t in topology))
         else:
             topology_str = str(topology)
         return hashlib.sha256(topology_str.encode()).hexdigest()[:16]
 
-    def _compute_metrics_hash(self, latencies: Dict, coherency: Dict, resource: float, entropy: float) -> str:
+    def _compute_metrics_hash(
+        self, latencies: Dict, coherency: Dict, resource: float, entropy: float
+    ) -> str:
         """Compute a stable hash for metrics snapshot."""
         # Round values to reduce sensitivity
-        lat_str = '|'.join(f"{k}:{v:.4f}" for k, v in sorted(latencies.items()))
-        coh_str = '|'.join(f"{k}:{v:.4f}" for k, v in sorted(coherency.items()))
+        lat_str = "|".join(f"{k}:{v:.4f}" for k, v in sorted(latencies.items()))
+        coh_str = "|".join(f"{k}:{v:.4f}" for k, v in sorted(coherency.items()))
         metrics_str = f"{lat_str}|{coh_str}|{resource:.4f}|{entropy:.4f}"
         return hashlib.sha256(metrics_str.encode()).hexdigest()[:16]
 
@@ -90,7 +94,8 @@ class ThermoCache:
 
         # Evict old energy cache entries
         expired_keys = [
-            key for key, (_, ts) in self._energy_cache.items()
+            key
+            for key, (_, ts) in self._energy_cache.items()
             if current_time - ts > self.ttl_seconds
         ]
         for key in expired_keys:
@@ -99,7 +104,8 @@ class ThermoCache:
 
         # Evict old topology cache entries
         expired_topo = [
-            key for key, (_, ts) in self._topology_cache.items()
+            key
+            for key, (_, ts) in self._topology_cache.items()
             if current_time - ts > self.ttl_seconds
         ]
         for key in expired_topo:
@@ -129,7 +135,9 @@ class ThermoCache:
             Cached energy value if found, None otherwise
         """
         topo_hash = self._compute_topology_hash(topology)
-        metrics_hash = self._compute_metrics_hash(latencies, coherency, resource, entropy)
+        metrics_hash = self._compute_metrics_hash(
+            latencies, coherency, resource, entropy
+        )
         time_bucket = self._get_time_bucket()
 
         key = CacheKey(
@@ -163,7 +171,9 @@ class ThermoCache:
         self._evict_old_entries()
 
         topo_hash = self._compute_topology_hash(topology)
-        metrics_hash = self._compute_metrics_hash(latencies, coherency, resource, entropy)
+        metrics_hash = self._compute_metrics_hash(
+            latencies, coherency, resource, entropy
+        )
         time_bucket = self._get_time_bucket()
 
         key = CacheKey(
@@ -315,20 +325,18 @@ class VectorizedOperations:
 
         # Compute rolling mean and std using convolution
         kernel = np.ones(window_size) / window_size
-        rolling_mean = np.convolve(values, kernel, mode='valid')
+        rolling_mean = np.convolve(values, kernel, mode="valid")
 
         # Pad to match original length
-        rolling_mean = np.pad(
-            rolling_mean,
-            (window_size - 1, 0),
-            mode='edge'
-        )
+        rolling_mean = np.pad(rolling_mean, (window_size - 1, 0), mode="edge")
 
         # Compute rolling std
-        rolling_std = np.array([
-            np.std(values[max(0, i - window_size):i + 1])
-            for i in range(len(values))
-        ])
+        rolling_std = np.array(
+            [
+                np.std(values[max(0, i - window_size) : i + 1])
+                for i in range(len(values))
+            ]
+        )
 
         # Compute z-scores
         z_scores = np.abs(values - rolling_mean) / (rolling_std + 1e-9)

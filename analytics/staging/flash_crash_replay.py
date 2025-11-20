@@ -1,4 +1,5 @@
 """Flash-crash replay for staging validation."""
+
 from __future__ import annotations
 
 import json
@@ -87,7 +88,9 @@ def simulate_flash_crash_replay(
     free_energy_series: List[float] = []
 
     for step in range(steps):
-        toxicity = float(vpin_series[min(step, len(vpin_series) - 1)]) if vpin_series else 0.0
+        toxicity = (
+            float(vpin_series[min(step, len(vpin_series) - 1)]) if vpin_series else 0.0
+        )
         _update_graph_metrics(graph, toxicity, rng)
 
         before_actions = len(controller.recovery_agent.action_history)
@@ -114,18 +117,26 @@ def simulate_flash_crash_replay(
 
     activation_history = controller.link_activator.get_activation_history()
     protocol_traces = _group_protocols(activation_history)
-    fallback_stable = all(len(set(filter(None, trace))) <= 1 for trace in protocol_traces.values())
+    fallback_stable = all(
+        len(set(filter(None, trace))) <= 1 for trace in protocol_traces.values()
+    )
 
     telemetry = list(controller.telemetry_history)
     monotonic_violations = controller.get_monotonic_violations_total()
-    circuit_breaker_triggered = any(bool(entry.get("circuit_breaker_active")) for entry in telemetry)
+    circuit_breaker_triggered = any(
+        bool(entry.get("circuit_breaker_active")) for entry in telemetry
+    )
     critical_steps = [
         idx
         for idx, entry in enumerate(telemetry)
         if entry.get("crisis_mode") in {CrisisMode.CRITICAL, CRITICAL_HALT_STATE}
     ]
-    manual_override_steps = [idx for idx, entry in enumerate(telemetry) if entry.get("manual_override")]
-    tail_free_energy_mean_95 = _compute_tail_free_energy_mean(free_energy_series, alpha=0.05)
+    manual_override_steps = [
+        idx for idx, entry in enumerate(telemetry) if entry.get("manual_override")
+    ]
+    tail_free_energy_mean_95 = _compute_tail_free_energy_mean(
+        free_energy_series, alpha=0.05
+    )
 
     metrics = FlashCrashMetrics(
         steps=steps,
@@ -145,7 +156,9 @@ def simulate_flash_crash_replay(
         tail_free_energy_mean_95=float(tail_free_energy_mean_95),
     )
 
-    return FlashCrashResult(metrics=metrics, telemetry=telemetry, free_energy_series=free_energy_series)
+    return FlashCrashResult(
+        metrics=metrics, telemetry=telemetry, free_energy_series=free_energy_series
+    )
 
 
 def write_staging_metrics(result: FlashCrashResult, path: Path | str) -> None:
@@ -156,7 +169,9 @@ def write_staging_metrics(result: FlashCrashResult, path: Path | str) -> None:
         "metrics": asdict(result.metrics),
         "telemetry_tail": result.telemetry[-5:],
     }
-    Path(path).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    Path(path).write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
 
 def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
@@ -196,7 +211,9 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
     ]
 
     if metrics.critical_steps:
-        report_lines.append(f"- CRITICAL mode entered at steps: {', '.join(map(str, metrics.critical_steps))}")
+        report_lines.append(
+            f"- CRITICAL mode entered at steps: {', '.join(map(str, metrics.critical_steps))}"
+        )
     else:
         report_lines.append("- CRITICAL mode was not triggered.")
 
@@ -226,13 +243,16 @@ def generate_staging_report(result: FlashCrashResult, path: Path | str) -> None:
             ),
             "",
             "## Link Activator Stability",
-            "- Protocol traces:"
+            "- Protocol traces:",
         ]
     )
 
     for edge, trace in metrics.link_activator_protocols.items():
         counts = Counter(trace)
-        summary = ", ".join(f"{protocol or 'none'} × {count}" for protocol, count in sorted(counts.items()))
+        summary = ", ".join(
+            f"{protocol or 'none'} × {count}"
+            for protocol, count in sorted(counts.items())
+        )
         report_lines.append(f"  - {edge}: {summary}")
 
     report_lines.append(
@@ -260,10 +280,14 @@ def _build_controller_graph() -> nx.DiGraph:
     graph.add_node("risk", cpu_norm=0.5)
     graph.add_node("broker", cpu_norm=0.3)
 
-    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.3, coherency=0.92)
+    graph.add_edge(
+        "ingest", "matcher", type="covalent", latency_norm=0.3, coherency=0.92
+    )
     graph.add_edge("matcher", "risk", type="ionic", latency_norm=0.35, coherency=0.87)
     graph.add_edge("risk", "broker", type="metallic", latency_norm=0.25, coherency=0.9)
-    graph.add_edge("broker", "ingest", type="hydrogen", latency_norm=0.4, coherency=0.85)
+    graph.add_edge(
+        "broker", "ingest", type="hydrogen", latency_norm=0.4, coherency=0.85
+    )
     return graph
 
 
@@ -295,7 +319,9 @@ def _build_order_flow_series(
     return np.asarray(data, dtype=float)
 
 
-def _update_graph_metrics(graph: nx.DiGraph, toxicity: float, rng: np.random.Generator) -> None:
+def _update_graph_metrics(
+    graph: nx.DiGraph, toxicity: float, rng: np.random.Generator
+) -> None:
     latency_scale = 1.0 + max(toxicity - 0.5, 0.0) * 1.8
     coherency_penalty = max(toxicity - 0.5, 0.0) * 0.6
 
@@ -305,22 +331,30 @@ def _update_graph_metrics(graph: nx.DiGraph, toxicity: float, rng: np.random.Gen
         noise = float(rng.normal(0, 0.02))
 
         data["latency_norm"] = max(base_latency * latency_scale + abs(noise), 0.05)
-        data["coherency"] = float(np.clip(base_coherency - coherency_penalty - abs(noise), 0.1, 0.99))
+        data["coherency"] = float(
+            np.clip(base_coherency - coherency_penalty - abs(noise), 0.1, 0.99)
+        )
 
     for node, attrs in graph.nodes(data=True):
         cpu = float(attrs.get("cpu_norm", 0.4))
-        attrs["cpu_norm"] = float(np.clip(cpu + 0.05 * max(toxicity - 0.5, 0.0), 0.1, 1.0))
+        attrs["cpu_norm"] = float(
+            np.clip(cpu + 0.05 * max(toxicity - 0.5, 0.0), 0.1, 1.0)
+        )
 
 
 def _count_action_changes(actions: Sequence[str]) -> int:
     return sum(1 for i in range(1, len(actions)) if actions[i] != actions[i - 1])
 
 
-def _group_protocols(history: Iterable[Dict[str, object]]) -> Dict[str, List[Optional[str]]]:
+def _group_protocols(
+    history: Iterable[Dict[str, object]],
+) -> Dict[str, List[Optional[str]]]:
     grouped: Dict[str, List[Optional[str]]] = {}
     for entry in history:
         key = f"{entry.get('src')}->{entry.get('dst')}:{entry.get('bond_type')}"
-        protocol = str(entry.get("protocol")) if entry.get("protocol") is not None else None
+        protocol = (
+            str(entry.get("protocol")) if entry.get("protocol") is not None else None
+        )
         grouped.setdefault(key, []).append(protocol)
     return grouped
 
@@ -337,7 +371,9 @@ def _compute_tail_free_energy_mean(series: Sequence[float], *, alpha: float) -> 
     return float(np.mean(tail))
 
 
-def _downsample_series(series: Sequence[float], *, target_points: int) -> List[Tuple[int, float]]:
+def _downsample_series(
+    series: Sequence[float], *, target_points: int
+) -> List[Tuple[int, float]]:
     if not series:
         return []
     total = len(series)

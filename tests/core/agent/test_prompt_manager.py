@@ -92,7 +92,9 @@ def test_context_truncation_policy(prompt_library: PromptTemplateLibrary) -> Non
     assert truncated_fragment.label == "History"
 
 
-def test_experiment_rolls_back_on_failure(prompt_library: PromptTemplateLibrary) -> None:
+def test_experiment_rolls_back_on_failure(
+    prompt_library: PromptTemplateLibrary,
+) -> None:
     experiment_variant = PromptTemplate(
         family="trade_summary",
         version="1.1.0",

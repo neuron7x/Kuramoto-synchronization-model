@@ -6,10 +6,10 @@ metrics collection, bottleneck detection, and performance regression tracking.
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class PerformanceMonitor:
         cpu_percent: float = 0.0,
         memory_mb: float = 0.0,
         error_rate: float = 0.0,
-        tags: Optional[Dict[str, str]] = None
+        tags: Optional[Dict[str, str]] = None,
     ) -> None:
         """Record a performance metric.
 
@@ -80,7 +80,7 @@ class PerformanceMonitor:
             cpu_percent=cpu_percent,
             memory_mb=memory_mb,
             error_rate=error_rate,
-            tags=tags or {}
+            tags=tags or {},
         )
         self.metrics_history.append(metric)
 
@@ -98,13 +98,15 @@ class PerformanceMonitor:
 
         # Check latency regression
         if metric.latency_ms > self.baseline.p99_latency_ms * 1.5:
-            self.bottlenecks.append({
-                "type": "latency_spike",
-                "timestamp": metric.timestamp,
-                "value": metric.latency_ms,
-                "baseline": self.baseline.p99_latency_ms,
-                "severity": "high"
-            })
+            self.bottlenecks.append(
+                {
+                    "type": "latency_spike",
+                    "timestamp": metric.timestamp,
+                    "value": metric.latency_ms,
+                    "baseline": self.baseline.p99_latency_ms,
+                    "severity": "high",
+                }
+            )
             logger.warning(
                 f"Latency spike detected: {metric.latency_ms:.2f}ms "
                 f"(baseline p99: {self.baseline.p99_latency_ms:.2f}ms)"
@@ -112,25 +114,31 @@ class PerformanceMonitor:
 
         # Check throughput degradation
         if metric.throughput < self.baseline.avg_throughput * 0.5:
-            self.bottlenecks.append({
-                "type": "throughput_drop",
-                "timestamp": metric.timestamp,
-                "value": metric.throughput,
-                "baseline": self.baseline.avg_throughput,
-                "severity": "medium"
-            })
+            self.bottlenecks.append(
+                {
+                    "type": "throughput_drop",
+                    "timestamp": metric.timestamp,
+                    "value": metric.throughput,
+                    "baseline": self.baseline.avg_throughput,
+                    "severity": "medium",
+                }
+            )
 
         # Check resource utilization
         if metric.cpu_percent > self.baseline.max_cpu_percent:
-            self.bottlenecks.append({
-                "type": "cpu_overload",
-                "timestamp": metric.timestamp,
-                "value": metric.cpu_percent,
-                "baseline": self.baseline.max_cpu_percent,
-                "severity": "high"
-            })
+            self.bottlenecks.append(
+                {
+                    "type": "cpu_overload",
+                    "timestamp": metric.timestamp,
+                    "value": metric.cpu_percent,
+                    "baseline": self.baseline.max_cpu_percent,
+                    "severity": "high",
+                }
+            )
 
-    def get_recent_metrics(self, window_seconds: float = 60.0) -> List[PerformanceMetrics]:
+    def get_recent_metrics(
+        self, window_seconds: float = 60.0
+    ) -> List[PerformanceMetrics]:
         """Get metrics from recent time window.
 
         Args:
@@ -142,10 +150,7 @@ class PerformanceMonitor:
         cutoff = time.time() - window_seconds
         return [m for m in self.metrics_history if m.timestamp >= cutoff]
 
-    def calculate_percentiles(
-        self,
-        window_seconds: float = 60.0
-    ) -> Dict[str, float]:
+    def calculate_percentiles(self, window_seconds: float = 60.0) -> Dict[str, float]:
         """Calculate latency percentiles.
 
         Args:
@@ -168,7 +173,7 @@ class PerformanceMonitor:
             "p95": float(np.percentile(latencies, 95)),
             "p99": float(np.percentile(latencies, 99)),
             "max": float(np.max(latencies)),
-            "avg": float(np.mean(latencies))
+            "avg": float(np.mean(latencies)),
         }
 
     def check_regression(self) -> Dict[str, bool]:
@@ -185,6 +190,7 @@ class PerformanceMonitor:
             return {}
 
         import numpy as np
+
         latencies = [m.latency_ms for m in recent]
         throughputs = [m.throughput for m in recent if m.throughput > 0]
 
@@ -194,14 +200,20 @@ class PerformanceMonitor:
         threshold = 0.1  # 10% regression threshold
 
         return {
-            "latency_regression": (p95 - self.baseline.p95_latency_ms) / self.baseline.p95_latency_ms > threshold,
-            "throughput_regression": (self.baseline.avg_throughput - avg_throughput) / self.baseline.avg_throughput > threshold if avg_throughput > 0 else False
+            "latency_regression": (p95 - self.baseline.p95_latency_ms)
+            / self.baseline.p95_latency_ms
+            > threshold,
+            "throughput_regression": (
+                (self.baseline.avg_throughput - avg_throughput)
+                / self.baseline.avg_throughput
+                > threshold
+                if avg_throughput > 0
+                else False
+            ),
         }
 
     def get_bottlenecks(
-        self,
-        severity: Optional[str] = None,
-        limit: int = 10
+        self, severity: Optional[str] = None, limit: int = 10
     ) -> List[Dict]:
         """Get detected bottlenecks.
 
@@ -230,7 +242,7 @@ class PerformanceMonitor:
         if not recent:
             return {
                 "status": "no_data",
-                "uptime_seconds": time.time() - self._start_time
+                "uptime_seconds": time.time() - self._start_time,
             }
 
         import numpy as np
@@ -247,7 +259,7 @@ class PerformanceMonitor:
             "avg_latency_ms": float(np.mean(latencies)),
             "p95_latency_ms": float(np.percentile(latencies, 95)),
             "p99_latency_ms": float(np.percentile(latencies, 99)),
-            "bottlenecks_count": len(self.bottlenecks)
+            "bottlenecks_count": len(self.bottlenecks),
         }
 
         if throughputs:
@@ -293,7 +305,7 @@ class AnomalyDetector:
 
         # Keep only recent window
         if len(self.history) > self.window_size:
-            self.history = self.history[-self.window_size:]
+            self.history = self.history[-self.window_size :]
 
         return self.is_anomaly(value)
 
@@ -337,5 +349,5 @@ class AnomalyDetector:
             "std": float(np.std(self.history)),
             "min": float(np.min(self.history)),
             "max": float(np.max(self.history)),
-            "count": len(self.history)
+            "count": len(self.history),
         }

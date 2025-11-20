@@ -32,10 +32,26 @@ def create_sample_graph() -> nx.DiGraph:
 
     # Add edges with latency and coherency
     edges = [
-        ("OrderRouter", "RiskEngine", {"latency_norm": 0.5, "coherency": 0.85, "type": "covalent"}),
-        ("RiskEngine", "ExecutionGateway", {"latency_norm": 0.6, "coherency": 0.80, "type": "ionic"}),
-        ("ExecutionGateway", "MarketData", {"latency_norm": 0.4, "coherency": 0.90, "type": "covalent"}),
-        ("MarketData", "OrderRouter", {"latency_norm": 0.3, "coherency": 0.95, "type": "metallic"}),
+        (
+            "OrderRouter",
+            "RiskEngine",
+            {"latency_norm": 0.5, "coherency": 0.85, "type": "covalent"},
+        ),
+        (
+            "RiskEngine",
+            "ExecutionGateway",
+            {"latency_norm": 0.6, "coherency": 0.80, "type": "ionic"},
+        ),
+        (
+            "ExecutionGateway",
+            "MarketData",
+            {"latency_norm": 0.4, "coherency": 0.90, "type": "covalent"},
+        ),
+        (
+            "MarketData",
+            "OrderRouter",
+            {"latency_norm": 0.3, "coherency": 0.95, "type": "metallic"},
+        ),
     ]
 
     for src, dst, data in edges:
@@ -118,11 +134,13 @@ def example_2_vectorized_operations():
 
     # Anomaly detection
     print("\nAnomaly Detection:")
-    time_series = np.concatenate([
-        np.random.normal(1.0, 0.1, 50),
-        [5.0],  # Anomaly
-        np.random.normal(1.0, 0.1, 49),
-    ])
+    time_series = np.concatenate(
+        [
+            np.random.normal(1.0, 0.1, 50),
+            [5.0],  # Anomaly
+            np.random.normal(1.0, 0.1, 49),
+        ]
+    )
 
     anomalies = VectorizedOperations.detect_anomalies_vectorized(
         time_series, window_size=10, threshold=3.0
@@ -149,33 +167,39 @@ def example_3_telemetry_management():
 
     # Record normal operation
     for i in range(50):
-        manager.record({
-            "F": 1.0 + i * 0.001,
-            "dF_dt": 0.001,
-            "crisis_mode": "NORMAL",
-            "circuit_breaker_active": False,
-            "topology_changes": [],
-        })
+        manager.record(
+            {
+                "F": 1.0 + i * 0.001,
+                "dF_dt": 0.001,
+                "crisis_mode": "NORMAL",
+                "circuit_breaker_active": False,
+                "topology_changes": [],
+            }
+        )
 
     # Record crisis period
     for i in range(10):
-        manager.record({
-            "F": 1.2 + i * 0.01,
-            "dF_dt": 0.02,
-            "crisis_mode": "ELEVATED",
-            "circuit_breaker_active": False,
-            "topology_changes": [{"change": i}],
-        })
+        manager.record(
+            {
+                "F": 1.2 + i * 0.01,
+                "dF_dt": 0.02,
+                "crisis_mode": "ELEVATED",
+                "circuit_breaker_active": False,
+                "topology_changes": [{"change": i}],
+            }
+        )
 
     # Back to normal
     for i in range(40):
-        manager.record({
-            "F": 1.1 - i * 0.001,
-            "dF_dt": -0.001,
-            "crisis_mode": "NORMAL",
-            "circuit_breaker_active": False,
-            "topology_changes": [],
-        })
+        manager.record(
+            {
+                "F": 1.1 - i * 0.001,
+                "dF_dt": -0.001,
+                "crisis_mode": "NORMAL",
+                "circuit_breaker_active": False,
+                "topology_changes": [],
+            }
+        )
 
     # Get statistics
     print("\nTelemetry Statistics:")
@@ -249,7 +273,7 @@ def example_4_performance_monitoring():
     print(f"  Total time: {summary['total_time_ms']:.2f} ms")
 
     print("\n  Slowest operations:")
-    for op in summary['slowest_operations'][:3]:
+    for op in summary["slowest_operations"][:3]:
         print(f"    {op['name']}: {op['avg_time_ms']:.2f} ms")
 
 
@@ -264,16 +288,17 @@ def example_5_benchmarking():
         """Original implementation."""
         result = 0.0
         for i in range(n):
-            result += i ** 2
+            result += i**2
         return result
 
     def compute_v2(n):
         """Optimized implementation."""
-        return sum(i ** 2 for i in range(n))
+        return sum(i**2 for i in range(n))
 
     def compute_v3(n):
         """Vectorized implementation."""
         import numpy as np
+
         return np.sum(np.arange(n) ** 2)
 
     print("\nBenchmarking 3 implementations...")
@@ -292,7 +317,7 @@ def example_5_benchmarking():
     print(f"Fastest time: {results['fastest_time_ms']:.3f} ms")
 
     print("\nDetailed Results:")
-    for name, metrics in results['results'].items():
+    for name, metrics in results["results"].items():
         print(f"\n  {name}:")
         print(f"    Avg time: {metrics['avg_time_ms']:.3f} ms")
         print(f"    Throughput: {metrics['throughput_ops_per_sec']:.0f} ops/sec")
@@ -328,12 +353,14 @@ def example_6_integrated_usage():
             controller.control_step()
 
         # Record to telemetry manager
-        controller.telemetry_manager.record({
-            "F": controller.previous_F or 0.0,
-            "dF_dt": controller.dF_dt,
-            "crisis_mode": controller.controller_state,
-            "circuit_breaker_active": controller.circuit_breaker_active,
-        })
+        controller.telemetry_manager.record(
+            {
+                "F": controller.previous_F or 0.0,
+                "dF_dt": controller.dF_dt,
+                "crisis_mode": controller.controller_state,
+                "circuit_breaker_active": controller.circuit_breaker_active,
+            }
+        )
 
     # Get performance metrics
     print("\nControl Step Performance:")
@@ -378,6 +405,7 @@ def main():
         except Exception as e:
             print(f"\nError in {name}: {e}")
             import traceback
+
             traceback.print_exc()
 
     print("\n" + "=" * 60)

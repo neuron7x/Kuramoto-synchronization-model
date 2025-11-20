@@ -88,7 +88,9 @@ class TestNumericalEdgeCases:
         assert size >= 0.0, "Size should be non-negative"
         assert not np.isinf(size), "Size should not be infinite"
         # With low price, size could be large but cost should be bounded
-        assert size * 0.001 <= 1000.0 * 0.1 * 1.01, "Cost should not exceed risk capital"
+        assert (
+            size * 0.001 <= 1000.0 * 0.1 * 1.01
+        ), "Cost should not exceed risk capital"
 
     def test_portfolio_heat_with_empty_positions(self) -> None:
         """Test portfolio heat calculation with no positions.

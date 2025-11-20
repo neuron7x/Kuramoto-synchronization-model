@@ -11,25 +11,30 @@ Usage:
 """
 
 import sys
-from pathlib import Path
 import time
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import numpy as np
+# Make Optional available globally for Pydantic
+import builtins
 
 # Direct import to avoid torch dependency in core.neuro.__init__
 import importlib.util
 from typing import Optional
 
-# Make Optional available globally for Pydantic
-import builtins
+import numpy as np
+
 builtins.Optional = Optional
 
 spec = importlib.util.spec_from_file_location(
     "serotonin_controller",
-    Path(__file__).parent.parent / "core" / "neuro" / "serotonin" / "serotonin_controller.py"
+    Path(__file__).parent.parent
+    / "core"
+    / "neuro"
+    / "serotonin"
+    / "serotonin_controller.py",
 )
 serotonin_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(serotonin_module)
@@ -40,7 +45,7 @@ def print_section(title: str):
     """Print a formatted section header."""
     print(f"\n{'=' * 80}")
     print(f"  {title}")
-    print('=' * 80)
+    print("=" * 80)
 
 
 def print_result(label: str, value, status: str = "✓"):
@@ -62,16 +67,14 @@ def scenario_1_normal_trading():
         novelty = 0.3 + 0.1 * np.cos(i / 8)  # Low novelty
 
         hold, veto, cooldown_s, level = controller.step(
-            stress=stress,
-            drawdown=drawdown,
-            novelty=novelty
+            stress=stress, drawdown=drawdown, novelty=novelty
         )
-        results.append({'hold': hold, 'level': level, 'cooldown': cooldown_s})
+        results.append({"hold": hold, "level": level, "cooldown": cooldown_s})
 
     # Analyze results
-    hold_count = sum(r['hold'] for r in results)
-    avg_level = np.mean([r['level'] for r in results])
-    max_level = max(r['level'] for r in results)
+    hold_count = sum(r["hold"] for r in results)
+    avg_level = np.mean([r["level"] for r in results])
+    max_level = max(r["level"] for r in results)
 
     print_result("Steps executed", 100)
     print_result("HOLD triggered", f"{hold_count} times ({hold_count}%)")
@@ -101,23 +104,18 @@ def scenario_2_high_stress():
         novelty = 0.5 + i * 0.03  # Increasing novelty
 
         hold, veto, cooldown_s, level = controller.step(
-            stress=stress,
-            drawdown=drawdown,
-            novelty=novelty
+            stress=stress, drawdown=drawdown, novelty=novelty
         )
-        results.append({
-            'hold': hold,
-            'level': level,
-            'cooldown': cooldown_s,
-            'step': i
-        })
+        results.append(
+            {"hold": hold, "level": level, "cooldown": cooldown_s, "step": i}
+        )
 
     # Find when HOLD was first triggered
-    hold_triggered = [r for r in results if r['hold']]
+    hold_triggered = [r for r in results if r["hold"]]
     if hold_triggered:
         first_hold = hold_triggered[0]
-        hold_step = first_hold['step']
-        hold_level = first_hold['level']
+        hold_step = first_hold["step"]
+        hold_level = first_hold["level"]
 
         print_result("HOLD first triggered at step", hold_step)
         print_result("Serotonin level at trigger", f"{hold_level:.3f}")
@@ -162,9 +160,7 @@ def scenario_3_recovery():
         novelty = max(0.1, 1.5 - i * 0.014)  # Reduced novelty
 
         hold, veto, cooldown_s, level = controller.step(
-            stress=stress,
-            drawdown=drawdown,
-            novelty=novelty
+            stress=stress, drawdown=drawdown, novelty=novelty
         )
 
         if not hold and hold_state_stressed:
@@ -210,9 +206,7 @@ def scenario_4_hysteresis():
         novelty = 1.0 + 0.2 * np.sin(phase)
 
         hold, veto, cooldown_s, level = controller.step(
-            stress=stress,
-            drawdown=drawdown,
-            novelty=novelty
+            stress=stress, drawdown=drawdown, novelty=novelty
         )
 
         if hold != prev_hold:
@@ -274,8 +268,8 @@ def scenario_6_state_persistence():
     """Scenario 6: State persistence - save and recover."""
     print_section("Scenario 6: State Persistence")
 
-    import tempfile
     import os
+    import tempfile
 
     # Create controller and build state
     controller1 = SerotoninController("configs/serotonin.yaml")
@@ -291,7 +285,7 @@ def scenario_6_state_persistence():
     print_result("Original sensitivity", f"{original_sensitivity:.4f}")
 
     # Save state
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         state_file = f.name
 
     try:
@@ -352,7 +346,9 @@ def scenario_7_health_checks():
     print_result("Status", "Healthy" if health["healthy"] else "Unhealthy")
     print_result("Issues detected", health["issues"])
 
-    stuck_detected = not health["healthy"] and any("Stuck" in str(issue) for issue in health["issues"])
+    stuck_detected = not health["healthy"] and any(
+        "Stuck" in str(issue) for issue in health["issues"]
+    )
 
     # Test 3: Reset and check metrics
     controller.reset()
@@ -419,11 +415,21 @@ def generate_summary_report(results: dict):
 def main():
     """Run all validation scenarios."""
     print("\n")
-    print("╔════════════════════════════════════════════════════════════════════════════╗")
-    print("║                                                                            ║")
-    print("║          Serotonin Controller v2.4.0 - Practical Validation Demo          ║")
-    print("║                                                                            ║")
-    print("╚════════════════════════════════════════════════════════════════════════════╝")
+    print(
+        "╔════════════════════════════════════════════════════════════════════════════╗"
+    )
+    print(
+        "║                                                                            ║"
+    )
+    print(
+        "║          Serotonin Controller v2.4.0 - Practical Validation Demo          ║"
+    )
+    print(
+        "║                                                                            ║"
+    )
+    print(
+        "╚════════════════════════════════════════════════════════════════════════════╝"
+    )
 
     results = {}
 
@@ -447,6 +453,7 @@ def main():
     except Exception as e:
         print(f"\n❌ CRITICAL ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 2
 

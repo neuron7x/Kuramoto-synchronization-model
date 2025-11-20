@@ -53,9 +53,7 @@ class _StaticCredentialProvider:
     def load(self, *, force: bool = False) -> Mapping[str, str]:  # noqa: D401
         return dict(self._credentials)
 
-    def rotate(
-        self, new_values: Mapping[str, str] | None = None
-    ) -> Mapping[str, str]:
+    def rotate(self, new_values: Mapping[str, str] | None = None) -> Mapping[str, str]:
         if new_values is not None:
             self._credentials = dict(new_values)
         return self.load(force=True)

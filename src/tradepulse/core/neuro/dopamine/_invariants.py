@@ -1,4 +1,5 @@
 """Numerical invariants and safety checks for dopamine module."""
+
 from __future__ import annotations
 
 import math

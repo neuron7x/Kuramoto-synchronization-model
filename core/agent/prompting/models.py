@@ -46,9 +46,7 @@ class PromptGuardrail:
     def __init__(self, description: str | None = None) -> None:
         self.description = description or self.__class__.__name__
 
-    def validate(
-        self, parameters: Mapping[str, str], context: "PromptContext"
-    ) -> None:
+    def validate(self, parameters: Mapping[str, str], context: "PromptContext") -> None:
         """Validate *parameters* and *context*.
 
         Sub-classes should raise :class:`PromptGuardrailViolation` when validation
@@ -89,7 +87,11 @@ class PromptTemplate:
         object.__setattr__(self, "variant", variant)
         object.__setattr__(self, "version", version)
 
-        metadata = MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
+        metadata = (
+            MappingProxyType(dict(self.metadata))
+            if self.metadata
+            else MappingProxyType({})
+        )
         object.__setattr__(self, "metadata", metadata)
 
         parameter_names = {spec.name for spec in self.parameters}
@@ -164,7 +166,7 @@ class ContextFragment:
 
         if max_chars < self.min_chars:
             max_chars = self.min_chars
-        truncated_content = self.content[:max(0, max_chars)].rstrip()
+        truncated_content = self.content[: max(0, max_chars)].rstrip()
         return ContextFragment(
             label=self.label,
             content=truncated_content,
@@ -184,13 +186,19 @@ class PromptContext:
     def __post_init__(self) -> None:
         fragments = tuple(self.fragments)
         object.__setattr__(self, "fragments", fragments)
-        metadata = MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
+        metadata = (
+            MappingProxyType(dict(self.metadata))
+            if self.metadata
+            else MappingProxyType({})
+        )
         object.__setattr__(self, "metadata", metadata)
 
     def sorted_fragments(self) -> tuple[ContextFragment, ...]:
         """Return fragments sorted by priority (descending)."""
 
-        return tuple(sorted(self.fragments, key=lambda fragment: fragment.priority, reverse=True))
+        return tuple(
+            sorted(self.fragments, key=lambda fragment: fragment.priority, reverse=True)
+        )
 
 
 @dataclass(slots=True, frozen=True)
@@ -204,7 +212,9 @@ class PromptContextWindow:
     def __post_init__(self) -> None:
         if self.max_chars <= 0:
             raise ValueError("max_chars must be positive")
-        if self.soft_chars is not None and (self.soft_chars <= 0 or self.soft_chars > self.max_chars):
+        if self.soft_chars is not None and (
+            self.soft_chars <= 0 or self.soft_chars > self.max_chars
+        ):
             raise ValueError("soft_chars must be positive and <= max_chars")
         if not self.separator:
             raise ValueError("separator must be non-empty")
@@ -261,7 +271,11 @@ class PromptOutcome:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        metadata = MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
+        metadata = (
+            MappingProxyType(dict(self.metadata))
+            if self.metadata
+            else MappingProxyType({})
+        )
         object.__setattr__(self, "metadata", metadata)
 
 

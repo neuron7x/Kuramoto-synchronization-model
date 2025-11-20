@@ -36,7 +36,9 @@ class _FakeBroker:
 
 
 class _CapturingKafkaService:
-    def __init__(self, config: KafkaIngestionConfig, *, tick_handler, lag_handler=None) -> None:
+    def __init__(
+        self, config: KafkaIngestionConfig, *, tick_handler, lag_handler=None
+    ) -> None:
         self.config = config
         self.tick_handler = tick_handler
         self.lag_handler = lag_handler
@@ -61,7 +63,14 @@ class _FakeRedisPipeline:
     async def __aexit__(self, exc_type, exc, tb) -> bool:
         return False
 
-    def xadd(self, stream_key: str, payload: dict[str, str], *, maxlen: int, approximate: bool) -> "_FakeRedisPipeline":
+    def xadd(
+        self,
+        stream_key: str,
+        payload: dict[str, str],
+        *,
+        maxlen: int,
+        approximate: bool,
+    ) -> "_FakeRedisPipeline":
         self._operations.append(("xadd", (stream_key, payload)))
         return self
 
@@ -94,7 +103,9 @@ class _FakeRedis:
     async def get(self, key: str) -> str | None:
         return self.store.get(key)
 
-    async def xread(self, *, streams: dict[str, str], count: int, block: int) -> list[tuple[str, list[tuple[str, dict[bytes, bytes]]]]]:
+    async def xread(
+        self, *, streams: dict[str, str], count: int, block: int
+    ) -> list[tuple[str, list[tuple[str, dict[bytes, bytes]]]]]:
         response: list[tuple[str, list[tuple[str, dict[bytes, bytes]]]]] = []
         for stream_key, last_id in streams.items():
             entries = self.streams.get(stream_key, [])
@@ -209,7 +220,10 @@ class _FakeConnection:
 
     async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
         normalized = " ".join(query.strip().split()).lower()
-        if "from feature_values" in normalized and "order by event_ts desc" in normalized:
+        if (
+            "from feature_values" in normalized
+            and "order by event_ts desc" in normalized
+        ):
             name, version, entity_id = args[:3]
             cutoff: datetime | None = None
             if "event_ts <= $4" in normalized:
@@ -292,7 +306,9 @@ async def test_streaming_pipeline_emits_broker_events_on_tick_batches() -> None:
     broker = _FakeBroker()
     captured_service: _CapturingKafkaService | None = None
 
-    def factory(config: KafkaIngestionConfig, *, tick_handler, lag_handler=None) -> _CapturingKafkaService:
+    def factory(
+        config: KafkaIngestionConfig, *, tick_handler, lag_handler=None
+    ) -> _CapturingKafkaService:
         nonlocal captured_service
         captured_service = _CapturingKafkaService(
             config, tick_handler=tick_handler, lag_handler=lag_handler
@@ -384,18 +400,24 @@ async def test_polygon_adapter_fetches_data_with_authorised_requests() -> None:
 
     assert requests
     request = requests[0]
-    assert request.url.path == "/v2/aggs/ticker/BTCUSD/range/1/minute/2024-01-01/2024-01-02"
+    assert (
+        request.url.path
+        == "/v2/aggs/ticker/BTCUSD/range/1/minute/2024-01-01/2024-01-02"
+    )
     assert len(ticks) == 1
     tick = ticks[0]
     assert isinstance(tick, PriceTick)
     assert tick.metadata.symbol == "BTC/USD"
     assert tick.metadata.venue == "POLYGON"
-    assert tick.price == PriceTick.create(
-        symbol="BTCUSD",
-        venue="POLYGON",
-        price=101.25,
-        timestamp=datetime.fromtimestamp(1_700_000_000, tz=timezone.utc),
-    ).price
+    assert (
+        tick.price
+        == PriceTick.create(
+            symbol="BTCUSD",
+            venue="POLYGON",
+            price=101.25,
+            timestamp=datetime.fromtimestamp(1_700_000_000, tz=timezone.utc),
+        ).price
+    )
 
 
 @pytest.mark.asyncio

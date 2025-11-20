@@ -4,11 +4,10 @@ from .core import (
     CoreEngine,
     CoreEngineConfig,
     CoreEngineError,
+    CycleMetrics,
     DataFeed,
     EngineContext,
     EngineCycle,
-    CycleMetrics,
-    StageDurations,
     ExecutionClient,
     ExecutionOutcome,
     LogEntry,
@@ -18,6 +17,7 @@ from .core import (
     RiskManager,
     Signal,
     SignalGenerator,
+    StageDurations,
 )
 from .energy import (
     COULOMB_CONSTANT,

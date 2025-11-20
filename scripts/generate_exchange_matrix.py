@@ -3,7 +3,7 @@
 import argparse
 import importlib
 import pkgutil
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 ADAPTERS_PKG = "execution.adapters"
 
@@ -27,9 +27,17 @@ def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
         return {}
     funcs = {k for k, v in vars(mod).items() if callable(v)}
     caps = {
-        "time": any(n in funcs for n in ("get_server_time", "server_time_ms", "time", "now_ms")),
-        "exchangeInfo_or_symbols": any(n in funcs for n in ("get_exchange_info", "exchange_info", "symbols", "list_symbols")),
-        "balance": any(n in funcs for n in ("get_balance", "balances", "account_balances", "spot_balance")),
+        "time": any(
+            n in funcs for n in ("get_server_time", "server_time_ms", "time", "now_ms")
+        ),
+        "exchangeInfo_or_symbols": any(
+            n in funcs
+            for n in ("get_exchange_info", "exchange_info", "symbols", "list_symbols")
+        ),
+        "balance": any(
+            n in funcs
+            for n in ("get_balance", "balances", "account_balances", "spot_balance")
+        ),
     }
     return caps
 
@@ -40,9 +48,14 @@ def render_markdown(rows: List[Dict[str, Any]]) -> str:
 
 This document is generated daily by CI.
 """
-    table = ["| Adapter | /time | /exchangeInfo/symbols | Balance (auth) |", "|---|:---:|:---:|:---:|"]
+    table = [
+        "| Adapter | /time | /exchangeInfo/symbols | Balance (auth) |",
+        "|---|:---:|:---:|:---:|",
+    ]
     for r in rows:
-        table.append(f"| `{r['name']}` | {'✅' if r['time'] else '❌'} | {'✅' if r['exchangeInfo_or_symbols'] else '❌'} | {'✅' if r['balance'] else '❌'} |")
+        table.append(
+            f"| `{r['name']}` | {'✅' if r['time'] else '❌'} | {'✅' if r['exchangeInfo_or_symbols'] else '❌'} | {'✅' if r['balance'] else '❌'} |"
+        )
     return header + "\n".join(table) + "\n"
 
 

@@ -326,10 +326,12 @@ class TestDeriveSignal:
         self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
     ) -> None:
         forecaster = make_forecaster(pd.DataFrame())
-        components = forecaster._compute_macd_components(  # pylint: disable=protected-access
-            macd=0.0,
-            macd_signal_line=0.0,
-            macd_histogram=0.0,
+        components = (
+            forecaster._compute_macd_components(  # pylint: disable=protected-access
+                macd=0.0,
+                macd_signal_line=0.0,
+                macd_histogram=0.0,
+            )
         )
 
         assert components["macd_trend"] == pytest.approx(0.0)
@@ -341,10 +343,12 @@ class TestDeriveSignal:
         self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
     ) -> None:
         forecaster = make_forecaster(pd.DataFrame())
-        components = forecaster._compute_macd_components(  # pylint: disable=protected-access
-            macd=0.9,
-            macd_signal_line=0.4,
-            macd_histogram=0.5,
+        components = (
+            forecaster._compute_macd_components(  # pylint: disable=protected-access
+                macd=0.9,
+                macd_signal_line=0.4,
+                macd_histogram=0.5,
+            )
         )
 
         assert components["macd_trend"] > 0

@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 # Direct import to avoid dependency issues in tests
 spec = importlib.util.spec_from_file_location(
     "serotonin_controller",
-    Path(__file__).parent.parent / "serotonin" / "serotonin_controller.py"
+    Path(__file__).parent.parent / "serotonin" / "serotonin_controller.py",
 )
 serotonin_module = importlib.util.module_from_spec(spec)
 sys.modules["serotonin_controller"] = serotonin_module
@@ -91,7 +91,7 @@ def test_aversive_state(controller):
     # - tanh saturation
     vol_contribution = 0.42 * math.sqrt(1.0)
     fe_contribution = 0.28 * 0.5
-    loss_contribution = 0.32 * (0.2 + 0.5 * 0.2 ** 2)
+    loss_contribution = 0.32 * (0.2 + 0.5 * 0.2**2)
     rho_contribution = 0.18 * (1 - (-0.90))
     release = vol_contribution + fe_contribution + loss_contribution + rho_contribution
     expected = 3.0 * math.tanh(release / 3.0)
@@ -171,7 +171,7 @@ def test_modulate_action_prob(controller):
         za_bias=-0.33,
     )
     # v2.4.0 uses quadratic inhibition for progressive effect
-    inhibition_strength = ser ** 2
+    inhibition_strength = ser**2
     inhibition_factor = 1.0 - inhibition_strength * 0.8
     inhibited = 0.9 * max(0.0, inhibition_factor)
     # Negative bias with sigmoid-like application
@@ -194,7 +194,7 @@ def test_apply_internal_shift(controller):
         beta_temper=0.12,
     )
     # v2.4.0 uses power-law tempering (power 1.5) for smoother transitions
-    tempering_curve = ser ** 1.5
+    tempering_curve = ser**1.5
     tempering_factor = 1.0 - 0.12 * tempering_curve
     expected = grad * max(0.0, tempering_factor)
     assert shifted == pytest.approx(expected, rel=1e-3)
@@ -342,7 +342,9 @@ def test_rho_loss_clamping(controller):
 
 
 def test_serotonin_monotonicity(controller):
-    responses = [controller.compute_serotonin_signal(val) for val in np.linspace(0, 3, 15)]
+    responses = [
+        controller.compute_serotonin_signal(val) for val in np.linspace(0, 3, 15)
+    ]
     assert responses == sorted(responses)
     assert all(0.0 <= r <= 1.0 for r in responses)
 
@@ -491,7 +493,9 @@ def test_step_hold_trigger(controller):
 
     # High stress should eventually trigger HOLD
     for _ in range(50):
-        hold2, veto2, _, level2 = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
+        hold2, veto2, _, level2 = controller.step(
+            stress=3.0, drawdown=-0.1, novelty=2.0
+        )
     assert hold2 or level2 > controller.config["cooldown_threshold"]
 
 
@@ -664,7 +668,9 @@ def test_step_monotonic_stress_response(controller):
         controller.sensitivity = 1.0
         # Run multiple steps to let tonic build up
         for _ in range(20):
-            _, _, _, level = controller.step(stress=stress, drawdown=-0.02, novelty=stress * 0.4)
+            _, _, _, level = controller.step(
+                stress=stress, drawdown=-0.02, novelty=stress * 0.4
+            )
         levels.append(level)
 
     # Higher stress should generally lead to higher levels
@@ -695,7 +701,10 @@ def test_save_and_load_state(controller, tmp_path):
     restored_state = controller.to_dict()
 
     # Verify key state is restored
-    assert abs(restored_state["serotonin_level"] - original_state["serotonin_level"]) < 0.01
+    assert (
+        abs(restored_state["serotonin_level"] - original_state["serotonin_level"])
+        < 0.01
+    )
     assert abs(restored_state["tonic_level"] - original_state["tonic_level"]) < 0.01
     assert abs(restored_state["sensitivity"] - original_state["sensitivity"]) < 0.01
 
@@ -853,6 +862,7 @@ def test_state_persistence_includes_metadata(controller, tmp_path):
 
     # Load raw JSON to check metadata
     import json
+
     with open(state_file, "r") as f:
         state = json.load(f)
 

@@ -40,7 +40,9 @@ class DesensitizationManager:
 
         shaped_reward, r_state = self.reward.update(reward)
         sensitivity, s_state = self.sensory.update(features)
-        gate, t_state = self.threat.update(drawdown=drawdown, vol=vol, hpa_tone=hpa_tone)
+        gate, t_state = self.threat.update(
+            drawdown=drawdown, vol=vol, hpa_tone=hpa_tone
+        )
         combined_gate = max(0.0, min(1.0, gate * (0.5 + 0.5 * sensitivity)))
         self.last = {
             "reward": r_state,

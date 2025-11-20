@@ -45,7 +45,9 @@ class RiskStateResponse(BaseModel):
     circuit_breaker_last_trip: Optional[str] = None
 
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)) -> bool:
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+) -> bool:
     """Verify the admin API token.
 
     Args:
@@ -143,7 +145,9 @@ def create_admin_app(
 
         if circuit_breaker is not None:
             response_data.circuit_breaker_state = circuit_breaker.state.value
-            response_data.circuit_breaker_ttl = circuit_breaker.get_time_until_recovery()
+            response_data.circuit_breaker_ttl = (
+                circuit_breaker.get_time_until_recovery()
+            )
             last_trip = circuit_breaker.get_last_trip_reason()
             response_data.circuit_breaker_last_trip = last_trip
 

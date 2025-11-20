@@ -18,7 +18,6 @@ from core.orchestrator import (
     TimeoutConfig,
 )
 
-
 GUARDS = GuardConfig(
     kappa=GuardBand(soft_limit=0.85, hard_limit=0.95, recover_limit=0.6),
     var=GuardBand(soft_limit=0.75, hard_limit=0.9, recover_limit=0.5),
@@ -98,7 +97,9 @@ def test_action_timeout_transitions_to_cooldown(seed: int) -> None:
 
 
 @pytest.mark.parametrize("seed", range(128))
-@pytest.mark.parametrize("state", [ModeState.ACTION, ModeState.COOLDOWN, ModeState.REST])
+@pytest.mark.parametrize(
+    "state", [ModeState.ACTION, ModeState.COOLDOWN, ModeState.REST]
+)
 def test_hard_breach_forces_safe_exit(seed: int, state: ModeState) -> None:
     rng = random.Random(seed)
     snapshot = hard_breach_snapshot(rng)

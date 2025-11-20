@@ -262,7 +262,14 @@ def _coerce_fill(fill: FillInput) -> FillDetail:
     quantity = float(fill.get("quantity") or fill.get("qty"))
     price = float(fill["price"])
     fees = float(fill.get("fees", 0.0))
-    return FillDetail(quantity=quantity, price=price, fees=fees, timestamp=timestamp, broker=broker, venue=venue)
+    return FillDetail(
+        quantity=quantity,
+        price=price,
+        fees=fees,
+        timestamp=timestamp,
+        broker=broker,
+        venue=venue,
+    )
 
 
 def _coerce_order(order: OrderLifecycleInput) -> OrderLifecycle:
@@ -271,15 +278,23 @@ def _coerce_order(order: OrderLifecycleInput) -> OrderLifecycle:
     return OrderLifecycle(
         order_id=str(order["order_id"]),
         submitted_ts=float(order["submitted_ts"]),
-        acknowledged_ts=(None if order.get("acknowledged_ts") is None else float(order["acknowledged_ts"])),
-        completed_ts=(None if order.get("completed_ts") is None else float(order["completed_ts"])),
+        acknowledged_ts=(
+            None
+            if order.get("acknowledged_ts") is None
+            else float(order["acknowledged_ts"])
+        ),
+        completed_ts=(
+            None if order.get("completed_ts") is None else float(order["completed_ts"])
+        ),
     )
 
 
 def _coerce_market_volume(sample: MarketVolumeInput) -> MarketVolumeSample:
     if isinstance(sample, MarketVolumeSample):
         return sample
-    return MarketVolumeSample(timestamp=float(sample["timestamp"]), volume=float(sample.get("volume", 0.0)))
+    return MarketVolumeSample(
+        timestamp=float(sample["timestamp"]), volume=float(sample.get("volume", 0.0))
+    )
 
 
 def _coerce_liquidity(sample: LiquidityInput) -> LiquiditySample:
@@ -301,7 +316,9 @@ def _coerce_benchmark(sample: BenchmarkPriceInput) -> BenchmarkPriceSample:
         timestamp=float(sample["timestamp"]),
         price=float(sample["price"]),
         vwap_window_volume=(
-            None if sample.get("vwap_window_volume") is None else float(sample["vwap_window_volume"])
+            None
+            if sample.get("vwap_window_volume") is None
+            else float(sample["vwap_window_volume"])
         ),
     )
 
@@ -375,26 +392,48 @@ class TransactionCostAnalyzer:
         coerced_fills = tuple(_coerce_fill(fill) for fill in fills)
         fill_samples = tuple(fill.as_fill_sample() for fill in coerced_fills)
         coerced_orders = tuple(_coerce_order(order) for order in (orders or ()))
-        coerced_market_volumes = tuple(_coerce_market_volume(sample) for sample in (market_volumes or ()))
-        coerced_liquidity = tuple(_coerce_liquidity(sample) for sample in (liquidity_samples or ()))
-        coerced_benchmarks = tuple(_coerce_benchmark(sample) for sample in (benchmark_prices or ()))
+        coerced_market_volumes = tuple(
+            _coerce_market_volume(sample) for sample in (market_volumes or ())
+        )
+        coerced_liquidity = tuple(
+            _coerce_liquidity(sample) for sample in (liquidity_samples or ())
+        )
+        coerced_benchmarks = tuple(
+            _coerce_benchmark(sample) for sample in (benchmark_prices or ())
+        )
 
-        executed_quantity = sum(fill.quantity for fill in coerced_fills if fill.quantity > 0.0)
+        executed_quantity = sum(
+            fill.quantity for fill in coerced_fills if fill.quantity > 0.0
+        )
         total_fees = sum(fill.fees for fill in coerced_fills)
         trade_vwap = vwap(fill_samples) if fill_samples else 0.0
 
-        market_vwap = self._compute_market_vwap(coerced_benchmarks) if coerced_benchmarks else arrival_price
+        market_vwap = (
+            self._compute_market_vwap(coerced_benchmarks)
+            if coerced_benchmarks
+            else arrival_price
+        )
         impl_shortfall = implementation_shortfall(
             side_norm,
             arrival_price,
             fill_samples,
             explicit_fees=0.0,
         )
-        per_share_shortfall = impl_shortfall / executed_quantity if executed_quantity > 0.0 else 0.0
-        arrival_slip = vwap_slippage(side_norm, arrival_price, fill_samples) if fill_samples else 0.0
-        vwap_slip = vwap_slippage(side_norm, market_vwap, fill_samples) if fill_samples else 0.0
+        per_share_shortfall = (
+            impl_shortfall / executed_quantity if executed_quantity > 0.0 else 0.0
+        )
+        arrival_slip = (
+            vwap_slippage(side_norm, arrival_price, fill_samples)
+            if fill_samples
+            else 0.0
+        )
+        vwap_slip = (
+            vwap_slippage(side_norm, market_vwap, fill_samples) if fill_samples else 0.0
+        )
 
-        participation_rate = self._compute_participation_rate(coerced_market_volumes, executed_quantity)
+        participation_rate = self._compute_participation_rate(
+            coerced_market_volumes, executed_quantity
+        )
 
         latency_report = self._build_latency_report(coerced_orders)
         liquidity_report = self._build_liquidity_report(
@@ -496,9 +535,17 @@ class TransactionCostAnalyzer:
         return min(1.0, executed_quantity / total_market_volume)
 
     def _build_latency_report(self, orders: Sequence[OrderLifecycle]) -> LatencyReport:
-        submit_to_ack = [value for order in orders if (value := order.submit_to_ack()) is not None]
-        ack_to_fill = [value for order in orders if (value := order.ack_to_complete()) is not None]
-        submit_to_complete = [value for order in orders if (value := order.submit_to_complete()) is not None]
+        submit_to_ack = [
+            value for order in orders if (value := order.submit_to_ack()) is not None
+        ]
+        ack_to_fill = [
+            value for order in orders if (value := order.ack_to_complete()) is not None
+        ]
+        submit_to_complete = [
+            value
+            for order in orders
+            if (value := order.submit_to_complete()) is not None
+        ]
         return LatencyReport(
             submit_to_ack=_compute_distribution(submit_to_ack),
             ack_to_fill=_compute_distribution(ack_to_fill),
@@ -520,7 +567,11 @@ class TransactionCostAnalyzer:
             )
 
         volumes: list[float] = [sample.displayed_volume for sample in liquidity_samples]
-        spreads: list[float] = [sample.spread_bps for sample in liquidity_samples if sample.spread_bps is not None]
+        spreads: list[float] = [
+            sample.spread_bps
+            for sample in liquidity_samples
+            if sample.spread_bps is not None
+        ]
 
         liquidity_by_bucket: MutableMapping[float, list[float]] = {}
         for sample in liquidity_samples:
@@ -544,7 +595,9 @@ class TransactionCostAnalyzer:
             pressures.append(bucket_executed / available)
 
         total_displayed = sum(volumes)
-        coverage_ratio = executed_quantity / total_displayed if total_displayed > 0.0 else 0.0
+        coverage_ratio = (
+            executed_quantity / total_displayed if total_displayed > 0.0 else 0.0
+        )
         book_pressure = max(pressures) if pressures else 0.0
         median_spread = _percentile(spreads, 0.5) if spreads else 0.0
 
@@ -588,7 +641,9 @@ class TransactionCostAnalyzer:
         grouped: MutableMapping[tuple[str, str], dict[str, float]] = {}
         for fill in fills:
             key = (fill.broker, fill.venue)
-            bucket = grouped.setdefault(key, {"quantity": 0.0, "notional": 0.0, "fees": 0.0, "count": 0.0})
+            bucket = grouped.setdefault(
+                key, {"quantity": 0.0, "notional": 0.0, "fees": 0.0, "count": 0.0}
+            )
             bucket["quantity"] += fill.quantity
             bucket["notional"] += fill.quantity * fill.price
             bucket["fees"] += fill.fees
@@ -646,9 +701,13 @@ class TransactionCostAnalyzer:
             bucket_fills = fills_by_bucket[bucket_start]
             executed_quantity = sum(fill.quantity for fill in bucket_fills)
             notional = sum(fill.quantity * fill.price for fill in bucket_fills)
-            vwap_price = notional / executed_quantity if executed_quantity > 0.0 else 0.0
+            vwap_price = (
+                notional / executed_quantity if executed_quantity > 0.0 else 0.0
+            )
             market_volume = volume_by_bucket.get(bucket_start, 0.0)
-            participation = executed_quantity / market_volume if market_volume > 0.0 else 0.0
+            participation = (
+                executed_quantity / market_volume if market_volume > 0.0 else 0.0
+            )
 
             benchmark_samples = benchmark_by_bucket.get(bucket_start)
             if benchmark_samples:

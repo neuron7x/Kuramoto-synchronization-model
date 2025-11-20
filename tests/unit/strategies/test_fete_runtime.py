@@ -19,7 +19,9 @@ from core.strategies import (
 from domain.position import Position
 
 
-def _stub_yahoo_download(symbol: str, start: datetime, end: datetime, progress: bool = False) -> pd.DataFrame:
+def _stub_yahoo_download(
+    symbol: str, start: datetime, end: datetime, progress: bool = False
+) -> pd.DataFrame:
     index = pd.date_range(start=start, periods=3, freq="D")
     return pd.DataFrame(
         {
@@ -47,7 +49,9 @@ def test_yahoo_fetcher_returns_candles() -> None:
 
 def test_paper_account_rebalance_and_cash_management() -> None:
     now = datetime.now()
-    account = PaperTradingAccount(initial_cash=1_000.0, transaction_cost=0.0, slippage=0.0)
+    account = PaperTradingAccount(
+        initial_cash=1_000.0, transaction_cost=0.0, slippage=0.0
+    )
     equity = account.equity({"BTC": 100.0}, timestamp=now, record=False)
     assert equity == 1_000.0
 
@@ -72,12 +76,20 @@ def test_paper_account_rebalance_and_cash_management() -> None:
         equity=account.equity({"BTC": 120.0}, timestamp=later, record=False),
         timestamp=later,
     )
-    assert account.positions["BTC"].quantity <= account.equity({"BTC": 120.0}, timestamp=later, record=False) / 120.0
+    assert (
+        account.positions["BTC"].quantity
+        <= account.equity({"BTC": 120.0}, timestamp=later, record=False) / 120.0
+    )
 
 
 def test_risk_guard_stop_loss_and_circuit_breaker() -> None:
     now = datetime.now()
-    guard = RiskGuard(max_position_fraction=0.5, max_daily_loss=0.05, max_drawdown=0.1, stop_loss_pct=0.05)
+    guard = RiskGuard(
+        max_position_fraction=0.5,
+        max_daily_loss=0.05,
+        max_drawdown=0.1,
+        stop_loss_pct=0.05,
+    )
     guard.reset(1_000.0, timestamp=now)
 
     ok, reason = guard.check_equity(900.0, timestamp=now)
@@ -85,7 +97,9 @@ def test_risk_guard_stop_loss_and_circuit_breaker() -> None:
     assert reason == "daily_loss"
     assert guard.circuit_breaker_active
 
-    position = Position(symbol="BTC", quantity=1.0, entry_price=100.0, current_price=100.0)
+    position = Position(
+        symbol="BTC", quantity=1.0, entry_price=100.0, current_price=100.0
+    )
     triggered = guard.stop_loss_triggered(position, 94.0, timestamp=now)
     assert triggered
     assert guard.events[-1].code == "stop_loss"
@@ -93,7 +107,12 @@ def test_risk_guard_stop_loss_and_circuit_breaker() -> None:
 
 def test_risk_guard_tracks_peak_drawdown() -> None:
     now = datetime.now()
-    guard = RiskGuard(max_position_fraction=0.5, max_daily_loss=1.0, max_drawdown=1.0, stop_loss_pct=0.05)
+    guard = RiskGuard(
+        max_position_fraction=0.5,
+        max_daily_loss=1.0,
+        max_drawdown=1.0,
+        stop_loss_pct=0.05,
+    )
     guard.reset(10_000.0, timestamp=now)
 
     deep_dip_time = now + timedelta(minutes=1)
@@ -111,8 +130,15 @@ def test_backtest_engine_generates_report() -> None:
     prices = np.array([100.0, 101.0, 100.5, 102.0, 103.5, 104.0], dtype=float)
     probs = np.linspace(0.45, 0.6, prices.size)
     fete = FETE(FETEConfig())
-    account = PaperTradingAccount(initial_cash=5_000.0, transaction_cost=0.0, slippage=0.0)
-    guard = RiskGuard(max_position_fraction=0.3, max_daily_loss=0.5, max_drawdown=0.5, stop_loss_pct=0.1)
+    account = PaperTradingAccount(
+        initial_cash=5_000.0, transaction_cost=0.0, slippage=0.0
+    )
+    guard = RiskGuard(
+        max_position_fraction=0.3,
+        max_daily_loss=0.5,
+        max_drawdown=0.5,
+        stop_loss_pct=0.1,
+    )
     engine = FETEBacktestEngine(fete, account, guard)
 
     report = engine.run(prices, probs, symbol="BTC-USD")

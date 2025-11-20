@@ -189,8 +189,7 @@ class CacheWarmupController:
         self._metrics = get_metrics_collector()
         self._min_samples_for_hit_rate = max(1, int(min_samples_for_hit_rate))
         self._statuses: MutableMapping[str, CacheWarmupStatus] = {
-            name: CacheWarmupStatus(spec=spec)
-            for name, spec in self._specs.items()
+            name: CacheWarmupStatus(spec=spec) for name, spec in self._specs.items()
         }
 
     # ------------------------------------------------------------------
@@ -200,9 +199,7 @@ class CacheWarmupController:
 
         return [self.warmup(name, strategy=strategy) for name in self._order]
 
-    def warmup(
-        self, cache_name: str, *, strategy: str = "manual"
-    ) -> CacheWarmupResult:
+    def warmup(self, cache_name: str, *, strategy: str = "manual") -> CacheWarmupResult:
         """Execute the warm-up callable associated with ``cache_name``."""
 
         status = self._get_status(cache_name)
@@ -280,9 +277,7 @@ class CacheWarmupController:
 
         return result
 
-    def _evaluate_readiness(
-        self, spec: CacheWarmupSpec
-    ) -> tuple[bool, str | None]:
+    def _evaluate_readiness(self, spec: CacheWarmupSpec) -> tuple[bool, str | None]:
         probe = spec.readiness_probe
         if probe is None:
             return True, None
@@ -382,9 +377,7 @@ class CacheWarmupController:
         """Return ``True`` when all critical caches are ready."""
 
         return all(
-            status.ready
-            for status in self._statuses.values()
-            if status.spec.critical
+            status.ready for status in self._statuses.values() if status.spec.critical
         )
 
     # ------------------------------------------------------------------
@@ -402,10 +395,7 @@ class CacheWarmupController:
         if spec.critical and not status.ready:
             reasons.add("not_ready")
 
-        if (
-            status.last_result is not None
-            and not status.last_result.warmed
-        ):
+        if status.last_result is not None and not status.last_result.warmed:
             reasons.add("warmup_failed")
 
         total = status.stats.total_accesses()

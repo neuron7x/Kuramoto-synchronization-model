@@ -30,7 +30,9 @@ price_series = pd.Series(price, index=idx, name="close")
 cfg = IGSConfig(window=400, n_states=7)
 features = compute_igs_features(price_series, cfg)
 signal = igs_directional_signal(features, cfg=cfg)
-out = pd.concat([price_series.rename("close"), features, signal.rename("igs_signal")], axis=1)
+out = pd.concat(
+    [price_series.rename("close"), features, signal.rename("igs_signal")], axis=1
+)
 Path("igs_demo_features_signal.csv").write_text(out.to_csv())
 
 eng = StreamingIGS(cfg)
@@ -38,6 +40,19 @@ rows = []
 for t, p in price_series.items():
     m = eng.update(t, float(p))
     if m:
-        rows.append([t, m.epr, m.flux_index, m.tra, m.pe, m.regime_score, m.regime, m.n_states_used])
-stream_df = pd.DataFrame(rows, columns=["ts", "epr", "flux", "tra", "pe", "regime_score", "regime", "K"]).set_index("ts")
+        rows.append(
+            [
+                t,
+                m.epr,
+                m.flux_index,
+                m.tra,
+                m.pe,
+                m.regime_score,
+                m.regime,
+                m.n_states_used,
+            ]
+        )
+stream_df = pd.DataFrame(
+    rows, columns=["ts", "epr", "flux", "tra", "pe", "regime_score", "regime", "K"]
+).set_index("ts")
 Path("igs_demo_stream.csv").write_text(stream_df.to_csv())

@@ -160,7 +160,9 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         headers: Dict[str, str],
     ) -> tuple[Dict[str, Any], Dict[str, Any] | None, Dict[str, str], Any | None]:
         if self._api_secret is None:
-            raise RuntimeError("Binance connector signing requested without credentials")
+            raise RuntimeError(
+                "Binance connector signing requested without credentials"
+            )
         params = dict(params)
         self._ensure_time_sync()
         params.setdefault("timestamp", str(self._timestamp_ms()))
@@ -225,10 +227,14 @@ class BinanceRESTConnector(RESTWebSocketConnector):
         )
         if not symbol:
             raise ValueError("Order payload did not include symbol")
-        side = str(
-            _first_present(payload, "side", "S")
-            or (original.side.value if original else "buy")
-        ).strip().lower()
+        side = (
+            str(
+                _first_present(payload, "side", "S")
+                or (original.side.value if original else "buy")
+            )
+            .strip()
+            .lower()
+        )
         order_type = self._coerce_order_type(
             str(
                 _first_present(payload, "type", "o")
@@ -265,9 +271,9 @@ class BinanceRESTConnector(RESTWebSocketConnector):
                 average_price = cumulative_quote / filled
             except ZeroDivisionError:  # pragma: no cover - defensive guard
                 average_price = None
-        status_value = str(
-            _first_present(payload, "status", "X") or "NEW"
-        ).strip().upper()
+        status_value = (
+            str(_first_present(payload, "status", "X") or "NEW").strip().upper()
+        )
         status = _STATUS_MAP.get(status_value, OrderStatus.OPEN)
         return Order(
             symbol=symbol,

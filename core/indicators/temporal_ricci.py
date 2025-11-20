@@ -22,7 +22,6 @@ import pandas as pd
 from ..utils.logging import get_logger
 from ..utils.metrics import get_metrics_collector
 
-
 _logger = get_logger(__name__)
 _metrics = get_metrics_collector()
 _VOLUME_MODES = {"none", "linear", "sqrt", "log"}
@@ -508,7 +507,9 @@ class TemporalRicciAnalyzer:
             price_values = price_series.to_numpy()
             ratio_metrics: Dict[str, float] = {}
             if price_values.size:
-                ratio_metrics["input_finite"] = float(np.mean(np.isfinite(price_values)))
+                ratio_metrics["input_finite"] = float(
+                    np.mean(np.isfinite(price_values))
+                )
             else:
                 ratio_metrics["input_finite"] = 0.0
             diagnostics["ratios"] = ratio_metrics
@@ -519,7 +520,9 @@ class TemporalRicciAnalyzer:
             if series_length < self.window_size:
                 ctx["value"] = 0.0
                 _metrics.record_indicator_value("temporal_ricci.transition_score", 0.0)
-                _metrics.record_indicator_value("temporal_ricci.structural_stability", 1.0)
+                _metrics.record_indicator_value(
+                    "temporal_ricci.structural_stability", 1.0
+                )
                 _metrics.record_indicator_value("temporal_ricci.edge_persistence", 1.0)
                 ctx["diagnostics"] = diagnostics
                 return TemporalRicciResult(
@@ -561,7 +564,9 @@ class TemporalRicciAnalyzer:
                     vol_values = segment[volume_col].astype(float).to_numpy()
                     if vol_values.size:
                         volume_segments += 1
-                        volumes = np.nan_to_num(vol_values, nan=0.0, posinf=0.0, neginf=0.0)
+                        volumes = np.nan_to_num(
+                            vol_values, nan=0.0, posinf=0.0, neginf=0.0
+                        )
                         if np.any(volumes > 0.0):
                             positive_volume_segments += 1
 
@@ -575,11 +580,19 @@ class TemporalRicciAnalyzer:
             persistence = self._persistence()
 
             ctx["value"] = temporal_curvature
-            _metrics.record_indicator_value("temporal_ricci.transition_score", transition_score)
-            _metrics.record_indicator_value("temporal_ricci.structural_stability", stability)
-            _metrics.record_indicator_value("temporal_ricci.edge_persistence", persistence)
+            _metrics.record_indicator_value(
+                "temporal_ricci.transition_score", transition_score
+            )
+            _metrics.record_indicator_value(
+                "temporal_ricci.structural_stability", stability
+            )
+            _metrics.record_indicator_value(
+                "temporal_ricci.edge_persistence", persistence
+            )
             if self.history:
-                _metrics.record_indicator_value("temporal_ricci.avg_curvature", self.history[-1].avg_curvature)
+                _metrics.record_indicator_value(
+                    "temporal_ricci.avg_curvature", self.history[-1].avg_curvature
+                )
 
             if attempts:
                 ratio_metrics["snapshot_coverage"] = float(

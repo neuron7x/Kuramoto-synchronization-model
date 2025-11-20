@@ -1,6 +1,5 @@
 """Tests for the main ArchitectureIntegrator."""
 
-
 from core.architecture_integrator import (
     ArchitectureIntegrator,
     ComponentHealth,

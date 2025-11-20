@@ -13,7 +13,9 @@ async def test_integrated_system_produces_decision() -> None:
     cfg = NeuroAdvancedConfig()
     system = IntegratedNeuroTradingSystem(cfg)
 
-    prices = np.maximum(1.0, np.cumsum(np.random.default_rng(42).normal(0.0, 0.5, size=64)) + 100)
+    prices = np.maximum(
+        1.0, np.cumsum(np.random.default_rng(42).normal(0.0, 0.5, size=64)) + 100
+    )
     market_data = {"series": {"EURUSD": prices.tolist()}}
     portfolio_state = {"strategies": ["fractal_momentum", "fractal_mean_reversion"]}
 

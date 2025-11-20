@@ -91,12 +91,8 @@ class StrategyEngineMode(str, Enum):
 class IOContract:
     """Declarative contract describing module inputs or outputs."""
 
-    required: Mapping[str, type | tuple[type, ...] | None] = field(
-        default_factory=dict
-    )
-    optional: Mapping[str, type | tuple[type, ...] | None] = field(
-        default_factory=dict
-    )
+    required: Mapping[str, type | tuple[type, ...] | None] = field(default_factory=dict)
+    optional: Mapping[str, type | tuple[type, ...] | None] = field(default_factory=dict)
     description: str | None = None
 
     def __post_init__(self) -> None:
@@ -248,9 +244,7 @@ class RiskAssessment:
         if "strength" in self.adjustments:
             updated = replace(updated, strength=float(self.adjustments["strength"]))
         if "confidence" in self.adjustments:
-            updated = replace(
-                updated, confidence=float(self.adjustments["confidence"])
-            )
+            updated = replace(updated, confidence=float(self.adjustments["confidence"]))
         if "metadata" in self.adjustments:
             merged: MutableMapping[str, Any] = dict(updated.metadata)
             metadata_update = self.adjustments["metadata"]
@@ -289,7 +283,9 @@ class StrategyModule(Protocol):
     input_contract: IOContract
     output_contract: IOContract
 
-    def process(self, context: StrategyContext) -> Iterable[StrategyEngineEvent] | StrategyEngineEvent | None:
+    def process(
+        self, context: StrategyContext
+    ) -> Iterable[StrategyEngineEvent] | StrategyEngineEvent | None:
         """Produce zero or more :class:`StrategyEngineEvent` objects."""
 
 
@@ -374,7 +370,9 @@ class StrategyEngine:
         """Transition the engine into ``mode`` if permitted."""
 
         if mode not in self._ALLOWED_TRANSITIONS[self._mode]:
-            raise InvalidModeTransition(f"Cannot transition from {self._mode} to {mode}")
+            raise InvalidModeTransition(
+                f"Cannot transition from {self._mode} to {mode}"
+            )
         self._mode = mode
         if mode is not StrategyEngineMode.PAUSED:
             self._last_active_mode = mode
@@ -504,9 +502,7 @@ class StrategyEngine:
         if event.type is StrategyEventType.RISK_ADVICE and not isinstance(
             event.payload, RiskAdvice
         ):
-            raise TypeError(
-                "Risk-advice events must carry RiskAdvice payloads"
-            )
+            raise TypeError("Risk-advice events must carry RiskAdvice payloads")
 
     def _validate_output_contract(self, event: StrategyEngineEvent) -> None:
         module = self._modules.get(event.module)

@@ -26,7 +26,12 @@ from libs.db.repository import KillSwitchStateRepository
 from libs.db.session import SessionManager
 from src.audit.audit_logger import AuditLogger, SiemAuditSink
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagRecord, LagReport
+from src.data.kafka_ingestion import (
+    KafkaIngestionConfig,
+    KafkaIngestionService,
+    LagRecord,
+    LagReport,
+)
 from src.data.pipeline import (
     CacheRoute,
     StaticTickRoutingStrategy,
@@ -37,8 +42,14 @@ from src.data.pipeline import (
 class _FlakyKillSwitchStateRepository(KillSwitchStateRepository):
     """Repository that fails once to exercise retry/backoff logic."""
 
-    def __init__(self, session_manager: SessionManager, *, retry_policy: RetryPolicy) -> None:
-        super().__init__(session_manager, retry_policy=retry_policy, logger=logging.getLogger("test.flaky_repo"))
+    def __init__(
+        self, session_manager: SessionManager, *, retry_policy: RetryPolicy
+    ) -> None:
+        super().__init__(
+            session_manager,
+            retry_policy=retry_policy,
+            logger=logging.getLogger("test.flaky_repo"),
+        )
         self.attempts = 0
 
     def upsert(self, *, engaged: bool, reason: str):  # type: ignore[override]
@@ -84,8 +95,12 @@ def test_postgres_kill_switch_store_handles_transient_failures(tmp_path: Path) -
     base_repo.ensure_schema()
     base_repo.upsert(engaged=False, reason="seed state")
 
-    retry_policy = RetryPolicy(attempts=3, initial_backoff=0.01, max_backoff=0.05, max_jitter=0.01)
-    flaky_repo = _FlakyKillSwitchStateRepository(session_manager, retry_policy=retry_policy)
+    retry_policy = RetryPolicy(
+        attempts=3, initial_backoff=0.01, max_backoff=0.05, max_jitter=0.01
+    )
+    flaky_repo = _FlakyKillSwitchStateRepository(
+        session_manager, retry_policy=retry_policy
+    )
     store = PostgresKillSwitchStateStore(
         "postgresql://integration",
         session_manager=session_manager,
@@ -163,7 +178,9 @@ class _FakeKafkaProducer:
     async def begin_transaction(self) -> None:
         self.begin_calls += 1
 
-    async def send_offsets_to_transaction(self, offsets: Mapping[_TopicPartition, int], group_id: str) -> None:
+    async def send_offsets_to_transaction(
+        self, offsets: Mapping[_TopicPartition, int], group_id: str
+    ) -> None:
         self.offset_commits.append((dict(offsets), group_id))
 
     async def commit_transaction(self) -> None:
@@ -174,7 +191,12 @@ class _FakeKafkaProducer:
 
 
 class _FakeKafkaConsumer:
-    def __init__(self, batches: deque[dict[_TopicPartition, list[_FakeMessage]]], *, end_offsets: dict[_TopicPartition, int]) -> None:
+    def __init__(
+        self,
+        batches: deque[dict[_TopicPartition, list[_FakeMessage]]],
+        *,
+        end_offsets: dict[_TopicPartition, int],
+    ) -> None:
         self._batches = batches
         self._assignment = {tp for batch in batches for tp in batch}
         self._end_offsets = end_offsets
@@ -189,7 +211,9 @@ class _FakeKafkaConsumer:
     async def stop(self) -> None:
         self.stopped += 1
 
-    async def getmany(self, timeout_ms: int, max_records: int) -> dict[_TopicPartition, list[_FakeMessage]]:
+    async def getmany(
+        self, timeout_ms: int, max_records: int
+    ) -> dict[_TopicPartition, list[_FakeMessage]]:
         if not self._batches:
             self.drained.set()
             await asyncio.sleep(timeout_ms / 1000)
@@ -202,7 +226,9 @@ class _FakeKafkaConsumer:
     def assignment(self) -> set[_TopicPartition]:
         return set(self._assignment)
 
-    async def end_offsets(self, partitions: list[_TopicPartition]) -> dict[_TopicPartition, int]:
+    async def end_offsets(
+        self, partitions: list[_TopicPartition]
+    ) -> dict[_TopicPartition, int]:
         return {tp: self._end_offsets.get(tp, 0) for tp in partitions}
 
     async def seek(self, tp: _TopicPartition, offset: int) -> None:
@@ -210,7 +236,9 @@ class _FakeKafkaConsumer:
 
 
 @pytest.mark.asyncio
-async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(tmp_path: Path) -> None:
+async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(
+    tmp_path: Path,
+) -> None:
     base_time = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
     def _message(offset: int, event_id: str, price: float) -> _FakeMessage:
@@ -227,13 +255,25 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(tmp_
             ("venue", b"BINANCE"),
             ("occurred_at", occurred_at.isoformat().encode("utf-8")),
         ]
-        return _FakeMessage(offset=offset, value=json.dumps(payload).encode("utf-8"), headers=headers)
+        return _FakeMessage(
+            offset=offset, value=json.dumps(payload).encode("utf-8"), headers=headers
+        )
 
     topic_partition = _TopicPartition(topic="tradepulse.market.ticks", partition=0)
     batches: deque[dict[_TopicPartition, list[_FakeMessage]]] = deque(
         [
-            {topic_partition: [_message(0, "evt-0", 100.0), _message(1, "evt-1", 101.0)]},
-            {topic_partition: [_message(2, "evt-1", 999.0), _message(3, "evt-3", 102.0)]},
+            {
+                topic_partition: [
+                    _message(0, "evt-0", 100.0),
+                    _message(1, "evt-1", 101.0),
+                ]
+            },
+            {
+                topic_partition: [
+                    _message(2, "evt-1", 999.0),
+                    _message(3, "evt-3", 102.0),
+                ]
+            },
         ]
     )
     consumer = _FakeKafkaConsumer(batches, end_offsets={topic_partition: 6})
@@ -271,7 +311,9 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(tmp_
     pipeline = StreamingIngestionPipeline(
         kafka_config=config,
         cache_service=cache_service,
-        routing_strategy=StaticTickRoutingStrategy(CacheRoute(layer="raw", timeframe="1min")),
+        routing_strategy=StaticTickRoutingStrategy(
+            CacheRoute(layer="raw", timeframe="1min")
+        ),
         lag_handler=lag_handler,
         kafka_service_factory=factory,
     )
@@ -313,7 +355,9 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(tmp_
     assert frame.shape[0] == 1
     assert pytest.approx(frame["price"].iloc[0]) == 102.0
 
-    hot_snapshot = pipeline.kafka_service.hot_cache.snapshot("BTCUSD", "BINANCE", InstrumentType.SPOT)
+    hot_snapshot = pipeline.kafka_service.hot_cache.snapshot(
+        "BTCUSD", "BINANCE", InstrumentType.SPOT
+    )
     assert hot_snapshot is None or not hot_snapshot.ticks
 
     assert lag_reports
@@ -364,7 +408,9 @@ def test_siem_audit_sink_retries_and_drains_spool(tmp_path: Path) -> None:
     assert record.signature
 
     def _spool_empty() -> bool:
-        return not list(spool_dir.glob("*.json")) and not list(spool_dir.glob("*.json.inflight"))
+        return not list(spool_dir.glob("*.json")) and not list(
+            spool_dir.glob("*.json.inflight")
+        )
 
     _wait_for(lambda: attempts >= 3 and _spool_empty(), timeout=2.0)
 

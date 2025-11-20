@@ -54,7 +54,9 @@ def canonical_dumps(payload: Any) -> str:
     """Return a canonical JSON representation for hashing purposes."""
 
     normalised = _normalise(payload)
-    return json.dumps(normalised, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+    return json.dumps(
+        normalised, separators=(",", ":"), sort_keys=True, ensure_ascii=False
+    )
 
 
 def fingerprint_payload(payload: Any, *, digest_size: int = 16) -> str:
@@ -103,13 +105,19 @@ class IdempotencyKeyFactory:
         request_uuid = uuid5(service_namespace, f"{operation}:{fingerprint}")
         attempt_source: str | None
         if nonce is not None:
-            attempt_source = f"nonce:{nonce}" if attempt is None else f"nonce:{nonce}:attempt:{attempt}"
+            attempt_source = (
+                f"nonce:{nonce}"
+                if attempt is None
+                else f"nonce:{nonce}:attempt:{attempt}"
+            )
         elif attempt is not None:
             attempt_source = f"attempt:{attempt}"
         else:
             attempt_source = None
         operation_uuid = (
-            uuid5(request_uuid, attempt_source) if attempt_source is not None else request_uuid
+            uuid5(request_uuid, attempt_source)
+            if attempt_source is not None
+            else request_uuid
         )
         return IdempotencyKey(
             service=service,
@@ -129,7 +137,9 @@ class IdempotencyKeyFactory:
         """Generate idempotency keys for a batch of items."""
 
         return [
-            self.build(service=service, operation=operation, dedupe_fields=item, attempt=index)
+            self.build(
+                service=service, operation=operation, dedupe_fields=item, attempt=index
+            )
             for index, item in enumerate(dedupe_items)
         ]
 

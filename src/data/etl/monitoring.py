@@ -9,8 +9,8 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import jensenshannon
 from pandas.api.types import is_numeric_dtype
+from scipy.spatial.distance import jensenshannon
 
 from .stores import AuditEntry
 

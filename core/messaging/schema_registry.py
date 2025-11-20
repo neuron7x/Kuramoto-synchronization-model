@@ -60,9 +60,7 @@ class EventSchemaRegistry:
         registry: Dict[str, List[SchemaVersionInfo]],
         subjects: Dict[str, Dict[Version, str]],
         namespaces: Dict[str, Dict[Version, str]],
-        versions: Dict[
-            str, Dict[Version, Dict[SchemaFormat, SchemaVersionInfo]]
-        ],
+        versions: Dict[str, Dict[Version, Dict[SchemaFormat, SchemaVersionInfo]]],
     ):
         self._base_path = base_path
         self._registry = registry
@@ -458,9 +456,7 @@ def _is_nullable(field: Mapping[str, Any]) -> bool:
     return False
 
 
-def _lint_avro_schema(
-    schema: Mapping[str, Any], event_type: str, version: str
-) -> None:
+def _lint_avro_schema(schema: Mapping[str, Any], event_type: str, version: str) -> None:
     if schema.get("type") != "record":
         raise SchemaLintError(
             f"{event_type}@{version}: root schema must be an Avro record"

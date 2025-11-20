@@ -1,13 +1,14 @@
 """SMT-based proof of bounded free energy growth."""
+
 from __future__ import annotations
 
 import importlib.util
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:  # pragma: no cover - only for static analysers
-    from z3 import And, Or, Real, Solver, Sum, sat, unsat  # type: ignore[import]
+    pass  # type: ignore[import]
 
 
 HAS_Z3 = importlib.util.find_spec("z3") is not None
@@ -86,7 +87,9 @@ def run_proof(output_path: Optional[Path] = None) -> ProofResult:
     ]
 
     if status == unsat:
-        certificate_lines.append("Result: UNSAT – no unbounded growth exists under the transition rules.")
+        certificate_lines.append(
+            "Result: UNSAT – no unbounded growth exists under the transition rules."
+        )
     elif status == sat:
         certificate_lines.append("Result: SAT – counterexample exists.")
         model = solver.model()

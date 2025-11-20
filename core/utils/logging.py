@@ -216,7 +216,9 @@ class StructuredLogger:
         else:
             duration = time.perf_counter() - start_time
             if emit_success:
-                resolved_success_level = success_level if success_level is not None else level
+                resolved_success_level = (
+                    success_level if success_level is not None else level
+                )
                 if self.logger.isEnabledFor(resolved_success_level):
                     self._log(
                         resolved_success_level,

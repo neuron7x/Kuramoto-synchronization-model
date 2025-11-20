@@ -74,8 +74,10 @@ def _shannon_entropy(series: np.ndarray, bins: int = _ENTROPY_BIN_COUNT) -> floa
     np.clip(finite, -1.0, 1.0, out=finite)
 
     scale = _ENTROPY_SCALE if bins == _ENTROPY_BIN_COUNT else np.float32(bins / 2.0)
-    clip = _ENTROPY_CLIP if bins == _ENTROPY_BIN_COUNT else np.nextafter(
-        np.float32(bins), np.float32(0.0)
+    clip = (
+        _ENTROPY_CLIP
+        if bins == _ENTROPY_BIN_COUNT
+        else np.nextafter(np.float32(bins), np.float32(0.0))
     )
     scaled = (finite + 1.0) * scale
     np.clip(scaled, 0.0, clip, out=scaled)
@@ -130,8 +132,7 @@ def compute_hierarchical_features(
     cache = cache or FeatureBufferCache()
     reference = next(iter(ohlcv_by_tf))
     prepared = {
-        name: _ensure_datetime_index(frame)
-        for name, frame in ohlcv_by_tf.items()
+        name: _ensure_datetime_index(frame) for name, frame in ohlcv_by_tf.items()
     }
     max_samples = max(frame.index.size for frame in prepared.values())
     ref_frame = prepared[reference]
@@ -143,18 +144,10 @@ def compute_hierarchical_features(
     returns_buffer = cache.buffer(
         "shared:returns_source", (max_samples,), dtype=np.float32
     )
-    phase_buffer = cache.buffer(
-        "shared:phase_source", (max_samples,), dtype=np.float32
-    )
-    cos_buffer = cache.buffer(
-        "shared:phase_cos", (max_samples,), dtype=np.float32
-    )
-    sin_buffer = cache.buffer(
-        "shared:phase_sin", (max_samples,), dtype=np.float32
-    )
-    finite_mask = cache.buffer(
-        "shared:phase_finite", (max_samples,), dtype=bool
-    )
+    phase_buffer = cache.buffer("shared:phase_source", (max_samples,), dtype=np.float32)
+    cos_buffer = cache.buffer("shared:phase_cos", (max_samples,), dtype=np.float32)
+    sin_buffer = cache.buffer("shared:phase_sin", (max_samples,), dtype=np.float32)
+    finite_mask = cache.buffer("shared:phase_finite", (max_samples,), dtype=bool)
     hurst_scratch_buffer = cache.buffer(
         "shared:hurst_diff", (max_samples,), dtype=np.float32
     )
@@ -221,8 +214,12 @@ def compute_hierarchical_features(
                     unique_bins, first_idx, counts = np.unique(
                         bins, return_index=True, return_counts=True
                     )
-                    cos_sums = np.add.reduceat(cos_aligned, first_idx).astype(np.float32, copy=False)
-                    sin_sums = np.add.reduceat(sin_aligned, first_idx).astype(np.float32, copy=False)
+                    cos_sums = np.add.reduceat(cos_aligned, first_idx).astype(
+                        np.float32, copy=False
+                    )
+                    sin_sums = np.add.reduceat(sin_aligned, first_idx).astype(
+                        np.float32, copy=False
+                    )
                     agg_cos[unique_bins] += cos_sums
                     agg_sin[unique_bins] += sin_sums
                     agg_counts[unique_bins] += counts.astype(np.int32, copy=False)

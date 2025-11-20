@@ -130,7 +130,9 @@ class TradingAgentEnvironment:
             "portfolio_value": float(portfolio_value),
             "trade_value": float(trade_value),
         }
-        return AgentStepResult(observation=observation, reward=float(reward), done=done, info=info)
+        return AgentStepResult(
+            observation=observation, reward=float(reward), done=done, info=info
+        )
 
     # ------------------------------------------------------------------
     # Helpers

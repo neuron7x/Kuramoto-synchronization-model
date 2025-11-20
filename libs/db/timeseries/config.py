@@ -28,9 +28,7 @@ def _ensure_identifier(value: str, *, label: str) -> str:
     if not value:
         raise ValueError(f"{label} must be a non-empty identifier")
     if not _IDENTIFIER_RE.fullmatch(value):
-        raise ValueError(
-            f"{label} must match {_IDENTIFIER_RE.pattern!r}: {value!r}"
-        )
+        raise ValueError(f"{label} must match {_IDENTIFIER_RE.pattern!r}: {value!r}")
     return value
 
 
@@ -145,7 +143,11 @@ class RetentionPolicy:
     def __post_init__(self) -> None:
         _validate_positive_timedelta(self.hot, field_name="hot")
         durations: list[timedelta] = [self.hot]
-        for label, value in (("warm", self.warm), ("cold", self.cold), ("drop", self.drop)):
+        for label, value in (
+            ("warm", self.warm),
+            ("cold", self.cold),
+            ("drop", self.drop),
+        ):
             if value is None:
                 continue
             if value <= timedelta(0):

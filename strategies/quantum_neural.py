@@ -7,6 +7,7 @@ close price, and a classification head for BUY/HOLD/SELL decisions. The module
 also exposes a backtester and CLI entry-point that integrates with Polygon
 market data or CSV files containing OHLCV series.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -56,14 +57,18 @@ def fetch_polygon_ohlcv(
     try:
         from polygon import RESTClient  # type: ignore
     except Exception as exc:  # pragma: no cover - requires optional dependency
-        raise ImportError("Install polygon-api-client: pip install polygon-api-client") from exc
+        raise ImportError(
+            "Install polygon-api-client: pip install polygon-api-client"
+        ) from exc
 
     client = RESTClient(api_key)
     if end is None:
         end = pd.Timestamp.today().normalize()
     start = end - pd.Timedelta(days=days)
 
-    aggs = client.get_aggs(ticker=ticker, multiplier=1, timespan="day", from_=start, to=end)
+    aggs = client.get_aggs(
+        ticker=ticker, multiplier=1, timespan="day", from_=start, to=end
+    )
     rows = []
     for agg in aggs:
         ts = pd.to_datetime(agg.timestamp, unit="ms")
@@ -156,7 +161,9 @@ class AdvancedTradingDataset(Dataset):
         if idx < 0:
             idx += self._length
         if idx < 0 or idx >= self._length:
-            raise IndexError(f"index {idx} out of range for dataset of length {self._length}")
+            raise IndexError(
+                f"index {idx} out of range for dataset of length {self._length}"
+            )
 
         seq = self.X[idx : idx + self.seq_len].copy()
         target_idx = idx + self.seq_len - 1
@@ -180,7 +187,9 @@ class AdvancedTradingDataset(Dataset):
 
 
 class EnhancedTemporalLSTM(nn.Module):
-    def __init__(self, input_size: int = 5, hidden_size: int = 128, num_layers: int = 3):
+    def __init__(
+        self, input_size: int = 5, hidden_size: int = 128, num_layers: int = 3
+    ):
         super().__init__()
         self.lstm = nn.LSTM(
             input_size,
@@ -223,7 +232,9 @@ class AdaptiveFundamentalTransformer(nn.Module):
 
 
 class CrossDomainFusion(nn.Module):
-    def __init__(self, temporal_dim: int = 256, fundamental_dim: int = 64, out_dim: int = 128):
+    def __init__(
+        self, temporal_dim: int = 256, fundamental_dim: int = 64, out_dim: int = 128
+    ):
         super().__init__()
         self.t_proj = nn.Linear(temporal_dim, out_dim)
         self.f_proj = nn.Linear(fundamental_dim, out_dim)
@@ -241,7 +252,9 @@ class CrossDomainFusion(nn.Module):
 class DecisionHeads(nn.Module):
     def __init__(self, in_dim: int = 128):
         super().__init__()
-        self.reg = nn.Sequential(nn.Linear(in_dim, 64), nn.ReLU(), nn.Dropout(0.2), nn.Linear(64, 1))
+        self.reg = nn.Sequential(
+            nn.Linear(in_dim, 64), nn.ReLU(), nn.Dropout(0.2), nn.Linear(64, 1)
+        )
         self.cls = nn.Sequential(
             nn.Linear(in_dim, 64),
             nn.LeakyReLU(0.1),
@@ -337,8 +350,8 @@ class QuantumNeuralStrategy:
         self.scalers: Optional[Dict[str, RobustScaler]] = None
         self._use_amp = self.device.type == "cuda" and cfg.amp
         self._scaler = torch.cuda.amp.GradScaler(enabled=self._use_amp)
-        self._amp_ctx = (
-            lambda: torch.autocast(device_type=self.device.type, dtype=torch.float16)
+        self._amp_ctx = lambda: (
+            torch.autocast(device_type=self.device.type, dtype=torch.float16)
             if self._use_amp
             else nullcontext
         )
@@ -346,7 +359,9 @@ class QuantumNeuralStrategy:
 
     def fit(self, df: pd.DataFrame) -> None:
         df = _check_df(df)
-        dataset = AdvancedTradingDataset(df, sequence_length=self.cfg.seq_len, augment=True)
+        dataset = AdvancedTradingDataset(
+            df, sequence_length=self.cfg.seq_len, augment=True
+        )
         self.scalers = dataset.scalers
 
         split = int(len(dataset) * 0.8)
@@ -355,8 +370,12 @@ class QuantumNeuralStrategy:
 
         train_ds = torch.utils.data.Subset(dataset, train_idx)
         val_ds = torch.utils.data.Subset(dataset, val_idx)
-        train_dl = DataLoader(train_ds, batch_size=self.cfg.batch_size, shuffle=True, drop_last=True)
-        val_dl = DataLoader(val_ds, batch_size=self.cfg.batch_size, shuffle=False, drop_last=False)
+        train_dl = DataLoader(
+            train_ds, batch_size=self.cfg.batch_size, shuffle=True, drop_last=True
+        )
+        val_dl = DataLoader(
+            val_ds, batch_size=self.cfg.batch_size, shuffle=False, drop_last=False
+        )
 
         best_val = float("inf")
         patience = 8
@@ -416,9 +435,9 @@ class QuantumNeuralStrategy:
             self.opt.zero_grad(set_to_none=True)
             with self._amp_ctx():
                 pred_price, logits = self.model(features)
-                loss = self.reg_loss(pred_price, target_price) + self.cfg.cls_weight * self.cls_loss(
-                    logits, target_action
-                )
+                loss = self.reg_loss(
+                    pred_price, target_price
+                ) + self.cfg.cls_weight * self.cls_loss(logits, target_action)
 
             if self._use_amp:
                 self._scaler.scale(loss).backward()
@@ -459,9 +478,9 @@ class QuantumNeuralStrategy:
             target_price = target_price.to(self.device)
             target_action = target_action.to(self.device)
             pred_price, logits = self.model(features)
-            loss = self.reg_loss(pred_price, target_price) + self.cfg.cls_weight * self.cls_loss(
-                logits, target_action
-            )
+            loss = self.reg_loss(
+                pred_price, target_price
+            ) + self.cfg.cls_weight * self.cls_loss(logits, target_action)
             batch_size = features.size(0)
             total_loss += float(loss.detach().cpu()) * batch_size
             mae = torch.mean(torch.abs(pred_price - target_price)).detach().cpu().item()
@@ -490,7 +509,9 @@ class QuantumNeuralStrategy:
                 "price_pred": float(df_window.iloc[-1]["close"]),
             }
 
-        feats = df_window[["open", "high", "low", "close", "volume"]].values.astype(np.float32)
+        feats = df_window[["open", "high", "low", "close", "volume"]].values.astype(
+            np.float32
+        )
         cols = ["open", "high", "low", "close", "volume"]
         xs = []
         for idx, name in enumerate(cols):
@@ -512,7 +533,11 @@ class QuantumNeuralStrategy:
     def _save(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         torch.save(
-            {"model": self.model.state_dict(), "cfg": self.cfg.__dict__, "history": self.history},
+            {
+                "model": self.model.state_dict(),
+                "cfg": self.cfg.__dict__,
+                "history": self.history,
+            },
             path,
         )
 
@@ -533,8 +558,8 @@ class QuantumNeuralStrategy:
         self.model.to(self.device)
         self._use_amp = self.device.type == "cuda" and self.cfg.amp
         self._scaler = torch.cuda.amp.GradScaler(enabled=self._use_amp)
-        self._amp_ctx = (
-            lambda: torch.autocast(device_type=self.device.type, dtype=torch.float16)
+        self._amp_ctx = lambda: (
+            torch.autocast(device_type=self.device.type, dtype=torch.float16)
             if self._use_amp
             else nullcontext
         )
@@ -607,12 +632,21 @@ def backtest(df: pd.DataFrame, strat: QuantumNeuralStrategy) -> Dict[str, float]
                 rm.position = size / price
                 rm.entry = price
                 rm.balance -= size
-                rm.trades.append({"ts": df.iloc[idx]["date"], "side": "BUY", "price": price, "size": size})
+                rm.trades.append(
+                    {
+                        "ts": df.iloc[idx]["date"],
+                        "side": "BUY",
+                        "price": price,
+                        "size": size,
+                    }
+                )
         elif action == 2 and rm.position > 0.0:
             sell_val = rm.position * price
             pnl = (price - rm.entry) / max(1e-6, rm.entry)
             rm.balance += sell_val
-            rm.trades.append({"ts": df.iloc[idx]["date"], "side": "SELL", "price": price, "pnl": pnl})
+            rm.trades.append(
+                {"ts": df.iloc[idx]["date"], "side": "SELL", "price": price, "pnl": pnl}
+            )
             rm.position = 0.0
             rm.entry = 0.0
 
@@ -622,16 +656,20 @@ def backtest(df: pd.DataFrame, strat: QuantumNeuralStrategy) -> Dict[str, float]
                 sell_val = rm.position * next_price
                 pnl = (next_price - rm.entry) / max(1e-6, rm.entry)
                 rm.balance += sell_val
-                rm.trades.append({
-                    "ts": df.iloc[idx + 1]["date"],
-                    "side": "STOP",
-                    "price": next_price,
-                    "pnl": pnl,
-                })
+                rm.trades.append(
+                    {
+                        "ts": df.iloc[idx + 1]["date"],
+                        "side": "STOP",
+                        "price": next_price,
+                        "pnl": pnl,
+                    }
+                )
                 rm.position = 0.0
                 rm.entry = 0.0
 
-        portfolio_value = rm.balance + (rm.position * price if rm.position > 0.0 else 0.0)
+        portfolio_value = rm.balance + (
+            rm.position * price if rm.position > 0.0 else 0.0
+        )
         portfolio_values.append(portfolio_value)
 
     return _analyze_performance(portfolio_values, rm.trades)
@@ -643,9 +681,17 @@ def _analyze_performance(pvs: List[float], trades: List[Dict]) -> Dict[str, floa
     arr = np.array(pvs, dtype=np.float64)
     rets = np.diff(arr) / arr[:-1]
     tot_ret = float((arr[-1] - arr[0]) / arr[0])
-    sharpe = float(np.mean(rets) / (np.std(rets) + 1e-9) * math.sqrt(252)) if len(rets) > 2 else 0.0
+    sharpe = (
+        float(np.mean(rets) / (np.std(rets) + 1e-9) * math.sqrt(252))
+        if len(rets) > 2
+        else 0.0
+    )
     downside = rets[rets < 0]
-    sortino = float(np.mean(rets) / (np.std(downside) + 1e-9) * math.sqrt(252)) if downside.size else 0.0
+    sortino = (
+        float(np.mean(rets) / (np.std(downside) + 1e-9) * math.sqrt(252))
+        if downside.size
+        else 0.0
+    )
 
     peak = np.maximum.accumulate(arr)
     drawdown = (arr - peak) / peak
@@ -654,10 +700,16 @@ def _analyze_performance(pvs: List[float], trades: List[Dict]) -> Dict[str, floa
     wins = [trade for trade in trades if float(trade.get("pnl", 0.0)) > 0]
     win_rate = float(len(wins) / len(trades)) if trades else 0.0
 
-    avg_profit = float(np.mean([trade.get("pnl", 0.0) for trade in trades])) if trades else 0.0
-    losses = [abs(trade.get("pnl", 0.0)) for trade in trades if trade.get("pnl", 0.0) < 0]
+    avg_profit = (
+        float(np.mean([trade.get("pnl", 0.0) for trade in trades])) if trades else 0.0
+    )
+    losses = [
+        abs(trade.get("pnl", 0.0)) for trade in trades if trade.get("pnl", 0.0) < 0
+    ]
     profits = [trade.get("pnl", 0.0) for trade in trades if trade.get("pnl", 0.0) > 0]
-    profit_factor = float((sum(profits) / (sum(losses) + 1e-9)) if losses else float("inf"))
+    profit_factor = float(
+        (sum(profits) / (sum(losses) + 1e-9)) if losses else float("inf")
+    )
 
     calmar = float((tot_ret / abs(mdd)) if mdd != 0 else 0.0)
 
@@ -710,9 +762,13 @@ def _maybe_fetch_data(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Quantum Neural Strategy for TradePulse")
+    parser = argparse.ArgumentParser(
+        description="Quantum Neural Strategy for TradePulse"
+    )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--csv", type=str, help="Path to OHLCV CSV (date,open,high,low,close,volume)")
+    group.add_argument(
+        "--csv", type=str, help="Path to OHLCV CSV (date,open,high,low,close,volume)"
+    )
     group.add_argument("--ticker", type=str, help="Polygon ticker e.g. X:BTCUSD")
     parser.add_argument("--days", type=int, default=500, help="Days for Polygon fetch")
     parser.add_argument("--epochs", type=int, default=8)
@@ -725,7 +781,9 @@ def main() -> None:
     df = _maybe_fetch_data(args)
 
     strategy = QuantumNeuralStrategy(
-        TrainConfig(epochs=args.epochs, seq_len=args.seq_len, batch_size=args.batch_size)
+        TrainConfig(
+            epochs=args.epochs, seq_len=args.seq_len, batch_size=args.batch_size
+        )
     )
     print("\n[Train] starting...")
     strategy.fit(df)

@@ -124,7 +124,10 @@ class FKDetector:
             lag=self._config.kuramoto_lag,
         )
         hurst_values = np.array(
-            [estimate_hurst_rs(log_returns[column].to_numpy()) for column in log_returns],
+            [
+                estimate_hurst_rs(log_returns[column].to_numpy())
+                for column in log_returns
+            ],
             dtype=float,
         )
         hurst_mean, hurst_dispersion = _summarise_hurst(hurst_values)
@@ -132,8 +135,15 @@ class FKDetector:
         calibration = self._calibration or self.calibrate_from_window(log_returns)
         inv_h = 1.0 - hurst_mean
 
-        z_delta_r = _zscore(delta_r, calibration.delta_r_mean, calibration.delta_r_std, self._config.epsilon)
-        z_inv_h = _zscore(inv_h, calibration.inv_h_mean, calibration.inv_h_std, self._config.epsilon)
+        z_delta_r = _zscore(
+            delta_r,
+            calibration.delta_r_mean,
+            calibration.delta_r_std,
+            self._config.epsilon,
+        )
+        z_inv_h = _zscore(
+            inv_h, calibration.inv_h_mean, calibration.inv_h_std, self._config.epsilon
+        )
         z_h_dispersion = _zscore(
             hurst_dispersion,
             calibration.hurst_dispersion_mean,
@@ -162,7 +172,9 @@ class FKDetector:
     def calibrate_from_window(self, returns: pd.DataFrame) -> FKDetectorCalibration:
         """Calibrate the detector using the supplied returns window."""
 
-        features = _fk_feature_matrix(returns.tail(self._config.window), self._config.kuramoto_lag)
+        features = _fk_feature_matrix(
+            returns.tail(self._config.window), self._config.kuramoto_lag
+        )
         if features.size == 0:
             raise ValueError("Not enough data to calibrate FKDetector.")
 
@@ -180,14 +192,18 @@ class FKDetector:
             inv_h_mean=float(np.mean(inv_h)),
             inv_h_std=float(np.std(inv_h, ddof=1) + self._config.epsilon),
             hurst_dispersion_mean=float(np.mean(hurst_dispersion)),
-            hurst_dispersion_std=float(np.std(hurst_dispersion, ddof=1) + self._config.epsilon),
+            hurst_dispersion_std=float(
+                np.std(hurst_dispersion, ddof=1) + self._config.epsilon
+            ),
             trigger_threshold=trigger_threshold,
         )
         self._calibration = calibration
         return calibration
 
 
-def _ensure_frame(data: Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series) -> pd.DataFrame:
+def _ensure_frame(
+    data: Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series,
+) -> pd.DataFrame:
     if isinstance(data, pd.DataFrame):
         return data
     if isinstance(data, pd.Series):
@@ -244,7 +260,9 @@ def _zscore(value: float, mean: float, std: float, epsilon: float) -> float:
     return (value - mean) / (std if std > epsilon else epsilon)
 
 
-def estimate_hurst_rs(series: Sequence[float], *, min_window: int = 8, max_window: int | None = None) -> float:
+def estimate_hurst_rs(
+    series: Sequence[float], *, min_window: int = 8, max_window: int | None = None
+) -> float:
     """Estimate the Hurst exponent using the rescaled range method."""
 
     values = np.asarray(series, dtype=float)
@@ -257,9 +275,7 @@ def estimate_hurst_rs(series: Sequence[float], *, min_window: int = 8, max_windo
     if max_window <= min_window:
         return float("nan")
 
-    window_sizes = np.unique(
-        np.linspace(min_window, max_window, num=8, dtype=int)
-    )
+    window_sizes = np.unique(np.linspace(min_window, max_window, num=8, dtype=int))
     rs_values = []
     for window in window_sizes:
         if window <= 1:

@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import pytest
-from tests.util.exchanges import load_adapter_or_http_client, get_server_time, get_exchange_info_or_symbols
+
+from tests.util.exchanges import (
+    get_exchange_info_or_symbols,
+    get_server_time,
+    load_adapter_or_http_client,
+)
 
 EXCHANGES = ("binance", "coinbase", "kraken")
 
@@ -16,4 +21,8 @@ def test_public_time_recorded(exchange):
 def test_public_symbols_recorded(exchange):
     subj = load_adapter_or_http_client(exchange)
     info = get_exchange_info_or_symbols(subj)
-    assert "symbols" in info and isinstance(info["symbols"], list) and len(info["symbols"]) > 0
+    assert (
+        "symbols" in info
+        and isinstance(info["symbols"], list)
+        and len(info["symbols"]) > 0
+    )

@@ -226,7 +226,9 @@ class RBACPolicy:
         if not roles:
             raise ValueError("At least one RBAC role must be defined")
         self._roles: dict[str, RoleDefinition] = dict(roles)
-        self._resolved_permissions: MutableMapping[str, tuple[ResolvedPermission, ...]] = {}
+        self._resolved_permissions: MutableMapping[
+            str, tuple[ResolvedPermission, ...]
+        ] = {}
         self._permission_index: MutableMapping[tuple[str, str], set[str]] = {}
         self._build_indexes()
 
@@ -259,7 +261,9 @@ class RBACPolicy:
             )
 
         for parent in definition.inherits:
-            parent_permissions = self._resolve_role(parent, _stack=_stack + (role_name,))
+            parent_permissions = self._resolve_role(
+                parent, _stack=_stack + (role_name,)
+            )
             for entry in parent_permissions:
                 resolved.setdefault(entry.permission, entry)
 
@@ -436,7 +440,8 @@ class AuthorizationGateway:
                     remaining.append(grant)
                 else:
                     self._logger.info(
-                        "Expired temporary access grant", extra={"grant_reason": grant.reason}
+                        "Expired temporary access grant",
+                        extra={"grant_reason": grant.reason},
                     )
             if remaining:
                 self._temporary[subject_key] = remaining
@@ -597,13 +602,17 @@ def _parse_temporary_grant(payload: Mapping[str, Any]) -> TemporaryAccessGrant:
         action = str(payload["action"])
         expires_at = str(payload["expires_at"])
     except KeyError as exc:
-        raise ValueError("Temporary grants require subject, resource, action, expires_at") from exc
+        raise ValueError(
+            "Temporary grants require subject, resource, action, expires_at"
+        ) from exc
 
-    permission = _parse_permission({
-        "resource": resource,
-        "action": action,
-        "attributes": payload.get("attributes"),
-    })
+    permission = _parse_permission(
+        {
+            "resource": resource,
+            "action": action,
+            "attributes": payload.get("attributes"),
+        }
+    )
     return TemporaryAccessGrant(
         subject=subject,
         permission=permission,

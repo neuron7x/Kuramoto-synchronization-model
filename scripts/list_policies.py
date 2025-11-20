@@ -12,6 +12,7 @@ When ``ROOT`` is omitted the repository root (two levels up from this file)
 will be used.  The script prints a Markdown-friendly table to ``stdout`` so
 that the output can be pasted directly into documentation when needed.
 """
+
 from __future__ import annotations
 
 import argparse

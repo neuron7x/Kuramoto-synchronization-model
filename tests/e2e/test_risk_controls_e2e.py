@@ -190,7 +190,9 @@ class TestE2ERiskControls:
         error_msg = str(exc_info.value)
         assert "Gross exposure" in error_msg
 
-    def test_circuit_breaker_blocks_after_breaches(self, oms, risk_compliance, circuit_breaker):
+    def test_circuit_breaker_blocks_after_breaches(
+        self, oms, risk_compliance, circuit_breaker
+    ):
         """Test that circuit breaker opens after N risk breaches."""
         for i in range(3):
             circuit_breaker.record_risk_breach(f"breach_{i}")

@@ -2,13 +2,27 @@ from datetime import datetime, timezone
 
 import pytest
 
-from sandbox.models import AuditEvent, KillSwitchState, OrderSide, OrderTicket, SignalDirection, TradingSignal
-from sandbox.risk.engine import AuditLoggerProtocol, KillSwitchProviderProtocol, RiskEngine, RiskLimits
+from sandbox.models import (
+    AuditEvent,
+    KillSwitchState,
+    OrderSide,
+    OrderTicket,
+    SignalDirection,
+    TradingSignal,
+)
+from sandbox.risk.engine import (
+    AuditLoggerProtocol,
+    KillSwitchProviderProtocol,
+    RiskEngine,
+    RiskLimits,
+)
 
 
 class StubKillSwitch(KillSwitchProviderProtocol):
     def __init__(self, engaged: bool = False) -> None:
-        self._state = KillSwitchState(engaged=engaged, reason="maintenance" if engaged else None)
+        self._state = KillSwitchState(
+            engaged=engaged, reason="maintenance" if engaged else None
+        )
 
     async def state(self) -> KillSwitchState:
         return self._state

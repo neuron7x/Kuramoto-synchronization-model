@@ -27,7 +27,9 @@ def _synth_returns(rows: int = 320, cols: int = 3, seed: int = 7) -> pd.DataFram
     rng = np.random.default_rng(seed)
     index = pd.date_range("2024-01-01", periods=rows, freq="D")
     returns = rng.normal(0.0, 0.01, size=(rows, cols))
-    return pd.DataFrame(returns, index=index, columns=[f"asset_{i}" for i in range(cols)])
+    return pd.DataFrame(
+        returns, index=index, columns=[f"asset_{i}" for i in range(cols)]
+    )
 
 
 def _structured_returns(rows: int = 120) -> pd.DataFrame:
@@ -139,7 +141,12 @@ def test_pipeline_runs_end_to_end() -> None:
     assert 0.0 <= result.artifacts.performance.pr_auc <= 1.0
     assert result.backtest is not None
     assert result.drift_guard is not None
-    assert set(result.drift_guard.keys()) == {"dr", "ricci_mean", "topo_intensity", "causal_strength"}
+    assert set(result.drift_guard.keys()) == {
+        "dr",
+        "ricci_mean",
+        "topo_intensity",
+        "causal_strength",
+    }
 
 
 def test_pipeline_without_backtest() -> None:
@@ -191,11 +198,15 @@ def test_probability_backtester_generates_positions() -> None:
     artifacts = trainer.fit(features.features.values, features.labels)
 
     standardized = (features.features.values - artifacts.mean) / artifacts.std
-    base_probs = 1.0 / (1.0 + np.exp(-artifacts.base_model.decision_function(standardized)))
+    base_probs = 1.0 / (
+        1.0 + np.exp(-artifacts.base_model.decision_function(standardized))
+    )
     calibrated = artifacts.isotonic.predict(base_probs)
 
     backtester = ProbabilityBacktester(BacktestConfig(tau_high=0.2, tau_low=0.6))
-    summary = backtester.backtest(calibrated, returns.loc[features.features.index].values)
+    summary = backtester.backtest(
+        calibrated, returns.loc[features.features.index].values
+    )
 
     assert np.isfinite(summary.sharpe)
     assert 0.0 <= summary.max_drawdown <= 1.0

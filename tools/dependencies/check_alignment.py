@@ -19,7 +19,11 @@ def _normalize_requirement(
     """Return a comparable key for a requirement (name + extras + marker)."""
 
     marker = str(requirement.marker) if requirement.marker is not None else None
-    return canonicalize_name(requirement.name), tuple(sorted(requirement.extras)), marker
+    return (
+        canonicalize_name(requirement.name),
+        tuple(sorted(requirement.extras)),
+        marker,
+    )
 
 
 def _load_requirement_lines(path: Path) -> Iterable[str]:
@@ -116,7 +120,9 @@ def check_alignment(requirements_file: Path, pyproject_file: Path) -> int:
         issues["Only in pyproject"].extend(unexpected)
 
     if not issues:
-        print("✅ Dependency declarations in requirements.txt and pyproject.toml are aligned.")
+        print(
+            "✅ Dependency declarations in requirements.txt and pyproject.toml are aligned."
+        )
         return 0
 
     print("❌ Dependency alignment issues detected:")
@@ -151,7 +157,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return check_alignment(args.requirements_file, args.pyproject_file)
-    except (FileNotFoundError, KeyError, ValueError) as exc:  # pragma: no cover - CLI surface
+    except (
+        FileNotFoundError,
+        KeyError,
+        ValueError,
+    ) as exc:  # pragma: no cover - CLI surface
         print(f"Error: {exc}", file=sys.stderr)
         return 2
 

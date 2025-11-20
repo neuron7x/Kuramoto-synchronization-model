@@ -14,7 +14,9 @@ def repo_with_symlinks(tmp_path: Path) -> Path:
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
 
-    (repo_root / "errors.log").write_text("ERROR first\nINFO ok\nERROR second\n", encoding="utf-8")
+    (repo_root / "errors.log").write_text(
+        "ERROR first\nINFO ok\nERROR second\n", encoding="utf-8"
+    )
 
     # Create a directory that points back to the repository root.  The scanner
     # must not follow this because it would recurse indefinitely.

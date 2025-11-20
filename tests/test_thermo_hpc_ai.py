@@ -2,11 +2,12 @@
 Tests for ThermoController HPC-AI integration.
 """
 
-import pytest
 import networkx as nx
 import pandas as pd
-from runtime.thermo_controller import ThermoController
+import pytest
+
 from neuropro.hpc_validation import generate_synthetic_data
+from runtime.thermo_controller import ThermoController
 
 
 @pytest.fixture
@@ -46,20 +47,22 @@ class TestThermoControllerHPCAI:
             learning_rate=1e-4,
         )
 
-        assert hasattr(controller, "hpc_ai"), (
-            "Controller should have hpc_ai attribute after initialization"
-        )
-        assert hasattr(controller, "prev_pwpe"), (
-            "Controller should have prev_pwpe attribute after initialization"
-        )
-        assert controller._hpc_ai_enabled is True, (
-            "HPC-AI should be enabled after successful initialization"
-        )
-        assert controller.prev_pwpe == 0.0, (
-            f"Initial prev_pwpe should be 0.0, got {controller.prev_pwpe}"
-        )
+        assert hasattr(
+            controller, "hpc_ai"
+        ), "Controller should have hpc_ai attribute after initialization"
+        assert hasattr(
+            controller, "prev_pwpe"
+        ), "Controller should have prev_pwpe attribute after initialization"
+        assert (
+            controller._hpc_ai_enabled is True
+        ), "HPC-AI should be enabled after successful initialization"
+        assert (
+            controller.prev_pwpe == 0.0
+        ), f"Initial prev_pwpe should be 0.0, got {controller.prev_pwpe}"
 
-    def test_hpc_ai_control_step_not_initialized(self, simple_graph, synthetic_market_data):
+    def test_hpc_ai_control_step_not_initialized(
+        self, simple_graph, synthetic_market_data
+    ):
         """Test HPC-AI control step returns error when not initialized.
 
         When HPC-AI is not initialized, the control step should gracefully
@@ -70,12 +73,12 @@ class TestThermoControllerHPCAI:
         result = controller.hpc_ai_control_step(synthetic_market_data)
 
         assert "error" in result, "Result should contain error message"
-        assert result["action"] == 0, (
-            f"Default action should be 0 when not initialized, got {result['action']}"
-        )
-        assert result["td_error"] == 0.0, (
-            f"Default TD error should be 0.0 when not initialized, got {result['td_error']}"
-        )
+        assert (
+            result["action"] == 0
+        ), f"Default action should be 0 when not initialized, got {result['action']}"
+        assert (
+            result["td_error"] == 0.0
+        ), f"Default TD error should be 0.0 when not initialized, got {result['td_error']}"
 
     def test_hpc_ai_control_step(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step returns complete result after initialization.
@@ -94,17 +97,21 @@ class TestThermoControllerHPCAI:
             assert key in result, f"Result should contain '{key}' key"
 
         # Validate action is valid (0=maintain, 1=increase, 2=decrease)
-        assert result["action"] in [0, 1, 2], (
-            f"Action should be 0, 1, or 2, got {result['action']}"
-        )
-        assert isinstance(result["td_error"], float), (
-            f"TD error should be float, got {type(result['td_error'])}"
-        )
-        assert result["pwpe"] >= 0.0, (
-            f"PWPE should be non-negative, got {result['pwpe']}"
-        )
+        assert result["action"] in [
+            0,
+            1,
+            2,
+        ], f"Action should be 0, 1, or 2, got {result['action']}"
+        assert isinstance(
+            result["td_error"], float
+        ), f"TD error should be float, got {type(result['td_error'])}"
+        assert (
+            result["pwpe"] >= 0.0
+        ), f"PWPE should be non-negative, got {result['pwpe']}"
 
-    def test_hpc_ai_control_step_with_execution(self, simple_graph, synthetic_market_data):
+    def test_hpc_ai_control_step_with_execution(
+        self, simple_graph, synthetic_market_data
+    ):
         """Test HPC-AI control step with action execution enabled.
 
         When execute_action=True, the controller should not only compute
@@ -119,9 +126,11 @@ class TestThermoControllerHPCAI:
         )
 
         assert "action" in result, "Result should contain action"
-        assert result["action"] in [0, 1, 2], (
-            f"Action should be valid (0-2), got {result['action']}"
-        )
+        assert result["action"] in [
+            0,
+            1,
+            2,
+        ], f"Action should be valid (0-2), got {result['action']}"
 
     def test_multiple_control_steps(self, simple_graph, synthetic_market_data):
         """Test sequential HPC-AI control steps with state persistence.
@@ -139,20 +148,18 @@ class TestThermoControllerHPCAI:
             results.append(result)
 
         # Check all steps completed
-        assert len(results) == 5, (
-            f"Expected 5 control step results, got {len(results)}"
-        )
+        assert len(results) == 5, f"Expected 5 control step results, got {len(results)}"
 
         # Check prev_pwpe is updated after multiple steps
-        assert controller.prev_pwpe > 0.0, (
-            "prev_pwpe should be updated after control steps"
-        )
+        assert (
+            controller.prev_pwpe > 0.0
+        ), "prev_pwpe should be updated after control steps"
 
         # Check all actions are valid
         actions = [r["action"] for r in results]
-        assert all(a in [0, 1, 2] for a in actions), (
-            f"All actions should be 0-2, got {actions}"
-        )
+        assert all(
+            a in [0, 1, 2] for a in actions
+        ), f"All actions should be 0-2, got {actions}"
 
     def test_pwpe_tracking(self, simple_graph, synthetic_market_data):
         """Test that PWPE is tracked across steps."""
@@ -208,10 +215,12 @@ class TestHPCAIEdgeCases:
         controller.init_hpc_ai(state_dim=64)
 
         # DataFrame with only some columns
-        partial_df = pd.DataFrame({
-            "close": [100.0, 101.0],
-            "volume": [1000000, 1100000],
-        })
+        partial_df = pd.DataFrame(
+            {
+                "close": [100.0, 101.0],
+                "volume": [1000000, 1100000],
+            }
+        )
         partial_df.index = pd.date_range("2020-01-01", periods=2, freq="D")
 
         # Should handle gracefully with fallback

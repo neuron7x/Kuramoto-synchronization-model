@@ -124,7 +124,9 @@ def _load_level_config(root: Path) -> _LevelConfig:
         level = _ensure_level(str(level_name))
         overrides[_normalize(root / location)] = level
 
-    return _LevelConfig(overrides=overrides, rules=tuple(rules), fallback_level=fallback_level)
+    return _LevelConfig(
+        overrides=overrides, rules=tuple(rules), fallback_level=fallback_level
+    )
 
 
 @lru_cache(maxsize=1)
@@ -157,13 +159,18 @@ def _determine_level(root: Path, path: Path) -> str:
     if matched_level is not None:
         return matched_level
 
-    if config.fallback_level is not None and relative.parts and relative.parts[0] == "tests":
+    if (
+        config.fallback_level is not None
+        and relative.parts
+        and relative.parts[0] == "tests"
+    ):
         return config.fallback_level
 
     raise pytest.UsageError(
         "Unable to classify test {path} with TradePulse level. "
-        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker."
-        .format(path=path)
+        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker.".format(
+            path=path
+        )
     )
 
 
@@ -207,8 +214,11 @@ def pytest_collection_modifyitems(  # type: ignore[override]
             if declared_level != level_from_config:
                 raise pytest.UsageError(
                     "Test {nodeid} is marked as {declared} but mapped to {computed} in tests/test_levels.yaml. "
-                    "Update the marker or adjust the mapping."
-                    .format(nodeid=item.nodeid, declared=declared_level, computed=level_from_config)
+                    "Update the marker or adjust the mapping.".format(
+                        nodeid=item.nodeid,
+                        declared=declared_level,
+                        computed=level_from_config,
+                    )
                 )
             level = declared_level
         else:
@@ -236,7 +246,8 @@ sensitive_body_keys = ["apiKey", "secret", "signature", "passphrase"]
 
 
 def scrub_request(request):
-    from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
     u = urlsplit(request.uri)
     q = []
     for k, v in parse_qsl(u.query, keep_blank_values=True):
@@ -253,16 +264,22 @@ def scrub_request(request):
 
 def scrub_response(response):
     import json
+
     ctype = response["headers"].get("Content-Type", [""])[0]
     if "application/json" in ctype:
         try:
             data = json.loads(response["body"]["string"])
+
             def cleanse(obj):
                 if isinstance(obj, dict):
-                    return {k: ("REDACTED" if k in sensitive_body_keys else cleanse(v)) for k, v in obj.items()}
+                    return {
+                        k: ("REDACTED" if k in sensitive_body_keys else cleanse(v))
+                        for k, v in obj.items()
+                    }
                 if isinstance(obj, list):
                     return [cleanse(x) for x in obj]
                 return obj
+
             data = cleanse(data)
             response["body"]["string"] = json.dumps(data).encode()
         except Exception:
@@ -274,7 +291,10 @@ def scrub_response(response):
 def _vcr_adapter_tests(request):
     """Auto-apply VCR to adapter tests."""
     # Only apply VCR to tests in tests/adapters directory
-    if request.fspath.strpath.endswith(".py") and "tests/adapters" in request.fspath.strpath:
+    if (
+        request.fspath.strpath.endswith(".py")
+        and "tests/adapters" in request.fspath.strpath
+    ):
         try:
             import vcr
         except ImportError:
@@ -289,7 +309,10 @@ def _vcr_adapter_tests(request):
             decode_compressed_response=True,
         )
 
-        cassette_name = request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
+        cassette_name = (
+            request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_")
+            + ".yaml"
+        )
         with vcr_default.use_cassette(cassette_name):
             yield
     else:

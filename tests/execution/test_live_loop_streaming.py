@@ -55,7 +55,9 @@ def live_loop_config(tmp_path):
 def test_live_loop_processes_streamed_fills_without_polling(live_loop_config) -> None:
     connector = StreamingConnector()
     risk_manager = RiskManager(RiskLimits(max_notional=1_000_000, max_position=100))
-    loop = LiveExecutionLoop({"stream": connector}, risk_manager, config=live_loop_config)
+    loop = LiveExecutionLoop(
+        {"stream": connector}, risk_manager, config=live_loop_config
+    )
 
     loop.start(cold_start=True)
     try:

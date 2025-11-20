@@ -20,7 +20,9 @@ def purged_kfold(
     else:
         events_start_idx = np.asarray(events_start_idx)
         if events_start_idx.shape != (n,):
-            raise ValueError("events_start_idx must be one-dimensional and match events_end_idx")
+            raise ValueError(
+                "events_start_idx must be one-dimensional and match events_end_idx"
+            )
 
     fold_sizes = np.full(n_folds, n // n_folds, dtype=int)
     fold_sizes[: n % n_folds] += 1

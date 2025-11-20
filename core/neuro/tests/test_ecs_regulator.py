@@ -8,16 +8,15 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-import numpy as np
-import pytest
-
 # Direct import to avoid dependency issues in tests
 import importlib.util
 
+import numpy as np
+import pytest
+
 # Load the module directly
 spec = importlib.util.spec_from_file_location(
-    "ecs_regulator",
-    Path(__file__).parent.parent / "ecs_regulator.py"
+    "ecs_regulator", Path(__file__).parent.parent / "ecs_regulator.py"
 )
 ecs_module = importlib.util.module_from_spec(spec)
 sys.modules["ecs_regulator"] = ecs_module
@@ -567,7 +566,9 @@ class TestIntegrationScenarios:
 
         # Count actions
         action_counts = np.bincount(np.array(actions) + 1)
-        print(f"Actions: sells={action_counts[0]}, holds={action_counts[1]}, buys={action_counts[2]}")
+        print(
+            f"Actions: sells={action_counts[0]}, holds={action_counts[1]}, buys={action_counts[2]}"
+        )
 
         # Verify reasonable action distribution
         assert action_counts[1] > n_steps * 0.5  # Mostly holds expected

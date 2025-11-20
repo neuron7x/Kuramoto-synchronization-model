@@ -6,10 +6,10 @@ import pytest
 
 from modules.agent_coordinator import (
     AgentCoordinator,
-    AgentType,
-    AgentStatus,
-    Priority,
     AgentMetadata,
+    AgentStatus,
+    AgentType,
+    Priority,
 )
 
 
@@ -48,7 +48,7 @@ class TestAgentCoordinator:
             description="Test trading agent",
             handler=handler,
             capabilities={"trade", "analyze"},
-            priority=Priority.HIGH
+            priority=Priority.HIGH,
         )
 
         assert isinstance(metadata, AgentMetadata)
@@ -97,7 +97,7 @@ class TestAgentCoordinator:
             agent_id="agent_1",
             task_type="analyze",
             payload={"symbol": "BTCUSD"},
-            priority=Priority.HIGH
+            priority=Priority.HIGH,
         )
 
         assert task_id.startswith("task_")
@@ -109,9 +109,7 @@ class TestAgentCoordinator:
 
         with pytest.raises(ValueError):
             coordinator.submit_task(
-                agent_id="nonexistent",
-                task_type="test",
-                payload={}
+                agent_id="nonexistent", task_type="test", payload={}
             )
 
     def test_task_priority_ordering(self):
@@ -138,15 +136,24 @@ class TestAgentCoordinator:
         handler2 = MockAgentHandler("agent2")
 
         coordinator.register_agent(
-            "agent_1", AgentType.TRADING, "Agent 1", "Desc", handler1, priority=Priority.HIGH
+            "agent_1",
+            AgentType.TRADING,
+            "Agent 1",
+            "Desc",
+            handler1,
+            priority=Priority.HIGH,
         )
         coordinator.register_agent(
-            "agent_2", AgentType.RISK_MANAGER, "Agent 2", "Desc", handler2, priority=Priority.NORMAL
+            "agent_2",
+            AgentType.RISK_MANAGER,
+            "Agent 2",
+            "Desc",
+            handler2,
+            priority=Priority.NORMAL,
         )
 
         decision = coordinator.make_decision(
-            decision_type="resource_allocation",
-            context={}
+            decision_type="resource_allocation", context={}
         )
 
         assert decision.decision_type == "resource_allocation"
@@ -165,8 +172,7 @@ class TestAgentCoordinator:
         )
 
         decision = coordinator.make_decision(
-            decision_type="emergency_stop",
-            context={"reason": "critical_error"}
+            decision_type="emergency_stop", context={"reason": "critical_error"}
         )
 
         assert decision.priority == Priority.EMERGENCY
@@ -193,8 +199,12 @@ class TestAgentCoordinator:
         handler = MockAgentHandler("test_agent")
 
         coordinator.register_agent(
-            "agent_1", AgentType.TRADING, "Agent 1", "Description", handler,
-            capabilities={"trade", "analyze"}
+            "agent_1",
+            AgentType.TRADING,
+            "Agent 1",
+            "Description",
+            handler,
+            capabilities={"trade", "analyze"},
         )
 
         info = coordinator.get_agent_info("agent_1")

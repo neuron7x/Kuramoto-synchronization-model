@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from strategies.neuro_trade_pulse import NeuroTradePulseStrategy, NeuroTradePulseConfig
+from strategies.neuro_trade_pulse import NeuroTradePulseConfig, NeuroTradePulseStrategy
 
 
 def sample_df(n=1500, seed=42) -> pd.DataFrame:
@@ -20,7 +20,9 @@ if __name__ == "__main__":
     snap = strat.analyze_snapshot(bars.iloc[:720])
     print("=== NeuroTradePulse Snapshot ===")
     print("Phase:", snap.phase.value)
-    print("Confidence:", round(snap.confidence, 3), "Entry:", round(snap.entry_signal, 3))
+    print(
+        "Confidence:", round(snap.confidence, 3), "Entry:", round(snap.entry_signal, 3)
+    )
 
     # Full series
     sig = strat.generate_signals(bars)

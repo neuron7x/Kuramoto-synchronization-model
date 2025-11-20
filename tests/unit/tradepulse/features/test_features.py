@@ -1,18 +1,18 @@
 """Tests for Ricci curvature and topological features."""
 
+# Import directly from module files to avoid package __init__
+import importlib.util
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-# Import directly from module files to avoid package __init__
-import importlib.util
-
 # Import RicciCurvatureGraph
 spec = importlib.util.spec_from_file_location(
     "ricci",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/ricci.py"
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src/tradepulse/features/ricci.py",
 )
 ricci_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ricci_module)
@@ -21,7 +21,8 @@ RicciCurvatureGraph = ricci_module.RicciCurvatureGraph
 # Import TopoSentinel
 spec = importlib.util.spec_from_file_location(
     "topo",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/topo.py"
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src/tradepulse/features/topo.py",
 )
 topo_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(topo_module)
@@ -30,7 +31,8 @@ TopoSentinel = topo_module.TopoSentinel
 # Import CausalGuard
 spec = importlib.util.spec_from_file_location(
     "causal",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/features/causal.py"
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src/tradepulse/features/causal.py",
 )
 causal_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(causal_module)
@@ -71,7 +73,10 @@ class TestRicciCurvature:
         """Test with insufficient data."""
         dates = pd.date_range("2024-01-01", periods=10, freq="1h")
         returns = pd.DataFrame(
-            {"asset1": np.random.randn(10) * 0.01, "asset2": np.random.randn(10) * 0.01},
+            {
+                "asset1": np.random.randn(10) * 0.01,
+                "asset2": np.random.randn(10) * 0.01,
+            },
             index=dates,
         )
 
@@ -90,9 +95,7 @@ class TestTopoSentinel:
         dates = pd.date_range("2024-01-01", periods=n_steps, freq="1h")
 
         returns = pd.DataFrame(
-            {
-                f"asset{i}": np.random.randn(n_steps) * 0.02 for i in range(5)
-            },
+            {f"asset{i}": np.random.randn(n_steps) * 0.02 for i in range(5)},
             index=dates,
         )
 

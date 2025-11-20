@@ -1,11 +1,11 @@
 """Tests for Helm chart structure and configuration."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict
 
 import yaml
-
 
 HELM_BASE = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "tradepulse"
 
@@ -117,7 +117,9 @@ def test_sandbox_has_autoscaling() -> None:
     sandbox = values["sandbox"]
     assert sandbox["autoscaling"]["enabled"] is True
     assert sandbox["autoscaling"]["minReplicas"] >= 2
-    assert sandbox["autoscaling"]["maxReplicas"] >= sandbox["autoscaling"]["minReplicas"]
+    assert (
+        sandbox["autoscaling"]["maxReplicas"] >= sandbox["autoscaling"]["minReplicas"]
+    )
 
 
 def test_sandbox_has_pod_disruption_budget() -> None:

@@ -26,35 +26,34 @@ def main():
         "--duration",
         type=str,
         default="1h",
-        help="Token validity duration (e.g., 1h, 24h, 7d)"
+        help="Token validity duration (e.g., 1h, 24h, 7d)",
     )
 
     parser.add_argument(
-        "--length",
-        type=int,
-        default=32,
-        help="Token length in bytes (default: 32)"
+        "--length", type=int, default=32, help="Token length in bytes (default: 32)"
     )
 
     parser.add_argument(
         "--type",
         choices=["override", "dual_approval"],
         default="override",
-        help="Token type"
+        help="Token type",
     )
 
     args = parser.parse_args()
 
     # Parse duration
     duration_str = args.duration.lower()
-    if duration_str.endswith('h'):
+    if duration_str.endswith("h"):
         hours = int(duration_str[:-1])
-    elif duration_str.endswith('d'):
+    elif duration_str.endswith("d"):
         hours = int(duration_str[:-1]) * 24
-    elif duration_str.endswith('m'):
+    elif duration_str.endswith("m"):
         hours = int(duration_str[:-1]) / 60
     else:
-        print(f"Error: Invalid duration format '{args.duration}'. Use format like '1h', '24h', or '7d'")
+        print(
+            f"Error: Invalid duration format '{args.duration}'. Use format like '1h', '24h', or '7d'"
+        )
         return 1
 
     expiration = datetime.now() + timedelta(hours=hours)
@@ -82,7 +81,7 @@ def main():
         print("\n  Then use manual override endpoint:")
         print("  curl -X POST http://localhost:8080/thermo/override \\")
         print("    -H 'Content-Type: application/json' \\")
-        print(f"    -d '{{\"token\": \"{token}\", \"reason\": \"Your reason here\"}}'")
+        print(f'    -d \'{{"token": "{token}", "reason": "Your reason here"}}\'')
     else:
         print(f"  export THERMO_DUAL_TOKEN='{token}'")
         print("\n  The controller will use this token for dual approval checks.")

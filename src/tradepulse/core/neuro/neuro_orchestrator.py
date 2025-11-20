@@ -126,7 +126,9 @@ class LearningLoop:
     learning_rate: float = 0.01
     prediction_window: int = 1
     error_metric: str = "absolute"
-    update_rule: str = "delta = reward + gamma * V_next - V_current; V_current += learning_rate * delta"
+    update_rule: str = (
+        "delta = reward + gamma * V_next - V_current; V_current += learning_rate * delta"
+    )
 
 
 @dataclass(frozen=True)
@@ -259,8 +261,7 @@ class NeuroOrchestrator:
         )
 
     def _map_risk_profile(
-        self,
-        risk_profile: Literal["conservative", "moderate", "aggressive"]
+        self, risk_profile: Literal["conservative", "moderate", "aggressive"]
     ) -> Dict[str, float]:
         """Map risk profile to numerical parameters."""
         profiles = {
@@ -455,7 +456,9 @@ class NeuroOrchestrator:
         for raw_key, raw_value in custom_parameters.items():
             prepared_value = self._prepare_override_value(raw_value)
             if "." in raw_key:
-                self._assign_override_path(normalised, raw_key.split("."), prepared_value)
+                self._assign_override_path(
+                    normalised, raw_key.split("."), prepared_value
+                )
             else:
                 if raw_key in normalised:
                     normalised[raw_key] = self._combine_override_values(
@@ -470,7 +473,9 @@ class NeuroOrchestrator:
         """Create a merge-ready copy of ``value``."""
 
         if isinstance(value, Mapping):
-            return {key: self._prepare_override_value(val) for key, val in value.items()}
+            return {
+                key: self._prepare_override_value(val) for key, val in value.items()
+            }
         return value
 
     def _assign_override_path(
@@ -490,14 +495,17 @@ class NeuroOrchestrator:
             if not isinstance(existing, dict):
                 joined = ".".join(path)
                 raise ValueError(
-                    "Custom parameter override for '%s' collides with a non-mapping value." % joined
+                    "Custom parameter override for '%s' collides with a non-mapping value."
+                    % joined
                 )
 
             current = existing
 
         leaf = path[-1]
         if leaf in current:
-            current[leaf] = self._combine_override_values(current[leaf], value, ".".join(path))
+            current[leaf] = self._combine_override_values(
+                current[leaf], value, ".".join(path)
+            )
         else:
             current[leaf] = value
 
@@ -509,7 +517,8 @@ class NeuroOrchestrator:
 
         if isinstance(existing, dict) != isinstance(incoming, dict):
             raise ValueError(
-                "Custom parameter override for '%s' mixes structured and scalar values." % key
+                "Custom parameter override for '%s' mixes structured and scalar values."
+                % key
             )
 
         return incoming
@@ -559,7 +568,11 @@ class NeuroOrchestrator:
     ) -> RiskContour:
         """Build risk contour configuration."""
         return RiskContour(
-            mode=scenario.risk_profile if scenario.risk_profile in ["conservative", "aggressive"] else "normal",
+            mode=(
+                scenario.risk_profile
+                if scenario.risk_profile in ["conservative", "aggressive"]
+                else "normal"
+            ),
             threat_threshold=risk_params["threat_threshold"],
             exposure_limit=risk_params["exposure_limit"],
             drawdown_limit=risk_params["drawdown_limit"],
@@ -599,7 +612,9 @@ class NeuroOrchestrator:
             If parameters would violate the free-energy constraint
         """
         # Check critical parameters that affect free energy
-        free_energy_threshold = parameters.get("free_energy_threshold", self._free_energy_threshold)
+        free_energy_threshold = parameters.get(
+            "free_energy_threshold", self._free_energy_threshold
+        )
         temperature = parameters.get("temperature", 1.0)
 
         # Validate threshold

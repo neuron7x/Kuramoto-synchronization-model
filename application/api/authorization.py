@@ -102,7 +102,9 @@ def _build_default_gateway() -> AuthorizationGateway:
     if not policy_path.is_absolute():
         policy_path = _REPO_ROOT / policy_path
     audit_logger = AuditLogger(secret=_resolve_audit_secret())
-    return build_authorization_gateway(policy_path=policy_path, audit_logger=audit_logger)
+    return build_authorization_gateway(
+        policy_path=policy_path, audit_logger=audit_logger
+    )
 
 
 def get_authorization_gateway() -> AuthorizationGateway:
@@ -118,8 +120,13 @@ def require_permission(
     action: str,
     *,
     identity_dependency: Callable[..., Awaitable[AdminIdentity]] | None = None,
-    attributes_provider: Callable[[Request, AdminIdentity], Mapping[str, Any] | Awaitable[Mapping[str, Any] | None] | None]
-    | None = None,
+    attributes_provider: (
+        Callable[
+            [Request, AdminIdentity],
+            Mapping[str, Any] | Awaitable[Mapping[str, Any] | None] | None,
+        ]
+        | None
+    ) = None,
     gateway_dependency: Callable[[], AuthorizationGateway] | None = None,
 ) -> Callable[[Request, AdminIdentity, AuthorizationGateway], Awaitable[AdminIdentity]]:
     """Return a dependency enforcing granular RBAC permissions."""

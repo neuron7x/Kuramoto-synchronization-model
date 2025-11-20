@@ -87,7 +87,9 @@ def test_publish_requires_sufficient_approvals() -> None:
         environments=[Environment.STAGE],
     )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("1.0.0")
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
+        "1.0.0"
+    )
 
 
 def test_validator_enforced() -> None:
@@ -165,7 +167,9 @@ def test_compatibility_policy_blocks_incompatible_payload() -> None:
 def test_release_checks_run_for_production_promotions() -> None:
     calls: list[tuple[str, Version, Mapping[str, object]]] = []
 
-    def release_check(profile: str, version: Version, payload: Mapping[str, object]) -> None:
+    def release_check(
+        profile: str, version: Version, payload: Mapping[str, object]
+    ) -> None:
         calls.append((profile, version, payload))
 
     registry = ConfigRegistry(release_checks=[release_check])
@@ -256,7 +260,9 @@ def test_rollback_restores_previous_version() -> None:
         reason="Stage smoke tests failed",
     )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("1.0.0")
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
+        "1.0.0"
+    )
 
 
 def test_rollback_requires_approvals_for_target_version() -> None:
@@ -292,7 +298,9 @@ def test_rollback_requires_approvals_for_target_version() -> None:
             reason="Rolling forward without approvals should fail",
         )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("1.0.0")
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
+        "1.0.0"
+    )
 
 
 def test_audit_trail_includes_lifecycle_events() -> None:
@@ -336,5 +344,9 @@ def test_publish_atomically_updates_multiple_environments() -> None:
         environments=[Environment.STAGE, Environment.PROD],
     )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("4.0.0")
-    assert registry.get_active_version("alpha-strategy", Environment.PROD) == Version("4.0.0")
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
+        "4.0.0"
+    )
+    assert registry.get_active_version("alpha-strategy", Environment.PROD) == Version(
+        "4.0.0"
+    )

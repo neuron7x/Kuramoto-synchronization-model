@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
 import json
 import logging
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Mapping
 
@@ -105,7 +105,9 @@ class MiFID2Reporter:
         self._abuse_signals: list[MarketAbuseSignal] = []
         self._synchronised_at: datetime | None = None
 
-    def record_order(self, *, order_id: str, payload: Mapping[str, object], venue: str, actor: str) -> None:
+    def record_order(
+        self, *, order_id: str, payload: Mapping[str, object], venue: str, actor: str
+    ) -> None:
         entry = OrderAuditTrail(
             order_id=order_id,
             timestamp=datetime.now(UTC),
@@ -158,7 +160,9 @@ class MiFID2Reporter:
         self._synchronised_at = datetime.now(UTC)
         LOGGER.info("Clock synchronised with offset %.3f ms", ntp_offset_ms)
 
-    def best_execution_breaches(self, threshold_bps: float = 5.0) -> list[ExecutionQuality]:
+    def best_execution_breaches(
+        self, threshold_bps: float = 5.0
+    ) -> list[ExecutionQuality]:
         breaches = [
             quality
             for quality in self._execution_quality
@@ -192,7 +196,9 @@ class MiFID2Reporter:
             "reports": len(self._reports),
             "audit_trail": len(self._audit_trail),
             "execution_quality": len(self._execution_quality),
-            "synchronised_at": self._synchronised_at.isoformat() if self._synchronised_at else None,
+            "synchronised_at": (
+                self._synchronised_at.isoformat() if self._synchronised_at else None
+            ),
             "market_abuse_signals": len(self._abuse_signals),
         }
 
@@ -209,10 +215,15 @@ class MiFID2Reporter:
             "generated_at": snapshot.generated_at.isoformat(),
             "reports": [report.to_dict() for report in snapshot.reports],
             "audit_trail": [entry.to_dict() for entry in snapshot.audit_trail],
-            "execution_quality": [quality.__dict__ for quality in snapshot.execution_quality],
+            "execution_quality": [
+                quality.__dict__ for quality in snapshot.execution_quality
+            ],
             "market_abuse_signals": [signal.__dict__ for signal in self._abuse_signals],
         }
-        target = self._storage_path / f"{prefix}-{snapshot.generated_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+        target = (
+            self._storage_path
+            / f"{prefix}-{snapshot.generated_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+        )
         target.write_text(json.dumps(payload, indent=2))
         self._apply_retention()
         return target
@@ -221,7 +232,9 @@ class MiFID2Reporter:
         cutoff = datetime.now(UTC) - self._retention.retention_delta()
         for artefact in list(self._storage_path.glob("*.json")):
             try:
-                timestamp = datetime.strptime(artefact.stem.split("-")[-1], "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
+                timestamp = datetime.strptime(
+                    artefact.stem.split("-")[-1], "%Y%m%dT%H%M%SZ"
+                ).replace(tzinfo=UTC)
             except ValueError:
                 continue
             if timestamp < cutoff:
@@ -234,13 +247,19 @@ class MiFID2Reporter:
             return
         if payload.get("action") == "cancel" and size > 1_000_000:
             self._abuse_signals.append(
-                MarketAbuseSignal(order_id=entry.order_id, actor=entry.actor, reason="suspicious large cancellation"),
+                MarketAbuseSignal(
+                    order_id=entry.order_id,
+                    actor=entry.actor,
+                    reason="suspicious large cancellation",
+                ),
             )
 
     def generate_regulatory_report(self) -> Mapping[str, object]:
         return {
             "health": self.health_summary(),
-            "best_execution_breaches": [quality.__dict__ for quality in self.best_execution_breaches()],
+            "best_execution_breaches": [
+                quality.__dict__ for quality in self.best_execution_breaches()
+            ],
             "market_abuse_signals": [signal.__dict__ for signal in self._abuse_signals],
         }
 

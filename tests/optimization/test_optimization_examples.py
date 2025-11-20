@@ -25,7 +25,7 @@ class TestStreamingEventReplayer:
         replayer._fetch_batch = Mock(return_value=[])
 
         result = replayer.replay_events_streaming("test-id", "TestType")
-        assert hasattr(result, '__iter__')
+        assert hasattr(result, "__iter__")
 
 
 class TestAdaptivePoller:

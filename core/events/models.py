@@ -45,6 +45,7 @@ class TimeInForce(Enum):
 
 class BarEvent(BaseModel):
     """Aggregated OHLCV bar for a symbol and interval."""
+
     model_config = ConfigDict(extra="forbid")
     event_id: str
     schema_version: str
@@ -62,6 +63,7 @@ class BarEvent(BaseModel):
 
 class FillEvent(BaseModel):
     """Execution fill acknowledgment for an order."""
+
     model_config = ConfigDict(extra="forbid")
     event_id: str
     schema_version: str
@@ -79,6 +81,7 @@ class FillEvent(BaseModel):
 
 class OrderEvent(BaseModel):
     """Order instruction emitted by the execution service."""
+
     model_config = ConfigDict(extra="forbid")
     event_id: str
     schema_version: str
@@ -96,6 +99,7 @@ class OrderEvent(BaseModel):
 
 class SignalEvent(BaseModel):
     """Generated trading signal with metadata and routing hints."""
+
     model_config = ConfigDict(extra="forbid")
     event_id: str
     schema_version: str
@@ -110,6 +114,7 @@ class SignalEvent(BaseModel):
 
 class TickEvent(BaseModel):
     """Real-time market tick update for a single symbol."""
+
     model_config = ConfigDict(extra="forbid")
     event_id: str
     schema_version: str
@@ -124,6 +129,7 @@ class TickEvent(BaseModel):
 
 class TickMicrostructure(BaseModel):
     """Order book context captured alongside the tick."""
+
     model_config = ConfigDict(extra="forbid")
     bid_size: Optional[int] = None
     ask_size: Optional[int] = None

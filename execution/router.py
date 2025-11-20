@@ -222,7 +222,9 @@ class ResilientExecutionRouter:
                     error=secondary_exc,
                 )
                 primary_error = translated or route.translate_error(exc)
-                secondary_error = secondary_translated or backup.translate_error(secondary_exc)
+                secondary_error = secondary_translated or backup.translate_error(
+                    secondary_exc
+                )
                 raise secondary_error from primary_error
             else:
                 self._record_result(
@@ -264,7 +266,10 @@ class ResilientExecutionRouter:
                 return route.normalize(route.connector.fetch_order(order_id))
 
         _, route = self._resolve_route(route_name)
-        def _place(active_route: ExecutionRoute, connector: ExecutionConnector) -> Order:
+
+        def _place(
+            active_route: ExecutionRoute, connector: ExecutionConnector
+        ) -> Order:
             adjusted = active_route.apply_slippage(order)
             return connector.place_order(adjusted, idempotency_key=idempotency_key)
 
@@ -294,7 +299,9 @@ class ResilientExecutionRouter:
             )
         except Exception as exc:  # noqa: BLE001
             error = exc
-            self._record_result(route_key, resilience, started_at=started, success=False, error=exc)
+            self._record_result(
+                route_key, resilience, started_at=started, success=False, error=exc
+            )
             failover_key = self._failover.get(route_key)
             if failover_key is None:
                 raise route.translate_error(exc)
@@ -317,7 +324,9 @@ class ResilientExecutionRouter:
                     success=False,
                     error=secondary_exc,
                 )
-                raise backup.translate_error(secondary_exc) from route.translate_error(error)
+                raise backup.translate_error(secondary_exc) from route.translate_error(
+                    error
+                )
             else:
                 self._record_result(
                     failover_key,
@@ -328,7 +337,9 @@ class ResilientExecutionRouter:
                 )
                 return result
         else:
-            self._record_result(route_key, resilience, started_at=started, success=True, error=None)
+            self._record_result(
+                route_key, resilience, started_at=started, success=True, error=None
+            )
             return result
 
     def fetch_order(self, route_name: str, order_id: str) -> NormalizedOrderState:

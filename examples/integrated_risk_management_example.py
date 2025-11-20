@@ -8,7 +8,6 @@ Integrated Risk Management Example
 - Agent Coordinator
 """
 
-
 import numpy as np
 
 from modules.adaptive_risk_manager import AdaptiveRiskManager

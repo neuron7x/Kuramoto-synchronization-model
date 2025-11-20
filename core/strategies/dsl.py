@@ -28,7 +28,14 @@ from typing import Any, Callable, Dict, Iterable, Literal
 import numpy as np
 import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PositiveInt,
+    field_validator,
+    model_validator,
+)
 
 __all__ = [
     "ComponentParameters",
@@ -118,8 +125,12 @@ def _is_component_sequence(value: Any) -> bool:
     return all(isinstance(item, Mapping) and "id" in item for item in value)
 
 
-def _merge_component_lists(existing: Sequence[Mapping[str, Any]], incoming: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
-    merged: dict[str, Mapping[str, Any]] = {str(item["id"]): dict(item) for item in existing}
+def _merge_component_lists(
+    existing: Sequence[Mapping[str, Any]], incoming: Sequence[Mapping[str, Any]]
+) -> list[Mapping[str, Any]]:
+    merged: dict[str, Mapping[str, Any]] = {
+        str(item["id"]): dict(item) for item in existing
+    }
     for item in incoming:
         identifier = str(item["id"])
         if identifier in merged:
@@ -133,7 +144,9 @@ def _merge_component_lists(existing: Sequence[Mapping[str, Any]], incoming: Sequ
     return list(merged.values())
 
 
-def _deep_merge(base: MutableMapping[str, Any], incoming: Mapping[str, Any]) -> MutableMapping[str, Any]:
+def _deep_merge(
+    base: MutableMapping[str, Any], incoming: Mapping[str, Any]
+) -> MutableMapping[str, Any]:
     """Recursively merge ``incoming`` into ``base`` (mutating ``base``)."""
 
     for key, value in incoming.items():
@@ -203,7 +216,11 @@ class ParameterField(BaseModel):
         if resolved is None and not self.allow_none:
             msg = "Parameter requires a value or default"
             raise ValueError(msg)
-        if self.choices is not None and resolved is not None and resolved not in self.choices:
+        if (
+            self.choices is not None
+            and resolved is not None
+            and resolved not in self.choices
+        ):
             msg = f"Value {resolved!r} not in allowed choices {self.choices!r}"
             raise ValueError(msg)
         if self.minimum is not None and resolved is not None:
@@ -571,7 +588,9 @@ class StrategyDSLLoader:
                 lstrip_blocks=True,
             )
 
-    def load(self, path: Path, *, context: Mapping[str, Any] | None = None) -> StrategyPipelineDefinition:
+    def load(
+        self, path: Path, *, context: Mapping[str, Any] | None = None
+    ) -> StrategyPipelineDefinition:
         text = self._render(path, context=context)
         data = yaml.safe_load(text)
         if not isinstance(data, Mapping):
@@ -595,11 +614,17 @@ class StrategyDSLLoader:
                     lstrip_blocks=True,
                 )
             template = env.get_template(path.name)
-            render_context = {"env": dict(os.environ), **(context or {}), "base_path": str(path.parent)}
+            render_context = {
+                "env": dict(os.environ),
+                **(context or {}),
+                "base_path": str(path.parent),
+            }
             return template.render(**render_context)
         return path.read_text(encoding="utf-8")
 
-    def _apply_includes(self, data: Mapping[str, Any], *, base_path: Path | None) -> Mapping[str, Any]:
+    def _apply_includes(
+        self, data: Mapping[str, Any], *, base_path: Path | None
+    ) -> Mapping[str, Any]:
         extends = data.get("extends")
         merged: dict[str, Any] = {}
         inherited_presets: list[str] = []

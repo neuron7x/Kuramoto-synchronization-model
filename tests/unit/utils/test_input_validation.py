@@ -1,19 +1,21 @@
 """Tests for input validation utilities."""
-import pytest
+
 from decimal import Decimal
+
+import pytest
 
 from core.utils.input_validation import (
     ValidationError,
-    validate_symbol,
-    validate_quantity,
-    validate_price,
-    validate_percentage,
+    sanitize_sql_identifier,
+    validate_enum,
     validate_order_side,
     validate_order_type,
-    validate_timeframe,
+    validate_percentage,
+    validate_price,
+    validate_quantity,
     validate_string_length,
-    validate_enum,
-    sanitize_sql_identifier,
+    validate_symbol,
+    validate_timeframe,
 )
 
 
@@ -92,7 +94,7 @@ class TestValidateQuantity:
     def test_infinity_rejected(self):
         """Test that infinity is rejected."""
         with pytest.raises(ValidationError, match="must be finite"):
-            validate_quantity(float('inf'))
+            validate_quantity(float("inf"))
 
 
 class TestValidatePrice:
@@ -239,27 +241,27 @@ class TestValidateEnum:
 
     def test_valid_value(self):
         """Test validation of valid enum value."""
-        allowed = ['USD', 'EUR', 'GBP']
-        assert validate_enum('USD', allowed) == 'USD'
+        allowed = ["USD", "EUR", "GBP"]
+        assert validate_enum("USD", allowed) == "USD"
 
     def test_case_insensitive_by_default(self):
         """Test that validation is case-insensitive by default."""
-        allowed = ['USD', 'EUR', 'GBP']
-        assert validate_enum('usd', allowed, case_sensitive=False) == 'usd'
+        allowed = ["USD", "EUR", "GBP"]
+        assert validate_enum("usd", allowed, case_sensitive=False) == "usd"
 
     def test_case_sensitive_when_enabled(self):
         """Test case-sensitive validation."""
-        allowed = ['USD', 'EUR', 'GBP']
+        allowed = ["USD", "EUR", "GBP"]
 
         with pytest.raises(ValidationError):
-            validate_enum('usd', allowed, case_sensitive=True)
+            validate_enum("usd", allowed, case_sensitive=True)
 
     def test_invalid_value_rejected(self):
         """Test that invalid value is rejected."""
-        allowed = ['USD', 'EUR', 'GBP']
+        allowed = ["USD", "EUR", "GBP"]
 
         with pytest.raises(ValidationError, match="Invalid"):
-            validate_enum('JPY', allowed)
+            validate_enum("JPY", allowed)
 
 
 class TestSanitizeSqlIdentifier:

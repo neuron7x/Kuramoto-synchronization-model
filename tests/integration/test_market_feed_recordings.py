@@ -12,7 +12,6 @@ import pytest
 from core.data.market_feed import MarketFeedRecording, validate_recording
 from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
 
-
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
 
 
@@ -139,6 +138,7 @@ class TestDDMIntegration:
                 momentum = (prices[i] - prices[i - 5]) / prices[i - 5]
                 # Map to [0, 1] range with sigmoid
                 import math
+
                 dopamine = 1.0 / (1.0 + math.exp(-momentum * 100))
                 dopamine_levels.append(dopamine)
 
@@ -173,9 +173,7 @@ class TestDDMIntegration:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(
-                FIXTURES_DIR / recording_name
-            )
+            recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
 
             # Test with various dopamine levels
             for da_level in [0.1, 0.3, 0.5, 0.7, 0.9]:
@@ -262,16 +260,14 @@ class TestRecordingTimestamps:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(
-                FIXTURES_DIR / recording_name
-            )
+            recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
 
             for i in range(1, len(recording)):
                 prev_ts = recording[i - 1].exchange_ts
                 curr_ts = recording[i].exchange_ts
-                assert curr_ts >= prev_ts, (
-                    f"{recording_name}: Timestamps not monotonic at index {i}"
-                )
+                assert (
+                    curr_ts >= prev_ts
+                ), f"{recording_name}: Timestamps not monotonic at index {i}"
 
     def test_latency_reasonable(self):
         """Test that ingestion latency is within reasonable bounds."""
@@ -281,9 +277,7 @@ class TestRecordingTimestamps:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(
-                FIXTURES_DIR / recording_name
-            )
+            recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
 
             for record in recording.records:
                 latency_ms = record.latency_ms

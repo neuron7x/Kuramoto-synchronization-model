@@ -109,7 +109,14 @@ class SecretScanner:
                     re.search(pattern, rel_path) for pattern in self._include_patterns
                 ):
                     continue
-                if candidate.suffix in {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico"}:
+                if candidate.suffix in {
+                    ".png",
+                    ".jpg",
+                    ".jpeg",
+                    ".gif",
+                    ".bmp",
+                    ".ico",
+                }:
                     continue
                 yield candidate
 

@@ -61,9 +61,11 @@ class SecureEnvelope:
         return EncryptedPayload(
             nonce=base64.b64encode(nonce).decode("ascii"),
             ciphertext=base64.b64encode(ciphertext).decode("ascii"),
-            associated_data=base64.b64encode(associated_data).decode("ascii")
-            if associated_data
-            else None,
+            associated_data=(
+                base64.b64encode(associated_data).decode("ascii")
+                if associated_data
+                else None
+            ),
         )
 
     def decrypt(self, payload: EncryptedPayload) -> bytes:

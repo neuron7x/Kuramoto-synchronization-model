@@ -6,8 +6,8 @@ import json
 import pytest
 
 from execution.connectors import ExecutionConnector
-from execution.session_snapshot import ExecutionMode, SessionSnapshotter
 from execution.risk import RiskLimits, RiskManager
+from execution.session_snapshot import ExecutionMode, SessionSnapshotter
 
 
 class StaticConnector(ExecutionConnector):
@@ -55,12 +55,18 @@ def test_session_snapshotter_persists_snapshot(tmp_path) -> None:
     assert path.exists()
     payload = json.loads(path.read_text())
     assert payload["mode"] == "live"
-    assert payload["venues"][0]["balance"]["estimated_equity"] == pytest.approx(10_000.0)
+    assert payload["venues"][0]["balance"]["estimated_equity"] == pytest.approx(
+        10_000.0
+    )
     assert payload["venues"][0]["issues"] == []
     assert payload["risk_limits"]["max_position"] == 10.0
     assert payload["kill_switch"]["violation_threshold"] == 5
     assert "hash" in payload
-    canonical = json.dumps({k: v for k, v in payload.items() if k != "hash"}, sort_keys=True, separators=(",", ":"))
+    canonical = json.dumps(
+        {k: v for k, v in payload.items() if k != "hash"},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     assert hashlib.sha256(canonical.encode("utf-8")).hexdigest() == payload["hash"]
     exposure = payload["risk_exposure"]
     assert exposure

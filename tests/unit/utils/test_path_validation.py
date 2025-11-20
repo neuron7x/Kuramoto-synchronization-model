@@ -1,14 +1,16 @@
 """Tests for path validation utilities."""
-import pytest
-import tempfile
+
 import os
+import tempfile
+
+import pytest
 
 from core.utils.path_validation import (
     PathTraversalError,
-    validate_safe_path,
-    validate_file_path,
-    sanitize_filename,
     ensure_directory_exists,
+    sanitize_filename,
+    validate_file_path,
+    validate_safe_path,
 )
 
 
@@ -54,7 +56,7 @@ class TestValidateSafePath:
         # Create a symlink that points outside base_dir
         with tempfile.TemporaryDirectory() as other_dir:
             link = tmp_path / "link"
-            if hasattr(os, 'symlink'):  # symlink not available on all platforms
+            if hasattr(os, "symlink"):  # symlink not available on all platforms
                 try:
                     os.symlink(other_dir, link)
                     with pytest.raises(PathTraversalError):
@@ -99,19 +101,19 @@ class TestValidateFilePath:
         test_file.write_text("data")
 
         # Valid extension
-        result = validate_file_path("test.csv", tmp_path, extensions=['.csv', '.json'])
+        result = validate_file_path("test.csv", tmp_path, extensions=[".csv", ".json"])
         assert result == test_file
 
         # Invalid extension
         with pytest.raises(ValueError, match="Invalid file extension"):
-            validate_file_path("test.csv", tmp_path, extensions=['.json', '.txt'])
+            validate_file_path("test.csv", tmp_path, extensions=[".json", ".txt"])
 
     def test_extension_case_insensitive(self, tmp_path):
         """Test that extension validation is case-insensitive."""
         test_file = tmp_path / "test.CSV"
         test_file.write_text("data")
 
-        result = validate_file_path("test.CSV", tmp_path, extensions=['.csv'])
+        result = validate_file_path("test.CSV", tmp_path, extensions=[".csv"])
         assert result == test_file
 
 
@@ -184,7 +186,9 @@ class TestEnsureDirectoryExists:
     def test_create_with_parents(self, tmp_path):
         """Test creation of nested directories."""
         nested_dir = tmp_path / "level1" / "level2" / "level3"
-        result = ensure_directory_exists("level1/level2/level3", tmp_path, create_parents=True)
+        result = ensure_directory_exists(
+            "level1/level2/level3", tmp_path, create_parents=True
+        )
 
         assert result == nested_dir
         assert nested_dir.exists()

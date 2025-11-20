@@ -1,7 +1,9 @@
 """Train the FHMC actor-critic agent in the toy market environment."""
+
 from __future__ import annotations
 
 import argparse
+
 import numpy as np
 
 from envs.market_env import ToyMarketEnv

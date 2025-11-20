@@ -25,13 +25,38 @@ def _approx(value: float, expected: float, rel: float = 1e-6) -> bool:
 def test_transaction_cost_analyzer_end_to_end() -> None:
     analyzer = TransactionCostAnalyzer(bucket_seconds=60.0)
     fills = [
-        FillDetail(quantity=50.0, price=101.0, fees=1.0, timestamp=0.0, broker="BrokerA", venue="X"),
-        FillDetail(quantity=30.0, price=102.0, fees=0.6, timestamp=60.0, broker="BrokerB", venue="Y"),
-        FillDetail(quantity=20.0, price=103.0, fees=0.4, timestamp=120.0, broker="BrokerA", venue="X"),
+        FillDetail(
+            quantity=50.0,
+            price=101.0,
+            fees=1.0,
+            timestamp=0.0,
+            broker="BrokerA",
+            venue="X",
+        ),
+        FillDetail(
+            quantity=30.0,
+            price=102.0,
+            fees=0.6,
+            timestamp=60.0,
+            broker="BrokerB",
+            venue="Y",
+        ),
+        FillDetail(
+            quantity=20.0,
+            price=103.0,
+            fees=0.4,
+            timestamp=120.0,
+            broker="BrokerA",
+            venue="X",
+        ),
     ]
     orders = [
-        OrderLifecycle(order_id="O1", submitted_ts=0.0, acknowledged_ts=0.2, completed_ts=30.0),
-        OrderLifecycle(order_id="O2", submitted_ts=40.0, acknowledged_ts=40.5, completed_ts=150.0),
+        OrderLifecycle(
+            order_id="O1", submitted_ts=0.0, acknowledged_ts=0.2, completed_ts=30.0
+        ),
+        OrderLifecycle(
+            order_id="O2", submitted_ts=40.0, acknowledged_ts=40.5, completed_ts=150.0
+        ),
     ]
     market_volumes = [
         MarketVolumeSample(timestamp=0.0, volume=500.0),
@@ -82,10 +107,13 @@ def test_transaction_cost_analyzer_end_to_end() -> None:
 
     assert any("Broker" in rec for rec in report.recommendations)
 
-    brokers = {(
-        breakdown.broker,
-        breakdown.venue,
-    ): breakdown for breakdown in report.broker_comparison}
+    brokers = {
+        (
+            breakdown.broker,
+            breakdown.venue,
+        ): breakdown
+        for breakdown in report.broker_comparison
+    }
     assert len(brokers) == 2
     broker_a = brokers[("BrokerA", "X")]
     assert isinstance(broker_a, BrokerVenueBreakdown)

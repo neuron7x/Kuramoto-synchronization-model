@@ -233,9 +233,15 @@ def create_remote_control_router(
     identity_dependency: Callable[..., AdminIdentity | Awaitable[AdminIdentity]],
     *,
     rate_limiter: AdminRateLimiter | None = None,
-    read_permission: Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None = None,
-    execute_permission: Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None = None,
-    reset_permission: Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None = None,
+    read_permission: (
+        Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None
+    ) = None,
+    execute_permission: (
+        Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None
+    ) = None,
+    reset_permission: (
+        Callable[..., AdminIdentity | Awaitable[AdminIdentity]] | None
+    ) = None,
 ) -> APIRouter:
     """Create a router exposing secure administrative endpoints."""
 

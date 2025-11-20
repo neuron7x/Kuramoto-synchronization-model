@@ -5,6 +5,7 @@ multiplicative cascades and coloured noise series used in adaptive sleep/wake
 scheduling.  The implementation favours clarity over micro-optimisation so it
 can be reused in research notebooks as well as production control loops.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -70,7 +71,9 @@ class DyadicPMCascade:
         self.heavy_tail = float(np.clip(self.heavy_tail + float(delta), 0.0, 1.0))
 
 
-def pink_noise(n: int, beta: float = 1.0, rng: np.random.Generator | None = None) -> np.ndarray:
+def pink_noise(
+    n: int, beta: float = 1.0, rng: np.random.Generator | None = None
+) -> np.ndarray:
     """Return real-valued 1/f^``beta`` noise generated via spectral shaping."""
 
     if n <= 0:

@@ -61,7 +61,10 @@ class BacktestingService(Microservice):
         return self._market_data_service
 
     def start(self) -> None:
-        if self._market_data_service is not None and self._market_data_service.state is ServiceState.STOPPED:
+        if (
+            self._market_data_service is not None
+            and self._market_data_service.state is ServiceState.STOPPED
+        ):
             self._market_data_service.start()
         super().start()
 
@@ -102,7 +105,9 @@ class BacktestingService(Microservice):
             signals=signals,
             payloads=payloads,
         )
-        self._last_result = BacktestResult(source=source, strategy_name=strategy_name, run=run)
+        self._last_result = BacktestResult(
+            source=source, strategy_name=strategy_name, run=run
+        )
         self._mark_healthy()
         return run
 

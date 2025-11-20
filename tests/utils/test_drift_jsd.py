@@ -15,7 +15,13 @@ def _load_drift_module():
     """Import ``src.tradepulse.utils.drift`` without triggering heavy bootstraps."""
 
     module_name = "tradepulse_utils_drift_test"
-    path = Path(__file__).resolve().parents[2] / "src" / "tradepulse" / "utils" / "drift.py"
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "tradepulse"
+        / "utils"
+        / "drift.py"
+    )
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:  # pragma: no cover - defensive guard.
         raise RuntimeError("Failed to load drift module for testing")

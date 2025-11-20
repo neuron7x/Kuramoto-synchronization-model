@@ -45,7 +45,11 @@ def _experiment_cfg(tmp_path: Path) -> ExperimentConfig:
                 "metrics_path": str(baseline_path),
                 "metric_tolerances": {"order_parameter": 0.5},
             },
-            "alerts": {"tolerance": 0.5, "strategy": "relative", "fail_on_deviation": True},
+            "alerts": {
+                "tolerance": 0.5,
+                "strategy": "relative",
+                "fail_on_deviation": True,
+            },
         },
     }
     return ExperimentConfig.model_validate(payload)
@@ -71,7 +75,9 @@ def _hydra_cfg(experiment_cfg: ExperimentConfig) -> "OmegaConf":
     return OmegaConf.create({"experiment": container})
 
 
-def test_tracker_generates_reports_archives(tmp_path: Path, experiment_cfg: ExperimentConfig, run_metadata: RunMetadata) -> None:
+def test_tracker_generates_reports_archives(
+    tmp_path: Path, experiment_cfg: ExperimentConfig, run_metadata: RunMetadata
+) -> None:
     hydra_cfg = _hydra_cfg(experiment_cfg)
     tracker = ExperimentTracker.from_experiment(experiment_cfg, run_metadata)
     assert isinstance(tracker, ExperimentTracker)
@@ -93,13 +99,20 @@ def test_tracker_generates_reports_archives(tmp_path: Path, experiment_cfg: Expe
     tracker.log_artifact(data_path, alias="dataset.csv")
     tracker.finalize(results={"status": "ok"}, error=None)
 
-    reports_dir = Path(experiment_cfg.tracking.base_dir) / experiment_cfg.tracking.reports_dirname
-    artifacts_dir = Path(experiment_cfg.tracking.base_dir) / experiment_cfg.tracking.artifacts_dirname
+    reports_dir = (
+        Path(experiment_cfg.tracking.base_dir) / experiment_cfg.tracking.reports_dirname
+    )
+    artifacts_dir = (
+        Path(experiment_cfg.tracking.base_dir)
+        / experiment_cfg.tracking.artifacts_dirname
+    )
     assert (reports_dir / experiment_cfg.tracking.reports.markdown_filename).exists()
     assert (reports_dir / experiment_cfg.tracking.reports.dashboard_filename).exists()
     assert (reports_dir / "ci_summary.json").exists()
     assert (artifacts_dir / "metrics.json").exists()
-    archives = sorted((Path(experiment_cfg.tracking.base_dir) / "archives").glob("*.zip"))
+    archives = sorted(
+        (Path(experiment_cfg.tracking.base_dir) / "archives").glob("*.zip")
+    )
     assert archives, "expected archive to be generated"
 
 

@@ -1,9 +1,15 @@
 """Tests for the runtime agent registry."""
+
 from __future__ import annotations
 
 import pytest
 
-from core.agent import AgentRegistry, AgentRegistryError, AgentSpec, global_agent_registry
+from core.agent import (
+    AgentRegistry,
+    AgentRegistryError,
+    AgentSpec,
+    global_agent_registry,
+)
 from runtime.misanthropic_agent import MisanthropicAgent
 
 

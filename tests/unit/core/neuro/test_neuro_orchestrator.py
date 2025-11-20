@@ -475,9 +475,7 @@ class TestNeuroOrchestrator:
             timeframe="1h",
             risk_profile="moderate",
         )
-        custom_params = {
-            "tacl": {"monotonic_descent": False}
-        }
+        custom_params = {"tacl": {"monotonic_descent": False}}
         orchestrator = NeuroOrchestrator(enable_tacl_validation=True)
 
         with pytest.raises(ValueError, match="must be enabled"):

@@ -7,7 +7,11 @@ import pytest
 
 from runtime.dual_approval import DualApprovalManager
 from runtime.recovery_agent import RecoveryState
-from runtime.thermo_controller import CrisisComputation, ThermoController, ToleranceCheck
+from runtime.thermo_controller import (
+    CrisisComputation,
+    ThermoController,
+    ToleranceCheck,
+)
 
 
 def _build_simple_graph() -> nx.DiGraph:
@@ -24,7 +28,9 @@ def test_audit_log_records_normal_step(tmp_path, monkeypatch):
 
     controller = ThermoController(_build_simple_graph())
     controller.set_dual_approval_token(
-        DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+        DualApprovalManager(secret="test-secret").issue_service_token(
+            action_id="thermo_topology"
+        )
     )
     controller.manual_override_active = True
     controller.manual_override_reason = "maintenance window"
@@ -50,7 +56,9 @@ def test_audit_log_records_rejected_actions(tmp_path, monkeypatch):
 
     controller = ThermoController(_build_simple_graph())
     controller.set_dual_approval_token(
-        DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+        DualApprovalManager(secret="test-secret").issue_service_token(
+            action_id="thermo_topology"
+        )
     )
     controller.baseline_F = 1.0
     controller.baseline_ema = 1.0
@@ -65,7 +73,9 @@ def test_audit_log_records_rejected_actions(tmp_path, monkeypatch):
 
     rejection = ToleranceCheck(accepted=False, reason="test_reject")
     crisis_result = CrisisComputation(
-        state=RecoveryState(F_current=2.0, F_baseline=1.0, latency_spike=1.0, steps_in_crisis=1),
+        state=RecoveryState(
+            F_current=2.0, F_baseline=1.0, latency_spike=1.0, steps_in_crisis=1
+        ),
         action=None,
         new_topology=None,
         proposed_F=2.5,

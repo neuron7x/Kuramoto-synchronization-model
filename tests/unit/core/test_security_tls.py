@@ -94,7 +94,9 @@ def test_create_server_ssl_context_enforces_client_ca(tmp_path: Path) -> None:
         )
 
 
-def test_create_server_ssl_context_supports_optional_client_auth(tmp_path: Path) -> None:
+def test_create_server_ssl_context_supports_optional_client_auth(
+    tmp_path: Path,
+) -> None:
     ca, cert, key = _write_certificate_bundle(tmp_path)
 
     context = create_server_ssl_context(

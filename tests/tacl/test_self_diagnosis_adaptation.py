@@ -9,6 +9,7 @@ import time
 import pytest
 
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryAction, RecoveryState
+
 # ThermoController requires optional dependencies, tests are self-contained
 
 
@@ -52,7 +53,7 @@ class TestSelfDiagnosisSystem:
         # Calculate health score
         issues = 0
         for metric, value in health_metrics.items():
-            if value > thresholds.get(metric, float('inf')):
+            if value > thresholds.get(metric, float("inf")):
                 issues += 1
 
         health_score = 100 - (issues * 25)  # Deduct 25 points per issue
@@ -62,12 +63,11 @@ class TestSelfDiagnosisSystem:
     def test_degradation_detection(self):
         """Test detection of gradual system degradation."""
         # Simulate time series of performance metric
-        time_series = [
-            100, 102, 101, 99, 98, 97, 95, 93, 90, 88  # Degrading
-        ]
+        time_series = [100, 102, 101, 99, 98, 97, 95, 93, 90, 88]  # Degrading
 
         # Calculate trend using simple linear regression
         import numpy as np
+
         x = np.arange(len(time_series))
         y = np.array(time_series)
 
@@ -85,6 +85,7 @@ class TestSelfDiagnosisSystem:
 
         # Calculate rate of increase
         import numpy as np
+
         np.arange(len(error_rates))
         np.array(error_rates)
 
@@ -104,11 +105,7 @@ class TestAdaptiveConfiguration:
     def test_auto_tuning_parameters(self):
         """Test automatic parameter tuning based on load."""
         # Initial configuration
-        config = {
-            "batch_size": 100,
-            "worker_threads": 4,
-            "cache_size_mb": 512
-        }
+        config = {"batch_size": 100, "worker_threads": 4, "cache_size_mb": 512}
 
         # Current metrics
         current_load = 0.85  # 85% capacity
@@ -125,6 +122,7 @@ class TestAdaptiveConfiguration:
         """Test dynamic adjustment of alert thresholds."""
         # Historical data
         import numpy as np
+
         historical = np.random.normal(100, 10, 1000)
 
         # Calculate adaptive threshold
@@ -138,7 +136,7 @@ class TestAdaptiveConfiguration:
     def test_load_based_scaling(self):
         """Test automatic scaling based on load."""
         current_rps = 1000  # requests per second
-        capacity_rps = 800   # current capacity
+        capacity_rps = 800  # current capacity
 
         utilization = current_rps / capacity_rps
 
@@ -318,7 +316,7 @@ class TestTACLAdaptiveRecovery:
         strategies = {
             "slow": {"mutation_rate": 0.01, "speed": 1},
             "medium": {"mutation_rate": 0.05, "speed": 2},
-            "fast": {"mutation_rate": 0.1, "speed": 3}
+            "fast": {"mutation_rate": 0.1, "speed": 3},
         }
 
         # Select strategy based on urgency
@@ -350,14 +348,16 @@ class TestMonotonicSafetyGuarantees:
         else:
             F_final = F_new
 
-        assert F_final == F_old, "Should reject change that violates monotonic constraint"
+        assert (
+            F_final == F_old
+        ), "Should reject change that violates monotonic constraint"
 
     def test_safety_gate_validation(self):
         """Test safety gate prevents unsafe changes."""
         proposed_change = {
             "parameter": "mutation_rate",
             "old_value": 0.01,
-            "new_value": 0.5
+            "new_value": 0.5,
         }
 
         # Validate change is within safe bounds
@@ -466,7 +466,7 @@ class TestEndToEndAdaptation:
         metrics = {
             "latency": 250,  # High
             "throughput": 500,  # Low
-            "error_rate": 0.08  # High
+            "error_rate": 0.08,  # High
         }
 
         adaptations = []

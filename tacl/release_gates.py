@@ -50,7 +50,9 @@ def _load_perf_budgets(path: Path) -> list[PerfBudget]:
     return budgets
 
 
-def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[str, object]]:
+def evaluate_release_gates(
+    config: Mapping[str, object],
+) -> tuple[bool, Mapping[str, object]]:
     latency_cfg = config.get("latency") or {}
     evaluator = ReleaseGateEvaluator(
         latency_median_target_ms=float(latency_cfg.get("median_target_ms", 60.0)),
@@ -70,7 +72,9 @@ def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[
     perf_passed = all(budget.passed() for budget in perf_budgets)
 
     validator = EnergyValidator()
-    scenarios = load_scenarios(Path(config.get("scenario_file", "")) if config.get("scenario_file") else None)
+    scenarios = load_scenarios(
+        Path(config.get("scenario_file", "")) if config.get("scenario_file") else None
+    )
     energy_scenario = str(config.get("energy_scenario", "nominal"))
     if energy_scenario not in scenarios:
         raise KeyError(f"energy scenario '{energy_scenario}' not present in fixtures")

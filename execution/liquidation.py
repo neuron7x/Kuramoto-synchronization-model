@@ -51,10 +51,7 @@ class PositionExposure:
             raise ValueError("mark_price must be positive")
         if self.maintenance_margin_rate <= 0:
             raise ValueError("maintenance_margin_rate must be positive")
-        if (
-            self.initial_margin_rate is not None
-            and self.initial_margin_rate <= 0
-        ):
+        if self.initial_margin_rate is not None and self.initial_margin_rate <= 0:
             raise ValueError("initial_margin_rate must be positive when provided")
 
     @property
@@ -308,9 +305,7 @@ class LiquidationEngine:
 
         return plan
 
-    def simulate(
-        self, accounts: Iterable[MarginAccountState]
-    ) -> list[LiquidationPlan]:
+    def simulate(self, accounts: Iterable[MarginAccountState]) -> list[LiquidationPlan]:
         """Utility helper to plan liquidations across multiple accounts."""
 
         plans: list[LiquidationPlan] = []

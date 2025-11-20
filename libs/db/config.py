@@ -19,7 +19,9 @@ __all__ = [
 class DatabasePoolConfig(BaseModel):
     """Connection pool tuning knobs shared by writer and reader engines."""
 
-    size: PositiveInt = Field(10, description="Base amount of connections to keep open.")
+    size: PositiveInt = Field(
+        10, description="Base amount of connections to keep open."
+    )
     max_overflow: int = Field(
         10,
         ge=0,
@@ -70,7 +72,9 @@ class DatabaseRuntimeConfig(BaseModel):
 class DatabaseSettings(BaseModel):
     """Complete database access configuration describing writer and reader endpoints."""
 
-    writer_dsn: str = Field(..., description="Primary connection string used for write transactions.")
+    writer_dsn: str = Field(
+        ..., description="Primary connection string used for write transactions."
+    )
     reader_dsns: Tuple[str, ...] = Field(
         default_factory=tuple,
         description="Optional additional connection strings used for read-only workloads.",

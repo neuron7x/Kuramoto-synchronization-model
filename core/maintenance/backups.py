@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
 import os
-from pathlib import Path
 import subprocess
 import tarfile
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
-
-CommandRunner = Callable[[Sequence[str], Mapping[str, str] | None], subprocess.CompletedProcess[int]]
+CommandRunner = Callable[
+    [Sequence[str], Mapping[str, str] | None], subprocess.CompletedProcess[int]
+]
 Clock = Callable[[], datetime]
 
 
@@ -25,7 +26,9 @@ def _default_runner(
     handling ``CompletedProcess.returncode`` when ``check`` is disabled.
     """
 
-    return subprocess.run(list(command), env=None if env is None else dict(env), check=True)
+    return subprocess.run(
+        list(command), env=None if env is None else dict(env), check=True
+    )
 
 
 def _default_clock() -> datetime:
@@ -58,7 +61,9 @@ class BackupConfig:
         if self.archive_after_days > self.retention_days:
             raise ValueError("archive_after_days cannot exceed retention_days")
         self.backup_dir = Path(self.backup_dir)
-        self.archive_dir = Path(self.archive_dir) if self.archive_dir else self.backup_dir / "archive"
+        self.archive_dir = (
+            Path(self.archive_dir) if self.archive_dir else self.backup_dir / "archive"
+        )
         self.pg_dump_binary = self.pg_dump_binary or "pg_dump"
 
 
@@ -147,7 +152,9 @@ class DatabaseBackupManager:
                 continue
             if candidate.suffixes and candidate.suffixes[-2:] == [".tar", ".gz"]:
                 continue
-            modified = datetime.fromtimestamp(candidate.stat().st_mtime, tz=timezone.utc)
+            modified = datetime.fromtimestamp(
+                candidate.stat().st_mtime, tz=timezone.utc
+            )
             if modified > cutoff:
                 continue
             archive_path = self._archive_dir / f"{candidate.name}.tar.gz"
@@ -164,7 +171,9 @@ class DatabaseBackupManager:
         for candidate in sorted(self._archive_dir.glob("*.tar.gz")):
             if not candidate.is_file():
                 continue
-            modified = datetime.fromtimestamp(candidate.stat().st_mtime, tz=timezone.utc)
+            modified = datetime.fromtimestamp(
+                candidate.stat().st_mtime, tz=timezone.utc
+            )
             if modified > cutoff:
                 continue
             if not self.dry_run:

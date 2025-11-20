@@ -9,10 +9,10 @@ even in large CI matrices where log volume is constrained.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import asdict, is_dataclass
 import hashlib
 import json
+from collections.abc import Mapping
+from dataclasses import asdict, is_dataclass
 from typing import Any
 
 import numpy as np
@@ -21,7 +21,9 @@ import pandas as pd
 try:  # pragma: no cover - Hypothesis is optional in some environments
     from hypothesis import HealthCheck, Phase, note
 except ImportError as exc:  # pragma: no cover
-    raise RuntimeError("Hypothesis must be installed to use property utilities") from exc
+    raise RuntimeError(
+        "Hypothesis must be installed to use property utilities"
+    ) from exc
 
 _SEED_REGISTRY: dict[str, int] = {}
 

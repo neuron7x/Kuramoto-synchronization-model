@@ -118,13 +118,13 @@ def _default_header_builder(
     if match.groupdict():
         headers["x-gateway-path-params"] = json.dumps(match.groupdict())
     if request.query_params:
-        headers["x-gateway-query"] = json.dumps(request.query_params, separators=(",", ":"))
+        headers["x-gateway-query"] = json.dumps(
+            request.query_params, separators=(",", ":")
+        )
     return headers
 
 
-def _default_partition_resolver(
-    request: GatewayRequest, match: re.Match[str]
-) -> str:
+def _default_partition_resolver(request: GatewayRequest, match: re.Match[str]) -> str:
     correlation_id = request.resolved_correlation_id
     if correlation_id:
         return correlation_id
@@ -154,11 +154,13 @@ class IntegrationRouter:
         methods: Iterable[str] | Mapping[str, Any],
         path_pattern: str | Pattern[str],
         topic: EventTopic,
-        partition_resolver: Callable[[GatewayRequest, re.Match[str]], str]
-        | None = None,
+        partition_resolver: (
+            Callable[[GatewayRequest, re.Match[str]], str] | None
+        ) = None,
         payload_encoder: Callable[[GatewayRequest], bytes] | None = None,
-        header_builder: Callable[[GatewayRequest, re.Match[str]], MutableMapping[str, str]]
-        | None = None,
+        header_builder: (
+            Callable[[GatewayRequest, re.Match[str]], MutableMapping[str, str]] | None
+        ) = None,
         content_type: str = "application/json",
         schema_version: str = "1.0",
         event_type: str | None = None,

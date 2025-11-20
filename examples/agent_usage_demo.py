@@ -23,7 +23,7 @@ def demo_bandits():
     print("Multi-Armed Bandits Demo")
     print("=" * 60)
 
-    from core.agent.bandits import EpsilonGreedy, UCB1
+    from core.agent.bandits import UCB1, EpsilonGreedy
 
     # Define strategy arms
     strategies = ["momentum", "mean_reversion", "breakout"]
@@ -39,9 +39,11 @@ def demo_bandits():
         # Simulate reward based on strategy
         reward = np.random.normal(0.5, 0.2)
         eg_bandit.update(arm, reward)
-        print(f"  Round {i + 1}: Selected {arm}, Reward: {reward:.3f}, "
-              f"Estimate: {eg_bandit.estimate(arm):.3f}, "
-              f"Pulls: {eg_bandit.pulls(arm)}")
+        print(
+            f"  Round {i + 1}: Selected {arm}, Reward: {reward:.3f}, "
+            f"Estimate: {eg_bandit.estimate(arm):.3f}, "
+            f"Pulls: {eg_bandit.pulls(arm)}"
+        )
 
     # UCB1 Algorithm
     print("\n2. UCB1 Algorithm")
@@ -52,9 +54,11 @@ def demo_bandits():
         arm = ucb_bandit.select()
         reward = np.random.normal(0.5, 0.2)
         ucb_bandit.update(arm, reward)
-        print(f"  Round {i + 1}: Selected {arm}, Reward: {reward:.3f}, "
-              f"Estimate: {ucb_bandit.estimate(arm):.3f}, "
-              f"Pulls: {ucb_bandit.pulls(arm)}")
+        print(
+            f"  Round {i + 1}: Selected {arm}, Reward: {reward:.3f}, "
+            f"Estimate: {ucb_bandit.estimate(arm):.3f}, "
+            f"Pulls: {ucb_bandit.pulls(arm)}"
+        )
 
 
 def demo_strategy_evaluation():
@@ -94,8 +98,10 @@ def demo_strategy_evaluation():
     for result in results:
         status = "✓" if result.succeeded else "✗"
         score = f"{result.score:.4f}" if result.score is not None else "N/A"
-        print(f"  {status} {result.strategy.name:20s} Score: {score:>8s} "
-              f"Time: {result.duration:.3f}s")
+        print(
+            f"  {status} {result.strategy.name:20s} Score: {score:>8s} "
+            f"Time: {result.duration:.3f}s"
+        )
 
 
 def demo_strategy_memory():
@@ -123,16 +129,20 @@ def demo_strategy_memory():
     for name, sig_tuple, score in strategies_data:
         sig = StrategySignature(*sig_tuple)
         memory.add(name, sig, score)
-        print(f"  Added: {name:20s} Score: {score:.2f} "
-              f"R={sig.R:.2f} ΔH={sig.delta_H:.2f}")
+        print(
+            f"  Added: {name:20s} Score: {score:.2f} "
+            f"R={sig.R:.2f} ΔH={sig.delta_H:.2f}"
+        )
 
     # Retrieve top performers
     print("\nTop 3 strategies:")
     print("-" * 60)
     top_strategies = memory.topk(k=3)
     for i, record in enumerate(top_strategies, 1):
-        print(f"  #{i} {record.name:20s} Score: {record.score:.2f} "
-              f"R={record.signature.R:.2f}")
+        print(
+            f"  #{i} {record.name:20s} Score: {record.score:.2f} "
+            f"R={record.signature.R:.2f}"
+        )
 
 
 def demo_orchestration():
@@ -141,7 +151,7 @@ def demo_orchestration():
     print("Strategy Orchestration Demo")
     print("=" * 60)
 
-    from core.agent import StrategyOrchestrator, StrategyFlow, Strategy
+    from core.agent import Strategy, StrategyFlow, StrategyOrchestrator
 
     # Create synthetic data for different instruments
     data_spy = pd.DataFrame({"close": 100 + np.cumsum(np.random.normal(0, 1, 100))})
@@ -195,13 +205,12 @@ def demo_scheduling():
     print("Job Scheduling Demo")
     print("=" * 60)
 
-    from core.agent import StrategyScheduler, StrategyJob, Strategy
     import time
 
+    from core.agent import Strategy, StrategyJob, StrategyScheduler
+
     # Create simple strategies
-    strategies = [
-        Strategy(name="test_strategy", params={"lookback": 20})
-    ]
+    strategies = [Strategy(name="test_strategy", params={"lookback": 20})]
 
     def data_provider():
         """Simulate fetching latest data."""
@@ -260,7 +269,7 @@ def demo_pi_agent():
             "lookback": 20,
             "threshold": 0.5,
             "instability_threshold": 0.2,
-        }
+        },
     )
 
     # Create PI agent
@@ -281,8 +290,10 @@ def demo_pi_agent():
         action = agent.evaluate_and_adapt(state)
 
         print(f"\n  Time {i}:")
-        print(f"    Market: R={state['R']:.2f}, ΔH={state['delta_H']:.2f}, "
-              f"κ={state['kappa_mean']:.2f}")
+        print(
+            f"    Market: R={state['R']:.2f}, ΔH={state['delta_H']:.2f}, "
+            f"κ={state['kappa_mean']:.2f}"
+        )
         print(f"    Instability: {'YES ⚠️ ' if is_unstable else 'NO ✓'}")
         print(f"    Action: {action.upper()}")
 
@@ -316,6 +327,7 @@ def main():
     except Exception as e:
         print(f"\n✗ Error during demonstration: {e}")
         import traceback
+
         traceback.print_exc()
 
 

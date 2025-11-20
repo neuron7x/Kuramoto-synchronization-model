@@ -34,7 +34,9 @@ def run() -> None:
         config_kwargs.update(
             ssl_certfile=str(tls_settings.certificate),
             ssl_keyfile=str(tls_settings.private_key),
-            ssl_ca_certs=str(tls_settings.client_ca) if tls_settings.client_ca else None,
+            ssl_ca_certs=(
+                str(tls_settings.client_ca) if tls_settings.client_ca else None
+            ),
             ssl_cert_reqs=(
                 ssl.CERT_REQUIRED
                 if tls_settings.require_client_certificate

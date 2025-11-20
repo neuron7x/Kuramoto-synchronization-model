@@ -6,8 +6,8 @@ import pytest
 
 from modules.dynamic_position_sizer import (
     DynamicPositionSizer,
-    SizingMethod,
     PositionSizeResult,
+    SizingMethod,
 )
 
 
@@ -17,9 +17,7 @@ class TestDynamicPositionSizer:
     def test_initialization(self):
         """Test sizer initialization"""
         sizer = DynamicPositionSizer(
-            base_capital=100000.0,
-            kelly_fraction=0.25,
-            max_position_pct=0.1
+            base_capital=100000.0, kelly_fraction=0.25, max_position_pct=0.1
         )
 
         assert sizer.base_capital == 100000.0
@@ -32,10 +30,7 @@ class TestDynamicPositionSizer:
 
         # Profitable strategy
         kelly_frac = sizer.calculate_kelly_size(
-            win_rate=0.6,
-            avg_win=0.02,
-            avg_loss=0.01,
-            fractional=True
+            win_rate=0.6, avg_win=0.02, avg_loss=0.01, fractional=True
         )
 
         assert kelly_frac > 0
@@ -43,10 +38,7 @@ class TestDynamicPositionSizer:
 
         # With fractional Kelly
         kelly_full = sizer.calculate_kelly_size(
-            win_rate=0.6,
-            avg_win=0.02,
-            avg_loss=0.01,
-            fractional=False
+            win_rate=0.6, avg_win=0.02, avg_loss=0.01, fractional=False
         )
 
         assert kelly_full > kelly_frac  # Full Kelly should be larger
@@ -65,10 +57,7 @@ class TestDynamicPositionSizer:
 
     def test_calculate_volatility_adjusted_size(self):
         """Test volatility-adjusted sizing"""
-        sizer = DynamicPositionSizer(
-            base_capital=100000.0,
-            volatility_target=0.15
-        )
+        sizer = DynamicPositionSizer(base_capital=100000.0, volatility_target=0.15)
 
         base_size = 10000.0
 
@@ -84,11 +73,7 @@ class TestDynamicPositionSizer:
         """Test risk parity sizing"""
         sizer = DynamicPositionSizer(base_capital=100000.0)
 
-        portfolio_vols = {
-            "BTCUSD": 0.02,
-            "ETHUSD": 0.03,
-            "SOLUSD": 0.04
-        }
+        portfolio_vols = {"BTCUSD": 0.02, "ETHUSD": 0.03, "SOLUSD": 0.04}
 
         # Lower volatility asset should get larger allocation
         size_btc = sizer.calculate_risk_parity_size("BTCUSD", 0.02, portfolio_vols)
@@ -111,7 +96,7 @@ class TestDynamicPositionSizer:
             confidence=0.8,
             win_rate=0.6,
             avg_win=0.02,
-            avg_loss=0.01
+            avg_loss=0.01,
         )
 
         assert isinstance(result, PositionSizeResult)
@@ -129,7 +114,7 @@ class TestDynamicPositionSizer:
             price=50000.0,
             volatility=0.01,
             confidence=0.8,
-            method=SizingMethod.FIXED
+            method=SizingMethod.FIXED,
         )
 
         assert result.sizing_method == SizingMethod.FIXED
@@ -139,12 +124,8 @@ class TestDynamicPositionSizer:
         """Test size adjustment with confidence"""
         sizer = DynamicPositionSizer(base_capital=100000.0)
 
-        size_high = sizer.calculate_size(
-            "BTCUSD", 50000.0, 0.01, confidence=1.0
-        )
-        size_low = sizer.calculate_size(
-            "BTCUSD", 50000.0, 0.01, confidence=0.5
-        )
+        size_high = sizer.calculate_size("BTCUSD", 50000.0, 0.01, confidence=1.0)
+        size_low = sizer.calculate_size("BTCUSD", 50000.0, 0.01, confidence=0.5)
 
         assert size_high.recommended_size > size_low.recommended_size
 

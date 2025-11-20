@@ -15,8 +15,7 @@ from .state import OrderBookStateError, OrderBookStore
 class SnapshotRequester(Protocol):
     """Abstraction to request fresh snapshots when recovery is needed."""
 
-    def __call__(self, instrument: str, reason: str) -> None:
-        ...
+    def __call__(self, instrument: str, reason: str) -> None: ...
 
 
 @dataclass(slots=True)
@@ -89,7 +88,9 @@ class OrderBookIngestService:
                 self._snapshot_requester(diff.instrument, "baseline missing")
             return None
 
-        self._diff_since_snapshot[diff.instrument] = self._diff_since_snapshot.get(diff.instrument, 0) + 1
+        self._diff_since_snapshot[diff.instrument] = (
+            self._diff_since_snapshot.get(diff.instrument, 0) + 1
+        )
         latency = diff.ts_arrival - diff.ts_event
         now = utc_now()
         freshness = now - diff.ts_event

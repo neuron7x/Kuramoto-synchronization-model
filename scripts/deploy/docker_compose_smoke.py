@@ -26,7 +26,9 @@ PROMETHEUS_RUNTIME_TEMPLATE = "http://localhost:{port}/api/v1/status/runtimeinfo
 PROMETHEUS_UP_TEMPLATE = "http://localhost:{port}/api/v1/query?query=up"
 
 
-def _run(command: Iterable[str], *, check: bool = True, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: Iterable[str], *, check: bool = True, capture_output: bool = False
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         list(command),
         check=check,
@@ -41,17 +43,16 @@ def _compose_cmd(compose_file: Path, project: str, *args: str) -> list[str]:
     return command
 
 
-def _wait_for_service(project: str, compose_file: Path, service: str, timeout: float) -> None:
+def _wait_for_service(
+    project: str, compose_file: Path, service: str, timeout: float
+) -> None:
     deadline = time.monotonic() + timeout
     last_status = "unknown"
     while time.monotonic() < deadline:
-        container_id = (
-            _run(
-                _compose_cmd(compose_file, project, "ps", "-q", service),
-                capture_output=True,
-            )
-            .stdout.strip()
-        )
+        container_id = _run(
+            _compose_cmd(compose_file, project, "ps", "-q", service),
+            capture_output=True,
+        ).stdout.strip()
         if not container_id:
             time.sleep(2.0)
             continue
@@ -72,7 +73,9 @@ def _wait_for_service(project: str, compose_file: Path, service: str, timeout: f
         last_status = status
         time.sleep(3.0)
 
-    raise TimeoutError(f"service '{service}' did not become healthy (last status: {last_status})")
+    raise TimeoutError(
+        f"service '{service}' did not become healthy (last status: {last_status})"
+    )
 
 
 def _port_is_available(port: int) -> bool:
@@ -200,10 +203,14 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     if args.metrics_url == default_metrics_url:
         args.metrics_url = f"http://localhost:{http_port}/metrics"
 
-    default_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
+    default_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(
+        port=DEFAULT_PROMETHEUS_PORT
+    )
     default_up_url = PROMETHEUS_UP_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
     if args.prometheus_runtime_url == default_runtime_url:
-        args.prometheus_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=prometheus_port)
+        args.prometheus_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(
+            port=prometheus_port
+        )
     if args.prometheus_up_url == default_up_url:
         args.prometheus_up_url = PROMETHEUS_UP_TEMPLATE.format(port=prometheus_port)
 
@@ -216,7 +223,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         try:
             health_payload = _fetch_json(args.health_url, timeout=args.http_timeout)
         except (HTTPError, URLError, TimeoutError) as exc:
-            raise RuntimeError(f"Failed to fetch service health from {args.health_url}: {exc}") from exc
+            raise RuntimeError(
+                f"Failed to fetch service health from {args.health_url}: {exc}"
+            ) from exc
 
         _write_artifact(
             artifact_dir / "api-health.json",
@@ -224,7 +233,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         )
 
         try:
-            prom_runtime = _fetch_json(args.prometheus_runtime_url, timeout=args.http_timeout)
+            prom_runtime = _fetch_json(
+                args.prometheus_runtime_url, timeout=args.http_timeout
+            )
             prom_up = _fetch_json(args.prometheus_up_url, timeout=args.http_timeout)
         except (HTTPError, URLError, TimeoutError) as exc:
             raise RuntimeError(f"Failed to query Prometheus: {exc}") from exc

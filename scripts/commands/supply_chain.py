@@ -183,7 +183,10 @@ def build_sign_parser(subparsers: _SubParsersAction[object]) -> None:
         "sign-image",
         help="Sign a container image with cosign to guarantee provenance.",
     )
-    sign.add_argument("image", help="Fully-qualified container image reference (e.g., repo/image:tag).")
+    sign.add_argument(
+        "image",
+        help="Fully-qualified container image reference (e.g., repo/image:tag).",
+    )
     sign.add_argument(
         "--key",
         default=None,
@@ -348,11 +351,17 @@ def _log_issues(report) -> None:
 def _log_license_issues(issues) -> None:
     for issue in issues:
         if issue.severity == Severity.WARNING:
-            LOGGER.warning("License policy – %s: %s", issue.dependency.name, issue.message)
+            LOGGER.warning(
+                "License policy – %s: %s", issue.dependency.name, issue.message
+            )
         elif issue.severity == Severity.ERROR:
-            LOGGER.error("License policy – %s: %s", issue.dependency.name, issue.message)
+            LOGGER.error(
+                "License policy – %s: %s", issue.dependency.name, issue.message
+            )
         else:
-            LOGGER.critical("License policy – %s: %s", issue.dependency.name, issue.message)
+            LOGGER.critical(
+                "License policy – %s: %s", issue.dependency.name, issue.message
+            )
         if getattr(issue, "exception_reason", None):
             LOGGER.debug(
                 "Exception rationale for %s: %s (expires: %s)",
@@ -520,11 +529,15 @@ def _handle_compliance_report(namespace: Namespace) -> int:
         except json.JSONDecodeError as exc:
             raise CommandError(f"Failed to parse SBOM {candidate}: {exc}") from exc
 
-    license_issues = evaluate_license_compliance(dependencies, license_source, license_policy)
+    license_issues = evaluate_license_compliance(
+        dependencies, license_source, license_policy
+    )
     _log_license_issues(license_issues)
 
     raw_vulnerability_path = getattr(namespace, "vulnerability_report", None)
-    vulnerability_path = Path(raw_vulnerability_path) if raw_vulnerability_path else None
+    vulnerability_path = (
+        Path(raw_vulnerability_path) if raw_vulnerability_path else None
+    )
     try:
         vulnerabilities = load_vulnerability_report(vulnerability_path)
     except DependencyError as exc:
@@ -548,7 +561,8 @@ def _handle_compliance_report(namespace: Namespace) -> int:
         LOGGER.info("Appended compliance snapshot to %s", archive)
 
     license_blocking = any(
-        issue.severity in {Severity.ERROR, Severity.CRITICAL} for issue in license_issues
+        issue.severity in {Severity.ERROR, Severity.CRITICAL}
+        for issue in license_issues
     )
     vulnerabilities_blocking = bool(vulnerabilities) and not bool(
         getattr(namespace, "ignore_vulnerabilities", False)

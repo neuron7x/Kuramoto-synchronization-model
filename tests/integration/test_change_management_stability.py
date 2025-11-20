@@ -40,17 +40,13 @@ class TestCanaryDeployment:
         canary.rollout_percentage = 5
 
         # Simulate health checks
-        health_checks = {
-            "http_200_rate": 0.99,
-            "error_rate": 0.01,
-            "latency_p99": 150
-        }
+        health_checks = {"http_200_rate": 0.99, "error_rate": 0.01, "latency_p99": 150}
 
         # Validate health
         canary.health_check_passed = (
-            health_checks["http_200_rate"] > 0.95 and
-            health_checks["error_rate"] < 0.05 and
-            health_checks["latency_p99"] < 500
+            health_checks["http_200_rate"] > 0.95
+            and health_checks["error_rate"] < 0.05
+            and health_checks["latency_p99"] < 500
         )
 
         assert canary.health_check_passed
@@ -116,7 +112,9 @@ class TestProgressiveRollout:
         pause_threshold_multiplier = 1.5
 
         # Check if should pause
-        should_pause = current_error_rate > baseline_error_rate * pause_threshold_multiplier
+        should_pause = (
+            current_error_rate > baseline_error_rate * pause_threshold_multiplier
+        )
 
         assert should_pause, "Should pause rollout on metric degradation"
 
@@ -134,9 +132,7 @@ class TestProgressiveRollout:
 
     def test_feature_flag_based_rollout(self):
         """Test feature flag controlled rollout."""
-        feature_flags = {
-            "new_algorithm": 0.25  # Enabled for 25% of users
-        }
+        feature_flags = {"new_algorithm": 0.25}  # Enabled for 25% of users
 
         # Simulate user assignment
         user_id = 42
@@ -157,7 +153,7 @@ class TestDeploymentSafety:
             "unit_tests": True,
             "integration_tests": True,
             "security_scan": True,
-            "performance_baseline": True
+            "performance_baseline": True,
         }
 
         all_passed = all(checks.values())
@@ -172,7 +168,7 @@ class TestDeploymentSafety:
         smoke_tests = {
             "health_endpoint": True,
             "critical_api": True,
-            "database_connectivity": True
+            "database_connectivity": True,
         }
 
         deployment.health_check_passed = all(smoke_tests.values())
@@ -233,7 +229,7 @@ class TestRollbackMechanisms:
         components = {
             "api_gateway": "v2.0.0",
             "trading_engine": "v2.0.0",
-            "risk_manager": "v2.0.0"
+            "risk_manager": "v2.0.0",
         }
 
         # Rollback only failing component
@@ -260,17 +256,13 @@ class TestConfigurationManagement:
 
     def test_config_validation_before_apply(self):
         """Test configuration validation before applying."""
-        new_config = {
-            "max_connections": 1000,
-            "timeout_ms": 5000,
-            "retry_attempts": 3
-        }
+        new_config = {"max_connections": 1000, "timeout_ms": 5000, "retry_attempts": 3}
 
         # Validate configuration
         is_valid = (
-            new_config["max_connections"] > 0 and
-            new_config["timeout_ms"] > 0 and
-            new_config["retry_attempts"] >= 0
+            new_config["max_connections"] > 0
+            and new_config["timeout_ms"] > 0
+            and new_config["retry_attempts"] >= 0
         )
 
         assert is_valid
@@ -284,10 +276,7 @@ class TestConfigurationManagement:
         diff = {}
         for key in new_config:
             if new_config[key] != old_config.get(key):
-                diff[key] = {
-                    "old": old_config.get(key),
-                    "new": new_config[key]
-                }
+                diff[key] = {"old": old_config.get(key), "new": new_config[key]}
 
         assert "timeout_ms" in diff
         assert diff["timeout_ms"]["old"] == 1000
@@ -315,7 +304,7 @@ class TestConfigurationManagement:
         config_history = [
             {"version": "v1", "timeout": 1000},
             {"version": "v2", "timeout": 2000},
-            {"version": "v3", "timeout": 1500}
+            {"version": "v3", "timeout": 1500},
         ]
 
         # Get current version
@@ -338,7 +327,7 @@ class TestStabilityMonitoring:
             "error_rate": 0.01,
             "latency_p50": 50,
             "latency_p99": 200,
-            "success_rate": 0.99
+            "success_rate": 0.99,
         }
 
         # All metrics should be present
@@ -349,16 +338,16 @@ class TestStabilityMonitoring:
         metrics = {
             "uptime": 0.999,  # 99.9%
             "error_rate": 0.01,  # 1%
-            "latency_ok": 0.95  # 95% under threshold
+            "latency_ok": 0.95,  # 95% under threshold
         }
 
         # Calculate weighted score
         weights = {"uptime": 0.4, "error_rate": 0.3, "latency_ok": 0.3}
 
         score = (
-            metrics["uptime"] * weights["uptime"] +
-            (1 - metrics["error_rate"]) * weights["error_rate"] +
-            metrics["latency_ok"] * weights["latency_ok"]
+            metrics["uptime"] * weights["uptime"]
+            + (1 - metrics["error_rate"]) * weights["error_rate"]
+            + metrics["latency_ok"] * weights["latency_ok"]
         )
 
         assert 0.9 < score < 1.0
@@ -403,12 +392,9 @@ class TestEndToEndChangeManagement:
         # 4. Post-deployment verification
         verification_passed = True
 
-        success = all([
-            validation_passed,
-            canary_health,
-            rollout_completed,
-            verification_passed
-        ])
+        success = all(
+            [validation_passed, canary_health, rollout_completed, verification_passed]
+        )
 
         assert success
 

@@ -123,9 +123,7 @@ class FakeExchangeAdapter(ExecutionConnector):
         with self._lock:
             if self._fill_cursor >= len(self._fills):
                 return []
-            new_events = [
-                dict(event) for event in self._fills[self._fill_cursor :]
-            ]
+            new_events = [dict(event) for event in self._fills[self._fill_cursor :]]
             self._fill_cursor = len(self._fills)
             return new_events
 

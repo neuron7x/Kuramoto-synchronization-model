@@ -26,7 +26,9 @@ class InMemoryAuditLog:
         with self._lock:
             return list(self._events)
 
-    def emit(self, source: str, category: str, message: str, payload: dict | None = None) -> AuditEvent:
+    def emit(
+        self, source: str, category: str, message: str, payload: dict | None = None
+    ) -> AuditEvent:
         event = AuditEvent(
             source=source,
             category=category,

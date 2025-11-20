@@ -9,6 +9,7 @@ Test Coverage:
 - Fairness evaluation: comprehensive fairness assessment
 - Edge cases: missing groups, invalid inputs, numpy array support
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -150,9 +151,9 @@ def test_missing_groups_returns_zero() -> None:
     groups = ["A", "A", "A"]
 
     result = demographic_parity_difference(y_pred, groups)
-    assert result == pytest.approx(0.0), (
-        f"Expected zero demographic parity for single group, but got {result}"
-    )
+    assert result == pytest.approx(
+        0.0
+    ), f"Expected zero demographic parity for single group, but got {result}"
 
 
 def test_invalid_lengths_raise() -> None:
@@ -192,9 +193,9 @@ def test_numpy_inputs_supported() -> None:
 
     evaluation = evaluate_fairness(y_true, y_pred, groups)
 
-    assert isinstance(evaluation.demographic_parity, float), (
-        f"Expected demographic_parity to be float, but got {type(evaluation.demographic_parity)}"
-    )
-    assert isinstance(evaluation.equal_opportunity, float), (
-        f"Expected equal_opportunity to be float, but got {type(evaluation.equal_opportunity)}"
-    )
+    assert isinstance(
+        evaluation.demographic_parity, float
+    ), f"Expected demographic_parity to be float, but got {type(evaluation.demographic_parity)}"
+    assert isinstance(
+        evaluation.equal_opportunity, float
+    ), f"Expected equal_opportunity to be float, but got {type(evaluation.equal_opportunity)}"

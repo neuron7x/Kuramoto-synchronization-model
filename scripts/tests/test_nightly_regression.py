@@ -43,7 +43,9 @@ def _write_baseline(tmp_path: Path, payload: dict) -> Path:
 
 
 def test_metric_threshold_evaluation() -> None:
-    threshold = MetricThreshold(higher_is_better=True, max_relative_change=0.1, max_absolute_change=5.0)
+    threshold = MetricThreshold(
+        higher_is_better=True, max_relative_change=0.1, max_absolute_change=5.0
+    )
     result_ok = threshold.evaluate(100.0, 95.5)
     assert result_ok.passed
     assert result_ok.message is None
@@ -53,7 +55,9 @@ def test_metric_threshold_evaluation() -> None:
     assert result_fail.relative_degradation is not None
     assert result_fail.relative_degradation > 0.1
 
-    dd_threshold = MetricThreshold(higher_is_better=False, max_relative_change=0.2, max_absolute_change=1.0)
+    dd_threshold = MetricThreshold(
+        higher_is_better=False, max_relative_change=0.2, max_absolute_change=1.0
+    )
     drawdown_ok = dd_threshold.evaluate(-4.0, -4.5)
     assert drawdown_ok.passed
     drawdown_fail = dd_threshold.evaluate(-4.0, -5.8)
@@ -67,25 +71,33 @@ def test_runner_records_history_and_notifications(tmp_path: Path) -> None:
             "backtests": {
                 "alpha": {
                     "baseline": {"pnl": 1.0},
-                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.2}},
+                    "thresholds": {
+                        "pnl": {"higher_is_better": True, "max_relative_change": 0.2}
+                    },
                 }
             },
             "e2e": {
                 "omega": {
                     "baseline": {"pnl": 2.0},
-                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.5}},
+                    "thresholds": {
+                        "pnl": {"higher_is_better": True, "max_relative_change": 0.5}
+                    },
                 }
             },
         },
     )
 
     def _backtest_runner() -> BacktestOutcome:
-        return BacktestOutcome(name="alpha", metrics={"pnl": 1.1}, details={"trades": 3})
+        return BacktestOutcome(
+            name="alpha", metrics={"pnl": 1.1}, details={"trades": 3}
+        )
 
     def _e2e_runner() -> E2EOutcome:
         return E2EOutcome(name="omega", metrics={"pnl": 2.5}, details={})
 
-    artifact_manager = create_artifact_manager("test-nightly", root=tmp_path / "artifacts")
+    artifact_manager = create_artifact_manager(
+        "test-nightly", root=tmp_path / "artifacts"
+    )
     dispatcher = _StubDispatcher()
     incident_root = tmp_path / "incidents"
 
@@ -117,13 +129,17 @@ def test_runner_triggers_incident_on_regression(tmp_path: Path) -> None:
             "backtests": {
                 "alpha": {
                     "baseline": {"pnl": 10.0},
-                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.1}},
+                    "thresholds": {
+                        "pnl": {"higher_is_better": True, "max_relative_change": 0.1}
+                    },
                 }
             },
             "e2e": {
                 "omega": {
                     "baseline": {"pnl": 12.0},
-                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.1}},
+                    "thresholds": {
+                        "pnl": {"higher_is_better": True, "max_relative_change": 0.1}
+                    },
                 }
             },
         },
@@ -135,7 +151,9 @@ def test_runner_triggers_incident_on_regression(tmp_path: Path) -> None:
     def _e2e_runner() -> E2EOutcome:
         return E2EOutcome(name="omega", metrics={"pnl": 1.0}, details={})
 
-    artifact_manager = create_artifact_manager("test-nightly", root=tmp_path / "artifacts")
+    artifact_manager = create_artifact_manager(
+        "test-nightly", root=tmp_path / "artifacts"
+    )
     dispatcher = _StubDispatcher()
     incident_root = tmp_path / "incidents"
 

@@ -40,13 +40,23 @@ class DopaminePredictionNetwork:
         expected = baseline if expected_reward is None else float(expected_reward)
         prediction_error = float(actual_reward) - expected
 
-        effective_lr = self._learning_rate * (1.0 + float(np.tanh(abs(prediction_error))))
+        effective_lr = self._learning_rate * (
+            1.0 + float(np.tanh(abs(prediction_error)))
+        )
         new_expected = expected + effective_lr * prediction_error * self._norepinephrine
         self._expected[key] = new_expected
 
-        dopamine_signal = float(np.tanh(prediction_error * (2.5 if prediction_error > 0 else 1.5)))
+        dopamine_signal = float(
+            np.tanh(prediction_error * (2.5 if prediction_error > 0 else 1.5))
+        )
         current_level = self._dopamine_levels.get(key, 0.5)
-        new_level = float(np.clip(current_level * self._decay + dopamine_signal * (1 - self._decay), 0.0, 1.0))
+        new_level = float(
+            np.clip(
+                current_level * self._decay + dopamine_signal * (1 - self._decay),
+                0.0,
+                1.0,
+            )
+        )
         self._dopamine_levels[key] = new_level
 
         if prediction_error < 0:
@@ -82,13 +92,19 @@ class DopaminePredictionNetwork:
         level = float(self._dopamine_levels.get(self._key(asset, strategy), 0.5))
         base = 1.0 - (level - 0.5) * 0.3 * self._serotonin
         bounds = self._cfg.dpa
-        return float(np.clip(base, bounds.risk_modulation_min, bounds.risk_modulation_max))
+        return float(
+            np.clip(base, bounds.risk_modulation_min, bounds.risk_modulation_max)
+        )
 
     def state(self) -> Dict[str, Any]:
         dopamine_values = list(self._dopamine_levels.values())
         avg_da = float(np.mean(dopamine_values)) if dopamine_values else 0.5
         recent = list(self._errors)[-100:]
-        avg_pe = float(np.mean([entry["prediction_error"] for entry in recent])) if recent else 0.0
+        avg_pe = (
+            float(np.mean([entry["prediction_error"] for entry in recent]))
+            if recent
+            else 0.0
+        )
         return {
             "dopamine_levels": dict(self._dopamine_levels),
             "expected_rewards": dict(self._expected),

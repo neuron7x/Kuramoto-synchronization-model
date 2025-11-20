@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from __future__ import annotations
-
 from pathlib import Path
 
 import pytest
 import yaml
 
-from tradepulse.core.neuro.dopamine.ddm_adapter import DDMAdjustment, adapt_ddm_parameters, ddm_thresholds
-
+from tradepulse.core.neuro.dopamine.ddm_adapter import (
+    DDMAdjustment,
+    adapt_ddm_parameters,
+    ddm_thresholds,
+)
 
 CONFIG = yaml.safe_load(Path("config/dopamine.yaml").read_text(encoding="utf-8"))
 
@@ -28,8 +29,12 @@ def _kwargs() -> dict[str, float]:
 
 @pytest.mark.monotonic
 def test_thresholds_respect_monotonicity() -> None:
-    fast = ddm_thresholds(1.5, CONFIG["ddm_baseline_a"], CONFIG["ddm_baseline_t0"], **_kwargs())
-    slow = ddm_thresholds(0.2, CONFIG["ddm_baseline_a"], CONFIG["ddm_baseline_t0"], **_kwargs())
+    fast = ddm_thresholds(
+        1.5, CONFIG["ddm_baseline_a"], CONFIG["ddm_baseline_t0"], **_kwargs()
+    )
+    slow = ddm_thresholds(
+        0.2, CONFIG["ddm_baseline_a"], CONFIG["ddm_baseline_t0"], **_kwargs()
+    )
     delayed = ddm_thresholds(
         0.2,
         CONFIG["ddm_baseline_a"],

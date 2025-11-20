@@ -319,5 +319,7 @@ class TestModelIntegrityChecker:
         model_file = tmp_path / "model.pkl"
         model_file.write_bytes(b"model data")
 
-        with pytest.raises(ValueError, match="Either manifest_path or expected_checksum"):
+        with pytest.raises(
+            ValueError, match="Either manifest_path or expected_checksum"
+        ):
             ModelIntegrityChecker.verify_model_file(model_file)

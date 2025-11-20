@@ -23,16 +23,16 @@ from typing import Deque
 
 class RollingBuffer:
     """Fixed-size circular buffer for streaming numeric data.
-    
+
     Automatically evicts the oldest values when the buffer is full,
     maintaining a rolling window of the most recent data points.
-    
+
     Args:
         size: Maximum number of elements to store. Must be positive.
-        
+
     Raises:
         ValueError: If size is not a positive integer.
-        
+
     Example:
         >>> buffer = RollingBuffer(size=3)
         >>> buffer.push(1.0)
@@ -51,9 +51,9 @@ class RollingBuffer:
 
     def push(self, v: float) -> None:
         """Add a value to the buffer.
-        
+
         If the buffer is at capacity, the oldest value is automatically removed.
-        
+
         Args:
             v: Numeric value to add to the buffer.
         """
@@ -61,7 +61,7 @@ class RollingBuffer:
 
     def values(self) -> list[float]:
         """Return all current values in chronological order.
-        
+
         Returns:
             List of values from oldest to newest.
         """
@@ -69,10 +69,10 @@ class RollingBuffer:
 
     def __len__(self) -> int:
         """Return the current number of elements in the buffer.
-        
+
         Returns:
             Number of elements currently in the buffer.
-            
+
         Raises:
             RuntimeError: If buffer state is corrupted (should never happen).
         """
@@ -85,7 +85,7 @@ class RollingBuffer:
 
     def is_full(self) -> bool:
         """Check if the buffer has reached capacity.
-        
+
         Returns:
             True if the buffer contains `size` elements, False otherwise.
         """

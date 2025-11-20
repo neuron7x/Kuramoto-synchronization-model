@@ -49,7 +49,9 @@ class SessionManager:
             )
             for engine in self._reader_engines
         )
-        self._reader_cycle = itertools.cycle(self._reader_factories) if self._reader_factories else None
+        self._reader_cycle = (
+            itertools.cycle(self._reader_factories) if self._reader_factories else None
+        )
         self._lock = Lock()
         self._owns_engines = owns_engines
         self._closed = False
@@ -76,7 +78,9 @@ class SessionManager:
         finally:
             session.close()
 
-    def warmup(self, *, writer_connections: int = 0, reader_connections: int = 0) -> None:
+    def warmup(
+        self, *, writer_connections: int = 0, reader_connections: int = 0
+    ) -> None:
         """Pre-open connections so latency-sensitive workloads do not pay the initial cost."""
 
         warm_pool(self._writer_engine, target_size=writer_connections)

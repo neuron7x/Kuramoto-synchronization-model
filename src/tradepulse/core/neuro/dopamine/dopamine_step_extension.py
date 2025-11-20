@@ -35,7 +35,9 @@ def dopamine_step(
 
     rpe = ctrl.compute_rpe(reward, value, next_value)
     ctrl.update_value_estimate(rpe)
-    appetitive = ctrl.estimate_appetitive_state(reward_proxy, novelty, momentum, value_gap)
+    appetitive = ctrl.estimate_appetitive_state(
+        reward_proxy, novelty, momentum, value_gap
+    )
     da = ctrl.compute_dopamine_signal(appetitive, rpe)
     q_mod = ctrl.modulate_action_value(original_q, da)
     temp = ctrl.compute_temperature(da)

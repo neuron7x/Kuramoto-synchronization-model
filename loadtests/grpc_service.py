@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from concurrent import futures
 import threading
+from concurrent import futures
 from typing import Iterable
 
 import grpc

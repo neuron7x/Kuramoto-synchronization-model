@@ -42,7 +42,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-
 __all__ = [
     "DigitalGovernanceFramework",
     "ComplianceLevel",
@@ -295,8 +294,16 @@ class SecretManager:
     """
 
     SENSITIVE_KEYWORDS = {
-        "token", "secret", "password", "key", "credential", "api_key",
-        "private_key", "access_token", "auth", "bearer"
+        "token",
+        "secret",
+        "password",
+        "key",
+        "credential",
+        "api_key",
+        "private_key",
+        "access_token",
+        "auth",
+        "bearer",
     }
 
     def __init__(self, env_file: Optional[Path] = None) -> None:
@@ -344,9 +351,7 @@ class SecretManager:
                 if keyword in lower_line and ("=" in line or ":" in line):
                     # Check if it's referencing env var or config
                     if "os.environ" not in line and "getenv" not in line:
-                        violations.append(
-                            f"Line {i}: Potential hard-coded {keyword}"
-                        )
+                        violations.append(f"Line {i}: Potential hard-coded {keyword}")
 
         return violations
 

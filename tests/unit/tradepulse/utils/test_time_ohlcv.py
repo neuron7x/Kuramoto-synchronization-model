@@ -12,9 +12,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
 # Import directly from module file to avoid package __init__
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
     "time_utils",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/utils/time.py"
+    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/utils/time.py",
 )
 time_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(time_utils)

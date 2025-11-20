@@ -41,22 +41,19 @@ LOGGER = logging.getLogger(__name__)
 class ParameterSampler(Protocol):
     """Callable responsible for sampling hyperparameters for a trial."""
 
-    def __call__(self, trial: optuna.trial.Trial) -> Mapping[str, Any]:
-        ...
+    def __call__(self, trial: optuna.trial.Trial) -> Mapping[str, Any]: ...
 
 
 class ObjectiveFunction(Protocol):
     """Objective used during optimisation returning a scalar score."""
 
-    def __call__(self, params: Mapping[str, Any], *, data: Any) -> float:
-        ...
+    def __call__(self, params: Mapping[str, Any], *, data: Any) -> float: ...
 
 
 class StrategyFactory(Protocol):
     """Factory producing :class:`~core.agent.strategy.Strategy` instances."""
 
-    def __call__(self, params: Mapping[str, Any], *, name: str) -> "Strategy":
-        ...
+    def __call__(self, params: Mapping[str, Any], *, name: str) -> "Strategy": ...
 
 
 @dataclass(slots=True)
@@ -89,8 +86,7 @@ class OptunaSearchConfig:
             msg = "n_startup_trials must not be negative"
             raise ValueError(msg)
         if (
-            self.objective is None
-            and self.strategy_factory is None
+            self.objective is None and self.strategy_factory is None
         ):  # pragma: no cover - configuration guard
             msg = "Either objective or strategy_factory must be provided"
             raise ValueError(msg)
@@ -122,7 +118,11 @@ def _normalise_params(params: Mapping[str, Any]) -> dict[str, Any]:
             normalised[key] = _normalise_params(value)
         elif isinstance(value, (list, tuple)):
             normalised[key] = [
-                _normalise_params(item) if isinstance(item, Mapping) else _coerce_scalar(item)
+                (
+                    _normalise_params(item)
+                    if isinstance(item, Mapping)
+                    else _coerce_scalar(item)
+                )
                 for item in value
             ]
         else:
@@ -146,7 +146,9 @@ def _coerce_scalar(value: Any) -> Any:
 
 def _coerce_json_serialisable(payload: Any) -> Any:
     if isinstance(payload, Mapping):
-        return {str(key): _coerce_json_serialisable(value) for key, value in payload.items()}
+        return {
+            str(key): _coerce_json_serialisable(value) for key, value in payload.items()
+        }
     if isinstance(payload, (list, tuple)):
         return [_coerce_json_serialisable(item) for item in payload]
     return _coerce_scalar(payload)
@@ -238,8 +240,12 @@ class StrategyHyperparameterSearch:
             multivariate=True,
             warn_independent_sampling=False,
         )
-        pruner = MedianPruner(n_startup_trials=config.n_startup_trials, interval_steps=1)
-        study = optuna.create_study(direction=config.direction, sampler=sampler, pruner=pruner)
+        pruner = MedianPruner(
+            n_startup_trials=config.n_startup_trials, interval_steps=1
+        )
+        study = optuna.create_study(
+            direction=config.direction, sampler=sampler, pruner=pruner
+        )
 
         optimisation_start = time.perf_counter()
 
@@ -269,7 +275,9 @@ class StrategyHyperparameterSearch:
             trial.set_user_attr("params", params)
             return float(aggregate)
 
-        def _callback(study: optuna.study.Study, trial: optuna.trial.FrozenTrial) -> None:
+        def _callback(
+            study: optuna.study.Study, trial: optuna.trial.FrozenTrial
+        ) -> None:
             payload: MutableMapping[str, Any] = {
                 "number": trial.number,
                 "state": trial.state.name,
@@ -342,13 +350,19 @@ class StrategyHyperparameterSearch:
                 "n_trials_requested": config.n_trials,
                 "timeout": config.timeout,
                 "n_trials_completed": sum(
-                    1 for trial in study.trials if trial.state == optuna.trial.TrialState.COMPLETE
+                    1
+                    for trial in study.trials
+                    if trial.state == optuna.trial.TrialState.COMPLETE
                 ),
                 "n_trials_pruned": sum(
-                    1 for trial in study.trials if trial.state == optuna.trial.TrialState.PRUNED
+                    1
+                    for trial in study.trials
+                    if trial.state == optuna.trial.TrialState.PRUNED
                 ),
                 "n_trials_failed": sum(
-                    1 for trial in study.trials if trial.state == optuna.trial.TrialState.FAIL
+                    1
+                    for trial in study.trials
+                    if trial.state == optuna.trial.TrialState.FAIL
                 ),
                 "promotion": {
                     "promoted": promoted,
@@ -451,7 +465,8 @@ class StrategyHyperparameterSearch:
         }
 
         trial_history = [
-            _coerce_json_serialisable(history) for history in sorted(
+            _coerce_json_serialisable(history)
+            for history in sorted(
                 self._trial_history, key=lambda item: int(item["number"])
             )
         ]

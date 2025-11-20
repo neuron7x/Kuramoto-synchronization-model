@@ -16,16 +16,19 @@ sys.path.insert(0, str(src_path))
 
 # Import directly from module to avoid triggering full app initialization
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
     "neuro_orchestrator",
-    src_path / "tradepulse" / "core" / "neuro" / "neuro_orchestrator.py"
+    src_path / "tradepulse" / "core" / "neuro" / "neuro_orchestrator.py",
 )
 neuro_orchestrator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(neuro_orchestrator)
 
 NeuroOrchestrator = neuro_orchestrator.NeuroOrchestrator
 TradingScenario = neuro_orchestrator.TradingScenario
-create_orchestration_from_scenario = neuro_orchestrator.create_orchestration_from_scenario
+create_orchestration_from_scenario = (
+    neuro_orchestrator.create_orchestration_from_scenario
+)
 
 
 def demo_basic_usage():
@@ -165,7 +168,9 @@ def demo_tacl_integration():
     print(f"Protocol Options: {', '.join(tacl_config['protocol_options'])}")
 
     print("\nTACL ensures:")
-    print("  • Monotonic free-energy descent (no action increases system F without override)")
+    print(
+        "  • Monotonic free-energy descent (no action increases system F without override)"
+    )
     print("  • Hot-swapping of communication protocols (RDMA, CRDT, gRPC, etc.)")
     print("  • Crisis-aware adaptive recovery")
     print("  • 7-year audit trail for compliance")

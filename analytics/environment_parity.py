@@ -134,7 +134,9 @@ class StrategyRunSnapshot:
             if not math.isfinite(numeric):
                 continue
             cleaned_metrics[str(key)] = numeric
-        object.__setattr__(self, "metrics", MappingProxyType(dict(sorted(cleaned_metrics.items()))))
+        object.__setattr__(
+            self, "metrics", MappingProxyType(dict(sorted(cleaned_metrics.items())))
+        )
 
         cleaned_metadata = {
             str(key): value for key, value in dict(self.metadata).items()
@@ -158,11 +160,13 @@ class StrategyRunSnapshot:
 
         metrics: MutableMapping[str, float] = {}
         if hasattr(report, "as_dict"):
-            metrics.update({
-                key: float(value)
-                for key, value in report.as_dict().items()
-                if value is not None
-            })
+            metrics.update(
+                {
+                    key: float(value)
+                    for key, value in report.as_dict().items()
+                    if value is not None
+                }
+            )
 
         if extra_metrics:
             for key, value in extra_metrics.items():
@@ -325,7 +329,9 @@ class EnvironmentParityChecker:
             required_metrics = set()
 
         required_metrics.update(
-            metric for metric in config.metric_tolerances.keys() if metric not in excluded
+            metric
+            for metric in config.metric_tolerances.keys()
+            if metric not in excluded
         )
 
         missing_metrics: MutableMapping[str, tuple[str, ...]] = {}
@@ -336,14 +342,10 @@ class EnvironmentParityChecker:
             if snapshot is None:
                 continue
             missing = sorted(
-                metric
-                for metric in required_metrics
-                if metric not in snapshot.metrics
+                metric for metric in required_metrics if metric not in snapshot.metrics
             )
             optional_absent = sorted(
-                metric
-                for metric in optional
-                if metric not in snapshot.metrics
+                metric for metric in optional if metric not in snapshot.metrics
             )
             if missing:
                 missing_metrics[environment] = tuple(missing)
@@ -361,7 +363,10 @@ class EnvironmentParityChecker:
                 pairs_list.append((config.baseline_environment, env))
             if len(ordered) > 1:
                 for left, right in combinations(ordered, 2):
-                    if (left, right) not in pairs_list and left != config.baseline_environment:
+                    if (
+                        left,
+                        right,
+                    ) not in pairs_list and left != config.baseline_environment:
                         pairs_list.append((left, right))
             pairs = tuple(pairs_list)
 
@@ -382,7 +387,9 @@ class EnvironmentParityChecker:
                 if left_value is None or right_value is None:
                     continue
 
-                tolerance = config.metric_tolerances.get(metric, config.default_tolerance)
+                tolerance = config.metric_tolerances.get(
+                    metric, config.default_tolerance
+                )
                 if not tolerance.allows(left_value, right_value):
                     difference = abs(right_value - left_value)
                     scale = max(abs(left_value), abs(right_value), 1.0)
@@ -398,9 +405,7 @@ class EnvironmentParityChecker:
                         )
                     )
 
-        code_digests = {
-            env: snapshot.code_digest for env, snapshot in env_map.items()
-        }
+        code_digests = {env: snapshot.code_digest for env, snapshot in env_map.items()}
         parameter_digests = {
             env: snapshot.parameters_digest for env, snapshot in env_map.items()
         }
@@ -408,7 +413,9 @@ class EnvironmentParityChecker:
         if config.metadata_keys:
             metadata_keys = set(config.metadata_keys)
         else:
-            metadata_sets = [set(snapshot.metadata.keys()) for snapshot in env_map.values()]
+            metadata_sets = [
+                set(snapshot.metadata.keys()) for snapshot in env_map.values()
+            ]
             metadata_keys = set.intersection(*metadata_sets) if metadata_sets else set()
             metadata_keys -= _DEFAULT_METADATA_IGNORES
 

@@ -152,8 +152,14 @@ class InstrumentOrderBookState:
 
     def get_snapshot(self, depth: int | None = None) -> OrderBookSnapshot:
         with self._lock:
-            if self._sequence is None or self._last_event is None or self._last_arrival is None:
-                raise OrderBookStateError("snapshot requested before baseline available")
+            if (
+                self._sequence is None
+                or self._last_event is None
+                or self._last_arrival is None
+            ):
+                raise OrderBookStateError(
+                    "snapshot requested before baseline available"
+                )
             return OrderBookSnapshot(
                 instrument=self._instrument,
                 sequence=self._sequence,
@@ -219,14 +225,18 @@ class OrderBookStore:
         with self._lock:
             state = self._states.get(instrument)
             if state is None:
-                state = InstrumentOrderBookState(instrument, max_snapshots=self._max_snapshots)
+                state = InstrumentOrderBookState(
+                    instrument, max_snapshots=self._max_snapshots
+                )
                 self._states[instrument] = state
             return state
 
     def snapshot(self, instrument: str, depth: int | None = None) -> OrderBookSnapshot:
         return self.for_instrument(instrument).get_snapshot(depth)
 
-    def snapshot_before(self, instrument: str, ts_event: datetime) -> OrderBookSnapshot | None:
+    def snapshot_before(
+        self, instrument: str, ts_event: datetime
+    ) -> OrderBookSnapshot | None:
         return self.for_instrument(instrument).snapshot_before(ts_event)
 
     def instruments(self) -> Iterable[str]:

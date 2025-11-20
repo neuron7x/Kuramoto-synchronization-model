@@ -10,13 +10,14 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Callable
+from typing import Callable, Dict, List
 
 logger = logging.getLogger(__name__)
 
 
 class HealthStatus(Enum):
     """System health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     CRITICAL = "critical"
@@ -25,6 +26,7 @@ class HealthStatus(Enum):
 
 class AdaptationStrategy(Enum):
     """Available adaptation strategies."""
+
     SCALE_UP = "scale_up"
     SCALE_DOWN = "scale_down"
     ADJUST_TIMEOUT = "adjust_timeout"
@@ -98,9 +100,7 @@ class AdaptiveSystemManager:
     """Manager for autonomous system adaptation and optimization."""
 
     def __init__(
-        self,
-        health_check_interval: float = 60.0,
-        adaptation_cooldown: float = 300.0
+        self, health_check_interval: float = 60.0, adaptation_cooldown: float = 300.0
     ):
         """Initialize adaptive system manager.
 
@@ -129,13 +129,11 @@ class AdaptiveSystemManager:
             "max_connections": 1000,
             "rate_limit_rps": 1000,
             "circuit_breaker_enabled": False,
-            "circuit_breaker_threshold": 0.5
+            "circuit_breaker_threshold": 0.5,
         }
 
     def register_adaptation_handler(
-        self,
-        strategy: AdaptationStrategy,
-        handler: Callable[[str, any], bool]
+        self, strategy: AdaptationStrategy, handler: Callable[[str, any], bool]
     ) -> None:
         """Register a handler for an adaptation strategy.
 
@@ -151,7 +149,7 @@ class AdaptiveSystemManager:
         memory_utilization: float,
         error_rate: float,
         latency_p99: float,
-        throughput: float
+        throughput: float,
     ) -> SystemHealth:
         """Assess current system health.
 
@@ -194,7 +192,7 @@ class AdaptiveSystemManager:
             error_rate=error_rate,
             latency_p99=latency_p99,
             throughput=throughput,
-            issues=issues
+            issues=issues,
         )
 
         self.health_history.append(health)
@@ -222,6 +220,7 @@ class AdaptiveSystemManager:
 
         # Check if scores are declining
         import numpy as np
+
         x = np.arange(len(scores))
         y = np.array(scores)
 
@@ -231,10 +230,7 @@ class AdaptiveSystemManager:
         # Negative slope indicates degradation
         return slope < -2.0  # Losing > 2 points per check
 
-    def recommend_adaptations(
-        self,
-        health: SystemHealth
-    ) -> List[AdaptationAction]:
+    def recommend_adaptations(self, health: SystemHealth) -> List[AdaptationAction]:
         """Recommend adaptations based on health assessment.
 
         Args:
@@ -247,53 +243,63 @@ class AdaptiveSystemManager:
 
         # CPU overload - scale up or optimize
         if health.cpu_utilization > 80:
-            recommendations.append(AdaptationAction(
-                strategy=AdaptationStrategy.SCALE_UP,
-                parameter="worker_threads",
-                old_value=self.configuration["worker_threads"],
-                new_value=min(self.configuration["worker_threads"] + 2, 16),
-                reason="High CPU utilization"
-            ))
+            recommendations.append(
+                AdaptationAction(
+                    strategy=AdaptationStrategy.SCALE_UP,
+                    parameter="worker_threads",
+                    old_value=self.configuration["worker_threads"],
+                    new_value=min(self.configuration["worker_threads"] + 2, 16),
+                    reason="High CPU utilization",
+                )
+            )
 
         # Memory pressure
         if health.memory_utilization > 85:
-            recommendations.append(AdaptationAction(
-                strategy=AdaptationStrategy.DECREASE_BATCH_SIZE,
-                parameter="batch_size",
-                old_value=self.configuration["batch_size"],
-                new_value=max(self.configuration["batch_size"] // 2, 10),
-                reason="High memory utilization"
-            ))
+            recommendations.append(
+                AdaptationAction(
+                    strategy=AdaptationStrategy.DECREASE_BATCH_SIZE,
+                    parameter="batch_size",
+                    old_value=self.configuration["batch_size"],
+                    new_value=max(self.configuration["batch_size"] // 2, 10),
+                    reason="High memory utilization",
+                )
+            )
 
         # High error rate
         if health.error_rate > 0.05:
-            recommendations.append(AdaptationAction(
-                strategy=AdaptationStrategy.ENABLE_CIRCUIT_BREAKER,
-                parameter="circuit_breaker_enabled",
-                old_value=False,
-                new_value=True,
-                reason="High error rate detected"
-            ))
+            recommendations.append(
+                AdaptationAction(
+                    strategy=AdaptationStrategy.ENABLE_CIRCUIT_BREAKER,
+                    parameter="circuit_breaker_enabled",
+                    old_value=False,
+                    new_value=True,
+                    reason="High error rate detected",
+                )
+            )
 
         # High latency
         if health.latency_p99 > 1000:
-            recommendations.append(AdaptationAction(
-                strategy=AdaptationStrategy.ADJUST_TIMEOUT,
-                parameter="timeout_ms",
-                old_value=self.configuration["timeout_ms"],
-                new_value=self.configuration["timeout_ms"] + 2000,
-                reason="High latency detected"
-            ))
+            recommendations.append(
+                AdaptationAction(
+                    strategy=AdaptationStrategy.ADJUST_TIMEOUT,
+                    parameter="timeout_ms",
+                    old_value=self.configuration["timeout_ms"],
+                    new_value=self.configuration["timeout_ms"] + 2000,
+                    reason="High latency detected",
+                )
+            )
 
         # Low throughput
         if health.throughput < 100:
-            recommendations.append(AdaptationAction(
-                strategy=AdaptationStrategy.INCREASE_BATCH_SIZE,
-                parameter="batch_size",
-                old_value=self.configuration["batch_size"],
-                new_value=min(self.configuration["batch_size"] * 2, 1000),
-                reason="Low throughput"
-            ))
+            recommendations.append(
+                AdaptationAction(
+                    strategy=AdaptationStrategy.INCREASE_BATCH_SIZE,
+                    parameter="batch_size",
+                    old_value=self.configuration["batch_size"],
+                    new_value=min(self.configuration["batch_size"] * 2, 1000),
+                    reason="Low throughput",
+                )
+            )
 
         return recommendations
 
@@ -423,6 +429,10 @@ class AdaptiveSystemManager:
             "avg_score": float(np.mean(scores)),
             "min_score": float(np.min(scores)),
             "max_score": float(np.max(scores)),
-            "trend": "improving" if len(scores) > 1 and scores[-1] > scores[0] else "declining",
-            "samples": len(scores)
+            "trend": (
+                "improving"
+                if len(scores) > 1 and scores[-1] > scores[0]
+                else "declining"
+            ),
+            "samples": len(scores),
         }

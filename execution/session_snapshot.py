@@ -61,10 +61,9 @@ class SessionSnapshotter:
         self,
         connectors: Mapping[str, ExecutionConnector],
         *,
-        preloaded: Mapping[
-            str, tuple[Sequence[Mapping[str, object]], Sequence[str]]
-        ]
-        | None = None,
+        preloaded: (
+            Mapping[str, tuple[Sequence[Mapping[str, object]], Sequence[str]]] | None
+        ) = None,
     ) -> Path:
         """Persist an immutable snapshot for the provided *connectors*."""
 
@@ -72,12 +71,12 @@ class SessionSnapshotter:
         venues: list[_VenueSnapshot] = []
         for name in sorted(connectors):
             cached = preloaded.get(name) if preloaded is not None else None
-            venues.append(
-                self._build_venue_snapshot(name, connectors[name], cached)
-            )
+            venues.append(self._build_venue_snapshot(name, connectors[name], cached))
 
         payload = {
-            "timestamp": timestamp.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            "timestamp": timestamp.isoformat(timespec="milliseconds").replace(
+                "+00:00", "Z"
+            ),
             "mode": self._mode.value,
             "venues": [
                 {
@@ -108,9 +107,7 @@ class SessionSnapshotter:
         if preloaded is not None:
             cached_positions, cached_issues = preloaded
             positions_iter = [
-                payload
-                for payload in cached_positions
-                if isinstance(payload, Mapping)
+                payload for payload in cached_positions if isinstance(payload, Mapping)
             ]
             issues.extend(str(item) for item in cached_issues if item)
         else:
@@ -124,9 +121,7 @@ class SessionSnapshotter:
                     )
                     raw_positions = []
                 positions_iter = [
-                    payload
-                    for payload in raw_positions
-                    if isinstance(payload, Mapping)
+                    payload for payload in raw_positions if isinstance(payload, Mapping)
                 ]
             else:
                 issues.append("positions_unsupported")
@@ -169,7 +164,7 @@ class SessionSnapshotter:
 
     @staticmethod
     def _parse_position(
-        payload: Mapping[str, object]
+        payload: Mapping[str, object],
     ) -> tuple[str, float, float | None, float] | None:
         symbol = str(
             payload.get("symbol")
@@ -191,13 +186,15 @@ class SessionSnapshotter:
                 return value
             return None
 
-        net_qty = _first([
-            "net_quantity",
-            "net_qty",
-            "net_position",
-            "quantity",
-            "qty",
-        ])
+        net_qty = _first(
+            [
+                "net_quantity",
+                "net_qty",
+                "net_position",
+                "quantity",
+                "qty",
+            ]
+        )
         if net_qty is None:
             long_qty = _first(["long_quantity", "long_qty"])
             short_qty = _first(["short_quantity", "short_qty"])

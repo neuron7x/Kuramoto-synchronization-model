@@ -9,10 +9,10 @@ allocation pressure.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum, auto
-import math
 from statistics import fmean
 from typing import Callable, Iterable, Mapping, MutableMapping, Sequence
 
@@ -108,19 +108,27 @@ class RegimeAdaptiveExposureGuard:
         self._cooldown = cooldown_seconds
         self._states: MutableMapping[str, _RegimeState] = {}
 
-    def observe(self, symbol: str, return_value: float, timestamp: float | None = None) -> VolatilityRegime:
+    def observe(
+        self, symbol: str, return_value: float, timestamp: float | None = None
+    ) -> VolatilityRegime:
         """Record a return observation and update the symbol's volatility regime."""
 
         state = self._states.setdefault(symbol, _RegimeState())
         abs_return = abs(float(return_value))
-        observation_time = float(timestamp) if timestamp is not None else datetime.now(timezone.utc).timestamp()
+        observation_time = (
+            float(timestamp)
+            if timestamp is not None
+            else datetime.now(timezone.utc).timestamp()
+        )
         if state.samples == 0:
             state.ewma_abs_return = abs_return
         else:
             previous_timestamp = state.last_timestamp or observation_time
             delta = max(0.0, observation_time - previous_timestamp)
-            decay_factor = self._decay ** delta
-            state.ewma_abs_return = (state.ewma_abs_return * decay_factor) + ((1.0 - decay_factor) * abs_return)
+            decay_factor = self._decay**delta
+            state.ewma_abs_return = (state.ewma_abs_return * decay_factor) + (
+                (1.0 - decay_factor) * abs_return
+            )
 
         state.samples += 1
         state.last_timestamp = observation_time
@@ -220,7 +228,9 @@ class KellyCriterionPositionSizer:
         """Return the fraction of capital to allocate to ``market``."""
 
         if market.win_probability is None or market.payoff_ratio is None:
-            raise ValueError("win_probability and payoff_ratio are required for Kelly sizing")
+            raise ValueError(
+                "win_probability and payoff_ratio are required for Kelly sizing"
+            )
 
         edge = (market.win_probability * (market.payoff_ratio + 1)) - 1
         if market.payoff_ratio == 0:
@@ -233,7 +243,9 @@ class KellyCriterionPositionSizer:
 class VolatilityAdjustedSizer:
     """Scale position sizes inversely with realised volatility."""
 
-    def __init__(self, target_volatility: float = 0.15, floor: float = 0.05, ceiling: float = 5.0) -> None:
+    def __init__(
+        self, target_volatility: float = 0.15, floor: float = 0.05, ceiling: float = 5.0
+    ) -> None:
         if target_volatility <= 0:
             raise ValueError("target_volatility must be positive")
         self._target = target_volatility
@@ -256,14 +268,12 @@ class RiskMetricsCalculator:
         self._confidence = confidence
 
     def _loss_distribution(self, returns: Sequence[float]) -> list[float]:
-        losses = [
-            -float(r)
-            for r in returns
-            if r < 0
-        ]
+        losses = [-float(r) for r in returns if r < 0]
         return sorted(losses)
 
-    def value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
+    def value_at_risk(
+        self, returns: Sequence[float], *, horizon_days: int = 1
+    ) -> float:
         if not returns:
             return 0.0
         losses = self._loss_distribution(returns)
@@ -273,7 +283,9 @@ class RiskMetricsCalculator:
         index = min(index, len(losses) - 1)
         return losses[index] * math.sqrt(max(1, horizon_days))
 
-    def conditional_value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
+    def conditional_value_at_risk(
+        self, returns: Sequence[float], *, horizon_days: int = 1
+    ) -> float:
         if not returns:
             return 0.0
         losses = self._loss_distribution(returns)
@@ -305,13 +317,18 @@ class MarginMonitor:
             raise ValueError("account_equity must be positive")
         utilisation = required_margin / account_equity
         self._utilisation = utilisation
-        return utilisation <= self._margin_limit and utilisation <= self._maintenance_margin
+        return (
+            utilisation <= self._margin_limit
+            and utilisation <= self._maintenance_margin
+        )
 
 
 class CorrelationLimitGuard:
     """Ensure portfolio exposure accounts for inter-asset correlation."""
 
-    def __init__(self, correlation_matrix: Mapping[tuple[str, str], float], max_exposure: float) -> None:
+    def __init__(
+        self, correlation_matrix: Mapping[tuple[str, str], float], max_exposure: float
+    ) -> None:
         self._correlations = dict(correlation_matrix)
         self._max_exposure = max_exposure
 
@@ -372,7 +389,7 @@ class TimeWeightedExposureTracker:
             self._exposure = abs(notional)
         else:
             delta = max(0.0, timestamp - self._last_timestamp)
-            decay_factor = self._decay ** delta
+            decay_factor = self._decay**delta
             self._exposure = (self._exposure * decay_factor) + abs(notional)
         self._last_timestamp = timestamp
         return self._exposure
@@ -385,7 +402,9 @@ class RiskParityAllocator:
         self._min_weight = max(0.0, minimum_weight)
 
     def weights(self, volatilities: Mapping[str, float]) -> Mapping[str, float]:
-        inv_vols = {symbol: 1.0 / vol for symbol, vol in volatilities.items() if vol > 0}
+        inv_vols = {
+            symbol: 1.0 / vol for symbol, vol in volatilities.items() if vol > 0
+        }
         total = sum(inv_vols.values())
         if total == 0:
             return {symbol: 0.0 for symbol in volatilities}
@@ -398,7 +417,9 @@ class RiskParityAllocator:
 class LiquidationCascadePreventer:
     """Limit exposures relative to estimated market liquidity."""
 
-    def __init__(self, liquidity_provider: Callable[[str], float], max_fraction: float = 0.1) -> None:
+    def __init__(
+        self, liquidity_provider: Callable[[str], float], max_fraction: float = 0.1
+    ) -> None:
         self._liquidity_provider = liquidity_provider
         self._max_fraction = max(0.0, min(1.0, max_fraction))
 
@@ -460,7 +481,9 @@ class AdvancedRiskController:
     def register_market_condition(self, market: MarketCondition) -> None:
         self._state.market_data[market.symbol] = market
 
-    def record_return(self, symbol: str, returns: Iterable[float | tuple[float, datetime]]) -> None:
+    def record_return(
+        self, symbol: str, returns: Iterable[float | tuple[float, datetime]]
+    ) -> None:
         """Store historical returns and update adaptive risk telemetry."""
 
         history = self._state.returns_history.setdefault(symbol, [])
@@ -485,7 +508,9 @@ class AdvancedRiskController:
             if self._regime_guard is not None:
                 self._regime_guard.observe(symbol, value, timestamp.timestamp())
 
-    def evaluate_order(self, request: PositionRequest, *, account_equity: float) -> bool:
+    def evaluate_order(
+        self, request: PositionRequest, *, account_equity: float
+    ) -> bool:
         market = self._state.market_data.get(request.symbol)
         if market is None:
             raise ValueError(f"Missing market data for {request.symbol}")
@@ -495,7 +520,9 @@ class AdvancedRiskController:
         desired_notional = self._capital * kelly_fraction * volatility_scale
         if self._regime_guard is not None:
             desired_notional *= self._regime_guard.multiplier(request.symbol)
-        aggregated_notional = self._state.positions.get(request.symbol, 0.0) + request.notional
+        aggregated_notional = (
+            self._state.positions.get(request.symbol, 0.0) + request.notional
+        )
 
         positions_preview = dict(self._state.positions)
         positions_preview[request.symbol] = aggregated_notional
@@ -509,7 +536,9 @@ class AdvancedRiskController:
         if not self._margin_monitor.update(required_margin, account_equity):
             return False
 
-        exposure = self._exposure_tracker.update(request.notional, request.timestamp.timestamp())
+        exposure = self._exposure_tracker.update(
+            request.notional, request.timestamp.timestamp()
+        )
         if exposure > desired_notional:
             return False
 

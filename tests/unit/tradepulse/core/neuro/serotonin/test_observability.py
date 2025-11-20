@@ -1,14 +1,15 @@
 """Tests for serotonin controller observability module."""
+
 from __future__ import annotations
 
 from src.tradepulse.core.neuro.serotonin.observability import (
+    SEROTONIN_ALERTS,
+    SEROTONIN_SLOS,
+    SLI,
+    SLO,
     Alert,
     AlertSeverity,
     SerotoninMonitor,
-    SLI,
-    SLO,
-    SEROTONIN_ALERTS,
-    SEROTONIN_SLOS,
     create_grafana_dashboard_json,
     create_prometheus_metrics,
 )
@@ -87,7 +88,9 @@ def test_predefined_alerts():
     assert set(SEROTONIN_ALERTS.keys()) == expected_alerts
 
     # Check critical alerts have correct severity
-    assert SEROTONIN_ALERTS["state_validation_failure"].severity == AlertSeverity.CRITICAL
+    assert (
+        SEROTONIN_ALERTS["state_validation_failure"].severity == AlertSeverity.CRITICAL
+    )
     assert SEROTONIN_ALERTS["error_budget_critical"].severity == AlertSeverity.CRITICAL
 
     # Check warning alerts
@@ -170,7 +173,9 @@ def test_monitor_extended_hold_alert():
             validation_ok=True,
         )
         # Should not trigger yet
-        assert len([a for a in alerts if a.name == "serotonin_extended_hold_state"]) == 0
+        assert (
+            len([a for a in alerts if a.name == "serotonin_extended_hold_state"]) == 0
+        )
 
     # 1800th tick should trigger
     alerts = monitor.check_alerts(
@@ -247,7 +252,7 @@ def test_slo_report_formatting():
     assert "step_latency_p95" in report
     assert "99.85" in report
     assert "99.9" in report  # Target
-    assert "150" in report   # Budget consumed percentage
+    assert "150" in report  # Budget consumed percentage
 
 
 def test_prometheus_metrics_format():

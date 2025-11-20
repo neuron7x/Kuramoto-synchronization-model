@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 
 from core.indicators.kuramoto import compute_phase
-from core.indicators.trading import KuramotoIndicator, VPINIndicator
 from core.indicators.temporal_ricci import TemporalRicciAnalyzer
+from core.indicators.trading import KuramotoIndicator, VPINIndicator
 from core.utils import metrics as metrics_module
 
 
@@ -24,9 +24,9 @@ def test_indicator_observability_pipeline() -> None:
     collector = metrics_module.get_metrics_collector(registry)
 
     # Ensure indicator modules reuse the fresh collector.
-    from core.indicators import trading as trading_module  # noqa: WPS433
     from core.indicators import kuramoto as kuramoto_module  # noqa: WPS433
     from core.indicators import temporal_ricci as ricci_module  # noqa: WPS433
+    from core.indicators import trading as trading_module  # noqa: WPS433
 
     trading_module._metrics = collector  # type: ignore[attr-defined]
     kuramoto_module._metrics = collector  # type: ignore[attr-defined]
@@ -84,7 +84,9 @@ def test_indicator_observability_pipeline() -> None:
     analysis_frame = df.tail(160)[["price", "volume"]].rename(
         columns={"price": "close"}
     )
-    result = analyzer.analyze(analysis_frame, price_col="close", volume_col="volume", reset_history=True)
+    result = analyzer.analyze(
+        analysis_frame, price_col="close", volume_col="volume", reset_history=True
+    )
 
     assert np.isfinite(result.temporal_curvature)
     assert -1.0 <= result.temporal_curvature <= 1.0

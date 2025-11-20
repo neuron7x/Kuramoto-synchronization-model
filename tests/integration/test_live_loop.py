@@ -156,7 +156,9 @@ def test_live_loop_creates_session_snapshot(
 ) -> None:
     connector = BinanceConnector()
     risk_manager = RiskManager(RiskLimits(max_notional=100_000.0, max_position=10.0))
-    loop = LiveExecutionLoop({"binance": connector}, risk_manager, config=live_loop_config)
+    loop = LiveExecutionLoop(
+        {"binance": connector}, risk_manager, config=live_loop_config
+    )
 
     loop.start(cold_start=True)
     try:
@@ -178,7 +180,9 @@ def test_live_loop_warm_start_enforces_limits(live_loop_config: LiveLoopConfig) 
     limits = RiskLimits(max_notional=1_000_000, max_position=1.0)
     risk_manager = RiskManager(limits, risk_state_store=store)
 
-    loop = LiveExecutionLoop({"binance": connector}, risk_manager, config=live_loop_config)
+    loop = LiveExecutionLoop(
+        {"binance": connector}, risk_manager, config=live_loop_config
+    )
     loop.start(cold_start=True)
     try:
         risk_manager.register_fill("BTCUSDT", "buy", 0.8, 20_000)
@@ -187,7 +191,9 @@ def test_live_loop_warm_start_enforces_limits(live_loop_config: LiveLoopConfig) 
         loop.shutdown()
 
     restart_risk = RiskManager(limits, risk_state_store=store)
-    loop_restart = LiveExecutionLoop({"binance": connector}, restart_risk, config=live_loop_config)
+    loop_restart = LiveExecutionLoop(
+        {"binance": connector}, restart_risk, config=live_loop_config
+    )
     loop_restart.start(cold_start=False)
     try:
         aggressive = Order(

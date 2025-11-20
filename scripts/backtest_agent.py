@@ -1,4 +1,5 @@
 """Backtest the FHMC agent in a regime-shift environment."""
+
 from __future__ import annotations
 
 import numpy as np

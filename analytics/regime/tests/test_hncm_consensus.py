@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
-from pathlib import Path
 import json
 import math
+from pathlib import Path
 
 import pytest
 
@@ -17,7 +17,9 @@ from domain.signals import SignalAction
 
 
 class DummyEWS:
-    def __init__(self, probability: float | None = None, ews_score: float | None = None):
+    def __init__(
+        self, probability: float | None = None, ews_score: float | None = None
+    ):
         self.probability = probability
         self.ews_score = ews_score
 
@@ -39,7 +41,9 @@ def test_aggregate_and_decide(tmp_path: Path):
 
 
 def test_learned_weights_influence(tmp_path: Path):
-    adapter = HNCMConsensusAdapter(base_weights={"a": 1.0, "b": 1.0}, state_path=tmp_path / "state.json")
+    adapter = HNCMConsensusAdapter(
+        base_weights={"a": 1.0, "b": 1.0}, state_path=tmp_path / "state.json"
+    )
     votes = (AgentVote("a", 1.0, 1.0), AgentVote("b", -1.0, 1.0))
     # зсунути ваги на користь "a"
     lw = {"a": 1.0, "b": 0.1}
@@ -48,7 +52,9 @@ def test_learned_weights_influence(tmp_path: Path):
 
 
 def test_decide_respects_override_weights(tmp_path: Path):
-    adapter = HNCMConsensusAdapter(base_weights={"a": 0.1, "b": 0.1}, state_path=tmp_path / "state.json")
+    adapter = HNCMConsensusAdapter(
+        base_weights={"a": 0.1, "b": 0.1}, state_path=tmp_path / "state.json"
+    )
     votes = (AgentVote("a", -1.0, 1.0), AgentVote("b", 1.0, 1.0))
     decision = adapter.decide(votes, override_weights={"a": 5.0})
     assert decision.score < 0
@@ -88,7 +94,9 @@ def test_ews_to_vote_probability():
 
 
 def test_ews_to_vote_score():
-    v = ews_to_vote("ews", DummyEWS(probability=None, ews_score=-0.7), use_probability=True)
+    v = ews_to_vote(
+        "ews", DummyEWS(probability=None, ews_score=-0.7), use_probability=True
+    )
     assert v.score == -0.7
 
 
@@ -119,5 +127,9 @@ def test_build_signal_with_consensus(tmp_path: Path):
     assert signal.symbol == "ETHUSDT"
     assert signal.action in {SignalAction.BUY, SignalAction.SELL, SignalAction.HOLD}
     assert signal.metadata
-    assert {vote["agent"] for vote in signal.metadata["votes"]} >= {"ews", "breakout", "mean_revert"}
+    assert {vote["agent"] for vote in signal.metadata["votes"]} >= {
+        "ews",
+        "breakout",
+        "mean_revert",
+    }
     assert all("rationale" in vote for vote in signal.metadata["votes"])

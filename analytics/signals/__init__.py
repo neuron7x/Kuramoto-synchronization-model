@@ -18,6 +18,15 @@ from .irreversibility import (
     igs_directional_signal,
 )
 from .irreversibility_adapter import IGSFeatureProvider
+from .news_sentiment import (
+    FinBERTSentimentModel,
+    NewsArticle,
+    NewsCollector,
+    NewsSentimentModel,
+    NewsSentimentPipeline,
+    SentimentLabel,
+    aggregate_sentiment,
+)
 from .pipeline import (
     FeaturePipelineConfig,
     LeakageGate,
@@ -27,15 +36,6 @@ from .pipeline import (
     SignalModelSelector,
     build_supervised_learning_frame,
     make_default_candidates,
-)
-from .news_sentiment import (
-    FinBERTSentimentModel,
-    NewsArticle,
-    NewsCollector,
-    NewsSentimentModel,
-    NewsSentimentPipeline,
-    SentimentLabel,
-    aggregate_sentiment,
 )
 
 __all__ = [

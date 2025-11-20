@@ -47,7 +47,7 @@ class TelemetryWindow:
         if to_compress:
             # Compress using gzip
             json_data = json.dumps(to_compress)
-            compressed = gzip.compress(json_data.encode('utf-8'))
+            compressed = gzip.compress(json_data.encode("utf-8"))
             self.compressed_archives.append(compressed)
 
     def get_recent(self, n: int = 100) -> List[Dict[str, Any]]:
@@ -62,15 +62,14 @@ class TelemetryWindow:
         """Decompress a specific archive."""
         if 0 <= index < len(self.compressed_archives):
             compressed = self.compressed_archives[index]
-            json_data = gzip.decompress(compressed).decode('utf-8')
+            json_data = gzip.decompress(compressed).decode("utf-8")
             return json.loads(json_data)
         return []
 
     def get_memory_usage(self) -> Dict[str, int]:
         """Get memory usage statistics in bytes."""
         uncompressed_size = sum(
-            len(json.dumps(record).encode('utf-8'))
-            for record in self.data
+            len(json.dumps(record).encode("utf-8")) for record in self.data
         )
         compressed_size = sum(len(archive) for archive in self.compressed_archives)
 
@@ -153,7 +152,7 @@ class OptimizedTelemetryManager:
                 timestamp = int(time.time() * 1000)
                 filename = self.export_dir / f"thermo_telemetry_{timestamp}.json.gz"
 
-                with filename.open('wb') as f:
+                with filename.open("wb") as f:
                     f.write(archive)
         except (OSError, IOError):
             # If export fails, just keep in memory
@@ -218,11 +217,10 @@ class OptimizedTelemetryManager:
         # Extract metrics
         F_values = [r.get("F", 0.0) for r in records]
         dF_dt_values = [r.get("dF_dt", 0.0) for r in records]
-        circuit_breaker_states = [r.get("circuit_breaker_active", False) for r in records]
-        topology_changes = sum(
-            len(r.get("topology_changes", []))
-            for r in records
-        )
+        circuit_breaker_states = [
+            r.get("circuit_breaker_active", False) for r in records
+        ]
+        topology_changes = sum(len(r.get("topology_changes", [])) for r in records)
 
         # Compute statistics using NumPy for efficiency
         F_array = np.array(F_values)
@@ -237,11 +235,14 @@ class OptimizedTelemetryManager:
             "median_F": float(np.median(F_array)),
             "avg_dF_dt": float(np.mean(dF_dt_array)),
             "std_dF_dt": float(np.std(dF_dt_array)),
-            "circuit_breaker_activations": sum(1 for active in circuit_breaker_states if active),
+            "circuit_breaker_activations": sum(
+                1 for active in circuit_breaker_states if active
+            ),
             "topology_changes": topology_changes,
             "time_span": (
                 records[-1].get("timestamp", 0.0) - records[0].get("timestamp", 0.0)
-                if len(records) > 1 else 0.0
+                if len(records) > 1
+                else 0.0
             ),
         }
 
@@ -286,27 +287,31 @@ class OptimizedTelemetryManager:
                 max_F_in_crisis = max(max_F_in_crisis, F_value)
             elif not is_crisis and in_crisis:
                 # End of crisis
-                crisis_periods.append({
-                    "start_time": crisis_start,
-                    "end_time": timestamp,
-                    "duration": timestamp - crisis_start if crisis_start else 0.0,
-                    "max_F": max_F_in_crisis,
-                    "severity": "critical" if max_F_in_crisis > 1.3 else "elevated",
-                })
+                crisis_periods.append(
+                    {
+                        "start_time": crisis_start,
+                        "end_time": timestamp,
+                        "duration": timestamp - crisis_start if crisis_start else 0.0,
+                        "max_F": max_F_in_crisis,
+                        "severity": "critical" if max_F_in_crisis > 1.3 else "elevated",
+                    }
+                )
                 in_crisis = False
                 crisis_start = None
                 max_F_in_crisis = 0.0
 
         # Handle ongoing crisis
         if in_crisis and crisis_start is not None:
-            crisis_periods.append({
-                "start_time": crisis_start,
-                "end_time": records[-1].get("timestamp", 0.0),
-                "duration": records[-1].get("timestamp", 0.0) - crisis_start,
-                "max_F": max_F_in_crisis,
-                "severity": "critical" if max_F_in_crisis > 1.3 else "elevated",
-                "ongoing": True,
-            })
+            crisis_periods.append(
+                {
+                    "start_time": crisis_start,
+                    "end_time": records[-1].get("timestamp", 0.0),
+                    "duration": records[-1].get("timestamp", 0.0) - crisis_start,
+                    "max_F": max_F_in_crisis,
+                    "severity": "critical" if max_F_in_crisis > 1.3 else "elevated",
+                    "ongoing": True,
+                }
+            )
 
         return crisis_periods
 
@@ -326,7 +331,7 @@ class OptimizedTelemetryManager:
 
         records = self.window.get_all_uncompressed()
 
-        with filepath.open('w', encoding='utf-8') as f:
+        with filepath.open("w", encoding="utf-8") as f:
             json.dump(records, f, indent=2)
 
         return filepath
@@ -347,9 +352,9 @@ class OptimizedTelemetryManager:
 
         records = self.window.get_all_uncompressed()
         json_data = json.dumps(records, indent=2)
-        compressed = gzip.compress(json_data.encode('utf-8'))
+        compressed = gzip.compress(json_data.encode("utf-8"))
 
-        with filepath.open('wb') as f:
+        with filepath.open("wb") as f:
             f.write(compressed)
 
         return filepath

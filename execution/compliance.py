@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass, replace as dataclass_replace
+from dataclasses import dataclass
+from dataclasses import replace as dataclass_replace
 from datetime import datetime, timezone
 from typing import Callable, Iterable, Mapping, Optional
 
 from domain import Order, OrderSide
 
-from .normalization import NormalizationError, SymbolNormalizer
 from .metrics import RiskMetrics, get_risk_metrics
+from .normalization import NormalizationError, SymbolNormalizer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -133,7 +134,9 @@ class RiskDecision:
             "allowed": self.allowed,
             "reasons": list(self.reasons),
             "breached_limits": dict(self.breached_limits),
-            "next_reset_at": self.next_reset_at.isoformat() if self.next_reset_at else None,
+            "next_reset_at": (
+                self.next_reset_at.isoformat() if self.next_reset_at else None
+            ),
         }
 
 
@@ -175,7 +178,9 @@ class RiskCompliance:
         self._open_orders_count: int = 0
         self._metrics: RiskMetrics | None = metrics or get_risk_metrics()
 
-        self._record_metric(lambda collector: collector.record_kill_switch(config.kill_switch))
+        self._record_metric(
+            lambda collector: collector.record_kill_switch(config.kill_switch)
+        )
         self._record_open_orders_metric()
 
     def set_kill_switch(self, enabled: bool) -> None:
@@ -259,7 +264,9 @@ class RiskCompliance:
                 current_position = 0.0
 
             side = OrderSide(order.side)
-            position_delta = order.quantity if side == OrderSide.BUY else -order.quantity
+            position_delta = (
+                order.quantity if side == OrderSide.BUY else -order.quantity
+            )
             new_position = current_position + position_delta
 
             cap = self._config.per_symbol_position_cap_default
@@ -296,7 +303,9 @@ class RiskCompliance:
                     breached["max_gross_exposure"] = projected_gross
 
             self._record_metric(
-                lambda collector, exposure=projected_gross: collector.record_gross_exposure(exposure)
+                lambda collector, exposure=projected_gross: collector.record_gross_exposure(
+                    exposure
+                )
             )
 
             if self._config.daily_max_drawdown_threshold > 0:
@@ -316,7 +325,9 @@ class RiskCompliance:
                     next_reset = self._next_daily_reset(self._daily_reset_time)
 
                 if self._daily_high_equity > 0:
-                    drawdown = (self._daily_high_equity - equity) / self._daily_high_equity
+                    drawdown = (
+                        self._daily_high_equity - equity
+                    ) / self._daily_high_equity
 
                     if self._config.daily_max_drawdown_mode == "percent":
                         if drawdown > self._config.daily_max_drawdown_threshold:
@@ -336,7 +347,9 @@ class RiskCompliance:
 
                     if drawdown_metric_value is not None:
                         self._record_metric(
-                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(value, mode=mode)
+                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(
+                                value, mode=mode
+                            )
                         )
 
             if self._config.max_open_orders_per_account > 0:
@@ -386,7 +399,9 @@ class RiskCompliance:
                 "daily_max_drawdown_mode": self._config.daily_max_drawdown_mode,
                 "daily_high_equity": self._daily_high_equity,
                 "last_trip_reason": self._last_trip_reason,
-                "last_trip_time": self._last_trip_time.isoformat() if self._last_trip_time else None,
+                "last_trip_time": (
+                    self._last_trip_time.isoformat() if self._last_trip_time else None
+                ),
                 "open_orders_count": self._open_orders_count,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
@@ -402,7 +417,9 @@ class RiskCompliance:
 
     def _record_open_orders_metric(self) -> None:
         self._record_metric(
-            lambda collector, count=self._open_orders_count: collector.record_open_orders(count)
+            lambda collector, count=self._open_orders_count: collector.record_open_orders(
+                count
+            )
         )
 
     def _record_rejections(
@@ -423,10 +440,7 @@ class RiskCompliance:
     def _normalise_rejection_reason(reason: str) -> str:
         if not reason:
             return "unspecified"
-        cleaned = [
-            ch.lower() if ch.isalnum() else "_"
-            for ch in reason
-        ]
+        cleaned = [ch.lower() if ch.isalnum() else "_" for ch in reason]
         normalised = "".join(cleaned).strip("_")
         while "__" in normalised:
             normalised = normalised.replace("__", "_")
@@ -442,6 +456,7 @@ class RiskCompliance:
     def _next_daily_reset(self, from_time: datetime) -> datetime:
         """Calculate next daily reset time."""
         from datetime import timedelta
+
         next_day = from_time + timedelta(days=1)
         return datetime(
             next_day.year,

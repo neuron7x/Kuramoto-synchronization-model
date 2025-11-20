@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import tempfile
+
 import yaml
 
 
@@ -45,7 +46,7 @@ def example_1_basic_integration():
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -72,13 +73,15 @@ def example_1_basic_integration():
         can_trade = controller.should_take_action(risk_level="moderate")
         position_size = controller.get_position_size_multiplier()
 
-        if tick % 5 == 0 or result['hold'] != 0:
+        if tick % 5 == 0 or result["hold"] != 0:
             print(f"\nTick {tick}:")
             print(f"  Stress: {stress:.1f}, Level: {result['level']:.3f}")
             print(f"  Can Trade: {can_trade}, Position Size: {position_size:.2%}")
-            print(f"  Hold: {bool(result['hold'])}, Cooldown: {int(result['cooldown'])}")
+            print(
+                f"  Hold: {bool(result['hold'])}, Cooldown: {int(result['cooldown'])}"
+            )
 
-            if result['hold']:
+            if result["hold"]:
                 recovery = controller.estimate_recovery_time()
                 print(f"  ⏸ IN HOLD - Recovery in ~{recovery} ticks")
 
@@ -95,16 +98,26 @@ def example_2_position_sizing():
     from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
     config = {
-        "tonic_beta": 0.15, "phasic_beta": 0.35, "stress_gain": 1.0,
-        "drawdown_gain": 1.2, "novelty_gain": 0.6, "stress_threshold": 0.7,
-        "release_threshold": 0.4, "hysteresis": 0.1, "cooldown_ticks": 3,
-        "chronic_window": 6, "desensitization_rate": 0.05,
-        "desensitization_decay": 0.05, "max_desensitization": 0.6,
-        "floor_min": 0.1, "floor_max": 0.6, "floor_gain": 0.8,
+        "tonic_beta": 0.15,
+        "phasic_beta": 0.35,
+        "stress_gain": 1.0,
+        "drawdown_gain": 1.2,
+        "novelty_gain": 0.6,
+        "stress_threshold": 0.7,
+        "release_threshold": 0.4,
+        "hysteresis": 0.1,
+        "cooldown_ticks": 3,
+        "chronic_window": 6,
+        "desensitization_rate": 0.05,
+        "desensitization_decay": 0.05,
+        "max_desensitization": 0.6,
+        "floor_min": 0.1,
+        "floor_max": 0.6,
+        "floor_gain": 0.8,
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -123,9 +136,19 @@ def example_2_position_sizing():
         base_size = 10000  # $10k base position
         actual_size = base_size * multiplier
 
-        status = "✓ Full" if multiplier > 0.9 else "⚠ Reduced" if multiplier > 0.3 else "⏸ Hold" if multiplier > 0 else "✗ No Trade"
+        status = (
+            "✓ Full"
+            if multiplier > 0.9
+            else (
+                "⚠ Reduced"
+                if multiplier > 0.3
+                else "⏸ Hold" if multiplier > 0 else "✗ No Trade"
+            )
+        )
 
-        print(f"{stress_level:<10.1f} {controller.level:<10.3f} ${actual_size:<14.0f} {status}")
+        print(
+            f"{stress_level:<10.1f} {controller.level:<10.3f} ${actual_size:<14.0f} {status}"
+        )
 
     Path(config_path).unlink()
     print("\n✓ Example 2 complete")
@@ -140,16 +163,26 @@ def example_3_risk_management():
     from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
     config = {
-        "tonic_beta": 0.15, "phasic_beta": 0.35, "stress_gain": 1.0,
-        "drawdown_gain": 1.2, "novelty_gain": 0.6, "stress_threshold": 0.7,
-        "release_threshold": 0.4, "hysteresis": 0.1, "cooldown_ticks": 3,
-        "chronic_window": 6, "desensitization_rate": 0.05,
-        "desensitization_decay": 0.05, "max_desensitization": 0.6,
-        "floor_min": 0.1, "floor_max": 0.6, "floor_gain": 0.8,
+        "tonic_beta": 0.15,
+        "phasic_beta": 0.35,
+        "stress_gain": 1.0,
+        "drawdown_gain": 1.2,
+        "novelty_gain": 0.6,
+        "stress_threshold": 0.7,
+        "release_threshold": 0.4,
+        "hysteresis": 0.1,
+        "cooldown_ticks": 3,
+        "chronic_window": 6,
+        "desensitization_rate": 0.05,
+        "desensitization_decay": 0.05,
+        "max_desensitization": 0.6,
+        "floor_min": 0.1,
+        "floor_max": 0.6,
+        "floor_gain": 0.8,
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -161,7 +194,9 @@ def example_3_risk_management():
     print("\nMarket stress scenario (stress=0.6):")
     controller.step(0.6, 0.1, 0.2)
 
-    print(f"\n{'Risk Profile':<15} {'Can Trade':<12} {'Position Size':<15} {'Recommendation'}")
+    print(
+        f"\n{'Risk Profile':<15} {'Can Trade':<12} {'Position Size':<15} {'Recommendation'}"
+    )
     print("-" * 60)
 
     for profile in risk_profiles:
@@ -177,7 +212,9 @@ def example_3_risk_management():
         else:
             recommendation = "⏸ Hold/rest"
 
-        print(f"{profile:<15} {str(can_trade):<12} {position_multiplier:<15.2%} {recommendation}")
+        print(
+            f"{profile:<15} {str(can_trade):<12} {position_multiplier:<15.2%} {recommendation}"
+        )
 
     Path(config_path).unlink()
     print("\n✓ Example 3 complete")
@@ -192,16 +229,26 @@ def example_4_diagnostics():
     from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
     config = {
-        "tonic_beta": 0.15, "phasic_beta": 0.35, "stress_gain": 1.0,
-        "drawdown_gain": 1.2, "novelty_gain": 0.6, "stress_threshold": 0.7,
-        "release_threshold": 0.4, "hysteresis": 0.1, "cooldown_ticks": 3,
-        "chronic_window": 6, "desensitization_rate": 0.05,
-        "desensitization_decay": 0.05, "max_desensitization": 0.6,
-        "floor_min": 0.1, "floor_max": 0.6, "floor_gain": 0.8,
+        "tonic_beta": 0.15,
+        "phasic_beta": 0.35,
+        "stress_gain": 1.0,
+        "drawdown_gain": 1.2,
+        "novelty_gain": 0.6,
+        "stress_threshold": 0.7,
+        "release_threshold": 0.4,
+        "hysteresis": 0.1,
+        "cooldown_ticks": 3,
+        "chronic_window": 6,
+        "desensitization_rate": 0.05,
+        "desensitization_decay": 0.05,
+        "max_desensitization": 0.6,
+        "floor_min": 0.1,
+        "floor_max": 0.6,
+        "floor_gain": 0.8,
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -239,20 +286,31 @@ def example_5_batch_processing():
     print("EXAMPLE 5: Batch Processing for Backtesting")
     print("=" * 70)
 
-    from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
     import time
 
+    from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
+
     config = {
-        "tonic_beta": 0.15, "phasic_beta": 0.35, "stress_gain": 1.0,
-        "drawdown_gain": 1.2, "novelty_gain": 0.6, "stress_threshold": 0.7,
-        "release_threshold": 0.4, "hysteresis": 0.1, "cooldown_ticks": 3,
-        "chronic_window": 6, "desensitization_rate": 0.05,
-        "desensitization_decay": 0.05, "max_desensitization": 0.6,
-        "floor_min": 0.1, "floor_max": 0.6, "floor_gain": 0.8,
+        "tonic_beta": 0.15,
+        "phasic_beta": 0.35,
+        "stress_gain": 1.0,
+        "drawdown_gain": 1.2,
+        "novelty_gain": 0.6,
+        "stress_threshold": 0.7,
+        "release_threshold": 0.4,
+        "hysteresis": 0.1,
+        "cooldown_ticks": 3,
+        "chronic_window": 6,
+        "desensitization_rate": 0.05,
+        "desensitization_decay": 0.05,
+        "max_desensitization": 0.6,
+        "floor_min": 0.1,
+        "floor_max": 0.6,
+        "floor_gain": 0.8,
         "cooldown_extension": 2,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config, f)
         config_path = f.name
 
@@ -319,6 +377,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

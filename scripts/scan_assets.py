@@ -11,10 +11,9 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, List, Sequence
-
 
 LOGGER = logging.getLogger(__name__)
 

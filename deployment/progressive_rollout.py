@@ -10,13 +10,14 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Callable
+from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class DeploymentPhase(Enum):
     """Deployment phase stages."""
+
     VALIDATION = "validation"
     CANARY = "canary"
     PROGRESSIVE = "progressive"
@@ -27,6 +28,7 @@ class DeploymentPhase(Enum):
 
 class RolloutStrategy(Enum):
     """Rollout strategy types."""
+
     IMMEDIATE = "immediate"
     GRADUAL = "gradual"
     BLUE_GREEN = "blue_green"
@@ -119,9 +121,11 @@ class ProgressiveRolloutManager:
         if self.current_state and self.current_state.phase not in [
             DeploymentPhase.COMPLETE,
             DeploymentPhase.FAILED,
-            DeploymentPhase.ROLLED_BACK
+            DeploymentPhase.ROLLED_BACK,
         ]:
-            logger.warning(f"Deployment already in progress: {self.current_state.version}")
+            logger.warning(
+                f"Deployment already in progress: {self.current_state.version}"
+            )
             return False
 
         # Pre-deployment validation
@@ -133,14 +137,16 @@ class ProgressiveRolloutManager:
             version=version,
             phase=DeploymentPhase.CANARY,
             current_traffic_percentage=self.config.canary_percentage,
-            start_time=time.time()
+            start_time=time.time(),
         )
 
         # Start canary
         if self._traffic_router:
             self._traffic_router(version, self.config.canary_percentage)
 
-        logger.info(f"Started canary deployment of {version} at {self.config.canary_percentage}%")
+        logger.info(
+            f"Started canary deployment of {version} at {self.config.canary_percentage}%"
+        )
         return True
 
     def _validate_deployment(self, version: str) -> bool:
@@ -168,7 +174,7 @@ class ProgressiveRolloutManager:
         request_count: int,
         error_count: int,
         avg_latency_ms: float,
-        p99_latency_ms: float
+        p99_latency_ms: float,
     ) -> None:
         """Record deployment metrics.
 
@@ -194,7 +200,7 @@ class ProgressiveRolloutManager:
             error_rate=error_rate,
             avg_latency_ms=avg_latency_ms,
             p99_latency_ms=p99_latency_ms,
-            health_check_passed=health_check
+            health_check_passed=health_check,
         )
 
         self.current_state.metrics.append(metrics)
@@ -283,7 +289,9 @@ class ProgressiveRolloutManager:
 
         self.deployment_history.append(self.current_state)
 
-        logger.info(f"Deployment of {self.current_state.version} completed successfully")
+        logger.info(
+            f"Deployment of {self.current_state.version} completed successfully"
+        )
 
     def _trigger_rollback(self, reason: str) -> bool:
         """Trigger automatic rollback.
@@ -331,12 +339,11 @@ class ProgressiveRolloutManager:
             Dictionary with deployment status
         """
         if not self.current_state:
-            return {
-                "status": "no_deployment",
-                "stable_version": self.stable_version
-            }
+            return {"status": "no_deployment", "stable_version": self.stable_version}
 
-        recent_metrics = self.current_state.metrics[-10:] if self.current_state.metrics else []
+        recent_metrics = (
+            self.current_state.metrics[-10:] if self.current_state.metrics else []
+        )
 
         return {
             "version": self.current_state.version,
@@ -350,10 +357,10 @@ class ProgressiveRolloutManager:
                 {
                     "error_rate": m.error_rate,
                     "latency_ms": m.p99_latency_ms,
-                    "health": m.health_check_passed
+                    "health": m.health_check_passed,
                 }
                 for m in recent_metrics
-            ]
+            ],
         }
 
     def get_deployment_history(self, limit: int = 10) -> List[Dict]:
@@ -372,7 +379,7 @@ class ProgressiveRolloutManager:
                 "final_traffic": d.current_traffic_percentage,
                 "duration_seconds": time.time() - d.start_time,
                 "rollback_triggered": d.rollback_triggered,
-                "rollback_reason": d.rollback_reason
+                "rollback_reason": d.rollback_reason,
             }
             for d in self.deployment_history[-limit:]
         ]
@@ -385,7 +392,7 @@ class CanaryValidator:
         self,
         baseline_error_rate: float = 0.01,
         baseline_latency_ms: float = 100.0,
-        threshold_multiplier: float = 2.0
+        threshold_multiplier: float = 2.0,
     ):
         """Initialize canary validator.
 
@@ -403,7 +410,7 @@ class CanaryValidator:
         canary_error_rate: float,
         canary_latency_ms: float,
         stable_error_rate: float,
-        stable_latency_ms: float
+        stable_latency_ms: float,
     ) -> tuple[bool, List[str]]:
         """Validate canary against stable version.
 

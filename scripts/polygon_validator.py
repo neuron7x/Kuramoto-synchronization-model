@@ -1,4 +1,5 @@
 """Utilities for validating thermodynamic behaviour with Polygon data."""
+
 from __future__ import annotations
 
 import logging
@@ -32,12 +33,18 @@ class PolygonValidator:
             response = requests.get(url, params={"apiKey": self.api_key}, timeout=10)
             response.raise_for_status()
             payload = response.json()
-            self.data = payload.get("results", []) or self._synthetic_dataset(symbol, start_date, end_date)
+            self.data = payload.get("results", []) or self._synthetic_dataset(
+                symbol, start_date, end_date
+            )
         except Exception as exc:  # pragma: no cover - network failures in CI
-            logger.warning("Polygon request failed (%s), falling back to synthetic data", exc)
+            logger.warning(
+                "Polygon request failed (%s), falling back to synthetic data", exc
+            )
             self.data = self._synthetic_dataset(symbol, start_date, end_date)
 
-    def _synthetic_dataset(self, symbol: str, start: str, end: str) -> List[Dict[str, float]]:
+    def _synthetic_dataset(
+        self, symbol: str, start: str, end: str
+    ) -> List[Dict[str, float]]:
         del symbol
         start_dt = datetime.fromisoformat(start)
         end_dt = datetime.fromisoformat(end)

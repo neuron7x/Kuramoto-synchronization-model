@@ -3,6 +3,7 @@
 This module provides SLI/SLO definitions, metrics collection,
 and monitoring utilities following SRE best practices.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -63,7 +64,7 @@ class SLO:
         budget = self.error_budget
 
         if budget <= 0:
-            return float('inf')
+            return float("inf")
 
         return error_rate / budget
 
@@ -411,8 +412,12 @@ def create_grafana_dashboard_json() -> dict:
                     "title": "SLO Compliance",
                     "type": "table",
                     "targets": [
-                        {"expr": "histogram_quantile(0.95, serotonin_step_duration_seconds)"},
-                        {"expr": "rate(serotonin_state_validation_total{result='failure'}[30d])"},
+                        {
+                            "expr": "histogram_quantile(0.95, serotonin_step_duration_seconds)"
+                        },
+                        {
+                            "expr": "rate(serotonin_state_validation_total{result='failure'}[30d])"
+                        },
                     ],
                 },
                 {

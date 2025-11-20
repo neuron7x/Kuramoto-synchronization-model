@@ -368,13 +368,21 @@ class SerotoninProfiler:
         self._history.append(record)
 
         # Track veto events
-        if veto and (not self._veto_events or not self._veto_events[-1].get("active", False)):
-            self._veto_events.append({
-                "start_step": len(self._history) - 1,
-                "start_level": level,
-                "active": True,
-            })
-        elif not veto and self._veto_events and self._veto_events[-1].get("active", False):
+        if veto and (
+            not self._veto_events or not self._veto_events[-1].get("active", False)
+        ):
+            self._veto_events.append(
+                {
+                    "start_step": len(self._history) - 1,
+                    "start_level": level,
+                    "active": True,
+                }
+            )
+        elif (
+            not veto
+            and self._veto_events
+            and self._veto_events[-1].get("active", False)
+        ):
             self._veto_events[-1]["end_step"] = len(self._history) - 1
             self._veto_events[-1]["end_level"] = level
             self._veto_events[-1]["active"] = False
@@ -384,8 +392,14 @@ class SerotoninProfiler:
 
         # Track cooldown events
         if cooldown_s > 0:
-            if not self._cooldown_events or self._cooldown_events[-1].get("max_duration", 0) < cooldown_s:
-                if self._cooldown_events and "max_duration" not in self._cooldown_events[-1]:
+            if (
+                not self._cooldown_events
+                or self._cooldown_events[-1].get("max_duration", 0) < cooldown_s
+            ):
+                if (
+                    self._cooldown_events
+                    and "max_duration" not in self._cooldown_events[-1]
+                ):
                     self._cooldown_events[-1]["max_duration"] = cooldown_s
                 elif not self._cooldown_events:
                     self._cooldown_events.append({"max_duration": cooldown_s})
@@ -455,7 +469,9 @@ class SerotoninProfiler:
 
         # Tonic baseline (average under low stress)
         low_stress_mask = stress < 0.5
-        tonic_baseline = float(np.mean(tonic[low_stress_mask])) if np.any(low_stress_mask) else 0.0
+        tonic_baseline = (
+            float(np.mean(tonic[low_stress_mask])) if np.any(low_stress_mask) else 0.0
+        )
         tonic_peak = float(np.max(tonic))
 
         # Tonic rise time (find first pulse and measure)
@@ -523,18 +539,42 @@ class SerotoninProfiler:
             recovery_threshold = float(np.mean(deactivation_levels))
 
             if len(veto_activations) > 0:
-                hysteresis_width = float(np.mean(activation_levels) - recovery_threshold)
+                hysteresis_width = float(
+                    np.mean(activation_levels) - recovery_threshold
+                )
 
         # Cooldown statistics
-        cooldown_durations = [e.get("max_duration", 0) for e in self._cooldown_events if "max_duration" in e]
-        cooldown_mean = float(np.mean(cooldown_durations)) if cooldown_durations else 0.0
+        cooldown_durations = [
+            e.get("max_duration", 0)
+            for e in self._cooldown_events
+            if "max_duration" in e
+        ]
+        cooldown_mean = (
+            float(np.mean(cooldown_durations)) if cooldown_durations else 0.0
+        )
         cooldown_max = float(np.max(cooldown_durations)) if cooldown_durations else 0.0
-        cooldown_frequency = len(cooldown_durations) / len(veto) * 100 if len(veto) > 0 else 0.0
+        cooldown_frequency = (
+            len(cooldown_durations) / len(veto) * 100 if len(veto) > 0 else 0.0
+        )
 
         # Analyze veto contributions
-        gate_veto = float(np.mean(gate[veto > 0] > self.controller.config["gate_veto"]) * 100) if np.any(veto) else 0.0
-        phasic_veto = float(np.mean(phasic[veto > 0] > self.controller.config["phasic_veto"]) * 100) if np.any(veto) else 0.0
-        tonic_veto = float(np.mean(level[veto > 0] > veto_threshold) * 100) if np.any(veto) else 0.0
+        gate_veto = (
+            float(np.mean(gate[veto > 0] > self.controller.config["gate_veto"]) * 100)
+            if np.any(veto)
+            else 0.0
+        )
+        phasic_veto = (
+            float(
+                np.mean(phasic[veto > 0] > self.controller.config["phasic_veto"]) * 100
+            )
+            if np.any(veto)
+            else 0.0
+        )
+        tonic_veto = (
+            float(np.mean(level[veto > 0] > veto_threshold) * 100)
+            if np.any(veto)
+            else 0.0
+        )
 
         return VetoCooldownCharacteristics(
             veto_threshold=veto_threshold,
@@ -564,7 +604,9 @@ class SerotoninProfiler:
             return float(crossings[0])
         return 0.0
 
-    def _estimate_decay_time(self, signal: np.ndarray, threshold: float = 0.37) -> float:
+    def _estimate_decay_time(
+        self, signal: np.ndarray, threshold: float = 0.37
+    ) -> float:
         """Estimate decay time from peak to threshold."""
         if len(signal) < 2:
             return 0.0
@@ -596,7 +638,9 @@ class SerotoninProfiler:
                     peaks += 1
         return peaks
 
-    def plot_profile(self, profile: BehavioralProfile, output_path: Optional[str] = None) -> None:
+    def plot_profile(
+        self, profile: BehavioralProfile, output_path: Optional[str] = None
+    ) -> None:
         """Generate visualization plots of the behavioral profile.
 
         Args:
@@ -606,15 +650,21 @@ class SerotoninProfiler:
         try:
             import matplotlib.pyplot as plt
         except ImportError:
-            logging.getLogger(__name__).warning("matplotlib not available, skipping plots")
+            logging.getLogger(__name__).warning(
+                "matplotlib not available, skipping plots"
+            )
             return
 
         if not self._history:
-            logging.getLogger(__name__).warning("No history data available for plotting")
+            logging.getLogger(__name__).warning(
+                "No history data available for plotting"
+            )
             return
 
         fig, axes = plt.subplots(4, 1, figsize=(12, 10))
-        fig.suptitle("Serotonin Controller Behavioral Profile", fontsize=14, fontweight="bold")
+        fig.suptitle(
+            "Serotonin Controller Behavioral Profile", fontsize=14, fontweight="bold"
+        )
 
         steps = np.arange(len(self._history))
         stress = np.array([r["stress"] for r in self._history])
@@ -625,36 +675,53 @@ class SerotoninProfiler:
         veto = np.array([r["veto"] for r in self._history])
 
         # Plot 1: Stress input
-        axes[0].plot(steps, stress, 'r-', label='Stress', linewidth=1.5)
-        axes[0].set_ylabel('Stress Level')
-        axes[0].set_title('Input Stress Pattern')
+        axes[0].plot(steps, stress, "r-", label="Stress", linewidth=1.5)
+        axes[0].set_ylabel("Stress Level")
+        axes[0].set_title("Input Stress Pattern")
         axes[0].legend()
         axes[0].grid(True, alpha=0.3)
 
         # Plot 2: Tonic and phasic components
-        axes[1].plot(steps, tonic, 'b-', label='Tonic', linewidth=1.5)
-        axes[1].plot(steps, phasic, 'g-', label='Phasic', linewidth=1.5)
-        axes[1].plot(steps, gate, 'm--', label='Gate', linewidth=1, alpha=0.7)
-        axes[1].axhline(y=profile.tonic_phasic.tonic_baseline, color='b', linestyle=':', alpha=0.5, label='Tonic Baseline')
-        axes[1].set_ylabel('Component Level')
-        axes[1].set_title('Tonic/Phasic Dynamics')
+        axes[1].plot(steps, tonic, "b-", label="Tonic", linewidth=1.5)
+        axes[1].plot(steps, phasic, "g-", label="Phasic", linewidth=1.5)
+        axes[1].plot(steps, gate, "m--", label="Gate", linewidth=1, alpha=0.7)
+        axes[1].axhline(
+            y=profile.tonic_phasic.tonic_baseline,
+            color="b",
+            linestyle=":",
+            alpha=0.5,
+            label="Tonic Baseline",
+        )
+        axes[1].set_ylabel("Component Level")
+        axes[1].set_title("Tonic/Phasic Dynamics")
         axes[1].legend()
         axes[1].grid(True, alpha=0.3)
 
         # Plot 3: Serotonin level
-        axes[2].plot(steps, level, 'k-', label='Serotonin Level', linewidth=1.5)
-        axes[2].axhline(y=profile.veto_cooldown.veto_threshold, color='r', linestyle='--', label='Veto Threshold')
-        axes[2].fill_between(steps, 0, level, where=veto, alpha=0.3, color='red', label='HOLD Active')
-        axes[2].set_ylabel('Serotonin Level')
-        axes[2].set_title('Serotonin Signal and Veto State')
+        axes[2].plot(steps, level, "k-", label="Serotonin Level", linewidth=1.5)
+        axes[2].axhline(
+            y=profile.veto_cooldown.veto_threshold,
+            color="r",
+            linestyle="--",
+            label="Veto Threshold",
+        )
+        axes[2].fill_between(
+            steps, 0, level, where=veto, alpha=0.3, color="red", label="HOLD Active"
+        )
+        axes[2].set_ylabel("Serotonin Level")
+        axes[2].set_title("Serotonin Signal and Veto State")
         axes[2].legend()
         axes[2].grid(True, alpha=0.3)
 
         # Plot 4: Veto events
-        axes[3].fill_between(steps, 0, 1, where=veto, alpha=0.6, color='red', label='HOLD')
-        axes[3].set_ylabel('Veto State')
-        axes[3].set_xlabel('Step')
-        axes[3].set_title(f'Veto/Cooldown Events (Rate: {profile.statistics.veto_rate:.1%})')
+        axes[3].fill_between(
+            steps, 0, 1, where=veto, alpha=0.6, color="red", label="HOLD"
+        )
+        axes[3].set_ylabel("Veto State")
+        axes[3].set_xlabel("Step")
+        axes[3].set_title(
+            f"Veto/Cooldown Events (Rate: {profile.statistics.veto_rate:.1%})"
+        )
         axes[3].set_ylim(-0.1, 1.1)
         axes[3].legend()
         axes[3].grid(True, alpha=0.3)
@@ -662,7 +729,7 @@ class SerotoninProfiler:
         plt.tight_layout()
 
         if output_path:
-            plt.savefig(output_path, dpi=150, bbox_inches='tight')
+            plt.savefig(output_path, dpi=150, bbox_inches="tight")
             logging.getLogger(__name__).info("Saved profile plot to %s", output_path)
         else:
             plt.show()

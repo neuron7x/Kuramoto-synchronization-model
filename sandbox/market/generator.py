@@ -45,6 +45,8 @@ class MarketDataset:
         data = {}
         for symbol in self._symbols:
             base_price = 50.0 + (sum(ord(char) for char in symbol) % 50)
-            generator = MockMarketDataGenerator(window=self._window, base_price=base_price)
+            generator = MockMarketDataGenerator(
+                window=self._window, base_price=base_price
+            )
             data[symbol] = generator.generate(symbol)
         return data

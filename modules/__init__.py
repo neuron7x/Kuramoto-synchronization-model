@@ -17,9 +17,9 @@ __all__ = [
 try:
     from modules.gaba_inhibition_gate import (
         GABAInhibitionGate,
+        GateMetrics,
         GateParams,
         GateState,
-        GateMetrics,
     )
 except ImportError:
     # Torch not available, skip GABA module
@@ -27,6 +27,6 @@ except ImportError:
 
 # Import new modules (no torch dependency)
 from modules.adaptive_risk_manager import AdaptiveRiskManager
-from modules.market_regime_analyzer import MarketRegimeAnalyzer
-from modules.dynamic_position_sizer import DynamicPositionSizer
 from modules.agent_coordinator import AgentCoordinator
+from modules.dynamic_position_sizer import DynamicPositionSizer
+from modules.market_regime_analyzer import MarketRegimeAnalyzer

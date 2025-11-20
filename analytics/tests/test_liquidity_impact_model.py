@@ -42,7 +42,9 @@ def test_forecast_computes_slippage_and_cost() -> None:
     assert forecast.base_market_impact == pytest.approx(0.1)
     assert forecast.expected_slippage > forecast.base_market_impact
     assert forecast.expected_cost == pytest.approx(forecast.expected_slippage * 4.0)
-    assert forecast.expected_slippage_bps == pytest.approx(forecast.expected_slippage / 100.0 * 1e4)
+    assert forecast.expected_slippage_bps == pytest.approx(
+        forecast.expected_slippage / 100.0 * 1e4
+    )
 
 
 def test_shortfall_penalty_and_liquidity_score() -> None:
@@ -75,7 +77,9 @@ def test_efficiency_metrics_include_shortfall() -> None:
 
     metrics = model.efficiency_metrics(forecast, benchmark_price=99.8)
 
-    assert metrics["expected_slippage_bps"] == pytest.approx(forecast.expected_slippage_bps)
+    assert metrics["expected_slippage_bps"] == pytest.approx(
+        forecast.expected_slippage_bps
+    )
     assert "expected_implementation_shortfall" in metrics
     assert metrics["expected_implementation_shortfall_bps"] == pytest.approx(
         metrics["expected_implementation_shortfall"] / 99.8 * 1e4
@@ -93,7 +97,9 @@ def test_adjust_execution_reacts_to_high_slippage() -> None:
         volatility=0.0,
     )
 
-    current = ExecutionParameters(participation_rate=0.2, slice_volume=2.0, limit_offset_bps=3.0)
+    current = ExecutionParameters(
+        participation_rate=0.2, slice_volume=2.0, limit_offset_bps=3.0
+    )
     adjusted = model.adjust_execution_params(forecast, current)
 
     assert adjusted.participation_rate < current.participation_rate
@@ -118,7 +124,9 @@ def test_adjust_execution_reacts_to_low_slippage() -> None:
         volatility=0.0,
     )
 
-    current = ExecutionParameters(participation_rate=0.05, slice_volume=1.0, limit_offset_bps=3.0)
+    current = ExecutionParameters(
+        participation_rate=0.05, slice_volume=1.0, limit_offset_bps=3.0
+    )
     adjusted = model.adjust_execution_params(forecast, current)
 
     assert adjusted.participation_rate > current.participation_rate

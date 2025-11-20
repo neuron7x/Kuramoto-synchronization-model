@@ -62,7 +62,9 @@ def test_end_to_end_trading_cycle(tmp_path: Path) -> None:
 
     signals = system.generate_signals(feature_frame, strategy=adaptive_momentum)
     assert signals
-    actionable = [signal for signal in signals if signal.action is not SignalAction.HOLD]
+    actionable = [
+        signal for signal in signals if signal.action is not SignalAction.HOLD
+    ]
     assert actionable
 
     latest_signal = actionable[-1]

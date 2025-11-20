@@ -41,11 +41,44 @@ def _build_sample_inputs() -> dict[str, object]:
 
     factor_returns = pd.DataFrame(
         {
-            "market": [0.01, -0.005, 0.008, 0.012, -0.002, 0.007, -0.004, 0.009, 0.0, 0.005]
+            "market": [
+                0.01,
+                -0.005,
+                0.008,
+                0.012,
+                -0.002,
+                0.007,
+                -0.004,
+                0.009,
+                0.0,
+                0.005,
+            ]
             * 3,
-            "value": [0.004, 0.003, 0.002, 0.001, -0.001, 0.002, 0.003, -0.002, 0.001, 0.002]
+            "value": [
+                0.004,
+                0.003,
+                0.002,
+                0.001,
+                -0.001,
+                0.002,
+                0.003,
+                -0.002,
+                0.001,
+                0.002,
+            ]
             * 3,
-            "momentum": [0.006, -0.004, 0.005, 0.007, 0.003, -0.002, 0.004, 0.005, 0.002, 0.003]
+            "momentum": [
+                0.006,
+                -0.004,
+                0.005,
+                0.007,
+                0.003,
+                -0.002,
+                0.004,
+                0.005,
+                0.002,
+                0.003,
+            ]
             * 3,
         },
         index=dates,
@@ -101,7 +134,10 @@ def test_portfolio_attribution_report_generation() -> None:
     strategy_totals = inputs["strategy_pnl"].sum()
     strategy_breakdown = {item.name: item for item in report.strategy_breakdown}
     assert set(strategy_breakdown) == set(strategy_totals.index)
-    assert pytest.approx(strategy_totals["alpha"], rel=1e-9) == strategy_breakdown["alpha"].total_pnl
+    assert (
+        pytest.approx(strategy_totals["alpha"], rel=1e-9)
+        == strategy_breakdown["alpha"].total_pnl
+    )
 
     factor_contributions = inputs["factor_exposures"] * inputs["factor_returns"]
     factor_totals = factor_contributions.sum()
@@ -121,7 +157,9 @@ def test_portfolio_attribution_report_generation() -> None:
     assert 0.0 <= hedge.effectiveness <= 1.0
 
     assert report.regime_stability, "regime stability metrics expected"
-    alpha_metrics = next(item for item in report.regime_stability if item.strategy == "alpha")
+    alpha_metrics = next(
+        item for item in report.regime_stability if item.strategy == "alpha"
+    )
     assert alpha_metrics.metrics, "per-regime metrics should exist"
 
     assert report.alerts, "expected concentration alerts based on configured limits"
@@ -145,7 +183,10 @@ def test_portfolio_attribution_instrument_exposure_validation() -> None:
     inputs = _build_sample_inputs()
     bad_exposures = inputs["instrument_exposures"].rename(columns={"AAPL": "AAPL_ALT"})
 
-    with pytest.raises(ValueError, match="instrument_exposures columns must match instrument_pnl columns"):
+    with pytest.raises(
+        ValueError,
+        match="instrument_exposures columns must match instrument_pnl columns",
+    ):
         PortfolioAttributionEngine(
             strategy_pnl=inputs["strategy_pnl"],
             instrument_pnl=inputs["instrument_pnl"],

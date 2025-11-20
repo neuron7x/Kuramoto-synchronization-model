@@ -1,19 +1,5 @@
 """High-level platform assembly helpers."""
 
-from .api_messaging_integration import (
-    GatewayRequest,
-    IntegrationRoute,
-    IntegrationRouteConflictError,
-    IntegrationRouteError,
-    IntegrationRouteNotFoundError,
-    IntegrationRouter,
-    RouteDispatchResult,
-)
-from .integration import (
-    StreamingPipelineSettings,
-    TradePulsePlatform,
-    build_tradepulse_platform,
-)
 from .action_control import (
     ActionAuditSink,
     ActionClass,
@@ -28,6 +14,20 @@ from .action_control import (
     SystemState,
     TaclDecision,
     TaclGate,
+)
+from .api_messaging_integration import (
+    GatewayRequest,
+    IntegrationRoute,
+    IntegrationRouteConflictError,
+    IntegrationRouteError,
+    IntegrationRouteNotFoundError,
+    IntegrationRouter,
+    RouteDispatchResult,
+)
+from .integration import (
+    StreamingPipelineSettings,
+    TradePulsePlatform,
+    build_tradepulse_platform,
 )
 from .module_orchestrator import (
     ModuleDefinition,

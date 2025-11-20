@@ -33,7 +33,6 @@ from core.strategies.fete import FETE
 from domain.order import OrderSide
 from domain.position import Position
 
-
 # ---------------------------------------------------------------------------
 # Data acquisition helpers
 # ---------------------------------------------------------------------------
@@ -81,7 +80,9 @@ class YahooFinanceDataFetcher:
             try:
                 import yfinance as yf
             except ImportError as exc:  # pragma: no cover - exercised in tests via stub
-                raise RuntimeError("yfinance must be installed to use the default downloader") from exc
+                raise RuntimeError(
+                    "yfinance must be installed to use the default downloader"
+                ) from exc
             downloader = yf.download
 
         frame = downloader(symbol, start=start, end=end, progress=False)
@@ -137,11 +138,15 @@ class BinanceRESTFetcher:
             raise ValueError("limit must be in (0, 1000]")
 
         factory = self._session_factory
-        if factory is None:  # pragma: no cover - exercised via dependency injection in tests
+        if (
+            factory is None
+        ):  # pragma: no cover - exercised via dependency injection in tests
             try:
                 import aiohttp
             except ImportError as exc:  # pragma: no cover
-                raise RuntimeError("aiohttp must be installed to use the default session") from exc
+                raise RuntimeError(
+                    "aiohttp must be installed to use the default session"
+                ) from exc
 
             def _factory() -> AsyncContextManager[aiohttp.ClientSession]:
                 return aiohttp.ClientSession()
@@ -257,10 +262,16 @@ class PaperTradingAccount:
         if price <= 0:
             raise ValueError("price must be positive")
 
-        fill_price = price * (1.0 + self.slippage) if side is OrderSide.BUY else price * (
-            1.0 - self.slippage
+        fill_price = (
+            price * (1.0 + self.slippage)
+            if side is OrderSide.BUY
+            else price * (1.0 - self.slippage)
         )
-        transaction_multiplier = 1.0 + self.transaction_cost if side is OrderSide.BUY else 1.0 - self.transaction_cost
+        transaction_multiplier = (
+            1.0 + self.transaction_cost
+            if side is OrderSide.BUY
+            else 1.0 - self.transaction_cost
+        )
 
         notional = quantity * fill_price
         if side is OrderSide.BUY:
@@ -397,7 +408,9 @@ class RiskGuard:
             self.circuit_reason = message
             self._record_event(timestamp, "circuit", message)
 
-    def check_equity(self, equity: float, *, timestamp: datetime) -> tuple[bool, str | None]:
+    def check_equity(
+        self, equity: float, *, timestamp: datetime
+    ) -> tuple[bool, str | None]:
         if equity <= 0:
             self._trigger_circuit(timestamp, "Equity dropped to non-positive value")
             return False, "equity_non_positive"
@@ -405,9 +418,15 @@ class RiskGuard:
         if equity > self.peak_equity:
             self.peak_equity = float(equity)
 
-        drawdown = 0.0 if self.peak_equity <= 0 else (self.peak_equity - equity) / self.peak_equity
+        drawdown = (
+            0.0
+            if self.peak_equity <= 0
+            else (self.peak_equity - equity) / self.peak_equity
+        )
         self.current_drawdown = float(max(drawdown, 0.0))
-        self.max_observed_drawdown = max(self.max_observed_drawdown, self.current_drawdown)
+        self.max_observed_drawdown = max(
+            self.max_observed_drawdown, self.current_drawdown
+        )
 
         daily_loss = (self.start_equity - equity) / self.start_equity
         if daily_loss > self.max_daily_loss:
@@ -426,7 +445,9 @@ class RiskGuard:
 
         return True, None
 
-    def check_position_size(self, value: float, equity: float, *, timestamp: datetime) -> tuple[bool, str | None]:
+    def check_position_size(
+        self, value: float, equity: float, *, timestamp: datetime
+    ) -> tuple[bool, str | None]:
         limit = equity * self.max_position_fraction
         if value > limit + 1e-9:
             self._record_event(
@@ -437,7 +458,9 @@ class RiskGuard:
             return False, "position_limit"
         return True, None
 
-    def stop_loss_triggered(self, position: Position | None, price: float, *, timestamp: datetime) -> bool:
+    def stop_loss_triggered(
+        self, position: Position | None, price: float, *, timestamp: datetime
+    ) -> bool:
         if position is None or position.quantity == 0:
             return False
         if position.entry_price <= 0:
@@ -487,7 +510,9 @@ class BacktestReport:
     risk_events: list[RiskEvent]
     portfolio: dict[str, object]
 
-    def to_dict(self) -> dict[str, object]:  # pragma: no cover - convenience for callers
+    def to_dict(
+        self,
+    ) -> dict[str, object]:  # pragma: no cover - convenience for callers
         return {
             "symbol": self.symbol,
             "start": self.start.isoformat(),
@@ -504,7 +529,9 @@ class BacktestReport:
             "win_rate": self.win_rate,
             "profit_factor": self.profit_factor,
             "audit": self.audit,
-            "equity_curve": [(ts.isoformat(), value) for ts, value in self.equity_curve],
+            "equity_curve": [
+                (ts.isoformat(), value) for ts, value in self.equity_curve
+            ],
             "trades": [trade.to_dict() for trade in self.trades],
             "risk_events": [event.__dict__ for event in self.risk_events],
             "portfolio": self.portfolio,
@@ -554,7 +581,9 @@ class FETEBacktestEngine:
             raise ValueError("timestamps length must match prices")
 
         self._account.reset()
-        initial_equity = self._account.equity({symbol: float(price_array[0])}, timestamp=timestamps[0], record=False)
+        initial_equity = self._account.equity(
+            {symbol: float(price_array[0])}, timestamp=timestamps[0], record=False
+        )
         self._risk.reset(initial_equity, timestamp=timestamps[0])
 
         returns = np.zeros_like(price_array)
@@ -564,7 +593,9 @@ class FETEBacktestEngine:
 
         for idx, price in enumerate(price_array):
             ts = timestamps[idx]
-            equity_before = self._account.equity({symbol: float(price)}, timestamp=ts, record=False)
+            equity_before = self._account.equity(
+                {symbol: float(price)}, timestamp=ts, record=False
+            )
 
             realized_return = float(returns[idx]) if idx > 0 else None
             position_fraction, diag = self._fete.decide(
@@ -575,17 +606,23 @@ class FETEBacktestEngine:
             )
             diagnostics.append(diag)
 
-            ok_equity, equity_reason = self._risk.check_equity(float(equity_before), timestamp=ts)
+            ok_equity, equity_reason = self._risk.check_equity(
+                float(equity_before), timestamp=ts
+            )
             target_fraction = float(position_fraction)
 
             if not ok_equity or self._risk.circuit_breaker_active:
                 target_fraction = 0.0
                 if equity_reason is not None:
-                    self._risk._record_event(ts, equity_reason, "Circuit breaker engaged")
+                    self._risk._record_event(
+                        ts, equity_reason, "Circuit breaker engaged"
+                    )
 
             if not self._risk.circuit_breaker_active:
                 pos_value = abs(target_fraction) * float(equity_before)
-                ok_size, size_reason = self._risk.check_position_size(pos_value, float(equity_before), timestamp=ts)
+                ok_size, size_reason = self._risk.check_position_size(
+                    pos_value, float(equity_before), timestamp=ts
+                )
                 if not ok_size:
                     # Clamp to the allowed band instead of flat rejection.
                     target_fraction = float(
@@ -600,7 +637,11 @@ class FETEBacktestEngine:
                     target_fraction = 0.0
 
             target_fraction = float(
-                np.clip(target_fraction, -self._risk.max_position_fraction, self._risk.max_position_fraction)
+                np.clip(
+                    target_fraction,
+                    -self._risk.max_position_fraction,
+                    self._risk.max_position_fraction,
+                )
             )
 
             trade = self._account.rebalance_to_fraction(
@@ -613,7 +654,9 @@ class FETEBacktestEngine:
 
             self._account.equity({symbol: float(price)}, timestamp=ts, record=True)
 
-            equity_after = self._account.equity({symbol: float(price)}, timestamp=ts, record=False)
+            equity_after = self._account.equity(
+                {symbol: float(price)}, timestamp=ts, record=False
+            )
             self._risk.check_equity(float(equity_after), timestamp=ts)
 
             if trade is not None:
@@ -628,7 +671,9 @@ class FETEBacktestEngine:
             equity_returns = np.zeros(1, dtype=float)
 
         avg_return = float(np.mean(equity_returns)) if equity_returns.size else 0.0
-        volatility = float(np.std(equity_returns, ddof=1)) if equity_returns.size > 1 else 0.0
+        volatility = (
+            float(np.std(equity_returns, ddof=1)) if equity_returns.size > 1 else 0.0
+        )
         annual_return = avg_return * 252.0
         sharpe = 0.0
         if volatility > 0:
@@ -651,7 +696,8 @@ class FETEBacktestEngine:
             end=timestamps[-1],
             start_equity=float(initial_equity),
             final_equity=float(final_equity),
-            total_return=(float(final_equity) - float(initial_equity)) / float(initial_equity),
+            total_return=(float(final_equity) - float(initial_equity))
+            / float(initial_equity),
             annual_return=float(annual_return),
             volatility=volatility,
             sharpe=float(sharpe),
@@ -664,7 +710,9 @@ class FETEBacktestEngine:
             equity_curve=equity_curve,
             trades=trades,
             risk_events=list(self._risk.events),
-            portfolio=self._account.portfolio_snapshot({symbol: float(price_array[-1])}),
+            portfolio=self._account.portfolio_snapshot(
+                {symbol: float(price_array[-1])}
+            ),
         )
         return report
 

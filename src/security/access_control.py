@@ -127,7 +127,9 @@ class AccessPolicy:
 class AccessController:
     """Evaluate whether actors are allowed to perform privileged actions."""
 
-    def __init__(self, policy: AccessPolicy, *, fallback_subject: str = "system") -> None:
+    def __init__(
+        self, policy: AccessPolicy, *, fallback_subject: str = "system"
+    ) -> None:
         self._policy = policy
         self._fallback = fallback_subject.strip().lower()
 
@@ -198,11 +200,7 @@ def _parse_permission(value: object, context: str) -> Permission:
                 items = [resources_value]
             else:
                 items = list(resources_value)
-            cleaned = {
-                str(item).strip().lower()
-                for item in items
-                if str(item).strip()
-            }
+            cleaned = {str(item).strip().lower() for item in items if str(item).strip()}
             resources = frozenset(cleaned or {"*"})
         return Permission(action=raw_action, resources=resources)
 

@@ -1,13 +1,13 @@
 """Neuro-inspired adaptive controllers for core decision loops."""
 
-from . import dopamine, desensitization, nak
+from . import desensitization, dopamine, nak
 from .neuro_orchestrator import (
+    LearningLoop,
+    ModuleInstruction,
     NeuroOrchestrator,
     OrchestrationOutput,
-    TradingScenario,
-    ModuleInstruction,
     RiskContour,
-    LearningLoop,
+    TradingScenario,
     create_orchestration_from_scenario,
 )
 

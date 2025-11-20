@@ -167,14 +167,18 @@ def _load_prices(config: SimulationConfig) -> pd.DataFrame:
     shocks = rng.normal(loc=drift, scale=volatility, size=length)
     log_prices = np.log(config.initial_price) + np.cumsum(shocks)
     prices = np.exp(log_prices)
-    volume = rng.lognormal(mean=config.volume_mean, sigma=config.volume_sigma, size=length)
+    volume = rng.lognormal(
+        mean=config.volume_mean, sigma=config.volume_sigma, size=length
+    )
     mock = pd.DataFrame({"close": prices, "volume": volume}, index=index)
     if not df.empty:
         mock = pd.concat([df, mock]).tail(config.history_length)
     return mock
 
 
-def _build_signal(df: pd.DataFrame, config: SimulationConfig) -> tuple[CompositeSignal, Signal]:
+def _build_signal(
+    df: pd.DataFrame, config: SimulationConfig
+) -> tuple[CompositeSignal, Signal]:
     engine = TradePulseCompositeEngine()
     composite = engine.analyze_market(df)
     entry = float(composite.entry_signal)
@@ -210,7 +214,9 @@ def _build_signal(df: pd.DataFrame, config: SimulationConfig) -> tuple[Composite
     return composite, signal
 
 
-def _derive_order_quantity(signal: Signal, config: SimulationConfig, price: float) -> float:
+def _derive_order_quantity(
+    signal: Signal, config: SimulationConfig, price: float
+) -> float:
     magnitude = abs(float(signal.metadata.get("entry_signal", 0.0)))
     risk_multiplier = float(signal.metadata.get("risk_multiplier", 1.0))
     scaled = config.base_order_size * max(magnitude, config.entry_threshold)
@@ -268,7 +274,9 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
             order_type=OrderType.MARKET,
         )
         try:
-            risk_manager.validate_order(order.symbol, order.side.value, order.quantity, last_price)
+            risk_manager.validate_order(
+                order.symbol, order.side.value, order.quantity, last_price
+            )
         except (LimitViolation, OrderRateExceeded) as exc:
             LOGGER.warning(
                 "Risk check rejected order",
@@ -282,12 +290,16 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
                 "Kill-switch blocked order",
                 extra={"event": "sim.risk_block", "reason": str(exc)},
             )
-            risk_result = RiskCheckResult(status="blocked", reason=str(exc), kill_switch_engaged=True)
+            risk_result = RiskCheckResult(
+                status="blocked", reason=str(exc), kill_switch_engaged=True
+            )
         else:
             risk_result = RiskCheckResult(status="passed", kill_switch_engaged=False)
             engine = PaperTradingEngine(
                 SimulatedExchangeConnector(),
-                latency_model=DeterministicLatencyModel(ack_delay=0.05, fill_delay=0.15),
+                latency_model=DeterministicLatencyModel(
+                    ack_delay=0.05, fill_delay=0.15
+                ),
             )
             execution_report = engine.execute_order(
                 order,
@@ -295,7 +307,9 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
                 metadata={"simulation": True, "phase": signal.metadata.get("phase")},
             )
             fill_side = "buy" if order.side is OrderSide.BUY else "sell"
-            risk_manager.register_fill(order.symbol, fill_side, order.quantity, last_price)
+            risk_manager.register_fill(
+                order.symbol, fill_side, order.quantity, last_price
+            )
             LOGGER.info(
                 "Executed simulated order",
                 extra={
@@ -333,7 +347,9 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
 
 
 if __name__ == "__main__":  # pragma: no cover - manual execution helper
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     result = run_local_sim()
     for key, value in result.summary().items():
         LOGGER.info("%s: %s", key, value)

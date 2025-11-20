@@ -8,8 +8,8 @@ import pytest
 
 from runtime.energy_validator import (
     EnergyConfig,
-    EnergyValidator,
     EnergyValidationResult,
+    EnergyValidator,
     MetricThreshold,
 )
 
@@ -24,7 +24,7 @@ class TestMetricThreshold:
             description="Test metric",
             threshold=100.0,
             weight=1.5,
-            unit="ms"
+            unit="ms",
         )
         assert metric.name == "test_metric"
         assert metric.threshold == 100.0
@@ -204,7 +204,7 @@ class TestEnergyValidator:
         validator.validate(metrics_bad)
 
         # Export to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
@@ -212,7 +212,7 @@ class TestEnergyValidator:
             assert temp_path.exists()
 
             # Load and verify report
-            with temp_path.open('r') as f:
+            with temp_path.open("r") as f:
                 report = json.load(f)
 
             assert "config" in report
@@ -266,7 +266,7 @@ class TestEnergyValidatorEdgeCases:
         validator = EnergyValidator()
         metrics = {
             "latency_p95": 75.0,  # Known
-            "unknown": 100.0,     # Unknown
+            "unknown": 100.0,  # Unknown
         }
         result = validator.compute_free_energy(metrics)
         assert "latency_p95" in result.metrics
@@ -274,11 +274,7 @@ class TestEnergyValidatorEdgeCases:
 
     def test_zero_threshold(self):
         """Test metric with zero threshold."""
-        config = EnergyConfig(
-            metrics=(
-                MetricThreshold("test", "Test", 0.0, 1.0, ""),
-            )
-        )
+        config = EnergyConfig(metrics=(MetricThreshold("test", "Test", 0.0, 1.0, ""),))
         validator = EnergyValidator(config)
         # Zero threshold: value 0 should have headroom 0
         penalty, headroom = validator.compute_penalty("test", 0.0)
@@ -345,14 +341,14 @@ class TestEnergyValidatorIntegration:
             validator.validate(metrics)
 
         # Export
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
             validator.export_validation_report(temp_path)
 
             # Reload and verify
-            with temp_path.open('r') as f:
+            with temp_path.open("r") as f:
                 report = json.load(f)
 
             assert report["summary"]["total_validations"] == 5

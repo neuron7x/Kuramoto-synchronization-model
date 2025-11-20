@@ -1,4 +1,5 @@
 """Integration-style tests around the Polygon validator."""
+
 from __future__ import annotations
 
 import os

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import numpy as np
 import networkx as nx
+import numpy as np
 
-from core.indicators.multiscale_kuramoto import multiscale_kuramoto, fractal_gcl_novelty
+from core.indicators.multiscale_kuramoto import fractal_gcl_novelty, multiscale_kuramoto
 from utils.change_point import cusum_score, vol_shock
 
 
@@ -57,7 +57,11 @@ class ToyMarketEnv:
         max_drawdown = _max_drawdown(np.array(self.returns, dtype=float))
 
         volshock = vol_shock(np.array(self.returns), window=min(60, len(self.returns)))
-        cp = cusum_score(np.array(self.returns[-300:])) if len(self.returns) > 100 else 0.0
+        cp = (
+            cusum_score(np.array(self.returns[-300:]))
+            if len(self.returns) > 100
+            else 0.0
+        )
 
         padded = np.array(self.returns[-128:], dtype=float)
         if padded.size < 128:
@@ -67,7 +71,9 @@ class ToyMarketEnv:
 
         embeddings_a = self._rng.standard_normal((32, 16))
         embeddings_b = self._rng.standard_normal((32, 16))
-        novelty, fd = fractal_gcl_novelty(_toy_graph(32, 0.1, self._rng), embeddings_a, embeddings_b)
+        novelty, fd = fractal_gcl_novelty(
+            _toy_graph(32, 0.1, self._rng), embeddings_a, embeddings_b
+        )
 
         info = {
             "latent": float(self.latent),
@@ -116,7 +122,11 @@ class RegimeShiftEnv(ToyMarketEnv):
         max_drawdown = _max_drawdown(np.array(self.returns, dtype=float))
 
         volshock = vol_shock(np.array(self.returns), window=min(60, len(self.returns)))
-        cp = cusum_score(np.array(self.returns[-300:])) if len(self.returns) > 100 else 0.0
+        cp = (
+            cusum_score(np.array(self.returns[-300:]))
+            if len(self.returns) > 100
+            else 0.0
+        )
 
         padded = np.array(self.returns[-128:], dtype=float)
         if padded.size < 128:
@@ -126,7 +136,9 @@ class RegimeShiftEnv(ToyMarketEnv):
 
         embeddings_a = self._rng.standard_normal((32, 16))
         embeddings_b = self._rng.standard_normal((32, 16))
-        novelty, fd = fractal_gcl_novelty(_toy_graph(32, 0.15, self._rng), embeddings_a, embeddings_b)
+        novelty, fd = fractal_gcl_novelty(
+            _toy_graph(32, 0.15, self._rng), embeddings_a, embeddings_b
+        )
 
         info = {
             "latent": float(self.latent),

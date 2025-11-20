@@ -126,7 +126,9 @@ def test_monitoring_service_generates_alerts_and_dashboard() -> None:
     retraining_trigger = RetrainingTrigger(
         window=dt.timedelta(minutes=30), min_events=1, min_features=1
     )
-    isolation_planner = ImpactIsolationPlanner(quarantine_severities=("major", "critical"))
+    isolation_planner = ImpactIsolationPlanner(
+        quarantine_severities=("major", "critical")
+    )
     change_log = FeatureChangeLog(max_records=10)
     change_log.record("feature_a", "backfill", author="alice")
     dispatcher = _StubDispatcher()

@@ -200,7 +200,9 @@ class PortfolioAttributionReport:
         lines.append("")
         lines.append(f"Total PnL: ${self.total_pnl:,.2f}")
 
-        def _render_breakdown(title: str, items: Sequence[AttributionBreakdown]) -> None:
+        def _render_breakdown(
+            title: str, items: Sequence[AttributionBreakdown]
+        ) -> None:
             if not items:
                 return
             lines.append("")
@@ -371,7 +373,9 @@ class PortfolioAttributionEngine:
                     detail.append(
                         "unexpected exposure columns: " + ", ".join(sorted(extra))
                     )
-                message = "instrument_exposures columns must match instrument_pnl columns"
+                message = (
+                    "instrument_exposures columns must match instrument_pnl columns"
+                )
                 if detail:
                     message = f"{message} ({'; '.join(detail)})"
                 raise ValueError(message)
@@ -386,10 +390,15 @@ class PortfolioAttributionEngine:
             raise ValueError("factor_exposures contains NaN values")
         if self._factor_returns.isnull().any().any():
             raise ValueError("factor_returns contains NaN values")
-        if self._instrument_exposures is not None and self._instrument_exposures.isnull().any().any():
+        if (
+            self._instrument_exposures is not None
+            and self._instrument_exposures.isnull().any().any()
+        ):
             raise ValueError("instrument_exposures contains NaN values")
 
-    def _breakdown_from_dataframe(self, df: pd.DataFrame) -> tuple[AttributionBreakdown, ...]:
+    def _breakdown_from_dataframe(
+        self, df: pd.DataFrame
+    ) -> tuple[AttributionBreakdown, ...]:
         totals = df.sum(axis=0)
         total_sum = float(totals.sum())
         abs_totals = totals.abs()
@@ -423,7 +432,9 @@ class PortfolioAttributionEngine:
             value = float(series[name])
             share = exposures[name] / total if total != 0.0 else 0.0
             breakdown.append(
-                ExposureBreakdown(name=name, exposure=value, share_of_total=float(share))
+                ExposureBreakdown(
+                    name=name, exposure=value, share_of_total=float(share)
+                )
             )
         return tuple(breakdown)
 
@@ -482,7 +493,9 @@ class PortfolioAttributionEngine:
                             metric="exposure_share",
                             threshold=exposure_limit,
                             value=item.share_of_total,
-                            severity=self._severity(item.share_of_total, exposure_limit),
+                            severity=self._severity(
+                                item.share_of_total, exposure_limit
+                            ),
                         )
                     )
         return tuple(alerts)
@@ -494,7 +507,9 @@ class PortfolioAttributionEngine:
         pnl = self._strategy_pnl
         for pair_name, (primary, hedge) in sorted(self._hedge_pairs.items()):
             if primary not in pnl.columns:
-                raise KeyError(f"primary strategy '{primary}' not found in strategy_pnl")
+                raise KeyError(
+                    f"primary strategy '{primary}' not found in strategy_pnl"
+                )
             if hedge not in pnl.columns:
                 raise KeyError(f"hedge strategy '{hedge}' not found in strategy_pnl")
             primary_series = pnl[primary].to_numpy(copy=True)

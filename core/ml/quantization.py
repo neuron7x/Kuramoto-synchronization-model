@@ -94,15 +94,17 @@ def _combine_arrays(batch: Iterable[np.ndarray]) -> np.ndarray:
     return np.concatenate(values)
 
 
-def _error_metrics(reference: np.ndarray, approx: np.ndarray, eps: float) -> MutableMapping[str, float]:
+def _error_metrics(
+    reference: np.ndarray, approx: np.ndarray, eps: float
+) -> MutableMapping[str, float]:
     ref = np.asarray(reference, dtype=np.float32)
     recon = np.asarray(approx, dtype=np.float32)
     diff = ref - recon
-    mse = float(np.mean(diff ** 2))
+    mse = float(np.mean(diff**2))
     mae = float(np.mean(np.abs(diff)))
     max_abs = float(np.max(np.abs(diff))) if diff.size else 0.0
-    signal_power = float(np.sum(ref ** 2))
-    noise_power = float(np.sum(diff ** 2))
+    signal_power = float(np.sum(ref**2))
+    noise_power = float(np.sum(diff**2))
     if noise_power <= eps:
         snr_db = float("inf")
     else:
@@ -125,7 +127,9 @@ class UniformAffineQuantizer:
         self._calibration_range: tuple[float, float] | None = None
         self._calibrated = False
         self._int_bounds = _dtype_bounds(np.int8)
-        self._target_dtype = np.dtype(np.int8 if self.config.target_dtype == "int8" else np.float16)
+        self._target_dtype = np.dtype(
+            np.int8 if self.config.target_dtype == "int8" else np.float16
+        )
 
     def calibrate(self, samples: Iterable[np.ndarray] | np.ndarray) -> None:
         """Register calibration samples to estimate the dynamic range."""
@@ -181,7 +185,9 @@ class UniformAffineQuantizer:
                     calib_range = None
                     fallback_used = True
                 else:
-                    raise RuntimeError("Degenerate scale encountered during quantization")
+                    raise RuntimeError(
+                        "Degenerate scale encountered during quantization"
+                    )
             else:
                 qmin, qmax = self._int_bounds
                 transformed = np.round(arr / scale + zero_point)
@@ -205,7 +211,9 @@ class UniformAffineQuantizer:
             error_metrics=errors,
         )
 
-    def _resolve_params(self, arr: np.ndarray) -> tuple[float | None, float | None, tuple[float, float] | None]:
+    def _resolve_params(
+        self, arr: np.ndarray
+    ) -> tuple[float | None, float | None, tuple[float, float] | None]:
         if self.config.scheme == "post_training":
             if not self._calibrated:
                 self.calibrate(arr)
@@ -218,7 +226,9 @@ class UniformAffineQuantizer:
         scale, zero_point = self._scale_from_range(min_val, max_val)
         return scale, zero_point, (min_val, max_val)
 
-    def _scale_from_range(self, min_val: float, max_val: float) -> tuple[float | None, float | None]:
+    def _scale_from_range(
+        self, min_val: float, max_val: float
+    ) -> tuple[float | None, float | None]:
         if max_val - min_val <= self.config.eps:
             return None, None
         qmin, qmax = self._int_bounds
@@ -228,7 +238,9 @@ class UniformAffineQuantizer:
         return float(scale), float(zero_point)
 
     @staticmethod
-    def _dequantize(quantized: np.ndarray, scale: float | None, zero_point: float | None) -> np.ndarray:
+    def _dequantize(
+        quantized: np.ndarray, scale: float | None, zero_point: float | None
+    ) -> np.ndarray:
         if quantized.dtype == np.int8:
             if scale is None or zero_point is None:
                 raise RuntimeError("Missing scale/zero_point for int8 dequantization")

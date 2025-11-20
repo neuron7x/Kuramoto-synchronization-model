@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from application.system import (
     ExchangeAdapterConfig,
@@ -19,7 +20,6 @@ from core.data.models import InstrumentType, PriceTick
 from domain import Order, OrderSide, OrderStatus, OrderType, Signal, SignalAction
 from execution.connectors import BinanceConnector
 from src.security import AccessController, AccessDeniedError, AccessPolicy
-import yaml
 
 
 def _build_controller(tmp_path: Path, payload: dict[str, object]) -> AccessController:
@@ -90,9 +90,7 @@ class FakeLiveLoop:
         self.last_order: Order | None = None
         self.last_correlation_id: str | None = None
 
-    def submit_order(
-        self, venue: str, order: Order, *, correlation_id: str
-    ) -> Order:
+    def submit_order(self, venue: str, order: Order, *, correlation_id: str) -> Order:
         self.last_venue = venue
         self.last_order = order
         self.last_correlation_id = correlation_id
