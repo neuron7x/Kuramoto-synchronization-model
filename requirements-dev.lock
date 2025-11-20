@@ -133,7 +133,7 @@ pyarrow==21.0.0
 pycares==4.11.0
 pycodestyle==2.12.1
 pycparser==2.23
-pydantic==2.12.3
+pydantic>=2.12,<3
 pydantic-core==2.41.4
 pydantic-settings==2.11.0
 pydeck==0.9.1
