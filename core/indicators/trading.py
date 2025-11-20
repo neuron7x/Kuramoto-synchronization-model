@@ -287,7 +287,6 @@ if _numba_available():  # pragma: no cover - compiled at import time
             slope = 1.0
         return slope
 
-
     @njit(parallel=True, cache=True, fastmath=True)
     def _rolling_hurst_numba(
         series: np.ndarray,

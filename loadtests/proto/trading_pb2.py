@@ -22,8 +22,6 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-
-
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rtrading.proto\x12\x14loadtests.trading.v1\"\x07\n\x05\x45mpty\"Z\n\x05Order\x12\x0e\n\x06symbol\x18\x01 \x01(\t\x12\x0c\n\x04side\x18\x02 \x01(\t\x12\x12\n\norder_type\x18\x03 \x01(\t\x12\x10\n\x08quantity\x18\x04 \x01(\x01\x12\r\n\x05price\x18\x05 \x01(\x01\"\x1b\n\x07OrderID\x12\x10\n\x08order_id\x18\x01 \x01(\t\"a\n\rOrderResponse\x12\x10\n\x08order_id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\x17\n\x0f\x66illed_quantity\x18\x03 \x01(\x01\x12\x15\n\raverage_price\x18\x04 \x01(\x01\"!\n\x0e\x43\x61ncelResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"M\n\x08Position\x12\x0e\n\x06symbol\x18\x01 \x01(\t\x12\x10\n\x08quantity\x18\x02 \x01(\x01\x12\x10\n\x08notional\x18\x03 \x01(\x01\x12\r\n\x05var95\x18\x04 \x01(\x01\"A\n\x0cPositionList\x12\x31\n\tpositions\x18\x01 \x03(\x0b\x32\x1e.loadtests.trading.v1.Position\"\x1d\n\nSymbolList\x12\x0f\n\x07symbols\x18\x01 \x03(\t\"J\n\x06Ticker\x12\x0e\n\x06symbol\x18\x01 \x01(\t\x12\r\n\x05price\x18\x02 \x01(\x01\x12\x0e\n\x06volume\x18\x03 \x01(\x01\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\x32\xd8\x02\n\x0eTradingService\x12N\n\nPlaceOrder\x12\x1b.loadtests.trading.v1.Order\x1a#.loadtests.trading.v1.OrderResponse\x12R\n\x0b\x43\x61ncelOrder\x12\x1d.loadtests.trading.v1.OrderID\x1a$.loadtests.trading.v1.CancelResponse\x12O\n\x0cGetPositions\x12\x1b.loadtests.trading.v1.Empty\x1a\".loadtests.trading.v1.PositionList\x12Q\n\rStreamTickers\x12 .loadtests.trading.v1.SymbolList\x1a\x1c.loadtests.trading.v1.Ticker0\x01\x62\x06proto3')
 
 _globals = globals()
@@ -31,24 +29,24 @@ _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'trading_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_EMPTY']._serialized_start=39
-  _globals['_EMPTY']._serialized_end=46
-  _globals['_ORDER']._serialized_start=48
-  _globals['_ORDER']._serialized_end=138
-  _globals['_ORDERID']._serialized_start=140
-  _globals['_ORDERID']._serialized_end=167
-  _globals['_ORDERRESPONSE']._serialized_start=169
-  _globals['_ORDERRESPONSE']._serialized_end=266
-  _globals['_CANCELRESPONSE']._serialized_start=268
-  _globals['_CANCELRESPONSE']._serialized_end=301
-  _globals['_POSITION']._serialized_start=303
-  _globals['_POSITION']._serialized_end=380
-  _globals['_POSITIONLIST']._serialized_start=382
-  _globals['_POSITIONLIST']._serialized_end=447
-  _globals['_SYMBOLLIST']._serialized_start=449
-  _globals['_SYMBOLLIST']._serialized_end=478
-  _globals['_TICKER']._serialized_start=480
-  _globals['_TICKER']._serialized_end=554
-  _globals['_TRADINGSERVICE']._serialized_start=557
-  _globals['_TRADINGSERVICE']._serialized_end=901
+  _globals['_EMPTY']._serialized_start = 39
+  _globals['_EMPTY']._serialized_end = 46
+  _globals['_ORDER']._serialized_start = 48
+  _globals['_ORDER']._serialized_end = 138
+  _globals['_ORDERID']._serialized_start = 140
+  _globals['_ORDERID']._serialized_end = 167
+  _globals['_ORDERRESPONSE']._serialized_start = 169
+  _globals['_ORDERRESPONSE']._serialized_end = 266
+  _globals['_CANCELRESPONSE']._serialized_start = 268
+  _globals['_CANCELRESPONSE']._serialized_end = 301
+  _globals['_POSITION']._serialized_start = 303
+  _globals['_POSITION']._serialized_end = 380
+  _globals['_POSITIONLIST']._serialized_start = 382
+  _globals['_POSITIONLIST']._serialized_end = 447
+  _globals['_SYMBOLLIST']._serialized_start = 449
+  _globals['_SYMBOLLIST']._serialized_end = 478
+  _globals['_TICKER']._serialized_start = 480
+  _globals['_TICKER']._serialized_end = 554
+  _globals['_TRADINGSERVICE']._serialized_start = 557
+  _globals['_TRADINGSERVICE']._serialized_end = 901
 # @@protoc_insertion_point(module_scope)

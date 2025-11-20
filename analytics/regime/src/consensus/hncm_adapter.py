@@ -19,6 +19,7 @@ import json
 
 # ----- helpers -----
 
+
 def clamp(x: float, lo: float, hi: float) -> float:
     """Clamp ``x`` into the inclusive ``[lo, hi]`` interval."""
 
@@ -30,7 +31,9 @@ def ema(prev: float, value: float, alpha: float) -> float:
 
     return alpha * value + (1.0 - alpha) * prev
 
+
 Action = Literal["BUY", "SELL", "HOLD"]
+
 
 @dataclass(slots=True, frozen=True)
 class AgentVote:
@@ -40,6 +43,7 @@ class AgentVote:
     confidence: float = 1.0  # [0, 1]
     rationale: str = ""
 
+
 @dataclass(slots=True, frozen=True)
 class ConsensusDecision:
     """Рішення консенсусу."""
@@ -48,6 +52,7 @@ class ConsensusDecision:
     confidence: float
     weights: Mapping[str, float]
     votes: Tuple[AgentVote, ...]
+
 
 class _StateStore:
     """Проста JSON-пам'ять для нагород/ваг (атомарний запис)."""
@@ -103,6 +108,7 @@ class _StateStore:
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(payload)
         tmp.replace(self.path)
+
 
 class HNCMConsensusAdapter:
     """Адаптивний консенсус (HNCM v1.1 логіка) для TradePulse.
@@ -261,6 +267,7 @@ class HNCMConsensusAdapter:
         return ConsensusDecision(action=action, score=score, confidence=conf, weights=weights, votes=v)
 
 # ---------- EWS → AgentVote ----------
+
 
 def ews_to_vote(agent_name: str, ews_result: Any, *, use_probability: bool = True) -> AgentVote:
     """Перетворити :class:`EWSResult` у голос агента."""

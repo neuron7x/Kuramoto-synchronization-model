@@ -275,4 +275,3 @@ class PromptRenderResult:
     context: PromptContext
     record: PromptExecutionRecord
     truncated_fragments: tuple[ContextFragment, ...]
-

@@ -181,4 +181,3 @@ class GABAInhibitionGate:
             "impulse_trace": self._impulse_trace,
             "stdp_dw": self._stdp_dw,
         }
-

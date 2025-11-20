@@ -219,4 +219,3 @@ def test_apply_neural_decision_rejects_non_numeric_allocations() -> None:
 
     with pytest.raises(TypeError, match="Allocation field 'alloc_scale' must be numeric"):
         apply_neural_decision({"alloc_scale": object()}, manager)
-

@@ -952,6 +952,7 @@ class BackendRuntimeSettings(BaseSettings):
 
         return self.redact_patterns
 
+
 __all__ = [
     "ApiServerTLSSettings",
     "ApiServerSettings",

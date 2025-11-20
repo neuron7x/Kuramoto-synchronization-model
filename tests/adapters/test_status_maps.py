@@ -11,13 +11,14 @@ INTERFACES_PKG = "interfaces.execution"
 
 CANONICAL_STATUS_NAMES: Set[str] = set()
 
+
 def _collect_canonical_statuses() -> Set[str]:
     names = set()
     try:
         interfaces = importlib.import_module(INTERFACES_PKG)
     except Exception:
         # Fallback to common status names found in domain.Order.OrderStatus
-        return {"open","partially_filled","filled","cancelled","rejected","pending"}
+        return {"open", "partially_filled", "filled", "cancelled", "rejected", "pending"}
 
     for _, name, ispkg in pkgutil.walk_packages(interfaces.__path__, interfaces.__name__ + "."):
         try:
@@ -32,9 +33,11 @@ def _collect_canonical_statuses() -> Set[str]:
                 for it in obj:
                     if isinstance(it, str):
                         names.add(it.lower())
-    return names or {"open","partially_filled","filled","cancelled","rejected","pending"}
+    return names or {"open", "partially_filled", "filled", "cancelled", "rejected", "pending"}
+
 
 CANONICAL_STATUS_NAMES = _collect_canonical_statuses()
+
 
 def _iter_adapter_modules():
     pkg = importlib.import_module(ADAPTERS_PKG)
@@ -43,7 +46,9 @@ def _iter_adapter_modules():
             continue
         yield name
 
+
 STATUS_MAP_NAME_RE = re.compile(r".*(ORDER|EXEC|STATUS).*(MAP|MAPPING).*", re.IGNORECASE)
+
 
 def _find_status_maps(mod) -> Dict[str, Dict[Any, Any]]:
     maps = {}
@@ -51,6 +56,7 @@ def _find_status_maps(mod) -> Dict[str, Dict[Any, Any]]:
         if isinstance(v, dict) and STATUS_MAP_NAME_RE.match(k):
             maps[k] = v
     return maps
+
 
 def test_status_maps_values_are_canonical():
     missing = {}
@@ -73,6 +79,7 @@ def test_status_maps_values_are_canonical():
     if missing:
         pytest.fail(f"Non-canonical status values found in adapters: {missing}")
 
+
 def test_status_maps_cover_common_states():
-    typical = {"open","partially_filled","filled","cancelled","rejected"}
+    typical = {"open", "partially_filled", "filled", "cancelled", "rejected"}
     assert typical.issubset(CANONICAL_STATUS_NAMES), "Canonical statuses missing typical names"

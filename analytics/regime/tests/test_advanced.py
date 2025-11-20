@@ -203,4 +203,3 @@ def test_ews_aggregator_combines_scores():
 
     assert 0.0 <= result.probability <= 1.0
     assert result.kill_switch_recommended is True
-

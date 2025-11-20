@@ -657,4 +657,3 @@ def load_strategy_pipeline(
 ) -> StrategyPipelineDefinition:
     loader = StrategyDSLLoader(preset_dirs=preset_dirs, template_dirs=template_dirs)
     return loader.load(Path(path), context=context)
-

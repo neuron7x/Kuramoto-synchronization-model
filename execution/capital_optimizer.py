@@ -538,4 +538,3 @@ __all__ = [
     "AllocationResult",
     "CapitalAllocationOptimizer",
 ]
-

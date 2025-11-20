@@ -114,4 +114,3 @@ def test_end_to_end_trading_cycle(tmp_path: Path) -> None:
     assert system.last_execution_submission_at is not None
     assert system.last_execution_error is None
     assert not list(connector.open_orders())  # Filled orders should not remain active.
-

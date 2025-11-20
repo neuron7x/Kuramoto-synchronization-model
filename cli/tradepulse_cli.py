@@ -1174,7 +1174,6 @@ def deploy(
     )
 
 
-
 @cli.command()
 @click.option(
     "--config",
@@ -1391,4 +1390,3 @@ DEFAULT_OVERLAY_NAMES = {
     "stage": "staging",
     "prod": "production",
 }
-

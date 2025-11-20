@@ -286,4 +286,3 @@ def estimate_hurst_rs(series: Sequence[float], *, min_window: int = 8, max_windo
     x, y = np.transpose(rs_values)
     slope, _ = np.polyfit(x, y, 1)
     return float(np.clip(slope, 0.0, 1.5))
-

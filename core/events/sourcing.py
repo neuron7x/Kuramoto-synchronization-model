@@ -1068,4 +1068,3 @@ def restore_from_snapshot(
     aggregate = aggregate_cls(snapshot.aggregate_id, version=snapshot.version)
     aggregate.load_snapshot(snapshot.state)
     return aggregate
-

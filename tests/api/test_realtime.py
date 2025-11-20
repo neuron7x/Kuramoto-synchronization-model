@@ -105,4 +105,3 @@ async def test_analytics_store_respects_history_limits() -> None:
     assert len(records) == 2
     assert records[0].symbol == "SYM-3"
     assert records[1].symbol == "SYM-2"
-

@@ -45,7 +45,7 @@ def benchmark_indicator(
     cold_best = min(cold_samples)
     hot_best = min(hot_samples)
     print(
-        f"{name:<24s} cold_best={cold_best*1e3:6.2f} ms  hot_best={hot_best*1e3:6.2f} ms  "
+        f"{name:<24s} cold_best={cold_best * 1e3:6.2f} ms  hot_best={hot_best * 1e3:6.2f} ms  "
         f"hot/ cold={hot_best / cold_best:5.2f}"
     )
 

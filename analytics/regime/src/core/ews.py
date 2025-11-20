@@ -111,4 +111,3 @@ class EarlyWarningSignal:
 
 def _sigmoid(value: float) -> float:
     return 1.0 / (1.0 + exp(-value))
-

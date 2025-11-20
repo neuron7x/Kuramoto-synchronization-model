@@ -4,11 +4,13 @@ from tests.util.exchanges import load_adapter_or_http_client, get_server_time, g
 
 EXCHANGES = ("binance", "coinbase", "kraken")
 
+
 @pytest.mark.parametrize("exchange", EXCHANGES)
 def test_public_time_recorded(exchange):
     subj = load_adapter_or_http_client(exchange)
     ts = get_server_time(subj)
     assert isinstance(ts, int) and ts > 0
+
 
 @pytest.mark.parametrize("exchange", EXCHANGES)
 def test_public_symbols_recorded(exchange):

@@ -18,7 +18,7 @@ def _fake_tick(ts: float):
             {'type': 'trade', 'side': 'bid', 'volume': 30, 'price_change': True},
         ],
         'messages': [1] * np.random.randint(50, 80),
-        'trades':   [{'profit': 0.0, 'slippage': 0.0}] * np.random.randint(1, 5),
+        'trades': [{'profit': 0.0, 'slippage': 0.0}] * np.random.randint(1, 5),
         'delta_P': np.random.normal(0, 0.02),
         'Q': np.random.normal(0, 1000)
     }

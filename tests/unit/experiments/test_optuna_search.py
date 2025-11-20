@@ -88,4 +88,3 @@ def test_optuna_search_logs_artifacts_and_promotes_best(tmp_path: Path) -> None:
     )
     assert summary_payload["experiment"] == config.experiment
     assert summary_payload["promotion"]["promoted"] is True
-

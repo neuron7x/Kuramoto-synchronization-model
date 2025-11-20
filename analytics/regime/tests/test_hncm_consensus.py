@@ -15,6 +15,7 @@ from analytics.regime.src.consensus.hncm_adapter import (
 from application.microservices.hncm_consensus import build_signal_with_consensus
 from domain.signals import SignalAction
 
+
 class DummyEWS:
     def __init__(self, probability: float | None = None, ews_score: float | None = None):
         self.probability = probability
@@ -23,6 +24,7 @@ class DummyEWS:
 
 def read_state(path: Path) -> dict:
     return json.loads(path.read_text())
+
 
 def test_aggregate_and_decide(tmp_path: Path):
     adapter = HNCMConsensusAdapter(state_path=tmp_path / "state.json")
@@ -35,8 +37,9 @@ def test_aggregate_and_decide(tmp_path: Path):
     assert math.isclose(abs(decision.score), decision.confidence, rel_tol=1e-9)
     assert decision.votes == votes
 
+
 def test_learned_weights_influence(tmp_path: Path):
-    adapter = HNCMConsensusAdapter(base_weights={"a":1.0, "b":1.0}, state_path=tmp_path/"state.json")
+    adapter = HNCMConsensusAdapter(base_weights={"a": 1.0, "b": 1.0}, state_path=tmp_path / "state.json")
     votes = (AgentVote("a", 1.0, 1.0), AgentVote("b", -1.0, 1.0))
     # зсунути ваги на користь "a"
     lw = {"a": 1.0, "b": 0.1}
@@ -51,12 +54,13 @@ def test_decide_respects_override_weights(tmp_path: Path):
     assert decision.score < 0
     assert decision.weights["a"] == pytest.approx(5.0)
 
+
 def test_feedback_updates_rewards(tmp_path: Path):
-    adapter = HNCMConsensusAdapter(alpha=0.5, state_path=tmp_path/"state.json")
+    adapter = HNCMConsensusAdapter(alpha=0.5, state_path=tmp_path / "state.json")
     learned = adapter.update_feedback(realized=1.0, agent_scores={"x": 1.0, "y": -1.0})
     assert learned["x"] > learned["y"]
     # перевірка персистентності
-    again = HNCMConsensusAdapter(alpha=0.5, state_path=tmp_path/"state.json")
+    again = HNCMConsensusAdapter(alpha=0.5, state_path=tmp_path / "state.json")
     learned2 = again.learned_weights()
     assert learned2["x"] > learned2["y"]
 
@@ -77,9 +81,11 @@ def test_state_store_recovers_from_corruption(tmp_path: Path):
     assert corrupt.exists()
     assert adapter.learned_weights() == {}
 
+
 def test_ews_to_vote_probability():
     v = ews_to_vote("ews", DummyEWS(probability=0.8))
     assert 0.0 <= v.score <= 1.0 and v.score > 0.0
+
 
 def test_ews_to_vote_score():
     v = ews_to_vote("ews", DummyEWS(probability=None, ews_score=-0.7), use_probability=True)

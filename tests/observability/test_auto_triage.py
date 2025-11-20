@@ -142,4 +142,3 @@ def test_auto_triage_skips_when_no_thresholds_breached(tmp_path: Path) -> None:
 
     assert summary["detection"]["triggered"] is False
     assert summary["steps"] == []
-

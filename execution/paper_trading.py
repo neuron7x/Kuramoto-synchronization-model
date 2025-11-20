@@ -237,4 +237,3 @@ class PaperTradingEngine:
             ),
             stability_issues=tuple(issues),
         )
-

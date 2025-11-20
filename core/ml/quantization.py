@@ -236,4 +236,3 @@ class UniformAffineQuantizer:
         if quantized.dtype == np.float16:
             return quantized.astype(np.float32)
         return quantized.astype(np.float32)
-

@@ -150,4 +150,3 @@ def test_execute_order_validation(execution_price: float, executed_quantity: flo
                 execution_price=execution_price,
                 executed_quantity=executed_quantity,
             )
-

@@ -1089,4 +1089,3 @@ class FinOpsController:
                 continue
             result.append(sample)
         return result
-

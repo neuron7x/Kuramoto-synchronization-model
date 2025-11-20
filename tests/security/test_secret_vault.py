@@ -156,4 +156,3 @@ def test_secure_channel_round_trip() -> None:
     assert decrypted == payload
     with pytest.raises(ValueError):
         channel.unwrap_json(encrypted, associated_data={"component": "different"})
-

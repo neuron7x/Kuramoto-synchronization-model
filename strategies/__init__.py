@@ -50,4 +50,3 @@ __all__ = [
     "list_strategies",
     "register_strategy",
 ]
-

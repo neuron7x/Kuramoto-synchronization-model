@@ -133,4 +133,3 @@ class SecureChannel:
         if associated_data is not None:
             salt = json.dumps(associated_data, separators=(",", ":")).encode("utf-8")
         return SecureEnvelope(secret.encode("utf-8"), salt=salt)
-

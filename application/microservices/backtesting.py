@@ -120,4 +120,6 @@ class BacktestingService(Microservice):
         if self.last_error is not None:
             metadata["last_error"] = self.last_error
         return metadata or None
+
+
 __all__ = ["BacktestingService", "BacktestResult"]

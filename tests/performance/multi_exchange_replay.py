@@ -53,37 +53,37 @@ class PerformanceMetrics:
     slippage_bps: list[float] = field(default_factory=list)
     tick_count: int = 0
     duration_s: float = 0.0
-    
+
     @property
     def latency_median_ms(self) -> float:
         """Median latency in milliseconds."""
         return float(np.median(self.latencies_ms)) if self.latencies_ms else 0.0
-    
+
     @property
     def latency_p95_ms(self) -> float:
         """95th percentile latency in milliseconds."""
         return float(np.percentile(self.latencies_ms, 95)) if self.latencies_ms else 0.0
-    
+
     @property
     def latency_p99_ms(self) -> float:
         """99th percentile latency in milliseconds."""
         return float(np.percentile(self.latencies_ms, 99)) if self.latencies_ms else 0.0
-    
+
     @property
     def latency_max_ms(self) -> float:
         """Maximum latency in milliseconds."""
         return float(max(self.latencies_ms)) if self.latencies_ms else 0.0
-    
+
     @property
     def slippage_median_bps(self) -> float:
         """Median slippage in basis points."""
         return float(np.median(self.slippage_bps)) if self.slippage_bps else 0.0
-    
+
     @property
     def slippage_p95_bps(self) -> float:
         """95th percentile slippage in basis points."""
         return float(np.percentile(self.slippage_bps, 95)) if self.slippage_bps else 0.0
-    
+
     def to_dict(self) -> dict[str, float]:
         """Export metrics as dictionary for serialization."""
         return {
@@ -130,21 +130,21 @@ def load_replay_recording(
     path: Path, exchange: str | None = None
 ) -> tuple[Sequence[ExchangeTick], ReplayMetadata | None]:
     """Load exchange replay recording from JSONL file.
-    
+
     Args:
         path: Path to JSONL recording file
         exchange: Optional exchange identifier (read from metadata if not provided)
-    
+
     Returns:
         Tuple of (ticks, metadata)
     """
     if not path.exists():
         raise FileNotFoundError(f"Recording not found: {path}")
-    
+
     # Try to load metadata from adjacent file
     metadata_path = path.with_suffix(".metadata.json")
     metadata: ReplayMetadata | None = None
-    
+
     if metadata_path.exists():
         meta_data = json.loads(metadata_path.read_text(encoding="utf-8"))
         metadata = ReplayMetadata(
@@ -157,11 +157,11 @@ def load_replay_recording(
             description=meta_data.get("description", ""),
             tags=tuple(meta_data.get("tags", [])),
         )
-    
+
     # Load ticks from JSONL
     ticks = []
     lines = path.read_text(encoding="utf-8").splitlines()
-    
+
     for line in lines:
         if not line.strip():
             continue
@@ -177,7 +177,7 @@ def load_replay_recording(
             exchange=exchange or (metadata.exchange if metadata else "unknown"),
         )
         ticks.append(tick)
-    
+
     # Create metadata if not loaded from file
     if metadata is None and ticks:
         metadata = ReplayMetadata(
@@ -188,37 +188,37 @@ def load_replay_recording(
             end_time=ticks[-1].exchange_ts,
             tick_count=len(ticks),
         )
-    
+
     return ticks, metadata
 
 
 def compute_performance_metrics(ticks: Sequence[ExchangeTick]) -> PerformanceMetrics:
     """Compute performance metrics from replay ticks.
-    
+
     Args:
         ticks: Sequence of exchange ticks
-    
+
     Returns:
         Performance metrics including latency, throughput, and slippage
     """
     metrics = PerformanceMetrics()
-    
+
     if not ticks:
         return metrics
-    
+
     # Compute latencies
     latencies = [
         (tick.ingest_ts - tick.exchange_ts).total_seconds() * 1000.0
         for tick in ticks
     ]
     metrics.latencies_ms = latencies
-    
+
     # Compute throughput
     duration = (ticks[-1].exchange_ts - ticks[0].exchange_ts).total_seconds()
     metrics.duration_s = duration
     metrics.tick_count = len(ticks)
     metrics.throughput_tps = len(ticks) / duration if duration > 0 else 0.0
-    
+
     # Compute slippage (bid-ask spread as proxy)
     slippages = []
     for tick in ticks:
@@ -227,7 +227,7 @@ def compute_performance_metrics(ticks: Sequence[ExchangeTick]) -> PerformanceMet
             spread_bps = ((tick.ask - tick.bid) / mid) * 10000.0
             slippages.append(spread_bps)
     metrics.slippage_bps = slippages
-    
+
     return metrics
 
 
@@ -235,52 +235,52 @@ def check_regression(
     metrics: PerformanceMetrics, budget: PerformanceBudget
 ) -> RegressionResult:
     """Check if metrics violate performance budget.
-    
+
     Args:
         metrics: Measured performance metrics
         budget: Performance budget thresholds
-    
+
     Returns:
         Regression result indicating pass/fail and violations
     """
     violations = []
-    
+
     if metrics.latency_median_ms > budget.latency_median_ms:
         violations.append(
             f"Latency median {metrics.latency_median_ms:.2f}ms exceeds "
             f"budget {budget.latency_median_ms:.2f}ms"
         )
-    
+
     if metrics.latency_p95_ms > budget.latency_p95_ms:
         violations.append(
             f"Latency p95 {metrics.latency_p95_ms:.2f}ms exceeds "
             f"budget {budget.latency_p95_ms:.2f}ms"
         )
-    
+
     if metrics.latency_max_ms > budget.latency_max_ms:
         violations.append(
             f"Latency max {metrics.latency_max_ms:.2f}ms exceeds "
             f"budget {budget.latency_max_ms:.2f}ms"
         )
-    
+
     if metrics.throughput_tps < budget.throughput_min_tps:
         violations.append(
             f"Throughput {metrics.throughput_tps:.2f} tps below "
             f"budget {budget.throughput_min_tps:.2f} tps"
         )
-    
+
     if metrics.slippage_median_bps > budget.slippage_median_bps:
         violations.append(
             f"Slippage median {metrics.slippage_median_bps:.2f}bps exceeds "
             f"budget {budget.slippage_median_bps:.2f}bps"
         )
-    
+
     if metrics.slippage_p95_bps > budget.slippage_p95_bps:
         violations.append(
             f"Slippage p95 {metrics.slippage_p95_bps:.2f}bps exceeds "
             f"budget {budget.slippage_p95_bps:.2f}bps"
         )
-    
+
     return RegressionResult(
         passed=len(violations) == 0,
         violations=tuple(violations),
@@ -291,16 +291,16 @@ def check_regression(
 
 def discover_recordings(directory: Path) -> Iterator[Path]:
     """Discover all replay recording files in directory.
-    
+
     Args:
         directory: Directory to search for recordings
-    
+
     Yields:
         Paths to JSONL recording files
     """
     if not directory.exists():
         return
-    
+
     for path in directory.glob("*.jsonl"):
         # Skip metadata files
         if ".metadata" in path.name:

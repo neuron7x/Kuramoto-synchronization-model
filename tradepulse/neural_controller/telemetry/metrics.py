@@ -96,4 +96,3 @@ class DecisionMetricsExporter:
         if denom == 0:
             return 0.0
         return float(num) / float(denom)
-

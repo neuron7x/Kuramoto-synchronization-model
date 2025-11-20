@@ -16,10 +16,10 @@ def simple_graph():
     G.add_edge("A", "B", type="covalent", latency_norm=0.1, coherency=0.8)
     G.add_edge("B", "C", type="ionic", latency_norm=0.2, coherency=0.7)
     G.add_edge("C", "A", type="vdw", latency_norm=0.15, coherency=0.75)
-    
+
     for node in G.nodes():
         G.nodes[node]["cpu_norm"] = 0.3
-    
+
     return G
 
 
@@ -34,7 +34,7 @@ class TestThermoControllerHPCAI:
 
     def test_init_hpc_ai(self, simple_graph):
         """Test HPC-AI initialization in ThermoController.
-        
+
         Validates that the ThermoController can initialize HPC-AI components
         with custom parameters and that all required attributes are created.
         """
@@ -61,12 +61,12 @@ class TestThermoControllerHPCAI:
 
     def test_hpc_ai_control_step_not_initialized(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step returns error when not initialized.
-        
+
         When HPC-AI is not initialized, the control step should gracefully
         return an error result with safe defaults rather than raising an exception.
         """
         controller = ThermoController(simple_graph)
-        
+
         result = controller.hpc_ai_control_step(synthetic_market_data)
 
         assert "error" in result, "Result should contain error message"
@@ -79,7 +79,7 @@ class TestThermoControllerHPCAI:
 
     def test_hpc_ai_control_step(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step returns complete result after initialization.
-        
+
         Validates that a properly initialized HPC-AI controller returns all
         required metrics and that values are within expected ranges.
         """
@@ -106,7 +106,7 @@ class TestThermoControllerHPCAI:
 
     def test_hpc_ai_control_step_with_execution(self, simple_graph, synthetic_market_data):
         """Test HPC-AI control step with action execution enabled.
-        
+
         When execute_action=True, the controller should not only compute
         the action but also apply it to the system state.
         """
@@ -125,7 +125,7 @@ class TestThermoControllerHPCAI:
 
     def test_multiple_control_steps(self, simple_graph, synthetic_market_data):
         """Test sequential HPC-AI control steps with state persistence.
-        
+
         Validates that the controller can handle multiple sequential control
         steps and properly maintains internal state (prev_pwpe) between steps.
         """
@@ -142,12 +142,12 @@ class TestThermoControllerHPCAI:
         assert len(results) == 5, (
             f"Expected 5 control step results, got {len(results)}"
         )
-        
+
         # Check prev_pwpe is updated after multiple steps
         assert controller.prev_pwpe > 0.0, (
             "prev_pwpe should be updated after control steps"
         )
-        
+
         # Check all actions are valid
         actions = [r["action"] for r in results]
         assert all(a in [0, 1, 2] for a in actions), (
@@ -178,7 +178,7 @@ class TestThermoControllerHPCAI:
 
         # Regular control step should still work
         controller.control_step()
-        
+
         assert controller.controller_state is not None
         assert controller.previous_F is not None
 
@@ -192,7 +192,7 @@ class TestHPCAIEdgeCases:
         controller.init_hpc_ai(state_dim=64)
 
         empty_df = pd.DataFrame()
-        
+
         # Should handle gracefully
         try:
             result = controller.hpc_ai_control_step(empty_df)

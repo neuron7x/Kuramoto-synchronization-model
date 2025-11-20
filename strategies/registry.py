@@ -170,4 +170,3 @@ __all__ = [
     "register_strategy",
     "resolve_strategy",
 ]
-

@@ -18,6 +18,7 @@ def _uuid_hex_factory() -> Callable[[], str]:
 
     return lambda: uuid4().hex
 
+
 __all__ = [
     "MarketState",
     "SuggestedOrder",
@@ -99,4 +100,3 @@ def utc_now() -> datetime:
     """Return a timezone-aware UTC timestamp."""
 
     return datetime.now(timezone.utc)
-

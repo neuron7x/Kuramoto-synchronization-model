@@ -194,5 +194,3 @@ def test_resolve_ip_falls_back_to_client_host() -> None:
 
     request = Request(scope, receive=receive)
     assert _resolve_ip(request) == "198.18.0.1"
-
-

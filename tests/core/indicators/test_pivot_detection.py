@@ -143,4 +143,3 @@ def test_detect_pivots_supports_timestamps() -> None:
 
     assert highs == [PivotPoint(index=1, value=3.0, kind="high", timestamp="t1")]
     assert lows == []
-

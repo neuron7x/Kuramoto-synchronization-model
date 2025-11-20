@@ -320,4 +320,3 @@ def handle(args: Namespace) -> int:
     execute(config)
     LOGGER.info("Bootstrap completed successfully.")
     return 0
-

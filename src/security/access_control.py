@@ -209,4 +209,3 @@ def _parse_permission(value: object, context: str) -> Permission:
     raise ValueError(
         f"Permissions for '{context}' must be strings or mappings, got {type(value)!r}"
     )
-

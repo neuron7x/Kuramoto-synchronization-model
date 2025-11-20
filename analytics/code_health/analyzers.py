@@ -442,4 +442,3 @@ def compute_trends(
 def rolling_average(values: Iterable[float]) -> float:
     seq = list(values)
     return statistics.mean(seq) if seq else 0.0
-

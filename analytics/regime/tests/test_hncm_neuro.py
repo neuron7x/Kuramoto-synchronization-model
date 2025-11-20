@@ -13,10 +13,10 @@ class DummyEWS:
 
 
 def test_decide_basic():
-    adapter = NeuroConsensusAdapter(base_weights={"a":1.0, "b":1.0})
+    adapter = NeuroConsensusAdapter(base_weights={"a": 1.0, "b": 1.0})
     votes = (AgentVote("a", 0.8, 1.0), AgentVote("b", -0.2, 1.0))
     decision = adapter.decide(votes)
-    assert decision.action in ("BUY","SELL","HOLD")
+    assert decision.action in ("BUY", "SELL", "HOLD")
     assert 0.0 <= decision.confidence <= 1.0
     assert -1.0 <= decision.score <= 1.0
 
@@ -36,5 +36,5 @@ def test_energy_budget_limits_delta():
     # large change requested via rewards
     adapter.state.s["reward_ema"] = {"a": 1.0, "b": -1.0}
     new_w = adapter.update_feedback(realized=1.0, agent_scores={"a": 1.0, "b": -1.0})
-    delta = sum(abs(new_w[k]-adapter.state.s["last_weights"].get(k,0.0)) for k in new_w)
+    delta = sum(abs(new_w[k] - adapter.state.s["last_weights"].get(k, 0.0)) for k in new_w)
     assert delta <= 0.1000001

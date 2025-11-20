@@ -156,4 +156,3 @@ def _project_simplex(vector: Iterable[float], *, lower_bound: float = 0.0) -> np
     # numerical guard in case of small floating-point drift
     projected /= projected.sum()
     return projected
-

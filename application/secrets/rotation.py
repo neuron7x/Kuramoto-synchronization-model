@@ -100,4 +100,3 @@ class SecretRotator:
         """Return registered policies."""
 
         return list(self._policies)
-

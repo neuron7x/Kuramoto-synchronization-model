@@ -282,4 +282,3 @@ __all__ = [
     "compute_convergence",
     "is_convergent",
 ]
-

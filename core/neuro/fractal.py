@@ -165,4 +165,3 @@ __all__ = [
     "rescaled_range",
     "summarise_fractal_properties",
 ]
-

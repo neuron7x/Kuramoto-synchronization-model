@@ -460,4 +460,3 @@ async def test_feature_store_persists_records_to_redis_and_timescale() -> None:
     )
 
     assert cache_key in redis.store
-

@@ -121,4 +121,3 @@ def test_backtest_engine_generates_report() -> None:
     assert len(report.equity_curve) == prices.size
     assert report.num_trades > 0
     assert "brier" in report.audit
-

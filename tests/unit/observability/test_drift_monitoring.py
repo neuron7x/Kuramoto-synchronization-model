@@ -179,4 +179,3 @@ def test_isolation_plan_reports_monitor_state() -> None:
     plan = planner.plan([summary])
     assert isinstance(plan, IsolationPlan)
     assert plan.decisions[0].isolate
-

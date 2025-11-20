@@ -17,10 +17,10 @@ from analytics.signals.irreversibility import (
 np.random.seed(0)
 n = 3000
 parts = [
-    np.cumsum(0.05 + 0.6*np.random.randn(600)),
-    np.cumsum(0.00 + 1.0*np.random.randn(600)),
-    np.cumsum(-0.03 + 0.5*np.random.randn(600)),
-    np.cumsum(0.02 + 0.7*np.random.randn(n-1800)),
+    np.cumsum(0.05 + 0.6 * np.random.randn(600)),
+    np.cumsum(0.00 + 1.0 * np.random.randn(600)),
+    np.cumsum(-0.03 + 0.5 * np.random.randn(600)),
+    np.cumsum(0.02 + 0.7 * np.random.randn(n - 1800)),
 ]
 trend = np.concatenate(parts)
 price = 100.0 * np.exp(trend / 100.0)

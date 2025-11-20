@@ -31,6 +31,8 @@ TRUTHY_VALUES = [True, "true", "TRUE", "1", "yes", "YES", "on", "active", 1]
 FALSY_VALUES = [False, "false", "0", "no", "", 0, None]
 
 IDENTIFIER_CHARS = st.characters(min_codepoint=97, max_codepoint=122)
+
+
 @contextmanager
 def _load_tracing():
     monkeypatch = MonkeyPatch()
@@ -41,6 +43,8 @@ def _load_tracing():
         yield tracing
     finally:
         monkeypatch.undo()
+
+
 @settings(
     max_examples=1200,
     deadline=None,

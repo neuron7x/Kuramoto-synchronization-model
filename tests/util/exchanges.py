@@ -11,6 +11,7 @@ import requests
 
 DEFAULT_TIMEOUT = 15
 
+
 class HttpClient:
     def __init__(self, base, headers=None, params=None):
         self.base = base.rstrip("/")
@@ -43,18 +44,22 @@ class HttpClient:
         r.raise_for_status()
         return r.json()
 
+
 def _binance_http():
     return HttpClient("https://api.binance.com")
+
 
 def _coinbase_http():
     return HttpClient("https://api.coinbase.com/api/v3")
 
+
 def _kraken_http():
     return HttpClient("https://api.kraken.com/0")
 
+
 def load_adapter_or_http_client(exchange: str):
     """Load an HTTP client for the exchange.
-    
+
     For canary tests, we use simple HTTP clients rather than full adapters
     to avoid credential and instantiation complexity.
     """
@@ -65,6 +70,7 @@ def load_adapter_or_http_client(exchange: str):
     if exchange == "kraken":
         return _kraken_http()
     raise ValueError(f"Unsupported exchange {exchange}")
+
 
 def get_server_time(subject) -> int:
     for name in ("get_server_time", "server_time_ms", "time", "now_ms"):
@@ -83,6 +89,7 @@ def get_server_time(subject) -> int:
             j = subject.get("/public/Time")
             return int(float(j["result"]["unixtime"])) * 1000
     raise RuntimeError("Cannot obtain server time")
+
 
 def get_exchange_info_or_symbols(subject):
     for name in ("get_exchange_info", "exchange_info", "symbols", "list_symbols"):
@@ -109,6 +116,7 @@ def get_exchange_info_or_symbols(subject):
             symbols = list(pairs.keys())
             return {"raw": j, "symbols": symbols}
     raise RuntimeError("Cannot obtain exchange info/symbols")
+
 
 def get_authenticated_balance(subject):
     for name in ("get_balance", "balances", "account_balances", "spot_balance"):

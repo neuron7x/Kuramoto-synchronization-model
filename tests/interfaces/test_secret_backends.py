@@ -184,5 +184,3 @@ def test_aws_resolver_errors_when_payload_missing() -> None:
 
     with pytest.raises(SecretBackendError):
         resolver("app/invalid")
-
-

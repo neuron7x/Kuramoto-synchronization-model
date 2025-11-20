@@ -28,29 +28,29 @@ def generate_trending_prices(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate prices with a trending pattern.
-    
+
     Args:
         n: Number of price points to generate.
         initial_price: Starting price level.
         trend: Trend strength (positive = uptrend, negative = downtrend).
         volatility: Price volatility multiplier.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated prices.
     """
     rng = np.random.default_rng(seed)
-    
+
     # Create trend component
     trend_component = np.linspace(0, trend * n, n)
-    
+
     # Create noise component
     noise = rng.normal(0, volatility, n)
-    
+
     # Combine and cumsum
     returns = (trend + noise) / 100
     prices = initial_price * np.exp(np.cumsum(returns))
-    
+
     return prices
 
 
@@ -62,27 +62,27 @@ def generate_mean_reverting_prices(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate prices with mean-reverting behavior.
-    
+
     Args:
         n: Number of price points to generate.
         mean_price: Central price level.
         reversion_speed: Speed of reversion to mean (0-1).
         volatility: Price volatility multiplier.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated prices.
     """
     rng = np.random.default_rng(seed)
     prices = np.zeros(n)
     prices[0] = mean_price
-    
+
     for i in range(1, n):
         # Ornstein-Uhlenbeck process
-        drift = reversion_speed * (mean_price - prices[i-1])
+        drift = reversion_speed * (mean_price - prices[i - 1])
         shock = rng.normal(0, volatility)
-        prices[i] = prices[i-1] + drift + shock
-    
+        prices[i] = prices[i - 1] + drift + shock
+
     return prices
 
 
@@ -93,20 +93,20 @@ def generate_random_walk_prices(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate prices following a random walk.
-    
+
     Args:
         n: Number of price points to generate.
         initial_price: Starting price level.
         volatility: Price volatility multiplier.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated prices.
     """
     rng = np.random.default_rng(seed)
     returns = rng.normal(0, volatility / 100, n)
     prices = initial_price * np.exp(np.cumsum(returns))
-    
+
     return prices
 
 
@@ -119,7 +119,7 @@ def generate_volume(
     seed: int | None = None,
 ) -> np.ndarray:
     """Generate trading volume data.
-    
+
     Args:
         n: Number of volume points to generate.
         mean_volume: Average volume level.
@@ -127,25 +127,25 @@ def generate_volume(
         price_correlation: Correlation with price changes (-1 to 1).
         prices: Optional price array for correlation.
         seed: Random seed for reproducibility.
-    
+
     Returns:
         Array of generated volumes.
     """
     rng = np.random.default_rng(seed)
-    
+
     # Base log-normal volume
     volume = rng.lognormal(
         mean=np.log(mean_volume) - (volatility**2) / 2,
         sigma=volatility,
         size=n
     )
-    
+
     # Add correlation with price changes if prices provided
     if prices is not None and len(prices) == n and price_correlation != 0:
         price_returns = np.diff(np.log(prices), prepend=np.log(prices[0]))
         volume_adjustment = 1 + price_correlation * np.abs(price_returns)
         volume = volume * volume_adjustment
-    
+
     return volume
 
 
@@ -156,20 +156,20 @@ def generate_market_data(
     seed: int | None = None,
 ) -> pd.DataFrame:
     """Generate a complete market data CSV.
-    
+
     Args:
         periods: Number of periods to generate.
         regime: Market regime type.
         freq: Time frequency (e.g., '1h', '5m', '1d').
         seed: Random seed for reproducibility.
-    
+
     Returns:
         DataFrame with timestamp, price, and volume columns.
     """
     # Generate timestamps
     start_date = datetime(2024, 1, 1, 9, 0, 0)
     timestamps = pd.date_range(start_date, periods=periods, freq=freq)
-    
+
     # Generate prices based on regime
     if regime == "trending":
         prices = generate_trending_prices(periods, trend=0.03, volatility=1.2, seed=seed)
@@ -179,24 +179,24 @@ def generate_market_data(
         )
     else:  # random_walk
         prices = generate_random_walk_prices(periods, volatility=1.5, seed=seed)
-    
+
     # Generate correlated volume
     volume = generate_volume(
-        periods, 
+        periods,
         mean_volume=1_500_000,
         volatility=0.4,
         price_correlation=0.3,
         prices=prices,
         seed=seed
     )
-    
+
     # Create DataFrame
     df = pd.DataFrame({
         'timestamp': timestamps,
         'price': prices,
         'volume': volume.astype(int)
     })
-    
+
     return df
 
 
@@ -220,21 +220,21 @@ Examples:
     python generate_sample_data.py --output data.csv --periods 300 --seed 42
         """
     )
-    
+
     parser.add_argument(
         '--output', '-o',
         type=str,
         required=True,
         help='Output CSV file path'
     )
-    
+
     parser.add_argument(
         '--periods', '-n',
         type=int,
         default=1000,
         help='Number of periods to generate (default: 1000)'
     )
-    
+
     parser.add_argument(
         '--regime', '-r',
         type=str,
@@ -242,23 +242,23 @@ Examples:
         default='random_walk',
         help='Market regime type (default: random_walk)'
     )
-    
+
     parser.add_argument(
         '--freq', '-f',
         type=str,
         default='1h',
         help='Time frequency: e.g., 1m, 5m, 15m, 1h, 4h, 1d (default: 1h)'
     )
-    
+
     parser.add_argument(
         '--seed', '-s',
         type=int,
         default=None,
         help='Random seed for reproducibility (optional)'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Generate data
     print(f"Generating {args.periods} periods of {args.regime} market data...")
     df = generate_market_data(
@@ -267,12 +267,12 @@ Examples:
         freq=args.freq,
         seed=args.seed
     )
-    
+
     # Save to CSV
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
-    
+
     # Print summary
     print(f"\n✓ Generated {len(df)} rows of market data")
     print(f"✓ Saved to: {output_path.absolute()}")

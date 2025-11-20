@@ -335,4 +335,3 @@ class LiquidityImpactModel:
             )
             for qty in quantities
         ]
-

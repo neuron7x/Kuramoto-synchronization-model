@@ -715,4 +715,3 @@ class TransactionCostAnalyzer:
                 unique_recommendations.append(rec)
                 seen.add(rec)
         return unique_recommendations
-

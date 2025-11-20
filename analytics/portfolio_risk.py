@@ -470,4 +470,3 @@ __all__ = [
     "VolatilityScenario",
     "VolatilityScenarioResult",
 ]
-

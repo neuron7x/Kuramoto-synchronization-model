@@ -205,7 +205,7 @@ class DopamineController:
         self._temp_adam_t: int = 0
         self._release_gate_open: bool = True
         self._last_temperature: float = float(self.config["base_temperature"])
-        
+
         # Cache frequently accessed config values for performance
         self._cache_discount_gamma: float = float(self.config["discount_gamma"])
         self._cache_learning_rate_v: float = float(self.config["learning_rate_v"])
@@ -514,16 +514,16 @@ class DopamineController:
         discount_gamma: Optional[float] = None,
     ) -> float:
         """Compute TD(0) reward prediction error: δ = r + γ·V' − V.
-        
+
         Args:
             reward: Observed reward
             value: Current state value estimate V
             next_value: Next state value estimate V'
             discount_gamma: Optional discount factor override (must be in (0,1])
-            
+
         Returns:
             RPE δ
-            
+
         Raises:
             RuntimeError: If any input or computed value is NaN or ±Inf
             ValueError: If discount_gamma is not in (0, 1]
@@ -535,11 +535,11 @@ class DopamineController:
             self._cache_discount_gamma if discount_gamma is None else float(discount_gamma)
         )
         self._ensure_finite("discount_gamma", gamma)
-        
+
         # Strict gamma validation as per spec: γ ∈ (0, 1]
         if not (0.0 < gamma <= 1.0):
             raise ValueError(f"discount_gamma must be in (0, 1], got {gamma}")
-        
+
         # Compute RPE with overflow protection
         try:
             rpe = float(reward + gamma * next_value - value)
@@ -553,7 +553,7 @@ class DopamineController:
             raise RuntimeError(
                 f"RPE computation overflow: {e}\nContext: {context}"
             ) from e
-        
+
         # Final NaN/Inf check with context
         if not math.isfinite(rpe):
             context = {
@@ -566,7 +566,7 @@ class DopamineController:
             raise RuntimeError(
                 f"RPE computation produced non-finite value: {rpe}\nContext: {context}"
             )
-        
+
         self.last_rpe = rpe
         return rpe
 

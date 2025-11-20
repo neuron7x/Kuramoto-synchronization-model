@@ -321,7 +321,7 @@ class RiskCompliance:
                     if self._config.daily_max_drawdown_mode == "percent":
                         if drawdown > self._config.daily_max_drawdown_threshold:
                             reasons.append(
-                                f"Daily drawdown {drawdown*100:.2f}% exceeds threshold {self._config.daily_max_drawdown_threshold*100:.2f}%"
+                                f"Daily drawdown {drawdown * 100:.2f}% exceeds threshold {self._config.daily_max_drawdown_threshold * 100:.2f}%"
                             )
                             breached["daily_max_drawdown"] = drawdown
                         drawdown_metric_value = drawdown

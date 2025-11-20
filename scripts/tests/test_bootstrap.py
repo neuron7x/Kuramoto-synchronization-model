@@ -162,4 +162,3 @@ def test_execute_skips_virtualenv_when_present(tmp_path: Path, monkeypatch: pyte
     bootstrap.execute(config)
 
     assert all("venv" not in command for command in calls)
-

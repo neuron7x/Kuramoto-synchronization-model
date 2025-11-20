@@ -614,4 +614,3 @@ __all__ = [
     "RegimeMetric",
     "StrategyRegimeStability",
 ]
-

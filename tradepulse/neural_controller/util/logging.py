@@ -89,7 +89,6 @@ def log_decision(event: Dict[str, Any]) -> None:
     logger.info(message, extra={"event": "neuro.decision", "payload": payload})
 
 
-
 class _JsonLogFormatter(logging.Formatter):
     """Format log records as newline-delimited JSON."""
 
@@ -112,4 +111,3 @@ class _JsonLogFormatter(logging.Formatter):
             payload["exc_info"] = self.formatException(record.exc_info)
 
         return json.dumps(payload, ensure_ascii=False)
-

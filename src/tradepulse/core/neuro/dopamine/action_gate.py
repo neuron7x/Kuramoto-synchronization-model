@@ -143,4 +143,3 @@ class ActionGate:
             temperature=temperature,
             dopamine_level=da,
         )
-

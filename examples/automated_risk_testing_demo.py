@@ -220,7 +220,7 @@ def demo_monte_carlo_simulation():
     print(f"    Max: {np.max(kellys):.6f}")
 
     print(f"\n  Risk Breaches: {breaches} / {config.num_simulations} "
-          f"({breaches/config.num_simulations:.1%})")
+          f"({breaches / config.num_simulations:.1%})")
 
 
 def demo_comprehensive_report():

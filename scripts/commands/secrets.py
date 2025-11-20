@@ -175,4 +175,3 @@ def handle_issue_dynamic(args: object) -> int:
     finally:
         if client is not None:
             client.close()
-

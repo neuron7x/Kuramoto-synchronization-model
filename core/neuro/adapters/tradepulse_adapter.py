@@ -65,4 +65,3 @@ class TradePulseNeuroAdapter:
 
     def load_state(self, path: str) -> bool:
         return self._neuro.load_state(path)
-

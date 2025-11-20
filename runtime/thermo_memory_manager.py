@@ -20,44 +20,44 @@ import numpy as np
 @dataclass
 class TelemetryWindow:
     """Fixed-size window of telemetry data with compression."""
-    
+
     max_size: int = 1000
     data: Deque[Dict[str, Any]] = field(default_factory=deque)
     compressed_archives: List[bytes] = field(default_factory=list)
-    
+
     def append(self, record: Dict[str, Any]) -> None:
         """Add a record to the window."""
         self.data.append(record)
-        
+
         # Auto-compress when window is full
         if len(self.data) >= self.max_size:
             self._compress_and_archive()
-    
+
     def _compress_and_archive(self) -> None:
         """Compress older data and move to archives."""
         if len(self.data) < self.max_size // 2:
             return
-        
+
         # Take half the data to compress
         to_compress = []
         for _ in range(self.max_size // 2):
             if self.data:
                 to_compress.append(self.data.popleft())
-        
+
         if to_compress:
             # Compress using gzip
             json_data = json.dumps(to_compress)
             compressed = gzip.compress(json_data.encode('utf-8'))
             self.compressed_archives.append(compressed)
-    
+
     def get_recent(self, n: int = 100) -> List[Dict[str, Any]]:
         """Get the n most recent records."""
         return list(self.data)[-n:]
-    
+
     def get_all_uncompressed(self) -> List[Dict[str, Any]]:
         """Get all uncompressed records."""
         return list(self.data)
-    
+
     def decompress_archive(self, index: int) -> List[Dict[str, Any]]:
         """Decompress a specific archive."""
         if 0 <= index < len(self.compressed_archives):
@@ -65,7 +65,7 @@ class TelemetryWindow:
             json_data = gzip.decompress(compressed).decode('utf-8')
             return json.loads(json_data)
         return []
-    
+
     def get_memory_usage(self) -> Dict[str, int]:
         """Get memory usage statistics in bytes."""
         uncompressed_size = sum(
@@ -73,7 +73,7 @@ class TelemetryWindow:
             for record in self.data
         )
         compressed_size = sum(len(archive) for archive in self.compressed_archives)
-        
+
         return {
             "uncompressed_bytes": uncompressed_size,
             "compressed_bytes": compressed_size,
@@ -83,7 +83,7 @@ class TelemetryWindow:
                 uncompressed_size / compressed_size if compressed_size > 0 else 0.0
             ),
         }
-    
+
     def clear(self) -> None:
         """Clear all data."""
         self.data.clear()
@@ -92,7 +92,7 @@ class TelemetryWindow:
 
 class OptimizedTelemetryManager:
     """Memory-optimized telemetry manager with efficient storage and querying.
-    
+
     Features:
     - Automatic compression of old data
     - Efficient memory usage with deque
@@ -100,7 +100,7 @@ class OptimizedTelemetryManager:
     - Aggregated statistics computation
     - Export to compressed files
     """
-    
+
     def __init__(
         self,
         *,
@@ -109,7 +109,7 @@ class OptimizedTelemetryManager:
         export_dir: Optional[Path] = None,
     ) -> None:
         """Initialize the telemetry manager.
-        
+
         Args:
             window_size: Maximum number of uncompressed records
             max_archives: Maximum number of compressed archives to keep
@@ -118,51 +118,51 @@ class OptimizedTelemetryManager:
         self.window = TelemetryWindow(max_size=window_size)
         self.max_archives = max_archives
         self.export_dir = export_dir or Path(".ci_artifacts")
-        
+
         # Statistics cache
         self._stats_cache: Optional[Dict[str, Any]] = None
         self._stats_cache_time: float = 0.0
         self._stats_cache_ttl: float = 1.0  # 1 second TTL
-        
+
     def record(self, telemetry: Dict[str, Any]) -> None:
         """Record a telemetry event."""
         # Ensure timestamp
         if "timestamp" not in telemetry:
             telemetry["timestamp"] = time.time()
-        
+
         self.window.append(telemetry)
-        
+
         # Invalidate stats cache
         self._stats_cache = None
-        
+
         # Limit number of archives
         if len(self.window.compressed_archives) > self.max_archives:
             # Export oldest archives to disk
             self._export_old_archives()
-    
+
     def _export_old_archives(self) -> None:
         """Export old archives to disk to free memory."""
         if len(self.window.compressed_archives) <= self.max_archives:
             return
-        
+
         try:
             self.export_dir.mkdir(parents=True, exist_ok=True)
-            
+
             while len(self.window.compressed_archives) > self.max_archives:
                 archive = self.window.compressed_archives.pop(0)
                 timestamp = int(time.time() * 1000)
                 filename = self.export_dir / f"thermo_telemetry_{timestamp}.json.gz"
-                
+
                 with filename.open('wb') as f:
                     f.write(archive)
         except (OSError, IOError):
             # If export fails, just keep in memory
             pass
-    
+
     def get_recent(self, n: int = 100) -> List[Dict[str, Any]]:
         """Get the n most recent telemetry records."""
         return self.window.get_recent(n)
-    
+
     def get_time_range(
         self,
         start_time: float,
@@ -170,13 +170,13 @@ class OptimizedTelemetryManager:
     ) -> List[Dict[str, Any]]:
         """Get telemetry records within a time range."""
         records = []
-        
+
         # Check uncompressed data
         for record in self.window.data:
             ts = record.get("timestamp", 0.0)
             if start_time <= ts <= end_time:
                 records.append(record)
-        
+
         # Check compressed archives if needed
         if not records:
             for i in range(len(self.window.compressed_archives)):
@@ -185,15 +185,15 @@ class OptimizedTelemetryManager:
                     ts = record.get("timestamp", 0.0)
                     if start_time <= ts <= end_time:
                         records.append(record)
-        
+
         return records
-    
+
     def compute_statistics(self, force: bool = False) -> Dict[str, Any]:
         """Compute aggregated statistics over telemetry data.
-        
+
         Args:
             force: Force recomputation even if cache is valid
-            
+
         Returns:
             Dictionary of statistics
         """
@@ -201,9 +201,9 @@ class OptimizedTelemetryManager:
         if not force and self._stats_cache is not None:
             if time.time() - self._stats_cache_time < self._stats_cache_ttl:
                 return self._stats_cache
-        
+
         records = self.window.get_all_uncompressed()
-        
+
         if not records:
             return {
                 "count": 0,
@@ -214,7 +214,7 @@ class OptimizedTelemetryManager:
                 "circuit_breaker_activations": 0,
                 "topology_changes": 0,
             }
-        
+
         # Extract metrics
         F_values = [r.get("F", 0.0) for r in records]
         dF_dt_values = [r.get("dF_dt", 0.0) for r in records]
@@ -223,11 +223,11 @@ class OptimizedTelemetryManager:
             len(r.get("topology_changes", []))
             for r in records
         )
-        
+
         # Compute statistics using NumPy for efficiency
         F_array = np.array(F_values)
         dF_dt_array = np.array(dF_dt_values)
-        
+
         stats = {
             "count": len(records),
             "avg_F": float(np.mean(F_array)),
@@ -244,38 +244,38 @@ class OptimizedTelemetryManager:
                 if len(records) > 1 else 0.0
             ),
         }
-        
+
         # Cache the result
         self._stats_cache = stats
         self._stats_cache_time = time.time()
-        
+
         return stats
-    
+
     def get_crisis_periods(self, threshold: float = 0.1) -> List[Dict[str, Any]]:
         """Identify periods where the system was in crisis mode.
-        
+
         Args:
             threshold: F deviation threshold for crisis detection
-            
+
         Returns:
             List of crisis periods with start/end times and severity
         """
         records = self.window.get_all_uncompressed()
         if not records:
             return []
-        
+
         crisis_periods = []
         in_crisis = False
         crisis_start = None
         max_F_in_crisis = 0.0
-        
+
         for record in records:
             crisis_mode = record.get("crisis_mode", "NORMAL")
             F_value = record.get("F", 0.0)
             timestamp = record.get("timestamp", 0.0)
-            
+
             is_crisis = crisis_mode not in ["NORMAL", "normal"]
-            
+
             if is_crisis and not in_crisis:
                 # Start of crisis
                 in_crisis = True
@@ -296,7 +296,7 @@ class OptimizedTelemetryManager:
                 in_crisis = False
                 crisis_start = None
                 max_F_in_crisis = 0.0
-        
+
         # Handle ongoing crisis
         if in_crisis and crisis_start is not None:
             crisis_periods.append({
@@ -307,15 +307,15 @@ class OptimizedTelemetryManager:
                 "severity": "critical" if max_F_in_crisis > 1.3 else "elevated",
                 "ongoing": True,
             })
-        
+
         return crisis_periods
-    
+
     def export_to_json(self, filepath: Optional[Path] = None) -> Path:
         """Export telemetry to a JSON file.
-        
+
         Args:
             filepath: Output file path (default: auto-generated)
-            
+
         Returns:
             Path to the exported file
         """
@@ -323,20 +323,20 @@ class OptimizedTelemetryManager:
             self.export_dir.mkdir(parents=True, exist_ok=True)
             timestamp = int(time.time() * 1000)
             filepath = self.export_dir / f"thermo_telemetry_{timestamp}.json"
-        
+
         records = self.window.get_all_uncompressed()
-        
+
         with filepath.open('w', encoding='utf-8') as f:
             json.dump(records, f, indent=2)
-        
+
         return filepath
-    
+
     def export_to_compressed_json(self, filepath: Optional[Path] = None) -> Path:
         """Export telemetry to a compressed JSON file.
-        
+
         Args:
             filepath: Output file path (default: auto-generated)
-            
+
         Returns:
             Path to the exported file
         """
@@ -344,20 +344,20 @@ class OptimizedTelemetryManager:
             self.export_dir.mkdir(parents=True, exist_ok=True)
             timestamp = int(time.time() * 1000)
             filepath = self.export_dir / f"thermo_telemetry_{timestamp}.json.gz"
-        
+
         records = self.window.get_all_uncompressed()
         json_data = json.dumps(records, indent=2)
         compressed = gzip.compress(json_data.encode('utf-8'))
-        
+
         with filepath.open('wb') as f:
             f.write(compressed)
-        
+
         return filepath
-    
+
     def get_memory_usage(self) -> Dict[str, Any]:
         """Get memory usage statistics."""
         return self.window.get_memory_usage()
-    
+
     def clear(self) -> None:
         """Clear all telemetry data."""
         self.window.clear()

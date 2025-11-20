@@ -429,4 +429,3 @@ class PromptManager:
                 observer.on_outcome(record_id, outcome)
             except Exception:  # pragma: no cover - defensive branch
                 self._logger.exception("prompt.observer.outcome-failed")
-

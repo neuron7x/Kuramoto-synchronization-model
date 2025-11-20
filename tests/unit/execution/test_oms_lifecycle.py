@@ -130,4 +130,3 @@ def test_oms_records_cancellation(tmp_path, lifecycle: OrderLifecycle) -> None:
         OrderEvent.ACK,
         OrderEvent.CANCEL,
     ]
-

@@ -88,4 +88,3 @@ class NeuroAdvancedConfig(BaseModel):
 
     def merged_alert_thresholds(self) -> Dict[str, float]:
         return self.alert_thresholds.model_dump()
-

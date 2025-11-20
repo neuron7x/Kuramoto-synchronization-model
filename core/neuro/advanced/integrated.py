@@ -804,4 +804,3 @@ __all__ = [
     "TradeOutcome",
     "TradeResult",
 ]
-

@@ -160,4 +160,3 @@ __all__ = [
     "normalize_indicator_series",
     "resolve_indicator_normalizer",
 ]
-

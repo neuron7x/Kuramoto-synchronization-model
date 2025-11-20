@@ -89,4 +89,3 @@ def test_audit_log_records_rejected_actions(tmp_path, monkeypatch):
     assert entry["F_old"] == pytest.approx(2.0)
     assert entry["F_new"] == pytest.approx(2.0)
     assert entry["topology_changes"] == []
-

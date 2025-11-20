@@ -354,4 +354,3 @@ def build_aws_secrets_manager_resolver(
         )
 
     return _resolver
-

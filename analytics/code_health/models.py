@@ -131,4 +131,3 @@ class RepositoryMetrics:
         return sorted(self.risk_hotspots, key=lambda fm: fm.risk_profile.risk_score, reverse=True)[
             :limit
         ]
-

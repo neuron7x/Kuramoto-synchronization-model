@@ -97,4 +97,3 @@ class DopaminePredictionNetwork:
             "serotonin_level": self._serotonin,
             "norepinephrine_level": self._norepinephrine,
         }
-

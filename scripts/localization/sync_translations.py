@@ -189,7 +189,7 @@ def main(argv: Iterable[str]) -> int:
   base_locale = locales_config['default_locale']
   base_keys = flatten_keys(translations[base_locale])
 
-  coverage: Dict[str, Any] = { 'locales': {}, 'generatedAt': None }
+  coverage: Dict[str, Any] = {'locales': {}, 'generatedAt': None}
   issues = []
 
   for locale, payload in translations.items():

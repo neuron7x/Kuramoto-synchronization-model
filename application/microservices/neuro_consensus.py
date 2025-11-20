@@ -13,6 +13,7 @@ from analytics.regime.src.consensus.hncm_neuro import (
     AgentVote,
 )
 
+
 def ews_to_vote(agent_name: str, ews_result: object) -> AgentVote:
     score = 0.0
     if hasattr(ews_result, "probability") and ews_result.probability is not None:

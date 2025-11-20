@@ -245,4 +245,3 @@ class BenchmarkWorkload:
             raise ValueError("query_iterations must be positive")
         if self.warmup_iterations < 0:
             raise ValueError("warmup_iterations must be non-negative")
-

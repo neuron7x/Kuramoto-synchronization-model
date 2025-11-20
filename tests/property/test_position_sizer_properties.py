@@ -285,4 +285,3 @@ def test_constrained_sizer_respects_invariants(
         assert result.applied_fraction >= -1e-12
     elif request.direction < 0:
         assert result.applied_fraction <= 1e-12
-

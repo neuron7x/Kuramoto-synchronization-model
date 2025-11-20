@@ -361,4 +361,3 @@ def test_generate_cost_optimisation_plan_systemic_actions() -> None:
     assert overspend[0].resource_id == "research"
 
     assert len(plan.review_schedule) == 4
-

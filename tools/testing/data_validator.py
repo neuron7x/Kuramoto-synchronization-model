@@ -20,14 +20,14 @@ class TestDataInventory:
     fixtures_dir: Path
     cassettes_dir: Path
     recordings_dir: Path
-    
+
     fixture_files: list[Path] = field(default_factory=list)
     cassette_files: list[Path] = field(default_factory=list)
     recording_files: list[Path] = field(default_factory=list)
-    
+
     orphaned_fixtures: list[Path] = field(default_factory=list)
     missing_cassettes: list[str] = field(default_factory=list)
-    
+
     total_size_bytes: int = 0
 
     @property
@@ -84,11 +84,11 @@ class TestDataValidator:
         """Find fixture files not referenced by any tests."""
         # Simple heuristic: check if fixture filename appears in test files
         test_files = list(self.test_dir.rglob("test_*.py"))
-        
+
         orphaned = []
         for fixture in inventory.fixture_files:
             fixture_name = fixture.stem
-            
+
             # Check if fixture is referenced in any test file
             referenced = False
             for test_file in test_files:
@@ -99,10 +99,10 @@ class TestDataValidator:
                         break
                 except (IOError, UnicodeDecodeError):
                     continue
-            
+
             if not referenced:
                 orphaned.append(fixture)
-        
+
         return orphaned
 
     def validate_cassette_completeness(

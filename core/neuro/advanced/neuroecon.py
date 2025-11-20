@@ -74,7 +74,6 @@ if torch is not None and nn is not None:
             activated = self._activation(combined)
             return activated.mean(dim=0)
 
-
     class AdvancedNeuroEconCore(nn.Module):  # type: ignore[misc]
         """Graph-based actor-critic core inspired by cortico-striatal circuitry."""
 

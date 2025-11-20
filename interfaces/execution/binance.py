@@ -26,6 +26,7 @@ def _safe_float(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
 
+
 _STATUS_MAP = {
     "NEW": OrderStatus.OPEN,
     "PARTIALLY_FILLED": OrderStatus.PARTIALLY_FILLED,

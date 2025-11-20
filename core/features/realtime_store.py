@@ -598,6 +598,8 @@ class RealTimeFeatureStore:
                 records.append(record)
                 _LOGGER.debug("Consumed stream entry %s for %s", entry_id, descriptor.name)
         return records
+
+
 def _chunked(iterable: Sequence[T], size: int) -> Iterable[Sequence[T]]:
     if size <= 0:
         raise ValueError("chunk size must be positive")

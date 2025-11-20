@@ -546,4 +546,3 @@ __all__ = [
     "AcceptAllRiskPolicy",
     "IOContract",
 ]
-

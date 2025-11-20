@@ -534,4 +534,3 @@ class AdvancedRiskController:
         if self._regime_guard is None:
             raise RuntimeError("RegimeAdaptiveExposureGuard is not configured")
         return self._regime_guard.regime(symbol)
-

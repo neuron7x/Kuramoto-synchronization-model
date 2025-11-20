@@ -545,4 +545,3 @@ class SerotoninController:
         self._step_count = 0
         self._total_step_time = 0.0
         self._hold_count = 0
-

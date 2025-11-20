@@ -523,4 +523,3 @@ class ConfigRegistry:
                     f"Release check {check!r} failed for version {record.version}"
                 )
                 raise ConfigPublicationError(msg) from exc
-

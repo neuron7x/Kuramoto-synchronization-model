@@ -44,7 +44,7 @@ def test_semgrep_job_has_security_permissions() -> None:
     """Ensure job has permissions to write security events."""
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
-    
+
     permissions = job.get("permissions")
     assert isinstance(permissions, dict)
     assert permissions["contents"] == "read"
@@ -55,7 +55,7 @@ def test_semgrep_runs_in_container() -> None:
     """Verify Semgrep runs in official container image."""
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
-    
+
     container = job.get("container")
     assert isinstance(container, dict)
     assert container["image"] == "semgrep/semgrep"
@@ -66,13 +66,13 @@ def test_semgrep_scans_with_auto_config() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
     steps = job.get("steps", [])
-    
+
     semgrep_step = None
     for step in steps:
         if isinstance(step, dict) and "Run Semgrep" in step.get("name", ""):
             semgrep_step = step
             break
-    
+
     assert semgrep_step is not None
     assert "--config auto" in semgrep_step["run"]
     assert "--sarif" in semgrep_step["run"]
@@ -83,13 +83,13 @@ def test_semgrep_outputs_sarif_format() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
     steps = job.get("steps", [])
-    
+
     semgrep_step = None
     for step in steps:
         if isinstance(step, dict) and "Run Semgrep" in step.get("name", ""):
             semgrep_step = step
             break
-    
+
     assert semgrep_step is not None
     assert "--sarif" in semgrep_step["run"]
     assert "semgrep-results.sarif" in semgrep_step["run"]
@@ -100,13 +100,13 @@ def test_semgrep_uploads_sarif_to_security_tab() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
     steps = job.get("steps", [])
-    
+
     upload_step = None
     for step in steps:
         if isinstance(step, dict) and "upload-sarif" in step.get("uses", ""):
             upload_step = step
             break
-    
+
     assert upload_step is not None
     assert upload_step.get("if") == "always()"
     with_section = upload_step.get("with", {})
@@ -118,13 +118,13 @@ def test_semgrep_checks_critical_findings() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
     steps = job.get("steps", [])
-    
+
     check_step = None
     for step in steps:
         if isinstance(step, dict) and "Check for critical findings" in step.get("name", ""):
             check_step = step
             break
-    
+
     assert check_step is not None
     assert "CRITICAL_COUNT" in check_step["run"]
     assert "exit 1" in check_step["run"]
@@ -135,13 +135,13 @@ def test_semgrep_scans_error_and_warning_severity() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["semgrep"]
     steps = job.get("steps", [])
-    
+
     semgrep_step = None
     for step in steps:
         if isinstance(step, dict) and "Run Semgrep" in step.get("name", ""):
             semgrep_step = step
             break
-    
+
     assert semgrep_step is not None
     assert "--severity ERROR" in semgrep_step["run"]
     assert "--severity WARNING" in semgrep_step["run"]

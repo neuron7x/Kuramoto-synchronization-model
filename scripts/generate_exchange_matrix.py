@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 
 ADAPTERS_PKG = "execution.adapters"
 
+
 def discover_adapters() -> List[str]:
     try:
         pkg = importlib.import_module(ADAPTERS_PKG)
@@ -17,6 +18,7 @@ def discover_adapters() -> List[str]:
         if not ispkg:
             found.append(name)
     return sorted(found)
+
 
 def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
     try:
@@ -31,6 +33,7 @@ def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
     }
     return caps
 
+
 def render_markdown(rows: List[Dict[str, Any]]) -> str:
     header = """<!-- AUTO-GENERATED FILE. DO NOT EDIT. -->
 # Exchange Compatibility Matrix
@@ -41,6 +44,7 @@ This document is generated daily by CI.
     for r in rows:
         table.append(f"| `{r['name']}` | {'✅' if r['time'] else '❌'} | {'✅' if r['exchangeInfo_or_symbols'] else '❌'} | {'✅' if r['balance'] else '❌'} |")
     return header + "\n".join(table) + "\n"
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -58,6 +62,7 @@ def main():
     content = render_markdown(rows)
     with open(args.write, "w", encoding="utf-8") as f:
         f.write(content)
+
 
 if __name__ == "__main__":
     main()

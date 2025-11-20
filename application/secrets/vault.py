@@ -473,4 +473,3 @@ def build_vault_resolver(
         )
 
     return _resolver
-

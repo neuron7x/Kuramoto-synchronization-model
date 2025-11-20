@@ -277,4 +277,3 @@ class AutomationRunner:
             started_at=started_at,
             completed_at=completed_at,
         )
-

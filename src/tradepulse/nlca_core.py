@@ -798,7 +798,7 @@ class MetricsDashboard:
     def serve_forever(self, host: str = '127.0.0.1', port: int = 8050):
         """
         Start the dashboard server.
-        
+
         Args:
             host: Network interface to bind to. Default '127.0.0.1' (localhost only).
                   Use '0.0.0.0' only in containerized environments with proper firewall rules.

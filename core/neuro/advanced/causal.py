@@ -109,4 +109,3 @@ def granger_causality(
 
 
 __all__ = ["GrangerResult", "granger_causality"]
-

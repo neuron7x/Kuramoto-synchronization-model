@@ -259,4 +259,3 @@ class PromptTemplateLibrary:
             raise PromptTemplateNotFoundError(
                 f"Prompt family '{family}' has not been registered"
             ) from exc
-

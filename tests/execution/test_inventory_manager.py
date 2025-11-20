@@ -222,4 +222,3 @@ def test_inventory_manager_raises_for_unknown_symbol() -> None:
         manager.propose_rebalance(
             "BTCUSDT", {"EX1": InventoryTarget(target_weight=Decimal("1"))}
         )
-

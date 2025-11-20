@@ -697,4 +697,3 @@ __all__ = [
     "ModuleTimelineEntry",
     "apply_neural_decision",
 ]
-

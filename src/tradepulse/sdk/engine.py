@@ -275,4 +275,3 @@ class TradePulseSDK:
             if override:
                 return override.lower()
         return declared.lower()
-

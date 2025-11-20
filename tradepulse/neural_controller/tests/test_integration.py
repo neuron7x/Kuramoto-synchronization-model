@@ -235,5 +235,3 @@ def test_decision_logging_contains_required_fields(
     ):
         assert key in payload
     assert 0.0 <= payload["sync_order"] <= 1.0
-
-

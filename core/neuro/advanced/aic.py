@@ -106,4 +106,3 @@ class AgencyControlNetwork:
         x_axis = np.arange(len(series))
         slope = float(np.polyfit(x_axis, series, 1)[0])
         return slope
-

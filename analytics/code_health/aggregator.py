@@ -367,4 +367,3 @@ class CodeMetricAggregator:
         if result.returncode != 0:
             return []
         return [line.strip() for line in result.stdout.splitlines() if line.strip().endswith(".py")]
-

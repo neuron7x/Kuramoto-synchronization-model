@@ -128,4 +128,3 @@ class TickMicrostructure(BaseModel):
     bid_size: Optional[int] = None
     ask_size: Optional[int] = None
     trade_condition: Optional[str] = None
-

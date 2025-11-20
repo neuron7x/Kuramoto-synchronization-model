@@ -32,20 +32,20 @@ except ImportError:
 
 def simulate_market_data(n_steps: int, seed: int = 42) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Simulate market returns, drawdowns, and phase data.
-    
+
     Args:
         n_steps: Number of simulation steps
         seed: Random seed for reproducibility
-    
+
     Returns:
         Tuple of (returns, drawdowns, phases)
     """
     rng = np.random.default_rng(seed)
-    
+
     # Generate market returns with varying volatility regimes
     market_returns = []
     phases = []
-    
+
     for i in range(n_steps):
         # Simulate different market regimes
         if i < n_steps // 3:
@@ -60,24 +60,24 @@ def simulate_market_data(n_steps: int, seed: int = 42) -> tuple[np.ndarray, np.n
             # Transition/recovery
             ret = rng.normal(0.002, 0.02)
             phase = rng.choice(["transition", "stable"])
-        
+
         market_returns.append(ret)
         phases.append(phase)
-    
+
     returns = np.array(market_returns)
     cum_returns = np.cumprod(1 + returns)
     drawdowns = (cum_returns.cummax() - cum_returns) / (cum_returns.cummax() + 1e-10)
-    
+
     return returns, drawdowns, phases
 
 
 def calculate_performance_metrics(returns: np.ndarray, actions: list[int]) -> dict:
     """Calculate trading performance metrics.
-    
+
     Args:
         returns: Market returns
         actions: Trading actions (-1, 0, 1)
-    
+
     Returns:
         Dictionary of performance metrics
     """
@@ -90,17 +90,17 @@ def calculate_performance_metrics(returns: np.ndarray, actions: list[int]) -> di
             strategy_returns.append(-returns[i])
         else:  # Hold
             strategy_returns.append(0.0)
-    
+
     strategy_returns = np.array(strategy_returns)
-    
+
     # Calculate metrics
     total_return = np.sum(strategy_returns)
     volatility = np.std(strategy_returns)
     sharpe_ratio = (np.mean(strategy_returns) / (volatility + 1e-10)) * np.sqrt(252)
-    
+
     cum_strategy = np.cumprod(1 + strategy_returns)
     max_dd = np.max((cum_strategy.cummax() - cum_strategy) / (cum_strategy.cummax() + 1e-10))
-    
+
     return {
         "total_return": float(total_return),
         "volatility": float(volatility),
@@ -118,11 +118,11 @@ def main():
     print("ECS-Inspired Regulator Demo for TradePulse")
     print("=" * 70)
     print()
-    
+
     # Configuration
     n_steps = 200
     seed = 42
-    
+
     # Initialize regulator
     print("Initializing ECS-Inspired Regulator...")
     regulator = ECSInspiredRegulator(
@@ -137,7 +137,7 @@ def main():
     print(f"  Stress Threshold: {regulator.stress_threshold:.4f}")
     print(f"  Chronic Threshold: {regulator.chronic_threshold} periods")
     print()
-    
+
     # Simulate market data
     print(f"Simulating {n_steps} steps of market data...")
     market_returns, drawdowns, phases = simulate_market_data(n_steps, seed)
@@ -145,7 +145,7 @@ def main():
     print(f"  Volatility: {np.std(market_returns):.4f}")
     print(f"  Max drawdown: {np.max(drawdowns):.4f}")
     print()
-    
+
     # Run simulation
     print("Running ECS regulator simulation...")
     actions = []
@@ -153,41 +153,41 @@ def main():
     fe_history = []
     stress_history = []
     prev_fe = None
-    
+
     rng = np.random.default_rng(seed)
-    
+
     for i in range(n_steps):
         # Update stress with market conditions
         regulator.update_stress(
-            market_returns[:i+1],
+            market_returns[:i + 1],
             drawdowns[i] if i > 0 else 0.0,
             prev_fe
         )
         prev_fe = regulator.free_energy_proxy
-        
+
         # Adapt parameters based on context
         regulator.adapt_parameters(context_phase=phases[i])
-        
+
         # Generate trading signal (from hypothetical TradePulseCompositeEngine)
         signal = market_returns[i] * rng.uniform(0.8, 1.2)
         signals.append(signal)
-        
+
         # Decide action
         action = regulator.decide_action(signal, context_phase=phases[i])
         actions.append(action)
-        
+
         # Track metrics
         fe_history.append(regulator.free_energy_proxy)
         stress_history.append(regulator.stress_level)
-    
+
     print("Simulation completed!")
     print()
-    
+
     # Analyze results
     print("=" * 70)
     print("Simulation Results")
     print("=" * 70)
-    
+
     # Final state
     metrics = regulator.get_metrics()
     print(f"\nFinal Regulator State:")
@@ -197,14 +197,14 @@ def main():
     print(f"  Compensatory Factor: {metrics.compensatory_factor:.4f}")
     print(f"  Chronic Counter: {metrics.chronic_counter}")
     print(f"  Is Chronic: {metrics.is_chronic}")
-    
+
     # Action distribution
     action_counts = np.bincount(np.array(actions) + 1)
     print(f"\nAction Distribution:")
-    print(f"  Sells:  {action_counts[0]:4d} ({action_counts[0]/n_steps*100:.1f}%)")
-    print(f"  Holds:  {action_counts[1]:4d} ({action_counts[1]/n_steps*100:.1f}%)")
-    print(f"  Buys:   {action_counts[2]:4d} ({action_counts[2]/n_steps*100:.1f}%)")
-    
+    print(f"  Sells:  {action_counts[0]:4d} ({action_counts[0] / n_steps * 100:.1f}%)")
+    print(f"  Holds:  {action_counts[1]:4d} ({action_counts[1] / n_steps * 100:.1f}%)")
+    print(f"  Buys:   {action_counts[2]:4d} ({action_counts[2] / n_steps * 100:.1f}%)")
+
     # Performance metrics
     performance = calculate_performance_metrics(market_returns, actions)
     print(f"\nPerformance Metrics:")
@@ -212,31 +212,31 @@ def main():
     print(f"  Volatility: {performance['volatility']:.4f}")
     print(f"  Sharpe Ratio: {performance['sharpe_ratio']:.4f}")
     print(f"  Max Drawdown: {performance['max_drawdown']:.4f}")
-    
+
     # Free energy analysis
     print(f"\nFree Energy Analysis:")
     print(f"  Initial FE: {fe_history[0]:.4f}")
     print(f"  Final FE: {fe_history[-1]:.4f}")
     print(f"  Mean FE: {np.mean(fe_history):.4f}")
     print(f"  Max FE: {np.max(fe_history):.4f}")
-    
+
     # Chronic stress detection
     chronic_periods = sum(1 for s in stress_history if s > regulator.stress_threshold)
     print(f"\nStress Analysis:")
-    print(f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods/n_steps*100:.1f}%)")
+    print(f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods / n_steps * 100:.1f}%)")
     print(f"  Mean Stress: {np.mean(stress_history):.4f}")
     print(f"  Max Stress: {np.max(stress_history):.4f}")
-    
+
     # Export trace
     print(f"\nExporting trace data...")
     trace = regulator.get_trace()
     print(f"  Trace records: {len(trace)}")
-    
+
     # Save to Parquet for TradePulse integration
     trace_file = "/tmp/ecs_regulator_trace.parquet"
     trace.to_parquet(trace_file)
     print(f"  Saved to: {trace_file}")
-    
+
     # Create summary CSV
     summary_df = pd.DataFrame({
         "step": range(n_steps),
@@ -248,11 +248,11 @@ def main():
         "stress": stress_history,
         "free_energy": fe_history,
     })
-    
+
     summary_file = "/tmp/ecs_regulator_summary.csv"
     summary_df.to_csv(summary_file, index=False)
     print(f"  Summary saved to: {summary_file}")
-    
+
     print()
     print("=" * 70)
     print("Integration Notes:")
@@ -286,25 +286,25 @@ The ECS-Inspired Regulator can be integrated with TradePulse components:
    - Store in TradePulse feature store
 
 Example integration code:
-    
+
     from core.neuro import ECSInspiredRegulator, FractalMotivationController
-    
+
     # Initialize
     ecs_reg = ECSInspiredRegulator()
     motivation = FractalMotivationController(actions=["buy", "sell", "hold"])
-    
+
     # Trading loop
     ecs_reg.update_stress(returns, drawdown)
     ecs_reg.adapt_parameters(phase)
     ecs_action = ecs_reg.decide_action(signal, phase)
-    
+
     # Combine with motivation system
     motivation_decision = motivation.recommend(
         state=[ecs_reg.stress_level, signal],
         signals={"risk_ok": ecs_reg.risk_threshold > 0.01}
     )
 """)
-    
+
     print("=" * 70)
     print("Demo completed successfully!")
     print("=" * 70)

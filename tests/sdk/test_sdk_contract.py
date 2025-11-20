@@ -193,4 +193,3 @@ def test_exit_flat_position_raises(tmp_path: Path, monkeypatch) -> None:
 
     with pytest.raises(ValueError):
         sdk.propose_trade(exit_signal)
-

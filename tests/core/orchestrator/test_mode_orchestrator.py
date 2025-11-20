@@ -168,4 +168,3 @@ def test_delay_budgets_non_negative() -> None:
     orchestrator.reset(state=ModeState.ACTION)
     with pytest.raises(ValueError):
         orchestrator.update(soft_breach_snapshot(random.Random(0)), timestamp=1.0)
-

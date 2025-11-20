@@ -223,4 +223,3 @@ def test_resample_order_book_invariants(levels: int, base: pd.DataFrame, frequen
     assert np.all(micro_vals[valid] >= bid_vals[valid] - 1e-9)
     assert np.all(micro_vals[valid] <= ask_vals[valid] + 1e-9)
     assert np.all(np.abs(imbalance.values) <= 1.0 + 1e-9)
-

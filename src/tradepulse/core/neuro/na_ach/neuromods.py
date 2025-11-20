@@ -152,4 +152,3 @@ class NAACHNeuromodulator:
             "arousal": self.arousal,
             "attention": self.attention,
         }
-

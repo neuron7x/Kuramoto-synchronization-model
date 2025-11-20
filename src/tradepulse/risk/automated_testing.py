@@ -25,7 +25,7 @@ except ImportError:
     except ImportError:
         import sys
         from pathlib import Path
-        
+
         # Try to import from absolute path
         risk_core_path = Path(__file__).parent / "risk_core.py"
         if risk_core_path.exists():
@@ -83,7 +83,7 @@ class RiskScenario:
         self, var: float, es: float, alpha: float = 0.975
     ) -> List[str]:
         """Validate if computed metrics are within expected ranges.
-        
+
         Returns:
             List of validation errors, empty if all validations pass
         """
@@ -186,7 +186,7 @@ class AutomatedRiskTester:
         seed: Optional[int] = None,
     ):
         """Initialize automated risk tester.
-        
+
         Args:
             es_limit: Maximum allowed Expected Shortfall
             var_alpha: Confidence level for VaR/ES calculations
@@ -210,10 +210,10 @@ class AutomatedRiskTester:
 
     def run_stress_test(self, scenario: RiskScenario) -> StressTestResult:
         """Run a single stress test scenario.
-        
+
         Args:
             scenario: The risk scenario to test
-            
+
         Returns:
             StressTestResult with metrics and validation status
         """
@@ -268,7 +268,7 @@ class AutomatedRiskTester:
 
     def run_all_scenarios(self) -> List[StressTestResult]:
         """Run all configured stress test scenarios.
-        
+
         Returns:
             List of all stress test results
         """
@@ -293,10 +293,10 @@ class AutomatedRiskTester:
         self, config: MonteCarloConfig
     ) -> List[StressTestResult]:
         """Run Monte Carlo simulation with multiple random scenarios.
-        
+
         Args:
             config: Monte Carlo configuration
-            
+
         Returns:
             List of results from all simulated scenarios
         """
@@ -317,10 +317,10 @@ class AutomatedRiskTester:
 
             # Create scenario
             scenario = RiskScenario(
-                name=f"monte_carlo_{i+1}",
+                name =f"monte_carlo_{i + 1}",
                 scenario_type=ScenarioType.NORMAL_MARKET,
                 returns=returns,
-                description=f"Monte Carlo simulation iteration {i+1}",
+                description =f"Monte Carlo simulation iteration {i + 1}",
                 metadata={
                     "simulation_id": i + 1,
                     "mu": config.mu,
@@ -346,7 +346,7 @@ class AutomatedRiskTester:
 
     def generate_summary_report(self) -> dict:
         """Generate a summary report of all test results.
-        
+
         Returns:
             Dictionary containing summary statistics and results
         """
@@ -438,11 +438,11 @@ def generate_market_stress_scenarios(
     num_days: int = 252, seed: Optional[int] = None
 ) -> List[RiskScenario]:
     """Generate market stress test scenarios.
-    
+
     Args:
         num_days: Number of trading days to simulate
         seed: Random seed for reproducibility
-        
+
     Returns:
         List of market stress scenarios
     """
@@ -523,11 +523,11 @@ def generate_liquidity_crisis_scenarios(
     num_days: int = 252, seed: Optional[int] = None
 ) -> List[RiskScenario]:
     """Generate liquidity crisis scenarios with extreme conditions.
-    
+
     Args:
         num_days: Number of trading days to simulate
         seed: Random seed for reproducibility
-        
+
     Returns:
         List of liquidity crisis scenarios
     """
@@ -574,12 +574,12 @@ def generate_flash_crash_scenarios(
     num_days: int = 252, crash_magnitude: float = 0.15, seed: Optional[int] = None
 ) -> List[RiskScenario]:
     """Generate flash crash scenarios with sudden extreme moves.
-    
+
     Args:
         num_days: Number of trading days to simulate
         crash_magnitude: Magnitude of the flash crash (as fraction)
         seed: Random seed for reproducibility
-        
+
     Returns:
         List of flash crash scenarios
     """
@@ -600,7 +600,7 @@ def generate_flash_crash_scenarios(
             name="single_flash_crash",
             scenario_type=ScenarioType.FLASH_CRASH,
             returns=returns,
-            description=f"Single flash crash of {crash_magnitude*100:.1f}% with partial recovery",
+            description =f"Single flash crash of {crash_magnitude * 100:.1f}% with partial recovery",
             expected_var_range=(0.02, 0.05),
             expected_es_range=(0.04, 0.10),
         )
@@ -631,12 +631,12 @@ def validate_risk_metrics(
     es_limit: float = 0.03,
 ) -> dict:
     """Validate risk metrics for a given return series.
-    
+
     Args:
         returns: Array of returns
         alpha: Confidence level for VaR/ES
         es_limit: Maximum allowed ES
-        
+
     Returns:
         Dictionary containing computed metrics and validation results
     """

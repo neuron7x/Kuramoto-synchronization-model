@@ -154,4 +154,3 @@ def test_portfolio_attribution_instrument_exposure_validation() -> None:
             regime_series=inputs["regime_series"],
             instrument_exposures=bad_exposures,
         )
-

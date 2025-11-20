@@ -246,4 +246,3 @@ def test_aggregate_sentiment_deduplicates_duplicate_articles() -> None:
     expected_signal = (-0.4 + 0.5) / 2
     assert row["sentiment_signal"] == pytest.approx(expected_signal)
     assert row["article_count"] == 2
-

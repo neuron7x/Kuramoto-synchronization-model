@@ -17,7 +17,7 @@ implementing a form of case-based reasoning for trading.
 Example:
     >>> from core.agent.memory import StrategyMemory, StrategySignature
     >>> memory = StrategyMemory(capacity=1000)
-    >>> sig = StrategySignature(R=0.95, delta_H=0.05, kappa_mean=0.3, 
+    >>> sig = StrategySignature(R=0.95, delta_H=0.05, kappa_mean=0.3,
     ...                         entropy=2.1, instability=0.1)
     >>> memory.store("momentum_strategy", sig, score=0.85)
 """

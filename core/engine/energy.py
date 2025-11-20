@@ -254,4 +254,3 @@ __all__ = [
     "measure_entropy",
     "total_latency",
 ]
-

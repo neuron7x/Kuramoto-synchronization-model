@@ -4,6 +4,7 @@ import time
 import argparse
 from pathlib import Path
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="tests/fixtures/recordings")
@@ -21,6 +22,7 @@ def main():
             p.unlink()
             removed += 1
     print(f"Removed {removed} old cassette(s) older than {args.max_age_days} days")
+
 
 if __name__ == "__main__":
     main()

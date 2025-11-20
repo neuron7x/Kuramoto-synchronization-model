@@ -813,4 +813,3 @@ def result_to_json(result: PipelineResult) -> str:
     """Serialize :class:`PipelineResult` to a human-readable JSON string."""
 
     return json.dumps(result.to_dict(), indent=2)
-

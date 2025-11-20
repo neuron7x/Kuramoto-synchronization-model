@@ -657,4 +657,3 @@ def build_authorization_gateway(
     )
     gateway.register_temporary_grants(configuration.temporary_grants)
     return gateway
-

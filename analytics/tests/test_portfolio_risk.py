@@ -120,4 +120,3 @@ def test_historical_shocks_require_positive_portfolio_value() -> None:
 
     with pytest.raises(ValueError, match="portfolio_value must be positive"):
         tester.evaluate_historical_shocks([scenario], portfolio_value=-10.0)
-

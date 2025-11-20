@@ -355,4 +355,3 @@ class InventoryManager:
             if deficit_map[target] <= threshold:
                 deficit_map.pop(target)
         return transfers
-

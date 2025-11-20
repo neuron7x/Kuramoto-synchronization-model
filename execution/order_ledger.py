@@ -160,6 +160,8 @@ class LedgerSnapshot:
                     "Snapshot integrity check failed: state hash mismatch",
                 )
         return state
+
+
 @dataclass(frozen=True, slots=True)
 class OrderLedgerEvent:
     """Single append-only entry within the order ledger."""
@@ -833,4 +835,3 @@ class OrderLedger:
                     stale.path.unlink()
             snapshots = snapshots[-self._config.snapshot_retention :]
         return snapshots
-
