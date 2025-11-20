@@ -17,8 +17,6 @@ from typing import List, Dict
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
     generate_synthetic_data,
-    validate_hpc_ai,
-    simple_backtest,
 )
 
 
@@ -242,7 +240,7 @@ def analyze_results(results: Dict[str, List[ExplorationResult]]):
     best_overall = max(synthetic_scores, key=lambda x: x[1])
     print(f"  Optimal τ={best_overall[0]:.1f} (balanced score={best_overall[1]:.4f})")
     print(f"  Use τ={best_overall[0]:.1f} for exploration (high uncertainty)")
-    print(f"  Use τ=100.0 for exploitation (low uncertainty)")
+    print("  Use τ=100.0 for exploitation (low uncertainty)")
 
 
 def run_exploration_optimization():

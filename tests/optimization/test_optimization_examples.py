@@ -3,7 +3,6 @@
 Validates that optimization code examples work correctly.
 """
 
-import time
 from unittest.mock import Mock
 
 import numpy as np

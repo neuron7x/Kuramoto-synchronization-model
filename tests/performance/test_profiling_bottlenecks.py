@@ -5,8 +5,6 @@ in critical trading system components.
 """
 
 import time
-from typing import Dict, List
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest

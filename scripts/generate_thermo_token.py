@@ -70,7 +70,7 @@ def main():
     print(f"Generated At:  {datetime.now().isoformat()}")
     print(f"Expires At:    {expiration.isoformat()}")
     print(f"Valid For:     {args.duration}")
-    print(f"\nToken (copy to environment variable):")
+    print("\nToken (copy to environment variable):")
     print("-" * 70)
     print(token)
     print("-" * 70)

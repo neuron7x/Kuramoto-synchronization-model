@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Iterator, Sequence
 
 import numpy as np
-from numpy.typing import NDArray
 
 
 @dataclass(slots=True, frozen=True)

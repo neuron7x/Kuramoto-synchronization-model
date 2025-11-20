@@ -307,7 +307,7 @@ def _join_features(features: Sequence[str]) -> str:
 
 def _render_pytest_file(analysis: ModuleAnalysis) -> str:
     header = textwrap.dedent(
-        f'''\
+        '''\
         """Auto-generated tests for {analysis.module}.
 
         This file was created by :mod:`tools.testing.test_generator`.
@@ -348,15 +348,15 @@ def _render_component_test(component: ComponentAnalysis) -> str:
     explanation_comment = _format_explanation_comment(component.explanation)
     lines = [
         f"def test_{slug}_analysis() -> None:",
-        f"    \"\"\"Auto-generated behavioural overview for ``{component.name}``.\"\"\"",
-        f"    analysis = analyze_component(MODULE_UNDER_TEST, \"{component.name}\")",
+        "    \"\"\"Auto-generated behavioural overview for ``{component.name}``.\"\"\"",
+        "    analysis = analyze_component(MODULE_UNDER_TEST, \"{component.name}\")",
     ]
     lines.extend(explanation_comment)
     lines.extend(
         [
-            f"    assert analysis.module == MODULE_UNDER_TEST",
-            f"    assert analysis.name == \"{component.name}\"",
-            f"    assert analysis.kind == \"{component.kind}\"",
+            "    assert analysis.module == MODULE_UNDER_TEST",
+            "    assert analysis.name == \"{component.name}\"",
+            "    assert analysis.kind == \"{component.kind}\"",
             f"    assert analysis.signature == {component.signature!r}",
             f"    assert analysis.explanation == {component.explanation!r}",
             f"    assert analysis.lineno == {component.lineno}",

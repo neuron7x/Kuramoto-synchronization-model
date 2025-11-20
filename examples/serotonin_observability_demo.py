@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import sys
 import tempfile
-import time
 from pathlib import Path
 
 import yaml
@@ -78,7 +77,6 @@ def alert_handler(alert: Alert, value: float) -> None:
 def log_metrics(name: str, value: float) -> None:
     """Log metrics (placeholder for real metrics system)."""
     # In production, this would push to Prometheus, StatsD, CloudWatch, etc.
-    pass
 
 
 def main() -> None:

@@ -138,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     # Generate plots
     if args.plot:
         plot_path = args.plot_output or f"profile_{args.mode}.png"
-        print(f"\nGenerating visualization...")
+        print("\nGenerating visualization...")
         profiler.plot_profile(profile, output_path=plot_path)
         print(f"Plot saved to: {plot_path}")
 

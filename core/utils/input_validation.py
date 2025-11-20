@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable, TypeVar
+from typing import Callable, TypeVar
 
 T = TypeVar('T')
 
@@ -16,7 +16,6 @@ T = TypeVar('T')
 class ValidationError(ValueError):
     """Raised when input validation fails."""
 
-    pass
 
 
 def validate_symbol(symbol: str, max_length: int = 20) -> str:

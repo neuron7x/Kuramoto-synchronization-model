@@ -42,7 +42,7 @@ def get_git_info() -> dict[str, str]:
 
     try:
         branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+            ["git", "rev-parse", "--abbrev-re", "HEAD"], stderr=subprocess.DEVNULL
         ).decode().strip()
     except Exception:
         branch = "unknown"
@@ -169,12 +169,12 @@ def main() -> int:
             regression_result = check_regression(metrics, budget)
 
             if not regression_result.passed:
-                print(f"  ⚠️  REGRESSION DETECTED")
+                print("  ⚠️  REGRESSION DETECTED")
                 for violation in regression_result.violations:
                     print(f"    - {violation}")
                 failed_runs.append(recording_path.stem)
             else:
-                print(f"  ✅ Passed")
+                print("  ✅ Passed")
 
             # Create run record
             run = PerformanceRun(

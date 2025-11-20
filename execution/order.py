@@ -40,7 +40,8 @@ except ModuleNotFoundError:  # pragma: no cover
             price: float,
             *,
             max_leverage: float = 5.0,
-        ) -> float: ...
+        ) -> float:
+            ...
 
 
 class RiskAwarePositionSizer(PositionSizer):

@@ -118,13 +118,13 @@ def test_cooldown_timing():
 
     # Verify cooldown is 0 while in hold
     assert ctrl._cooldown == 0, f"Cooldown should be 0 in hold, got {ctrl._cooldown}"
-    print(f"✓ Cooldown is 0 while in hold")
+    print("✓ Cooldown is 0 while in hold")
 
     # Stay in hold
     for _ in range(3):
         result = ctrl.step(stress=1.0, drawdown=0.5, novelty=0.0, dt=1.0)
         assert ctrl._cooldown == 0, "Cooldown should stay 0 while in hold"
-    print(f"✓ Cooldown remains 0 while in hold")
+    print("✓ Cooldown remains 0 while in hold")
 
     # Exit hold
     for i in range(30):
@@ -151,7 +151,7 @@ def test_cooldown_timing():
             break
 
     assert result["cooldown"] == 0, "Cooldown should reach 0"
-    print(f"✓ Cooldown reached 0")
+    print("✓ Cooldown reached 0")
 
 
 def test_tonic_phasic():
@@ -257,7 +257,7 @@ def test_config_validation():
         raise AssertionError("Should have raised ValueError for missing keys")
     except ValueError as e:
         assert "Missing serotonin config keys" in str(e)
-        print(f"✓ Properly rejects incomplete config")
+        print("✓ Properly rejects incomplete config")
     finally:
         Path(config_path).unlink()
 
@@ -290,7 +290,7 @@ def test_config_validation():
         Controller(config_path)
         raise AssertionError("Should have raised ValueError for invalid beta")
     except ValueError:
-        print(f"✓ Properly rejects invalid beta value")
+        print("✓ Properly rejects invalid beta value")
     finally:
         Path(config_path).unlink()
 

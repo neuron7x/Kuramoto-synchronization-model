@@ -9,7 +9,6 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-from collections import defaultdict
 import logging
 
 logger = logging.getLogger(__name__)

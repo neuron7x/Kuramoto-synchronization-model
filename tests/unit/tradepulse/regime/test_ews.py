@@ -1,6 +1,5 @@
 """Tests for EWS aggregator."""
 
-import sys
 from pathlib import Path
 
 # Import directly from module file to avoid package __init__

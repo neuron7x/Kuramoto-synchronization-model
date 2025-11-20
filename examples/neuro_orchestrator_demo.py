@@ -192,7 +192,7 @@ def demo_learning_loop():
     print(f"Learning Rate (α): {loop.learning_rate}")
     print(f"Prediction Window: {loop.prediction_window} step(s)")
     print(f"Error Metric: {loop.error_metric}")
-    print(f"\nUpdate Rule:")
+    print("\nUpdate Rule:")
     print(f"  {loop.update_rule}")
 
     print("\nBiological Mapping:")

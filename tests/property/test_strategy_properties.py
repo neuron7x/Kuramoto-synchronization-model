@@ -209,11 +209,11 @@ class TestPiAgentProperties:
         result1 = agent.detect_instability(state)
 
         # Immediate next call should not trigger (cooldown)
-        _result2 = agent.detect_instability(state)
-        _result3 = agent.detect_instability(state)
+        agent.detect_instability(state)
+        agent.detect_instability(state)
 
         # After cooldown expires (3 calls), it should trigger again
-        _result4 = agent.detect_instability(state)
+        agent.detect_instability(state)
 
         # First should trigger, next 2-3 should be cooled down
         assert result1 is True

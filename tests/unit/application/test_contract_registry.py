@@ -1,7 +1,6 @@
 from application.microservices.contracts import (
     ApiContract,
     EventContract,
-    IntegrationContractRegistry,
     QueueContract,
     ServiceInteractionContract,
     default_contract_registry,

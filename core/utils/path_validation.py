@@ -6,7 +6,6 @@ directory traversal vulnerabilities.
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Union
 
@@ -14,7 +13,6 @@ from typing import Union
 class PathTraversalError(ValueError):
     """Raised when a path traversal attack is detected."""
 
-    pass
 
 
 def validate_safe_path(

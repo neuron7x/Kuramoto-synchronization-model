@@ -149,7 +149,7 @@ else:
                     st.error(f"❌ Missing required columns: {', '.join(missing_cols)}")
                     validation_passed = False
                 else:
-                    st.success(f"✅ Required column 'price' found")
+                    st.success("✅ Required column 'price' found")
 
                 # Check optional columns
                 found_optional = [col for col in optional_cols if col in df.columns]
@@ -293,7 +293,7 @@ else:
 
                 # Comprehensive analysis summary
                 with st.expander("📊 Detailed Analysis Summary"):
-                    st.markdown(f"""
+                    st.markdown("""
                     **Analysis Window:** {analysis_window} periods
                     **Data Points Analyzed:** {len(prices)}
 
@@ -566,7 +566,7 @@ else:
 
         # System info
         with st.expander("🔧 System Information"):
-            st.markdown(f"""
+            st.markdown("""
             **Dashboard Version:** 2.0.0
             **Analysis Window:** {window_size} periods
             **Entropy Bins:** {entropy_bins}

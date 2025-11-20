@@ -24,7 +24,7 @@ class Controller:
         self.cfg = cfg or MPCConfig()
 
     def decide(self, state: Dict[str, float], mode: str, D: float) -> Tuple[str, Dict[str, float]]:
-        H = state["H"]
+        state["H"]
         M = state["M"]
         E = state["E"]
         S = state["S"]

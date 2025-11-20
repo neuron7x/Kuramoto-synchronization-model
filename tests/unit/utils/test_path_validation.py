@@ -1,6 +1,5 @@
 """Tests for path validation utilities."""
 import pytest
-from pathlib import Path
 import tempfile
 import os
 

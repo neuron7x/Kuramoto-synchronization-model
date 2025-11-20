@@ -1,7 +1,6 @@
 """Tests for security validation framework."""
 
 from decimal import Decimal
-from pathlib import Path
 
 import pytest
 

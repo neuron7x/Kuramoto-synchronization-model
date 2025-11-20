@@ -31,12 +31,12 @@ def example_basic_validation():
 
     result = validator.compute_free_energy(metrics_good)
 
-    print(f"\nMetrics (all below threshold):")
+    print("\nMetrics (all below threshold):")
     for name, value in metrics_good.items():
         metric_config = validator.config.get_metric(name)
         print(f"  {name:20s}: {value:8.3f} (threshold: {metric_config.threshold:.3f})")
 
-    print(f"\nEnergy Computation:")
+    print("\nEnergy Computation:")
     print(f"  Internal Energy (U): {result.internal_energy:.6f}")
     print(f"  Stability (S):       {result.stability:.6f}")
     print(f"  Temperature (T):     {result.temperature:.6f}")
@@ -68,19 +68,19 @@ def example_threshold_violation():
 
     result = validator.compute_free_energy(metrics_bad)
 
-    print(f"\nMetrics (some above threshold):")
+    print("\nMetrics (some above threshold):")
     for name, value in metrics_bad.items():
         metric_config = validator.config.get_metric(name)
         threshold = metric_config.threshold
         status = "✗ VIOLATION" if value > threshold else "✓ OK"
         print(f"  {name:20s}: {value:8.3f} (threshold: {threshold:.3f}) {status}")
 
-    print(f"\nPenalties:")
+    print("\nPenalties:")
     for name, penalty in result.penalties.items():
         if penalty > 0:
             print(f"  {name:20s}: {penalty:.6f}")
 
-    print(f"\nEnergy Computation:")
+    print("\nEnergy Computation:")
     print(f"  Internal Energy (U): {result.internal_energy:.6f}")
     print(f"  Stability (S):       {result.stability:.6f}")
     print(f"  Free Energy (F):     {result.free_energy:.6f}")
@@ -129,7 +129,7 @@ def example_time_series_validation():
         print(f"{i + 1:<6} {result.free_energy:<10.6f} {result.internal_energy:<10.6f} "
               f"{result.stability:<10.6f} {status:<10}")
 
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total validations: {len(validator.validation_history)}")
     passed = sum(1 for r in validator.validation_history if r.passed)
     failed = len(validator.validation_history) - passed
@@ -176,7 +176,7 @@ def example_export_report():
     # Show report summary
     latest = validator.get_latest_result()
     if latest:
-        print(f"\nLatest validation:")
+        print("\nLatest validation:")
         print(f"  Free Energy: {latest.free_energy:.6f}")
         print(f"  Status: {'PASS ✓' if latest.passed else 'FAIL ✗'}")
     print()
@@ -203,7 +203,7 @@ def example_custom_configuration():
 
     validator = EnergyValidator(config=custom_config)
 
-    print(f"Custom Configuration:")
+    print("Custom Configuration:")
     print(f"  Control Temperature: {custom_config.control_temperature}")
     print(f"  Max Energy: {custom_config.max_acceptable_energy}")
     print(f"  Metrics: {len(custom_config.metrics)}")
@@ -216,7 +216,7 @@ def example_custom_configuration():
 
     result = validator.compute_free_energy(metrics)
 
-    print(f"\nValidation Result:")
+    print("\nValidation Result:")
     print(f"  Free Energy: {result.free_energy:.6f}")
     print(f"  Threshold: {result.threshold:.6f}")
     print(f"  Status: {'PASS ✓' if result.passed else 'FAIL ✗'}")

@@ -1,6 +1,5 @@
 """Tests for risk core module."""
 
-import sys
 from pathlib import Path
 
 import numpy as np

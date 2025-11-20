@@ -15,11 +15,10 @@ Exit codes:
 """
 
 import argparse
-import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 
 class ConstraintViolation:

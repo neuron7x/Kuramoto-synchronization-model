@@ -5,10 +5,7 @@ Autonomic Control Layer including self-diagnosis, auto-tuning, and self-healing.
 """
 
 import time
-from typing import Dict, List
-from unittest.mock import MagicMock, patch
 
-import networkx as nx
 import pytest
 
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryAction, RecoveryState
@@ -88,8 +85,8 @@ class TestSelfDiagnosisSystem:
 
         # Calculate rate of increase
         import numpy as np
-        x = np.arange(len(error_rates))
-        y = np.array(error_rates)
+        np.arange(len(error_rates))
+        np.array(error_rates)
 
         # Exponential growth detection
         if len(error_rates) >= 3:
@@ -284,8 +281,6 @@ class TestTACLAdaptiveRecovery:
     def test_crisis_mode_escalation(self):
         """Test escalation to different crisis modes."""
         # Simulate system metrics
-        F_current = 0.15
-        F_baseline = 0.10
         dF_dt = 0.05
 
         # Determine crisis mode
@@ -459,8 +454,6 @@ class TestEndToEndAdaptation:
         assert issue_detected
 
         # 2. Adapt configuration
-        old_timeout = 1000
-        new_timeout = 2000
 
         # 3. Verify improvement
         new_latency = 180  # ms (improved)

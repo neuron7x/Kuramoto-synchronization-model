@@ -4,4 +4,5 @@ from typing import Protocol
 
 
 class SumPort(Protocol):
-    def sum(self, a: int, b: int) -> int: ...
+    def sum(self, a: int, b: int) -> int:
+        ...

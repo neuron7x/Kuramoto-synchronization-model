@@ -23,7 +23,6 @@ from pydantic import BaseModel, Field
 class IntegrityError(Exception):
     """Raised when integrity verification fails."""
 
-    pass
 
 
 class ChecksumManifest(BaseModel):

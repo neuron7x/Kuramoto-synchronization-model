@@ -8,7 +8,6 @@ from src.tradepulse.core.neuro.serotonin.observability import (
     SLI,
     SLO,
     SEROTONIN_ALERTS,
-    SEROTONIN_SLIS,
     SEROTONIN_SLOS,
     create_grafana_dashboard_json,
     create_prometheus_metrics,

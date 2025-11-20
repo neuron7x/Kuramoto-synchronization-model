@@ -190,7 +190,7 @@ def main():
 
     # Final state
     metrics = regulator.get_metrics()
-    print(f"\nFinal Regulator State:")
+    print("\nFinal Regulator State:")
     print(f"  Stress Level: {metrics.stress_level:.4f}")
     print(f"  Free Energy Proxy: {metrics.free_energy_proxy:.4f}")
     print(f"  Risk Threshold: {metrics.risk_threshold:.4f}")
@@ -200,21 +200,21 @@ def main():
 
     # Action distribution
     action_counts = np.bincount(np.array(actions) + 1)
-    print(f"\nAction Distribution:")
+    print("\nAction Distribution:")
     print(f"  Sells:  {action_counts[0]:4d} ({action_counts[0] / n_steps * 100:.1f}%)")
     print(f"  Holds:  {action_counts[1]:4d} ({action_counts[1] / n_steps * 100:.1f}%)")
     print(f"  Buys:   {action_counts[2]:4d} ({action_counts[2] / n_steps * 100:.1f}%)")
 
     # Performance metrics
     performance = calculate_performance_metrics(market_returns, actions)
-    print(f"\nPerformance Metrics:")
+    print("\nPerformance Metrics:")
     print(f"  Total Return: {performance['total_return']:.4f}")
     print(f"  Volatility: {performance['volatility']:.4f}")
     print(f"  Sharpe Ratio: {performance['sharpe_ratio']:.4f}")
     print(f"  Max Drawdown: {performance['max_drawdown']:.4f}")
 
     # Free energy analysis
-    print(f"\nFree Energy Analysis:")
+    print("\nFree Energy Analysis:")
     print(f"  Initial FE: {fe_history[0]:.4f}")
     print(f"  Final FE: {fe_history[-1]:.4f}")
     print(f"  Mean FE: {np.mean(fe_history):.4f}")
@@ -222,13 +222,13 @@ def main():
 
     # Chronic stress detection
     chronic_periods = sum(1 for s in stress_history if s > regulator.stress_threshold)
-    print(f"\nStress Analysis:")
+    print("\nStress Analysis:")
     print(f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods / n_steps * 100:.1f}%)")
     print(f"  Mean Stress: {np.mean(stress_history):.4f}")
     print(f"  Max Stress: {np.max(stress_history):.4f}")
 
     # Export trace
-    print(f"\nExporting trace data...")
+    print("\nExporting trace data...")
     trace = regulator.get_trace()
     print(f"  Trace records: {len(trace)}")
 

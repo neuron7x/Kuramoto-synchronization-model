@@ -2,7 +2,6 @@
 Tests for Dynamic Position Sizer Module
 """
 
-import numpy as np
 import pytest
 
 from modules.dynamic_position_sizer import (

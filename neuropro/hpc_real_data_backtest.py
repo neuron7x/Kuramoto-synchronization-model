@@ -7,7 +7,7 @@ Compares HPC-AI against baseline strategies (TACL, Buy-and-Hold).
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 import logging
 
@@ -15,9 +15,7 @@ from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 
 try:
-    from backtest.event_driven import ArrayDataHandler, EventDrivenBacktestEngine
     from backtest.events import SignalEvent, MarketEvent
-    from backtest.performance import compute_performance_metrics
     BACKTEST_AVAILABLE = True
 except ImportError:
     BACKTEST_AVAILABLE = False

@@ -426,7 +426,7 @@ def cmd_backtest(args):
                 "error": "ValueError",
                 "message": f"Column '{args.price_col}' not found in CSV",
                 "available_columns": list(df.columns),
-                "suggestion": f"Use --price-col to specify the correct column name."
+                "suggestion": "Use --price-col to specify the correct column name."
             }, indent=2),
             file=sys.stderr
         )

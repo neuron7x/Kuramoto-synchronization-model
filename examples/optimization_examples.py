@@ -3,12 +3,10 @@
 Цей модуль демонструє конкретні оптимізації, описані в SYSTEM_OPTIMIZATION_ANALYSIS_UA.md.
 """
 
-import asyncio
 import hashlib
 import logging
 import time
-from collections import defaultdict, deque
-from contextlib import contextmanager
+from collections import deque
 from dataclasses import dataclass
 from functools import wraps
 from queue import Empty, Queue
@@ -592,7 +590,6 @@ def monitor_performance(
 def _record_metric(name: str, value: float, labels: Dict[str, str]):
     """Helper для запису метрики."""
     # TODO: Інтегрувати з AsyncMetricsWriter
-    pass
 
 
 # ============================================================================
@@ -702,9 +699,16 @@ def example_async_metrics():
 
 
 # Dummy functions для прикладів
-def process_event(event): pass
-def has_pending_orders(): return np.random.random() > 0.8
-def process_orders(): pass
+def process_event(event):
+    pass
+
+
+def has_pending_orders():
+    return np.random.random() > 0.8
+
+
+def process_orders():
+    pass
 
 
 if __name__ == "__main__":

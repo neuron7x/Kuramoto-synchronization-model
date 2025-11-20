@@ -15,7 +15,8 @@ from .state import OrderBookStateError, OrderBookStore
 class SnapshotRequester(Protocol):
     """Abstraction to request fresh snapshots when recovery is needed."""
 
-    def __call__(self, instrument: str, reason: str) -> None: ...
+    def __call__(self, instrument: str, reason: str) -> None:
+        ...
 
 
 @dataclass(slots=True)

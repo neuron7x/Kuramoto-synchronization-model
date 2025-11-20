@@ -15,7 +15,6 @@ from runtime.thermo_controller import ThermoController
 from runtime.thermo_memory_manager import OptimizedTelemetryManager
 from runtime.thermo_performance import (
     Benchmark,
-    PerformanceProfiler,
     get_performance_monitor,
     timed,
     timing_context,

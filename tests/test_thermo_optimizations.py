@@ -5,12 +5,11 @@ monitoring features of the optimized thermodynamics system.
 """
 
 import time
-from pathlib import Path
 
 import numpy as np
 import pytest
 
-from runtime.thermo_cache import ThermoCache, VectorizedOperations, cached_bond_energy
+from runtime.thermo_cache import ThermoCache, VectorizedOperations
 from runtime.thermo_memory_manager import OptimizedTelemetryManager, TelemetryWindow
 from runtime.thermo_performance import (
     Benchmark,

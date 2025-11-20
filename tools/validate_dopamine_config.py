@@ -16,7 +16,6 @@ from typing import Any
 import yaml
 
 try:
-    import jsonschema
     from jsonschema import Draft7Validator
 except ImportError:
     print("Error: jsonschema package required. Install with: pip install jsonschema", file=sys.stderr)

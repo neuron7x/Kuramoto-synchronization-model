@@ -13,8 +13,6 @@ Usage:
 import sys
 from pathlib import Path
 import time
-import json
-import math
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

@@ -43,10 +43,10 @@ def main():
         learning_rate=1e-4,
     )
     print("Model initialized with:")
-    print(f"  - Input dimension: 10 (OHLCV + 5 indicators)")
-    print(f"  - State dimension: 128")
-    print(f"  - Action dimension: 3 (Hold, Buy, Sell)")
-    print(f"  - HPC levels: 3")
+    print("  - Input dimension: 10 (OHLCV + 5 indicators)")
+    print("  - State dimension: 128")
+    print("  - Action dimension: 3 (Hold, Buy, Sell)")
+    print("  - HPC levels: 3")
     print(f"  - Device: {model.device}")
     print()
 

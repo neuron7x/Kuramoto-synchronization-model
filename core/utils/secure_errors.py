@@ -7,7 +7,6 @@ information from being exposed in error messages and logs.
 from __future__ import annotations
 
 import logging
-import traceback
 from typing import Any, Dict, Optional
 
 _LOGGER = logging.getLogger(__name__)
@@ -97,13 +96,11 @@ class SecureError(Exception):
 class TradingError(SecureError):
     """Error related to trading operations."""
 
-    pass
 
 
 class DataValidationError(SecureError):
     """Error related to data validation."""
 
-    pass
 
 
 class AuthenticationError(SecureError):

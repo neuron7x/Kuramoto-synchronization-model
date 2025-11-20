@@ -12,7 +12,6 @@ This example shows how to use the various components of the agent system:
 
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
 # Note: This is a demonstration script showing the API usage.
 # In production, ensure all dependencies are installed.
@@ -234,7 +233,7 @@ def demo_scheduling():
 
     # Get job status
     status = scheduler.get_status("quick_eval")
-    print(f"\nJob Status:")
+    print("\nJob Status:")
     print(f"  Name: {status.name}")
     print(f"  Enabled: {status.enabled}")
     print(f"  Last run: {status.last_run_at is not None}")

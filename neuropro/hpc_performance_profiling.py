@@ -12,7 +12,6 @@ Uses torch.profiler for detailed analysis.
 """
 
 import torch
-import torch.nn as nn
 from torch.profiler import profile, record_function, ProfilerActivity
 import numpy as np
 import time
@@ -231,10 +230,10 @@ def run_comprehensive_profile():
 
     # Check if meets <1ms target
     if forward_stats['mean_ms'] < 1.0:
-        print(f"✓ Meets <1ms target for forward pass")
+        print("✓ Meets <1ms target for forward pass")
     else:
         print(f"⚠ Forward pass ({forward_stats['mean_ms']:.2f}ms) exceeds 1ms target")
-        print(f"  Consider: FlashAttention, quantization, or model pruning")
+        print("  Consider: FlashAttention, quantization, or model pruning")
 
     # 4. Training step profiling
     print("\n4. Training Step Latency")
