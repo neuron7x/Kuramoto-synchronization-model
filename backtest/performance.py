@@ -113,34 +113,61 @@ def compute_performance_metrics(
     probabilistic_sharpe_ratio: float | None = None
     sharpe_p_value: float | None = None
     if returns.size:
-        excess_returns = returns - excess_rate
-        mean_excess = float(np.mean(excess_returns)) if excess_returns.size else 0.0
+        # Compute excess returns with float64 precision
+        # Critical for small excess returns where precision matters
+        excess_returns = returns.astype(np.float64, copy=False) - excess_rate
+        
+        # Use float64 accumulation for mean (prevents drift for long backtests)
+        mean_excess = float(np.mean(excess_returns, dtype=np.float64)) if excess_returns.size else 0.0
+        
+        # Compute volatility (standard deviation) with ddof=1 for sample estimate
+        # Using float64 prevents precision loss in variance calculation
         volatility = (
-            float(np.std(excess_returns, ddof=1))
+            float(np.std(excess_returns, ddof=1, dtype=np.float64))
             if excess_returns.size > 1
-            else float(np.std(excess_returns))
+            else float(np.std(excess_returns, dtype=np.float64))
         )
+        
         if volatility > 0:
+            # Sharpe ratio: (mean excess return) / (volatility)
             sr_periodic = mean_excess / volatility
             sharpe_ratio = sr_periodic * annualisation
+            
             n_obs = excess_returns.size
             if n_obs > 1:
+                # t-statistic for testing SR != 0
                 t_stat = sr_periodic * math.sqrt(n_obs)
                 sharpe_p_value = float(2.0 * stats.t.sf(abs(t_stat), n_obs - 1))
 
+                # Probabilistic Sharpe Ratio (Bailey & de Prado, 2012)
+                # Accounts for higher moments (skewness, kurtosis) in SR distribution
                 centered = excess_returns - mean_excess
-                m2 = float(np.mean(centered**2)) if centered.size else 0.0
+                
+                # Compute moments with float64 for numerical stability
+                # m2 = E[(X - μ)²], m3 = E[(X - μ)³], m4 = E[(X - μ)⁴]
+                m2 = float(np.mean(centered**2, dtype=np.float64)) if centered.size else 0.0
+                
                 if m2 > 1e-12:
-                    m3 = float(np.mean(centered**3))
-                    m4 = float(np.mean(centered**4))
+                    m3 = float(np.mean(centered**3, dtype=np.float64))
+                    m4 = float(np.mean(centered**4, dtype=np.float64))
+                    
+                    # Standardized skewness and excess kurtosis
+                    # Skewness: γ₁ = m₃ / σ³
+                    # Kurtosis: γ₂ = m₄ / σ⁴ (excess kurtosis = γ₂ - 3)
                     skewness = m3 / (m2**1.5) if m2 > 0 else 0.0
                     kurtosis = m4 / (m2**2) if m2 > 0 else 3.0
+                    
+                    # Denominator for PSR calculation
+                    # Accounts for non-normality via skewness and kurtosis adjustments
                     denom_term = (
                         1.0
                         - skewness * sr_periodic
                         + ((kurtosis - 1.0) / 4.0) * sr_periodic**2
                     )
+                    
                     if denom_term > 1e-12:
+                        # Z-score for PSR
+                        # PSR = P[SR_estimated > SR_target | skewness, kurtosis]
                         z_score = (
                             (sr_periodic - psr_target)
                             * math.sqrt(n_obs - 1)
@@ -150,33 +177,60 @@ def compute_performance_metrics(
 
     sortino_ratio: float | None = None
     if returns.size:
-        excess_returns = returns - excess_rate
+        # Sortino ratio: like Sharpe but only penalizes downside volatility
+        # More appropriate for strategies with asymmetric returns
+        excess_returns = returns.astype(np.float64, copy=False) - excess_rate
+        
+        # Extract downside returns (negative excess returns only)
         downside = excess_returns[excess_returns < 0.0]
+        
         if downside.size:
+            # Compute downside deviation (semi-deviation)
+            # Uses only negative returns to compute volatility
             downside_vol = (
-                float(np.std(downside, ddof=1))
+                float(np.std(downside, ddof=1, dtype=np.float64))
                 if downside.size > 1
-                else float(np.std(downside))
+                else float(np.std(downside, dtype=np.float64))
             )
+            
             if downside_vol > 0:
-                sortino_ratio = (
-                    float(np.mean(excess_returns)) / downside_vol * annualisation
-                )
+                # Sortino = mean(excess returns) / downside_deviation
+                mean_excess = float(np.mean(excess_returns, dtype=np.float64))
+                sortino_ratio = (mean_excess / downside_vol) * annualisation
         elif excess_returns.size:
+            # No downside deviation: all returns are non-negative
+            # Sortino ratio is infinite (perfect risk-adjusted return)
             sortino_ratio = math.inf
 
     certainty_equivalent: float | None = None
     if returns.size:
+        # Certainty Equivalent Return (CER): utility-adjusted return
+        # CER = μ - (γ/2) * σ² where γ is risk aversion coefficient
+        # Represents the guaranteed return an investor would accept
+        # instead of the risky portfolio return distribution
+        
+        # Compute variance with ddof=1 for sample estimate
+        # Use float64 to prevent precision loss
         variance = (
-            float(np.var(returns, ddof=1))
+            float(np.var(returns, ddof=1, dtype=np.float64))
             if returns.size > 1
-            else float(np.var(returns))
+            else float(np.var(returns, dtype=np.float64))
         )
-        mean_return = float(np.mean(returns))
-        ce_periodic = mean_return - 0.5 * float(max(risk_aversion, 0.0)) * variance
+        
+        mean_return = float(np.mean(returns, dtype=np.float64))
+        
+        # Risk aversion parameter: typically γ ∈ [1, 10]
+        # γ = 1: risk-neutral, γ > 1: risk-averse
+        risk_aversion_coef = float(max(risk_aversion, 0.0))
+        
+        # CER in periodic units (same as returns)
+        ce_periodic = mean_return - 0.5 * risk_aversion_coef * variance
+        
         if periods_per_year > 0:
+            # Annualize CER: (1 + ce_periodic)^periods_per_year - 1
             base = 1.0 + ce_periodic
             if base <= 0.0:
+                # Negative annualized return
                 certainty_equivalent = -1.0
             else:
                 exponent = periods_per_year * math.log(base)
