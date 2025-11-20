@@ -1,6 +1,5 @@
 """Chaotic fractal Grey Wolf Optimiser used for crisis adaptation."""
 
-"""Chaotic fractal Grey Wolf optimiser used for FHMC crisis modes."""
 from __future__ import annotations
 
 import numpy as np
