@@ -15,13 +15,9 @@ Features:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any, Mapping
 
-from application.microservices.backtesting import BacktestingService
-from application.microservices.execution import ExecutionService
-from application.microservices.market_data import MarketDataService
 from application.microservices.registry import ServiceRegistry
 from application.system import TradePulseSystem, TradePulseSystemConfig
 from core.architecture_integrator import (
@@ -48,7 +44,7 @@ class UnifiedIntegratorConfig:
     enable_position_sizer: bool = True
     enable_agent_coordinator: bool = True
     enable_fractal_regulator: bool = False
-    
+
     # Module configurations
     risk_manager_config: Mapping[str, Any] | None = None
     regime_analyzer_config: Mapping[str, Any] | None = None
@@ -90,35 +86,35 @@ class UnifiedSystemIntegrator:
         self._integrator = ArchitectureIntegrator()
         self._service_registry: ServiceRegistry | None = None
         self._components: dict[str, Any] = {}
-        
+
         # Register all components
         self._register_all_components()
-        
+
     def _register_all_components(self) -> None:
         """Register all system components with the integrator."""
         # Register core services first
         self._register_service_registry()
-        
+
         # Register modules with dependencies
         if self._config.enable_risk_manager:
             self._register_risk_manager()
-        
+
         if self._config.enable_regime_analyzer:
             self._register_regime_analyzer()
-        
+
         if self._config.enable_position_sizer:
             self._register_position_sizer()
-        
+
         if self._config.enable_agent_coordinator:
             self._register_agent_coordinator()
-            
+
         logger.info("All components registered successfully")
-    
+
     def _register_service_registry(self) -> None:
         """Register the microservices registry."""
         service_registry = ServiceRegistry.from_system(self._system)
         self._service_registry = service_registry
-        
+
         # Register market data service
         self._integrator.register_component(
             name="market_data_service",
@@ -140,7 +136,7 @@ class UnifiedSystemIntegrator:
                 message=f"Market data service: {service_registry.market_data.state.name}",
             ),
         )
-        
+
         # Register backtesting service
         self._integrator.register_component(
             name="backtesting_service",
@@ -162,7 +158,7 @@ class UnifiedSystemIntegrator:
                 message=f"Backtesting service: {service_registry.backtesting.state.name}",
             ),
         )
-        
+
         # Register execution service
         self._integrator.register_component(
             name="execution_service",
@@ -184,15 +180,15 @@ class UnifiedSystemIntegrator:
                 message=f"Execution service: {service_registry.execution.state.name}",
             ),
         )
-        
+
         self._components["service_registry"] = service_registry
         logger.info("Service registry and microservices registered")
-    
+
     def _register_risk_manager(self) -> None:
         """Register the adaptive risk manager module."""
         config = self._config.risk_manager_config or {}
         risk_manager = AdaptiveRiskManager(**config)
-        
+
         self._integrator.register_component(
             name="adaptive_risk_manager",
             instance=risk_manager,
@@ -210,15 +206,15 @@ class UnifiedSystemIntegrator:
                 message="Risk manager operational",
             ),
         )
-        
+
         self._components["risk_manager"] = risk_manager
         logger.info("Adaptive risk manager registered")
-    
+
     def _register_regime_analyzer(self) -> None:
         """Register the market regime analyzer module."""
         config = self._config.regime_analyzer_config or {}
         regime_analyzer = MarketRegimeAnalyzer(**config)
-        
+
         self._integrator.register_component(
             name="market_regime_analyzer",
             instance=regime_analyzer,
@@ -236,15 +232,15 @@ class UnifiedSystemIntegrator:
                 message="Regime analyzer operational",
             ),
         )
-        
+
         self._components["regime_analyzer"] = regime_analyzer
         logger.info("Market regime analyzer registered")
-    
+
     def _register_position_sizer(self) -> None:
         """Register the dynamic position sizer module."""
         config = self._config.position_sizer_config or {}
         position_sizer = DynamicPositionSizer(**config)
-        
+
         self._integrator.register_component(
             name="dynamic_position_sizer",
             instance=position_sizer,
@@ -262,15 +258,15 @@ class UnifiedSystemIntegrator:
                 message="Position sizer operational",
             ),
         )
-        
+
         self._components["position_sizer"] = position_sizer
         logger.info("Dynamic position sizer registered")
-    
+
     def _register_agent_coordinator(self) -> None:
         """Register the agent coordinator module."""
         config = self._config.agent_coordinator_config or {}
         agent_coordinator = AgentCoordinator(**config)
-        
+
         self._integrator.register_component(
             name="agent_coordinator",
             instance=agent_coordinator,
@@ -292,10 +288,10 @@ class UnifiedSystemIntegrator:
                 message=f"Agent coordinator operational with {len(agent_coordinator.agents)} agents",
             ),
         )
-        
+
         self._components["agent_coordinator"] = agent_coordinator
         logger.info("Agent coordinator registered")
-    
+
     def initialize(self) -> None:
         """Initialize all registered components in dependency order."""
         logger.info("Initializing unified system...")
@@ -303,19 +299,19 @@ class UnifiedSystemIntegrator:
         logger.info(f"Initialization order: {order}")
         self._integrator.initialize_all()
         logger.info("All components initialized")
-    
+
     def start(self) -> None:
         """Start all registered components in dependency order."""
         logger.info("Starting unified system...")
         self._integrator.start_all()
         logger.info("All components started")
-    
+
     def stop(self) -> None:
         """Stop all registered components in reverse dependency order."""
         logger.info("Stopping unified system...")
         self._integrator.stop_all()
         logger.info("All components stopped")
-    
+
     def get_system_health(self) -> dict[str, ComponentHealth]:
         """Get health status of all components.
         
@@ -323,7 +319,7 @@ class UnifiedSystemIntegrator:
             Dictionary mapping component names to their health status
         """
         return self._integrator.aggregate_health()
-    
+
     def is_system_healthy(self) -> bool:
         """Check if the entire system is healthy.
         
@@ -331,7 +327,7 @@ class UnifiedSystemIntegrator:
             True if all components are healthy, False otherwise
         """
         return self._integrator.is_system_healthy()
-    
+
     def validate_architecture(self) -> bool:
         """Validate the system architecture.
         
@@ -344,7 +340,7 @@ class UnifiedSystemIntegrator:
             for issue in validation.issues:
                 logger.error(f"  [{issue.severity.value}] {issue.message}")
         return validation.passed
-    
+
     def get_component(self, name: str) -> Any:
         """Get a registered component by name.
         
@@ -359,14 +355,14 @@ class UnifiedSystemIntegrator:
         """
         if name in self._components:
             return self._components[name]
-        
+
         # Try to get from integrator registry
         metadata = self._integrator.registry.get_metadata(name)
         if metadata:
             return metadata.instance
-        
+
         raise KeyError(f"Component not found: {name}")
-    
+
     def get_dependency_graph(self) -> dict[str, list[str]]:
         """Get the dependency graph of all components.
         
@@ -374,19 +370,19 @@ class UnifiedSystemIntegrator:
             Dictionary mapping component names to their dependencies
         """
         return self._integrator.get_dependency_graph()
-    
+
     @property
     def integrator(self) -> ArchitectureIntegrator:
         """Get the underlying architecture integrator."""
         return self._integrator
-    
+
     @property
     def service_registry(self) -> ServiceRegistry:
         """Get the service registry."""
         if self._service_registry is None:
             raise RuntimeError("Service registry not initialized")
         return self._service_registry
-    
+
     @property
     def components(self) -> dict[str, Any]:
         """Get all registered components."""
@@ -417,16 +413,16 @@ def build_unified_system(
         >>> integrator.stop()
     """
     from application.system_orchestrator import build_tradepulse_system
-    
+
     # Build base system if not provided
     if system_config is None:
         system = build_tradepulse_system()
     else:
         system = TradePulseSystem(system_config)
-    
+
     # Build unified integrator
     integrator = UnifiedSystemIntegrator(system, integrator_config)
-    
+
     return integrator
 
 
