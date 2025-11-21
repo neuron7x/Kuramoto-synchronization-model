@@ -62,7 +62,7 @@ class UnifiedSystemIntegrator:
     - Core components (neuro controllers, indicators, strategies)
     
     Example:
-        >>> config = UnifiedIntegratorConfig(enable_all=True)
+        >>> config = UnifiedIntegratorConfig()
         >>> integrator = UnifiedSystemIntegrator(tradepulse_system, config)
         >>> integrator.initialize()
         >>> integrator.start()
@@ -273,6 +273,15 @@ class UnifiedSystemIntegrator:
         config = self._config.agent_coordinator_config or {}
         agent_coordinator = AgentCoordinator(**config)
 
+        def agent_coordinator_health():
+            """Get agent coordinator health."""
+            agent_count = len(getattr(agent_coordinator, "_agents", {}))
+            return ComponentHealth(
+                status=ComponentStatus.RUNNING,
+                healthy=True,
+                message=f"Agent coordinator operational with {agent_count} agents",
+            )
+
         self._integrator.register_component(
             name="agent_coordinator",
             instance=agent_coordinator,
@@ -288,11 +297,7 @@ class UnifiedSystemIntegrator:
             init_hook=None,
             start_hook=None,
             stop_hook=None,
-            health_hook=lambda: ComponentHealth(
-                status=ComponentStatus.RUNNING,
-                healthy=True,
-                message=f"Agent coordinator operational with {len(agent_coordinator.agents)} agents",
-            ),
+            health_hook=agent_coordinator_health,
         )
 
         self._components["agent_coordinator"] = agent_coordinator
