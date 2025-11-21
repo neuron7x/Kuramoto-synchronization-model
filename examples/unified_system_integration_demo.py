@@ -102,9 +102,14 @@ def demo_custom_configuration():
         ExchangeAdapterConfig(name="coinbase", connector=CoinbaseConnector()),
     ]
 
+    import tempfile
+
+    # Use system temporary directory for cross-platform compatibility
+    temp_dir = Path(tempfile.gettempdir()) / "tradepulse" / "data"
+
     system_config = TradePulseSystemConfig(
         venues=venues,
-        allowed_data_roots=[Path("/tmp/tradepulse/data")],
+        allowed_data_roots=[temp_dir],
         max_csv_bytes=10_000_000,  # 10MB limit
     )
 

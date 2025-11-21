@@ -330,6 +330,7 @@ if not validation.passed:
 ## See Also
 
 - [Architecture Integrator Documentation](../architecture/architecture_integrator.md)
-- [Module Documentation](../../modules/README.md)
-- [Microservices Documentation](../microservices/README.md)
 - [Examples](../../examples/)
+  - `module_integration_demo.py` - Basic module integration demonstration
+  - `unified_system_integration_demo.py` - Full system integration examples
+  - `architecture_integrator_demo.py` - Architecture integrator patterns

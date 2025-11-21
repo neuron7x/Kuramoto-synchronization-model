@@ -110,6 +110,30 @@ class UnifiedSystemIntegrator:
 
         logger.info("All components registered successfully")
 
+    def _create_service_start_hook(self, service):
+        """Create a start hook for a service."""
+        def start_hook():
+            if service.state.name == "STOPPED":
+                service.start()
+        return start_hook
+
+    def _create_service_stop_hook(self, service):
+        """Create a stop hook for a service."""
+        def stop_hook():
+            service.stop()
+        return stop_hook
+
+    def _create_service_health_hook(self, service, service_name):
+        """Create a health hook for a service."""
+        def health_hook():
+            is_running = service.state.name == "RUNNING"
+            return ComponentHealth(
+                status=ComponentStatus.RUNNING if is_running else ComponentStatus.STOPPED,
+                healthy=is_running,
+                message=f"{service_name}: {service.state.name}",
+            )
+        return health_hook
+
     def _register_service_registry(self) -> None:
         """Register the microservices registry."""
         service_registry = ServiceRegistry.from_system(self._system)
@@ -124,16 +148,10 @@ class UnifiedSystemIntegrator:
             tags=["service", "data", "core"],
             provides=["market_data"],
             init_hook=None,  # Already initialized
-            start_hook=lambda: service_registry.market_data.start()
-            if service_registry.market_data.state.name == "STOPPED"
-            else None,
-            stop_hook=lambda: service_registry.market_data.stop(),
-            health_hook=lambda: ComponentHealth(
-                status=ComponentStatus.RUNNING
-                if service_registry.market_data.state.name == "RUNNING"
-                else ComponentStatus.STOPPED,
-                healthy=service_registry.market_data.state.name == "RUNNING",
-                message=f"Market data service: {service_registry.market_data.state.name}",
+            start_hook=self._create_service_start_hook(service_registry.market_data),
+            stop_hook=self._create_service_stop_hook(service_registry.market_data),
+            health_hook=self._create_service_health_hook(
+                service_registry.market_data, "Market data service"
             ),
         )
 
@@ -146,16 +164,10 @@ class UnifiedSystemIntegrator:
             tags=["service", "testing", "core"],
             dependencies=["market_data_service"],
             provides=["backtesting"],
-            start_hook=lambda: service_registry.backtesting.start()
-            if service_registry.backtesting.state.name == "STOPPED"
-            else None,
-            stop_hook=lambda: service_registry.backtesting.stop(),
-            health_hook=lambda: ComponentHealth(
-                status=ComponentStatus.RUNNING
-                if service_registry.backtesting.state.name == "RUNNING"
-                else ComponentStatus.STOPPED,
-                healthy=service_registry.backtesting.state.name == "RUNNING",
-                message=f"Backtesting service: {service_registry.backtesting.state.name}",
+            start_hook=self._create_service_start_hook(service_registry.backtesting),
+            stop_hook=self._create_service_stop_hook(service_registry.backtesting),
+            health_hook=self._create_service_health_hook(
+                service_registry.backtesting, "Backtesting service"
             ),
         )
 
@@ -168,16 +180,10 @@ class UnifiedSystemIntegrator:
             tags=["service", "execution", "core"],
             dependencies=["market_data_service"],
             provides=["execution"],
-            start_hook=lambda: service_registry.execution.start()
-            if service_registry.execution.state.name == "STOPPED"
-            else None,
-            stop_hook=lambda: service_registry.execution.stop(),
-            health_hook=lambda: ComponentHealth(
-                status=ComponentStatus.RUNNING
-                if service_registry.execution.state.name == "RUNNING"
-                else ComponentStatus.STOPPED,
-                healthy=service_registry.execution.state.name == "RUNNING",
-                message=f"Execution service: {service_registry.execution.state.name}",
+            start_hook=self._create_service_start_hook(service_registry.execution),
+            stop_hook=self._create_service_stop_hook(service_registry.execution),
+            health_hook=self._create_service_health_hook(
+                service_registry.execution, "Execution service"
             ),
         )
 
@@ -343,13 +349,13 @@ class UnifiedSystemIntegrator:
 
     def get_component(self, name: str) -> Any:
         """Get a registered component by name.
-        
+
         Args:
             name: The component name
-            
+
         Returns:
             The component instance
-            
+
         Raises:
             KeyError: If component not found
         """
@@ -357,11 +363,11 @@ class UnifiedSystemIntegrator:
             return self._components[name]
 
         # Try to get from integrator registry
-        metadata = self._integrator.registry.get_metadata(name)
-        if metadata:
-            return metadata.instance
-
-        raise KeyError(f"Component not found: {name}")
+        try:
+            component = self._integrator.registry.get(name)
+            return component.instance
+        except KeyError:
+            raise KeyError(f"Component not found: {name}")
 
     def get_dependency_graph(self) -> dict[str, list[str]]:
         """Get the dependency graph of all components.
