@@ -58,7 +58,7 @@ class TestCacheReducesLLMCalls:
         """Test that semantically similar prompts can hit cache."""
         config = NeuroEngineConfig(
             cache_enabled=True,
-            cache_similarity_threshold=0.95  # High threshold for similar prompts
+            cache_similarity_threshold=0.95  # Very high threshold for nearly identical prompts
         )
         engine = NeuroCognitiveEngine(config=config, llm_backend=mock_fast_llm)
         
@@ -154,8 +154,8 @@ class TestAdaptiveContextReducesLatency:
         
         initial_k = engine._current_context_top_k
         
-        # Simulate high cognitive load
-        engine._cognitive_load = 0.8
+        # Simulate high cognitive load using public method
+        engine.set_cognitive_load(0.8)
         
         # Make several fast calls
         for i in range(5):

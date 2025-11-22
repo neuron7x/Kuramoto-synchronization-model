@@ -9,6 +9,7 @@ This module implements the cognitive engine with:
 """
 
 import time
+import hashlib
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Literal, Callable, List
@@ -131,11 +132,31 @@ class NeuroCognitiveEngine:
         # Memory for summarization
         self._memory: List[Dict] = []
     
+    def _get_avg_latency(self) -> float:
+        """
+        Get average latency from history.
+
+        Returns:
+            Average latency in milliseconds, or 0 if no history
+        """
+        if self._latency_history:
+            return float(np.mean(self._latency_history))
+        return 0.0
+    
+    def set_cognitive_load(self, load: float):
+        """
+        Set the current cognitive load for testing/tuning.
+
+        Args:
+            load: Cognitive load value (0.0 to 1.0)
+        """
+        self._cognitive_load = max(0.0, min(1.0, load))
+    
     def _default_embedding(self, text: str) -> np.ndarray:
         """
         Default simple embedding function.
 
-        Uses a simple hash-based embedding for demonstration.
+        Uses a deterministic hash-based embedding for demonstration.
         In production, use a proper embedding model.
 
         Args:
@@ -144,8 +165,10 @@ class NeuroCognitiveEngine:
         Returns:
             Embedding vector
         """
-        # Simple deterministic embedding based on text hash
-        np.random.seed(hash(text) % (2**32))
+        # Use deterministic hash for consistent embeddings across sessions
+        text_hash = hashlib.md5(text.encode('utf-8')).digest()
+        seed = int.from_bytes(text_hash[:4], 'little') % (2**32)
+        np.random.seed(seed)
         embedding = np.random.randn(384)  # 384-dimensional embedding
         return embedding / np.linalg.norm(embedding)
     
@@ -160,7 +183,7 @@ class NeuroCognitiveEngine:
         Returns:
             Adapted context_top_k value
         """
-        avg_latency = np.mean(self._latency_history) if self._latency_history else 0
+        avg_latency = self._get_avg_latency()
         
         # If we're running slow, reduce context
         if avg_latency > self.config.target_latency_ms:
@@ -190,7 +213,7 @@ class NeuroCognitiveEngine:
             True if degradation was applied
         """
         # Check if we need to degrade
-        avg_latency = np.mean(self._latency_history) if self._latency_history else 0
+        avg_latency = self._get_avg_latency()
         
         if avg_latency <= self.config.target_latency_ms:
             # No degradation needed
@@ -291,7 +314,7 @@ class NeuroCognitiveEngine:
         
         # Adapt context parameters
         self._current_context_top_k = self._adapt_context_parameters(
-            {'total': np.mean(self._latency_history) if self._latency_history else 0},
+            {'total': self._get_avg_latency()},
             self._cognitive_load
         )
         
@@ -364,7 +387,7 @@ class NeuroCognitiveEngine:
             'from_cache': from_cache,
             'timing': {
                 'total': total_time_ms,
-                'avg_latency': np.mean(self._latency_history)
+                'avg_latency': self._get_avg_latency()
             },
             'qos_degraded': qos_degraded,
             'context_top_k': self._current_context_top_k,
@@ -383,7 +406,7 @@ class NeuroCognitiveEngine:
         stats = {
             'cost': self.cost_tracker.get_summary(),
             'performance': {
-                'avg_latency_ms': np.mean(self._latency_history) if self._latency_history else 0,
+                'avg_latency_ms': self._get_avg_latency(),
                 'current_context_top_k': self._current_context_top_k
             },
             'memory_size': len(self._memory)

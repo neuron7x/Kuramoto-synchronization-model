@@ -6,7 +6,7 @@ associated with LLM API calls.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 
 def estimate_tokens(text: str) -> int:
@@ -56,7 +56,7 @@ class CostTracker:
         prompt: str,
         completion: str,
         pricing: Optional[Dict[str, float]] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Update tracker with a new prompt-completion pair.
 
@@ -101,7 +101,7 @@ class CostTracker:
         
         return call_info
     
-    def get_summary(self) -> Dict[str, any]:
+    def get_summary(self) -> Dict[str, Any]:
         """
         Get summary of all tracked costs.
 
