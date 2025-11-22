@@ -10,30 +10,34 @@ jobs:
   scorecard:
     name: Run OSSF Scorecard
     runs-on: ubuntu-latest
-    outputs:
-      scorecard-path: ${{ steps.upload.outputs.artifact-path || 'scorecard-results/scorecard.json' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python (for any scorecard wrapper scripts)
-        uses: actions/setup-python@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          python-version: '3.x'
+          go-version: '1.21'
+
+      - name: Install OSSF Scorecard
+        run: |
+          # Install a specific version of scorecard for reproducibility
+          go install github.com/ossf/scorecard/v4/cmd/scorecard@v4.13.1
 
       - name: Run OSSF Scorecard
-        # Use the official scorecard-action if available; fallback to CLI via container
-        # This step must produce a JSON result at ./scorecard-results/scorecard.json
+        # This step produces a JSON result at ./scorecard-results/scorecard.json
         run: |
           mkdir -p scorecard-results
-          # Try to run the scorecard-action CLI directly (if you prefer the action replace this run with the action call)
-          # Install scorecard if not present and run it against the repository
-          if ! command -v scorecard >/dev/null 2>&1; then
-            python -m pip install --upgrade pip
-            pip install scorecard
-          fi
           # Run scorecard and write JSON output
-          scorecard --repo="https://github.com/${{ github.repository }}" --output=json > scorecard-results/scorecard.json || true
+          # Setting GITHUB_AUTH_TOKEN for better rate limits (optional, uses default GitHub token)
+          export GITHUB_AUTH_TOKEN=${{ github.token }}
+          if scorecard --repo="https://github.com/${{ github.repository }}" --format=json > scorecard-results/scorecard.json; then
+            echo "✅ Scorecard analysis completed successfully"
+            cat scorecard-results/scorecard.json | head -50
+          else
+            echo "❌ ERROR: Scorecard analysis failed"
+            exit 1
+          fi
 
       - name: Upload OSSF Scorecard Results
         id: upload
