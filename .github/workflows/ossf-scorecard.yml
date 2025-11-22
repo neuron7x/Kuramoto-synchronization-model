@@ -10,6 +10,8 @@ jobs:
   scorecard:
     name: Run OSSF Scorecard
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Required to checkout repository
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,6 +53,8 @@ jobs:
     name: Process Scorecard Results
     needs: scorecard
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Minimal permission required
     steps:
       - name: Download OSSF Scorecard Results
         uses: actions/download-artifact@v3
