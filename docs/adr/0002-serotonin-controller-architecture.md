@@ -323,53 +323,51 @@ The controller design addresses Non-Functional Requirements (NFRs) according to 
 
 ### Risk Aversion and Behavioral Inhibition
 
-27. Boureau, Y. L., & Dayan, P. (2011). Opponency revisited: Competition and cooperation between dopamine and serotonin. *Neuropsychopharmacology*, 36(1), 74-97. https://doi.org/10.1038/npp.2010.151
+27. Schweighofer, N., Bertin, M., Shishida, K., Okamoto, Y., Tanaka, S. C., Yamawaki, S., & Doya, K. (2008). Low-serotonin levels increase delayed reward discounting in humans. *Journal of Neuroscience*, 28(17), 4528-4532. https://doi.org/10.1523/JNEUROSCI.4982-07.2008
 
-28. Schweighofer, N., Bertin, M., Shishida, K., Okamoto, Y., Tanaka, S. C., Yamawaki, S., & Doya, K. (2008). Low-serotonin levels increase delayed reward discounting in humans. *Journal of Neuroscience*, 28(17), 4528-4532. https://doi.org/10.1523/JNEUROSCI.4982-07.2008
-
-29. Miyazaki, K., Miyazaki, K. W., & Doya, K. (2011). Activation of dorsal raphe serotonin neurons underlies waiting for delayed rewards. *Journal of Neuroscience*, 31(2), 469-479. https://doi.org/10.1523/JNEUROSCI.3714-10.2011
+28. Miyazaki, K., Miyazaki, K. W., & Doya, K. (2011). Activation of dorsal raphe serotonin neurons underlies waiting for delayed rewards. *Journal of Neuroscience*, 31(2), 469-479. https://doi.org/10.1523/JNEUROSCI.3714-10.2011
 
 ### Technical Standards and Frameworks
 
-30. National Institute of Standards and Technology. (2023). *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*. U.S. Department of Commerce. https://doi.org/10.6028/NIST.AI.100-1
+29. National Institute of Standards and Technology. (2023). *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*. U.S. Department of Commerce. https://doi.org/10.6028/NIST.AI.100-1
 
-31. International Organization for Standardization. (2023). *ISO/IEC 25010:2023 - Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Product quality model*. ISO/IEC. https://www.iso.org/standard/78176.html
+30. International Organization for Standardization. (2023). *ISO/IEC 25010:2023 - Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Product quality model*. ISO/IEC. https://www.iso.org/standard/78176.html
 
-32. International Electrotechnical Commission. (2010). *IEC 61508 - Functional safety of electrical/electronic/programmable electronic safety-related systems*. IEC.
+31. International Electrotechnical Commission. (2010). *IEC 61508 - Functional safety of electrical/electronic/programmable electronic safety-related systems*. IEC.
 
 ### Safety Analysis and STPA
 
-33. Leveson, N. G. (2011). *Engineering a safer world: Systems thinking applied to safety*. MIT Press. https://doi.org/10.7551/mitpress/8179.001.0001
+32. Leveson, N. G. (2011). *Engineering a safer world: Systems thinking applied to safety*. MIT Press. https://doi.org/10.7551/mitpress/8179.001.0001
 
-34. Leveson, N., & Thomas, J. (2018). *STPA handbook*. MIT Partnership for Systems Approaches to Safety and Security. http://psas.scripts.mit.edu/home/get_file.php?name=STPA_handbook.pdf
+33. Leveson, N., & Thomas, J. (2018). *STPA handbook*. MIT Partnership for Systems Approaches to Safety and Security. http://psas.scripts.mit.edu/home/get_file.php?name=STPA_handbook.pdf
 
-35. Leveson, N. G. (2004). A new accident model for engineering safer systems. *Safety Science*, 42(4), 237-270. https://doi.org/10.1016/S0925-7535(03)00047-X
+34. Leveson, N. G. (2004). A new accident model for engineering safer systems. *Safety Science*, 42(4), 237-270. https://doi.org/10.1016/S0925-7535(03)00047-X
 
 ### Time Series Analysis and Exponential Moving Averages
 
-36. Box, G. E. P., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015). *Time series analysis: Forecasting and control* (5th ed.). Wiley.
+35. Box, G. E. P., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015). *Time series analysis: Forecasting and control* (5th ed.). Wiley.
 
-37. Hunter, J. S. (1986). The exponentially weighted moving average. *Journal of Quality Technology*, 18(4), 203-210. https://doi.org/10.1080/00224065.1986.11979014
+36. Hunter, J. S. (1986). The exponentially weighted moving average. *Journal of Quality Technology*, 18(4), 203-210. https://doi.org/10.1080/00224065.1986.11979014
 
 ### Performance Optimization and Real-Time Systems
 
-38. Buttazzo, G. C. (2011). *Hard real-time computing systems: Predictable scheduling algorithms and applications* (3rd ed.). Springer. https://doi.org/10.1007/978-1-4614-0676-1
+37. Buttazzo, G. C. (2011). *Hard real-time computing systems: Predictable scheduling algorithms and applications* (3rd ed.). Springer. https://doi.org/10.1007/978-1-4614-0676-1
 
-39. Liu, J. W. S. (2000). *Real-time systems*. Prentice Hall.
+38. Liu, J. W. S. (2000). *Real-time systems*. Prentice Hall.
 
 ### Software Architecture and Quality Attributes
 
-40. Bass, L., Clements, P., & Kazman, R. (2021). *Software architecture in practice* (4th ed.). Addison-Wesley.
+39. Bass, L., Clements, P., & Kazman, R. (2021). *Software architecture in practice* (4th ed.). Addison-Wesley.
 
-41. Kazman, R., Klein, M., & Clements, P. (2000). ATAM: Method for architecture evaluation (CMU/SEI-2000-TR-004). Software Engineering Institute, Carnegie Mellon University. https://resources.sei.cmu.edu/library/asset-view.cfm?assetid=5177
+40. Kazman, R., Klein, M., & Clements, P. (2000). ATAM: Method for architecture evaluation (CMU/SEI-2000-TR-004). Software Engineering Institute, Carnegie Mellon University. https://resources.sei.cmu.edu/library/asset-view.cfm?assetid=5177
 
 ### Financial Risk Management
 
-42. Jorion, P. (2006). *Value at risk: The new benchmark for managing financial risk* (3rd ed.). McGraw-Hill.
+41. Jorion, P. (2006). *Value at risk: The new benchmark for managing financial risk* (3rd ed.). McGraw-Hill.
 
-43. McNeil, A. J., Frey, R., & Embrechts, P. (2015). *Quantitative risk management: Concepts, techniques and tools* (Revised ed.). Princeton University Press.
+42. McNeil, A. J., Frey, R., & Embrechts, P. (2015). *Quantitative risk management: Concepts, techniques and tools* (Revised ed.). Princeton University Press.
 
-44. Tsay, R. S. (2010). *Analysis of financial time series* (3rd ed.). Wiley. https://doi.org/10.1002/9780470644560
+43. Tsay, R. S. (2010). *Analysis of financial time series* (3rd ed.). Wiley. https://doi.org/10.1002/9780470644560
 
 ## Related ADRs
 
