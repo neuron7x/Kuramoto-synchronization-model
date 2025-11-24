@@ -14,6 +14,14 @@ import pytest
 from observability.profiling import ProfileReport, ProfileSectionResult
 
 
+def _require_psutil():
+    """Import psutil or skip tests that rely on it."""
+
+    return pytest.importorskip(
+        "psutil", reason="psutil is required for system resource profiling tests"
+    )
+
+
 class TestProfilingInstrumentation:
     """Test suite for profiling instrumentation."""
 
@@ -355,7 +363,7 @@ class TestSystemResourceProfiling:
 
     def test_cpu_utilization_tracking(self):
         """Test tracking of CPU utilization."""
-        import psutil
+        psutil = _require_psutil()
         
         # Get CPU utilization over interval
         cpu_percent = psutil.cpu_percent(interval=0.1)
@@ -364,7 +372,7 @@ class TestSystemResourceProfiling:
 
     def test_memory_utilization_tracking(self):
         """Test tracking of memory utilization."""
-        import psutil
+        psutil = _require_psutil()
         
         memory = psutil.virtual_memory()
         
@@ -374,7 +382,7 @@ class TestSystemResourceProfiling:
 
     def test_disk_io_tracking(self):
         """Test tracking of disk I/O."""
-        import psutil
+        psutil = _require_psutil()
         
         disk_io = psutil.disk_io_counters()
         
