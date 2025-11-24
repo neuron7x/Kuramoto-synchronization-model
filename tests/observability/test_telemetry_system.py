@@ -10,6 +10,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
+def _require_psutil():
+    """Import psutil or skip telemetry resource tests if missing."""
+
+    return pytest.importorskip(
+        "psutil", reason="psutil is required for telemetry resource sampling tests"
+    )
+
 # Telemetry tests are self-contained and don't need external imports for basic validation
 
 
@@ -133,7 +141,7 @@ class TestPerformanceMonitoring:
 
     def test_resource_utilization_tracking(self):
         """Test tracking of resource utilization metrics."""
-        import psutil
+        psutil = _require_psutil()
         
         # Track CPU and memory
         cpu_percent = psutil.cpu_percent(interval=0.1)

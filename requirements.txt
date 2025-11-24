@@ -13,8 +13,8 @@ SQLAlchemy>=2.0.36
 optuna>=3.6.1,<4.0.0
 
 # Data validation
-pydantic>=2.12.3,<3.0.0
-pydantic-settings>=2.11.0,<3.0.0
+pydantic>=2.12.4,<3.0.0
+pydantic-settings>=2.12.0,<3.0.0
 pandera>=0.20.4,<0.27
 exchange-calendars>=4.11.1
 

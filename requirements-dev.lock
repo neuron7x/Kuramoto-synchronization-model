@@ -133,9 +133,9 @@ pyarrow==21.0.0
 pycares==4.11.0
 pycodestyle==2.12.1
 pycparser==2.23
-pydantic==2.12.3
-pydantic-core==2.41.4
-pydantic-settings==2.11.0
+pydantic==2.12.4
+pydantic-core==2.41.5
+pydantic-settings==2.12.0
 pydeck==0.9.1
 pyelftools==0.32
 pyflakes==3.2.0

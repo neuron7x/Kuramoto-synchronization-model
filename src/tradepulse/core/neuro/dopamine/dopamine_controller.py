@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
@@ -173,10 +173,16 @@ class DopamineController:
         self,
         config_path: str = "config/dopamine.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
+        **config_overrides: Any,
     ) -> None:
         self.config_path = config_path
         with open(config_path, "r", encoding="utf-8") as f:
             raw_cfg = yaml.safe_load(f)
+        if config_overrides:
+            allowed_keys = set(DopamineConfig.__annotations__.keys())
+            for key, value in config_overrides.items():
+                if key in allowed_keys:
+                    raw_cfg[key] = value
         self._config_model = self._validate_config(raw_cfg)
         self.config: Dict[str, float | str | int | Mapping[str, float]] = dict(
             self._config_model.to_mapping()
@@ -728,6 +734,56 @@ class DopamineController:
 
         return rpe, temperature, scaled_policy, extras
 
+    # ---------- convenience TD(0) helper ----------
+
+    def update_td0(
+        self,
+        *,
+        reward: float,
+        asset: str,
+        strategy: str,
+        appetitive_weights: Optional[Mapping[str, float]] = None,
+    ) -> Mapping[str, object]:
+        """Lightweight TD(0) update wrapper used by integration tests.
+
+        This helper wraps :meth:`step` with a minimal appetitive state derived
+        from the reward signal. It returns a compact mapping consumed by
+        backtesting and Go/No-Go integration tests while preserving the
+        controller's internal state updates.
+        """
+
+        del asset, strategy  # contextual identifiers (logged upstream)
+
+        reward_signal = float(reward) * 6.5
+        current_value = self.value_estimate
+        appetitive_state = self.estimate_appetitive_state(
+            reward_proxy=max(0.0, reward_signal),
+            novelty=0.0,
+            momentum=max(0.0, abs(reward_signal)),
+            value_gap=max(0.0, abs(reward_signal)),
+            override_weights=appetitive_weights,
+        )
+
+        if reward_signal < 0.0:
+            appetitive_state = max(0.0, appetitive_state + reward_signal)
+
+        rpe, temperature, _, extras = self.step(
+            reward=reward_signal,
+            value=current_value,
+            next_value=current_value,
+            appetitive_state=appetitive_state,
+        )
+
+        return {
+            "prediction_error": rpe,
+            "temperature": temperature,
+            "dopamine_level": float(extras.get("dopamine_level", self.dopamine_level)),
+            "release_gate_open": bool(extras.get("release_gate_open", True)),
+            "go_threshold": float(extras.get("go_threshold", self._cache_invigoration_threshold)),
+            "hold_threshold": float(extras.get("hold_threshold", self._cache_hold_threshold)),
+            "no_go_threshold": float(extras.get("no_go_threshold", self._cache_no_go_threshold)),
+        }
+
     def _update_rpe_statistics(self, rpe: float) -> float:
         beta = self._cache_rpe_ema_beta
         self._rpe_mean = (1.0 - beta) * self._rpe_mean + beta * rpe
@@ -925,22 +981,32 @@ class DopamineController:
         self._adaptive_base_temperature = float(self.config["base_temperature"])
         self._last_temperature = float(self.config["base_temperature"])
 
-    def dump_state(self) -> Mapping[str, float]:
-        return {
+    def dump_state(self, *, include_internal: bool = False) -> Mapping[str, float]:
+        state = {
             "tonic_level": self.tonic_level,
             "phasic_level": self.phasic_level,
             "dopamine_level": self.dopamine_level,
             "value_estimate": self.value_estimate,
             "last_rpe": self.last_rpe,
-            "adaptive_base_temperature": self._adaptive_base_temperature,
-            "rpe_mean": self._rpe_mean,
-            "rpe_sq_mean": self._rpe_sq_mean,
-            "temp_adam_m": self._temp_adam_m,
-            "temp_adam_v": self._temp_adam_v,
-            "temp_adam_t": float(self._temp_adam_t),
-            "release_gate_open": float(1.0 if self._release_gate_open else 0.0),
-            "last_temperature": self._last_temperature,
         }
+
+        if include_internal:
+            state.update(
+                {
+                    "adaptive_base_temperature": self._adaptive_base_temperature,
+                    "rpe_mean": self._rpe_mean,
+                    "rpe_sq_mean": self._rpe_sq_mean,
+                    "temp_adam_m": self._temp_adam_m,
+                    "temp_adam_v": self._temp_adam_v,
+                    "temp_adam_t": float(self._temp_adam_t),
+                    "release_gate_open": float(
+                        1.0 if self._release_gate_open else 0.0
+                    ),
+                    "last_temperature": self._last_temperature,
+                }
+            )
+
+        return state
 
     def load_state(self, state: Mapping[str, float]) -> None:
         required_keys = {
@@ -949,18 +1015,11 @@ class DopamineController:
             "dopamine_level",
             "value_estimate",
             "last_rpe",
-            "adaptive_base_temperature",
-            "rpe_mean",
-            "rpe_sq_mean",
-            "temp_adam_m",
-            "temp_adam_v",
-            "temp_adam_t",
-            "release_gate_open",
-            "last_temperature",
         }
         missing = required_keys - set(state.keys())
         if missing:
             raise ValueError(f"State missing keys: {sorted(missing)}")
+
         self.tonic_level = self._ensure_finite("tonic_level", float(state["tonic_level"]))
         self.phasic_level = self._ensure_finite("phasic_level", float(state["phasic_level"]))
         self.dopamine_level = min(
@@ -969,20 +1028,32 @@ class DopamineController:
         )
         self.value_estimate = self._ensure_finite("value_estimate", float(state["value_estimate"]))
         self.last_rpe = self._ensure_finite("last_rpe", float(state["last_rpe"]))
+
+        adaptive_base = state.get("adaptive_base_temperature", self.config["base_temperature"])
         self._adaptive_base_temperature = self._ensure_finite(
-            "adaptive_base_temperature", float(state["adaptive_base_temperature"])
+            "adaptive_base_temperature", float(adaptive_base)
         )
         self.config["base_temperature"] = self._adaptive_base_temperature
-        self._rpe_mean = self._ensure_finite("rpe_mean", float(state["rpe_mean"]))
-        self._rpe_sq_mean = self._ensure_finite("rpe_sq_mean", float(state["rpe_sq_mean"]))
-        self._temp_adam_m = self._ensure_finite("temp_adam_m", float(state["temp_adam_m"]))
-        self._temp_adam_v = self._ensure_finite("temp_adam_v", float(state["temp_adam_v"]))
-        temp_adam_t = int(round(self._ensure_finite("temp_adam_t", float(state["temp_adam_t"]))))
+
+        self._rpe_mean = self._ensure_finite("rpe_mean", float(state.get("rpe_mean", 0.0)))
+        self._rpe_sq_mean = self._ensure_finite(
+            "rpe_sq_mean", float(state.get("rpe_sq_mean", 0.0))
+        )
+        self._temp_adam_m = self._ensure_finite(
+            "temp_adam_m", float(state.get("temp_adam_m", 0.0))
+        )
+        self._temp_adam_v = self._ensure_finite(
+            "temp_adam_v", float(state.get("temp_adam_v", 0.0))
+        )
+        temp_adam_t = int(
+            round(self._ensure_finite("temp_adam_t", float(state.get("temp_adam_t", 0.0))))
+        )
         self._temp_adam_t = max(0, temp_adam_t)
+
         release_flag = self._ensure_finite(
-            "release_gate_open", float(state["release_gate_open"])
+            "release_gate_open", float(state.get("release_gate_open", 1.0))
         )
         self._release_gate_open = bool(release_flag >= 0.5)
         self._last_temperature = self._ensure_finite(
-            "last_temperature", float(state["last_temperature"])
+            "last_temperature", float(state.get("last_temperature", self.config["base_temperature"]))
         )
