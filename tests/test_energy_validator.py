@@ -135,12 +135,12 @@ class TestEnergyValidator:
         headrooms = {
             "metric1": 0.2,
             "metric2": 0.3,
-            "metric3": -0.1,  # Negative headroom ignored
+            "metric3": -0.1,  # Negative headroom reduces stability
         }
         stability = validator.compute_stability(headrooms)
-        assert 0 <= stability <= 1
-        # Should average positive headrooms only
-        expected = (0.2 + 0.3) / 2
+        assert -1 <= stability <= 1
+        # Should average across all headrooms so deficits reduce S
+        expected = sum(headrooms.values()) / len(headrooms)
         assert abs(stability - expected) < 1e-6
     
     def test_compute_free_energy_good_metrics(self, validator, metrics_good):
