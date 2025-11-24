@@ -305,16 +305,12 @@ class SerotoninController:
         threshold = cfg.stress_threshold
         release = max(0.0, cfg.release_threshold)
 
-        # Track if we just exited hold in this step
-        just_exited_hold = False
-
         # Apply hysteresis: higher threshold to enter, lower threshold to exit
         if self._hold:
             # Exit hold when level drops below release threshold minus hysteresis margin
             exit_threshold = release - cfg.hysteresis / 2.0
             if self.level <= exit_threshold:
                 self._hold = False
-                just_exited_hold = True
                 # Initialize cooldown when EXITING hold state
                 self._cooldown = cfg.cooldown_ticks
                 # Extend cooldown if level is still elevated near threshold
