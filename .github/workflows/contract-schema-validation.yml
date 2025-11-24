@@ -151,7 +151,7 @@ jobs:
 
       - name: Post contract test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && steps.contract_summary.outputs.summary != '' }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.contract_summary.outputs.summary }}

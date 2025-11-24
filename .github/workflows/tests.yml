@@ -488,7 +488,7 @@ jobs:
           body-includes: '### Test & Coverage Summary'
       - name: Post test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && matrix.python-version == '3.11' && !github.event.pull_request.head.repo.fork }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find_test_comment.outputs.comment-id }}
@@ -828,7 +828,7 @@ jobs:
           body-includes: '### Performance Benchmark Summary'
       - name: Post benchmark summary comment
         if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && steps.benchmark_summary.outputs.comment_body != '' }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find_benchmark_comment.outputs.comment-id }}
