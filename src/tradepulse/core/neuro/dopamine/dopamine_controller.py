@@ -981,22 +981,32 @@ class DopamineController:
         self._adaptive_base_temperature = float(self.config["base_temperature"])
         self._last_temperature = float(self.config["base_temperature"])
 
-    def dump_state(self) -> Mapping[str, float]:
-        return {
+    def dump_state(self, *, include_internal: bool = False) -> Mapping[str, float]:
+        state = {
             "tonic_level": self.tonic_level,
             "phasic_level": self.phasic_level,
             "dopamine_level": self.dopamine_level,
             "value_estimate": self.value_estimate,
             "last_rpe": self.last_rpe,
-            "adaptive_base_temperature": self._adaptive_base_temperature,
-            "rpe_mean": self._rpe_mean,
-            "rpe_sq_mean": self._rpe_sq_mean,
-            "temp_adam_m": self._temp_adam_m,
-            "temp_adam_v": self._temp_adam_v,
-            "temp_adam_t": float(self._temp_adam_t),
-            "release_gate_open": float(1.0 if self._release_gate_open else 0.0),
-            "last_temperature": self._last_temperature,
         }
+
+        if include_internal:
+            state.update(
+                {
+                    "adaptive_base_temperature": self._adaptive_base_temperature,
+                    "rpe_mean": self._rpe_mean,
+                    "rpe_sq_mean": self._rpe_sq_mean,
+                    "temp_adam_m": self._temp_adam_m,
+                    "temp_adam_v": self._temp_adam_v,
+                    "temp_adam_t": float(self._temp_adam_t),
+                    "release_gate_open": float(
+                        1.0 if self._release_gate_open else 0.0
+                    ),
+                    "last_temperature": self._last_temperature,
+                }
+            )
+
+        return state
 
     def load_state(self, state: Mapping[str, float]) -> None:
         required_keys = {
@@ -1005,18 +1015,11 @@ class DopamineController:
             "dopamine_level",
             "value_estimate",
             "last_rpe",
-            "adaptive_base_temperature",
-            "rpe_mean",
-            "rpe_sq_mean",
-            "temp_adam_m",
-            "temp_adam_v",
-            "temp_adam_t",
-            "release_gate_open",
-            "last_temperature",
         }
         missing = required_keys - set(state.keys())
         if missing:
             raise ValueError(f"State missing keys: {sorted(missing)}")
+
         self.tonic_level = self._ensure_finite("tonic_level", float(state["tonic_level"]))
         self.phasic_level = self._ensure_finite("phasic_level", float(state["phasic_level"]))
         self.dopamine_level = min(
@@ -1025,20 +1028,32 @@ class DopamineController:
         )
         self.value_estimate = self._ensure_finite("value_estimate", float(state["value_estimate"]))
         self.last_rpe = self._ensure_finite("last_rpe", float(state["last_rpe"]))
+
+        adaptive_base = state.get("adaptive_base_temperature", self.config["base_temperature"])
         self._adaptive_base_temperature = self._ensure_finite(
-            "adaptive_base_temperature", float(state["adaptive_base_temperature"])
+            "adaptive_base_temperature", float(adaptive_base)
         )
         self.config["base_temperature"] = self._adaptive_base_temperature
-        self._rpe_mean = self._ensure_finite("rpe_mean", float(state["rpe_mean"]))
-        self._rpe_sq_mean = self._ensure_finite("rpe_sq_mean", float(state["rpe_sq_mean"]))
-        self._temp_adam_m = self._ensure_finite("temp_adam_m", float(state["temp_adam_m"]))
-        self._temp_adam_v = self._ensure_finite("temp_adam_v", float(state["temp_adam_v"]))
-        temp_adam_t = int(round(self._ensure_finite("temp_adam_t", float(state["temp_adam_t"]))))
+
+        self._rpe_mean = self._ensure_finite("rpe_mean", float(state.get("rpe_mean", 0.0)))
+        self._rpe_sq_mean = self._ensure_finite(
+            "rpe_sq_mean", float(state.get("rpe_sq_mean", 0.0))
+        )
+        self._temp_adam_m = self._ensure_finite(
+            "temp_adam_m", float(state.get("temp_adam_m", 0.0))
+        )
+        self._temp_adam_v = self._ensure_finite(
+            "temp_adam_v", float(state.get("temp_adam_v", 0.0))
+        )
+        temp_adam_t = int(
+            round(self._ensure_finite("temp_adam_t", float(state.get("temp_adam_t", 0.0))))
+        )
         self._temp_adam_t = max(0, temp_adam_t)
+
         release_flag = self._ensure_finite(
-            "release_gate_open", float(state["release_gate_open"])
+            "release_gate_open", float(state.get("release_gate_open", 1.0))
         )
         self._release_gate_open = bool(release_flag >= 0.5)
         self._last_temperature = self._ensure_finite(
-            "last_temperature", float(state["last_temperature"])
+            "last_temperature", float(state.get("last_temperature", self.config["base_temperature"]))
         )
