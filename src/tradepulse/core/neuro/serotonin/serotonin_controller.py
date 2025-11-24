@@ -330,11 +330,11 @@ class SerotoninController:
                 # Pre-set cooldown for when/if we enter hold
                 pass  # Will be handled when entering hold
 
-        # Cooldown only decrements when NOT in active hold state. Preserve the
-        # initialized cooldown value on the exit tick so tests can observe the
-        # full configured duration before the first decrement on the next
-        # step.
-        if not self._hold and self._cooldown > 0 and not just_exited_hold:
+        # Cooldown only decrements when NOT in active hold state. Count the
+        # exit tick toward the cooldown duration so recovery happens within the
+        # configured window instead of holding for an extra step after release
+        # (which would keep ``hold`` latched even when serotonin has subsided).
+        if not self._hold and self._cooldown > 0:
             self._cooldown = max(0, self._cooldown - int(max(1, round(dt))))
 
         floor_span = max(0.0, cfg.floor_max - cfg.floor_min)
