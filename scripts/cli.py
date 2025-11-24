@@ -59,6 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
         proto,
         sanity,
         secrets,
+        system,
         supply_chain,
     )
     from scripts.commands import test as test_cmd
@@ -76,6 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     nightly.build_parser(subparsers)
     sanity.build_parser(subparsers)
     secrets.build_parser(subparsers)
+    system.build_parser(subparsers)
     supply_chain.build_parser(subparsers)
 
     return parser
