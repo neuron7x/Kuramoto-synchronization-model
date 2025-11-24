@@ -12,7 +12,7 @@ from . import (  # noqa: F401
     lint,
     live,
     proto,
-    secrets,
+    system,
     supply_chain,
     test,
 )
