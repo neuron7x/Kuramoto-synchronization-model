@@ -1,4 +1,85 @@
-"""Serotonin tonic/phasic controller with hysteresis driven hold logic."""
+"""Serotonin tonic/phasic controller with hysteresis driven hold logic.
+
+This module implements a computational model of serotonergic neuromodulation
+for risk management in algorithmic trading systems. The controller is grounded
+in neuroscience research on serotonin's role in behavioral inhibition, risk
+aversion, and temporal processing.
+
+Theoretical Foundation
+----------------------
+Serotonin operates on multiple timescales with both tonic (slow baseline) and
+phasic (fast transient) components that regulate decision-making under uncertainty.
+Key neuroscience findings that inform this implementation:
+
+1. **Opponent Process Theory**: Serotonin opposes dopamine, promoting behavioral
+   inhibition and caution during aversive conditions (Daw et al., 2002; Cools et
+   al., 2011).
+
+2. **Tonic vs Phasic Dynamics**: Serotonergic neurons exhibit both slow tonic firing
+   and rapid phasic bursts in response to salient events (Cohen et al., 2015; Liu
+   et al., 2014; Matias et al., 2017).
+
+3. **Risk Aversion & Patience**: Elevated serotonin promotes waiting for delayed
+   rewards and sensitivity to punishment (Miyazaki et al., 2011; Schweighofer et
+   al., 2008).
+
+4. **Receptor Desensitization**: Chronic activation leads to reduced sensitivity
+   through homeostatic adaptation (Roth, 2011; Turrigiano, 2011).
+
+Control Theory Integration
+---------------------------
+The controller employs:
+- Hysteresis for stable state transitions (Bertotti & Mayergoyz, 2006)
+- Exponential moving averages for temporal filtering (Hunter, 1986)
+- Meta-adaptive learning rates (Doya, 2002, 2008)
+
+References
+----------
+Cohen, J. Y., Amoroso, M. W., & Uchida, N. (2015). Serotonergic neurons signal
+    reward and punishment on multiple timescales. eLife, 4, e06346.
+    https://doi.org/10.7554/eLife.06346
+
+Cools, R., Nakamura, K., & Daw, N. D. (2011). Serotonin and dopamine: Unifying
+    affective, activational, and decision functions. Neuropsychopharmacology,
+    36(1), 98-113. https://doi.org/10.1038/npp.2010.121
+
+Daw, N. D., Kakade, S., & Dayan, P. (2002). Opponent interactions between
+    serotonin and dopamine. Neural Networks, 15(4-6), 603-616.
+    https://doi.org/10.1016/S0893-6080(02)00052-7
+
+Doya, K. (2002). Metalearning and neuromodulation. Neural Networks, 15(4-6),
+    495-506. https://doi.org/10.1016/S0893-6080(02)00044-8
+
+Doya, K. (2008). Modulators of decision making. Nature Neuroscience, 11(4),
+    410-416. https://doi.org/10.1038/nn2077
+
+Liu, Z., et al. (2014). Dorsal raphe neurons signal reward through 5-HT and
+    glutamate. Neuron, 81(6), 1360-1374. https://doi.org/10.1016/j.neuron.2014.02.010
+
+Matias, S., et al. (2017). Activity patterns of serotonin neurons underlying
+    cognitive flexibility. eLife, 6, e20552. https://doi.org/10.7554/eLife.20552
+
+Miyazaki, K., Miyazaki, K. W., & Doya, K. (2011). Activation of dorsal raphe
+    serotonin neurons underlies waiting for delayed rewards. Journal of
+    Neuroscience, 31(2), 469-479. https://doi.org/10.1523/JNEUROSCI.3714-10.2011
+
+Roth, B. L. (2011). Irving Page Lecture: 5-HT₂A serotonin receptor biology.
+    Neuropharmacology, 61(3), 348-354. https://doi.org/10.1016/j.neuropharm.2011.01.012
+
+Schweighofer, N., et al. (2008). Low-serotonin levels increase delayed reward
+    discounting in humans. Journal of Neuroscience, 28(17), 4528-4532.
+    https://doi.org/10.1523/JNEUROSCI.4982-07.2008
+
+Turrigiano, G. (2011). Too many cooks? Intrinsic and synaptic homeostatic
+    mechanisms in cortical circuit refinement. Annual Review of Neuroscience,
+    34, 89-103. https://doi.org/10.1146/annurev-neuro-060909-153238
+
+Bertotti, G., & Mayergoyz, I. D. (2006). The science of hysteresis (Vol. 1-3).
+    Academic Press. https://doi.org/10.1016/B978-0-12-480874-4.X5000-2
+
+Hunter, J. S. (1986). The exponentially weighted moving average. Journal of
+    Quality Technology, 18(4), 203-210. https://doi.org/10.1080/00224065.1986.11979014
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -72,7 +153,58 @@ def _ensure_int(name: str, value: object, *, min_value: Optional[int] = None) ->
 
 
 class SerotoninController:
-    """Model chronic serotonin dynamics with hysteretic hold decisions."""
+    """Model chronic serotonin dynamics with hysteretic hold decisions.
+    
+    This controller implements a biologically-inspired neuromodulation system
+    that regulates trading behavior based on stress, drawdown, and novelty signals.
+    The implementation separates tonic (slow-changing baseline) and phasic (rapid
+    transient) components, mirroring the dual timescale operation of serotonergic
+    neurons in the brain.
+    
+    Key Features
+    ------------
+    1. **Dual Timescale Processing**: Separate EMA filtering for tonic (chronic)
+       and phasic (acute) stress signals with different time constants.
+       
+    2. **Hysteretic State Machine**: Prevents rapid oscillation around threshold
+       boundaries using separate entry and exit thresholds with configurable
+       hysteresis band (Bertotti & Mayergoyz, 2006).
+       
+    3. **Adaptive Desensitization**: Models receptor downregulation during
+       chronic stress, implementing homeostatic plasticity principles
+       (Turrigiano, 2011).
+       
+    4. **Cooldown Mechanism**: Enforces refractory period after exiting hold
+       state to prevent premature re-engagement.
+    
+    Biological Motivation
+    ---------------------
+    The design is grounded in neuroscience findings showing that serotonin:
+    - Promotes behavioral inhibition and risk aversion (Cools et al., 2011)
+    - Operates on multiple timescales (Cohen et al., 2015)
+    - Undergoes adaptive desensitization (Roth, 2011)
+    - Interacts with stress and punishment signals (Dayan & Huys, 2009)
+    
+    Applications in Trading
+    -----------------------
+    - Prevents overtrading during volatile market conditions
+    - Adaptively adjusts position sizing based on cumulative stress
+    - Provides dynamic temperature floor for exploration-exploitation balance
+    - Enforces recovery periods after stress events
+    
+    See Also
+    --------
+    docs/adr/0002-serotonin-controller-architecture.md : Complete ADR with
+        theoretical foundations, trade-off analysis, and validation results
+    
+    Examples
+    --------
+    >>> controller = SerotoninController("configs/serotonin.yaml")
+    >>> result = controller.step(stress=0.5, drawdown=0.1, novelty=0.0)
+    >>> if result['hold']:
+    ...     print("Trading paused due to elevated stress")
+    >>> print(f"Current level: {result['level']:.3f}")
+    """
 
     def __init__(
         self,
