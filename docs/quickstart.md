@@ -53,6 +53,16 @@ pip install -r requirements-dev.lock
 # pip install ".[docs]"        # documentation toolchain
 ```
 
+Prefer a single command that provisions everything? Use the bundled bootstrapper
+from the repository root:
+
+```bash
+python -m scripts bootstrap --include-dev --verify --smoke-test
+```
+
+This creates `.venv`, installs the locked dependencies, runs `pip check`, and
+executes a tiny sample analysis to confirm the stack is healthy.
+
 ---
 
 ## Step 4: Verify Installation
