@@ -1,5 +1,7 @@
 # Security Policy
 
+For a cross-functional "digital risk" playbook that consolidates confidentiality, integrity, availability, identity hardening, and legal/ethical controls (including the first 72-hour stabilization checklist), see [docs/digital_risk_action_plan.md](docs/digital_risk_action_plan.md).
+
 ## Thermodynamic Autonomic Control Layer (TACL)
 
 ### System Classification
