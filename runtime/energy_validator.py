@@ -132,40 +132,57 @@ class EnergyValidator:
             f"max_F={self.config.max_acceptable_energy}"
         )
     
-    def compute_penalty(self, metric_name: str, value: float) -> Tuple[float, float]:
+    def compute_penalty(
+        self,
+        metric_name: str,
+        value: float,
+        *,
+        metric_config: Optional[MetricThreshold] = None,
+        total_weight: Optional[float] = None,
+    ) -> Optional[Tuple[float, float]]:
         """Compute normalized penalty and headroom for a metric.
-        
+
         Args:
             metric_name: Name of the metric
             value: Measured value
             
+        Keyword Args:
+            metric_config: Optional metric configuration to avoid repeated
+                lookups when callers already resolved it.
+            total_weight: Pre-computed total weight for efficiency.
+
         Returns:
-            Tuple of (penalty, headroom)
+            Tuple of (penalty, headroom) or ``None`` if the metric is unknown.
             - penalty: Weighted penalty contribution (0 if below threshold)
             - headroom: Fractional headroom (positive if below threshold)
         """
-        metric_config = self.config.get_metric(metric_name)
+        metric_config = metric_config or self.config.get_metric(metric_name)
         if metric_config is None:
             logger.warning(f"Unknown metric: {metric_name}")
-            return 0.0, 0.0
-        
+            return None
+
         threshold = metric_config.threshold
         weight = metric_config.weight
-        total_weight = self.config.get_total_weight()
-        
+        total_weight = total_weight or self.config.get_total_weight()
+
+        # Guard against zero/negative thresholds to avoid division by zero and
+        # represent "no slack" conditions. Any positive value should count as a
+        # full-weight violation; zero preserves neutrality.
+        if threshold <= 0:
+            penalty = (weight / total_weight) if value > 0 else 0.0
+            headroom = 0.0
+            return penalty, headroom
+
         # Compute penalty if above threshold
         if value > threshold:
             excess_ratio = (value - threshold) / threshold
             penalty = (weight / total_weight) * excess_ratio
         else:
             penalty = 0.0
-        
+
         # Compute headroom
-        if threshold > 0:
-            headroom = (threshold - value) / threshold
-        else:
-            headroom = 0.0 if value > 0 else 1.0
-        
+        headroom = (threshold - value) / threshold
+
         return penalty, headroom
     
     def compute_internal_energy(
@@ -184,8 +201,24 @@ class EnergyValidator:
         penalties: Dict[str, float] = {}
         headrooms: Dict[str, float] = {}
         
+        total_weight = self.config.get_total_weight()
+
         for metric_name, value in metrics.items():
-            penalty, headroom = self.compute_penalty(metric_name, value)
+            metric_config = self.config.get_metric(metric_name)
+            if metric_config is None:
+                logger.warning(f"Unknown metric: {metric_name}")
+                continue
+
+            penalty_headroom = self.compute_penalty(
+                metric_name,
+                value,
+                metric_config=metric_config,
+                total_weight=total_weight,
+            )
+            if penalty_headroom is None:
+                continue
+
+            penalty, headroom = penalty_headroom
             penalties[metric_name] = penalty
             headrooms[metric_name] = headroom
             base_energy += penalty
@@ -193,26 +226,29 @@ class EnergyValidator:
         return base_energy, penalties, headrooms
     
     def compute_stability(self, headrooms: Dict[str, float]) -> float:
-        """Compute stability term S from headroom values.
-        
-        Higher stability (more headroom) increases entropy, thus reducing free energy.
-        
+        """Compute stability term ``S`` from headroom values.
+
+        The original implementation only rewarded positive headroom (metrics
+        below threshold), which could overpower modest penalties and drive
+        ``F`` negative even when multiple metrics violated thresholds. For
+        operational readiness we need instability to *decrease* the stability
+        term instead of being silently ignored. We therefore average all
+        headroom values—including negative ones—to reflect the overall
+        thermodynamic headroom of the system.
+
         Args:
-            headrooms: Dictionary of metric name to headroom value
-            
+            headrooms: Dictionary of metric name to headroom value. Positive
+                values indicate remaining budget, negative values indicate
+                deficits.
+
         Returns:
-            Stability value (0-1 range typically)
+            Mean headroom across metrics (can be negative when violations are
+            present).
         """
         if not headrooms:
             return 0.0
-        
-        # Average headroom across all metrics
-        # Only consider positive headroom (below threshold)
-        positive_headrooms = [h for h in headrooms.values() if h > 0]
-        if not positive_headrooms:
-            return 0.0
-        
-        return sum(positive_headrooms) / len(positive_headrooms)
+
+        return sum(headrooms.values()) / len(headrooms)
     
     def compute_free_energy(self, metrics: Dict[str, float]) -> EnergyValidationResult:
         """Compute Helmholtz free energy F = U - T·S.
