@@ -53,11 +53,14 @@ Doya, K. (2002). Metalearning and neuromodulation. Neural Networks, 15(4-6),
 Doya, K. (2008). Modulators of decision making. Nature Neuroscience, 11(4),
     410-416. https://doi.org/10.1038/nn2077
 
-Liu, Z., et al. (2014). Dorsal raphe neurons signal reward through 5-HT and
-    glutamate. Neuron, 81(6), 1360-1374. https://doi.org/10.1016/j.neuron.2014.02.010
+Liu, Z., Zhou, J., Li, Y., Hu, F., Lu, Y., Ma, M., Feng, Q., Zhang, J. E.,
+    Wang, D., Zeng, J., Bao, J., Kim, J. Y., Chen, Z. F., El Mestikawy, S., &
+    Luo, M. (2014). Dorsal raphe neurons signal reward through 5-HT and glutamate.
+    Neuron, 81(6), 1360-1374. https://doi.org/10.1016/j.neuron.2014.02.010
 
-Matias, S., et al. (2017). Activity patterns of serotonin neurons underlying
-    cognitive flexibility. eLife, 6, e20552. https://doi.org/10.7554/eLife.20552
+Matias, S., Lottem, E., Dugué, G. P., & Mainen, Z. F. (2017). Activity patterns
+    of serotonin neurons underlying cognitive flexibility. eLife, 6, e20552.
+    https://doi.org/10.7554/eLife.20552
 
 Miyazaki, K., Miyazaki, K. W., & Doya, K. (2011). Activation of dorsal raphe
     serotonin neurons underlies waiting for delayed rewards. Journal of
@@ -66,8 +69,9 @@ Miyazaki, K., Miyazaki, K. W., & Doya, K. (2011). Activation of dorsal raphe
 Roth, B. L. (2011). Irving Page Lecture: 5-HT₂A serotonin receptor biology.
     Neuropharmacology, 61(3), 348-354. https://doi.org/10.1016/j.neuropharm.2011.01.012
 
-Schweighofer, N., et al. (2008). Low-serotonin levels increase delayed reward
-    discounting in humans. Journal of Neuroscience, 28(17), 4528-4532.
+Schweighofer, N., Bertin, M., Shishida, K., Okamoto, Y., Tanaka, S. C.,
+    Yamawaki, S., & Doya, K. (2008). Low-serotonin levels increase delayed
+    reward discounting in humans. Journal of Neuroscience, 28(17), 4528-4532.
     https://doi.org/10.1523/JNEUROSCI.4982-07.2008
 
 Turrigiano, G. (2011). Too many cooks? Intrinsic and synaptic homeostatic
