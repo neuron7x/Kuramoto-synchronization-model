@@ -6,14 +6,20 @@ import argparse
 import json
 from dataclasses import dataclass
 from pathlib import Path
+import sys
 from typing import Iterable, Mapping, MutableMapping
 
 import yaml
 
+# Allow running this module as a standalone script without requiring installation
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from observability.release_gates import ReleaseGateEvaluator
 
-from .energy_model import EnergyValidationError, EnergyValidator
-from .validate import ARTIFACTS_DIR, load_scenarios
+from tacl.energy_model import EnergyValidationError, EnergyValidator
+from tacl.validate import ARTIFACTS_DIR, load_scenarios
 
 
 @dataclass(frozen=True, slots=True)
