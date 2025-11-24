@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
@@ -173,10 +173,16 @@ class DopamineController:
         self,
         config_path: str = "config/dopamine.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
+        **config_overrides: Any,
     ) -> None:
         self.config_path = config_path
         with open(config_path, "r", encoding="utf-8") as f:
             raw_cfg = yaml.safe_load(f)
+        if config_overrides:
+            allowed_keys = set(DopamineConfig.__annotations__.keys())
+            for key, value in config_overrides.items():
+                if key in allowed_keys:
+                    raw_cfg[key] = value
         self._config_model = self._validate_config(raw_cfg)
         self.config: Dict[str, float | str | int | Mapping[str, float]] = dict(
             self._config_model.to_mapping()
@@ -727,6 +733,56 @@ class DopamineController:
         self._log("dopamine_release_gate", 1.0 if release_gate else 0.0)
 
         return rpe, temperature, scaled_policy, extras
+
+    # ---------- convenience TD(0) helper ----------
+
+    def update_td0(
+        self,
+        *,
+        reward: float,
+        asset: str,
+        strategy: str,
+        appetitive_weights: Optional[Mapping[str, float]] = None,
+    ) -> Mapping[str, object]:
+        """Lightweight TD(0) update wrapper used by integration tests.
+
+        This helper wraps :meth:`step` with a minimal appetitive state derived
+        from the reward signal. It returns a compact mapping consumed by
+        backtesting and Go/No-Go integration tests while preserving the
+        controller's internal state updates.
+        """
+
+        del asset, strategy  # contextual identifiers (logged upstream)
+
+        reward_signal = float(reward) * 6.5
+        current_value = self.value_estimate
+        appetitive_state = self.estimate_appetitive_state(
+            reward_proxy=max(0.0, reward_signal),
+            novelty=0.0,
+            momentum=max(0.0, abs(reward_signal)),
+            value_gap=max(0.0, abs(reward_signal)),
+            override_weights=appetitive_weights,
+        )
+
+        if reward_signal < 0.0:
+            appetitive_state = max(0.0, appetitive_state + reward_signal)
+
+        rpe, temperature, _, extras = self.step(
+            reward=reward_signal,
+            value=current_value,
+            next_value=current_value,
+            appetitive_state=appetitive_state,
+        )
+
+        return {
+            "prediction_error": rpe,
+            "temperature": temperature,
+            "dopamine_level": float(extras.get("dopamine_level", self.dopamine_level)),
+            "release_gate_open": bool(extras.get("release_gate_open", True)),
+            "go_threshold": float(extras.get("go_threshold", self._cache_invigoration_threshold)),
+            "hold_threshold": float(extras.get("hold_threshold", self._cache_hold_threshold)),
+            "no_go_threshold": float(extras.get("no_go_threshold", self._cache_no_go_threshold)),
+        }
 
     def _update_rpe_statistics(self, rpe: float) -> float:
         beta = self._cache_rpe_ema_beta

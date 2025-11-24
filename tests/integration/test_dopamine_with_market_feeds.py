@@ -12,11 +12,45 @@ from typing import List
 import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from tradepulse.core.neuro.dopamine import DopamineController, adapt_ddm_parameters
+from tradepulse.core.neuro.dopamine.action_gate import ActionGate, DopamineSnapshot
 
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
+
+
+def calculate_simple_reward(records: List[MarketFeedRecord], window: int = 1) -> List[float]:
+    """Generate a simple reward signal from mid-price momentum.
+
+    The helper mirrors the lightweight reward shaping used by the dopamine
+    controller tests: it computes the percentage change of the current
+    mid-price relative to a previous observation ``window`` steps back. The
+    output length matches the number of records so callers can zip rewards and
+    market events directly.
+    """
+
+    if not records:
+        return []
+
+    window = max(1, int(window))
+    mid_prices = [float(record.mid_price) for record in records]
+    rewards: List[float] = []
+
+    for i, price in enumerate(mid_prices):
+        baseline_idx = max(0, i - window)
+        baseline_price = mid_prices[baseline_idx]
+        if baseline_price <= 0:
+            rewards.append(0.0)
+            continue
+
+        pct_change = (price - baseline_price) / baseline_price
+
+        # Scale to percentage points to provide a meaningful reward magnitude
+        # for the dopamine controller while retaining sign information.
+        rewards.append(float(pct_change * 100.0))
+
+    return rewards
 
 
 class TestDopamineTD0RPE:
