@@ -1,0 +1,49 @@
+{{- if and .Values.global .Values.global.networkPolicy .Values.global.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "admin.fullname" . }}
+  labels:
+    {{- include "admin.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "admin.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    {{- toYaml .Values.global.networkPolicy.policyTypes | nindent 4 }}
+  ingress:
+  # Allow ingress from within the namespace
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+  # Allow ingress from Prometheus for metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+  egress:
+  # Allow egress to DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow egress to other services in namespace
+  - to:
+    - podSelector: {}
+  # Allow egress to OTEL collector
+  - to:
+    - podSelector:
+        matchLabels:
+          app: otel-collector
+    ports:
+    - protocol: TCP
+      port: 4317
+{{- end }}
