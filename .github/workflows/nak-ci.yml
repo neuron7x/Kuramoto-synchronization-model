@@ -30,7 +30,7 @@ jobs:
       matrix:
         python-version: ['3.11']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check for hidden Unicode markers
         shell: bash
         run: |

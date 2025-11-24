@@ -33,7 +33,7 @@ jobs:
       ui: ${{ steps.filter.outputs.ui }}
       web: ${{ steps.filter.outputs.web }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -50,7 +50,7 @@ jobs:
         python-version: ['3.11']
     name: Lint & Type Check (Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -119,7 +119,7 @@ jobs:
     needs: detect_ui_changes
     name: Web Frontend Lint & Type Check
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -149,7 +149,7 @@ jobs:
         python-version: ['3.11']
     name: Tests (Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -577,7 +577,7 @@ jobs:
         python-version: ['3.11']
     name: Security Tests (Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -619,7 +619,7 @@ jobs:
       - tests
     name: Targeted Mutation Testing (Trading Engine)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -654,7 +654,7 @@ jobs:
     needs: detect_ui_changes
     if: needs.detect_ui_changes.outputs.ui == 'true'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -688,7 +688,7 @@ jobs:
     env:
       TP_BENCHMARK_ARTIFACT_DIR: reports/benchmarks
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -840,7 +840,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: tests
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -880,7 +880,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: tests
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -916,7 +916,7 @@ jobs:
     if: always()
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

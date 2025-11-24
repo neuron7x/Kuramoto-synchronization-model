@@ -31,7 +31,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -125,7 +125,7 @@ jobs:
           if [ "$UNPINNED_ACTIONS" -gt 0 ]; then
             echo "⚠️  Found $UNPINNED_ACTIONS unpinned actions"
             echo "Recommendation: Pin actions to full SHA for security"
-            echo "Example: uses: actions/checkout@v5 -> uses: actions/checkout@<sha256>"
+            echo "Example: uses: actions/checkout@v6 -> uses: actions/checkout@<sha256>"
           else
             echo "✅ All actions properly pinned"
           fi
