@@ -526,23 +526,32 @@ class DigitalGovernanceFramework:
         if detect_spikes and len(values_arr) > 1:
             mean = np.mean(values_arr)
             std = np.std(values_arr)
-            
+
+            spike_count = 0
+
             if std > 0:
                 z_scores = np.abs((values_arr - mean) / std)
                 spike_count = int((z_scores > spike_threshold_std).sum())
-                
-                if spike_count > 0:
-                    check = DataQualityCheck(
-                        check_type="spikes",
-                        passed=False,
-                        metric_name=data_name,
-                        value=float(spike_count),
-                        threshold=0.0,
-                        severity="WARNING",
-                        message=f"{spike_count} spike(s) detected (>{spike_threshold_std} std)",
-                    )
-                    checks.append(check)
-                    self._quality_checks.append(check)
+
+            # Use a robust MAD-based detector so single extreme points still trigger
+            median = np.median(values_arr)
+            mad = np.median(np.abs(values_arr - median))
+            if mad > 0:
+                robust_z = 0.6745 * np.abs(values_arr - median) / mad
+                spike_count = max(spike_count, int((robust_z > spike_threshold_std).sum()))
+
+            if spike_count > 0:
+                check = DataQualityCheck(
+                    check_type="spikes",
+                    passed=False,
+                    metric_name=data_name,
+                    value=float(spike_count),
+                    threshold=0.0,
+                    severity="WARNING",
+                    message=f"{spike_count} spike(s) detected (>{spike_threshold_std} std)",
+                )
+                checks.append(check)
+                self._quality_checks.append(check)
         
         return checks
     

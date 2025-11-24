@@ -29,7 +29,10 @@ on:
     branches:
       - main
       - develop
-  # PRs disabled - SBOM only needed for releases, not during development
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   generate:

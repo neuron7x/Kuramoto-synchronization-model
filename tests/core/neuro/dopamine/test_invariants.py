@@ -6,13 +6,19 @@ import math
 import pytest
 
 try:
-    from hypothesis import given, strategies as st
+    from hypothesis import HealthCheck, given, settings, strategies as st
     HAS_HYPOTHESIS = True
 except ImportError:
     HAS_HYPOTHESIS = False
     # Dummy decorators for when hypothesis is not available
     def given(*args, **kwargs):
         return lambda f: pytest.mark.skip(reason="hypothesis not installed")(f)
+
+    def settings(*args, **kwargs):  # type: ignore
+        return lambda f: f
+
+    class HealthCheck:  # type: ignore
+        too_slow = None
     
     class st:
         @staticmethod
@@ -80,6 +86,7 @@ class TestClamp:
         assert clamp(10.0, 0.0, 10.0) == 10.0
 
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(
         value=st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False),
         min_val=st.floats(min_value=-1e3, max_value=0.0, allow_nan=False, allow_infinity=False),

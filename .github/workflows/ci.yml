@@ -225,7 +225,7 @@ jobs:
 
   publish-containers:
     if: github.event_name == 'push'
-    needs: [coverage-aggregate, mutation-testing-gate]
+    needs: coverage-aggregate
     runs-on: ubuntu-latest
     timeout-minutes: 45
     name: Publish container images

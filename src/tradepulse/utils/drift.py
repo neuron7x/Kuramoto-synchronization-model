@@ -138,7 +138,36 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
     arr1 = _as_array(data1, name="data1")
     arr2 = _as_array(data2, name="data2")
 
-    if arr1.shape == arr2.shape:
+    if arr1.shape != arr2.shape:
+        finite1 = arr1[np.isfinite(arr1)]
+        finite2 = arr2[np.isfinite(arr2)]
+        prob_like = (
+            finite1.size > 0
+            and finite2.size > 0
+            and np.all(finite1 >= 0)
+            and np.all(finite2 >= 0)
+            and np.isclose(finite1.sum(), 1.0)
+            and np.isclose(finite2.sum(), 1.0)
+        )
+        if prob_like:
+            raise ValueError("data1 and data2 must have matching lengths")
+
+        # Treat as empirical samples and build discrete probability
+        # distributions over the combined support.
+        arr1 = finite1
+        arr2 = finite2
+        if arr1.size == 0 or arr2.size == 0:
+            return float("nan")
+        support = np.union1d(arr1, arr2)
+        probs1 = np.zeros_like(support, dtype=float)
+        probs2 = np.zeros_like(support, dtype=float)
+        values1, counts1 = np.unique(arr1, return_counts=True)
+        values2, counts2 = np.unique(arr2, return_counts=True)
+        probs1[np.searchsorted(support, values1)] = counts1 / arr1.size
+        probs2[np.searchsorted(support, values2)] = counts2 / arr2.size
+        arr1 = probs1
+        arr2 = probs2
+    else:
         # Apply a shared mask so NaNs are removed in lockstep.  Historical
         # callers rely on positional alignment when both distributions are
         # provided explicitly as probability vectors.
@@ -153,23 +182,6 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
             arr1 = arr1 / total1
         if total2 > 0:
             arr2 = arr2 / total2
-    else:
-        # When samples have different lengths treat them as empirical
-        # observations and build discrete probability distributions over the
-        # shared support.  Missing categories are assigned probability zero.
-        arr1 = arr1[np.isfinite(arr1)]
-        arr2 = arr2[np.isfinite(arr2)]
-        if arr1.size == 0 or arr2.size == 0:
-            return float("nan")
-        support = np.union1d(arr1, arr2)
-        probs1 = np.zeros_like(support, dtype=float)
-        probs2 = np.zeros_like(support, dtype=float)
-        values1, counts1 = np.unique(arr1, return_counts=True)
-        values2, counts2 = np.unique(arr2, return_counts=True)
-        probs1[np.searchsorted(support, values1)] = counts1 / arr1.size
-        probs2[np.searchsorted(support, values2)] = counts2 / arr2.size
-        arr1 = probs1
-        arr2 = probs2
 
     if arr1.size == 0 or arr2.size == 0:
         return float("nan")

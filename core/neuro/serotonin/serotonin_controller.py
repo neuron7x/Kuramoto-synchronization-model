@@ -429,9 +429,10 @@ class SerotoninController:
         self,
         market_vol: float,
         free_energy: float,
-        cum_losses: float,
-        rho_loss: float,
+        cum_losses: Optional[float] = None,
+        rho_loss: Optional[float] = None,
         override_weights: Optional[Mapping[str, float]] = None,
+        **legacy_kwargs,
     ) -> float:
         """Estimate aversive state from market conditions.
 
@@ -443,6 +444,18 @@ class SerotoninController:
 
         Enhanced with non-linear transformations for biological plausibility.
         """
+        # Support legacy keyword names (losses/rho) while keeping the new API
+        if cum_losses is None:
+            cum_losses = legacy_kwargs.pop("losses", None)
+        if rho_loss is None:
+            rho_loss = legacy_kwargs.pop("rho", None)
+        if legacy_kwargs:
+            unexpected = ", ".join(sorted(legacy_kwargs.keys()))
+            raise TypeError(f"Unexpected keyword arguments: {unexpected}")
+
+        if cum_losses is None or rho_loss is None:
+            raise TypeError("cum_losses/losses and rho_loss/rho are required")
+
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
             raise ValueError(
                 "market_vol, free_energy and cum_losses must be non-negative"

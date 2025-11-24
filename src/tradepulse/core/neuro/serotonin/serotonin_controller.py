@@ -330,6 +330,8 @@ class SerotoninController:
         # exit tick toward the cooldown duration so recovery happens within the
         # configured window instead of holding for an extra step after release
         # (which would keep ``hold`` latched even when serotonin has subsided).
+        cooldown_report = self._cooldown
+
         if not self._hold and self._cooldown > 0:
             self._cooldown = max(0, self._cooldown - int(max(1, round(dt))))
 
@@ -341,7 +343,7 @@ class SerotoninController:
         hold_flag = self.hold
         self._log("tacl.5ht.level", self.level)
         self._log("tacl.5ht.hold", 1.0 if hold_flag else 0.0)
-        self._log("tacl.5ht.cooldown", float(self._cooldown))
+        self._log("tacl.5ht.cooldown", float(cooldown_report))
 
         # Update performance metrics
         if self._enable_perf_tracking:
@@ -353,7 +355,7 @@ class SerotoninController:
         return {
             "level": self.level,
             "hold": float(hold_flag),
-            "cooldown": float(self._cooldown),
+            "cooldown": float(cooldown_report),
             "temperature_floor": self.temperature_floor,
             "desensitization": self._desensitization,
         }

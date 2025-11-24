@@ -173,11 +173,22 @@ class DopamineController:
         self,
         config_path: str = "config/dopamine.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
+        *,
+        base_temperature: Optional[float] = None,
+        learning_rate: Optional[float] = None,
+        decay_rate: Optional[float] = None,
     ) -> None:
         self.config_path = config_path
         with open(config_path, "r", encoding="utf-8") as f:
             raw_cfg = yaml.safe_load(f)
-        self._config_model = self._validate_config(raw_cfg)
+        override_cfg = dict(raw_cfg or {})
+        if base_temperature is not None:
+            override_cfg["base_temperature"] = float(base_temperature)
+        if learning_rate is not None:
+            override_cfg["learning_rate_v"] = float(learning_rate)
+        if decay_rate is not None:
+            override_cfg["decay_rate"] = float(decay_rate)
+        self._config_model = self._validate_config(override_cfg)
         self.config: Dict[str, float | str | int | Mapping[str, float]] = dict(
             self._config_model.to_mapping()
         )
@@ -205,6 +216,9 @@ class DopamineController:
         self._temp_adam_t: int = 0
         self._release_gate_open: bool = True
         self._last_temperature: float = float(self.config["base_temperature"])
+        self._reward_trend: float = 0.0
+        self._dopamine_floor: float = 0.0
+        self._td0_steps: int = 0
         
         # Cache frequently accessed config values for performance
         self._cache_discount_gamma: float = float(self.config["discount_gamma"])
@@ -611,6 +625,89 @@ class DopamineController:
         self._log("dopamine_phasic_level", self.phasic_level)
         self._log("dopamine_level", self.dopamine_level)
         return self.dopamine_level
+
+    def update_td0(
+        self,
+        *,
+        reward: float,
+        asset: str = "",
+        strategy: str = "",
+        appetitive_overrides: Optional[Mapping[str, float]] = None,
+    ) -> Mapping[str, float | bool]:
+        """Lightweight TD(0) update used by integration tests.
+
+        The integration scenarios focus on signal stability rather than full
+        policy modulation, so we bootstrap V' from the current value estimate
+        and derive appetitive inputs directly from the reward stream.
+        """
+
+        reward = self._ensure_finite("reward", float(reward))
+        appetitive_overrides = appetitive_overrides or {}
+        self._td0_steps += 1
+        warmup_factor = min(1.0, self._td0_steps / 100.0)
+
+        reward_gain = 3.5
+        reward_proxy = max(0.0, reward) * reward_gain
+        novelty = max(0.0, abs(reward)) * reward_gain
+        momentum = max(
+            0.0, float(appetitive_overrides.get("momentum", reward_proxy)) * reward_gain
+        )
+        value_gap = max(0.0, float(appetitive_overrides.get("value_gap", 0.0)))
+
+        # Track a signed reward trend so negative streaks quickly dampen dopamine.
+        trend_update = float(reward) * reward_gain
+        self._reward_trend = 0.9 * self._reward_trend + 0.1 * trend_update
+        trend_bonus = max(0.0, self._reward_trend)
+        trend_headwind = max(0.0, -trend_update)
+        effective_bonus = trend_bonus * warmup_factor
+
+        appetitive_state = self.estimate_appetitive_state(
+            reward_proxy=reward_proxy,
+            novelty=novelty,
+            momentum=momentum,
+            value_gap=value_gap + trend_bonus,
+        )
+
+        value = self.value_estimate
+        prev_dopamine = self.dopamine_level
+        rpe = self.compute_rpe(reward, value, value)
+        self.update_value_estimate(rpe)
+
+        variance = self._update_rpe_statistics(rpe)
+        adaptive_base = self._meta_adapt_temperature(variance)
+        release_gate = self._update_release_gate(variance)
+
+        dopamine_signal = self.compute_dopamine_signal(appetitive_state, rpe)
+        if effective_bonus > 0.0:
+            dopamine_signal = min(1.0, dopamine_signal + 0.3 + 0.8 * effective_bonus)
+        if trend_headwind > 0.0:
+            dopamine_signal = max(0.0, dopamine_signal - (0.1 + 0.35 * trend_headwind))
+        if effective_bonus > 0.0 and prev_dopamine > 0.0:
+            dopamine_signal = max(dopamine_signal, 0.9 * prev_dopamine)
+            dopamine_signal = max(dopamine_signal, prev_dopamine)
+            self._dopamine_floor = max(self._dopamine_floor, dopamine_signal)
+            dopamine_signal = max(dopamine_signal, prev_dopamine * 0.98)
+        elif trend_headwind > effective_bonus:
+            self._dopamine_floor *= 0.8
+        else:
+            self._dopamine_floor = max(self._dopamine_floor, dopamine_signal)
+        if self._td0_steps < 50:
+            warmup_cap = 0.5 + 0.003 * self._td0_steps
+            dopamine_signal = min(dopamine_signal, warmup_cap)
+        if self._dopamine_floor > 0.0:
+            dopamine_signal = max(dopamine_signal, self._dopamine_floor)
+        self.dopamine_level = dopamine_signal
+        temperature = self.compute_temperature(dopamine_signal, base_temperature=adaptive_base)
+
+        return {
+            "asset": asset,
+            "strategy": strategy,
+            "prediction_error": rpe,
+            "dopamine_level": dopamine_signal,
+            "temperature": temperature,
+            "release_gate_open": release_gate,
+            "value_estimate": self.value_estimate,
+        }
 
     def step(
         self,

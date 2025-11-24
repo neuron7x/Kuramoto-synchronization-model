@@ -11,8 +11,12 @@ on:
       - '**.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
-  # PRs disabled - security-policy-enforcement.yml provides comprehensive security scanning
-  # This reduces CI overhead while maintaining security standards
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
   schedule:
     - cron: '0 0 * * 1'  # Weekly on Monday
 
@@ -24,6 +28,10 @@ jobs:
   semgrep:
     name: Semgrep Scan (Python/TS/Rust/Go)
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
 
     container:
       image: semgrep/semgrep
