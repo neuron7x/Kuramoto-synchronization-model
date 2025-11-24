@@ -48,6 +48,8 @@ SQLAlchemy==2.0.44
 # Security fixes for ReDoS and validation bypass
 pydantic==2.12.4
 pydantic-settings==2.12.0
+# pydantic-core: aligned with pydantic 2.12.4 to avoid resolver drift
+pydantic-core==2.41.5
 
 # pandera: DataFrame validation, data quality and security
 pandera==0.26.1
