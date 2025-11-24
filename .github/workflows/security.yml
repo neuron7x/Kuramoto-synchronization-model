@@ -293,7 +293,7 @@ jobs:
         exit 1
 
     - name: Build container image for scanning
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         file: ./Dockerfile
