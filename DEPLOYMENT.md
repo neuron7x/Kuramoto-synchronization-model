@@ -80,6 +80,23 @@ Before deploying, install the following tools:
 
 The repository ships with a lightweight Compose stack that builds the TradePulse container and runs Prometheus for metrics scraping.【F:docker-compose.yml†L1-L12】
 
+### One-command launcher (fast path)
+
+The `scripts.deploy.launcher` helper wraps the common Docker Compose operations so anyone can start or inspect the stack without memorising arguments:
+
+- `make deploy` – bootstrap `.env` from `.env.example` if needed and start all services in detached mode.
+- `make deploy-status` – show container health/state.
+- `make deploy-logs` – follow logs for the running services; add service names to scope the stream (for example, `make deploy-logs SERVICES="tradepulse cortex"`).
+- `make deploy-down` – tear down the stack and prune volumes for a clean reset.
+
+You can call the launcher directly to start just the modules you need or to run a smoke test:
+
+```bash
+python -m scripts.deploy.launcher --bootstrap-env up tradepulse cortex --smoke-test
+python -m scripts.deploy.launcher logs tradepulse
+python -m scripts.deploy.launcher down --prune-volumes
+```
+
 1. **Build images** (only required when you change the application code):
    ```bash
    docker compose build tradepulse

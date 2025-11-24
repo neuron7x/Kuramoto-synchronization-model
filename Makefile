@@ -21,14 +21,27 @@ lint\:go:
 
 .PHONY: lock
 lock:
-	python -m pip install --upgrade pip
-	python -m pip install pip-tools
-	pip-compile --resolver=backtracking --strip-extras --no-annotate \
-	    --constraint constraints/security.txt \
-	    --output-file=requirements.lock requirements.txt
-	pip-compile --resolver=backtracking --strip-extras --no-annotate \
-	    --constraint constraints/security.txt \
-	    --output-file=requirements-dev.lock requirements-dev.txt
+        python -m pip install --upgrade pip
+        python -m pip install pip-tools
+        pip-compile --resolver=backtracking --strip-extras --no-annotate \
+            --constraint constraints/security.txt \
+            --output-file=requirements.lock requirements.txt
+        pip-compile --resolver=backtracking --strip-extras --no-annotate \
+            --constraint constraints/security.txt \
+            --output-file=requirements-dev.lock requirements-dev.txt
+
+.PHONY: deploy deploy-down deploy-status deploy-logs
+deploy:
+        python -m scripts.deploy.launcher --bootstrap-env up
+
+deploy-down:
+        python -m scripts.deploy.launcher down --prune-volumes
+
+deploy-status:
+        python -m scripts.deploy.launcher status
+
+deploy-logs:
+        python -m scripts.deploy.launcher logs --follow $(SERVICES)
 
 .PHONY: build-package
 build-package: clean-dist
