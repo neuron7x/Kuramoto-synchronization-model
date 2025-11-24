@@ -230,7 +230,7 @@ jobs:
           echo "✅ Canary scaled down"
 
       - name: Notify on rollback
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.createComment({
@@ -293,7 +293,7 @@ jobs:
           echo "✅ Canary scaled down"
 
       - name: Notify on promotion
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.createComment({

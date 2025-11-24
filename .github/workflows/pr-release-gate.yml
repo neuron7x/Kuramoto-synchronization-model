@@ -51,7 +51,7 @@ jobs:
       # Wait for tests workflow to complete instead of re-running tests
       - name: Wait for tests workflow
         id: wait_tests
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -87,7 +87,7 @@ jobs:
 
       - name: Assess risk level
         id: risk_assessment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -149,7 +149,7 @@ jobs:
             return { riskLevel, riskScore, riskFactors };
 
       - name: Apply risk label
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -212,7 +212,7 @@ jobs:
             // This workflow only manages risk labels
 
       - name: Post comprehensive quality report
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');

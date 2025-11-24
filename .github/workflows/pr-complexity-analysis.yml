@@ -190,7 +190,7 @@ jobs:
 
       - name: Check code ownership coverage
         id: ownership_check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -268,7 +268,7 @@ jobs:
             return { covered, uncovered, coveragePercent };
 
       - name: Post complexity analysis
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -386,7 +386,7 @@ jobs:
             }
 
       - name: Apply complexity labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { owner, repo } = context.repo;
