@@ -53,14 +53,19 @@ can be imported from unit tests or other automation code.
 Use the ``bootstrap`` command to provision a fully configured development
 environment in minutes. It creates (or refreshes) a virtualenv, installs the
 locked dependency sets, applies optional extras, configures ``pre-commit`` git
-hooks, and can install the dashboard frontend dependencies when requested.
+hooks, and can install the dashboard frontend dependencies when requested. For
+new contributors or scientists who simply want to validate the stack end-to-end,
+``--verify`` runs lightweight health checks after installation and ``--smoke-test``
+executes a tiny sample CSV analysis so you immediately know the pipeline works.
 
 ```bash
 python -m scripts bootstrap \
   --include-dev \
   --pre-commit \
   --frontend \
-  --extras connectors gpu
+  --extras connectors gpu \
+  --verify \
+  --smoke-test
 ```
 
 Key options:

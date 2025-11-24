@@ -40,6 +40,8 @@ class BootstrapConfig:
     install_frontend: bool
     reinstall_frontend: bool
     frontend_path: Path
+    run_readiness_checks: bool
+    run_smoke_test: bool
 
 
 def build_parser(subparsers: _SubParsersAction[object]) -> None:
@@ -128,6 +130,24 @@ def build_parser(subparsers: _SubParsersAction[object]) -> None:
         "--reinstall-frontend",
         action="store_true",
         help="Force reinstall of frontend dependencies even if node_modules exists.",
+    )
+    parser.add_argument(
+        "--verify",
+        dest="run_readiness_checks",
+        action="store_true",
+        help=(
+            "Run lightweight post-install verification (pip check and CLI help) "
+            "to confirm the environment is healthy."
+        ),
+    )
+    parser.add_argument(
+        "--smoke-test",
+        dest="run_smoke_test",
+        action="store_true",
+        help=(
+            "Execute a sample CSV analysis using interfaces.cli to confirm core "
+            "data pathways are operational."
+        ),
     )
 
 
@@ -248,6 +268,35 @@ def _install_frontend_dependencies(frontend_path: Path, reinstall: bool) -> None
     run_subprocess(command, cwd=frontend_path)
 
 
+def _run_readiness_checks(venv_python: Path) -> None:
+    LOGGER.info("Running dependency integrity check (pip check)…")
+    run_subprocess((str(venv_python), "-m", "pip", "check"))
+
+    LOGGER.info("Verifying core CLI responds to --help…")
+    run_subprocess((str(venv_python), "-m", "interfaces.cli", "--help"))
+
+
+def _run_sample_analysis(venv_python: Path) -> None:
+    sample_path = Path("sample.csv").resolve()
+    if not sample_path.exists():
+        LOGGER.warning("sample.csv not found at %s; skipping smoke test.", sample_path)
+        return
+
+    LOGGER.info("Running smoke-test analysis on %s", sample_path)
+    run_subprocess(
+        (
+            str(venv_python),
+            "-m",
+            "interfaces.cli",
+            "analyze",
+            "--csv",
+            str(sample_path),
+            "--window",
+            "200",
+        )
+    )
+
+
 def _build_config(args: Namespace) -> BootstrapConfig:
     python = _resolve_python_interpreter(getattr(args, "python"))
     venv_path = getattr(args, "venv_path").resolve()
@@ -268,6 +317,8 @@ def _build_config(args: Namespace) -> BootstrapConfig:
     install_frontend = bool(getattr(args, "install_frontend", False))
     reinstall_frontend = bool(getattr(args, "reinstall_frontend", False))
     frontend_path = getattr(args, "frontend_path", DEFAULT_FRONTEND_PATH).resolve()
+    run_readiness_checks = bool(getattr(args, "run_readiness_checks", False))
+    run_smoke_test = bool(getattr(args, "run_smoke_test", False))
 
     return BootstrapConfig(
         python=python,
@@ -283,6 +334,8 @@ def _build_config(args: Namespace) -> BootstrapConfig:
         install_frontend=install_frontend,
         reinstall_frontend=reinstall_frontend,
         frontend_path=frontend_path,
+        run_readiness_checks=run_readiness_checks,
+        run_smoke_test=run_smoke_test,
     )
 
 
@@ -312,6 +365,12 @@ def execute(config: BootstrapConfig) -> None:
 
     if config.install_frontend:
         _install_frontend_dependencies(config.frontend_path, config.reinstall_frontend)
+
+    if config.run_readiness_checks:
+        _run_readiness_checks(venv_python)
+
+    if config.run_smoke_test:
+        _run_sample_analysis(venv_python)
 
 
 @register("bootstrap")
