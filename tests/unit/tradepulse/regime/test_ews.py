@@ -154,3 +154,25 @@ class TestEWSAggregator:
 
         # With higher threshold, should not trigger KILL
         assert state != "KILL"
+
+    def test_config_preserves_zero_thresholds(self, monkeypatch):
+        """Ensure explicit zero thresholds are not replaced by env defaults."""
+        monkeypatch.setenv("TP_EWS_DR_THRESHOLD", "0.5")
+        monkeypatch.setenv("TP_EWS_TOPO_THRESHOLD", "0.75")
+
+        config = EWSConfig(dr_threshold=0.0, topo_threshold=0.0)
+
+        assert config.dr_threshold == 0.0
+        assert config.topo_threshold == 0.0
+
+        # Zero ΔR threshold should trigger KILL on any drop below 0
+        ews = EWSAggregator(config)
+        state, _ = ews.decide(
+            R=0.5,
+            dR=-0.01,
+            kappa_min=-0.05,
+            topo_score=0.01,
+            te_pass=True,
+        )
+
+        assert state == "KILL"

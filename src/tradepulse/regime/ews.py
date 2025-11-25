@@ -34,11 +34,15 @@ class EWSConfig:
         ricci_kill_threshold: float = -0.3,
     ):
         # Load from environment or use defaults
-        self.dr_threshold = dr_threshold or float(
-            os.getenv("TP_EWS_DR_THRESHOLD", "0.1")
+        self.dr_threshold = (
+            float(os.getenv("TP_EWS_DR_THRESHOLD", "0.1"))
+            if dr_threshold is None
+            else dr_threshold
         )
-        self.topo_threshold = topo_threshold or float(
-            os.getenv("TP_EWS_TOPO_THRESHOLD", "0.15")
+        self.topo_threshold = (
+            float(os.getenv("TP_EWS_TOPO_THRESHOLD", "0.15"))
+            if topo_threshold is None
+            else topo_threshold
         )
         self.ricci_kill_threshold = ricci_kill_threshold
 
