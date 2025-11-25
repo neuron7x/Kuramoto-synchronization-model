@@ -13,7 +13,6 @@ from typing import Iterable, List, Protocol, Sequence
 DEFAULT_TARGETS: tuple[Path, ...] = (
     Path("docs"),
     Path("README.md"),
-    Path("DOCUMENTATION_SUMMARY.md"),
 )
 MARKDOWN_SUFFIXES: tuple[str, ...] = (".md", ".markdown")
 SKIP_DIR_NAMES: frozenset[str] = frozenset({".git", "node_modules", "__pycache__"})

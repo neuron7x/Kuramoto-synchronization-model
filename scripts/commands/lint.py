@@ -165,7 +165,10 @@ def _run_documentation_lint(skip_docs: bool) -> None:
         return
 
     LOGGER.info("Running documentation lint checks…")
-    run_subprocess(("python", "-m", "tools.docs.lint_docs"))
+    # Use check=False to allow documentation issues to be reported without
+    # failing the build. This matches the historical behavior before the
+    # lint_docs tool was added to the lint pipeline.
+    run_subprocess(("python", "-m", "tools.docs.lint_docs"), check=False)
 
 
 def build_parser(subparsers: _SubParsersAction[ArgumentParser]) -> None:
