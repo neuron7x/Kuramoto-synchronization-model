@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import logging
 import os
 import sys
 from dataclasses import dataclass
@@ -183,6 +184,25 @@ def configure_audit_trails(tmp_path_factory: pytest.TempPathFactory) -> None:
     get_access_audit_trail("observability/audit/access.jsonl")
     get_system_audit_trail("observability/audit/system.jsonl")
 
+
+@pytest.fixture(autouse=True)
+def _ensure_logging_propagation() -> None:
+    """Ensure loggers propagate to root for caplog capture.
+    
+    Some tests rely on caplog to capture log messages, but the StructuredLogger
+    may have handlers that prevent propagation. This fixture ensures the
+    key loggers used in tests have propagation enabled.
+    """
+    loggers_to_fix = [
+        "core.data.async_ingestion",
+        "core.data.ingestion",
+        "core.data",
+        "core",
+    ]
+    for name in loggers_to_fix:
+        logger = logging.getLogger(name)
+        logger.propagate = True
+    yield
 
 def pytest_collection_modifyitems(  # type: ignore[override]
     config: pytest.Config, items: list[pytest.Item]

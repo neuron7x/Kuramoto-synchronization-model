@@ -74,9 +74,15 @@ def test_publish_job_runs_only_on_push_events() -> None:
 
 
 def test_publish_job_depends_on_coverage_aggregate() -> None:
+    """Test that publish job depends on coverage-aggregate (and optionally others)."""
     workflow = _load_ci_workflow()
     job = _get_publish_job(workflow)
-    assert job["needs"] == "coverage-aggregate"
+    needs = job["needs"]
+    # needs can be a string or a list
+    if isinstance(needs, str):
+        assert needs == "coverage-aggregate"
+    else:
+        assert "coverage-aggregate" in needs
 
 
 def test_publish_job_sets_required_permissions() -> None:

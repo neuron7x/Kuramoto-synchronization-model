@@ -8,7 +8,7 @@
         },
         "data": {
           "kind": "csv",
-          "path": "/tmp/pytest-of-runner/pytest-14/test_backtest_outputs_jsonl0/prices.csv",
+          "path": "/tmp/pytest-of-runner/pytest-6/test_backtest_outputs_jsonl0/prices.csv",
           "timestamp_field": "timestamp",
           "value_field": "price"
         },
@@ -21,7 +21,7 @@
           "owner": "research"
         },
         "name": "sample_backtest_job",
-        "results_path": "/tmp/pytest-of-runner/pytest-14/test_backtest_outputs_jsonl0/results.json",
+        "results_path": "/tmp/pytest-of-runner/pytest-6/test_backtest_outputs_jsonl0/results.json",
         "strategy": {
           "entrypoint": "core.strategies.signals:moving_average_signal",
           "parameters": {
@@ -37,15 +37,15 @@
           "repo_path": null
         }
       },
-      "created_at": "2025-11-18T20:10:17.147398+00:00",
+      "created_at": "2025-11-25T14:21:23.372908+00:00",
       "lineage": [
-        "/tmp/pytest-of-runner/pytest-14/test_backtest_outputs_jsonl0/prices.csv"
+        "/tmp/pytest-of-runner/pytest-6/test_backtest_outputs_jsonl0/prices.csv"
       ],
       "metadata": {
         "owner": "research"
       },
       "name": "sample_backtest_job",
-      "path": "/tmp/pytest-of-runner/pytest-14/test_backtest_outputs_jsonl0/results.json"
+      "path": "/tmp/pytest-of-runner/pytest-6/test_backtest_outputs_jsonl0/results.json"
     }
   ]
 }

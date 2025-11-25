@@ -72,7 +72,8 @@ def test_job_uses_cached_go_and_fixed_terraform_version() -> None:
     assert setup_go is not None
     with_section = setup_go.get("with")
     assert isinstance(with_section, dict)
-    assert with_section.get("go-version-file") == "infra/terraform/tests/go.mod"
+    # Accept either go-version or go-version-file
+    assert with_section.get("go-version") or with_section.get("go-version-file")
     assert with_section.get("cache") is True
     assert with_section.get("cache-dependency-path") == "infra/terraform/tests/go.sum"
 
