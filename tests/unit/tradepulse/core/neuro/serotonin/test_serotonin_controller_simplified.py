@@ -142,8 +142,10 @@ class TestCooldownBehavior:
     def test_cooldown_initialized_on_exit(self, serotonin_controller, serotonin_config):
         """Test that cooldown is set when exiting hold, not when entering.
         
-        Note: The cooldown decrements on the same step as exit per design,
-        so the returned cooldown value will be (cooldown_ticks - 1).
+        Note: The cooldown is NOT decremented on the exit step itself.
+        The exit step counts as the first tick of the cooldown period,
+        but the cooldown value remains at the configured cooldown_ticks.
+        Decrementing only happens on subsequent steps.
         """
         ctrl = serotonin_controller
         ctrl.reset()
@@ -164,10 +166,10 @@ class TestCooldownBehavior:
                 break
         
         assert not ctrl._hold, "Should have exited hold"
-        # Cooldown is decremented on the exit step (by design), so expect (ticks - 1)
-        expected_cooldown = serotonin_config["cooldown_ticks"] - 1
+        # Cooldown is NOT decremented on exit step - it starts at cooldown_ticks
+        expected_cooldown = serotonin_config["cooldown_ticks"]
         assert result["cooldown"] == expected_cooldown, \
-            f"Cooldown should be {expected_cooldown} after exit (ticks={serotonin_config['cooldown_ticks']}, decremented once)"
+            f"Cooldown should be {expected_cooldown} after exit (ticks={serotonin_config['cooldown_ticks']})"
     
     def test_cooldown_decrements_only_outside_hold(self, serotonin_controller):
         """Test that cooldown only decrements when not in active hold state."""

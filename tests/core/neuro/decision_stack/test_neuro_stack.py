@@ -110,7 +110,9 @@ def test_serotonin_hysteresis_and_release() -> None:
         state = ctrl.step(stress=1.0, drawdown=0.5, novelty=0.3)
     assert state["hold"] >= 0.5
     desens_before = state["desensitization"]
-    for _ in range(5):
+    # Need enough steps for the level to decay below release threshold AND
+    # for the cooldown period (3 ticks) to expire
+    for _ in range(10):
         state = ctrl.step(stress=0.0, drawdown=0.0, novelty=0.0)
     assert state["hold"] < 0.5
     assert ctrl.temperature_floor >= ctrl.config.floor_min
