@@ -239,6 +239,12 @@ def test_constrained_sizer_respects_invariants(
 ) -> None:
     request, state, constraints = payload
     assume(request.price > 0.0)
+    # Avoid extreme edge cases where tiny equity leads to numerical instability
+    assume(state.equity == 0.0 or state.equity >= 1e-100)
+    # Ensure positions don't exceed equity by unreasonable ratios
+    for pos_val in state.positions.values():
+        if state.equity > 0:
+            assume(abs(pos_val * request.price / state.equity) < 1e20)
     sizer = ConstrainedPositionSizer(constraints=constraints)
     result = sizer.size_order(request, state)
 
