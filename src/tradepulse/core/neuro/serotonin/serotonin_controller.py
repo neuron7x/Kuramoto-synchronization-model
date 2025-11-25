@@ -274,6 +274,7 @@ class SerotoninController:
         novelty = float(max(0.0, novelty))
 
         cfg = self._config
+        exited_hold_this_step = False
         # EMA dynamics for tonic and phasic components
         # Tonic: slow integration of chronic stress
         tonic_alpha = 1.0 - (1.0 - cfg.tonic_beta) ** dt
@@ -311,6 +312,7 @@ class SerotoninController:
             exit_threshold = release - cfg.hysteresis / 2.0
             if self.level <= exit_threshold:
                 self._hold = False
+                exited_hold_this_step = True
                 # Initialize cooldown when EXITING hold state
                 self._cooldown = cfg.cooldown_ticks
                 # Extend cooldown if level is still elevated near threshold
@@ -330,7 +332,7 @@ class SerotoninController:
         # exit tick toward the cooldown duration so recovery happens within the
         # configured window instead of holding for an extra step after release
         # (which would keep ``hold`` latched even when serotonin has subsided).
-        if not self._hold and self._cooldown > 0:
+        if not exited_hold_this_step and not self._hold and self._cooldown > 0:
             self._cooldown = max(0, self._cooldown - int(max(1, round(dt))))
 
         floor_span = max(0.0, cfg.floor_max - cfg.floor_min)
