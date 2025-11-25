@@ -111,3 +111,14 @@ def test_lint_paths_skips_non_markdown(tmp_path: Path) -> None:
     issues = lint_paths([tmp_path])
 
     assert issues == []
+
+
+def test_lint_paths_skips_node_modules_directory(tmp_path: Path) -> None:
+    node_modules = tmp_path / "node_modules"
+    node_modules.mkdir()
+
+    _write(node_modules, "ignored.md", "# Title\t\nTrailing whitespace \n")
+
+    issues = lint_paths([tmp_path])
+
+    assert issues == []
