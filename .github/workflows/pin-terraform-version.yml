@@ -19,6 +19,8 @@ jobs:
     name: Terraform validation tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
 
 
     steps:
@@ -28,9 +30,20 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.7'
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: infra/terraform/tests/go.sum
+
+      - name: Prepare Terraform plugin cache directory
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('infra/terraform/eks/**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
