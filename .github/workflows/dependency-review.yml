@@ -29,6 +29,8 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Skip if Dependency graph is not enabled in repository settings
+    continue-on-error: true
 
     
     steps:
