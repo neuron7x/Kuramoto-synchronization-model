@@ -165,8 +165,8 @@ Tested and validated edge cases:
 
 **Breaking Changes**: NONE
 
-All v2.3.1 APIs remain unchanged:
-- ✅ `estimate_aversive_state()` - same signature, enhanced behavior
+All v2.3.1 APIs remain compatible:
+- ✅ `estimate_aversive_state()` - positional interface unchanged; added keyword aliases `losses`/`rho`
 - ✅ `compute_serotonin_signal()` - same signature, enhanced behavior
 - ✅ `modulate_action_prob()` - same signature, enhanced behavior
 - ✅ `check_cooldown()` - same signature, enhanced behavior

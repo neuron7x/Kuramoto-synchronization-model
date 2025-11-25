@@ -124,6 +124,22 @@ def test_estimate_aversive_state_rejects_negative_inputs(serotonin_controller):
         ctrl.estimate_aversive_state(0.1, 0.2, -0.3, 0.0)
 
 
+def test_estimate_aversive_state_supports_aliases(serotonin_controller):
+    ctrl = serotonin_controller
+
+    baseline = ctrl.estimate_aversive_state(1.0, 0.5, 0.2, 0.1)
+    aliased = ctrl.estimate_aversive_state(1.0, 0.5, losses=0.2, rho=0.1)
+
+    assert math.isclose(aliased, baseline, rel_tol=1e-9)
+
+
+def test_estimate_aversive_state_requires_losses_and_rho(serotonin_controller):
+    ctrl = serotonin_controller
+
+    with pytest.raises(TypeError, match="cum_losses and rho_loss must be provided"):
+        ctrl.estimate_aversive_state(1.0, 0.5)
+
+
 def test_compute_serotonin_signal_updates_floor(serotonin_controller):
     ctrl = serotonin_controller
     cfg = ctrl.config

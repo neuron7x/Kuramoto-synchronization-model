@@ -429,9 +429,12 @@ class SerotoninController:
         self,
         market_vol: float,
         free_energy: float,
-        cum_losses: float,
-        rho_loss: float,
+        cum_losses: Optional[float] = None,
+        rho_loss: Optional[float] = None,
         override_weights: Optional[Mapping[str, float]] = None,
+        *,
+        losses: Optional[float] = None,
+        rho: Optional[float] = None,
     ) -> float:
         """Estimate aversive state from market conditions.
 
@@ -442,7 +445,27 @@ class SerotoninController:
         - rho_loss (delta_rho): Portfolio correlation losses
 
         Enhanced with non-linear transformations for biological plausibility.
+        Args:
+            market_vol: External market volatility/uncertainty.
+            free_energy: Internal model uncertainty/surprise.
+            cum_losses: Accumulated losses (pain signal). If omitted, ``losses``
+                may be provided as a backward-compatible alias.
+            rho_loss: Portfolio correlation losses. If omitted, ``rho`` may be
+                provided as a backward-compatible alias.
+            override_weights: Optional overrides for alpha/beta/gamma/delta_rho.
+
         """
+        # Backward compatibility: accept legacy keyword aliases
+        if cum_losses is None and losses is not None:
+            cum_losses = losses
+        if rho_loss is None and rho is not None:
+            rho_loss = rho
+
+        if cum_losses is None or rho_loss is None:
+            raise TypeError(
+                "cum_losses and rho_loss must be provided (or via losses/rho aliases)"
+            )
+
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
             raise ValueError(
                 "market_vol, free_energy and cum_losses must be non-negative"

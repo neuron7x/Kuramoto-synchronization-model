@@ -35,7 +35,7 @@ The public interface is intentionally small and stable:
 | Method | Contract |
 |--------|----------|
 | `step(stress, drawdown, novelty, **kwargs)` | **Primary API**: Consolidated control step returning `(hold, veto, cooldown_s, level)`. Accepts high-level inputs (stress, drawdown, novelty) and optional overrides for market_vol, free_energy, cum_losses, rho_loss. Emits TACL telemetry. Thread-safe. |
-| `estimate_aversive_state(market_vol, free_energy, cum_losses, rho_loss, override_weights=None)` | Returns a non-negative float release signal. Inputs must be ≥0 except `rho_loss`, which is clamped to [-1, 1]. |
+| `estimate_aversive_state(market_vol, free_energy, cum_losses, rho_loss, override_weights=None, *, losses=None, rho=None)` | Returns a non-negative float release signal. Inputs must be ≥0 except `rho_loss`, which is clamped to [-1, 1]. Backward-compatible aliases `losses`/`rho` are accepted for legacy callers. |
 | `compute_serotonin_signal(aversive_state)` | Updates the internal tonic/phasic state and returns the serotonin level in [0, 1]. Input must be ≥0. Thread-safe. |
 | `modulate_action_prob(original_prob, serotonin_signal=None, za_bias=None)` | Applies inhibition and bias, returning a probability in [0, 1]. Raises `ValueError` when `original_prob` is outside [0, 1]. |
 | `check_cooldown(serotonin_signal=None)` | Returns `True` when any veto channel (tonic, phasic, gate) exceeds configured thresholds. Consults the optional TACL guard before final approval. |
