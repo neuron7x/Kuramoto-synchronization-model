@@ -27,7 +27,7 @@
     <img src="https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
   </a>
   <a href="#-testing">
-    <img src="https://img.shields.io/badge/Coverage-%E2%89%A598%25-brightgreen?logo=pytest" alt="Coverage">
+    <img src="https://img.shields.io/badge/Coverage-94%25-green?logo=pytest" alt="Coverage">
   </a>
   
   <!-- Version & License -->
@@ -377,7 +377,7 @@ print(f"Confidence: {snapshot.confidence:.3f}, Entry: {snapshot.entry_signal:.3f
 
 | Component | Status | Progress |
 |-----------|--------|----------|
-| 🧪 **Test Coverage** | 🔄 In Progress | ![98%](https://progress-bar.dev/98?title=Target%2098%25&width=200&color=yellow) |
+| 🧪 **Test Coverage** | 🔄 In Progress | ![94%](https://progress-bar.dev/94?title=Current%2094%25%20(Goal%2098%25)&width=200&color=yellow) |
 | 📖 **Documentation** | 🔄 In Progress | ![85%](https://progress-bar.dev/85?title=85%25&width=200&color=blue) |
 | 🎨 **Web Dashboard** | 🚧 Planning | ![40%](https://progress-bar.dev/40?title=40%25&width=200&color=orange) |
 | 🔒 **Security Audit** | ✅ Complete | ![100%](https://progress-bar.dev/100?title=100%25&width=200&color=green) |
@@ -1035,6 +1035,9 @@ risk:
 
 ### 🔬 Comprehensive Test Suite
 
+> [!IMPORTANT]
+> The latest release gate reports **93.7% overall coverage** (rounded to 94%) with a **92% minimum gate** and a **98% GA target**. The badge and table below reflect this baseline while we continue pushing toward the higher goal.
+
 </div>
 
 ```bash
@@ -1056,12 +1059,11 @@ mutmut run
 
 <div align="center">
 
-| Test Type | Coverage | Status |
-|-----------|----------|--------|
-| Unit Tests | ![98%](https://img.shields.io/badge/Coverage-98%25-brightgreen) | ✅ Passing |
-| Integration | ![95%](https://img.shields.io/badge/Coverage-95%25-green) | ✅ Passing |
-| Property-Based | ![100%](https://img.shields.io/badge/Coverage-100%25-brightgreen) | ✅ Passing |
-| Performance | N/A | ✅ Benchmarked |
+| Scope | Coverage | Status |
+|-------|----------|--------|
+| Overall (release gate) | ![94%](https://img.shields.io/badge/Coverage-94%25-green) | ✅ Passed (≥92% gate) |
+| GA Target | ![98%](https://img.shields.io/badge/Target-98%25-brightgreen) | 🔄 In Progress |
+| Performance Benchmarks | N/A | ✅ Benchmarked |
 
 </div>
 
