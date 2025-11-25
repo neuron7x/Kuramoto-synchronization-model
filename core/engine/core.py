@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
-from time import perf_counter
+from time import perf_counter, perf_counter_ns
 from typing import Any, Protocol, TypeVar, runtime_checkable
 
 
@@ -198,24 +198,24 @@ class CoreEngine:
             for market_data in self._yield_data(context):
                 cycle_index += 1
                 cycle_started_at = datetime.now(timezone.utc)
-                stopwatch = perf_counter()
+                stopwatch = perf_counter_ns()
 
-                signal_timer = perf_counter()
+                signal_timer = perf_counter_ns()
                 generated_signals = self._collect_and_validate(
                     "SignalGenerator.generate",
                     self._yield_signals(market_data, context),
                     Signal,
                 )
-                signal_latency_ms = (perf_counter() - signal_timer) * 1000.0
+                signal_latency_ms = self._elapsed_ms(signal_timer)
                 received_count = len(generated_signals)
 
-                risk_timer = perf_counter()
+                risk_timer = perf_counter_ns()
                 decisions = self._collect_and_validate(
                     "RiskManager.assess",
                     (self._risk_manager.assess(signal, context) for signal in generated_signals),
                     RiskDecision,
                 )
-                risk_latency_ms = (perf_counter() - risk_timer) * 1000.0
+                risk_latency_ms = self._elapsed_ms(risk_timer)
                 approved_count = sum(1 for decision in decisions if decision.approved)
                 rejected_count = received_count - approved_count
 
@@ -234,7 +234,7 @@ class CoreEngine:
                 dispatched_signals = tuple(signal for signal, _ in filtered_pairs)
                 dispatched_decisions = tuple(decision for _, decision in filtered_pairs)
 
-                execution_timer = perf_counter()
+                execution_timer = perf_counter_ns()
                 executions = self._collect_and_validate(
                     "ExecutionClient.execute",
                     (
@@ -243,14 +243,14 @@ class CoreEngine:
                     ),
                     ExecutionOutcome,
                 )
-                execution_latency_ms = (perf_counter() - execution_timer) * 1000.0
+                execution_latency_ms = self._elapsed_ms(execution_timer)
 
                 completed_at = datetime.now(timezone.utc)
                 metrics = CycleMetrics(
                     sequence_number=cycle_index,
                     started_at=cycle_started_at,
                     completed_at=completed_at,
-                    duration_ms=(perf_counter() - stopwatch) * 1000.0,
+                    duration_ms=self._elapsed_ms(stopwatch),
                     stage_durations=StageDurations(
                         signal_ms=signal_latency_ms,
                         risk_ms=risk_latency_ms,
@@ -350,9 +350,9 @@ class CoreEngine:
         *,
         metrics: CycleMetrics,
     ) -> tuple[LogEntry, ...]:
-        signals_tuple = tuple(signals)
-        decisions_tuple = tuple(decisions)
-        executions_tuple = tuple(executions)
+        signals_tuple = signals if isinstance(signals, tuple) else tuple(signals)
+        decisions_tuple = decisions if isinstance(decisions, tuple) else tuple(decisions)
+        executions_tuple = executions if isinstance(executions, tuple) else tuple(executions)
         entries = (
             LogEntry(
                 level="INFO",
@@ -393,11 +393,18 @@ class CoreEngine:
     ) -> tuple[_T, ...]:
         """Materialize *values* into a tuple while validating item types."""
 
-        collected = tuple(values)
-        for index, value in enumerate(collected):
+        collected: list[_T] = []
+        for index, value in enumerate(values):
             if not isinstance(value, expected_type):
                 raise TypeError(
                     f"{producer} produced unsupported payload at index {index}: "
                     f"{type(value).__name__} (expected {expected_type.__name__})",
                 )
-        return collected
+            collected.append(value)
+        return tuple(collected)
+
+    @staticmethod
+    def _elapsed_ms(start_ns: int) -> float:
+        """Return elapsed time in milliseconds from a perf_counter_ns checkpoint."""
+
+        return (perf_counter_ns() - start_ns) / 1_000_000
