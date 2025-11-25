@@ -5,18 +5,51 @@ Tests TD(0) RPE (Reward Prediction Error), DDM adaptation, and Go/No-Go
 decision making using stable, reproducible market feed recordings.
 """
 
-from decimal import Decimal
 from pathlib import Path
 from typing import List
 
 import pytest
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording, validate_recording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from tradepulse.core.neuro.dopamine import (
+    ActionGate,
+    DopamineController,
+    DopamineSnapshot,
+    adapt_ddm_parameters,
+)
 
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "recordings"
+
+
+def calculate_simple_reward(records: List[MarketFeedRecord], window: int = 1) -> List[float]:
+    """Compute a simple momentum-based reward signal.
+
+    Uses percentage price change over a configurable rolling window as a
+    lightweight reward proxy for dopamine TD(0) updates. The first element is
+    always zero to align lengths with the input sequence.
+    """
+
+    if window < 1:
+        raise ValueError("window must be >= 1")
+
+    prices = [float(rec.last) for rec in records]
+    rewards: List[float] = []
+
+    for i, price in enumerate(prices):
+        if i == 0:
+            rewards.append(0.0)
+            continue
+
+        start_idx = max(0, i - window)
+        baseline = prices[start_idx]
+        change = price - baseline
+        pct_change = change / baseline if baseline != 0 else 0.0
+        scaled = max(-5.0, min(5.0, pct_change * 200.0))
+        rewards.append(float(scaled))
+
+    return rewards
 
 
 class TestDopamineTD0RPE:

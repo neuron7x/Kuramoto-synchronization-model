@@ -429,9 +429,12 @@ class SerotoninController:
         self,
         market_vol: float,
         free_energy: float,
-        cum_losses: float,
-        rho_loss: float,
+        cum_losses: Optional[float] = None,
+        rho_loss: Optional[float] = None,
         override_weights: Optional[Mapping[str, float]] = None,
+        *,
+        losses: Optional[float] = None,
+        rho: Optional[float] = None,
     ) -> float:
         """Estimate aversive state from market conditions.
 
@@ -441,13 +444,22 @@ class SerotoninController:
         - cum_losses (gamma): Accumulated losses (pain signal)
         - rho_loss (delta_rho): Portfolio correlation losses
 
+        Supports backward-compatible aliases:
+        - ``losses`` as an alias for ``cum_losses``
+        - ``rho`` as an alias for ``rho_loss``
+
         Enhanced with non-linear transformations for biological plausibility.
         """
-        if market_vol < 0 or free_energy < 0 or cum_losses < 0:
+        loss_value = cum_losses if cum_losses is not None else losses
+        if loss_value is None:
+            raise ValueError("cum_losses/losses must be provided")
+
+        if market_vol < 0 or free_energy < 0 or loss_value < 0:
             raise ValueError(
                 "market_vol, free_energy and cum_losses must be non-negative"
             )
 
+        rho_value = rho_loss if rho_loss is not None else rho if rho is not None else 0.0
         cfg = self.config
         if override_weights is not None:
             alpha = override_weights.get("alpha", cfg["alpha"])
@@ -461,7 +473,7 @@ class SerotoninController:
             delta_rho = cfg["delta_rho"]
 
         # Clamp rho_loss to valid range
-        rho_loss = max(-1.0, min(1.0, rho_loss))
+        rho_value = max(-1.0, min(1.0, rho_value))
 
         # Apply non-linear transformations for better sensitivity
         # Square root for diminishing returns at high values (Weber-Fechner law)
@@ -472,10 +484,10 @@ class SerotoninController:
 
         # Cumulative losses use accelerating function (pain intensifies)
         # Use quadratic for losses to emphasize large drawdowns
-        loss_contribution = gamma * (cum_losses + 0.5 * cum_losses**2)
+        loss_contribution = gamma * (loss_value + 0.5 * loss_value**2)
 
         # Rho-loss complement (decorrelation benefit)
-        rho_contribution = delta_rho * (1.0 - rho_loss)
+        rho_contribution = delta_rho * (1.0 - rho_value)
 
         # Weighted sum with saturation
         release = (

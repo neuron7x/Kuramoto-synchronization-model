@@ -19,7 +19,7 @@ Invariants & Safety:
 from __future__ import annotations
 
 from ._invariants import assert_no_nan_inf, check_monotonic_thresholds, clamp
-from .action_gate import ActionGate, GateEvaluation
+from .action_gate import ActionGate, DopamineSnapshot, GateEvaluation
 from .ddm_adapter import DDMAdjustment, DDMThresholds, adapt_ddm_parameters, ddm_thresholds
 from .dopamine_controller import DopamineController
 
@@ -33,6 +33,7 @@ __all__ = [
     # Core components
     "DopamineController",
     "ActionGate",
+    "DopamineSnapshot",
     "GateEvaluation",
     # DDM adapters
     "DDMAdjustment",

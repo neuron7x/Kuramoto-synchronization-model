@@ -173,6 +173,9 @@ class DopamineController:
         self,
         config_path: str = "config/dopamine.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
+        base_temperature: Optional[float] = None,
+        learning_rate: Optional[float] = None,
+        decay_rate: Optional[float] = None,
     ) -> None:
         self.config_path = config_path
         with open(config_path, "r", encoding="utf-8") as f:
@@ -185,6 +188,13 @@ class DopamineController:
             state: dict(rules)
             for state, rules in self.config["meta_adapt_rules"].items()
         }
+
+        if base_temperature is not None:
+            self.config["base_temperature"] = float(base_temperature)
+        if learning_rate is not None:
+            self.config["learning_rate_v"] = float(learning_rate)
+        if decay_rate is not None:
+            self.config["decay_rate"] = float(decay_rate)
 
         self.tonic_level: float = 0.0
         self.phasic_level: float = 0.0
@@ -569,6 +579,52 @@ class DopamineController:
         
         self.last_rpe = rpe
         return rpe
+
+    def update_td0(
+        self,
+        reward: float,
+        asset: str,
+        strategy: str,
+        appetitive_state: Optional[float] = None,
+        ddm_params: Optional[Tuple[float, float, float]] = None,
+    ) -> Mapping[str, object]:
+        """Convenience TD(0) update using internal value estimate.
+
+        Args:
+            reward: Observed reward signal.
+            asset: Asset identifier for telemetry context.
+            strategy: Strategy identifier for telemetry context.
+            appetitive_state: Optional override for appetitive drive; defaults to
+                a non-negative reward proxy.
+            ddm_params: Optional (v, a, t0) tuple to enable DDM scaling.
+
+        Returns:
+            Mapping of dopamine state, including prediction error and telemetry.
+        """
+
+        appetitive_base = appetitive_state if appetitive_state is not None else max(0.0, reward)
+        if appetitive_base <= 0:
+            appetitive = 0.02
+        else:
+            appetitive = max(0.0, appetitive_base * 3.0 + 0.05)
+        value = self.value_estimate
+        next_value = value
+
+        rpe, temperature, _policy, extras = self.step(
+            reward=reward,
+            value=value,
+            next_value=next_value,
+            appetitive_state=appetitive,
+            ddm_params=ddm_params,
+        )
+
+        result = dict(extras)
+        result.setdefault("prediction_error", rpe)
+        result.setdefault("temperature", temperature)
+        result.setdefault("dopamine_level", self.dopamine_level)
+        result["asset"] = asset
+        result["strategy"] = strategy
+        return result
 
     def update_value_estimate(self, rpe: Optional[float] = None) -> float:
         if rpe is None:

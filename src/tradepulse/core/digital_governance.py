@@ -522,27 +522,46 @@ class DigitalGovernanceFramework:
             checks.append(check)
             self._quality_checks.append(check)
         
-        # Detect spikes
+        # Detect spikes using both standard deviation and robust MAD-based z-scores
         if detect_spikes and len(values_arr) > 1:
             mean = np.mean(values_arr)
             std = np.std(values_arr)
-            
-            if std > 0:
-                z_scores = np.abs((values_arr - mean) / std)
-                spike_count = int((z_scores > spike_threshold_std).sum())
-                
-                if spike_count > 0:
-                    check = DataQualityCheck(
-                        check_type="spikes",
-                        passed=False,
-                        metric_name=data_name,
-                        value=float(spike_count),
-                        threshold=0.0,
-                        severity="WARNING",
-                        message=f"{spike_count} spike(s) detected (>{spike_threshold_std} std)",
-                    )
-                    checks.append(check)
-                    self._quality_checks.append(check)
+
+            # Robust median absolute deviation to avoid dilution from the spike itself
+            median = np.median(values_arr)
+            mad = np.median(np.abs(values_arr - median))
+            # 1.4826 rescales MAD to match std for normal distributions
+            mad_scale = mad * 1.4826 if mad > 0 else 0.0
+
+            z_scores = (
+                np.abs((values_arr - mean) / std) if std > 0 else np.zeros_like(values_arr)
+            )
+            robust_z = (
+                np.abs((values_arr - median) / mad_scale)
+                if mad_scale > 0
+                else np.zeros_like(values_arr)
+            )
+
+            spike_mask = (z_scores > spike_threshold_std) | (
+                robust_z > spike_threshold_std
+            )
+            spike_count = int(spike_mask.sum())
+
+            check = DataQualityCheck(
+                check_type="spikes",
+                passed=spike_count == 0,
+                metric_name=data_name,
+                value=float(spike_count),
+                threshold=0.0,
+                severity="WARNING" if spike_count > 0 else "INFO",
+                message=(
+                    f"{spike_count} spike(s) detected (> {spike_threshold_std} z-score)"
+                    if spike_count > 0
+                    else "No spikes detected"
+                ),
+            )
+            checks.append(check)
+            self._quality_checks.append(check)
         
         return checks
     
