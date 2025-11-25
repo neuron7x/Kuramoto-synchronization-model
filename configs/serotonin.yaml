@@ -1,5 +1,5 @@
 # Serotonin Controller Configuration
-# Compatible with both legacy and v2.4.0 implementations
+# Compatible with both legacy and v2.5.0 implementations
 
 # === Legacy Controller Fields (src/tradepulse/) ===
 tonic_beta: 0.35
@@ -20,7 +20,7 @@ floor_max: 0.6
 floor_gain: 0.8
 cooldown_extension: 2
 
-# === v2.4.0 Controller Fields (core/neuro/) ===
+# === v2.5.0 Controller Fields (core/neuro/) ===
 # Aversive state estimation weights
 alpha: 0.5              # Weight for market volatility (sqrt transform)
 beta: 0.3               # Weight for free energy term  
@@ -70,3 +70,9 @@ temperature_floor_max: 0.6   # Upper bound for serotonin-governed temperature fl
 
 # Time constants
 tick_hours: 1.0          # Wall-clock hours represented by a controller tick
+
+# === v2.5.0 Hysteresis Configuration ===
+# Margin for hysteresis-based veto transitions (fraction of threshold)
+# Range: 0.01 to 0.15 (1% to 15% of threshold value)
+# Lower values = faster transitions, higher values = more stable states
+hysteresis_margin: 0.05

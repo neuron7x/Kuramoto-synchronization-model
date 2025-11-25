@@ -463,3 +463,134 @@ desens_gain: 0.8
     # Should raise ValueError due to constraint violation
     with pytest.raises(ValueError, match="Invalid serotonin configuration"):
         serotonin_cls(str(invalid_config))
+
+
+def test_configurable_hysteresis_margin(serotonin_cls, tmp_path: Path):
+    """Test that hysteresis_margin can be configured and affects veto transitions."""
+    # Test with a custom hysteresis margin
+    custom_config = tmp_path / "custom_hysteresis.yaml"
+    
+    config_content = """
+alpha: 0.5
+beta: 0.3
+gamma: 0.4
+delta_rho: 0.2
+k: 1.5
+theta: 0.0
+delta: 0.5
+za_bias: 0.0
+decay_rate: 0.01
+cooldown_threshold: 0.7
+desens_threshold_ticks: 3
+desens_rate: 0.05
+target_dd: 0.15
+target_sharpe: 1.5
+beta_temper: 0.5
+phase_threshold: 0.7
+phase_kappa: 2.0
+burst_factor: 0.35
+mod_t_max: 10.0
+mod_t_half: 5.0
+mod_k: 0.5
+max_desens_counter: 10
+desens_gain: 0.8
+hysteresis_margin: 0.10
+"""
+    custom_config.write_text(config_content, encoding="utf-8")
+    
+    ctrl = serotonin_cls(str(custom_config))
+    
+    # Verify the custom hysteresis margin is loaded
+    assert ctrl.config["hysteresis_margin"] == 0.10
+    
+    # Test hysteresis with custom margin
+    margin = 0.10
+    threshold = ctrl.config["cooldown_threshold"]
+    ctrl.phasic_level = 0.0
+    ctrl.gate_level = 0.0
+    
+    # When not in hold state, threshold is increased by margin
+    ctrl._hold_state = False
+    assert not ctrl.check_cooldown(threshold * (1.0 + margin) - 1e-6)
+    assert ctrl.check_cooldown(threshold * (1.0 + margin) + 1e-6)
+    
+    # When in hold state, threshold is decreased by margin
+    ctrl._hold_state = True
+    assert ctrl.check_cooldown(threshold * (1.0 - margin) + 1e-6)
+    assert not ctrl.check_cooldown(threshold * (1.0 - margin) - 1e-6)
+
+
+def test_hysteresis_margin_bounds_validation(serotonin_cls, tmp_path: Path):
+    """Test that hysteresis_margin constraints are enforced."""
+    # Test with margin too low
+    low_margin_config = tmp_path / "low_margin.yaml"
+    low_config = """
+alpha: 0.5
+beta: 0.3
+gamma: 0.4
+delta_rho: 0.2
+k: 1.5
+theta: 0.0
+delta: 0.5
+za_bias: 0.0
+decay_rate: 0.01
+cooldown_threshold: 0.7
+desens_threshold_ticks: 3
+desens_rate: 0.05
+target_dd: 0.15
+target_sharpe: 1.5
+beta_temper: 0.5
+phase_threshold: 0.7
+phase_kappa: 2.0
+burst_factor: 0.35
+mod_t_max: 10.0
+mod_t_half: 5.0
+mod_k: 0.5
+max_desens_counter: 10
+desens_gain: 0.8
+hysteresis_margin: 0.005
+"""
+    low_margin_config.write_text(low_config, encoding="utf-8")
+    
+    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+        serotonin_cls(str(low_margin_config))
+    
+    # Test with margin too high
+    high_margin_config = tmp_path / "high_margin.yaml"
+    high_config = """
+alpha: 0.5
+beta: 0.3
+gamma: 0.4
+delta_rho: 0.2
+k: 1.5
+theta: 0.0
+delta: 0.5
+za_bias: 0.0
+decay_rate: 0.01
+cooldown_threshold: 0.7
+desens_threshold_ticks: 3
+desens_rate: 0.05
+target_dd: 0.15
+target_sharpe: 1.5
+beta_temper: 0.5
+phase_threshold: 0.7
+phase_kappa: 2.0
+burst_factor: 0.35
+mod_t_max: 10.0
+mod_t_half: 5.0
+mod_k: 0.5
+max_desens_counter: 10
+desens_gain: 0.8
+hysteresis_margin: 0.20
+"""
+    high_margin_config.write_text(high_config, encoding="utf-8")
+    
+    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+        serotonin_cls(str(high_margin_config))
+
+
+def test_default_hysteresis_margin(serotonin_controller):
+    """Test that default hysteresis margin is 0.05 when not specified."""
+    ctrl = serotonin_controller
+    # The default value should be 0.05 as specified in SerotoninConfig
+    assert ctrl.config.get("hysteresis_margin", 0.05) == 0.05

@@ -142,6 +142,12 @@ class SerotoninConfig(BaseModel):
     tick_hours: float = Field(
         1.0, gt=0.0, description="Wall-clock hours represented by a controller tick"
     )
+    hysteresis_margin: float = Field(
+        0.05,
+        ge=0.01,
+        le=0.15,
+        description="Margin for hysteresis-based veto transitions (fraction of threshold)",
+    )
 
     model_config = ConfigDict(extra="ignore")
 
@@ -172,17 +178,20 @@ def _generate_config_table(schema: dict) -> str:
 
 
 class SerotoninController:
-    """SerotoninController v2.4.0 tonic–phasic stabiliser with TACL guardrails.
+    """SerotoninController v2.5.0 tonic–phasic stabiliser with TACL guardrails.
 
     Enhanced version with improved action/rest potential dynamics:
     - Adaptive gate sensitivity based on tonic level
     - Non-linear phasic burst dynamics with saturation
     - Improved tonic-phasic separation with adaptive decay
     - Enhanced desensitization with exponential recovery curves
-    - Hysteresis-based veto logic for smoother state transitions
+    - Configurable hysteresis-based veto logic for smoother state transitions
     - Non-linear aversive state estimation with biological transforms
     - Progressive inhibition curves for realistic neuromodulation
     - Cubic temperature floor interpolation for smoother adaptation
+
+    v2.5.0 enhancements:
+    - Configurable hysteresis_margin parameter (default 0.05, range 0.01-0.15)
     """
 
     def __init__(
@@ -244,7 +253,7 @@ class SerotoninController:
         """Wrap a collector callable for Prometheus-style metrics."""
 
         def _log(name: str, value: float) -> None:
-            collector(name, float(value), {"controller_version": "v2.4.0"})
+            collector(name, float(value), {"controller_version": "v2.5.0"})
 
         return _log
 
@@ -646,8 +655,8 @@ class SerotoninController:
 
             cfg = self.config
 
-            # Hysteresis margins (5% of threshold for smooth transitions)
-            hysteresis_margin = 0.05
+            # Configurable hysteresis margin for smooth transitions
+            hysteresis_margin = cfg.get("hysteresis_margin", 0.05)
 
             # Calculate effective thresholds based on current hold state
             if self._hold_state:
@@ -734,7 +743,7 @@ class SerotoninController:
         """Push serotonin telemetry to the logger backend."""
 
         with self._lock:
-            tag = '{controller_version="v2.4.0"}'
+            tag = '{controller_version="v2.5.0"}'
             self._log(f"serotonin_level{tag}", self.serotonin_level)
             self._log(f"serotonin_tonic_level{tag}", self.tonic_level)
             self._log(f"serotonin_sensitivity{tag}", self.sensitivity)
