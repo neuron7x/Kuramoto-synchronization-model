@@ -4,6 +4,7 @@ from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import argparse
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -182,11 +183,12 @@ def _iter_markdown_files(targets: Sequence[Path]) -> list[Path]:
             if _is_markdown_file(target):
                 discovered.append(target.resolve())
             continue
-        for candidate in target.rglob("*"):
-            if candidate.is_dir() and candidate.name in SKIP_DIR_NAMES:
-                continue
-            if _is_markdown_file(candidate):
-                discovered.append(candidate.resolve())
+        for root, dirs, files in os.walk(target):
+            dirs[:] = [name for name in dirs if name not in SKIP_DIR_NAMES]
+            for file in files:
+                candidate = Path(root) / file
+                if _is_markdown_file(candidate):
+                    discovered.append(candidate.resolve())
     return sorted({path for path in discovered})
 
 
