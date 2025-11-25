@@ -4,8 +4,10 @@ import asyncio
 import json
 from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable
 
+import ssl
 import pytest
 
 from core.data.models import InstrumentType
@@ -274,3 +276,42 @@ async def test_gap_detection_triggers_seek_and_lag_report() -> None:
         record.reason == "gap" for report in reports for record in report.records
     )
     assert sorted(processed) == [100.0, 101.0, 102.0]
+
+
+def test_build_security_kwargs_requires_existing_cafile(tmp_path: Path) -> None:
+    missing_cafile = tmp_path / "missing.pem"
+    config = KafkaIngestionConfig(
+        topic="tradepulse.market.ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+        ssl_cafile=str(missing_cafile),
+    )
+    service = KafkaIngestionService(config)
+
+    with pytest.raises(ValueError, match="ssl_cafile must point to an existing file"):
+        service._build_security_kwargs()
+
+
+def test_build_security_kwargs_validates_cert_and_key_files(tmp_path: Path) -> None:
+    default_ca = (
+        ssl.get_default_verify_paths().openssl_cafile
+        or ssl.get_default_verify_paths().cafile
+    )
+    if default_ca is None or not Path(default_ca).is_file():
+        pytest.skip("System CA bundle not available for SSL validation test")
+    cafile = Path(default_ca)
+    missing_cert = tmp_path / "cert.pem"
+    keyfile = tmp_path / "key.pem"
+    keyfile.write_text("key")
+    config = KafkaIngestionConfig(
+        topic="tradepulse.market.ticks",
+        bootstrap_servers="kafka:9092",
+        group_id="tradepulse-test",
+        ssl_cafile=str(cafile),
+        ssl_certfile=str(missing_cert),
+        ssl_keyfile=str(keyfile),
+    )
+    service = KafkaIngestionService(config)
+
+    with pytest.raises(ValueError, match="ssl_certfile must point to an existing file"):
+        service._build_security_kwargs()

@@ -15,6 +15,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Mapping, Protocol, Sequence
 
 from core.data.models import InstrumentType, PriceTick
@@ -598,12 +599,18 @@ class KafkaIngestionService:
             raise ValueError(
                 "ssl_cafile must be configured for secure Kafka connections"
             )
-        cafile_path = self._config.ssl_cafile
-        context = ssl.create_default_context(cafile=cafile_path)
+        cafile_path = Path(self._config.ssl_cafile)
+        if not cafile_path.is_file():
+            raise ValueError("ssl_cafile must point to an existing file")
+        context = ssl.create_default_context(cafile=str(cafile_path))
         if self._config.ssl_certfile and self._config.ssl_keyfile:
-            context.load_cert_chain(
-                certfile=self._config.ssl_certfile, keyfile=self._config.ssl_keyfile
-            )
+            cert_path = Path(self._config.ssl_certfile)
+            key_path = Path(self._config.ssl_keyfile)
+            if not cert_path.is_file():
+                raise ValueError("ssl_certfile must point to an existing file")
+            if not key_path.is_file():
+                raise ValueError("ssl_keyfile must point to an existing file")
+            context.load_cert_chain(certfile=str(cert_path), keyfile=str(key_path))
         elif self._config.ssl_certfile or self._config.ssl_keyfile:
             raise ValueError("ssl_certfile and ssl_keyfile must be provided together")
         kwargs: Dict[str, Any] = {
