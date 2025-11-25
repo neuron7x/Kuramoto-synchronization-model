@@ -18,7 +18,7 @@ from pydantic import BaseModel
 __all__ = ["create_admin_app", "KillSwitchRequest", "RiskStateResponse"]
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 class KillSwitchRequest(BaseModel):
@@ -45,7 +45,7 @@ class RiskStateResponse(BaseModel):
     circuit_breaker_last_trip: Optional[str] = None
 
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)) -> bool:
+def verify_token(credentials: HTTPAuthorizationCredentials | None = Security(security)) -> bool:
     """Verify the admin API token.
 
     Args:
@@ -62,6 +62,12 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Admin API token not configured",
+        )
+
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authenticated",
         )
 
     if credentials.credentials != expected_token:

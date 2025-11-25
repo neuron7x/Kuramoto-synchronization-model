@@ -318,6 +318,10 @@ class SerotoninController:
                 # Extend cooldown if level is still elevated near threshold
                 if self.level >= threshold:
                     self._cooldown = cfg.cooldown_ticks + cfg.cooldown_extension
+                # Count the exit step toward the cooldown duration so recovery
+                # begins immediately rather than after an extra tick.
+                decrement = int(max(1, round(dt)))
+                self._cooldown = max(0, self._cooldown - decrement)
         else:
             # Enter hold when level exceeds threshold plus hysteresis margin
             entry_threshold = threshold + cfg.hysteresis / 2.0

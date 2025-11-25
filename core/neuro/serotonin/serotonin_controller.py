@@ -429,24 +429,33 @@ class SerotoninController:
         self,
         market_vol: float,
         free_energy: float,
-        cum_losses: float,
-        rho_loss: float,
+        losses: Optional[float] = None,
+        rho: Optional[float] = None,
         override_weights: Optional[Mapping[str, float]] = None,
+        *,
+        cum_losses: Optional[float] = None,
+        rho_loss: Optional[float] = None,
     ) -> float:
         """Estimate aversive state from market conditions.
 
         Combines multiple stress signals with configurable weights:
         - market_vol (alpha): External market volatility/uncertainty
         - free_energy (beta): Internal model uncertainty/surprise
-        - cum_losses (gamma): Accumulated losses (pain signal)
-        - rho_loss (delta_rho): Portfolio correlation losses
+        - losses/cum_losses (gamma): Accumulated losses (pain signal)
+        - rho/rho_loss (delta_rho): Portfolio correlation losses
 
-        Enhanced with non-linear transformations for biological plausibility.
+        "losses"/"rho" are preferred but legacy "cum_losses"/"rho_loss" are
+        still accepted for compatibility with earlier call-sites.
         """
-        if market_vol < 0 or free_energy < 0 or cum_losses < 0:
+        effective_losses = losses if losses is not None else cum_losses
+        effective_rho = rho if rho is not None else rho_loss
+
+        if market_vol < 0 or free_energy < 0 or effective_losses is None or effective_losses < 0:
             raise ValueError(
-                "market_vol, free_energy and cum_losses must be non-negative"
+                "market_vol, free_energy and losses/cum_losses must be non-negative"
             )
+        if effective_rho is None:
+            raise ValueError("rho or rho_loss must be provided")
 
         cfg = self.config
         if override_weights is not None:
@@ -461,7 +470,7 @@ class SerotoninController:
             delta_rho = cfg["delta_rho"]
 
         # Clamp rho_loss to valid range
-        rho_loss = max(-1.0, min(1.0, rho_loss))
+        rho_loss = max(-1.0, min(1.0, effective_rho))
 
         # Apply non-linear transformations for better sensitivity
         # Square root for diminishing returns at high values (Weber-Fechner law)
@@ -472,7 +481,7 @@ class SerotoninController:
 
         # Cumulative losses use accelerating function (pain intensifies)
         # Use quadratic for losses to emphasize large drawdowns
-        loss_contribution = gamma * (cum_losses + 0.5 * cum_losses**2)
+        loss_contribution = gamma * (effective_losses + 0.5 * effective_losses**2)
 
         # Rho-loss complement (decorrelation benefit)
         rho_contribution = delta_rho * (1.0 - rho_loss)
