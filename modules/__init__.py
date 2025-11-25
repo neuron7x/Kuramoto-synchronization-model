@@ -2,28 +2,25 @@
 # SPDX-License-Identifier: Apache-2.0
 """Neural modules for TradePulse."""
 
+import importlib.util
+
 __all__ = [
-    "GABAInhibitionGate",
-    "GateParams",
-    "GateState",
-    "GateMetrics",
     "AdaptiveRiskManager",
     "MarketRegimeAnalyzer",
     "DynamicPositionSizer",
     "AgentCoordinator",
 ]
 
-# Import GABA gate if torch is available
-try:
+# Optional GABA gate (requires torch)
+if importlib.util.find_spec("torch") is not None:
     from modules.gaba_inhibition_gate import (
         GABAInhibitionGate,
         GateParams,
         GateState,
         GateMetrics,
     )
-except ImportError:
-    # Torch not available, skip GABA module
-    pass
+
+    __all__.extend(["GABAInhibitionGate", "GateParams", "GateState", "GateMetrics"])
 
 # Import new modules (no torch dependency)
 from modules.adaptive_risk_manager import AdaptiveRiskManager
