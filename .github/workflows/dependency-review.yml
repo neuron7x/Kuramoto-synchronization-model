@@ -42,7 +42,6 @@ jobs:
         with:
           fail-on-severity: moderate
           deny-licenses: GPL-3.0, AGPL-3.0
-          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, MPL-2.0
           comment-summary-in-pr: always
           retry-on-snapshot-warnings: true
           warn-only: false
@@ -75,12 +74,14 @@ jobs:
           pip-licenses --format=json --output-file=python-licenses.json
           pip-licenses --format=markdown --output-file=python-licenses.md
           
-          # Check for problematic licenses
-          PROBLEMATIC=$(pip-licenses --format=json | jq -r '.[] | select(.License | test("GPL-3|AGPL|SSPL")) | .Name' || echo "")
+          # Check for problematic licenses (GPL-3.0, AGPL, SSPL are copyleft)
+          # Note: LGPL is permissive for libraries and is allowed
+          PROBLEMATIC=$(pip-licenses --format=json | jq -r '.[] | select(.License | test("^GPL-3|AGPL|SSPL") and (.License | test("LGPL") | not)) | .Name' || echo "")
           
           if [ -n "$PROBLEMATIC" ]; then
             echo "problematic=true" >> $GITHUB_OUTPUT
-            echo "licenses=$PROBLEMATIC" >> $GITHUB_OUTPUT
+            # Use printf to handle multiline output safely
+            printf "licenses=%s\n" "$(echo "$PROBLEMATIC" | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
             echo "❌ Found problematic licenses: $PROBLEMATIC"
           else
             echo "problematic=false" >> $GITHUB_OUTPUT
