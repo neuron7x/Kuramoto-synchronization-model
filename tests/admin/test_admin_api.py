@@ -110,7 +110,8 @@ class TestAdminAPI:
             json={"enabled": True},
         )
 
-        assert response.status_code == 403
+        # HTTPBearer returns 401 when credentials are missing
+        assert response.status_code == 401
 
     def test_get_risk_state(self, client, risk_compliance):
         """Test getting risk state via API."""
