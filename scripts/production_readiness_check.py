@@ -346,11 +346,6 @@ def main() -> int:
         default=None,
         help="Output report to JSON file",
     )
-    parser.add_argument(
-        "--fail-fast",
-        action="store_true",
-        help="Exit on first failure",
-    )
     args = parser.parse_args()
 
     print("=" * 70)
