@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, Mapping, Optional
@@ -409,8 +410,9 @@ class SerotoninController:
             "tonic_level": self.tonic_level,
             "phasic_level": self.phasic_level,
             "level": self.level,
-            "hold": float(self.hold),
-            "cooldown": float(self._cooldown),
+            "hold": bool(self.hold),
+            "active_hold": bool(self._hold),
+            "cooldown": int(self._cooldown),
             "temperature_floor": self.temperature_floor,
             "desensitization": self._desensitization,
         }
@@ -597,3 +599,108 @@ class SerotoninController:
         self._step_count = 0
         self._total_step_time = 0.0
         self._hold_count = 0
+
+    # --------------------------------------------------------- state snapshot
+    def _validate_state_payload(self, state: Mapping[str, object]) -> dict[str, float | bool]:
+        required_keys = {
+            "tonic_level",
+            "phasic_level",
+            "level",
+            "hold",
+            "cooldown",
+            "temperature_floor",
+            "desensitization",
+        }
+        missing = required_keys - set(state.keys())
+        if missing:
+            raise ValueError(f"Missing state fields: {sorted(missing)}")
+
+        def _as_float(name: str, value: object) -> float:
+            return _ensure_float(name, value)
+
+        tonic_level = _as_float("tonic_level", state["tonic_level"])
+        phasic_level = _as_float("phasic_level", state["phasic_level"])
+        level = _as_float("level", state["level"])
+        desensitization = _as_float("desensitization", state["desensitization"])
+        temperature_floor = _as_float("temperature_floor", state["temperature_floor"])
+
+        hold_value = state.get("active_hold", state["hold"])
+        if isinstance(hold_value, bool):
+            active_hold = hold_value
+        elif isinstance(hold_value, (int, float)):
+            active_hold = bool(hold_value)
+        else:
+            raise ValueError("hold must be a boolean or numeric flag")
+
+        cooldown = _ensure_int("cooldown", state["cooldown"], min_value=0)
+
+        if not (0.0 <= level <= 1.5):
+            raise ValueError("level must be within [0.0, 1.5]")
+        if not (0.0 <= tonic_level <= 2.0):
+            raise ValueError("tonic_level must be within [0.0, 2.0]")
+        if not (0.0 <= phasic_level <= 2.0):
+            raise ValueError("phasic_level must be within [0.0, 2.0]")
+        if not (0.0 <= desensitization <= self._config.max_desensitization):
+            raise ValueError("desensitization exceeds configured maximum")
+        if not (self._config.floor_min <= temperature_floor <= self._config.floor_max):
+            raise ValueError("temperature_floor outside configured bounds")
+
+        return {
+            "tonic_level": tonic_level,
+            "phasic_level": phasic_level,
+            "level": level,
+            "desensitization": desensitization,
+            "temperature_floor": temperature_floor,
+            "active_hold": active_hold,
+            "cooldown": cooldown,
+        }
+
+    def apply_state(self, state: Mapping[str, object]) -> Mapping[str, float | bool]:
+        """Apply a previously captured controller state.
+
+        Args:
+            state: Mapping produced by :meth:`to_dict` or loaded from disk.
+
+        Returns:
+            The normalized state that was applied.
+        """
+
+        normalized = self._validate_state_payload(state)
+
+        self.tonic_level = normalized["tonic_level"]
+        self.phasic_level = normalized["phasic_level"]
+        self.level = normalized["level"]
+        self._desensitization = normalized["desensitization"]
+        self.temperature_floor = normalized["temperature_floor"]
+        self._hold = bool(normalized["active_hold"])
+        self._cooldown = int(normalized["cooldown"])
+
+        return self.to_dict()
+
+    def save_state(self, path: str | Path) -> Path:
+        """Persist controller state to JSON.
+
+        Args:
+            path: Target file path.
+
+        Returns:
+            Path to the persisted file for convenience.
+        """
+
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("w", encoding="utf-8") as handle:
+            json.dump(self.to_dict(), handle, indent=2)
+        return target
+
+    def load_state(self, path: str | Path) -> Mapping[str, float | bool]:
+        """Load and apply controller state from JSON."""
+
+        source = Path(path)
+        if not source.exists():
+            raise FileNotFoundError(source)
+        with source.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if not isinstance(payload, Mapping):
+            raise ValueError("State file must contain a JSON object")
+        return self.apply_state(payload)
