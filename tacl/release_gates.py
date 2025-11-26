@@ -16,9 +16,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from observability.release_gates import ReleaseGateEvaluator
-from tacl.energy_model import EnergyValidationError, EnergyValidator
-from tacl.validate import ARTIFACTS_DIR, load_scenarios
+from observability.release_gates import ReleaseGateEvaluator  # noqa: E402
+from tacl.energy_model import EnergyValidationError, EnergyValidator  # noqa: E402
+from tacl.validate import ARTIFACTS_DIR, load_scenarios  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)

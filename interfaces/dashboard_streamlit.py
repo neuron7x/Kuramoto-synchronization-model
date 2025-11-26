@@ -336,23 +336,23 @@ else:
                 with st.expander("📊 Detailed Analysis Summary"):
                     st.markdown(
                         f"""
-                    **Analysis Window:** {analysis_window} periods  
+                    **Analysis Window:** {analysis_window} periods
                     **Data Points Analyzed:** {len(prices)}
-                    
+
                     **Synchronization Analysis:**
                     - Kuramoto Order Parameter: {R:.4f}
                     - Interpretation: {'High synchronization' if R > 0.7 else 'Moderate synchronization' if R > 0.4 else 'Low synchronization'}
-                    
+
                     **Information Theory:**
                     - Shannon Entropy: {H:.4f}
                     - Delta Entropy: {dH:.4f}
                     - Entropy Trend: {'Increasing uncertainty' if dH > 0 else 'Decreasing uncertainty'}
-                    
+
                     **Long-term Memory:**
                     - Hurst Exponent: {Hs:.4f}
                     - Market Behavior: {regime_type}
                     - Predictability: {'High' if abs(Hs - 0.5) > 0.15 else 'Moderate' if abs(Hs - 0.5) > 0.05 else 'Low'}
-                    
+
                     **Geometric Properties:**
                     - Mean Ricci Curvature: {kappa:.6f}
                     - Price Manifold: {'Contracting' if kappa > 0 else 'Expanding' if kappa < -0.001 else 'Stable'}
@@ -545,19 +545,19 @@ else:
         - **0.4 < R < 0.7**: Moderate coherence, mixed signals
         - **R < 0.4**: Low coherence, noisy/random behavior
         - **R ≈ 0**: No synchronization (random walk)
-        
+
         ### Shannon Entropy (H)
         Measures the information content and uncertainty in price distribution:
         - **High H**: More unpredictable, diverse outcomes, high volatility
         - **Low H**: More concentrated, predictable distribution, low volatility
         - Range: 0 (perfectly predictable) to log₂(bins) (maximum uncertainty)
-        
+
         ### Delta Entropy (ΔH)
         Tracks the change in entropy over time:
         - **Positive ΔH**: Increasing uncertainty, potential trend breakout
         - **Negative ΔH**: Decreasing uncertainty, potential regime shift or consolidation
         - **ΔH ≈ 0**: Stable market conditions
-        
+
         ### Hurst Exponent (H)
         Measures long-term memory and trend persistence:
         - **H > 0.5**: Trending/persistent behavior (momentum strategies)
@@ -565,29 +565,29 @@ else:
         - **H < 0.5**: Mean-reverting behavior (reversion strategies)
         - **H > 0.6**: Strong trending
         - **H < 0.4**: Strong mean reversion
-        
+
         ### Ricci Curvature (κ)
         Geometric curvature of the price manifold:
         - **κ > 0**: Contracting regime, prices converging
         - **κ ≈ 0**: Stable/flat geometry
         - **κ < 0**: Expanding regime, prices diverging
         - Useful for detecting regime changes and phase transitions
-        
+
         ---
-        
+
         ### How TradePulse Works
-        
+
         **TradePulse** combines geometric indicators with traditional technical analysis
         for robust market regime detection and signal generation. The platform uses:
-        
+
         1. **Multi-scale Analysis**: Examines patterns at different timeframes
         2. **Phase Synchronization**: Detects coherent market behavior
         3. **Information Theory**: Quantifies uncertainty and randomness
         4. **Geometric Methods**: Analyzes market structure via manifold curvature
         5. **Fractal Analysis**: Identifies self-similar patterns and long-term memory
-        
+
         ### Best Practices
-        
+
         """
         )
 
@@ -601,17 +601,17 @@ else:
         5. **Export results** for further analysis or record-keeping
         6. **Monitor history** to track how indicators evolve over time
         7. **Combine indicators** - No single indicator is perfect; use multiple for confirmation
-        
+
         ### CSV Format Requirements
-        
+
         **Required columns:**
         - `price`: Numeric price values (close, last, mid, etc.)
-        
+
         **Optional columns:**
         - `volume`: Trading volume
         - `ts`, `timestamp`, or `date`: Time information
         - Any other columns will be preserved but not used in analysis
-        
+
         **Example CSV:**
         ```
         timestamp,price,volume
@@ -619,16 +619,16 @@ else:
         2024-01-01 10:00,101.2,1200000
         2024-01-01 11:00,100.8,900000
         ```
-        
+
         ### Troubleshooting
-        
+
         - **"Missing required columns"**: Ensure your CSV has a column named 'price'
         - **"Data has no variation"**: Check that prices are not constant
         - **"Insufficient data"**: Increase your dataset size or decrease the analysis window
         - **Computation errors**: Ensure price values are numeric and not missing
-        
+
         ### Resources
-        
+
         - [TradePulse Documentation](https://github.com/neuron7x/TradePulse)
         - [Indicator Theory](https://github.com/neuron7x/TradePulse/docs/indicators.md)
         - [API Reference](https://docs.tradepulse.io/api)
@@ -639,11 +639,11 @@ else:
         with st.expander("🔧 System Information"):
             st.markdown(
                 f"""
-            **Dashboard Version:** 2.0.0  
-            **Analysis Window:** {window_size} periods  
-            **Entropy Bins:** {entropy_bins}  
-            **Ricci Delta:** {ricci_delta}  
-            **Session Analyses:** {len(st.session_state.analysis_history)}  
+            **Dashboard Version:** 2.0.0
+            **Analysis Window:** {window_size} periods
+            **Entropy Bins:** {entropy_bins}
+            **Ricci Delta:** {ricci_delta}
+            **Session Analyses:** {len(st.session_state.analysis_history)}
             **User:** {name}
             """
             )

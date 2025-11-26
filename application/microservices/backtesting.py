@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import (
@@ -15,6 +16,9 @@ from application.microservices.contracts import (
 from application.system import TradePulseSystem
 from application.trading import signal_to_dto
 from domain import Signal
+
+if TYPE_CHECKING:
+    from application.microservices.market_data import MarketDataService
 
 
 @dataclass(slots=True)

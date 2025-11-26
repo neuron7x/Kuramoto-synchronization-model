@@ -7,7 +7,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from neuropro.multifractal_opt import fractional_update
+from neuropro.multifractal_opt import fractional_update  # noqa: E402
 
 
 def test_fractional_update_descends_without_noise() -> None:

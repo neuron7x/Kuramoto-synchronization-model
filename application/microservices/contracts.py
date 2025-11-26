@@ -21,15 +21,15 @@ if not _audit_logger.handlers:
     _audit_logger.addHandler(logging.NullHandler())
 _audit_logger.propagate = False
 
-from application.api.service import (
+from application.api.service import (  # noqa: E402 - must follow env setup
     FeatureRequest,
     FeatureResponse,
     PredictionRequest,
     PredictionResponse,
 )
-from core.data.models import InstrumentType
-from core.messaging.event_bus import EventTopic
-from domain import Signal, SignalAction
+from core.data.models import InstrumentType  # noqa: E402
+from core.messaging.event_bus import EventTopic  # noqa: E402
+from domain import Signal, SignalAction  # noqa: E402
 
 StrategyCallable = Callable[[np.ndarray], np.ndarray]
 

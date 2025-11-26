@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from runtime.cns_stabilizer import CNSStabilizer
+from runtime.cns_stabilizer import CNSStabilizer  # noqa: E402
 
 np.random.seed(42)
 

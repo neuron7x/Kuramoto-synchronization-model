@@ -16,7 +16,7 @@ from typing import Any
 import yaml
 
 try:
-    import jsonschema
+    import jsonschema  # noqa: F401 - required for Draft7Validator
     from jsonschema import Draft7Validator
 except ImportError:
     print(

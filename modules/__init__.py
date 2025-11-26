@@ -13,7 +13,7 @@ __all__ = [
 
 # Optional GABA gate (requires torch)
 if importlib.util.find_spec("torch") is not None:
-    from modules.gaba_inhibition_gate import (
+    from modules.gaba_inhibition_gate import (  # noqa: F401 - re-exported in __all__
         GABAInhibitionGate,
         GateMetrics,
         GateParams,

@@ -1,9 +1,8 @@
 """Chaotic fractal Grey Wolf Optimiser used for crisis adaptation."""
 
-"""Chaotic fractal Grey Wolf optimiser used for FHMC crisis modes."""
-from __future__ import annotations
+from __future__ import annotations  # noqa: E402 - after module docstring
 
-import numpy as np
+import numpy as np  # noqa: E402
 
 
 def logistic_map(x: float, r: float = 3.99) -> float:

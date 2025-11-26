@@ -15,7 +15,7 @@ src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 # Import directly from module to avoid triggering full app initialization
-import importlib.util
+import importlib.util  # noqa: E402
 
 spec = importlib.util.spec_from_file_location(
     "neuro_orchestrator",

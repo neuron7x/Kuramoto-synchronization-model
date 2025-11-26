@@ -6,7 +6,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from core.neuro.shocks import ShockScenario, ShockScenarioGenerator
+from core.neuro.shocks import ShockScenario, ShockScenarioGenerator  # noqa: E402
 
 
 def _baseline() -> list[list[float]]:

@@ -26,7 +26,7 @@ class Controller:
     def decide(
         self, state: Dict[str, float], mode: str, D: float
     ) -> Tuple[str, Dict[str, float]]:
-        H = state["H"]
+        _H = state["H"]  # noqa: F841 - extracted for state completeness
         M = state["M"]
         E = state["E"]
         S = state["S"]

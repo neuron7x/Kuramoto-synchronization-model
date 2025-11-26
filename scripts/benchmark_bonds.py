@@ -22,8 +22,8 @@ script_dir_str = str(SCRIPT_DIR)
 if script_dir_str in sys.path:
     sys.path.remove(script_dir_str)
 
-from core.energy import delta_free_energy
-from runtime.thermo_controller import ThermoController
+from core.energy import delta_free_energy  # noqa: E402 - after sys.path setup
+from runtime.thermo_controller import ThermoController  # noqa: E402
 
 
 def run_benchmark(iterations: int = 200) -> dict[str, float | int]:
