@@ -304,7 +304,9 @@ class DopamineController:
 
         return self._build_config_dataclass(extracted, meta_rules)
 
-    def _extract_config_values(self, _require: Callable[[str], object]) -> Dict[str, object]:
+    def _extract_config_values(
+        self, _require: Callable[[str], object]
+    ) -> Dict[str, object]:
         """Extract and type-convert all configuration values."""
         return {
             "version": str(_require("version")),
@@ -414,9 +416,13 @@ class DopamineController:
             raise ValueError("min_temperature must be ≤ base_temperature")
         if cfg["temp_k"] <= 0.0 or not math.isfinite(cfg["temp_k"]):
             raise ValueError("temp_k must be > 0")
-        if cfg["neg_rpe_temp_gain"] < 0.0 or not math.isfinite(cfg["neg_rpe_temp_gain"]):
+        if cfg["neg_rpe_temp_gain"] < 0.0 or not math.isfinite(
+            cfg["neg_rpe_temp_gain"]
+        ):
             raise ValueError("neg_rpe_temp_gain must be ≥ 0")
-        if cfg["max_temp_multiplier"] < 1.0 or not math.isfinite(cfg["max_temp_multiplier"]):
+        if cfg["max_temp_multiplier"] < 1.0 or not math.isfinite(
+            cfg["max_temp_multiplier"]
+        ):
             raise ValueError("max_temp_multiplier must be ≥ 1")
 
     def _validate_threshold_params(self, cfg: Dict[str, object]) -> None:
@@ -432,7 +438,9 @@ class DopamineController:
         """Validate adaptive temperature parameters."""
         if not 0.0 < cfg["rpe_ema_beta"] <= 1.0:
             raise ValueError("rpe_ema_beta must be in (0, 1]")
-        if cfg["temp_adapt_target_var"] < 0.0 or not math.isfinite(cfg["temp_adapt_target_var"]):
+        if cfg["temp_adapt_target_var"] < 0.0 or not math.isfinite(
+            cfg["temp_adapt_target_var"]
+        ):
             raise ValueError("temp_adapt_target_var must be ≥ 0")
         if cfg["temp_adapt_lr"] <= 0.0 or not math.isfinite(cfg["temp_adapt_lr"]):
             raise ValueError("temp_adapt_lr must be > 0")
@@ -440,33 +448,51 @@ class DopamineController:
             raise ValueError("temp_adapt_beta1 must be in (0, 1)")
         if not 0.0 < cfg["temp_adapt_beta2"] < 1.0:
             raise ValueError("temp_adapt_beta2 must be in (0, 1)")
-        if cfg["temp_adapt_epsilon"] <= 0.0 or not math.isfinite(cfg["temp_adapt_epsilon"]):
+        if cfg["temp_adapt_epsilon"] <= 0.0 or not math.isfinite(
+            cfg["temp_adapt_epsilon"]
+        ):
             raise ValueError("temp_adapt_epsilon must be > 0")
-        if cfg["temp_adapt_min_base"] <= 0.0 or not math.isfinite(cfg["temp_adapt_min_base"]):
+        if cfg["temp_adapt_min_base"] <= 0.0 or not math.isfinite(
+            cfg["temp_adapt_min_base"]
+        ):
             raise ValueError("temp_adapt_min_base must be > 0")
-        if cfg["temp_adapt_max_base"] <= 0.0 or not math.isfinite(cfg["temp_adapt_max_base"]):
+        if cfg["temp_adapt_max_base"] <= 0.0 or not math.isfinite(
+            cfg["temp_adapt_max_base"]
+        ):
             raise ValueError("temp_adapt_max_base must be > 0")
         if cfg["temp_adapt_min_base"] > cfg["temp_adapt_max_base"]:
             raise ValueError("temp_adapt_min_base must be ≤ temp_adapt_max_base")
-        if cfg["rpe_var_release_threshold"] < 0.0 or not math.isfinite(cfg["rpe_var_release_threshold"]):
+        if cfg["rpe_var_release_threshold"] < 0.0 or not math.isfinite(
+            cfg["rpe_var_release_threshold"]
+        ):
             raise ValueError("rpe_var_release_threshold must be ≥ 0")
-        if cfg["rpe_var_release_hysteresis"] < 0.0 or not math.isfinite(cfg["rpe_var_release_hysteresis"]):
+        if cfg["rpe_var_release_hysteresis"] < 0.0 or not math.isfinite(
+            cfg["rpe_var_release_hysteresis"]
+        ):
             raise ValueError("rpe_var_release_hysteresis must be ≥ 0")
 
     def _validate_ddm_params(self, cfg: Dict[str, object]) -> None:
         """Validate DDM (Drift Diffusion Model) parameters."""
         if cfg["ddm_temp_gain"] < 0.0 or not math.isfinite(cfg["ddm_temp_gain"]):
             raise ValueError("ddm_temp_gain must be ≥ 0")
-        if cfg["ddm_threshold_gain"] < 0.0 or not math.isfinite(cfg["ddm_threshold_gain"]):
+        if cfg["ddm_threshold_gain"] < 0.0 or not math.isfinite(
+            cfg["ddm_threshold_gain"]
+        ):
             raise ValueError("ddm_threshold_gain must be ≥ 0")
         if cfg["ddm_hold_gain"] < 0.0 or not math.isfinite(cfg["ddm_hold_gain"]):
             raise ValueError("ddm_hold_gain must be ≥ 0")
-        if cfg["ddm_min_temperature_scale"] <= 0.0 or not math.isfinite(cfg["ddm_min_temperature_scale"]):
+        if cfg["ddm_min_temperature_scale"] <= 0.0 or not math.isfinite(
+            cfg["ddm_min_temperature_scale"]
+        ):
             raise ValueError("ddm_min_temperature_scale must be > 0")
-        if cfg["ddm_max_temperature_scale"] <= 0.0 or not math.isfinite(cfg["ddm_max_temperature_scale"]):
+        if cfg["ddm_max_temperature_scale"] <= 0.0 or not math.isfinite(
+            cfg["ddm_max_temperature_scale"]
+        ):
             raise ValueError("ddm_max_temperature_scale must be > 0")
         if cfg["ddm_min_temperature_scale"] > cfg["ddm_max_temperature_scale"]:
-            raise ValueError("ddm_min_temperature_scale must be ≤ ddm_max_temperature_scale")
+            raise ValueError(
+                "ddm_min_temperature_scale must be ≤ ddm_max_temperature_scale"
+            )
         if cfg["ddm_baseline_a"] <= 0.0 or not math.isfinite(cfg["ddm_baseline_a"]):
             raise ValueError("ddm_baseline_a must be > 0")
         if cfg["ddm_baseline_t0"] < 0.0 or not math.isfinite(cfg["ddm_baseline_t0"]):
@@ -744,14 +770,30 @@ class DopamineController:
 
         # Build extras and log telemetry
         extras = self._build_step_extras(
-            dopamine_signal, rpe, variance, temperature, adaptive_base,
-            go_gate, hold_gate, no_go_gate,
-            go_threshold, hold_threshold, no_go_threshold,
-            release_gate, ddm_info
+            dopamine_signal,
+            rpe,
+            variance,
+            temperature,
+            adaptive_base,
+            go_gate,
+            hold_gate,
+            no_go_gate,
+            go_threshold,
+            hold_threshold,
+            no_go_threshold,
+            release_gate,
+            ddm_info,
         )
         self._log_step_telemetry(
-            dopamine_signal, rpe, variance, temperature,
-            go_gate, hold_gate, no_go_gate, release_gate, ddm_info
+            dopamine_signal,
+            rpe,
+            variance,
+            temperature,
+            go_gate,
+            hold_gate,
+            no_go_gate,
+            release_gate,
+            ddm_info,
         )
 
         return rpe, temperature, scaled_policy, extras
@@ -938,7 +980,9 @@ class DopamineController:
         # Use defaults if not provided
         current_value = self.value_estimate if value is None else float(value)
         next_val = self.value_estimate if next_value is None else float(next_value)
-        app_state = max(0.0, reward) if appetitive_state is None else float(appetitive_state)
+        app_state = (
+            max(0.0, reward) if appetitive_state is None else float(appetitive_state)
+        )
 
         # Compute RPE
         rpe = self.compute_rpe(reward, current_value, next_val)

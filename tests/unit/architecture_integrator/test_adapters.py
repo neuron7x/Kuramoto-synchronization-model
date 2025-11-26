@@ -3,9 +3,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock
-
-import pytest
+from unittest.mock import MagicMock
 
 from core.architecture_integrator.adapters import (
     TradePulseOrchestratorAdapter,

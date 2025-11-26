@@ -5,7 +5,11 @@ from __future__ import annotations
 
 import pytest
 
-from core.architecture_integrator.component import Component, ComponentMetadata, ComponentStatus
+from core.architecture_integrator.component import (
+    Component,
+    ComponentMetadata,
+    ComponentStatus,
+)
 from core.architecture_integrator.lifecycle import LifecycleManager
 from core.architecture_integrator.registry import ComponentRegistry
 
@@ -13,7 +17,13 @@ from core.architecture_integrator.registry import ComponentRegistry
 class MockComponent:
     """Mock component for testing."""
 
-    def __init__(self, *, fail_init: bool = False, fail_start: bool = False, fail_stop: bool = False):
+    def __init__(
+        self,
+        *,
+        fail_init: bool = False,
+        fail_start: bool = False,
+        fail_stop: bool = False,
+    ):
         self.initialized = False
         self.started = False
         self.stopped = False

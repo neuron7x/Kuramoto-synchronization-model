@@ -279,10 +279,7 @@ class TestArchitectureValidator:
         result = validator.validate_all()
 
         assert result.passed is False
-        assert any(
-            "missing" in issue.message.lower()
-            for issue in result.issues
-        )
+        assert any("missing" in issue.message.lower() for issue in result.issues)
 
     def test_validate_all_detects_circular_dependencies(self) -> None:
         """Test validate_all detects circular dependencies."""
@@ -297,10 +294,7 @@ class TestArchitectureValidator:
         result = validator.validate_all()
 
         assert result.passed is False
-        assert any(
-            issue.category == "circular_dependency"
-            for issue in result.issues
-        )
+        assert any(issue.category == "circular_dependency" for issue in result.issues)
 
     def test_validate_all_checks_component_health(self) -> None:
         """Test validate_all checks component health."""
@@ -383,10 +377,7 @@ class TestArchitectureValidator:
 
         result = validator.validate_all()
 
-        assert any(
-            issue.category == "custom_check"
-            for issue in result.issues
-        )
+        assert any(issue.category == "custom_check" for issue in result.issues)
 
     def test_validate_all_handles_custom_rule_failure(self) -> None:
         """Test validate_all handles custom rule failures."""
@@ -451,8 +442,7 @@ class TestArchitectureValidator:
 
         assert result.passed is False
         assert any(
-            issue.severity == ValidationSeverity.CRITICAL
-            for issue in result.issues
+            issue.severity == ValidationSeverity.CRITICAL for issue in result.issues
         )
 
     def test_validate_component_health_check_failure(self) -> None:
@@ -472,8 +462,7 @@ class TestArchitectureValidator:
 
         assert result.passed is False
         assert any(
-            "health check failed" in issue.message.lower()
-            for issue in result.issues
+            "health check failed" in issue.message.lower() for issue in result.issues
         )
 
     def test_validate_component_not_found(self) -> None:

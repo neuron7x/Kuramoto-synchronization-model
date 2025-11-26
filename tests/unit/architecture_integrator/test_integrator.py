@@ -48,7 +48,9 @@ class MockService:
 
     def health_check(self) -> ComponentHealth:
         return ComponentHealth(
-            status=ComponentStatus.RUNNING if self._healthy else ComponentStatus.DEGRADED,
+            status=(
+                ComponentStatus.RUNNING if self._healthy else ComponentStatus.DEGRADED
+            ),
             healthy=self._healthy,
             message="OK" if self._healthy else "Unhealthy",
         )
@@ -446,7 +448,9 @@ class TestArchitectureIntegrator:
         events = []
 
         integrator.on("initialization_started", lambda: events.append("init_start"))
-        integrator.on("initialization_completed", lambda **kw: events.append("init_done"))
+        integrator.on(
+            "initialization_completed", lambda **kw: events.append("init_done")
+        )
         integrator.on("startup_started", lambda: events.append("start_start"))
         integrator.on("startup_completed", lambda **kw: events.append("start_done"))
         integrator.on("shutdown_started", lambda: events.append("stop_start"))
@@ -469,7 +473,9 @@ class TestArchitectureIntegrator:
         integrator = ArchitectureIntegrator()
         events = []
 
-        integrator.on("initialization_failed", lambda **kw: events.append(kw.get("error")))
+        integrator.on(
+            "initialization_failed", lambda **kw: events.append(kw.get("error"))
+        )
 
         service = MockService(fail_init=True)
         integrator.register_component(name="test", instance=service)
