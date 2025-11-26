@@ -1,8 +1,8 @@
 # TradePulse Requirements Specification
 
-**Version:** 1.0.0  
-**Date:** 2025-11-18  
-**Status:** Active  
+**Version:** 1.0.0
+**Date:** 2025-11-18
+**Status:** Active
 **Owner:** Principal System Architect
 
 ## Document Purpose
@@ -30,9 +30,9 @@ This document provides a formal specification of TradePulse platform requirement
 
 ### REQ-001: Fractal Indicator Composition
 
-**Category:** Functional  
-**Priority:** Must  
-**Status:** Accepted  
+**Category:** Functional
+**Priority:** Must
+**Status:** Accepted
 **Source:** project.md, Section: Архітектурні принципи, Line: 5
 
 #### Description
@@ -46,8 +46,8 @@ Quantitative researchers need to apply the same analytical logic across multiple
 
 #### Formal Specification
 
-**Given:** An indicator `I` with computation logic `f(data, params)`  
-**When:** Researcher applies `I` to data at scales `S = {s₁, s₂, ..., sₙ}`  
+**Given:** An indicator `I` with computation logic `f(data, params)`
+**When:** Researcher applies `I` to data at scales `S = {s₁, s₂, ..., sₙ}`
 **Then:** System SHALL:
 1. Instantiate `I` for each scale without code changes
 2. Validate feature graph compatibility: `∀s ∈ S, compatible(I@s, FeatureGraph)`
@@ -100,9 +100,9 @@ Quantitative researchers need to apply the same analytical logic across multiple
 
 ### REQ-002: Automatic Data Quality Control
 
-**Category:** Functional  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Functional
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Керування даними, Line: 9
 
 #### Description
@@ -118,8 +118,8 @@ Automatic validation prevents corrupted data from entering the system.
 
 #### Formal Specification
 
-**Given:** Import operation with time series data `T = {(t₁, d₁), (t₂, d₂), ..., (tₙ, dₙ)}`  
-**When:** Quality control validates `T`  
+**Given:** Import operation with time series data `T = {(t₁, d₁), (t₂, d₂), ..., (tₙ, dₙ)}`
+**When:** Quality control validates `T`
 **Then:** System SHALL:
 1. Check temporal continuity: `∀i ∈ [1, n-1], tᵢ₊₁ - tᵢ = expected_interval ± tolerance`
 2. If gaps detected: Block import AND report gap details
@@ -177,9 +177,9 @@ gap_detected = ∃i : |tᵢ₊₁ - tᵢ - expected_interval| > tolerance
 
 ### REQ-003: Course Synchronization and Fractal Resampling
 
-**Category:** Functional  
-**Priority:** Should  
-**Status:** Proposed  
+**Category:** Functional
+**Priority:** Should
+**Status:** Proposed
 **Source:** project.md, Section: Аналітика та дослідження, Line: 13
 
 #### Description
@@ -198,11 +198,11 @@ Without synchronization, strategies face:
 
 #### Formal Specification
 
-**Given:** 
+**Given:**
 - Data sources `D₁, D₂, ..., Dₙ` with potentially different sampling rates
-- Target timeframe `T_target` 
+- Target timeframe `T_target`
 
-**When:** Synchronization requested  
+**When:** Synchronization requested
 **Then:** System SHALL:
 1. Resample all sources to `T_target` using appropriate aggregation
 2. Align timestamps: `∀d ∈ {D₁, D₂, ..., Dₙ}, timestamps(d) = common_grid(T_target)`
@@ -265,9 +265,9 @@ Without synchronization, strategies face:
 
 ### REQ-004: Incremental Backtest Re-execution
 
-**Category:** Functional  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Functional
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Бектестинг, Line: 17
 
 #### Description
@@ -286,12 +286,12 @@ Incremental re-execution enables:
 
 #### Formal Specification
 
-**Given:** 
+**Given:**
 - Original backtest execution `B₁` over time range `[t₀, tₙ]` with config `C₁`
 - Configuration change `ΔC` to produce config `C₂`
 - Change affects time ranges `R_affected ⊂ [t₀, tₙ]`
 
-**When:** Re-execution requested with `C₂`  
+**When:** Re-execution requested with `C₂`
 **Then:** System SHALL:
 1. Compute affected ranges: `R_affected = {r | affected_by(r, ΔC)}`
 2. Reuse cached results: `∀r ∉ R_affected, result(r) ← cache(B₁, r)`
@@ -360,9 +360,9 @@ def affected_ranges(change, original_backtest):
 
 ### REQ-005: Fault-Tolerant Order Execution
 
-**Category:** Functional  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Functional
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Операційне виконання, Line: 21
 
 #### Description
@@ -381,8 +381,8 @@ Fault-tolerant execution ensures:
 
 #### Formal Specification
 
-**Given:** Order submission request `O` with idempotency key `k`  
-**When:** Network failure during submission  
+**Given:** Order submission request `O` with idempotency key `k`
+**When:** Network failure during submission
 **Then:** System SHALL:
 1. Detect failure: Timeout or connection error
 2. Retry with exponential backoff: `delay = base × 2^attempt`
@@ -411,7 +411,7 @@ for attempt in range(max_attempts):
             # Check if order was received
             if order_exists(idempotency_key):
                 return get_order_status(idempotency_key)
-            
+
             delay = min(base_delay * 2^attempt, max_delay)
             sleep(delay + random_jitter())
         else:
@@ -468,9 +468,9 @@ for attempt in range(max_attempts):
 
 ### SEC-001: Versioned Market Data Storage
 
-**Category:** Security  
-**Priority:** Should  
-**Status:** Accepted  
+**Category:** Security
+**Priority:** Should
+**Status:** Accepted
 **Source:** project.md, Section: Керування даними, Line: 9
 
 #### Description
@@ -524,9 +524,9 @@ Key metrics:
 
 ### SEC-002: Deterministic Backtest Execution
 
-**Category:** Security  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Security
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Бектестинг, Line: 17
 
 #### Description
@@ -546,15 +546,15 @@ Non-deterministic sources:
 
 #### Formal Specification
 
-**Given:** 
+**Given:**
 - Backtest configuration `C` (strategy, data, parameters)
 - Random seed `s`
 - Execution platform `P`
 
-**When:** Backtest executed twice: `R₁ = run(C, s, P)` and `R₂ = run(C, s, P)`  
+**When:** Backtest executed twice: `R₁ = run(C, s, P)` and `R₂ = run(C, s, P)`
 **Then:** Results MUST be identical:
 ```
-R₁ = R₂ ⟺ 
+R₁ = R₂ ⟺
   ∀ metric m: m(R₁) = m(R₂) AND
   ∀ trade t: trades(R₁)[t] = trades(R₂)[t] AND
   ∀ timestamp t: state(R₁, t) = state(R₂, t)
@@ -567,7 +567,7 @@ class DeterministicBacktest:
         self.rng = np.random.Generator(seed)  # Seeded RNG
         self.timestamp = ClockMock(start_time)  # Controlled clock
         self.order_queue = DeterministicQueue()  # FIFO guaranteed
-    
+
     def ensure_determinism(self):
         # No global state mutations
         # No datetime.now() calls
@@ -626,9 +626,9 @@ class DeterministicBacktest:
 
 ### SEC-003: Pre-Trade Risk Checks
 
-**Category:** Security  
-**Priority:** Should  
-**Status:** Proposed  
+**Category:** Security
+**Priority:** Should
+**Status:** Proposed
 **Source:** project.md, Section: Операційне виконання, Line: 21
 
 #### Description
@@ -648,18 +648,18 @@ Risk scenarios:
 
 #### Formal Specification
 
-**Given:** Order request `O = (symbol, side, quantity, price, params)`  
-**When:** Pre-trade validation runs  
+**Given:** Order request `O = (symbol, side, quantity, price, params)`
+**When:** Pre-trade validation runs
 **Then:** System SHALL check:
 
 1. **Position Limit Check:**
 ```python
 def check_position_limits(order, current_positions, limits):
     new_position = current_positions[order.symbol] + order.quantity * order.side
-    
+
     assert abs(new_position) <= limits.per_symbol[order.symbol], \
         f"Position limit exceeded: {new_position} > {limits.per_symbol[order.symbol]}"
-    
+
     assert portfolio_exposure(current_positions, order) <= limits.portfolio, \
         f"Portfolio limit exceeded"
 ```
@@ -739,9 +739,9 @@ else:
 
 ### SEC-004: Secrets Encryption
 
-**Category:** Security  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Security
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Захист та комплаєнс, Line: 29
 
 #### Description
@@ -833,9 +833,9 @@ audit_log = all key access events logged
 
 ### SEC-005: Regulatory Compliance and Audit Logging
 
-**Category:** Security  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Security
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Захист та комплаєнс, Line: 29
 
 #### Description
@@ -865,7 +865,7 @@ All processes MUST comply with MiFID II regulatory policies, and authorization m
     - input_data_version (SEC-001 linkage)
     - rationale (signal values, risk checks)
     - outcome (executed trades)
-  
+
   retention(record(d)) ≥ 7 years
   accessible_for_audit(record(d)) = true
 ```
@@ -885,7 +885,7 @@ All processes MUST comply with MiFID II regulatory policies, and authorization m
       request_id
     }
   )
-  
+
   log_retention ≥ 400 days (per requirement)
   log_integrity = cryptographically_signed
 ```
@@ -933,7 +933,7 @@ All processes MUST comply with MiFID II regulatory policies, and authorization m
 
 **Audit Logging:**
 - **Component:** `observability/audit/`
-- **Infrastructure:** 
+- **Infrastructure:**
   - Ingest: Kafka/Redpanda for high-throughput
   - Storage: Elasticsearch or ClickHouse for queries
   - Backup: S3 with Glacier for long-term retention
@@ -957,9 +957,9 @@ All processes MUST comply with MiFID II regulatory policies, and authorization m
 
 ### NFR-001: Observability
 
-**Category:** Non-Functional  
-**Priority:** Should  
-**Status:** Proposed  
+**Category:** Non-Functional
+**Priority:** Should
+**Status:** Proposed
 **Source:** project.md, Section: Спостережуваність, Line: 25
 
 #### Description
@@ -988,7 +988,7 @@ Without observability:
     timestamp, level, message, context
     correlation_id (request tracing)
     structured_fields (JSON format)
-  
+
   log_aggregation: centralized (Loki, Elasticsearch)
   search_latency < 5 seconds for queries
 ```
@@ -1001,7 +1001,7 @@ Without observability:
     USE_metrics: [Utilization, Saturation, Errors],
     business_metrics: domain-specific
   }
-  
+
   collection_interval ≤ 15 seconds
   cardinality < 10K per service (avoid explosion)
 ```
@@ -1013,7 +1013,7 @@ Without observability:
     span_tree: parent-child relationships
     timing: duration per operation
     metadata: success/failure, attributes
-  
+
   sampling_rate ≥ 1% (all errors, sampled success)
   trace_retention ≥ 7 days
 ```
@@ -1024,7 +1024,7 @@ when_enabled(diagnostic_mode):
   log_level = DEBUG
   trace_sampling = 100%
   metrics_detail = high_cardinality
-  
+
   auto_disable_after = 1 hour (prevent overhead)
 ```
 
@@ -1094,9 +1094,9 @@ when_enabled(diagnostic_mode):
 
 ### NFR-002: Performance
 
-**Category:** Non-Functional  
-**Priority:** Must  
-**Status:** Proposed  
+**Category:** Non-Functional
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Нефункціональні вимоги, Line: 33
 
 #### Description
@@ -1151,7 +1151,7 @@ Total 50ms budget for order submission:
     time_of_day,
     result_code
   ])
-  
+
   alert_if(p99_latency(r, window=5min) > threshold)
 ```
 
@@ -1228,8 +1228,8 @@ Total 50ms budget for order submission:
 ### NFR-003: Scalability
 
 **Category:** Legal  *(Note: Should be Non-Functional)*
-**Priority:** Must  
-**Status:** Proposed  
+**Priority:** Must
+**Status:** Proposed
 **Source:** project.md, Section: Нефункціональні вимоги, Line: 33
 
 **Category Correction:** This is a Non-Functional requirement, not Legal. The backlog categorization appears incorrect.
@@ -1257,7 +1257,7 @@ Without horizontal scaling:
 ∀ stateless_service s:
   can_scale_horizontally(s) = true
   scale_metric = CPU, memory, request_rate
-  
+
   when metric > threshold_high:
     add_instance(s)
   when metric < threshold_low:

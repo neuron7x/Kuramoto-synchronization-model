@@ -29,7 +29,7 @@
   <a href="#-testing">
     <img src="https://img.shields.io/badge/Coverage-94%25-green?logo=pytest" alt="Coverage">
   </a>
-  
+
   <!-- Version & License -->
   <a href="https://github.com/neuron7x/TradePulse/releases">
     <img src="https://img.shields.io/github/v/release/neuron7x/TradePulse?include_prereleases&style=flat&logo=github" alt="Release">
@@ -37,7 +37,7 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/License-TPLA-blue.svg" alt="License">
   </a>
-  
+
   <!-- Language & Framework -->
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue?logo=python&logoColor=white" alt="Python">
@@ -48,7 +48,7 @@
   <a href="https://pandas.pydata.org/">
     <img src="https://img.shields.io/badge/Pandas-%23150458.svg?logo=pandas&logoColor=white" alt="Pandas">
   </a>
-  
+
   <!-- Community -->
   <a href="https://github.com/neuron7x/TradePulse/stargazers">
     <img src="https://img.shields.io/github/stars/neuron7x/TradePulse?style=social" alt="Stars">
@@ -282,7 +282,7 @@ graph LR
     B -->|Analyze| C{🧮 Geometric<br/>Indicators}
     C -->|Signals| D[📈 Strategy]
     D -->|Orders| E[💰 Live Trading]
-    
+
     style A fill:#4a90e2,stroke:#357abd,color:#fff
     style B fill:#7ed321,stroke:#5fa319,color:#fff
     style C fill:#f5a623,stroke:#c47d1a,color:#fff
@@ -924,7 +924,7 @@ indicator = MultiscaleKuramoto(
 
 # Automatic feature versioning
 data_signals = indicator.compute(
-    data, 
+    data,
     version="v2.1.0"
 )
 ```
@@ -1386,7 +1386,7 @@ Report bugs and request features
 
 For enterprise support, custom development, or commercial licensing:
 
-**Email**: [support@tradepulse.io](mailto:support@tradepulse.io)  
+**Email**: [support@tradepulse.io](mailto:support@tradepulse.io)
 **Website**: [tradepulse.io/enterprise](https://tradepulse.io/enterprise)
 
 ---

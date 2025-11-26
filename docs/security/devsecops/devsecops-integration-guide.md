@@ -26,7 +26,7 @@ graph LR
     F --> G[Operate]
     G --> H[Monitor]
     H --> A
-    
+
     B -.->|Pre-commit| I[Secret Scan]
     B -.->|IDE Plugin| J[SAST]
     C -.->|CI| K[Dependency Scan]
@@ -111,7 +111,7 @@ class OrderRequest(BaseModel):
     symbol: str = Field(..., regex=r'^[A-Z]{3,10}/[A-Z]{3,10}$')
     quantity: Decimal = Field(..., gt=0, le=1000000)
     price: Decimal = Field(..., gt=0)
-    
+
     @validator('symbol')
     def validate_symbol(cls, v):
         # Additional business logic validation
@@ -231,7 +231,7 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-ten
-      
+
   codeql:
     runs-on: ubuntu-latest
     permissions:
@@ -321,10 +321,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build container image
         run: docker build -t tradepulse:${{ github.sha }} .
-      
+
       - name: Run Trivy scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -332,19 +332,19 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-      
+
       - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
-      
+
       - name: Run Grype scanner
         uses: anchore/scan-action@v3
         with:
           image: tradepulse:${{ github.sha }}
           fail-build: true
           severity-cutoff: high
-      
+
       - name: Sign container image
         if: github.ref == 'refs/heads/main'
         run: |
@@ -363,7 +363,7 @@ from application.auth import authenticate_user, generate_token
 def test_authentication_requires_mfa():
     """Test that MFA is enforced for authentication."""
     user = create_test_user(mfa_enabled=True)
-    
+
     # First factor should not be sufficient
     result = authenticate_user(user.username, 'correct_password')
     assert result.status == 'mfa_required'
@@ -372,11 +372,11 @@ def test_authentication_requires_mfa():
 def test_failed_login_rate_limiting():
     """Test that failed logins trigger rate limiting."""
     user = create_test_user()
-    
+
     # Attempt multiple failed logins
     for _ in range(5):
         authenticate_user(user.username, 'wrong_password')
-    
+
     # Next attempt should be rate limited
     result = authenticate_user(user.username, 'correct_password')
     assert result.status == 'rate_limited'
@@ -385,10 +385,10 @@ def test_token_expiration():
     """Test that tokens expire after configured time."""
     user = create_test_user()
     token = generate_token(user, expires_in=1)  # 1 second
-    
+
     # Token should be valid immediately
     assert validate_token(token).is_valid
-    
+
     # Token should be expired after 2 seconds
     time.sleep(2)
     assert not validate_token(token).is_valid
@@ -396,13 +396,13 @@ def test_token_expiration():
 def test_session_timeout():
     """Test that sessions timeout after inactivity."""
     session = create_session(timeout_minutes=15)
-    
+
     # Session should be valid initially
     assert session.is_active()
-    
+
     # Simulate inactivity
     session.last_activity = datetime.now() - timedelta(minutes=16)
-    
+
     # Session should be expired
     assert not session.is_active()
 ```
@@ -427,19 +427,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Start application
         run: |
           docker-compose up -d
           sleep 30  # Wait for services to start
-      
+
       - name: Run OWASP ZAP scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
           target: 'http://localhost:8000'
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
-      
+
       - name: Upload ZAP results
         uses: actions/upload-artifact@v4
         with:
@@ -463,13 +463,13 @@ def test_api_requires_authentication(api_client):
 def test_api_rate_limiting(api_client, test_user):
     """Test that API enforces rate limits."""
     token = api_client.get_auth_token(test_user)
-    
+
     # Make requests up to the limit
     for _ in range(100):
-        response = api_client.get('/api/v1/positions', 
+        response = api_client.get('/api/v1/positions',
                                    headers={'Authorization': f'Bearer {token}'})
         assert response.status_code == 200
-    
+
     # Next request should be rate limited
     response = api_client.get('/api/v1/positions',
                                headers={'Authorization': f'Bearer {token}'})
@@ -479,13 +479,13 @@ def test_api_rate_limiting(api_client, test_user):
 def test_api_input_validation(api_client, test_user):
     """Test that API validates input properly."""
     token = api_client.get_auth_token(test_user)
-    
+
     # Test SQL injection attempt
     malicious_input = "' OR '1'='1"
     response = api_client.get(f'/api/v1/strategies/{malicious_input}',
                                headers={'Authorization': f'Bearer {token}'})
     assert response.status_code == 400
-    
+
     # Test XSS attempt
     malicious_input = "<script>alert('xss')</script>"
     response = api_client.post('/api/v1/strategies',
@@ -530,7 +530,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
         with:
@@ -538,12 +538,12 @@ jobs:
           framework: terraform
           output_format: sarif
           output_file_path: checkov-results.sarif
-      
+
       - name: Upload Checkov results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: checkov-results.sarif
-      
+
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
@@ -558,26 +558,26 @@ jobs:
 ```python
 class DeploymentSecurityGate:
     """Security gates for deployment approval."""
-    
+
     def __init__(self, environment: str):
         self.environment = environment
         self.checks = []
-    
+
     def add_check(self, check: Callable) -> None:
         """Add a security check to the gate."""
         self.checks.append(check)
-    
+
     def evaluate(self) -> Tuple[bool, List[str]]:
         """Evaluate all security checks."""
         failures = []
-        
+
         for check in self.checks:
             try:
                 if not check():
                     failures.append(check.__name__)
             except Exception as e:
                 failures.append(f"{check.__name__}: {str(e)}")
-        
+
         return len(failures) == 0, failures
 
 # Example usage
@@ -602,7 +602,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Import Secrets from Vault
         uses: hashicorp/vault-action@v2
         with:
@@ -613,7 +613,7 @@ jobs:
             secret/data/production/database username | DB_USER ;
             secret/data/production/database password | DB_PASS ;
             secret/data/production/api api_key | API_KEY
-      
+
       - name: Deploy with secrets
         env:
           DB_USER: ${{ env.DB_USER }}
@@ -679,7 +679,7 @@ jobs:
 ```python
 class DevSecOpsMetrics:
     """Track DevSecOps metrics."""
-    
+
     def calculate_metrics(self, period_days: int = 30) -> Dict:
         """Calculate security metrics for the period."""
         return {
@@ -688,16 +688,16 @@ class DevSecOpsMetrics:
             'vulnerabilities_fixed': self._count_fixed_vulnerabilities(),
             'mean_time_to_remediate': self._calculate_mttr(),
             'vulnerability_debt': self._calculate_vuln_debt(),
-            
+
             # Scanning Metrics
             'scans_performed': self._count_scans(),
             'scan_coverage': self._calculate_scan_coverage(),
             'false_positive_rate': self._calculate_fp_rate(),
-            
+
             # Deployment Metrics
             'deployments_blocked': self._count_blocked_deployments(),
             'security_gate_pass_rate': self._calculate_pass_rate(),
-            
+
             # Code Security Metrics
             'secure_code_review_rate': self._calculate_review_rate(),
             'security_tests_coverage': self._calculate_test_coverage(),
@@ -747,7 +747,7 @@ class DevSecOpsMetrics:
 
 ---
 
-**Document Owner**: DevSecOps Team  
-**Last Updated**: 2025-11-10  
-**Review Cycle**: Quarterly  
+**Document Owner**: DevSecOps Team
+**Last Updated**: 2025-11-10
+**Review Cycle**: Quarterly
 **Next Review**: 2026-02-10

@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-**Owner:** Principal System Architect  
+**Owner:** Principal System Architect
 **Last Updated:** 2025-11-18
 
 ## About ADRs
@@ -89,7 +89,7 @@ These ADRs existed before the formalization effort:
 
 ## Contact
 
-**Questions about ADRs?** 
+**Questions about ADRs?**
 - Open an issue with label `architecture`
 - Contact: Principal System Architect
 

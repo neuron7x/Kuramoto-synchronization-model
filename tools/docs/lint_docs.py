@@ -54,6 +54,7 @@ class HeadingFirstRule:
     def check(self, path: Path, lines: Sequence[str]) -> Iterable[LintIssue]:
         in_front_matter = False
         in_html_comment = False
+        in_html_block = False
         for index, raw_line in enumerate(lines):
             stripped = raw_line.strip()
             if index == 0 and stripped == "---":
@@ -74,6 +75,18 @@ class HeadingFirstRule:
             if in_html_comment:
                 if stripped.endswith("-->"):
                     in_html_comment = False
+                continue
+            # Handle HTML block elements (e.g., <div>, <picture>, <p>, etc.)
+            # These are allowed before the heading for styling purposes
+            if stripped.startswith("<") and not stripped.startswith("<!"):
+                # Track if we're in an HTML block
+                if not stripped.endswith("/>") and not stripped.startswith("</"):
+                    in_html_block = True
+                continue
+            if in_html_block:
+                # Stay in HTML block until we see a closing tag or the heading
+                if stripped.startswith("</"):
+                    in_html_block = False
                 continue
             if not stripped:
                 continue

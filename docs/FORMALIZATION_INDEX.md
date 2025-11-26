@@ -314,12 +314,12 @@ Formal methods and verification artifacts for critical system properties.
 
 | Contract | Interface File | Test Suite | Coverage |
 |----------|---------------|------------|----------|
-| Market Data Ingestion | `core/data/ingestion.py` | `tests/contracts/test_ingestion.py` | TBD |
-| Versioned Retrieval | `core/data/versioned/retrieval.py` | `tests/contracts/test_versioned.py` | TBD |
-| Feature Store | `core/features/store.py` | `tests/contracts/test_features.py` | TBD |
-| Order Execution | `execution/gateway.py` | `tests/contracts/test_execution.py` | TBD |
-| Risk Checks | `execution/risk/checks.py` | `tests/contracts/test_risk.py` | TBD |
-| Signal Generation | `strategies/base.py` | `tests/contracts/test_signals.py` | TBD |
+| Market Data Ingestion | `core/data/ingestion.py` | `tests/contracts/test_ingestion.py` | — |
+| Versioned Retrieval | `core/data/versioned/retrieval.py` | `tests/contracts/test_versioned.py` | — |
+| Feature Store | `core/features/store.py` | `tests/contracts/test_features.py` | — |
+| Order Execution | `execution/gateway.py` | `tests/contracts/test_execution.py` | — |
+| Risk Checks | `execution/risk/checks.py` | `tests/contracts/test_risk.py` | — |
+| Signal Generation | `strategies/base.py` | `tests/contracts/test_signals.py` | — |
 
 ### Formal Proofs → Properties
 
@@ -374,7 +374,7 @@ Formal methods and verification artifacts for critical system properties.
 | ADRs Published | 3/13 (23%) | 100% by Q2 2026 |
 | Contracts Specified | 10/15 (67%) | 100% |
 | Formal Proofs Complete | 1/5 (20%) | 80% by Q2 2026 |
-| Contract Test Coverage | 0% (TBD) | 90% |
+| Contract Test Coverage | 0% (pending) | 90% |
 
 ### Documentation Health
 

@@ -299,7 +299,7 @@ from runtime.thermo_performance import timed
 class ThermoController:
     def __init__(self, graph: nx.DiGraph, metrics_exporter=None):
         # ... existing initialization ...
-        
+
         # Add optimization modules
         self.cache = ThermoCache(max_size=1000, ttl_seconds=5.0)
         self.telemetry_manager = OptimizedTelemetryManager(
@@ -321,14 +321,14 @@ def _compute_free_energy(self, snapshot: MetricsSnapshot) -> float:
         snapshot.resource_usage,
         snapshot.entropy
     )
-    
+
     if cached_energy is not None:
         return cached_energy
-    
+
     # Compute if not cached
-    bonds = {(u, v): data.get("type", "vdw") 
+    bonds = {(u, v): data.get("type", "vdw")
              for u, v, data in self.graph.edges(data=True)}
-    
+
     energy = system_free_energy(
         bonds,
         snapshot.latencies,
@@ -336,7 +336,7 @@ def _compute_free_energy(self, snapshot: MetricsSnapshot) -> float:
         snapshot.resource_usage,
         snapshot.entropy,
     )
-    
+
     # Cache result
     self.cache.set_energy(
         self.current_topology,
@@ -346,14 +346,14 @@ def _compute_free_energy(self, snapshot: MetricsSnapshot) -> float:
         snapshot.entropy,
         energy
     )
-    
+
     return energy
 ```
 
 ### Step 3: Use Optimized Telemetry
 
 ```python
-def _record_telemetry(self, *, F_old: float, F_new: float, 
+def _record_telemetry(self, *, F_old: float, F_new: float,
                       crisis_mode: str, action: str,
                       topology_changes: List) -> None:
     # Use optimized telemetry manager
@@ -367,7 +367,7 @@ def _record_telemetry(self, *, F_old: float, F_new: float,
         "topology_changes": topology_changes,
         # ... other fields ...
     })
-    
+
     # Still write to audit log for compliance
     # ... existing audit logging ...
 ```
@@ -378,7 +378,7 @@ def _record_telemetry(self, *, F_old: float, F_new: float,
 def control_step(self) -> None:
     with timing_context("control_step_total"):
         # ... existing control step logic ...
-        
+
         # Get performance summary periodically
         if self.step_count % 1000 == 0:
             summary = get_performance_monitor().get_summary()
@@ -398,11 +398,11 @@ cache:
   max_size: 1000        # Entries to cache
   ttl_seconds: 5.0      # Cache lifetime
   time_bucket_size: 0.1 # Time bucketing
-  
+
   # Aggressive caching (high-performance systems)
   # max_size: 5000
   # ttl_seconds: 10.0
-  
+
   # Conservative caching (memory-constrained)
   # max_size: 200
   # ttl_seconds: 2.0
@@ -415,11 +415,11 @@ telemetry:
   window_size: 1000     # Uncompressed records
   max_archives: 10      # Compressed archives
   export_interval: 60   # Export frequency (seconds)
-  
+
   # High-frequency systems
   # window_size: 5000
   # max_archives: 20
-  
+
   # Low-memory systems
   # window_size: 200
   # max_archives: 3
@@ -522,11 +522,11 @@ Example Grafana queries for monitoring optimizations:
 
 ```promql
 # Cache hit rate
-rate(thermo_cache_hits_total[5m]) / 
+rate(thermo_cache_hits_total[5m]) /
   (rate(thermo_cache_hits_total[5m]) + rate(thermo_cache_misses_total[5m]))
 
 # Average energy computation time
-rate(thermo_energy_computation_seconds_sum[5m]) / 
+rate(thermo_energy_computation_seconds_sum[5m]) /
   rate(thermo_energy_computation_seconds_count[5m])
 
 # Memory usage
