@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 import yaml
 
@@ -305,8 +305,8 @@ class DopamineController:
         return self._build_config_dataclass(extracted, meta_rules)
 
     def _extract_config_values(
-        self, _require: Callable[[str], object]
-    ) -> Dict[str, object]:
+        self, _require: Callable[[str], Any]
+    ) -> Dict[str, Union[str, float, int]]:
         """Extract and type-convert all configuration values."""
         return {
             "version": str(_require("version")),
@@ -356,14 +356,14 @@ class DopamineController:
             "hold_threshold": float(_require("hold_threshold")),
         }
 
-    def _validate_core_params(self, cfg: Dict[str, object]) -> None:
+    def _validate_core_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
         """Validate core dopamine parameters."""
-        discount_gamma = cfg["discount_gamma"]
-        learning_rate_v = cfg["learning_rate_v"]
-        decay_rate = cfg["decay_rate"]
-        burst_factor = cfg["burst_factor"]
-        k_val = cfg["k"]
-        theta_val = cfg["theta"]
+        discount_gamma = float(cfg["discount_gamma"])
+        learning_rate_v = float(cfg["learning_rate_v"])
+        decay_rate = float(cfg["decay_rate"])
+        burst_factor = float(cfg["burst_factor"])
+        k_val = float(cfg["k"])
+        theta_val = float(cfg["theta"])
 
         if not math.isfinite(discount_gamma) or not (0.0 < discount_gamma <= 1.0):
             raise ValueError("discount_gamma must be in (0, 1]")
@@ -378,35 +378,42 @@ class DopamineController:
         if not math.isfinite(theta_val):
             raise ValueError("theta must be finite")
 
-        for weight_value, label in (
-            (cfg["w_r"], "w_r"),
-            (cfg["w_n"], "w_n"),
-            (cfg["w_m"], "w_m"),
-            (cfg["w_v"], "w_v"),
+        for weight_key, label in (
+            ("w_r", "w_r"),
+            ("w_n", "w_n"),
+            ("w_m", "w_m"),
+            ("w_v", "w_v"),
         ):
+            weight_value = float(cfg[weight_key])
             if not math.isfinite(weight_value) or weight_value < 0.0:
                 raise ValueError(f"{label} must be ≥ 0")
 
         if cfg["novelty_mode"] not in _ALLOWED_NOVELTY_MODES:
             raise ValueError(f"novelty_mode must be one of {_ALLOWED_NOVELTY_MODES}")
-        if cfg["c_absrpe"] < 0.0 or not math.isfinite(cfg["c_absrpe"]):
+        c_absrpe = float(cfg["c_absrpe"])
+        if c_absrpe < 0.0 or not math.isfinite(c_absrpe):
             raise ValueError("c_absrpe must be ≥ 0")
-        if not 0.0 <= cfg["baseline"] <= 1.0:
+        baseline = float(cfg["baseline"])
+        if not 0.0 <= baseline <= 1.0:
             raise ValueError("baseline must be within [0, 1]")
-        if not 0.0 <= cfg["delta_gain"] <= 1.0:
+        delta_gain = float(cfg["delta_gain"])
+        if not 0.0 <= delta_gain <= 1.0:
             raise ValueError("delta_gain must be within [0, 1]")
 
-        if cfg["meta_cooldown_ticks"] < 0:
+        meta_cooldown_ticks = int(cfg["meta_cooldown_ticks"])
+        if meta_cooldown_ticks < 0:
             raise ValueError("meta_cooldown_ticks must be ≥ 0")
-        if cfg["metric_interval"] <= 0:
+        metric_interval = int(cfg["metric_interval"])
+        if metric_interval <= 0:
             raise ValueError("metric_interval must be ≥ 1")
-        if cfg["target_sharpe"] <= 0.0 or not math.isfinite(cfg["target_sharpe"]):
+        target_sharpe = float(cfg["target_sharpe"])
+        if target_sharpe <= 0.0 or not math.isfinite(target_sharpe):
             raise ValueError("target_sharpe must be > 0")
 
-    def _validate_temperature_params(self, cfg: Dict[str, object]) -> None:
+    def _validate_temperature_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
         """Validate temperature-related parameters."""
-        base_temperature = cfg["base_temperature"]
-        min_temperature = cfg["min_temperature"]
+        base_temperature = float(cfg["base_temperature"])
+        min_temperature = float(cfg["min_temperature"])
 
         if base_temperature <= 0.0 or not math.isfinite(base_temperature):
             raise ValueError("base_temperature must be > 0")
@@ -414,90 +421,92 @@ class DopamineController:
             raise ValueError("min_temperature must be > 0")
         if min_temperature > base_temperature:
             raise ValueError("min_temperature must be ≤ base_temperature")
-        if cfg["temp_k"] <= 0.0 or not math.isfinite(cfg["temp_k"]):
+        temp_k = float(cfg["temp_k"])
+        if temp_k <= 0.0 or not math.isfinite(temp_k):
             raise ValueError("temp_k must be > 0")
-        if cfg["neg_rpe_temp_gain"] < 0.0 or not math.isfinite(
-            cfg["neg_rpe_temp_gain"]
-        ):
+        neg_rpe_temp_gain = float(cfg["neg_rpe_temp_gain"])
+        if neg_rpe_temp_gain < 0.0 or not math.isfinite(neg_rpe_temp_gain):
             raise ValueError("neg_rpe_temp_gain must be ≥ 0")
-        if cfg["max_temp_multiplier"] < 1.0 or not math.isfinite(
-            cfg["max_temp_multiplier"]
-        ):
+        max_temp_multiplier = float(cfg["max_temp_multiplier"])
+        if max_temp_multiplier < 1.0 or not math.isfinite(max_temp_multiplier):
             raise ValueError("max_temp_multiplier must be ≥ 1")
 
-    def _validate_threshold_params(self, cfg: Dict[str, object]) -> None:
+    def _validate_threshold_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
         """Validate threshold parameters."""
-        if not 0.0 <= cfg["invigoration_threshold"] <= 1.0:
+        invigoration_threshold = float(cfg["invigoration_threshold"])
+        if not 0.0 <= invigoration_threshold <= 1.0:
             raise ValueError("invigoration_threshold must be within [0, 1]")
-        if not 0.0 <= cfg["no_go_threshold"] <= 1.0:
+        no_go_threshold = float(cfg["no_go_threshold"])
+        if not 0.0 <= no_go_threshold <= 1.0:
             raise ValueError("no_go_threshold must be within [0, 1]")
-        if not 0.0 <= cfg["hold_threshold"] <= 1.0:
+        hold_threshold = float(cfg["hold_threshold"])
+        if not 0.0 <= hold_threshold <= 1.0:
             raise ValueError("hold_threshold must be within [0, 1]")
 
-    def _validate_adaptive_params(self, cfg: Dict[str, object]) -> None:
+    def _validate_adaptive_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
         """Validate adaptive temperature parameters."""
-        if not 0.0 < cfg["rpe_ema_beta"] <= 1.0:
+        rpe_ema_beta = float(cfg["rpe_ema_beta"])
+        if not 0.0 < rpe_ema_beta <= 1.0:
             raise ValueError("rpe_ema_beta must be in (0, 1]")
-        if cfg["temp_adapt_target_var"] < 0.0 or not math.isfinite(
-            cfg["temp_adapt_target_var"]
-        ):
+        temp_adapt_target_var = float(cfg["temp_adapt_target_var"])
+        if temp_adapt_target_var < 0.0 or not math.isfinite(temp_adapt_target_var):
             raise ValueError("temp_adapt_target_var must be ≥ 0")
-        if cfg["temp_adapt_lr"] <= 0.0 or not math.isfinite(cfg["temp_adapt_lr"]):
+        temp_adapt_lr = float(cfg["temp_adapt_lr"])
+        if temp_adapt_lr <= 0.0 or not math.isfinite(temp_adapt_lr):
             raise ValueError("temp_adapt_lr must be > 0")
-        if not 0.0 < cfg["temp_adapt_beta1"] < 1.0:
+        temp_adapt_beta1 = float(cfg["temp_adapt_beta1"])
+        if not 0.0 < temp_adapt_beta1 < 1.0:
             raise ValueError("temp_adapt_beta1 must be in (0, 1)")
-        if not 0.0 < cfg["temp_adapt_beta2"] < 1.0:
+        temp_adapt_beta2 = float(cfg["temp_adapt_beta2"])
+        if not 0.0 < temp_adapt_beta2 < 1.0:
             raise ValueError("temp_adapt_beta2 must be in (0, 1)")
-        if cfg["temp_adapt_epsilon"] <= 0.0 or not math.isfinite(
-            cfg["temp_adapt_epsilon"]
-        ):
+        temp_adapt_epsilon = float(cfg["temp_adapt_epsilon"])
+        if temp_adapt_epsilon <= 0.0 or not math.isfinite(temp_adapt_epsilon):
             raise ValueError("temp_adapt_epsilon must be > 0")
-        if cfg["temp_adapt_min_base"] <= 0.0 or not math.isfinite(
-            cfg["temp_adapt_min_base"]
-        ):
+        temp_adapt_min_base = float(cfg["temp_adapt_min_base"])
+        if temp_adapt_min_base <= 0.0 or not math.isfinite(temp_adapt_min_base):
             raise ValueError("temp_adapt_min_base must be > 0")
-        if cfg["temp_adapt_max_base"] <= 0.0 or not math.isfinite(
-            cfg["temp_adapt_max_base"]
-        ):
+        temp_adapt_max_base = float(cfg["temp_adapt_max_base"])
+        if temp_adapt_max_base <= 0.0 or not math.isfinite(temp_adapt_max_base):
             raise ValueError("temp_adapt_max_base must be > 0")
-        if cfg["temp_adapt_min_base"] > cfg["temp_adapt_max_base"]:
+        if temp_adapt_min_base > temp_adapt_max_base:
             raise ValueError("temp_adapt_min_base must be ≤ temp_adapt_max_base")
-        if cfg["rpe_var_release_threshold"] < 0.0 or not math.isfinite(
-            cfg["rpe_var_release_threshold"]
-        ):
+        rpe_var_release_threshold = float(cfg["rpe_var_release_threshold"])
+        if rpe_var_release_threshold < 0.0 or not math.isfinite(rpe_var_release_threshold):
             raise ValueError("rpe_var_release_threshold must be ≥ 0")
-        if cfg["rpe_var_release_hysteresis"] < 0.0 or not math.isfinite(
-            cfg["rpe_var_release_hysteresis"]
-        ):
+        rpe_var_release_hysteresis = float(cfg["rpe_var_release_hysteresis"])
+        if rpe_var_release_hysteresis < 0.0 or not math.isfinite(rpe_var_release_hysteresis):
             raise ValueError("rpe_var_release_hysteresis must be ≥ 0")
 
-    def _validate_ddm_params(self, cfg: Dict[str, object]) -> None:
+    def _validate_ddm_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
         """Validate DDM (Drift Diffusion Model) parameters."""
-        if cfg["ddm_temp_gain"] < 0.0 or not math.isfinite(cfg["ddm_temp_gain"]):
+        ddm_temp_gain = float(cfg["ddm_temp_gain"])
+        if ddm_temp_gain < 0.0 or not math.isfinite(ddm_temp_gain):
             raise ValueError("ddm_temp_gain must be ≥ 0")
-        if cfg["ddm_threshold_gain"] < 0.0 or not math.isfinite(
-            cfg["ddm_threshold_gain"]
-        ):
+        ddm_threshold_gain = float(cfg["ddm_threshold_gain"])
+        if ddm_threshold_gain < 0.0 or not math.isfinite(ddm_threshold_gain):
             raise ValueError("ddm_threshold_gain must be ≥ 0")
-        if cfg["ddm_hold_gain"] < 0.0 or not math.isfinite(cfg["ddm_hold_gain"]):
+        ddm_hold_gain = float(cfg["ddm_hold_gain"])
+        if ddm_hold_gain < 0.0 or not math.isfinite(ddm_hold_gain):
             raise ValueError("ddm_hold_gain must be ≥ 0")
-        if cfg["ddm_min_temperature_scale"] <= 0.0 or not math.isfinite(
-            cfg["ddm_min_temperature_scale"]
-        ):
+        ddm_min_temperature_scale = float(cfg["ddm_min_temperature_scale"])
+        if ddm_min_temperature_scale <= 0.0 or not math.isfinite(ddm_min_temperature_scale):
             raise ValueError("ddm_min_temperature_scale must be > 0")
-        if cfg["ddm_max_temperature_scale"] <= 0.0 or not math.isfinite(
-            cfg["ddm_max_temperature_scale"]
-        ):
+        ddm_max_temperature_scale = float(cfg["ddm_max_temperature_scale"])
+        if ddm_max_temperature_scale <= 0.0 or not math.isfinite(ddm_max_temperature_scale):
             raise ValueError("ddm_max_temperature_scale must be > 0")
-        if cfg["ddm_min_temperature_scale"] > cfg["ddm_max_temperature_scale"]:
+        if ddm_min_temperature_scale > ddm_max_temperature_scale:
             raise ValueError(
                 "ddm_min_temperature_scale must be ≤ ddm_max_temperature_scale"
             )
-        if cfg["ddm_baseline_a"] <= 0.0 or not math.isfinite(cfg["ddm_baseline_a"]):
+        ddm_baseline_a = float(cfg["ddm_baseline_a"])
+        if ddm_baseline_a <= 0.0 or not math.isfinite(ddm_baseline_a):
             raise ValueError("ddm_baseline_a must be > 0")
-        if cfg["ddm_baseline_t0"] < 0.0 or not math.isfinite(cfg["ddm_baseline_t0"]):
+        ddm_baseline_t0 = float(cfg["ddm_baseline_t0"])
+        if ddm_baseline_t0 < 0.0 or not math.isfinite(ddm_baseline_t0):
             raise ValueError("ddm_baseline_t0 must be ≥ 0")
-        if cfg["ddm_eps"] <= 0.0 or not math.isfinite(cfg["ddm_eps"]):
+        ddm_eps = float(cfg["ddm_eps"])
+        if ddm_eps <= 0.0 or not math.isfinite(ddm_eps):
             raise ValueError("ddm_eps must be > 0")
 
     def _validate_meta_adapt_rules(
