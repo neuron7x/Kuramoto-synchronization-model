@@ -511,7 +511,8 @@ class AutoTriageOrchestrator:
         traffic_dir.mkdir(exist_ok=True)
         captured: list[Path] = []
         missing: list[str] = []
-        for source in self._config.traffic_replay_sources:
+        for raw_source in self._config.traffic_replay_sources:
+            source = Path(raw_source)
             if source.exists():
                 destination = traffic_dir / source.name
                 shutil.copy2(source, destination)
@@ -689,7 +690,7 @@ class AutoTriageOrchestrator:
         steps: Iterable[TriageStepReport],
         context: Mapping[str, Any],
     ) -> Path:
-        summary_root = self._config.incident_root / "automation_runs"
+        summary_root = Path(self._config.incident_root) / "automation_runs"
         summary_root.mkdir(parents=True, exist_ok=True)
         summary_path = (
             summary_root / f"auto_triage_{started_at.strftime('%Y%m%dT%H%M%S')}.json"
@@ -735,7 +736,7 @@ class AutoTriageOrchestrator:
         if self._config.archive_history == 0:
             return
 
-        root = self._config.incident_root
+        root = Path(self._config.incident_root)
         if not root.exists():
             return
 

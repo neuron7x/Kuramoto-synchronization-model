@@ -91,7 +91,7 @@ class AutoRollbackGuard:
         self,
         config: SLOConfig | None = None,
         *,
-        rollback_callback: Optional[Callable[[str, Dict[str, float]], None]] = None,
+        rollback_callback: Optional[Callable[[str, Dict[str, float | str]], None]] = None,
         clock: Optional[Callable[[], datetime]] = None,
     ) -> None:
         self.config = config or SLOConfig()
@@ -209,9 +209,9 @@ class AutoRollbackGuard:
 
         return self._trigger(reason, summary, now)
 
-    def _breach_reason(self, summary: Dict[str, float]) -> Optional[str]:
-        error_rate = summary.get("error_rate", 0.0)
-        latency_p95 = summary.get("latency_p95_ms", 0.0)
+    def _breach_reason(self, summary: Dict[str, float | str]) -> Optional[str]:
+        error_rate = float(summary.get("error_rate", 0.0))
+        latency_p95 = float(summary.get("latency_p95_ms", 0.0))
         if error_rate >= self.config.error_rate_threshold:
             return "error_rate"
         if latency_p95 >= self.config.latency_threshold_ms:
@@ -250,7 +250,7 @@ class AutoRollbackGuard:
             self._rollback_callback(reason, enriched_summary)
         return True
 
-    def _summarise_window(self, now: datetime) -> Optional[Dict[str, float]]:
+    def _summarise_window(self, now: datetime) -> Optional[Dict[str, float | str]]:
         stats_total, stats_errors, latencies = self._aggregate_window(
             now, self.config.evaluation_period, collect_latencies=True
         )

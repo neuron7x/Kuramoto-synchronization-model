@@ -64,6 +64,8 @@ class StructuredLogFormatter(logging.Formatter):
 class _StructuredSinkHandler(logging.Handler):
     """Handler that forwards structured log payloads to a callable sink."""
 
+    formatter: StructuredLogFormatter  # type: ignore[assignment]
+
     def __init__(
         self, sink: Callable[[dict[str, Any]], None], formatter: StructuredLogFormatter
     ) -> None:
@@ -112,11 +114,12 @@ def configure_logging(
     root_logger = logging.getLogger()
     root_logger.setLevel(numeric_level)
 
-    for handler in list(root_logger.handlers):
-        root_logger.removeHandler(handler)
+    for existing_handler in list(root_logger.handlers):
+        root_logger.removeHandler(existing_handler)
 
+    handler: logging.Handler
     if sink is None:
-        handler: logging.Handler = logging.StreamHandler()
+        handler = logging.StreamHandler()
         handler.setFormatter(formatter)
     else:
         handler = _StructuredSinkHandler(sink, formatter)
