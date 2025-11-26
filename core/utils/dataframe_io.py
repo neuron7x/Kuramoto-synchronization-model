@@ -130,15 +130,14 @@ def _json_backend() -> _Backend:
     def _write(frame: pd.DataFrame, path: Path, index: bool) -> None:
         frame.to_json(
             path,
-            orient="split",
+            orient="table",
             index=index,
-            date_format="iso",
             date_unit="ns",
             double_precision=15,
         )
 
     def _read(path: Path) -> pd.DataFrame:
-        return pd.read_json(path, orient="split")
+        return pd.read_json(path, orient="table")
 
     return _Backend("json", _JSON_SUFFIX, _write, _read, None)
 

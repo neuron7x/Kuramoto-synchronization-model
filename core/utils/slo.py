@@ -99,7 +99,7 @@ class AutoRollbackGuard:
         self._clock = clock or (lambda: datetime.now(timezone.utc))
         self._events: Deque[RequestSample] = deque()
         self._last_triggered_at: Optional[datetime] = None
-        self._last_summary: Dict[str, float] | None = None
+        self._last_summary: Dict[str, float | str] | None = None
         self._retention_period = self._compute_retention_period()
 
     @property
@@ -109,7 +109,7 @@ class AutoRollbackGuard:
         return self._last_triggered_at
 
     @property
-    def last_summary(self) -> Dict[str, float] | None:
+    def last_summary(self) -> Dict[str, float | str] | None:
         """Return the metrics snapshot from the last evaluation."""
 
         return self._last_summary.copy() if self._last_summary is not None else None
@@ -185,7 +185,7 @@ class AutoRollbackGuard:
         if now.tzinfo is None:
             now = now.replace(tzinfo=timezone.utc)
 
-        summary: Dict[str, float] = {
+        summary: Dict[str, float | str] = {
             "error_rate": float(error_rate),
             "latency_p95_ms": float(latency_p95_ms),
             "total_requests": (
@@ -218,7 +218,7 @@ class AutoRollbackGuard:
             return "latency"
         return None
 
-    def _trigger(self, reason: str, summary: Dict[str, float], now: datetime) -> bool:
+    def _trigger(self, reason: str, summary: Dict[str, float | str], now: datetime) -> bool:
         if self._last_triggered_at is not None:
             elapsed = now - self._last_triggered_at
             if elapsed < self.config.cooldown:
@@ -226,7 +226,7 @@ class AutoRollbackGuard:
                 return False
 
         self._last_triggered_at = now
-        enriched_summary = dict(summary)
+        enriched_summary: Dict[str, float | str] = dict(summary)
         enriched_summary.update(
             {
                 "reason": reason,
@@ -306,7 +306,7 @@ class AutoRollbackGuard:
     def _burn_rate_breach(
         self,
         now: datetime,
-        summary: Dict[str, float],
+        summary: Dict[str, float | str],
         *,
         precomputed_windows: Optional[Dict[timedelta, tuple[int, int]]] = None,
     ) -> Optional[str]:
