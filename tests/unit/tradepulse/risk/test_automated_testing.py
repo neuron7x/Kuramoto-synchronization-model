@@ -392,6 +392,28 @@ class TestValidateRiskMetrics:
         # Should handle empty array gracefully
         assert result["metrics"]["var"] == 0.0
         assert result["metrics"]["es"] == 0.0
+        assert result["metrics"]["mu"] == 0.0
+        assert result["metrics"]["sigma"] == 0.0
+        assert result["metrics"]["sharpe"] == 0.0
+        assert result["risk_breach"] == "OK"
+        assert result["all_valid"] is True
+
+    def test_validate_risk_metrics_filters_non_finite_values(self):
+        """Non-finite values should be ignored when computing metrics."""
+
+        returns = np.array([0.01, np.nan, np.inf, -0.02])
+
+        result = validate_risk_metrics(returns, alpha=0.975, es_limit=0.03)
+        metrics = result["metrics"]
+
+        assert np.isfinite(metrics["var"]) and metrics["var"] >= 0
+        assert np.isfinite(metrics["es"]) and metrics["es"] >= metrics["var"]
+        assert np.isfinite(metrics["mu"]) and np.isfinite(metrics["sigma"])
+        assert np.isfinite(metrics["kelly_emergent"])
+        assert np.isfinite(metrics["kelly_caution"])
+        assert np.isfinite(metrics["kelly_kill"])
+        assert result["risk_breach"] in {"OK", "BREACH"}
+        assert all(result["validations"].values())
 
 
 class TestStressTestResultSerialization:

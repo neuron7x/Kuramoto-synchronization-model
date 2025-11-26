@@ -636,18 +636,51 @@ def validate_risk_metrics(
     """Validate risk metrics for a given return series.
 
     Args:
-        returns: Array of returns
+        returns: Array of returns (non-finite values are ignored)
         alpha: Confidence level for VaR/ES
         es_limit: Maximum allowed ES
 
     Returns:
         Dictionary containing computed metrics and validation results
     """
-    # Calculate metrics
-    var, es = var_es(returns, alpha)
+    returns_array = np.asarray(returns, dtype=float)
+    finite_returns = returns_array[np.isfinite(returns_array)]
 
-    mu = float(np.mean(returns))
-    sigma2 = float(np.var(returns))
+    # Early exit for empty or all-invalid input to avoid NaNs and runtime warnings
+    if finite_returns.size == 0:
+        zero_metrics = {
+            "var": 0.0,
+            "es": 0.0,
+            "mu": 0.0,
+            "sigma": 0.0,
+            "sharpe": 0.0,
+            "kelly_emergent": 0.0,
+            "kelly_caution": 0.0,
+            "kelly_kill": 0.0,
+        }
+
+        validations = {
+            "var_positive": True,
+            "es_positive": True,
+            "es_gte_var": True,
+            "kelly_in_range": True,
+            "kelly_caution_half_emergent": True,
+            "kelly_kill_zero": True,
+            "risk_breach_correct": True,
+        }
+
+        return {
+            "metrics": zero_metrics,
+            "validations": validations,
+            "all_valid": True,
+            "risk_breach": "OK",
+        }
+
+    # Calculate metrics
+    var, es = var_es(finite_returns, alpha)
+
+    mu = float(np.mean(finite_returns))
+    sigma2 = float(np.var(finite_returns))
 
     # Calculate Kelly fractions for different regimes
     kelly_emergent = kelly_shrink(mu, sigma2, "EMERGENT")
