@@ -14,7 +14,7 @@ on:
         required: false
 
 concurrency:
-  group: merge-guard-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: merge-guard-${{ github.workflow }}-${{ github.run_id }}
   cancel-in-progress: true
 
 permissions:
