@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
@@ -234,7 +235,14 @@ class BehavioralProfile:
 
 
 class SerotoninProfiler:
-    """Profiler for comprehensive behavioral characterization of SerotoninController."""
+    """Profiler for comprehensive behavioral characterization of SerotoninController.
+
+    Enhanced in v2.5.0 with:
+    - Performance benchmarking capabilities
+    - Batch processing efficiency analysis
+    - Adaptive threshold tracking
+    - Temperature floor dynamics analysis
+    """
 
     def __init__(self, controller):
         """Initialize profiler with a controller instance.
@@ -246,12 +254,124 @@ class SerotoninProfiler:
         self._history: List[dict] = []
         self._veto_events: List[dict] = []
         self._cooldown_events: List[dict] = []
+        self._performance_metrics: dict = {}
 
     def reset_history(self) -> None:
         """Clear profiling history."""
         self._history = []
         self._veto_events = []
         self._cooldown_events = []
+        self._performance_metrics = {}
+
+    def benchmark_performance(
+        self,
+        num_steps: int = 10000,
+        warmup_steps: int = 100,
+    ) -> dict:
+        """Benchmark controller step performance.
+
+        Args:
+            num_steps: Number of steps to benchmark.
+            warmup_steps: Number of warmup steps before timing.
+
+        Returns:
+            Dictionary with performance metrics.
+        """
+        self.controller.reset()
+
+        # Warmup
+        for _ in range(warmup_steps):
+            self.controller.step(
+                stress=0.5,
+                drawdown=-0.02,
+                novelty=0.3,
+            )
+
+        # Benchmark
+        self.controller.reset()
+        start_time = time.perf_counter()
+
+        for i in range(num_steps):
+            stress = 0.3 + 0.4 * (i % 100) / 100
+            drawdown = -0.01 - 0.04 * ((i + 50) % 100) / 100
+            novelty = 0.2 + 0.6 * ((i + 25) % 100) / 100
+            self.controller.step(stress=stress, drawdown=drawdown, novelty=novelty)
+
+        elapsed = time.perf_counter() - start_time
+
+        self._performance_metrics = {
+            "total_steps": num_steps,
+            "total_time_s": elapsed,
+            "avg_step_time_us": (elapsed / num_steps) * 1e6,
+            "steps_per_second": num_steps / elapsed,
+            "warmup_steps": warmup_steps,
+        }
+
+        return self._performance_metrics
+
+    def benchmark_batch_performance(
+        self,
+        num_steps: int = 10000,
+        batch_sizes: Optional[List[int]] = None,
+    ) -> dict:
+        """Benchmark batch processing performance vs sequential.
+
+        Args:
+            num_steps: Total number of steps to process.
+            batch_sizes: List of batch sizes to test.
+
+        Returns:
+            Dictionary with batch performance comparison.
+        """
+        if batch_sizes is None:
+            batch_sizes = [100, 500, 1000, 5000]
+
+        # Generate test data
+        stress_seq = [0.3 + 0.4 * (i % 100) / 100 for i in range(num_steps)]
+        drawdown_seq = [-0.01 - 0.04 * ((i + 50) % 100) / 100 for i in range(num_steps)]
+        novelty_seq = [0.2 + 0.6 * ((i + 25) % 100) / 100 for i in range(num_steps)]
+
+        results = {}
+
+        # Sequential baseline
+        self.controller.reset()
+        start = time.perf_counter()
+        for i in range(num_steps):
+            self.controller.step(
+                stress=stress_seq[i],
+                drawdown=drawdown_seq[i],
+                novelty=novelty_seq[i],
+            )
+        sequential_time = time.perf_counter() - start
+        results["sequential"] = {
+            "time_s": sequential_time,
+            "steps_per_second": num_steps / sequential_time,
+        }
+
+        # Test batch processing if available
+        if hasattr(self.controller, "step_batch"):
+            for batch_size in batch_sizes:
+                self.controller.reset()
+                start = time.perf_counter()
+
+                for i in range(0, num_steps, batch_size):
+                    end = min(i + batch_size, num_steps)
+                    self.controller.step_batch(
+                        stress_sequence=stress_seq[i:end],
+                        drawdown_sequence=drawdown_seq[i:end],
+                        novelty_sequence=novelty_seq[i:end],
+                    )
+
+                batch_time = time.perf_counter() - start
+                speedup = sequential_time / batch_time if batch_time > 0 else 0
+
+                results[f"batch_{batch_size}"] = {
+                    "time_s": batch_time,
+                    "steps_per_second": num_steps / batch_time,
+                    "speedup": speedup,
+                }
+
+        return results
 
     def profile_stress_response(
         self,
@@ -363,6 +483,9 @@ class SerotoninProfiler:
             "phasic": self.controller.phasic_level,
             "gate": self.controller.gate_level,
             "sensitivity": self.controller.sensitivity,
+            # v2.5.0 fields
+            "adaptive_threshold": getattr(self.controller, "_adaptive_threshold", None),
+            "temperature_floor": self.controller.temperature_floor,
         }
 
         self._history.append(record)

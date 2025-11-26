@@ -583,7 +583,11 @@ def test_get_effective_threshold_returns_adaptive_when_enabled(serotonin_cls, tm
         ctrl.update_adaptive_threshold(0.05)
 
     effective = ctrl.get_effective_threshold()
-    assert effective != ctrl.config["cooldown_threshold"] or effective == ctrl._adaptive_threshold
+    # When adaptive threshold is enabled, get_effective_threshold should return
+    # the controller's internal _adaptive_threshold, not the base config value
+    assert effective == ctrl._adaptive_threshold
+    # Verify it's within the valid clamped bounds
+    assert 0.3 <= effective <= 0.95
 
 
 def test_to_dict_includes_new_fields(serotonin_controller):
