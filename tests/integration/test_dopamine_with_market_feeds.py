@@ -8,8 +8,6 @@ decision making using stable, reproducible market feed recordings.
 from pathlib import Path
 from typing import List
 
-import pytest
-
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording
 from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
 from tradepulse.core.neuro.dopamine.action_gate import ActionGate, DopamineSnapshot

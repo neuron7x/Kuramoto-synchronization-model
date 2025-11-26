@@ -243,7 +243,9 @@ class TestValidateTimeseriesGaps:
         """Test raises GapDetectionError when gaps detected."""
         full_index = pd.date_range("2024-01-01 10:00", periods=30, freq="1min")
         gapped_index = full_index.delete(slice(10, 20))
-        df = pd.DataFrame({"timestamp": gapped_index, "price": range(len(gapped_index))})
+        df = pd.DataFrame(
+            {"timestamp": gapped_index, "price": range(len(gapped_index))}
+        )
 
         with pytest.raises(GapDetectionError):
             validate_timeseries_gaps(df, "timestamp", "1min")
