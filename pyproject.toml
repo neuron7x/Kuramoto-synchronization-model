@@ -149,6 +149,8 @@ include = [
     "execution.*",
     "interfaces",
     "interfaces.*",
+    "libs",
+    "libs.*",
     "src",
     "src.*",
     "tradepulse_agent",
