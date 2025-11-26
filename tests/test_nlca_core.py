@@ -3,7 +3,13 @@ from pathlib import Path
 
 import numpy as np
 
-from tradepulse.nlca_core import NLCA, MarketRecorder, StateSimulator
+from tradepulse.nlca_core import (
+    FiniteStateMachine,
+    L2Collector,
+    NLCA,
+    MarketRecorder,
+    StateSimulator,
+)
 
 
 def _fake_tick(ts: float):
@@ -115,3 +121,49 @@ def test_market_recorder_flush_persists_dataset(tmp_path):
     assert recorder.buffer == []
     parquet_files = list(Path(dataset_dir).rglob("*.parquet"))
     assert parquet_files, "Expected at least one parquet file to be written"
+
+
+def test_fsm_respects_refractory(monkeypatch):
+    timestamps = [0.0, 2.0, 2.5, 3.0]
+
+    def fake_time():
+        if timestamps:
+            return timestamps.pop(0)
+        return 1.5
+
+    monkeypatch.setattr(time, "time", fake_time)
+
+    fsm = FiniteStateMachine(refractory_period=1.0)
+
+    first = fsm.transition("S1", "first")
+    second = fsm.transition("S2", "too_soon")
+    forced = fsm.transition("S3", "override", force=True)
+
+    assert first is True
+    assert second is False
+    assert forced is True
+    assert fsm.get_state() == "S3"
+    assert len(fsm.get_logs()) == 2  # only successful transitions are logged
+
+
+def test_l2collector_warns_on_desync(caplog, monkeypatch):
+    collector = L2Collector(sync_tolerance=0.1)
+    collector.last_ts = 0.0
+    monkeypatch.setattr(time, "time", lambda: 1.0)
+
+    with caplog.at_level("WARNING"):
+        payload = collector.collect({"foo": "bar"})
+
+    assert payload == {"foo": "bar"}
+    assert any("Timestamp desync" in rec.message for rec in caplog.records)
+
+
+def test_step_rejects_invalid_depth_vectors():
+    nlca = _build_nlca()
+    tick = _fake_tick(time.time())
+    tick["q_a"] = ["bad", "data"]
+
+    result = nlca.step(tick)
+
+    assert result["action"] == "STOP_INVALID_DATA"
+    assert result["state"] == "S⊘"

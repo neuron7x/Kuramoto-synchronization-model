@@ -348,6 +348,19 @@ class NLCA:
         if np.any(np.isnan(vals)):
             return False, "NaN in numeric fields"
 
+        for depth_key in ("q_a", "q_b"):
+            depth_values = tick.get(depth_key)
+            if not isinstance(depth_values, (list, tuple, np.ndarray)):
+                return False, f"{depth_key} must be a sequence"
+            if len(depth_values) == 0:
+                return False, f"{depth_key} is empty"
+            try:
+                depth_array = np.asarray(depth_values, dtype=float)
+            except (TypeError, ValueError):
+                return False, f"{depth_key} contains non-numeric values"
+            if not np.isfinite(depth_array).all():
+                return False, f"{depth_key} contains non-finite values"
+
         ts = tick.get("timestamp", time.time())
         if self.last_ts is not None and ts <= self.last_ts:
             return False, "Non-increasing timestamp"
