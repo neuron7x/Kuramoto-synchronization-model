@@ -31,7 +31,8 @@ def dto_to_signal(data: Mapping[str, Any]) -> Signal:
 
     raw_ts = data.get("timestamp")
     if isinstance(raw_ts, str):
-        timestamp = datetime.fromisoformat(raw_ts)
+        cleaned_ts = raw_ts.replace("Z", "+00:00") if raw_ts.endswith("Z") else raw_ts
+        timestamp = datetime.fromisoformat(cleaned_ts)
     elif isinstance(raw_ts, datetime):
         timestamp = raw_ts
     elif raw_ts is None:
