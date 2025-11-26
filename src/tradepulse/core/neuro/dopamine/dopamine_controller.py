@@ -758,6 +758,74 @@ class DopamineController:
 
         return rpe, temperature, scaled_policy, extras
 
+    def update_td0(
+        self,
+        reward: float,
+        *,
+        asset: Optional[str] = None,
+        strategy: Optional[str] = None,
+        value: Optional[float] = None,
+        next_value: Optional[float] = None,
+        appetitive_state: Optional[float] = None,
+    ) -> Dict[str, float]:
+        """Simplified TD(0) update API for market feed integration.
+
+        This method provides a simpler interface than step() for TD(0) updates,
+        automatically managing value estimates and computing prediction errors.
+
+        Args:
+            reward: Observed reward from the environment
+            asset: Optional asset identifier for logging/tracking
+            strategy: Optional strategy identifier for logging/tracking
+            value: Optional current value estimate (defaults to self.value_estimate)
+            next_value: Optional next value estimate (defaults to self.value_estimate)
+            appetitive_state: Optional appetitive state (defaults to max(0, reward))
+
+        Returns:
+            Dictionary containing:
+                - prediction_error: TD(0) RPE (δ = r + γ·V' − V)
+                - dopamine_level: Current dopamine signal [0, 1]
+                - value_estimate: Updated value estimate
+                - temperature: Current exploration temperature
+                - tonic_level: Tonic dopamine level
+                - phasic_level: Phasic dopamine level
+        """
+        reward = self._ensure_finite("reward", float(reward))
+
+        # Use defaults if not provided
+        current_value = self.value_estimate if value is None else float(value)
+        next_val = self.value_estimate if next_value is None else float(next_value)
+        app_state = max(0.0, reward) if appetitive_state is None else float(appetitive_state)
+
+        # Compute RPE
+        rpe = self.compute_rpe(reward, current_value, next_val)
+        self.update_value_estimate(rpe)
+
+        # Update statistics and gates
+        variance = self._update_rpe_statistics(rpe)
+        self._meta_adapt_temperature(variance)
+        self._update_release_gate(variance)
+
+        # Compute dopamine signal
+        dopamine_signal = self.compute_dopamine_signal(app_state, rpe)
+        temperature = self.compute_temperature(dopamine_signal)
+
+        # Log with asset/strategy context if provided
+        if asset:
+            self._log(f"tacl.dopa.td0.{asset}.rpe", rpe)
+            self._log(f"tacl.dopa.td0.{asset}.da", dopamine_signal)
+        if strategy:
+            self._log(f"tacl.dopa.td0.{strategy}.rpe", rpe)
+
+        return {
+            "prediction_error": rpe,
+            "dopamine_level": dopamine_signal,
+            "value_estimate": self.value_estimate,
+            "temperature": temperature,
+            "tonic_level": self.tonic_level,
+            "phasic_level": self.phasic_level,
+        }
+
     def _update_rpe_statistics(self, rpe: float) -> float:
         beta = self._cache_rpe_ema_beta
         self._rpe_mean = (1.0 - beta) * self._rpe_mean + beta * rpe
