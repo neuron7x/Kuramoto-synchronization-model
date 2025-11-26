@@ -70,7 +70,7 @@ The serotonin controller must:
 
 We implement a **dual-component serotonin controller** with:
 
-1. **Tonic/Phasic Separation:** 
+1. **Tonic/Phasic Separation:**
    - Tonic component (β=0.001-0.01): slow EMA for chronic stress baseline
    - Phasic component (β=0.1-0.3): fast EMA for acute transient events
 
@@ -197,7 +197,7 @@ We implement a **dual-component serotonin controller** with:
 - Proven in production on staging environments
 - Minor uncertainty around optimal desensitization parameters for extreme events
 
-**Human Review Recommended:** 
+**Human Review Recommended:**
 - Quarterly review of desensitization parameters against actual market events
 - Annual architecture review when market regimes shift significantly
 
@@ -237,7 +237,7 @@ We implement a **dual-component serotonin controller** with:
 
 ### Monitoring
 - **Metrics:** `tacl.5ht.level`, `tacl.5ht.hold`, `tacl.5ht.cooldown`
-- **Alerts:** 
+- **Alerts:**
   - Level > 1.2 for > 5 minutes (warning)
   - Hold state > 30 minutes (investigate)
   - State validation failures (critical)
@@ -257,5 +257,5 @@ We implement a **dual-component serotonin controller** with:
 
 ---
 
-**Last Updated:** 2025-11-17  
+**Last Updated:** 2025-11-17
 **Next Review:** 2026-02-17 (Quarterly)

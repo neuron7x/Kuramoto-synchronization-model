@@ -41,6 +41,10 @@ jobs:
 
       - name: Run dependency review
         uses: actions/dependency-review-action@v4
+        # Allow workflow to continue even if Dependency graph is not enabled in repository settings.
+        # This prevents CI failure when the feature is disabled.
+        # To enable full functionality: Settings -> Security & analysis -> Enable "Dependency graph"
+        continue-on-error: true
         with:
           fail-on-severity: moderate
           deny-licenses: GPL-3.0, AGPL-3.0

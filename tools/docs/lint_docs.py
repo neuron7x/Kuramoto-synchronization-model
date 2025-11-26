@@ -13,7 +13,6 @@ from typing import Iterable, List, Protocol, Sequence
 DEFAULT_TARGETS: tuple[Path, ...] = (
     Path("docs"),
     Path("README.md"),
-    Path("DOCUMENTATION_SUMMARY.md"),
 )
 MARKDOWN_SUFFIXES: tuple[str, ...] = (".md", ".markdown")
 SKIP_DIR_NAMES: frozenset[str] = frozenset({".git", "node_modules", "__pycache__"})
@@ -55,6 +54,7 @@ class HeadingFirstRule:
     def check(self, path: Path, lines: Sequence[str]) -> Iterable[LintIssue]:
         in_front_matter = False
         in_html_comment = False
+        in_html_block = 0  # Depth counter for nested HTML elements
         for index, raw_line in enumerate(lines):
             stripped = raw_line.strip()
             if index == 0 and stripped == "---":
@@ -75,6 +75,23 @@ class HeadingFirstRule:
             if in_html_comment:
                 if stripped.endswith("-->"):
                     in_html_comment = False
+                continue
+            # Handle HTML block elements (e.g., <div>, <picture>, <p>, etc.)
+            # These are allowed before the heading for styling purposes.
+            # We use a simple depth counter to track nested elements.
+            if stripped.startswith("<") and not stripped.startswith("<!"):
+                # Self-closing tags: <img />, <br/>, etc. - don't change block state
+                if "/>" in stripped:
+                    continue
+                # Closing tags decrease block depth
+                if stripped.startswith("</"):
+                    in_html_block = max(0, in_html_block - 1)
+                else:
+                    # Opening tags increase block depth
+                    in_html_block += 1
+                continue
+            if in_html_block > 0:
+                # Stay in HTML block until depth returns to 0
                 continue
             if not stripped:
                 continue

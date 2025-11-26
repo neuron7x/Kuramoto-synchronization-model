@@ -42,7 +42,7 @@ TradePulse is an enterprise-grade algorithmic trading platform handling sensitiv
 ### Related Incidents / Metrics
 - **Current State**: 0 HIGH/MEDIUM severity vulnerabilities (CodeQL clean), 389 LOW severity warnings (Bandit)
 - **Target State**: Zero critical vulnerabilities, comprehensive security controls, automated compliance
-- **Baseline Metrics**: 
+- **Baseline Metrics**:
   - Security scan coverage: 100%
   - Vulnerability remediation SLA: Critical 7d, High 30d, Medium 90d
   - Security test coverage: >95%

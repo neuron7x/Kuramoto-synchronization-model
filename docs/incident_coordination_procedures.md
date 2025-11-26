@@ -599,7 +599,7 @@ Prevent → Implement actions, update playbooks
 
 ### Incident Review Cadence
 
-**Weekly**: 
+**Weekly**:
 - Review all incidents from past week
 - Update action item register
 - Identify trends

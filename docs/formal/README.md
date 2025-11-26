@@ -1,7 +1,7 @@
 # Formal Specifications and Verification
 
-**Version:** 1.0.0  
-**Date:** 2025-11-18  
+**Version:** 1.0.0
+**Date:** 2025-11-18
 **Owner:** Principal System Architect
 
 ## Purpose
@@ -24,7 +24,7 @@ formal/
 ### Existing Artifacts
 
 #### 1. Free Energy Boundedness Proof
-**File:** `proof_invariant.py`  
+**File:** `proof_invariant.py`
 **Certificate:** `INVARIANT_CERT.txt`
 
 **Purpose:** Proves that the thermodynamic control system's free energy never grows unboundedly.
@@ -167,19 +167,19 @@ from z3 import Real, Solver, sat, unsat
 
 def prove_property():
     solver = Solver()
-    
+
     # Define variables
     x = Real('x')
     y = Real('y')
-    
+
     # Add constraints (system rules)
     solver.add(x >= 0)
     solver.add(y >= 0)
-    
+
     # Add negation of property to prove
     # (if UNSAT, property holds)
     solver.add(x + y < 0)  # Try to find counterexample
-    
+
     status = solver.check()
     assert status == unsat, "Property violated!"
 ```
@@ -210,23 +210,23 @@ Design-by-contract using:
 **Example:**
 ```python
 def transfer_funds(
-    from_account: Account, 
-    to_account: Account, 
+    from_account: Account,
+    to_account: Account,
     amount: Decimal
 ) -> None:
     """
     Transfer funds between accounts.
-    
+
     Pre-conditions:
         - amount > 0
         - from_account.balance >= amount
         - from_account != to_account
-    
+
     Post-conditions:
         - from_account.balance_after == from_account.balance_before - amount
         - to_account.balance_after == to_account.balance_before + amount
         - total_balance unchanged (conservation)
-    
+
     Invariants:
         - No negative balances
         - Atomic operation (all-or-nothing)
@@ -234,9 +234,9 @@ def transfer_funds(
     assert amount > 0, "Amount must be positive"
     assert from_account.balance >= amount, "Insufficient funds"
     assert from_account != to_account, "Cannot transfer to self"
-    
+
     # Implementation...
-    
+
     # Verify post-conditions
     assert from_account.balance >= 0, "Negative balance violated"
     assert to_account.balance >= 0, "Negative balance violated"
@@ -251,7 +251,7 @@ For distributed system properties (planned).
 ```tla
 VARIABLES orderQueue, orderStatus
 
-Init == 
+Init ==
     /\ orderQueue = <<>>
     /\ orderStatus = [o \in Order |-> "pending"]
 
@@ -284,16 +284,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Install Z3
         run: pip install z3-solver
-      
+
       - name: Run Invariant Proofs
         run: python formal/proof_invariant.py
-      
+
       - name: Type Check
         run: mypy tradepulse/
-      
+
       - name: Property Tests
         run: pytest tests/property/ --hypothesis-seed=0
 ```

@@ -26,7 +26,7 @@ This document defines comprehensive security requirements for TradePulse based o
 #### AC-1: Multi-Factor Authentication (MFA)
 - **Requirement**: All user accounts MUST implement MFA
 - **Standard**: NIST SP 800-63B Level AAL2
-- **Implementation**: 
+- **Implementation**:
   - Primary factor: Password (minimum 12 characters, complexity required)
   - Secondary factor: TOTP, SMS, or hardware token
   - Biometric factor: Optional for high-privilege accounts
@@ -575,7 +575,7 @@ Each requirement must meet:
 
 ---
 
-**Document Owner**: Security Team  
-**Last Updated**: 2025-11-10  
-**Review Cycle**: Semi-annually  
+**Document Owner**: Security Team
+**Last Updated**: 2025-11-10
+**Review Cycle**: Semi-annually
 **Next Review**: 2026-05-10
