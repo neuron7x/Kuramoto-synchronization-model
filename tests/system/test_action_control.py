@@ -122,6 +122,16 @@ def test_a1_action_blocked_when_energy_increases_without_recovery() -> None:
     assert details["mandate_allowed"] is True
 
 
+def test_a1_action_blocked_when_exceeding_free_energy_cap() -> None:
+    gate = TaclGate(max_free_energy=1.0)
+    forecast = FreeEnergyForecast(current=0.8, projected=1.05)
+
+    decision = gate.evaluate(forecast)
+
+    assert decision.allowed is False
+    assert decision.reason == "projected free energy 1.050 exceeds limit 1.000"
+
+
 def test_a2_requires_state_permission_and_manual_corridor() -> None:
     store = _MemoryStore()
     governor = _make_governor(store)
@@ -174,6 +184,24 @@ def test_non_passive_actions_require_forecast() -> None:
 
     with pytest.raises(ValueError, match="Free energy forecast required"):
         governor.evaluate(intent, state=SystemState.DEGRADED)
+
+
+def test_governor_rejects_unknown_module_requests() -> None:
+    store = _MemoryStore()
+    governor = _make_governor(store)
+    intent = ActionIntent(
+        module="orchestrator",
+        action_class=ActionClass.A1,
+        operation="retune-buffer",
+        description="retune buffer thresholds",
+        target="buffers",
+    )
+    forecast = FreeEnergyForecast(current=0.9, projected=0.7)
+
+    with pytest.raises(
+        ValueError, match="No mandate defined for module 'orchestrator'"
+    ):
+        governor.evaluate(intent, state=SystemState.NORMAL, forecast=forecast)
 
 
 def test_tacl_gate_rejects_negative_energy_values() -> None:
