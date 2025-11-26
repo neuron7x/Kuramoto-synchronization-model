@@ -131,7 +131,7 @@ python -m interfaces.cli analyze \
     --price-col close
 
 # Launch dashboard
-streamlit run interfaces/streamlit_app.py
+streamlit run interfaces/dashboard_streamlit.py
 ```
 
 </td>
