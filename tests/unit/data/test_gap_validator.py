@@ -113,9 +113,9 @@ class TestGapValidator:
     def test_validate_with_weekend_gaps_allowed(self) -> None:
         """Test that weekend gaps are allowed when configured."""
         validator = GapValidator(frequency="1D", allow_weekend_gaps=True)
-        # Create a weekday-only index (Mon-Fri)
-        # January 6, 2025 is a Monday
-        index = pd.date_range("2025-01-06", periods=5, freq="B")  # Business days only
+        # Create a weekday-only index using business day frequency
+        # The "B" freq automatically skips weekends
+        index = pd.date_range("2024-01-01", periods=5, freq="B")  # Business days only
 
         is_valid, gaps = validator.validate(index)
         assert is_valid is True
