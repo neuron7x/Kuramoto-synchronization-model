@@ -87,6 +87,82 @@
 
 ---
 
+<!-- TL;DR Entry Point Section -->
+<div align="center">
+
+### ⚡ TL;DR — Start Here
+
+</div>
+
+> **What is TradePulse?** — An enterprise-grade algorithmic trading platform with advanced geometric market indicators (Kuramoto oscillators, Ricci flow, entropy measures) for research and live trading.
+
+<table>
+<tr>
+<td width="33%">
+
+**🚀 Install & Run**
+```bash
+git clone https://github.com/neuron7x/TradePulse.git
+cd TradePulse
+pip install -e .
+python examples/quick_start.py
+```
+
+</td>
+<td width="33%">
+
+**🧪 Test**
+```bash
+# Quick tests
+pytest tests/unit -q
+
+# Full suite with coverage
+pytest tests/ --cov=core
+```
+
+</td>
+<td width="34%">
+
+**📊 Analyze Data**
+```bash
+# CLI analysis
+python -m interfaces.cli analyze \
+    --csv sample.csv --window 200 \
+    --price-col close
+
+# Launch dashboard
+streamlit run interfaces/streamlit_app.py
+```
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>📝 Minimal Code Example (click to expand)</b></summary>
+
+```python
+import numpy as np
+import pandas as pd
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+
+# Generate sample market data with DatetimeIndex
+index = pd.date_range("2024-01-01", periods=720, freq="5min")
+prices = 100 + np.cumsum(np.random.normal(0, 0.6, 720))
+volume = np.random.lognormal(9.5, 0.35, 720)
+bars = pd.DataFrame({"close": prices, "volume": volume}, index=index)
+
+# Analyze market regime
+engine = TradePulseCompositeEngine()
+snapshot = engine.analyze_market(bars)
+print(f"Phase: {snapshot.phase.value}, Confidence: {snapshot.confidence:.3f}")
+```
+</details>
+
+📖 **For detailed instructions, see [Quick Start Guide](docs/quickstart.md) • [Examples](examples/) • [Documentation](docs/)**
+
+---
+
 <div align="center">
 
 ### 🌟 Why Choose TradePulse?
