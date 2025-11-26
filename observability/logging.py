@@ -64,20 +64,18 @@ class StructuredLogFormatter(logging.Formatter):
 class _StructuredSinkHandler(logging.Handler):
     """Handler that forwards structured log payloads to a callable sink."""
 
-    formatter: StructuredLogFormatter  # type: ignore[assignment]
-
     def __init__(
         self, sink: Callable[[dict[str, Any]], None], formatter: StructuredLogFormatter
     ) -> None:
         super().__init__()
         self._sink = sink
-        self.formatter = formatter
+        self._structured_formatter = formatter
 
     def emit(
         self, record: logging.LogRecord
     ) -> None:  # pragma: no cover - errors handled by logging
         try:
-            payload = self.formatter.format_to_dict(record)
+            payload = self._structured_formatter.format_to_dict(record)
             self._sink(payload)
         except Exception:
             self.handleError(record)
