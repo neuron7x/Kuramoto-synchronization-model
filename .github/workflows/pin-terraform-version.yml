@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 20
     env:
       TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
+      TF_IN_AUTOMATION: "true"
 
 
     steps:
@@ -30,7 +31,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: infra/terraform/tests/go.mod
           cache: true
           cache-dependency-path: infra/terraform/tests/go.sum
 

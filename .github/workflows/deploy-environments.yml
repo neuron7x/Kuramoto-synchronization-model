@@ -50,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
+      TF_IN_AUTOMATION: "true"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
