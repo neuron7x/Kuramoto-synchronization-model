@@ -231,8 +231,9 @@ class IntegrationRouter:
                 f"Encoder for route '{route.name}' must return bytes, received {type(payload)!r}"
             )
 
-        headers = dict(route.header_builder(request, match))
         event_id = request.resolved_correlation_id or str(self.event_id_factory())
+        headers = dict(route.header_builder(request, match))
+        headers.setdefault("x-correlation-id", event_id)
         envelope = EventEnvelope(
             event_type=route.event_type or route.name,
             partition_key=partition_key,
