@@ -110,7 +110,7 @@ def check_class_instantiation(
     start = time.perf_counter()
     try:
         module = importlib.import_module(module_path)
-        cls = getattr(module, class_name)
+        _cls = getattr(module, class_name)
         # Try to get the class signature to understand requirements
         duration = (time.perf_counter() - start) * 1000
         return CheckResult(

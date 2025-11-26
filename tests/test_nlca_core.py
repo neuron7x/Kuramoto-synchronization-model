@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 
 from tradepulse.nlca_core import (
+    NLCA,
     FiniteStateMachine,
     L2Collector,
-    NLCA,
     MarketRecorder,
     StateSimulator,
 )
