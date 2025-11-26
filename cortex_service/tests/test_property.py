@@ -126,8 +126,8 @@ def test_risk_score_non_negative(exposures):
 
     settings = RiskSettings()
     exposure_list = [
-        Exposure(instrument=f"TEST{i}", exposure=e, limit=l, volatility=v)
-        for i, (e, l, v) in enumerate(exposures)
+        Exposure(instrument=f"TEST{i}", exposure=e, limit=lim, volatility=v)  # noqa: E741
+        for i, (e, lim, v) in enumerate(exposures)
     ]
     assessment = compute_risk(exposure_list, settings)
     assert assessment.score >= 0.0

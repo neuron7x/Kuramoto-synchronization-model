@@ -413,7 +413,7 @@ class AsyncMetricsWriter:
         try:
             self._queue.put_nowait((metric_name, value, labels or {}, time.time()))
             self._stats["total_recorded"] += 1
-        except:
+        except Exception:  # noqa: BLE001 - intentionally catch all for queue operations
             # Queue full - краще drop ніж blocking
             self._stats["total_dropped"] += 1
             logger.warning(

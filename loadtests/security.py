@@ -58,10 +58,12 @@ def configure_security_overrides() -> ApiSecuritySettings:
     )
 
     # Ensure FastAPI dependency injection reuses our explicit settings instance.
-    loader: Callable[[], ApiSecuritySettings] = lambda: settings
-    security_module._default_settings_loader = loader  # type: ignore[attr-defined]
+    def _settings_loader() -> ApiSecuritySettings:
+        return settings
+
+    security_module._default_settings_loader = _settings_loader  # type: ignore[attr-defined]
     setattr(security_module.get_api_security_settings, "_instance", settings)
-    setattr(security_module.get_api_security_settings, "_loader", loader)
+    setattr(security_module.get_api_security_settings, "_loader", _settings_loader)
     setattr(security_module.get_api_security_settings, "_manual_override", True)
 
     public_key = _public_key()

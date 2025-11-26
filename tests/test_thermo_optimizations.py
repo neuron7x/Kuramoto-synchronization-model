@@ -160,7 +160,7 @@ class TestVectorizedOperations:
         )
 
         # Should detect the spike at index 20
-        assert anomalies[20] == True
+        assert anomalies[20] is True
         assert np.sum(anomalies) >= 1
 
 
