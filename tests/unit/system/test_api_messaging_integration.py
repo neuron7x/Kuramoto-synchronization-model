@@ -172,6 +172,24 @@ def test_default_partition_resolver_falls_back_to_request_path() -> None:
     assert result.envelope.partition_key == "/health"
 
 
+def test_event_id_is_propagated_as_correlation_header_when_missing() -> None:
+    bus = StubEventBus()
+    router = IntegrationRouter(event_bus=bus, event_id_factory=lambda: "generated-id")
+    router.register_route(
+        name="orders",
+        methods={"POST"},
+        path_pattern=r"/orders",
+        topic=EventTopic.ORDERS,
+    )
+
+    request = GatewayRequest(path="/orders", method="POST", payload={"id": 1})
+
+    result = router.route_request(request)
+
+    assert result.envelope.event_id == "generated-id"
+    assert result.envelope.headers["x-correlation-id"] == "generated-id"
+
+
 def test_route_request_rejects_empty_partition_key() -> None:
     bus = StubEventBus()
     router = IntegrationRouter(event_bus=bus)
