@@ -69,13 +69,13 @@ class _StructuredSinkHandler(logging.Handler):
     ) -> None:
         super().__init__()
         self._sink = sink
-        self.formatter = formatter
+        self._structured_formatter = formatter
 
     def emit(
         self, record: logging.LogRecord
     ) -> None:  # pragma: no cover - errors handled by logging
         try:
-            payload = self.formatter.format_to_dict(record)
+            payload = self._structured_formatter.format_to_dict(record)
             self._sink(payload)
         except Exception:
             self.handleError(record)
@@ -112,13 +112,15 @@ def configure_logging(
     root_logger = logging.getLogger()
     root_logger.setLevel(numeric_level)
 
-    for handler in list(root_logger.handlers):
-        root_logger.removeHandler(handler)
+    for existing_handler in list(root_logger.handlers):
+        root_logger.removeHandler(existing_handler)
 
+    new_handler: logging.Handler
     if sink is None:
-        handler: logging.Handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        new_handler = stream_handler
     else:
-        handler = _StructuredSinkHandler(sink, formatter)
+        new_handler = _StructuredSinkHandler(sink, formatter)
 
-    root_logger.addHandler(handler)
+    root_logger.addHandler(new_handler)

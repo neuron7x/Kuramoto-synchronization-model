@@ -15,7 +15,7 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Deque, Dict, Optional, Protocol, Tuple
+from typing import Callable, Deque, Dict, List, Optional, Protocol, Tuple
 
 
 class CircuitBreakerState(str, Enum):
@@ -553,7 +553,7 @@ def default_resilience_profile(
     bulkhead = Bulkhead(bulkhead_concurrency)
 
     fallbacks: Tuple[FallbackStrategy, ...]
-    fallback_list = []
+    fallback_list: List[FallbackStrategy] = []
     if cache_provider is not None:
         fallback_list.append(CachedDataFallback(cache_provider))
     if degraded_factory is not None:
