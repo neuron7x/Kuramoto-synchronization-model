@@ -12,12 +12,16 @@ Test Coverage:
 - Edge cases: empty inputs, insufficient data, non-numeric columns
 """
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from tradepulse.utils.drift import (
     DriftDetector,
+    DriftMetric,
+    DriftTestResult,
     DriftThresholds,
     compute_js_divergence,
     compute_ks_test,
@@ -327,3 +331,43 @@ def test_load_thresholds_requires_mapping(tmp_path):
     cfg_path.write_text("- 0.1\n- 0.2\n")
     with pytest.raises(TypeError, match=".+"):
         load_thresholds(cfg_path)
+
+
+def test_drift_metric_respects_thresholds_overrides():
+    metric = DriftMetric(
+        feature="f0",
+        js_divergence=0.05,
+        ks=DriftTestResult(statistic=0.1, pvalue=0.02, valid=True, message="ok"),
+        psi=0.05,
+    )
+    thresholds = DriftThresholds(default_jsd=0.1, default_ks=0.05, default_psi=0.1)
+
+    assert metric.drifted, "Legacy drift flag should remain permissive"
+    assert (
+        metric.drifted_with_thresholds(thresholds=thresholds, feature="f0") is True
+    )
+    assert (
+        metric.drifted_with_thresholds(
+            thresholds=thresholds, feature="f0", alpha=0.01
+        )
+        is False
+    ), "Alpha override should tighten KS detection"
+
+
+def test_load_thresholds_supports_psi_thresholds(tmp_path):
+    cfg_path = tmp_path / "thresholds.json"
+    cfg_path.write_text(
+        json.dumps(
+            {
+                "jsd_threshold": 0.2,
+                "ks_pvalue_threshold": 0.01,
+                "psi_threshold": 0.25,
+                "thresholds": {"custom": {"psi": 0.5}},
+            }
+        )
+    )
+
+    thresholds = load_thresholds(cfg_path)
+
+    assert thresholds.default_psi == 0.25
+    assert thresholds.threshold_for("custom", "psi") == 0.5

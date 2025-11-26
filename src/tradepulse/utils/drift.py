@@ -72,6 +72,30 @@ class DriftMetric:
             )
         )
 
+    def drifted_with_thresholds(
+        self,
+        *,
+        thresholds: DriftThresholds,
+        feature: str,
+        alpha: float | None = None,
+    ) -> bool:
+        """Determine drift status using configurable thresholds."""
+
+        jsd_threshold = thresholds.threshold_for(feature, "jsd")
+        ks_threshold = alpha if alpha is not None else thresholds.threshold_for(
+            feature, "ks"
+        )
+        psi_threshold = thresholds.threshold_for(feature, "psi")
+
+        drift_flags = []
+        if np.isfinite(self.js_divergence):
+            drift_flags.append(self.js_divergence > jsd_threshold)
+        if self.ks.valid:
+            drift_flags.append(self.ks.pvalue < ks_threshold)
+        if np.isfinite(self.psi):
+            drift_flags.append(self.psi > psi_threshold)
+        return any(drift_flags)
+
 
 @dataclass(frozen=True)
 class DriftThresholds:
@@ -79,6 +103,7 @@ class DriftThresholds:
 
     default_jsd: float = 0.1
     default_ks: float = 0.05
+    default_psi: float = 0.0
     per_signal: Mapping[str, Mapping[str, float]] | None = None
 
     def threshold_for(self, signal: str, metric: str) -> float:
@@ -93,6 +118,8 @@ class DriftThresholds:
             return self.default_jsd
         if metric in {"ks", "ks_pvalue"}:
             return self.default_ks
+        if metric == "psi":
+            return self.default_psi
         raise KeyError(metric)
 
 
@@ -329,21 +356,16 @@ class DriftDetector:
                 "jsd": metric.js_divergence,
                 "ks_pvalue": metric.ks.pvalue,
                 "psi": metric.psi,
-                "drifted": self._is_drifted(feature, metric),
+                "drifted": metric.drifted_with_thresholds(
+                    thresholds=self.thresholds, feature=feature, alpha=self.alpha
+                ),
             }
         return summary
 
     def _is_drifted(self, feature: str, metric: DriftMetric) -> bool:
-        jsd_threshold = self.thresholds.threshold_for(feature, "jsd")
-        ks_threshold = self.thresholds.threshold_for(feature, "ks")
-        drift_flags = []
-        if np.isfinite(metric.js_divergence):
-            drift_flags.append(metric.js_divergence > jsd_threshold)
-        if metric.ks.valid:
-            drift_flags.append(metric.ks.pvalue < ks_threshold)
-        if np.isfinite(metric.psi):
-            drift_flags.append(metric.psi > 0)
-        return any(drift_flags)
+        return metric.drifted_with_thresholds(
+            thresholds=self.thresholds, feature=feature, alpha=self.alpha
+        )
 
 
 def generate_synthetic_data(
@@ -400,8 +422,9 @@ def load_thresholds(path: str | Path | None) -> DriftThresholds:
         raise TypeError("threshold configuration must be a mapping")
     default_jsd = float(data.get("jsd_threshold", 0.1))
     default_ks = float(data.get("ks_pvalue_threshold", 0.05))
+    default_psi = float(data.get("psi_threshold", 0.0))
     per_signal = data.get("thresholds")
-    return DriftThresholds(default_jsd, default_ks, per_signal)
+    return DriftThresholds(default_jsd, default_ks, default_psi, per_signal)
 
 
 __all__ = [
