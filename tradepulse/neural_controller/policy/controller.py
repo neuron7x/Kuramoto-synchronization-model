@@ -15,7 +15,9 @@ class BasalGangliaController:
     def decide(
         self, state: Dict[str, float], mode: str, RPE: float
     ) -> Tuple[str, Dict[str, float]]:
-        _H = float(state.get("H", state.get("H_est", 0.5)))  # noqa: F841 - extracted for completeness
+        _H = float(
+            state.get("H", state.get("H_est", 0.5))
+        )  # noqa: F841 - extracted for completeness
         M = float(state.get("M", state.get("M_est", 0.8)))
         E = float(state.get("E", state.get("E_est", 0.1)))
         S = float(state.get("S", state.get("S_est", 0.0)))

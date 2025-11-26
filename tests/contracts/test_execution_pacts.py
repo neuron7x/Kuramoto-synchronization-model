@@ -17,7 +17,12 @@ Consumer = pactman.Consumer
 Provider = pactman.Provider
 mock_server = mock_module.mock_server
 
-from domain import Order, OrderSide, OrderStatus, OrderType  # noqa: E402 - after importorskip
+from domain import (
+    Order,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+)  # noqa: E402 - after importorskip
 from execution.adapters.base import RESTWebSocketConnector  # noqa: E402
 
 

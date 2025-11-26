@@ -111,7 +111,9 @@ class MetricsCollector:
 
             if multiprocess_dir:
                 try:
-                    from prometheus_client import multiprocess  # noqa: F401 - import check
+                    from prometheus_client import (
+                        multiprocess,
+                    )  # noqa: F401 - import check
                 except ImportError:
                     # Multiprocess collector isn't available; fall back to defaults.
                     pass
