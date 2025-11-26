@@ -17,6 +17,7 @@ class StepResult(TypedDict):
     q_modulated: float
     go: bool
     no_go: bool
+    hold: bool
 
 
 def dopamine_step(
@@ -30,10 +31,12 @@ def dopamine_step(
     value_gap: float,
     original_q: float,
     performance_metrics: Optional[Mapping[str, float]] = None,
+    *,
+    discount_gamma: Optional[float] = None,
 ) -> StepResult:
     """Execute a full dopamine update step and return the captured metrics."""
 
-    rpe = ctrl.compute_rpe(reward, value, next_value)
+    rpe = ctrl.compute_rpe(reward, value, next_value, discount_gamma=discount_gamma)
     ctrl.update_value_estimate(rpe)
     appetitive = ctrl.estimate_appetitive_state(
         reward_proxy, novelty, momentum, value_gap
@@ -43,8 +46,19 @@ def dopamine_step(
     temp = ctrl.compute_temperature(da)
     go = ctrl.check_invigoration(da)
     no_go = ctrl.check_suppress(da)
+    hold = not go and not no_go
     if performance_metrics:
-        ctrl.meta_adapt(performance_metrics)
+        missing = {"drawdown", "sharpe"} - set(performance_metrics)
+        if missing:
+            raise ValueError(
+                "performance_metrics is missing required keys: "
+                + ", ".join(sorted(missing))
+            )
+        metrics = {
+            "drawdown": float(performance_metrics["drawdown"]),
+            "sharpe": float(performance_metrics["sharpe"]),
+        }
+        ctrl.meta_adapt(metrics)
     ctrl.update_metrics()
     return StepResult(
         rpe=rpe,
@@ -54,4 +68,5 @@ def dopamine_step(
         q_modulated=q_mod,
         go=go,
         no_go=no_go,
+        hold=hold,
     )

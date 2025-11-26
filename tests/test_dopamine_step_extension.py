@@ -123,6 +123,7 @@ def test_dopamine_step_executes_full_pipeline(controller: DopamineController) ->
 
     assert result["go"] is (expected_da > cfg_before["invigoration_threshold"])
     assert result["no_go"] is (expected_da < cfg_before["no_go_threshold"])
+    assert result["hold"] is (not result["go"] and not result["no_go"])
 
     assert controller.config["learning_rate_v"] == pytest.approx(
         cfg_before["learning_rate_v"] * 1.01, rel=1e-6
@@ -141,3 +142,36 @@ def test_dopamine_step_executes_full_pipeline(controller: DopamineController) ->
         -controller.config["temp_k"] * controller.dopamine_level
     )
     assert logged_temp == pytest.approx(expected_logged_temp, rel=1e-6)
+
+
+def test_dopamine_step_allows_gamma_override(controller: DopamineController) -> None:
+    result = dopamine_step(
+        ctrl=controller,
+        reward=1.0,
+        value=0.5,
+        next_value=0.25,
+        reward_proxy=0.2,
+        novelty=0.0,
+        momentum=0.0,
+        value_gap=0.0,
+        original_q=0.0,
+        discount_gamma=0.5,
+    )
+
+    assert result["rpe"] == pytest.approx(1.0 + 0.5 * 0.25 - 0.5, rel=1e-6)
+
+
+def test_meta_adapt_requires_expected_metrics(controller: DopamineController) -> None:
+    with pytest.raises(ValueError, match="performance_metrics is missing required keys"):
+        dopamine_step(
+            ctrl=controller,
+            reward=0.0,
+            value=0.0,
+            next_value=0.0,
+            reward_proxy=0.0,
+            novelty=0.0,
+            momentum=0.0,
+            value_gap=0.0,
+            original_q=0.0,
+            performance_metrics={"drawdown": 0.0},
+        )
