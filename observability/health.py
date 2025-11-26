@@ -102,8 +102,9 @@ class HealthServer:
 
     @property
     def port(self) -> int:
-        host, port = self._server.server_address
-        return int(port)
+        addr = self._server.server_address
+        # server_address is (host, port) for IPv4 or (host, port, flow, scope) for IPv6
+        return int(addr[1])
 
     def start(self) -> None:
         if self._started.is_set():
