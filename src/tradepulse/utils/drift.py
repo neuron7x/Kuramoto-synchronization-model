@@ -178,10 +178,12 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
             return float("nan")
         total1 = arr1.sum()
         total2 = arr2.sum()
-        if total1 > 0:
-            arr1 = arr1 / total1
-        if total2 > 0:
-            arr2 = arr2 / total2
+        # Degenerate distributions (all zeros) should return NaN without
+        # emitting runtime warnings from SciPy's normalisation step.
+        if total1 <= 0 or total2 <= 0:
+            return float("nan")
+        arr1 = arr1 / total1
+        arr2 = arr2 / total2
     else:
         # When samples have different lengths treat them as empirical
         # observations and build discrete probability distributions over the

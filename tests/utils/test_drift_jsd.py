@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -64,3 +65,13 @@ def test_compute_js_divergence_handles_different_lengths(drift):
     # Different length arrays should be handled gracefully (empirical mode)
     result = drift.compute_js_divergence(data1, data2)
     assert np.isfinite(result) or np.isnan(result)
+
+
+def test_compute_js_divergence_zero_only_returns_nan_without_warnings(drift):
+    """Zero-sum distributions should short-circuit instead of warning."""
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = drift.compute_js_divergence(np.zeros(4), np.zeros(4))
+
+    assert np.isnan(result)
