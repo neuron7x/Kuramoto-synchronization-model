@@ -111,7 +111,7 @@ class AgentTradeOrchestrator:
             "current_position": float(observation.position),
         }
 
-        price = float(market_frame[self._price_column].iloc[-1])
+        float(market_frame[self._price_column].iloc[-1])
         signal = Signal(
             symbol=self._symbol,
             action=signal_action,

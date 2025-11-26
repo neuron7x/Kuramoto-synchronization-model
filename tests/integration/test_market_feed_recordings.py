@@ -173,7 +173,7 @@ class TestDDMIntegration:
         ]
 
         for recording_name in recordings:
-            recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
+            MarketFeedRecording.read_jsonl(FIXTURES_DIR / recording_name)
 
             # Test with various dopamine levels
             for da_level in [0.1, 0.3, 0.5, 0.7, 0.9]:

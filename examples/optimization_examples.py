@@ -620,14 +620,14 @@ def example_indicator_cache():
     data = np.random.randn(10000)
 
     # Перший виклик - miss
-    result1 = cache.get_or_compute(
+    cache.get_or_compute(
         key="mean_indicator",
         data=data,
         compute_fn=lambda: compute_expensive_indicator(data),
     )
 
     # Другий виклик на тих самих даних - hit
-    result2 = cache.get_or_compute(
+    cache.get_or_compute(
         key="mean_indicator",
         data=data,
         compute_fn=lambda: compute_expensive_indicator(data),

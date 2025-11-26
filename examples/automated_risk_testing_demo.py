@@ -253,7 +253,7 @@ def demo_comprehensive_report():
 
     # Run all tests
     print("\nExecuting comprehensive test suite...")
-    results = tester.run_all_scenarios()
+    tester.run_all_scenarios()
 
     # Generate and save report
     print("\nGenerating comprehensive report...")

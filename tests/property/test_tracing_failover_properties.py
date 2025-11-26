@@ -17,9 +17,9 @@ HealthCheck = hypothesis.HealthCheck
 given = hypothesis.given
 settings = hypothesis.settings
 
-from tests.unit.observability.test_tracing import (
+from tests.unit.observability.test_tracing import (  # noqa: E402
     _install_stub_opentelemetry,
-)  # noqa: E402
+)
 
 FAILOVER_KEYS = (
     "pipeline.failover",

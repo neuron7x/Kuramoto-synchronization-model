@@ -288,7 +288,7 @@ def test_throughput_stress_test(recordings_dir: Path) -> None:
 
     for _ in range(iterations):
         ticks, _ = load_replay_recording(recording_path)
-        metrics = compute_performance_metrics(ticks)
+        compute_performance_metrics(ticks)
 
     elapsed = time.perf_counter() - start
     processing_rate = iterations / elapsed

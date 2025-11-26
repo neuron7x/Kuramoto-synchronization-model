@@ -539,7 +539,7 @@ class TestIntegration:
         assert governance.validate_market_event("ticks", event_data) is True
 
         # Log decision
-        audit_record = governance.log_audit_event(
+        governance.log_audit_event(
             event_type="market_data_ingestion",
             actor="data_ingestion_service",
             component="market_feed",

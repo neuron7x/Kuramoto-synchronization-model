@@ -187,11 +187,10 @@ class TestDeploymentSafety:
 
     def test_backward_compatibility_validation(self):
         """Test backward compatibility with older clients."""
-        api_versions = ["v1", "v2", "v3"]
         supported_versions = ["v2", "v3"]
 
         # Check if v1 clients can still work
-        supports_v1 = "v1" in supported_versions or len(supported_versions) > 0
+        "v1" in supported_versions or len(supported_versions) > 0
 
         # In real scenario, would test API compatibility
         assert len(supported_versions) > 0
@@ -242,8 +241,6 @@ class TestRollbackMechanisms:
     def test_rollback_verification(self):
         """Test verification after rollback."""
         # Simulate rollback
-        current_version = "v2.0.0"
-        rolled_back_version = "v1.0.0"
 
         # Verify rollback successful
         error_rate_after_rollback = 0.01
@@ -357,7 +354,6 @@ class TestStabilityMonitoring:
 
     def test_stability_degradation_alert(self):
         """Test alerting on stability degradation."""
-        baseline_stability = 0.95
         current_stability = 0.85
         alert_threshold = 0.90
 
