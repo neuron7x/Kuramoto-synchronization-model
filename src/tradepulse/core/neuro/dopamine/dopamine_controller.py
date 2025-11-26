@@ -378,15 +378,10 @@ class DopamineController:
         if not math.isfinite(theta_val):
             raise ValueError("theta must be finite")
 
-        for weight_key, label in (
-            ("w_r", "w_r"),
-            ("w_n", "w_n"),
-            ("w_m", "w_m"),
-            ("w_v", "w_v"),
-        ):
+        for weight_key in ("w_r", "w_n", "w_m", "w_v"):
             weight_value = float(cfg[weight_key])
             if not math.isfinite(weight_value) or weight_value < 0.0:
-                raise ValueError(f"{label} must be ≥ 0")
+                raise ValueError(f"{weight_key} must be ≥ 0")
 
         if cfg["novelty_mode"] not in _ALLOWED_NOVELTY_MODES:
             raise ValueError(f"novelty_mode must be one of {_ALLOWED_NOVELTY_MODES}")
