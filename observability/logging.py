@@ -117,9 +117,8 @@ def configure_logging(
 
     new_handler: logging.Handler
     if sink is None:
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-        new_handler = stream_handler
+        new_handler = logging.StreamHandler()
+        new_handler.setFormatter(formatter)
     else:
         new_handler = _StructuredSinkHandler(sink, formatter)
 
