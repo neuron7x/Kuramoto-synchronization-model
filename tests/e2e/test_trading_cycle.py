@@ -81,7 +81,7 @@ def test_end_to_end_trading_cycle(tmp_path: Path) -> None:
     )
 
     loop = system.ensure_live_loop()
-    order = system.submit_signal(
+    system.submit_signal(
         latest_signal,
         venue="BINANCE",
         quantity=0.25,

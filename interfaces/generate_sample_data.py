@@ -42,7 +42,7 @@ def generate_trending_prices(
     rng = np.random.default_rng(seed)
 
     # Create trend component
-    trend_component = np.linspace(0, trend * n, n)
+    np.linspace(0, trend * n, n)
 
     # Create noise component
     noise = rng.normal(0, volatility, n)
