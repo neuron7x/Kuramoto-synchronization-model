@@ -22,4 +22,3 @@ async def test_adapter_combines_amm_and_neuro() -> None:
     assert "amm" in response
     assert "neuro" in response
     assert response["neuro"]["modulated_candidates"], "Candidates should not be empty"
-

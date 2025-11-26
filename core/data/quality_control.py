@@ -8,8 +8,6 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
 
-from typing_extensions import Literal
-
 import numpy as np
 import pandas as pd
 from pydantic import (
@@ -23,6 +21,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Literal
 
 from core.data.validation import (
     TimeSeriesValidationConfig,
@@ -256,9 +255,7 @@ class QualityReport:
         detail = "; ".join(reasons) or "Batch blocked by quality gate"
         raise QualityGateError(detail)
 
-    def summarise(
-        self, gate: "QualityGateConfig" | None = None
-    ) -> "QualitySummary":
+    def summarise(self, gate: "QualityGateConfig" | None = None) -> "QualitySummary":
         """Return structured quality metrics for observability and reporting."""
 
         return summarise_quality(self, gate)
@@ -323,8 +320,7 @@ class QualitySummary:
                 for outcome in self.validator_outcomes
             ],
             "range_limits": {
-                column: dict(limits)
-                for column, limits in self.range_limits.items()
+                column: dict(limits) for column, limits in self.range_limits.items()
             },
             "anomaly_threshold": self.anomaly_threshold,
             "anomaly_window": self.anomaly_window,
@@ -353,7 +349,8 @@ def summarise_quality(
     spike_rows = int(report.spikes.shape[0])
     denominator = max(total_rows, 1)
     range_violation_rows = {
-        column: int(payload.shape[0]) for column, payload in report.range_violations.items()
+        column: int(payload.shape[0])
+        for column, payload in report.range_violations.items()
     }
 
     range_limits: Dict[str, Dict[str, float | bool | None]] = {}
@@ -366,8 +363,12 @@ def summarise_quality(
         anomaly_window = int(gate.anomaly_window)
         for check in gate.range_checks:
             range_limits[check.column] = {
-                "min_value": float(check.min_value) if check.min_value is not None else None,
-                "max_value": float(check.max_value) if check.max_value is not None else None,
+                "min_value": (
+                    float(check.min_value) if check.min_value is not None else None
+                ),
+                "max_value": (
+                    float(check.max_value) if check.max_value is not None else None
+                ),
                 "inclusive_min": bool(check.inclusive_min),
                 "inclusive_max": bool(check.inclusive_max),
             }
@@ -431,7 +432,11 @@ def summarise_quality(
             name="anomaly-and-contract",
             category="semantics",
             status=semantics_status,
-            detail="; ".join(semantics_notes) if semantics_notes else "All semantic checks passed",
+            detail=(
+                "; ".join(semantics_notes)
+                if semantics_notes
+                else "All semantic checks passed"
+            ),
         )
     )
 
@@ -442,11 +447,20 @@ def summarise_quality(
         security_detail = f"{duplicate_rows} duplicate rows quarantined"
     if clean_rows:
         timestamp_column = None
-        if gate is not None and gate.validation_schema.timestamp_column in report.clean.columns:
+        if (
+            gate is not None
+            and gate.validation_schema.timestamp_column in report.clean.columns
+        ):
             timestamp_column = gate.validation_schema.timestamp_column
-        elif report.clean.columns.size > 0 and report.clean.columns[0] in report.clean.columns:
+        elif (
+            report.clean.columns.size > 0
+            and report.clean.columns[0] in report.clean.columns
+        ):
             timestamp_column = report.clean.columns[0]
-        if timestamp_column is not None and report.clean[timestamp_column].duplicated().any():
+        if (
+            timestamp_column is not None
+            and report.clean[timestamp_column].duplicated().any()
+        ):
             security_status = "fail"
             security_detail = "Duplicate timestamps remained in the clean dataset"
 

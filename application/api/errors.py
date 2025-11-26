@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum
 from collections.abc import Mapping, Sequence
+from enum import Enum
 from http import HTTPStatus
 from typing import Any
 
@@ -156,7 +156,9 @@ def register_exception_handlers(
             return value
         if isinstance(value, Mapping):
             return {key: _make_json_safe(item) for key, item in value.items()}
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
             return [_make_json_safe(item) for item in value]
         return str(value)
 

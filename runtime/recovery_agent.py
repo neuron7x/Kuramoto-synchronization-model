@@ -1,4 +1,5 @@
 """Adaptive recovery agent for crisis mitigation."""
+
 from __future__ import annotations
 
 import logging
@@ -62,12 +63,18 @@ class AdaptiveRecoveryAgent:
 
     # State handling -----------------------------------------------------
     def discretize_state(self, state: RecoveryState) -> Tuple[int, int, int]:
-        deviation = 0.0 if state.F_baseline == 0 else (
-            (state.F_current - state.F_baseline) / state.F_baseline
+        deviation = (
+            0.0
+            if state.F_baseline == 0
+            else ((state.F_current - state.F_baseline) / state.F_baseline)
         )
         F_bin = int(np.clip(deviation * 100, 0, 2 * self.state_bins - 1))
         spike_bin = int(np.clip(state.latency_spike - 1.0, 0, 2 * self.state_bins - 1))
-        duration_bin = int(np.clip(state.steps_in_crisis / max(self.state_bins, 1), 0, self.state_bins - 1))
+        duration_bin = int(
+            np.clip(
+                state.steps_in_crisis / max(self.state_bins, 1), 0, self.state_bins - 1
+            )
+        )
         return F_bin, spike_bin, duration_bin
 
     # Policy -------------------------------------------------------------
@@ -77,7 +84,10 @@ class AdaptiveRecoveryAgent:
             action = self._rng.choice(RecoveryAction.ALL)
             logger.debug("Exploration step: action=%s state=%s", action, discrete_state)
         else:
-            values = {action: self.Q[(discrete_state, action)] for action in RecoveryAction.ALL}
+            values = {
+                action: self.Q[(discrete_state, action)]
+                for action in RecoveryAction.ALL
+            }
             action = max(values, key=values.get)
             logger.debug(
                 "Exploitation step: action=%s q=%.6f state=%s",
@@ -129,9 +139,21 @@ class AdaptiveRecoveryAgent:
     # Utilities ----------------------------------------------------------
     def get_recovery_params(self, action: str) -> Dict[str, float]:
         mapping = {
-            RecoveryAction.SLOW: {"mutation_rate": 0.1, "recovery_speed": 1.05, "generations": 10},
-            RecoveryAction.MEDIUM: {"mutation_rate": 0.3, "recovery_speed": 1.15, "generations": 30},
-            RecoveryAction.FAST: {"mutation_rate": 0.5, "recovery_speed": 1.30, "generations": 50},
+            RecoveryAction.SLOW: {
+                "mutation_rate": 0.1,
+                "recovery_speed": 1.05,
+                "generations": 10,
+            },
+            RecoveryAction.MEDIUM: {
+                "mutation_rate": 0.3,
+                "recovery_speed": 1.15,
+                "generations": 30,
+            },
+            RecoveryAction.FAST: {
+                "mutation_rate": 0.5,
+                "recovery_speed": 1.30,
+                "generations": 50,
+            },
         }
         return mapping[action]
 

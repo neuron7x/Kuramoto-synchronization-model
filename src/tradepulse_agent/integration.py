@@ -143,6 +143,8 @@ class AgentTradeOrchestrator:
             delta = abs(float(price_series.iloc[-1] - price_series.iloc[-2]))
         else:
             delta = 0.0
-        scaled = fraction + cfg.confidence_scale * delta / max(float(price_series.iloc[-1]), 1e-9)
+        scaled = fraction + cfg.confidence_scale * delta / max(
+            float(price_series.iloc[-1]), 1e-9
+        )
         confidence = max(cfg.min_confidence, min(1.0, scaled))
         return float(confidence)

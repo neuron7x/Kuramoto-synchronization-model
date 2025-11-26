@@ -254,7 +254,9 @@ def test_default_payload_encoder_serialises_dataclasses_and_datetimes() -> None:
         topic=EventTopic.ORDERS,
     )
 
-    payload = Payload(symbol="BTC-USD", created_at=datetime(2024, 1, 2, tzinfo=timezone.utc))
+    payload = Payload(
+        symbol="BTC-USD", created_at=datetime(2024, 1, 2, tzinfo=timezone.utc)
+    )
     request = GatewayRequest(path="/orders", method="POST", payload=payload)
 
     result = router.route_request(request)

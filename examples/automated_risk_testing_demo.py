@@ -4,14 +4,13 @@ This script demonstrates how to use the automated risk testing module
 to validate risk management systems with various market scenarios.
 """
 
+# Import directly from module files to avoid dependency issues
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
-
-# Import directly from module files to avoid dependency issues
-import importlib.util
 
 # Load risk_core first
 risk_core_spec = importlib.util.spec_from_file_location(
@@ -34,7 +33,9 @@ auto_test_spec.loader.exec_module(auto_test_module)
 AutomatedRiskTester = auto_test_module.AutomatedRiskTester
 MonteCarloConfig = auto_test_module.MonteCarloConfig
 generate_flash_crash_scenarios = auto_test_module.generate_flash_crash_scenarios
-generate_liquidity_crisis_scenarios = auto_test_module.generate_liquidity_crisis_scenarios
+generate_liquidity_crisis_scenarios = (
+    auto_test_module.generate_liquidity_crisis_scenarios
+)
 generate_market_stress_scenarios = auto_test_module.generate_market_stress_scenarios
 validate_risk_metrics = auto_test_module.validate_risk_metrics
 
@@ -81,9 +82,7 @@ def demo_market_stress_testing():
     print("=" * 80)
 
     # Initialize tester
-    tester = AutomatedRiskTester(
-        es_limit=0.03, var_alpha=0.975, f_max=1.0, seed=42
-    )
+    tester = AutomatedRiskTester(es_limit=0.03, var_alpha=0.975, f_max=1.0, seed=42)
 
     # Generate market stress scenarios
     print("\nGenerating market stress scenarios...")
@@ -99,18 +98,20 @@ def demo_market_stress_testing():
     results = tester.run_all_scenarios()
 
     # Display results
-    print(f"\nStress Test Results:")
+    print("\nStress Test Results:")
     print("-" * 80)
     for result in results:
         status = "✓ PASS" if result.passed else "✗ FAIL"
-        print(f"{status} | {result.scenario_name:30} | "
-              f"VaR: {result.var:.4f} | ES: {result.es:.4f} | "
-              f"Breach: {result.risk_breach:6} | "
-              f"Sharpe: {result.sharpe_ratio:6.2f}")
+        print(
+            f"{status} | {result.scenario_name:30} | "
+            f"VaR: {result.var:.4f} | ES: {result.es:.4f} | "
+            f"Breach: {result.risk_breach:6} | "
+            f"Sharpe: {result.sharpe_ratio:6.2f}"
+        )
 
     # Generate summary
     summary = tester.generate_summary_report()
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total Scenarios: {summary['total_scenarios']}")
     print(f"  Passed: {summary['passed']}")
     print(f"  Failed: {summary['failed']}")
@@ -145,7 +146,7 @@ def demo_crisis_scenarios():
     results = tester.run_all_scenarios()
 
     # Display detailed results
-    print(f"\nCrisis Scenario Results:")
+    print("\nCrisis Scenario Results:")
     print("-" * 80)
     for result in results:
         status = "✓ PASS" if result.passed else "✗ FAIL"
@@ -157,7 +158,7 @@ def demo_crisis_scenarios():
         print(f"  Risk Breach: {result.risk_breach}")
 
         if result.validation_errors:
-            print(f"  Validation Errors:")
+            print("  Validation Errors:")
             for error in result.validation_errors:
                 print(f"    - {error}")
 
@@ -181,7 +182,7 @@ def demo_monte_carlo_simulation():
         seed=42,
     )
 
-    print(f"\nMonte Carlo Configuration:")
+    print("\nMonte Carlo Configuration:")
     print(f"  Simulations: {config.num_simulations}")
     print(f"  Periods per simulation: {config.num_periods}")
     print(f"  Expected daily return: {config.mu:.4%}")
@@ -198,29 +199,31 @@ def demo_monte_carlo_simulation():
     kellys = [r.kelly_fraction for r in results]
     breaches = sum(1 for r in results if r.risk_breach == "BREACH")
 
-    print(f"\nMonte Carlo Results:")
-    print(f"  VaR Statistics:")
+    print("\nMonte Carlo Results:")
+    print("  VaR Statistics:")
     print(f"    Mean: {np.mean(vars):.6f}")
     print(f"    Std: {np.std(vars):.6f}")
     print(f"    Min: {np.min(vars):.6f}")
     print(f"    Max: {np.max(vars):.6f}")
     print(f"    Median: {np.median(vars):.6f}")
 
-    print(f"\n  ES Statistics:")
+    print("\n  ES Statistics:")
     print(f"    Mean: {np.mean(ess):.6f}")
     print(f"    Std: {np.std(ess):.6f}")
     print(f"    Min: {np.min(ess):.6f}")
     print(f"    Max: {np.max(ess):.6f}")
     print(f"    Median: {np.median(ess):.6f}")
 
-    print(f"\n  Kelly Fraction Statistics:")
+    print("\n  Kelly Fraction Statistics:")
     print(f"    Mean: {np.mean(kellys):.6f}")
     print(f"    Std: {np.std(kellys):.6f}")
     print(f"    Min: {np.min(kellys):.6f}")
     print(f"    Max: {np.max(kellys):.6f}")
 
-    print(f"\n  Risk Breaches: {breaches} / {config.num_simulations} "
-          f"({breaches/config.num_simulations:.1%})")
+    print(
+        f"\n  Risk Breaches: {breaches} / {config.num_simulations} "
+        f"({breaches/config.num_simulations:.1%})"
+    )
 
 
 def demo_comprehensive_report():
@@ -257,7 +260,9 @@ def demo_comprehensive_report():
     summary = tester.generate_summary_report()
 
     # Save to file
-    output_file = Path(__file__).parent.parent / "test_results" / "risk_test_report.json"
+    output_file = (
+        Path(__file__).parent.parent / "test_results" / "risk_test_report.json"
+    )
     output_file.parent.mkdir(exist_ok=True)
 
     with open(output_file, "w") as f:
@@ -274,25 +279,39 @@ def demo_comprehensive_report():
     print(f"Failed: {summary['failed']}")
     print(f"Pass Rate: {summary['pass_rate']:.1%}")
 
-    print(f"\nAggregate Risk Metrics:")
-    print(f"  VaR: {summary['metrics']['var']['mean']:.6f} ± "
-          f"{summary['metrics']['var']['std']:.6f}")
-    print(f"  ES: {summary['metrics']['es']['mean']:.6f} ± "
-          f"{summary['metrics']['es']['std']:.6f}")
-    print(f"  Max Drawdown: {summary['metrics']['max_drawdown']['mean']:.4%} ± "
-          f"{summary['metrics']['max_drawdown']['std']:.4%}")
+    print("\nAggregate Risk Metrics:")
+    print(
+        f"  VaR: {summary['metrics']['var']['mean']:.6f} ± "
+        f"{summary['metrics']['var']['std']:.6f}"
+    )
+    print(
+        f"  ES: {summary['metrics']['es']['mean']:.6f} ± "
+        f"{summary['metrics']['es']['std']:.6f}"
+    )
+    print(
+        f"  Max Drawdown: {summary['metrics']['max_drawdown']['mean']:.4%} ± "
+        f"{summary['metrics']['max_drawdown']['std']:.4%}"
+    )
 
     if "sharpe_ratio" in summary["metrics"]:
-        print(f"  Sharpe Ratio: {summary['metrics']['sharpe_ratio']['mean']:.4f} ± "
-              f"{summary['metrics']['sharpe_ratio']['std']:.4f}")
+        print(
+            f"  Sharpe Ratio: {summary['metrics']['sharpe_ratio']['mean']:.4f} ± "
+            f"{summary['metrics']['sharpe_ratio']['std']:.4f}"
+        )
 
 
 def main():
     """Run all demos."""
     print("\n")
-    print("╔═══════════════════════════════════════════════════════════════════════════╗")
-    print("║           TradePulse Automated Risk Testing Module Demo                   ║")
-    print("╚═══════════════════════════════════════════════════════════════════════════╝")
+    print(
+        "╔═══════════════════════════════════════════════════════════════════════════╗"
+    )
+    print(
+        "║           TradePulse Automated Risk Testing Module Demo                   ║"
+    )
+    print(
+        "╚═══════════════════════════════════════════════════════════════════════════╝"
+    )
 
     try:
         demo_basic_risk_validation()
@@ -308,6 +327,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error during demo: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

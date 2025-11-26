@@ -17,16 +17,17 @@ No external deps beyond stdlib. Compatible with TradePulse EWSResult and domain 
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, Iterable, Mapping, Optional, Tuple, Literal
 import json
 import math
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Iterable, Literal, Mapping, Optional, Tuple
 
 Action = Literal["BUY", "SELL", "HOLD"]
 
 
 # ---------- helpers ----------
+
 
 def clamp(x: float, lo: float, hi: float) -> float:
     return x if (x >= lo and x <= hi) else (lo if x < lo else hi)
@@ -50,10 +51,11 @@ def softmax(d: Mapping[str, float], temperature: float) -> Dict[str, float]:
 
 # ---------- data ----------
 
+
 @dataclass(slots=True, frozen=True)
 class AgentVote:
     agent: str
-    score: float           # [-1, 1]
+    score: float  # [-1, 1]
     confidence: float = 1.0
     rationale: str = ""
 
@@ -61,8 +63,8 @@ class AgentVote:
 @dataclass(slots=True, frozen=True)
 class ConsensusDecision:
     action: Action
-    score: float           # [-1,1]
-    confidence: float      # [0,1]
+    score: float  # [-1,1]
+    confidence: float  # [0,1]
     weights: Mapping[str, float]
     votes: Tuple[AgentVote, ...]
 
@@ -70,19 +72,15 @@ class ConsensusDecision:
 # ---------- state ----------
 
 _DEFAULT_STATE = {
-    "reward_ema": {},          # agent -> r ∈ [-1,1]
-    "baseline_ema": 0.0,       # baseline outcome for RPE
-    "activation_ma": {},       # agent -> mean |score|
-    "eligibility": {},         # agent -> trace value
-    "reliability": {},         # agent -> calibration [0,1] (lower = worse)
-    "consolidated": {},        # agent -> last consolidated weight
-    "ph": {                    # Page–Hinkley stats
-        "mean": 0.0,
-        "m_t": 0.0,
-        "T": 0
-    },
-    "last_weights": {},        # previous step effective weights
-    "config": {}
+    "reward_ema": {},  # agent -> r ∈ [-1,1]
+    "baseline_ema": 0.0,  # baseline outcome for RPE
+    "activation_ma": {},  # agent -> mean |score|
+    "eligibility": {},  # agent -> trace value
+    "reliability": {},  # agent -> calibration [0,1] (lower = worse)
+    "consolidated": {},  # agent -> last consolidated weight
+    "ph": {"mean": 0.0, "m_t": 0.0, "T": 0},  # Page–Hinkley stats
+    "last_weights": {},  # previous step effective weights
+    "config": {},
 }
 
 
@@ -178,7 +176,9 @@ class NeuroConsensusAdapter:
             learned_f = {k: max(0.0, float(v)) for k, v in learned.items()}
             total_learned = sum(learned_f.values())
             if total_learned > 0:
-                prior_total = sum(float(w.get(k, 1.0)) for k in learned_f) or float(len(learned_f))
+                prior_total = sum(float(w.get(k, 1.0)) for k in learned_f) or float(
+                    len(learned_f)
+                )
                 scale = prior_total / total_learned
                 for k, v in learned_f.items():
                     w[k] = v * scale
@@ -201,7 +201,9 @@ class NeuroConsensusAdapter:
         override_weights: Optional[Mapping[str, float]] = None,
     ) -> Tuple[float, Dict[str, float]]:
         votes = tuple(votes)
-        weights = self._effective_weights(self.base_weights, learned_weights, override_weights)
+        weights = self._effective_weights(
+            self.base_weights, learned_weights, override_weights
+        )
         num = 0.0
         den = 0.0
         for v in votes:
@@ -234,9 +236,13 @@ class NeuroConsensusAdapter:
         margin = max(0.0, score_abs - theta)
         return clamp(1.0 + 1.5 * margin, 0.5, 2.5)
 
-    def _update_activation_ma(self, agent: str, score_abs: float, alpha: float = 0.05) -> None:
+    def _update_activation_ma(
+        self, agent: str, score_abs: float, alpha: float = 0.05
+    ) -> None:
         prev = float(self.state.s["activation_ma"].get(agent, 0.3))
-        self.state.s["activation_ma"][agent] = clamp(ema(prev, score_abs, alpha), 0.0, 1.0)
+        self.state.s["activation_ma"][agent] = clamp(
+            ema(prev, score_abs, alpha), 0.0, 1.0
+        )
 
     def _update_eligibility(self, agent: str, score: float) -> float:
         e_prev = float(self.state.s["eligibility"].get(agent, 0.0))
@@ -244,7 +250,9 @@ class NeuroConsensusAdapter:
         self.state.s["eligibility"][agent] = clamp(e_new, -5.0, 5.0)
         return self.state.s["eligibility"][agent]
 
-    def _update_reliability(self, agent: str, realized: float, score: float, beta: float = 0.05) -> None:
+    def _update_reliability(
+        self, agent: str, realized: float, score: float, beta: float = 0.05
+    ) -> None:
         """Running calibration proxy: lower error → higher reliability."""
         # Expected sign = sign(score), target = sign(realized)
         # error in [0,1]: 0 when aligned, 1 when opposite; neutral 0.5 if score≈0
@@ -275,11 +283,16 @@ class NeuroConsensusAdapter:
             prev = float(cons.get(k, w))
             cons[k] = (1 - beta) * prev + beta * float(w)
 
-    def _apply_energy_budget(self, old: Mapping[str, float], new: Dict[str, float]) -> Dict[str, float]:
+    def _apply_energy_budget(
+        self, old: Mapping[str, float], new: Dict[str, float]
+    ) -> Dict[str, float]:
         if self.energy_budget is None:
             return new
         budget = float(self.energy_budget)
-        total_delta = sum(abs(float(new.get(k, 0.0)) - float(old.get(k, 0.0))) for k in set(old) | set(new))
+        total_delta = sum(
+            abs(float(new.get(k, 0.0)) - float(old.get(k, 0.0)))
+            for k in set(old) | set(new)
+        )
         if total_delta <= budget or total_delta == 0.0:
             return new
         # scale down deltas to fit budget
@@ -294,12 +307,15 @@ class NeuroConsensusAdapter:
     def _r_to_preweight(self, r: float) -> float:
         # map [-1,1] → [eps, 1] with contrast gamma
         x = clamp((r + 1.0) / 2.0, 0.0, 1.0)
-        return max(1e-3, x ** self.gamma_reward)
+        return max(1e-3, x**self.gamma_reward)
 
     def learned_weights(self) -> Dict[str, float]:
         rewards: Mapping[str, float] = self.state.s.get("reward_ema", {})
         rel: Mapping[str, float] = self.state.s.get("reliability", {})
-        pre = {k: self._r_to_preweight(float(v)) * max(0.1, float(rel.get(k, 0.5))) for k, v in rewards.items()}
+        pre = {
+            k: self._r_to_preweight(float(v)) * max(0.1, float(rel.get(k, 0.5)))
+            for k, v in rewards.items()
+        }
         if not pre:
             return {}
         w_soft = softmax(pre, self.tau)
@@ -310,7 +326,9 @@ class NeuroConsensusAdapter:
             for k in set(pre) | set(cons):
                 p = float(w_soft.get(k, 0.0))
                 c = float(cons.get(k, p))
-                w_out[k] = clamp((1 - self.ewc_strength) * p + self.ewc_strength * c, 0.0, 1.0)
+                w_out[k] = clamp(
+                    (1 - self.ewc_strength) * p + self.ewc_strength * c, 0.0, 1.0
+                )
             w_soft = w_out
         # ensure normalization
         s = sum(w_soft.values()) or 1.0
@@ -328,14 +346,20 @@ class NeuroConsensusAdapter:
         votes = tuple(votes)
         # use current learned weights if not provided
         lw = dict(learned_weights or self.learned_weights())
-        score, weights = self.aggregate(votes, learned_weights=lw, override_weights=override_weights)
+        score, weights = self.aggregate(
+            votes, learned_weights=lw, override_weights=override_weights
+        )
         action: Action = self.score_to_action(score)
         conf = self.confidence_from_score(score)
         # persist last weights
         self.state.s["last_weights"] = dict(weights)
-        return ConsensusDecision(action=action, score=score, confidence=conf, weights=weights, votes=votes)
+        return ConsensusDecision(
+            action=action, score=score, confidence=conf, weights=weights, votes=votes
+        )
 
-    def update_feedback(self, realized: float, agent_scores: Mapping[str, float]) -> Dict[str, float]:
+    def update_feedback(
+        self, realized: float, agent_scores: Mapping[str, float]
+    ) -> Dict[str, float]:
         """Neuro-inspired weight learning from outcome and agent scores.
 
         realized ∈ [-1,1], agent_scores: {agent: score∈[-1,1]} from the decision timestep.

@@ -58,7 +58,9 @@ class LiquidityShock:
         if not 0.0 <= self.severity <= 1.0:
             raise ValueError("severity must be between 0 and 1")
         if self.spread_widening < -0.99:
-            raise ValueError("spread_widening cannot shrink the spread below 1% of base")
+            raise ValueError(
+                "spread_widening cannot shrink the spread below 1% of base"
+            )
 
     def is_active(self, index: int) -> bool:
         return self.start <= index < self.start + self.duration
@@ -273,7 +275,9 @@ class SyntheticScenarioGenerator:
             for name, strategy in strategies.items():
                 metric = float(strategy(scenario))
                 evaluations.append(
-                    StrategyEvaluation(strategy=name, scenario=scenario.name, metric=metric)
+                    StrategyEvaluation(
+                        strategy=name, scenario=scenario.name, metric=metric
+                    )
                 )
             results.append(
                 ControlledExperiment(
@@ -314,16 +318,16 @@ class SyntheticScenarioGenerator:
         volatility_multiplier = np.ones(length - 1, dtype=float)
         for shift in volatility_shifts:
             end_index = min(length - 1, shift.start + shift.duration)
-            volatility_multiplier[shift.start:end_index] *= shift.multiplier
+            volatility_multiplier[shift.start : end_index] *= shift.multiplier
 
         liquidity_scale = np.ones(length - 1, dtype=float)
         spread_multiplier = np.ones(length - 1, dtype=float)
         imbalance_series = np.full(length - 1, cfg.order_book.imbalance, dtype=float)
         for shock in liquidity_shocks:
             end_index = min(length - 1, shock.start + shock.duration)
-            liquidity_scale[shock.start:end_index] *= max(1e-6, 1.0 - shock.severity)
-            spread_multiplier[shock.start:end_index] *= 1.0 + shock.spread_widening
-            imbalance_series[shock.start:end_index] += shock.imbalance_shift
+            liquidity_scale[shock.start : end_index] *= max(1e-6, 1.0 - shock.severity)
+            spread_multiplier[shock.start : end_index] *= 1.0 + shock.spread_widening
+            imbalance_series[shock.start : end_index] += shock.imbalance_shift
 
         np.clip(imbalance_series, -0.95, 0.95, out=imbalance_series)
 
@@ -347,13 +351,15 @@ class SyntheticScenarioGenerator:
             mu = drift_series[t]
             sigma = volatility_series[t] * volatility_multiplier[t]
             effective_vol_series[t] = sigma
-            drift_term = (mu - 0.5 * sigma ** 2) * dt
+            drift_term = (mu - 0.5 * sigma**2) * dt
             shock = rng.normal(loc=drift_term, scale=sigma * sqrt_dt)
             log_price += float(shock)
             prices[t + 1] = float(np.exp(log_price))
             returns[t] = prices[t + 1] / prices[t] - 1.0
 
-            volatility_factor = 1.0 + spread_sensitivity * (volatility_multiplier[t] - 1.0)
+            volatility_factor = 1.0 + spread_sensitivity * (
+                volatility_multiplier[t] - 1.0
+            )
             spread = base_spread * spread_multiplier[t] * max(volatility_factor, 1e-3)
             imbalance = float(imbalance_series[t])
             bid_multiplier = max(1e-6, 1.0 + imbalance)

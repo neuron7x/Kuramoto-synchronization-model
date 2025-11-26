@@ -6,9 +6,9 @@ and their relationships within the system architecture.
 
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Sequence
 
-from core.architecture_integrator.component import Component, ComponentMetadata
+from core.architecture_integrator.component import Component
 
 
 class ComponentRegistry:
@@ -84,11 +84,7 @@ class ComponentRegistry:
 
     def get_by_tag(self, tag: str) -> Sequence[Component]:
         """Return all components with the specified tag."""
-        return [
-            comp
-            for comp in self._components.values()
-            if tag in comp.metadata.tags
-        ]
+        return [comp for comp in self._components.values() if tag in comp.metadata.tags]
 
     def get_by_capability(self, capability: str) -> Sequence[Component]:
         """Return all components that provide a specific capability."""

@@ -35,7 +35,9 @@ def _build_resilient_graph() -> nx.DiGraph:
     graph.add_node("ingest", cpu_norm=0.55)
     graph.add_node("matcher", cpu_norm=0.52)
     graph.add_node("risk", cpu_norm=0.57)
-    graph.add_edge("ingest", "matcher", type="metallic", latency_norm=0.45, coherency=0.88)
+    graph.add_edge(
+        "ingest", "matcher", type="metallic", latency_norm=0.45, coherency=0.88
+    )
     graph.add_edge("matcher", "risk", type="hydrogen", latency_norm=0.5, coherency=0.83)
     graph.add_edge("risk", "ingest", type="metallic", latency_norm=0.48, coherency=0.85)
     return graph
@@ -69,7 +71,9 @@ def test_ga_evolution_respects_monotonicity_budget() -> None:
     assert F_new <= F_old + epsilon_spike
 
 
-def _build_degraded_topology(topology: List[Tuple[str, str, str]]) -> List[Tuple[str, str, str]]:
+def _build_degraded_topology(
+    topology: List[Tuple[str, str, str]],
+) -> List[Tuple[str, str, str]]:
     mutated: List[Tuple[str, str, str]] = []
     threshold = max(1, int(0.2 * len(topology)))
     for idx, (src, dst, bond) in enumerate(topology):
@@ -103,7 +107,9 @@ def test_worsened_topology_trips_monotonicity_guardrail() -> None:
     F_old = controller._compute_free_energy(snapshot=snapshot)
 
     degraded_topology = _build_degraded_topology(list(controller.current_topology))
-    F_bad = controller._compute_free_energy(topology=degraded_topology, snapshot=snapshot)
+    F_bad = controller._compute_free_energy(
+        topology=degraded_topology, snapshot=snapshot
+    )
 
     tolerance = controller._check_monotonic_with_tolerance(F_old, F_bad)
     assert not tolerance.accepted

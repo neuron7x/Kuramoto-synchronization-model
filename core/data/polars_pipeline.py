@@ -70,12 +70,16 @@ def _infer_file_format(path: str | Path, explicit: str | None) -> str:
     return "csv"
 
 
-def _apply_predicates(lazy_frame: "LazyFrame", predicates: Any, module: Any) -> "LazyFrame":
+def _apply_predicates(
+    lazy_frame: "LazyFrame", predicates: Any, module: Any
+) -> "LazyFrame":
     if predicates in (None, _UNSET):
         return lazy_frame
 
     def _iter_predicates() -> list[Any]:
-        if isinstance(predicates, Sequence) and not isinstance(predicates, (str, bytes)):
+        if isinstance(predicates, Sequence) and not isinstance(
+            predicates, (str, bytes)
+        ):
             return list(predicates)
         return [predicates]
 
@@ -381,7 +385,9 @@ def summarize_parquet_dataset(
     for file_path in paths:
         parquet_file = pa.parquet.ParquetFile(file_path)
         metadata = parquet_file.metadata
-        column_names = [metadata.schema.column(i).name for i in range(metadata.num_columns)]
+        column_names = [
+            metadata.schema.column(i).name for i in range(metadata.num_columns)
+        ]
         compression: dict[str, str] = {}
         if metadata.num_row_groups:
             row_group = metadata.row_group(0)

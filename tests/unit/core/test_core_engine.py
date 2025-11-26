@@ -25,7 +25,9 @@ class DummyDataFeed:
     def __init__(self, items: Iterable[MarketData]) -> None:
         self._items = tuple(items)
 
-    def fetch(self, context: EngineContext) -> Iterable[MarketData]:  # noqa: D401 - protocol implementation
+    def fetch(
+        self, context: EngineContext
+    ) -> Iterable[MarketData]:  # noqa: D401 - protocol implementation
         return self._items
 
 
@@ -35,7 +37,9 @@ class DummySignalGenerator:
     def __init__(self, mapping: Mapping[str, Iterable[Signal]]) -> None:
         self._mapping = {key: tuple(value) for key, value in mapping.items()}
 
-    def generate(self, data: MarketData, context: EngineContext) -> Iterable[Signal]:  # noqa: D401 - protocol implementation
+    def generate(
+        self, data: MarketData, context: EngineContext
+    ) -> Iterable[Signal]:  # noqa: D401 - protocol implementation
         return self._mapping.get(data.source, ())
 
 
@@ -45,7 +49,9 @@ class DummyRiskManager:
     def __init__(self, approvals: Mapping[str, bool]) -> None:
         self._approvals = dict(approvals)
 
-    def assess(self, signal: Signal, context: EngineContext) -> RiskDecision:  # noqa: D401 - protocol implementation
+    def assess(
+        self, signal: Signal, context: EngineContext
+    ) -> RiskDecision:  # noqa: D401 - protocol implementation
         return RiskDecision(approved=self._approvals.get(signal.name, True))
 
 
@@ -72,7 +78,9 @@ class DummyLogSink:
     def __init__(self) -> None:
         self.entries: list[LogEntry] = []
 
-    def emit(self, entry: LogEntry, context: EngineContext) -> None:  # noqa: D401 - protocol implementation
+    def emit(
+        self, entry: LogEntry, context: EngineContext
+    ) -> None:  # noqa: D401 - protocol implementation
         self.entries.append(entry)
 
 

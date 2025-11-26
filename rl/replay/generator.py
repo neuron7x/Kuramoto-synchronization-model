@@ -1,4 +1,5 @@
 """Simple data generator replay utility used in FHMC tests."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -15,6 +16,8 @@ class SimpleDGR:
             state = np.random.randn(self.dim_state).astype(np.float32)
             action = np.random.randn(self.dim_action).astype(np.float32)
             reward = float(np.random.randn() * 0.01)
-            next_state = state + 0.01 * np.random.randn(self.dim_state).astype(np.float32)
+            next_state = state + 0.01 * np.random.randn(self.dim_state).astype(
+                np.float32
+            )
             batch.append((state, action, reward, next_state))
         return batch

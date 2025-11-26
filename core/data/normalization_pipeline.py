@@ -173,7 +173,9 @@ def normalize_market_data(
                 tz=start.tz,
             )
             price_columns = [
-                column for column in ("open", "high", "low", "close") if column in ohlcv_raw
+                column
+                for column in ("open", "high", "low", "close")
+                if column in ohlcv_raw
             ]
             if price_columns:
                 present_mask = ~ohlcv_raw[price_columns].isna().all(axis=1)
@@ -204,7 +206,9 @@ def normalize_market_data(
     return MarketNormalizationResult(frame=ohlcv, metadata=metadata)
 
 
-def _prepare_frame(frame: pd.DataFrame, config: MarketNormalizationConfig) -> pd.DataFrame:
+def _prepare_frame(
+    frame: pd.DataFrame, config: MarketNormalizationConfig
+) -> pd.DataFrame:
     prepared = frame.copy()
     if not isinstance(prepared.index, pd.DatetimeIndex):
         if config.timestamp_col not in prepared.columns:
@@ -233,7 +237,9 @@ def _drop_duplicates(frame: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     return deduplicated, dropped
 
 
-def _resolve_frequency(index: pd.DatetimeIndex, explicit: str | None) -> tuple[str, bool]:
+def _resolve_frequency(
+    index: pd.DatetimeIndex, explicit: str | None
+) -> tuple[str, bool]:
     if explicit is not None:
         return explicit, False
     inferred = pd.infer_freq(index)
@@ -257,7 +263,9 @@ def _fill_gaps(frame: pd.DataFrame, method: FillMethod) -> pd.DataFrame:
         return frame
 
     filled = frame.copy()
-    price_cols = [col for col in ("open", "high", "low", "close", "price") if col in filled]
+    price_cols = [
+        col for col in ("open", "high", "low", "close", "price") if col in filled
+    ]
     volume_cols = [col for col in ("volume",) if col in filled]
 
     if method in {"ffill", "bfill"}:
@@ -296,7 +304,11 @@ def _from_ticks(
 
     if counts_index.tz is None and l1_index.tz is not None:
         counts.index = counts_index.tz_localize(l1_index.tz)
-    elif counts_index.tz is not None and l1_index.tz is not None and counts_index.tz != l1_index.tz:
+    elif (
+        counts_index.tz is not None
+        and l1_index.tz is not None
+        and counts_index.tz != l1_index.tz
+    ):
         counts.index = counts_index.tz_convert(l1_index.tz)
     empty_bins = counts[counts == 0].index
     if not empty_bins.empty:
@@ -360,4 +372,3 @@ __all__ = [
     "NormalisationKind",
     "normalize_market_data",
 ]
-

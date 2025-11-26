@@ -22,4 +22,3 @@ def test_secret_scanner_honors_ignore_file(tmp_path: Path) -> None:
     scanner = SecretScanner(min_entropy=3.5, min_length=20)
     findings = scanner.scan(tmp_path)
     assert not findings
-

@@ -77,7 +77,9 @@ class StrategyOrchestrationError(RuntimeError):
                 detail = error.__class__.__name__
             return f"{name}: {detail}"
 
-        message = ", ".join(_format_error(name, error) for name, error in self.errors.items())
+        message = ", ".join(
+            _format_error(name, error) for name, error in self.errors.items()
+        )
         super().__init__(
             f"Strategy orchestration failed for {len(self.errors)} flow(s): {message}"
         )

@@ -34,6 +34,7 @@ from .normalization import (
     resolve_indicator_normalizer,
 )
 
+
 @dataclass(frozen=True, slots=True)
 class PivotPoint:
     """Represents a confirmed local extremum in a time series."""
@@ -141,7 +142,10 @@ def detect_pivots(
         is_low = np.all(center <= left_segment) and np.all(center <= right_segment)
 
         if is_high:
-            best_other = max(np.max(left_segment, initial=-np.inf), np.max(right_segment, initial=-np.inf))
+            best_other = max(
+                np.max(left_segment, initial=-np.inf),
+                np.max(right_segment, initial=-np.inf),
+            )
             if center - best_other > tolerance:
                 highs.append(
                     PivotPoint(
@@ -244,7 +248,9 @@ def detect_pivot_divergences(
     price_scale = max(price_scale, tolerance)
     indicator_scale = max(indicator_scale, tolerance)
 
-    def match_pivot(target: PivotPoint, candidates: Iterable[PivotPoint]) -> Optional[PivotPoint]:
+    def match_pivot(
+        target: PivotPoint, candidates: Iterable[PivotPoint]
+    ) -> Optional[PivotPoint]:
         best: Optional[PivotPoint] = None
         best_dist = np.inf
         for candidate in candidates:
@@ -258,7 +264,10 @@ def detect_pivot_divergences(
                 best_dist = dist - (0.25 if not is_forward else 0.0)
                 continue
             candidate_score = dist - (0.25 if not is_forward else 0.0)
-            if candidate_score < best_dist or (np.isclose(candidate_score, best_dist) and candidate.index <= target.index):
+            if candidate_score < best_dist or (
+                np.isclose(candidate_score, best_dist)
+                and candidate.index <= target.index
+            ):
                 best = candidate
                 best_dist = candidate_score
         return best
@@ -367,4 +376,3 @@ __all__ = [
     "detect_pivots",
     "detect_pivot_divergences",
 ]
-

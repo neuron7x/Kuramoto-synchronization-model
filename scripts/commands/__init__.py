@@ -12,8 +12,8 @@ from . import (  # noqa: F401
     lint,
     live,
     proto,
-    system,
     supply_chain,
+    system,
     test,
 )
 from .base import CommandError, register

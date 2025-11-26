@@ -91,5 +91,3 @@ def test_agent_trade_orchestrator_executes_order(tmp_path: Path) -> None:
     next_observation = environment.step(AgentAction.BUY).observation
     sell_result = orchestrator.execute_action(AgentAction.SELL, next_observation)
     assert sell_result.signal is not None
-
-

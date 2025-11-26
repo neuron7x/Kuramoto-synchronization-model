@@ -86,6 +86,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight t
                             getattr(check, "error", f"Check failed for {name}")
                         )
             return frame
+
 else:  # pragma: no cover - alias for typing convenience when pandera is present
     Check = pa.Check
     Column = pa.Column

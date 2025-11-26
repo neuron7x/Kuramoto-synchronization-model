@@ -4,7 +4,6 @@ import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 
-import pandas as pd
 import pytest
 
 from core.altdata.social_listening import (
@@ -55,9 +54,13 @@ def test_social_listening_processor_grouped_aggregation() -> None:
     config = SocialListeningConfig(window=timedelta(minutes=15), frequency="1min")
     processor = SocialListeningProcessor(config=config)
     posts = [
-        SocialPost(timestamp=_ts(0), platform="twitter", text="BTC 🚀", symbols=["BTC"]),
+        SocialPost(
+            timestamp=_ts(0), platform="twitter", text="BTC 🚀", symbols=["BTC"]
+        ),
         SocialPost(timestamp=_ts(1), platform="reddit", text="BTC 🚀", symbols=["BTC"]),
-        SocialPost(timestamp=_ts(2), platform="twitter", text="ETH 😡", symbols=["ETH"]),
+        SocialPost(
+            timestamp=_ts(2), platform="twitter", text="ETH 😡", symbols=["ETH"]
+        ),
     ]
     processor.ingest(posts)
     aggregated = processor.aggregate()

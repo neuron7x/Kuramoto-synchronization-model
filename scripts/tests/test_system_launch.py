@@ -11,13 +11,15 @@ from scripts.commands import system
 from scripts.commands.base import CommandError
 
 
-def test_validate_environment_reads_env_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_validate_environment_reads_env_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     env_file = tmp_path / "compose.env"
     env_file.write_text(
         "\n".join(
             (
-                "TRADEPULSE_AUDIT_SECRET=audit", 
-                "TRADEPULSE_RBAC_AUDIT_SECRET=rbac", 
+                "TRADEPULSE_AUDIT_SECRET=audit",
+                "TRADEPULSE_RBAC_AUDIT_SECRET=rbac",
                 "EXTRA_FLAG=true",
             )
         ),
@@ -41,7 +43,9 @@ def test_validate_environment_raises_for_missing_required(tmp_path: Path) -> Non
         system.validate_environment(env_file, system.REQUIRED_ENV_VARS)
 
 
-def test_wait_for_healthy_services_eventually_succeeds(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_wait_for_healthy_services_eventually_succeeds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     status_sequence = [
         [system.ServiceStatus(name="tradepulse", state="running", health="starting")],
         [
@@ -70,7 +74,9 @@ def test_wait_for_healthy_services_eventually_succeeds(monkeypatch: pytest.Monke
 
 def test_wait_for_healthy_services_times_out(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_fetch(_: Path, __: object) -> list[system.ServiceStatus]:
-        return [system.ServiceStatus(name="tradepulse", state="running", health="starting")]
+        return [
+            system.ServiceStatus(name="tradepulse", state="running", health="starting")
+        ]
 
     monkeypatch.setattr(system.time, "sleep", lambda _: None)
 
@@ -87,7 +93,9 @@ def test_wait_for_healthy_services_times_out(monkeypatch: pytest.MonkeyPatch) ->
     assert "tradepulse=starting" in str(excinfo.value)
 
 
-def test_wait_for_healthy_services_detects_missing_required(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_wait_for_healthy_services_detects_missing_required(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def fake_fetch(_: Path, __: object) -> list[system.ServiceStatus]:
         return [system.ServiceStatus(name="prometheus", state="running", health=None)]
 

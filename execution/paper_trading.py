@@ -118,8 +118,12 @@ class PaperTradingEngine:
         if telemetry_listeners:
             self._listeners.extend(telemetry_listeners)
 
-    def _record_event(self, event: str, timestamp: float, **attributes: object) -> TelemetryEvent:
-        payload = TelemetryEvent(timestamp=timestamp, event=event, attributes=dict(attributes))
+    def _record_event(
+        self, event: str, timestamp: float, **attributes: object
+    ) -> TelemetryEvent:
+        payload = TelemetryEvent(
+            timestamp=timestamp, event=event, attributes=dict(attributes)
+        )
         for listener in self._listeners:
             listener(payload)
         return payload
@@ -180,7 +184,9 @@ class PaperTradingEngine:
             )
         )
 
-        filled = self._connector.apply_fill(placed.order_id or "", executed_quantity, execution_price)
+        filled = self._connector.apply_fill(
+            placed.order_id or "", executed_quantity, execution_price
+        )
         telemetry.append(
             self._record_event(
                 "order.fill",
@@ -214,9 +220,7 @@ class PaperTradingEngine:
                 f"Order {final_order.order_id or '<unknown>'} ended in status {final_order.status.value}"
             )
         if abs(final_order.filled_quantity - executed_quantity) > 1e-9:
-            issues.append(
-                "Filled quantity does not match executed_quantity"
-            )
+            issues.append("Filled quantity does not match executed_quantity")
 
         fill_event = FillEvent(
             quantity=executed_quantity,
@@ -237,4 +241,3 @@ class PaperTradingEngine:
             ),
             stability_issues=tuple(issues),
         )
-

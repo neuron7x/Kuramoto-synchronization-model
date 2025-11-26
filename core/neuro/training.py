@@ -79,7 +79,9 @@ class TrainingBatch:
             return self
 
         def _cast(value: Any) -> Any:
-            if isinstance(value, np.ndarray) and np.issubdtype(value.dtype, np.floating):
+            if isinstance(value, np.ndarray) and np.issubdtype(
+                value.dtype, np.floating
+            ):
                 return value.astype(dtype, copy=False)
             if isinstance(value, (list, tuple)):
                 array = np.asarray(value)
@@ -220,7 +222,9 @@ class TrainingProfiler:
             yield
         finally:
             wall_time = (
-                (time.perf_counter() - wall_start) if wall_start is not None else float("nan")
+                (time.perf_counter() - wall_start)
+                if wall_start is not None
+                else float("nan")
             )
             memory_peak: int | None = None
             if self._profile_memory:
@@ -243,14 +247,20 @@ class TrainingProfiler:
         if not self._snapshots:
             return {"steps": 0}
 
-        wall_times = [snap.wall_time for snap in self._snapshots if not math.isnan(snap.wall_time)]
-        memory_peaks = [snap.memory_peak_bytes for snap in self._snapshots if snap.memory_peak_bytes]
+        wall_times = [
+            snap.wall_time for snap in self._snapshots if not math.isnan(snap.wall_time)
+        ]
+        memory_peaks = [
+            snap.memory_peak_bytes for snap in self._snapshots if snap.memory_peak_bytes
+        ]
         io_times = [snap.io_time for snap in self._snapshots]
 
         return {
             "steps": len(self._snapshots),
             "wall_time_total": float(sum(wall_times)) if wall_times else None,
-            "wall_time_avg": float(sum(wall_times) / len(wall_times)) if wall_times else None,
+            "wall_time_avg": (
+                float(sum(wall_times) / len(wall_times)) if wall_times else None
+            ),
             "memory_peak_max": int(max(memory_peaks)) if memory_peaks else None,
             "io_time_total": float(sum(io_times)) if self._profile_io else None,
         }
@@ -278,9 +288,19 @@ def _normalise_sample(item: Any) -> TrainingSample:
         metadata = dict(item.get("metadata", {}))
         priority = item.get("priority")
         if "inputs" in item and "target" in item:
-            return TrainingSample(inputs=item["inputs"], target=item["target"], metadata=metadata, priority=priority)
+            return TrainingSample(
+                inputs=item["inputs"],
+                target=item["target"],
+                metadata=metadata,
+                priority=priority,
+            )
         if "input" in item and "label" in item:
-            return TrainingSample(inputs=item["input"], target=item["label"], metadata=metadata, priority=priority)
+            return TrainingSample(
+                inputs=item["input"],
+                target=item["label"],
+                metadata=metadata,
+                priority=priority,
+            )
         raise ValueError("Mapping sample must contain 'inputs'/'target' keys")
 
     if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
@@ -444,7 +464,10 @@ class AsyncDataLoader:
                         max_length=self._sequence_length,
                         enable_padding=self._enable_padding,
                     )
-                if isinstance(sample.target, (np.ndarray, list, tuple)) and self._sequence_length is not None:
+                if (
+                    isinstance(sample.target, (np.ndarray, list, tuple))
+                    and self._sequence_length is not None
+                ):
                     sample.target = _limit_sequence_length(
                         sample.target,
                         max_length=self._sequence_length,
@@ -512,7 +535,9 @@ class AsyncDataLoader:
         batch_inputs = _stack(inputs)
         batch_targets = _stack(targets)
         metadata: dict[str, Any] = {"io_time": io_time, "size": len(samples)}
-        return TrainingBatch(inputs=batch_inputs, targets=batch_targets, metadata=metadata)
+        return TrainingBatch(
+            inputs=batch_inputs, targets=batch_targets, metadata=metadata
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -530,7 +555,9 @@ class CheckpointManager:
         self._index_path = self._directory / "checkpoints.json"
         self._lock = threading.Lock()
         if not self._index_path.exists():
-            self._index_path.write_text(json.dumps({"checkpoints": []}), encoding="utf-8")
+            self._index_path.write_text(
+                json.dumps({"checkpoints": []}), encoding="utf-8"
+            )
 
     def _load_index(self) -> list[str]:
         payload = json.loads(self._index_path.read_text(encoding="utf-8"))
@@ -570,7 +597,7 @@ class CheckpointManager:
             entries = self._load_index()
             entries.append(checkpoint_path.name)
             if len(entries) > self._keep_last:
-                for obsolete in entries[:-self._keep_last]:
+                for obsolete in entries[: -self._keep_last]:
                     obsolete_path = self._directory / obsolete
                     if obsolete_path.exists():
                         obsolete_path.unlink()
@@ -670,7 +697,10 @@ class TrainingEngine:
             self._component.zero_grad()
             batch_in_epoch = 0
             for batch in loader:
-                if config.limit_batches is not None and batch_in_epoch >= config.limit_batches:
+                if (
+                    config.limit_batches is not None
+                    and batch_in_epoch >= config.limit_batches
+                ):
                     break
                 global_step += 1
                 batch_in_epoch += 1
@@ -679,7 +709,9 @@ class TrainingEngine:
                     global_step,
                     io_time=float(batch.metadata.get("io_time", 0.0)),
                 ):
-                    result = self._component.forward_backward(cast_batch, self._precision)
+                    result = self._component.forward_backward(
+                        cast_batch, self._precision
+                    )
                 loss_history.append(float(result.loss))
                 metrics_history.append(dict(result.metrics))
 
@@ -715,4 +747,3 @@ class TrainingEngine:
             checkpoints=checkpoints,
         )
         return summary
-

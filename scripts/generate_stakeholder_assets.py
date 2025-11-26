@@ -336,7 +336,9 @@ def describe_repo_state(root: Path) -> dict[str, str]:
     return {"git_rev": rev}
 
 
-def dump_manifest(manifest_path: Path, files: Sequence[Path], extras: dict[str, str]) -> None:
+def dump_manifest(
+    manifest_path: Path, files: Sequence[Path], extras: dict[str, str]
+) -> None:
     records = []
     for file_path in files:
         records.append(
@@ -346,7 +348,9 @@ def dump_manifest(manifest_path: Path, files: Sequence[Path], extras: dict[str, 
             }
         )
     payload = {"artifacts": records, **extras}
-    manifest_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def build_entries() -> List[StakeholderEntry]:
@@ -368,7 +372,9 @@ def build_entries() -> List[StakeholderEntry]:
                 SourceRef("Створити Раду з відповідального ШІ", "council formation"),
                 SourceRef("Затвердити мандат", "mandate"),
                 SourceRef("Назначити власників робочих потоків", "workstream owners"),
-                SourceRef("ретроспективи ради Responsible AI", "continuous improvement"),
+                SourceRef(
+                    "ретроспективи ради Responsible AI", "continuous improvement"
+                ),
             ],
         ),
         StakeholderEntry(
@@ -448,7 +454,9 @@ def build_entries() -> List[StakeholderEntry]:
             sources=[
                 SourceRef("юристів", "council composition"),
                 SourceRef("правові перегляди", "legal reviews"),
-                SourceRef("Узгодити процес комунікації з регуляторами", "regulator comms"),
+                SourceRef(
+                    "Узгодити процес комунікації з регуляторами", "regulator comms"
+                ),
             ],
         ),
         StakeholderEntry(
@@ -507,7 +515,9 @@ def build_entries() -> List[StakeholderEntry]:
             interest_level=5,
             sources=[
                 SourceRef("внутрішній/зовнішній клієнт", "usage contexts"),
-                SourceRef("клієнт, служба підтримки, регулятор", "explainability audiences"),
+                SourceRef(
+                    "клієнт, служба підтримки, регулятор", "explainability audiences"
+                ),
                 SourceRef("Публікувати щоквартальні звіти", "transparency reports"),
             ],
         ),
@@ -609,7 +619,9 @@ def build_entries() -> List[StakeholderEntry]:
             interest_level=5,
             sources=[
                 SourceRef("red team", "red team"),
-                SourceRef("симульовані атаки щонайменше щоквартально", "red team cadence"),
+                SourceRef(
+                    "симульовані атаки щонайменше щоквартально", "red team cadence"
+                ),
             ],
         ),
         StakeholderEntry(
@@ -638,15 +650,21 @@ def build_entries() -> List[StakeholderEntry]:
             power="Medium",
             interest_level=5,
             sources=[
-                SourceRef("Задокументувати зв’язок між продуктами й моделями", "catalogue"),
-                SourceRef("gate review перед запуском критичних функцій", "product governance"),
+                SourceRef(
+                    "Задокументувати зв’язок між продуктами й моделями", "catalogue"
+                ),
+                SourceRef(
+                    "gate review перед запуском критичних функцій", "product governance"
+                ),
             ],
         ),
     ]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate stakeholder matrix and RACI from RLHF/RLAIF strategy doc")
+    parser = argparse.ArgumentParser(
+        description="Generate stakeholder matrix and RACI from RLHF/RLAIF strategy doc"
+    )
     parser.add_argument(
         "--source",
         type=Path,
@@ -685,7 +703,9 @@ def main() -> None:
 
     extras = describe_repo_state(ROOT)
     extras["source_sha256"] = compute_sha256(source_path)
-    dump_manifest(manifest_path, [matrix_path, raci_path, comm_plan_path, source_path], extras)
+    dump_manifest(
+        manifest_path, [matrix_path, raci_path, comm_plan_path, source_path], extras
+    )
 
     print(f"Generated {matrix_path.relative_to(ROOT)}")
     print(f"Generated {raci_path.relative_to(ROOT)}")

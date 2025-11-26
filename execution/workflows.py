@@ -41,7 +41,10 @@ class WorkflowAssessment:
 
     @property
     def compliance_reports(self) -> tuple[ComplianceReport, ...]:
-        return tuple(assessment.compliance_report for assessment in (*self.accepted, *self.rejected))
+        return tuple(
+            assessment.compliance_report
+            for assessment in (*self.accepted, *self.rejected)
+        )
 
     @property
     def passed(self) -> bool:
@@ -51,7 +54,9 @@ class WorkflowAssessment:
 class RiskComplianceWorkflow:
     """Run compliance checks followed by risk validation for order batches."""
 
-    def __init__(self, risk_manager: RiskManager, compliance_monitor: ComplianceMonitor) -> None:
+    def __init__(
+        self, risk_manager: RiskManager, compliance_monitor: ComplianceMonitor
+    ) -> None:
         self._risk = risk_manager
         self._compliance = compliance_monitor
 
@@ -84,7 +89,9 @@ class RiskComplianceWorkflow:
                 rejected.append(assessment)
                 continue
             try:
-                self._risk.validate_order(order.symbol, order.side, order.quantity, order.price)
+                self._risk.validate_order(
+                    order.symbol, order.side, order.quantity, order.price
+                )
             except (LimitViolation, OrderRateExceeded) as exc:
                 rejected.append(OrderAssessment(order, report, str(exc)))
                 continue
@@ -93,10 +100,14 @@ class RiskComplianceWorkflow:
                 continue
             accepted.append(assessment)
             # Assume immediate fill to keep exposure tracking consistent for subsequent orders.
-            self._risk.register_fill(order.symbol, order.side, order.quantity, order.price)
+            self._risk.register_fill(
+                order.symbol, order.side, order.quantity, order.price
+            )
         return WorkflowAssessment(tuple(accepted), tuple(rejected))
 
-    def evaluate_from_dicts(self, payloads: Iterable[dict[str, object]]) -> WorkflowAssessment:
+    def evaluate_from_dicts(
+        self, payloads: Iterable[dict[str, object]]
+    ) -> WorkflowAssessment:
         """Helper accepting dictionaries (for fixtures and JSON payloads)."""
 
         orders: list[OrderRequest] = []
@@ -105,7 +116,9 @@ class RiskComplianceWorkflow:
             side = str(payload.get("side", "buy")).lower()
             quantity = float(payload.get("quantity", 0.0))
             price = float(payload.get("price", 0.0))
-            orders.append(OrderRequest(symbol=symbol, side=side, quantity=quantity, price=price))
+            orders.append(
+                OrderRequest(symbol=symbol, side=side, quantity=quantity, price=price)
+            )
         return self.evaluate(orders)
 
 

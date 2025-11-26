@@ -1,18 +1,17 @@
 """Tests for automated risk testing module."""
 
+# Import directly from module file to avoid torch dependency issues
+import importlib.util
 import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
-
-# Import directly from module file to avoid torch dependency issues
-import importlib.util
 
 # First load risk_core
 risk_core_spec = importlib.util.spec_from_file_location(
     "risk_core",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/risk/risk_core.py",
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src/tradepulse/risk/risk_core.py",
 )
 risk_core_module = importlib.util.module_from_spec(risk_core_spec)
 sys.modules["tradepulse.risk.risk_core"] = risk_core_module
@@ -21,7 +20,8 @@ risk_core_spec.loader.exec_module(risk_core_module)
 # Then load automated_testing
 auto_test_spec = importlib.util.spec_from_file_location(
     "tradepulse.risk.automated_testing",
-    Path(__file__).parent.parent.parent.parent.parent / "src/tradepulse/risk/automated_testing.py",
+    Path(__file__).parent.parent.parent.parent.parent
+    / "src/tradepulse/risk/automated_testing.py",
 )
 auto_test_module = importlib.util.module_from_spec(auto_test_spec)
 sys.modules["tradepulse.risk.automated_testing"] = auto_test_module
@@ -32,7 +32,9 @@ MonteCarloConfig = auto_test_module.MonteCarloConfig
 RiskScenario = auto_test_module.RiskScenario
 ScenarioType = auto_test_module.ScenarioType
 generate_flash_crash_scenarios = auto_test_module.generate_flash_crash_scenarios
-generate_liquidity_crisis_scenarios = auto_test_module.generate_liquidity_crisis_scenarios
+generate_liquidity_crisis_scenarios = (
+    auto_test_module.generate_liquidity_crisis_scenarios
+)
 generate_market_stress_scenarios = auto_test_module.generate_market_stress_scenarios
 validate_risk_metrics = auto_test_module.validate_risk_metrics
 
@@ -117,9 +119,7 @@ class TestAutomatedRiskTester:
 
     def test_tester_initialization_with_custom_params(self):
         """Test tester initialization with custom parameters."""
-        tester = AutomatedRiskTester(
-            es_limit=0.05, var_alpha=0.95, f_max=0.8, seed=42
-        )
+        tester = AutomatedRiskTester(es_limit=0.05, var_alpha=0.95, f_max=0.8, seed=42)
 
         assert tester.es_limit == 0.05
         assert tester.var_alpha == 0.95
@@ -287,15 +287,9 @@ class TestScenarioGenerators:
 
         assert len(scenarios) > 0
         assert all(isinstance(s, RiskScenario) for s in scenarios)
-        assert any(
-            s.scenario_type == ScenarioType.NORMAL_MARKET for s in scenarios
-        )
-        assert any(
-            s.scenario_type == ScenarioType.VOLATILE_MARKET for s in scenarios
-        )
-        assert any(
-            s.scenario_type == ScenarioType.TRENDING_MARKET for s in scenarios
-        )
+        assert any(s.scenario_type == ScenarioType.NORMAL_MARKET for s in scenarios)
+        assert any(s.scenario_type == ScenarioType.VOLATILE_MARKET for s in scenarios)
+        assert any(s.scenario_type == ScenarioType.TRENDING_MARKET for s in scenarios)
         assert all(len(s.returns) == 100 for s in scenarios)
 
     def test_generate_liquidity_crisis_scenarios(self):
@@ -304,9 +298,7 @@ class TestScenarioGenerators:
 
         assert len(scenarios) > 0
         assert all(isinstance(s, RiskScenario) for s in scenarios)
-        assert all(
-            s.scenario_type == ScenarioType.LIQUIDITY_CRISIS for s in scenarios
-        )
+        assert all(s.scenario_type == ScenarioType.LIQUIDITY_CRISIS for s in scenarios)
         assert all(len(s.returns) == 100 for s in scenarios)
 
     def test_generate_flash_crash_scenarios(self):
@@ -317,9 +309,7 @@ class TestScenarioGenerators:
 
         assert len(scenarios) > 0
         assert all(isinstance(s, RiskScenario) for s in scenarios)
-        assert all(
-            s.scenario_type == ScenarioType.FLASH_CRASH for s in scenarios
-        )
+        assert all(s.scenario_type == ScenarioType.FLASH_CRASH for s in scenarios)
         assert all(len(s.returns) == 100 for s in scenarios)
 
         # Check that crashes are present
@@ -460,9 +450,7 @@ class TestIntegrationScenarios:
             tester.add_scenario(scenario)
 
         # Add liquidity crisis scenarios
-        crisis_scenarios = generate_liquidity_crisis_scenarios(
-            num_days=252, seed=42
-        )
+        crisis_scenarios = generate_liquidity_crisis_scenarios(num_days=252, seed=42)
         for scenario in crisis_scenarios:
             tester.add_scenario(scenario)
 

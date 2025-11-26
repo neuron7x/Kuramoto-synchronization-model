@@ -8,11 +8,12 @@ Provides tools for:
 - Backtest utilities
 """
 
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
 import torch
-from dataclasses import dataclass
 
 
 @dataclass
@@ -270,9 +271,7 @@ def simple_backtest(
 
     # Compute metrics
     total_return = (capital - initial_capital) / initial_capital
-    sharpe = (
-        np.mean(trades) / np.std(trades) if trades and np.std(trades) > 0 else 0.0
-    )
+    sharpe = np.mean(trades) / np.std(trades) if trades and np.std(trades) > 0 else 0.0
     max_drawdown = (
         abs(min(np.minimum.accumulate(trades))) / initial_capital if trades else 0.0
     )
@@ -338,7 +337,7 @@ def format_validation_report(
         report += f"  Mean PWPE: {backtest_results['mean_pwpe']:.4f}\n"
         report += f"  Final Capital: ${backtest_results['final_capital']:.2f}\n\n"
 
-        dist = backtest_results['action_distribution']
+        dist = backtest_results["action_distribution"]
         report += "  Action Distribution:\n"
         report += f"    Hold: {dist['hold']:.1%}\n"
         report += f"    Buy: {dist['buy']:.1%}\n"

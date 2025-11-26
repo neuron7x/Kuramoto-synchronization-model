@@ -79,7 +79,9 @@ class CentralConfigurationStore:
         self._rotator = rotator or SecretRotator(vault=vault, clock=clock_fn)
         self._namespaces: dict[str, NamespaceDefinition] = {}
         self._namespace_secrets: dict[str, set[str]] = {}
-        self._policy = access_policy or SecretAccessPolicy({"system": {"read": {"*"}, "write": {"*"}}})
+        self._policy = access_policy or SecretAccessPolicy(
+            {"system": {"read": {"*"}, "write": {"*"}}}
+        )
         self._vault.register_policy(self._policy)
 
     # ------------------------------------------------------------------
@@ -207,7 +209,9 @@ class CentralConfigurationStore:
     ) -> SecretMetadata:
         """Persist structured configuration as encrypted JSON."""
 
-        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        serialized = json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
         combined_labels = {"type": "configuration"}
         if labels:
             combined_labels.update(labels)
@@ -426,7 +430,11 @@ class CentralConfigurationStore:
             raise ConfigurationStoreError(
                 f"Actor '{actor}' is not permitted to write namespace '{definition.name}'"
             )
-        if not for_write and normalized not in allowed_readers and normalized not in allowed_writers:
+        if (
+            not for_write
+            and normalized not in allowed_readers
+            and normalized not in allowed_writers
+        ):
             raise ConfigurationStoreError(
                 f"Actor '{actor}' is not permitted to read namespace '{definition.name}'"
             )
@@ -439,7 +447,9 @@ class CentralConfigurationStore:
         namespace_key = definition.name.strip().lower()
         try:
             metadata_records = self._vault.list_metadata()
-        except SecretVaultError as exc:  # pragma: no cover - defensive, list_metadata doesn't raise
+        except (
+            SecretVaultError
+        ) as exc:  # pragma: no cover - defensive, list_metadata doesn't raise
             raise ConfigurationStoreError(str(exc)) from exc
         for metadata in metadata_records:
             namespace_part, separator, secret_part = metadata.name.partition("/")
@@ -458,7 +468,9 @@ class CentralConfigurationStore:
         for reader in definition.readers:
             self._policy.grant(reader, actions={"read": [qualified]})
         for writer in definition.writers:
-            self._policy.grant(writer, actions={"write": [qualified], "read": [qualified]})
+            self._policy.grant(
+                writer, actions={"write": [qualified], "read": [qualified]}
+            )
 
     def _merge_labels(
         self,
@@ -483,7 +495,9 @@ class CentralConfigurationStore:
     ) -> None:
         details = metadata.model_dump()
         details.update({"namespace": namespace, "name": name})
-        self._audit(event_type=event_type, actor=actor, ip_address=ip_address, details=details)
+        self._audit(
+            event_type=event_type, actor=actor, ip_address=ip_address, details=details
+        )
 
     def _audit(
         self,

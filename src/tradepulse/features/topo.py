@@ -153,7 +153,9 @@ class TopoSentinel:
         np.fill_diagonal(dist_matrix, 0.0)
 
         # Compute Rips complex
-        rips_complex = gudhi.RipsComplex(distance_matrix=dist_matrix, max_edge_length=2.0)
+        rips_complex = gudhi.RipsComplex(
+            distance_matrix=dist_matrix, max_edge_length=2.0
+        )
         simplex_tree = rips_complex.create_simplex_tree(max_dimension=2)
 
         # Compute persistence
@@ -195,7 +197,9 @@ class TopoSentinel:
         eigenvalues = np.linalg.eigvalsh(corr.values)
         eigenvalues_sum = float(np.sum(eigenvalues))
         if not np.isfinite(eigenvalues_sum) or eigenvalues_sum <= 0:
-            logger.warning("Correlation matrix produced invalid eigenvalue sum; returning 0.0")
+            logger.warning(
+                "Correlation matrix produced invalid eigenvalue sum; returning 0.0"
+            )
             return 0.0
 
         # Participation ratio (inverse of normalized eigenvalue variance)

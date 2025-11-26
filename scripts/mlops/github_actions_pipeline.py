@@ -56,7 +56,9 @@ class PipelineConfig:
 
 
 def _configure_logging(level: int = logging.INFO) -> None:
-    logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.basicConfig(
+        level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
 
 
 def _derive_seed(config: PipelineConfig) -> int:
@@ -123,7 +125,9 @@ def _select_lookback(seed: int) -> int:
     return lower + (seed % span)
 
 
-def _prepare_regression(prices: np.ndarray, lookback: int) -> tuple[np.ndarray, np.ndarray]:
+def _prepare_regression(
+    prices: np.ndarray, lookback: int
+) -> tuple[np.ndarray, np.ndarray]:
     returns = np.diff(prices) / np.maximum(prices[:-1], 1e-9)
     if returns.size <= lookback:
         raise ValueError(
@@ -139,7 +143,9 @@ def _prepare_regression(prices: np.ndarray, lookback: int) -> tuple[np.ndarray, 
     return design, targets
 
 
-def _fit_linear_model(features: np.ndarray, targets: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:
+def _fit_linear_model(
+    features: np.ndarray, targets: np.ndarray
+) -> tuple[np.ndarray, float, np.ndarray]:
     ones = np.ones((features.shape[0], 1), dtype=float)
     X = np.concatenate([ones, features], axis=1)
     solution, *_ = np.linalg.lstsq(X, targets, rcond=None)
@@ -149,7 +155,9 @@ def _fit_linear_model(features: np.ndarray, targets: np.ndarray) -> tuple[np.nda
     return coefficients, intercept, predictions
 
 
-def _compute_metrics_from_predictions(targets: np.ndarray, predictions: np.ndarray) -> dict[str, float]:
+def _compute_metrics_from_predictions(
+    targets: np.ndarray, predictions: np.ndarray
+) -> dict[str, float]:
     residuals = predictions - targets
     mse = float(np.mean(residuals**2))
     mae = float(np.mean(np.abs(residuals)))
@@ -223,7 +231,9 @@ def _persist_artifacts(
     )
 
     artifacts: list[ArtifactSpec] = [
-        ArtifactSpec(model_path, name="model.json", kind="model", metadata={"format": "json"}),
+        ArtifactSpec(
+            model_path, name="model.json", kind="model", metadata={"format": "json"}
+        ),
         ArtifactSpec(
             metrics_path,
             name="metrics.json",
@@ -374,9 +384,11 @@ def _build_config(args: argparse.Namespace) -> PipelineConfig:
         experiment=str(args.experiment),
         commit_sha=str(args.commit_sha),
         environment=str(args.environment),
-        dataset_path=Path(args.dataset_path).expanduser().resolve()
-        if getattr(args, "dataset_path", None)
-        else None,
+        dataset_path=(
+            Path(args.dataset_path).expanduser().resolve()
+            if getattr(args, "dataset_path", None)
+            else None
+        ),
     )
 
 

@@ -60,24 +60,48 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AggregationSpec": ("libs.db.timeseries.config", "AggregationSpec"),
     "BenchmarkRunner": ("libs.db.timeseries.benchmarks", "BenchmarkRunner"),
     "BenchmarkWorkload": ("libs.db.timeseries.config", "BenchmarkWorkload"),
-    "ClickHouseBackupPlanner": ("libs.db.timeseries.clickhouse", "ClickHouseBackupPlanner"),
+    "ClickHouseBackupPlanner": (
+        "libs.db.timeseries.clickhouse",
+        "ClickHouseBackupPlanner",
+    ),
     "ClickHouseIndex": ("libs.db.timeseries.clickhouse", "ClickHouseIndex"),
-    "ClickHouseIngestionConnector": ("libs.db.timeseries.clickhouse", "ClickHouseIngestionConnector"),
-    "ClickHouseQueryBuilder": ("libs.db.timeseries.clickhouse", "ClickHouseQueryBuilder"),
-    "ClickHouseSchemaManager": ("libs.db.timeseries.clickhouse", "ClickHouseSchemaManager"),
+    "ClickHouseIngestionConnector": (
+        "libs.db.timeseries.clickhouse",
+        "ClickHouseIngestionConnector",
+    ),
+    "ClickHouseQueryBuilder": (
+        "libs.db.timeseries.clickhouse",
+        "ClickHouseQueryBuilder",
+    ),
+    "ClickHouseSchemaManager": (
+        "libs.db.timeseries.clickhouse",
+        "ClickHouseSchemaManager",
+    ),
     "ClickHouseSLAManager": ("libs.db.timeseries.clickhouse", "ClickHouseSLAManager"),
     "DimensionColumn": ("libs.db.timeseries.config", "DimensionColumn"),
-    "IngestionConnectorConfig": ("libs.db.timeseries.config", "IngestionConnectorConfig"),
+    "IngestionConnectorConfig": (
+        "libs.db.timeseries.config",
+        "IngestionConnectorConfig",
+    ),
     "MeasureColumn": ("libs.db.timeseries.config", "MeasureColumn"),
     "RetentionPolicy": ("libs.db.timeseries.config", "RetentionPolicy"),
     "RollupAggregation": ("libs.db.timeseries.config", "RollupAggregation"),
     "RollupMaterialization": ("libs.db.timeseries.config", "RollupMaterialization"),
     "SLAMetric": ("libs.db.timeseries.config", "SLAMetric"),
     "TimeSeriesSchema": ("libs.db.timeseries.config", "TimeSeriesSchema"),
-    "TimescaleBackupPlanner": ("libs.db.timeseries.timescale", "TimescaleBackupPlanner"),
-    "TimescaleIngestionConnector": ("libs.db.timeseries.timescale", "TimescaleIngestionConnector"),
+    "TimescaleBackupPlanner": (
+        "libs.db.timeseries.timescale",
+        "TimescaleBackupPlanner",
+    ),
+    "TimescaleIngestionConnector": (
+        "libs.db.timeseries.timescale",
+        "TimescaleIngestionConnector",
+    ),
     "TimescaleQueryBuilder": ("libs.db.timeseries.timescale", "TimescaleQueryBuilder"),
-    "TimescaleSchemaManager": ("libs.db.timeseries.timescale", "TimescaleSchemaManager"),
+    "TimescaleSchemaManager": (
+        "libs.db.timeseries.timescale",
+        "TimescaleSchemaManager",
+    ),
     "TimescaleSLAManager": ("libs.db.timeseries.timescale", "TimescaleSLAManager"),
 }
 

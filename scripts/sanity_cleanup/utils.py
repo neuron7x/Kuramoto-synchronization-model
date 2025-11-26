@@ -6,7 +6,6 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 

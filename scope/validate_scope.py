@@ -39,7 +39,9 @@ def load_wbs() -> Dict[str, Dict[str, Any]]:
             if duration is None:
                 raise ValueError(f"Leaf task {code} missing duration")
             if duration <= 0 or duration > 1:
-                raise ValueError(f"Leaf task {code} has invalid duration {duration}; expected 0<duration<=1")
+                raise ValueError(
+                    f"Leaf task {code} has invalid duration {duration}; expected 0<duration<=1"
+                )
             if not node.get("deliverables"):
                 raise ValueError(f"Leaf task {code} missing deliverables")
             if not node.get("test_refs"):
@@ -54,7 +56,14 @@ def load_deliverables() -> List[Dict[str, str]]:
     with DELIV_PATH.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
-    required = {"DEL", "Description", "Definition_of_Done", "Dependencies", "WBS_Refs", "Source"}
+    required = {
+        "DEL",
+        "Description",
+        "Definition_of_Done",
+        "Dependencies",
+        "WBS_Refs",
+        "Source",
+    }
     missing_cols = required - set(rows[0].keys()) if rows else required
     if missing_cols:
         raise ValueError(f"Deliverables CSV missing columns: {sorted(missing_cols)}")
@@ -124,10 +133,14 @@ def main() -> int:
         validate_sources([row], max_line)
 
     # Ensure deliverables referenced from WBS exist in CSV
-    wbs_deliverables = {deliv for dels in leaves_with_deliverables.values() for deliv in dels}
+    wbs_deliverables = {
+        deliv for dels in leaves_with_deliverables.values() for deliv in dels
+    }
     missing = wbs_deliverables - set(deliverable_to_wbs.keys())
     if missing:
-        raise ValueError(f"Deliverables referenced in WBS but missing from CSV: {sorted(missing)}")
+        raise ValueError(
+            f"Deliverables referenced in WBS but missing from CSV: {sorted(missing)}"
+        )
 
     # Ensure no orphan deliverables (each referenced by at least one WBS leaf)
     for del_id, refs in deliverable_to_wbs.items():

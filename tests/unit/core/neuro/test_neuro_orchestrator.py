@@ -436,7 +436,7 @@ class TestNeuroOrchestrator:
             timeframe="1h",
             risk_profile="moderate",
         )
-        
+
         # Should not raise with valid threshold
         orchestrator = NeuroOrchestrator(free_energy_threshold=1.5)
         output = orchestrator.orchestrate(scenario)
@@ -451,7 +451,7 @@ class TestNeuroOrchestrator:
         )
         custom_params = {"free_energy_threshold": 2.5}
         orchestrator = NeuroOrchestrator(enable_tacl_validation=True)
-        
+
         with pytest.raises(ValueError, match="exceeds safe limit"):
             orchestrator.orchestrate(scenario, custom_parameters=custom_params)
 
@@ -464,7 +464,7 @@ class TestNeuroOrchestrator:
         )
         custom_params = {"temperature": 3.0}
         orchestrator = NeuroOrchestrator(enable_tacl_validation=True)
-        
+
         with pytest.raises(ValueError, match="exceeds safe limit"):
             orchestrator.orchestrate(scenario, custom_parameters=custom_params)
 
@@ -475,11 +475,9 @@ class TestNeuroOrchestrator:
             timeframe="1h",
             risk_profile="moderate",
         )
-        custom_params = {
-            "tacl": {"monotonic_descent": False}
-        }
+        custom_params = {"tacl": {"monotonic_descent": False}}
         orchestrator = NeuroOrchestrator(enable_tacl_validation=True)
-        
+
         with pytest.raises(ValueError, match="must be enabled"):
             orchestrator.orchestrate(scenario, custom_parameters=custom_params)
 
@@ -494,7 +492,7 @@ class TestNeuroOrchestrator:
         custom_params = {"free_energy_threshold": 3.0}
         orchestrator = NeuroOrchestrator(enable_tacl_validation=False)
         output = orchestrator.orchestrate(scenario, custom_parameters=custom_params)
-        
+
         assert output.parameters["free_energy_threshold"] == 3.0
 
 

@@ -7,11 +7,11 @@ with Active Inference (HPC-AI v4) module for adaptive trading.
 
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import (
-    generate_synthetic_data,
     calibrate_perturbation_scale,
-    validate_hpc_ai,
-    simple_backtest,
     format_validation_report,
+    generate_synthetic_data,
+    simple_backtest,
+    validate_hpc_ai,
 )
 
 
@@ -25,7 +25,9 @@ def main():
     # Step 1: Generate synthetic market data
     print("Step 1: Generating Synthetic Market Data")
     print("-" * 80)
-    data = generate_synthetic_data(n_days=1000, initial_price=100.0, volatility=0.5, seed=42)
+    data = generate_synthetic_data(
+        n_days=1000, initial_price=100.0, volatility=0.5, seed=42
+    )
     print(f"Generated {len(data)} days of synthetic OHLCV data")
     print(f"Price range: ${data['close'].min():.2f} - ${data['close'].max():.2f}")
     print(f"Mean volume: {data['volume'].mean():.0f}")
@@ -43,10 +45,10 @@ def main():
         learning_rate=1e-4,
     )
     print("Model initialized with:")
-    print(f"  - Input dimension: 10 (OHLCV + 5 indicators)")
-    print(f"  - State dimension: 128")
-    print(f"  - Action dimension: 3 (Hold, Buy, Sell)")
-    print(f"  - HPC levels: 3")
+    print("  - Input dimension: 10 (OHLCV + 5 indicators)")
+    print("  - State dimension: 128")
+    print("  - Action dimension: 3 (Hold, Buy, Sell)")
+    print("  - HPC levels: 3")
     print(f"  - Device: {model.device}")
     print()
 
@@ -102,7 +104,7 @@ def main():
     print(f"  Final Capital: ${backtest_results['final_capital']:.2f}")
     print()
     print("Action Distribution:")
-    dist = backtest_results['action_distribution']
+    dist = backtest_results["action_distribution"]
     print(f"  Hold: {dist['hold']:.1%}")
     print(f"  Buy:  {dist['buy']:.1%}")
     print(f"  Sell: {dist['sell']:.1%}")
@@ -121,7 +123,7 @@ def main():
     action = model.decide_action(latest_window, prev_pwpe=0.0)
     pwpe = model.get_pwpe(latest_window)
     state = model.get_state_representation(latest_window)
-    
+
     action_names = {0: "HOLD", 1: "BUY", 2: "SELL"}
     print(f"Latest price: ${data.iloc[-1]['close']:.2f}")
     print(f"Decision: {action_names[action]}")

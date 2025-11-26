@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
-import json
 
 import pytest
 
 from execution.compliance import ComplianceReport
 from observability.release_gates import ReleaseGateEvaluator, ReleaseGateResult
-
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "recordings"
 

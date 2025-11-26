@@ -21,7 +21,9 @@ def cvar(returns: Iterable[float], alpha: float = 0.95) -> float:
 class CVARGate:
     """CVaR-based risk limiter."""
 
-    def __init__(self, alpha: float = 0.95, limit: float = 0.03, lookback: int = 50) -> None:
+    def __init__(
+        self, alpha: float = 0.95, limit: float = 0.03, lookback: int = 50
+    ) -> None:
         self.alpha = alpha
         self.limit = limit
         self.lookback = lookback

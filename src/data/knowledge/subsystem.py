@@ -11,12 +11,23 @@ from .compression import SegmentCompressor
 from .embeddings import EmbeddingProvider
 from .graph import KnowledgeGraph
 from .indexer import HybridIndex, HybridIndexConfig
-from .models import CompletenessReport, Document, PipelineResult, SearchQuery, SearchResult
+from .models import (
+    CompletenessReport,
+    Document,
+    PipelineResult,
+    SearchQuery,
+    SearchResult,
+)
 from .pipeline import KnowledgeUpdatePipeline
 from .retrieval import HybridSearchEngine, SourcePrioritizer
 from .segmenter import DocumentSegmenter, SegmentationConfig
 from .sharding import ShardManager
-from .validators import CitationBuilder, CompletenessController, FreshnessPolicy, LinkValidator
+from .validators import (
+    CitationBuilder,
+    CompletenessController,
+    FreshnessPolicy,
+    LinkValidator,
+)
 
 
 @dataclass(slots=True)
@@ -51,7 +62,9 @@ class KnowledgeSearchSubsystem:
             if self._config.cache_ttl_minutes is not None
             else None
         )
-        self._cache = AnswerCache(max_entries=self._config.cache_max_entries, ttl=cache_ttl)
+        self._cache = AnswerCache(
+            max_entries=self._config.cache_max_entries, ttl=cache_ttl
+        )
         self._citation_builder = CitationBuilder(LinkValidator())
         self._completeness = CompletenessController(self._config.required_tags_by_query)
         self._prioritizer = SourcePrioritizer(self._config.source_weights)
@@ -87,7 +100,9 @@ class KnowledgeSearchSubsystem:
             self._cache.clear()
         return result
 
-    def search(self, query: SearchQuery) -> tuple[Sequence[SearchResult], CompletenessReport]:
+    def search(
+        self, query: SearchQuery
+    ) -> tuple[Sequence[SearchResult], CompletenessReport]:
         """Execute a hybrid search with cache, citations, and completeness control."""
 
         return self._search.search(query)

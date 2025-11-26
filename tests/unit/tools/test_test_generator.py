@@ -11,7 +11,11 @@ from typing import Dict, Iterable, Tuple
 
 import pytest
 
-from tools.testing.test_generator import analyze_component, analyze_module, generate_unit_tests
+from tools.testing.test_generator import (
+    analyze_component,
+    analyze_module,
+    generate_unit_tests,
+)
 
 
 @pytest.fixture()
@@ -67,7 +71,9 @@ def sample_module(tmp_path: Path) -> Iterable[Tuple[str, Path]]:
     sys.modules.pop(package_name, None)
 
 
-def test_analyze_module_returns_structured_components(sample_module: Tuple[str, Path]) -> None:
+def test_analyze_module_returns_structured_components(
+    sample_module: Tuple[str, Path],
+) -> None:
     module_name, module_path = sample_module
     analysis = analyze_module(module_name)
 
@@ -97,12 +103,16 @@ def test_generate_unit_tests_produces_runnable_pytest_file(
 
     assert output_path.exists()
 
-    compiled = compile(output_path.read_text(encoding="utf-8"), str(output_path), "exec")
+    compiled = compile(
+        output_path.read_text(encoding="utf-8"), str(output_path), "exec"
+    )
     namespace: Dict[str, ModuleType | object] = {}
     exec(compiled, namespace)
 
     test_functions = [
-        value for key, value in namespace.items() if key.startswith("test_") and callable(value)
+        value
+        for key, value in namespace.items()
+        if key.startswith("test_") and callable(value)
     ]
     assert test_functions, "expected generated test functions"
 

@@ -125,7 +125,9 @@ def _load_level_config(root: Path) -> _LevelConfig:
         level = _ensure_level(str(level_name))
         overrides[_normalize(root / location)] = level
 
-    return _LevelConfig(overrides=overrides, rules=tuple(rules), fallback_level=fallback_level)
+    return _LevelConfig(
+        overrides=overrides, rules=tuple(rules), fallback_level=fallback_level
+    )
 
 
 @lru_cache(maxsize=1)
@@ -158,13 +160,18 @@ def _determine_level(root: Path, path: Path) -> str:
     if matched_level is not None:
         return matched_level
 
-    if config.fallback_level is not None and relative.parts and relative.parts[0] == "tests":
+    if (
+        config.fallback_level is not None
+        and relative.parts
+        and relative.parts[0] == "tests"
+    ):
         return config.fallback_level
 
     raise pytest.UsageError(
         "Unable to classify test {path} with TradePulse level. "
-        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker."
-        .format(path=path)
+        "Update tests/test_levels.yaml with an explicit mapping or add a pytest marker.".format(
+            path=path
+        )
     )
 
 
@@ -188,7 +195,7 @@ def configure_audit_trails(tmp_path_factory: pytest.TempPathFactory) -> None:
 @pytest.fixture(autouse=True)
 def _ensure_logging_propagation() -> None:
     """Ensure loggers propagate to root for caplog capture.
-    
+
     Some tests rely on caplog to capture log messages, but the StructuredLogger
     may have handlers that prevent propagation. This fixture ensures the
     key loggers used in tests have propagation enabled.
@@ -203,6 +210,7 @@ def _ensure_logging_propagation() -> None:
         logger = logging.getLogger(name)
         logger.propagate = True
     yield
+
 
 def pytest_collection_modifyitems(  # type: ignore[override]
     config: pytest.Config, items: list[pytest.Item]
@@ -227,8 +235,11 @@ def pytest_collection_modifyitems(  # type: ignore[override]
             if declared_level != level_from_config:
                 raise pytest.UsageError(
                     "Test {nodeid} is marked as {declared} but mapped to {computed} in tests/test_levels.yaml. "
-                    "Update the marker or adjust the mapping."
-                    .format(nodeid=item.nodeid, declared=declared_level, computed=level_from_config)
+                    "Update the marker or adjust the mapping.".format(
+                        nodeid=item.nodeid,
+                        declared=declared_level,
+                        computed=level_from_config,
+                    )
                 )
             level = declared_level
         else:
@@ -254,8 +265,10 @@ sensitive_headers = [
 sensitive_query = ["timestamp", "signature", "recvWindow"]
 sensitive_body_keys = ["apiKey", "secret", "signature", "passphrase"]
 
+
 def scrub_request(request):
-    from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
     u = urlsplit(request.uri)
     q = []
     for k, v in parse_qsl(u.query, keep_blank_values=True):
@@ -269,34 +282,45 @@ def scrub_request(request):
             request.headers[h] = "REDACTED"
     return request
 
+
 def scrub_response(response):
     import json
+
     ctype = response["headers"].get("Content-Type", [""])[0]
     if "application/json" in ctype:
         try:
             data = json.loads(response["body"]["string"])
+
             def cleanse(obj):
                 if isinstance(obj, dict):
-                    return {k: ("REDACTED" if k in sensitive_body_keys else cleanse(v)) for k, v in obj.items()}
+                    return {
+                        k: ("REDACTED" if k in sensitive_body_keys else cleanse(v))
+                        for k, v in obj.items()
+                    }
                 if isinstance(obj, list):
                     return [cleanse(x) for x in obj]
                 return obj
+
             data = cleanse(data)
             response["body"]["string"] = json.dumps(data).encode()
         except Exception:
             pass
     return response
 
+
 @pytest.fixture(autouse=True)
 def _vcr_adapter_tests(request):
     """Auto-apply VCR to adapter tests."""
     # Only apply VCR to tests in tests/adapters directory
-    if request.fspath.strpath.endswith(".py") and "tests/adapters" in request.fspath.strpath:
+    if (
+        request.fspath.strpath.endswith(".py")
+        and "tests/adapters" in request.fspath.strpath
+    ):
         try:
             import vcr
         except ImportError:
             pytest.skip("vcrpy is required for adapter tests")
-        
+
         vcr_default = vcr.VCR(
             cassette_library_dir="tests/fixtures/recordings",
             record_mode=os.getenv("VCR_RECORD", "once"),
@@ -305,10 +329,12 @@ def _vcr_adapter_tests(request):
             before_record_response=scrub_response,
             decode_compressed_response=True,
         )
-        
-        cassette_name = request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_") + ".yaml"
+
+        cassette_name = (
+            request.node.nodeid.replace("::", "__").replace("/", "_").replace("\\", "_")
+            + ".yaml"
+        )
         with vcr_default.use_cassette(cassette_name):
             yield
     else:
         yield
-

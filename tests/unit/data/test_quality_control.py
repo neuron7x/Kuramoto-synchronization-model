@@ -111,7 +111,9 @@ def test_quality_summary_reports_metrics_and_validators():
     assert isinstance(summary, QualitySummary)
     assert summary.total_rows == frame.shape[0]
     assert summary.quarantined_rows == summary.sanitised_rows
-    validator_statuses = {outcome.category: outcome.status for outcome in summary.validator_outcomes}
+    validator_statuses = {
+        outcome.category: outcome.status for outcome in summary.validator_outcomes
+    }
     assert validator_statuses["syntax"] == "pass"
     assert validator_statuses["semantics"] == "warn"
     assert validator_statuses["security"] == "warn"
@@ -138,7 +140,11 @@ def test_quality_summary_flags_range_failures():
 
     assert summary.blocked is True
     assert summary.range_violation_rows["close"] == 1
-    semantics = next(outcome for outcome in summary.validator_outcomes if outcome.category == "semantics")
+    semantics = next(
+        outcome
+        for outcome in summary.validator_outcomes
+        if outcome.category == "semantics"
+    )
     assert semantics.status == "fail"
 
 
@@ -160,7 +166,9 @@ def test_quality_summary_warns_when_blocked_by_quarantine_ratio():
     summary = report.summarise(gate)
 
     semantics = next(
-        outcome for outcome in summary.validator_outcomes if outcome.category == "semantics"
+        outcome
+        for outcome in summary.validator_outcomes
+        if outcome.category == "semantics"
     )
     assert semantics.status == "warn"
     assert "blocked" in semantics.detail.lower()

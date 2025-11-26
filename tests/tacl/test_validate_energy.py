@@ -33,8 +33,7 @@ def test_free_energy_normalises_weights() -> None:
 
     weight_total = sum(DEFAULT_WEIGHTS.values())
     expected_internal = 0.92 + sum(
-        penalties[name] * (DEFAULT_WEIGHTS[name] / weight_total)
-        for name in penalties
+        penalties[name] * (DEFAULT_WEIGHTS[name] / weight_total) for name in penalties
     )
     expected_entropy = max(
         0.05,
@@ -72,17 +71,20 @@ def test_cli_creates_artifacts(
 ) -> None:
     workspace = Path(tmp_path_factory.mktemp("energy-artifacts"))
     monkeypatch.chdir(workspace)
-    exit_code = run_validation("single", scenarios={
-        "single": EnergyMetrics(
-            latency_p95=170.0,
-            latency_p99=240.0,
-            coherency_drift=0.18,
-            cpu_burn=0.88,
-            mem_cost=7.1,
-            queue_depth=52.0,
-            packet_loss=0.012,
-        )
-    })
+    exit_code = run_validation(
+        "single",
+        scenarios={
+            "single": EnergyMetrics(
+                latency_p95=170.0,
+                latency_p99=240.0,
+                coherency_drift=0.18,
+                cpu_burn=0.88,
+                mem_cost=7.1,
+                queue_depth=52.0,
+                packet_loss=0.012,
+            )
+        },
+    )
     assert exit_code == 1
 
     artifact = ARTIFACTS_DIR / "energy_validation.json"

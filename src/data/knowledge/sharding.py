@@ -21,7 +21,9 @@ class ShardManager:
         self._sorted_shards = sorted(self._shard_weights.items())
 
     def shard_key(self, segment: DocumentSegment) -> str:
-        digest = hashlib.blake2b(segment.segment_id.encode("utf-8"), digest_size=8).digest()
+        digest = hashlib.blake2b(
+            segment.segment_id.encode("utf-8"), digest_size=8
+        ).digest()
         value = int.from_bytes(digest, "big") % self._total_weight
         cumulative = 0
         for shard, weight in self._sorted_shards:
@@ -30,8 +32,12 @@ class ShardManager:
                 return shard
         return self._sorted_shards[-1][0]
 
-    def assign(self, segments: Iterable[DocumentSegment]) -> Mapping[str, list[DocumentSegment]]:
-        buckets: dict[str, list[DocumentSegment]] = {shard: [] for shard in self._shard_weights}
+    def assign(
+        self, segments: Iterable[DocumentSegment]
+    ) -> Mapping[str, list[DocumentSegment]]:
+        buckets: dict[str, list[DocumentSegment]] = {
+            shard: [] for shard in self._shard_weights
+        }
         for segment in segments:
             shard = self.shard_key(segment)
             buckets.setdefault(shard, []).append(segment)

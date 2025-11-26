@@ -231,10 +231,14 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         )
         if not symbol:
             raise ValueError("Order payload missing product identifier")
-        side = str(
-            _first_present(payload, "side")
-            or (original.side.value if original else "buy")
-        ).strip().lower()
+        side = (
+            str(
+                _first_present(payload, "side")
+                or (original.side.value if original else "buy")
+            )
+            .strip()
+            .lower()
+        )
         order_type = self._coerce_order_type(
             str(
                 _first_present(payload, "order_type", "type")
@@ -260,9 +264,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         price = _coerce_optional_float(price_value)
         if price is None and original is not None:
             price = float(original.price) if original.price is not None else None
-        avg_price_val = _first_present(
-            payload, "average_filled_price", "average_price"
-        )
+        avg_price_val = _first_present(payload, "average_filled_price", "average_price")
         average_price = _coerce_optional_float(avg_price_val)
         status_value = str(_first_present(payload, "status") or "OPEN").strip().upper()
         status = _STATUS_MAP.get(status_value, OrderStatus.OPEN)

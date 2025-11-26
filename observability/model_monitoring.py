@@ -11,7 +11,16 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Deque, Dict, Iterable, Iterator, Mapping, MutableMapping, Sequence
+from typing import (
+    Callable,
+    Deque,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 
 try:  # pragma: no cover - optional dependency may not be available
     import psutil
@@ -280,7 +289,9 @@ class ModelObservabilityOrchestrator:
             "request.id": request_id,
         }
         if attributes:
-            span_attributes.update({str(key): value for key, value in attributes.items()})
+            span_attributes.update(
+                {str(key): value for key, value in attributes.items()}
+            )
 
         self.label_event("inference.start", {"request_id": request_id})
         span = pipeline_span(
@@ -320,7 +331,9 @@ class ModelObservabilityOrchestrator:
                     },
                 )
 
-    def record_quality_metric(self, metric: str, value: float) -> QualityConfidenceInterval:
+    def record_quality_metric(
+        self, metric: str, value: float
+    ) -> QualityConfidenceInterval:
         """Record a model quality metric observation and emit statistics."""
 
         samples = self._quality_samples[metric]
@@ -407,13 +420,13 @@ class ModelObservabilityOrchestrator:
                 entries=snapshot.cache_entries,
             )
             if snapshot.cache_hit_ratio is not None:
-                self._get_series(
-                    f"cache.hit_ratio.{snapshot.cache_name}"
-                ).append(now, snapshot.cache_hit_ratio)
+                self._get_series(f"cache.hit_ratio.{snapshot.cache_name}").append(
+                    now, snapshot.cache_hit_ratio
+                )
             if snapshot.cache_entries is not None:
-                self._get_series(
-                    f"cache.entries.{snapshot.cache_name}"
-                ).append(now, snapshot.cache_entries)
+                self._get_series(f"cache.entries.{snapshot.cache_name}").append(
+                    now, snapshot.cache_entries
+                )
             if snapshot.cache_evictions:
                 self._metrics.increment_model_cache_evictions(
                     self._config.model_name,
@@ -473,7 +486,9 @@ class ModelObservabilityOrchestrator:
             return None
         return coefficient
 
-    def label_event(self, name: str, tags: Mapping[str, object] | None = None) -> EventLabel:
+    def label_event(
+        self, name: str, tags: Mapping[str, object] | None = None
+    ) -> EventLabel:
         """Attach a label to an operational event and retain it in the timeline."""
 
         label = EventLabel(name=name, tags=dict(tags or {}), timestamp=self._now())
@@ -704,9 +719,7 @@ class ModelObservabilityOrchestrator:
     def _launch_triage(self, event: DegradationSignal) -> None:
         try:
             record = self._incident_manager.create(
-                title=(
-                    f"{self._config.model_name} {event.metric} degradation"
-                ),
+                title=(f"{self._config.model_name} {event.metric} degradation"),
                 description=(
                     f"Automated triage triggered due to {event.reason}.\n"
                     f"Observed value: {event.observed_value:.6f}."

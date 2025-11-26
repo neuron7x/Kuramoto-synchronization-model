@@ -34,7 +34,9 @@ class MacroFeatureBuilder:
             return pd.DataFrame()
 
         combined = pd.concat(frames, ignore_index=True, sort=False)
-        combined = combined.sort_values(["indicator", "period_end"]).reset_index(drop=True)
+        combined = combined.sort_values(["indicator", "period_end"]).reset_index(
+            drop=True
+        )
 
         frames = [
             self._build_indicator_features(group)
@@ -59,8 +61,8 @@ class MacroFeatureBuilder:
             frame["surprise"] = frame["value"] - frame["consensus"]
 
         frame["release_gap_days"] = (
-            (frame["release_date"] - frame["period_end"]).dt.days
-        )
+            frame["release_date"] - frame["period_end"]
+        ).dt.days
 
         meta_columns = self._extract_meta_columns(frame)
         ordered_cols = [

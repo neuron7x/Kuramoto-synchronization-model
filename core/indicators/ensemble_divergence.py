@@ -186,7 +186,9 @@ def compute_ensemble_divergence(
     opposing_raw = bearish if kind == DivergenceKind.BULLISH else bullish
     supporting = tuple(signal for signal in supporting_raw if signal.confidence > 0.0)
     opposing = tuple(signal for signal in opposing_raw if signal.confidence > 0.0)
-    avg_strength = summary.weighted_strength / summary.confidence if summary.confidence else 0.0
+    avg_strength = (
+        summary.weighted_strength / summary.confidence if summary.confidence else 0.0
+    )
     consensus = summary.confidence / total_confidence
     score = _squash(avg_strength * consensus)
     if kind == DivergenceKind.BEARISH:
@@ -211,7 +213,9 @@ class _Summary:
 
 def _partition_signals(
     signals: Iterable[IndicatorDivergenceSignal],
-) -> Tuple[Tuple[IndicatorDivergenceSignal, ...], Tuple[IndicatorDivergenceSignal, ...]]:
+) -> Tuple[
+    Tuple[IndicatorDivergenceSignal, ...], Tuple[IndicatorDivergenceSignal, ...]
+]:
     bullish: list[IndicatorDivergenceSignal] = []
     bearish: list[IndicatorDivergenceSignal] = []
 
@@ -228,7 +232,9 @@ def _summarise_signals(signals: Sequence[IndicatorDivergenceSignal]) -> _Summary
     confidence = sum(signal.confidence for signal in signals)
     weighted_strength = sum(signal.confidence * signal.strength for signal in signals)
     count = sum(1 for signal in signals if signal.confidence > 0.0)
-    return _Summary(count=count, confidence=confidence, weighted_strength=weighted_strength)
+    return _Summary(
+        count=count, confidence=confidence, weighted_strength=weighted_strength
+    )
 
 
 def _select_candidate(
@@ -242,10 +248,16 @@ def _select_candidate(
     """Pick the divergence direction that satisfies consensus thresholds."""
 
     candidates: list[tuple[DivergenceKind, _Summary]] = []
-    if bull.count >= min_support and (bull.confidence / total_confidence) >= min_consensus:
+    if (
+        bull.count >= min_support
+        and (bull.confidence / total_confidence) >= min_consensus
+    ):
         candidates.append((DivergenceKind.BULLISH, bull))
 
-    if bear.count >= min_support and (bear.confidence / total_confidence) >= min_consensus:
+    if (
+        bear.count >= min_support
+        and (bear.confidence / total_confidence) >= min_consensus
+    ):
         candidates.append((DivergenceKind.BEARISH, bear))
 
     if not candidates:
@@ -254,7 +266,8 @@ def _select_candidate(
     # Prioritise the direction with the higher consensus-adjusted strength.
     chosen_kind, chosen_summary = max(
         candidates,
-        key=lambda item: item[1].weighted_strength * (item[1].confidence / total_confidence),
+        key=lambda item: item[1].weighted_strength
+        * (item[1].confidence / total_confidence),
     )
 
     return chosen_kind, chosen_summary

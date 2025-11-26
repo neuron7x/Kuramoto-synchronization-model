@@ -60,13 +60,16 @@ class NaKAdapter:
             hpa_tone=hpa_tone,
             base_temperature=base_temperature,
         )
-        gate_state["combined"]["lambda"] = ctrl_log.get("lambda_", gate_state["combined"].get("lambda", 0.05))
+        gate_state["combined"]["lambda"] = ctrl_log.get(
+            "lambda_", gate_state["combined"].get("lambda", 0.05)
+        )
         effective_size = max(0.0, min(1.0, size_hint * size_gate))
         return AdapterOutput(
             reward=reward,
             gate=size_gate,
             effective_size=effective_size,
             temperature=temp_effect,
-            controller_log=ctrl_log | {"shaped_reward": shaped_reward, "size_hint": size_hint},
+            controller_log=ctrl_log
+            | {"shaped_reward": shaped_reward, "size_hint": size_hint},
             gate_state=gate_state,
         )

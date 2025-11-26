@@ -10,7 +10,9 @@ from execution.risk import KillSwitchStateRecord
 
 def test_tuple_payload_is_normalised_to_utc_and_stripped_reason() -> None:
     naive_timestamp = datetime(2025, 1, 1, 12, 30, 0)
-    record = KillSwitchStateRecord.model_validate((True, " maintenance  ", naive_timestamp))
+    record = KillSwitchStateRecord.model_validate(
+        (True, " maintenance  ", naive_timestamp)
+    )
 
     assert record.engaged is True
     assert record.reason == "maintenance"
@@ -19,7 +21,9 @@ def test_tuple_payload_is_normalised_to_utc_and_stripped_reason() -> None:
 
 
 def test_string_timestamp_allows_space_separator_and_converts_timezone() -> None:
-    aware_timestamp = datetime(2025, 5, 1, 8, 15, 0, tzinfo=timezone(timedelta(hours=-4)))
+    aware_timestamp = datetime(
+        2025, 5, 1, 8, 15, 0, tzinfo=timezone(timedelta(hours=-4))
+    )
     payload = {
         "engaged": False,
         "reason": None,

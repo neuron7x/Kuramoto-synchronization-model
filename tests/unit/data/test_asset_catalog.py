@@ -109,4 +109,3 @@ def test_asset_catalog_historical_ambiguity_raises() -> None:
 
     with pytest.raises(LookupError):
         catalog.resolve("AAaUsd")
-

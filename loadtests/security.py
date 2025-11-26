@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Callable
-
-import os
 
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -15,7 +14,9 @@ from jwt.algorithms import RSAAlgorithm
 
 from application.settings import ApiSecuritySettings
 
-LOADTEST_OAUTH_ISSUER = os.getenv("LOADTEST_OAUTH_ISSUER", "https://perf.tradepulse.test")
+LOADTEST_OAUTH_ISSUER = os.getenv(
+    "LOADTEST_OAUTH_ISSUER", "https://perf.tradepulse.test"
+)
 LOADTEST_OAUTH_AUDIENCE = os.getenv("LOADTEST_OAUTH_AUDIENCE", "tradepulse-api")
 LOADTEST_JWKS_PATH = os.getenv("LOADTEST_JWKS_PATH", "/.well-known/jwks.json")
 LOADTEST_KID = os.getenv("LOADTEST_KEY_ID", "loadtest-perf-key")
@@ -35,7 +36,9 @@ def _key_pair() -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
 
     pem = os.getenv("LOADTEST_PRIVATE_KEY_PEM")
     if pem:
-        private_key = serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
+        private_key = serialization.load_pem_private_key(
+            pem.encode("utf-8"), password=None
+        )
         return private_key, private_key.public_key()
 
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)

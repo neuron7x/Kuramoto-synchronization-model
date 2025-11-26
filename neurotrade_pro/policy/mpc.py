@@ -23,14 +23,21 @@ class Controller:
     def __init__(self, cfg: MPCConfig | None = None) -> None:
         self.cfg = cfg or MPCConfig()
 
-    def decide(self, state: Dict[str, float], mode: str, D: float) -> Tuple[str, Dict[str, float]]:
+    def decide(
+        self, state: Dict[str, float], mode: str, D: float
+    ) -> Tuple[str, Dict[str, float]]:
         H = state["H"]
         M = state["M"]
         E = state["E"]
         S = state["S"]
         q = {
-            "increase_risk": S + 0.2 * M - 0.3 * (mode == "AMBER") - 0.8 * (mode == "RED"),
-            "decrease_risk": 0.4 * (mode == "AMBER") + 0.9 * (mode == "RED") + 0.1 * (1 - S),
+            "increase_risk": S
+            + 0.2 * M
+            - 0.3 * (mode == "AMBER")
+            - 0.8 * (mode == "RED"),
+            "decrease_risk": 0.4 * (mode == "AMBER")
+            + 0.9 * (mode == "RED")
+            + 0.1 * (1 - S),
             "switch_to_alt": 0.3 + 0.5 * E,
             "hedge": 0.2 + 0.6 * (mode != "GREEN") + 0.2 * (1 - M),
             "hold": 0.3 + 0.2 * M - 0.1 * S,
@@ -51,4 +58,6 @@ class Controller:
         penalty = {"GREEN": 0.0, "AMBER": 0.2, "RED": 0.5}[mode]
         alloc_main = clamp(M * (0.5 + 0.5 * S) * (1.0 - penalty))
         alloc_alt = clamp(0.6 * E + 0.4 * S)
-        return action, dict(alloc_main=alloc_main, alloc_alt=alloc_alt, action_probs=probs)
+        return action, dict(
+            alloc_main=alloc_main, alloc_alt=alloc_alt, action_probs=probs
+        )

@@ -15,7 +15,16 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, ClassVar, Dict, Iterable, Iterator, Mapping, MutableMapping, Protocol
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Protocol,
+)
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -107,7 +116,9 @@ class DomainEvent(BaseModel):
         super().__init_subclass__(**kwargs)
         cls.event_name = getattr(cls, "event_name", cls.__name__)
         if cls.event_name in _EVENT_REGISTRY:
-            raise ValueError(f"Duplicate domain event name registered: {cls.event_name}")
+            raise ValueError(
+                f"Duplicate domain event name registered: {cls.event_name}"
+            )
         _EVENT_REGISTRY[cls.event_name] = cls
 
     @classmethod
@@ -228,7 +239,9 @@ class AggregateRoot:
             self.version += 1
         else:
             # For historic events the version is managed externally by the store.
-            self.version = max(self.version, getattr(event, "stream_version", self.version))
+            self.version = max(
+                self.version, getattr(event, "stream_version", self.version)
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -314,7 +327,9 @@ class OrderAggregate(AggregateRoot):
     def mark_submitted(self, venue_order_id: str) -> None:
         if self.status not in {OrderStatus.PENDING, OrderStatus.OPEN}:
             raise ValueError(f"Cannot submit order in status {self.status}")
-        self._raise_event(OrderSubmitted(order_id=self.id, venue_order_id=venue_order_id))
+        self._raise_event(
+            OrderSubmitted(order_id=self.id, venue_order_id=venue_order_id)
+        )
 
     def record_fill(self, *, quantity: float, price: float) -> None:
         if quantity <= 0:
@@ -328,9 +343,15 @@ class OrderAggregate(AggregateRoot):
         if self.average_price is None:
             avg_price = price
         else:
-            avg_price = (self.average_price * self.filled_quantity + price * quantity) / new_total
+            avg_price = (
+                self.average_price * self.filled_quantity + price * quantity
+            ) / new_total
 
-        status = OrderStatus.FILLED if abs(new_total - self.quantity) < 1e-9 else OrderStatus.PARTIALLY_FILLED
+        status = (
+            OrderStatus.FILLED
+            if abs(new_total - self.quantity) < 1e-9
+            else OrderStatus.PARTIALLY_FILLED
+        )
         self._raise_event(
             OrderFilled(
                 order_id=self.id,
@@ -399,7 +420,9 @@ class OrderAggregate(AggregateRoot):
         self.side = OrderSide(state["side"]) if state.get("side") else None
         self.quantity = float(state.get("quantity", 0.0))
         self.price = state.get("price")
-        self.order_type = OrderType(state["order_type"]) if state.get("order_type") else None
+        self.order_type = (
+            OrderType(state["order_type"]) if state.get("order_type") else None
+        )
         self.status = OrderStatus(state.get("status", OrderStatus.PENDING.value))
         self.average_price = state.get("average_price")
         self.filled_quantity = float(state.get("filled_quantity", 0.0))
@@ -445,7 +468,9 @@ class PositionAggregate(AggregateRoot):
         self.is_closed: bool = False
 
     @classmethod
-    def open(cls, *, position_id: str, symbol: str, quantity: float, average_price: float) -> "PositionAggregate":
+    def open(
+        cls, *, position_id: str, symbol: str, quantity: float, average_price: float
+    ) -> "PositionAggregate":
         if quantity == 0:
             raise ValueError("Position quantity must be non-zero on open")
         if average_price <= 0:
@@ -589,7 +614,9 @@ class PortfolioAggregate(AggregateRoot):
     @classmethod
     def create(cls, *, portfolio_id: str, base_currency: str) -> "PortfolioAggregate":
         aggregate = cls(portfolio_id)
-        aggregate._raise_event(PortfolioCreated(portfolio_id=portfolio_id, base_currency=base_currency))
+        aggregate._raise_event(
+            PortfolioCreated(portfolio_id=portfolio_id, base_currency=base_currency)
+        )
         return aggregate
 
     def deposit_cash(self, amount: float) -> None:
@@ -616,11 +643,15 @@ class PortfolioAggregate(AggregateRoot):
 
     def realise_pnl(self, position_id: str, realised_pnl: float) -> None:
         self._raise_event(
-            PnLRealized(portfolio_id=self.id, position_id=position_id, realised_pnl=realised_pnl)
+            PnLRealized(
+                portfolio_id=self.id, position_id=position_id, realised_pnl=realised_pnl
+            )
         )
 
     def update_exposure(self, exposures: Mapping[str, float]) -> None:
-        self._raise_event(ExposureUpdated(portfolio_id=self.id, exposures=dict(exposures)))
+        self._raise_event(
+            ExposureUpdated(portfolio_id=self.id, exposures=dict(exposures))
+        )
 
     # Event handlers -------------------------------------------------------------
 
@@ -676,13 +707,17 @@ class ConcurrencyError(RuntimeError):
 class PostgresEventStore:
     """Event store persisting events and snapshots in PostgreSQL."""
 
-    def __init__(self, engine: Engine, *, schema: str = "public", table_prefix: str = "es_") -> None:
+    def __init__(
+        self, engine: Engine, *, schema: str = "public", table_prefix: str = "es_"
+    ) -> None:
         self._engine = engine
         self._schema = schema
         self._metadata = MetaData(schema=schema)
         self._events = self._create_events_table(table_prefix)
         self._snapshots = self._create_snapshots_table(table_prefix)
-        self._session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+        self._session_factory = sessionmaker(
+            bind=engine, expire_on_commit=False, future=True
+        )
 
     # Table definitions ---------------------------------------------------------
 
@@ -698,11 +733,23 @@ class PostgresEventStore:
             Column("event_type", String(128), nullable=False),
             Column("correlation_id", String(64), nullable=True),
             Column("causation_id", String(64), nullable=True),
-            Column("metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+            Column(
+                "metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")
+            ),
             Column("payload", JSONB, nullable=False),
             Column("occurred_at", DateTime(timezone=True), nullable=False),
-            Column("recorded_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-            UniqueConstraint("aggregate_id", "aggregate_type", "version", name="uq_event_stream_version"),
+            Column(
+                "recorded_at",
+                DateTime(timezone=True),
+                nullable=False,
+                server_default=func.now(),
+            ),
+            UniqueConstraint(
+                "aggregate_id",
+                "aggregate_type",
+                "version",
+                name="uq_event_stream_version",
+            ),
             Index("ix_event_store_stream", "aggregate_type", "aggregate_id"),
         )
 
@@ -715,8 +762,15 @@ class PostgresEventStore:
             Column("aggregate_type", String(64), nullable=False),
             Column("version", Integer, nullable=False),
             Column("state", JSONB, nullable=False),
-            Column("taken_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-            UniqueConstraint("aggregate_id", "aggregate_type", name="uq_snapshot_latest"),
+            Column(
+                "taken_at",
+                DateTime(timezone=True),
+                nullable=False,
+                server_default=func.now(),
+            ),
+            UniqueConstraint(
+                "aggregate_id", "aggregate_type", name="uq_snapshot_latest"
+            ),
             CheckConstraint("version >= 0", name="ck_snapshot_version_non_negative"),
         )
 
@@ -756,7 +810,9 @@ class PostgresEventStore:
 
         metadata_payload = dict(metadata or {})
         with self._session() as session:
-            current_version = self._current_stream_version(session, aggregate.id, aggregate.aggregate_type)
+            current_version = self._current_stream_version(
+                session, aggregate.id, aggregate.aggregate_type
+            )
             if expected_version is not None and current_version != expected_version:
                 raise ConcurrencyError(
                     f"Expected version {expected_version} but stream is at {current_version}"
@@ -826,7 +882,9 @@ class PostgresEventStore:
             )
         return envelopes
 
-    def iterate_all_events(self, *, chunk_size: int = 1000) -> Iterator[list[EventEnvelope]]:
+    def iterate_all_events(
+        self, *, chunk_size: int = 1000
+    ) -> Iterator[list[EventEnvelope]]:
         """Yield envelopes for all events in batches for projection rebuilds."""
 
         with self._session() as session:
@@ -861,7 +919,9 @@ class PostgresEventStore:
                     last_id = row.id
                 yield envelopes
 
-    def _current_stream_version(self, session: Session, aggregate_id: str, aggregate_type: str) -> int:
+    def _current_stream_version(
+        self, session: Session, aggregate_id: str, aggregate_type: str
+    ) -> int:
         stmt = select(func.max(self._events.c.version)).where(
             and_(
                 self._events.c.aggregate_id == aggregate_id,
@@ -871,10 +931,14 @@ class PostgresEventStore:
         version = session.execute(stmt).scalar_one_or_none()
         return int(version or 0)
 
-    def _hydrate_event(self, payload: Mapping[str, Any], event_type: str) -> DomainEvent:
+    def _hydrate_event(
+        self, payload: Mapping[str, Any], event_type: str
+    ) -> DomainEvent:
         model_cls = _EVENT_REGISTRY.get(event_type)
         if model_cls is None:
-            raise KeyError(f"Unknown event type '{event_type}' encountered during hydration")
+            raise KeyError(
+                f"Unknown event type '{event_type}' encountered during hydration"
+            )
         return model_cls.from_dict(payload)
 
     # Snapshot support -----------------------------------------------------------
@@ -906,7 +970,9 @@ class PostgresEventStore:
             )
             session.execute(upsert)
 
-    def load_latest_snapshot(self, *, aggregate_id: str, aggregate_type: str) -> AggregateSnapshot | None:
+    def load_latest_snapshot(
+        self, *, aggregate_id: str, aggregate_type: str
+    ) -> AggregateSnapshot | None:
         with self._session() as session:
             stmt = (
                 select(self._snapshots)
@@ -942,7 +1008,9 @@ class EventReplay:
     def __init__(self, store: PostgresEventStore) -> None:
         self._store = store
 
-    def rehydrate(self, aggregate_cls: type[AggregateRoot], aggregate_id: str) -> AggregateRoot:
+    def rehydrate(
+        self, aggregate_cls: type[AggregateRoot], aggregate_id: str
+    ) -> AggregateRoot:
         aggregate = aggregate_cls(aggregate_id)
         snapshot = self._store.load_latest_snapshot(
             aggregate_id=aggregate_id, aggregate_type=aggregate.aggregate_type
@@ -954,22 +1022,26 @@ class EventReplay:
             since_version = 0
 
         envelopes = self._store.load_stream(
-            aggregate_id=aggregate_id, aggregate_type=aggregate.aggregate_type, since_version=since_version
+            aggregate_id=aggregate_id,
+            aggregate_type=aggregate.aggregate_type,
+            since_version=since_version,
         )
         aggregate.load_from_history([envelope.payload for envelope in envelopes])
         return aggregate
 
-    def print_timeline(self, aggregate_cls: type[AggregateRoot], aggregate_id: str) -> list[str]:
+    def print_timeline(
+        self, aggregate_cls: type[AggregateRoot], aggregate_id: str
+    ) -> list[str]:
         aggregate = aggregate_cls(aggregate_id)
         envelopes = self._store.load_stream(
-            aggregate_id=aggregate_id, aggregate_type=aggregate.aggregate_type, since_version=0
+            aggregate_id=aggregate_id,
+            aggregate_type=aggregate.aggregate_type,
+            since_version=0,
         )
         timeline: list[str] = []
         for envelope in envelopes:
             payload_repr = json.dumps(envelope.payload.to_dict(), default=str)
-            timeline_entry = (
-                f"{envelope.stored_at.isoformat()} | v{envelope.version} | {envelope.event_type} | {payload_repr}"
-            )
+            timeline_entry = f"{envelope.stored_at.isoformat()} | v{envelope.version} | {envelope.event_type} | {payload_repr}"
             timeline.append(timeline_entry)
         return timeline
 
@@ -1022,12 +1094,10 @@ class MaterializedViewManager:
     def ensure_exists(self, view: MaterializedView) -> None:
         """Create the materialized view if it is absent."""
 
-        create_sql = (
-            "CREATE MATERIALIZED VIEW IF NOT EXISTS {name} AS {definition} {with_data}".format(
-                name=view.name,
-                definition=view.definition_sql,
-                with_data="WITH DATA" if view.with_data else "WITH NO DATA",
-            )
+        create_sql = "CREATE MATERIALIZED VIEW IF NOT EXISTS {name} AS {definition} {with_data}".format(
+            name=view.name,
+            definition=view.definition_sql,
+            with_data="WITH DATA" if view.with_data else "WITH NO DATA",
         )
         with self._engine.begin() as connection:
             connection.execute(text(create_sql))
@@ -1068,4 +1138,3 @@ def restore_from_snapshot(
     aggregate = aggregate_cls(snapshot.aggregate_id, version=snapshot.version)
     aggregate.load_snapshot(snapshot.state)
     return aggregate
-

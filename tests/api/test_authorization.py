@@ -21,7 +21,9 @@ class TestNormaliseRoles:
         assert _normalise_roles(roles) == ("admin", "operator")
 
     def test_raises_value_error_when_no_valid_roles(self) -> None:
-        with pytest.raises(ValueError, match="At least one non-empty role must be provided"):
+        with pytest.raises(
+            ValueError, match="At least one non-empty role must be provided"
+        ):
             _normalise_roles(["   ", "\t\n"])  # only whitespace entries
 
 
@@ -29,11 +31,15 @@ class TestResolveAuditSecret:
     def test_raises_when_secret_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("TRADEPULSE_RBAC_AUDIT_SECRET", raising=False)
 
-        with pytest.raises(RuntimeError, match="TRADEPULSE_RBAC_AUDIT_SECRET must be set"):
+        with pytest.raises(
+            RuntimeError, match="TRADEPULSE_RBAC_AUDIT_SECRET must be set"
+        ):
             _resolve_audit_secret()
 
     def test_strips_and_validates_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRADEPULSE_RBAC_AUDIT_SECRET", "  integration-rbac-secret  ")
+        monkeypatch.setenv(
+            "TRADEPULSE_RBAC_AUDIT_SECRET", "  integration-rbac-secret  "
+        )
 
         assert _resolve_audit_secret() == "integration-rbac-secret"
 

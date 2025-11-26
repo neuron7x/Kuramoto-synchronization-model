@@ -88,7 +88,9 @@ def test_stress_tester_rejects_insufficient_history() -> None:
     returns = _build_returns_frame(rows=50)
     exposures = {"AssetA": 1_000_000.0}
     with pytest.raises(ValueError, match="insufficient history"):
-        PortfolioStressTester(returns, exposures, portfolio_value=1_500_000.0, min_history=60)
+        PortfolioStressTester(
+            returns, exposures, portfolio_value=1_500_000.0, min_history=60
+        )
 
 
 def test_volatility_scenario_requires_positive_multiplier() -> None:
@@ -120,4 +122,3 @@ def test_historical_shocks_require_positive_portfolio_value() -> None:
 
     with pytest.raises(ValueError, match="portfolio_value must be positive"):
         tester.evaluate_historical_shocks([scenario], portfolio_value=-10.0)
-

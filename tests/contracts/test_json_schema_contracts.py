@@ -117,8 +117,12 @@ def test_json_schema_contract_versions_are_semantic() -> None:
     versions = _iter_schema_versions()
     assert versions, "No JSON schema contract versions discovered"
     parsed_versions = [version for version, _ in versions]
-    assert len(parsed_versions) == len(set(parsed_versions)), "Duplicate schema versions found"
-    assert parsed_versions == sorted(parsed_versions), "Schema versions must increase monotonically"
+    assert len(parsed_versions) == len(
+        set(parsed_versions)
+    ), "Duplicate schema versions found"
+    assert parsed_versions == sorted(
+        parsed_versions
+    ), "Schema versions must increase monotonically"
 
 
 def test_json_schema_backward_and_forward_compatibility() -> None:
@@ -135,13 +139,14 @@ def test_json_schema_backward_and_forward_compatibility() -> None:
         }
         version_schemas.append((version, files))
 
-    for (previous_version, previous_files), (current_version, current_files) in pairwise(version_schemas):
+    for (previous_version, previous_files), (
+        current_version,
+        current_files,
+    ) in pairwise(version_schemas):
         for name, previous_schema in previous_files.items():
             current_schema = current_files.get(name)
             if current_schema is None:
-                assert (
-                    current_version.major > previous_version.major
-                ), (
+                assert current_version.major > previous_version.major, (
                     f"Schema {name} removed without major version bump: "
                     f"{previous_version} -> {current_version}"
                 )

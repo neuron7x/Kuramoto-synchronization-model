@@ -30,9 +30,17 @@ def build_parser(subparsers: _SubParsersAction[object]) -> None:
 
 
 def _configure_issue_dynamic(parser: ArgumentParser) -> None:
-    parser.add_argument("--address", required=True, help="Vault base URL (e.g. https://vault.service:8200)")
+    parser.add_argument(
+        "--address",
+        required=True,
+        help="Vault base URL (e.g. https://vault.service:8200)",
+    )
     parser.add_argument("--namespace", default=None, help="Optional Vault namespace")
-    parser.add_argument("--mount", default="database", help="Secret engine mount path (default: database)")
+    parser.add_argument(
+        "--mount",
+        default="database",
+        help="Secret engine mount path (default: database)",
+    )
     parser.add_argument("--role", required=True, help="Dynamic credential role name")
     parser.add_argument(
         "--auth-method",
@@ -45,7 +53,9 @@ def _configure_issue_dynamic(parser: ArgumentParser) -> None:
         "--token-env",
         help="Environment variable containing a static Vault token",
     )
-    parser.add_argument("--oidc-mount", default="oidc", help="OIDC auth mount path (default: oidc)")
+    parser.add_argument(
+        "--oidc-mount", default="oidc", help="OIDC auth mount path (default: oidc)"
+    )
     parser.add_argument(
         "--oidc-role",
         help="OIDC auth role name (defaults to the dynamic credential role)",
@@ -111,7 +121,9 @@ def _load_jwt(args: object) -> str:
         if not jwt_path.exists():
             raise CommandError(f"JWT file {jwt_path} does not exist")
         return jwt_path.read_text(encoding="utf-8").strip()
-    raise CommandError("A JWT must be supplied via --jwt, --jwt-env, or --jwt-path for OIDC auth")
+    raise CommandError(
+        "A JWT must be supplied via --jwt, --jwt-env, or --jwt-path for OIDC auth"
+    )
 
 
 @register("secrets-issue-dynamic")
@@ -175,4 +187,3 @@ def handle_issue_dynamic(args: object) -> int:
     finally:
         if client is not None:
             client.close()
-

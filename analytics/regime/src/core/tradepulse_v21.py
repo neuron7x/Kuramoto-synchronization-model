@@ -39,20 +39,20 @@ import math
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
+import networkx as nx
 import numpy as np
 import pandas as pd
-import networkx as nx
 
 try:  # pragma: no cover - optional dependency
-    from sklearn.linear_model import LogisticRegression
     from sklearn.isotonic import IsotonicRegression
+    from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import average_precision_score, roc_auc_score
     from sklearn.model_selection import TimeSeriesSplit
     from sklearn.utils import check_random_state
 except ModuleNotFoundError:  # pragma: no cover - fallback exercised in tests
     from ._sklearn_compat import (
-        LogisticRegression,
         IsotonicRegression,
+        LogisticRegression,
         TimeSeriesSplit,
         average_precision_score,
         check_random_state,
@@ -191,7 +191,9 @@ class StrictCausalFeatureBuilder:
         step = max(1, segment // 2)
         coherence_series: list[float] = []
         for start in range(0, len(past_returns) - segment + 1, step):
-            coherence_series.append(cls._coherence(past_returns[start : start + segment]))
+            coherence_series.append(
+                cls._coherence(past_returns[start : start + segment])
+            )
 
         if len(coherence_series) < 2:
             return 0.0
@@ -199,7 +201,9 @@ class StrictCausalFeatureBuilder:
         coherence_array = np.asarray(coherence_series, dtype=float)
         if coherence_array.ndim != 1:
             coherence_array = coherence_array.reshape(-1)
-        coherence_array = np.nan_to_num(coherence_array, nan=0.0, posinf=1.0, neginf=0.0)
+        coherence_array = np.nan_to_num(
+            coherence_array, nan=0.0, posinf=1.0, neginf=0.0
+        )
         smoothed = _ema(coherence_array, alpha=alpha)
         if len(smoothed) < 2:
             return 0.0
@@ -211,7 +215,9 @@ class StrictCausalFeatureBuilder:
         graph = _graph_from_corr(corr, threshold)
         if graph.number_of_edges() == 0:
             return 0.0
-        curvature = [4.0 - (graph.degree(u) + graph.degree(v)) for u, v in graph.edges()]
+        curvature = [
+            4.0 - (graph.degree(u) + graph.degree(v)) for u, v in graph.edges()
+        ]
         return float(np.mean(curvature))
 
     def _compute_topology(self, past_returns: np.ndarray) -> float:
@@ -247,7 +253,9 @@ class StrictCausalFeatureBuilder:
                 if driver == target:
                     continue
                 try:
-                    series = np.column_stack([past_returns[:, target], past_returns[:, driver]])
+                    series = np.column_stack(
+                        [past_returns[:, target], past_returns[:, driver]]
+                    )
                     tests = sm.tsa.stattools.grangercausalitytests(
                         series,
                         maxlag=maxlag,
@@ -285,7 +293,9 @@ class StrictCausalFeatureBuilder:
             index=pd.Index(timestamps, name="ts"),
             columns=["dr", "ricci_mean", "topo_intensity", "causal_strength"],
         )
-        return StrictCausalFeatures(features=frame, labels=np.asarray(labels, dtype=int))
+        return StrictCausalFeatures(
+            features=frame, labels=np.asarray(labels, dtype=int)
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -334,7 +344,9 @@ class LogisticIsotonicTrainer:
         self._config = config or ModelTrainingConfig()
 
     @staticmethod
-    def _standardize(train: np.ndarray, test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _standardize(
+        train: np.ndarray, test: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         mean = train.mean(axis=0)
         std = train.std(axis=0) + 1e-9
         return mean, std, (train - mean) / std, (test - mean) / std
@@ -363,7 +375,9 @@ class LogisticIsotonicTrainer:
 
         oof = np.full(len(labels), np.nan, dtype=float)
         for train_idx, test_idx in tscv.split(features):
-            mean, std, train_std, test_std = self._standardize(features[train_idx], features[test_idx])
+            mean, std, train_std, test_std = self._standardize(
+                features[train_idx], features[test_idx]
+            )
             model = self._fit_logistic(train_std, labels[train_idx], cfg, rng)
             raw = model.decision_function(test_std)
             oof[test_idx] = 1.0 / (1.0 + np.exp(-raw))
@@ -390,7 +404,9 @@ class LogisticIsotonicTrainer:
         standardized = (features - full_mean) / full_std
         base_model = self._fit_logistic(standardized, labels, cfg, rng)
 
-        conformal_eps = _conformal_epsilon(calibrated[mask], labels[mask], cfg.conformal_alpha)
+        conformal_eps = _conformal_epsilon(
+            calibrated[mask], labels[mask], cfg.conformal_alpha
+        )
 
         performance = ModelPerformance(
             auc=float(auc),
@@ -415,7 +431,9 @@ class LogisticIsotonicTrainer:
 # ---------------------------------------------------------------------------
 
 
-def _conformal_epsilon(probabilities: np.ndarray, labels: np.ndarray, alpha: float) -> float:
+def _conformal_epsilon(
+    probabilities: np.ndarray, labels: np.ndarray, alpha: float
+) -> float:
     residuals = np.abs(labels - probabilities)
     return float(np.quantile(residuals, 1.0 - alpha))
 
@@ -473,12 +491,16 @@ class RegimeHMMAdapter:
     @staticmethod
     def _logsumexp(values: np.ndarray, axis: int) -> np.ndarray:
         max_val = np.max(values, axis=axis, keepdims=True)
-        return max_val + np.log(np.sum(np.exp(values - max_val), axis=axis, keepdims=True))
+        return max_val + np.log(
+            np.sum(np.exp(values - max_val), axis=axis, keepdims=True)
+        )
 
     def adjust(self, probabilities: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         cfg = self._config
         eps = 1e-8
-        logits = np.log(np.clip(probabilities, eps, 1 - eps)) - np.log(np.clip(1 - probabilities, eps, 1 - eps))
+        logits = np.log(np.clip(probabilities, eps, 1 - eps)) - np.log(
+            np.clip(1 - probabilities, eps, 1 - eps)
+        )
         slopes = np.array(cfg.slope, dtype=float)
         biases = np.array(cfg.bias, dtype=float)
 
@@ -497,7 +519,10 @@ class RegimeHMMAdapter:
                 biases = np.pad(biases, (0, cfg.states - biases.size), mode="edge")
         else:
             biases = biases[: cfg.states]
-        transition = np.full((cfg.states, cfg.states), (1.0 - cfg.stay_probability) / max(cfg.states - 1, 1))
+        transition = np.full(
+            (cfg.states, cfg.states),
+            (1.0 - cfg.stay_probability) / max(cfg.states - 1, 1),
+        )
         np.fill_diagonal(transition, cfg.stay_probability)
         log_transition = np.log(transition)
         log_pi = np.log(np.full(cfg.states, 1.0 / cfg.states))
@@ -599,7 +624,9 @@ class ProbabilityBacktester:
         positions[mask] = 0.5
         return positions
 
-    def backtest(self, probabilities: np.ndarray, returns: np.ndarray) -> BacktestSummary:
+    def backtest(
+        self, probabilities: np.ndarray, returns: np.ndarray
+    ) -> BacktestSummary:
         cfg = self._config
         positions = self._positions(probabilities)
         delta_positions = np.insert(np.diff(positions), 0, 0.0)
@@ -613,7 +640,9 @@ class ProbabilityBacktester:
         sharpe = float(mu / sigma)
         equity = np.cumprod(1.0 + pnl)
         max_dd, _ = _drawdown(equity)
-        return BacktestSummary(sharpe=sharpe, max_drawdown=max_dd, equity_final=float(equity[-1]))
+        return BacktestSummary(
+            sharpe=sharpe, max_drawdown=max_dd, equity_final=float(equity[-1])
+        )
 
     def stress_test(
         self,
@@ -740,7 +769,10 @@ class TradePulseV21Pipeline:
         base_probs = 1.0 / (1.0 + np.exp(-raw))
         calibrated = artifacts.isotonic.predict(base_probs)
         hmm_probs, path = self._hmm.adjust(calibrated)
-        final_probs = self._ensemble.lambda_base * calibrated + (1.0 - self._ensemble.lambda_base) * hmm_probs
+        final_probs = (
+            self._ensemble.lambda_base * calibrated
+            + (1.0 - self._ensemble.lambda_base) * hmm_probs
+        )
 
         probability_outputs = ProbabilityOutputs(
             base=calibrated.astype(float),
@@ -780,7 +812,9 @@ def _feature_drift_guard(frame: pd.DataFrame) -> Dict[str, Dict[str, float]]:
     return drift
 
 
-def _population_stability_index(reference: np.ndarray, current: np.ndarray, bins: int = 10) -> float:
+def _population_stability_index(
+    reference: np.ndarray, current: np.ndarray, bins: int = 10
+) -> float:
     quantiles = np.linspace(0, 1, bins + 1)
     edges = np.unique(np.quantile(reference, quantiles))
     if len(edges) < 3:
@@ -813,4 +847,3 @@ def result_to_json(result: PipelineResult) -> str:
     """Serialize :class:`PipelineResult` to a human-readable JSON string."""
 
     return json.dumps(result.to_dict(), indent=2)
-

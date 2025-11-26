@@ -1,4 +1,5 @@
 """Tests for the link activator."""
+
 from runtime.link_activator import LinkActivator, ProtocolType
 
 

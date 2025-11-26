@@ -63,7 +63,9 @@ def fixture_env() -> SyntheticMarketEnv:
     return SyntheticMarketEnv(num_steps=24, seed=99)
 
 
-def test_step_returns_valid_action_and_size(agent: MisanthropicAgent, env: SyntheticMarketEnv) -> None:
+def test_step_returns_valid_action_and_size(
+    agent: MisanthropicAgent, env: SyntheticMarketEnv
+) -> None:
     state = env.reset()
     action, size = agent.step(state["lob_data"], state["price"])
     assert action in {0, 1, 2}
@@ -93,7 +95,9 @@ def test_repose_raises_lambda_on_cvar_violation(agent: MisanthropicAgent) -> Non
     assert agent.replay.priorities[0] != initial_priorities[0]
 
 
-def test_train_updates_metrics(agent: MisanthropicAgent, env: SyntheticMarketEnv) -> None:
+def test_train_updates_metrics(
+    agent: MisanthropicAgent, env: SyntheticMarketEnv
+) -> None:
     agent.batch_size = 8
     agent.train(env, episodes=1, save_artifacts=False)
 
@@ -114,7 +118,9 @@ def test_train_updates_metrics(agent: MisanthropicAgent, env: SyntheticMarketEnv
 
 
 def test_telemetry_hook_receives_metrics(
-    agent: MisanthropicAgent, env: SyntheticMarketEnv, telemetry_buffer: list[dict[str, float]]
+    agent: MisanthropicAgent,
+    env: SyntheticMarketEnv,
+    telemetry_buffer: list[dict[str, float]],
 ) -> None:
     state = env.reset()
     agent.step(state["lob_data"], state["price"])

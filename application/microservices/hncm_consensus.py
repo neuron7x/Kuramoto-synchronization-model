@@ -30,7 +30,11 @@ def build_signal_with_consensus(
         votes.append(AgentVote(agent=str(agent), score=float(s), confidence=1.0))
     decision = adapter.decide(tuple(votes))
 
-    action_map = {"BUY": SignalAction.BUY, "SELL": SignalAction.SELL, "HOLD": SignalAction.HOLD}
+    action_map = {
+        "BUY": SignalAction.BUY,
+        "SELL": SignalAction.SELL,
+        "HOLD": SignalAction.HOLD,
+    }
     rationale = f"HNCM consensus: score={decision.score:.4f}, action={decision.action}"
     metadata = {
         "weights": dict(decision.weights),
@@ -45,5 +49,10 @@ def build_signal_with_consensus(
         ],
     }
 
-    return Signal(symbol=symbol, action=action_map[decision.action], confidence=decision.confidence,
-                  rationale=rationale, metadata=metadata)
+    return Signal(
+        symbol=symbol,
+        action=action_map[decision.action],
+        confidence=decision.confidence,
+        rationale=rationale,
+        metadata=metadata,
+    )

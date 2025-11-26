@@ -141,9 +141,7 @@ class BlueGreenRolloutOrchestrator:
 
     def _monitor_step(self, step: RolloutStep, previous_share: float) -> None:
         start = self._time()
-        deadline = (
-            start + step.max_duration if step.max_duration is not None else None
-        )
+        deadline = start + step.max_duration if step.max_duration is not None else None
 
         while True:
             metrics = self._metrics_provider()
@@ -184,4 +182,6 @@ class BlueGreenRolloutOrchestrator:
         if self._rollback_callback is not None:
             self._rollback_callback(decision.reason, metrics, decision)
         self._controller.reset()
-        raise RolloutAbortedError(reason=decision.reason, decision=decision, metrics=metrics)
+        raise RolloutAbortedError(
+            reason=decision.reason, decision=decision, metrics=metrics
+        )

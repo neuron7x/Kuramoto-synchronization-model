@@ -25,7 +25,11 @@ class CleanupResult:
 
     @property
     def exit_code(self) -> int:
-        return 0 if all(report.status != TaskStatus.FAILED for report in self.reports) else 1
+        return (
+            0
+            if all(report.status != TaskStatus.FAILED for report in self.reports)
+            else 1
+        )
 
 
 def _write_summary(result: CleanupResult) -> Path | None:
@@ -51,7 +55,9 @@ def _write_summary(result: CleanupResult) -> Path | None:
     output_path = result.root / "reports" / "sanity_cleanup_summary.json"
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        output_path.write_text(
+            json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
     except Exception:  # pragma: no cover - best effort reporting
         LOGGER.exception("Unable to write summary to %s", output_path)
         return None
@@ -65,7 +71,9 @@ def _execute_task(func, context: TaskContext) -> TaskReport:
     try:
         report = func(context)
         if not isinstance(report, TaskReport):  # pragma: no cover - defensive guard
-            raise TypeError(f"Task {func.__name__} returned unexpected type {type(report)!r}")
+            raise TypeError(
+                f"Task {func.__name__} returned unexpected type {type(report)!r}"
+            )
         return report
     except Exception as exc:  # pragma: no cover - resilience to unexpected issues
         LOGGER.exception("Task %s failed", func.__name__)
@@ -99,18 +107,19 @@ def run_all(root: Path, options: CleanupOptions | None = None) -> CleanupResult:
         tasks.archive_legacy_content,
     )
 
-    reports = [
-        _execute_task(func, context)
-        for func in task_functions
-    ]
+    reports = [_execute_task(func, context) for func in task_functions]
 
     result = CleanupResult(root=resolved_root, reports=tuple(reports))
     summary_path = _write_summary(result)
     if summary_path:
-        LOGGER.info("Wrote cleanup summary to %s", summary_path.relative_to(resolved_root))
+        LOGGER.info(
+            "Wrote cleanup summary to %s", summary_path.relative_to(resolved_root)
+        )
 
     for report in reports:
-        LOGGER.info("[%s] %s — %s", report.status.value.upper(), report.name, report.summary)
+        LOGGER.info(
+            "[%s] %s — %s", report.status.value.upper(), report.name, report.summary
+        )
         for line in report.details:
             LOGGER.debug("    %s", line)
 

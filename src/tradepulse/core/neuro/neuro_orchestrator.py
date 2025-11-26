@@ -29,7 +29,7 @@ __all__ = [
 @dataclass(frozen=True)
 class TradingScenario:
     """Input specification for a trading scenario.
-    
+
     Attributes
     ----------
     market : str
@@ -43,7 +43,7 @@ class TradingScenario:
     max_position_size : float, optional
         Maximum position size as fraction of capital (0-1)
     """
-    
+
     market: str
     timeframe: str
     risk_profile: Literal["conservative", "moderate", "aggressive"]
@@ -54,7 +54,7 @@ class TradingScenario:
 @dataclass(frozen=True)
 class ModuleInstruction:
     """Instruction specification for a system module.
-    
+
     Attributes
     ----------
     module_name : str
@@ -66,7 +66,7 @@ class ModuleInstruction:
     priority : int
         Execution priority (lower = higher priority)
     """
-    
+
     module_name: str
     operation: str
     parameters: Dict[str, Any]
@@ -76,7 +76,7 @@ class ModuleInstruction:
 @dataclass(frozen=True)
 class RiskContour:
     """Risk assessment and threat threshold configuration.
-    
+
     Attributes
     ----------
     mode : Literal["conservative", "normal", "aggressive"]
@@ -92,7 +92,7 @@ class RiskContour:
     kelly_fraction_cap : float
         Maximum Kelly fraction for position sizing
     """
-    
+
     mode: Literal["conservative", "normal", "aggressive"]
     threat_threshold: float
     exposure_limit: float
@@ -104,7 +104,7 @@ class RiskContour:
 @dataclass(frozen=True)
 class LearningLoop:
     """Dopamine-loop learning configuration (TD-based).
-    
+
     Attributes
     ----------
     algorithm : str
@@ -120,19 +120,21 @@ class LearningLoop:
     update_rule : str
         Update rule specification
     """
-    
+
     algorithm: str = "TD(0)"
     discount_gamma: float = 0.99
     learning_rate: float = 0.01
     prediction_window: int = 1
     error_metric: str = "absolute"
-    update_rule: str = "delta = reward + gamma * V_next - V_current; V_current += learning_rate * delta"
+    update_rule: str = (
+        "delta = reward + gamma * V_next - V_current; V_current += learning_rate * delta"
+    )
 
 
 @dataclass(frozen=True)
 class OrchestrationOutput:
     """Complete orchestration specification output.
-    
+
     Attributes
     ----------
     module_sequence : List[ModuleInstruction]
@@ -144,20 +146,20 @@ class OrchestrationOutput:
     learning_loop : LearningLoop
         Learning loop specification
     """
-    
+
     module_sequence: List[ModuleInstruction]
     parameters: Dict[str, Any]
     risk_contour: RiskContour
     learning_loop: LearningLoop
-    
+
     def to_json(self, **kwargs) -> str:
         """Convert to JSON string.
-        
+
         Parameters
         ----------
         **kwargs
             Additional arguments passed to json.dumps
-            
+
         Returns
         -------
         str
@@ -174,20 +176,20 @@ class OrchestrationOutput:
 
 class NeuroOrchestrator:
     """Neuro-Orchestrator Agent for biologically-inspired module coordination.
-    
+
     This orchestrator implements the mapping between trading scenarios and
     TradePulse's neuroscience-inspired architecture:
-    
+
     - Basal ganglia → action selection module
     - Dopamine loop → learning_loop (TD-based reinforcement)
     - Threat contour → risk_contour (risk management)
     - TACL → free-energy monitoring and protocol hot-swapping
-    
+
     The orchestrator ensures all proposed actions maintain TACL's monotonic
     free-energy descent constraint: no action can increase system free energy
     without human override.
     """
-    
+
     def __init__(
         self,
         *,
@@ -195,7 +197,7 @@ class NeuroOrchestrator:
         enable_tacl_validation: bool = True,
     ) -> None:
         """Initialize the orchestrator.
-        
+
         Parameters
         ----------
         free_energy_threshold : float, optional
@@ -205,7 +207,7 @@ class NeuroOrchestrator:
         """
         self._free_energy_threshold = free_energy_threshold
         self._enable_tacl_validation = enable_tacl_validation
-    
+
     def orchestrate(
         self,
         scenario: TradingScenario,
@@ -213,20 +215,20 @@ class NeuroOrchestrator:
         custom_parameters: Optional[Mapping[str, Any]] = None,
     ) -> OrchestrationOutput:
         """Generate module-level orchestration for a trading scenario.
-        
+
         Parameters
         ----------
         scenario : TradingScenario
             Input trading scenario specification
         custom_parameters : Optional[Mapping[str, Any]], optional
             Override default parameters
-            
+
         Returns
         -------
         OrchestrationOutput
             Complete orchestration specification with module sequence,
             parameters, risk contour, and learning loop
-            
+
         Notes
         -----
         This method implements the mapping from scenario to modules while
@@ -234,33 +236,32 @@ class NeuroOrchestrator:
         """
         # Map risk profile to parameters
         risk_params = self._map_risk_profile(scenario.risk_profile)
-        
+
         # Build module sequence
         module_sequence = self._build_module_sequence(scenario, risk_params)
-        
+
         # Configure global parameters
         parameters = self._build_parameters(scenario, risk_params, custom_parameters)
-        
+
         # Define risk contour
         risk_contour = self._build_risk_contour(scenario, risk_params)
-        
+
         # Configure learning loop
         learning_loop = self._build_learning_loop(scenario, risk_params)
-        
+
         # Validate TACL constraint if enabled
         if self._enable_tacl_validation:
             self._validate_free_energy_constraint(parameters)
-        
+
         return OrchestrationOutput(
             module_sequence=module_sequence,
             parameters=parameters,
             risk_contour=risk_contour,
             learning_loop=learning_loop,
         )
-    
+
     def _map_risk_profile(
-        self, 
-        risk_profile: Literal["conservative", "moderate", "aggressive"]
+        self, risk_profile: Literal["conservative", "moderate", "aggressive"]
     ) -> Dict[str, float]:
         """Map risk profile to numerical parameters."""
         profiles = {
@@ -293,14 +294,14 @@ class NeuroOrchestrator:
             },
         }
         return profiles[risk_profile]
-    
+
     def _build_module_sequence(
         self,
         scenario: TradingScenario,
         risk_params: Dict[str, float],
     ) -> List[ModuleInstruction]:
         """Build ordered sequence of module instructions.
-        
+
         Module execution order follows the biological pathway:
         1. Data ingestion (sensory input)
         2. Feature extraction (preprocessing)
@@ -370,7 +371,7 @@ class NeuroOrchestrator:
                 priority=5,
             ),
         ]
-    
+
     def _build_parameters(
         self,
         scenario: TradingScenario,
@@ -412,7 +413,7 @@ class NeuroOrchestrator:
                 "protocol_options": ["CRDT", "RDMA", "gRPC", "shared_memory"],
             },
         }
-        
+
         # Apply custom overrides using a deep merge so nested dictionaries are
         # preserved rather than replaced wholesale.
         if custom_parameters:
@@ -455,7 +456,9 @@ class NeuroOrchestrator:
         for raw_key, raw_value in custom_parameters.items():
             prepared_value = self._prepare_override_value(raw_value)
             if "." in raw_key:
-                self._assign_override_path(normalised, raw_key.split("."), prepared_value)
+                self._assign_override_path(
+                    normalised, raw_key.split("."), prepared_value
+                )
             else:
                 if raw_key in normalised:
                     normalised[raw_key] = self._combine_override_values(
@@ -470,7 +473,9 @@ class NeuroOrchestrator:
         """Create a merge-ready copy of ``value``."""
 
         if isinstance(value, Mapping):
-            return {key: self._prepare_override_value(val) for key, val in value.items()}
+            return {
+                key: self._prepare_override_value(val) for key, val in value.items()
+            }
         return value
 
     def _assign_override_path(
@@ -490,14 +495,17 @@ class NeuroOrchestrator:
             if not isinstance(existing, dict):
                 joined = ".".join(path)
                 raise ValueError(
-                    "Custom parameter override for '%s' collides with a non-mapping value." % joined
+                    "Custom parameter override for '%s' collides with a non-mapping value."
+                    % joined
                 )
 
             current = existing
 
         leaf = path[-1]
         if leaf in current:
-            current[leaf] = self._combine_override_values(current[leaf], value, ".".join(path))
+            current[leaf] = self._combine_override_values(
+                current[leaf], value, ".".join(path)
+            )
         else:
             current[leaf] = value
 
@@ -509,7 +517,8 @@ class NeuroOrchestrator:
 
         if isinstance(existing, dict) != isinstance(incoming, dict):
             raise ValueError(
-                "Custom parameter override for '%s' mixes structured and scalar values." % key
+                "Custom parameter override for '%s' mixes structured and scalar values."
+                % key
             )
 
         return incoming
@@ -551,7 +560,7 @@ class NeuroOrchestrator:
                 base[key] = value
 
         return base
-    
+
     def _build_risk_contour(
         self,
         scenario: TradingScenario,
@@ -559,14 +568,18 @@ class NeuroOrchestrator:
     ) -> RiskContour:
         """Build risk contour configuration."""
         return RiskContour(
-            mode=scenario.risk_profile if scenario.risk_profile in ["conservative", "aggressive"] else "normal",
+            mode=(
+                scenario.risk_profile
+                if scenario.risk_profile in ["conservative", "aggressive"]
+                else "normal"
+            ),
             threat_threshold=risk_params["threat_threshold"],
             exposure_limit=risk_params["exposure_limit"],
             drawdown_limit=risk_params["drawdown_limit"],
             var_confidence=0.975,
             kelly_fraction_cap=risk_params["kelly_cap"],
         )
-    
+
     def _build_learning_loop(
         self,
         scenario: TradingScenario,
@@ -581,41 +594,43 @@ class NeuroOrchestrator:
             error_metric="absolute",
             update_rule="delta = reward + gamma * V_next - V_current; V_current += learning_rate * delta",
         )
-    
+
     def _validate_free_energy_constraint(self, parameters: Dict[str, Any]) -> None:
         """Validate TACL monotonic free-energy descent constraint.
-        
+
         This ensures no configuration will increase system free energy without
         human override, maintaining TACL's thermodynamic stability guarantees.
-        
+
         Parameters
         ----------
         parameters : Dict[str, Any]
             System parameters to validate
-            
+
         Raises
         ------
         ValueError
             If parameters would violate the free-energy constraint
         """
         # Check critical parameters that affect free energy
-        free_energy_threshold = parameters.get("free_energy_threshold", self._free_energy_threshold)
+        free_energy_threshold = parameters.get(
+            "free_energy_threshold", self._free_energy_threshold
+        )
         temperature = parameters.get("temperature", 1.0)
-        
+
         # Validate threshold
         if free_energy_threshold > 2.0:
             raise ValueError(
                 f"free_energy_threshold {free_energy_threshold} exceeds safe limit (2.0). "
                 "This would violate TACL's monotonic descent constraint."
             )
-        
+
         # Validate temperature (high temperature increases exploration/entropy)
         if temperature > 2.5:
             raise ValueError(
                 f"temperature {temperature} exceeds safe limit (2.5). "
                 "High temperature increases system entropy and may violate free-energy constraints."
             )
-        
+
         # Ensure TACL monitoring is enabled
         tacl_config = parameters.get("tacl", {})
         if not tacl_config.get("monotonic_descent", True):
@@ -634,7 +649,7 @@ def create_orchestration_from_scenario(
     free_energy_threshold: float = 1.4,
 ) -> OrchestrationOutput:
     """Convenience function to create orchestration from scenario parameters.
-    
+
     Parameters
     ----------
     market : str
@@ -649,12 +664,12 @@ def create_orchestration_from_scenario(
         Maximum position size fraction, by default 0.2
     free_energy_threshold : float, optional
         TACL free-energy threshold, by default 1.4
-        
+
     Returns
     -------
     OrchestrationOutput
         Complete orchestration specification
-        
+
     Examples
     --------
     >>> output = create_orchestration_from_scenario(
@@ -671,10 +686,10 @@ def create_orchestration_from_scenario(
         capital=capital,
         max_position_size=max_position_size,
     )
-    
+
     orchestrator = NeuroOrchestrator(
         free_energy_threshold=free_energy_threshold,
         enable_tacl_validation=True,
     )
-    
+
     return orchestrator.orchestrate(scenario)

@@ -5,9 +5,9 @@ import networkx as nx
 import pytest
 from fastapi.testclient import TestClient
 
+from runtime import thermo_api
 from runtime.dual_approval import DualApprovalManager
 from runtime.thermo_controller import CRITICAL_HALT_STATE, CrisisMode, ThermoController
-from runtime import thermo_api
 
 
 def _build_simple_controller() -> ThermoController:
@@ -16,7 +16,9 @@ def _build_simple_controller() -> ThermoController:
     graph.add_node("b", cpu_norm=0.5)
     graph.add_edge("a", "b", type="vdw", latency_norm=0.8, coherency=0.7)
     controller = ThermoController(graph)
-    token = DualApprovalManager(secret="test-secret").issue_service_token(action_id="thermo_topology")
+    token = DualApprovalManager(secret="test-secret").issue_service_token(
+        action_id="thermo_topology"
+    )
     controller.set_dual_approval_token(token)
     return controller
 
@@ -38,8 +40,12 @@ def test_manual_override_resets_circuit_breaker(caplog):
     assert time.time() - controller.override_time < 5
     assert controller.controller_state == CrisisMode.NORMAL
 
-    override_records = [r for r in caplog.records if getattr(r, "manual_override", False)]
-    assert override_records, "manual override should be logged with manual_override flag"
+    override_records = [
+        r for r in caplog.records if getattr(r, "manual_override", False)
+    ]
+    assert (
+        override_records
+    ), "manual override should be logged with manual_override flag"
     assert override_records[0].code == "B1"
     assert "manually overridden" in override_records[0].message
 

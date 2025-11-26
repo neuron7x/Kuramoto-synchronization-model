@@ -67,9 +67,7 @@ class KuramotoSynchrony:
         self.R_high = R_threshold_high
         self.R_low = R_threshold_low
 
-    def fit_transform(
-        self, prices: DataFrame
-    ) -> dict[str, Series]:
+    def fit_transform(self, prices: DataFrame) -> dict[str, Series]:
         """Compute Kuramoto synchrony from price data.
 
         Parameters

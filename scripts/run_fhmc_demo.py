@@ -1,4 +1,5 @@
 """Run a short FHMC-controlled demo inside the toy market environment."""
+
 from __future__ import annotations
 
 import time

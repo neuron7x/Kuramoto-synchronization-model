@@ -10,7 +10,6 @@ import pytest
 
 from markets.regime import RegimeDetectionResult, RegimeDetector
 
-
 ALLOWED_REGIMES = {"bull_trend", "bear_trend", "range_bound", "volatile_breakout"}
 
 

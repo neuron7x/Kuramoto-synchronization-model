@@ -1,4 +1,5 @@
 """Tests for version-gate workflow."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,8 +7,9 @@ from typing import Any, Dict
 
 import yaml
 
-
-WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "version-gate.yml"
+WORKFLOW_PATH = (
+    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "version-gate.yml"
+)
 
 
 def _load_workflow() -> Dict[str, Any]:
@@ -34,10 +36,12 @@ def test_version_check_job_has_minimal_permissions() -> None:
     jobs = workflow.get("jobs", {})
     job = jobs.get("version-check")
     assert isinstance(job, dict), "version-check job must be defined"
-    
+
     permissions = job.get("permissions")
     assert isinstance(permissions, dict), "Job must declare explicit permissions"
-    assert permissions == {"contents": "read"}, "Job should have minimal read-only permissions"
+    assert permissions == {
+        "contents": "read"
+    }, "Job should have minimal read-only permissions"
 
 
 def test_version_check_job_installs_setuptools_scm() -> None:
@@ -45,13 +49,13 @@ def test_version_check_job_installs_setuptools_scm() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["version-check"]
     steps = job.get("steps", [])
-    
+
     install_step = None
     for step in steps:
         if isinstance(step, dict) and "Install dependencies" in step.get("name", ""):
             install_step = step
             break
-    
+
     assert install_step is not None, "Install dependencies step must exist"
     assert "setuptools_scm" in install_step["run"]
 
@@ -61,34 +65,34 @@ def test_version_check_compares_scm_version_with_git_tag() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["version-check"]
     steps = job.get("steps", [])
-    
+
     # Check for SCM version step
     scm_step = None
     for step in steps:
         if isinstance(step, dict) and step.get("id") == "scm_version":
             scm_step = step
             break
-    
+
     assert scm_step is not None, "SCM version step must exist"
     assert "python -m setuptools_scm" in scm_step["run"]
-    
+
     # Check for git tag step
     tag_step = None
     for step in steps:
         if isinstance(step, dict) and step.get("id") == "git_tag":
             tag_step = step
             break
-    
+
     assert tag_step is not None, "Git tag step must exist"
     assert "git describe --tags --abbrev=0" in tag_step["run"]
-    
+
     # Check for comparison step
     compare_step = None
     for step in steps:
         if isinstance(step, dict) and "Compare versions" in step.get("name", ""):
             compare_step = step
             break
-    
+
     assert compare_step is not None, "Compare versions step must exist"
     assert "scm_version" in compare_step["run"]
     assert "git_tag" in compare_step["run"]
@@ -99,13 +103,13 @@ def test_version_check_allows_development_versions() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["version-check"]
     steps = job.get("steps", [])
-    
+
     compare_step = None
     for step in steps:
         if isinstance(step, dict) and "Compare versions" in step.get("name", ""):
             compare_step = step
             break
-    
+
     assert compare_step is not None
     assert ".dev" in compare_step["run"]
     assert "Development version detected" in compare_step["run"]
@@ -116,13 +120,13 @@ def test_version_check_fails_on_version_mismatch() -> None:
     workflow = _load_workflow()
     job = workflow["jobs"]["version-check"]
     steps = job.get("steps", [])
-    
+
     compare_step = None
     for step in steps:
         if isinstance(step, dict) and "Compare versions" in step.get("name", ""):
             compare_step = step
             break
-    
+
     assert compare_step is not None
     assert "exit 1" in compare_step["run"]
     assert "Version mismatch" in compare_step["run"]

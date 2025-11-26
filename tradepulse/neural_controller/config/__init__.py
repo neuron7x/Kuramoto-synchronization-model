@@ -1,4 +1,3 @@
-
 """Configuration helpers for the neural controller package."""
 
 from __future__ import annotations

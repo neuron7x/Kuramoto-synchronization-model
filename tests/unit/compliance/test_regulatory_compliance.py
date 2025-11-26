@@ -153,7 +153,9 @@ def test_validator_detects_broad_failures() -> None:
     assert any("Consent logging must be enabled" in message for message in messages)
     assert "Independent audit coverage is not confirmed" in messages
     assert "Audit frequency exceeds configured maximum interval" in messages
-    assert any("Remediation commitments are not aligned" in message for message in messages)
+    assert any(
+        "Remediation commitments are not aligned" in message for message in messages
+    )
     assert "Remediation plan reference is missing" in messages
 
 
@@ -169,7 +171,7 @@ def test_validator_requires_audit_frequency(sample_metadata: dict[str, object]) 
 
 
 def test_validator_accepts_string_remediation_reference(
-    sample_metadata: dict[str, object]
+    sample_metadata: dict[str, object],
 ) -> None:
     """Plain string remediation notes should count as both alignment and reference."""
 
@@ -182,7 +184,7 @@ def test_validator_accepts_string_remediation_reference(
 
 
 def test_validator_skips_attested_privacy_requirements(
-    sample_metadata: dict[str, object]
+    sample_metadata: dict[str, object],
 ) -> None:
     """Explicit GDPR/CCPA flags should satisfy the regulatory checklist."""
 
@@ -194,7 +196,7 @@ def test_validator_skips_attested_privacy_requirements(
 
 
 def test_validator_flags_missing_confidentiality_and_license(
-    sample_metadata: dict[str, object]
+    sample_metadata: dict[str, object],
 ) -> None:
     """Absence of key metadata should yield direct validation errors."""
 
@@ -209,7 +211,9 @@ def test_validator_flags_missing_confidentiality_and_license(
     assert "License metadata is missing" in messages
 
 
-def test_validator_accepts_scalar_audit_toggle(sample_metadata: dict[str, object]) -> None:
+def test_validator_accepts_scalar_audit_toggle(
+    sample_metadata: dict[str, object],
+) -> None:
     """Scalar audit indicators should be normalised just like mappings."""
 
     sample_metadata["independent_audit"] = "yes"
@@ -220,19 +224,22 @@ def test_validator_accepts_scalar_audit_toggle(sample_metadata: dict[str, object
     assert any("Audit cadence" in issue.message for issue in report.issues)
 
 
-def test_validator_accepts_compliant_metadata(sample_metadata: dict[str, object]) -> None:
+def test_validator_accepts_compliant_metadata(
+    sample_metadata: dict[str, object],
+) -> None:
     validator = RegulatoryComplianceValidator()
     report = validator.validate(sample_metadata)
     assert report.compliant
     assert report.issues == ()
     assert (
-        report.metadata["license"]
-        == "TradePulse Proprietary License Agreement (TPLA)"
+        report.metadata["license"] == "TradePulse Proprietary License Agreement (TPLA)"
     )
     assert "GDPR" in report.metadata["privacy_regimes"]
 
 
-def test_validator_flags_missing_privacy_framework(sample_metadata: dict[str, object]) -> None:
+def test_validator_flags_missing_privacy_framework(
+    sample_metadata: dict[str, object],
+) -> None:
     sample_metadata.pop("ccpa_compliant", None)
     sample_metadata["privacy_regulations"] = ["GDPR"]
     validator = RegulatoryComplianceValidator()

@@ -98,7 +98,9 @@ class SemanticVersion:
 
         match = cls._SEMVER_RE.match(value.strip())
         if not match:
-            msg = f"Invalid semantic version '{value}'. Expected <major>.<minor>.<patch>."
+            msg = (
+                f"Invalid semantic version '{value}'. Expected <major>.<minor>.<patch>."
+            )
             raise ValueError(msg)
         major, minor, patch = (int(group) for group in match.groups())
         return cls(major=major, minor=minor, patch=patch)
@@ -106,7 +108,9 @@ class SemanticVersion:
     def __str__(self) -> str:  # pragma: no cover - trivial proxy
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    def bump(self, *, major: bool = False, minor: bool = False, patch: bool = True) -> "SemanticVersion":
+    def bump(
+        self, *, major: bool = False, minor: bool = False, patch: bool = True
+    ) -> "SemanticVersion":
         """Return a new version incremented according to semantic version rules."""
 
         if sum(map(bool, (major, minor, patch))) != 1:
@@ -202,9 +206,13 @@ class LineageRecord:
 
     def __post_init__(self) -> None:
         if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "created_at", self.created_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.astimezone(timezone.utc)
+            )
 
 
 @dataclass(frozen=True)
@@ -234,9 +242,13 @@ class RollbackRecord:
 
     def __post_init__(self) -> None:  # pragma: no cover - trivial timezone guard
         if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "created_at", self.created_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.astimezone(timezone.utc)
+            )
 
 
 @dataclass
@@ -268,7 +280,9 @@ class VersionEntry:
     def ensure_access(self, context: Mapping[str, Any]) -> None:
         for gate in self.access_gates:
             if not gate.is_open(context):
-                raise AccessDeniedError(f"Access gate '{gate.name}' denied access to {self.version_id}")
+                raise AccessDeniedError(
+                    f"Access gate '{gate.name}' denied access to {self.version_id}"
+                )
 
     def add_lineage(self, record: LineageRecord) -> None:
         self.lineage.append(record)
@@ -365,7 +379,13 @@ class VersionRegistry:
             msg = f"Version '{key}' is not registered."
             raise VersioningError(msg) from exc
 
-    def promote(self, identifier: str, version: SemanticVersion | str, *, target_state: LifecycleState) -> VersionEntry:
+    def promote(
+        self,
+        identifier: str,
+        version: SemanticVersion | str,
+        *,
+        target_state: LifecycleState,
+    ) -> VersionEntry:
         entry = self.get(identifier, version)
         if target_state not in _ALLOWED_TRANSITIONS[entry.lifecycle_state]:
             msg = (
@@ -377,9 +397,14 @@ class VersionRegistry:
         entry.mark_updated()
         return entry
 
-    def set_active(self, identifier: str, version: SemanticVersion | str, *, active: bool) -> VersionEntry:
+    def set_active(
+        self, identifier: str, version: SemanticVersion | str, *, active: bool
+    ) -> VersionEntry:
         entry = self.get(identifier, version)
-        if active and entry.lifecycle_state not in {LifecycleState.STAGING, LifecycleState.PRODUCTION}:
+        if active and entry.lifecycle_state not in {
+            LifecycleState.STAGING,
+            LifecycleState.PRODUCTION,
+        }:
             msg = (
                 f"Only staging or production versions can be activated. "
                 f"{entry.version_id} is {entry.lifecycle_state.value}."
@@ -389,7 +414,13 @@ class VersionRegistry:
         entry.mark_updated()
         return entry
 
-    def validate_contract(self, identifier: str, version: SemanticVersion | str, *, against: CompatibilityContract) -> bool:
+    def validate_contract(
+        self,
+        identifier: str,
+        version: SemanticVersion | str,
+        *,
+        against: CompatibilityContract,
+    ) -> bool:
         entry = self.get(identifier, version)
         return entry.contract.is_compatible_with(against)
 
@@ -411,7 +442,11 @@ class VersionRegistry:
         payload: Any,
     ) -> Any:
         entry = self.get(identifier, source_version)
-        target_semver = SemanticVersion.parse(target_version) if isinstance(target_version, str) else target_version
+        target_semver = (
+            SemanticVersion.parse(target_version)
+            if isinstance(target_version, str)
+            else target_version
+        )
         migration = entry.migrations.get(target_semver)
         if not migration:
             msg = (
@@ -457,4 +492,3 @@ class VersionRegistry:
     def active_versions(self, *, kind: str | None = None) -> list[VersionEntry]:
         catalog = self.catalog()
         return catalog.list_versions(kind=kind, active_only=True)
-

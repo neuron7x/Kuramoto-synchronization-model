@@ -51,7 +51,9 @@ class HybridSearchEngine:
         hasher.update(str(query.freshness_horizon).encode("utf-8"))
         return hasher.hexdigest()
 
-    def _score_tags(self, result_tags: Sequence[str], query_tags: Sequence[str]) -> float:
+    def _score_tags(
+        self, result_tags: Sequence[str], query_tags: Sequence[str]
+    ) -> float:
         if not query_tags:
             return 1.0
         overlap = len(set(result_tags) & set(query_tags))
@@ -64,7 +66,9 @@ class HybridSearchEngine:
         references = len(self._graph.references(document_id))
         return 1.0 + min(backlinks + references, 10) * 0.03
 
-    def search(self, query: SearchQuery) -> tuple[Sequence[SearchResult], CompletenessReport]:
+    def search(
+        self, query: SearchQuery
+    ) -> tuple[Sequence[SearchResult], CompletenessReport]:
         fingerprint = self._fingerprint(query)
         cached = self._cache.get(fingerprint)
         if cached:
@@ -75,10 +79,15 @@ class HybridSearchEngine:
         ranked: list[SearchResult] = []
 
         for segment, score in raw_results:
-            freshness_score = self._freshness.score(segment.metadata, query.freshness_horizon)
+            freshness_score = self._freshness.score(
+                segment.metadata, query.freshness_horizon
+            )
             if freshness_score <= 0:
                 continue
-            source_weight = self._prioritizer.weight(segment.metadata.source) * segment.metadata.priority
+            source_weight = (
+                self._prioritizer.weight(segment.metadata.source)
+                * segment.metadata.priority
+            )
             tag_weight = self._score_tags(segment.metadata.tags, query.tags)
             authority = self._authority_bonus(segment.document_id)
             composite = score * freshness_score * source_weight * tag_weight * authority

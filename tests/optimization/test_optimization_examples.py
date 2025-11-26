@@ -3,7 +3,6 @@
 Validates that optimization code examples work correctly.
 """
 
-import time
 from unittest.mock import Mock
 
 import numpy as np
@@ -24,9 +23,9 @@ class TestStreamingEventReplayer:
         """Streaming replay should return an iterator of batches."""
         replayer = StreamingEventReplayer(batch_size=10)
         replayer._fetch_batch = Mock(return_value=[])
-        
+
         result = replayer.replay_events_streaming("test-id", "TestType")
-        assert hasattr(result, '__iter__')
+        assert hasattr(result, "__iter__")
 
 
 class TestAdaptivePoller:
@@ -45,10 +44,10 @@ class TestIndicatorCache:
     def test_cache_miss_computes_value(self):
         """Cache miss should compute value."""
         cache = IndicatorCache(max_size=10, ttl_seconds=60.0)
-        
+
         data = np.random.randn(1000)
         compute_fn = Mock(return_value=42.0)
-        
+
         result = cache.get_or_compute("test", data, compute_fn)
         assert result == 42.0
         compute_fn.assert_called_once()

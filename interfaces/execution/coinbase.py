@@ -261,7 +261,8 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
                         {
                             "type": "balance",
                             "balances": balances,
-                            "event_time": payload.get("timestamp") or event.get("timestamp"),
+                            "event_time": payload.get("timestamp")
+                            or event.get("timestamp"),
                         }
                     )
                     handled = True

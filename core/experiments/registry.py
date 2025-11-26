@@ -52,7 +52,9 @@ class ArtifactSpec:
 
         candidate_path = Path(candidate)
         if candidate_path.is_absolute():
-            raise ValueError(f"Artifact name '{candidate}' must not be an absolute path")
+            raise ValueError(
+                f"Artifact name '{candidate}' must not be an absolute path"
+            )
 
         normalised = candidate_path.name
         if normalised in {"", ".", ".."}:
@@ -206,7 +208,9 @@ class ModelRegistry:
             tags_payload = sorted(set(tags))
 
             previous_run = self._load_latest_run(experiment)
-            audit_trail = self._build_audit(previous_run, parameters_payload, metrics_payload)
+            audit_trail = self._build_audit(
+                previous_run, parameters_payload, metrics_payload
+            )
 
             run = ExperimentRun(
                 id=run_id,
@@ -241,7 +245,9 @@ class ModelRegistry:
                 raise KeyError(f"Run '{run_id}' is not present in the registry")
             metadata_path = self._base_dir / Path(relative)
             if not metadata_path.exists():
-                raise FileNotFoundError(f"Metadata for run '{run_id}' is missing: {metadata_path}")
+                raise FileNotFoundError(
+                    f"Metadata for run '{run_id}' is missing: {metadata_path}"
+                )
             return ExperimentRun.model_validate_json(metadata_path.read_text())
 
     def list_experiments(self) -> List[str]:
@@ -375,7 +381,9 @@ def _flatten_mapping(mapping: Mapping[str, Any], *, prefix: str = "") -> Dict[st
     return flat
 
 
-def _diff_mappings(current: Mapping[str, Any], previous: Mapping[str, Any]) -> AuditDelta:
+def _diff_mappings(
+    current: Mapping[str, Any], previous: Mapping[str, Any]
+) -> AuditDelta:
     current_flat = _flatten_mapping(current)
     previous_flat = _flatten_mapping(previous)
 

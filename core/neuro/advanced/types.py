@@ -64,4 +64,3 @@ class MarketContext:
             "regime": self.regime,
             "timestamp": self.timestamp.isoformat(),
         }
-

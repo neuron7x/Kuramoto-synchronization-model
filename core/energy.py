@@ -24,8 +24,8 @@ Example:
 
 from __future__ import annotations
 
-from typing import Dict, Tuple, Literal, TypedDict
 import math
+from typing import Dict, Literal, Tuple, TypedDict
 
 import numpy as np
 
@@ -40,11 +40,36 @@ class BondParams(TypedDict):
 
 
 BOND_LIBRARY: Dict[BondType, BondParams] = {
-    "covalent": {"base_energy": 1.0, "latency_weight": 4.0, "coherency_weight": 2.0, "stability_bonus": 1.5},
-    "ionic": {"base_energy": 1.4, "latency_weight": 2.5, "coherency_weight": 4.0, "stability_bonus": 1.2},
-    "metallic": {"base_energy": 0.7, "latency_weight": 1.0, "coherency_weight": 1.5, "stability_bonus": 2.5},
-    "vdw": {"base_energy": 0.25, "latency_weight": 0.6, "coherency_weight": 0.8, "stability_bonus": 0.2},
-    "hydrogen": {"base_energy": 0.5, "latency_weight": 1.8, "coherency_weight": 3.5, "stability_bonus": 3.2},
+    "covalent": {
+        "base_energy": 1.0,
+        "latency_weight": 4.0,
+        "coherency_weight": 2.0,
+        "stability_bonus": 1.5,
+    },
+    "ionic": {
+        "base_energy": 1.4,
+        "latency_weight": 2.5,
+        "coherency_weight": 4.0,
+        "stability_bonus": 1.2,
+    },
+    "metallic": {
+        "base_energy": 0.7,
+        "latency_weight": 1.0,
+        "coherency_weight": 1.5,
+        "stability_bonus": 2.5,
+    },
+    "vdw": {
+        "base_energy": 0.25,
+        "latency_weight": 0.6,
+        "coherency_weight": 0.8,
+        "stability_bonus": 0.2,
+    },
+    "hydrogen": {
+        "base_energy": 0.5,
+        "latency_weight": 1.8,
+        "coherency_weight": 3.5,
+        "stability_bonus": 3.2,
+    },
 }
 
 K_BOLTZMANN_EFFECTIVE = 1.38e-23

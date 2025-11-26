@@ -314,7 +314,9 @@ class DataIngestionCacheService:
             key=key, rows=rows, start=start, end=end, last_updated=timestamp
         )
 
-    def _snapshot_from_entry(self, key: CacheKey, entry: CacheEntry) -> CacheEntrySnapshot:
+    def _snapshot_from_entry(
+        self, key: CacheKey, entry: CacheEntry
+    ) -> CacheEntrySnapshot:
         rows = int(entry.frame.shape[0])
         if rows == 0:
             start = end = None

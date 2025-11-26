@@ -8,7 +8,13 @@ from typing import Any, AsyncIterator, Mapping
 
 import httpx
 
-from .models import AuditEvent, KillSwitchState, OrderTicket, RiskDecision, TradingSignal
+from .models import (
+    AuditEvent,
+    KillSwitchState,
+    OrderTicket,
+    RiskDecision,
+    TradingSignal,
+)
 
 
 class SandboxHttpClient:
@@ -20,7 +26,9 @@ class SandboxHttpClient:
 
     @asynccontextmanager
     async def client(self) -> AsyncIterator[httpx.AsyncClient]:
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as session:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout
+        ) as session:
             yield session
 
 

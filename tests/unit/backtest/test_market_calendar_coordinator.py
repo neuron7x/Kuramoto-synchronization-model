@@ -25,16 +25,15 @@ def coordinator() -> MarketCalendarCoordinator:
     return MarketCalendarCoordinator({"NYSE": ny_calendar, "LSE": ldn_calendar})
 
 
-def test_session_events_return_local_and_utc(coordinator: MarketCalendarCoordinator) -> None:
+def test_session_events_return_local_and_utc(
+    coordinator: MarketCalendarCoordinator,
+) -> None:
     start = datetime(2023, 7, 3, 11, 0, tzinfo=timezone.utc)
     end = datetime(2023, 7, 3, 20, 30, tzinfo=timezone.utc)
 
     events = coordinator.session_events(start, end)
 
-    assert [
-        (event.market, event.kind)
-        for event in events
-    ] == [
+    assert [(event.market, event.kind) for event in events] == [
         ("NYSE", "open"),
         ("LSE", "close"),
         ("NYSE", "close"),
@@ -70,7 +69,9 @@ def test_trading_windows_union_mode(coordinator: MarketCalendarCoordinator) -> N
     ]
 
 
-def test_trading_windows_intersection_mode(coordinator: MarketCalendarCoordinator) -> None:
+def test_trading_windows_intersection_mode(
+    coordinator: MarketCalendarCoordinator,
+) -> None:
     start = datetime(2023, 7, 3, 11, 0, tzinfo=timezone.utc)
     end = datetime(2023, 7, 3, 21, 0, tzinfo=timezone.utc)
 

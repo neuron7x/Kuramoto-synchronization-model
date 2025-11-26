@@ -20,7 +20,9 @@ from observability.response_quality import (
 UTC = timezone.utc
 
 
-def _sample(registry: CollectorRegistry, name: str, labels: Mapping[str, str]) -> float | None:
+def _sample(
+    registry: CollectorRegistry, name: str, labels: Mapping[str, str]
+) -> float | None:
     return registry.get_sample_value(name, labels)
 
 
@@ -143,7 +145,9 @@ def test_run_golden_checks_detects_regression(
     assert pending_gauge == len(reviews)
 
 
-def test_partial_checks_and_contract_enforcement(metrics_registry: CollectorRegistry) -> None:
+def test_partial_checks_and_contract_enforcement(
+    metrics_registry: CollectorRegistry,
+) -> None:
     clock = FakeClock()
     config = ResponseQualityConfig(
         model_name="qa-model",
@@ -253,7 +257,9 @@ def test_active_sampling_complaints_and_improvements(
         now=clock.now,
     )
 
-    orchestrator.record_live_response({"feature": 1}, {"prediction": 0.2, "confidence": 0.8})
+    orchestrator.record_live_response(
+        {"feature": 1}, {"prediction": 0.2, "confidence": 0.8}
+    )
     sample = orchestrator.record_live_response(
         {"feature": 2},
         {"prediction": 0.1, "confidence": 0.05},
@@ -263,7 +269,9 @@ def test_active_sampling_complaints_and_improvements(
     assert next_sample is not None and next_sample.identifier == sample.identifier
 
     orchestrator.register_complaint_route("bias", lambda category, metadata: "ethics")
-    complaint = orchestrator.route_complaint("bias", "potential drift", metadata={"ticket": 42})
+    complaint = orchestrator.route_complaint(
+        "bias", "potential drift", metadata={"ticket": 42}
+    )
     assert complaint.route == "ethics"
     assert complaint in orchestrator.complaints()
 

@@ -437,9 +437,12 @@ def test_delete_cached_frame_evicts_dataset_and_metadata() -> None:
     )
 
     assert removed is True
-    assert service.metadata_for(
-        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
-    ) is None
+    assert (
+        service.metadata_for(
+            layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+        )
+        is None
+    )
     assert service.get_cached_frame(
         layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
     ).empty
@@ -456,7 +459,9 @@ def test_delete_cached_frame_handles_missing_entries() -> None:
 
 
 def test_delete_cached_frame_removes_metadata_only_entry() -> None:
-    frame = pd.DataFrame(columns=["price", "volume"], index=pd.DatetimeIndex([], tz="UTC"))
+    frame = pd.DataFrame(
+        columns=["price", "volume"], index=pd.DatetimeIndex([], tz="UTC")
+    )
     service = DataIngestionCacheService()
     service.cache_frame(
         frame,
@@ -471,9 +476,12 @@ def test_delete_cached_frame_removes_metadata_only_entry() -> None:
     )
 
     assert removed is True
-    assert service.metadata_for(
-        layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
-    ) is None
+    assert (
+        service.metadata_for(
+            layer="raw", symbol="BTCUSD", venue="BINANCE", timeframe="1min"
+        )
+        is None
+    )
 
 
 def test_metadata_for_unknown_key_returns_none() -> None:
@@ -530,9 +538,12 @@ def test_rebuild_metadata_hydrates_registry_state() -> None:
     assert snapshot.start == base
     assert snapshot.end == base + timedelta(minutes=1)
     assert snapshot.last_updated == datetime(2024, 1, 2, tzinfo=timezone.utc)
-    assert service.metadata_for(
-        layer="raw", symbol="BTC/USD", venue="BINANCE", timeframe="1min"
-    ) == snapshot
+    assert (
+        service.metadata_for(
+            layer="raw", symbol="BTC/USD", venue="BINANCE", timeframe="1min"
+        )
+        == snapshot
+    )
 
 
 def test_rebuild_metadata_overwrites_stale_entries() -> None:

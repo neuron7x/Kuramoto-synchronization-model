@@ -23,7 +23,9 @@ def _build_dataframe() -> pd.DataFrame:
 
 def test_vlpo_filter_downscales_low_entropy_and_forgets_low_corr():
     df = _build_dataframe()
-    filt = VLPOCoreFilter(entropy_threshold=1.0, correlation_threshold=0.2, scale_factor=0.5)
+    filt = VLPOCoreFilter(
+        entropy_threshold=1.0, correlation_threshold=0.2, scale_factor=0.5
+    )
     cleaned = filt.filter(df, target_col="coherency")
 
     assert cleaned.shape == df.shape

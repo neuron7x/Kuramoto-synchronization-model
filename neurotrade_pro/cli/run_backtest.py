@@ -13,7 +13,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--out", type=str, default="artifacts/backtest.csv")
-    parser.add_argument("--metrics", type=str, default="artifacts/backtest_metrics.json")
+    parser.add_argument(
+        "--metrics", type=str, default="artifacts/backtest_metrics.json"
+    )
     args = parser.parse_args()
 
     df, metrics = run_validation(args.steps)

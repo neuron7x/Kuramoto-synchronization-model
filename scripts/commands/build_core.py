@@ -1,4 +1,5 @@
 """Core module build and release orchestration pipeline."""
+
 from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
@@ -18,7 +19,12 @@ from packaging.version import InvalidVersion, Version
 from core.events import BarEvent, FillEvent, OrderEvent, SignalEvent, TickEvent
 from core.messaging.contracts import SchemaContractValidator
 from core.messaging.schema_registry import EventSchemaRegistry
-from scripts.commands.base import CommandError, ensure_tools_exist, register, run_subprocess
+from scripts.commands.base import (
+    CommandError,
+    ensure_tools_exist,
+    register,
+    run_subprocess,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -88,7 +94,9 @@ class BuildPipeline:
             self._cleanups.append(action)
 
     def _perform_rollbacks(self) -> None:
-        LOGGER.info("Initiating automatic rollback across %d step(s)…", len(self._rollbacks))
+        LOGGER.info(
+            "Initiating automatic rollback across %d step(s)…", len(self._rollbacks)
+        )
         for action in self._rollbacks:
             try:
                 action()
@@ -108,7 +116,9 @@ def _read_version(version_file: Path) -> Version:
     try:
         return Version(raw_value)
     except InvalidVersion as exc:
-        raise CommandError(f"Version '{raw_value}' is not a valid semantic version") from exc
+        raise CommandError(
+            f"Version '{raw_value}' is not a valid semantic version"
+        ) from exc
 
 
 def _bump_version(base: Version, release_type: str) -> Version:
@@ -133,7 +143,9 @@ def _ensure_git_clean(root: Path) -> None:
     except FileNotFoundError as exc:  # pragma: no cover - environment guard
         raise CommandError("git executable is required for release automation") from exc
     if result.stdout.strip():
-        raise CommandError("Working tree has uncommitted changes. Commit or stash before releasing.")
+        raise CommandError(
+            "Working tree has uncommitted changes. Commit or stash before releasing."
+        )
 
 
 def _ensure_version_ahead(previous: Version, target: Version) -> None:
@@ -155,7 +167,9 @@ def _ensure_tag_absent(root: Path, tag_name: str) -> None:
     except FileNotFoundError as exc:  # pragma: no cover - environment guard
         raise CommandError("git executable is required for release automation") from exc
     if result.stdout.strip():
-        raise CommandError(f"Tag '{tag_name}' already exists. Choose a different version or delete the tag.")
+        raise CommandError(
+            f"Tag '{tag_name}' already exists. Choose a different version or delete the tag."
+        )
 
 
 def _verify_api_contracts(pipeline: BuildPipeline) -> None:
@@ -188,7 +202,9 @@ def _update_version_file(pipeline: BuildPipeline) -> None:
 
     pipeline.register_rollback(rollback)
     if context.dry_run:
-        pipeline.register_cleanup(lambda: context.version_file.write_text(previous_text, encoding="utf-8"))
+        pipeline.register_cleanup(
+            lambda: context.version_file.write_text(previous_text, encoding="utf-8")
+        )
 
 
 def _run_linters(pipeline: BuildPipeline) -> None:
@@ -220,7 +236,9 @@ def _run_tests(pipeline: BuildPipeline) -> None:
 
 def _build_distributions(pipeline: BuildPipeline) -> None:
     context = pipeline.context
-    temp_dir = Path(tempfile.mkdtemp(prefix="core-build-", dir=str(context.repository_root)))
+    temp_dir = Path(
+        tempfile.mkdtemp(prefix="core-build-", dir=str(context.repository_root))
+    )
     pipeline.state.build_dir = temp_dir
     pipeline.register_cleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
 
@@ -364,12 +382,16 @@ def _create_git_tag(pipeline: BuildPipeline) -> None:
     tag_name = f"{context.tag_prefix}{context.target_version}"
     _ensure_tag_absent(context.repository_root, tag_name)
     message = f"core release {context.target_version}"
-    run_subprocess(["git", "tag", "-a", tag_name, "-m", message], cwd=context.repository_root)
+    run_subprocess(
+        ["git", "tag", "-a", tag_name, "-m", message], cwd=context.repository_root
+    )
     pipeline.state.tag_name = tag_name
 
     def rollback() -> None:
         LOGGER.info("Deleting git tag %s", tag_name)
-        run_subprocess(["git", "tag", "-d", tag_name], cwd=context.repository_root, check=False)
+        run_subprocess(
+            ["git", "tag", "-d", tag_name], cwd=context.repository_root, check=False
+        )
 
     pipeline.register_rollback(rollback)
 
@@ -392,7 +414,9 @@ def _publish_to_repository(pipeline: BuildPipeline) -> None:
         if path.suffix == ".whl" or path.suffixes[-2:] == [".tar", ".gz"]
     ]
     if not dist_files:
-        raise CommandError("No wheel or source distribution artifacts found for publishing")
+        raise CommandError(
+            "No wheel or source distribution artifacts found for publishing"
+        )
 
     command = [
         "twine",
@@ -422,8 +446,12 @@ def _publish_to_repository(pipeline: BuildPipeline) -> None:
     pipeline.register_rollback(rollback)
 
 
-def build_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparsers.add_parser("build-core", help="Build, verify, and release the core module")
+def build_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
+    parser = subparsers.add_parser(
+        "build-core", help="Build, verify, and release the core module"
+    )
     parser.set_defaults(command="build-core", handler=handle)
     parser.add_argument(
         "--release-type",
@@ -436,7 +464,9 @@ def build_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]
     )
     parser.add_argument(
         "--repository-url",
-        default=os.environ.get("CORE_PACKAGE_REPOSITORY", "https://upload.pypi.org/legacy/"),
+        default=os.environ.get(
+            "CORE_PACKAGE_REPOSITORY", "https://upload.pypi.org/legacy/"
+        ),
         help="Package repository endpoint used for publishing artifacts.",
     )
     parser.add_argument(
@@ -499,11 +529,15 @@ def handle(args: argparse.Namespace) -> int:
         try:
             target_version = Version(raw_new_version)
         except InvalidVersion as exc:
-            raise CommandError(f"Provided --new-version '{raw_new_version}' is invalid") from exc
+            raise CommandError(
+                f"Provided --new-version '{raw_new_version}' is invalid"
+            ) from exc
     elif release_type:
         target_version = _bump_version(previous_version, release_type)
     else:
-        raise CommandError("Provide either --release-type or --new-version to determine release version")
+        raise CommandError(
+            "Provide either --release-type or --new-version to determine release version"
+        )
 
     _ensure_version_ahead(previous_version, target_version)
 

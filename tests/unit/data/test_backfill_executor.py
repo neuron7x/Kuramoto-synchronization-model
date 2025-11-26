@@ -35,7 +35,9 @@ def test_backfill_planner_recovers_all_gaps_with_retries() -> None:
     failures: defaultdict[pd.Timestamp, int] = defaultdict(int)
 
     def loader(_: CacheKey, start: pd.Timestamp, end: pd.Timestamp) -> BackfillPayload:
-        segment_index = expected_index[(expected_index >= start) & (expected_index < end)]
+        segment_index = expected_index[
+            (expected_index >= start) & (expected_index < end)
+        ]
         frame = dataset.loc[segment_index]
         failures[start] += 1
         if start == expected_index[10] and failures[start] < 2:
@@ -63,7 +65,9 @@ def test_backfill_planner_records_checksum_failures() -> None:
     expected_index = dataset.index
 
     def loader(_: CacheKey, start: pd.Timestamp, end: pd.Timestamp) -> BackfillPayload:
-        segment_index = expected_index[(expected_index >= start) & (expected_index < end)]
+        segment_index = expected_index[
+            (expected_index >= start) & (expected_index < end)
+        ]
         frame = dataset.loc[segment_index]
         return BackfillPayload(frame=frame, checksum="invalid")
 
@@ -85,7 +89,9 @@ def test_backfill_planner_validates_loader_payload() -> None:
     expected_index = dataset.index
 
     def loader(_: CacheKey, start: pd.Timestamp, end: pd.Timestamp) -> BackfillPayload:
-        segment_index = expected_index[(expected_index >= start) & (expected_index < end)]
+        segment_index = expected_index[
+            (expected_index >= start) & (expected_index < end)
+        ]
         frame = dataset.loc[segment_index]
         # Drop a row to trigger validation
         frame = frame.iloc[:-1]
@@ -96,5 +102,3 @@ def test_backfill_planner_validates_loader_payload() -> None:
     assert not result.success
     assert result.failed_segments
     assert any("missing timestamps" in error.message for error in result.errors)
-
-

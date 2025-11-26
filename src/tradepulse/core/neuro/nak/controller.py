@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import math
 from collections import deque
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, Iterable
-import math
 
 import numpy as np
 
@@ -45,7 +45,9 @@ class NaKControllerV4_2:
         self.lambda_ = 0.05
         self._p_hist: deque[float] = deque(maxlen=50)
         self._refr_ticks = 0
-        self.sensory = SensoryHabituation() if self.cfg.enable_sens_habituation else None
+        self.sensory = (
+            SensoryHabituation() if self.cfg.enable_sens_habituation else None
+        )
         self.desens = DesensitizationModule()
         self._sens = 1.0
         self.r_mode = 1.0
@@ -83,7 +85,9 @@ class NaKControllerV4_2:
         p_exp = (
             p_exp_for_stim
             if p_exp_for_stim is not None
-            else (float(np.mean(self._p_hist)) if self._p_hist else self.cfg.p_exp_default)
+            else (
+                float(np.mean(self._p_hist)) if self._p_hist else self.cfg.p_exp_default
+            )
         )
         self._p_hist.append(p)
 

@@ -37,9 +37,13 @@ def test_parse_env_overrides_invalid() -> None:
 
 
 @patch("scripts.commands.backup.DatabaseBackupManager")
-def test_handle_executes_backup(mock_manager: Mock, backup_args: argparse.Namespace) -> None:
+def test_handle_executes_backup(
+    mock_manager: Mock, backup_args: argparse.Namespace
+) -> None:
     manager_instance = mock_manager.return_value
-    manager_instance.run_backup_cycle.return_value.backup_path = Path("/backups/demo.dump")
+    manager_instance.run_backup_cycle.return_value.backup_path = Path(
+        "/backups/demo.dump"
+    )
     manager_instance.run_backup_cycle.return_value.archived = tuple()
     manager_instance.run_backup_cycle.return_value.pruned = tuple()
 
@@ -64,7 +68,9 @@ def test_handle_uses_env_when_missing_database_url(
     assert config.database_url == "postgresql://env@db/tradepulse"
 
 
-def test_handle_missing_database_url(backup_args: argparse.Namespace, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_missing_database_url(
+    backup_args: argparse.Namespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
     backup_args.database_url = None
     monkeypatch.delenv("DATABASE_URL", raising=False)
 

@@ -3,4 +3,3 @@
 The initializer eliminates ambiguous module imports when multiple test suites
 share the ``test_validation`` filename.
 """
-

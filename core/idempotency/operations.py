@@ -32,7 +32,9 @@ class IdempotencyError(RuntimeError):
 
     status_code: int = 500
 
-    def __init__(self, message: str, *, detail: Mapping[str, Any] | None = None) -> None:
+    def __init__(
+        self, message: str, *, detail: Mapping[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.detail = dict(detail or {})
 
@@ -152,22 +154,31 @@ class IdempotencyCoordinator(Generic[T]):
                 self._append_audit(
                     record,
                     "collision",
-                    {"expected": record.payload_fingerprint, "actual": fingerprint} | dict(metadata or {}),
+                    {"expected": record.payload_fingerprint, "actual": fingerprint}
+                    | dict(metadata or {}),
                 )
                 LOGGER.warning(
-                    "Idempotency collision detected", extra={"operation_id": key.operation_id, "service": key.service}
+                    "Idempotency collision detected",
+                    extra={"operation_id": key.operation_id, "service": key.service},
                 )
                 raise IdempotencyConflictError(
                     "Idempotency key collision detected.",
-                    detail={"operation_id": key.operation_id, "request_id": key.request_id},
+                    detail={
+                        "operation_id": key.operation_id,
+                        "request_id": key.request_id,
+                    },
                 )
             record.duplicates += 1
             self._duplicates += 1
             self._append_audit(record, "duplicate", metadata)
             if record.status is OperationStatus.FAILED:
                 raise IdempotencyInputError(
-                    record.failure_reason or "Previous attempt failed and cannot be retried.",
-                    detail={"operation_id": key.operation_id, "request_id": key.request_id},
+                    record.failure_reason
+                    or "Previous attempt failed and cannot be retried.",
+                    detail={
+                        "operation_id": key.operation_id,
+                        "request_id": key.request_id,
+                    },
                 )
             return self._outcome(record, from_cache=True)
 
@@ -197,7 +208,10 @@ class IdempotencyCoordinator(Generic[T]):
                 )
                 raise IdempotencyConflictError(
                     "Conflicting payload for operation.",
-                    detail={"operation_id": key.operation_id, "request_id": key.request_id},
+                    detail={
+                        "operation_id": key.operation_id,
+                        "request_id": key.request_id,
+                    },
                 )
             record.last_seen_monotonic = now
             record.last_seen_at = timestamp
@@ -217,14 +231,20 @@ class IdempotencyCoordinator(Generic[T]):
                     self._append_audit(record, "result_conflict", metadata)
                     raise IdempotencyConflictError(
                         "Conflicting result detected for idempotent operation.",
-                        detail={"operation_id": key.operation_id, "request_id": key.request_id},
+                        detail={
+                            "operation_id": key.operation_id,
+                            "request_id": key.request_id,
+                        },
                     )
                 self._append_audit(record, "replayed", metadata)
                 return self._outcome(record, from_cache=True)
             if record.status is OperationStatus.FAILED:
                 raise IdempotencyInputError(
                     "Cannot mark a failed operation as successful without remediation.",
-                    detail={"operation_id": key.operation_id, "request_id": key.request_id},
+                    detail={
+                        "operation_id": key.operation_id,
+                        "request_id": key.request_id,
+                    },
                 )
             record.status = OperationStatus.SUCCEEDED
             record.result_value = result
@@ -249,7 +269,10 @@ class IdempotencyCoordinator(Generic[T]):
             if record.status is OperationStatus.SUCCEEDED:
                 raise IdempotencyInputError(
                     "Cannot mark a successful operation as failed without remediation.",
-                    detail={"operation_id": key.operation_id, "request_id": key.request_id},
+                    detail={
+                        "operation_id": key.operation_id,
+                        "request_id": key.request_id,
+                    },
                 )
             record.status = OperationStatus.FAILED
             record.failure_reason = reason

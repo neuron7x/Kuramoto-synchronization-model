@@ -125,7 +125,9 @@ class ProfileHistory:
     def clone(self) -> "ProfileHistory":
         return ProfileHistory(
             name=self.name,
-            versions={version: record.clone() for version, record in self.versions.items()},
+            versions={
+                version: record.clone() for version, record in self.versions.items()
+            },
             published=dict(self.published),
             audit_log=list(self.audit_log),
         )
@@ -134,31 +136,41 @@ class ProfileHistory:
 class ConfigValidator(Protocol):
     """Callable contract for configuration validators."""
 
-    def __call__(self, profile_name: str, payload: Mapping[str, Any]) -> None:  # pragma: no cover - protocol definition
+    def __call__(
+        self, profile_name: str, payload: Mapping[str, Any]
+    ) -> None:  # pragma: no cover - protocol definition
         ...
 
 
 class CompatibilityPolicy(Protocol):
     """Callable contract for compatibility enforcement."""
 
-    def ensure(self, profile_name: str, version: Version, payload: Mapping[str, Any]) -> None:  # pragma: no cover - protocol definition
+    def ensure(
+        self, profile_name: str, version: Version, payload: Mapping[str, Any]
+    ) -> None:  # pragma: no cover - protocol definition
         ...
 
 
 class ReleaseCheck(Protocol):
     """Callable contract for automated release checks."""
 
-    def __call__(self, profile_name: str, version: Version, payload: Mapping[str, Any]) -> None:  # pragma: no cover - protocol definition
+    def __call__(
+        self, profile_name: str, version: Version, payload: Mapping[str, Any]
+    ) -> None:  # pragma: no cover - protocol definition
         ...
 
 
 class ConfigStorageBackend(Protocol):
     """Persistence contract for configuration histories."""
 
-    def read(self, profile_name: str) -> ProfileHistory | None:  # pragma: no cover - protocol definition
+    def read(
+        self, profile_name: str
+    ) -> ProfileHistory | None:  # pragma: no cover - protocol definition
         ...
 
-    def write(self, profile_name: str, history: ProfileHistory) -> None:  # pragma: no cover - protocol definition
+    def write(
+        self, profile_name: str, history: ProfileHistory
+    ) -> None:  # pragma: no cover - protocol definition
         ...
 
     def list_names(self) -> list[str]:  # pragma: no cover - protocol definition
@@ -194,7 +206,9 @@ def _ensure_mapping(payload: Mapping[str, Any]) -> Mapping[str, Any]:
 
 
 def _stable_checksum(payload: Mapping[str, Any]) -> str:
-    normalized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    normalized = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
@@ -284,9 +298,7 @@ class ConfigRegistry:
             history = self._load_history(profile_name)
             record = self._get_version_record(history, version_obj)
             if record.required_approvals == 0:
-                msg = (
-                    f"Version {version_obj} of '{profile_name}' does not require approvals"
-                )
+                msg = f"Version {version_obj} of '{profile_name}' does not require approvals"
                 raise ConfigApprovalError(msg)
             if record.has_approval_from(approver):
                 msg = (
@@ -363,7 +375,11 @@ class ConfigRegistry:
     ) -> None:
         """Rollback an environment to a previously registered configuration version."""
 
-        env = environment if isinstance(environment, Environment) else Environment(environment)
+        env = (
+            environment
+            if isinstance(environment, Environment)
+            else Environment(environment)
+        )
         version_obj = self._parse_version(target_version)
 
         with self._lock:
@@ -388,15 +404,27 @@ class ConfigRegistry:
             history.audit_log.append(audit_entry)
             self._persist(profile_name, history)
 
-    def get_active_version(self, profile_name: str, environment: Environment | str) -> Version | None:
-        env = environment if isinstance(environment, Environment) else Environment(environment)
+    def get_active_version(
+        self, profile_name: str, environment: Environment | str
+    ) -> Version | None:
+        env = (
+            environment
+            if isinstance(environment, Environment)
+            else Environment(environment)
+        )
         history = self._storage.read(profile_name)
         if history is None:
             return None
         return history.published.get(env)
 
-    def get_active_payload(self, profile_name: str, environment: Environment | str) -> Mapping[str, Any] | None:
-        env = environment if isinstance(environment, Environment) else Environment(environment)
+    def get_active_payload(
+        self, profile_name: str, environment: Environment | str
+    ) -> Mapping[str, Any] | None:
+        env = (
+            environment
+            if isinstance(environment, Environment)
+            else Environment(environment)
+        )
         history = self._storage.read(profile_name)
         if history is None:
             return None
@@ -460,14 +488,14 @@ class ConfigRegistry:
             raise ConfigVersionError(msg)
         return record
 
-    def _ensure_version_is_newer(self, history: ProfileHistory, version: Version) -> None:
+    def _ensure_version_is_newer(
+        self, history: ProfileHistory, version: Version
+    ) -> None:
         if not history.versions:
             return
         latest = max(history.versions)
         if version <= latest:
-            msg = (
-                f"Version {version} must be greater than existing latest version {latest}"
-            )
+            msg = f"Version {version} must be greater than existing latest version {latest}"
             raise ConfigVersionError(msg)
 
     def _ensure_approvals_satisfied(
@@ -490,10 +518,10 @@ class ConfigRegistry:
                 validator(profile_name, payload)
             except ConfigValidationError:
                 raise
-            except Exception as exc:  # noqa: BLE001 - propagate wrapped validation errors
-                msg = (
-                    f"Validator {validator!r} rejected payload for profile '{profile_name}'"
-                )
+            except (
+                Exception
+            ) as exc:  # noqa: BLE001 - propagate wrapped validation errors
+                msg = f"Validator {validator!r} rejected payload for profile '{profile_name}'"
                 raise ConfigValidationError(msg) from exc
 
     def _run_compatibility(
@@ -519,8 +547,5 @@ class ConfigRegistry:
             except ConfigPublicationError:
                 raise
             except Exception as exc:  # noqa: BLE001
-                msg = (
-                    f"Release check {check!r} failed for version {record.version}"
-                )
+                msg = f"Release check {check!r} failed for version {record.version}"
                 raise ConfigPublicationError(msg) from exc
-

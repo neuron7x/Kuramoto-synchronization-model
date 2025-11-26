@@ -10,7 +10,9 @@ class StubMarketProvider:
     async def fetch(self, symbol: str, window: int) -> PriceSeries:
         base = 100.0
         points = [
-            PricePoint(symbol=symbol, timestamp=datetime.now(timezone.utc), price=base + offset)
+            PricePoint(
+                symbol=symbol, timestamp=datetime.now(timezone.utc), price=base + offset
+            )
             for offset in (-2, -1, 0, 1, 2)
         ]
         return PriceSeries(symbol=symbol, points=points)

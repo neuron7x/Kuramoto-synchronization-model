@@ -3,7 +3,7 @@
 
 Usage:
     python tools/migrate_dopamine_config.py <input_config.yaml> [output_config.yaml]
-    
+
 If output is not specified, prints to stdout.
 """
 from __future__ import annotations
@@ -18,15 +18,15 @@ import yaml
 
 def migrate_2_2_to_1_0(config: Dict[str, Any]) -> Dict[str, Any]:
     """Migrate from version 2.2.x to 1.0.0.
-    
+
     Version 1.0.0 is the new production schema with standardized naming
     and additional safety parameters.
     """
     migrated = config.copy()
-    
+
     # Update version
     migrated["version"] = "1.0.0"
-    
+
     # Ensure all required fields exist with safe defaults if missing
     defaults = {
         "rpe_ema_beta": 0.2,
@@ -49,11 +49,11 @@ def migrate_2_2_to_1_0(config: Dict[str, Any]) -> Dict[str, Any]:
         "ddm_eps": 1.0e-6,
         "hold_threshold": 0.4,
     }
-    
+
     for key, default_value in defaults.items():
         if key not in migrated:
             migrated[key] = default_value
-    
+
     return migrated
 
 
@@ -68,7 +68,7 @@ def detect_version(config: Dict[str, Any]) -> str:
 def migrate_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Migrate configuration to latest version (1.0.0)."""
     version = detect_version(config)
-    
+
     if version.startswith("2.2"):
         return migrate_2_2_to_1_0(config)
     elif version.startswith("1.0"):
@@ -99,34 +99,34 @@ def main() -> int:
         action="store_true",
         help="Show what would be done without writing output",
     )
-    
+
     args = parser.parse_args()
-    
+
     if not args.input.exists():
         print(f"Error: Input file not found: {args.input}", file=sys.stderr)
         return 1
-    
+
     # Load input config
     with open(args.input, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
-    
+
     if not isinstance(config, dict):
         print("Error: Configuration must be a YAML mapping/dict", file=sys.stderr)
         return 1
-    
+
     original_version = detect_version(config)
     print(f"Input version: {original_version}", file=sys.stderr)
-    
+
     # Migrate
     try:
         migrated = migrate_config(config)
     except Exception as e:
         print(f"Error during migration: {e}", file=sys.stderr)
         return 1
-    
+
     migrated_version = detect_version(migrated)
     print(f"Output version: {migrated_version}", file=sys.stderr)
-    
+
     # Output
     output_yaml = yaml.dump(
         migrated,
@@ -134,19 +134,19 @@ def main() -> int:
         sort_keys=False,
         allow_unicode=True,
     )
-    
+
     if args.dry_run:
         print("\n--- Dry run (no files written) ---", file=sys.stderr)
         print(output_yaml)
         return 0
-    
+
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
             f.write(output_yaml)
         print(f"Migrated configuration written to: {args.output}", file=sys.stderr)
     else:
         print(output_yaml)
-    
+
     return 0
 
 

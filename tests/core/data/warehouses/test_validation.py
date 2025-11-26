@@ -43,7 +43,9 @@ def test_clickhouse_config_validation_applies() -> None:
 
 def test_clickhouse_bootstrap_uses_sanitised_identifiers() -> None:
     client = httpx.Client(base_url="http://example.com")
-    cfg = ClickHouseConfig(database="tradepulse", raw_table="ticks", rollup_table="bars")
+    cfg = ClickHouseConfig(
+        database="tradepulse", raw_table="ticks", rollup_table="bars"
+    )
     warehouse = ClickHouseWarehouse(client, config=cfg)
     statements = warehouse.bootstrap_statements()
     for statement in statements:

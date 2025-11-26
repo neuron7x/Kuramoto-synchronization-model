@@ -73,6 +73,8 @@ def test_distribution_profiler_reports_top_values_for_categorical_data() -> None
 
     # Boolean columns are treated as numeric for aggregation but still provide
     # useful frequency information.
-    assert signals_summary.mean == pytest.approx(float(frame["signals"].dropna().mean()))
+    assert signals_summary.mean == pytest.approx(
+        float(frame["signals"].dropna().mean())
+    )
     assert signals_summary.top_values[0][0] is True
     assert signals_summary.top_values[0][1] == 4

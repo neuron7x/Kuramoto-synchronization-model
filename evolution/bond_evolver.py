@@ -64,7 +64,7 @@ def crossover_graphs(g1: nx.DiGraph, g2: nx.DiGraph) -> Tuple[nx.DiGraph, nx.DiG
     sample_size = len(common_edges) // 2
     swap_edges = random.sample(list(common_edges), sample_size) if sample_size else []
 
-    for (src, dst) in swap_edges:
+    for src, dst in swap_edges:
         edge_type_1 = g1.edges[(src, dst)].get("type")
         edge_type_2 = g2.edges[(src, dst)].get("type")
         child1.edges[(src, dst)]["type"] = edge_type_2
@@ -127,7 +127,9 @@ def evolve_bonds(
     def mutate_wrapper(individual: nx.DiGraph) -> Tuple[nx.DiGraph]:
         return mutate_bond_type(individual)
 
-    def mate_wrapper(ind1: nx.DiGraph, ind2: nx.DiGraph) -> Tuple[nx.DiGraph, nx.DiGraph]:
+    def mate_wrapper(
+        ind1: nx.DiGraph, ind2: nx.DiGraph
+    ) -> Tuple[nx.DiGraph, nx.DiGraph]:
         return crossover_graphs(ind1, ind2)
 
     toolbox.register("evaluate", eval_ind)

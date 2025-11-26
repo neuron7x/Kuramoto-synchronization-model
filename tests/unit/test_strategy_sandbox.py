@@ -38,7 +38,9 @@ class _HungryStrategy(Strategy):
 
 def test_strategy_sandbox_returns_result() -> None:
     sandbox = StrategySandbox(
-        limits=SandboxLimits(cpu_time_seconds=1.0, wall_time_seconds=2.0, memory_bytes=64 * 1024 * 1024)
+        limits=SandboxLimits(
+            cpu_time_seconds=1.0, wall_time_seconds=2.0, memory_bytes=64 * 1024 * 1024
+        )
     )
     strategy = _MarkingStrategy()
 
@@ -50,7 +52,9 @@ def test_strategy_sandbox_returns_result() -> None:
 
 def test_strategy_sandbox_enforces_timeout() -> None:
     sandbox = StrategySandbox(
-        limits=SandboxLimits(cpu_time_seconds=1.0, wall_time_seconds=0.1, memory_bytes=64 * 1024 * 1024)
+        limits=SandboxLimits(
+            cpu_time_seconds=1.0, wall_time_seconds=0.1, memory_bytes=64 * 1024 * 1024
+        )
     )
 
     with pytest.raises(StrategySandboxError) as excinfo:
@@ -61,7 +65,9 @@ def test_strategy_sandbox_enforces_timeout() -> None:
 
 def test_strategy_sandbox_enforces_memory_limit() -> None:
     sandbox = StrategySandbox(
-        limits=SandboxLimits(cpu_time_seconds=1.0, wall_time_seconds=2.0, memory_bytes=8 * 1024 * 1024)
+        limits=SandboxLimits(
+            cpu_time_seconds=1.0, wall_time_seconds=2.0, memory_bytes=8 * 1024 * 1024
+        )
     )
 
     with pytest.raises(StrategySandboxError) as excinfo:

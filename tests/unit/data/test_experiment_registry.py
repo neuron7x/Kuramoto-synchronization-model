@@ -57,7 +57,10 @@ def test_register_run_persists_payload(tmp_path: Path) -> None:
     assert payload["metrics"] == {"loss": pytest.approx(0.42)}
     assert payload["artifacts"][0]["uri"] == "s3://bucket/model.pt"
     assert record.param_hash
-    assert registry.get_run(record.run_id, experiment_name="volatility-model").model_dump() == record.model_dump()
+    assert (
+        registry.get_run(record.run_id, experiment_name="volatility-model").model_dump()
+        == record.model_dump()
+    )
 
 
 def test_list_runs_is_sorted_by_creation_time(tmp_path: Path) -> None:
@@ -85,7 +88,9 @@ def test_list_runs_is_sorted_by_creation_time(tmp_path: Path) -> None:
     assert runs[0].created_at <= runs[1].created_at <= runs[2].created_at
 
 
-def test_audit_trail_highlights_hyperparameter_and_metric_changes(tmp_path: Path) -> None:
+def test_audit_trail_highlights_hyperparameter_and_metric_changes(
+    tmp_path: Path,
+) -> None:
     id_iter = iter(["base", "tuned"])
     clock_iter = iter(
         [
@@ -131,7 +136,9 @@ def test_audit_trail_highlights_hyperparameter_and_metric_changes(tmp_path: Path
 
 
 def test_reproducibility_manifest_matches_run(tmp_path: Path) -> None:
-    registry = ExperimentRegistry(tmp_path, run_id_factory=lambda: "manifest", fsync=False)
+    registry = ExperimentRegistry(
+        tmp_path, run_id_factory=lambda: "manifest", fsync=False
+    )
     record = registry.register_run(
         "signal-model",
         params={"window": 30},
@@ -139,7 +146,9 @@ def test_reproducibility_manifest_matches_run(tmp_path: Path) -> None:
         artifacts=[{"name": "model", "uri": "./model.pkl", "kind": "model"}],
     )
 
-    manifest = registry.reproducibility_manifest(record.run_id, experiment_name="signal-model")
+    manifest = registry.reproducibility_manifest(
+        record.run_id, experiment_name="signal-model"
+    )
     assert manifest["run_id"] == record.run_id
     assert manifest["param_hash"] == record.param_hash
     assert manifest["artifacts"][0]["uri"] == "./model.pkl"

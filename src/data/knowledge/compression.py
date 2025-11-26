@@ -30,8 +30,12 @@ class SegmentCompressor:
             metadata=compressed.metadata,
         )
 
-    def bulk_compress(self, segments: Iterable[DocumentSegment]) -> List[CompressedSegment]:
+    def bulk_compress(
+        self, segments: Iterable[DocumentSegment]
+    ) -> List[CompressedSegment]:
         return [self.compress(seg) for seg in segments]
 
-    def bulk_decompress(self, segments: Iterable[CompressedSegment]) -> List[DocumentSegment]:
+    def bulk_decompress(
+        self, segments: Iterable[CompressedSegment]
+    ) -> List[DocumentSegment]:
         return [self.decompress(seg) for seg in segments]

@@ -27,12 +27,23 @@ def test_generate_demo_ticks_is_deterministic(tmp_path: Path) -> None:
     pd.testing.assert_frame_equal(first, second)
 
 
-def test_read_ticks_csv_materialises_missing_demo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_read_ticks_csv_materialises_missing_demo(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     dataset_path = tmp_path / "sim_ticks.csv"
 
-    monkeypatch.setattr(synthetic_module, "DEFAULT_DEMO_TICKS_PATH", dataset_path, raising=False)
-    monkeypatch.setattr(data_module, "DEFAULT_DEMO_TICKS_PATH", dataset_path, raising=False)
-    monkeypatch.setattr(data_module, "generate_demo_ticks", synthetic_module.generate_demo_ticks, raising=False)
+    monkeypatch.setattr(
+        synthetic_module, "DEFAULT_DEMO_TICKS_PATH", dataset_path, raising=False
+    )
+    monkeypatch.setattr(
+        data_module, "DEFAULT_DEMO_TICKS_PATH", dataset_path, raising=False
+    )
+    monkeypatch.setattr(
+        data_module,
+        "generate_demo_ticks",
+        synthetic_module.generate_demo_ticks,
+        raising=False,
+    )
 
     df = data_module.read_ticks_csv(dataset_path)
 

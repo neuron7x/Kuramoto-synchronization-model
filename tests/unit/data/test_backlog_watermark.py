@@ -120,8 +120,12 @@ def test_resampling_and_synchronisation_edge_cases() -> None:
             payload={"price": price, "size": 2},
             arrival_time=_dt(offset + 1.0),
         )
-    backlog.observe("alpha", _dt(10), payload={"price": 110, "size": 1}, arrival_time=_dt(11))
-    backlog.observe("beta", _dt(10), payload={"price": 210, "size": 2}, arrival_time=_dt(11))
+    backlog.observe(
+        "alpha", _dt(10), payload={"price": 110, "size": 1}, arrival_time=_dt(11)
+    )
+    backlog.observe(
+        "beta", _dt(10), payload={"price": 210, "size": 2}, arrival_time=_dt(11)
+    )
     ready = backlog.drain_ready()
 
     alpha_rows = [
@@ -142,9 +146,13 @@ def test_resampling_and_synchronisation_edge_cases() -> None:
     assert alpha_frame.index.is_monotonic_increasing
     assert beta_frame.index.is_monotonic_increasing
 
-    l1 = resample_ticks_to_l1(alpha_frame, freq="1s", price_col="price", size_col="size")
+    l1 = resample_ticks_to_l1(
+        alpha_frame, freq="1s", price_col="price", size_col="size"
+    )
     assert not l1.empty
-    aligned = align_timeframes({"alpha": alpha_frame, "beta": beta_frame}, reference="alpha")
+    aligned = align_timeframes(
+        {"alpha": alpha_frame, "beta": beta_frame}, reference="alpha"
+    )
     assert aligned["alpha"].index.equals(aligned["beta"].index)
     assert aligned["alpha"].index.is_monotonic_increasing
 
@@ -188,4 +196,3 @@ def test_pruned_sources_are_removed_from_lag_and_delay_views() -> None:
 
     assert "beta" not in backlog.lag_summary()
     assert "beta" not in backlog.delay_series()
-

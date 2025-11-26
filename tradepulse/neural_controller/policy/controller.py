@@ -12,15 +12,22 @@ class BasalGangliaController:
         self.temp = float(temp)
         self.tau_E_amber = float(tau_E_amber)
 
-    def decide(self, state: Dict[str, float], mode: str, RPE: float) -> Tuple[str, Dict[str, float]]:
+    def decide(
+        self, state: Dict[str, float], mode: str, RPE: float
+    ) -> Tuple[str, Dict[str, float]]:
         H = float(state.get("H", state.get("H_est", 0.5)))
         M = float(state.get("M", state.get("M_est", 0.8)))
         E = float(state.get("E", state.get("E_est", 0.1)))
         S = float(state.get("S", state.get("S_est", 0.0)))
 
         Q = {
-            "increase_risk": S + 0.2 * M - 0.3 * (mode == "AMBER") - 0.8 * (mode == "RED"),
-            "decrease_risk": 0.4 * (mode == "AMBER") + 0.9 * (mode == "RED") + 0.1 * (1 - S),
+            "increase_risk": S
+            + 0.2 * M
+            - 0.3 * (mode == "AMBER")
+            - 0.8 * (mode == "RED"),
+            "decrease_risk": 0.4 * (mode == "AMBER")
+            + 0.9 * (mode == "RED")
+            + 0.1 * (1 - S),
             "switch_to_alt": 0.3 + 0.5 * E,
             "hedge": 0.2 + 0.6 * (mode != "GREEN") + 0.2 * (1 - M),
             "hold": 0.3 + 0.2 * M - 0.1 * S,

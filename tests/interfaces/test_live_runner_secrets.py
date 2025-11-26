@@ -40,7 +40,9 @@ sandbox = true
         encoding="utf-8",
     )
 
-    store = {"secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}}
+    store = {
+        "secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}
+    }
 
     monkeypatch.setenv("TRADEPULSE_VAULT_ADDR", "https://vault.tradepulse.local")
     monkeypatch.setenv("TRADEPULSE_VAULT_TOKEN", "vault-token")

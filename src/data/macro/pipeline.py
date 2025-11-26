@@ -8,7 +8,13 @@ from typing import Iterable, Mapping
 
 import pandas as pd
 
-from ..etl.stores import AuditEntry, AuditLog, CatalogEntry, DataCatalog, dataframe_signature
+from ..etl.stores import (
+    AuditEntry,
+    AuditLog,
+    CatalogEntry,
+    DataCatalog,
+    dataframe_signature,
+)
 from .clients import MacroDataClient
 from .feature_engineering import MacroFeatureBuilder
 from .models import MacroDataSet, MacroIndicatorConfig
@@ -69,10 +75,14 @@ class MacroSignalPipeline:
         for indicator in indicators:
             client = self._clients.get(indicator.source)
             if client is None:
-                raise ValueError(f"No client registered for source '{indicator.source}'")
+                raise ValueError(
+                    f"No client registered for source '{indicator.source}'"
+                )
 
             params = (extra_params or {}).get(indicator.code, {})
-            frame = client.fetch_series(indicator.code, start=start, end=end, params=params)
+            frame = client.fetch_series(
+                indicator.code, start=start, end=end, params=params
+            )
             if indicator.consensus_indicator:
                 consensus_frame = client.fetch_series(
                     indicator.consensus_indicator,
@@ -103,16 +113,22 @@ class MacroSignalPipeline:
 
         return features
 
-    def _harmonise_frequency(self, frame: pd.DataFrame, indicator: MacroIndicatorConfig) -> pd.DataFrame:
+    def _harmonise_frequency(
+        self, frame: pd.DataFrame, indicator: MacroIndicatorConfig
+    ) -> pd.DataFrame:
         if frame.empty:
             return frame
 
         resampled = frame.copy()
 
         if "period_end" not in resampled.columns:
-            raise ValueError(f"Macro dataset for {indicator.code} missing 'period_end' column")
+            raise ValueError(
+                f"Macro dataset for {indicator.code} missing 'period_end' column"
+            )
         if "value" not in resampled.columns:
-            raise ValueError(f"Macro dataset for {indicator.code} missing 'value' column")
+            raise ValueError(
+                f"Macro dataset for {indicator.code} missing 'value' column"
+            )
 
         if "indicator" not in resampled.columns:
             resampled["indicator"] = indicator.code
@@ -133,7 +149,9 @@ class MacroSignalPipeline:
             )
             local["indicator"] = code
             harmonised.append(local)
-        resampled = pd.concat(harmonised, ignore_index=True) if harmonised else resampled
+        resampled = (
+            pd.concat(harmonised, ignore_index=True) if harmonised else resampled
+        )
         has_release_date = "release_date" in resampled.columns
         if has_release_date:
             resampled["release_date"] = pd.to_datetime(
@@ -142,7 +160,9 @@ class MacroSignalPipeline:
         else:
             resampled["release_date"] = resampled["period_end"]
         if "consensus" in resampled.columns:
-            resampled["consensus"] = pd.to_numeric(resampled["consensus"], errors="coerce")
+            resampled["consensus"] = pd.to_numeric(
+                resampled["consensus"], errors="coerce"
+            )
         resampled["value"] = pd.to_numeric(resampled["value"], errors="coerce")
         lag = pd.to_timedelta(indicator.release_lag)
         availability_anchor = resampled["release_date"].fillna(resampled["period_end"])

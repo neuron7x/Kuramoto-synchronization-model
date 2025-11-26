@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Dict, Iterable, Tuple
-import math
 
 import numpy as np
 
@@ -47,12 +47,16 @@ class SensoryHabituation:
         if sim > 0.95:
             self._ticks_in_ctx += 1
             lam = math.log(2.0) / max(1, self.cfg.half_life)
-            self._sensitivity = max(self.cfg.min_sensitivity, self._sensitivity * math.exp(-lam))
+            self._sensitivity = max(
+                self.cfg.min_sensitivity, self._sensitivity * math.exp(-lam)
+            )
         else:
             vec = self._normalize(np.asarray(features, dtype=float))
             self._ctx_vec = vec
             lam = math.log(2.0) / max(1, self.cfg.recovery_hl)
-            self._sensitivity = min(1.0, 1.0 - (1.0 - self._sensitivity) * math.exp(-lam))
+            self._sensitivity = min(
+                1.0, 1.0 - (1.0 - self._sensitivity) * math.exp(-lam)
+            )
             self._ticks_in_ctx = 0
 
         return self._sensitivity, {

@@ -1,6 +1,7 @@
 import argparse
-import yaml
+
 import pandas as pd
+import yaml
 
 from neuropro.backtest import BacktesterCAL
 from neuropro.data import read_ticks_csv

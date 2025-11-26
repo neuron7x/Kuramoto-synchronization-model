@@ -133,4 +133,3 @@ def test_snapshot_respects_configuration_order() -> None:
 
     names = [status.spec.name for status in controller.snapshot()]
     assert names == ["a", "b"]
-

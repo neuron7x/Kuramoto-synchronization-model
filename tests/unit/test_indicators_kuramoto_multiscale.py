@@ -258,7 +258,9 @@ def test_multiscale_analyzer_exposes_resampled_series() -> None:
     pd.testing.assert_series_equal(result.timeframe_series[TimeFrame.M5], expected)
 
 
-def test_timeframe_cache_reuses_resampled_series(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_timeframe_cache_reuses_resampled_series(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     df = _synth_dataframe(periods=512)
     analyzer = MultiScaleKuramoto(
         timeframes=(TimeFrame.M1, TimeFrame.M5),
@@ -286,7 +288,9 @@ def test_timeframe_cache_reuses_resampled_series(monkeypatch: pytest.MonkeyPatch
     feature = MultiScaleKuramotoFeature(analyzer=analyzer, cache=cache)
 
     def fail_resample(*_: object, **__: object) -> pd.Series:
-        raise AssertionError("_resample_prices should not be used when timeframe_series is populated")
+        raise AssertionError(
+            "_resample_prices should not be used when timeframe_series is populated"
+        )
 
     monkeypatch.setattr(feature.analyzer, "_resample_prices", fail_resample)
 

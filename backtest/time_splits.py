@@ -16,7 +16,6 @@ from typing import Iterator, Optional, Sequence, Tuple
 import numpy as np
 import pandas as pd
 
-
 _CANONICAL_FREQUENCY_UNITS = {
     "H": "h",
     "HR": "h",
@@ -82,6 +81,7 @@ def _normalise_timedelta_string(value: str) -> str:
         return _normalise_frequency_unit(unit)
 
     return _STRING_UNIT_PATTERN.sub(_replace, value.replace("μ", "u").replace("µ", "u"))
+
 
 def _to_timedelta(
     value: Optional[pd.Timedelta | str | int | float], *, freq: Optional[str] = None

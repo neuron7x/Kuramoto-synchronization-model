@@ -71,10 +71,16 @@ class AdapterContract:
         if not self.version:
             raise ValueError("AdapterContract.version must be provided")
         # Materialize tuples for credential collections for immutability
-        object.__setattr__(self, "required_credentials", tuple(self.required_credentials))
-        object.__setattr__(self, "optional_credentials", tuple(self.optional_credentials))
+        object.__setattr__(
+            self, "required_credentials", tuple(self.required_credentials)
+        )
+        object.__setattr__(
+            self, "optional_credentials", tuple(self.optional_credentials)
+        )
         object.__setattr__(self, "transports", MappingProxyType(dict(self.transports)))
-        object.__setattr__(self, "capabilities", MappingProxyType(dict(self.capabilities)))
+        object.__setattr__(
+            self, "capabilities", MappingProxyType(dict(self.capabilities))
+        )
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
 
@@ -147,14 +153,18 @@ class AdapterPlugin:
                 adapter_id=self.contract.identifier,
                 checks=(
                     AdapterCheckResult(
-                        name="self-test", status="skipped", detail="Adapter did not provide self-test"
+                        name="self-test",
+                        status="skipped",
+                        detail="Adapter did not provide self-test",
                     ),
                 ),
             )
         try:
             result = self.self_test()
         except Exception as exc:  # pragma: no cover - defensive guard
-            logger.exception("Adapter self-test failed", extra={"adapter": self.contract.identifier})
+            logger.exception(
+                "Adapter self-test failed", extra={"adapter": self.contract.identifier}
+            )
             return AdapterDiagnostic(
                 adapter_id=self.contract.identifier,
                 checks=(
@@ -212,7 +222,9 @@ class AdapterRegistry:
     # -- helper APIs ------------------------------------------------------
     def contracts(self) -> Mapping[str, AdapterContract]:
         with self._lock:
-            return MappingProxyType({key: plugin.contract for key, plugin in self._plugins.items()})
+            return MappingProxyType(
+                {key: plugin.contract for key, plugin in self._plugins.items()}
+            )
 
     def identifiers(self) -> Iterable[str]:
         with self._lock:
@@ -236,11 +248,14 @@ class AdapterRegistry:
     def self_test_all(self) -> Mapping[str, AdapterDiagnostic]:
         with self._lock:
             return {
-                identifier: plugin.run_self_test() for identifier, plugin in self._plugins.items()
+                identifier: plugin.run_self_test()
+                for identifier, plugin in self._plugins.items()
             }
 
     # -- discovery --------------------------------------------------------
-    def discover(self, group: str = "tradepulse.execution.adapters", *, reload: bool = False) -> None:
+    def discover(
+        self, group: str = "tradepulse.execution.adapters", *, reload: bool = False
+    ) -> None:
         """Discover adapters via ``importlib.metadata`` entry points."""
 
         if not reload and group in self._discovered_groups:
@@ -256,7 +271,9 @@ class AdapterRegistry:
         if hasattr(entry_points, "select"):
             selected = entry_points.select(group=group)
         else:  # pragma: no cover - compatibility path
-            selected = [ep for ep in entry_points if getattr(ep, "group", None) == group]
+            selected = [
+                ep for ep in entry_points if getattr(ep, "group", None) == group
+            ]
 
         for entry_point in selected:
             try:
@@ -299,7 +316,9 @@ class AdapterRegistry:
         if not callable(factory):
             raise LookupError(f"Resolved attribute '{dotted_path}' is not callable")
         connector = factory(**kwargs)
-        if not isinstance(connector, ExecutionConnector):  # pragma: no cover - defensive guard
+        if not isinstance(
+            connector, ExecutionConnector
+        ):  # pragma: no cover - defensive guard
             raise TypeError(
                 f"Factory '{dotted_path}' did not return an ExecutionConnector instance"
             )

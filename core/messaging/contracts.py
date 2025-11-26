@@ -124,7 +124,9 @@ def _validate_type_compatibility(avro_type: Any, annotation: Any, context: str) 
                 raise SchemaContractError(
                     f"{context}: Avro maps require string keys, model uses {key_annotation}"
                 )
-            _validate_type_compatibility(value_type, value_annotation, f"{context}<'value'>")
+            _validate_type_compatibility(
+                value_type, value_annotation, f"{context}<'value'>"
+            )
             return
         if avro_type_name == "fixed":
             _ensure_primitive(annotation, "bytes", context)
@@ -148,7 +150,9 @@ def _validate_type_compatibility(avro_type: Any, annotation: Any, context: str) 
 def _ensure_primitive(annotation: Any, avro_primitive: str, context: str) -> None:
     expected = _PRIMITIVE_TYPE_MAP.get(avro_primitive)
     if expected is None:
-        raise SchemaContractError(f"{context}: unsupported Avro primitive '{avro_primitive}'")
+        raise SchemaContractError(
+            f"{context}: unsupported Avro primitive '{avro_primitive}'"
+        )
     if annotation is Any:
         return
     if annotation is None:
@@ -169,7 +173,9 @@ def _ensure_primitive(annotation: Any, avro_primitive: str, context: str) -> Non
         )
 
 
-def _validate_enum(avro_enum: MappingABC[str, Any], enum_cls: Type[Enum], context: str) -> None:
+def _validate_enum(
+    avro_enum: MappingABC[str, Any], enum_cls: Type[Enum], context: str
+) -> None:
     symbols = set(avro_enum.get("symbols", []))
     enum_values = {member.value for member in enum_cls}
     if symbols != enum_values:
@@ -183,7 +189,9 @@ def _sequence_element(annotation: Any, context: str) -> Any:
     if origin in {list, tuple} or _is_sequence_origin(origin):
         args = get_args(annotation)
         if not args:
-            raise SchemaContractError(f"{context}: sequence annotation missing type arguments")
+            raise SchemaContractError(
+                f"{context}: sequence annotation missing type arguments"
+            )
         return args[0]
     if isinstance(annotation, type) and issubclass(annotation, SequenceABC):
         raise SchemaContractError(
@@ -199,7 +207,9 @@ def _mapping_types(annotation: Any, context: str) -> Tuple[Any, Any]:
     if origin in {dict} or _is_mapping_origin(origin):
         args = get_args(annotation)
         if len(args) != 2:
-            raise SchemaContractError(f"{context}: mapping annotation must declare key/value types")
+            raise SchemaContractError(
+                f"{context}: mapping annotation must declare key/value types"
+            )
         return args[0], args[1]
     if isinstance(annotation, type) and issubclass(annotation, MappingABC):
         raise SchemaContractError(

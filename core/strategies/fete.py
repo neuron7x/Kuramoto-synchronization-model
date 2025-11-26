@@ -29,14 +29,18 @@ class Regime(str, Enum):
 def binary_entropy(probabilities: ArrayLike) -> NDArray[np.float64]:
     """Compute binary entropy for probabilities with numerical stability."""
 
-    probs = np.clip(np.asarray(probabilities, dtype=float), EPS_PROB_CLIP, 1.0 - EPS_PROB_CLIP)
+    probs = np.clip(
+        np.asarray(probabilities, dtype=float), EPS_PROB_CLIP, 1.0 - EPS_PROB_CLIP
+    )
     return -(probs * np.log(probs) + (1.0 - probs) * np.log(1.0 - probs))
 
 
 class FractalEMA:
     """Hierarchical exponential moving average with fractal weights."""
 
-    def __init__(self, shape: Tuple[int, ...] = (1,), *, levels: int = 5, base: float = 0.6) -> None:
+    def __init__(
+        self, shape: Tuple[int, ...] = (1,), *, levels: int = 5, base: float = 0.6
+    ) -> None:
         self.levels = levels
         self.rates = [float(base) ** (k + 1) for k in range(levels)]
         self.states = [np.zeros(shape, dtype=float) for _ in range(levels)]
@@ -181,9 +185,19 @@ class AdvancedRegimeDetector:
         hurst_value = hurst_stats["hurst"]
         spectral_power = spectral_stats["spectral_power"]
         snr_db = emd_stats["snr_db"]
-        trending = (hurst_value > 0.55) * 0.4 + (spectral_power > 0.25) * 0.3 + (snr_db > 5) * 0.3
-        reverting = (hurst_value < 0.45) * 0.4 + (spectral_power < 0.2) * 0.3 + (snr_db < -5) * 0.3
-        noise = (0.45 <= hurst_value <= 0.55) * 0.5 + (0.15 <= spectral_power <= 0.3) * 0.5
+        trending = (
+            (hurst_value > 0.55) * 0.4
+            + (spectral_power > 0.25) * 0.3
+            + (snr_db > 5) * 0.3
+        )
+        reverting = (
+            (hurst_value < 0.45) * 0.4
+            + (spectral_power < 0.2) * 0.3
+            + (snr_db < -5) * 0.3
+        )
+        noise = (0.45 <= hurst_value <= 0.55) * 0.5 + (
+            0.15 <= spectral_power <= 0.3
+        ) * 0.5
         scores = {
             Regime.TRENDING.value: trending,
             Regime.MEAN_REVERTING.value: reverting,
@@ -290,7 +304,12 @@ class PositionSizer:
         q = 1.0 - p
         b = 1.0 / max(0.01, volatility)
         raw_kelly = (p * b - q) / b if b > 0 else 0.0
-        position = float(np.clip(raw_kelly, -1.0, 1.0)) * self.kelly_fraction * scale * self.leverage
+        position = (
+            float(np.clip(raw_kelly, -1.0, 1.0))
+            * self.kelly_fraction
+            * scale
+            * self.leverage
+        )
         return float(np.clip(position, -1.0, 1.0))
 
 
@@ -306,7 +325,10 @@ class MultiScaleRiskMonitor:
         self.peak = max(self.peak, equity)
         self.equity.append(float(equity))
         current_dd = (self.peak - equity) / self.peak if self.peak > 0 else 0.0
-        result: Dict[str, float] = {"current_dd": float(current_dd), "peak": float(self.peak)}
+        result: Dict[str, float] = {
+            "current_dd": float(current_dd),
+            "peak": float(self.peak),
+        }
         for window in self.windows:
             if len(self.equity) >= window:
                 recent = list(self.equity)[-window:]
@@ -444,7 +466,9 @@ class FETE:
             "prices": price_array,
             "returns": returns,
             "equity": equity_array,
-            "final_return": float((equity_array[-1] - 1.0) * 100) if equity_array.size else 0.0,
+            "final_return": (
+                float((equity_array[-1] - 1.0) * 100) if equity_array.size else 0.0
+            ),
             "positions": np.asarray(self.position_history, dtype=float),
             "regimes": list(self.regime_history),
             "audit": self.sigma.audit(),

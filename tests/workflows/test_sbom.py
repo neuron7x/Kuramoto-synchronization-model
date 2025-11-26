@@ -1,4 +1,5 @@
 """Regression tests for the CycloneDX SBOM workflow configuration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,8 +7,9 @@ from typing import Any, Dict, Iterable
 
 import yaml
 
-
-WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "sbom.yml"
+WORKFLOW_PATH = (
+    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "sbom.yml"
+)
 
 
 def _load_workflow() -> Dict[str, Any]:
@@ -41,7 +43,9 @@ def test_workflow_triggers_on_prs_to_main_and_develop() -> None:
     on_config = _get_on_config(workflow)
 
     # SBOM workflow may trigger on push only or both push and pull_request
-    assert "push" in on_config or "pull_request" in on_config, "workflow must have push or pull_request trigger"
+    assert (
+        "push" in on_config or "pull_request" in on_config
+    ), "workflow must have push or pull_request trigger"
 
 
 def test_concurrency_includes_pull_request_number() -> None:

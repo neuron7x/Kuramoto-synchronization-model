@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any, Protocol, TypeVar, runtime_checkable
 
-
 _T = TypeVar("_T")
 
 
@@ -91,7 +90,9 @@ class DataFeed(Protocol):
 class SignalGenerator(Protocol):
     """Transforms :class:`MarketData` into actionable :class:`Signal` objects."""
 
-    def generate(self, data: MarketData, context: EngineContext) -> Iterable[Signal] | Signal | None:
+    def generate(
+        self, data: MarketData, context: EngineContext
+    ) -> Iterable[Signal] | Signal | None:
         """Produce zero or more signals for the supplied market data."""
 
 
@@ -107,7 +108,9 @@ class RiskManager(Protocol):
 class ExecutionClient(Protocol):
     """Handles interaction with trading venues, brokers, or downstream systems."""
 
-    def execute(self, signal: Signal, decision: RiskDecision, context: EngineContext) -> ExecutionOutcome:
+    def execute(
+        self, signal: Signal, decision: RiskDecision, context: EngineContext
+    ) -> ExecutionOutcome:
         """Execute the signal in accordance with the supplied risk decision."""
 
 
@@ -212,7 +215,10 @@ class CoreEngine:
                 risk_timer = perf_counter()
                 decisions = self._collect_and_validate(
                     "RiskManager.assess",
-                    (self._risk_manager.assess(signal, context) for signal in generated_signals),
+                    (
+                        self._risk_manager.assess(signal, context)
+                        for signal in generated_signals
+                    ),
                     RiskDecision,
                 )
                 risk_latency_ms = (perf_counter() - risk_timer) * 1000.0
@@ -280,7 +286,9 @@ class CoreEngine:
                             entry.context.setdefault("log_entries", metrics.log_entries)
                         else:  # pragma: no cover - defensive path for Mapping implementations
                             mutable_context = dict(entry.context)
-                            mutable_context.setdefault("log_entries", metrics.log_entries)
+                            mutable_context.setdefault(
+                                "log_entries", metrics.log_entries
+                            )
                             entry.context = mutable_context
 
                 yield EngineCycle(
@@ -321,7 +329,9 @@ class CoreEngine:
                 )
             yield item
 
-    def _yield_signals(self, data: MarketData, context: EngineContext) -> Iterator[Signal]:
+    def _yield_signals(
+        self, data: MarketData, context: EngineContext
+    ) -> Iterator[Signal]:
         generated = self._signal_generator.generate(data, context)
         if generated is None:
             return

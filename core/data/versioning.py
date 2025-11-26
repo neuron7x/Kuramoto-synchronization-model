@@ -71,9 +71,7 @@ class DataVersionManager:
         if not repo_root.exists():
             raise VersioningError(f"Repository path {repo_root!s} does not exist")
         if not repo_root.is_dir():
-            raise VersioningError(
-                f"Repository path {repo_root!s} is not a directory"
-            )
+            raise VersioningError(f"Repository path {repo_root!s} is not a directory")
         return repo_root
 
     def _relative_to_repo(self, path: Path, repo_root: Path) -> str | None:

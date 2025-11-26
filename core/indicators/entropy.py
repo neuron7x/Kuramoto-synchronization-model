@@ -410,7 +410,10 @@ def _run_entropy_async(
         return asyncio.run(coro)
     except RuntimeError as exc:
         message = str(exc)
-        if "event loop is running" not in message and "running event loop" not in message:
+        if (
+            "event loop is running" not in message
+            and "running event loop" not in message
+        ):
             coro.close()
             raise
         coro.close()
