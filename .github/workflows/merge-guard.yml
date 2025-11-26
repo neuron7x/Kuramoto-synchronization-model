@@ -1,14 +1,20 @@
-name: Merge Guard - Block on Quality Gate Failure
+# DISABLED: This workflow checks for CI jobs that only run on push to main, not on PRs
+# The required checks (coverage guardrail, mutation testing gate) are from ci.yml which
+# only triggers on push to main. This makes the PR check meaningless.
+# Quality gates are already enforced by:
+# - tests.yml: coverage verification and test results
+# - pr-release-gate.yml: risk assessment and labeling
+name: Merge Guard - Block on Quality Gate Failure (DISABLED)
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches:
-      - main
-      - develop
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - quality gates enforced by tests.yml and pr-release-gate.yml'
+        required: false
 
 concurrency:
-  group: merge-guard-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: merge-guard-${{ github.workflow }}-${{ github.run_id }}
   cancel-in-progress: true
 
 permissions:
