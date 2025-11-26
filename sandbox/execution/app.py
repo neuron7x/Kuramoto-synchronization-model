@@ -10,9 +10,14 @@ from pydantic import ValidationError
 
 from ..clients import ControlClient, RiskClient, SignalClient
 from ..models import AuditEvent, OrderTicket, RiskDecision, TradingSignal
-from ..settings import ExecutionSettings, execution_settings
 from ..risk.engine import AuditLoggerProtocol
-from .engine import ExecutionEngine, ExecutionParameters, RiskGatewayProtocol, SignalGatewayProtocol
+from ..settings import ExecutionSettings, execution_settings
+from .engine import (
+    ExecutionEngine,
+    ExecutionParameters,
+    RiskGatewayProtocol,
+    SignalGatewayProtocol,
+)
 
 
 class HttpSignalGateway(SignalGatewayProtocol):
@@ -55,7 +60,9 @@ def create_engine(settings: ExecutionSettings) -> ExecutionEngine:
     )
 
 
-def create_app(settings: ExecutionSettings | None = None, engine: ExecutionEngine | None = None) -> FastAPI:
+def create_app(
+    settings: ExecutionSettings | None = None, engine: ExecutionEngine | None = None
+) -> FastAPI:
     config = settings or execution_settings()
     execution_engine = engine or create_engine(config)
 

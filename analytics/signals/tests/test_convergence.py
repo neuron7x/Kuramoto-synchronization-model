@@ -84,4 +84,3 @@ def test_convergence_accepts_dataframe_input() -> None:
 
     assert len(scores.alignment) == len(index)
     assert not scores.support_ratio.isna().all()
-

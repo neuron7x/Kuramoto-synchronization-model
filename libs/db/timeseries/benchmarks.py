@@ -38,7 +38,9 @@ class BenchmarkMetrics:
 class BenchmarkRunner:
     """Runs deterministic ingestion/query workloads for regression testing."""
 
-    def __init__(self, schema: TimeSeriesSchema, *, clock: Callable[[], float] | None = None) -> None:
+    def __init__(
+        self, schema: TimeSeriesSchema, *, clock: Callable[[], float] | None = None
+    ) -> None:
         self._schema = schema
         self._clock = clock or perf_counter
 

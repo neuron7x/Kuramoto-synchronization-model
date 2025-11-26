@@ -16,7 +16,10 @@ def setup_logging(log_dir: str, log_file: str) -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(log_path, encoding="utf-8")],
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler(log_path, encoding="utf-8"),
+        ],
     )
     logging.info("Logging initialized at %s", log_path)
 

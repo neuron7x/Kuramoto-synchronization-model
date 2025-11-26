@@ -15,31 +15,31 @@ def main():
     print("\n" + "=" * 60)
     print("Market Feed Recordings Demo")
     print("=" * 60)
-    
+
     # List available recordings
     recordings_dir = Path("tests/fixtures/recordings")
     jsonl_files = sorted(recordings_dir.glob("*.jsonl"))
-    
+
     print(f"\n✓ Found {len(jsonl_files)} sample recordings:\n")
-    
+
     for filepath in jsonl_files:
         # Skip the original coinbase sample
         if "coinbase" in filepath.name:
             continue
-            
+
         # Load and analyze
         records = []
         with open(filepath) as f:
             for line in f:
                 if line.strip():
                     records.append(json.loads(line))
-        
+
         # Extract prices and calculate statistics
         prices = [float(r["last"]) for r in records]
         avg_price = sum(prices) / len(prices)
         price_range = max(prices) - min(prices)
         volatility = price_range / avg_price * 100
-        
+
         # Get metadata if available
         metadata_path = filepath.with_suffix(".metadata.json")
         description = ""
@@ -47,15 +47,17 @@ def main():
             with open(metadata_path) as f:
                 metadata = json.load(f)
                 description = metadata.get("description", "")
-        
+
         print(f"  {filepath.name:45s}")
-        print(f"    Records: {len(records):4d} | "
-              f"Avg Price: ${avg_price:,.2f} | "
-              f"Volatility: {volatility:.2f}%")
+        print(
+            f"    Records: {len(records):4d} | "
+            f"Avg Price: ${avg_price:,.2f} | "
+            f"Volatility: {volatility:.2f}%"
+        )
         if description:
             print(f"    {description}")
         print()
-    
+
     print("=" * 60)
     print("✅ All recordings loaded successfully!")
     print("=" * 60)

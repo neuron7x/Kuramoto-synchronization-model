@@ -75,14 +75,14 @@ def run_validation(mode: str, *, scenarios: Mapping[str, EnergyMetrics]) -> int:
 
     if mode == "ci":
         degradations = {
-            name: metrics
-            for name, metrics in scenarios.items()
-            if name != "nominal"
+            name: metrics for name, metrics in scenarios.items() if name != "nominal"
         }
         for name, metrics in degradations.items():
             try:
                 validator.validate(metrics)
-            except EnergyValidationError as exc:  # noqa: PERF203 - deliberate control flow
+            except (
+                EnergyValidationError
+            ) as exc:  # noqa: PERF203 - deliberate control flow
                 summary[f"{name}_result"] = {
                     "passed": False,
                     "free_energy": round(exc.result.free_energy, 6),

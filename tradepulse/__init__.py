@@ -5,12 +5,12 @@ project transitions to the unified protocol layout.  All heavy lifting lives
 under ``src.tradepulse`` so that packaging metadata remains consistent.
 """
 
-from importlib import import_module
 import os
+import sys
+from importlib import import_module
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING
-import sys
 
 # Provide a benign default for the admin API two-factor secret so importing the
 # heavyweight ``tradepulse.sdk`` module in developer environments (and within

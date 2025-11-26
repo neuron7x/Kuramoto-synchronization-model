@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient

@@ -9,8 +9,8 @@ import numpy as np
 import torch
 
 from .model import HydroBrainV2
-from .validator import GBStandardValidator
 from .utils import AnomalyDetector, DataImputer, preprocess_window
+from .validator import GBStandardValidator
 
 
 class RealTimeMonitor:
@@ -26,7 +26,9 @@ class RealTimeMonitor:
         self.model = HydroBrainV2(cfg, A_tensor).to(self.device).eval()
         if weights_path:
             obj = torch.load(weights_path, map_location=self.device)
-            self.model.load_state_dict(obj["model"] if "model" in obj else obj, strict=False)
+            self.model.load_state_dict(
+                obj["model"] if "model" in obj else obj, strict=False
+            )
             logging.info("Weights loaded from %s", weights_path)
         self.validator = GBStandardValidator()
         self.imputer = DataImputer()
@@ -38,7 +40,9 @@ class RealTimeMonitor:
         window_np = self.imputer.impute(window_np)
         z = self.anom.zscore(window_np)
         if z > self.th["sensor_anomaly_z"]:
-            logging.warning("Sensor anomaly: z=%.2f > %.2f", z, self.th["sensor_anomaly_z"])
+            logging.warning(
+                "Sensor anomaly: z=%.2f > %.2f", z, self.th["sensor_anomaly_z"]
+            )
         X = preprocess_window(window_np).to(self.device)
         out = self.model(X)
         probs = torch.softmax(out["flood_logits"], dim=-1)
@@ -56,7 +60,11 @@ class RealTimeMonitor:
         alerts = []
         if resp["flood_prob"][-1] >= self.th["flood_high_risk"]:
             alerts.append(
-                {"type": "FLOOD_WARNING", "level": "HIGH", "message": "Високий ризик повені"}
+                {
+                    "type": "FLOOD_WARNING",
+                    "level": "HIGH",
+                    "message": "Високий ризик повені",
+                }
             )
         if z > self.th["sensor_anomaly_z"]:
             alerts.append(

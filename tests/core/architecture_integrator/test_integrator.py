@@ -1,7 +1,5 @@
 """Tests for the main ArchitectureIntegrator."""
 
-import pytest
-
 from core.architecture_integrator import (
     ArchitectureIntegrator,
     ComponentHealth,

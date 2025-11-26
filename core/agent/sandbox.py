@@ -244,7 +244,11 @@ def _running_without_main_file() -> bool:
     if not main_file:
         return True
 
-    if isinstance(main_file, str) and main_file.startswith("<") and main_file.endswith(">"):
+    if (
+        isinstance(main_file, str)
+        and main_file.startswith("<")
+        and main_file.endswith(">")
+    ):
         return True
 
     return not os.path.exists(main_file)
@@ -289,4 +293,3 @@ __all__ = [
     "StrategySandbox",
     "StrategySandboxError",
 ]
-

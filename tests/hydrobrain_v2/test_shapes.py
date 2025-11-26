@@ -6,7 +6,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from hydrobrain_v2.model import HydroBrainV2
+from hydrobrain_v2.model import HydroBrainV2  # noqa: E402 - after importorskip
 
 
 def test_forward_shapes() -> None:

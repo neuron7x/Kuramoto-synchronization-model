@@ -216,7 +216,10 @@ async def test_pipeline_exposes_composed_services() -> None:
     created: list[_StubKafkaService] = []
 
     def factory(
-        cfg: KafkaIngestionConfig, *, tick_handler: CacheWriterTickHandler, **kwargs: Any
+        cfg: KafkaIngestionConfig,
+        *,
+        tick_handler: CacheWriterTickHandler,
+        **kwargs: Any,
     ) -> _StubKafkaService:
         service = _StubKafkaService(cfg, tick_handler=tick_handler, **kwargs)
         created.append(service)

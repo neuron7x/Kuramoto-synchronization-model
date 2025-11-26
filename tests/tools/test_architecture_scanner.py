@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import textwrap
+from pathlib import Path
 
 from tools.architecture.scanner import ArchitectureScanner
 
@@ -38,7 +37,10 @@ def test_scanner_detects_dependencies(tmp_path: Path) -> None:
     report = scanner.scan()
 
     assert "package.module_a" in report.dependencies
-    assert report.dependencies["package.module_a"] == {"package.module_b", "package.nested.module_c"}
+    assert report.dependencies["package.module_a"] == {
+        "package.module_b",
+        "package.nested.module_c",
+    }
     assert report.reverse_dependencies["package.module_b"] == {"package.module_a"}
 
 

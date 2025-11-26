@@ -38,7 +38,9 @@ class TestInvariants(unittest.TestCase):
         p = Params()
         m = EMHSSM(p, State())
         m.belief = VolBelief()
-        out = m.step(dict(dd=0.2, liq=0.3, reg=0.4, vol=0.95, reward=0.0, var_breach=True))
+        out = m.step(
+            dict(dd=0.2, liq=0.3, reg=0.4, vol=0.95, reward=0.0, var_breach=True)
+        )
         self.assertTrue(0.0 <= out["S"] <= 1.0)
 
 

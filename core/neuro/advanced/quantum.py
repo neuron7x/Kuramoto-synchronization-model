@@ -36,7 +36,6 @@ from typing import Iterable
 
 import numpy as np
 
-
 _EPSILON = 1e-12
 
 
@@ -179,4 +178,3 @@ __all__ = [
     "to_density_matrix",
     "von_neumann_entropy",
 ]
-

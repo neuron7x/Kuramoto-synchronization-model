@@ -124,4 +124,12 @@ class EMHSSM:
         if self.s.M < self.p.eps * D:
             self.s.E = clamp(self.s.E + self.p.eta)
 
-        return dict(H=self.s.H, M=self.s.M, E=self.s.E, S=self.s.S, D=D, RPE=delta_rpe, mode=self.s.mode)
+        return dict(
+            H=self.s.H,
+            M=self.s.M,
+            E=self.s.E,
+            S=self.s.S,
+            D=D,
+            RPE=delta_rpe,
+            mode=self.s.mode,
+        )

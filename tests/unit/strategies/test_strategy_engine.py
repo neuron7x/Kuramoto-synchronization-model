@@ -8,8 +8,8 @@ import pytest
 
 from core.events.models import SignalDirection
 from core.strategies.engine import (
-    IOContract,
     InvalidModeTransition,
+    IOContract,
     RiskAdviceLevel,
     RiskAssessment,
     StrategyContext,
@@ -17,7 +17,6 @@ from core.strategies.engine import (
     StrategyEngineEvent,
     StrategyEngineMode,
     StrategyEventType,
-    StrategyModule,
     StrategySignal,
 )
 
@@ -36,7 +35,13 @@ class _StubModule:
 
 
 class _BlockingRiskPolicy:
-    def __init__(self, approved: bool, *, adjustments: Mapping[str, object] | None = None, reason: str | None = None) -> None:
+    def __init__(
+        self,
+        approved: bool,
+        *,
+        adjustments: Mapping[str, object] | None = None,
+        reason: str | None = None,
+    ) -> None:
         self._assessment = RiskAssessment(
             approved=approved,
             reason=reason,
@@ -44,7 +49,9 @@ class _BlockingRiskPolicy:
         )
         self.calls: list[tuple[StrategySignal, StrategyEngineMode]] = []
 
-    def assess(self, signal: StrategySignal, *, mode: StrategyEngineMode) -> RiskAssessment:
+    def assess(
+        self, signal: StrategySignal, *, mode: StrategyEngineMode
+    ) -> RiskAssessment:
         self.calls.append((signal, mode))
         return self._assessment
 
@@ -57,7 +64,9 @@ def _context(data: Mapping[str, object]) -> StrategyContext:
     )
 
 
-def _make_signal_event(signal_id: str = "sig-1", strength: float = 1.0) -> StrategyEngineEvent:
+def _make_signal_event(
+    signal_id: str = "sig-1", strength: float = 1.0
+) -> StrategyEngineEvent:
     signal = StrategySignal(
         signal_id=signal_id,
         symbol="BTCUSDT",
@@ -117,10 +126,14 @@ def test_engine_routes_signal_when_risk_approves() -> None:
 
     assert policy.calls and policy.calls[0][1] is StrategyEngineMode.PAPER
     assert len(events) == 2  # adjusted signal + risk advice
-    signal_event = next(event for event in events if event.type is StrategyEventType.SIGNAL)
+    signal_event = next(
+        event for event in events if event.type is StrategyEventType.SIGNAL
+    )
     assert signal_event.payload.strength == pytest.approx(0.5)
     assert routed[0][0].strength == pytest.approx(0.5)
-    advice_event = next(event for event in events if event.type is StrategyEventType.RISK_ADVICE)
+    advice_event = next(
+        event for event in events if event.type is StrategyEventType.RISK_ADVICE
+    )
     assert advice_event.payload.level is RiskAdviceLevel.WARN
     assert captured == list(events)
 
@@ -132,7 +145,11 @@ def test_engine_blocks_signal_when_risk_denies() -> None:
         advice_messages.append(advice.message)
 
     policy = _BlockingRiskPolicy(False, reason="limit breached")
-    engine = StrategyEngine(risk_policy=policy, risk_advice_sink=sink, signal_router=lambda *_: (_ for _ in ()).throw(RuntimeError))
+    engine = StrategyEngine(
+        risk_policy=policy,
+        risk_advice_sink=sink,
+        signal_router=lambda *_: (_ for _ in ()).throw(RuntimeError),
+    )
     module = _StubModule(
         name="stub",
         input_contract=IOContract(required={"prices": list}),

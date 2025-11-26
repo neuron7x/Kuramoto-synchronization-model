@@ -29,7 +29,9 @@ def _load_yaml_documents(path: Path) -> list[dict[str, object]]:
 def _single_document(path: Path) -> dict[str, object]:
     documents = _load_yaml_documents(path)
     if len(documents) != 1:
-        raise AssertionError(f"Expected a single document in {path}, got {len(documents)}")
+        raise AssertionError(
+            f"Expected a single document in {path}, got {len(documents)}"
+        )
     return documents[0]
 
 
@@ -43,13 +45,15 @@ def _single_document(path: Path) -> dict[str, object]:
 def test_kustomize_overlays_include_logging_addon(overlay_path: Path) -> None:
     doc = _single_document(overlay_path)
     resources: Iterable[str] = doc.get("resources", [])  # type: ignore[assignment]
-    assert "../../addons/logging" in set(resources), (
-        f"{overlay_path} must include the centralized logging addon"
-    )
+    assert "../../addons/logging" in set(
+        resources
+    ), f"{overlay_path} must include the centralized logging addon"
 
 
 def test_logging_addon_kustomization_wires_configmaps() -> None:
-    doc = _single_document(REPO_ROOT / "deploy/kustomize/addons/logging/kustomization.yaml")
+    doc = _single_document(
+        REPO_ROOT / "deploy/kustomize/addons/logging/kustomization.yaml"
+    )
 
     resources: list[str] = doc.get("resources", [])  # type: ignore[assignment]
     assert resources == [
@@ -63,7 +67,11 @@ def test_logging_addon_kustomization_wires_configmaps() -> None:
     assert isinstance(config_maps, list) and len(config_maps) == 2
 
     filebeat_entry = next(
-        (entry for entry in config_maps if entry.get("name") == "tradepulse-filebeat-config"),
+        (
+            entry
+            for entry in config_maps
+            if entry.get("name") == "tradepulse-filebeat-config"
+        ),
         None,
     )
     assert filebeat_entry is not None
@@ -72,7 +80,11 @@ def test_logging_addon_kustomization_wires_configmaps() -> None:
     ]
 
     logstash_entry = next(
-        (entry for entry in config_maps if entry.get("name") == "tradepulse-logstash-pipeline"),
+        (
+            entry
+            for entry in config_maps
+            if entry.get("name") == "tradepulse-logstash-pipeline"
+        ),
         None,
     )
     assert logstash_entry is not None
@@ -81,11 +93,15 @@ def test_logging_addon_kustomization_wires_configmaps() -> None:
     ]
 
     replacements = doc.get("replacements", [])  # type: ignore[assignment]
-    assert replacements, "Namespace replacements for Filebeat RBAC must remain configured"
+    assert (
+        replacements
+    ), "Namespace replacements for Filebeat RBAC must remain configured"
 
 
 def test_filebeat_daemonset_mounts_required_paths() -> None:
-    doc = _single_document(REPO_ROOT / "deploy/kustomize/addons/logging/filebeat-daemonset.yaml")
+    doc = _single_document(
+        REPO_ROOT / "deploy/kustomize/addons/logging/filebeat-daemonset.yaml"
+    )
     spec = doc["spec"]
     template = spec["template"]
     pod_spec = template["spec"]
@@ -99,7 +115,9 @@ def test_filebeat_daemonset_mounts_required_paths() -> None:
     env_names = {env["name"] for env in container["env"]}
     assert {"NODE_NAME", "TRADEPULSE_ENVIRONMENT", "LOGSTASH_HOSTS"} <= env_names
 
-    volume_mounts = {mount["name"]: mount["mountPath"] for mount in container["volumeMounts"]}
+    volume_mounts = {
+        mount["name"]: mount["mountPath"] for mount in container["volumeMounts"]
+    }
     expected_mounts = {
         "config": "/etc/filebeat.yml",
         "data": "/usr/share/filebeat/data",
@@ -129,7 +147,9 @@ def test_filebeat_rbac_definitions_present() -> None:
 
 
 def test_logstash_deployment_mounts_pipeline_config() -> None:
-    doc = _single_document(REPO_ROOT / "deploy/kustomize/addons/logging/logstash-deployment.yaml")
+    doc = _single_document(
+        REPO_ROOT / "deploy/kustomize/addons/logging/logstash-deployment.yaml"
+    )
     container = doc["spec"]["template"]["spec"]["containers"][0]
 
     env_defaults = {item["name"]: item.get("value", "") for item in container["env"]}
@@ -144,13 +164,17 @@ def test_logstash_deployment_mounts_pipeline_config() -> None:
 
 
 def test_logstash_service_exposes_expected_ports() -> None:
-    doc = _single_document(REPO_ROOT / "deploy/kustomize/addons/logging/logstash-service.yaml")
+    doc = _single_document(
+        REPO_ROOT / "deploy/kustomize/addons/logging/logstash-service.yaml"
+    )
     ports = {port["name"]: port["port"] for port in doc["spec"]["ports"]}
     assert ports == {"beats": 5044, "monitoring": 9600}
 
 
 def test_filebeat_kubernetes_config_filters_tradepulse_workloads() -> None:
-    config = _single_document(REPO_ROOT / "observability/logging/filebeat.kubernetes.yml")
+    config = _single_document(
+        REPO_ROOT / "observability/logging/filebeat.kubernetes.yml"
+    )
     inputs = config["filebeat.inputs"]
     assert len(inputs) == 1
     input_config = inputs[0]
@@ -185,8 +209,12 @@ def test_logstash_pipeline_prefers_api_key_authentication() -> None:
     pipeline_source = (
         REPO_ROOT / "observability/logstash/pipeline/logstash.conf"
     ).read_text(encoding="utf-8")
-    api_key_condition = "if \"${ELASTICSEARCH_API_KEY}\" != \"\""
-    username_condition = "else if \"${ELASTICSEARCH_USERNAME}\" != \"\""
-    assert pipeline_source.index(api_key_condition) < pipeline_source.index(username_condition)
+    api_key_condition = 'if "${ELASTICSEARCH_API_KEY}" != ""'
+    username_condition = 'else if "${ELASTICSEARCH_USERNAME}" != ""'
+    assert pipeline_source.index(api_key_condition) < pipeline_source.index(
+        username_condition
+    )
 
-    assert "stdout" in pipeline_source, "Logstash pipeline must keep stdout debugging output"
+    assert (
+        "stdout" in pipeline_source
+    ), "Logstash pipeline must keep stdout debugging output"

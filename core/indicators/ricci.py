@@ -185,13 +185,22 @@ class NodeDistribution:
     positions: np.ndarray
 
     def __post_init__(self) -> None:
-        if self.support.ndim != 1 or self.probabilities.ndim != 1 or self.positions.ndim != 1:
+        if (
+            self.support.ndim != 1
+            or self.probabilities.ndim != 1
+            or self.positions.ndim != 1
+        ):
             raise ValueError("NodeDistribution arrays must be one-dimensional")
-        if self.support.shape != self.probabilities.shape or self.support.shape != self.positions.shape:
+        if (
+            self.support.shape != self.probabilities.shape
+            or self.support.shape != self.positions.shape
+        ):
             raise ValueError("NodeDistribution arrays must share the same shape")
         total = float(self.probabilities.sum())
         if not np.isfinite(total) or total <= 0.0:
-            raise ValueError("NodeDistribution probabilities must sum to a positive finite value")
+            raise ValueError(
+                "NodeDistribution probabilities must sum to a positive finite value"
+            )
 
 
 def _graph_geometry(G: nx.Graph) -> tuple[float, float]:
@@ -209,7 +218,9 @@ def _graph_geometry(G: nx.Graph) -> tuple[float, float]:
     return offset, scale
 
 
-def _normalized_neighbor_weights(G: nx.Graph, node: int) -> tuple[np.ndarray, np.ndarray]:
+def _normalized_neighbor_weights(
+    G: nx.Graph, node: int
+) -> tuple[np.ndarray, np.ndarray]:
     """Return neighbour identifiers and normalized transition weights."""
 
     neighbors = [int(n) for n in G.neighbors(node)]
@@ -242,7 +253,9 @@ def _normalized_neighbor_weights(G: nx.Graph, node: int) -> tuple[np.ndarray, np
     return np.asarray(neighbors, dtype=int), w_arr
 
 
-def _build_node_distribution(G: nx.Graph, node: int, offset: float, scale: float) -> NodeDistribution:
+def _build_node_distribution(
+    G: nx.Graph, node: int, offset: float, scale: float
+) -> NodeDistribution:
     support, weights = _normalized_neighbor_weights(G, node)
     support_idx = np.asarray(support, dtype=int)
     support_arr = support_idx.astype(float, copy=True)

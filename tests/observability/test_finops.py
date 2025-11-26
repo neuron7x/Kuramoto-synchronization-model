@@ -332,7 +332,9 @@ def test_generate_cost_optimisation_plan_systemic_actions() -> None:
     assert plan.cloud_costs["gcp"] > 0.0
     assert any(key.startswith("aws:") for key in plan.instance_costs)
 
-    profile_lookup = {profile.resource_id: profile for profile in plan.resource_profiles}
+    profile_lookup = {
+        profile.resource_id: profile for profile in plan.resource_profiles
+    }
     assert profile_lookup["trainer-a"].cloud == "aws"
     assert profile_lookup["trainer-a"].purchase_option == "on-demand"
 
@@ -354,11 +356,18 @@ def test_generate_cost_optimisation_plan_systemic_actions() -> None:
     idle_recs = [rec for rec in plan.recommendations if rec.category == "idle_shutdown"]
     assert idle_recs, "Expected idle shutdown recommendation"
 
-    governance_recs = [rec for rec in plan.recommendations if rec.category == "governance"]
-    assert governance_recs[0].metadata["next_review"].startswith(str(plan.review_schedule[0].date()))
+    governance_recs = [
+        rec for rec in plan.recommendations if rec.category == "governance"
+    ]
+    assert (
+        governance_recs[0]
+        .metadata["next_review"]
+        .startswith(str(plan.review_schedule[0].date()))
+    )
 
-    overspend = [rec for rec in plan.recommendations if rec.category == "overspend_alert"]
+    overspend = [
+        rec for rec in plan.recommendations if rec.category == "overspend_alert"
+    ]
     assert overspend[0].resource_id == "research"
 
     assert len(plan.review_schedule) == 4
-

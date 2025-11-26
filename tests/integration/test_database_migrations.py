@@ -64,7 +64,9 @@ def _table_exists(engine: Engine, table_name: str) -> bool:
     return inspect(engine).has_table(table_name)
 
 
-def test_migration_upgrade_and_downgrade_cycle(migration_context: MigrationTestContext) -> None:
+def test_migration_upgrade_and_downgrade_cycle(
+    migration_context: MigrationTestContext,
+) -> None:
     """Migrations should upgrade to head and downgrade back to base cleanly."""
 
     migration_context.upgrade("head")
@@ -74,7 +76,9 @@ def test_migration_upgrade_and_downgrade_cycle(migration_context: MigrationTestC
     assert _table_exists(migration_context.engine, "kill_switch_state") is False
 
 
-def test_migration_upgrade_is_idempotent(migration_context: MigrationTestContext) -> None:
+def test_migration_upgrade_is_idempotent(
+    migration_context: MigrationTestContext,
+) -> None:
     """Running ``upgrade head`` twice must leave the schema stable."""
 
     migration_context.upgrade("head")
@@ -86,7 +90,9 @@ def test_migration_upgrade_is_idempotent(migration_context: MigrationTestContext
     assert indexes[0]["name"] == "idx_kill_switch_state_updated_at"
 
 
-def test_migration_preserves_data_integrity(migration_context: MigrationTestContext) -> None:
+def test_migration_preserves_data_integrity(
+    migration_context: MigrationTestContext,
+) -> None:
     """Ensure constraints and defaults configured by the migration behave as expected."""
 
     migration_context.upgrade("head")
@@ -192,7 +198,9 @@ def test_migration_revisions_apply_sequentially(
     migration_context.downgrade("base")
 
 
-def test_migration_rolls_back_on_failure(migration_context: MigrationTestContext) -> None:
+def test_migration_rolls_back_on_failure(
+    migration_context: MigrationTestContext,
+) -> None:
     """If a migration step fails the previous schema must remain untouched."""
 
     module = importlib.import_module(
@@ -211,7 +219,9 @@ def test_migration_rolls_back_on_failure(migration_context: MigrationTestContext
         assert _table_exists(migration_context.engine, "kill_switch_state") is False
     else:
         with migration_context.engine.begin() as connection:
-            connection.execute(text("DROP INDEX IF EXISTS idx_kill_switch_state_updated_at"))
+            connection.execute(
+                text("DROP INDEX IF EXISTS idx_kill_switch_state_updated_at")
+            )
             connection.execute(text("DROP TABLE IF EXISTS kill_switch_state"))
 
     migration_context.upgrade("head")

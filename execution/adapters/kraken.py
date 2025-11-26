@@ -122,7 +122,9 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         payload = dict(params)
         payload.setdefault("nonce", nonce)
         postdata = urlencode(payload)
-        sha256_hash = hashlib.sha256((payload["nonce"] + postdata).encode("utf-8")).digest()
+        sha256_hash = hashlib.sha256(
+            (payload["nonce"] + postdata).encode("utf-8")
+        ).digest()
         signature = hmac.new(
             self._api_secret,
             path.encode("utf-8") + sha256_hash,
@@ -151,7 +153,10 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             "ordertype": kraken_type,
             "volume": f"{order.quantity:.10f}",
         }
-        if order.price is not None and order_type in {OrderType.LIMIT, OrderType.STOP_LIMIT}:
+        if order.price is not None and order_type in {
+            OrderType.LIMIT,
+            OrderType.STOP_LIMIT,
+        }:
             payload["price"] = f"{order.price:.10f}"
         if order.stop_price is not None:
             payload["price2" if order_type is OrderType.STOP_LIMIT else "price"] = (
@@ -171,9 +176,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             symbol = original.symbol
         if not symbol:
             raise ValueError("Order payload missing symbol")
-        side_value = str(
-            _first_present(data, "type", "side") or "buy"
-        ).strip().lower()
+        side_value = str(_first_present(data, "type", "side") or "buy").strip().lower()
         order_type = self._coerce_order_type(
             str(_first_present(data, "ordertype", "type")), original
         )
@@ -206,11 +209,15 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             price = float(original.price) if original.price is not None else None
         avg_price_value = _first_present(data, "avg_price", "price")
         average_price = _coerce_optional_float(avg_price_value)
-        status_value = str(
-            _first_present(data, "status", "state") or "open"
-        ).strip().lower()
+        status_value = (
+            str(_first_present(data, "status", "state") or "open").strip().lower()
+        )
         status = _STATUS_MAP.get(status_value, OrderStatus.OPEN)
-        if filled_quantity and filled_quantity < quantity and status is OrderStatus.FILLED:
+        if (
+            filled_quantity
+            and filled_quantity < quantity
+            and status is OrderStatus.FILLED
+        ):
             status = OrderStatus.PARTIALLY_FILLED
         return Order(
             symbol=symbol,
@@ -237,7 +244,11 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         return "/0/private/Balance", {}
 
     def _parse_positions(self, payload: Mapping[str, Any]) -> list[dict]:
-        result = payload.get("result") if isinstance(payload.get("result"), Mapping) else payload
+        result = (
+            payload.get("result")
+            if isinstance(payload.get("result"), Mapping)
+            else payload
+        )
         positions: list[dict] = []
         if isinstance(result, Mapping):
             for asset, value in result.items():
@@ -261,7 +272,9 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         token_response = self._request(
             "POST", "/0/private/GetWebSocketsToken", params={}, signed=True
         )
-        token_payload = token_response.get("result") if isinstance(token_response, Mapping) else {}
+        token_payload = (
+            token_response.get("result") if isinstance(token_response, Mapping) else {}
+        )
         token = None
         if isinstance(token_payload, Mapping):
             token = token_payload.get("token")
@@ -383,7 +396,9 @@ def _self_test() -> AdapterDiagnostic:
             )
         )
     except Exception as exc:  # pragma: no cover - defensive guard
-        checks.append(AdapterCheckResult(name="instantiate", status="failed", detail=str(exc)))
+        checks.append(
+            AdapterCheckResult(name="instantiate", status="failed", detail=str(exc))
+        )
     return AdapterDiagnostic(adapter_id="kraken.spot", checks=tuple(checks))
 
 

@@ -69,7 +69,9 @@ def lifecycle(tmp_path) -> OrderLifecycle:
         dialect="sqlite",
     )
     store.ensure_schema()
-    return OrderLifecycle(store, clock=lambda: datetime(2024, 1, 1, tzinfo=timezone.utc))
+    return OrderLifecycle(
+        store, clock=lambda: datetime(2024, 1, 1, tzinfo=timezone.utc)
+    )
 
 
 def _make_oms(tmp_path, lifecycle: OrderLifecycle) -> OrderManagementSystem:
@@ -130,4 +132,3 @@ def test_oms_records_cancellation(tmp_path, lifecycle: OrderLifecycle) -> None:
         OrderEvent.ACK,
         OrderEvent.CANCEL,
     ]
-

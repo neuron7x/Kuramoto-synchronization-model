@@ -7,11 +7,6 @@ import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import ExecutionConnector, OrderError, TransientOrderError
-from execution.router import (
-    ExecutionRoute,
-    ResilientExecutionRouter,
-    SlippageModel,
-)
 from execution.resilience.circuit_breaker import (
     AdaptiveThrottler,
     Bulkhead,
@@ -20,6 +15,11 @@ from execution.resilience.circuit_breaker import (
     ExchangeResilienceProfile,
     LeakyBucketRateLimiter,
     TokenBucketRateLimiter,
+)
+from execution.router import (
+    ExecutionRoute,
+    ResilientExecutionRouter,
+    SlippageModel,
 )
 
 
@@ -83,7 +83,9 @@ def test_place_order_applies_slippage_and_normalises_state() -> None:
     state = router.place_order("binance", _order(), idempotency_key="abc")
 
     assert state.status is OrderStatus.OPEN
-    assert pytest.approx(connector.submissions[0].price, rel=1e-6) == 10.0 * (1 + (0.25 + 0.5) / 100)
+    assert pytest.approx(connector.submissions[0].price, rel=1e-6) == 10.0 * (
+        1 + (0.25 + 0.5) / 100
+    )
 
 
 def test_idempotency_uses_cached_identifier() -> None:

@@ -88,7 +88,9 @@ def test_scan_directory_respects_extension_filter() -> None:
     assert "image.png" not in results
 
 
-def test_scan_directory_skips_non_files_and_empty_extension_list(tmp_path: Path) -> None:
+def test_scan_directory_skips_non_files_and_empty_extension_list(
+    tmp_path: Path,
+) -> None:
     repo = Path(tempfile.mkdtemp(prefix="secrepo"))
     nested = repo / "configs"
     nested.mkdir()

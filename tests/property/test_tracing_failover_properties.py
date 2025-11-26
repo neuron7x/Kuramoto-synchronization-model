@@ -17,7 +17,9 @@ HealthCheck = hypothesis.HealthCheck
 given = hypothesis.given
 settings = hypothesis.settings
 
-from tests.unit.observability.test_tracing import _install_stub_opentelemetry
+from tests.unit.observability.test_tracing import (
+    _install_stub_opentelemetry,
+)  # noqa: E402
 
 FAILOVER_KEYS = (
     "pipeline.failover",
@@ -31,6 +33,8 @@ TRUTHY_VALUES = [True, "true", "TRUE", "1", "yes", "YES", "on", "active", 1]
 FALSY_VALUES = [False, "false", "0", "no", "", 0, None]
 
 IDENTIFIER_CHARS = st.characters(min_codepoint=97, max_codepoint=122)
+
+
 @contextmanager
 def _load_tracing():
     monkeypatch = MonkeyPatch()
@@ -41,6 +45,8 @@ def _load_tracing():
         yield tracing
     finally:
         monkeypatch.undo()
+
+
 @settings(
     max_examples=1200,
     deadline=None,
@@ -71,7 +77,9 @@ def _load_tracing():
         st.sampled_from(FALSY_VALUES),
     ).filter(lambda pair: pair[0] != pair[1]),
     failover_key=st.sampled_from(FAILOVER_KEYS),
-    hot_ratio=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+    hot_ratio=st.floats(
+        min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False
+    ),
     default_ratio=st.floats(
         min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False
     ),
@@ -177,7 +185,9 @@ def _exercise_sampler(
     sampler._hot_sampler.calls.clear()
     sampler._default_sampler.calls.clear()
 
-    sampler.should_sample(None, 2, non_failover_stage, None, non_failover_attributes, None)
+    sampler.should_sample(
+        None, 2, non_failover_stage, None, non_failover_attributes, None
+    )
 
     assert len(sampler._hot_sampler.calls) == 0
     assert len(sampler._default_sampler.calls) == 1

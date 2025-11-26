@@ -7,6 +7,7 @@ behaviour so unit tests and production telemetry remain predictable.
 It follows a three-tier fallback hierarchy for each bond type and keeps
 track of activation history for observability.
 """
+
 from __future__ import annotations
 
 import logging
@@ -137,7 +138,9 @@ class LinkActivator:
     def get_total_cost(self) -> float:
         """Return the cumulative protocol cost."""
 
-        return sum(entry["cost"] for entry in self._activation_history if entry["success"])
+        return sum(
+            entry["cost"] for entry in self._activation_history if entry["success"]
+        )
 
     # Internal helpers ---------------------------------------------------
     def _record_history(
@@ -217,7 +220,9 @@ class LinkActivator:
             metadata=metadata,
         )
 
-    def _grpc_stream(self, src: str, dst: str, ttl_seconds: Optional[int] = None) -> ActivationResult:
+    def _grpc_stream(
+        self, src: str, dst: str, ttl_seconds: Optional[int] = None
+    ) -> ActivationResult:
         metadata = {"stream_id": f"{src}-{dst}", "ttl_seconds": ttl_seconds}
         return ActivationResult(
             success=True,
@@ -237,7 +242,9 @@ class LinkActivator:
             metadata=metadata,
         )
 
-    def _gossip(self, src: str, dst: str, *, priority: str = "normal") -> ActivationResult:
+    def _gossip(
+        self, src: str, dst: str, *, priority: str = "normal"
+    ) -> ActivationResult:
         metadata = {"channel": f"gossip::{src}->{dst}", "priority": priority}
         return ActivationResult(
             success=True,

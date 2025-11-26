@@ -10,8 +10,8 @@ import pytest
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import BinanceConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
-from execution.session_snapshot import SessionSnapshotError
 from execution.risk import RiskLimits, RiskManager
+from execution.session_snapshot import SessionSnapshotError
 
 
 @pytest.fixture()

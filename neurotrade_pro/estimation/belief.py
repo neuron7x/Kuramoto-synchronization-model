@@ -6,7 +6,9 @@ from __future__ import annotations
 class VolBelief:
     """Simple two-state belief filter for volatility regimes."""
 
-    def __init__(self, p11: float = 0.95, p00: float = 0.95, thresh: float = 0.75) -> None:
+    def __init__(
+        self, p11: float = 0.95, p00: float = 0.95, thresh: float = 0.75
+    ) -> None:
         self.p11 = float(p11)
         self.p00 = float(p00)
         self.thresh = float(thresh)

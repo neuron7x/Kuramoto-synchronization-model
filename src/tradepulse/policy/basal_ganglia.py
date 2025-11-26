@@ -1,4 +1,5 @@
 """Basal ganglia inspired decision stack orchestrating neuromodulators."""
+
 from __future__ import annotations
 
 from typing import Mapping, MutableMapping, NamedTuple, Optional, Sequence
@@ -222,4 +223,3 @@ __all__ = [
     "PolicyResult",
     "select_action",
 ]
-

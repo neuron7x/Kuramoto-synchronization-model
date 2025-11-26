@@ -246,7 +246,9 @@ class WatermarkBacklog:
             samples = [sample.delay_seconds for sample in self._delay_samples[source]]
             summary[source] = LagSummary(
                 count=stats.count,
-                average_seconds=fmean(samples) if samples else stats.total / stats.count,
+                average_seconds=(
+                    fmean(samples) if samples else stats.total / stats.count
+                ),
                 max_seconds=stats.max_value,
                 p95_seconds=_percentile(samples, 0.95) if samples else 0.0,
             )
@@ -255,7 +257,9 @@ class WatermarkBacklog:
     def delay_series(self) -> Mapping[str, List[DelaySample]]:
         """Return the retained delay samples suitable for charting."""
 
-        return {source: list(samples) for source, samples in self._delay_samples.items()}
+        return {
+            source: list(samples) for source, samples in self._delay_samples.items()
+        }
 
     def _update_watermark(self) -> None:
         self._prune_inactive_sources()
@@ -311,4 +315,3 @@ __all__ = [
     "WatermarkBacklog",
     "WatermarkProgress",
 ]
-

@@ -6,12 +6,12 @@ from decimal import Decimal
 import pytest
 
 hypothesis = pytest.importorskip("hypothesis")
-from hypothesis import given, settings
-from hypothesis import strategies as st
+from hypothesis import given, settings  # noqa: E402 - after importorskip
+from hypothesis import strategies as st  # noqa: E402
 
-import src.data.kafka_ingestion as kafka_ingestion
-from core.data.models import InstrumentType, PriceTick
-from src.data.kafka_ingestion import HotSymbolCache
+import src.data.kafka_ingestion as kafka_ingestion  # noqa: E402
+from core.data.models import InstrumentType, PriceTick  # noqa: E402
+from src.data.kafka_ingestion import HotSymbolCache  # noqa: E402
 
 BASE_TS = datetime(2024, 1, 1, tzinfo=UTC)
 
@@ -83,7 +83,11 @@ def test_hot_symbol_cache_flushes_overflow_when_exceeding_max_ticks(
 
     snapshot = cache.snapshot("BTC/USDT", "BINANCE")
     assert snapshot is not None
-    assert [tick.price for tick in snapshot.ticks] == [ticks[1].price, ticks[2].price, ticks[3].price]
+    assert [tick.price for tick in snapshot.ticks] == [
+        ticks[1].price,
+        ticks[2].price,
+        ticks[3].price,
+    ]
 
 
 def test_hot_symbol_cache_flushes_when_reaching_flush_size(
@@ -114,7 +118,9 @@ def test_hot_symbol_cache_flushes_when_reaching_flush_size(
     assert snapshot.ticks == ()
 
 
-def test_hot_symbol_cache_expires_stale_entries(deterministic_clock: _DeterministicClock) -> None:
+def test_hot_symbol_cache_expires_stale_entries(
+    deterministic_clock: _DeterministicClock,
+) -> None:
     cache = HotSymbolCache(
         max_entries=4,
         ttl_seconds=5,
@@ -133,7 +139,9 @@ def test_hot_symbol_cache_expires_stale_entries(deterministic_clock: _Determinis
     flushed = cache.update(second_tick)
 
     assert any(snapshot.symbol == "BTC/USDT" for snapshot in flushed)
-    stale_snapshot = next(snapshot for snapshot in flushed if snapshot.symbol == "BTC/USDT")
+    stale_snapshot = next(
+        snapshot for snapshot in flushed if snapshot.symbol == "BTC/USDT"
+    )
     assert [tick.price for tick in stale_snapshot.ticks] == [first_tick.price]
     expected_last_seen = datetime.fromtimestamp(first_seen, tz=UTC)
     assert stale_snapshot.last_seen == expected_last_seen
@@ -229,8 +237,12 @@ def test_hot_symbol_cache_drain_flushes_all_entries(
     drained = cache.drain()
     snapshot_by_symbol = {snapshot.symbol: snapshot for snapshot in drained}
     assert set(snapshot_by_symbol) == {"BTC/USDT", "ETH/USDT"}
-    assert [tick.price for tick in snapshot_by_symbol["BTC/USDT"].ticks] == [first_tick.price]
-    assert [tick.price for tick in snapshot_by_symbol["ETH/USDT"].ticks] == [second_tick.price]
+    assert [tick.price for tick in snapshot_by_symbol["BTC/USDT"].ticks] == [
+        first_tick.price
+    ]
+    assert [tick.price for tick in snapshot_by_symbol["ETH/USDT"].ticks] == [
+        second_tick.price
+    ]
 
     assert cache.snapshot("BTC/USDT", "BINANCE") is None
     assert cache.snapshot("ETH/USDT", "BINANCE") is None
@@ -298,7 +310,9 @@ def _tick_strategy(draw) -> PriceTick:
             allow_infinity=False,
         )
     )
-    timestamp = BASE_TS + timedelta(seconds=draw(st.integers(min_value=0, max_value=86_400)))
+    timestamp = BASE_TS + timedelta(
+        seconds=draw(st.integers(min_value=0, max_value=86_400))
+    )
     return PriceTick.create(
         symbol=symbol,
         venue=venue,
@@ -309,7 +323,9 @@ def _tick_strategy(draw) -> PriceTick:
     )
 
 
-def _run_cache_sequence(ticks: list[PriceTick]) -> tuple[tuple[tuple, ...], tuple[tuple, ...]]:
+def _run_cache_sequence(
+    ticks: list[PriceTick],
+) -> tuple[tuple[tuple, ...], tuple[tuple, ...]]:
     clock = _PredictableClock()
     cache = HotSymbolCache(
         max_entries=5,
@@ -329,7 +345,9 @@ def _run_cache_sequence(ticks: list[PriceTick]) -> tuple[tuple[tuple, ...], tupl
             assert len(snapshot.ticks) <= 7
             assert all(t.symbol == snapshot.symbol for t in snapshot.ticks)
             assert all(t.venue == snapshot.venue for t in snapshot.ticks)
-            assert all(t.instrument_type == snapshot.instrument_type for t in snapshot.ticks)
+            assert all(
+                t.instrument_type == snapshot.instrument_type for t in snapshot.ticks
+            )
         flushes.append(tuple(_summarise_snapshot(snapshot) for snapshot in snapshots))
         for symbol, venue, instrument_type in seen_keys:
             snapshot = cache.snapshot(symbol, venue, instrument_type)

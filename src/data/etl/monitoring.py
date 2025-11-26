@@ -9,8 +9,8 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import jensenshannon
 from pandas.api.types import is_numeric_dtype
+from scipy.spatial.distance import jensenshannon
 
 from .stores import AuditEntry
 
@@ -87,11 +87,21 @@ class DistributionProfiler:
                     unique = None
             else:
                 unique = None
-            mean_value = float(numeric_values.mean()) if not numeric_values.empty else None
-            std_value = float(numeric_values.std()) if numeric_values.shape[0] > 1 else None
-            min_value = float(numeric_values.min()) if not numeric_values.empty else None
-            max_value = float(numeric_values.max()) if not numeric_values.empty else None
-            median_value = float(numeric_values.median()) if not numeric_values.empty else None
+            mean_value = (
+                float(numeric_values.mean()) if not numeric_values.empty else None
+            )
+            std_value = (
+                float(numeric_values.std()) if numeric_values.shape[0] > 1 else None
+            )
+            min_value = (
+                float(numeric_values.min()) if not numeric_values.empty else None
+            )
+            max_value = (
+                float(numeric_values.max()) if not numeric_values.empty else None
+            )
+            median_value = (
+                float(numeric_values.median()) if not numeric_values.empty else None
+            )
 
             quantiles_map: dict[str, float] | None = None
             if not numeric_values.empty and self._quantiles:
@@ -110,7 +120,10 @@ class DistributionProfiler:
             if self._max_top_values and not non_null_values.empty:
                 counts = series.value_counts(dropna=True)
                 sorted_counts = sorted(
-                    ((self._normalise_value(value), int(count)) for value, count in counts.items()),
+                    (
+                        (self._normalise_value(value), int(count))
+                        for value, count in counts.items()
+                    ),
                     key=lambda item: (-item[1], repr(item[0])),
                 )
                 top_values = sorted_counts[: self._max_top_values]
@@ -119,8 +132,12 @@ class DistributionProfiler:
             is_monotonic_decreasing: bool | None
             if non_null_values.shape[0] > 1:
                 try:
-                    is_monotonic_increasing = bool(non_null_values.is_monotonic_increasing)
-                    is_monotonic_decreasing = bool(non_null_values.is_monotonic_decreasing)
+                    is_monotonic_increasing = bool(
+                        non_null_values.is_monotonic_increasing
+                    )
+                    is_monotonic_decreasing = bool(
+                        non_null_values.is_monotonic_decreasing
+                    )
                 except TypeError:
                     is_monotonic_increasing = None
                     is_monotonic_decreasing = None
@@ -193,23 +210,36 @@ class DriftDetector:
 
         return self._threshold
 
-    def compare(self, baseline: pd.DataFrame, candidate: pd.DataFrame) -> list[DriftReport]:
+    def compare(
+        self, baseline: pd.DataFrame, candidate: pd.DataFrame
+    ) -> list[DriftReport]:
         reports: list[DriftReport] = []
         for column in candidate.select_dtypes(include=[np.number]).columns:
             baseline_series = baseline[column].dropna().to_numpy()
             candidate_series = candidate[column].dropna().to_numpy()
             if baseline_series.size == 0 or candidate_series.size == 0:
                 reports.append(
-                    DriftReport(column=column, statistic=float("nan"), threshold=self._threshold, drifted=False)
+                    DriftReport(
+                        column=column,
+                        statistic=float("nan"),
+                        threshold=self._threshold,
+                        drifted=False,
+                    )
                 )
                 continue
             hist_range = (
                 min(baseline_series.min(), candidate_series.min()),
                 max(baseline_series.max(), candidate_series.max()),
             )
-            baseline_hist, _ = np.histogram(baseline_series, bins=self._bins, range=hist_range, density=True)
-            candidate_hist, _ = np.histogram(candidate_series, bins=self._bins, range=hist_range, density=True)
-            divergence = float(jensenshannon(baseline_hist + 1e-12, candidate_hist + 1e-12))
+            baseline_hist, _ = np.histogram(
+                baseline_series, bins=self._bins, range=hist_range, density=True
+            )
+            candidate_hist, _ = np.histogram(
+                candidate_series, bins=self._bins, range=hist_range, density=True
+            )
+            divergence = float(
+                jensenshannon(baseline_hist + 1e-12, candidate_hist + 1e-12)
+            )
             reports.append(
                 DriftReport(
                     column=column,
@@ -269,8 +299,12 @@ class DriftDetector:
                     column_scores.append(0.0)
                     continue
                 hist_range = (min_val, max_val)
-                hist_a, _ = np.histogram(sample_a, bins=self._bins, range=hist_range, density=True)
-                hist_b, _ = np.histogram(sample_b, bins=self._bins, range=hist_range, density=True)
+                hist_a, _ = np.histogram(
+                    sample_a, bins=self._bins, range=hist_range, density=True
+                )
+                hist_b, _ = np.histogram(
+                    sample_b, bins=self._bins, range=hist_range, density=True
+                )
                 divergence = float(jensenshannon(hist_a + 1e-12, hist_b + 1e-12))
                 column_scores.append(divergence)
 
@@ -316,10 +350,18 @@ class SLAMonitor:
 class AutoReporter:
     """Generate concise execution reports for stakeholders."""
 
-    def render(self, *, run_id: str, audit_entries: Iterable[AuditEntry], sla_findings: Iterable[str]) -> str:
+    def render(
+        self,
+        *,
+        run_id: str,
+        audit_entries: Iterable[AuditEntry],
+        sla_findings: Iterable[str],
+    ) -> str:
         entries = list(audit_entries)
         total_duration = sum(entry.duration_seconds for entry in entries)
-        avg_duration = mean(entry.duration_seconds for entry in entries) if entries else 0.0
+        avg_duration = (
+            mean(entry.duration_seconds for entry in entries) if entries else 0.0
+        )
         lines = [
             f"Pipeline run {run_id}",
             f"Total segments: {len(entries)}",
@@ -340,7 +382,9 @@ class AutoReporter:
 class LoadSimulator:
     """Generate synthetic datasets to stress-test pipelines."""
 
-    def simulate(self, *, rows: int, columns: dict[str, tuple[float, float]]) -> pd.DataFrame:
+    def simulate(
+        self, *, rows: int, columns: dict[str, tuple[float, float]]
+    ) -> pd.DataFrame:
         data: dict[str, np.ndarray] = {}
         for name, (mean_value, std_dev) in columns.items():
             data[name] = np.random.normal(mean_value, std_dev, size=rows)

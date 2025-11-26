@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import ssl
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-import ssl
 import pytest
 
 from core.data.models import InstrumentType

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-import sys
 from typing import Iterable, Mapping, MutableMapping
 
 import yaml
@@ -16,10 +16,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from observability.release_gates import ReleaseGateEvaluator
-
-from tacl.energy_model import EnergyValidationError, EnergyValidator
-from tacl.validate import ARTIFACTS_DIR, load_scenarios
+from observability.release_gates import ReleaseGateEvaluator  # noqa: E402
+from tacl.energy_model import EnergyValidationError, EnergyValidator  # noqa: E402
+from tacl.validate import ARTIFACTS_DIR, load_scenarios  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,7 +55,9 @@ def _load_perf_budgets(path: Path) -> list[PerfBudget]:
     return budgets
 
 
-def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[str, object]]:
+def evaluate_release_gates(
+    config: Mapping[str, object],
+) -> tuple[bool, Mapping[str, object]]:
     latency_cfg = config.get("latency") or {}
     evaluator = ReleaseGateEvaluator(
         latency_median_target_ms=float(latency_cfg.get("median_target_ms", 60.0)),
@@ -76,7 +77,9 @@ def evaluate_release_gates(config: Mapping[str, object]) -> tuple[bool, Mapping[
     perf_passed = all(budget.passed() for budget in perf_budgets)
 
     validator = EnergyValidator()
-    scenarios = load_scenarios(Path(config.get("scenario_file", "")) if config.get("scenario_file") else None)
+    scenarios = load_scenarios(
+        Path(config.get("scenario_file", "")) if config.get("scenario_file") else None
+    )
     energy_scenario = str(config.get("energy_scenario", "nominal"))
     if energy_scenario not in scenarios:
         raise KeyError(f"energy scenario '{energy_scenario}' not present in fixtures")

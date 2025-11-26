@@ -265,7 +265,9 @@ def run_live_runner_with_fake_exchange(
             positions_for_pnl = positions_np[1:]
             pnl_steps = positions_for_pnl * price_moves
         equity_curve = (
-            np.concatenate(([0.0], np.cumsum(pnl_steps))) if pnl_steps.size else np.array([0.0])
+            np.concatenate(([0.0], np.cumsum(pnl_steps)))
+            if pnl_steps.size
+            else np.array([0.0])
         )
         pnl_total = float(pnl_steps.sum()) if pnl_steps.size else 0.0
         drawdowns = equity_curve - np.maximum.accumulate(equity_curve)
@@ -325,9 +327,9 @@ def compare_reports(
     live_dd = float(live_report.get("max_drawdown", 0.0))
     allowed_dd = abs(back_dd) * drawdown_tolerance + 1e-6
     dd_gap = abs(abs(live_dd) - abs(back_dd))
-    assert dd_gap <= allowed_dd, (
-        f"Drawdown mismatch {dd_gap:.4f} exceeds tolerance {allowed_dd:.4f}"
-    )
+    assert (
+        dd_gap <= allowed_dd
+    ), f"Drawdown mismatch {dd_gap:.4f} exceeds tolerance {allowed_dd:.4f}"
 
     positions = np.asarray(live_report.get("positions", []), dtype=float)
     assert positions.shape == signals.shape

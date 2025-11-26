@@ -108,7 +108,9 @@ class ProfileCollector:
         self._sections: list[ProfileSectionResult] = []
 
     @contextmanager
-    def section(self, name: str, metadata: Optional[MutableMapping[str, Any]] = None) -> Iterator[MutableMapping[str, Any]]:
+    def section(
+        self, name: str, metadata: Optional[MutableMapping[str, Any]] = None
+    ) -> Iterator[MutableMapping[str, Any]]:
         """Profile the enclosed block and record its metrics.
 
         Parameters

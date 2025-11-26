@@ -8,9 +8,9 @@ real-time strategy routing.
 
 from __future__ import annotations
 
+import math
 from collections import Counter, defaultdict, deque
 from dataclasses import dataclass
-import math
 from typing import Mapping, MutableMapping, Sequence
 
 import numpy as np
@@ -95,7 +95,9 @@ class FractalMotivationEngine:
             prev_tensor = torch.as_tensor(previous, dtype=torch.float32)
             prev_probs = F.softmax(prev_tensor, dim=-1)
         return float(
-            F.kl_div(prev_probs.log(), current_probs, reduction="batchmean").clamp_min(0.0)
+            F.kl_div(prev_probs.log(), current_probs, reduction="batchmean").clamp_min(
+                0.0
+            )
         )
 
     def _compute_context_coherence(self, hidden_states: np.ndarray) -> float:
@@ -103,7 +105,9 @@ class FractalMotivationEngine:
         if tensor.ndim == 1:
             tensor = tensor.unsqueeze(0)
         norm = torch.norm(tensor, dim=-1, keepdim=True) + 1e-8
-        sim = torch.matmul(tensor, tensor.transpose(-1, -2)) / (norm * norm.transpose(-1, -2))
+        sim = torch.matmul(tensor, tensor.transpose(-1, -2)) / (
+            norm * norm.transpose(-1, -2)
+        )
         return float(sim.mean())
 
     def _motivation_policy(
@@ -169,18 +173,26 @@ class AllostaticRegulator:
         self.dopamine_level = 0.5
         self.stress_level = 0.1
 
-    def _ode(self, y: Sequence[float], _: float, rpe: float, stress_input: float) -> list[float]:
+    def _ode(
+        self, y: Sequence[float], _: float, rpe: float, stress_input: float
+    ) -> list[float]:
         allostatic, dopamine, stress = y
         d_allostatic = -0.1 * allostatic + 0.2 * stress
         d_dopamine = rpe - 0.2 * dopamine
         d_stress = stress_input - 0.1 * stress
         return [d_allostatic, d_dopamine, d_stress]
 
-    def update(self, rpe: float, stress_input: float, *, time_step: float = 0.1) -> float:
+    def update(
+        self, rpe: float, stress_input: float, *, time_step: float = 0.1
+    ) -> float:
         y0 = (self.allostatic_load, self.dopamine_level, self.stress_level)
         t = (0.0, time_step)
-        result = odeint(self._ode, y0, t, args=(rpe, stress_input), atol=1e-6, rtol=1e-6)
-        self.allostatic_load, self.dopamine_level, self.stress_level = map(float, result[-1])
+        result = odeint(
+            self._ode, y0, t, args=(rpe, stress_input), atol=1e-6, rtol=1e-6
+        )
+        self.allostatic_load, self.dopamine_level, self.stress_level = map(
+            float, result[-1]
+        )
         self.allostatic_load = float(np.clip(self.allostatic_load, -1.0, 1.0))
         return self.allostatic_load
 
@@ -278,7 +290,9 @@ class MotivationDecision:
 class FractalMotivationController:
     """Guard-rail aware controller that routes actions via fractal motivation."""
 
-    def __init__(self, actions: Sequence[str], *, exploration_coef: float = 1.0) -> None:
+    def __init__(
+        self, actions: Sequence[str], *, exploration_coef: float = 1.0
+    ) -> None:
         if not actions:
             raise ValueError("actions must be a non-empty sequence")
         if "pause_and_audit" not in actions:
@@ -299,7 +313,12 @@ class FractalMotivationController:
             for action in self.actions
             if action in {"exploit", "explore", "deepen", "broaden"}
         )
-        bandit_actions = self._strategy_actions or ("exploit", "explore", "deepen", "broaden")
+        bandit_actions = self._strategy_actions or (
+            "exploit",
+            "explore",
+            "deepen",
+            "broaden",
+        )
         self._bandit = FractalBandit(bandit_actions)
 
     def recommend(
@@ -335,13 +354,17 @@ class FractalMotivationController:
             previous=previous,
         )
         projected_next = (
-            self._coerce_state(next_state) if next_state is not None else self._project_next_state(state_vec, signals)
+            self._coerce_state(next_state)
+            if next_state is not None
+            else self._project_next_state(state_vec, signals)
         )
         intrinsic_reward, allostatic = self.compute_intrinsic_reward(
             state_vec, projected_next, motivation_signal
         )
         expected_rewards = {
-            action: self._estimate_reward(action, signals, intrinsic_reward, motivation_signal)
+            action: self._estimate_reward(
+                action, signals, intrinsic_reward, motivation_signal
+            )
             for action in self.actions
         }
         ucb_scores = self._compute_ucb_scores(expected_rewards, motivation_signal)
@@ -355,7 +378,9 @@ class FractalMotivationController:
 
         if self._strategy_actions and recommended in self._strategy_actions:
             idx = self._strategy_actions.index(recommended)
-            reward_norm = float(np.clip((expected_rewards[recommended] + 1.0) / 2.0, 0.0, 1.0))
+            reward_norm = float(
+                np.clip((expected_rewards[recommended] + 1.0) / 2.0, 0.0, 1.0)
+            )
             self._bandit.update(idx, reward_norm)
 
         metrics = self.monitor.observe(

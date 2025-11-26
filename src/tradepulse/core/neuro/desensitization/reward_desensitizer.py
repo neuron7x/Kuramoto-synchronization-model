@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Dict, Tuple
-import math
 
 
 @dataclass(slots=True)
@@ -34,7 +34,9 @@ class RewardDesensitizer:
 
         delta = reward - self._mean
         self._mean += self.cfg.ewma_alpha * delta
-        self._var = (1 - self.cfg.ewma_alpha) * self._var + self.cfg.ewma_alpha * delta * delta
+        self._var = (
+            1 - self.cfg.ewma_alpha
+        ) * self._var + self.cfg.ewma_alpha * delta * delta
         std = max(1e-6, math.sqrt(self._var))
         z = (reward - self._mean) / std
         rpe = reward - self._last

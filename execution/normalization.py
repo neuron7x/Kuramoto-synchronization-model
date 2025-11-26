@@ -78,7 +78,9 @@ class SymbolNormalizer:
             ctx.prec = cls._DECIMAL_PRECISION
             ctx.rounding = ROUND_HALF_UP
             value_decimal = cls._decimal(value)
-            steps = (value_decimal / step_decimal).to_integral_value(rounding=ROUND_HALF_UP)
+            steps = (value_decimal / step_decimal).to_integral_value(
+                rounding=ROUND_HALF_UP
+            )
             return steps * step_decimal
 
     @classmethod

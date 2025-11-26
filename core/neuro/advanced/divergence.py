@@ -9,7 +9,12 @@ import numpy as np
 import pandas as pd
 
 from .causal import GrangerResult, granger_causality
-from .quantum import QuantumBeliefUpdate, quantum_active_update, quantum_relative_entropy, to_density_matrix
+from .quantum import (
+    QuantumBeliefUpdate,
+    quantum_active_update,
+    quantum_relative_entropy,
+    to_density_matrix,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,7 +95,9 @@ def _compute_divergence(
         rho_f = to_density_matrix(feature_delta)
         divergence = max(0.0, quantum_relative_entropy(rho_p, rho_f))
         if divergence < config.divergence_threshold:
-            convergence = max(0.0, 1.0 - divergence / (config.divergence_threshold + 1.0))
+            convergence = max(
+                0.0, 1.0 - divergence / (config.divergence_threshold + 1.0)
+            )
         else:
             convergence = max(0.0, 1.0 - divergence / (divergence + 1.0))
         return divergence, convergence
@@ -154,7 +161,9 @@ def compute_divergence_convergence_phi(
         price_delta = float(row["price"])
         feature_delta = row.drop(labels="price").to_numpy(dtype=float)
 
-        divergence, convergence = _compute_divergence(price_delta, feature_delta, config)
+        divergence, convergence = _compute_divergence(
+            price_delta, feature_delta, config
+        )
 
         causal_result: GrangerResult | None = None
         if config.causal_p_threshold is not None:
@@ -221,4 +230,3 @@ __all__ = [
     "DivergenceOutput",
     "compute_divergence_convergence_phi",
 ]
-

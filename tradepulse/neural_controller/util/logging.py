@@ -89,14 +89,15 @@ def log_decision(event: Dict[str, Any]) -> None:
     logger.info(message, extra={"event": "neuro.decision", "payload": payload})
 
 
-
 class _JsonLogFormatter(logging.Formatter):
     """Format log records as newline-delimited JSON."""
 
     default_time_format = "%Y-%m-%dT%H:%M:%S"
     default_msec_format = "%s.%03dZ"
 
-    def format(self, record: logging.LogRecord) -> str:  # noqa: D401 - inherited docstring
+    def format(
+        self, record: logging.LogRecord
+    ) -> str:  # noqa: D401 - inherited docstring
         payload: Dict[str, Any] = {
             "ts": self.formatTime(record, self.default_time_format),
             "level": record.levelname,
@@ -112,4 +113,3 @@ class _JsonLogFormatter(logging.Formatter):
             payload["exc_info"] = self.formatException(record.exc_info)
 
         return json.dumps(payload, ensure_ascii=False)
-

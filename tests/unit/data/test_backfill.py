@@ -93,7 +93,9 @@ def test_detect_gaps_requires_frequency_override_for_irregular_index() -> None:
     )
     existing = expected.delete(1)
 
-    with pytest.raises(ValueError, match="Unable to determine expected_index frequency"):
+    with pytest.raises(
+        ValueError, match="Unable to determine expected_index frequency"
+    ):
         detect_gaps(expected, existing)
 
     gaps = detect_gaps(expected, existing, frequency="1min")

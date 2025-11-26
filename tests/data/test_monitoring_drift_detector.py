@@ -40,7 +40,9 @@ def test_drift_detector_calibration_updates_threshold_and_details() -> None:
 
 
 def test_drift_detector_calibration_respects_apply_flag() -> None:
-    baseline = pd.DataFrame({"constant": np.ones(32), "category": ["a", "b", "c", "d"] * 8})
+    baseline = pd.DataFrame(
+        {"constant": np.ones(32), "category": ["a", "b", "c", "d"] * 8}
+    )
     detector = DriftDetector(threshold=0.2, bins=8)
 
     result = detector.calibrate(

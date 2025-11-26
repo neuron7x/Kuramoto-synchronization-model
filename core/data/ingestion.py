@@ -116,7 +116,9 @@ class DataIngestor(DataIngestionService):
                 required = set(required_fields or ())
                 required.update({timestamp_field, price_field})
                 missing = [
-                    field for field in sorted(required) if field not in reader.fieldnames
+                    field
+                    for field in sorted(required)
+                    if field not in reader.fieldnames
                 ]
                 if missing:
                     raise ValueError(

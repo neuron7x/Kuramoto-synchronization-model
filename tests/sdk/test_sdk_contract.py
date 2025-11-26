@@ -55,13 +55,16 @@ def _position_sizer(signal) -> float:
     return max(signal.confidence, 0.25)
 
 
-def _build_system(tmp_path: Path, *, risk_limits: RiskLimits | None = None) -> TradePulseSystem:
+def _build_system(
+    tmp_path: Path, *, risk_limits: RiskLimits | None = None
+) -> TradePulseSystem:
     venue = ExchangeAdapterConfig(name="BINANCE", connector=BinanceConnector())
     settings = LiveLoopSettings(state_dir=tmp_path / "state")
     config = TradePulseSystemConfig(
         venues=[venue],
         live_settings=settings,
-        risk_limits=risk_limits or RiskLimits(max_notional=1_000_000.0, max_position=1_000.0),
+        risk_limits=risk_limits
+        or RiskLimits(max_notional=1_000_000.0, max_position=1_000.0),
     )
     return TradePulseSystem(config)
 
@@ -127,7 +130,9 @@ def test_risk_check_rejection(tmp_path: Path) -> None:
     )
     sdk = TradePulseSDK(system, config)
 
-    signal = sdk.get_signal(MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market))
+    signal = sdk.get_signal(
+        MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
+    )
     proposal = sdk.propose_trade(signal)
 
     result = sdk.risk_check(proposal.order)
@@ -148,7 +153,11 @@ def test_propose_trade_requires_context(tmp_path: Path) -> None:
     sdk = TradePulseSDK(system, config)
 
     with pytest.raises(LookupError):
-        signal = type("_S", (), {"symbol": "BTCUSDT", "action": SignalAction.BUY, "confidence": 0.5})()
+        signal = type(
+            "_S",
+            (),
+            {"symbol": "BTCUSDT", "action": SignalAction.BUY, "confidence": 0.5},
+        )()
         sdk.propose_trade(signal)  # type: ignore[arg-type]
 
 
@@ -193,4 +202,3 @@ def test_exit_flat_position_raises(tmp_path: Path, monkeypatch) -> None:
 
     with pytest.raises(ValueError):
         sdk.propose_trade(exit_signal)
-

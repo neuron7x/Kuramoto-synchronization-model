@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import Mock
 
 import pytest
 
 from domain import Order, OrderSide, OrderStatus
-from execution.audit import ExecutionAuditLogger
 from execution.compliance import ComplianceViolation, RiskCompliance, RiskConfig
 from execution.connectors import ExecutionConnector
 from execution.oms import OMSConfig, OrderManagementSystem
@@ -193,7 +190,9 @@ class TestE2ERiskControls:
         error_msg = str(exc_info.value)
         assert "Gross exposure" in error_msg
 
-    def test_circuit_breaker_blocks_after_breaches(self, oms, risk_compliance, circuit_breaker):
+    def test_circuit_breaker_blocks_after_breaches(
+        self, oms, risk_compliance, circuit_breaker
+    ):
         """Test that circuit breaker opens after N risk breaches."""
         for i in range(3):
             circuit_breaker.record_risk_breach(f"breach_{i}")

@@ -1,7 +1,9 @@
 """Generate validation metrics for CNSStabilizer v2.1."""
+
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List
@@ -9,14 +11,11 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-import sys
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from runtime.cns_stabilizer import CNSStabilizer
-
+from runtime.cns_stabilizer import CNSStabilizer  # noqa: E402
 
 np.random.seed(42)
 
@@ -82,7 +81,9 @@ def _evaluate_episode(name: str, prices: np.ndarray) -> EpisodeResult:
 
     hazard_count = len(hazard_events)
     veto_count = sum(1 for evt in events if evt["data"].get("action") == "veto")
-    suppression_accuracy = 1.0 if hazard_count == 0 else min(1.0, veto_count / hazard_count)
+    suppression_accuracy = (
+        1.0 if hazard_count == 0 else min(1.0, veto_count / hazard_count)
+    )
 
     false_deny_rate = 0.0
     if hazard_count == 0 and len(events) > 0:
@@ -92,13 +93,17 @@ def _evaluate_episode(name: str, prices: np.ndarray) -> EpisodeResult:
     target_arr = prices[: len(filtered_arr)]
     mse = float(np.mean((filtered_arr - target_arr) ** 2)) if len(filtered_arr) else 0.0
 
-    latencies = [evt["data"].get("latency", 0.0) for evt in events if "latency" in evt["data"]]
+    latencies = [
+        evt["data"].get("latency", 0.0) for evt in events if "latency" in evt["data"]
+    ]
     latency_ms = float(np.mean(latencies) * 1000) if latencies else 0.0
 
     confirmed = sum(1 for entry in audit_log if "confirmed" in entry)
     monotonic_rate = confirmed / max(len(audit_log), 1)
 
-    integrity_values = [evt["data"].get("integrity", stabilizer.get_integrity_ratio()) for evt in events]
+    integrity_values = [
+        evt["data"].get("integrity", stabilizer.get_integrity_ratio()) for evt in events
+    ]
     if integrity_values:
         integrity_ratio = float(np.mean([float(val) for val in integrity_values]))
     else:

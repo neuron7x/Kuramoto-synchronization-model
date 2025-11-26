@@ -7,7 +7,6 @@ information from being exposed in error messages and logs.
 from __future__ import annotations
 
 import logging
-import traceback
 from typing import Any, Dict, Optional
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,15 +44,24 @@ class SecureError(Exception):
         """Remove sensitive information from context."""
         sanitized = {}
         sensitive_keys = {
-            'password', 'passwd', 'pwd', 'secret', 'api_key', 'apikey',
-            'token', 'auth', 'authorization', 'private_key', 'credit_card'
+            "password",
+            "passwd",
+            "pwd",
+            "secret",
+            "api_key",
+            "apikey",
+            "token",
+            "auth",
+            "authorization",
+            "private_key",
+            "credit_card",
         }
 
         for key, value in context.items():
             key_lower = key.lower()
             # Check if key contains sensitive words
             if any(sensitive in key_lower for sensitive in sensitive_keys):
-                sanitized[key] = '***REDACTED***'
+                sanitized[key] = "***REDACTED***"
             else:
                 sanitized[key] = value
 
@@ -69,16 +77,16 @@ class SecureError(Exception):
             Dictionary representation of the error
         """
         result = {
-            'error': self.public_message,
+            "error": self.public_message,
         }
 
         if self.error_code:
-            result['error_code'] = self.error_code
+            result["error_code"] = self.error_code
 
         if include_details:
-            result['detail'] = self.detail_message
+            result["detail"] = self.detail_message
             if self.context:
-                result['context'] = self.context
+                result["context"] = self.context
 
         return result
 
@@ -89,7 +97,7 @@ class SecureError(Exception):
             "Error occurred: %s | Detail: %s | Code: %s | Context: %s",
             self.public_message,
             self.detail_message,
-            self.error_code or 'N/A',
+            self.error_code or "N/A",
             self.context or {},
         )
 
@@ -128,7 +136,9 @@ class AuthorizationError(SecureError):
     def __init__(self, resource: Optional[str] = None, **context: Any):
         """Initialize an authorization error."""
         public_msg = "Access denied"
-        detail_msg = f"Access denied to resource: {resource}" if resource else "Access denied"
+        detail_msg = (
+            f"Access denied to resource: {resource}" if resource else "Access denied"
+        )
 
         super().__init__(
             public_message=public_msg,
@@ -182,15 +192,19 @@ def sanitize_error_message(error: Exception, include_type: bool = True) -> str:
 
     # Patterns to redact
     patterns = [
-        (r'password[=:]\s*\S+', 'password=***'),
-        (r'api[_-]?key[=:]\s*\S+', 'api_key=***'),
-        (r'token[=:]\s*\S+', 'token=***'),
-        (r'secret[=:]\s*\S+', 'secret=***'),
-        (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '***@***.***'),  # emails
-        (r'\b(?:\d{1,3}\.){3}\d{1,3}\b', '***.***.***.***'),  # IP addresses
+        (r"password[=:]\s*\S+", "password=***"),
+        (r"api[_-]?key[=:]\s*\S+", "api_key=***"),
+        (r"token[=:]\s*\S+", "token=***"),
+        (r"secret[=:]\s*\S+", "secret=***"),
+        (
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+            "***@***.***",
+        ),  # emails
+        (r"\b(?:\d{1,3}\.){3}\d{1,3}\b", "***.***.***.***"),  # IP addresses
     ]
 
     import re
+
     sanitized = error_msg
     for pattern, replacement in patterns:
         sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
@@ -241,7 +255,7 @@ def handle_exception(
             "Exception caught: %s",
             detail_message,
             exc_info=True,
-            extra={'context': context or {}},
+            extra={"context": context or {}},
         )
 
     secure_error = SecureError(
@@ -266,7 +280,7 @@ def safe_str(obj: Any, max_length: int = 100) -> str:
     try:
         s = str(obj)
         if len(s) > max_length:
-            s = s[:max_length - 3] + '...'
+            s = s[: max_length - 3] + "..."
         return s
     except Exception:
         return f"<{type(obj).__name__} object>"

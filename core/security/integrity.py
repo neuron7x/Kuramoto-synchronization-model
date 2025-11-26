@@ -187,9 +187,7 @@ class IntegrityVerifier:
         return manifest
 
     @classmethod
-    def verify_manifest(
-        cls, artifact_path: Path, manifest: ChecksumManifest
-    ) -> bool:
+    def verify_manifest(cls, artifact_path: Path, manifest: ChecksumManifest) -> bool:
         """Verify artifact against its manifest.
 
         Args:
@@ -230,7 +228,9 @@ class IntegrityVerifier:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(manifest.model_dump(), f, indent=2, sort_keys=True)
         except Exception as e:
-            raise IntegrityError(f"Failed to save manifest to {output_path}: {e}") from e
+            raise IntegrityError(
+                f"Failed to save manifest to {output_path}: {e}"
+            ) from e
 
     @classmethod
     def load_manifest(cls, manifest_path: Path) -> ChecksumManifest:
@@ -405,9 +405,7 @@ class ModelIntegrityChecker:
             manifest = IntegrityVerifier.load_manifest(manifest_path)
             return IntegrityVerifier.verify_manifest(model_path, manifest)
         elif expected_checksum is not None:
-            return IntegrityVerifier.verify_file_checksum(
-                model_path, expected_checksum
-            )
+            return IntegrityVerifier.verify_file_checksum(model_path, expected_checksum)
         else:
             raise ValueError(
                 "Either manifest_path or expected_checksum must be provided"

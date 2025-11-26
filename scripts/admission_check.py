@@ -17,7 +17,7 @@ if str(SCRIPT_DIR) in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from runtime.thermo_controller import MetricsSnapshot, ThermoController
+from runtime.thermo_controller import MetricsSnapshot, ThermoController  # noqa: E402
 
 
 def _compute_epsilon_spike(controller: ThermoController, F_old: float) -> float:
@@ -38,7 +38,9 @@ def _build_reference_graph() -> nx.DiGraph:
     return graph
 
 
-def _degrade_topology(controller: ThermoController) -> Tuple[MetricsSnapshot, list[tuple[str, str, str]]]:
+def _degrade_topology(
+    controller: ThermoController,
+) -> Tuple[MetricsSnapshot, list[tuple[str, str, str]]]:
     snapshot = MetricsSnapshot(
         latencies=dict(controller._latest_snapshot.latencies),
         coherency=dict(controller._latest_snapshot.coherency),
@@ -59,7 +61,9 @@ def _degrade_topology(controller: ThermoController) -> Tuple[MetricsSnapshot, li
 def _validate_monotonic_acceptance() -> bool:
     controller = ThermoController(_build_reference_graph())
     F_old = controller._compute_free_energy(snapshot=controller._latest_snapshot)
-    new_topology, F_new, _ = controller.crisis_ga.evolve(controller.current_topology, F_old)
+    new_topology, F_new, _ = controller.crisis_ga.evolve(
+        controller.current_topology, F_old
+    )
     epsilon_spike = _compute_epsilon_spike(controller, F_old)
 
     tolerance = controller._check_monotonic_with_tolerance(F_old, F_new)

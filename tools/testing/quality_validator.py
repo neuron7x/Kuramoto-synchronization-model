@@ -96,7 +96,11 @@ class TestQualityAnalyzer(ast.NodeVisitor):
             self._detect_test_smells(node)
 
         # Check for fixture usage
-        if any(dec.id == "pytest.fixture" for dec in node.decorator_list if isinstance(dec, ast.Name)):
+        if any(
+            dec.id == "pytest.fixture"
+            for dec in node.decorator_list
+            if isinstance(dec, ast.Name)
+        ):
             self.metrics.has_fixtures = True
 
         # Check for parametrize usage
@@ -120,9 +124,7 @@ class TestQualityAnalyzer(ast.NodeVisitor):
         # Smell 2: No assertions at all
         if len(assertions) == 0:
             # Check if it's not using pytest.raises or similar
-            has_pytest_raises = any(
-                isinstance(n, ast.With) for n in ast.walk(node)
-            )
+            has_pytest_raises = any(isinstance(n, ast.With) for n in ast.walk(node))
             if not has_pytest_raises:
                 self.metrics.test_smells.append(f"{node.name}: No assertions found")
 
@@ -213,14 +215,18 @@ class TestQualityValidator:
 
         # Find problematic files
         low_quality_files = [m for m in self.file_metrics if m.quality_score < 60]
-        undocumented_files = [m for m in self.file_metrics if m.documentation_rate < 0.5]
+        undocumented_files = [
+            m for m in self.file_metrics if m.documentation_rate < 0.5
+        ]
 
         report = {
             "summary": {
                 "total_test_files": len(self.file_metrics),
                 "total_tests": total_tests,
                 "documented_tests": total_documented,
-                "documentation_rate": total_documented / total_tests if total_tests > 0 else 0,
+                "documentation_rate": (
+                    total_documented / total_tests if total_tests > 0 else 0
+                ),
                 "total_smells": total_smells,
                 "avg_quality_score": avg_quality_score,
             },
@@ -268,7 +274,9 @@ class TestQualityValidator:
         print("=" * 70)
         print(f"\nTotal Test Files: {summary['total_test_files']}")
         print(f"Total Tests: {summary['total_tests']}")
-        print(f"Documented Tests: {summary['documented_tests']} ({summary['documentation_rate']:.1%})")
+        print(
+            f"Documented Tests: {summary['documented_tests']} ({summary['documentation_rate']:.1%})"
+        )
         print(f"Total Test Smells: {summary['total_smells']}")
         print(f"Average Quality Score: {summary['avg_quality_score']:.1f}/100")
 
@@ -278,7 +286,9 @@ class TestQualityValidator:
         elif summary["avg_quality_score"] >= 60:
             print("\n⚠️  GOOD - Test suite quality is acceptable but can be improved")
         else:
-            print("\n❌ NEEDS IMPROVEMENT - Test suite quality is below acceptable standards")
+            print(
+                "\n❌ NEEDS IMPROVEMENT - Test suite quality is below acceptable standards"
+            )
 
         # Show problematic files
         if report["problematic_files"]["low_quality"]:

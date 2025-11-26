@@ -1,4 +1,5 @@
 """Regression tests for the CI workflow's container publication job."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,14 +8,15 @@ from urllib.parse import urlsplit
 
 import yaml
 
-
 WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
 
 
 def _load_ci_workflow() -> Dict[str, Any]:
     raw = WORKFLOW_PATH.read_text(encoding="utf-8")
     loaded = yaml.safe_load(raw)
-    if not isinstance(loaded, dict):  # pragma: no cover - defensive, should never happen.
+    if not isinstance(
+        loaded, dict
+    ):  # pragma: no cover - defensive, should never happen.
         raise TypeError("CI workflow should deserialize into a mapping")
     return loaded
 
@@ -122,7 +124,9 @@ def test_build_and_push_step_pushes_multi_arch_images() -> None:
     steps: List[Dict[str, Any]] = job["steps"]  # type: ignore[assignment]
 
     build_steps = [
-        step for step in steps if isinstance(step, dict) and step.get("uses") == "docker/build-push-action@v5"
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("uses") == "docker/build-push-action@v5"
     ]
     assert build_steps, "Expected docker/build-push-action@v5 step"
     build_step = build_steps[0]
@@ -154,6 +158,6 @@ def test_prepare_step_generates_expected_outputs() -> None:
     step = _get_step_by_id(job, step_id="image-targets")
     assert step["shell"] == "bash"
     run_script = step["run"]
-    assert "targets=(\"${GHCR_IMAGE}\")" in run_script
-    assert "targets+=(\"docker.io/${DOCKERHUB_IMAGE}\")" in run_script
+    assert 'targets=("${GHCR_IMAGE}")' in run_script
+    assert 'targets+=("docker.io/${DOCKERHUB_IMAGE}")' in run_script
     assert "GITHUB_OUTPUT" in run_script

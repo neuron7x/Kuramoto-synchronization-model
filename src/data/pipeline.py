@@ -24,14 +24,16 @@ from .ingestion_service import DataIngestionCacheService
 from .kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagHandler
 
 if TYPE_CHECKING:
-    from .streaming_aggregator import TickStreamAggregator
     from .events import HeaderFactory
+    from .streaming_aggregator import TickStreamAggregator
 
 
 class TickRoutingStrategy(Protocol):
     """Decide how incoming ticks should be routed to cache layers."""
 
-    def route(self, tick: PriceTick) -> "CacheRoute | None":  # pragma: no cover - protocol
+    def route(
+        self, tick: PriceTick
+    ) -> "CacheRoute | None":  # pragma: no cover - protocol
         """Return the cache route for ``tick`` or ``None`` to drop it."""
 
 
@@ -74,9 +76,9 @@ class CacheWriterTickHandler:
         if not ticks:
             return
 
-        buckets: Dict[
-            tuple[CacheRoute, str, str, InstrumentType], list[PriceTick]
-        ] = defaultdict(list)
+        buckets: Dict[tuple[CacheRoute, str, str, InstrumentType], list[PriceTick]] = (
+            defaultdict(list)
+        )
         for tick in ticks:
             route = self._routing_strategy.route(tick)
             if route is None:
@@ -124,11 +126,11 @@ class StreamingIngestionPipeline:
         tick_event_publisher: TickEventPublisher | None = None,
         tick_event_topic: str = "tradepulse.data.tick_batch.persisted",
         tick_header_factory: "HeaderFactory" | None = None,
-        kafka_service_factory: Callable[
-            [KafkaIngestionConfig], KafkaIngestionService
-        ]
-        | Callable[..., KafkaIngestionService]
-        | None = None,
+        kafka_service_factory: (
+            Callable[[KafkaIngestionConfig], KafkaIngestionService]
+            | Callable[..., KafkaIngestionService]
+            | None
+        ) = None,
         kafka_kwargs: Mapping[str, Any] | None = None,
     ) -> None:
         self._cache_service = cache_service or DataIngestionCacheService()
@@ -190,7 +192,7 @@ class StreamingIngestionPipeline:
 
     @staticmethod
     def _inspect_factory_support(
-        factory: Callable[..., KafkaIngestionService]
+        factory: Callable[..., KafkaIngestionService],
     ) -> tuple[bool, bool] | None:
         try:
             signature = inspect.signature(factory)

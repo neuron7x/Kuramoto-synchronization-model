@@ -20,20 +20,24 @@ class TestDataInventory:
     fixtures_dir: Path
     cassettes_dir: Path
     recordings_dir: Path
-    
+
     fixture_files: list[Path] = field(default_factory=list)
     cassette_files: list[Path] = field(default_factory=list)
     recording_files: list[Path] = field(default_factory=list)
-    
+
     orphaned_fixtures: list[Path] = field(default_factory=list)
     missing_cassettes: list[str] = field(default_factory=list)
-    
+
     total_size_bytes: int = 0
 
     @property
     def total_assets(self) -> int:
         """Total number of test data assets."""
-        return len(self.fixture_files) + len(self.cassette_files) + len(self.recording_files)
+        return (
+            len(self.fixture_files)
+            + len(self.cassette_files)
+            + len(self.recording_files)
+        )
 
 
 class TestDataValidator:
@@ -72,7 +76,9 @@ class TestDataValidator:
 
         # Calculate total size
         all_files = (
-            inventory.fixture_files + inventory.cassette_files + inventory.recording_files
+            inventory.fixture_files
+            + inventory.cassette_files
+            + inventory.recording_files
         )
         inventory.total_size_bytes = sum(
             f.stat().st_size for f in all_files if f.exists()
@@ -84,11 +90,11 @@ class TestDataValidator:
         """Find fixture files not referenced by any tests."""
         # Simple heuristic: check if fixture filename appears in test files
         test_files = list(self.test_dir.rglob("test_*.py"))
-        
+
         orphaned = []
         for fixture in inventory.fixture_files:
             fixture_name = fixture.stem
-            
+
             # Check if fixture is referenced in any test file
             referenced = False
             for test_file in test_files:
@@ -99,15 +105,13 @@ class TestDataValidator:
                         break
                 except (IOError, UnicodeDecodeError):
                     continue
-            
+
             if not referenced:
                 orphaned.append(fixture)
-        
+
         return orphaned
 
-    def validate_cassette_completeness(
-        self, inventory: TestDataInventory
-    ) -> list[str]:
+    def validate_cassette_completeness(self, inventory: TestDataInventory) -> list[str]:
         """Validate that all VCR cassettes have required fields."""
         missing_fields = []
 
@@ -115,6 +119,7 @@ class TestDataValidator:
             try:
                 if cassette.suffix == ".yaml":
                     import yaml
+
                     with open(cassette, encoding="utf-8") as f:
                         data = yaml.safe_load(f)
                 elif cassette.suffix == ".json":
@@ -129,7 +134,9 @@ class TestDataValidator:
                     continue
 
                 if "interactions" not in data:
-                    missing_fields.append(f"{cassette.name}: Missing 'interactions' field")
+                    missing_fields.append(
+                        f"{cassette.name}: Missing 'interactions' field"
+                    )
 
             except Exception as e:
                 missing_fields.append(f"{cassette.name}: Error reading cassette - {e}")
@@ -154,10 +161,21 @@ class TestDataValidator:
                 "invalid_cassettes": len(missing_fields),
             },
             "details": {
-                "fixtures": [str(f.relative_to(self.test_dir)) for f in inventory.fixture_files[:50]],
-                "cassettes": [str(f.relative_to(self.test_dir)) for f in inventory.cassette_files[:50]],
-                "recordings": [str(f.relative_to(self.test_dir)) for f in inventory.recording_files[:50]],
-                "orphaned_fixtures": [str(f.relative_to(self.test_dir)) for f in orphaned[:20]],
+                "fixtures": [
+                    str(f.relative_to(self.test_dir))
+                    for f in inventory.fixture_files[:50]
+                ],
+                "cassettes": [
+                    str(f.relative_to(self.test_dir))
+                    for f in inventory.cassette_files[:50]
+                ],
+                "recordings": [
+                    str(f.relative_to(self.test_dir))
+                    for f in inventory.recording_files[:50]
+                ],
+                "orphaned_fixtures": [
+                    str(f.relative_to(self.test_dir)) for f in orphaned[:20]
+                ],
                 "invalid_cassettes": missing_fields[:20],
             },
         }

@@ -89,4 +89,3 @@ def test_package_list_strategies_exposes_quantum_neural() -> None:
     names = [spec.name for spec in strategies.list_strategies()]
 
     assert "quantum_neural" in names
-

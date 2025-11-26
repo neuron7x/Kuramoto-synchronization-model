@@ -292,7 +292,9 @@ async def _send_notifications(args: NotificationArguments) -> None:
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     parser = _build_parser()
     namespace = parser.parse_args()
     args = _prepare_arguments(namespace)

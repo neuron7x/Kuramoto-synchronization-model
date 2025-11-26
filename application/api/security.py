@@ -14,9 +14,9 @@ import jwt
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from application.settings import ApiSecuritySettings
 from application.secrets.manager import SecretManagerError
 from application.security.two_factor import verify_totp_code
+from application.settings import ApiSecuritySettings
 from src.admin.remote_control import AdminIdentity
 
 __all__ = [
@@ -454,7 +454,10 @@ def require_two_factor(
 
 def verify_optional_request_identity(
     *, require_client_certificate: bool = False
-) -> Callable[[Request, HTTPAuthorizationCredentials | None, ApiSecuritySettings], Awaitable[AdminIdentity | None]]:
+) -> Callable[
+    [Request, HTTPAuthorizationCredentials | None, ApiSecuritySettings],
+    Awaitable[AdminIdentity | None],
+]:
     """Return a dependency that authenticates requests when credentials are supplied."""
 
     required_dependency = verify_request_identity(

@@ -24,9 +24,12 @@ except Exception:  # pragma: no cover - markdown is optional
 
 
 if markdown is None:  # pragma: no cover - fallback for environments without markdown
+
     def _markdown_to_html(source: str) -> str:
         return "<pre>" + source.replace("<", "&lt;").replace(">", "&gt;") + "</pre>"
+
 else:  # pragma: no cover - executed when markdown package is available
+
     def _markdown_to_html(source: str) -> str:
         return markdown.markdown(source, extensions=["tables", "fenced_code"])
 
@@ -53,7 +56,9 @@ class ExperimentDeviationError(RuntimeError):
 class NullExperimentTracker:
     """No-op tracker used when experiment tracking is disabled."""
 
-    def log_configuration(self, cfg: DictConfig, safe_yaml: str | None) -> None:  # noqa: D401
+    def log_configuration(
+        self, cfg: DictConfig, safe_yaml: str | None
+    ) -> None:  # noqa: D401
         return
 
     def log_data_version(self, data_path: Path) -> None:  # noqa: D401
@@ -62,7 +67,9 @@ class NullExperimentTracker:
     def log_metrics(self, metrics: Mapping[str, Any]) -> None:  # noqa: D401
         return
 
-    def record_status(self, status: str, payload: Mapping[str, Any] | None = None) -> None:  # noqa: D401
+    def record_status(
+        self, status: str, payload: Mapping[str, Any] | None = None
+    ) -> None:  # noqa: D401
         return
 
     def log_artifact(self, path: Path, alias: str | None = None) -> None:  # noqa: D401
@@ -71,7 +78,9 @@ class NullExperimentTracker:
     def log_metadata(self, metadata: Any) -> None:  # noqa: D401
         return
 
-    def finalize(self, results: Mapping[str, Any] | None, error: BaseException | None) -> None:  # noqa: D401
+    def finalize(
+        self, results: Mapping[str, Any] | None, error: BaseException | None
+    ) -> None:  # noqa: D401
         return
 
 
@@ -161,7 +170,11 @@ class ExperimentTracker:
 
         if not self._tracking.auto_log_metadata:
             return
-        payload = asdict(metadata) if hasattr(metadata, "__dataclass_fields__") else dict(metadata)
+        payload = (
+            asdict(metadata)
+            if hasattr(metadata, "__dataclass_fields__")
+            else dict(metadata)
+        )
         payload["recorded_at"] = datetime.now(timezone.utc).isoformat()
         path = self._artifacts_dir / "metadata.json"
         path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
@@ -189,9 +202,11 @@ class ExperimentTracker:
         if self._tracking.versioning.backend != "none":
             record["versioning"] = {
                 "backend": self._tracking.versioning.backend,
-                "repo_path": str(self._tracking.versioning.repo_path)
-                if self._tracking.versioning.repo_path
-                else None,
+                "repo_path": (
+                    str(self._tracking.versioning.repo_path)
+                    if self._tracking.versioning.repo_path
+                    else None
+                ),
                 "message": self._tracking.versioning.message,
             }
         self._data_version = record
@@ -246,7 +261,9 @@ class ExperimentTracker:
                 delta = abs((observed - baseline_val) / baseline_val)
             else:
                 delta = abs(observed - baseline_val)
-            threshold = float(baseline_cfg.metric_tolerances.get(metric, default_tolerance))
+            threshold = float(
+                baseline_cfg.metric_tolerances.get(metric, default_tolerance)
+            )
             if delta > threshold:
                 deviations.append(
                     BaselineDeviation(
@@ -279,7 +296,9 @@ class ExperimentTracker:
                 deviation.baseline,
             )
 
-    def record_status(self, status: str, payload: Mapping[str, Any] | None = None) -> None:
+    def record_status(
+        self, status: str, payload: Mapping[str, Any] | None = None
+    ) -> None:
         """Append a structured status entry for CI dashboards."""
 
         entry = {
@@ -340,7 +359,11 @@ class ExperimentTracker:
         self, results: Mapping[str, Any] | None, error: BaseException | None
     ) -> str:
         metadata_block = json.dumps(
-            asdict(self._metadata) if hasattr(self._metadata, "__dataclass_fields__") else {},
+            (
+                asdict(self._metadata)
+                if hasattr(self._metadata, "__dataclass_fields__")
+                else {}
+            ),
             indent=2,
             default=str,
         )
@@ -409,7 +432,9 @@ class ExperimentTracker:
         if hasattr(self._metadata, "__dataclass_fields__"):
             payload["metadata"] = asdict(self._metadata)
         summary_path = self._reports_dir / "ci_summary.json"
-        summary_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        summary_path.write_text(
+            json.dumps(payload, indent=2, default=str), encoding="utf-8"
+        )
 
     def _archive_run_dir(self) -> None:
         """Archive the Hydra run directory for long-term storage."""

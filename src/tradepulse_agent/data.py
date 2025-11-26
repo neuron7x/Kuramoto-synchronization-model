@@ -52,10 +52,14 @@ class AgentDataLoader:
             raise KeyError(f"Missing required columns: {missing}")
 
         numeric_market = market.apply(pd.to_numeric, errors="coerce")
-        all_nan_columns = [col for col in numeric_market.columns if numeric_market[col].isna().all()]
+        all_nan_columns = [
+            col for col in numeric_market.columns if numeric_market[col].isna().all()
+        ]
         if all_nan_columns:
             problematic_required = [
-                col for col in all_nan_columns if col in required_set or col == config.price_field
+                col
+                for col in all_nan_columns
+                if col in required_set or col == config.price_field
             ]
             if problematic_required:
                 raise ValueError(
@@ -71,7 +75,9 @@ class AgentDataLoader:
             raise ValueError("No valid rows remain after cleaning market data")
 
         if self._price_column not in market.columns:
-            market.rename(columns={config.price_field: self._price_column}, inplace=True)
+            market.rename(
+                columns={config.price_field: self._price_column}, inplace=True
+            )
         return market
 
     def build_feature_frame(self, market_frame: pd.DataFrame) -> pd.DataFrame:

@@ -37,7 +37,9 @@ def test_discover_assets_identifies_models_and_scripts(tmp_path: Path) -> None:
 def test_save_registry_writes_json(tmp_path: Path) -> None:
     assets = [
         AssetRecord(name="alpha_model", path="analytics/alpha_model.pkl", kind="model"),
-        AssetRecord(name="train_alpha", path="analytics/train_alpha.py", kind="training_script"),
+        AssetRecord(
+            name="train_alpha", path="analytics/train_alpha.py", kind="training_script"
+        ),
     ]
     output = tmp_path / "registry" / "assets_registry.json"
 

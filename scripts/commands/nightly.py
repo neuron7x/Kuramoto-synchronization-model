@@ -8,7 +8,11 @@ import logging
 from pathlib import Path
 
 from observability.incidents import IncidentManager
-from observability.notifications import EmailSender, NotificationDispatcher, SlackNotifier
+from observability.notifications import (
+    EmailSender,
+    NotificationDispatcher,
+    SlackNotifier,
+)
 from scripts.commands.base import CommandError, register
 from scripts.nightly import BaselineStore, NightlyRegressionRunner
 from scripts.runtime import EXIT_CODES, create_artifact_manager
@@ -146,7 +150,9 @@ def handle(args: argparse.Namespace) -> int:
         },
     )
 
-    return EXIT_CODES["success"] if summary.success else EXIT_CODES["circuit_breaker_open"]
+    return (
+        EXIT_CODES["success"] if summary.success else EXIT_CODES["circuit_breaker_open"]
+    )
 
 
 def _build_dispatcher(args: argparse.Namespace) -> NotificationDispatcher | None:

@@ -23,7 +23,9 @@ def metadata() -> DocumentMetadata:
     )
 
 
-def make_segment(segment_id: str, metadata: DocumentMetadata, *, order: int = 0) -> DocumentSegment:
+def make_segment(
+    segment_id: str, metadata: DocumentMetadata, *, order: int = 0
+) -> DocumentSegment:
     return DocumentSegment(
         segment_id=segment_id,
         document_id=metadata.document_id,
@@ -64,4 +66,7 @@ def test_assign_groups_segments_by_computed_shard(metadata: DocumentMetadata) ->
 
     assert set(assignments.keys()) == {"alpha", "beta"}
     assert {segment.segment_id for segment in assignments["alpha"]} == {"segment-5"}
-    assert {segment.segment_id for segment in assignments["beta"]} == {"segment-0", "segment-6"}
+    assert {segment.segment_id for segment in assignments["beta"]} == {
+        "segment-0",
+        "segment-6",
+    }

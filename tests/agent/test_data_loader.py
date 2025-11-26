@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import pytest
 
 from core.data.models import InstrumentType
-
 from tradepulse_agent import AgentDataFeedConfig, AgentDataLoader
 
 from .utils import build_system, write_sample_ohlc
@@ -17,7 +17,9 @@ def sample_feed(tmp_path: Path) -> Path:
     return path
 
 
-def test_agent_data_loader_produces_feature_frame(tmp_path: Path, sample_feed: Path) -> None:
+def test_agent_data_loader_produces_feature_frame(
+    tmp_path: Path, sample_feed: Path
+) -> None:
     system = build_system(tmp_path)
     loader = AgentDataLoader(system)
     config = AgentDataFeedConfig(

@@ -39,7 +39,11 @@ def schema() -> TimeSeriesSchema:
         timestamp_column="timestamp",
         dimensions=(DimensionColumn("symbol"), DimensionColumn("venue")),
         measures=(
-            MeasureColumn("price", "Float64", aggregations=(AggregationSpec("avg_price", "avg(price)"),)),
+            MeasureColumn(
+                "price",
+                "Float64",
+                aggregations=(AggregationSpec("avg_price", "avg(price)"),),
+            ),
             MeasureColumn("volume", "Float64"),
         ),
         metadata=(DimensionColumn("ingestion_id", data_type="UUID", nullable=True),),
@@ -62,8 +66,12 @@ def rollup() -> RollupMaterialization:
         name="ticks_1h",
         interval=timedelta(hours=1),
         aggregations=(
-            RollupAggregation(alias="avg_price", expression="avg(price)", data_type="Float64"),
-            RollupAggregation(alias="total_volume", expression="sum(volume)", data_type="Float64"),
+            RollupAggregation(
+                alias="avg_price", expression="avg(price)", data_type="Float64"
+            ),
+            RollupAggregation(
+                alias="total_volume", expression="sum(volume)", data_type="Float64"
+            ),
         ),
         refresh_lag=timedelta(minutes=5),
     )
@@ -73,11 +81,15 @@ class FakeClickHouseClient:
     def __init__(self) -> None:
         self.calls: list[tuple[str, list[list[Any]], list[str]]] = []
 
-    def insert(self, table: str, rows: list[list[Any]], column_names: list[str]) -> None:
+    def insert(
+        self, table: str, rows: list[list[Any]], column_names: list[str]
+    ) -> None:
         self.calls.append((table, rows, column_names))
 
 
-def test_clickhouse_create_table(schema: TimeSeriesSchema, retention: RetentionPolicy) -> None:
+def test_clickhouse_create_table(
+    schema: TimeSeriesSchema, retention: RetentionPolicy
+) -> None:
     manager = ClickHouseSchemaManager(
         schema=schema,
         retention=retention,
@@ -90,7 +102,9 @@ def test_clickhouse_create_table(schema: TimeSeriesSchema, retention: RetentionP
     assert "DELETE" in ddl
 
 
-def test_clickhouse_rollup_table_and_mv(schema: TimeSeriesSchema, retention: RetentionPolicy, rollup: RollupMaterialization) -> None:
+def test_clickhouse_rollup_table_and_mv(
+    schema: TimeSeriesSchema, retention: RetentionPolicy, rollup: RollupMaterialization
+) -> None:
     manager = ClickHouseSchemaManager(schema=schema, retention=retention)
     table_sql = manager.rollup_table_sql(rollup)
     mv_sql = manager.materialized_view_sql(rollup)
@@ -106,12 +120,32 @@ def test_clickhouse_ingestion_connector(schema: TimeSeriesSchema) -> None:
     connector = ClickHouseIngestionConnector(
         client=client,
         schema=schema,
-        config=IngestionConnectorConfig(batch_size=2, flush_interval=timedelta(seconds=1)),
+        config=IngestionConnectorConfig(
+            batch_size=2, flush_interval=timedelta(seconds=1)
+        ),
     )
     records = [
-        {"timestamp": "2024-01-01T00:00:00Z", "symbol": "BTC", "venue": "CME", "price": 10.0, "volume": 1.0},
-        {"timestamp": "2024-01-01T00:00:01Z", "symbol": "BTC", "venue": "CME", "price": 11.0, "volume": 2.0},
-        {"timestamp": "2024-01-01T00:00:02Z", "symbol": "BTC", "venue": "CME", "price": 12.0, "volume": 3.0},
+        {
+            "timestamp": "2024-01-01T00:00:00Z",
+            "symbol": "BTC",
+            "venue": "CME",
+            "price": 10.0,
+            "volume": 1.0,
+        },
+        {
+            "timestamp": "2024-01-01T00:00:01Z",
+            "symbol": "BTC",
+            "venue": "CME",
+            "price": 11.0,
+            "volume": 2.0,
+        },
+        {
+            "timestamp": "2024-01-01T00:00:02Z",
+            "symbol": "BTC",
+            "venue": "CME",
+            "price": 12.0,
+            "volume": 3.0,
+        },
     ]
     flushed = connector.ingest_many(records)
     assert flushed == 2
@@ -121,7 +155,9 @@ def test_clickhouse_ingestion_connector(schema: TimeSeriesSchema) -> None:
     assert len(client.calls) == 2
 
 
-def test_clickhouse_query_builder(schema: TimeSeriesSchema, rollup: RollupMaterialization) -> None:
+def test_clickhouse_query_builder(
+    schema: TimeSeriesSchema, rollup: RollupMaterialization
+) -> None:
     builder = ClickHouseQueryBuilder(schema)
     query = builder.ohlcv_query(filters={"symbol": "BTC"})
     assert "toStartOfInterval(timestamp" in query
@@ -135,14 +171,20 @@ def test_clickhouse_query_builder(schema: TimeSeriesSchema, rollup: RollupMateri
 
 def test_clickhouse_sla_metrics(schema: TimeSeriesSchema) -> None:
     sla = ClickHouseSLAManager(schema).latency_metrics()
-    assert {metric.name for metric in sla} == {"ohlcv_latency_p99", "ingest_lag_seconds"}
+    assert {metric.name for metric in sla} == {
+        "ohlcv_latency_p99",
+        "ingest_lag_seconds",
+    }
     for metric in sla:
         assert isinstance(metric, SLAMetric)
 
 
 def test_clickhouse_backup_plan(schema: TimeSeriesSchema) -> None:
     planner = ClickHouseBackupPlanner(schema=schema, retention_days=21)
-    assert "clickhouse-backup create --tables marketdata.ticks" in planner.full_backup_command()
+    assert (
+        "clickhouse-backup create --tables marketdata.ticks"
+        in planner.full_backup_command()
+    )
     assert "retain 21 days" == planner.retention_policy()
 
 
@@ -172,7 +214,9 @@ class FakeConnection:
         self.commits += 1
 
 
-def test_timescale_schema_manager(schema: TimeSeriesSchema, retention: RetentionPolicy, rollup: RollupMaterialization) -> None:
+def test_timescale_schema_manager(
+    schema: TimeSeriesSchema, retention: RetentionPolicy, rollup: RollupMaterialization
+) -> None:
     manager = TimescaleSchemaManager(schema=schema, retention=retention)
     assert "CREATE TABLE IF NOT EXISTS ticks" in manager.create_table_sql()
     assert "create_hypertable" in manager.hypertable_sql()
@@ -192,11 +236,25 @@ def test_timescale_ingestion_connector(schema: TimeSeriesSchema) -> None:
     connector = TimescaleIngestionConnector(
         connection=connection,
         schema=schema,
-        config=IngestionConnectorConfig(batch_size=2, flush_interval=timedelta(seconds=1)),
+        config=IngestionConnectorConfig(
+            batch_size=2, flush_interval=timedelta(seconds=1)
+        ),
     )
     rows = [
-        {"timestamp": "2024-01-01T00:00:00Z", "symbol": "BTC", "venue": "CME", "price": 10.0, "volume": 1.0},
-        {"timestamp": "2024-01-01T00:00:01Z", "symbol": "BTC", "venue": "CME", "price": 11.0, "volume": 2.0},
+        {
+            "timestamp": "2024-01-01T00:00:00Z",
+            "symbol": "BTC",
+            "venue": "CME",
+            "price": 10.0,
+            "volume": 1.0,
+        },
+        {
+            "timestamp": "2024-01-01T00:00:01Z",
+            "symbol": "BTC",
+            "venue": "CME",
+            "price": 11.0,
+            "volume": 2.0,
+        },
     ]
     inserted = connector.ingest_many(rows)
     assert inserted == 2
@@ -206,7 +264,9 @@ def test_timescale_ingestion_connector(schema: TimeSeriesSchema) -> None:
     assert len(parameters) == 2
 
 
-def test_timescale_query_builder(schema: TimeSeriesSchema, rollup: RollupMaterialization) -> None:
+def test_timescale_query_builder(
+    schema: TimeSeriesSchema, rollup: RollupMaterialization
+) -> None:
     builder = TimescaleQueryBuilder(schema)
     query = builder.ohlcv_query(filters={"symbol": "BTC"})
     assert "time_bucket(" in query
@@ -219,7 +279,10 @@ def test_timescale_query_builder(schema: TimeSeriesSchema, rollup: RollupMateria
 
 def test_timescale_sla(schema: TimeSeriesSchema) -> None:
     sla = TimescaleSLAManager(schema).latency_metrics()
-    assert {metric.name for metric in sla} == {"timescale_ohlcv_latency_p99", "timescale_ingest_lag_seconds"}
+    assert {metric.name for metric in sla} == {
+        "timescale_ohlcv_latency_p99",
+        "timescale_ingest_lag_seconds",
+    }
 
 
 def test_timescale_backup_plan(schema: TimeSeriesSchema) -> None:
@@ -229,7 +292,9 @@ def test_timescale_backup_plan(schema: TimeSeriesSchema) -> None:
 
 
 def test_benchmark_runner(schema: TimeSeriesSchema) -> None:
-    workload = BenchmarkWorkload(name="smoke", ingest_batches=(2, 3), query_iterations=2, warmup_iterations=1)
+    workload = BenchmarkWorkload(
+        name="smoke", ingest_batches=(2, 3), query_iterations=2, warmup_iterations=1
+    )
     times = iter([0.0, 0.001, 0.002, 0.004, 0.005, 0.007, 0.008, 0.011])
 
     def clock() -> float:
@@ -245,7 +310,9 @@ def test_benchmark_runner(schema: TimeSeriesSchema) -> None:
         queries.append(dict(params))
 
     runner = BenchmarkRunner(schema, clock=clock)
-    metrics = runner.run(workload=workload, ingestion_callable=ingest, query_callable=query)
+    metrics = runner.run(
+        workload=workload, ingestion_callable=ingest, query_callable=query
+    )
 
     assert metrics.rows_ingested == 5
     assert len(ingested_batches) == 2

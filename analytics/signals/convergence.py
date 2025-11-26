@@ -21,7 +21,6 @@ from typing import Mapping, MutableMapping
 import numpy as np
 import pandas as pd
 
-
 DEFAULT_EPSILON = 1e-12
 
 
@@ -199,7 +198,9 @@ class ConvergenceDetector:
 
         direction_changes: MutableMapping[str, pd.Series] = {}
         for column in frame.columns:
-            change = _directional_change(frame[column], window=cfg.window, method=cfg.method)
+            change = _directional_change(
+                frame[column], window=cfg.window, method=cfg.method
+            )
             change = _smooth(change, window=cfg.smoothing)
             direction_changes[column] = change
 
@@ -230,7 +231,11 @@ class ConvergenceDetector:
 
         strength_diff = (majority_strength - opposing_strength).fillna(0.0)
 
-        return ConvergenceScores(alignment=alignment, support_ratio=support_ratio, strength_diff=strength_diff)
+        return ConvergenceScores(
+            alignment=alignment,
+            support_ratio=support_ratio,
+            strength_diff=strength_diff,
+        )
 
 
 def compute_convergence(
@@ -282,4 +287,3 @@ __all__ = [
     "compute_convergence",
     "is_convergent",
 ]
-

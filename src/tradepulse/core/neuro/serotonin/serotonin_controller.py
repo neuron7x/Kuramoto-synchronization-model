@@ -1,4 +1,5 @@
 """Serotonin tonic/phasic controller with hysteresis driven hold logic."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -52,7 +53,13 @@ class SerotoninConfig:
         }
 
 
-def _ensure_float(name: str, value: object, *, min_value: Optional[float] = None, max_value: Optional[float] = None) -> float:
+def _ensure_float(
+    name: str,
+    value: object,
+    *,
+    min_value: Optional[float] = None,
+    max_value: Optional[float] = None,
+) -> float:
     if not isinstance(value, (int, float)):
         raise ValueError(f"{name} must be a number")
     result = float(value)
@@ -136,30 +143,59 @@ class SerotoninController:
         missing = required_keys - set(raw.keys())
         if missing:
             raise ValueError(f"Missing serotonin config keys: {sorted(missing)}")
-        tonic_beta = _ensure_float("tonic_beta", raw["tonic_beta"], min_value=0.0, max_value=1.0)
-        phasic_beta = _ensure_float("phasic_beta", raw["phasic_beta"], min_value=0.0, max_value=1.0)
+        tonic_beta = _ensure_float(
+            "tonic_beta", raw["tonic_beta"], min_value=0.0, max_value=1.0
+        )
+        phasic_beta = _ensure_float(
+            "phasic_beta", raw["phasic_beta"], min_value=0.0, max_value=1.0
+        )
         stress_gain = _ensure_float("stress_gain", raw["stress_gain"], min_value=0.0)
-        drawdown_gain = _ensure_float("drawdown_gain", raw["drawdown_gain"], min_value=0.0)
+        drawdown_gain = _ensure_float(
+            "drawdown_gain", raw["drawdown_gain"], min_value=0.0
+        )
         novelty_gain = _ensure_float("novelty_gain", raw["novelty_gain"], min_value=0.0)
-        stress_threshold = _ensure_float("stress_threshold", raw["stress_threshold"], min_value=0.0, max_value=1.5)
-        release_threshold = _ensure_float("release_threshold", raw["release_threshold"], min_value=0.0, max_value=stress_threshold)
-        hysteresis = _ensure_float("hysteresis", raw["hysteresis"], min_value=0.0, max_value=1.0)
-        cooldown_ticks = _ensure_int("cooldown_ticks", raw["cooldown_ticks"], min_value=0)
-        chronic_window = _ensure_int("chronic_window", raw["chronic_window"], min_value=1)
+        stress_threshold = _ensure_float(
+            "stress_threshold", raw["stress_threshold"], min_value=0.0, max_value=1.5
+        )
+        release_threshold = _ensure_float(
+            "release_threshold",
+            raw["release_threshold"],
+            min_value=0.0,
+            max_value=stress_threshold,
+        )
+        hysteresis = _ensure_float(
+            "hysteresis", raw["hysteresis"], min_value=0.0, max_value=1.0
+        )
+        cooldown_ticks = _ensure_int(
+            "cooldown_ticks", raw["cooldown_ticks"], min_value=0
+        )
+        chronic_window = _ensure_int(
+            "chronic_window", raw["chronic_window"], min_value=1
+        )
         desensitization_rate = _ensure_float(
             "desensitization_rate", raw["desensitization_rate"], min_value=0.0
         )
         desensitization_decay = _ensure_float(
-            "desensitization_decay", raw["desensitization_decay"], min_value=0.0, max_value=1.0
+            "desensitization_decay",
+            raw["desensitization_decay"],
+            min_value=0.0,
+            max_value=1.0,
         )
         max_desensitization = _ensure_float(
-            "max_desensitization", raw["max_desensitization"], min_value=0.0, max_value=0.99
+            "max_desensitization",
+            raw["max_desensitization"],
+            min_value=0.0,
+            max_value=0.99,
         )
-        floor_min = _ensure_float("floor_min", raw["floor_min"], min_value=0.0, max_value=1.0)
+        floor_min = _ensure_float(
+            "floor_min", raw["floor_min"], min_value=0.0, max_value=1.0
+        )
         floor_max = _ensure_float(
             "floor_max", raw["floor_max"], min_value=floor_min, max_value=1.0
         )
-        floor_gain = _ensure_float("floor_gain", raw["floor_gain"], min_value=0.0, max_value=4.0)
+        floor_gain = _ensure_float(
+            "floor_gain", raw["floor_gain"], min_value=0.0, max_value=4.0
+        )
         cooldown_extension = _ensure_int(
             "cooldown_extension", raw["cooldown_extension"], min_value=0
         )
@@ -217,11 +253,15 @@ class SerotoninController:
         Returns:
             List of result dictionaries, one per step
         """
-        if not (len(stress_sequence) == len(drawdown_sequence) == len(novelty_sequence)):
+        if not (
+            len(stress_sequence) == len(drawdown_sequence) == len(novelty_sequence)
+        ):
             raise ValueError("All input sequences must have the same length")
 
         results = []
-        for stress, drawdown, novelty in zip(stress_sequence, drawdown_sequence, novelty_sequence):
+        for stress, drawdown, novelty in zip(
+            stress_sequence, drawdown_sequence, novelty_sequence
+        ):
             result = self.step(stress, drawdown, novelty, dt=dt)
             results.append(result)
 
@@ -267,6 +307,7 @@ class SerotoninController:
         # Performance tracking
         if self._enable_perf_tracking:
             import time
+
             start_time = time.perf_counter()
 
         stress = float(max(0.0, stress))
@@ -282,7 +323,9 @@ class SerotoninController:
 
         # Phasic: fast response to acute transients (drawdown and novelty events)
         phasic_alpha = 1.0 - (1.0 - cfg.phasic_beta) ** dt
-        phasic_drive = max(0.0, cfg.drawdown_gain * drawdown + cfg.novelty_gain * novelty)
+        phasic_drive = max(
+            0.0, cfg.drawdown_gain * drawdown + cfg.novelty_gain * novelty
+        )
         self.phasic_level += phasic_alpha * (phasic_drive - self.phasic_level)
 
         raw_level = max(0.0, min(2.0, self.tonic_level + self.phasic_level))
@@ -413,8 +456,8 @@ class SerotoninController:
         # Risk-adjusted thresholds
         thresholds = {
             "conservative": 0.3,  # Very cautious
-            "moderate": 0.5,      # Balanced approach
-            "aggressive": 0.7,    # Willing to take more risk
+            "moderate": 0.5,  # Balanced approach
+            "aggressive": 0.7,  # Willing to take more risk
         }
 
         threshold = thresholds.get(risk_level, 0.5)
@@ -455,7 +498,9 @@ class SerotoninController:
 
         if self._hold:
             # Still in active hold, need to drop below exit threshold
-            exit_threshold = self._config.release_threshold - self._config.hysteresis / 2.0
+            exit_threshold = (
+                self._config.release_threshold - self._config.hysteresis / 2.0
+            )
             if self.level <= exit_threshold:
                 return self._cooldown
 
@@ -488,14 +533,20 @@ class SerotoninController:
             issues.append(f"Level {self.level:.3f} outside bounds [0.0, 1.5]")
 
         if not (0.0 <= self.tonic_level <= 2.0):
-            issues.append(f"Tonic level {self.tonic_level:.3f} outside bounds [0.0, 2.0]")
+            issues.append(
+                f"Tonic level {self.tonic_level:.3f} outside bounds [0.0, 2.0]"
+            )
 
         if not (0.0 <= self.phasic_level <= 2.0):
-            issues.append(f"Phasic level {self.phasic_level:.3f} outside bounds [0.0, 2.0]")
+            issues.append(
+                f"Phasic level {self.phasic_level:.3f} outside bounds [0.0, 2.0]"
+            )
 
         # Check desensitization
         if not (0.0 <= self._desensitization <= self._config.max_desensitization):
-            issues.append(f"Desensitization {self._desensitization:.3f} outside valid range")
+            issues.append(
+                f"Desensitization {self._desensitization:.3f} outside valid range"
+            )
 
         # Check cooldown consistency
         if self._cooldown < 0:
@@ -528,7 +579,9 @@ class SerotoninController:
         hold_rate = self._hold_count / self._step_count
 
         steps_per_sec = (
-            self._step_count / self._total_step_time if self._total_step_time > 0 else 0.0
+            self._step_count / self._total_step_time
+            if self._total_step_time > 0
+            else 0.0
         )
         return {
             "total_steps": float(self._step_count),
@@ -544,4 +597,3 @@ class SerotoninController:
         self._step_count = 0
         self._total_step_time = 0.0
         self._hold_count = 0
-

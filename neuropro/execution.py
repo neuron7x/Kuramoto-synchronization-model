@@ -21,7 +21,9 @@ class Execution:
         # Використовуємо генератор випадкових чисел з фіксованим seed для відтворюваності
         self._rng = np.random.default_rng(seed)
 
-    def costs(self, spread_frac: float, vol_proxy: float, notional_frac: float = 1.0) -> float:
+    def costs(
+        self, spread_frac: float, vol_proxy: float, notional_frac: float = 1.0
+    ) -> float:
         half = 0.5 * spread_frac
         if self.impact_model == "linear":
             impact = self.impact_coeff * vol_proxy * 1e-4 * notional_frac
@@ -36,7 +38,9 @@ class Execution:
             )
         return float(self.fee + half + impact)
 
-    def fill(self, mid: float, spread_frac: float, target_pos: float, cur_pos: float) -> float:
+    def fill(
+        self, mid: float, spread_frac: float, target_pos: float, cur_pos: float
+    ) -> float:
         side = np.sign(target_pos - cur_pos)
         slip = 0.5 * spread_frac * mid
         improve = self._rng.random() < self.queue_fill_p

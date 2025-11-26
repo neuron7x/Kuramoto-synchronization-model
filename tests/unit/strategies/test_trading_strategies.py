@@ -98,16 +98,15 @@ def test_hurst_vpin_strategy_branch_logic(monkeypatch: pytest.MonkeyPatch) -> No
     signals = strategy.generate_signals(data)
 
     assert list(signals["signal"]) == ["Buy", "Sell", "Hold"]
-    assert signals.loc[signals["signal"] == "Buy", "confidence"].iloc[0] == pytest.approx(
-        0.8
-    )
-    assert signals.loc[signals["signal"] == "Sell", "confidence"].iloc[0] == pytest.approx(
-        0.8
-    )
-    assert (
-        signals.loc[signals["signal"] == "Hold", "confidence"].iloc[0]
-        == pytest.approx(0.5)
-    )
+    assert signals.loc[signals["signal"] == "Buy", "confidence"].iloc[
+        0
+    ] == pytest.approx(0.8)
+    assert signals.loc[signals["signal"] == "Sell", "confidence"].iloc[
+        0
+    ] == pytest.approx(0.8)
+    assert signals.loc[signals["signal"] == "Hold", "confidence"].iloc[
+        0
+    ] == pytest.approx(0.5)
 
 
 def test_hurst_vpin_strategy_symbol_and_index(monkeypatch: pytest.MonkeyPatch) -> None:

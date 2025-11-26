@@ -37,4 +37,6 @@ class MacroDataSet:
 
         if self.frame.empty:
             return self.frame
-        return self.frame.sort_values(["release_date", "period_end"]).reset_index(drop=True)
+        return self.frame.sort_values(["release_date", "period_end"]).reset_index(
+            drop=True
+        )

@@ -195,7 +195,10 @@ class DependencyVerificationReport:
     issues: tuple[VerificationIssue, ...]
 
     def has_failures(self) -> bool:
-        return any(issue.severity in {Severity.ERROR, Severity.CRITICAL} for issue in self.issues)
+        return any(
+            issue.severity in {Severity.ERROR, Severity.CRITICAL}
+            for issue in self.issues
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -213,8 +216,13 @@ class LicenseException:
     reason: str
     expires_at: datetime | None
 
-    def matches(self, dependency: Dependency, license_key: str, *, now: datetime) -> bool:
-        if self.canonical_package and dependency.canonical_name != self.canonical_package:
+    def matches(
+        self, dependency: Dependency, license_key: str, *, now: datetime
+    ) -> bool:
+        if (
+            self.canonical_package
+            and dependency.canonical_name != self.canonical_package
+        ):
             return False
         if self.normalized_license and license_key != self.normalized_license:
             return False
@@ -309,7 +317,9 @@ class ComplianceReport:
 
     def to_dict(self) -> dict[str, object]:
         dependency_report = self.dependency_report.to_dict()
-        license_counts = _summarise_by_severity(issue.severity for issue in self.license_issues)
+        license_counts = _summarise_by_severity(
+            issue.severity for issue in self.license_issues
+        )
         vulnerability_counts = _summarise_by_severity(
             finding.severity for finding in self.vulnerabilities
         )
@@ -351,8 +361,12 @@ def _parse_requirement(line: str, source: Path) -> Dependency:
         raise DependencyError(f"Invalid requirement '{line}' in {source}") from exc
     name = requirement.name
     if not name:
-        raise DependencyError(f"Missing package name in requirement '{line}' from {source}")
-    return Dependency(name=name, raw_requirement=line, source=source, requirement=requirement)
+        raise DependencyError(
+            f"Missing package name in requirement '{line}' from {source}"
+        )
+    return Dependency(
+        name=name, raw_requirement=line, source=source, requirement=requirement
+    )
 
 
 IGNORED_PREFIXES = ("-r ", "--", "http://", "https://", "git+", "svn+", "hg+")
@@ -378,7 +392,9 @@ def load_dependencies(requirement_files: Sequence[Path]) -> list[Dependency]:
 
 def load_denylist(path: Path) -> list[DenylistEntry]:
     if not path.exists():
-        LOGGER.debug("No denylist found at %s; skipping compromised dependency checks.", path)
+        LOGGER.debug(
+            "No denylist found at %s; skipping compromised dependency checks.", path
+        )
         return []
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     raw_entries = data.get("compromised", []) or []
@@ -410,7 +426,9 @@ def load_denylist(path: Path) -> list[DenylistEntry]:
 
 def load_allowlist(path: Path) -> list[AllowlistEntry]:
     if not path.exists():
-        LOGGER.debug("No allowlist found at %s; falling back to strict policy enforcement.", path)
+        LOGGER.debug(
+            "No allowlist found at %s; falling back to strict policy enforcement.", path
+        )
         return []
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     raw_entries = data.get("packages", []) or []
@@ -427,7 +445,11 @@ def load_allowlist(path: Path) -> list[AllowlistEntry]:
         try:
             specifier = SpecifierSet(specifier_text) if specifier_text else None
         except Exception as exc:  # pragma: no cover - defensive parsing
-            LOGGER.warning("Ignoring allowlist entry for %s due to invalid specifier: %s", name, exc)
+            LOGGER.warning(
+                "Ignoring allowlist entry for %s due to invalid specifier: %s",
+                name,
+                exc,
+            )
             continue
         allow_unpinned = bool(item.get("allow_unpinned", False))
         allow_multiple_versions = bool(item.get("allow_multiple_versions", False))
@@ -462,7 +484,8 @@ def verify_dependencies(
         key = dependency.canonical_name
         entries = allowlist_map.get(key, [])
         allow_multi = any(
-            entry.allow_multiple_versions and entry.matches(dependency) for entry in entries
+            entry.allow_multiple_versions and entry.matches(dependency)
+            for entry in entries
         )
         if key in seen and seen[key].version != dependency.version and not allow_multi:
             issues.append(
@@ -528,9 +551,15 @@ def load_license_policy(path: Path) -> LicensePolicy:
             continue
         alias_map[alias.casefold()] = target.strip()
 
-    allowed = frozenset(_normalise_license_collection(data.get("allowed", []), alias_map))
-    restricted = frozenset(_normalise_license_collection(data.get("restricted", []), alias_map))
-    forbidden = frozenset(_normalise_license_collection(data.get("forbidden", []), alias_map))
+    allowed = frozenset(
+        _normalise_license_collection(data.get("allowed", []), alias_map)
+    )
+    restricted = frozenset(
+        _normalise_license_collection(data.get("restricted", []), alias_map)
+    )
+    forbidden = frozenset(
+        _normalise_license_collection(data.get("forbidden", []), alias_map)
+    )
 
     exceptions: list[LicenseException] = []
     for raw in data.get("exceptions", []) or []:
@@ -543,10 +572,14 @@ def load_license_policy(path: Path) -> LicensePolicy:
         normalized_license = None
         display_license = None
         if license_name:
-            normalized_license, display_license = _normalise_license_value(license_name, alias_map)
+            normalized_license, display_license = _normalise_license_value(
+                license_name, alias_map
+            )
             if not normalized_license:
                 LOGGER.debug(
-                    "Unable to normalise license '%s' for exception involving %s", license_name, package
+                    "Unable to normalise license '%s' for exception involving %s",
+                    license_name,
+                    package,
                 )
         reason = raw.get("reason") or "Exception approved by compliance team."
         expires_text = raw.get("expires")
@@ -574,7 +607,9 @@ def load_license_policy(path: Path) -> LicensePolicy:
     )
 
 
-def build_license_inventory(sbom: Mapping[str, Any]) -> dict[tuple[str, str | None], tuple[str, ...]]:
+def build_license_inventory(
+    sbom: Mapping[str, Any],
+) -> dict[tuple[str, str | None], tuple[str, ...]]:
     components = sbom.get("components", []) if isinstance(sbom, Mapping) else []
     inventory: dict[tuple[str, str | None], tuple[str, ...]] = {}
     if not isinstance(components, Iterable):
@@ -606,9 +641,13 @@ def evaluate_license_compliance(
     issues: list[LicenseIssue] = []
     for dependency in dependencies:
         key = (dependency.canonical_name, dependency.version)
-        licenses = inventory.get(key) or inventory.get((dependency.canonical_name, None))
+        licenses = inventory.get(key) or inventory.get(
+            (dependency.canonical_name, None)
+        )
         resolved = tuple(licenses) if licenses else ("UNKNOWN",)
-        issue = _evaluate_single_dependency_license(dependency, resolved, policy, timestamp)
+        issue = _evaluate_single_dependency_license(
+            dependency, resolved, policy, timestamp
+        )
         if issue:
             issues.append(issue)
     return tuple(issues)
@@ -623,7 +662,9 @@ def load_vulnerability_report(path: Path | None) -> tuple[VulnerabilityFinding, 
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise DependencyError(f"Failed to parse vulnerability report at {path}: {exc}") from exc
+        raise DependencyError(
+            f"Failed to parse vulnerability report at {path}: {exc}"
+        ) from exc
 
     findings: list[VulnerabilityFinding] = []
     packages = payload.get("packages")
@@ -637,7 +678,9 @@ def load_vulnerability_report(path: Path | None) -> tuple[VulnerabilityFinding, 
                     version=str(entry.get("version", "")),
                     advisory=str(entry.get("advisory", "")),
                     severity=str(entry.get("severity", "unknown")).lower(),
-                    fix_versions=tuple(str(v) for v in entry.get("fix_versions", []) or []),
+                    fix_versions=tuple(
+                        str(v) for v in entry.get("fix_versions", []) or []
+                    ),
                     aliases=tuple(str(v) for v in entry.get("aliases", []) or []),
                     description=str(entry.get("description", "")),
                 )
@@ -653,7 +696,9 @@ def load_vulnerability_report(path: Path | None) -> tuple[VulnerabilityFinding, 
                         version=version,
                         advisory=str(vuln.get("id", "")),
                         severity=str(vuln.get("severity", "unknown")).lower(),
-                        fix_versions=tuple(str(v) for v in vuln.get("fix_versions", []) or []),
+                        fix_versions=tuple(
+                            str(v) for v in vuln.get("fix_versions", []) or []
+                        ),
                         aliases=tuple(str(v) for v in vuln.get("aliases", []) or []),
                         description=str(vuln.get("description", "")),
                     )
@@ -788,7 +833,9 @@ def _evaluate_single_dependency_license(
         reasons = sorted({exc.reason for _, exc in exceptions_applied})
         expiries = [exc.expires_at for _, exc in exceptions_applied if exc.expires_at]
         exception_message = "; ".join(reasons)
-        expires_at = max(expiries).replace(microsecond=0).isoformat() if expiries else None
+        expires_at = (
+            max(expiries).replace(microsecond=0).isoformat() if expiries else None
+        )
         message = (
             "License(s) "
             + ", ".join(sorted({name for name, _ in exceptions_applied}))
@@ -854,11 +901,15 @@ def build_cyclonedx_sbom(
 
 def write_json_document(document: dict[str, object], destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    destination.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     LOGGER.info("Wrote JSON document to %s", destination)
 
 
-def write_verification_report(report: DependencyVerificationReport, destination: Path) -> None:
+def write_verification_report(
+    report: DependencyVerificationReport, destination: Path
+) -> None:
     write_json_document(report.to_dict(), destination)
 
 

@@ -28,14 +28,18 @@ class EMHEKF:
         self.P = np.eye(4) * 1e-2
 
     def _D_proxy(self, obs: Dict[str, float]) -> float:
-        return float(np.clip(0.5 * obs["dd"] + 0.3 * obs["liq"] + 0.2 * obs["reg"], 0.0, 1.0))
+        return float(
+            np.clip(0.5 * obs["dd"] + 0.3 * obs["liq"] + 0.2 * obs["reg"], 0.0, 1.0)
+        )
 
     def f(self, x: np.ndarray, obs: Dict[str, float]) -> np.ndarray:
         H, M, E, _ = x.tolist()
         D = self._D_proxy(obs)
         reward = float(obs.get("reward", 0.0))
         p = self.model.p
-        S_next = float(np.clip(p.phi * D + p.omega * (1.0 - M / p.M0) + p.kappa * reward, 0.0, 1.0))
+        S_next = float(
+            np.clip(p.phi * D + p.omega * (1.0 - M / p.M0) + p.kappa * reward, 0.0, 1.0)
+        )
         dH = p.alpha * S_next - p.beta * H + p.gamma * M
         dM = -p.delta * M + p.theta
         dE = p.lambd * (D - M) + p.mu * H * S_next
@@ -90,4 +94,9 @@ class EMHEKF:
 
         self.x = np.clip(x_upd, 0.0, 1.0)
         self.P = P_upd
-        return dict(H=float(self.x[0]), M=float(self.x[1]), E=float(self.x[2]), S=float(self.x[3]))
+        return dict(
+            H=float(self.x[0]),
+            M=float(self.x[1]),
+            E=float(self.x[2]),
+            S=float(self.x[3]),
+        )

@@ -1,4 +1,5 @@
 """Fractal dimension estimators used by FHMC tests."""
+
 from __future__ import annotations
 
 import numpy as np

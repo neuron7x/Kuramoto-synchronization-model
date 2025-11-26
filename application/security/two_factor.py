@@ -134,4 +134,3 @@ def verify_totp_code(
         if hmac.compare_digest(expected, normalised_code):
             return True
     return False
-

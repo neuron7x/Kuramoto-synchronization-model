@@ -6,11 +6,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+import yaml
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
 from starlette.requests import Request as StarletteRequest
-
-import yaml
 
 from execution.risk import RiskLimits, RiskManager
 from src.admin.remote_control import (
@@ -306,9 +305,7 @@ def test_kill_switch_endpoint_requires_access_policy(tmp_path: Path) -> None:
     )
     client = TestClient(app)
     try:
-        response = client.post(
-            "/admin/kill-switch", json={"reason": "manual"}
-        )
+        response = client.post("/admin/kill-switch", json={"reason": "manual"})
     finally:
         client.close()
 

@@ -45,7 +45,7 @@ class IncrementFeature(BaseFeature):
 
 def test_base_feature_callable_contract() -> None:
     """Test that BaseFeature instances are callable and return FeatureResult.
-    
+
     Validates:
     - Feature can be called directly (callable interface)
     - Result contains correct transformed value
@@ -59,7 +59,7 @@ def test_base_feature_callable_contract() -> None:
 
 def test_feature_block_executes_all_features() -> None:
     """Test that FeatureBlock executes all registered features.
-    
+
     Validates:
     - All features in block are executed
     - Results are collected in dictionary
@@ -74,10 +74,10 @@ def test_feature_block_executes_all_features() -> None:
 
 def test_functional_feature_wraps_callable() -> None:
     """Test that FunctionalFeature correctly wraps arbitrary callables.
-    
+
     This is the primary test for FunctionalFeature callable wrapping.
     See test_indicator_base.py for metadata-specific tests.
-    
+
     Validates:
     - Arbitrary functions can be wrapped as features
     - Wrapped function is executed during transform
@@ -93,7 +93,7 @@ def test_functional_feature_wraps_callable() -> None:
 
 def test_feature_block_extend() -> None:
     """Test that FeatureBlock can be extended with multiple features at once.
-    
+
     Validates:
     - Multiple features can be added via extend()
     - Block remains callable after extension
@@ -102,14 +102,15 @@ def test_feature_block_extend() -> None:
     block = FeatureBlock()
     block.extend([DoubleFeature(name="double"), IncrementFeature(increment=0.5)])
     outputs = block(4)
-    assert outputs == {"double": 8.0, "increment": 4.5}, (
-        "All extended features should execute"
-    )
+    assert outputs == {
+        "double": 8.0,
+        "increment": 4.5,
+    }, "All extended features should execute"
 
 
 def test_feature_block_supports_positional_name_and_alias_methods() -> None:
     """Test that FeatureBlock supports both naming and method aliases.
-    
+
     Validates:
     - Block can be named during construction
     - add_feature() alias works correctly
@@ -124,7 +125,7 @@ def test_feature_block_supports_positional_name_and_alias_methods() -> None:
 
 def test_feature_block_transform_all_returns_feature_results() -> None:
     """Test that transform_all() returns full FeatureResult objects.
-    
+
     Validates:
     - transform_all() returns dict of FeatureResult objects
     - Unlike run(), full result metadata is preserved
@@ -134,9 +135,9 @@ def test_feature_block_transform_all_returns_feature_results() -> None:
     results = block.transform_all(2)
     assert set(results.keys()) == {"double"}, "All features should be present"
     result = results["double"]
-    assert isinstance(result, FeatureResult), (
-        "Results should be FeatureResult objects, not raw values"
-    )
+    assert isinstance(
+        result, FeatureResult
+    ), "Results should be FeatureResult objects, not raw values"
     assert result.value == 4.0
 
 

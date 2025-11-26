@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from tradepulse.core.neuro.nak import NaKController, NaKAdapter
+from tradepulse.core.neuro.nak import NaKAdapter, NaKController
 
 
 def test_nak_controller_update_returns_reward_and_log() -> None:

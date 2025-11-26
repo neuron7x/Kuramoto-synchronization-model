@@ -3,41 +3,41 @@ from pathlib import Path
 
 import numpy as np
 
-from tradepulse.nlca_core import NLCA, StateSimulator, MarketRecorder
+from tradepulse.nlca_core import NLCA, MarketRecorder, StateSimulator
 
 
 def _fake_tick(ts: float):
     return {
-        'timestamp': ts,
-        'p_a1': 100.0 + np.random.normal(0, 0.01),
-        'p_b1': 99.99 + np.random.normal(0, 0.01),
-        'q_a': np.abs(np.random.normal(1000, 50, size=10)).tolist(),
-        'q_b': np.abs(np.random.normal(1000, 50, size=10)).tolist(),
-        'events': [
-            {'type': 'add', 'side': 'ask', 'volume': 50, 'price_change': False},
-            {'type': 'trade', 'side': 'bid', 'volume': 30, 'price_change': True},
+        "timestamp": ts,
+        "p_a1": 100.0 + np.random.normal(0, 0.01),
+        "p_b1": 99.99 + np.random.normal(0, 0.01),
+        "q_a": np.abs(np.random.normal(1000, 50, size=10)).tolist(),
+        "q_b": np.abs(np.random.normal(1000, 50, size=10)).tolist(),
+        "events": [
+            {"type": "add", "side": "ask", "volume": 50, "price_change": False},
+            {"type": "trade", "side": "bid", "volume": 30, "price_change": True},
         ],
-        'messages': [1] * np.random.randint(50, 80),
-        'trades':   [{'profit': 0.0, 'slippage': 0.0}] * np.random.randint(1, 5),
-        'delta_P': np.random.normal(0, 0.02),
-        'Q': np.random.normal(0, 1000)
+        "messages": [1] * np.random.randint(50, 80),
+        "trades": [{"profit": 0.0, "slippage": 0.0}] * np.random.randint(1, 5),
+        "delta_P": np.random.normal(0, 0.02),
+        "Q": np.random.normal(0, 1000),
     }
 
 
 def _build_nlca(delay_budget=0.1, exposure_limit=100000):
     context = {
-        'S_median': 0.01,
-        'D_median': 1000,
-        'SVI_80th': 0.0001,
-        'OTR_80th': 10,
-        'BRHL_80th': 5
+        "S_median": 0.01,
+        "D_median": 1000,
+        "SVI_80th": 0.0001,
+        "OTR_80th": 10,
+        "BRHL_80th": 5,
     }
     recorder = MarketRecorder(enabled=False)
     return NLCA(
         context_profile=context,
         delay_budget=delay_budget,
         exposure_limit=exposure_limit,
-        recorder=recorder
+        recorder=recorder,
     )
 
 
@@ -48,12 +48,12 @@ def test_step_core_contract_fields_exist():
 
     out = nlca.step(tick)
 
-    assert 'state' in out
-    assert 'action' in out
-    assert 'metrics' in out
-    assert 'priority_paths' in out
-    for key in ['S', 'D', 'OFI', 'lambda', 'SVI', 'BRHL', 'OTR']:
-        assert key in out['metrics']
+    assert "state" in out
+    assert "action" in out
+    assert "metrics" in out
+    assert "priority_paths" in out
+    for key in ["S", "D", "OFI", "lambda", "SVI", "BRHL", "OTR"]:
+        assert key in out["metrics"]
 
 
 def test_latency_budget_enforced_and_sets_stop():
@@ -63,8 +63,8 @@ def test_latency_budget_enforced_and_sets_stop():
 
     out = nlca.step(tick)
 
-    assert out['action'] == 'STOP_LATENCY'
-    assert nlca.fsm.get_state() == 'S⊘'
+    assert out["action"] == "STOP_LATENCY"
+    assert nlca.fsm.get_state() == "S⊘"
 
 
 def test_exposure_firewall_blocks_and_forces_stop():
@@ -75,7 +75,7 @@ def test_exposure_firewall_blocks_and_forces_stop():
 
     assert ok_first is True
     assert ok_second is False
-    assert nlca.fsm.get_state() == 'S⊘'
+    assert nlca.fsm.get_state() == "S⊘"
 
 
 def test_state_simulator_runs():
@@ -86,32 +86,32 @@ def test_state_simulator_runs():
     sim = StateSimulator(nlca)
     summary = sim.simulate(ticks, num_steps=10)
 
-    assert 'transitions' in summary
-    assert 'results' in summary
-    assert 'final_state' in summary
-    assert isinstance(summary['results'], list)
-    assert len(summary['results']) == 10
+    assert "transitions" in summary
+    assert "results" in summary
+    assert "final_state" in summary
+    assert isinstance(summary["results"], list)
+    assert len(summary["results"]) == 10
 
 
 def test_market_recorder_flush_persists_dataset(tmp_path):
     dataset_dir = tmp_path / "market_ds"
     recorder = MarketRecorder(dataset_path=dataset_dir, enabled=True, flush_every=1)
 
-    tick = {'timestamp': time.time()}
-    decision = {'state': 'S0', 'action': 'HOLD'}
+    tick = {"timestamp": time.time()}
+    decision = {"state": "S0", "action": "HOLD"}
     metrics = {
-        'S': 0.1,
-        'D': 1.0,
-        'OFI': 0.0,
-        'lambda': 0.0,
-        'SVI': 0.0,
-        'BRHL': 0.0,
-        'OTR': 0.0,
+        "S": 0.1,
+        "D": 1.0,
+        "OFI": 0.0,
+        "lambda": 0.0,
+        "SVI": 0.0,
+        "BRHL": 0.0,
+        "OTR": 0.0,
     }
 
     recorder.record_tick(tick, decision, metrics)
     recorder.flush()
 
     assert recorder.buffer == []
-    parquet_files = list(Path(dataset_dir).rglob('*.parquet'))
+    parquet_files = list(Path(dataset_dir).rglob("*.parquet"))
     assert parquet_files, "Expected at least one parquet file to be written"

@@ -288,7 +288,9 @@ class MarketCalendarCoordinator:
                         )
                     )
 
-        events.sort(key=lambda evt: (evt.timestamp, 0 if evt.kind == "open" else 1, evt.market))
+        events.sort(
+            key=lambda evt: (evt.timestamp, 0 if evt.kind == "open" else 1, evt.market)
+        )
         return events
 
     # ------------------------------------------------------------------
@@ -461,7 +463,9 @@ class MarketCalendarCoordinator:
             raise ValueError("markets must reference at least one configured calendar")
         return subset
 
-    def _normalize_range(self, start: datetime, end: datetime) -> tuple[datetime, datetime]:
+    def _normalize_range(
+        self, start: datetime, end: datetime
+    ) -> tuple[datetime, datetime]:
         self._ensure_aware(start)
         self._ensure_aware(end)
         if end < start:

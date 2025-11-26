@@ -20,7 +20,9 @@ def test_snapshot_records_git_metadata(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
     subprocess.run(["git", "init"], check=True, cwd=repo_root)
-    subprocess.run(["git", "config", "user.email", "ci@example.com"], check=True, cwd=repo_root)
+    subprocess.run(
+        ["git", "config", "user.email", "ci@example.com"], check=True, cwd=repo_root
+    )
     subprocess.run(["git", "config", "user.name", "CI Bot"], check=True, cwd=repo_root)
 
     artifact = repo_root / "data" / "artifact.txt"

@@ -15,7 +15,9 @@ from execution.adapters.binance import BinanceRESTConnector
 from execution.adapters.coinbase import CoinbaseRESTConnector
 from execution.adapters.kraken import KrakenRESTConnector
 
-_FLOATS = st.floats(min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False)
+_FLOATS = st.floats(
+    min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False
+)
 _INTS = st.integers(min_value=-1_000_000_000, max_value=1_000_000_000)
 _NUMERIC_TEXT = st.one_of(
     _FLOATS.map(lambda value: f"  {value} \t"),
@@ -138,7 +140,11 @@ _COINBASE_POSITIONS_PAYLOAD = _payload_strategy(["accounts"])
 _KRAKEN_POSITIONS_PAYLOAD = _payload_strategy(["result"])
 
 
-@settings(max_examples=150, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=150,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 @given(payload=_payload_strategy(_BINANCE_ORDER_KEYS))
 def test_binance_parse_order_is_resilient(payload: dict[str, object]) -> None:
     connector = BinanceRESTConnector()
@@ -161,7 +167,11 @@ def test_binance_parse_positions_handles_noise(payload: dict[str, object]) -> No
         assert position["qty"] >= 0
 
 
-@settings(max_examples=150, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=150,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 @given(
     payload=_payload_strategy(
         _COINBASE_ORDER_KEYS + ["order"],
@@ -189,7 +199,11 @@ def test_coinbase_parse_positions_handles_noise(payload: dict[str, object]) -> N
         assert position["qty"] >= 0
 
 
-@settings(max_examples=150, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=150,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 @given(payload=_payload_strategy(_KRAKEN_ORDER_KEYS))
 def test_kraken_parse_order_is_resilient(payload: dict[str, object]) -> None:
     connector = KrakenRESTConnector()

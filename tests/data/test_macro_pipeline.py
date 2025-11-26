@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import pandas as pd
+
 from src.data.macro.feature_engineering import MacroFeatureBuilder, MacroFeatureConfig
 from src.data.macro.models import MacroIndicatorConfig
 from src.data.macro.pipeline import MacroSignalPipeline
@@ -41,15 +42,19 @@ def test_pipeline_generates_features_and_catalog_entries():
     consensus_payload["indicator"] = "GDP_CONS"
     consensus_payload["value"] = [99, 100, 101, 102]
 
-    client = FakeMacroClient({
-        "GDP": base_payload,
-        "GDP_CONS": consensus_payload,
-    })
+    client = FakeMacroClient(
+        {
+            "GDP": base_payload,
+            "GDP_CONS": consensus_payload,
+        }
+    )
 
     pipeline = MacroSignalPipeline(
         clients={"macros": client},
         feature_builder=MacroFeatureBuilder(
-            MacroFeatureConfig(z_score_window=2, momentum_windows=(1,), year_over_year_periods=2)
+            MacroFeatureConfig(
+                z_score_window=2, momentum_windows=(1,), year_over_year_periods=2
+            )
         ),
     )
 

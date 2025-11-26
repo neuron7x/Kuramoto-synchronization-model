@@ -8,7 +8,6 @@ from tradepulse.core.neuro.dopamine import (
     adapt_ddm_parameters,
 )
 
-
 da_ctrl = DopamineController("config/dopamine.yaml")
 
 
@@ -31,7 +30,9 @@ def policy_step(
     da_ctrl.update_value_estimate(rpe)
 
     # 2. DA сигнал
-    appetitive = da_ctrl.estimate_appetitive_state(reward_proxy, novelty, momentum, value_gap)
+    appetitive = da_ctrl.estimate_appetitive_state(
+        reward_proxy, novelty, momentum, value_gap
+    )
     DA = da_ctrl.compute_dopamine_signal(appetitive, rpe)
 
     # 3. Модуляція Q, температура, адаптація DDM

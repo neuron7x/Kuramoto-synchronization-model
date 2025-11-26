@@ -59,8 +59,8 @@ def build_parser() -> argparse.ArgumentParser:
         proto,
         sanity,
         secrets,
-        system,
         supply_chain,
+        system,
     )
     from scripts.commands import test as test_cmd
 

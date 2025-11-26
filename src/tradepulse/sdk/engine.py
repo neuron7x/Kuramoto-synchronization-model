@@ -207,7 +207,9 @@ class TradePulseSDK:
             state = self._sessions[session_id]
 
         if state.approved is False:
-            raise RuntimeError("Order was rejected by risk checks and cannot be executed")
+            raise RuntimeError(
+                "Order was rejected by risk checks and cannot be executed"
+            )
 
         venue = state.venue or self._config.default_venue
         correlation_id = self._config.correlation_id_factory()
@@ -254,7 +256,9 @@ class TradePulseSDK:
                 return key
         raise LookupError("Order is not managed by the TradePulse SDK")
 
-    def _record_event(self, session_id: str, event: str, payload: Mapping[str, object]) -> None:
+    def _record_event(
+        self, session_id: str, event: str, payload: Mapping[str, object]
+    ) -> None:
         timestamp = utc_now()
         entry = AuditEvent(
             session_id=session_id,
@@ -275,4 +279,3 @@ class TradePulseSDK:
             if override:
                 return override.lower()
         return declared.lower()
-

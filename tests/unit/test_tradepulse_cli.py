@@ -175,9 +175,7 @@ def test_deploy_cli_applies_manifests(tmp_path: Path) -> None:
     config_data["kubectl"]["extra_args"] = []
     manifests_cfg = config_data.setdefault("manifests", {})
     manifests_cfg.pop("name", None)
-    manifests_cfg["path"] = str(
-        Path("deploy/kustomize/overlays/staging").resolve()
-    )
+    manifests_cfg["path"] = str(Path("deploy/kustomize/overlays/staging").resolve())
 
     log_path = tmp_path / "kubectl.log"
     kubectl_stub = tmp_path / "kubectl"
@@ -227,8 +225,7 @@ with open(log, "a", encoding="utf-8") as handle:
         == config_data["artifact"]
     )
     assert (
-        summary["annotations"]["tradepulse.dev/strategy-id"]
-        == config_data["strategy"]
+        summary["annotations"]["tradepulse.dev/strategy-id"] == config_data["strategy"]
     )
 
 

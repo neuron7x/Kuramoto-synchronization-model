@@ -4,11 +4,15 @@ from datetime import datetime, timezone
 import pytest
 
 from core.data.models import InstrumentType, PriceTick
-
 from src.data.event_bus import BrokerMessage
 from src.data.ingestion_service import DataIngestionCacheService
-from src.data.pipeline import CacheRoute, CacheWriterTickHandler, StaticTickRoutingStrategy, StreamingIngestionPipeline
 from src.data.kafka_ingestion import KafkaIngestionConfig
+from src.data.pipeline import (
+    CacheRoute,
+    CacheWriterTickHandler,
+    StaticTickRoutingStrategy,
+    StreamingIngestionPipeline,
+)
 
 
 class _RecordingPublisher:
@@ -54,7 +58,9 @@ async def test_cache_writer_emits_event_metadata() -> None:
     publisher = _RecordingPublisher()
     handler = CacheWriterTickHandler(
         cache_service=DataIngestionCacheService(),
-        routing_strategy=StaticTickRoutingStrategy(CacheRoute(layer="raw", timeframe="1min")),
+        routing_strategy=StaticTickRoutingStrategy(
+            CacheRoute(layer="raw", timeframe="1min")
+        ),
         event_publisher=publisher,
     )
     tick = PriceTick.create(

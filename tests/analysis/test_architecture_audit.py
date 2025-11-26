@@ -76,7 +76,9 @@ def sample_project(tmp_path: Path) -> list[Path]:
     return [package_root]
 
 
-def test_architecture_audit_detects_cycles_and_conflicts(sample_project: list[Path]) -> None:
+def test_architecture_audit_detects_cycles_and_conflicts(
+    sample_project: list[Path],
+) -> None:
     auditor = ArchitectureAudit(sample_project)
     report = auditor.analyze()
 
@@ -98,5 +100,5 @@ def test_architecture_audit_detects_cycles_and_conflicts(sample_project: list[Pa
 def test_run_audit_cli_wrapper(sample_project: list[Path]) -> None:
     report = run_audit([str(sample_project[0])])
     output = json.dumps(report.to_dict())
-    assert "\"modules\"" in output
-    assert "\"conflicts\"" in output
+    assert '"modules"' in output
+    assert '"conflicts"' in output

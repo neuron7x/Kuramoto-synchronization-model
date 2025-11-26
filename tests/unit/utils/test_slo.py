@@ -191,6 +191,5 @@ def test_retention_expands_for_burn_rate_windows(base_time: datetime) -> None:
 
     guard.record_outcome(95.0, True, timestamp=base_time + timedelta(seconds=121))
     assert all(
-        sample.timestamp >= base_time + timedelta(seconds=1)
-        for sample in guard._events
+        sample.timestamp >= base_time + timedelta(seconds=1) for sample in guard._events
     )

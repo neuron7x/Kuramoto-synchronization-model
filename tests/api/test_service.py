@@ -8,6 +8,7 @@ from typing import Callable, Sequence
 import httpx
 import jwt
 import pytest
+
 pytest.importorskip("strawberry")
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -30,6 +31,7 @@ from application.api.rate_limit import (
     SlidingWindowRateLimiter,
 )
 from application.api.service import DependencyProbeResult, create_app
+from application.security.two_factor import generate_totp_code
 from application.settings import (
     AdminApiSettings,
     ApiRateLimitSettings,
@@ -37,9 +39,7 @@ from application.settings import (
     KillSwitchPostgresSettings,
     RateLimitPolicy,
 )
-from application.security.two_factor import generate_totp_code
 from core.config.cli_models import PostgresTLSConfig
-
 
 API_V1_PREFIX = "/api/v1"
 TWO_FACTOR_HEADER = "X-Admin-OTP"
@@ -389,7 +389,9 @@ def test_graphql_interface_exposes_latest_data(
     headers = _auth_headers(token)
 
     feature_payload = _build_payload()
-    feature_response = client.post(_api_v1("/features"), json=feature_payload, headers=headers)
+    feature_response = client.post(
+        _api_v1("/features"), json=feature_payload, headers=headers
+    )
     assert feature_response.status_code == 200
 
     prediction_payload = _build_payload()
@@ -733,9 +735,7 @@ def test_admin_endpoints_require_two_factor(
     payload = {"reason": "manual intervention"}
 
     missing_headers = _auth_headers(token, client_cert=True)
-    response = client.post(
-        "/admin/kill-switch", headers=missing_headers, json=payload
-    )
+    response = client.post("/admin/kill-switch", headers=missing_headers, json=payload)
     assert response.status_code == 401
     body = response.json()
     assert body["error"]["code"] == "ERR_AUTH_REQUIRED"
@@ -747,9 +747,7 @@ def test_admin_endpoints_require_two_factor(
     invalid_headers = _auth_headers(
         token, client_cert=True, two_factor_code=invalid_code
     )
-    response = client.post(
-        "/admin/kill-switch", headers=invalid_headers, json=payload
-    )
+    response = client.post("/admin/kill-switch", headers=invalid_headers, json=payload)
     assert response.status_code == 401
     body = response.json()
     assert body["error"]["code"] == "ERR_AUTH_REQUIRED"

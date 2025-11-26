@@ -40,7 +40,9 @@ def test_pytest_terminal_summary_reports_median_label() -> None:
         assert "mean (s)" not in header_line
 
         data_line = next(
-            line for line in reporter.lines if "sample-benchmark" in line and "0.250000" in line
+            line
+            for line in reporter.lines
+            if "sample-benchmark" in line and "0.250000" in line
         )
         assert f"{record.observed:12.6f}" in data_line
     finally:

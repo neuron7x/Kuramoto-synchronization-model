@@ -1,4 +1,5 @@
 """Fractal graph contrastive learning helpers for FHMC novelty signals."""
+
 from __future__ import annotations
 
 from typing import Sequence

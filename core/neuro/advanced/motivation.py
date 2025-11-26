@@ -159,7 +159,9 @@ class FractalMotivationController:
             if state.count == 0:
                 scores[action] = float("inf")
             else:
-                bonus = self._exploration_coef * math.sqrt((2.0 * log_total) / state.count)
+                bonus = self._exploration_coef * math.sqrt(
+                    (2.0 * log_total) / state.count
+                )
                 scores[action] = state.value + bonus
         return scores
 
@@ -180,13 +182,17 @@ class FractalMotivationController:
         """Intrinsic reward composed of reward prediction error and fractal metrics."""
 
         predicted = self.predict_value(state)
-        next_state = self._project_next_state(np.asarray(state, dtype=float), signals, metrics)
+        next_state = self._project_next_state(
+            np.asarray(state, dtype=float), signals, metrics
+        )
         actual = self.predict_value(next_state)
         reward_prediction_error = float(actual - predicted)
         info_gain = float(np.linalg.norm(next_state - np.asarray(state, dtype=float)))
         energy = float(metrics.get("energy", 0.0))
         stability = float(metrics.get("stability", 1.0))
-        return reward_prediction_error + 0.1 * info_gain + 0.05 * energy + 0.02 * stability
+        return (
+            reward_prediction_error + 0.1 * info_gain + 0.05 * energy + 0.02 * stability
+        )
 
     def predict_value(self, state: Sequence[float]) -> float:
         """Predict the value of ``state`` using the linear value function."""
@@ -200,7 +206,9 @@ class FractalMotivationController:
             )
         return float(self._value_weights @ state_array)
 
-    def get_recommended_action(self, state: Sequence[float], signals: Mapping[str, float | bool]) -> str:
+    def get_recommended_action(
+        self, state: Sequence[float], signals: Mapping[str, float | bool]
+    ) -> str:
         """Return the next action recommendation based on the provided signals."""
 
         risk_ok = bool(signals.get("risk_ok", True))
@@ -294,4 +302,3 @@ __all__ = [
     "FractalSignalTracker",
     "UCBState",
 ]
-

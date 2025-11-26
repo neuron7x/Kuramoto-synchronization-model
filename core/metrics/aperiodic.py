@@ -1,4 +1,5 @@
 """Aperiodic spectral slope estimators."""
+
 from __future__ import annotations
 
 from typing import Iterable

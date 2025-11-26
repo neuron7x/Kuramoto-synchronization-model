@@ -63,12 +63,7 @@ class StaticQuoteProvider:
 @pytest.mark.asyncio
 async def test_latency_tracker_percentiles() -> None:
     tracker = LatencyTracker(max_samples=5)
-    tracker.extend(
-        [
-            timedelta(milliseconds=value)
-            for value in (5, 7, 9, 11, 13, 15)
-        ]
-    )
+    tracker.extend([timedelta(milliseconds=value) for value in (5, 7, 9, 11, 13, 15)])
     assert tracker.percentile(50) == timedelta(milliseconds=11)
     assert tracker.percentile(90) > tracker.percentile(50)
     assert tracker.average() == timedelta(milliseconds=11)
@@ -114,7 +109,9 @@ async def test_atomic_capital_mover_success_and_failure() -> None:
     )
     result = await mover.execute(plan)
     assert result.committed is False
-    assert any(token in failing_gateway.released for token in failing_gateway.reservations)
+    assert any(
+        token in failing_gateway.released for token in failing_gateway.reservations
+    )
 
 
 @pytest.mark.asyncio
@@ -145,8 +142,12 @@ async def test_arbitrage_engine_detects_opportunity_and_executes() -> None:
     provider_a = StaticQuoteProvider(quotes_a)
     provider_b = StaticQuoteProvider(quotes_b)
     ledger = LiquidityLedger()
-    ledger.set_balance("EX1", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500"))
-    ledger.set_balance("EX2", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500"))
+    ledger.set_balance(
+        "EX1", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500")
+    )
+    ledger.set_balance(
+        "EX2", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500")
+    )
     gateway = InMemoryGateway()
     mover = AtomicCapitalMover({"EX1": gateway, "EX2": gateway})
     engine = CrossExchangeArbitrageEngine(
@@ -197,8 +198,12 @@ async def test_arbitrage_engine_ignores_stale_quotes() -> None:
     provider_a = StaticQuoteProvider([stale])
     provider_b = StaticQuoteProvider([fresh])
     ledger = LiquidityLedger()
-    ledger.set_balance("EX1", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500"))
-    ledger.set_balance("EX2", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500"))
+    ledger.set_balance(
+        "EX1", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500")
+    )
+    ledger.set_balance(
+        "EX2", "BTCUSDT", base_available=Decimal("5"), quote_available=Decimal("500")
+    )
     gateway = InMemoryGateway()
     mover = AtomicCapitalMover({"EX1": gateway, "EX2": gateway})
     engine = CrossExchangeArbitrageEngine(

@@ -61,4 +61,6 @@ class IncidentManager:
             "metadata": dict(metadata or {}),
         }
         summary_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        return IncidentRecord(identifier=identifier, directory=incident_dir, summary_path=summary_path)
+        return IncidentRecord(
+            identifier=identifier, directory=incident_dir, summary_path=summary_path
+        )

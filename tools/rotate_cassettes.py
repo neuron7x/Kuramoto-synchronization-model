@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-import time
 import argparse
+import time
 from pathlib import Path
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -21,6 +22,7 @@ def main():
             p.unlink()
             removed += 1
     print(f"Removed {removed} old cassette(s) older than {args.max_age_days} days")
+
 
 if __name__ == "__main__":
     main()

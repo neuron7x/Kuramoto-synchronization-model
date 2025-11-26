@@ -16,7 +16,6 @@ from core.architecture_integrator import (
     ComponentStatus,
 )
 
-
 # ------------------------------------------------------------------
 # Example Components
 # ------------------------------------------------------------------
@@ -140,7 +139,9 @@ class DataIngestionService:
         """Stop ingestion."""
         print("DataIngestionService: Stopping ingestion...")
         self.running = False
-        print(f"DataIngestionService: Stopped (ingested {self.records_ingested} records)")
+        print(
+            f"DataIngestionService: Stopped (ingested {self.records_ingested} records)"
+        )
 
     def health_check(self):
         """Check ingestion health."""

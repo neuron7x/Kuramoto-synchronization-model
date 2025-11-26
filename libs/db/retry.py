@@ -6,7 +6,12 @@ import logging
 from collections.abc import Callable
 
 from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
-from sqlalchemy.exc import DBAPIError, DisconnectionError, InterfaceError, OperationalError
+from sqlalchemy.exc import (
+    DBAPIError,
+    DisconnectionError,
+    InterfaceError,
+    OperationalError,
+)
 from tenacity import (
     Retrying,
     before_sleep_log,
@@ -24,7 +29,9 @@ __all__ = ["RetryPolicy", "run_with_retry"]
 class RetryPolicy(BaseModel):
     """Retry configuration with exponential backoff and jitter."""
 
-    attempts: PositiveInt = Field(5, description="Maximum number of attempts before surfacing the error.")
+    attempts: PositiveInt = Field(
+        5, description="Maximum number of attempts before surfacing the error."
+    )
     initial_backoff: PositiveFloat = Field(
         0.05,
         description="Initial backoff interval in seconds before the first retry.",
@@ -41,7 +48,9 @@ class RetryPolicy(BaseModel):
     def build(self, *, logger: logging.Logger) -> Retrying:
         """Return a configured :class:`~tenacity.Retrying` instance."""
 
-        wait = wait_random_exponential(multiplier=self.initial_backoff, max=self.max_backoff)
+        wait = wait_random_exponential(
+            multiplier=self.initial_backoff, max=self.max_backoff
+        )
         if self.max_jitter > 0:
             wait = wait + wait_random(0, self.max_jitter)
         return Retrying(
@@ -65,7 +74,9 @@ class RetryPolicy(BaseModel):
         return False
 
 
-def run_with_retry(policy: RetryPolicy, logger: logging.Logger, operation: Callable[[], object]) -> object:
+def run_with_retry(
+    policy: RetryPolicy, logger: logging.Logger, operation: Callable[[], object]
+) -> object:
     """Execute *operation* applying the supplied retry policy."""
 
     retrying = policy.build(logger=logger)

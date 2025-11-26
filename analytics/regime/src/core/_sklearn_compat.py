@@ -145,7 +145,9 @@ class LogisticRegression:
 
     def decision_function(self, features: ArrayLike) -> ArrayLike:
         if self.coef_ is None or self.intercept_ is None:
-            raise RuntimeError("The model must be fitted before calling decision_function")
+            raise RuntimeError(
+                "The model must be fitted before calling decision_function"
+            )
         x = np.asarray(features, dtype=float)
         return x @ self.coef_ + self.intercept_
 
@@ -178,7 +180,9 @@ class IsotonicRegression:
 
     def predict(self, x: ArrayLike) -> ArrayLike:
         if self._x is None or self._y is None:
-            raise RuntimeError("The isotonic regressor must be fitted before prediction")
+            raise RuntimeError(
+                "The isotonic regressor must be fitted before prediction"
+            )
 
         x_arr = np.asarray(x, dtype=float)
         x_sorted = self._x
@@ -199,7 +203,9 @@ class TimeSeriesSplit:
         self.n_splits = int(n_splits)
         self.test_size = test_size
 
-    def split(self, X: ArrayLike | Iterable[object]) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
+    def split(
+        self, X: ArrayLike | Iterable[object]
+    ) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
         n_samples = len(X) if isinstance(X, np.ndarray) else len(list(X))
         indices = np.arange(n_samples)
         if self.n_splits >= n_samples:
@@ -219,7 +225,9 @@ class TimeSeriesSplit:
             yield indices[:test_start], indices[test_start:test_end]
 
 
-def check_random_state(seed: np.random.RandomState | int | None) -> np.random.RandomState:
+def check_random_state(
+    seed: np.random.RandomState | int | None,
+) -> np.random.RandomState:
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
     if isinstance(seed, (int, np.integer)):
@@ -290,7 +298,9 @@ def _pava(y: ArrayLike, weights: ArrayLike) -> ArrayLike:
             continue
 
         total_weight = weights[idx] + weights[idx + 1]
-        total_value = (weights[idx] * values[idx] + weights[idx + 1] * values[idx + 1]) / total_weight
+        total_value = (
+            weights[idx] * values[idx] + weights[idx + 1] * values[idx + 1]
+        ) / total_weight
 
         values[idx] = total_value
         weights[idx] = total_weight
@@ -318,4 +328,3 @@ __all__ = [
     "roc_auc_score",
     "average_precision_score",
 ]
-

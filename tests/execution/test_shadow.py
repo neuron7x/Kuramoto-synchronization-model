@@ -134,7 +134,9 @@ def test_shadow_orchestrator_handles_candidate_errors() -> None:
     def failing_candidate(_: Mapping[str, Any]) -> Signal:
         raise RuntimeError("boom")
 
-    config = ShadowDeploymentConfig(window_size=2, min_samples=1, promotion_stable_observations=1)
+    config = ShadowDeploymentConfig(
+        window_size=2, min_samples=1, promotion_stable_observations=1
+    )
     orchestrator = ShadowDeploymentOrchestrator(
         baseline=baseline,
         candidates={"failing": failing_candidate},

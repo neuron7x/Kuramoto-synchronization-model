@@ -204,7 +204,9 @@ class InventoryManager:
             )
             venues.append(venue)
 
-        venues_with_targets = self._compute_targets(venues, targets, weights, total_base)
+        venues_with_targets = self._compute_targets(
+            venues, targets, weights, total_base
+        )
         return InventorySnapshot(
             symbol=symbol,
             base_asset=base_asset,
@@ -355,4 +357,3 @@ class InventoryManager:
             if deficit_map[target] <= threshold:
                 deficit_map.pop(target)
         return transfers
-

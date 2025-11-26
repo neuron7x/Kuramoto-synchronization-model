@@ -1,8 +1,8 @@
 """Staging simulations and reporting utilities."""
 
 from .flash_crash_replay import (
-    FlashCrashResult,
     FlashCrashMetrics,
+    FlashCrashResult,
     generate_staging_report,
     simulate_flash_crash_replay,
     write_staging_metrics,

@@ -1,4 +1,5 @@
 """Exploration noise processes used by FHMC agents."""
+
 from __future__ import annotations
 
 import numpy as np

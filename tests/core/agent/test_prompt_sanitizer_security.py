@@ -40,9 +40,7 @@ def test_unsafe_deserialization_patterns_raise(sanitizer: PromptSanitizer) -> No
     payload = "pickle.loads(__import__('os').system('id'))"
     with pytest.raises(PromptInjectionDetected) as excinfo:
         sanitizer.sanitize_text(payload)
-    assert (
-        str(excinfo.value) == "unsafe dynamic deserialization directive detected"
-    )
+    assert str(excinfo.value) == "unsafe dynamic deserialization directive detected"
 
 
 def test_xml_entity_expansion_is_detected(sanitizer: PromptSanitizer) -> None:

@@ -15,11 +15,10 @@ Exit codes:
 """
 
 import argparse
-import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 
 class ConstraintViolation:
@@ -84,9 +83,7 @@ def get_installed_packages() -> Dict[str, str]:
         sys.exit(2)
 
 
-def compare_versions(
-    installed: str, operator: str, required: str
-) -> Tuple[bool, str]:
+def compare_versions(installed: str, operator: str, required: str) -> Tuple[bool, str]:
     """
     Compare package versions.
 
@@ -103,8 +100,16 @@ def compare_versions(
         except ImportError:
             # Fallback to simple string comparison if packaging not available
             # This is a simplified comparison that works for most semantic versions
-            installed_v = tuple(map(int, installed.split('.')[:3])) if '.' in installed else (0, 0, 0)
-            required_v = tuple(map(int, required.split('.')[:3])) if '.' in required else (0, 0, 0)
+            installed_v = (
+                tuple(map(int, installed.split(".")[:3]))
+                if "." in installed
+                else (0, 0, 0)
+            )
+            required_v = (
+                tuple(map(int, required.split(".")[:3]))
+                if "." in required
+                else (0, 0, 0)
+            )
 
         if operator == "==":
             satisfied = installed_v == required_v
@@ -199,9 +204,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Verify security constraints are satisfied"
     )
-    parser.add_argument(
-        "--fix", action="store_true", help="Attempt to fix violations"
-    )
+    parser.add_argument("--fix", action="store_true", help="Attempt to fix violations")
     args = parser.parse_args()
 
     # Find project root

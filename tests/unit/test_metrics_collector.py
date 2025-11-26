@@ -431,11 +431,14 @@ def test_record_equity_curve_downsamples_and_resets() -> None:
         )
         is None
     )
-    assert _sample_value(
-        registry,
-        "tradepulse_backtest_equity_curve",
-        {"strategy": "trend", "step": "2"},
-    ) == 30.0
+    assert (
+        _sample_value(
+            registry,
+            "tradepulse_backtest_equity_curve",
+            {"strategy": "trend", "step": "2"},
+        )
+        == 30.0
+    )
 
 
 @pytest.mark.parametrize(
@@ -512,8 +515,12 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     registry = CollectorRegistry()
     collector = MetricsCollector(registry)
 
-    collector.observe_database_size(database="tradepulse", host="db-primary", size_bytes=1024)
-    collector.observe_database_size(database="tradepulse", host="db-primary", size_bytes=2048)
+    collector.observe_database_size(
+        database="tradepulse", host="db-primary", size_bytes=1024
+    )
+    collector.observe_database_size(
+        database="tradepulse", host="db-primary", size_bytes=2048
+    )
 
     collector.observe_database_query(
         database="tradepulse",
@@ -689,7 +696,9 @@ def test_incident_and_lifecycle_metrics() -> None:
     collector.record_runbook_execution("runbook_live_trading", "failed", count=2)
     collector.set_lifecycle_phase_state("active_operations", "active")
     collector.set_lifecycle_checkpoint_status("daily-risk-review", "passed")
-    collector.record_lifecycle_transition("startup", "active_operations", outcome="success")
+    collector.record_lifecycle_transition(
+        "startup", "active_operations", outcome="success"
+    )
 
     open_incidents = _sample_value(
         registry,
@@ -744,7 +753,11 @@ def test_incident_and_lifecycle_metrics() -> None:
     lifecycle_transition = _sample_value(
         registry,
         "tradepulse_lifecycle_transition_total",
-        {"from_phase": "startup", "to_phase": "active_operations", "outcome": "success"},
+        {
+            "from_phase": "startup",
+            "to_phase": "active_operations",
+            "outcome": "success",
+        },
     )
 
     assert open_incidents == 2.0

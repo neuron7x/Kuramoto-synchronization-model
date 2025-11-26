@@ -111,7 +111,7 @@ class MetricsCollector:
 
             if multiprocess_dir:
                 try:
-                    from prometheus_client import multiprocess
+                    from prometheus_client import multiprocess  # noqa: F401
                 except ImportError:
                     # Multiprocess collector isn't available; fall back to defaults.
                     pass
@@ -1762,9 +1762,13 @@ class MetricsCollector:
 
         severity_label = self._normalise_label(severity, default="unknown")
         bounded_duration = max(0.0, float(duration))
-        self.incident_ack_latency.labels(severity=severity_label).observe(bounded_duration)
+        self.incident_ack_latency.labels(severity=severity_label).observe(
+            bounded_duration
+        )
 
-    def observe_incident_resolution_latency(self, severity: str, duration: float) -> None:
+    def observe_incident_resolution_latency(
+        self, severity: str, duration: float
+    ) -> None:
         """Observe the resolution latency for an incident."""
 
         if not self._enabled:
@@ -1772,9 +1776,13 @@ class MetricsCollector:
 
         severity_label = self._normalise_label(severity, default="unknown")
         bounded_duration = max(0.0, float(duration))
-        self.incident_resolution_latency.labels(severity=severity_label).observe(bounded_duration)
+        self.incident_resolution_latency.labels(severity=severity_label).observe(
+            bounded_duration
+        )
 
-    def record_runbook_execution(self, runbook: str, outcome: str, count: float = 1.0) -> None:
+    def record_runbook_execution(
+        self, runbook: str, outcome: str, count: float = 1.0
+    ) -> None:
         """Record the execution of a production runbook."""
 
         if not self._enabled:
@@ -1785,7 +1793,9 @@ class MetricsCollector:
 
         runbook_label = self._normalise_label(runbook, default="unknown")
         outcome_label = self._normalise_label(outcome, default="unknown")
-        self.runbook_executions_total.labels(runbook=runbook_label, outcome=outcome_label).inc(float(count))
+        self.runbook_executions_total.labels(
+            runbook=runbook_label, outcome=outcome_label
+        ).inc(float(count))
 
     def set_lifecycle_phase_state(self, phase: str, state: str) -> None:
         """Update lifecycle phase state gauges."""
@@ -1795,12 +1805,23 @@ class MetricsCollector:
 
         phase_label = self._normalise_label(phase, default="unknown")
         state_label = self._normalise_label(state, default="unknown")
-        known_states = ("active", "standby", "maintenance", "degraded", "completed", "offline")
+        known_states = (
+            "active",
+            "standby",
+            "maintenance",
+            "degraded",
+            "completed",
+            "offline",
+        )
         for candidate in known_states:
             value = 1.0 if candidate == state_label else 0.0
-            self.lifecycle_phase_state.labels(phase=phase_label, state=candidate).set(value)
+            self.lifecycle_phase_state.labels(phase=phase_label, state=candidate).set(
+                value
+            )
         if state_label not in known_states:
-            self.lifecycle_phase_state.labels(phase=phase_label, state=state_label).set(1.0)
+            self.lifecycle_phase_state.labels(phase=phase_label, state=state_label).set(
+                1.0
+            )
 
     def set_lifecycle_checkpoint_status(self, checkpoint: str, status: str) -> None:
         """Update lifecycle checkpoint status gauges."""

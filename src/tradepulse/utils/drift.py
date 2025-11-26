@@ -106,7 +106,9 @@ def _as_array(values: ArrayLike, *, name: str) -> np.ndarray:
     return array
 
 
-def _coerce_numeric_series(series: pd.Series, *, column: str, frame: str) -> tuple[np.ndarray | None, str | None]:
+def _coerce_numeric_series(
+    series: pd.Series, *, column: str, frame: str
+) -> tuple[np.ndarray | None, str | None]:
     """Return a float array for *series* or an error message if conversion fails."""
 
     if is_numeric_dtype(series.dtype):
@@ -175,7 +177,7 @@ def compute_js_divergence(data1: ArrayLike, data2: ArrayLike) -> float:
         return float("nan")
 
     distance = jensenshannon(arr1, arr2)
-    divergence = float(distance ** 2)
+    divergence = float(distance**2)
     logger.debug("Computed JSD divergence: %s", divergence)
     return divergence
 
@@ -194,7 +196,9 @@ def compute_ks_test(data1: ArrayLike, data2: ArrayLike) -> DriftTestResult:
     if arr1.size < 2 or arr2.size < 2:
         message = "insufficient data for KS test"
         logger.warning(message)
-        return DriftTestResult(statistic=float("nan"), pvalue=float("nan"), valid=False, message=message)
+        return DriftTestResult(
+            statistic=float("nan"), pvalue=float("nan"), valid=False, message=message
+        )
     statistic, pvalue = ks_2samp(arr1, arr2)
     message = "ok"
     logger.debug("KS test statistic=%s pvalue=%s", statistic, pvalue)
@@ -260,17 +264,25 @@ def compute_parallel_drift(
     non_numeric_message = "non-numeric column"
 
     def _compute(column: str) -> tuple[str, DriftMetric]:
-        base, base_error = _coerce_numeric_series(baseline[column], column=column, frame="baseline")
-        curr, curr_error = _coerce_numeric_series(current[column], column=column, frame="current")
+        base, base_error = _coerce_numeric_series(
+            baseline[column], column=column, frame="baseline"
+        )
+        curr, curr_error = _coerce_numeric_series(
+            current[column], column=column, frame="current"
+        )
         if base is None or curr is None:
             message = base_error or curr_error or non_numeric_message
             logger.warning(
                 "Column %s cannot be processed for drift metrics: %s", column, message
             )
-            skipped = DriftTestResult(float("nan"), float("nan"), False, non_numeric_message)
+            skipped = DriftTestResult(
+                float("nan"), float("nan"), False, non_numeric_message
+            )
             return column, DriftMetric(column, float("nan"), skipped, float("nan"))
 
-        jsd_value = compute_js_divergence(base, curr) if "jsd" in metrics_set else float("nan")
+        jsd_value = (
+            compute_js_divergence(base, curr) if "jsd" in metrics_set else float("nan")
+        )
         if "ks" in metrics_set:
             ks_result = compute_ks_test(base, curr)
         else:
@@ -297,7 +309,9 @@ class DriftDetector:
         self.alpha = alpha
         self.workers = workers
 
-    def compare(self, baseline: pd.DataFrame, current: pd.DataFrame) -> Mapping[str, DriftMetric]:
+    def compare(
+        self, baseline: pd.DataFrame, current: pd.DataFrame
+    ) -> Mapping[str, DriftMetric]:
         """Return drift metrics for aligned columns."""
 
         results = compute_parallel_drift(
@@ -347,7 +361,9 @@ def generate_synthetic_data(
         raise ValueError("rows and cols must be positive")
     rng = np.random.default_rng(seed)
     base = rng.normal(loc=0.0, scale=1.0, size=(rows, cols))
-    drifted = rng.normal(loc=drift_level, scale=1.0 + abs(drift_level) * 0.5, size=(rows, cols))
+    drifted = rng.normal(
+        loc=drift_level, scale=1.0 + abs(drift_level) * 0.5, size=(rows, cols)
+    )
     base_df = pd.DataFrame(base, columns=[f"f{i}" for i in range(cols)])
     drift_df = pd.DataFrame(drifted, columns=base_df.columns)
     if include_categorical:

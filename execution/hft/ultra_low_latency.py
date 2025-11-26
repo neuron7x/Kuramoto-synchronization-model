@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 import mmap
 import struct
 import threading
 import time
+from dataclasses import dataclass
 from typing import Callable, Optional
 
 
@@ -128,7 +128,9 @@ class OrderEnvelope:
 class UltraLowLatencyOMS:
     """High-frequency order management system skeleton."""
 
-    def __init__(self, capacity: int, transmitter: RDMATransport | KernelBypassSocket) -> None:
+    def __init__(
+        self, capacity: int, transmitter: RDMATransport | KernelBypassSocket
+    ) -> None:
         self._queue = DisruptorQueue(capacity)
         self._transmitter = transmitter
 
@@ -160,4 +162,3 @@ __all__ = [
     "UltraLowLatencyOMS",
     "ZeroCopyCodec",
 ]
-

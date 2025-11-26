@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import pytest
 
 from domain import Order, OrderSide
-from execution.compliance import RiskCompliance, RiskConfig, RiskDecision
+from execution.compliance import RiskCompliance, RiskConfig
 
 
 class DummyMetrics:
@@ -55,7 +53,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -76,7 +79,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
         assert decision.allowed
@@ -102,7 +110,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -123,7 +136,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 
@@ -288,7 +306,12 @@ class TestRiskCompliance:
         )
 
         market_data = {"price": 50000.0}
-        portfolio_state = {"positions": {}, "gross_exposure": 0.0, "equity": 100000.0, "peak_equity": 100000.0}
+        portfolio_state = {
+            "positions": {},
+            "gross_exposure": 0.0,
+            "equity": 100000.0,
+            "peak_equity": 100000.0,
+        }
 
         decision = compliance.check_order(order, market_data, portfolio_state)
 

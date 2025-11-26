@@ -20,11 +20,17 @@ class EKFState:
 class EMHEKF:
     """Extended Kalman Filter over x=[H, M, E, S]."""
 
-    def __init__(self, p: Params, cfg: EKFConfig = EKFConfig(), init_x: np.ndarray | None = None):
+    def __init__(
+        self, p: Params, cfg: EKFConfig = EKFConfig(), init_x: np.ndarray | None = None
+    ):
         self.p = p
         self.cfg = cfg
         self.st = EKFState(
-            x=init_x if init_x is not None else np.array([0.5, 0.8, 0.1, 0.0], dtype=float),
+            x=(
+                init_x
+                if init_x is not None
+                else np.array([0.5, 0.8, 0.1, 0.0], dtype=float)
+            ),
             P=np.eye(4, dtype=float) * 1e-2,
         )
 
@@ -44,7 +50,9 @@ class EMHEKF:
         D = self._d_proxy(obs)
         reward = float(obs.get("reward", 0.0))
         S = np.clip(
-            self.p.phi * D + self.p.omega * (1.0 - M / self.p.M0) + self.p.kappa * reward,
+            self.p.phi * D
+            + self.p.omega * (1.0 - M / self.p.M0)
+            + self.p.kappa * reward,
             0.0,
             1.0,
         )

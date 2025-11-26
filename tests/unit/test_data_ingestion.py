@@ -150,7 +150,7 @@ def test_binance_ws_ignores_messages_without_kline(
 
 
 def test_binance_ws_logs_warning_on_invalid_payload(
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that invalid payloads are handled gracefully without crashing."""
     captured: list[Ticker] = []

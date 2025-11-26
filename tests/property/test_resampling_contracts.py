@@ -21,14 +21,22 @@ from .utils import property_seed, property_settings, regression_note
 
 def _timezone_strategy() -> st.SearchStrategy[timezone | None]:
     offsets = st.integers(min_value=-11, max_value=12)
-    return st.one_of(st.just(None), offsets.map(lambda hours: timezone(timedelta(hours=int(hours)))))
+    return st.one_of(
+        st.just(None), offsets.map(lambda hours: timezone(timedelta(hours=int(hours))))
+    )
 
 
 @st.composite
-def _tick_frames(draw: st.DrawFn, *, min_size: int = 1, max_size: int = 60) -> pd.DataFrame:
+def _tick_frames(
+    draw: st.DrawFn, *, min_size: int = 1, max_size: int = 60
+) -> pd.DataFrame:
     size = draw(st.integers(min_value=min_size, max_value=max_size))
     base = datetime(2024, 1, 1, 9, 30, 0)
-    offsets = draw(st.lists(st.integers(min_value=-3_600, max_value=3_600), min_size=size, max_size=size))
+    offsets = draw(
+        st.lists(
+            st.integers(min_value=-3_600, max_value=3_600), min_size=size, max_size=size
+        )
+    )
     tzinfo = draw(_timezone_strategy())
     index = [base + timedelta(seconds=offset) for offset in offsets]
     if tzinfo is not None:
@@ -36,27 +44,36 @@ def _tick_frames(draw: st.DrawFn, *, min_size: int = 1, max_size: int = 60) -> p
 
     price_values = draw(
         st.lists(
-            st.floats(min_value=1e-9, max_value=1e7, allow_nan=False, allow_infinity=False),
+            st.floats(
+                min_value=1e-9, max_value=1e7, allow_nan=False, allow_infinity=False
+            ),
             min_size=size,
             max_size=size,
         )
     )
     size_values = draw(
         st.lists(
-            st.floats(min_value=0.0, max_value=5e6, allow_nan=False, allow_infinity=False),
+            st.floats(
+                min_value=0.0, max_value=5e6, allow_nan=False, allow_infinity=False
+            ),
             min_size=size,
             max_size=size,
         )
     )
     frame = pd.DataFrame(
-        {"price": np.asarray(price_values, dtype=float), "size": np.asarray(size_values, dtype=float)},
+        {
+            "price": np.asarray(price_values, dtype=float),
+            "size": np.asarray(size_values, dtype=float),
+        },
         index=pd.DatetimeIndex(index),
     )
     return frame
 
 
 @st.composite
-def _l1_frames(draw: st.DrawFn, *, min_size: int = 1, max_size: int = 60) -> pd.DataFrame:
+def _l1_frames(
+    draw: st.DrawFn, *, min_size: int = 1, max_size: int = 60
+) -> pd.DataFrame:
     ticks = draw(_tick_frames(min_size=min_size, max_size=max_size))
     normalised = resampling._ensure_datetime_index(ticks)
     frame = pd.DataFrame(
@@ -73,9 +90,13 @@ _FREQS = ["1S", "5S", "15S", "30S", "1T", "5T"]
 
 
 @seed(property_seed("test_resample_ticks_to_l1_matches_reference"))
-@settings(**property_settings("test_resample_ticks_to_l1_matches_reference", max_examples=80))
+@settings(
+    **property_settings("test_resample_ticks_to_l1_matches_reference", max_examples=80)
+)
 @given(_tick_frames(min_size=1, max_size=40), st.sampled_from(_FREQS))
-def test_resample_ticks_to_l1_matches_reference(ticks: pd.DataFrame, frequency: str) -> None:
+def test_resample_ticks_to_l1_matches_reference(
+    ticks: pd.DataFrame, frequency: str
+) -> None:
     event(f"tick-count={ticks.shape[0]}")
     normalised = resampling._ensure_datetime_index(ticks)
     result = resampling.resample_ticks_to_l1(ticks, freq=frequency)
@@ -88,7 +109,11 @@ def test_resample_ticks_to_l1_matches_reference(ticks: pd.DataFrame, frequency: 
             "input_rows": ticks.shape[0],
             "result_rows": result.shape[0],
             "frequency": frequency,
-            "tzinfo": str(ticks.index.tzinfo) if isinstance(ticks.index, pd.DatetimeIndex) else None,
+            "tzinfo": (
+                str(ticks.index.tzinfo)
+                if isinstance(ticks.index, pd.DatetimeIndex)
+                else None
+            ),
         },
     )
 
@@ -99,9 +124,13 @@ def test_resample_ticks_to_l1_matches_reference(ticks: pd.DataFrame, frequency: 
 
 
 @seed(property_seed("test_resample_l1_to_ohlcv_preserves_volume"))
-@settings(**property_settings("test_resample_l1_to_ohlcv_preserves_volume", max_examples=70))
+@settings(
+    **property_settings("test_resample_l1_to_ohlcv_preserves_volume", max_examples=70)
+)
 @given(_l1_frames(min_size=2, max_size=60), st.sampled_from(_FREQS))
-def test_resample_l1_to_ohlcv_preserves_volume(l1: pd.DataFrame, frequency: str) -> None:
+def test_resample_l1_to_ohlcv_preserves_volume(
+    l1: pd.DataFrame, frequency: str
+) -> None:
     assume(l1.index.size > 1)
     result = resampling.resample_l1_to_ohlcv(l1, freq=frequency)
     normalised = resampling._ensure_datetime_index(l1)
@@ -125,26 +154,44 @@ def test_resample_l1_to_ohlcv_preserves_volume(l1: pd.DataFrame, frequency: str)
 
 
 @seed(property_seed("test_align_timeframes_ffill_consistency"))
-@settings(**property_settings("test_align_timeframes_ffill_consistency", max_examples=60))
+@settings(
+    **property_settings("test_align_timeframes_ffill_consistency", max_examples=60)
+)
 @given(_tick_frames(min_size=3, max_size=40), st.data())
-def test_align_timeframes_ffill_consistency(base: pd.DataFrame, data: st.DataObject) -> None:
+def test_align_timeframes_ffill_consistency(
+    base: pd.DataFrame, data: st.DataObject
+) -> None:
     normalised = resampling._ensure_datetime_index(base)
-    reference = pd.DataFrame({"ref_price": normalised["price"].values}, index=normalised.index)
+    reference = pd.DataFrame(
+        {"ref_price": normalised["price"].values}, index=normalised.index
+    )
     frame_count = data.draw(st.integers(min_value=1, max_value=4))
     names = [f"frame_{idx}" for idx in range(frame_count)]
     frames: dict[str, pd.DataFrame] = {"reference": reference}
 
     for name in names:
-        chosen_positions = sorted(data.draw(st.sets(st.integers(min_value=0, max_value=normalised.index.size - 1), min_size=1, max_size=normalised.index.size)))
+        chosen_positions = sorted(
+            data.draw(
+                st.sets(
+                    st.integers(min_value=0, max_value=normalised.index.size - 1),
+                    min_size=1,
+                    max_size=normalised.index.size,
+                )
+            )
+        )
         index = normalised.index[chosen_positions]
         values = data.draw(
             st.lists(
-                st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False),
+                st.floats(
+                    min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False
+                ),
                 min_size=len(index),
                 max_size=len(index),
             )
         )
-        frame = pd.DataFrame({f"value_{name}": np.asarray(values, dtype=float)}, index=index)
+        frame = pd.DataFrame(
+            {f"value_{name}": np.asarray(values, dtype=float)}, index=index
+        )
         if data.draw(st.booleans()):
             frame = frame.sort_index(ascending=False)
         frames[name] = frame
@@ -162,14 +209,22 @@ def test_align_timeframes_ffill_consistency(base: pd.DataFrame, data: st.DataObj
             },
         )
         assert frame.index.equals(ref_index)
-        expected = resampling._ensure_datetime_index(frames[key]).reindex(ref_index, method="pad")
+        expected = resampling._ensure_datetime_index(frames[key]).reindex(
+            ref_index, method="pad"
+        )
         tm.assert_frame_equal(frame, expected, check_freq=False)
 
 
 @seed(property_seed("test_resample_order_book_invariants"))
 @settings(**property_settings("test_resample_order_book_invariants", max_examples=70))
-@given(st.integers(min_value=1, max_value=4), _tick_frames(min_size=5, max_size=60), st.sampled_from(_FREQS))
-def test_resample_order_book_invariants(levels: int, base: pd.DataFrame, frequency: str) -> None:
+@given(
+    st.integers(min_value=1, max_value=4),
+    _tick_frames(min_size=5, max_size=60),
+    st.sampled_from(_FREQS),
+)
+def test_resample_order_book_invariants(
+    levels: int, base: pd.DataFrame, frequency: str
+) -> None:
     normalised = resampling._ensure_datetime_index(base)
     prices = normalised["price"].abs() + 1.0
     spreads = np.linspace(0.01, 0.5, levels)
@@ -186,7 +241,9 @@ def test_resample_order_book_invariants(levels: int, base: pd.DataFrame, frequen
 
     book = pd.concat([bids, asks], axis=1)
 
-    result = resampling.resample_order_book(book, freq=frequency, bid_cols=bid_cols, ask_cols=ask_cols)
+    result = resampling.resample_order_book(
+        book, freq=frequency, bid_cols=bid_cols, ask_cols=ask_cols
+    )
 
     regression_note(
         "order_book",
@@ -223,4 +280,3 @@ def test_resample_order_book_invariants(levels: int, base: pd.DataFrame, frequen
     assert np.all(micro_vals[valid] >= bid_vals[valid] - 1e-9)
     assert np.all(micro_vals[valid] <= ask_vals[valid] + 1e-9)
     assert np.all(np.abs(imbalance.values) <= 1.0 + 1e-9)
-

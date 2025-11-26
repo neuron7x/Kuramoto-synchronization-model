@@ -38,7 +38,7 @@ class QuadraticComponent(TrainingComponent):
         self.sequence_lengths.append(inputs.shape[-1])
         preds = inputs @ self.weights
         diff = preds - targets
-        loss = float(np.mean(diff ** 2))
+        loss = float(np.mean(diff**2))
         grad = (inputs.T @ diff) / inputs.shape[0]
         self._grad += grad.astype(np.float32)
         self.forward_calls += 1
@@ -46,7 +46,9 @@ class QuadraticComponent(TrainingComponent):
         metrics = {"grad_norm": grad_norm}
         # Trigger checkpoint if gradient norm explodes for edge cases.
         should_ckpt = not math.isfinite(grad_norm)
-        return TrainingStepResult(loss=loss, metrics=metrics, should_checkpoint=should_ckpt)
+        return TrainingStepResult(
+            loss=loss, metrics=metrics, should_checkpoint=should_ckpt
+        )
 
     def optimizer_step(self) -> None:
         self.weights -= self.lr * self._grad
@@ -71,7 +73,9 @@ class QuadraticComponent(TrainingComponent):
             self._grad = np.concatenate([self._grad, np.zeros_like(pad)])
 
 
-def _build_dataset(samples: int, *, dim: int, noise: float = 0.0) -> list[dict[str, object]]:
+def _build_dataset(
+    samples: int, *, dim: int, noise: float = 0.0
+) -> list[dict[str, object]]:
     rng = np.random.default_rng(42)
     weight = rng.standard_normal(dim)
     data: list[dict[str, object]] = []
@@ -147,7 +151,11 @@ def test_checkpointing_creates_files(tmp_path: Path) -> None:
 
 def test_priority_queue_orders_batches() -> None:
     samples = [
-        TrainingSample(inputs=np.array([priority], dtype=np.float32), target=0.0, metadata={"priority": priority})
+        TrainingSample(
+            inputs=np.array([priority], dtype=np.float32),
+            target=0.0,
+            metadata={"priority": priority},
+        )
         for priority in (0.1, 0.5, 0.3, 0.9)
     ]
     loader = AsyncDataLoader(

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import base64
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
-
-import base64
 
 import jwt
 import pytest
@@ -28,11 +27,10 @@ from application.api.security import (
     require_two_factor,
     verify_request_identity,
 )
-from application.settings import ApiSecuritySettings
 from application.secrets.manager import SecretManagerError
 from application.security.two_factor import generate_totp_code
+from application.settings import ApiSecuritySettings
 from src.admin.remote_control import AdminIdentity
-
 
 TWO_FACTOR_HEADER = "X-Admin-OTP"
 TWO_FACTOR_SECRET = os.environ["TRADEPULSE_TWO_FACTOR_SECRET"]
@@ -214,7 +212,9 @@ async def test_certificate_required_but_missing_is_rejected(
 
 
 @pytest.mark.anyio
-async def test_disallowed_algorithm_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_disallowed_algorithm_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     if hasattr(get_api_security_settings, "_instance"):
         delattr(get_api_security_settings, "_instance")
 
@@ -681,7 +681,9 @@ async def test_two_factor_dependency_rejects_missing_code() -> None:
         await dependency(request, identity)
 
     assert exc.value.status_code == 401
-    assert exc.value.detail == "Two-factor authentication code required for this endpoint."
+    assert (
+        exc.value.detail == "Two-factor authentication code required for this endpoint."
+    )
 
 
 @pytest.mark.anyio

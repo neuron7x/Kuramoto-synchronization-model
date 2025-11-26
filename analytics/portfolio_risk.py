@@ -85,9 +85,9 @@ class StressScenarioResult:
                 "pnl": float(self.pnl),
                 "relative_impact": float(self.relative_impact),
                 "description": self.description,
-                "reference_date": self.reference_date.isoformat()
-                if self.reference_date
-                else None,
+                "reference_date": (
+                    self.reference_date.isoformat() if self.reference_date else None
+                ),
                 "missing_assets": list(self.missing_assets),
                 "contributions": [
                     {"asset": item.asset, "pnl": float(item.pnl)}
@@ -135,9 +135,7 @@ class VolatilityScenarioResult:
                 "volatility_multiplier": float(self.volatility_multiplier),
                 "horizon_days": int(self.horizon_days),
                 "baseline_var": float(self.baseline_var),
-                "baseline_expected_shortfall": float(
-                    self.baseline_expected_shortfall
-                ),
+                "baseline_expected_shortfall": float(self.baseline_expected_shortfall),
                 "projected_var": float(self.projected_var),
                 "projected_expected_shortfall": float(
                     self.projected_expected_shortfall
@@ -157,7 +155,11 @@ class RiskLimitBreach:
 
     def to_dict(self) -> Mapping[str, float | str]:
         return MappingProxyType(
-            {"metric": self.metric, "value": float(self.value), "limit": float(self.limit)}
+            {
+                "metric": self.metric,
+                "value": float(self.value),
+                "limit": float(self.limit),
+            }
         )
 
 
@@ -206,13 +208,10 @@ class PortfolioStressReport:
         lines.append(f"- Portfolio value: ${self.portfolio_value:,.2f}")
         metrics = self.risk_metrics
         lines.append(
-            "- VaR (" +
-            f"{metrics.confidence_level:.2%}, {metrics.horizon_days}-day): ${metrics.var:,.2f}"
+            "- VaR ("
+            + f"{metrics.confidence_level:.2%}, {metrics.horizon_days}-day): ${metrics.var:,.2f}"
         )
-        lines.append(
-            "- Expected Shortfall: "
-            + f"${metrics.expected_shortfall:,.2f}"
-        )
+        lines.append("- Expected Shortfall: " + f"${metrics.expected_shortfall:,.2f}")
         if self.limit_breaches:
             lines.append("- Limit breaches detected:")
             for breach in self.limit_breaches:
@@ -351,9 +350,7 @@ class PortfolioStressTester:
             shock_series = pd.Series(scenario.shocks, dtype=float)
             overlapping = shock_series.index.intersection(exposures.index)
             missing_assets = tuple(sorted(set(exposures.index).difference(overlapping)))
-            contributions = (
-                exposures.loc[overlapping] * shock_series.loc[overlapping]
-            )
+            contributions = exposures.loc[overlapping] * shock_series.loc[overlapping]
             pnl = float(contributions.sum())
             relative = pnl / portfolio_value
             contribution_objects = tuple(
@@ -470,4 +467,3 @@ __all__ = [
     "VolatilityScenario",
     "VolatilityScenarioResult",
 ]
-

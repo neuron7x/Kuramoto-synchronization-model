@@ -73,6 +73,10 @@ class KillSwitchStateRepository(SqlAlchemyRepository[KillSwitchState]):
 
     def ensure_schema(self) -> None:
         try:
-            Base.metadata.create_all(self._session_manager.writer_engine, tables=[KillSwitchState.__table__])
+            Base.metadata.create_all(
+                self._session_manager.writer_engine, tables=[KillSwitchState.__table__]
+            )
         except Exception as exc:  # pragma: no cover - defensive guard for engine issues
-            raise DatabaseError("Failed to initialise kill_switch_state schema") from exc
+            raise DatabaseError(
+                "Failed to initialise kill_switch_state schema"
+            ) from exc

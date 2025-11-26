@@ -41,7 +41,9 @@ class _ControlledClock:
 
 
 @pytest.fixture()
-def store_components(tmp_path: Path) -> Tuple[CentralConfigurationStore, _ControlledClock, _RecordingSink]:
+def store_components(
+    tmp_path: Path,
+) -> Tuple[CentralConfigurationStore, _ControlledClock, _RecordingSink]:
     clock = _ControlledClock()
     storage_path = tmp_path / "vault.json"
     master_key = SecretVault.generate_key()
@@ -116,7 +118,9 @@ def test_namespace_access_hydrated_on_restart(tmp_path: Path):
     audit_logger = AuditLogger(secret="audit-secret-value", sink=audit_sink)
     template_dir = tmp_path / "templates"
     template_dir.mkdir()
-    (template_dir / "config.yaml.j2").write_text("value={{ value }}\n", encoding="utf-8")
+    (template_dir / "config.yaml.j2").write_text(
+        "value={{ value }}\n", encoding="utf-8"
+    )
 
     namespace = NamespaceDefinition(
         name="prod",

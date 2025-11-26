@@ -84,7 +84,9 @@ class TimeSeriesWarehouse(Protocol):
     def backup_plan(self) -> Sequence[BackupStep]:
         """Return the ordered backup and recovery instructions."""
 
-    def ingest_ticks(self, ticks: Sequence["PriceTick"], *, chunk_size: int = 10_000) -> None:
+    def ingest_ticks(
+        self, ticks: Sequence["PriceTick"], *, chunk_size: int = 10_000
+    ) -> None:
         """Persist a batch of tick payloads into the warehouse."""
 
     def ingest_bars(

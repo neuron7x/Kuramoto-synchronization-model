@@ -74,13 +74,16 @@ class RicciFlowRebalancer:
 
         candidate = prev + self._config.step_size * gradient
         candidate = _project_simplex(candidate, lower_bound=self._config.minimum_weight)
-        weights = (1.0 - self._config.turnover_penalty) * candidate + self._config.turnover_penalty * prev
+        weights = (
+            1.0 - self._config.turnover_penalty
+        ) * candidate + self._config.turnover_penalty * prev
         weights = _project_simplex(weights, lower_bound=self._config.minimum_weight)
 
         objective = (
             -ricci_mean
             + self._config.risk_aversion * float(weights @ (cov.to_numpy() @ weights))
-            + self._config.turnover_penalty * float(np.linalg.norm(weights - prev, ord=1))
+            + self._config.turnover_penalty
+            * float(np.linalg.norm(weights - prev, ord=1))
         )
 
         weight_series = pd.Series(weights, index=cov.index, name="weight")
@@ -94,7 +97,9 @@ class RicciFlowRebalancer:
         )
 
 
-def _to_frame(matrix: Mapping[str, Mapping[str, float]] | pd.DataFrame | None) -> pd.DataFrame:
+def _to_frame(
+    matrix: Mapping[str, Mapping[str, float]] | pd.DataFrame | None,
+) -> pd.DataFrame:
     if matrix is None:
         raise ValueError("Matrix is required.")
     if isinstance(matrix, pd.DataFrame):
@@ -131,7 +136,9 @@ def _forman_ricci(correlation: np.ndarray, *, beta: float) -> np.ndarray:
     return curvature
 
 
-def _project_simplex(vector: Iterable[float], *, lower_bound: float = 0.0) -> np.ndarray:
+def _project_simplex(
+    vector: Iterable[float], *, lower_bound: float = 0.0
+) -> np.ndarray:
     x = np.asarray(vector, dtype=float)
     if lower_bound < 0:
         raise ValueError("lower_bound must be non-negative")
@@ -156,4 +163,3 @@ def _project_simplex(vector: Iterable[float], *, lower_bound: float = 0.0) -> np
     # numerical guard in case of small floating-point drift
     projected /= projected.sum()
     return projected
-

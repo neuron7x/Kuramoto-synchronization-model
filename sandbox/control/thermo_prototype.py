@@ -24,8 +24,8 @@ import networkx as nx
 import numpy as np
 
 from core.energy import system_free_energy
-from runtime.thermo_controller import estimate_entropy
 from evolution.crisis_ga import CrisisMode
+from runtime.thermo_controller import estimate_entropy
 
 
 @dataclass(frozen=True)
@@ -346,19 +346,23 @@ def run_backtest_on_synthetic_crises(
 
     # Calculate performance metrics
     true_positives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true != CrisisMode.NORMAL and pred != CrisisMode.NORMAL
     )
     false_positives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true == CrisisMode.NORMAL and pred != CrisisMode.NORMAL
     )
     true_negatives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true == CrisisMode.NORMAL and pred == CrisisMode.NORMAL
     )
     false_negatives = sum(
-        1 for true, pred in zip(crisis_labels, predicted_labels)
+        1
+        for true, pred in zip(crisis_labels, predicted_labels)
         if true != CrisisMode.NORMAL and pred == CrisisMode.NORMAL
     )
 
@@ -407,4 +411,9 @@ def run_backtest_on_synthetic_crises(
     )
 
 
-__all__ = ["run_prototype", "PrototypeResult", "run_backtest_on_synthetic_crises", "BacktestResult"]
+__all__ = [
+    "run_prototype",
+    "PrototypeResult",
+    "run_backtest_on_synthetic_crises",
+    "BacktestResult",
+]

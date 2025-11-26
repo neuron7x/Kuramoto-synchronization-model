@@ -32,10 +32,14 @@ class DesensitizationModule:
         bounds: tuple[float, float] = (0.02, 0.08),
     ) -> Tuple[float, float]:
         self._ei_hist.append(ei_current)
-        sigma_ei = np.std(self._ei_hist) if len(self._ei_hist) > 10 else self.sigma_target
+        sigma_ei = (
+            np.std(self._ei_hist) if len(self._ei_hist) > 10 else self.sigma_target
+        )
         if abs(ei_current - 1.0) > self.reset_eps:
             self.lambda_ = float(
-                np.clip(self.lambda_ + self.mu * (ei_current - 1.0), bounds[0], bounds[1])
+                np.clip(
+                    self.lambda_ + self.mu * (ei_current - 1.0), bounds[0], bounds[1]
+                )
             )
         self.scale = float(self.sigma_target / max(1e-6, sigma_ei))
         return self.scale, self.lambda_

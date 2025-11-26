@@ -3,9 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional
 
-import yaml
-
 import pytest
+import yaml
 
 from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
 from tradepulse.core.neuro.dopamine.action_gate import (
@@ -16,7 +15,6 @@ from tradepulse.core.neuro.dopamine.action_gate import (
 )
 from tradepulse.core.neuro.dopamine.ddm_adapter import DDMThresholds, ddm_thresholds
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
-
 
 SEROTONIN_TEST_CONFIG = {
     "tonic_beta": 0.15,
@@ -81,13 +79,17 @@ def _make_serotonin_snapshot(
 @pytest.fixture()
 def controller(tmp_path: Path) -> DopamineController:
     cfg_target = tmp_path / "dopamine.yaml"
-    cfg_target.write_text(Path("config/dopamine.yaml").read_text(encoding="utf-8"), encoding="utf-8")
+    cfg_target.write_text(
+        Path("config/dopamine.yaml").read_text(encoding="utf-8"), encoding="utf-8"
+    )
     ctrl = DopamineController(str(cfg_target))
     ctrl.dopamine_level = 0.7
     return ctrl
 
 
-def test_gate_respects_release_serotonin_and_gaba(controller: DopamineController) -> None:
+def test_gate_respects_release_serotonin_and_gaba(
+    controller: DopamineController,
+) -> None:
     gate = ActionGate(controller)
 
     serotonin_hold = _make_serotonin_snapshot(hold=True, floor=0.5)
@@ -101,7 +103,9 @@ def test_gate_respects_release_serotonin_and_gaba(controller: DopamineController
     assert eval_closed.temperature >= 0.5 - 1e-9
 
     dopamine_open = _make_dopamine_snapshot(controller, 0.8, release_gate_open=True)
-    eval_serotonin_hold = gate.evaluate(dopamine=dopamine_open, serotonin=serotonin_hold)
+    eval_serotonin_hold = gate.evaluate(
+        dopamine=dopamine_open, serotonin=serotonin_hold
+    )
     assert eval_serotonin_hold.hold is True
     assert eval_serotonin_hold.no_go is True
 
@@ -119,7 +123,9 @@ def test_gate_respects_release_serotonin_and_gaba(controller: DopamineController
     assert eval_gaba.decision == "NO_GO"
 
 
-def test_gate_combines_modulators_for_go_decision(controller: DopamineController) -> None:
+def test_gate_combines_modulators_for_go_decision(
+    controller: DopamineController,
+) -> None:
     logs: List[tuple[str, float]] = []
 
     def capture(name: str, value: float) -> None:
@@ -177,7 +183,9 @@ def test_gate_produces_hold_window(controller: DopamineController) -> None:
 
     dopamine = _make_dopamine_snapshot(controller, 0.5)
     serotonin = _make_serotonin_snapshot(hold=False)
-    na_ach = NAACHSnapshot(arousal=0.4, attention=1.0, risk_multiplier=1.0, temperature_scale=1.0)
+    na_ach = NAACHSnapshot(
+        arousal=0.4, attention=1.0, risk_multiplier=1.0, temperature_scale=1.0
+    )
 
     evaluation = gate.evaluate(dopamine=dopamine, serotonin=serotonin, na_ach=na_ach)
 
@@ -188,7 +196,9 @@ def test_gate_produces_hold_window(controller: DopamineController) -> None:
     assert evaluation.score == pytest.approx(0.5, rel=1e-3)
 
 
-def test_gate_with_real_serotonin_step_api(controller: DopamineController, tmp_path: Path) -> None:
+def test_gate_with_real_serotonin_step_api(
+    controller: DopamineController, tmp_path: Path
+) -> None:
     """Test ActionGate integration with SerotoninController.step() API."""
     sero_cfg = tmp_path / "serotonin.yaml"
     sero_cfg.write_text(yaml.safe_dump(SEROTONIN_TEST_CONFIG), encoding="utf-8")

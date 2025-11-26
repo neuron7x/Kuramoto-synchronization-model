@@ -81,7 +81,9 @@ class TradingSymbolValidator(BaseModel):
 
         for pattern in dangerous_patterns:
             if re.search(pattern, v, re.IGNORECASE):
-                raise ValueError(f"Symbol contains potentially malicious pattern: {pattern}")
+                raise ValueError(
+                    f"Symbol contains potentially malicious pattern: {pattern}"
+                )
 
         return v.upper()
 

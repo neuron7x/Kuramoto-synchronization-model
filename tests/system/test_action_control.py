@@ -8,7 +8,6 @@ import pytest
 
 from src.audit.audit_logger import AuditLogger
 from src.audit.stores import AuditLedgerEntry
-
 from src.system.action_control import (
     ActionClass,
     ActionGovernor,
@@ -62,7 +61,9 @@ def _make_governor(store: _MemoryStore) -> ActionGovernor:
     audit_logger = AuditLogger(secret="test-secret", store=store)
     audit_sink = AuditLoggerActionSink(audit_logger, ip_address="10.0.0.1")
     return ActionGovernor(
-        {"planner": mandate}, tacl_gate=TaclGate(max_free_energy=1.4), audit_sink=audit_sink
+        {"planner": mandate},
+        tacl_gate=TaclGate(max_free_energy=1.4),
+        audit_sink=audit_sink,
     )
 
 

@@ -16,7 +16,9 @@ if str(ROOT) not in sys.path:
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "openapi-generation-secret")
 os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://openapi.tradepulse.local")
 os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
-os.environ.setdefault("TRADEPULSE_OAUTH2_JWKS_URI", "https://openapi.tradepulse.local/jwks")
+os.environ.setdefault(
+    "TRADEPULSE_OAUTH2_JWKS_URI", "https://openapi.tradepulse.local/jwks"
+)
 
 from application.api.service import create_app  # noqa: E402
 

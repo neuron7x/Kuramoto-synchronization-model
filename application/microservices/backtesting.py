@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import (
@@ -15,6 +16,9 @@ from application.microservices.contracts import (
 from application.system import TradePulseSystem
 from application.trading import signal_to_dto
 from domain import Signal
+
+if TYPE_CHECKING:
+    from application.microservices.market_data import MarketDataService
 
 
 @dataclass(slots=True)
@@ -61,7 +65,10 @@ class BacktestingService(Microservice):
         return self._market_data_service
 
     def start(self) -> None:
-        if self._market_data_service is not None and self._market_data_service.state is ServiceState.STOPPED:
+        if (
+            self._market_data_service is not None
+            and self._market_data_service.state is ServiceState.STOPPED
+        ):
             self._market_data_service.start()
         super().start()
 
@@ -102,7 +109,9 @@ class BacktestingService(Microservice):
             signals=signals,
             payloads=payloads,
         )
-        self._last_result = BacktestResult(source=source, strategy_name=strategy_name, run=run)
+        self._last_result = BacktestResult(
+            source=source, strategy_name=strategy_name, run=run
+        )
         self._mark_healthy()
         return run
 
@@ -120,4 +129,6 @@ class BacktestingService(Microservice):
         if self.last_error is not None:
             metadata["last_error"] = self.last_error
         return metadata or None
+
+
 __all__ = ["BacktestingService", "BacktestResult"]

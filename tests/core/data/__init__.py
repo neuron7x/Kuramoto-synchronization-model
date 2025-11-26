@@ -5,4 +5,3 @@ collection.  Declaring this directory as a package ensures that imports use
 the ``tests.core.data`` prefix instead of falling back to the generic
 ``test_*`` module namespace.
 """
-

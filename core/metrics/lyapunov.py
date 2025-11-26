@@ -1,4 +1,5 @@
 """Lyapunov-inspired metrics used by FHMC diagnostics."""
+
 from __future__ import annotations
 
 import numpy as np

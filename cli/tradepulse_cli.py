@@ -7,8 +7,8 @@ import importlib
 import itertools
 import json
 import os
-import shutil
 import shlex
+import shutil
 import subprocess
 import sys
 import threading
@@ -199,7 +199,9 @@ def _run_kubectl(
     except FileNotFoundError as exc:
         raise ComputeError(f"kubectl binary '{binary}' not found") from exc
     except subprocess.CalledProcessError as exc:
-        raise ComputeError(f"kubectl command failed with exit code {exc.returncode}") from exc
+        raise ComputeError(
+            f"kubectl command failed with exit code {exc.returncode}"
+        ) from exc
 
 
 def _load_callable(entrypoint: str) -> Callable[..., Any]:
@@ -266,11 +268,7 @@ def _load_prices(cfg: IngestConfig | BacktestConfig | ExecConfig) -> pd.DataFram
         # already holds.
         frame = frame.sort_values(timestamp_field)
     index = frame.index
-    if not (
-        isinstance(index, pd.RangeIndex)
-        and index.start == 0
-        and index.step == 1
-    ):
+    if not (isinstance(index, pd.RangeIndex) and index.start == 0 and index.step == 1):
         frame = frame.reset_index(drop=True)
     return frame
 
@@ -314,7 +312,11 @@ def _load_fete_inputs(
     else:
         rng = np.random.default_rng(42)
         time_index = np.arange(prices.size)
-        probs = 0.5 + 0.15 * np.sin(time_index / 50.0) + rng.normal(0.0, 0.08, size=prices.size)
+        probs = (
+            0.5
+            + 0.15 * np.sin(time_index / 50.0)
+            + rng.normal(0.0, 0.08, size=prices.size)
+        )
     probs = np.clip(probs, 0.0, 1.0)
     return prices, probs
 
@@ -328,9 +330,9 @@ def _build_parity_spec(spec_cfg: FeatureParitySpecConfig) -> FeatureParitySpec:
         numeric_tolerance=spec_cfg.numeric_tolerance,
         max_clock_skew=spec_cfg.max_clock_skew,
         allow_schema_evolution=spec_cfg.allow_schema_evolution,
-        value_columns=None
-        if spec_cfg.value_columns is None
-        else tuple(spec_cfg.value_columns),
+        value_columns=(
+            None if spec_cfg.value_columns is None else tuple(spec_cfg.value_columns)
+        ),
     )
 
 
@@ -401,9 +403,15 @@ def _load_feature_dataset(path: Path) -> v21.StrictCausalFeatures:
         frame = frame.set_index(ts_col).sort_index()
     if "y" not in frame.columns:
         raise ComputeError("Features CSV must contain a 'y' label column.")
-    feature_cols = [c for c in ("dr", "ricci_mean", "topo_intensity", "causal_strength") if c in frame.columns]
+    feature_cols = [
+        c
+        for c in ("dr", "ricci_mean", "topo_intensity", "causal_strength")
+        if c in frame.columns
+    ]
     if len(feature_cols) != 4:
-        raise ComputeError("Features CSV must include dr, ricci_mean, topo_intensity and causal_strength columns.")
+        raise ComputeError(
+            "Features CSV must include dr, ricci_mean, topo_intensity and causal_strength columns."
+        )
     features = frame[feature_cols]
     labels = frame["y"].astype(int).to_numpy()
     return v21.StrictCausalFeatures(features=features, labels=labels)
@@ -965,13 +973,9 @@ def _emit_parity_summary(report: FeatureParityReport, *, command: str) -> None:
             f"abs={report.clock_skew_abs}"
         )
     if report.columns_added:
-        click.echo(
-            f"[{command}] • columns_added={', '.join(report.columns_added)}"
-        )
+        click.echo(f"[{command}] • columns_added={', '.join(report.columns_added)}")
     if report.columns_removed:
-        click.echo(
-            f"[{command}] • columns_removed={', '.join(report.columns_removed)}"
-        )
+        click.echo(f"[{command}] • columns_removed={', '.join(report.columns_removed)}")
 
 
 @cli.command()
@@ -1166,13 +1170,14 @@ def deploy(
             "annotations": dict(sorted(annotations.items())),
             "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         }
-        summary_path.write_text(json.dumps(summary_payload, indent=2) + "\n", encoding="utf-8")
+        summary_path.write_text(
+            json.dumps(summary_payload, indent=2) + "\n", encoding="utf-8"
+        )
         click.echo(f"[{command}] • wrote deployment summary to {summary_path}")
 
     click.echo(
         f"[{command}] completed environment={cfg.environment.value} deployment={cfg.deployment_name}"
     )
-
 
 
 @cli.command()
@@ -1279,7 +1284,10 @@ def fete_backtest(
     audit = report.audit
     click.echo(
         "Audit  → Brier: {brier:.4f}  ECE: {ece:.4f}  Entropy: {entropy:.3f}  τ: {tau:.3f}".format(
-            brier=audit["brier"], ece=audit["ece"], entropy=audit["entropy"], tau=audit["tau"]
+            brier=audit["brier"],
+            ece=audit["ece"],
+            entropy=audit["entropy"],
+            tau=audit["tau"],
         )
     )
     if risk_guard.circuit_breaker_active:
@@ -1287,7 +1295,9 @@ def fete_backtest(
     if report.risk_events:
         click.echo("Risk events:")
         for event in report.risk_events[-5:]:
-            click.echo(f"  {event.timestamp.isoformat()} • {event.code} • {event.message}")
+            click.echo(
+                f"  {event.timestamp.isoformat()} • {event.code} • {event.message}"
+            )
 
     if out_path is not None:
         curve = pd.DataFrame(
@@ -1312,10 +1322,27 @@ def fete_backtest(
     type=click.Path(exists=True, path_type=Path),
     help="CSV file with precomputed features and labels.",
 )
-@click.option("--window", default=252, show_default=True, help="Rolling window length for feature generation.")
-@click.option("--horizon", default=5, show_default=True, help="Forward horizon (in periods) for labels.")
-@click.option("--lambda-base", default=0.6, show_default=True, help="Ensemble weight for the base calibrated probability.")
-@click.option("--hmm-states", type=click.Choice(["2", "3"]), default="2", show_default=True)
+@click.option(
+    "--window",
+    default=252,
+    show_default=True,
+    help="Rolling window length for feature generation.",
+)
+@click.option(
+    "--horizon",
+    default=5,
+    show_default=True,
+    help="Forward horizon (in periods) for labels.",
+)
+@click.option(
+    "--lambda-base",
+    default=0.6,
+    show_default=True,
+    help="Ensemble weight for the base calibrated probability.",
+)
+@click.option(
+    "--hmm-states", type=click.Choice(["2", "3"]), default="2", show_default=True
+)
 @click.option(
     "--output",
     type=click.Path(path_type=Path),
@@ -1334,7 +1361,9 @@ def causal_pipeline(
 
     command = "causal-pipeline"
     if bool(returns_csv) == bool(features_csv):
-        raise click.UsageError("Provide exactly one of --returns-csv or --features-csv.")
+        raise click.UsageError(
+            "Provide exactly one of --returns-csv or --features-csv."
+        )
 
     feature_builder = v21.StrictCausalFeatureBuilder(
         v21.FeatureBuilderConfig(window=window, horizon=horizon)
@@ -1391,4 +1420,3 @@ DEFAULT_OVERLAY_NAMES = {
     "stage": "staging",
     "prod": "production",
 }
-

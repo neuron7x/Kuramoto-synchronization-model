@@ -24,7 +24,9 @@ class MessageBroker(Protocol):
     async def stop(self) -> None:  # pragma: no cover - protocol definition
         """Release broker resources and close network connections."""
 
-    async def publish(self, message: BrokerMessage) -> None:  # pragma: no cover - protocol definition
+    async def publish(
+        self, message: BrokerMessage
+    ) -> None:  # pragma: no cover - protocol definition
         """Publish ``message`` to the broker."""
 
 
@@ -92,7 +94,9 @@ class KafkaMessageBroker:
         if send is None:
             raise RuntimeError("Kafka producer does not implement send/send_and_wait")
         headers = message.headers or {}
-        encoded_headers = tuple((key, value.encode("utf-8")) for key, value in headers.items())
+        encoded_headers = tuple(
+            (key, value.encode("utf-8")) for key, value in headers.items()
+        )
         result = send(message.topic, message.payload, headers=encoded_headers)
         if isinstance(result, Awaitable):
             await result
@@ -139,14 +143,20 @@ class RabbitMQMessageBroker:
 
     async def publish(self, message: BrokerMessage) -> None:
         if self._exchange is None:
-            raise RuntimeError("RabbitMQMessageBroker.start must be awaited before publishing")
+            raise RuntimeError(
+                "RabbitMQMessageBroker.start must be awaited before publishing"
+            )
         payload = message.payload
         headers = dict(message.headers or {})
         module = _import_aio_pika()
-        amqp_message = module.Message(payload, headers=headers, content_type="application/json")
+        amqp_message = module.Message(
+            payload, headers=headers, content_type="application/json"
+        )
         routing_key = message.topic or self._routing_key
         if routing_key is None:
-            raise ValueError("routing_key must be provided when publishing RabbitMQ messages")
+            raise ValueError(
+                "routing_key must be provided when publishing RabbitMQ messages"
+            )
         await self._exchange.publish(amqp_message, routing_key=routing_key)
 
 

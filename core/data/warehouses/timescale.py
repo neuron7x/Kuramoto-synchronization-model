@@ -55,7 +55,9 @@ class _TimescaleIdentifiers:
     def from_config(cls, config: TimescaleConfig) -> "_TimescaleIdentifiers":
         schema = ensure_identifier(config.schema, label="Timescale schema")
         raw_table = ensure_identifier(config.raw_table, label="Timescale raw table")
-        rollup_table = ensure_identifier(config.rollup_table, label="Timescale rollup table")
+        rollup_table = ensure_identifier(
+            config.rollup_table, label="Timescale rollup table"
+        )
         schema_prefix = "" if schema == "public" else schema + "."
         raw_qualified = schema_prefix + raw_table
         rollup_qualified = schema_prefix + rollup_table
@@ -134,11 +136,15 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
         policy_lines = [
             "CREATE INDEX IF NOT EXISTS " + ids.raw_table + "_symbol_ts_idx",
             "    ON " + ids.raw_qualified + " (symbol, ts DESC);",
-            "SELECT add_retention_policy(" + raw_literal + ", INTERVAL '"
+            "SELECT add_retention_policy("
+            + raw_literal
+            + ", INTERVAL '"
             + str(cfg.retention_days)
             + " days');",
             "ALTER TABLE " + ids.raw_qualified + " SET (timescaledb.compress);",
-            "ALTER TABLE " + ids.raw_qualified + " SET (timescaledb.compress_segmentby = 'symbol');",
+            "ALTER TABLE "
+            + ids.raw_qualified
+            + " SET (timescaledb.compress_segmentby = 'symbol');",
             "SELECT add_compression_policy(" + raw_literal + ", INTERVAL '7 days');",
         ]
         raw_policies = WarehouseStatement(
@@ -172,7 +178,9 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
             "    start_offset => INTERVAL '2 days',",
             "    end_offset => INTERVAL '5 minutes',",
             "    schedule_interval => INTERVAL '1 minute');",
-            "SELECT add_retention_policy(" + rollup_literal + ", INTERVAL '"
+            "SELECT add_retention_policy("
+            + rollup_literal
+            + ", INTERVAL '"
             + str(cfg.rollup_retention_days)
             + " days');",
         ]
@@ -194,7 +202,9 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
         ids = self._identifiers
         statement = WarehouseStatement(
             "refresh continuous aggregate",
-            "CALL refresh_continuous_aggregate(" + literal(ids.rollup_qualified) + ", NULL, NULL);",
+            "CALL refresh_continuous_aggregate("
+            + literal(ids.rollup_qualified)
+            + ", NULL, NULL);",
         )
         return (
             RollupJob(
@@ -211,7 +221,9 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
                 name="timescale-reorder-chunks",
                 statement=WarehouseStatement(
                     "reorder chunks by symbol",
-                    "CALL reorder_chunks(" + literal(ids.raw_qualified) + ", 'symbol, ts DESC');",
+                    "CALL reorder_chunks("
+                    + literal(ids.raw_qualified)
+                    + ", 'symbol, ts DESC');",
                 ),
                 cadence="daily",
             ),
@@ -321,7 +333,9 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
         )
 
     # -- Ingestion ------------------------------------------------------------
-    def ingest_ticks(self, ticks: Sequence[PriceTick], *, chunk_size: int | None = None) -> None:
+    def ingest_ticks(
+        self, ticks: Sequence[PriceTick], *, chunk_size: int | None = None
+    ) -> None:
         if not ticks:
             return
         chunk_limit = self._batch_size if chunk_size is None else chunk_size
@@ -360,7 +374,9 @@ class TimescaleWarehouse(TimeSeriesWarehouse):
             raise
 
 
-def _chunk_iterable(items: Iterable[PriceTick], size: int) -> Iterable[Sequence[PriceTick]]:
+def _chunk_iterable(
+    items: Iterable[PriceTick], size: int
+) -> Iterable[Sequence[PriceTick]]:
     batch: list[PriceTick] = []
     for item in items:
         batch.append(item)

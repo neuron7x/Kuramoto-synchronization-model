@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -12,9 +14,6 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
-import logging
-import os
-
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-tests-placeholder")
 
 _audit_logger = logging.getLogger("tradepulse.audit")
@@ -22,16 +21,15 @@ if not _audit_logger.handlers:
     _audit_logger.addHandler(logging.NullHandler())
 _audit_logger.propagate = False
 
-from application.api.service import (
+from application.api.service import (  # noqa: E402 - must follow env setup
     FeatureRequest,
     FeatureResponse,
     PredictionRequest,
     PredictionResponse,
 )
-from core.data.models import InstrumentType
-from core.messaging.event_bus import EventTopic
-from domain import Signal, SignalAction
-
+from core.data.models import InstrumentType  # noqa: E402
+from core.messaging.event_bus import EventTopic  # noqa: E402
+from domain import Signal, SignalAction  # noqa: E402
 
 StrategyCallable = Callable[[np.ndarray], np.ndarray]
 
@@ -313,14 +311,18 @@ class MarketTickEvent(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     market: str | None = None
 
-    model_config = ConfigDict(json_schema_extra={"example": {
-        "symbol": "BTC-USD",
-        "venue": "binance",
-        "price": 42001.52,
-        "volume": 1.25,
-        "timestamp": "2025-01-01T00:00:00Z",
-        "market": "spot",
-    }})
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTC-USD",
+                "venue": "binance",
+                "price": 42001.52,
+                "volume": 1.25,
+                "timestamp": "2025-01-01T00:00:00Z",
+                "market": "spot",
+            }
+        }
+    )
 
 
 class FeatureVectorComputedEvent(BaseModel):
@@ -329,12 +331,16 @@ class FeatureVectorComputedEvent(BaseModel):
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     feature_window: str | None = None
 
-    model_config = ConfigDict(json_schema_extra={"example": {
-        "symbol": "BTC-USD",
-        "feature_keys": ["macd", "rsi"],
-        "generated_at": "2025-01-01T00:00:30Z",
-        "feature_window": "5m",
-    }})
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTC-USD",
+                "feature_keys": ["macd", "rsi"],
+                "generated_at": "2025-01-01T00:00:30Z",
+                "feature_window": "5m",
+            }
+        }
+    )
 
 
 class SignalGeneratedEvent(BaseModel):
@@ -344,13 +350,17 @@ class SignalGeneratedEvent(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     rationale: str | None = None
 
-    model_config = ConfigDict(json_schema_extra={"example": {
-        "symbol": "BTC-USD",
-        "action": SignalAction.BUY,
-        "confidence": 0.76,
-        "timestamp": "2025-01-01T00:00:30Z",
-        "rationale": "Composite signal from Kuramoto pipeline",
-    }})
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTC-USD",
+                "action": SignalAction.BUY,
+                "confidence": 0.76,
+                "timestamp": "2025-01-01T00:00:30Z",
+                "rationale": "Composite signal from Kuramoto pipeline",
+            }
+        }
+    )
 
 
 class OrderSubmittedEvent(BaseModel):
@@ -363,16 +373,20 @@ class OrderSubmittedEvent(BaseModel):
     submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     correlation_id: str | None = None
 
-    model_config = ConfigDict(json_schema_extra={"example": {
-        "symbol": "BTCUSDT",
-        "venue": "binance",
-        "quantity": 0.5,
-        "side": "buy",
-        "order_type": "limit",
-        "price": 42010.5,
-        "submitted_at": "2025-01-01T00:00:32Z",
-        "correlation_id": "btc-1700000000",
-    }})
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTCUSDT",
+                "venue": "binance",
+                "quantity": 0.5,
+                "side": "buy",
+                "order_type": "limit",
+                "price": 42010.5,
+                "submitted_at": "2025-01-01T00:00:32Z",
+                "correlation_id": "btc-1700000000",
+            }
+        }
+    )
 
 
 class OrderFillEvent(BaseModel):
@@ -385,16 +399,20 @@ class OrderFillEvent(BaseModel):
     fill_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     correlation_id: str | None = None
 
-    model_config = ConfigDict(json_schema_extra={"example": {
-        "symbol": "BTCUSDT",
-        "venue": "binance",
-        "fill_price": 42011.0,
-        "fill_quantity": 0.5,
-        "remaining_quantity": 0.0,
-        "side": "buy",
-        "fill_timestamp": "2025-01-01T00:00:35Z",
-        "correlation_id": "btc-1700000000",
-    }})
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTCUSDT",
+                "venue": "binance",
+                "fill_price": 42011.0,
+                "fill_quantity": 0.5,
+                "remaining_quantity": 0.0,
+                "side": "buy",
+                "fill_timestamp": "2025-01-01T00:00:35Z",
+                "correlation_id": "btc-1700000000",
+            }
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -447,15 +465,21 @@ class IntegrationContractRegistry:
     # Introspection --------------------------------------------------------
     def snapshot(self) -> dict[str, Any]:
         return {
-            "api": {name: self._api_metadata(contract) for name, contract in self._api.items()},
+            "api": {
+                name: self._api_metadata(contract)
+                for name, contract in self._api.items()
+            },
             "events": {
-                name: self._event_metadata(contract) for name, contract in self._events.items()
+                name: self._event_metadata(contract)
+                for name, contract in self._events.items()
             },
             "queues": {
-                name: self._queue_metadata(contract) for name, contract in self._queues.items()
+                name: self._queue_metadata(contract)
+                for name, contract in self._queues.items()
             },
             "services": {
-                name: self._service_metadata(contract) for name, contract in self._services.items()
+                name: self._service_metadata(contract)
+                for name, contract in self._services.items()
             },
         }
 
@@ -568,7 +592,9 @@ def default_contract_registry() -> IntegrationContractRegistry:
         path="/api/v1/features",
         request_model=FeatureRequest,
         response_model=FeatureResponse,
-        versioning=VersioningPolicy(scheme="semver", current="1.2.0", compatible_since="1.0.0"),
+        versioning=VersioningPolicy(
+            scheme="semver", current="1.2.0", compatible_since="1.0.0"
+        ),
         authorization=service_jwt,
         idempotency=api_idempotency,
         retry_policy=api_retry,
@@ -593,7 +619,9 @@ def default_contract_registry() -> IntegrationContractRegistry:
         path="/api/v1/predictions",
         request_model=PredictionRequest,
         response_model=PredictionResponse,
-        versioning=VersioningPolicy(scheme="semver", current="1.2.0", compatible_since="1.0.0"),
+        versioning=VersioningPolicy(
+            scheme="semver", current="1.2.0", compatible_since="1.0.0"
+        ),
         authorization=service_jwt,
         idempotency=api_idempotency,
         retry_policy=api_retry,
@@ -742,9 +770,13 @@ def default_contract_registry() -> IntegrationContractRegistry:
         ServiceInteractionContract(
             name="tradepulse.service.market-data.ingest",
             operation="ingest",
-            versioning=VersioningPolicy(scheme="semver", current="1.1.0", compatible_since="1.0.0"),
+            versioning=VersioningPolicy(
+                scheme="semver", current="1.1.0", compatible_since="1.0.0"
+            ),
             authorization=internal_service,
-            retry_policy=RetryPolicy(max_attempts=3, initial_interval_seconds=0.5, max_interval_seconds=4.0),
+            retry_policy=RetryPolicy(
+                max_attempts=3, initial_interval_seconds=0.5, max_interval_seconds=4.0
+            ),
             sla=ingest_sla,
             observability=ObservabilityPolicy(
                 span_name="service.market_data.ingest",
@@ -809,10 +841,14 @@ def default_contract_registry() -> IntegrationContractRegistry:
         ServiceInteractionContract(
             name="tradepulse.service.execution.submit",
             operation="submit",
-            versioning=VersioningPolicy(scheme="semver", current="1.1.0", compatible_since="1.0.0"),
+            versioning=VersioningPolicy(
+                scheme="semver", current="1.1.0", compatible_since="1.0.0"
+            ),
             authorization=internal_service,
             idempotency=IdempotencyPolicy(key="idempotency_key", ttl_seconds=3600),
-            retry_policy=RetryPolicy(max_attempts=3, initial_interval_seconds=0.5, max_interval_seconds=5.0),
+            retry_policy=RetryPolicy(
+                max_attempts=3, initial_interval_seconds=0.5, max_interval_seconds=5.0
+            ),
             sla=ServiceLevelAgreement(
                 name="execution.submit",
                 indicators=(

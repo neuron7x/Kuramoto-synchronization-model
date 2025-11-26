@@ -4,6 +4,7 @@ These helpers normalise incoming series and compute lightweight signals for
 runtime anomaly detection.  They intentionally avoid heavier dependencies so
 they can run inside tight control loops.
 """
+
 from __future__ import annotations
 
 import numpy as np

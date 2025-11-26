@@ -125,7 +125,9 @@ def test_execute_order_defaults_to_normalized_quantity() -> None:
     "execution_price,executed_quantity",
     [(-1.0, 0.01), (10.0, 0.0), (10.0, 0.02)],
 )
-def test_execute_order_validation(execution_price: float, executed_quantity: float) -> None:
+def test_execute_order_validation(
+    execution_price: float, executed_quantity: float
+) -> None:
     connector = _DummyConnector()
     engine = PaperTradingEngine(connector)
     order = _order()
@@ -150,4 +152,3 @@ def test_execute_order_validation(execution_price: float, executed_quantity: flo
                 execution_price=execution_price,
                 executed_quantity=executed_quantity,
             )
-

@@ -110,7 +110,9 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
         self._logger = logger or logging.getLogger("tradepulse.audit.access")
         self._service = service
         headers = capture_headers or ("x-request-id", "x-correlation-id")
-        self._capture_headers = tuple({header.lower(): header for header in headers}.values())
+        self._capture_headers = tuple(
+            {header.lower(): header for header in headers}.values()
+        )
 
     async def dispatch(self, request: Request, call_next) -> Response:
         request_id = None

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Dict, Iterable, Tuple
-import math
 
 from .manager import DesensitizationConfig, DesensitizationManager
 
@@ -30,7 +30,9 @@ class DesensitizationGate:
         core_config: DesensitizationConfig | None = None,
         cfg: DesensitizationGateConfig | None = None,
     ) -> None:
-        self.core = core or DesensitizationManager(core_config or DesensitizationConfig())
+        self.core = core or DesensitizationManager(
+            core_config or DesensitizationConfig()
+        )
         self.cfg = cfg or DesensitizationGateConfig()
 
     def step(

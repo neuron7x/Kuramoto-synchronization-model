@@ -49,9 +49,9 @@ def test_calculate_position_size_guards_invalid_inputs() -> None:
 
     assert calculate_position_size(balance=0.0, risk=0.1, price=100.0) == 0.0
     assert calculate_position_size(balance=1_000.0, risk=-1.0, price=100.0) == 0.0
-    assert calculate_position_size(balance=1_000.0, risk=10.0, price=100.0) == pytest.approx(
-        10.0
-    )
+    assert calculate_position_size(
+        balance=1_000.0, risk=10.0, price=100.0
+    ) == pytest.approx(10.0)
 
 
 def test_size_rejects_non_positive_price() -> None:

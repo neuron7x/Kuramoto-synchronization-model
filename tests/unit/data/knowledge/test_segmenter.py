@@ -54,7 +54,9 @@ def test_segmenter_respects_token_window_and_overlap() -> None:
 
 
 def test_bulk_segment_concatenates_results_in_document_order() -> None:
-    segmenter = DocumentSegmenter(SegmentationConfig(max_segment_tokens=3, overlap_tokens=0))
+    segmenter = DocumentSegmenter(
+        SegmentationConfig(max_segment_tokens=3, overlap_tokens=0)
+    )
     doc_a = _make_document(document_id="doc-A", content="one two three four")
     doc_b = _make_document(document_id="doc-B", content="five six seven eight")
 

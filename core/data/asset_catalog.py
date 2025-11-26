@@ -262,7 +262,9 @@ class AssetCatalog:
         self._bind_symbol(asset, new_symbol, venue=normalised_venue)
         return asset
 
-    def mark_delisted(self, asset_id: str, *, when: datetime | None = None) -> AssetRecord:
+    def mark_delisted(
+        self, asset_id: str, *, when: datetime | None = None
+    ) -> AssetRecord:
         asset = self._get_asset(asset_id)
         asset.set_status(AssetStatus.DELISTED, when=when)
         return asset
@@ -359,4 +361,3 @@ class AssetCatalog:
         for asset in self._assets.values():
             if status is None or asset.status == status:
                 yield asset
-

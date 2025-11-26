@@ -34,7 +34,9 @@ def plot_entropy_and_correlation(
 
     fig, (ax_entropy, ax_corr) = plt.subplots(1, 2, figsize=(12, 5))
     ax_entropy.bar(np.arange(len(features)) - 0.15, pre_entropy, width=0.3, label="pre")
-    ax_entropy.bar(np.arange(len(features)) + 0.15, post_entropy, width=0.3, label="post")
+    ax_entropy.bar(
+        np.arange(len(features)) + 0.15, post_entropy, width=0.3, label="post"
+    )
     ax_entropy.set_title("Feature entropy")
     ax_entropy.legend()
 
@@ -63,7 +65,10 @@ def plot_metrics(
     post_tail = _upper_tail_mean(post_target)
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    bars = ax.bar(["pre_snr", "post_snr", "pre_tail", "post_tail"], [pre_snr, post_snr, pre_tail, post_tail])
+    bars = ax.bar(
+        ["pre_snr", "post_snr", "pre_tail", "post_tail"],
+        [pre_snr, post_snr, pre_tail, post_tail],
+    )
     ax.bar_label(bars, fmt="%.4f")
     ax.set_title("VLPO filter metrics")
     fig.tight_layout()

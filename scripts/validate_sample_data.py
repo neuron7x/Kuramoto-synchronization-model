@@ -150,7 +150,9 @@ def _parse_artifact_specs(
     raw_artifacts = front_matter.get("artifacts")
     if raw_artifacts is None:
         raise ValidationError("front matter missing 'artifacts' list")
-    if not isinstance(raw_artifacts, Sequence) or isinstance(raw_artifacts, (str, bytes)):
+    if not isinstance(raw_artifacts, Sequence) or isinstance(
+        raw_artifacts, (str, bytes)
+    ):
         raise ValidationError("'artifacts' must be a sequence of mappings")
 
     specs: list[ArtifactSpec] = []
@@ -166,7 +168,10 @@ def _parse_artifact_specs(
             raise ValidationError(f"artifacts[{index}] has invalid 'path'")
         if not isinstance(checksum_value, str) or not checksum_value.strip():
             raise ValidationError(f"artifacts[{index}] has invalid 'checksum'")
-        algorithm, digest = _normalise_checksum(checksum_value, algorithm_value if isinstance(algorithm_value, str) else None)
+        algorithm, digest = _normalise_checksum(
+            checksum_value,
+            algorithm_value if isinstance(algorithm_value, str) else None,
+        )
 
         size_bytes: int | None
         if size_value is None:
@@ -242,7 +247,12 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
         specs = _parse_artifact_specs(path, front_matter)
     except ValidationError as exc:
         errors.append(str(exc))
-        return ContractReport(path=path, artifacts=tuple(artifacts), errors=tuple(errors), warnings=tuple(warnings))
+        return ContractReport(
+            path=path,
+            artifacts=tuple(artifacts),
+            errors=tuple(errors),
+            warnings=tuple(warnings),
+        )
 
     for spec in specs:
         artifact_errors: list[str] = []
@@ -252,7 +262,9 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
         actual_size: int | None = None
 
         try:
-            resolved = _resolve_artifact_path(spec, contract_path=path, repo_root=repo_root)
+            resolved = _resolve_artifact_path(
+                spec, contract_path=path, repo_root=repo_root
+            )
         except ValidationError as exc:
             artifact_errors.append(str(exc))
             artifacts.append(
@@ -274,7 +286,9 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
             try:
                 actual_checksum = _compute_checksum(resolved, spec.algorithm)
             except (OSError, ValueError) as exc:
-                artifact_errors.append(f"failed to compute checksum for {resolved}: {exc}")
+                artifact_errors.append(
+                    f"failed to compute checksum for {resolved}: {exc}"
+                )
 
             if actual_checksum and actual_checksum.lower() != spec.digest:
                 artifact_errors.append(
@@ -324,7 +338,9 @@ def discover_contracts(
     return discovered
 
 
-def validate_contracts(paths: Iterable[Path], *, repo_root: Path) -> list[ContractReport]:
+def validate_contracts(
+    paths: Iterable[Path], *, repo_root: Path
+) -> list[ContractReport]:
     """Validate multiple contracts returning per-contract reports."""
 
     reports: list[ContractReport] = []
@@ -333,10 +349,14 @@ def validate_contracts(paths: Iterable[Path], *, repo_root: Path) -> list[Contra
     return reports
 
 
-def _render_text_report(reports: Sequence[ContractReport], *, warn_as_error: bool) -> str:
+def _render_text_report(
+    reports: Sequence[ContractReport], *, warn_as_error: bool
+) -> str:
     lines: list[str] = []
     for report in reports:
-        status = "OK" if report.valid(treat_warnings_as_errors=warn_as_error) else "FAIL"
+        status = (
+            "OK" if report.valid(treat_warnings_as_errors=warn_as_error) else "FAIL"
+        )
         lines.append(f"[{status}] {report.path}")
         for error in report.errors:
             lines.append(f"  ERROR: {error}")
@@ -368,7 +388,9 @@ def _render_json_report(reports: Sequence[ContractReport]) -> str:
             "artifacts": [
                 {
                     "path": str(artifact.spec.path),
-                    "resolved_path": str(artifact.resolved_path) if artifact.resolved_path else None,
+                    "resolved_path": (
+                        str(artifact.resolved_path) if artifact.resolved_path else None
+                    ),
                     "algorithm": artifact.spec.algorithm,
                     "expected_digest": artifact.spec.digest,
                     "actual_checksum": artifact.actual_checksum,
@@ -428,7 +450,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(output)
 
     treat_warnings_as_errors = args.fail_on_warning
-    if reports and all(report.valid(treat_warnings_as_errors=treat_warnings_as_errors) for report in reports):
+    if reports and all(
+        report.valid(treat_warnings_as_errors=treat_warnings_as_errors)
+        for report in reports
+    ):
         return 0
     if not reports:
         # No contracts found is treated as success to keep the script usable in new repositories.

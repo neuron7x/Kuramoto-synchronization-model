@@ -2,22 +2,21 @@
 
 from __future__ import annotations
 
+import math
+import random
+import time
 from collections import deque
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
 from enum import Enum
-import math
-import random
-import time
 from typing import Any, Callable, Iterator, Mapping, MutableMapping, Sequence, TypeVar
-
-from observability.tracing import Status, StatusCode, get_tracer
 
 from application.microservices.contracts import (
     RetryPolicy,
     ServiceInteractionContract,
     ServiceLevelAgreement,
 )
+from observability.tracing import Status, StatusCode, get_tracer
 
 T = TypeVar("T")
 
@@ -50,9 +49,7 @@ class Microservice:
         self._last_error: str | None = None
         self._tracer = get_tracer(f"tradepulse.microservice.{name}")
         self._operation_stats: MutableMapping[str, _OperationStats] = {}
-        self._operation_contracts: MutableMapping[
-            str, ServiceInteractionContract
-        ] = {}
+        self._operation_contracts: MutableMapping[str, ServiceInteractionContract] = {}
 
     @property
     def name(self) -> str:
@@ -123,9 +120,7 @@ class Microservice:
         attributes: Mapping[str, Any] | None = None,
     ) -> Iterator[Any]:
         tracer_cm = getattr(self._tracer, "start_as_current_span", None)
-        context = (
-            tracer_cm(f"{self._name}.{operation}") if tracer_cm else nullcontext()
-        )
+        context = tracer_cm(f"{self._name}.{operation}") if tracer_cm else nullcontext()
         start = time.perf_counter()
         success = False
         error: Exception | None = None
@@ -236,7 +231,9 @@ class _OperationStats:
     replays: int = 0
     last_error: str | None = None
 
-    def record(self, duration: float, success: bool, *, error: Exception | None) -> None:
+    def record(
+        self, duration: float, success: bool, *, error: Exception | None
+    ) -> None:
         self.latencies.append(duration)
         if success:
             self.successes += 1

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+import os
 import sys
 from argparse import Namespace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Sequence
-
-import os
-import sys
 
 os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "audit-secret-placeholder-1234")
@@ -24,7 +22,9 @@ def _create_fake_venv(venv_path: Path) -> None:
     (venv_path / "pyvenv.cfg").write_text("home = python\n", encoding="utf-8")
 
 
-def test_execute_installs_requested_tooling(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_execute_installs_requested_tooling(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     venv_path = tmp_path / ".venv"
     requirements = tmp_path / "requirements.lock"
     requirements.write_text("numpy==1.26.0\n", encoding="utf-8")
@@ -38,14 +38,20 @@ def test_execute_installs_requested_tooling(tmp_path: Path, monkeypatch: pytest.
 
     executed: list[tuple[tuple[str, ...], Path | None]] = []
 
-    def fake_run(command: Sequence[str], *, cwd: Path | None = None, **_: object) -> SimpleNamespace:
+    def fake_run(
+        command: Sequence[str], *, cwd: Path | None = None, **_: object
+    ) -> SimpleNamespace:
         executed.append((tuple(command), cwd))
         if "venv" in command:
             _create_fake_venv(venv_path)
         return SimpleNamespace(returncode=0)
 
     monkeypatch.setattr(bootstrap, "run_subprocess", fake_run)
-    monkeypatch.setattr(bootstrap.shutil, "which", lambda tool: f"/usr/bin/{tool}" if tool == "npm" else None)
+    monkeypatch.setattr(
+        bootstrap.shutil,
+        "which",
+        lambda tool: f"/usr/bin/{tool}" if tool == "npm" else None,
+    )
 
     config = bootstrap.BootstrapConfig(
         python=Path(sys.executable),
@@ -70,7 +76,16 @@ def test_execute_installs_requested_tooling(tmp_path: Path, monkeypatch: pytest.
     venv_python = bootstrap._venv_python_path(venv_path)
     expected_commands = [
         (str(Path(sys.executable)), "-m", "venv", str(venv_path)),
-        (str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"),
+        (
+            str(venv_python),
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            "pip",
+            "setuptools",
+            "wheel",
+        ),
         (str(venv_python), "-m", "pip", "install", "-r", str(requirements)),
         (str(venv_python), "-m", "pip", "install", "-r", str(dev_requirements)),
         (str(venv_python), "-m", "pip", "install", ".[connectors,gpu]"),
@@ -109,7 +124,9 @@ def test_build_config_validates_missing_requirements(tmp_path: Path) -> None:
         bootstrap._build_config(args)
 
 
-def test_build_config_appends_default_requirements(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_build_config_appends_default_requirements(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     default_requirements = tmp_path / "requirements.lock"
     default_requirements.write_text("base==1.0\n", encoding="utf-8")
     extra_requirements = tmp_path / "local.lock"
@@ -143,7 +160,9 @@ def test_build_config_appends_default_requirements(tmp_path: Path, monkeypatch: 
     )
 
 
-def test_execute_skips_virtualenv_when_present(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_execute_skips_virtualenv_when_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     venv_path = tmp_path / ".venv"
     _create_fake_venv(venv_path)
 
@@ -178,7 +197,9 @@ def test_execute_skips_virtualenv_when_present(tmp_path: Path, monkeypatch: pyte
     assert all("venv" not in command for command in calls)
 
 
-def test_execute_runs_readiness_and_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_execute_runs_readiness_and_smoke(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     venv_path = tmp_path / ".venv"
     sample = tmp_path / "sample.csv"
     sample.write_text("timestamp,close\n2024-01-01,1\n", encoding="utf-8")
@@ -187,7 +208,9 @@ def test_execute_runs_readiness_and_smoke(tmp_path: Path, monkeypatch: pytest.Mo
 
     executed: list[tuple[tuple[str, ...], Path | None]] = []
 
-    def fake_run(command: Sequence[str], *, cwd: Path | None = None, **_: object) -> SimpleNamespace:
+    def fake_run(
+        command: Sequence[str], *, cwd: Path | None = None, **_: object
+    ) -> SimpleNamespace:
         executed.append((tuple(command), cwd))
         return SimpleNamespace(returncode=0)
 
@@ -219,4 +242,3 @@ def test_execute_runs_readiness_and_smoke(tmp_path: Path, monkeypatch: pytest.Mo
     commands_only = [entry[0] for entry in executed]
     assert (str(venv_python), "-m", "pip", "check") in commands_only
     assert any("interfaces.cli" in cmd for cmd in commands_only)
-

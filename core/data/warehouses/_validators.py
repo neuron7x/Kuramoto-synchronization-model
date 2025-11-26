@@ -1,6 +1,5 @@
 """Validation helpers to harden SQL identifier handling."""
 
-
 from __future__ import annotations
 
 import re

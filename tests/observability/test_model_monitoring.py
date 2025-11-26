@@ -44,11 +44,15 @@ def metrics_registry(monkeypatch: pytest.MonkeyPatch) -> CollectorRegistry:
     monkeypatch.setattr(metrics_module, "_collector", None, raising=False)
 
 
-def _sample(registry: CollectorRegistry, name: str, labels: dict[str, str]) -> float | None:
+def _sample(
+    registry: CollectorRegistry, name: str, labels: dict[str, str]
+) -> float | None:
     return registry.get_sample_value(name, labels)
 
 
-def test_trace_inference_records_metrics(metrics_registry: CollectorRegistry, tmp_path) -> None:
+def test_trace_inference_records_metrics(
+    metrics_registry: CollectorRegistry, tmp_path
+) -> None:
     clock = FakeClock()
     config = ModelObservabilityConfig(
         model_name="alpha",
@@ -145,7 +149,9 @@ def test_trace_inference_records_metrics(metrics_registry: CollectorRegistry, tm
     assert latency_event.severity == pytest.approx(1.5, rel=1e-6)
 
 
-def test_quality_interval_and_degradation(metrics_registry: CollectorRegistry, tmp_path) -> None:
+def test_quality_interval_and_degradation(
+    metrics_registry: CollectorRegistry, tmp_path
+) -> None:
     clock = FakeClock()
     config = ModelObservabilityConfig(
         model_name="beta",
@@ -187,7 +193,9 @@ def test_quality_interval_and_degradation(metrics_registry: CollectorRegistry, t
     assert mean_gauge == pytest.approx(interval.mean)
 
     degradation_events = [
-        event for event in orchestrator.latest_degradations if event.metric == "accuracy"
+        event
+        for event in orchestrator.latest_degradations
+        if event.metric == "accuracy"
     ]
     assert degradation_events, "quality baseline breach should emit degradation"
     assert degradation_events[-1].incident is not None
@@ -218,7 +226,9 @@ def test_error_rate_degradation_severity_handles_zero_threshold(
             raise RuntimeError("boom")
 
     degradation_events = [
-        event for event in orchestrator.latest_degradations if event.metric == "error_rate"
+        event
+        for event in orchestrator.latest_degradations
+        if event.metric == "error_rate"
     ]
     assert degradation_events, "error threshold breach should emit degradation"
     assert degradation_events[-1].severity == pytest.approx(1.0, rel=1e-6)
@@ -268,7 +278,9 @@ def test_correlation_metrics(metrics_registry: CollectorRegistry, tmp_path) -> N
     assert gauge_value == pytest.approx(coefficient)
 
 
-def test_postmortem_template_contains_timeline(metrics_registry: CollectorRegistry, tmp_path) -> None:
+def test_postmortem_template_contains_timeline(
+    metrics_registry: CollectorRegistry, tmp_path
+) -> None:
     clock = FakeClock()
     config = ModelObservabilityConfig(
         model_name="delta",

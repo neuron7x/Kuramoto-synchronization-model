@@ -10,12 +10,21 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Mapping, MutableMapping, Optional, Set, Tuple
+from typing import (
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+)
 
 import networkx as nx
 
 from .models import DeveloperMetrics, RiskProfile
-
 
 _AST_COMPLEXITY_NODES = (
     ast.If,
@@ -270,7 +279,9 @@ class GitHistoryAnalyzer:
             return self._change_cache[days]
         since = (datetime.utcnow() - timedelta(days=days)).isoformat()
         result = self._run("log", "--since", since, "--numstat", "--pretty=%H")
-        data: Dict[str, Dict[str, int]] = defaultdict(lambda: {"frequency": 0, "churn": 0})
+        data: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: {"frequency": 0, "churn": 0}
+        )
         seen_in_commit: Set[str] = set()
         for line in result.stdout.splitlines():
             if not line:
@@ -367,10 +378,14 @@ class RiskHeuristics:
 
         if avg_complexity > self.thresholds.get("complexity", 10):
             contributions.append("High average cyclomatic complexity")
-            score_components.append(avg_complexity / (self.thresholds.get("complexity", 10) * 2))
+            score_components.append(
+                avg_complexity / (self.thresholds.get("complexity", 10) * 2)
+            )
         if max_complexity > self.thresholds.get("max_complexity", 15):
             contributions.append("Elevated worst-case complexity")
-            score_components.append(max_complexity / (self.thresholds.get("max_complexity", 15) * 2))
+            score_components.append(
+                max_complexity / (self.thresholds.get("max_complexity", 15) * 2)
+            )
         if fan_in > self.thresholds.get("fan_in", 10):
             contributions.append("High fan-in indicates coupling")
             score_components.append(fan_in / (self.thresholds.get("fan_in", 10) * 2))
@@ -382,30 +397,53 @@ class RiskHeuristics:
             score_components.append(churn / (self.thresholds.get("churn", 50) * 3))
         if change_frequency > self.thresholds.get("change_frequency", 10):
             contributions.append("Frequent modifications make this area unstable")
-            score_components.append(change_frequency / (self.thresholds.get("change_frequency", 10) * 3))
+            score_components.append(
+                change_frequency / (self.thresholds.get("change_frequency", 10) * 3)
+            )
         if interface_stability < self.thresholds.get("interface_stability", 0.8):
             contributions.append("Public interface changes too frequently")
             score_components.append((1 - interface_stability) * 1.5)
 
         risk_score = max(0.0, min(1.0, sum(score_components)))
         recommendations = self._make_recommendations(contributions, interface_stability)
-        return RiskProfile(risk_score=risk_score, contributing_factors=contributions, recommendations=recommendations)
+        return RiskProfile(
+            risk_score=risk_score,
+            contributing_factors=contributions,
+            recommendations=recommendations,
+        )
 
-    def _make_recommendations(self, factors: Iterable[str], interface_stability: float) -> List[str]:
+    def _make_recommendations(
+        self, factors: Iterable[str], interface_stability: float
+    ) -> List[str]:
         recommendations: List[str] = []
         factor_set = set(factors)
-        if "High average cyclomatic complexity" in factor_set or "Elevated worst-case complexity" in factor_set:
-            recommendations.append("Break large functions into smaller units and add focused tests.")
+        if (
+            "High average cyclomatic complexity" in factor_set
+            or "Elevated worst-case complexity" in factor_set
+        ):
+            recommendations.append(
+                "Break large functions into smaller units and add focused tests."
+            )
         if "High fan-in indicates coupling" in factor_set:
-            recommendations.append("Isolate responsibilities via facades or domain services.")
+            recommendations.append(
+                "Isolate responsibilities via facades or domain services."
+            )
         if "High fan-out indicates broad dependencies" in factor_set:
-            recommendations.append("Introduce abstractions to reduce direct dependency breadth.")
+            recommendations.append(
+                "Introduce abstractions to reduce direct dependency breadth."
+            )
         if "Significant churn in recent history" in factor_set:
-            recommendations.append("Pair refactoring with regression tests to stabilise behavior.")
+            recommendations.append(
+                "Pair refactoring with regression tests to stabilise behavior."
+            )
         if "Frequent modifications make this area unstable" in factor_set:
-            recommendations.append("Schedule dedicated hardening sprint for this module.")
+            recommendations.append(
+                "Schedule dedicated hardening sprint for this module."
+            )
         if interface_stability < 0.5:
-            recommendations.append("Document contract changes and version interfaces to restore trust.")
+            recommendations.append(
+                "Document contract changes and version interfaces to restore trust."
+            )
         return recommendations
 
 
@@ -419,7 +457,9 @@ def load_previous_snapshot(history_file: Path) -> Optional[Dict[str, Dict[str, f
 
 
 def save_snapshot(history_file: Path, snapshot: Mapping[str, Dict[str, float]]) -> None:
-    history_file.write_text(json.dumps(snapshot, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    history_file.write_text(
+        json.dumps(snapshot, indent=2, sort_keys=True, default=str), encoding="utf-8"
+    )
 
 
 def compute_trends(
@@ -442,4 +482,3 @@ def compute_trends(
 def rolling_average(values: Iterable[float]) -> float:
     seq = list(values)
     return statistics.mean(seq) if seq else 0.0
-

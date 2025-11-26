@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Callable, List, Optional, Protocol, Tuple
+from typing import List, Optional, Protocol, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -21,15 +21,20 @@ try:
 except ImportError:
     # Fallback for direct module loading in tests
     try:
-        from risk_core import check_risk_breach, compute_final_size, kelly_shrink, var_es
+        from risk_core import (
+            check_risk_breach,
+            compute_final_size,
+            kelly_shrink,
+            var_es,
+        )
     except ImportError:
-        import sys
         from pathlib import Path
-        
+
         # Try to import from absolute path
         risk_core_path = Path(__file__).parent / "risk_core.py"
         if risk_core_path.exists():
             import importlib.util
+
             spec = importlib.util.spec_from_file_location("risk_core", risk_core_path)
             risk_core = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(risk_core)
@@ -83,7 +88,7 @@ class RiskScenario:
         self, var: float, es: float, alpha: float = 0.975
     ) -> List[str]:
         """Validate if computed metrics are within expected ranges.
-        
+
         Returns:
             List of validation errors, empty if all validations pass
         """
@@ -168,9 +173,7 @@ class RiskMetricsProtocol(Protocol):
         """Compute VaR and ES."""
         ...
 
-    def compute_kelly_fraction(
-        self, mu: float, sigma2: float, ews_level: str
-    ) -> float:
+    def compute_kelly_fraction(self, mu: float, sigma2: float, ews_level: str) -> float:
         """Compute Kelly fraction."""
         ...
 
@@ -186,7 +189,7 @@ class AutomatedRiskTester:
         seed: Optional[int] = None,
     ):
         """Initialize automated risk tester.
-        
+
         Args:
             es_limit: Maximum allowed Expected Shortfall
             var_alpha: Confidence level for VaR/ES calculations
@@ -210,10 +213,10 @@ class AutomatedRiskTester:
 
     def run_stress_test(self, scenario: RiskScenario) -> StressTestResult:
         """Run a single stress test scenario.
-        
+
         Args:
             scenario: The risk scenario to test
-            
+
         Returns:
             StressTestResult with metrics and validation status
         """
@@ -268,7 +271,7 @@ class AutomatedRiskTester:
 
     def run_all_scenarios(self) -> List[StressTestResult]:
         """Run all configured stress test scenarios.
-        
+
         Returns:
             List of all stress test results
         """
@@ -293,10 +296,10 @@ class AutomatedRiskTester:
         self, config: MonteCarloConfig
     ) -> List[StressTestResult]:
         """Run Monte Carlo simulation with multiple random scenarios.
-        
+
         Args:
             config: Monte Carlo configuration
-            
+
         Returns:
             List of results from all simulated scenarios
         """
@@ -346,7 +349,7 @@ class AutomatedRiskTester:
 
     def generate_summary_report(self) -> dict:
         """Generate a summary report of all test results.
-        
+
         Returns:
             Dictionary containing summary statistics and results
         """
@@ -438,11 +441,11 @@ def generate_market_stress_scenarios(
     num_days: int = 252, seed: Optional[int] = None
 ) -> List[RiskScenario]:
     """Generate market stress test scenarios.
-    
+
     Args:
         num_days: Number of trading days to simulate
         seed: Random seed for reproducibility
-        
+
     Returns:
         List of market stress scenarios
     """
@@ -523,11 +526,11 @@ def generate_liquidity_crisis_scenarios(
     num_days: int = 252, seed: Optional[int] = None
 ) -> List[RiskScenario]:
     """Generate liquidity crisis scenarios with extreme conditions.
-    
+
     Args:
         num_days: Number of trading days to simulate
         seed: Random seed for reproducibility
-        
+
     Returns:
         List of liquidity crisis scenarios
     """
@@ -574,12 +577,12 @@ def generate_flash_crash_scenarios(
     num_days: int = 252, crash_magnitude: float = 0.15, seed: Optional[int] = None
 ) -> List[RiskScenario]:
     """Generate flash crash scenarios with sudden extreme moves.
-    
+
     Args:
         num_days: Number of trading days to simulate
         crash_magnitude: Magnitude of the flash crash (as fraction)
         seed: Random seed for reproducibility
-        
+
     Returns:
         List of flash crash scenarios
     """
@@ -631,12 +634,12 @@ def validate_risk_metrics(
     es_limit: float = 0.03,
 ) -> dict:
     """Validate risk metrics for a given return series.
-    
+
     Args:
         returns: Array of returns
         alpha: Confidence level for VaR/ES
         es_limit: Maximum allowed ES
-        
+
     Returns:
         Dictionary containing computed metrics and validation results
     """

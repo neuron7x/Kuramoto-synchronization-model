@@ -13,17 +13,17 @@ __all__ = [
 
 # Optional GABA gate (requires torch)
 if importlib.util.find_spec("torch") is not None:
-    from modules.gaba_inhibition_gate import (
+    from modules.gaba_inhibition_gate import (  # noqa: F401 - re-exported in __all__
         GABAInhibitionGate,
+        GateMetrics,
         GateParams,
         GateState,
-        GateMetrics,
     )
 
     __all__.extend(["GABAInhibitionGate", "GateParams", "GateState", "GateMetrics"])
 
 # Import new modules (no torch dependency)
 from modules.adaptive_risk_manager import AdaptiveRiskManager
-from modules.market_regime_analyzer import MarketRegimeAnalyzer
-from modules.dynamic_position_sizer import DynamicPositionSizer
 from modules.agent_coordinator import AgentCoordinator
+from modules.dynamic_position_sizer import DynamicPositionSizer
+from modules.market_regime_analyzer import MarketRegimeAnalyzer

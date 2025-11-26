@@ -145,7 +145,9 @@ class ExperimentTrackingConfig(BaseModel):
     hyperparameters_filename: str = "hyperparameters.json"
     reports: ExperimentReportConfig = Field(default_factory=ExperimentReportConfig)
     archive: ExperimentArchiveConfig = Field(default_factory=ExperimentArchiveConfig)
-    alerts: ExperimentDeviationAlertConfig = Field(default_factory=ExperimentDeviationAlertConfig)
+    alerts: ExperimentDeviationAlertConfig = Field(
+        default_factory=ExperimentDeviationAlertConfig
+    )
     baseline: ExperimentBaselineConfig | None = None
     data_versioning: bool = True
     auto_log_config: bool = True
@@ -173,9 +175,7 @@ class ExperimentConfig(BaseModel):
         normalized = value.upper()
         valid_levels = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"}
         if normalized not in valid_levels:
-            msg = (
-                "log_level must be one of CRITICAL, ERROR, WARNING, INFO, DEBUG, or NOTSET"
-            )
+            msg = "log_level must be one of CRITICAL, ERROR, WARNING, INFO, DEBUG, or NOTSET"
             raise ValueError(msg)
         return normalized
 
@@ -326,7 +326,9 @@ class FeatureParitySpecConfig(BaseModel):
         try:
             return pd.Timedelta(value)
         except (ValueError, TypeError) as exc:  # pragma: no cover - defensive
-            raise ValueError("timedelta fields must be pandas-compatible strings") from exc
+            raise ValueError(
+                "timedelta fields must be pandas-compatible strings"
+            ) from exc
 
     @model_validator(mode="after")
     def _validate_columns(self) -> "FeatureParitySpecConfig":
@@ -388,7 +390,9 @@ class DeploymentConfig(TradePulseBaseConfig):
     environment: Environment
     strategy: str
     artifact: str
-    manifests: DeploymentManifestsConfig = Field(default_factory=DeploymentManifestsConfig)
+    manifests: DeploymentManifestsConfig = Field(
+        default_factory=DeploymentManifestsConfig
+    )
     deployment_name: str = "tradepulse-api"
     wait_for_rollout: bool = True
     rollout_timeout_seconds: float = 600.0
@@ -423,5 +427,7 @@ class DeploymentConfig(TradePulseBaseConfig):
         if not self.wait_for_rollout:
             return self
         if self.rollout_timeout_seconds <= 0.0:
-            raise ValueError("wait_for_rollout requires a positive rollout_timeout_seconds")
+            raise ValueError(
+                "wait_for_rollout requires a positive rollout_timeout_seconds"
+            )
         return self

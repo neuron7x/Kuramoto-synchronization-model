@@ -104,23 +104,35 @@ def test_dopamine_step_executes_full_pipeline(controller: DopamineController) ->
         + cfg_before["w_v"] * 0.05
     )
     phasic = max(0.0, expected_rpe) * cfg_before["burst_factor"]
-    tonic = (1 - cfg_before["decay_rate"]) * 0.0 + cfg_before["decay_rate"] * (appetitive + phasic)
+    tonic = (1 - cfg_before["decay_rate"]) * 0.0 + cfg_before["decay_rate"] * (
+        appetitive + phasic
+    )
     x = cfg_before["k"] * (tonic - cfg_before["theta"])
     expected_da = 1.0 / (1.0 + math.exp(-max(min(x, 60.0), -60.0)))
     assert result["dopamine"] == pytest.approx(expected_da, rel=1e-6)
 
-    expected_q = 2.0 * (1.0 + cfg_before["delta_gain"] * (expected_da - cfg_before["baseline"]))
+    expected_q = 2.0 * (
+        1.0 + cfg_before["delta_gain"] * (expected_da - cfg_before["baseline"])
+    )
     assert result["q_modulated"] == pytest.approx(expected_q, rel=1e-6)
 
-    expected_temp = cfg_before["base_temperature"] * math.exp(-cfg_before["temp_k"] * expected_da)
+    expected_temp = cfg_before["base_temperature"] * math.exp(
+        -cfg_before["temp_k"] * expected_da
+    )
     assert result["temperature"] == pytest.approx(expected_temp, rel=1e-6)
 
     assert result["go"] is (expected_da > cfg_before["invigoration_threshold"])
     assert result["no_go"] is (expected_da < cfg_before["no_go_threshold"])
 
-    assert controller.config["learning_rate_v"] == pytest.approx(cfg_before["learning_rate_v"] * 1.01, rel=1e-6)
-    assert controller.config["delta_gain"] == pytest.approx(cfg_before["delta_gain"] * 1.01, rel=1e-6)
-    assert controller.config["base_temperature"] == pytest.approx(cfg_before["base_temperature"] * 0.99, rel=1e-6)
+    assert controller.config["learning_rate_v"] == pytest.approx(
+        cfg_before["learning_rate_v"] * 1.01, rel=1e-6
+    )
+    assert controller.config["delta_gain"] == pytest.approx(
+        cfg_before["delta_gain"] * 1.01, rel=1e-6
+    )
+    assert controller.config["base_temperature"] == pytest.approx(
+        cfg_before["base_temperature"] * 0.99, rel=1e-6
+    )
 
     metrics = controller._captured_metrics  # type: ignore[attr-defined]
     assert "dopamine_temperature" in metrics
