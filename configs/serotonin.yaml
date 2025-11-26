@@ -1,5 +1,5 @@
 # Serotonin Controller Configuration
-# Compatible with both legacy and v2.4.0 implementations
+# Compatible with both legacy and v2.5.0 implementations
 
 # === Legacy Controller Fields (src/tradepulse/) ===
 tonic_beta: 0.35
@@ -20,7 +20,7 @@ floor_max: 0.6
 floor_gain: 0.8
 cooldown_extension: 2
 
-# === v2.4.0 Controller Fields (core/neuro/) ===
+# === v2.5.0 Controller Fields (core/neuro/) ===
 # Aversive state estimation weights
 alpha: 0.5              # Weight for market volatility (sqrt transform)
 beta: 0.3               # Weight for free energy term  
@@ -70,3 +70,14 @@ temperature_floor_max: 0.6   # Upper bound for serotonin-governed temperature fl
 
 # Time constants
 tick_hours: 1.0          # Wall-clock hours represented by a controller tick
+
+# === v2.5.0 New Features ===
+# Circadian rhythm modulation (time-of-day sensitivity adjustment)
+circadian_enabled: false      # Enable circadian rhythm modulation
+circadian_amplitude: 0.2      # Amplitude of circadian modulation (0-0.5)
+circadian_peak_hour: 14       # Hour of peak alertness (0-23, typically afternoon)
+
+# Adaptive threshold (volatility-based dynamic threshold)
+adaptive_threshold_enabled: false   # Enable adaptive threshold based on volatility
+volatility_window: 20               # Window size for volatility calculation (5-100)
+threshold_adaptation_rate: 0.1      # Rate of threshold adaptation (0-0.5)

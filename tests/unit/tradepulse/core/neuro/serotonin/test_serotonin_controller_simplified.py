@@ -427,6 +427,7 @@ class TestStepMethod:
             "cooldown",
             "temperature_floor",
             "desensitization",
+            "signal_trend",  # Added in v2.5.0
         }
         assert (
             set(result.keys()) == expected_keys

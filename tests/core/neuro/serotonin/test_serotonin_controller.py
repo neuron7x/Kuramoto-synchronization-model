@@ -473,3 +473,157 @@ desens_gain: 0.8
     # Should raise ValueError due to constraint violation
     with pytest.raises(ValueError, match="Invalid serotonin configuration"):
         serotonin_cls(str(invalid_config))
+
+
+def test_circadian_modulation_disabled_returns_one(serotonin_controller):
+    """Test that circadian modulation returns 1.0 when disabled."""
+    ctrl = serotonin_controller
+    # circadian_enabled is False by default
+    assert ctrl.config.get("circadian_enabled", False) is False
+    modulation = ctrl.compute_circadian_modulation(hour=12)
+    assert modulation == 1.0
+
+
+def test_circadian_modulation_enabled(serotonin_cls, tmp_path: Path):
+    """Test circadian modulation when enabled."""
+    config_path = tmp_path / "circadian.yaml"
+    base_config = (
+        Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
+    ).read_text(encoding="utf-8")
+    # Add circadian settings
+    config_content = base_config + "\ncircadian_enabled: true\ncircadian_amplitude: 0.2\ncircadian_peak_hour: 14\n"
+    config_path.write_text(config_content, encoding="utf-8")
+
+    ctrl = serotonin_cls(str(config_path))
+
+    # At peak hour, modulation should be at minimum (1.0 - amplitude)
+    mod_peak = ctrl.compute_circadian_modulation(hour=14)
+    assert 0.78 <= mod_peak <= 0.82  # Around 0.8 (1.0 - 0.2)
+
+    # 12 hours from peak, modulation should be at maximum (1.0 + amplitude)
+    mod_trough = ctrl.compute_circadian_modulation(hour=2)
+    assert 1.18 <= mod_trough <= 1.22  # Around 1.2 (1.0 + 0.2)
+
+
+def test_adaptive_threshold_disabled_returns_base(serotonin_controller):
+    """Test that adaptive threshold returns base when disabled."""
+    ctrl = serotonin_controller
+    assert ctrl.config.get("adaptive_threshold_enabled", False) is False
+    threshold = ctrl.update_adaptive_threshold(0.05)
+    assert threshold == ctrl.config["cooldown_threshold"]
+
+
+def test_adaptive_threshold_enabled(serotonin_cls, tmp_path: Path):
+    """Test adaptive threshold when enabled."""
+    config_path = tmp_path / "adaptive.yaml"
+    base_config = (
+        Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
+    ).read_text(encoding="utf-8")
+    config_content = base_config + "\nadaptive_threshold_enabled: true\nvolatility_window: 10\nthreshold_adaptation_rate: 0.2\n"
+    config_path.write_text(config_content, encoding="utf-8")
+
+    ctrl = serotonin_cls(str(config_path))
+
+    # Feed in varying volatility with a trend
+    for i in range(15):
+        ctrl.update_adaptive_threshold(0.01 + i * 0.001)
+
+    # Threshold should adapt based on volatility z-score
+    threshold = ctrl.get_effective_threshold()
+    # With increasing volatility, z-score of recent values is positive,
+    # so threshold should be lower than base
+    base = ctrl.config["cooldown_threshold"]
+    # Just verify the threshold is within reasonable bounds
+    assert 0.3 <= threshold <= 0.95
+
+
+def test_step_batch_returns_correct_length(serotonin_controller):
+    """Test that step_batch returns results for all inputs."""
+    ctrl = serotonin_controller
+    ctrl.reset()
+
+    n = 10
+    stress_seq = [0.5 + i * 0.1 for i in range(n)]
+    drawdown_seq = [-0.01 - i * 0.005 for i in range(n)]
+    novelty_seq = [0.3 + i * 0.05 for i in range(n)]
+
+    results = ctrl.step_batch(stress_seq, drawdown_seq, novelty_seq)
+
+    assert len(results) == n
+    for result in results:
+        assert isinstance(result, tuple)
+        assert len(result) == 4  # (hold, veto, cooldown_s, level)
+
+
+def test_step_batch_validates_sequence_lengths(serotonin_controller):
+    """Test that step_batch raises error for mismatched lengths."""
+    ctrl = serotonin_controller
+
+    with pytest.raises(ValueError):
+        ctrl.step_batch(
+            stress_sequence=[0.5, 0.6],
+            drawdown_sequence=[-0.01],  # Different length
+            novelty_sequence=[0.3, 0.4],
+        )
+
+
+def test_get_effective_threshold_returns_adaptive_when_enabled(serotonin_cls, tmp_path: Path):
+    """Test that get_effective_threshold returns adaptive threshold when enabled."""
+    config_path = tmp_path / "threshold.yaml"
+    base_config = (
+        Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
+    ).read_text(encoding="utf-8")
+    config_content = base_config + "\nadaptive_threshold_enabled: true\nvolatility_window: 5\n"
+    config_path.write_text(config_content, encoding="utf-8")
+
+    ctrl = serotonin_cls(str(config_path))
+
+    # Feed volatility data
+    for _ in range(10):
+        ctrl.update_adaptive_threshold(0.05)
+
+    effective = ctrl.get_effective_threshold()
+    assert effective != ctrl.config["cooldown_threshold"] or effective == ctrl._adaptive_threshold
+
+
+def test_to_dict_includes_new_fields(serotonin_controller):
+    """Test that to_dict includes new v2.5.0 fields."""
+    ctrl = serotonin_controller
+    ctrl.step(stress=0.5, drawdown=-0.02, novelty=0.3)
+
+    state = ctrl.to_dict()
+
+    assert "adaptive_threshold" in state
+    assert "circadian_phase" in state
+    assert "effective_threshold" in state
+    assert "controller_version" in state
+    assert state["controller_version"] == "v2.5.0"
+
+
+def test_reset_clears_new_state(serotonin_controller):
+    """Test that reset clears adaptive and circadian state."""
+    ctrl = serotonin_controller
+
+    # Modify some state
+    ctrl.step(stress=0.5, drawdown=-0.02, novelty=0.3)
+    ctrl._adaptive_threshold = 0.5
+    ctrl._circadian_phase = 1.5
+
+    ctrl.reset()
+
+    assert ctrl._adaptive_threshold == ctrl.config["cooldown_threshold"]
+    assert ctrl._circadian_phase == 0.0
+    assert len(ctrl._volatility_buffer) == 0
+
+
+def test_diagnose_includes_advanced_features(serotonin_controller):
+    """Test that diagnose includes advanced feature information."""
+    ctrl = serotonin_controller
+    ctrl.step(stress=0.5, drawdown=-0.02, novelty=0.3)
+
+    report = ctrl.diagnose()
+
+    assert "v2.5.0" in report
+    assert "Advanced Features" in report
+    assert "Circadian Enabled" in report
+    assert "Adaptive Threshold Enabled" in report

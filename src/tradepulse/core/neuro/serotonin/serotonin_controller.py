@@ -1,10 +1,18 @@
-"""Serotonin tonic/phasic controller with hysteresis driven hold logic."""
+"""Serotonin tonic/phasic controller with hysteresis driven hold logic.
+
+This is the legacy controller implementation providing backward compatibility
+while maintaining efficient operation for production workloads.
+
+Version: 2.5.0 (Legacy API compatible)
+"""
 
 from __future__ import annotations
 
+import math
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Mapping, Optional
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
@@ -79,7 +87,32 @@ def _ensure_int(name: str, value: object, *, min_value: Optional[int] = None) ->
 
 
 class SerotoninController:
-    """Model chronic serotonin dynamics with hysteretic hold decisions."""
+    """Model chronic serotonin dynamics with hysteretic hold decisions.
+
+    Version 2.5.0: Enhanced with optimized batch processing, signal smoothing,
+    and improved memory efficiency.
+    """
+
+    # Use __slots__ for memory efficiency
+    __slots__ = (
+        "_config",
+        "config_path",
+        "_logger",
+        "tonic_level",
+        "phasic_level",
+        "level",
+        "_hold",
+        "_cooldown",
+        "_chronic_ticks",
+        "_desensitization",
+        "temperature_floor",
+        "_enable_perf_tracking",
+        "_step_count",
+        "_total_step_time",
+        "_hold_count",
+        "_signal_history",
+        "_ema_cache",
+    )
 
     def __init__(
         self,
@@ -112,6 +145,15 @@ class SerotoninController:
         self._step_count = 0
         self._total_step_time = 0.0
         self._hold_count = 0
+
+        # Signal history for trend analysis (new in v2.5.0)
+        self._signal_history: deque = deque(maxlen=20)
+
+        # Pre-computed EMA constants for optimized processing
+        self._ema_cache: Dict[str, float] = {
+            "tonic_alpha_1": 1.0 - (1.0 - self._config.tonic_beta),
+            "phasic_alpha_1": 1.0 - (1.0 - self._config.phasic_beta),
+        }
 
     # ------------------------------------------------------------------ utils
     def _log(self, name: str, value: float) -> None:
@@ -230,15 +272,19 @@ class SerotoninController:
         self._chronic_ticks = 0
         self._desensitization = 0.0
         self.temperature_floor = self._config.floor_min
+        self._signal_history.clear()
+        self._step_count = 0
+        self._total_step_time = 0.0
+        self._hold_count = 0
 
     def step_batch(
         self,
-        stress_sequence: list[float],
-        drawdown_sequence: list[float],
-        novelty_sequence: list[float],
+        stress_sequence: Sequence[float],
+        drawdown_sequence: Sequence[float],
+        novelty_sequence: Sequence[float],
         *,
         dt: float = 1.0,
-    ) -> list[Mapping[str, float]]:
+    ) -> List[Mapping[str, float]]:
         """Process multiple steps efficiently in batch.
 
         More efficient than calling step() in a loop when processing
@@ -266,6 +312,149 @@ class SerotoninController:
             results.append(result)
 
         return results
+
+    def step_batch_fast(
+        self,
+        stress_sequence: Sequence[float],
+        drawdown_sequence: Sequence[float],
+        novelty_sequence: Sequence[float],
+        *,
+        dt: float = 1.0,
+    ) -> List[Tuple[float, bool, float]]:
+        """Ultra-fast batch processing with minimal overhead.
+
+        Optimized for backtesting performance. Returns a simplified tuple format
+        instead of dictionaries for reduced memory allocation.
+
+        Args:
+            stress_sequence: Sequence of stress values
+            drawdown_sequence: Sequence of drawdown values
+            novelty_sequence: Sequence of novelty values
+            dt: Time delta for each step
+
+        Returns:
+            List of (level, hold, temperature_floor) tuples, one per step
+        """
+        n = len(stress_sequence)
+        if len(drawdown_sequence) != n or len(novelty_sequence) != n:
+            raise ValueError("All input sequences must have the same length")
+
+        if dt <= 0:
+            raise ValueError("dt must be positive")
+
+        cfg = self._config
+        results: List[Tuple[float, bool, float]] = []
+
+        # Pre-compute EMA alphas for the given dt
+        tonic_alpha = 1.0 - math.pow(1.0 - cfg.tonic_beta, dt)
+        phasic_alpha = 1.0 - math.pow(1.0 - cfg.phasic_beta, dt)
+
+        threshold = cfg.stress_threshold
+        release = max(0.0, cfg.release_threshold)
+        floor_span = max(0.0, cfg.floor_max - cfg.floor_min)
+
+        # Local variable caching for speed
+        tonic = self.tonic_level
+        phasic = self.phasic_level
+        hold = self._hold
+        cooldown = self._cooldown
+        chronic_ticks = self._chronic_ticks
+        desens = self._desensitization
+
+        for i in range(n):
+            stress = max(0.0, float(stress_sequence[i]))
+            drawdown = max(0.0, float(drawdown_sequence[i]))
+            novelty = max(0.0, float(novelty_sequence[i]))
+
+            # Tonic EMA update
+            tonic += tonic_alpha * (cfg.stress_gain * stress - tonic)
+
+            # Phasic EMA update
+            phasic_drive = max(0.0, cfg.drawdown_gain * drawdown + cfg.novelty_gain * novelty)
+            phasic += phasic_alpha * (phasic_drive - phasic)
+
+            raw_level = max(0.0, min(2.0, tonic + phasic))
+
+            # Chronic stress and desensitization
+            if raw_level >= threshold - cfg.hysteresis:
+                chronic_ticks += 1
+                if chronic_ticks >= cfg.chronic_window:
+                    desens = min(cfg.max_desensitization, desens + cfg.desensitization_rate)
+                    chronic_ticks = 0
+            else:
+                chronic_ticks = 0
+                desens *= 1.0 - cfg.desensitization_decay
+
+            effective_level = raw_level * (1.0 - desens)
+            level = min(1.5, max(0.0, effective_level))
+
+            # Hysteretic hold logic
+            exited_hold = False
+            if hold:
+                exit_threshold = release - cfg.hysteresis / 2.0
+                if level <= exit_threshold:
+                    hold = False
+                    exited_hold = True
+                    cooldown = cfg.cooldown_ticks
+                    if level >= threshold:
+                        cooldown = cfg.cooldown_ticks + cfg.cooldown_extension
+            else:
+                entry_threshold = threshold + cfg.hysteresis / 2.0
+                if level >= entry_threshold:
+                    hold = True
+
+            # Cooldown decrement
+            if not exited_hold and not hold and cooldown > 0:
+                cooldown = max(0, cooldown - int(max(1, round(dt))))
+
+            # Temperature floor
+            floor = cfg.floor_min + floor_span * min(1.0, level * cfg.floor_gain)
+            floor *= 1.0 - desens
+            floor = min(cfg.floor_max, max(cfg.floor_min, floor))
+
+            hold_flag = hold or cooldown > 0
+            results.append((level, hold_flag, floor))
+
+        # Update state
+        self.tonic_level = tonic
+        self.phasic_level = phasic
+        self.level = level
+        self._hold = hold
+        self._cooldown = cooldown
+        self._chronic_ticks = chronic_ticks
+        self._desensitization = desens
+        self.temperature_floor = floor
+
+        return results
+
+    def get_signal_trend(self) -> float:
+        """Get the current signal trend direction.
+
+        Returns a value between -1 (strongly decreasing) and +1 (strongly increasing).
+        Useful for anticipating state transitions.
+
+        Returns:
+            Trend value in [-1, 1]
+        """
+        if len(self._signal_history) < 3:
+            return 0.0
+
+        history = list(self._signal_history)
+        n = len(history)
+
+        # Simple linear regression slope
+        x_mean = (n - 1) / 2.0
+        y_mean = sum(history) / n
+
+        numerator = sum((i - x_mean) * (history[i] - y_mean) for i in range(n))
+        denominator = sum((i - x_mean) ** 2 for i in range(n))
+
+        if denominator == 0:
+            return 0.0
+
+        slope = numerator / denominator
+        # Normalize to [-1, 1] using tanh
+        return math.tanh(slope * 10)
 
     # ------------------------------------------------------------------- state
     @property
@@ -388,6 +577,9 @@ class SerotoninController:
         self._log("tacl.5ht.hold", 1.0 if hold_flag else 0.0)
         self._log("tacl.5ht.cooldown", float(self._cooldown))
 
+        # Record signal history for trend analysis
+        self._signal_history.append(self.level)
+
         # Update performance metrics
         if self._enable_perf_tracking:
             self._step_count += 1
@@ -401,6 +593,7 @@ class SerotoninController:
             "cooldown": float(self._cooldown),
             "temperature_floor": self.temperature_floor,
             "desensitization": self._desensitization,
+            "signal_trend": self.get_signal_trend(),
         }
 
     # ------------------------------------------------------------------ export

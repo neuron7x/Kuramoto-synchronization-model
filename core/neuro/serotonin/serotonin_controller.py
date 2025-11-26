@@ -10,6 +10,8 @@ The controller combines multiple components:
     - Desensitization: Adaptive reduction in response to sustained signals
     - Meta-adaptation: Long-term parameter adjustment toward target metrics
     - Temporal modulation: Time-dependent gating of inhibitory strength
+    - Circadian rhythm: Time-of-day based sensitivity modulation
+    - Adaptive thresholds: Dynamic threshold adjustment based on market regime
 
 Key Components:
     SerotoninConfig: Complete parameter specification with validation
@@ -27,6 +29,10 @@ Features:
     - File-based locking for multi-process safety
     - Meta-adaptation with gradient descent
     - Configurable phasic burst dynamics
+    - Optimized batch processing for backtesting
+    - Memory-efficient __slots__ usage
+    - Circadian rhythm modulation for time-aware risk management
+    - Adaptive threshold calculation based on recent volatility
 
 Example:
     >>> config = SerotoninConfig.from_yaml("serotonin.yaml")
@@ -44,14 +50,22 @@ import json
 import logging
 import math
 import os
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
 from time import time
-from typing import Callable, Mapping, Optional
+from typing import Callable, Final, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+# Constants for optimized calculations
+_LOG_2: Final[float] = math.log(2.0)
+_SQRT_2PI: Final[float] = math.sqrt(2.0 * math.pi)
+_SATURATION_SCALE: Final[float] = 3.0
 
 
 class SerotoninConfig(BaseModel):
@@ -142,6 +156,26 @@ class SerotoninConfig(BaseModel):
     tick_hours: float = Field(
         1.0, gt=0.0, description="Wall-clock hours represented by a controller tick"
     )
+    # Circadian rhythm parameters
+    circadian_enabled: bool = Field(
+        False, description="Enable circadian rhythm modulation"
+    )
+    circadian_amplitude: float = Field(
+        0.2, ge=0.0, le=0.5, description="Amplitude of circadian modulation"
+    )
+    circadian_peak_hour: int = Field(
+        14, ge=0, le=23, description="Hour of peak alertness (0-23)"
+    )
+    # Adaptive threshold parameters
+    adaptive_threshold_enabled: bool = Field(
+        False, description="Enable adaptive threshold based on recent volatility"
+    )
+    volatility_window: int = Field(
+        20, ge=5, le=100, description="Window size for volatility calculation"
+    )
+    threshold_adaptation_rate: float = Field(
+        0.1, ge=0.0, le=0.5, description="Rate of threshold adaptation"
+    )
 
     model_config = ConfigDict(extra="ignore")
 
@@ -172,7 +206,7 @@ def _generate_config_table(schema: dict) -> str:
 
 
 class SerotoninController:
-    """SerotoninController v2.4.0 tonic–phasic stabiliser with TACL guardrails.
+    """SerotoninController v2.5.0 tonic–phasic stabiliser with TACL guardrails.
 
     Enhanced version with improved action/rest potential dynamics:
     - Adaptive gate sensitivity based on tonic level
@@ -183,7 +217,41 @@ class SerotoninController:
     - Non-linear aversive state estimation with biological transforms
     - Progressive inhibition curves for realistic neuromodulation
     - Cubic temperature floor interpolation for smoother adaptation
+    - Circadian rhythm modulation for time-aware risk management
+    - Adaptive threshold calculation based on recent volatility
+    - Optimized batch processing for backtesting efficiency
     """
+
+    # Use __slots__ for memory efficiency
+    __slots__ = (
+        "config_path",
+        "_config_model",
+        "config",
+        "_config_schema",
+        "tonic_level",
+        "sensitivity",
+        "desens_counter",
+        "serotonin_level",
+        "phasic_level",
+        "gate_level",
+        "temperature_floor",
+        "_logger",
+        "_tacl_guard",
+        "_lock",
+        "_file_lock_path",
+        "_cooldown_start_time",
+        "_hold_state",
+        "_step_count",
+        "_total_cooldown_time",
+        "_veto_count",
+        "_last_step_time",
+        "_tick_hours",
+        "_volatility_buffer",
+        "_adaptive_threshold",
+        "_circadian_phase",
+        "_last_aversive_states",
+        "_ema_alpha_cache",
+    )
 
     def __init__(
         self,
@@ -231,6 +299,20 @@ class SerotoninController:
         self._veto_count: int = 0
         self._last_step_time: Optional[float] = None
 
+        # Adaptive threshold and volatility tracking
+        window_size = self.config.get("volatility_window", 20)
+        self._volatility_buffer: deque = deque(maxlen=window_size)
+        self._adaptive_threshold: float = self.config["cooldown_threshold"]
+
+        # Circadian rhythm state
+        self._circadian_phase: float = 0.0
+
+        # Cache for recent aversive states (for trend analysis)
+        self._last_aversive_states: deque = deque(maxlen=10)
+
+        # Pre-computed EMA alpha cache for decay optimization
+        self._ema_alpha_cache: float = self.config["decay_rate"]
+
     @staticmethod
     def noop_logger(name: str, value: float) -> None:
         """No-op logger compatible with the controller interface."""
@@ -244,7 +326,7 @@ class SerotoninController:
         """Wrap a collector callable for Prometheus-style metrics."""
 
         def _log(name: str, value: float) -> None:
-            collector(name, float(value), {"controller_version": "v2.4.0"})
+            collector(name, float(value), {"controller_version": "v2.5.0"})
 
         return _log
 
@@ -294,6 +376,318 @@ class SerotoninController:
         """Inject a TACL guard to prevent free-energy regressions."""
 
         self._tacl_guard = guard_fn
+
+    def compute_circadian_modulation(self, hour: Optional[int] = None) -> float:
+        """Compute circadian rhythm modulation factor.
+
+        This models the natural variation in alertness and risk tolerance
+        throughout the day, inspired by serotonergic circadian rhythms.
+
+        Args:
+            hour: Hour of day (0-23). If None, uses current UTC hour.
+
+        Returns:
+            Modulation factor in range [1 - amplitude, 1 + amplitude].
+            Values > 1 indicate heightened sensitivity (higher risk aversion).
+            Values < 1 indicate reduced sensitivity (more risk tolerance).
+
+        Example:
+            >>> controller = SerotoninController()
+            >>> mod = controller.compute_circadian_modulation(9)  # 9 AM
+        """
+        if not self.config.get("circadian_enabled", False):
+            return 1.0
+
+        if hour is None:
+            hour = datetime.now(timezone.utc).hour
+
+        amplitude = self.config.get("circadian_amplitude", 0.2)
+        peak_hour = self.config.get("circadian_peak_hour", 14)
+
+        # Use cosine function for smooth circadian rhythm
+        # Peak alertness (lowest modulation) at peak_hour
+        # Lowest alertness (highest modulation) 12 hours later
+        phase = 2.0 * math.pi * (hour - peak_hour) / 24.0
+        modulation = 1.0 - amplitude * math.cos(phase)
+
+        self._circadian_phase = phase
+        return float(modulation)
+
+    def update_adaptive_threshold(self, volatility: float) -> float:
+        """Update the adaptive threshold based on recent volatility.
+
+        This implements a regime-aware threshold that adjusts based on
+        market conditions, preventing over-sensitivity during calm markets
+        and under-sensitivity during volatile periods.
+
+        Args:
+            volatility: Current market volatility measure.
+
+        Returns:
+            Updated adaptive threshold value.
+
+        Example:
+            >>> controller = SerotoninController()
+            >>> new_threshold = controller.update_adaptive_threshold(0.025)
+        """
+        if not self.config.get("adaptive_threshold_enabled", False):
+            return self.config["cooldown_threshold"]
+
+        with self._lock:
+            # Add to volatility buffer
+            self._volatility_buffer.append(volatility)
+
+            if len(self._volatility_buffer) < 5:
+                # Not enough data, return base threshold
+                return self.config["cooldown_threshold"]
+
+            # Compute rolling volatility statistics
+            vol_array = np.array(self._volatility_buffer)
+            vol_mean = float(np.mean(vol_array))
+            vol_std = float(np.std(vol_array))
+
+            # Compute z-score of current volatility
+            if vol_std > 0:
+                vol_zscore = (volatility - vol_mean) / vol_std
+            else:
+                vol_zscore = 0.0
+
+            # Adapt threshold based on volatility regime
+            base_threshold = self.config["cooldown_threshold"]
+            adaptation_rate = self.config.get("threshold_adaptation_rate", 0.1)
+
+            # Higher volatility → lower threshold (more sensitive)
+            # Lower volatility → higher threshold (less sensitive)
+            # Use tanh for smooth bounded adaptation
+            threshold_adjustment = adaptation_rate * math.tanh(-vol_zscore * 0.5)
+            new_threshold = base_threshold * (1.0 + threshold_adjustment)
+
+            # Clamp to reasonable bounds
+            new_threshold = max(0.3, min(0.95, new_threshold))
+
+            # EMA smoothing of threshold changes
+            self._adaptive_threshold = (
+                0.9 * self._adaptive_threshold + 0.1 * new_threshold
+            )
+
+            return float(self._adaptive_threshold)
+
+    def get_effective_threshold(self) -> float:
+        """Get the currently effective cooldown threshold.
+
+        Returns the adaptive threshold if enabled, otherwise returns
+        the base cooldown threshold from configuration.
+
+        Returns:
+            Effective threshold value.
+        """
+        if self.config.get("adaptive_threshold_enabled", False):
+            return self._adaptive_threshold
+        return self.config["cooldown_threshold"]
+
+    def step_batch(
+        self,
+        stress_sequence: Sequence[float],
+        drawdown_sequence: Sequence[float],
+        novelty_sequence: Sequence[float],
+        *,
+        market_vol_sequence: Optional[Sequence[float]] = None,
+    ) -> List[Tuple[bool, bool, float, float]]:
+        """Process multiple steps efficiently in batch.
+
+        Optimized for backtesting and simulation. More efficient than
+        calling step() in a loop due to reduced lock acquisition overhead.
+
+        Args:
+            stress_sequence: Sequence of stress values.
+            drawdown_sequence: Sequence of drawdown values.
+            novelty_sequence: Sequence of novelty values.
+            market_vol_sequence: Optional sequence of market volatility overrides.
+
+        Returns:
+            List of (hold, veto, cooldown_s, level) tuples, one per step.
+
+        Raises:
+            ValueError: If input sequences have different lengths.
+
+        Example:
+            >>> controller = SerotoninController()
+            >>> results = controller.step_batch(
+            ...     stress_sequence=[0.5, 0.8, 1.2],
+            ...     drawdown_sequence=[-0.01, -0.02, -0.03],
+            ...     novelty_sequence=[0.3, 0.5, 0.7]
+            ... )
+        """
+        n = len(stress_sequence)
+        if len(drawdown_sequence) != n or len(novelty_sequence) != n:
+            raise ValueError("All input sequences must have the same length")
+
+        if market_vol_sequence is not None and len(market_vol_sequence) != n:
+            raise ValueError("market_vol_sequence must have the same length as other sequences")
+
+        results: List[Tuple[bool, bool, float, float]] = []
+
+        # Use a single lock acquisition for the entire batch
+        with self._lock:
+            for i in range(n):
+                stress = stress_sequence[i]
+                drawdown = drawdown_sequence[i]
+                novelty = novelty_sequence[i]
+                market_vol = market_vol_sequence[i] if market_vol_sequence else None
+
+                # Inline validation for speed
+                if stress < 0 or drawdown > 0 or novelty < 0:
+                    raise ValueError(
+                        f"Invalid inputs at index {i}: stress={stress}, "
+                        f"drawdown={drawdown}, novelty={novelty}"
+                    )
+
+                # Map inputs
+                vol = market_vol if market_vol is not None else stress
+                losses = abs(drawdown)
+                fe = novelty
+
+                # Update adaptive threshold if enabled
+                if self.config.get("adaptive_threshold_enabled", False):
+                    self.update_adaptive_threshold(vol)
+
+                # Compute aversive state (inline optimized version)
+                aversive = self._compute_aversive_fast(vol, fe, losses, 0.0)
+
+                # Compute serotonin signal
+                level = self._compute_signal_fast(aversive)
+
+                # Check cooldown
+                veto = self._check_cooldown_fast(level)
+                hold = veto
+
+                # Track cooldown timer
+                current_time = time()
+                if hold and not self._hold_state:
+                    self._cooldown_start_time = current_time
+                    self._hold_state = True
+                elif not hold and self._hold_state:
+                    self._hold_state = False
+                    self._cooldown_start_time = None
+
+                cooldown_s = 0.0
+                if self._hold_state and self._cooldown_start_time is not None:
+                    cooldown_s = current_time - self._cooldown_start_time
+
+                results.append((hold, veto, cooldown_s, level))
+
+                # Update tracking
+                self._step_count += 1
+                if hold:
+                    self._veto_count += 1
+                self._last_step_time = current_time
+
+        return results
+
+    def _compute_aversive_fast(
+        self, vol: float, fe: float, losses: float, rho: float
+    ) -> float:
+        """Optimized aversive state computation for batch processing."""
+        cfg = self.config
+
+        # Pre-compute contributions with optimized math
+        vol_contrib = cfg["alpha"] * (math.sqrt(vol) if vol > 0 else 0.0)
+        fe_contrib = cfg["beta"] * fe
+        loss_contrib = cfg["gamma"] * (losses + 0.5 * losses * losses)
+        rho_contrib = cfg["delta_rho"] * (1.0 - max(-1.0, min(1.0, rho)))
+
+        release = vol_contrib + fe_contrib + loss_contrib + rho_contrib
+
+        # Fast tanh approximation for saturation
+        saturated = _SATURATION_SCALE * math.tanh(release / _SATURATION_SCALE)
+        return max(0.0, saturated)
+
+    def _compute_signal_fast(self, aversive_state: float) -> float:
+        """Optimized serotonin signal computation for batch processing."""
+        cfg = self.config
+
+        # Adaptive kappa based on tonic level
+        kappa_base = cfg["phase_kappa"]
+        tonic_adaptation = 1.0 - 0.3 * min(self.tonic_level / 2.0, 1.0)
+        kappa = kappa_base * tonic_adaptation
+
+        # Gate calculation with clamping
+        gate_raw = (aversive_state - cfg["phase_threshold"]) / kappa
+        gate_raw = max(-20.0, min(20.0, gate_raw))
+        gate = 1.0 / (1.0 + math.exp(-gate_raw))
+        self.gate_level = gate
+
+        # Phasic component with Michaelis-Menten saturation
+        phasic_saturation = aversive_state / (1.0 + aversive_state)
+        phasic_burst = cfg["burst_factor"] * gate * phasic_saturation
+        self.phasic_level = 0.7 * self.phasic_level + 0.3 * phasic_burst
+
+        # Tonic dynamics
+        decay = self._ema_alpha_cache
+        effective_decay = decay * (1.0 - 0.3 * gate)
+        tonic_input = aversive_state + 0.5 * phasic_burst
+        self.tonic_level = (1.0 - effective_decay) * self.tonic_level + effective_decay * tonic_input
+
+        # Apply circadian modulation if enabled
+        circadian_mod = self.compute_circadian_modulation()
+
+        # Logistic transformation
+        k = cfg["k"]
+        theta = cfg["theta"]
+        x = k * (self.tonic_level * circadian_mod - theta)
+        x = max(-60.0, min(60.0, x))
+        sig = 1.0 / (1.0 + math.exp(-x))
+
+        # Desensitization logic
+        max_counter = int(cfg["max_desens_counter"])
+        effective_threshold = self.get_effective_threshold()
+
+        if self.tonic_level > effective_threshold:
+            self.desens_counter = min(self.desens_counter + 1, max_counter)
+            if self.desens_counter > cfg["desens_threshold_ticks"]:
+                desens_factor = 1.0 + 0.5 * (self.desens_counter / max_counter)
+                self.sensitivity = max(
+                    0.1,
+                    self.sensitivity * math.exp(-cfg["desens_gain"] * sig * desens_factor)
+                )
+        else:
+            recovery_boost = 1.0 + 0.5 * max(
+                0.0, (effective_threshold - self.tonic_level) / effective_threshold
+            )
+            recovery_rate = cfg["desens_rate"] * recovery_boost
+            self.desens_counter = max(0, self.desens_counter - 2)
+            self.sensitivity = min(1.0, self.sensitivity + recovery_rate)
+
+        self.serotonin_level = sig * self.sensitivity
+
+        # Temperature floor update
+        floor_min = cfg["temperature_floor_min"]
+        floor_max = cfg["temperature_floor_max"]
+        level_cubed = self.serotonin_level ** 3
+        self.temperature_floor = floor_min + (floor_max - floor_min) * level_cubed
+
+        return self.serotonin_level
+
+    def _check_cooldown_fast(self, serotonin_signal: float) -> bool:
+        """Optimized cooldown check for batch processing."""
+        cfg = self.config
+        hysteresis_margin = 0.05
+        effective_threshold = self.get_effective_threshold()
+
+        if self._hold_state:
+            serotonin_threshold = effective_threshold * (1.0 - hysteresis_margin)
+            phasic_threshold = cfg["phasic_veto"] * (1.0 - hysteresis_margin)
+            gate_threshold = cfg["gate_veto"] * (1.0 - hysteresis_margin)
+        else:
+            serotonin_threshold = effective_threshold * (1.0 + hysteresis_margin)
+            phasic_threshold = cfg["phasic_veto"] * (1.0 + hysteresis_margin)
+            gate_threshold = cfg["gate_veto"] * (1.0 + hysteresis_margin)
+
+        serotonin_veto = serotonin_signal > serotonin_threshold
+        phasic_veto = self.phasic_level > phasic_threshold
+        gate_veto = self.gate_level > gate_threshold
+
+        return serotonin_veto or phasic_veto or gate_veto
 
     def step(
         self,
@@ -734,7 +1128,7 @@ class SerotoninController:
         """Push serotonin telemetry to the logger backend."""
 
         with self._lock:
-            tag = '{controller_version="v2.4.0"}'
+            tag = '{controller_version="v2.5.0"}'
             self._log(f"serotonin_level{tag}", self.serotonin_level)
             self._log(f"serotonin_tonic_level{tag}", self.tonic_level)
             self._log(f"serotonin_sensitivity{tag}", self.sensitivity)
@@ -742,6 +1136,8 @@ class SerotoninController:
             self._log(f"serotonin_gate_level{tag}", self.gate_level)
             self._log(f"serotonin_decay_rate{tag}", self.config["decay_rate"])
             self._log(f"serotonin_temperature_floor{tag}", self.temperature_floor)
+            self._log(f"serotonin_adaptive_threshold{tag}", self._adaptive_threshold)
+            self._log(f"serotonin_circadian_phase{tag}", self._circadian_phase)
             # TACL telemetry
             self._log("tacl.5ht.level", self.serotonin_level)
             self._log("tacl.5ht.hold", float(self._hold_state))
@@ -843,6 +1239,10 @@ class SerotoninController:
                 "decay_rate": float(self.config["decay_rate"]),
                 "hold_state": bool(self._hold_state),
                 "cooldown_s": float(cooldown_s),
+                "adaptive_threshold": float(self._adaptive_threshold),
+                "circadian_phase": float(self._circadian_phase),
+                "effective_threshold": float(self.get_effective_threshold()),
+                "controller_version": "v2.5.0",
             }
 
     def _with_file_lock(self, action: Callable[[], None]) -> None:
@@ -955,6 +1355,11 @@ class SerotoninController:
             self._total_cooldown_time = 0.0
             self._veto_count = 0
             self._last_step_time = None
+            # Reset adaptive and circadian state
+            self._adaptive_threshold = self.config["cooldown_threshold"]
+            self._circadian_phase = 0.0
+            self._volatility_buffer.clear()
+            self._last_aversive_states.clear()
             logging.getLogger(__name__).info("Controller state reset")
 
     def health_check(self) -> dict:
@@ -1052,7 +1457,7 @@ class SerotoninController:
         """
         with self._lock:
             lines = [
-                "=== SerotoninController Diagnostic Report ===",
+                "=== SerotoninController v2.5.0 Diagnostic Report ===",
                 f"Config: {self.config_path}",
                 "",
                 "State:",
@@ -1066,9 +1471,17 @@ class SerotoninController:
                 f"  Desens Counter: {self.desens_counter}/{self.config['max_desens_counter']}",
                 "",
                 "Thresholds:",
-                f"  Cooldown Threshold: {self.config['cooldown_threshold']:.4f}",
+                f"  Cooldown Threshold (base): {self.config['cooldown_threshold']:.4f}",
+                f"  Adaptive Threshold: {self._adaptive_threshold:.4f}",
+                f"  Effective Threshold: {self.get_effective_threshold():.4f}",
                 f"  Gate Veto: {self.config['gate_veto']:.4f}",
                 f"  Phasic Veto: {self.config['phasic_veto']:.4f}",
+                "",
+                "Advanced Features:",
+                f"  Circadian Enabled: {self.config.get('circadian_enabled', False)}",
+                f"  Circadian Phase: {self._circadian_phase:.4f}",
+                f"  Adaptive Threshold Enabled: {self.config.get('adaptive_threshold_enabled', False)}",
+                f"  Volatility Buffer Size: {len(self._volatility_buffer)}",
                 "",
                 "Performance Metrics:",
             ]
