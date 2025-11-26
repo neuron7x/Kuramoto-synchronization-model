@@ -124,19 +124,23 @@ def test_market_recorder_flush_persists_dataset(tmp_path):
 
 
 def test_fsm_respects_refractory(monkeypatch):
-    timestamps = [0.0, 2.0, 2.5, 3.0]
-
-    def fake_time():
-        if timestamps:
-            return timestamps.pop(0)
-        return 1.5
-
-    monkeypatch.setattr(time, "time", fake_time)
-
+    # Create FSM first with real time, then manipulate last_transition_time directly
+    # to avoid issues with time.time() mocking being affected by other code
     fsm = FiniteStateMachine(refractory_period=1.0)
 
+    # Set a known starting point
+    fsm.last_transition_time = 0.0
+
+    # First transition at t=2.0: elapsed = 2.0 > 1.0 (refractory_period), should succeed
+    monkeypatch.setattr(time, "time", lambda: 2.0)
     first = fsm.transition("S1", "first")
+
+    # Second transition at t=2.5: elapsed = 0.5 < 1.0, should be blocked
+    monkeypatch.setattr(time, "time", lambda: 2.5)
     second = fsm.transition("S2", "too_soon")
+
+    # Third transition at t=3.0 with force=True: should succeed regardless
+    monkeypatch.setattr(time, "time", lambda: 3.0)
     forced = fsm.transition("S3", "override", force=True)
 
     assert first is True
