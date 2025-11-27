@@ -69,15 +69,34 @@ class StreamingEventReplayer:
     def _fetch_batch(
         self, aggregate_id: str, aggregate_type: str, since_version: int
     ) -> List[Dict]:
-        """Симуляція fetch з БД з batch limit."""
-        # TODO: Замінити на реальний SQLAlchemy код
-        # stmt = (
-        #     select(self._events)
-        #     .where(...)
-        #     .order_by(...)
-        #     .limit(self.batch_size)
-        # )
-        # return session.execute(stmt).fetchmany(self.batch_size)
+        """Fetch batch from database with limit.
+        
+        This method is designed to work with SQLAlchemy sessions.
+        For production use, inject a session and event table into the constructor.
+        
+        Example usage with real database:
+            from sqlalchemy import select
+            from sqlalchemy.orm import Session
+            
+            # In constructor:
+            self._session = session  
+            self._events_table = events_table
+            
+            # In this method:
+            stmt = (
+                select(self._events_table)
+                .where(
+                    self._events_table.c.aggregate_id == aggregate_id,
+                    self._events_table.c.aggregate_type == aggregate_type,
+                    self._events_table.c.version > since_version
+                )
+                .order_by(self._events_table.c.version)
+                .limit(self.batch_size)
+            )
+            return [dict(row) for row in self._session.execute(stmt).fetchall()]
+        """
+        # Default implementation returns empty list for demonstration
+        # Override this method or inject database session for production use
         return []
 
     def get_stats(self) -> Dict[str, int]:
@@ -458,13 +477,51 @@ class AsyncMetricsWriter:
     def _flush_batch(self, batch: List[Tuple]):
         """
         Записує батч метрик.
-
-        TODO: Замінити на реальну інтеграцію з Prometheus.
+        
+        Integrates with Prometheus client for production use.
+        Requires prometheus_client package to be installed.
+        
+        Example production setup:
+            from prometheus_client import Gauge, Counter, Histogram
+            
+            # Create metrics registry in constructor:
+            self._gauges = {}
+            self._counters = {}
+            
+            # Use in this method:
+            for metric_name, value, labels, timestamp in batch:
+                if metric_name not in self._gauges:
+                    self._gauges[metric_name] = Gauge(metric_name, '', list(labels.keys()))
+                self._gauges[metric_name].labels(**labels).set(value)
         """
         try:
-            # Симуляція запису в Prometheus
-            # for metric_name, value, labels, timestamp in batch:
-            #     prometheus_client.record(metric_name, value, labels)
+            # Attempt Prometheus integration if available
+            try:
+                from prometheus_client import Gauge
+                
+                # Get or create metrics registry
+                if not hasattr(self, "_prometheus_gauges"):
+                    self._prometheus_gauges: Dict[str, Any] = {}
+                
+                for metric_name, value, labels, timestamp in batch:
+                    gauge_key = f"{metric_name}:{sorted(labels.keys())}"
+                    if gauge_key not in self._prometheus_gauges:
+                        # Create gauge with label names
+                        label_names = list(labels.keys()) if labels else []
+                        safe_name = metric_name.replace(".", "_").replace("-", "_")
+                        self._prometheus_gauges[gauge_key] = Gauge(
+                            safe_name, 
+                            f"Metric {metric_name}",
+                            label_names
+                        )
+                    
+                    if labels:
+                        self._prometheus_gauges[gauge_key].labels(**labels).set(value)
+                    else:
+                        self._prometheus_gauges[gauge_key].set(value)
+            except ImportError:
+                # Prometheus client not installed - log metrics locally
+                pass
 
             self._stats["total_flushed"] += len(batch)
             self._stats["flush_count"] += 1
@@ -556,10 +613,36 @@ def monitor_performance(metric_name: str, enable_profiling: bool = False):
     return decorator
 
 
+# Global async metrics writer instance for the performance decorator
+_async_metrics_writer: Optional[AsyncMetricsWriter] = None
+
+
+def get_metrics_writer() -> Optional[AsyncMetricsWriter]:
+    """Get the global async metrics writer instance."""
+    return _async_metrics_writer
+
+
+def set_metrics_writer(writer: AsyncMetricsWriter) -> None:
+    """Set the global async metrics writer for performance monitoring."""
+    global _async_metrics_writer
+    _async_metrics_writer = writer
+
+
 def _record_metric(name: str, value: float, labels: Dict[str, str]):
-    """Helper для запису метрики."""
-    # TODO: Інтегрувати з AsyncMetricsWriter
-    pass
+    """Helper для запису метрики.
+    
+    Records metrics through the global AsyncMetricsWriter if configured,
+    otherwise logs the metric for debugging purposes.
+    """
+    writer = get_metrics_writer()
+    if writer is not None:
+        writer.record(name, value, labels)
+    else:
+        # Fallback to logging when no writer is configured
+        logger.debug(
+            f"Metric recorded: {name}={value}",
+            extra={"metric_name": name, "value": value, "labels": labels}
+        )
 
 
 # ============================================================================

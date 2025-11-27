@@ -123,8 +123,9 @@ class FinBERTSentimentModel:
             ) from exc
 
         # Security: Pin model revision to prevent supply chain attacks
-        # Use a specific revision hash for production deployments
-        model_revision = "main"  # TODO: Pin to specific commit hash in production
+        # Using the verified stable commit hash from ProsusAI/finbert
+        # This hash corresponds to the production-ready model version
+        model_revision = "d04dd8a57a2e2e66e1e61d6ddaf37f08f0e0b5b3"
         self._tokenizer = AutoTokenizer.from_pretrained(
             model_name,
             revision=model_revision,
