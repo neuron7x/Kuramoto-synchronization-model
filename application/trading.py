@@ -40,6 +40,9 @@ def dto_to_signal(data: Mapping[str, Any]) -> Signal:
     else:  # pragma: no cover - defensive branch
         raise TypeError("timestamp must be str, datetime, or None")
 
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+
     return Signal(
         symbol=str(data["symbol"]),
         action=data["action"],
