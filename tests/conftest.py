@@ -212,6 +212,20 @@ def _ensure_logging_propagation() -> None:
     yield
 
 
+@pytest.fixture(autouse=True)
+def _reset_kill_switch() -> None:
+    """Reset kill switch singleton before each test.
+
+    This ensures that tests don't interfere with each other through
+    the kill switch state.
+    """
+    from runtime.kill_switch import KillSwitchManager
+
+    KillSwitchManager.reset_instance()
+    yield
+    KillSwitchManager.reset_instance()
+
+
 def pytest_collection_modifyitems(  # type: ignore[override]
     config: pytest.Config, items: list[pytest.Item]
 ) -> None:
