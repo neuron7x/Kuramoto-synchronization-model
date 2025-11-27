@@ -61,6 +61,12 @@ def resample_ohlcv(
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("DataFrame must have a DatetimeIndex")
 
+    # ``resample`` requires a monotonic DatetimeIndex. Sorting ensures that
+    # consumers do not need to pre-order their data before calling the helper,
+    # which previously surfaced as a cryptic pandas ``ValueError``.
+    if not df.index.is_monotonic_increasing:
+        df = df.sort_index()
+
     open_col, high_col, low_col, close_col = price_cols
 
     # Build aggregation dictionary

@@ -144,6 +144,29 @@ class TestResampleOHLCV:
         with pytest.raises(ValueError, match="DatetimeIndex"):
             resample_ohlcv(df, "5min")
 
+    def test_unsorted_index_is_sorted_before_resample(self):
+        """Resampling should handle out-of-order rows transparently."""
+
+        dates = pd.date_range("2024-01-01 09:00", periods=4, freq="1min")
+        df = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0, 103.0],
+                "high": [101.0, 102.0, 103.0, 104.0],
+                "low": [99.0, 100.0, 101.0, 102.0],
+                "close": [100.5, 101.5, 102.5, 103.5],
+                "volume": [1000, 1100, 1200, 1300],
+            },
+            index=dates,
+        )
+        df = df.sample(frac=1.0, random_state=42)  # deliberately shuffled
+
+        result = resample_ohlcv(df, "2min")
+
+        assert list(result.index) == list(pd.date_range(dates[0], dates[-1], freq="2min"))
+        assert result.iloc[0]["open"] == 100.0
+        assert result.iloc[0]["close"] == 101.5
+        assert result.iloc[0]["volume"] == 2100
+
     def test_empty_result_handling(self):
         """Test handling of empty resampling results."""
         dates = pd.date_range("2024-01-01", periods=2, freq="1h")
