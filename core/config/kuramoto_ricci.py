@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pydantic
 import yaml
@@ -24,18 +24,24 @@ from pydantic_settings.sources import PydanticBaseSettingsSource
 
 from core.indicators.multiscale_kuramoto import TimeFrame
 
-AliasChoices = getattr(pydantic, "AliasChoices", None)
+# Handle AliasChoices compatibility for older pydantic versions
+_PydanticAliasChoices = getattr(pydantic, "AliasChoices", None)
 
-if (
-    AliasChoices is None
-):  # pragma: no cover - exercised implicitly via configuration parsing
+if TYPE_CHECKING:
+    # Type checking uses the pydantic type if available
+    from pydantic import AliasChoices as _AliasChoicesType
 
-    class AliasChoices(tuple):
+    AliasChoices = _AliasChoicesType
+elif _PydanticAliasChoices is not None:
+    AliasChoices = _PydanticAliasChoices
+else:  # pragma: no cover - exercised implicitly via configuration parsing
+
+    class _FallbackAliasChoices(tuple):
         """Lightweight stand-in for :mod:`pydantic`'s ``AliasChoices`` helper."""
 
         __slots__ = ()
 
-        def __new__(cls, *choices: str) -> "AliasChoices":
+        def __new__(cls, *choices: str) -> "_FallbackAliasChoices":
             normalized = tuple(str(choice) for choice in choices if str(choice))
             if not normalized:
                 msg = "AliasChoices requires at least one non-empty alias"
@@ -45,6 +51,8 @@ if (
         def __repr__(self) -> str:  # pragma: no cover - debug helper
             joined = ", ".join(self)
             return f"AliasChoices({joined})"
+
+    AliasChoices = _FallbackAliasChoices  # type: ignore[misc,assignment]
 
 
 DEFAULT_CONFIG_PATH = Path("configs/kuramoto_ricci_composite.yaml")
@@ -87,7 +95,9 @@ def _merge_adaptive_window_payload(data: Any) -> Mapping[str, Any]:
     return payload
 
 
-def _coerce_timeframes_payload(value: Any) -> Sequence[Any] | tuple[TimeFrame, ...]:
+def _coerce_timeframes_payload(
+    value: Any,
+) -> Sequence[Any] | tuple[TimeFrame, ...] | None:
     if value is None:
         return value
     if isinstance(value, (str, bytes)):
@@ -104,38 +114,41 @@ def _ensure_timeframes_non_empty_payload(
         raise ValueError("kuramoto.timeframes cannot be empty")
 
 
-def _coerce_int_value(value: Any, field_name: str) -> Any:
+def _coerce_int_value(value: Any, field_name: str | None) -> Any:
+    name = field_name or "value"
     if isinstance(value, str):
         stripped = value.strip()
         if not stripped:
-            raise ValueError(f"{field_name} cannot be blank")
+            raise ValueError(f"{name} cannot be blank")
         try:
             return int(stripped)
         except ValueError as exc:
-            raise ValueError(f"{field_name} must be an integer") from exc
+            raise ValueError(f"{name} must be an integer") from exc
     return value
 
 
-def _coerce_float_value(value: Any, field_name: str) -> Any:
+def _coerce_float_value(value: Any, field_name: str | None) -> Any:
+    name = field_name or "value"
     if isinstance(value, str):
         stripped = value.strip()
         if not stripped:
-            raise ValueError(f"{field_name} cannot be blank")
+            raise ValueError(f"{name} cannot be blank")
         try:
             return float(stripped)
         except ValueError as exc:
-            raise ValueError(f"{field_name} must be a number") from exc
+            raise ValueError(f"{name} must be a number") from exc
     return value
 
 
-def _coerce_bool_value(value: Any, field_name: str) -> Any:
+def _coerce_bool_value(value: Any, field_name: str | None) -> Any:
+    name = field_name or "value"
     if isinstance(value, str):
         normalized = value.strip().lower()
         if normalized in {"true", "1", "yes", "y"}:
             return True
         if normalized in {"false", "0", "no", "n"}:
             return False
-        raise ValueError(f"{field_name} must be a boolean value")
+        raise ValueError(f"{name} must be a boolean value")
     return value
 
 

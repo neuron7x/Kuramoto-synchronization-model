@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from math import isclose, isnan
-from typing import Mapping, MutableMapping
+from typing import Mapping, MutableMapping, TypeVar
 
 from application.system import TradePulseSystem
 from domain import Order, OrderSide, OrderType, Signal, SignalAction
@@ -20,6 +21,13 @@ from .contracts import (
 )
 
 __all__ = ["TradePulseSDK"]
+
+_E = TypeVar("_E", bound=Enum)
+
+
+def _enum_value(val: _E | str) -> str:
+    """Extract the string value from an enum or passthrough string."""
+    return val.value if isinstance(val, Enum) else val
 
 
 @dataclass(slots=True)
@@ -126,10 +134,10 @@ class TradePulseSDK:
             "trade_proposed",
             {
                 "symbol": signal.symbol,
-                "side": order.side.value,
+                "side": _enum_value(order.side),
                 "quantity": order.quantity,
                 "price": order.price,
-                "action": signal.action.value,
+                "action": _enum_value(signal.action),
                 "confidence": signal.confidence,
             },
         )
@@ -161,7 +169,7 @@ class TradePulseSDK:
 
         try:
             self._system.risk_manager.validate_order(
-                order.symbol, order.side.value, order.quantity, float(price)
+                order.symbol, _enum_value(order.side), order.quantity, float(price)
             )
         except Exception as exc:
             state.approved = False
@@ -171,7 +179,7 @@ class TradePulseSDK:
                 "risk_check_failed",
                 {
                     "symbol": order.symbol,
-                    "side": order.side.value,
+                    "side": _enum_value(order.side),
                     "quantity": order.quantity,
                     "price": price,
                     "error": reason,
@@ -186,7 +194,7 @@ class TradePulseSDK:
             "risk_check_passed",
             {
                 "symbol": order.symbol,
-                "side": order.side.value,
+                "side": _enum_value(order.side),
                 "quantity": order.quantity,
                 "price": price,
             },
@@ -222,7 +230,7 @@ class TradePulseSDK:
             "order_submitted",
             {
                 "symbol": submitted.symbol,
-                "side": submitted.side.value,
+                "side": _enum_value(submitted.side),
                 "quantity": submitted.quantity,
                 "price": submitted.price,
                 "venue": venue,
