@@ -84,6 +84,12 @@ def is_torch_available() -> bool:
     return _TORCH_AVAILABLE
 
 
+# Default scoring weights for combining similarity components
+_DEFAULT_COSINE_WEIGHT = 0.7  # Weight for cosine similarity in base score
+_DEFAULT_PHASE_WEIGHT = 0.3  # Weight for phase coherence in base score
+_DEFAULT_FRACTAL_DECAY = 2.0  # Exponential decay factor for fractal rank weighting
+
+
 @dataclass
 class _MemoryEntry:
     """Internal storage for a single memory entry."""
@@ -283,7 +289,7 @@ class FractalPELMGPU:
         ranks = torch.argsort(torch.argsort(similarities, descending=True))
         # Normalize ranks to [0, 1] and apply exponential decay
         normalized_ranks = ranks.float() / max(n - 1, 1)
-        weights = torch.exp(-2.0 * normalized_ranks)  # Decay factor
+        weights = torch.exp(-_DEFAULT_FRACTAL_DECAY * normalized_ranks)
 
         # Normalize to [0, 1]
         if weights.max() > 0:
@@ -399,11 +405,23 @@ class FractalPELMGPU:
         ValueError
             If query_vector has wrong dimensionality.
         """
+        torch = self._torch
+
+        # Handle query vector expansion
+        if isinstance(query_vector, np.ndarray):
+            query_expanded: np.ndarray | Any = query_vector.reshape(1, -1)
+        else:
+            query_expanded = query_vector.unsqueeze(0)
+
+        # Handle phase - use tensor if torch input, numpy otherwise
+        if isinstance(query_vector, np.ndarray):
+            phase_input: np.ndarray | Any = np.array([current_phase])
+        else:
+            phase_input = torch.tensor([current_phase], dtype=torch.float32)
+
         results = self.batch_retrieve(
-            query_vectors=query_vector.reshape(1, -1)
-            if isinstance(query_vector, np.ndarray)
-            else query_vector.unsqueeze(0),
-            current_phases=np.array([current_phase]),
+            query_vectors=query_expanded,
+            current_phases=phase_input,
             top_k=top_k,
         )
         return results[0] if results else []
@@ -505,7 +523,10 @@ class FractalPELMGPU:
 
             # Combine scores: weighted average of cosine and phase coherence
             base_weight = 1.0 - self.fractal_weight
-            combined_scores = base_weight * (0.7 * sim_scores + 0.3 * phase_coherence)
+            combined_scores = base_weight * (
+                _DEFAULT_COSINE_WEIGHT * sim_scores
+                + _DEFAULT_PHASE_WEIGHT * phase_coherence
+            )
 
             # Add fractal weighting if enabled
             if self.fractal_weight > 0:

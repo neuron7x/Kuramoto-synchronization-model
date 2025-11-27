@@ -1,7 +1,7 @@
 """Tests for experimental FractalPELMGPU memory backend.
 
 These tests validate the experimental phase-aware retrieval backend.
-Tests are marked with L3 as they are integration tests.
+Tests are marked with L3 as per the TradePulse test level mapping.
 """
 
 from __future__ import annotations
