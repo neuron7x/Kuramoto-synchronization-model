@@ -124,14 +124,23 @@ def test_market_recorder_flush_persists_dataset(tmp_path):
 
 
 def test_fsm_respects_refractory(monkeypatch):
-    timestamps = [0.0, 2.0, 2.5, 3.0]
+    # Timestamps for:
+    # 1. FSM init (0.0)
+    # 2. First transition check (2.0)
+    # 3. First transition logging (2.0)
+    # 4. Second transition check (2.5) - should fail due to refractory (2.5 - 2.0 = 0.5 < 1.0)
+    # 5. Second transition logging would not happen since it fails
+    # 6. Forced transition check (3.0)
+    # 7. Forced transition logging (3.0)
+    timestamps = [0.0, 2.0, 2.0, 2.5, 3.0, 3.0]
 
     def fake_time():
         if timestamps:
             return timestamps.pop(0)
-        return 1.5
+        return 100.0  # Return a large value if we run out
 
-    monkeypatch.setattr(time, "time", fake_time)
+    # Patch time.time in the nlca_core module's namespace
+    monkeypatch.setattr("tradepulse.nlca_core.time.time", fake_time)
 
     fsm = FiniteStateMachine(refractory_period=1.0)
 
