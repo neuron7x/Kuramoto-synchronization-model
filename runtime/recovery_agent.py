@@ -165,10 +165,25 @@ class AdaptiveRecoveryAgent:
         logger.info("Saved Q-table entries=%s path=%s", len(self.Q), path)
 
     def load_q_table(self, path: str) -> None:
+        import io
         import pickle
 
+        # CWE-502: Use restricted unpickler to prevent arbitrary code execution
+        # The Q-table only contains primitive types (dict, tuple, str, float)
+        class RestrictedUnpickler(pickle.Unpickler):
+            """Restricted unpickler that only allows safe types for Q-table."""
+
+            SAFE_BUILTINS = frozenset({"dict", "tuple", "list", "str", "int", "float"})
+
+            def find_class(self, module: str, name: str) -> type:
+                if module == "builtins" and name in self.SAFE_BUILTINS:
+                    return getattr(__builtins__, name) if isinstance(__builtins__, dict) else getattr(__builtins__.__class__, name)
+                raise pickle.UnpicklingError(
+                    f"Unsafe class: {module}.{name} - only primitive types are allowed for Q-table"
+                )
+
         with open(path, "rb") as fh:
-            data = pickle.load(fh)
+            data = RestrictedUnpickler(fh).load()  # nosec B301 - guarded by restricted unpickler
         self.Q = defaultdict(float, data)
         logger.info("Loaded Q-table entries=%s path=%s", len(self.Q), path)
 
