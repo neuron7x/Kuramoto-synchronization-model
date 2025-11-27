@@ -117,14 +117,13 @@ class AutoTriageConfig:
         if self.archive_history < 0:
             raise ValueError("archive_history must be non-negative")
 
-        # Normalize all path-like fields to Path objects
-        root = Path(self.incident_root) if isinstance(self.incident_root, str) else self.incident_root
-        object.__setattr__(self, "incident_root", root)
+        # Normalize all path-like fields to Path objects (Path(path) is idempotent)
+        object.__setattr__(self, "incident_root", Path(self.incident_root))
 
-        log_paths = tuple(Path(p) if isinstance(p, str) else p for p in self.log_paths)
+        log_paths = tuple(Path(p) for p in self.log_paths)
         object.__setattr__(self, "log_paths", log_paths)
 
-        traffic_sources = tuple(Path(p) if isinstance(p, str) else p for p in self.traffic_replay_sources)
+        traffic_sources = tuple(Path(p) for p in self.traffic_replay_sources)
         object.__setattr__(self, "traffic_replay_sources", traffic_sources)
 
         commands: list[tuple[str, ...]] = []
