@@ -143,6 +143,17 @@ def test_compute_psi(baseline, current, expected):
     ), f"PSI mismatch: expected {expected}, got {result}"
 
 
+def test_compute_psi_ignores_nan_values():
+    """PSI should drop NaN inputs instead of returning NaN for mixed payloads."""
+
+    baseline = np.array([1.0, 1.0, np.nan, 1.0])
+    current = np.array([1.0, 1.0, 1.0])
+
+    result = compute_psi(baseline, current, bins=3)
+
+    assert result == pytest.approx(0.0), "Identical distributions should yield zero PSI"
+
+
 def test_parallel_drift():
     """Test parallel drift detection across multiple features.
 
