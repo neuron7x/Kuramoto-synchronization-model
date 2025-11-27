@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, List
 
 import yaml
 
@@ -360,8 +360,8 @@ class ThermoConfig:
         Returns:
             ConfigValidationResult with validation status and any issues found
         """
-        issues: list = []
-        warnings: list = []
+        issues: List[ConfigValidationIssue] = []
+        warnings: List[ConfigValidationIssue] = []
 
         # Validate control temperature
         if self.control_temperature <= 0:
@@ -653,7 +653,7 @@ class ConfigValidationIssue:
     field: str
     message: str
     severity: str  # "error" or "warning"
-    current_value: any = None
+    current_value: Any = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -670,8 +670,8 @@ class ConfigValidationResult:
     """Result of configuration validation."""
 
     valid: bool
-    issues: list  # List[ConfigValidationIssue]
-    warnings: list  # List[ConfigValidationIssue]
+    issues: List["ConfigValidationIssue"]
+    warnings: List["ConfigValidationIssue"]
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
