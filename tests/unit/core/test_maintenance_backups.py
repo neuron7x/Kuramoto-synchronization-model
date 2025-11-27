@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import tarfile
 from datetime import datetime, timedelta, timezone
@@ -263,8 +264,6 @@ class TestDatabaseBackupManager:
         old_backup.write_bytes(b"test data")
         # Set mtime to 10 days ago
         old_mtime = datetime.now(timezone.utc) - timedelta(days=10)
-        import os
-
         os.utime(old_backup, (old_mtime.timestamp(), old_mtime.timestamp()))
 
         config = BackupConfig(
@@ -290,8 +289,6 @@ class TestDatabaseBackupManager:
             pass  # Create empty archive
         # Set mtime to 40 days ago
         old_mtime = datetime.now(timezone.utc) - timedelta(days=40)
-        import os
-
         os.utime(old_archive, (old_mtime.timestamp(), old_mtime.timestamp()))
 
         config = BackupConfig(
@@ -317,8 +314,6 @@ class TestDatabaseBackupManager:
             pass  # Create empty archive
         # Set mtime to 40 days ago
         old_mtime = datetime.now(timezone.utc) - timedelta(days=40)
-        import os
-
         os.utime(old_archive, (old_mtime.timestamp(), old_mtime.timestamp()))
 
         config = BackupConfig(

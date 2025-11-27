@@ -224,13 +224,19 @@ class TestFeatureRecord:
 
     def test_from_redis_payload_with_lineage(self, descriptor: FeatureDescriptor) -> None:
         """Verify from_redis_payload parses lineage correctly."""
+        lineage_data = {
+            "sources": ["src1"],
+            "transformations": [],
+            "owners": [],
+            "extra": {},
+        }
         payload = {
             "entity_id": "user123",
             "feature_name": "test_feature",
             "feature_version": "1.0",
             "event_ts": "2024-01-15T12:00:00.000000+00:00",
             "value": '{"score":0.95}',
-            "lineage": '{"sources":["src1"],"transformations":[],"owners":[],"extra":{}}',
+            "lineage": json.dumps(lineage_data),
         }
 
         record = FeatureRecord.from_redis_payload(descriptor, payload)
@@ -342,16 +348,15 @@ class TestTTLCache:
             event_ts=datetime.now(timezone.utc),
         )
 
-        # Set with different TTLs so first one has earliest expiry
-        await cache.set("key1", record1, ttl_ms=1000)
-        await asyncio.sleep(0.01)  # Slight delay to ensure different expiry times
-        await cache.set("key2", record2, ttl_ms=5000)
-        await asyncio.sleep(0.01)
+        # Set records with varying TTLs - earliest expiry will be evicted first
+        # Using significantly different TTLs to ensure deterministic eviction order
+        await cache.set("key1", record1, ttl_ms=100)   # Shortest TTL, earliest expiry
+        await cache.set("key2", record2, ttl_ms=5000)  # Longer TTL
 
-        # This should evict key1 (earliest expiry)
+        # This should evict key1 (earliest expiry) due to max_size=2
         await cache.set("key3", record3, ttl_ms=5000)
 
-        # key1 should be evicted
+        # key1 should be evicted (it had the earliest expiry time)
         result1 = await cache.get("key1")
         result2 = await cache.get("key2")
         result3 = await cache.get("key3")

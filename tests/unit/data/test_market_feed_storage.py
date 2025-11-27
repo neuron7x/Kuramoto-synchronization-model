@@ -356,8 +356,7 @@ class TestMarketFeedStorageDownload:
             "invalid_checksum"
         )
 
-        # Should not raise when verify_checksum=False
-        # We need to patch at the module level where MarketFeedRecording is imported
+        # Patch the MarketFeedRecording class to avoid internal validation
         with patch(
             "core.data.market_feed_storage.MarketFeedRecording"
         ) as mock_recording_cls:
@@ -370,15 +369,8 @@ class TestMarketFeedStorageDownload:
                 mock_record = MagicMock()
                 mock_from_jsonl.return_value = mock_record
 
-                # Import the class again to apply patch
-                from core.data.market_feed_storage import MarketFeedStorage
-
-                # Re-create storage with mocked client
-                test_storage = MarketFeedStorage(bucket="test-bucket", prefix="feeds")
-                test_storage._s3_client = mock_client
-
                 # This should not raise ValueError even with corrupted checksum
-                result = test_storage.download_recording("test-rec", verify_checksum=False)
+                result = storage.download_recording("test-rec", verify_checksum=False)
                 assert result is not None
 
 
