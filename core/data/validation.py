@@ -21,10 +21,14 @@ The helpers below enforce several invariants that routinely bite real trading
 pipelines: null values are rejected, duplicate timestamps are flagged, time
 stamps must be strictly increasing with a fixed sampling cadence, and timezone
 drift is prevented by requiring a consistent timezone across the whole series.
+
+Additionally, this module provides OHLCV-specific validation through the
+``validate_ohlcv`` function for quick trading data quality checks.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Iterable, List, Optional, Sequence
 
@@ -115,11 +119,167 @@ __all__ = [
     "ValueColumnConfig",
     "build_timeseries_schema",
     "validate_timeseries_frame",
+    "validate_ohlcv",
+    "OHLCVValidationResult",
 ]
 
 
 class TimeSeriesValidationError(ValueError):
     """Raised when a DataFrame payload fails the strict validation checks."""
+
+
+@dataclass
+class OHLCVValidationResult:
+    """Result of OHLCV validation with detailed diagnostics."""
+    
+    valid: bool
+    issues: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    row_count: int = 0
+    nan_count: int = 0
+    negative_count: int = 0
+    
+    def summary(self) -> str:
+        """Return a human-readable summary of validation results."""
+        status = "PASSED" if self.valid else "FAILED"
+        return (
+            f"OHLCV Validation {status}: {self.row_count} rows, "
+            f"{len(self.issues)} errors, {len(self.warnings)} warnings"
+        )
+
+
+def validate_ohlcv(
+    df: pd.DataFrame,
+    *,
+    price_col: str = "close",
+    open_col: str | None = "open",
+    high_col: str | None = "high",
+    low_col: str | None = "low",
+    volume_col: str | None = "volume",
+    raise_on_error: bool = False,
+) -> OHLCVValidationResult:
+    """Validate OHLCV data for trading analysis.
+    
+    This is a lightweight validation function for quick data quality checks
+    before running analysis or backtests.
+    
+    Args:
+        df: DataFrame containing OHLCV data
+        price_col: Name of the close/price column (required)
+        open_col: Name of the open column (optional)
+        high_col: Name of the high column (optional)
+        low_col: Name of the low column (optional)
+        volume_col: Name of the volume column (optional)
+        raise_on_error: Whether to raise TimeSeriesValidationError on failure
+        
+    Returns:
+        OHLCVValidationResult with validation details
+        
+    Raises:
+        TimeSeriesValidationError: If validation fails and raise_on_error=True
+        
+    Example:
+        >>> result = validate_ohlcv(df)
+        >>> if not result.valid:
+        ...     print(result.issues)
+    """
+    result = OHLCVValidationResult(valid=True, row_count=len(df))
+    
+    # Check if DataFrame is empty
+    if df.empty:
+        result.valid = False
+        result.issues.append("DataFrame is empty")
+        if raise_on_error:
+            raise TimeSeriesValidationError("DataFrame is empty")
+        return result
+    
+    # Check minimum data points
+    if len(df) < 10:
+        result.warnings.append(f"Only {len(df)} rows - analysis may be unreliable")
+    
+    # Check required price column
+    if price_col not in df.columns:
+        result.valid = False
+        result.issues.append(f"Required column '{price_col}' not found")
+        if raise_on_error:
+            raise TimeSeriesValidationError(f"Required column '{price_col}' not found")
+        return result
+    
+    # Validate price column
+    price_series = df[price_col]
+    nan_count = price_series.isna().sum()
+    result.nan_count = int(nan_count)
+    
+    if nan_count > 0:
+        nan_ratio = nan_count / len(df)
+        if nan_ratio > 0.05:
+            result.valid = False
+            result.issues.append(f"{nan_count} NaN values in {price_col} ({nan_ratio:.1%})")
+        else:
+            result.warnings.append(f"{nan_count} NaN values in {price_col}")
+    
+    # Check for non-positive prices
+    valid_prices = price_series.dropna()
+    negative = (valid_prices <= 0).sum()
+    result.negative_count = int(negative)
+    
+    if negative > 0:
+        result.valid = False
+        result.issues.append(f"{negative} non-positive values in {price_col}")
+    
+    # Check for constant prices
+    if valid_prices.nunique() == 1:
+        result.valid = False
+        result.issues.append(f"All values in {price_col} are identical")
+    
+    # Validate OHLC relationships if all columns present
+    ohlc_cols = [
+        (open_col, "open"),
+        (high_col, "high"),
+        (low_col, "low"),
+        (price_col, "close"),
+    ]
+    available_cols = {name: label for name, label in ohlc_cols if name and name in df.columns}
+    
+    if len(available_cols) == 4 and high_col and low_col:
+        # Check high >= low
+        violations = (df[high_col] < df[low_col]).sum()
+        if violations > 0:
+            result.valid = False
+            result.issues.append(f"{violations} rows where high < low")
+        
+        # Check high >= close, open
+        if open_col and open_col in df.columns:
+            high_open_violations = (df[high_col] < df[open_col]).sum()
+            if high_open_violations > 0:
+                result.warnings.append(f"{high_open_violations} rows where high < open")
+        
+        high_close_violations = (df[high_col] < df[price_col]).sum()
+        if high_close_violations > 0:
+            result.warnings.append(f"{high_close_violations} rows where high < close")
+        
+        # Check low <= close, open
+        if open_col and open_col in df.columns:
+            low_open_violations = (df[low_col] > df[open_col]).sum()
+            if low_open_violations > 0:
+                result.warnings.append(f"{low_open_violations} rows where low > open")
+        
+        low_close_violations = (df[low_col] > df[price_col]).sum()
+        if low_close_violations > 0:
+            result.warnings.append(f"{low_close_violations} rows where low > close")
+    
+    # Validate volume if present
+    if volume_col and volume_col in df.columns:
+        vol_series = df[volume_col]
+        neg_volume = (vol_series < 0).sum()
+        if neg_volume > 0:
+            result.valid = False
+            result.issues.append(f"{neg_volume} negative volume values")
+    
+    if raise_on_error and not result.valid:
+        raise TimeSeriesValidationError("; ".join(result.issues))
+    
+    return result
 
 
 class ValueColumnConfig(BaseModel):
