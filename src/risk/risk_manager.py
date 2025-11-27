@@ -40,7 +40,7 @@ class RiskManagerFacade:
 
     def engage_kill_switch(
         self,
-        reason: str,
+        reason: str | None,
         *,
         actor: str = "system",
         roles: Iterable[str] = (),
@@ -57,7 +57,10 @@ class RiskManagerFacade:
         already_engaged = kill_switch.is_triggered()
         previous_reason = kill_switch.reason
 
-        normalised_reason = reason.strip()
+        # External callers (e.g., REST payloads) may omit the reason field or
+        # send ``null``. Normalise this to an empty string so validation below
+        # returns the expected ``ValueError`` instead of an ``AttributeError``.
+        normalised_reason = (reason or "").strip()
 
         trigger_reason: str | None
         if normalised_reason:

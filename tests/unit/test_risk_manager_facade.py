@@ -44,6 +44,16 @@ def test_facade_engage_requires_reason_for_first_activation() -> None:
         facade.engage_kill_switch("   ")
 
 
+def test_facade_engage_handles_missing_reason_payloads() -> None:
+    """A ``None`` reason from external payloads should not raise AttributeError."""
+
+    manager = RiskManager(RiskLimits())
+    facade = RiskManagerFacade(manager)
+
+    with pytest.raises(ValueError):
+        facade.engage_kill_switch(None)
+
+
 def test_facade_reset_returns_previous_reason() -> None:
     manager = RiskManager(RiskLimits())
     facade = RiskManagerFacade(manager)
