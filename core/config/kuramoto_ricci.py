@@ -97,7 +97,7 @@ def _merge_adaptive_window_payload(data: Any) -> Mapping[str, Any]:
 
 def _coerce_timeframes_payload(
     value: Any,
-) -> Sequence[Any] | tuple[TimeFrame, ...] | None:
+) -> tuple[TimeFrame, ...] | None:
     if value is None:
         return value
     if isinstance(value, (str, bytes)):
@@ -183,7 +183,9 @@ class KuramotoConfig(BaseModel):
 
     @field_validator("timeframes", mode="before")
     @classmethod
-    def _coerce_timeframes(cls, value: Any) -> Sequence[Any] | tuple[TimeFrame, ...]:
+    def _coerce_timeframes(
+        cls, value: Any
+    ) -> tuple[TimeFrame, ...] | None:
         return _coerce_timeframes_payload(value)
 
     @field_validator("base_window", "min_samples_per_scale", mode="before")
