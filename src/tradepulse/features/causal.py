@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -101,20 +102,27 @@ class CausalGuard:
             )
             return {"TE_pass": False}
 
+        if not is_numeric_dtype(df[target]):
+            raise ValueError("Target series must be numeric for causal analysis")
+
         # Get target series
-        target_series = df[target]
+        target_series = df[target].astype(float)
 
         # Get potential drivers (all other columns)
-        drivers = [col for col in df.columns if col != target]
+        driver_frame = df.drop(columns=[target])
+        numeric_drivers = driver_frame.select_dtypes(include=[np.number])
+        drivers = list(numeric_drivers.columns)
 
         if not drivers:
-            logger.warning("No driver variables found. Returning TE_pass=False")
+            logger.warning(
+                "No numeric driver variables found. Returning TE_pass=False"
+            )
             return {"TE_pass": False}
 
-        # Compute TE from each driver to target
+        # Compute TE from each numeric driver to target
         te_values = []
         for driver_col in drivers:
-            te = self._transfer_entropy(df[driver_col], target_series)
+            te = self._transfer_entropy(numeric_drivers[driver_col], target_series)
             te_values.append(te)
 
         # Check if any driver passes threshold
