@@ -82,13 +82,18 @@ class TriageStepReport:
 
 @dataclass(slots=True)
 class AutoTriageConfig:
-    """User configurable options for :class:`AutoTriageOrchestrator`."""
+    """User configurable options for :class:`AutoTriageOrchestrator`.
+
+    Note: The ``incident_root``, ``log_paths``, and ``traffic_replay_sources``
+    fields accept either ``Path`` or ``str`` values at initialization time,
+    but are always converted to ``Path`` objects in ``__post_init__``.
+    """
 
     thresholds: Sequence[MetricThreshold] = field(default_factory=tuple)
-    incident_root: Path | str = Path("reports/incidents")
+    incident_root: Path = field(default_factory=lambda: Path("reports/incidents"))
     reproduction_commands: Sequence[Sequence[str]] = field(default_factory=tuple)
-    log_paths: Sequence[Path | str] = field(default_factory=tuple)
-    traffic_replay_sources: Sequence[Path | str] = field(default_factory=tuple)
+    log_paths: Sequence[Path] = field(default_factory=tuple)
+    traffic_replay_sources: Sequence[Path] = field(default_factory=tuple)
     runbook_links: Sequence[str] = field(default_factory=tuple)
     dashboard_links: Sequence[str] = field(default_factory=tuple)
     owner_routes: Mapping[str, str] = field(default_factory=dict)
@@ -112,13 +117,14 @@ class AutoTriageConfig:
         if self.archive_history < 0:
             raise ValueError("archive_history must be non-negative")
 
-        root = Path(self.incident_root)
+        # Normalize all path-like fields to Path objects
+        root = Path(self.incident_root) if isinstance(self.incident_root, str) else self.incident_root
         object.__setattr__(self, "incident_root", root)
 
-        log_paths = tuple(Path(path) for path in self.log_paths)
+        log_paths = tuple(Path(p) if isinstance(p, str) else p for p in self.log_paths)
         object.__setattr__(self, "log_paths", log_paths)
 
-        traffic_sources = tuple(Path(path) for path in self.traffic_replay_sources)
+        traffic_sources = tuple(Path(p) if isinstance(p, str) else p for p in self.traffic_replay_sources)
         object.__setattr__(self, "traffic_replay_sources", traffic_sources)
 
         commands: list[tuple[str, ...]] = []
@@ -437,14 +443,14 @@ class AutoTriageOrchestrator:
             except (
                 FileNotFoundError
             ) as exc:  # pragma: no cover - depends on environment
-                payload = {
+                error_payload: dict[str, Any] = {
                     "command": serialized_command,
                     "error": str(exc),
                     "timestamp": timestamp,
                     "context": dict(context),
                 }
                 log_path.write_text(
-                    json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+                    json.dumps(error_payload, indent=2, sort_keys=True), encoding="utf-8"
                 )
                 results.append(
                     TriageStepReport(
@@ -456,7 +462,7 @@ class AutoTriageOrchestrator:
                 )
                 continue
 
-            payload = {
+            success_payload: dict[str, Any] = {
                 "command": serialized_command,
                 "returncode": completed.returncode,
                 "stdout": completed.stdout,
@@ -465,7 +471,7 @@ class AutoTriageOrchestrator:
                 "context": dict(context),
             }
             log_path.write_text(
-                json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+                json.dumps(success_payload, indent=2, sort_keys=True), encoding="utf-8"
             )
 
             status = "completed" if completed.returncode == 0 else "failed"

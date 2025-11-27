@@ -8,7 +8,7 @@ import math
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Deque, Dict, Iterable, Optional
+from typing import Any, Callable, Deque, Dict, Iterable, Optional
 
 _logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class AutoRollbackGuard:
         self,
         config: SLOConfig | None = None,
         *,
-        rollback_callback: Optional[Callable[[str, Dict[str, float]], None]] = None,
+        rollback_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
         clock: Optional[Callable[[], datetime]] = None,
     ) -> None:
         self.config = config or SLOConfig()
@@ -99,7 +99,7 @@ class AutoRollbackGuard:
         self._clock = clock or (lambda: datetime.now(timezone.utc))
         self._events: Deque[RequestSample] = deque()
         self._last_triggered_at: Optional[datetime] = None
-        self._last_summary: Dict[str, float] | None = None
+        self._last_summary: Dict[str, Any] | None = None
         self._retention_period = self._compute_retention_period()
 
     @property
@@ -109,7 +109,7 @@ class AutoRollbackGuard:
         return self._last_triggered_at
 
     @property
-    def last_summary(self) -> Dict[str, float] | None:
+    def last_summary(self) -> Dict[str, Any] | None:
         """Return the metrics snapshot from the last evaluation."""
 
         return self._last_summary.copy() if self._last_summary is not None else None
@@ -209,16 +209,16 @@ class AutoRollbackGuard:
 
         return self._trigger(reason, summary, now)
 
-    def _breach_reason(self, summary: Dict[str, float]) -> Optional[str]:
-        error_rate = summary.get("error_rate", 0.0)
-        latency_p95 = summary.get("latency_p95_ms", 0.0)
+    def _breach_reason(self, summary: Dict[str, Any]) -> Optional[str]:
+        error_rate = float(summary.get("error_rate", 0.0))
+        latency_p95 = float(summary.get("latency_p95_ms", 0.0))
         if error_rate >= self.config.error_rate_threshold:
             return "error_rate"
         if latency_p95 >= self.config.latency_threshold_ms:
             return "latency"
         return None
 
-    def _trigger(self, reason: str, summary: Dict[str, float], now: datetime) -> bool:
+    def _trigger(self, reason: str, summary: Dict[str, Any], now: datetime) -> bool:
         if self._last_triggered_at is not None:
             elapsed = now - self._last_triggered_at
             if elapsed < self.config.cooldown:
@@ -226,7 +226,7 @@ class AutoRollbackGuard:
                 return False
 
         self._last_triggered_at = now
-        enriched_summary = dict(summary)
+        enriched_summary: Dict[str, Any] = dict(summary)
         enriched_summary.update(
             {
                 "reason": reason,
@@ -250,7 +250,7 @@ class AutoRollbackGuard:
             self._rollback_callback(reason, enriched_summary)
         return True
 
-    def _summarise_window(self, now: datetime) -> Optional[Dict[str, float]]:
+    def _summarise_window(self, now: datetime) -> Optional[Dict[str, Any]]:
         stats_total, stats_errors, latencies = self._aggregate_window(
             now, self.config.evaluation_period, collect_latencies=True
         )
@@ -306,7 +306,7 @@ class AutoRollbackGuard:
     def _burn_rate_breach(
         self,
         now: datetime,
-        summary: Dict[str, float],
+        summary: Dict[str, Any],
         *,
         precomputed_windows: Optional[Dict[timedelta, tuple[int, int]]] = None,
     ) -> Optional[str]:

@@ -122,7 +122,7 @@ class RabbitMQMessageBroker:
 
     async def start(self) -> None:
         self._channel = await self._connection.channel()
-        declare_kwargs = {"name": self._exchange_name}
+        declare_kwargs: dict[str, Any] = {"name": self._exchange_name}
         if self._declare_exchange:
             declare_kwargs.update(
                 {
