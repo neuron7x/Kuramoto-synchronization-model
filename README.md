@@ -103,7 +103,7 @@
     <img src="https://img.shields.io/github/watchers/neuron7x/TradePulse?style=social&logo=github" alt="GitHub Watchers">
   </a>
   <a href="https://discord.gg/tradepulse">
-    <img src="https://img.shields.io/discord/123456789?style=social&logo=discord&label=Discord" alt="Discord Community">
+    <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord Community">
   </a>
 </p>
 
