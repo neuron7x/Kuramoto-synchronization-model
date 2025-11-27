@@ -83,6 +83,12 @@ def resample_ohlcv(
     if volume_col in df.columns:
         agg_dict[volume_col] = "sum"
 
+    if not agg_dict:
+        raise ValueError(
+            "No OHLCV columns found in DataFrame; expected at least one of "
+            f"{price_cols + (volume_col,)}"
+        )
+
     # Resample with proper aggregation
     resampled = df.resample(rule, label=label, closed=closed).agg(agg_dict)
 

@@ -144,6 +144,20 @@ class TestResampleOHLCV:
         with pytest.raises(ValueError, match="DatetimeIndex"):
             resample_ohlcv(df, "5min")
 
+    def test_missing_ohlcv_columns_raise_error(self):
+        """DataFrames without any OHLCV columns should error clearly."""
+
+        df = pd.DataFrame(
+            {
+                "bid": [100, 101, 102],
+                "ask": [100.5, 101.5, 102.5],
+            },
+            index=pd.date_range("2024-01-01", periods=3, freq="1min"),
+        )
+
+        with pytest.raises(ValueError, match="No OHLCV columns"):
+            resample_ohlcv(df, "5min")
+
     def test_unsorted_index_is_sorted_before_resample(self):
         """Resampling should handle out-of-order rows transparently."""
 
