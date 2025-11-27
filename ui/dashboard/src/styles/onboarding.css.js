@@ -84,7 +84,7 @@ export const ONBOARDING_STYLES = `
     font-size: 0.75rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #22d3ee;
+    color: var(--tp-accent-vibrant, #22d3ee);
     margin: 0 0 0.5rem;
     font-weight: 600;
   }
@@ -209,9 +209,9 @@ export const ONBOARDING_STYLES = `
   }
 
   .tp-onboarding__control--muted:hover {
-    background: rgba(6, 182, 212, 0.15);
+    background: var(--tp-accent-soft, rgba(6, 182, 212, 0.15));
     border-color: rgba(6, 182, 212, 0.4);
-    color: #22d3ee;
+    color: var(--tp-accent-vibrant, #22d3ee);
   }
 
   .tp-onboarding__control--disabled,

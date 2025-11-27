@@ -39,6 +39,7 @@ export const BASE_STYLES = `
     --tp-shadow-ambient: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
     --tp-shadow-card: 0 20px 40px -20px rgba(6, 182, 212, 0.3), 0 0 0 1px rgba(6, 182, 212, 0.1);
     --tp-noise-opacity: 0.03;
+    --tp-noise-pattern: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     --tp-transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     --tp-transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
     --tp-transition-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -108,7 +109,7 @@ export const BASE_STYLES = `
     content: '';
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-image: var(--tp-noise-pattern);
     opacity: var(--tp-noise-opacity);
     pointer-events: none;
     mix-blend-mode: overlay;

@@ -29,7 +29,7 @@ export const TABLE_STYLES = `
   }
 
   .tp-live-table__viewport:focus-visible {
-    outline: 2px solid var(--tp-focus-ring, #06b6d4);
+    outline: 2px solid var(--tp-focus-ring);
     outline-offset: 2px;
   }
 
@@ -64,7 +64,7 @@ export const TABLE_STYLES = `
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(180deg, #22d3ee, #0891b2);
+    background: var(--tp-gradient-accent, linear-gradient(180deg, #22d3ee, #0891b2));
     opacity: 0;
     transition: opacity 0.3s ease;
   }

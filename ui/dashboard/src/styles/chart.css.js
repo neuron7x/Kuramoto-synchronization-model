@@ -113,7 +113,7 @@ export const CHART_STYLES = `
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(180deg, #22d3ee, #0891b2);
+    background: var(--tp-gradient-accent, linear-gradient(180deg, #22d3ee, #0891b2));
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -122,7 +122,7 @@ export const CHART_STYLES = `
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), transparent);
+    background: linear-gradient(90deg, var(--tp-accent-soft, rgba(6, 182, 212, 0.1)), transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
   }
