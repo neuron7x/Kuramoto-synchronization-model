@@ -20,3 +20,16 @@ def test_dto_to_signal_parses_zulu_timestamp():
     assert signal.timestamp == datetime(2024, 1, 1, 15, 30, tzinfo=timezone.utc)
     assert signal.confidence == pytest.approx(0.75)
 
+
+def test_dto_to_signal_assumes_utc_for_naive_timestamp():
+    payload = {
+        "symbol": "ETHUSD",
+        "action": "sell",
+        "confidence": 0.5,
+        "timestamp": "2024-05-10T12:00:00",  # no timezone information
+    }
+
+    signal = dto_to_signal(payload)
+
+    assert signal.timestamp == datetime(2024, 5, 10, 12, 0, tzinfo=timezone.utc)
+
