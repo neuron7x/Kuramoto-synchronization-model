@@ -461,8 +461,10 @@ class KillSwitchManager:
     @classmethod
     def reset_instance(cls) -> None:
         """Reset the singleton instance (primarily for testing)."""
+        global _manager
         with cls._lock:
             cls._instance = None
+            _manager = None
 
 
 # Global manager instance
