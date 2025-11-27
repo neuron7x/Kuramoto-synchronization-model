@@ -102,3 +102,4 @@ actionlint
 /TASK_COMPLETION*.md
 /*_SUMMARY_*.md
 /SECURITY_SUMMARY.txt
+data/feature_catalog.json

@@ -218,10 +218,12 @@ class BehavioralProfile:
             f"  Total Vetoes:                 {self.statistics.total_vetos}",
             f"  Veto Rate:                    {self.statistics.veto_rate:.2%}",
             "",
-            f"  Stress Mean ± Std:            {self.statistics.stress_mean:.3f} ± {self.statistics.stress_std:.3f}",
+            f"  Stress Mean ± Std:            {self.statistics.stress_mean:.3f} "
+            f"± {self.statistics.stress_std:.3f}",
             f"  Stress Max:                   {self.statistics.stress_max:.3f}",
             "",
-            f"  Serotonin Mean ± Std:         {self.statistics.serotonin_mean:.3f} ± {self.statistics.serotonin_std:.3f}",
+            f"  Serotonin Mean ± Std:         {self.statistics.serotonin_mean:.3f} "
+            f"± {self.statistics.serotonin_std:.3f}",
             f"  Serotonin Max:                {self.statistics.serotonin_max:.3f}",
             "",
             f"  Tonic Mean:                   {self.statistics.tonic_mean:.3f}",
