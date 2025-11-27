@@ -354,6 +354,343 @@ class ThermoConfig:
         with open(path, "w", encoding="utf-8") as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False, sort_keys=False)
 
+    def validate(self) -> "ConfigValidationResult":
+        """Validate all configuration parameters for safety compliance.
+
+        Returns:
+            ConfigValidationResult with validation status and any issues found
+        """
+        issues: list = []
+        warnings: list = []
+
+        # Validate control temperature
+        if self.control_temperature <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="control_temperature",
+                    message="Control temperature must be positive",
+                    severity="error",
+                    current_value=self.control_temperature,
+                )
+            )
+        elif self.control_temperature > 1.0:
+            warnings.append(
+                ConfigValidationIssue(
+                    field="control_temperature",
+                    message="Control temperature > 1.0 may lead to unstable behavior",
+                    severity="warning",
+                    current_value=self.control_temperature,
+                )
+            )
+
+        # Validate max_acceptable_energy
+        if self.max_acceptable_energy <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="max_acceptable_energy",
+                    message="Maximum acceptable energy must be positive",
+                    severity="error",
+                    current_value=self.max_acceptable_energy,
+                )
+            )
+
+        # Validate control_step_interval
+        if self.control_step_interval <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="control_step_interval",
+                    message="Control step interval must be positive",
+                    severity="error",
+                    current_value=self.control_step_interval,
+                )
+            )
+        elif self.control_step_interval < 0.0001:
+            warnings.append(
+                ConfigValidationIssue(
+                    field="control_step_interval",
+                    message="Very short control intervals may cause performance issues",
+                    severity="warning",
+                    current_value=self.control_step_interval,
+                )
+            )
+
+        # Validate crisis thresholds ordering
+        if self.crisis.elevated_threshold >= self.crisis.critical_threshold:
+            issues.append(
+                ConfigValidationIssue(
+                    field="crisis.thresholds",
+                    message="Elevated threshold must be less than critical threshold",
+                    severity="error",
+                    current_value={
+                        "elevated": self.crisis.elevated_threshold,
+                        "critical": self.crisis.critical_threshold,
+                    },
+                )
+            )
+
+        # Validate latency spike thresholds
+        if self.crisis.latency_spike_elevated >= self.crisis.latency_spike_critical:
+            issues.append(
+                ConfigValidationIssue(
+                    field="crisis.latency_spike_thresholds",
+                    message="Elevated latency spike threshold must be less than critical",
+                    severity="error",
+                    current_value={
+                        "elevated": self.crisis.latency_spike_elevated,
+                        "critical": self.crisis.latency_spike_critical,
+                    },
+                )
+            )
+
+        # Validate dF/dt thresholds
+        if self.crisis.dF_dt_warning >= self.crisis.dF_dt_critical:
+            issues.append(
+                ConfigValidationIssue(
+                    field="crisis.dF_dt_thresholds",
+                    message="dF/dt warning threshold must be less than critical",
+                    severity="error",
+                    current_value={
+                        "warning": self.crisis.dF_dt_warning,
+                        "critical": self.crisis.dF_dt_critical,
+                    },
+                )
+            )
+
+        # Validate safety constraints
+        if self.safety.epsilon_base <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="safety.epsilon_base",
+                    message="Epsilon base must be positive",
+                    severity="error",
+                    current_value=self.safety.epsilon_base,
+                )
+            )
+
+        if self.safety.epsilon_min <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="safety.epsilon_min",
+                    message="Epsilon minimum must be positive",
+                    severity="error",
+                    current_value=self.safety.epsilon_min,
+                )
+            )
+
+        if self.safety.circuit_breaker_timeout_seconds <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="safety.circuit_breaker_timeout_seconds",
+                    message="Circuit breaker timeout must be positive",
+                    severity="error",
+                    current_value=self.safety.circuit_breaker_timeout_seconds,
+                )
+            )
+
+        if self.safety.max_consecutive_violations < 1:
+            issues.append(
+                ConfigValidationIssue(
+                    field="safety.max_consecutive_violations",
+                    message="Max consecutive violations must be at least 1",
+                    severity="error",
+                    current_value=self.safety.max_consecutive_violations,
+                )
+            )
+
+        if self.safety.recovery_decay_factor <= 0 or self.safety.recovery_decay_factor > 1:
+            issues.append(
+                ConfigValidationIssue(
+                    field="safety.recovery_decay_factor",
+                    message="Recovery decay factor must be in (0, 1]",
+                    severity="error",
+                    current_value=self.safety.recovery_decay_factor,
+                )
+            )
+
+        # Validate genetic algorithm config
+        if self.genetic_algorithm.pop_size_normal < 2:
+            issues.append(
+                ConfigValidationIssue(
+                    field="genetic_algorithm.pop_size_normal",
+                    message="Population size must be at least 2",
+                    severity="error",
+                    current_value=self.genetic_algorithm.pop_size_normal,
+                )
+            )
+
+        if not (0 <= self.genetic_algorithm.crossover_prob <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="genetic_algorithm.crossover_prob",
+                    message="Crossover probability must be in [0, 1]",
+                    severity="error",
+                    current_value=self.genetic_algorithm.crossover_prob,
+                )
+            )
+
+        for prob_name in ["mutation_prob_normal", "mutation_prob_elevated", "mutation_prob_critical"]:
+            prob_value = getattr(self.genetic_algorithm, prob_name)
+            if not (0 <= prob_value <= 1):
+                issues.append(
+                    ConfigValidationIssue(
+                        field=f"genetic_algorithm.{prob_name}",
+                        message="Mutation probability must be in [0, 1]",
+                        severity="error",
+                        current_value=prob_value,
+                    )
+                )
+
+        # Validate recovery agent config
+        if not (0 < self.recovery_agent.learning_rate <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="recovery_agent.learning_rate",
+                    message="Learning rate must be in (0, 1]",
+                    severity="error",
+                    current_value=self.recovery_agent.learning_rate,
+                )
+            )
+
+        if not (0 <= self.recovery_agent.discount_factor <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="recovery_agent.discount_factor",
+                    message="Discount factor must be in [0, 1]",
+                    severity="error",
+                    current_value=self.recovery_agent.discount_factor,
+                )
+            )
+
+        # Validate CNS stabilizer config
+        valid_normalize = {"logret", "zscore", "none"}
+        if self.cns_stabilizer.normalize not in valid_normalize:
+            issues.append(
+                ConfigValidationIssue(
+                    field="cns_stabilizer.normalize",
+                    message=f"Normalize must be one of {valid_normalize}",
+                    severity="error",
+                    current_value=self.cns_stabilizer.normalize,
+                )
+            )
+
+        # Validate veto thresholds
+        if not (0 <= self.cns_stabilizer.veto_integrity_threshold <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="cns_stabilizer.veto_integrity_threshold",
+                    message="Veto integrity threshold must be in [0, 1]",
+                    severity="error",
+                    current_value=self.cns_stabilizer.veto_integrity_threshold,
+                )
+            )
+
+        # Validate VLPO filter config
+        if self.vlpo_filter.window_size < 1:
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.window_size",
+                    message="Window size must be at least 1",
+                    severity="error",
+                    current_value=self.vlpo_filter.window_size,
+                )
+            )
+
+        if self.vlpo_filter.outlier_threshold <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.outlier_threshold",
+                    message="Outlier threshold must be positive",
+                    severity="error",
+                    current_value=self.vlpo_filter.outlier_threshold,
+                )
+            )
+
+        if not (0 < self.vlpo_filter.smoothing_alpha <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.smoothing_alpha",
+                    message="Smoothing alpha must be in (0, 1]",
+                    severity="error",
+                    current_value=self.vlpo_filter.smoothing_alpha,
+                )
+            )
+
+        # Validate dual approval config
+        if self.dual_approval.token_expiration_seconds <= 0:
+            issues.append(
+                ConfigValidationIssue(
+                    field="dual_approval.token_expiration_seconds",
+                    message="Token expiration must be positive",
+                    severity="error",
+                    current_value=self.dual_approval.token_expiration_seconds,
+                )
+            )
+
+        return ConfigValidationResult(
+            valid=len(issues) == 0,
+            issues=issues,
+            warnings=warnings,
+        )
+
+    def validate_or_raise(self) -> None:
+        """Validate configuration and raise if invalid.
+
+        Raises:
+            ConfigValidationError: If validation fails
+        """
+        result = self.validate()
+        if not result.valid:
+            raise ConfigValidationError(
+                f"Configuration validation failed with {len(result.issues)} errors",
+                result,
+            )
+
+
+@dataclass
+class ConfigValidationIssue:
+    """A single configuration validation issue."""
+
+    field: str
+    message: str
+    severity: str  # "error" or "warning"
+    current_value: any = None
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "field": self.field,
+            "message": self.message,
+            "severity": self.severity,
+            "current_value": str(self.current_value) if self.current_value is not None else None,
+        }
+
+
+@dataclass
+class ConfigValidationResult:
+    """Result of configuration validation."""
+
+    valid: bool
+    issues: list  # List[ConfigValidationIssue]
+    warnings: list  # List[ConfigValidationIssue]
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "valid": self.valid,
+            "issues": [issue.to_dict() for issue in self.issues],
+            "warnings": [warning.to_dict() for warning in self.warnings],
+            "issue_count": len(self.issues),
+            "warning_count": len(self.warnings),
+        }
+
+
+class ConfigValidationError(Exception):
+    """Raised when configuration validation fails."""
+
+    def __init__(self, message: str, result: ConfigValidationResult) -> None:
+        super().__init__(message)
+        self.result = result
+
 
 def load_default_config() -> ThermoConfig:
     """Load default thermodynamics configuration.
@@ -388,5 +725,8 @@ __all__ = [
     "CNSStabilizerConfig",
     "VLPOFilterConfig",
     "DualApprovalConfig",
+    "ConfigValidationIssue",
+    "ConfigValidationResult",
+    "ConfigValidationError",
     "load_default_config",
 ]
