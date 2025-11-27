@@ -33,3 +33,16 @@ def test_dto_to_signal_assumes_utc_for_naive_timestamp():
 
     assert signal.timestamp == datetime(2024, 5, 10, 12, 0, tzinfo=timezone.utc)
 
+
+def test_dto_to_signal_treats_none_confidence_as_default():
+    payload = {
+        "symbol": "ETHUSD",
+        "action": "sell",
+        "confidence": None,
+        "timestamp": "2024-05-10T12:00:00Z",
+    }
+
+    signal = dto_to_signal(payload)
+
+    assert signal.confidence == 0.0
+

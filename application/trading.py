@@ -30,6 +30,8 @@ def dto_to_signal(data: Mapping[str, Any]) -> Signal:
     """Instantiate a domain signal from serialized data."""
 
     raw_ts = data.get("timestamp")
+    confidence_raw = data.get("confidence", 0.0)
+    confidence = 0.0 if confidence_raw is None else float(confidence_raw)
     if isinstance(raw_ts, str):
         cleaned_ts = raw_ts.replace("Z", "+00:00") if raw_ts.endswith("Z") else raw_ts
         timestamp = datetime.fromisoformat(cleaned_ts)
@@ -46,7 +48,7 @@ def dto_to_signal(data: Mapping[str, Any]) -> Signal:
     return Signal(
         symbol=str(data["symbol"]),
         action=data["action"],
-        confidence=float(data.get("confidence", 0.0)),
+        confidence=confidence,
         timestamp=timestamp,
         rationale=data.get("rationale"),
         metadata=data.get("metadata"),
