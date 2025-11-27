@@ -10,6 +10,7 @@ such as wall time, CPU time, and peak memory consumption.
 from __future__ import annotations
 
 import json
+import math
 import time
 import tracemalloc
 from contextlib import contextmanager
@@ -49,11 +50,11 @@ class ProfileReport:
 
     @property
     def total_wall_time_s(self) -> float:
-        return sum(section.wall_time_s for section in self.sections)
+        return math.fsum(section.wall_time_s for section in self.sections)
 
     @property
     def total_cpu_time_s(self) -> float:
-        return sum(section.cpu_time_s for section in self.sections)
+        return math.fsum(section.cpu_time_s for section in self.sections)
 
     @property
     def peak_memory_mb(self) -> float:
