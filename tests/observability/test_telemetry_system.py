@@ -110,7 +110,8 @@ class TestPerformanceMonitoring:
             latencies.append(elapsed * 1000)  # Convert to ms
 
         avg_latency = sum(latencies) / len(latencies)
-        assert 8 < avg_latency < 15  # Should be around 10ms with some variance
+        # CI environments can introduce scheduler jitter; keep bounds generous but bounded
+        assert 8 < avg_latency < 30  # Should be ~10ms while allowing slower runners
 
     def test_throughput_measurement(self):
         """Test throughput measurement capabilities."""

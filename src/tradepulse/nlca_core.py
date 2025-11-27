@@ -3,6 +3,7 @@ import logging
 import queue
 import time
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -39,14 +40,17 @@ logging.basicConfig(
 
 
 class FiniteStateMachine:
-    def __init__(self, refractory_period: float = 1.0):
+    def __init__(
+        self, refractory_period: float = 1.0, *, clock: Callable[[], float] | None = None
+    ):
         self.state = "S0"
-        self.last_transition_time = time.time()
+        self._clock = clock or time.time
+        self.last_transition_time = self._clock()
         self.refractory_period = refractory_period
         self.log = []
 
     def transition(self, new_state: str, reason: str, force: bool = False):
-        now = time.time()
+        now = self._clock()
         if not force and (now - self.last_transition_time < self.refractory_period):
             logging.warning(f"Refractory active: ignoring {new_state}")
             return False

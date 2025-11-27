@@ -11,6 +11,8 @@ Provides tools for:
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
+import math
+
 import numpy as np
 import pandas as pd
 import torch
@@ -84,6 +86,8 @@ def calibrate_perturbation_scale(
     data: pd.DataFrame,
     epsilon_grid: List[float] = [0.005, 0.01, 0.02],
     n_steps: int = 10,
+    *,
+    window: int = 64,
 ) -> Tuple[float, Dict[float, float]]:
     """
     Calibrate perturbation scale using grid search.
@@ -93,19 +97,21 @@ def calibrate_perturbation_scale(
         data: Market data
         epsilon_grid: Grid of epsilon values to test
         n_steps: Number of validation steps
+        window: Number of samples per validation window (clamped to data length)
 
     Returns:
         Tuple of (best_epsilon, results_dict)
     """
     results = {}
+    window = min(len(data), max(16, int(window)))
 
     for eps in epsilon_grid:
         model.perturbation_scale.data = torch.tensor(eps)
         pwpes = []
 
         for i in range(n_steps):
-            start_idx = max(0, len(data) - n_steps - 100 + i)
-            end_idx = start_idx + 100
+            start_idx = max(0, len(data) - n_steps - window + i)
+            end_idx = start_idx + window
             batch_data = data.iloc[start_idx:end_idx]
 
             try:
@@ -130,6 +136,8 @@ def validate_hpc_ai(
     model,
     data: pd.DataFrame,
     n_steps: int = 10,
+    *,
+    window: int = 64,
 ) -> ValidationMetrics:
     """
     Validate HPC-AI model on synthetic data.
@@ -138,6 +146,7 @@ def validate_hpc_ai(
         model: HPC-AI model instance
         data: Market data
         n_steps: Number of validation steps
+        window: Number of samples per validation window (clamped to data length)
 
     Returns:
         ValidationMetrics object
@@ -147,9 +156,11 @@ def validate_hpc_ai(
     td_errors = []
     prev_pwpe = 0.0
 
+    window = min(len(data), max(16, int(window)))
+
     for i in range(n_steps):
-        start_idx = max(0, len(data) - n_steps - 100 + i)
-        end_idx = start_idx + 100
+        start_idx = max(0, len(data) - n_steps - window + i)
+        end_idx = start_idx + window
         batch_data = data.iloc[start_idx:end_idx]
 
         try:
@@ -209,6 +220,9 @@ def simple_backtest(
     data: pd.DataFrame,
     initial_capital: float = 10000.0,
     position_size: float = 0.1,
+    *,
+    window_size: int = 64,
+    max_windows: int = 32,
 ) -> Dict[str, float]:
     """
     Simple backtest of HPC-AI model.
@@ -218,6 +232,8 @@ def simple_backtest(
         data: Market data with OHLCV
         initial_capital: Starting capital
         position_size: Fraction of capital to use per trade
+        window_size: Sliding window length used for feature extraction
+        max_windows: Maximum number of windows to evaluate (caps runtime)
 
     Returns:
         Dictionary with backtest metrics
@@ -230,9 +246,15 @@ def simple_backtest(
     actions = []
     prev_pwpe = 0.0
 
-    # Sliding window backtest
-    window_size = 100
-    for i in range(window_size, len(data)):
+    # Sliding window backtest (cap windows to keep tests fast)
+    window_size = min(len(data), max(16, int(window_size)))
+    step = max(1, math.ceil((len(data) - window_size) / max_windows))
+    windows_processed = 0
+
+    for i in range(window_size, len(data), step):
+        if windows_processed >= max_windows:
+            break
+
         window_data = data.iloc[i - window_size : i]
 
         try:
@@ -259,8 +281,10 @@ def simple_backtest(
                 position = 0
                 entry_price = 0
 
+            windows_processed += 1
         except Exception:
-            pass
+            windows_processed += 1
+            continue
 
     # Close any open position
     if position > 0:

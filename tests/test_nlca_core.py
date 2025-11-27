@@ -123,17 +123,13 @@ def test_market_recorder_flush_persists_dataset(tmp_path):
     assert parquet_files, "Expected at least one parquet file to be written"
 
 
-def test_fsm_respects_refractory(monkeypatch):
-    timestamps = [0.0, 2.0, 2.5, 3.0]
+def test_fsm_respects_refractory():
+    timestamps = iter([0.0, 2.0, 2.5, 3.0])
 
     def fake_time():
-        if timestamps:
-            return timestamps.pop(0)
-        return 1.5
+        return next(timestamps, 1.5)
 
-    monkeypatch.setattr(time, "time", fake_time)
-
-    fsm = FiniteStateMachine(refractory_period=1.0)
+    fsm = FiniteStateMachine(refractory_period=1.0, clock=fake_time)
 
     first = fsm.transition("S1", "first")
     second = fsm.transition("S2", "too_soon")
