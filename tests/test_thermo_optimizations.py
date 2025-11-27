@@ -269,6 +269,20 @@ class TestOptimizedTelemetryManager:
         records = manager.get_time_range(start_time, end_time)
         assert len(records) == 3
 
+    def test_get_time_range_includes_archived_records(self):
+        """Ensure archived telemetry is included in time range queries."""
+        manager = OptimizedTelemetryManager(window_size=4)
+
+        base_time = time.time()
+        for i in range(4):
+            manager.record({"F": float(i), "timestamp": base_time + i})
+
+        assert manager.window.compressed_archives, "Expected some data to be archived"
+
+        records = manager.get_time_range(base_time, base_time + 3)
+        assert len(records) == 4
+        assert {record["F"] for record in records} == {0.0, 1.0, 2.0, 3.0}
+
     def test_compute_statistics(self):
         """Test computing aggregated statistics."""
         manager = OptimizedTelemetryManager()
@@ -288,6 +302,26 @@ class TestOptimizedTelemetryManager:
         assert "avg_F" in stats
         assert "max_F" in stats
         assert "circuit_breaker_activations" in stats
+
+    def test_compute_statistics_includes_archived_records(self):
+        """Aggregated stats should consider both uncompressed and archived data."""
+        manager = OptimizedTelemetryManager(window_size=4)
+
+        base_time = time.time()
+        for i in range(4):
+            manager.record(
+                {
+                    "F": float(i),
+                    "dF_dt": 0.1 * i,
+                    "timestamp": base_time + i,
+                }
+            )
+
+        stats = manager.compute_statistics(force=True)
+
+        assert stats["count"] == 4
+        assert stats["max_F"] == 3.0
+        assert pytest.approx(stats["avg_F"], rel=1e-9) == 1.5
 
     def test_get_crisis_periods(self):
         """Test identifying crisis periods."""

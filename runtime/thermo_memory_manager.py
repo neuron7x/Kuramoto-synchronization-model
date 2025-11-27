@@ -58,6 +58,21 @@ class TelemetryWindow:
         """Get all uncompressed records."""
         return list(self.data)
 
+    def get_all_records(self) -> List[Dict[str, Any]]:
+        """Return both uncompressed and archived telemetry in chronological order."""
+
+        records: List[Dict[str, Any]] = []
+        for archive in self.compressed_archives:
+            try:
+                json_data = gzip.decompress(archive).decode("utf-8")
+                records.extend(json.loads(json_data))
+            except (OSError, EOFError, json.JSONDecodeError):
+                # Skip corrupted archives instead of failing the entire read
+                continue
+
+        records.extend(self.get_all_uncompressed())
+        return records
+
     def decompress_archive(self, index: int) -> List[Dict[str, Any]]:
         """Decompress a specific archive."""
         if 0 <= index < len(self.compressed_archives):
@@ -170,20 +185,10 @@ class OptimizedTelemetryManager:
         """Get telemetry records within a time range."""
         records = []
 
-        # Check uncompressed data
-        for record in self.window.data:
+        for record in self.window.get_all_records():
             ts = record.get("timestamp", 0.0)
             if start_time <= ts <= end_time:
                 records.append(record)
-
-        # Check compressed archives if needed
-        if not records:
-            for i in range(len(self.window.compressed_archives)):
-                archive_data = self.window.decompress_archive(i)
-                for record in archive_data:
-                    ts = record.get("timestamp", 0.0)
-                    if start_time <= ts <= end_time:
-                        records.append(record)
 
         return records
 
@@ -201,7 +206,7 @@ class OptimizedTelemetryManager:
             if time.time() - self._stats_cache_time < self._stats_cache_ttl:
                 return self._stats_cache
 
-        records = self.window.get_all_uncompressed()
+        records = self.window.get_all_records()
 
         if not records:
             return {
