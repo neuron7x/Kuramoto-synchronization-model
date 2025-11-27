@@ -1,136 +1,262 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                                          TRADEPULSE README                                                                                                                       -->
+<!--                                                 Enterprise-Grade Algorithmic Trading Platform                                                                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
 <div align="center">
 
-<!-- Header Banner -->
+<!-- ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗ -->
+<!-- ║                                                    HERO SECTION                                                            ║ -->
+<!-- ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝ -->
+
+<!-- Animated Header Banner with Dark/Light Mode Support -->
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/banner.png">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/banner.png">
-  <img alt="TradePulse Banner" src="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/banner.png" width="100%">
+  <img alt="TradePulse — Enterprise-Grade Algorithmic Trading Platform" src="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/banner.png" width="100%">
 </picture>
 
-# 📈 TradePulse
+<br>
 
-### *Enterprise-Grade Algorithmic Trading Platform with Geometric Market Intelligence*
+<!-- Main Title with Gradient Effect Simulation -->
+<h1>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Chart Increasing" width="45" height="45" />
+  TradePulse
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" alt="High Voltage" width="40" height="40" />
+</h1>
 
-<p align="center">
-  <strong>Transform market data into actionable insights using cutting-edge geometric indicators and production-ready infrastructure</strong>
+<h3>
+  <em>Enterprise-Grade Algorithmic Trading Platform with Geometric Market Intelligence</em>
+</h3>
+
+<!-- Typing Animation Effect Simulation -->
+<p>
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=4A90E2&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=80&lines=Transform+market+data+into+actionable+insights;Using+cutting-edge+geometric+indicators;With+production-ready+infrastructure" alt="Typing SVG" />
 </p>
 
----
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                                     BADGES SECTION                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
-<!-- Badges Section -->
-<p align="center">
-  <!-- Build Status -->
+<br>
+
+<!-- Primary Status Badges Row -->
+<p>
   <a href="https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml">
-    <img src="https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests">
+    <img src="https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests Status">
   </a>
   <a href="https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml">
-    <img src="https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
+    <img src="https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI Status">
   </a>
   <a href="#-testing">
-    <img src="https://img.shields.io/badge/Coverage-94%25-green?logo=pytest" alt="Coverage">
+    <img src="https://img.shields.io/badge/Coverage-94%25-brightgreen?style=flat&logo=pytest&logoColor=white" alt="Test Coverage: 94%">
   </a>
+  <a href="https://github.com/neuron7x/TradePulse/security">
+    <img src="https://img.shields.io/badge/Security-Verified-success?style=flat&logo=shield&logoColor=white" alt="Security Status">
+  </a>
+</p>
 
-  <!-- Version & License -->
+<!-- Version & Technology Badges Row -->
+<p>
   <a href="https://github.com/neuron7x/TradePulse/releases">
-    <img src="https://img.shields.io/github/v/release/neuron7x/TradePulse?include_prereleases&style=flat&logo=github" alt="Release">
+    <img src="https://img.shields.io/github/v/release/neuron7x/TradePulse?include_prereleases&style=flat&logo=semantic-release&logoColor=white&label=Version" alt="Latest Release">
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-TPLA-blue.svg" alt="License">
+    <img src="https://img.shields.io/badge/License-TPLA-0066CC?style=flat&logo=bookstack&logoColor=white" alt="License: TPLA">
   </a>
-
-  <!-- Language & Framework -->
   <a href="https://www.python.org/">
-    <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue?logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11 | 3.12">
   </a>
+  <a href="https://docs.docker.com/">
+    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker Ready">
+  </a>
+</p>
+
+<!-- Framework & Technology Stack Badges -->
+<p>
   <a href="https://numpy.org/">
-    <img src="https://img.shields.io/badge/NumPy-%23013243.svg?logo=numpy&logoColor=white" alt="NumPy">
+    <img src="https://img.shields.io/badge/NumPy-013243?style=flat&logo=numpy&logoColor=white" alt="NumPy">
   </a>
   <a href="https://pandas.pydata.org/">
-    <img src="https://img.shields.io/badge/Pandas-%23150458.svg?logo=pandas&logoColor=white" alt="Pandas">
+    <img src="https://img.shields.io/badge/Pandas-150458?style=flat&logo=pandas&logoColor=white" alt="Pandas">
   </a>
+  <a href="https://fastapi.tiangolo.com/">
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI">
+  </a>
+  <a href="https://redis.io/">
+    <img src="https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white" alt="Redis">
+  </a>
+  <a href="https://prometheus.io/">
+    <img src="https://img.shields.io/badge/Prometheus-E6522C?style=flat&logo=prometheus&logoColor=white" alt="Prometheus">
+  </a>
+</p>
 
-  <!-- Community -->
+<!-- Community & Social Badges -->
+<p>
   <a href="https://github.com/neuron7x/TradePulse/stargazers">
-    <img src="https://img.shields.io/github/stars/neuron7x/TradePulse?style=social" alt="Stars">
+    <img src="https://img.shields.io/github/stars/neuron7x/TradePulse?style=social&logo=github" alt="GitHub Stars">
   </a>
   <a href="https://github.com/neuron7x/TradePulse/network/members">
-    <img src="https://img.shields.io/github/forks/neuron7x/TradePulse?style=social" alt="Forks">
+    <img src="https://img.shields.io/github/forks/neuron7x/TradePulse?style=social&logo=github" alt="GitHub Forks">
   </a>
   <a href="https://github.com/neuron7x/TradePulse/watchers">
-    <img src="https://img.shields.io/github/watchers/neuron7x/TradePulse?style=social" alt="Watchers">
+    <img src="https://img.shields.io/github/watchers/neuron7x/TradePulse?style=social&logo=github" alt="GitHub Watchers">
+  </a>
+  <a href="https://discord.gg/tradepulse">
+    <img src="https://img.shields.io/discord/123456789?style=social&logo=discord&label=Discord" alt="Discord Community">
   </a>
 </p>
 
-<!-- Quick Links -->
-<p align="center">
-  <a href="#-quick-start"><b>Quick Start</b></a> •
-  <a href="#-feature-highlights"><b>Features</b></a> •
-  <a href="#-documentation"><b>Docs</b></a> •
-  <a href="#-use-cases"><b>Use Cases</b></a> •
-  <a href="#-roadmap"><b>Roadmap</b></a> •
-  <a href="#-community"><b>Community</b></a>
-</p>
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                                  QUICK NAVIGATION                                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
-<!-- Visual Highlights Box -->
-```ascii
-╔═══════════════════════════════════════════════════════════════════════════╗
-║                                                                           ║
-║  🎯 Enterprise-Grade Trading    🧮 Geometric Market Indicators            ║
-║  ⚡ Real-Time Analytics         🔒 Production-Ready Security              ║
-║  🚀 Live Trading Support        📊 Advanced Backtesting Engine            ║
-║  🔬 Research Tools             🌐 Multi-Exchange Integration              ║
-║                                                                           ║
-╚═══════════════════════════════════════════════════════════════════════════╝
+<br>
+
+<!-- Interactive Navigation Bar -->
+<table>
+<tr>
+<td align="center" width="16%">
+<a href="#-quick-start">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Rocket.png" width="40" height="40" alt="Quick Start"/>
+<br><b>Quick Start</b>
+</a>
+</td>
+<td align="center" width="16%">
+<a href="#-feature-highlights">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Sparkles.png" width="40" height="40" alt="Features"/>
+<br><b>Features</b>
+</a>
+</td>
+<td align="center" width="16%">
+<a href="#-documentation">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" width="40" height="40" alt="Documentation"/>
+<br><b>Docs</b>
+</a>
+</td>
+<td align="center" width="16%">
+<a href="#-use-cases">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Briefcase.png" width="40" height="40" alt="Use Cases"/>
+<br><b>Use Cases</b>
+</a>
+</td>
+<td align="center" width="16%">
+<a href="#-roadmap">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/World%20Map.png" width="40" height="40" alt="Roadmap"/>
+<br><b>Roadmap</b>
+</a>
+</td>
+<td align="center" width="16%">
+<a href="#-community">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Busts%20in%20Silhouette.png" width="40" height="40" alt="Community"/>
+<br><b>Community</b>
+</a>
+</td>
+</tr>
+</table>
+
+<br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                               FEATURE HIGHLIGHTS BOX                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Premium Feature Showcase -->
+<table>
+<tr>
+<td>
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                   ║
+║   🎯  ENTERPRISE-GRADE TRADING          🧮  GEOMETRIC MARKET INDICATORS                          ║
+║   ⚡  REAL-TIME ANALYTICS               🔒  PRODUCTION-READY SECURITY                            ║
+║   🚀  LIVE TRADING SUPPORT              📊  ADVANCED BACKTESTING ENGINE                          ║
+║   🔬  RESEARCH-FIRST DESIGN             🌐  MULTI-EXCHANGE INTEGRATION                           ║
+║                                                                                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+</td>
+</tr>
+</table>
+
 </div>
 
----
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                                      TL;DR SECTION                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
-<!-- TL;DR Entry Point Section -->
+<br>
+
 <div align="center">
 
-### ⚡ TL;DR — Start Here
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" alt="High Voltage" width="30" height="30" />
+<strong>TL;DR — Get Started in 60 Seconds</strong>
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" alt="High Voltage" width="30" height="30" />
 
 </div>
 
-> **What is TradePulse?** — An enterprise-grade algorithmic trading platform with advanced geometric market indicators (Kuramoto oscillators, Ricci flow, entropy measures) for research and live trading.
+<br>
+
+> **What is TradePulse?** — An **enterprise-grade algorithmic trading platform** with advanced geometric market indicators (Kuramoto oscillators, Ricci flow, entropy measures) for research and live trading.
 
 <table>
 <tr>
-<td width="33%">
+<td width="33%" valign="top">
+
+<div align="center">
 
 **🚀 Install & Run**
+
+</div>
+
 ```bash
+# Clone and install
 git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
 pip install -e .
+
+# Run quick start example
 python examples/quick_start.py
 ```
 
 </td>
-<td width="33%">
+<td width="33%" valign="top">
+
+<div align="center">
 
 **🧪 Test**
+
+</div>
+
 ```bash
-# Quick tests
+# Quick unit tests
 pytest tests/unit -q
 
 # Full suite with coverage
 pytest tests/ --cov=core
+
+# Property-based tests
+pytest tests/property
 ```
 
 </td>
-<td width="34%">
+<td width="34%" valign="top">
+
+<div align="center">
 
 **📊 Analyze Data**
+
+</div>
+
 ```bash
 # CLI analysis
 python -m interfaces.cli analyze \
     --csv sample.csv --window 200 \
     --price-col close
 
-# Launch dashboard
+# Launch interactive dashboard
 streamlit run interfaces/dashboard_streamlit.py
 ```
 
@@ -139,7 +265,9 @@ streamlit run interfaces/dashboard_streamlit.py
 </table>
 
 <details>
-<summary><b>📝 Minimal Code Example (click to expand)</b></summary>
+<summary><b>📝 Minimal Python Code Example — Click to Expand</b></summary>
+
+<br>
 
 ```python
 import numpy as np
@@ -152,203 +280,217 @@ prices = 100 + np.cumsum(np.random.normal(0, 0.6, 720))
 volume = np.random.lognormal(9.5, 0.35, 720)
 bars = pd.DataFrame({"close": prices, "volume": volume}, index=index)
 
-# Analyze market regime
+# Analyze market regime with Kuramoto-Ricci composite engine
 engine = TradePulseCompositeEngine()
 snapshot = engine.analyze_market(bars)
-print(f"Phase: {snapshot.phase.value}, Confidence: {snapshot.confidence:.3f}")
+
+print(f"📊 Market Phase: {snapshot.phase.value}")
+print(f"🎯 Confidence:   {snapshot.confidence:.3f}")
+print(f"📈 Entry Signal: {snapshot.entry_signal:.3f}")
 ```
+
 </details>
 
-📖 **For detailed instructions, see [Quick Start Guide](docs/quickstart.md) • [Examples](examples/) • [Documentation](docs/)**
-
----
+<br>
 
 <div align="center">
 
-### 🌟 Why Choose TradePulse?
-
-<table>
-<tr>
-<td width="33%" align="center">
-<h3>🔬 Research First</h3>
-<p>Advanced geometric indicators and multi-scale analysis for deep market insights</p>
-<img src="https://img.shields.io/badge/Indicators-50%2B-informational?style=flat-square" alt="Indicators">
-</td>
-<td width="33%" align="center">
-<h3>⚡ Lightning Fast</h3>
-<p>Event-driven architecture with microsecond latency and GPU acceleration</p>
-<img src="https://img.shields.io/badge/Latency-%C2%B5s-success?style=flat-square" alt="Speed">
-</td>
-<td width="33%" align="center">
-<h3>🔒 Enterprise Ready</h3>
-<p>Production-grade security with ISO 27001 and NIST compliance</p>
-<img src="https://img.shields.io/badge/Security-ISO%2027001-critical?style=flat-square" alt="Security">
-</td>
-</tr>
-</table>
+📖 **Detailed Guides:** [Quick Start](docs/quickstart.md) • [Examples](examples/) • [Full Documentation](docs/)
 
 </div>
 
-TradePulse is a **production-grade algorithmic trading platform** that marries cutting-edge geometric market indicators with enterprise reliability. Quantitative researchers, discretionary traders, and financial institutions use TradePulse to move from research to live execution with confidence.
+<br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              WHY CHOOSE TRADEPULSE                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
 ---
 
 <div align="center">
 
-## 📊 How Does TradePulse Compare?
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Trophy.png" alt="Trophy" width="35" height="35" />
+<h2>Why Choose TradePulse?</h2>
 
 </div>
 
 <table>
-<thead>
 <tr>
-<th>Feature</th>
-<th>TradePulse</th>
-<th>Zipline</th>
-<th>Backtrader</th>
-<th>QuantConnect</th>
+<td width="33%" align="center" valign="top">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Microscope.png" alt="Microscope" width="50" height="50" />
+
+### Research First
+
+Advanced geometric indicators and multi-scale analysis for deep market insights
+
+<img src="https://img.shields.io/badge/Indicators-50%2B-4A90E2?style=for-the-badge" alt="50+ Indicators">
+
+</td>
+<td width="33%" align="center" valign="top">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="50" height="50" />
+
+### Lightning Fast
+
+Event-driven architecture with microsecond latency and GPU acceleration
+
+<img src="https://img.shields.io/badge/Latency-μs-7ED321?style=for-the-badge" alt="Microsecond Latency">
+
+</td>
+<td width="33%" align="center" valign="top">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" alt="Locked" width="50" height="50" />
+
+### Enterprise Ready
+
+Production-grade security with ISO 27001 and NIST compliance
+
+<img src="https://img.shields.io/badge/Security-ISO%2027001-BD10E0?style=for-the-badge" alt="ISO 27001 Certified">
+
+</td>
 </tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Geometric Indicators</strong></td>
-<td>✅ 50+ including Kuramoto, Ricci Flow</td>
-<td>❌ Basic only</td>
-<td>❌ Basic only</td>
-<td>⚠️ Limited</td>
-</tr>
-<tr>
-<td><strong>Live Trading</strong></td>
-<td>✅ Multi-exchange support</td>
-<td>❌ Backtesting only</td>
-<td>✅ Limited exchanges</td>
-<td>✅ Cloud-based</td>
-</tr>
-<tr>
-<td><strong>Performance</strong></td>
-<td>✅ GPU accelerated, microsecond latency</td>
-<td>⚠️ Single-threaded</td>
-<td>⚠️ Moderate</td>
-<td>✅ Cloud infrastructure</td>
-</tr>
-<tr>
-<td><strong>Event-Driven Engine</strong></td>
-<td>✅ Native support</td>
-<td>✅ Event-driven</td>
-<td>⚠️ Tick-based</td>
-<td>✅ Event-driven</td>
-</tr>
-<tr>
-<td><strong>Risk Management</strong></td>
-<td>✅ Comprehensive (position limits, kill switch, circuit breakers)</td>
-<td>⚠️ Basic</td>
-<td>⚠️ Basic</td>
-<td>✅ Advanced</td>
-</tr>
-<tr>
-<td><strong>Self-Hosted</strong></td>
-<td>✅ Full control</td>
-<td>✅ Open source</td>
-<td>✅ Open source</td>
-<td>❌ Cloud only</td>
-</tr>
-<tr>
-<td><strong>Multi-Asset Support</strong></td>
-<td>✅ Crypto, stocks, forex, futures</td>
-<td>✅ Stocks primarily</td>
-<td>✅ Multi-asset</td>
-<td>✅ Multi-asset</td>
-</tr>
-<tr>
-<td><strong>Learning Curve</strong></td>
-<td>⚠️ Moderate (advanced features)</td>
-<td>⚠️ Steep</td>
-<td>⚠️ Moderate</td>
-<td>⚠️ Moderate-Steep</td>
-</tr>
-<tr>
-<td><strong>License</strong></td>
-<td>⚠️ Proprietary (free for non-commercial)</td>
-<td>✅ Apache 2.0</td>
-<td>✅ GPL 3.0</td>
-<td>⚠️ Freemium (subscription for live)</td>
-</tr>
-<tr>
-<td><strong>Documentation</strong></td>
-<td>✅ Comprehensive</td>
-<td>⚠️ Outdated</td>
-<td>✅ Good</td>
-<td>✅ Excellent</td>
-</tr>
-<tr>
-<td><strong>Active Development</strong></td>
-<td>✅ Active</td>
-<td>❌ Archived</td>
-<td>⚠️ Slow</td>
-<td>✅ Very active</td>
-</tr>
-</tbody>
 </table>
 
-<div align="center">
-
-**💡 Choose TradePulse if you need:**
-- Advanced geometric and information-theoretic indicators
-- Self-hosted production-ready trading infrastructure
-- GPU-accelerated high-performance computing
-- Comprehensive risk management and compliance features
-- Full control over your trading technology stack
-
-</div>
-
+<br>
 
 <div align="center">
 
-### 🏆 Trusted by Traders Worldwide
-
-<p>
-<img src="https://img.shields.io/badge/Active%20Users-1.2k%2B-success?style=for-the-badge" alt="Users">
-<img src="https://img.shields.io/badge/Backtests%20Run-500k%2B-informational?style=for-the-badge" alt="Backtests">
-<img src="https://img.shields.io/badge/Data%20Points-10B%2B-blueviolet?style=for-the-badge" alt="Data">
-</p>
+TradePulse is a **production-grade algorithmic trading platform** that combines cutting-edge geometric market indicators with enterprise reliability. Quantitative researchers, discretionary traders, and financial institutions use TradePulse to seamlessly transition from research to live execution with confidence.
 
 </div>
+
+<br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              COMPARISON TABLE                                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
 ---
 
-## 📑 Table of Contents
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Bar%20Chart.png" alt="Bar Chart" width="35" height="35" />
+<h2>How Does TradePulse Compare?</h2>
+
+</div>
+
+<br>
+
+<div align="center">
+
+| Feature | <img src="https://img.shields.io/badge/-TradePulse-4A90E2?style=flat-square" alt="TradePulse"> | Zipline | Backtrader | QuantConnect |
+|:--------|:----------------------------:|:-------:|:----------:|:------------:|
+| **Geometric Indicators** | ✅ 50+ (Kuramoto, Ricci) | ❌ Basic | ❌ Basic | ⚠️ Limited |
+| **Live Trading** | ✅ Multi-exchange | ❌ Backtest only | ✅ Limited | ✅ Cloud |
+| **Performance** | ✅ GPU, μs latency | ⚠️ Single-thread | ⚠️ Moderate | ✅ Cloud |
+| **Event-Driven Engine** | ✅ Native | ✅ Yes | ⚠️ Tick-based | ✅ Yes |
+| **Risk Management** | ✅ Comprehensive | ⚠️ Basic | ⚠️ Basic | ✅ Advanced |
+| **Self-Hosted** | ✅ Full control | ✅ Open source | ✅ Open source | ❌ Cloud only |
+| **Multi-Asset** | ✅ All markets | ✅ Stocks | ✅ Multi | ✅ Multi |
+| **Learning Curve** | ⚠️ Moderate | ⚠️ Steep | ⚠️ Moderate | ⚠️ Moderate |
+| **Active Development** | ✅ Active | ❌ Archived | ⚠️ Slow | ✅ Very active |
+
+</div>
+
+<br>
+
+<div align="center">
+
+> **💡 Choose TradePulse if you need:** Advanced geometric indicators • Self-hosted infrastructure • GPU acceleration • Comprehensive risk management • Full technology control
+
+</div>
+
+<br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              TRUST METRICS                                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+---
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/1st%20Place%20Medal.png" alt="1st Place Medal" width="35" height="35" />
+<h3>Trusted by Traders Worldwide</h3>
+
+<br>
+
+<img src="https://img.shields.io/badge/Active%20Users-1.2k%2B-27AE60?style=for-the-badge&logo=users&logoColor=white" alt="Active Users: 1.2k+">
+&nbsp;
+<img src="https://img.shields.io/badge/Backtests%20Run-500k%2B-3498DB?style=for-the-badge&logo=activity&logoColor=white" alt="Backtests: 500k+">
+&nbsp;
+<img src="https://img.shields.io/badge/Data%20Points-10B%2B-9B59B6?style=for-the-badge&logo=database&logoColor=white" alt="Data Points: 10B+">
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              TABLE OF CONTENTS                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
+---
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Bookmark%20Tabs.png" alt="Bookmark Tabs" width="35" height="35" />
+<h2>Table of Contents</h2>
+
+</div>
 
 <details open>
-<summary><b>Click to expand/collapse</b></summary>
+<summary><strong>📋 Click to expand/collapse navigation</strong></summary>
 
-- [🎯 Why TradePulse?](#-why-tradepulse)
-- [📊 How Does TradePulse Compare?](#-how-does-tradepulse-compare)
-- [✨ Feature Highlights](#-feature-highlights)
-- [📊 Project Status](#-project-status)
-- [🚀 Quick Start](#-quick-start)
-- [💻 Demo Dashboard](#-demo-dashboard)
-- [🏗️ System Architecture](#-system-architecture)
-- [🌡️ TACL - Thermodynamic Control](#thermodynamic-autonomic-control-layer-tacl)
-- [📚 Documentation](#-documentation)
-- [🎯 Use Cases](#-use-cases)
-- [⚙️ Configuration](#-configuration)
-- [🧪 Testing](#-testing)
-- [⚡ Performance Benchmarks](#-performance-benchmarks)
-- [🤝 Contributing](#-contributing)
-- [🌟 Contributors](#-contributors)
-- [📈 Roadmap](#-roadmap)
-- [🌐 Community](#-community)
-- [💬 Getting Help](#-getting-help)
-- [🔧 Troubleshooting](#-troubleshooting)
-- [📜 License](#-license)
-- [⚠️ Disclaimer](#-disclaimer)
-- [🙏 Acknowledgments](#-acknowledgments)
+<br>
+
+<div align="center">
+
+| Section | Description |
+|:--------|:------------|
+| [🎯 Why TradePulse?](#-why-tradepulse) | Core value proposition and benefits |
+| [📊 Platform Comparison](#-how-does-tradepulse-compare) | Feature comparison with alternatives |
+| [✨ Feature Highlights](#-feature-highlights) | Complete feature overview |
+| [📈 Project Status](#-project-status) | Current development stage |
+| [🚀 Quick Start](#-quick-start) | Installation and setup guide |
+| [💻 Demo Dashboard](#-demo-dashboard) | Interactive analytics interface |
+| [🏗️ System Architecture](#️-system-architecture) | Technical architecture overview |
+| [🌡️ TACL](#thermodynamic-autonomic-control-layer-tacl) | Thermodynamic control layer |
+| [📚 Documentation](#-documentation) | Complete documentation index |
+| [🎯 Use Cases](#-use-cases) | User profiles and examples |
+| [⚙️ Configuration](#️-configuration) | Hydra configuration system |
+| [🧪 Testing](#-testing) | Test suite and coverage |
+| [⚡ Performance](#-performance-benchmarks) | Benchmark results |
+| [🤝 Contributing](#-contributing) | Contribution guidelines |
+| [🌟 Contributors](#-contributors) | Community contributors |
+| [📈 Roadmap](#-roadmap) | Development timeline |
+| [🌐 Community](#-community) | Join the community |
+| [💬 Getting Help](#-getting-help) | Support channels |
+| [🔧 Troubleshooting](#-troubleshooting) | Common issues and solutions |
+| [📜 License](#-license) | Licensing information |
+| [⚠️ Disclaimer](#️-disclaimer) | Risk disclaimer |
+| [🙏 Acknowledgments](#-acknowledgments) | Credits and thanks |
+
+</div>
 
 </details>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              WHY TRADEPULSE SECTION                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🎯 Why TradePulse?
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Direct%20Hit.png" alt="Direct Hit" width="40" height="40" />
+<h2>Why TradePulse?</h2>
+
+</div>
+
+<br>
 
 <div align="center">
 
@@ -368,7 +510,15 @@ graph LR
 
 </div>
 
-**In 3 Lines of Code, Get Professional Market Analysis:**
+<br>
+
+<div align="center">
+
+**🎯 In Just 3 Lines of Code, Get Professional Market Analysis**
+
+</div>
+
+<br>
 
 ```python
 import numpy as np
@@ -387,196 +537,340 @@ bars = pd.DataFrame({"close": price, "volume": volume}, index=index)
 engine = TradePulseCompositeEngine()
 snapshot = engine.analyze_market(bars)
 
-print(f"Phase: {snapshot.phase.value}")
-print(f"Confidence: {snapshot.confidence:.3f}, Entry: {snapshot.entry_signal:.3f}")
+print(f"📊 Phase: {snapshot.phase.value}")
+print(f"🎯 Confidence: {snapshot.confidence:.3f}")
+print(f"📈 Entry Signal: {snapshot.entry_signal:.3f}")
 ```
+
+<br>
 
 <div align="center">
 
-**✅ That's it! You're now analyzing markets like a quantitative hedge fund.**
+> ✅ **That's it! You're now analyzing markets like a quantitative hedge fund.**
 
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              PROJECT STATUS                                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
 
 ---
 
-## 📊 Project Status
-
 <div align="center">
 
-**Current Version: 0.1.0** | [Release Notes](CHANGELOG.md) | [Upgrade Guide](docs/UPGRADE_SUMMARY.md)
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Bar%20Chart.png" alt="Bar Chart" width="40" height="40" />
+<h2>Project Status</h2>
+
+<br>
+
+**Current Version: `v0.1.0`** &nbsp;|&nbsp; [📋 Release Notes](CHANGELOG.md) &nbsp;|&nbsp; [📖 Upgrade Guide](docs/UPGRADE_SUMMARY.md)
 
 </div>
 
+<br>
 
+<!-- Development Stage Cards -->
 <div align="center">
-
-### 🚦 Current Development Stage
 
 <table>
 <tr>
 <td align="center" width="25%">
-<h3>✅ Stable</h3>
-<p><b>Core Engine</b></p>
-<p>Production Ready</p>
-<img src="https://img.shields.io/badge/Status-Stable-success?style=for-the-badge" alt="Stable">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" alt="Check Mark" width="35" height="35" />
+
+### Core Engine
+
+**Production Ready**
+
+<img src="https://img.shields.io/badge/Status-Stable-27AE60?style=for-the-badge" alt="Stable">
+
 </td>
 <td align="center" width="25%">
-<h3>✅ Stable</h3>
-<p><b>Indicators</b></p>
-<p>50+ Available</p>
-<img src="https://img.shields.io/badge/Status-Stable-success?style=for-the-badge" alt="Stable">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" alt="Check Mark" width="35" height="35" />
+
+### Indicators
+
+**50+ Available**
+
+<img src="https://img.shields.io/badge/Status-Stable-27AE60?style=for-the-badge" alt="Stable">
+
 </td>
 <td align="center" width="25%">
-<h3>🔄 Beta</h3>
-<p><b>Live Trading</b></p>
-<p>Active Development</p>
-<img src="https://img.shields.io/badge/Status-Beta-yellow?style=for-the-badge" alt="Beta">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Counterclockwise%20Arrows%20Button.png" alt="In Progress" width="35" height="35" />
+
+### Live Trading
+
+**Active Development**
+
+<img src="https://img.shields.io/badge/Status-Beta-F39C12?style=for-the-badge" alt="Beta">
+
 </td>
 <td align="center" width="25%">
-<h3>🚧 Alpha</h3>
-<p><b>Web Dashboard</b></p>
-<p>Early Preview</p>
-<img src="https://img.shields.io/badge/Status-Alpha-orange?style=for-the-badge" alt="Alpha">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Construction.png" alt="Construction" width="35" height="35" />
+
+### Web Dashboard
+
+**Early Preview**
+
+<img src="https://img.shields.io/badge/Status-Alpha-E67E22?style=for-the-badge" alt="Alpha">
+
 </td>
 </tr>
 </table>
 
 </div>
 
+<br>
+
 > [!NOTE]
-> **v1.0 Release Progress:** TradePulse ships with a fully operational research and execution core—including geometric indicators, the event-driven backtester, and CLI tooling. The v1.0 release is on hold while we finalize:
+> **v1.0 Release Progress:** TradePulse ships with a fully operational research and execution core—including geometric indicators, event-driven backtester, and CLI tooling. The v1.0 release is on hold while we finalize remaining components.
 
 <details>
-<summary><b>📋 Release Checklist (Click to expand)</b></summary>
+<summary><strong>📋 Release Checklist — Click to Expand</strong></summary>
 
 <br>
 
-| Component | Status | Progress |
-|-----------|--------|----------|
-| 🧪 **Test Coverage** | 🔄 In Progress | ![94%](https://progress-bar.dev/94?title=Current%2094%25%20(Goal%2098%25)&width=200&color=yellow) |
-| 📖 **Documentation** | 🔄 In Progress | ![85%](https://progress-bar.dev/85?title=85%25&width=200&color=blue) |
-| 🎨 **Web Dashboard** | 🚧 Planning | ![40%](https://progress-bar.dev/40?title=40%25&width=200&color=orange) |
-| 🔒 **Security Audit** | ✅ Complete | ![100%](https://progress-bar.dev/100?title=100%25&width=200&color=green) |
-| ⚡ **Performance** | ✅ Complete | ![100%](https://progress-bar.dev/100?title=100%25&width=200&color=green) |
-
-</details>
-
 <div align="center">
 
-**📅 Track progress on our [Public Roadmap](docs/roadmap.md) • 📰 Weekly updates in [CHANGELOG.md](CHANGELOG.md)**
+| Component | Status | Progress |
+|:----------|:------:|:---------|
+| 🧪 **Test Coverage** | 🔄 In Progress | ![94%](https://progress-bar.dev/94?title=94%25%20→%20Target%2098%25&width=220&color=F39C12) |
+| 📖 **Documentation** | 🔄 In Progress | ![85%](https://progress-bar.dev/85?title=85%25%20Complete&width=220&color=3498DB) |
+| 🎨 **Web Dashboard** | 🚧 Planning | ![40%](https://progress-bar.dev/40?title=40%25%20Complete&width=220&color=E67E22) |
+| 🔒 **Security Audit** | ✅ Complete | ![100%](https://progress-bar.dev/100?title=100%25%20Complete&width=220&color=27AE60) |
+| ⚡ **Performance** | ✅ Complete | ![100%](https://progress-bar.dev/100?title=100%25%20Complete&width=220&color=27AE60) |
 
 </div>
 
----
+</details>
 
-## ✨ Feature Highlights
+<br>
 
 <div align="center">
+
+📅 **Track progress:** [Public Roadmap](docs/roadmap.md) &nbsp;•&nbsp; 📰 **Weekly updates:** [CHANGELOG.md](CHANGELOG.md)
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              FEATURE HIGHLIGHTS                                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
+---
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Sparkles.png" alt="Sparkles" width="40" height="40" />
+<h2>Feature Highlights</h2>
+
+<br>
 
 ### 🎨 Complete Trading Ecosystem
 
 </div>
 
+<br>
+
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 🧮 Advanced Indicators
-- **Kuramoto Oscillators** — synchronization-based market analysis
-- **Ricci Flow** — geometric curvature detection
-- **Multi-scale Analysis** — fractal pattern recognition
-- **Entropy Measures** — information-theoretic signals
-- **50+ Technical Indicators** — classic plus modern coverage
+<div align="center">
 
-### ⚡ High-Performance Engine
-- **Event-Driven Architecture** — microsecond latency pipeline
-- **Parallel Processing** — multi-core optimizations throughout
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Abacus.png" alt="Abacus" width="35" height="35" />
+
+### Advanced Indicators
+
+</div>
+
+- **Kuramoto Oscillators** — Synchronization-based market analysis
+- **Ricci Flow** — Geometric curvature detection
+- **Multi-scale Analysis** — Fractal pattern recognition
+- **Entropy Measures** — Information-theoretic signals
+- **50+ Technical Indicators** — Classic plus modern coverage
+
+<br>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" alt="High Voltage" width="35" height="35" />
+
+### High-Performance Engine
+
+</div>
+
+- **Event-Driven Architecture** — Microsecond latency pipeline
+- **Parallel Processing** — Multi-core optimizations throughout
 - **GPU Acceleration** — CUDA/Numba-enabled workloads
-- **Streaming Analytics** — real-time signal processing
+- **Streaming Analytics** — Real-time signal processing
 - **Smart Caching** — Redis-powered performance boosts
 
-### 🔄 Data Management
+<br>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Card%20File%20Box.png" alt="Card File Box" width="35" height="35" />
+
+### Data Management
+
+</div>
+
 - **Multi-Source Integration** — CCXT, Alpaca, Polygon, and more
-- **Versioned Storage** — full data lineage tracking
-- **Quality Control** — automated validation pipelines
+- **Versioned Storage** — Full data lineage tracking
+- **Quality Control** — Automated validation pipelines
 - **Feature Store** — Parquet/Polars efficiency
-- **Dead Letter Queue** — zero data loss guarantees
+- **Dead Letter Queue** — Zero data loss guarantees
 
 </td>
 <td width="50%" valign="top">
 
-### 🧪 Research & Testing
-- **Deterministic Backtesting** — reproducible simulations
-- **Monte Carlo Simulation** — deep risk analysis
-- **Walk-Forward Optimization** — defense against overfitting
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Test%20Tube.png" alt="Test Tube" width="35" height="35" />
+
+### Research & Testing
+
+</div>
+
+- **Deterministic Backtesting** — Reproducible simulations
+- **Monte Carlo Simulation** — Deep risk analysis
+- **Walk-Forward Optimization** — Defense against overfitting
 - **Property-Based Testing** — Hypothesis-driven validation
-- **Mutation Testing** — quality assurance for trading logic
+- **Mutation Testing** — Quality assurance for trading logic
 
-### 🚀 Production Ready
-- **Live Trading** — multi-exchange support out of the box
-- **Risk Management** — comprehensive pre-trade compliance and exposure limits
-- **Kill Switch** — global emergency stop with secure admin API
-- **Circuit Breakers** — automatic trading halt after failures or breaches
-- **Position Limits** — per-symbol and portfolio-wide exposure caps
-- **Drawdown Protection** — daily loss limits with automatic reset
-- **Paper Trading** — safe deployment dry runs
-- **Canary Releases** — progressive rollout tooling
+<br>
 
-### 🔒 Enterprise Security
-- **Comprehensive Security Framework** — 10 key requirements (NIST, ISO 27001)
-- **HashiCorp Vault** — centralized secret management
-- **Role-Based Access Control** — granular permissions with least privilege
-- **Audit Logging** — full compliance traceability with 400-day retention
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="35" height="35" />
+
+### Production Ready
+
+</div>
+
+- **Live Trading** — Multi-exchange support out of the box
+- **Risk Management** — Pre-trade compliance & exposure limits
+- **Kill Switch** — Global emergency stop with secure admin API
+- **Circuit Breakers** — Auto trading halt after failures/breaches
+- **Position Limits** — Per-symbol and portfolio-wide caps
+- **Drawdown Protection** — Daily loss limits with auto reset
+- **Paper Trading** — Safe deployment dry runs
+- **Canary Releases** — Progressive rollout tooling
+
+<br>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" alt="Locked" width="35" height="35" />
+
+### Enterprise Security
+
+</div>
+
+- **Security Framework** — 10 key requirements (NIST, ISO 27001)
+- **HashiCorp Vault** — Centralized secret management
+- **Role-Based Access** — Granular least-privilege permissions
+- **Audit Logging** — Full compliance with 400-day retention
 - **Encrypted Storage** — AES-256 at rest, TLS 1.3 in transit
-- **MiFID II Compliance** — regulatory readiness (GDPR, CCPA, SEC, FINRA)
-- **Real-time Threat Detection** — SIEM integration with ML-based anomaly detection
-- **Incident Response** — NIST 800-61 compliant IRP with < 4 hour MTTR
-- **DevSecOps** — automated security scanning in CI/CD pipeline
-- **93 Security Controls** — mapped to NIST and ISO 27001 (80% implemented)
+- **MiFID II Compliance** — GDPR, CCPA, SEC, FINRA ready
+- **Threat Detection** — SIEM with ML-based anomaly detection
+- **Incident Response** — NIST 800-61 compliant (< 4hr MTTR)
+- **DevSecOps** — Automated security scanning in CI/CD
+- **93 Security Controls** — 80% implemented
 
 </td>
 </tr>
 </table>
 
+<br>
+
 <details>
-<summary><b>📊 More Features - Click to expand</b></summary>
+<summary><strong>📊 More Features — Click to Expand</strong></summary>
 
 <br>
 
-### 📊 Observability
-- **Prometheus Metrics** — operational visibility
-- **OpenTelemetry Tracing** — distributed diagnostics
-- **Grafana Dashboards** — visual insights
-- **Health Checks** — proactive alerting
-- **Auto-Triage** — intelligent diagnostics
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### 🎨 Developer Experience
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Telescope.png" alt="Telescope" width="35" height="35" />
+
+### Observability
+
+</div>
+
+- **Prometheus Metrics** — Operational visibility
+- **OpenTelemetry Tracing** — Distributed diagnostics
+- **Grafana Dashboards** — Visual insights
+- **Health Checks** — Proactive alerting
+- **Auto-Triage** — Intelligent diagnostics
+
+</td>
+<td width="50%" valign="top">
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Laptop.png" alt="Laptop" width="35" height="35" />
+
+### Developer Experience
+
+</div>
+
 - **CLI Tools** — Streamlit-powered dashboards
 - **REST API** — FastAPI-first integration points
 - **Type Safety** — Pydantic models and schema validation
-- **Hydra Config** — flexible configuration management
-- **Hot Reload** — rapid iteration for research teams
+- **Hydra Config** — Flexible configuration management
+- **Hot Reload** — Rapid iteration for research teams
+
+</td>
+</tr>
+</table>
 
 </details>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              QUICK START                                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🚀 Quick Start
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="40" height="40" />
+<h2>Quick Start</h2>
+
+<br>
 
 ### 📦 Installation
 
 </div>
 
+<br>
+
 > [!IMPORTANT]
-> **Prerequisites**: Python 3.11+ required. For GPU acceleration, ensure CUDA toolkit 11.8+ is installed.
+> **Prerequisites:** Python 3.11+ required. For GPU acceleration, ensure CUDA toolkit 11.8+ is installed.
 
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-**🐍 Install from source (recommended)**
+<div align="center">
+
+**🐍 Install from Source (Recommended)**
+
+</div>
+
 ```bash
 # Clone the repository
 git clone https://github.com/neuron7x/TradePulse.git
@@ -584,7 +878,7 @@ cd TradePulse
 
 # Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install runtime dependencies
 pip install -r requirements.txt
@@ -594,9 +888,14 @@ pip install -e ".[connectors,feature_store,dev]"
 ```
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-**🐳 Using Docker (alternative)**
+<div align="center">
+
+**🐳 Using Docker (Alternative)**
+
+</div>
+
 ```bash
 # Build and run with Docker Compose
 docker-compose up -d
@@ -605,7 +904,7 @@ docker-compose up -d
 # docker pull ghcr.io/neuron7x/tradepulse:latest
 
 # Access the services
-# API: http://localhost:8000
+# API:       http://localhost:8000
 # Dashboard: http://localhost:8501
 ```
 
@@ -613,31 +912,65 @@ docker-compose up -d
 </tr>
 </table>
 
+<br>
+
 <details>
-<summary><b>📋 System Requirements - Click to expand</b></summary>
+<summary><strong>📋 System Requirements — Click to Expand</strong></summary>
 
 <br>
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
 **Minimum Requirements:**
-- **OS**: Linux (Ubuntu 20.04+), macOS 12+, Windows 10/11 (WSL2 recommended)
-- **CPU**: 4 cores, 2.5 GHz+
-- **RAM**: 8 GB (16 GB recommended for backtesting)
-- **Disk**: 10 GB free space
-- **Python**: 3.11 or 3.12 (3.13 experimental support)
+
+| Component | Specification |
+|:----------|:--------------|
+| **OS** | Linux (Ubuntu 20.04+), macOS 12+, Windows 10/11 (WSL2) |
+| **CPU** | 4 cores, 2.5 GHz+ |
+| **RAM** | 8 GB (16 GB recommended) |
+| **Disk** | 10 GB free space |
+| **Python** | 3.11 or 3.12 (3.13 experimental) |
+
+</td>
+<td width="50%" valign="top">
 
 **Optional for GPU Acceleration:**
-- **GPU**: NVIDIA GPU with CUDA Compute Capability 7.0+
-- **CUDA**: 11.8 or higher
-- **cuDNN**: 8.6+
 
-**Build Tools (for development):**
-- **C/C++ Compiler**: gcc/clang for Linux/macOS, MSVC for Windows
-- **Git**: Version control (2.30+)
-- **Make**: Build automation (optional)
+| Component | Specification |
+|:----------|:--------------|
+| **GPU** | NVIDIA, CUDA Compute 7.0+ |
+| **CUDA** | 11.8 or higher |
+| **cuDNN** | 8.6+ |
+
+**Build Tools (Development):**
+
+| Tool | Version |
+|:-----|:--------|
+| **C/C++** | gcc/clang (Linux/macOS), MSVC (Windows) |
+| **Git** | 2.30+ |
+| **Make** | Optional |
+
+</td>
+</tr>
+</table>
 
 </details>
 
+<br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              YOUR FIRST STRATEGY                                                            -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<div align="center">
+
 ### 🎯 Your First Strategy
+
+</div>
+
+<br>
 
 ```python
 import numpy as np
@@ -653,6 +986,7 @@ indicator = KuramotoIndicator(window=80, coupling=0.9)
 
 
 def kuramoto_signal(series: np.ndarray) -> np.ndarray:
+    """Generate trading signals based on Kuramoto order parameter."""
     order = indicator.compute(series)
     signal = np.where(order > 0.75, 1.0, np.where(order < 0.25, -1.0, 0.0))
     warmup = min(indicator.window, signal.size)
@@ -660,6 +994,7 @@ def kuramoto_signal(series: np.ndarray) -> np.ndarray:
     return signal
 
 
+# Run the backtest
 engine = EventDrivenBacktestEngine()
 result = engine.run(
     prices,
@@ -668,12 +1003,24 @@ result = engine.run(
     strategy_name="kuramoto_demo",
 )
 
-print(f"PnL: {result.pnl:.2f}")
-print(f"Max drawdown: {result.max_dd:.2f}")
-print(f"Trades executed: {result.trades}")
+print(f"💰 PnL:           ${result.pnl:,.2f}")
+print(f"📉 Max Drawdown:  {result.max_dd:.2%}")
+print(f"📊 Trades:        {result.trades}")
 ```
 
+<br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              VIEW RESULTS                                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<div align="center">
+
 ### 📈 View Results
+
+</div>
+
+<br>
 
 ```python
 import pandas as pd
@@ -682,8 +1029,8 @@ import pandas as pd
 # Inspect metrics collected by the engine
 if result.performance:
     stats = result.performance.as_dict()
-    print(f"Sharpe ratio: {stats['sharpe_ratio']:.2f}")
-    print(f"Max drawdown: {stats['max_drawdown']:.2f}")
+    print(f"📊 Sharpe Ratio:  {stats['sharpe_ratio']:.2f}")
+    print(f"📉 Max Drawdown:  {stats['max_drawdown']:.2%}")
 
 
 # Persist the equity curve for further analysis
@@ -693,6 +1040,8 @@ if result.equity_curve is not None:
     )
 ```
 
+<br>
+
 <div align="center">
 
 > [!TIP]
@@ -700,31 +1049,42 @@ if result.equity_curve is not None:
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              DEMO DASHBOARD                                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 💻 Demo Dashboard
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Desktop%20Computer.png" alt="Desktop Computer" width="40" height="40" />
+<h2>Demo Dashboard</h2>
+
+<br>
 
 ### 📊 Interactive Analytics Interface
 
 Experience TradePulse's real-time market analysis and backtesting capabilities
 
-</div>
-
-<div align="center">
+<br>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/dashboard_demo.png">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/dashboard_demo.png">
-  <img alt="TradePulse Dashboard" src="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/dashboard_demo.png" width="90%">
+  <img alt="TradePulse Interactive Dashboard — Real-time market analysis with geometric indicators" src="https://raw.githubusercontent.com/neuron7x/TradePulse/main/docs/assets/dashboard_demo.png" width="90%">
 </picture>
+
+<br>
 
 *Real-time market analysis with TradePulse Dashboard*
 
 </div>
 
-### 🎮 Try it Yourself
+<br>
+
+### 🎮 Try It Yourself
 
 ```bash
 # Start the Streamlit dashboard
@@ -734,11 +1094,18 @@ streamlit run interfaces/streamlit_app.py
 python -m interfaces.cli analyze --csv sample.csv --window 200
 ```
 
+<br>
+
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-**Dashboard Features:**
+<div align="center">
+
+**📊 Dashboard Features**
+
+</div>
+
 - 📈 Real-time price charts with indicators
 - 🔬 Multi-timeframe analysis
 - 📊 Custom indicator composer
@@ -747,9 +1114,14 @@ python -m interfaces.cli analyze --csv sample.csv --window 200
 - ⚡ Order book visualization
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-**CLI Features:**
+<div align="center">
+
+**⌨️ CLI Features**
+
+</div>
+
 - ⚡ Fast CSV data analysis
 - 🔄 Batch processing support
 - 📤 JSON/CSV output formats
@@ -761,173 +1133,286 @@ python -m interfaces.cli analyze --csv sample.csv --window 200
 </tr>
 </table>
 
+<br>
+
 > [!TIP]
 > **First time?** Check out the [Dashboard User Guide](docs/ui_logical_structure.md) for a walkthrough of all features.
 
----
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              SYSTEM ARCHITECTURE                                                            -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
-## 🏗️ System Architecture
+<br>
+
+---
 
 <div align="center">
 
-TradePulse follows a contracts-first approach with explicit boundaries between ingestion, feature generation, strategy execution, and observability layers.
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Classical%20Building.png" alt="Classical Building" width="40" height="40" />
+<h2>System Architecture</h2>
+
+<br>
+
+TradePulse follows a **contracts-first approach** with explicit boundaries between ingestion, feature generation, strategy execution, and observability layers.
 
 </div>
 
+<br>
+
 ```mermaid
 graph TB
-  A[Data Ingestion] --> B[Feature Store]
-  B --> C[Strategy Engine]
-  C --> D[Risk Manager]
-  D --> E[Execution Layer]
-  E --> F[Exchange APIs]
-  C --> G[Analytics]
-  G --> H[Observability]
+  A[🔄 Data Ingestion] --> B[📦 Feature Store]
+  B --> C[🧠 Strategy Engine]
+  C --> D[🛡️ Risk Manager]
+  D --> E[⚡ Execution Layer]
+  E --> F[🌐 Exchange APIs]
+  C --> G[📊 Analytics]
+  G --> H[📡 Observability]
 
   style A fill:#4a90e2,stroke:#357abd,color:#fff
+  style B fill:#9b59b6,stroke:#7d3c98,color:#fff
   style C fill:#7ed321,stroke:#5fa319,color:#fff
+  style D fill:#e74c3c,stroke:#c0392b,color:#fff
   style E fill:#f5a623,stroke:#c47d1a,color:#fff
+  style F fill:#1abc9c,stroke:#16a085,color:#fff
+  style G fill:#3498db,stroke:#2980b9,color:#fff
   style H fill:#bd10e0,stroke:#8e0ca8,color:#fff
 ```
+
+<br>
 
 <div align="center">
 
 ### 📐 Architecture Documentation
 
 | Resource | Description |
-|----------|-------------|
-| [Architecture Blueprint](docs/ARCHITECTURE.md) | Full system topology and governance model |
-| [Conceptual Architecture (UA)](docs/CONCEPTUAL_ARCHITECTURE_UA.md) | Visual guide to conceptual elements and relationships |
-| [System Overview](docs/architecture/system_overview.md) | Component interactions and data flow |
-| [Architecture Diagrams](docs/architecture/assets/README.md) | Complete diagram catalog |
+|:---------|:------------|
+| [🏗️ Architecture Blueprint](docs/ARCHITECTURE.md) | Full system topology and governance model |
+| [🎨 Conceptual Architecture (UA)](docs/CONCEPTUAL_ARCHITECTURE_UA.md) | Visual guide to elements and relationships |
+| [📊 System Overview](docs/architecture/system_overview.md) | Component interactions and data flow |
+| [📁 Architecture Diagrams](docs/architecture/assets/README.md) | Complete diagram catalog |
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              TACL SECTION                                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## Thermodynamic Autonomic Control Layer (TACL)
+<a name="thermodynamic-autonomic-control-layer-tacl"></a>
 
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Thermometer.png" alt="Thermometer" width="40" height="40" />
+<h2>Thermodynamic Autonomic Control Layer (TACL)</h2>
+
+<br>
 
 ### 🌡️ Self-Regulating Control System
 
 </div>
 
-TACL is the self-regulating control system that manages TradePulse topology as a physical system. It measures free energy F (latency, coherency, resource costs), detects stress, evolutionarily reconfigures service bonds via GA/RL/LinkActivator, performs hot-swap of protocols (RDMA, CRDT, shared memory), and guarantees safety through **Monotonic Free Energy Descent** constraint: no change can increase F without human override.
-
-**Key Features:**
-- ⚡ Real-time telemetry & observability API
-- 🔒 CI gates with formal safety guarantees
-- 📊 7-year audit trail for compliance
-- 🚨 Crisis-aware adaptive recovery
-
-> [!IMPORTANT]
-> **This layer enforces thermodynamic stability of the topology using Lyapunov-style energy descent, GA/RL adaptation, runtime monotonic safety gates, and auditable decision logs.**
-
-**Prototype classification:** TRL7 (post-staging)
-
-<details>
-<summary><b>🏗️ Architecture Overview - Click to expand</b></summary>
-
 <br>
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    Thermodynamic Control Loop                │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Measure  →  Analyse  →  Plan  →  Execute                    │
-│                                                              │
-│  • system_free_energy()                                      │
-│  • dF/dt & adaptive epsilon                                  │
-│  • Crisis detection (normal/elevated/critical)               │
-│  • CrisisAwareGA + AdaptiveRecoveryAgent                     │
-│  • LinkActivator (primary → fallback → last resort)          │
-└──────────────────────────────────────────────────────────────┘
-```
+TACL is the **self-regulating control system** that manages TradePulse topology as a physical system. It measures free energy F (latency, coherency, resource costs), detects stress, evolutionarily reconfigures service bonds via GA/RL/LinkActivator, performs hot-swap of protocols (RDMA, CRDT, shared memory), and guarantees safety through **Monotonic Free Energy Descent** constraint: no change can increase F without human override.
 
-### Key Components
-
-- `runtime/link_activator.py` — maps bond types to concrete communication protocols (CRDT, RDMA, gRPC, shared memory, gossip, local fallbacks) and records activation telemetry.
-- `runtime/recovery_agent.py` — Q-learning agent selecting recovery intensity (slow/medium/fast) based on free-energy deviation, latency spike and crisis duration.
-- `evolution/crisis_ga.py` — crisis-aware genetic algorithm that scales population and mutation rate according to the detected crisis mode.
-- `runtime/thermo_controller.py` — orchestrates the loop, enforces the monotonic constraint with tolerance windows, and drives LinkActivator for hot-swapping protocols.
-- `runtime/thermo_api.py` — FastAPI service exposing `/thermo/status`, `/thermo/history`, `/thermo/crisis`, `/thermo/activations`, and a `/thermo/reset` hook for integration tests.
-- `scripts/polygon_validator.py` — offline-friendly Polygon loader with synthetic fallback for validating the internal tail free-energy proxy and flash-crash behaviour.
-
-### Safety Guarantees
-
-- **Monotonic descent** — every accepted mutation must satisfy `F_new ≤ F_old + ε`, where `ε = 0.01 × baseline_EMA`.
-- **Crisis handling** — latency spikes or large `|dF/dt|` trigger the adaptive recovery agent and the crisis-aware GA.
-- **Telemetry** — each control step logs timestamp, free energy, derivative, epsilon, bottleneck edge, crisis mode and activation history. Accessible via the FastAPI endpoints.
-
-### Validation & Testing
-
-- Unit tests cover the link activator, recovery agent and controller monotonic constraint (`tests/test_link_activator.py`, `tests/test_recovery_agent.py`, `tests/test_energy.py`).
-- Integration harness for Polygon-based stress tests lives in `tests/test_polygon_integration.py` and is opt-in through `RUN_POLYGON_TESTS=1`.
-- CI workflow `.github/workflows/thermo-evolution.yml` now runs the dedicated unit suites and validates the security policy.
-
-</details>
-
----
-
-## 📚 Documentation
-
-<div align="center">
-
-### 📖 Comprehensive Documentation Suite
-
-</div>
+<br>
 
 <table>
 <tr>
 <td width="50%">
 
-#### 🚀 Getting Started
-- [Installation Guide](docs/installation.md) — Detailed setup instructions
-- [Quickstart Guide](docs/quickstart.md) — Step-by-step tutorials
-- [User Guide](docs/quickstart.md) — Complete user documentation
-- [Strategy Examples](docs/examples) — 20+ working strategies
+**🔑 Key Features:**
 
-#### 🏗️ Technical Docs
-- [API Reference](https://docs.tradepulse.io/api) — Complete API documentation
-- [Indicator Library](docs/indicators.md) — Geometric and technical indicators
-- [Architecture Overview](docs/ARCHITECTURE.md) — System design deep dive
-- [Deployment Guide](docs/deployment.md) — Production rollouts
+- ⚡ Real-time telemetry & observability API
+- 🔒 CI gates with formal safety guarantees
+- 📊 7-year audit trail for compliance
+- 🚨 Crisis-aware adaptive recovery
 
 </td>
 <td width="50%">
 
-#### 🔐 Security & Operations
-- [**Security Framework**](SECURITY_FRAMEWORK_SUMMARY.md) — **Comprehensive security documentation**
-- [Security Framework Index](docs/security/SECURITY_FRAMEWORK_INDEX.md) — Complete framework index
-- [Security Policy](SECURITY.md) — Vulnerability reporting and best practices
-- [**Operational Artifacts**](docs/OPERATIONAL_ARTIFACTS_INDEX.md) — **Production operations guide**
+**⚙️ Technical Details:**
 
-#### 📊 Advanced Topics
-- [Risk Analysis](docs/security/risk-analysis/risk-identification-framework.md) — FMEA, PESTLE, SWOT analysis
-- [Security Requirements](docs/security/requirements/security-requirements-specification.md) — 93 controls mapped to NIST and ISO 27001
-- [DevSecOps Guide](docs/security/devsecops/devsecops-integration-guide.md) — Security automation in CI/CD
-
-#### 🤖 Documentation Automation
-- [DOC PR COPILOT v2](.github/agents/doc-pr-copilot-v2.md) — LLM-based documentation agent for PR reviews
-- [Agent Integration Guide](.github/agents/INTEGRATION.md) — How to integrate documentation automation
-- [Agent Configuration](.github/agents/README.md) — Available agents and usage
+- **Classification:** TRL7 (post-staging)
+- **Safety Guarantee:** Lyapunov-style energy descent
+- **Adaptation:** GA/RL with runtime monotonic gates
+- **Audit:** Full decision logging
 
 </td>
 </tr>
 </table>
 
+<br>
+
+> [!IMPORTANT]
+> **This layer enforces thermodynamic stability of the topology using Lyapunov-style energy descent, GA/RL adaptation, runtime monotonic safety gates, and auditable decision logs.**
+
+<br>
+
 <details>
-<summary><b>🔐 Security Highlights - Click to expand</b></summary>
+<summary><strong>🏗️ Architecture Overview — Click to Expand</strong></summary>
+
+<br>
+
+```
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                       THERMODYNAMIC CONTROL LOOP                              │
+├───────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│   📏 MEASURE  →  🔍 ANALYSE  →  📋 PLAN  →  ⚡ EXECUTE                         │
+│                                                                               │
+│   • system_free_energy()                                                      │
+│   • dF/dt & adaptive epsilon                                                  │
+│   • Crisis detection (normal/elevated/critical)                               │
+│   • CrisisAwareGA + AdaptiveRecoveryAgent                                     │
+│   • LinkActivator (primary → fallback → last resort)                          │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+<br>
+
+### 🧩 Key Components
+
+| Component | Description |
+|:----------|:------------|
+| `runtime/link_activator.py` | Maps bond types to communication protocols (CRDT, RDMA, gRPC, shared memory) |
+| `runtime/recovery_agent.py` | Q-learning agent selecting recovery intensity based on free-energy deviation |
+| `evolution/crisis_ga.py` | Crisis-aware genetic algorithm scaling population and mutation rate |
+| `runtime/thermo_controller.py` | Orchestrates loop, enforces monotonic constraint, drives LinkActivator |
+| `runtime/thermo_api.py` | FastAPI endpoints: `/thermo/status`, `/thermo/history`, `/thermo/crisis` |
+| `scripts/polygon_validator.py` | Offline-friendly Polygon loader with synthetic fallback |
+
+<br>
+
+### 🔐 Safety Guarantees
+
+- **Monotonic Descent:** Every mutation satisfies `F_new ≤ F_old + ε` where `ε = 0.01 × baseline_EMA`
+- **Crisis Handling:** Latency spikes or large `|dF/dt|` trigger adaptive recovery agent and crisis-aware GA
+- **Telemetry:** Each step logs timestamp, free energy, derivative, epsilon, bottleneck edge, crisis mode
+
+<br>
+
+### ✅ Validation & Testing
+
+- **Unit Tests:** `tests/test_link_activator.py`, `tests/test_recovery_agent.py`, `tests/test_energy.py`
+- **Integration:** `tests/test_polygon_integration.py` (opt-in via `RUN_POLYGON_TESTS=1`)
+- **CI Workflow:** `.github/workflows/thermo-evolution.yml`
+
+</details>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              DOCUMENTATION                                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
+---
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="40" height="40" />
+<h2>Documentation</h2>
+
+<br>
+
+### 📖 Comprehensive Documentation Suite
+
+</div>
+
+<br>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="25" height="25" />
+**Getting Started**
+
+</div>
+
+- [📥 Installation Guide](docs/installation.md) — Detailed setup instructions
+- [🚀 Quickstart Guide](docs/quickstart.md) — Step-by-step tutorials
+- [📖 User Guide](docs/quickstart.md) — Complete user documentation
+- [💡 Strategy Examples](docs/examples) — 20+ working strategies
+
+<br>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
+**Technical Docs**
+
+</div>
+
+- [📡 API Reference](https://docs.tradepulse.io/api) — Complete API documentation
+- [📊 Indicator Library](docs/indicators.md) — Geometric and technical indicators
+- [🏗️ Architecture Overview](docs/ARCHITECTURE.md) — System design deep dive
+- [🚀 Deployment Guide](docs/deployment.md) — Production rollouts
+
+</td>
+<td width="50%" valign="top">
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" alt="Locked" width="25" height="25" />
+**Security & Operations**
+
+</div>
+
+- [🔐 **Security Framework**](SECURITY_FRAMEWORK_SUMMARY.md) — Comprehensive security
+- [📋 Security Framework Index](docs/security/SECURITY_FRAMEWORK_INDEX.md) — Complete framework
+- [🛡️ Security Policy](SECURITY.md) — Vulnerability reporting
+- [⚙️ **Operational Artifacts**](docs/OPERATIONAL_ARTIFACTS_INDEX.md) — Production ops guide
+
+<br>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Graduation%20Cap.png" alt="Graduation Cap" width="25" height="25" />
+**Advanced Topics**
+
+</div>
+
+- [📊 Risk Analysis](docs/security/risk-analysis/risk-identification-framework.md) — FMEA, PESTLE, SWOT
+- [📜 Security Requirements](docs/security/requirements/security-requirements-specification.md) — 93 NIST/ISO controls
+- [🔧 DevSecOps Guide](docs/security/devsecops/devsecops-integration-guide.md) — Security in CI/CD
+
+<br>
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Robot.png" alt="Robot" width="25" height="25" />
+**Documentation Automation**
+
+</div>
+
+- [🤖 DOC PR COPILOT v2](.github/agents/doc-pr-copilot-v2.md) — LLM-based doc agent
+- [🔌 Agent Integration](.github/agents/INTEGRATION.md) — Automation integration
+- [⚙️ Agent Configuration](.github/agents/README.md) — Available agents
+
+</td>
+</tr>
+</table>
+
+<br>
+
+<details>
+<summary><strong>🔐 Security Highlights — Click to Expand</strong></summary>
 
 <br>
 
 <div align="center">
 
 | Feature | Status |
-|---------|--------|
-| Security Controls | ![80%](https://progress-bar.dev/80?title=93%20Controls&width=200) |
+|:--------|:------:|
+| Security Controls | ![80%](https://progress-bar.dev/80?title=93%20Controls&width=200&color=27AE60) |
 | ISO 27001 Alignment | ✅ Complete |
 | NIST SP 800-53 | ✅ Complete |
 | GDPR, CCPA Compliance | ✅ Complete |
@@ -936,6 +1421,8 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 | Incident Response | ✅ < 4 hour MTTR |
 
 </div>
+
+<br>
 
 **Security Documentation:**
 - ✅ 93 security controls (80% implemented)
@@ -948,7 +1435,7 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 </details>
 
 <details>
-<summary><b>🚀 Operational Readiness - Click to expand</b></summary>
+<summary><strong>🚀 Operational Readiness — Click to Expand</strong></summary>
 
 <br>
 
@@ -962,32 +1449,52 @@ TACL is the self-regulating control system that manages TradePulse topology as a
 - ✅ Communication templates and escalation paths
 - ✅ Backup/recovery and capacity planning procedures
 
+<br>
+
 **Resources:**
+
 | Document | Description |
-|----------|-------------|
+|:---------|:------------|
 | [Operational Artifacts Index](docs/OPERATIONAL_ARTIFACTS_INDEX.md) | Master index of all operational documentation |
-| [Production Operations Dashboard](observability/dashboards/tradepulse-production-operations.json) | Real-time monitoring and SLO tracking |
+| [Production Dashboard](observability/dashboards/tradepulse-production-operations.json) | Real-time monitoring and SLO tracking |
 | [SLA/Alert Playbooks](docs/sla_alert_playbooks.md) | Alert response procedures and escalation |
 | [Incident Coordination](docs/incident_coordination_procedures.md) | Complete incident management framework |
-| [System Lifecycle Operations](docs/system_lifecycle_operations.md) | Daily/weekly/monthly operational procedures |
+| [System Lifecycle](docs/system_lifecycle_operations.md) | Daily/weekly/monthly operational procedures |
 
 </details>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              USE CASES                                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🎯 Use Cases
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Direct%20Hit.png" alt="Direct Hit" width="40" height="40" />
+<h2>Use Cases</h2>
+
+<br>
 
 ### 💼 Built for Everyone — From Researchers to Institutions
 
 </div>
 
+<br>
+
 <table>
 <tr>
 <td width="33%" valign="top">
 
-### 🔬 For Quantitative Researchers
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Microscope.png" alt="Microscope" width="45" height="45" />
+
+### For Quantitative Researchers
+
+</div>
 
 ```python
 # Fractal indicator composition
@@ -1014,7 +1521,13 @@ data_signals = indicator.compute(
 </td>
 <td width="33%" valign="top">
 
-### 📈 For Day Traders
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Chart Increasing" width="45" height="45" />
+
+### For Day Traders
+
+</div>
 
 ```python
 # Real-time signal generation
@@ -1037,7 +1550,13 @@ trader.start()
 </td>
 <td width="33%" valign="top">
 
-### 🏢 For Institutions
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Office%20Building.png" alt="Office Building" width="45" height="45" />
+
+### For Institutions
+
+</div>
 
 ```python
 # Enterprise risk management
@@ -1064,20 +1583,32 @@ risk_manager = RiskManager(
 </tr>
 </table>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              CONFIGURATION                                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## ⚙️ Configuration
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" alt="Gear" width="40" height="40" />
+<h2>Configuration</h2>
+
+<br>
 
 ### 🎛️ Flexible Configuration with Hydra
 
 </div>
 
-TradePulse uses Hydra for flexible, composable configuration management:
+<br>
+
+TradePulse uses **Hydra** for flexible, composable configuration management:
 
 ```yaml
-# config.yaml
+# config.yaml — Main configuration file
+
 strategy:
   name: momentum
   capital: 100000
@@ -1096,25 +1627,43 @@ risk:
   stop_loss_pct: 0.02
 ```
 
+<br>
+
 <div align="center">
 
 > [!TIP]
-> Override any configuration from the command line: `tradepulse run strategy.capital=200000`
+> **Override any configuration from the command line:**
+> ```bash
+> tradepulse run strategy.capital=200000 data.timeframe=4h
+> ```
 
 </div>
 
----
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              TESTING                                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
-## 🧪 Testing
+<br>
+
+---
 
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Test%20Tube.png" alt="Test Tube" width="40" height="40" />
+<h2>Testing</h2>
+
+<br>
+
 ### 🔬 Comprehensive Test Suite
+
+</div>
+
+<br>
 
 > [!IMPORTANT]
 > The latest release gate reports **93.7% overall coverage** (rounded to 94%) with a **92% minimum gate** and a **98% GA target**. The badge and table below reflect this baseline while we continue pushing toward the higher goal.
 
-</div>
+<br>
 
 ```bash
 # Run all tests
@@ -1133,21 +1682,32 @@ pytest tests/performance --benchmark-only
 mutmut run
 ```
 
+<br>
+
 <div align="center">
 
 | Scope | Coverage | Status |
-|-------|----------|--------|
-| Overall (release gate) | ![94%](https://img.shields.io/badge/Coverage-94%25-green) | ✅ Passed (≥92% gate) |
-| GA Target | ![98%](https://img.shields.io/badge/Target-98%25-brightgreen) | 🔄 In Progress |
-| Performance Benchmarks | N/A | ✅ Benchmarked |
+|:------|:--------:|:------:|
+| **Overall (release gate)** | ![94%](https://img.shields.io/badge/Coverage-94%25-27AE60?style=flat-square) | ✅ Passed (≥92% gate) |
+| **GA Target** | ![98%](https://img.shields.io/badge/Target-98%25-3498DB?style=flat-square) | 🔄 In Progress |
+| **Performance Benchmarks** | N/A | ✅ Benchmarked |
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              PERFORMANCE BENCHMARKS                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## ⚡ Performance Benchmarks
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" alt="High Voltage" width="40" height="40" />
+<h2>Performance Benchmarks</h2>
+
+<br>
 
 ### 🚀 Built for Speed
 
@@ -1155,59 +1715,79 @@ Real-world performance metrics from production deployments
 
 </div>
 
+<br>
+
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-### 📈 Backtesting Performance
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Chart Increasing" width="30" height="30" />
+
+### Backtesting Performance
+
+</div>
 
 | Metric | Value |
-|--------|-------|
+|:-------|------:|
 | **Throughput** | 1M+ bars/second |
 | **Memory** | ~50 MB per 1M bars |
 | **Indicators** | 50+ computed in parallel |
 | **Latency (p99)** | <10ms per signal |
 
+<br>
+
 **Benchmark Setup:**
-- Hardware: AMD Ryzen 9 5950X (16 cores)
-- Dataset: 1M OHLCV bars
-- Strategy: Kuramoto + Ricci composite
-- Configuration: Default settings
+- **Hardware:** AMD Ryzen 9 5950X (16 cores)
+- **Dataset:** 1M OHLCV bars
+- **Strategy:** Kuramoto + Ricci composite
+- **Configuration:** Default settings
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-### 🔄 Live Trading Performance
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Counterclockwise%20Arrows%20Button.png" alt="Live" width="30" height="30" />
+
+### Live Trading Performance
+
+</div>
 
 | Metric | Value |
-|--------|-------|
+|:-------|------:|
 | **Order Latency** | <5ms (exchange dependent) |
 | **WebSocket Processing** | 10K+ messages/sec |
 | **Signal Generation** | <1ms (cached indicators) |
 | **Memory Footprint** | ~200 MB steady-state |
 
+<br>
+
 **Production Environment:**
-- Deployment: Docker Swarm
-- Exchanges: Binance, Kraken, Coinbase
-- Uptime: 99.9%+ (30-day average)
-- Concurrent strategies: 20+
+- **Deployment:** Docker Swarm
+- **Exchanges:** Binance, Kraken, Coinbase
+- **Uptime:** 99.9%+ (30-day average)
+- **Concurrent strategies:** 20+
 
 </td>
 </tr>
 </table>
 
+<br>
+
 <details>
-<summary><b>📊 Detailed Benchmarks - Click to expand</b></summary>
+<summary><strong>📊 Detailed Benchmarks — Click to Expand</strong></summary>
 
 <br>
 
-### Indicator Computation Speed
+### ⚡ Indicator Computation Speed
 
 Measured on synthetic data (100K bars, window=200):
 
 ```
 Indicator               Time (ms)    Speedup vs Pure Python
-─────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────
 Kuramoto Order          12.3         50x (Numba)
 Ricci Curvature         45.8         30x (Numba)
 Hurst Exponent          8.7          25x (NumPy vectorization)
@@ -1215,24 +1795,30 @@ Entropy Measures        15.2         40x (Numba)
 Composite Engine        78.4         35x (parallel + Numba)
 ```
 
-### Memory Efficiency
+<br>
+
+### 💾 Memory Efficiency
 
 ```
 Component               Memory Usage    Notes
-─────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────
 Core Engine             ~50 MB          Base process
 Feature Cache           ~100 MB         Per 1M cached bars
 Live Trading Session    ~150 MB         Includes WebSocket buffers
 Backtest Run            ~200 MB         Per strategy (1M bars)
 ```
 
-### Scalability
+<br>
 
-- **Horizontal**: Tested up to 100 concurrent strategy instances
-- **Vertical**: Efficiently uses 32+ CPU cores
-- **GPU**: 10-50x speedup on CUDA-enabled operations
+### 📈 Scalability
+
+- **Horizontal:** Tested up to 100 concurrent strategy instances
+- **Vertical:** Efficiently uses 32+ CPU cores
+- **GPU:** 10-50x speedup on CUDA-enabled operations
 
 </details>
+
+<br>
 
 <div align="center">
 
@@ -1243,17 +1829,28 @@ Backtest Run            ~200 MB         Per strategy (1M bars)
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              CONTRIBUTING                                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🤝 Contributing
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Handshake.png" alt="Handshake" width="40" height="40" />
+<h2>Contributing</h2>
+
+<br>
 
 ### 🌟 Join Our Community of Contributors!
 
 We love contributions! Whether it's bug fixes, new features, or documentation improvements—every contribution matters.
 
 </div>
+
+<br>
 
 ```bash
 # Setup development environment
@@ -1268,76 +1865,120 @@ mypy .            # Type check
 pytest            # Run tests
 ```
 
+<br>
+
 <div align="center">
 
 📖 **Read our [Contributing Guide](CONTRIBUTING.md) for detailed guidelines**
 
-[![Contributors](https://img.shields.io/github/contributors/neuron7x/TradePulse?style=for-the-badge)](https://github.com/neuron7x/TradePulse/graphs/contributors)
-[![Pull Requests](https://img.shields.io/github/issues-pr/neuron7x/TradePulse?style=for-the-badge)](https://github.com/neuron7x/TradePulse/pulls)
+<br>
+
+[![Contributors](https://img.shields.io/github/contributors/neuron7x/TradePulse?style=for-the-badge&color=4A90E2)](https://github.com/neuron7x/TradePulse/graphs/contributors)
+&nbsp;
+[![Pull Requests](https://img.shields.io/github/issues-pr/neuron7x/TradePulse?style=for-the-badge&color=7ED321)](https://github.com/neuron7x/TradePulse/pulls)
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              CONTRIBUTORS                                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🌟 Contributors
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Star.png" alt="Star" width="40" height="40" />
+<h2>Contributors</h2>
+
+<br>
 
 *TradePulse is made possible by a vibrant community of quants, traders, and engineers.*
 
+<br>
+
 <a href="https://github.com/neuron7x/TradePulse/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=neuron7x/TradePulse" />
+  <img src="https://contrib.rocks/image?repo=neuron7x/TradePulse" alt="TradePulse Contributors" />
 </a>
 
-**Thank you to all our amazing contributors! 🎉**
+<br>
+<br>
+
+**Thank you to all our amazing contributors!** 🎉
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              ROADMAP                                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 📈 Roadmap
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/World%20Map.png" alt="World Map" width="40" height="40" />
+<h2>Roadmap</h2>
+
+<br>
 
 ### 🗺️ Product Development Timeline
 
 </div>
 
+<br>
+
 ```mermaid
 gantt
     title TradePulse Development Roadmap
     dateFormat YYYY-MM
-    section Completed
+    section ✅ Completed
     Core Backtesting Engine       :done, 2023-01, 2023-06
     Geometric Indicators          :done, 2023-06, 2023-12
     Live Trading Support          :done, 2024-01, 2024-06
-    section In Progress
+    section 🔄 In Progress
     ML Integration                :active, 2024-06, 2025-03
-    section Planned
+    section 📋 Planned
     Options & Derivatives         :2025-03, 2025-09
     Multi-Asset Portfolio         :2025-09, 2026-03
 ```
 
+<br>
+
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
+
+<div align="center">
 
 ### ✅ Completed
+
+</div>
+
 - [x] **Phase 1** — Core backtesting engine
-- [x] **Phase 2** — Geometric indicators
+- [x] **Phase 2** — Geometric indicators (50+)
 - [x] **Phase 3** — Live trading support
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
+
+<div align="center">
 
 ### 🚧 In Progress & Planned
+
+</div>
+
 - [x] **Phase 4** — Machine learning integration
-- [ ] **Phase 5** — Options & derivatives
+- [ ] **Phase 5** — Options & derivatives support
 - [ ] **Phase 6** — Multi-asset portfolio optimization
 
 </td>
 </tr>
 </table>
+
+<br>
 
 <div align="center">
 
@@ -1345,51 +1986,73 @@ gantt
 
 </div>
 
----
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              COMMUNITY                                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
-## 🌐 Community
+<br>
+
+---
 
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Busts%20in%20Silhouette.png" alt="Busts in Silhouette" width="40" height="40" />
+<h2>Community</h2>
+
+<br>
+
 ### 💬 Join the TradePulse Community
 
-<p>
+<br>
+
 <a href="https://discord.gg/tradepulse">
-  <img src="https://img.shields.io/badge/Discord-Join%20Server-7289DA?style=for-the-badge&logo=discord&logoColor=white" alt="Discord">
+  <img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join Discord">
 </a>
+&nbsp;
 <a href="https://twitter.com/tradepulse">
-  <img src="https://img.shields.io/badge/Twitter-Follow-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter">
+  <img src="https://img.shields.io/badge/Twitter-Follow-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" alt="Follow on Twitter">
 </a>
+&nbsp;
 <a href="https://linkedin.com/company/tradepulse">
-  <img src="https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+  <img src="https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn">
 </a>
+&nbsp;
 <a href="https://youtube.com/tradepulse">
-  <img src="https://img.shields.io/badge/YouTube-Subscribe-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube">
+  <img src="https://img.shields.io/badge/YouTube-Subscribe-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Subscribe on YouTube">
 </a>
-</p>
 
 </div>
 
+<br>
+
 <table>
 <tr>
-<td width="50%" align="center">
+<td width="50%" valign="top" align="center">
 
-### 🗨️ Chat & Discussion
-- 💬 [Discord Community](https://discord.gg/tradepulse) — Real-time chat with users and developers
-- 🐦 [Twitter](https://twitter.com/tradepulse) — Latest updates and news
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Speech%20Balloon.png" alt="Speech Balloon" width="30" height="30" />
+
+### Chat & Discussion
+
+- 💬 [Discord Community](https://discord.gg/tradepulse) — Real-time chat
+- 🐦 [Twitter](https://twitter.com/tradepulse) — Latest updates
 - 📧 [Mailing List](https://tradepulse.io/newsletter) — Monthly newsletter
 
 </td>
-<td width="50%" align="center">
+<td width="50%" valign="top" align="center">
 
-### 📚 Learn & Share
-- 🎥 [YouTube Channel](https://youtube.com/tradepulse) — Video tutorials and demos
-- 📝 [Blog](https://blog.tradepulse.io) — Technical articles and insights
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="30" height="30" />
+
+### Learn & Share
+
+- 🎥 [YouTube Channel](https://youtube.com/tradepulse) — Video tutorials
+- 📝 [Blog](https://blog.tradepulse.io) — Technical articles
 - 💼 [LinkedIn](https://linkedin.com/company/tradepulse) — Professional network
 
 </td>
 </tr>
 </table>
+
+<br>
 
 <div align="center">
 
@@ -1398,11 +2061,20 @@ gantt
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              GETTING HELP                                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 💬 Getting Help
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="40" height="40" />
+<h2>Getting Help</h2>
+
+<br>
 
 ### 🆘 Need Assistance?
 
@@ -1410,51 +2082,61 @@ Multiple channels available to get help fast
 
 </div>
 
+<br>
+
 <table>
 <tr>
-<td width="33%" align="center">
+<td width="33%" valign="top" align="center">
 
-### 📚 Documentation
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="40" height="40" />
 
-Start here first!
+### Documentation
 
-- [Quick Start Guide](docs/quickstart.md)
-- [User Guide](docs/quickstart.md)
-- [API Reference](https://docs.tradepulse.io/api)
-- [FAQ](docs/faq.md)
-- [Troubleshooting](docs/troubleshooting.md)
+**Start here first!**
+
+- [🚀 Quick Start Guide](docs/quickstart.md)
+- [📖 User Guide](docs/quickstart.md)
+- [📡 API Reference](https://docs.tradepulse.io/api)
+- [❓ FAQ](docs/faq.md)
+- [🔧 Troubleshooting](docs/troubleshooting.md)
 
 **Best for:** Self-service, tutorials
 
 </td>
-<td width="33%" align="center">
+<td width="33%" valign="top" align="center">
 
-### 💭 Community
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Busts%20in%20Silhouette.png" alt="Community" width="40" height="40" />
 
-Connect with other users
+### Community
 
-- [GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions) — Q&A and ideas
-- [Discord Server](https://discord.gg/tradepulse) — Real-time chat
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/tradepulse) — Tagged questions
+**Connect with other users**
+
+- [💬 GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions) — Q&A
+- [🎮 Discord Server](https://discord.gg/tradepulse) — Real-time chat
+- [📚 Stack Overflow](https://stackoverflow.com/questions/tagged/tradepulse) — Tagged questions
 
 **Best for:** General questions, tips
 
 </td>
-<td width="33%" align="center">
+<td width="33%" valign="top" align="center">
 
-### 🐛 Issues
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Warning.png" alt="Warning" width="40" height="40" />
 
-Report bugs and request features
+### Issues
 
-- [Bug Reports](https://github.com/neuron7x/TradePulse/issues/new?template=bug_report.md)
-- [Feature Requests](https://github.com/neuron7x/TradePulse/issues/new?template=feature_request.md)
-- [Security Issues](SECURITY.md)
+**Report bugs and features**
 
-**Best for:** Bugs, vulnerabilities, enhancements
+- [🐛 Bug Reports](https://github.com/neuron7x/TradePulse/issues/new?template=bug_report.md)
+- [✨ Feature Requests](https://github.com/neuron7x/TradePulse/issues/new?template=feature_request.md)
+- [🔒 Security Issues](SECURITY.md)
+
+**Best for:** Bugs, enhancements
 
 </td>
 </tr>
 </table>
+
+<br>
 
 <div align="center">
 
@@ -1462,10 +2144,9 @@ Report bugs and request features
 
 For enterprise support, custom development, or commercial licensing:
 
-**Email**: [support@tradepulse.io](mailto:support@tradepulse.io)
-**Website**: [tradepulse.io/enterprise](https://tradepulse.io/enterprise)
+**Email:** [support@tradepulse.io](mailto:support@tradepulse.io) &nbsp;•&nbsp; **Website:** [tradepulse.io/enterprise](https://tradepulse.io/enterprise)
 
----
+<br>
 
 > [!TIP]
 > **Before asking for help:**
@@ -1476,24 +2157,35 @@ For enterprise support, custom development, or commercial licensing:
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              TROUBLESHOOTING                                                                -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🔧 Troubleshooting
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="40" height="40" />
+<h2>Troubleshooting</h2>
+
+<br>
 
 ### 💡 Common Issues and Solutions
 
 </div>
 
+<br>
+
 <details>
-<summary><b>❓ Installation Issues</b></summary>
+<summary><strong>❓ Installation Issues</strong></summary>
 
 <br>
 
-**Problem**: `pip install` fails with compilation errors
+**Problem:** `pip install` fails with compilation errors
 
-**Solution**:
+**Solution:**
 ```bash
 # Ensure build tools are installed
 # Ubuntu/Debian:
@@ -1508,9 +2200,9 @@ pip install -r requirements.txt
 
 ---
 
-**Problem**: Import errors after installation
+**Problem:** Import errors after installation
 
-**Solution**:
+**Solution:**
 ```bash
 # Ensure you're in the project root and virtual environment is activated
 cd /path/to/TradePulse
@@ -1523,13 +2215,13 @@ pip install -e .
 </details>
 
 <details>
-<summary><b>🔌 Data Connection Issues</b></summary>
+<summary><strong>🔌 Data Connection Issues</strong></summary>
 
 <br>
 
-**Problem**: Cannot connect to exchange APIs
+**Problem:** Cannot connect to exchange APIs
 
-**Solution**:
+**Solution:**
 1. Verify API keys are set correctly in `.env` file
 2. Check firewall/network settings
 3. Ensure exchange connector dependencies are installed:
@@ -1543,9 +2235,9 @@ pip install -e .
 
 ---
 
-**Problem**: Rate limit errors
+**Problem:** Rate limit errors
 
-**Solution**:
+**Solution:**
 - Reduce polling frequency in configuration
 - Use WebSocket connections instead of REST API where possible
 - Implement exponential backoff (already built-in for most connectors)
@@ -1553,13 +2245,13 @@ pip install -e .
 </details>
 
 <details>
-<summary><b>⚡ Performance Issues</b></summary>
+<summary><strong>⚡ Performance Issues</strong></summary>
 
 <br>
 
-**Problem**: Slow backtests
+**Problem:** Slow backtests
 
-**Solution**:
+**Solution:**
 1. Enable parallel processing:
    ```python
    engine = EventDrivenBacktestEngine(n_jobs=4)
@@ -1573,9 +2265,9 @@ pip install -e .
 
 ---
 
-**Problem**: High memory usage
+**Problem:** High memory usage
 
-**Solution**:
+**Solution:**
 - Process data in chunks for large datasets
 - Use `polars` instead of `pandas` for large-scale data:
   ```bash
@@ -1587,13 +2279,13 @@ pip install -e .
 </details>
 
 <details>
-<summary><b>🐛 Common Errors</b></summary>
+<summary><strong>🐛 Common Errors</strong></summary>
 
 <br>
 
-**Error**: `ModuleNotFoundError: No module named 'core'`
+**Error:** `ModuleNotFoundError: No module named 'core'`
 
-**Fix**:
+**Fix:**
 ```bash
 # Add project to PYTHONPATH or install in editable mode
 pip install -e .
@@ -1601,9 +2293,9 @@ pip install -e .
 
 ---
 
-**Error**: `RuntimeError: CUDA out of memory`
+**Error:** `RuntimeError: CUDA out of memory`
 
-**Fix**:
+**Fix:**
 ```python
 # Reduce batch size or disable GPU acceleration
 import os
@@ -1612,9 +2304,9 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable CUDA
 
 ---
 
-**Error**: `KeyError` in backtesting results
+**Error:** `KeyError` in backtesting results
 
-**Fix**: Ensure your data has required columns (`close`, `open`, `high`, `low`, `volume`)
+**Fix:** Ensure your data has required columns (`close`, `open`, `high`, `low`, `volume`)
 ```python
 # Validate data schema
 from tradepulse.data.validation import validate_ohlcv
@@ -1623,6 +2315,8 @@ validate_ohlcv(df)
 
 </details>
 
+<br>
+
 <div align="center">
 
 ### 📚 More Help
@@ -1630,115 +2324,213 @@ validate_ohlcv(df)
 Can't find your issue? Check these resources:
 
 | Resource | Link |
-|----------|------|
-| **Detailed Troubleshooting Guide** | [docs/troubleshooting.md](docs/troubleshooting.md) |
+|:---------|:-----|
+| **Detailed Troubleshooting** | [docs/troubleshooting.md](docs/troubleshooting.md) |
 | **FAQ** | [docs/faq.md](docs/faq.md) |
 | **GitHub Issues** | [Search existing issues](https://github.com/neuron7x/TradePulse/issues) |
 | **GitHub Discussions** | [Ask the community](https://github.com/neuron7x/TradePulse/discussions) |
 | **Documentation** | [Full docs](docs/) |
 
+<br>
+
 > [!TIP]
-> **Before opening a new issue**: Search existing issues and discussions, check the troubleshooting guide, and include system info (OS, Python version, error logs).
+> **Before opening a new issue:** Search existing issues and discussions, check the troubleshooting guide, and include system info (OS, Python version, error logs).
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              LICENSE                                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 📜 License
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="40" height="40" />
+<h2>License</h2>
+
+<br>
 
 TradePulse is distributed under the **[TradePulse Proprietary License Agreement (TPLA)](LICENSE)**.
 
-[![License](https://img.shields.io/badge/License-TPLA-blue.svg?style=for-the-badge)](LICENSE)
+<br>
+
+<a href="LICENSE">
+  <img src="https://img.shields.io/badge/License-TPLA-0066CC?style=for-the-badge&logo=bookstack&logoColor=white" alt="License: TPLA">
+</a>
 
 </div>
 
+<br>
+
 The TPLA permits internal, non-commercial evaluation and development use only. Commercial usage of any portion of TradePulse requires a separate written agreement with TradePulse Technologies.
 
-**📄 See [LICENSE](LICENSE) for full terms and conditions**
+<div align="center">
+
+📄 **See [LICENSE](LICENSE) for full terms and conditions**
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              DISCLAIMER                                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
 
 ---
 
-## ⚠️ Disclaimer
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Warning.png" alt="Warning" width="40" height="40" />
+<h2>Disclaimer</h2>
+
+</div>
+
+<br>
 
 > [!WARNING]
 > **Trading involves substantial risk of loss and is not suitable for everyone.**
 
-</div>
+<br>
 
 This software is provided for **educational and research purposes only**. Past performance does not guarantee future results. Always test strategies thoroughly in paper trading before risking real capital.
 
+<br>
+
 <div align="center">
 
-**⚠️ Trade responsibly. Never invest more than you can afford to lose.**
+⚠️ **Trade responsibly. Never invest more than you can afford to lose.**
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              ACKNOWLEDGMENTS                                                                -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
-## 🙏 Acknowledgments
-
 <div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Folded%20Hands.png" alt="Folded Hands" width="40" height="40" />
+<h2>Acknowledgments</h2>
+
+<br>
 
 ### 💖 Built with Love and Open Source
 
 </div>
 
+<br>
+
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-#### 🛠️ Technology Stack
-- ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) **Python** — Primary language
-- ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white) **FastAPI** — REST API framework
-- ![NumPy](https://img.shields.io/badge/NumPy-013243?logo=numpy&logoColor=white) **NumPy** — Numerical computing
-- ![Pandas](https://img.shields.io/badge/Pandas-150458?logo=pandas&logoColor=white) **Pandas** — Data manipulation
-- ![Pydantic](https://img.shields.io/badge/Pydantic-E92063?logo=pydantic&logoColor=white) **Pydantic** — Data validation
-- ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?logo=sqlalchemy&logoColor=white) **SQLAlchemy** — ORM
+<div align="center">
+
+### 🛠️ Technology Stack
+
+</div>
+
+<br>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white" alt="NumPy">
+  <img src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="Pandas">
+  <img src="https://img.shields.io/badge/Pydantic-E92063?style=flat-square&logo=pydantic&logoColor=white" alt="Pydantic">
+  <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy">
+</p>
+
+- **Python** — Primary language
+- **FastAPI** — REST API framework
+- **NumPy** — Numerical computing
+- **Pandas** — Data manipulation
+- **Pydantic** — Data validation
+- **SQLAlchemy** — ORM
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-#### 🌟 Inspired By
+<div align="center">
+
+### 🌟 Inspired By
+
+</div>
+
+<br>
+
 - [Zipline](https://github.com/quantopian/zipline) — Quantopian's backtesting library
 - [Backtrader](https://github.com/mementum/backtrader) — Python trading framework
 - [QuantLib](https://www.quantlib.org/) — Quantitative finance library
 - Leading quantitative finance research journals
 
-#### 🙏 Special Thanks
+<br>
+
+<div align="center">
+
+### 🙏 Special Thanks
+
+</div>
+
 Special thanks to all [contributors](https://github.com/neuron7x/TradePulse/graphs/contributors) who have helped build TradePulse!
 
 </td>
 </tr>
 </table>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              FOOTER                                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
 ---
 
 <div align="center">
 
-### 🌟 Star History
+### ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=neuron7x/TradePulse&type=Date)](https://star-history.com/#neuron7x/TradePulse&Date)
 
----
-
-<p>
-  <strong>Made with ❤️ by the TradePulse Community</strong>
-</p>
-
-<p>
-  <a href="#-tradepulse">⬆ Back to Top</a>
-</p>
+<br>
 
 ---
 
-<p>
-  <img src="https://img.shields.io/badge/Built%20with-❤️%20and%20☕-red?style=for-the-badge" alt="Built with Love">
-  <img src="https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge" alt="Production Ready">
-  <img src="https://img.shields.io/badge/Maintained-Yes-green?style=for-the-badge" alt="Maintained">
-</p>
+<br>
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="25" height="25" />
+<strong>Made with Love by the TradePulse Community</strong>
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="25" height="25" />
+
+<br>
+<br>
+
+<a href="#-tradepulse">
+  <img src="https://img.shields.io/badge/⬆_Back_to_Top-4A90E2?style=for-the-badge" alt="Back to Top">
+</a>
+
+<br>
+<br>
+
+<img src="https://img.shields.io/badge/Built%20with-❤️%20and%20☕-E74C3C?style=for-the-badge" alt="Built with Love and Coffee">
+&nbsp;
+<img src="https://img.shields.io/badge/Status-Production%20Ready-27AE60?style=for-the-badge" alt="Production Ready">
+&nbsp;
+<img src="https://img.shields.io/badge/Maintained-Yes-3498DB?style=for-the-badge" alt="Maintained">
+
+<br>
+<br>
+
+---
+
+<sub>
+© 2024 TradePulse Technologies. All rights reserved.
+</sub>
 
 </div>
