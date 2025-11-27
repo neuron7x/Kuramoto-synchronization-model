@@ -40,7 +40,7 @@ class NaKControllerV4_2:
         self.cfg = cfg or NaKConfig()
         self.strategy_id = strategy_id
         self.E = self.cfg.E_init
-        self.I = 0.0
+        self.I_integral = 0.0
         self.scale = 1.0
         self.lambda_ = 0.05
         self._p_hist: deque[float] = deque(maxlen=50)
@@ -60,7 +60,7 @@ class NaKControllerV4_2:
     def snapshot(self) -> Dict[str, Any]:
         return {
             "E": self.E,
-            "I": self.I,
+            "I": self.I_integral,
             "lambda_": self.lambda_,
             "scale": self.scale,
             "r_mode": self.r_mode,
@@ -105,9 +105,9 @@ class NaKControllerV4_2:
 
         err = p_exp - p
         pi_p = kp_eff * self._act(err / max(1e-9, self.scale))
-        pi_i = self.cfg.K_i * self._act(self.I / max(1e-9, self.cfg.I_scale))
+        pi_i = self.cfg.K_i * self._act(self.I_integral / max(1e-9, self.cfg.I_scale))
         u = pi_p + pi_i
-        self.I += err
+        self.I_integral += err
 
         rec_gain = self.cfg.rec_gain_base * (1.0 + hpa_tone - 0.3 * (drawdown < -0.02))
         self.E += rec_gain
@@ -147,7 +147,7 @@ class NaKControllerV4_2:
         log["danger"] = danger
         log["r_mode"] = self.r_mode
 
-        ei_current = self.E / max(1e-6, self.I + 1.0)
+        ei_current = self.E / max(1e-6, self.I_integral + 1.0)
         self.scale, self.lambda_ = self.desens.update(p, ei_current, ht5=hpa_tone)
         log["lambda_"] = log["lambda"] = self.lambda_
         log["scale"] = self.scale
@@ -167,7 +167,7 @@ class NaKControllerV4_2:
         ctrl = cls(strategy_id, cfg)
         state = data.get("state", {})
         ctrl.E = state.get("E", ctrl.E)
-        ctrl.I = state.get("I", ctrl.I)
+        ctrl.I_integral = state.get("I", ctrl.I_integral)
         ctrl.lambda_ = state.get("lambda_", ctrl.lambda_)
         ctrl._reopen_phase = state.get("reopen_phase", ctrl._reopen_phase)
         return ctrl

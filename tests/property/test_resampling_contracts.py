@@ -86,7 +86,7 @@ def _l1_frames(
     return frame
 
 
-_FREQS = ["1S", "5S", "15S", "30S", "1T", "5T"]
+_FREQS = ["1s", "5s", "15s", "30s", "1min", "5min"]
 
 
 @seed(property_seed("test_resample_ticks_to_l1_matches_reference"))

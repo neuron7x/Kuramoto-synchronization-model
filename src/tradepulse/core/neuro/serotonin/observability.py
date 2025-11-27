@@ -158,42 +158,60 @@ SEROTONIN_ALERTS = {
         description="Serotonin level elevated above warning threshold",
         severity=AlertSeverity.WARNING,
         condition="level > 1.2 for 5 consecutive minutes",
-        remediation="Review recent market events and trading activity. Consider manual intervention if level approaches 1.4.",
+        remediation=(
+            "Review recent market events and trading activity. "
+            "Consider manual intervention if level approaches 1.4."
+        ),
     ),
     "extended_hold_state": Alert(
         name="serotonin_extended_hold_state",
         description="Controller in hold state for extended period",
         severity=AlertSeverity.WARNING,
         condition="hold_state = True for > 30 minutes",
-        remediation="Investigate market conditions. Verify stress inputs are accurate. May indicate market crisis or data issue.",
+        remediation=(
+            "Investigate market conditions. Verify stress inputs are accurate. "
+            "May indicate market crisis or data issue."
+        ),
     ),
     "state_validation_failure": Alert(
         name="serotonin_state_validation_failure",
         description="State validation check failed",
         severity=AlertSeverity.CRITICAL,
         condition="validate_state() returns False",
-        remediation="IMMEDIATE: Stop trading. Investigate state corruption. Review recent inputs and config changes. Restart controller with reset().",
+        remediation=(
+            "IMMEDIATE: Stop trading. Investigate state corruption. "
+            "Review recent inputs and config changes. Restart controller with reset()."
+        ),
     ),
     "slo_violation_latency": Alert(
         name="serotonin_slo_violation_latency",
         description="Step latency SLO violation",
         severity=AlertSeverity.WARNING,
         condition="P95 latency > 500μs over 30-day window",
-        remediation="Profile step() execution. Check for performance regressions. Consider optimization or infrastructure upgrade.",
+        remediation=(
+            "Profile step() execution. Check for performance regressions. "
+            "Consider optimization or infrastructure upgrade."
+        ),
     ),
     "error_budget_critical": Alert(
         name="serotonin_error_budget_critical",
         description="Error budget critically depleted",
         severity=AlertSeverity.CRITICAL,
         condition="Error budget consumption > 80%",
-        remediation="FREEZE: Stop non-critical changes. Focus on stability. Conduct incident review. Defer feature work until budget recovers.",
+        remediation=(
+            "FREEZE: Stop non-critical changes. Focus on stability. "
+            "Conduct incident review. Defer feature work until budget recovers."
+        ),
     ),
     "desensitization_excessive": Alert(
         name="serotonin_desensitization_excessive",
         description="Desensitization level near maximum",
         severity=AlertSeverity.WARNING,
         condition="desensitization > 0.7 (approaching max_desensitization)",
-        remediation="Extended high-stress period detected. Review market conditions and risk exposure. Consider manual stress assessment.",
+        remediation=(
+            "Extended high-stress period detected. Review market conditions "
+            "and risk exposure. Consider manual stress assessment."
+        ),
     ),
 }
 

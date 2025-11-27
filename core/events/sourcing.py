@@ -1041,7 +1041,10 @@ class EventReplay:
         timeline: list[str] = []
         for envelope in envelopes:
             payload_repr = json.dumps(envelope.payload.to_dict(), default=str)
-            timeline_entry = f"{envelope.stored_at.isoformat()} | v{envelope.version} | {envelope.event_type} | {payload_repr}"
+            timeline_entry = (
+                f"{envelope.stored_at.isoformat()} | v{envelope.version} | "
+                f"{envelope.event_type} | {payload_repr}"
+            )
             timeline.append(timeline_entry)
         return timeline
 

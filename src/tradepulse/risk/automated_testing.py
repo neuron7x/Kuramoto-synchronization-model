@@ -320,10 +320,10 @@ class AutomatedRiskTester:
 
             # Create scenario
             scenario = RiskScenario(
-                name=f"monte_carlo_{i+1}",
+                name=f"monte_carlo_{i + 1}",
                 scenario_type=ScenarioType.NORMAL_MARKET,
                 returns=returns,
-                description=f"Monte Carlo simulation iteration {i+1}",
+                description=f"Monte Carlo simulation iteration {i + 1}",
                 metadata={
                     "simulation_id": i + 1,
                     "mu": config.mu,
@@ -603,7 +603,7 @@ def generate_flash_crash_scenarios(
             name="single_flash_crash",
             scenario_type=ScenarioType.FLASH_CRASH,
             returns=returns,
-            description=f"Single flash crash of {crash_magnitude*100:.1f}% with partial recovery",
+            description=f"Single flash crash of {crash_magnitude * 100:.1f}% with partial recovery",
             expected_var_range=(0.02, 0.05),
             expected_es_range=(0.04, 0.10),
         )
