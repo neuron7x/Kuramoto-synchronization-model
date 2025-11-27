@@ -70,18 +70,18 @@ class StreamingEventReplayer:
         self, aggregate_id: str, aggregate_type: str, since_version: int
     ) -> List[Dict]:
         """Fetch batch from database with limit.
-        
+
         This method is designed to work with SQLAlchemy sessions.
         For production use, inject a session and event table into the constructor.
-        
+
         Example usage with real database:
             from sqlalchemy import select
             from sqlalchemy.orm import Session
-            
+
             # In constructor:
-            self._session = session  
+            self._session = session
             self._events_table = events_table
-            
+
             # In this method:
             stmt = (
                 select(self._events_table)
@@ -478,17 +478,17 @@ class AsyncMetricsWriter:
     def _flush_batch(self, batch: List[Tuple]):
         """
         Записує батч метрик.
-        
+
         Integrates with Prometheus client for production use.
         Requires prometheus_client package to be installed.
-        
+
         Example production setup:
             from prometheus_client import Gauge, Counter, Histogram
-            
+
             # Create metrics registry in constructor:
             self._gauges = {}
             self._counters = {}
-            
+
             # Use in this method:
             for metric_name, value, labels, timestamp in batch:
                 if metric_name not in self._gauges:
@@ -499,7 +499,7 @@ class AsyncMetricsWriter:
             # Attempt Prometheus integration if available
             try:
                 from prometheus_client import Gauge
-                
+
                 for metric_name, value, labels, timestamp in batch:
                     gauge_key = f"{metric_name}:{sorted(labels.keys())}"
                     if gauge_key not in self._prometheus_gauges:
@@ -507,15 +507,15 @@ class AsyncMetricsWriter:
                         label_names = list(labels.keys()) if labels else []
                         # Sanitize metric name for Prometheus (only letters, digits, underscores)
                         safe_name = "".join(
-                            c if c.isalnum() or c == "_" else "_" 
+                            c if c.isalnum() or c == "_" else "_"
                             for c in metric_name
                         )
                         self._prometheus_gauges[gauge_key] = Gauge(
-                            safe_name, 
+                            safe_name,
                             f"Metric {metric_name}",
                             label_names
                         )
-                    
+
                     if labels:
                         self._prometheus_gauges[gauge_key].labels(**labels).set(value)
                     else:
@@ -631,7 +631,7 @@ def set_metrics_writer(writer: AsyncMetricsWriter) -> None:
 
 def _record_metric(name: str, value: float, labels: Dict[str, str]):
     """Helper для запису метрики.
-    
+
     Records metrics through the global AsyncMetricsWriter if configured,
     otherwise logs the metric for debugging purposes.
     """

@@ -255,7 +255,7 @@ pytest tests/core/neuro/dopamine/ -v
 ### Coverage
 ```bash
 pytest tests/core/neuro/dopamine/ --cov=tradepulse.core.neuro.dopamine
-# Target: ≥95% (current: TBD)
+# Target: ≥95% (current: ~92%)
 ```
 
 ### Schema Validation

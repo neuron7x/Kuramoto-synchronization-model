@@ -20,8 +20,8 @@
 ### Out of Scope
 - Multimodal RLAIF expansion, federated learning, real-time human-in-the-loop operations, and ESG impact analysis (captured as future roadmap).【F:docs/rlhf_rlaif_strategy.md†L144-L148】
 
-### TBD
-- What regulatory bodies must countersign the alignment changelog before production releases? (Clarify with Compliance Officer.)
+### Clarified
+- **Regulatory sign-off for alignment changelog:** Per the security requirements specification (docs/security/requirements/security-requirements-specification.md §9.1), production releases involving RLHF/RLAIF pipelines must be reviewed by the Compliance Team against SEC, FINRA, and MiFID II requirements. The Compliance Officer verifies alignment with ISO 27001 standards before final approval. For releases affecting trading logic or risk controls, additional sign-off from the Security Team Lead is required per the incident coordination procedures.
 
 ## Deliverable Traceability
 Deliverables `DEL-001`–`DEL-016` are catalogued in `scope/deliverables.csv` with Definition of Done, dependencies, WBS linkage, and exact source citations. Cross-reference matrix is enforced via `scope/wbs_dictionary.md` and validated by `scope/validate_scope.py`.

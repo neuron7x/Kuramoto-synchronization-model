@@ -34,12 +34,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationResult:
     """Result of a validation check."""
-    
+
     name: str
     passed: bool
     message: str
     details: dict[str, Any] | None = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
@@ -51,12 +51,12 @@ class ValidationResult:
 
 class LiveTradingValidator:
     """Validator for live trading configuration and readiness."""
-    
+
     def __init__(self, config_path: Path | None = None):
         self.config_path = config_path
         self.config: dict[str, Any] = {}
         self.results: list[ValidationResult] = []
-        
+
     def load_config(self) -> bool:
         """Load and parse configuration file."""
         if not self.config_path:
@@ -66,7 +66,7 @@ class LiveTradingValidator:
                 message="No configuration file specified",
             ))
             return False
-            
+
         if not self.config_path.exists():
             self.results.append(ValidationResult(
                 name="config_load",
@@ -74,19 +74,19 @@ class LiveTradingValidator:
                 message=f"Configuration file not found: {self.config_path}",
             ))
             return False
-            
+
         try:
             if self.config_path.suffix == ".toml":
                 try:
                     import tomllib
                 except ModuleNotFoundError:
                     import tomli as tomllib
-                    
+
                 with open(self.config_path, "rb") as f:
                     self.config = tomllib.load(f)
             elif self.config_path.suffix in (".yaml", ".yml"):
                 import yaml
-                
+
                 with open(self.config_path, "r") as f:
                     self.config = yaml.safe_load(f)
             elif self.config_path.suffix == ".json":
@@ -99,7 +99,7 @@ class LiveTradingValidator:
                     message=f"Unsupported config format: {self.config_path.suffix}",
                 ))
                 return False
-                
+
             self.results.append(ValidationResult(
                 name="config_load",
                 passed=True,
@@ -107,7 +107,7 @@ class LiveTradingValidator:
                 details={"sections": list(self.config.keys())},
             ))
             return True
-            
+
         except Exception as e:
             self.results.append(ValidationResult(
                 name="config_load",
@@ -115,11 +115,11 @@ class LiveTradingValidator:
                 message=f"Failed to load configuration: {e}",
             ))
             return False
-    
+
     def validate_venues(self) -> bool:
         """Validate venue configurations."""
         venues = self.config.get("venues", {})
-        
+
         if not venues:
             self.results.append(ValidationResult(
                 name="venues",
@@ -127,13 +127,13 @@ class LiveTradingValidator:
                 message="No venues configured",
             ))
             return False
-            
+
         all_valid = True
         for venue_name, venue_config in venues.items():
             # Check required fields
             required_fields = ["connector"]
             missing = [f for f in required_fields if f not in venue_config]
-            
+
             if missing:
                 self.results.append(ValidationResult(
                     name=f"venue_{venue_name}",
@@ -148,15 +148,15 @@ class LiveTradingValidator:
                     message=f"Venue '{venue_name}' configuration valid",
                     details={"connector": venue_config.get("connector")},
                 ))
-                
+
         return all_valid
-    
+
     def validate_risk_limits(self) -> bool:
         """Validate risk management configuration."""
         risk_config = self.config.get("risk", {})
-        
+
         validations = []
-        
+
         # Check position limits
         max_position = risk_config.get("max_position_size")
         if max_position is not None:
@@ -166,7 +166,7 @@ class LiveTradingValidator:
                 validations.append(("max_position_size", True, f"Set to {max_position}"))
         else:
             validations.append(("max_position_size", False, "Not configured"))
-            
+
         # Check daily loss limit
         daily_loss = risk_config.get("max_daily_loss")
         if daily_loss is not None:
@@ -176,33 +176,33 @@ class LiveTradingValidator:
                 validations.append(("max_daily_loss", True, f"Set to {daily_loss}"))
         else:
             validations.append(("max_daily_loss", False, "Not configured (recommended)"))
-            
+
         # Check kill switch
         kill_switch = risk_config.get("kill_switch_enabled", True)
         validations.append(("kill_switch", kill_switch, "Enabled" if kill_switch else "Disabled (WARNING)"))
-        
+
         all_valid = all(v[1] for v in validations)
-        
+
         self.results.append(ValidationResult(
             name="risk_limits",
             passed=all_valid,
             message="Risk limits validation",
             details={v[0]: {"valid": v[1], "message": v[2]} for v in validations},
         ))
-        
+
         return all_valid
-    
+
     def validate_credentials(self) -> bool:
         """Validate credential configuration (not actual credentials)."""
         venues = self.config.get("venues", {})
-        
+
         all_valid = True
         for venue_name, venue_config in venues.items():
             creds = venue_config.get("credentials", {})
-            
+
             env_prefix = creds.get("env_prefix")
             secret_backend = creds.get("secret_backend")
-            
+
             if not env_prefix and not secret_backend:
                 self.results.append(ValidationResult(
                     name=f"credentials_{venue_name}",
@@ -217,18 +217,18 @@ class LiveTradingValidator:
                     passed=True,
                     message=f"Credentials configured via {source}",
                 ))
-                
+
         return all_valid
-    
+
     def validate_state_directory(self) -> bool:
         """Validate state directory configuration."""
         state_dir = self.config.get("state", {}).get("directory")
-        
+
         if not state_dir:
             state_dir = "./state"  # Default
-            
+
         path = Path(state_dir)
-        
+
         if path.exists():
             if path.is_dir():
                 self.results.append(ValidationResult(
@@ -252,30 +252,30 @@ class LiveTradingValidator:
                 message=f"State directory will be created: {path}",
             ))
             return True
-    
+
     def run_all_validations(self) -> bool:
         """Run all validation checks."""
         if not self.load_config():
             return False
-            
+
         checks = [
             self.validate_venues(),
             self.validate_risk_limits(),
             self.validate_credentials(),
             self.validate_state_directory(),
         ]
-        
+
         return all(checks)
-    
+
     def print_report(self) -> None:
         """Print a formatted validation report."""
         print("\n" + "=" * 60)
         print("  TradePulse Live Trading Validation Report")
         print("=" * 60 + "\n")
-        
+
         passed_count = sum(1 for r in self.results if r.passed)
         failed_count = len(self.results) - passed_count
-        
+
         for result in self.results:
             status = "✅ PASS" if result.passed else "❌ FAIL"
             print(f"  {status}  {result.name}")
@@ -284,11 +284,11 @@ class LiveTradingValidator:
                 for key, value in result.details.items():
                     print(f"           • {key}: {value}")
             print()
-        
+
         print("-" * 60)
         print(f"  Summary: {passed_count} passed, {failed_count} failed")
         print("-" * 60)
-        
+
         if failed_count > 0:
             print("\n  ⚠️  Some validations failed. Please review before going live.\n")
         else:
@@ -298,7 +298,7 @@ class LiveTradingValidator:
 def preflight_checks() -> list[ValidationResult]:
     """Run pre-flight checks for system readiness."""
     results = []
-    
+
     # Check Python version
     import sys
     py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -314,14 +314,14 @@ def preflight_checks() -> list[ValidationResult]:
             passed=False,
             message=f"Python {py_version} not recommended (3.11+ required)",
         ))
-    
+
     # Check core dependencies
     core_deps = [
         ("numpy", "numpy"),
         ("pandas", "pandas"),
         ("pydantic", "pydantic"),
     ]
-    
+
     for name, import_name in core_deps:
         try:
             __import__(import_name)
@@ -336,13 +336,13 @@ def preflight_checks() -> list[ValidationResult]:
                 passed=False,
                 message=f"{name} is not installed",
             ))
-    
+
     # Check optional dependencies
     optional_deps = [
         ("redis", "redis", "For Redis-backed feature store"),
         ("prometheus_client", "prometheus-client", "For metrics export"),
     ]
-    
+
     for name, import_name, purpose in optional_deps:
         try:
             __import__(name)
@@ -357,7 +357,7 @@ def preflight_checks() -> list[ValidationResult]:
                 passed=True,  # Optional, so still passes
                 message=f"{name} not installed ({purpose}) - optional",
             ))
-    
+
     return results
 
 
@@ -370,10 +370,10 @@ def main():
 Examples:
     # Validate with default config
     python examples/live_trading_validation_demo.py
-    
+
     # Validate specific config
     python examples/live_trading_validation_demo.py --config configs/live/production.toml
-    
+
     # Run pre-flight checks only
     python examples/live_trading_validation_demo.py --preflight-only
         """,
@@ -394,17 +394,17 @@ Examples:
         action="store_true",
         help="Output results as JSON",
     )
-    
+
     args = parser.parse_args()
-    
+
     print("\n🚀 TradePulse Live Trading Validation\n")
-    
+
     # Run pre-flight checks
     print("Running pre-flight system checks...")
     preflight_results = preflight_checks()
-    
+
     all_passed = all(r.passed for r in preflight_results)
-    
+
     if args.preflight_only:
         if args.json:
             print(json.dumps([r.to_dict() for r in preflight_results], indent=2))
@@ -412,25 +412,25 @@ Examples:
             for result in preflight_results:
                 status = "✅" if result.passed else "❌"
                 print(f"  {status} {result.name}: {result.message}")
-            
+
             print(f"\nPre-flight: {'PASSED' if all_passed else 'FAILED'}")
-        
+
         return 0 if all_passed else 1
-    
+
     # Run configuration validation
     print("\nValidating configuration...")
-    
+
     config_path = Path(args.config)
     validator = LiveTradingValidator(config_path)
     config_valid = validator.run_all_validations()
-    
+
     if args.json:
         all_results = preflight_results + validator.results
         print(json.dumps([r.to_dict() for r in all_results], indent=2))
     else:
         validator.results = preflight_results + validator.results
         validator.print_report()
-    
+
     return 0 if (all_passed and config_valid) else 1
 
 
