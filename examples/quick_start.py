@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from core.data.validation import validate_ohlcv
 from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
 
 
@@ -94,6 +95,16 @@ def load_csv_data(csv_path: str, price_col: str = "close") -> pd.DataFrame:
     else:
         # Generate synthetic volume if not available
         result["volume"] = np.random.lognormal(10, 1, len(df))
+    
+    # Validate the loaded data
+    validation = validate_ohlcv(result, price_col="close")
+    if not validation.valid:
+        raise ValueError(f"Data validation failed: {'; '.join(validation.issues)}")
+    
+    if validation.warnings:
+        import sys
+        for warning in validation.warnings:
+            print(f"⚠️  Data warning: {warning}", file=sys.stderr)
     
     return result
 

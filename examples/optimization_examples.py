@@ -393,6 +393,7 @@ class AsyncMetricsWriter:
         self._flush_interval = flush_interval
         self._worker_thread: Optional[Thread] = None
         self._running = False
+        self._prometheus_gauges: Dict[str, Any] = {}  # Initialize Prometheus gauges dict
 
         self._stats = {
             "total_recorded": 0,
@@ -499,16 +500,16 @@ class AsyncMetricsWriter:
             try:
                 from prometheus_client import Gauge
                 
-                # Get or create metrics registry
-                if not hasattr(self, "_prometheus_gauges"):
-                    self._prometheus_gauges: Dict[str, Any] = {}
-                
                 for metric_name, value, labels, timestamp in batch:
                     gauge_key = f"{metric_name}:{sorted(labels.keys())}"
                     if gauge_key not in self._prometheus_gauges:
                         # Create gauge with label names
                         label_names = list(labels.keys()) if labels else []
-                        safe_name = metric_name.replace(".", "_").replace("-", "_")
+                        # Sanitize metric name for Prometheus (only letters, digits, underscores)
+                        safe_name = "".join(
+                            c if c.isalnum() or c == "_" else "_" 
+                            for c in metric_name
+                        )
                         self._prometheus_gauges[gauge_key] = Gauge(
                             safe_name, 
                             f"Metric {metric_name}",
