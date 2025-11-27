@@ -183,6 +183,28 @@ def test_exit_short_position_requests_buy_order(tmp_path: Path, monkeypatch) -> 
     assert proposal.order.quantity > 0
 
 
+def test_exit_order_uses_position_size(tmp_path: Path, monkeypatch) -> None:
+    system = _build_system(tmp_path)
+    market = _load_market_frame(system)
+    config = SDKConfig(
+        default_venue="binance",
+        signal_strategy=_strategy,
+        position_sizer=_position_sizer,
+    )
+    sdk = TradePulseSDK(system, config)
+
+    state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
+    sdk.get_signal(state)
+
+    monkeypatch.setattr(system.risk_manager, "current_position", lambda symbol: 2.5)
+
+    exit_signal = Signal(symbol="BTCUSDT", action=SignalAction.EXIT, confidence=1.0)
+    proposal = sdk.propose_trade(exit_signal)
+
+    assert proposal.order.quantity == pytest.approx(2.5)
+    assert proposal.order.side is OrderSide.SELL
+
+
 def test_exit_flat_position_raises(tmp_path: Path, monkeypatch) -> None:
     system = _build_system(tmp_path)
     market = _load_market_frame(system)
