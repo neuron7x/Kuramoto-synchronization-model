@@ -257,7 +257,10 @@ def compute_psi(
 
     ref = _as_array(baseline, name="baseline")
     cur = _as_array(current, name="current")
+    ref = ref[np.isfinite(ref)]
+    cur = cur[np.isfinite(cur)]
     if ref.size == 0 or cur.size == 0:
+        logger.warning("PSI inputs contain no finite values; returning NaN")
         return float("nan")
     if isinstance(bins, Sequence) and not isinstance(bins, (str, bytes)):
         bin_edges = np.asarray(bins, dtype=float)
