@@ -82,11 +82,6 @@ class TradePulseSDK:
         if signal.action in {SignalAction.HOLD}:
             raise ValueError("Cannot propose trade for HOLD signals")
 
-        raw_quantity = float(self._config.position_sizer(signal))
-        quantity = abs(raw_quantity)
-        if quantity == 0:
-            raise ValueError("Position sizer must return a non-zero quantity")
-
         try:
             current_position = float(
                 self._system.risk_manager.current_position(signal.symbol)
@@ -101,10 +96,19 @@ class TradePulseSDK:
                 raise ValueError(
                     f"Cannot exit flat position for symbol {signal.symbol!r}"
                 )
+            quantity = abs(current_position)
             side = OrderSide.SELL if current_position > 0 else OrderSide.BUY
         elif signal.action is SignalAction.SELL:
+            raw_quantity = float(self._config.position_sizer(signal))
+            quantity = abs(raw_quantity)
+            if quantity == 0:
+                raise ValueError("Position sizer must return a non-zero quantity")
             side = OrderSide.SELL
         else:
+            raw_quantity = float(self._config.position_sizer(signal))
+            quantity = abs(raw_quantity)
+            if quantity == 0:
+                raise ValueError("Position sizer must return a non-zero quantity")
             side = OrderSide.BUY
 
         price = context.last_price
