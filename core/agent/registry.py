@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable, Iterable, Mapping, MutableMapping
 
 from runtime.misanthropic_agent import MisanthropicAgent
+from tradepulse.core.neuro.neuro_physio_guard import NeuroPhysioGuard
 
 AgentFactory = Callable[..., object]
 
@@ -56,3 +57,4 @@ def global_agent_registry() -> AgentRegistry:
 
 _GLOBAL_REGISTRY = AgentRegistry()
 _GLOBAL_REGISTRY.register("misanthropic", MisanthropicAgent)
+_GLOBAL_REGISTRY.register("neuro_physio_guard", NeuroPhysioGuard)

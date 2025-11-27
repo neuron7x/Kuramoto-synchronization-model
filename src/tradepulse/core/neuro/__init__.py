@@ -10,11 +10,21 @@ from .neuro_orchestrator import (
     TradingScenario,
     create_orchestration_from_scenario,
 )
+from .neuro_physio_guard import (
+    NeuroPhysioGuard,
+    NeurophysiologyDomain,
+    PhysioOutput,
+    PhysioScenario,
+    PipelineStep,
+    SafetyAudit,
+    create_neurophysiology_pipeline,
+)
 
 __all__ = [
     "dopamine",
     "desensitization",
     "nak",
+    # Neuro-Orchestrator
     "NeuroOrchestrator",
     "OrchestrationOutput",
     "TradingScenario",
@@ -22,4 +32,12 @@ __all__ = [
     "RiskContour",
     "LearningLoop",
     "create_orchestration_from_scenario",
+    # NeuroPhysioGuard
+    "NeuroPhysioGuard",
+    "NeurophysiologyDomain",
+    "PhysioScenario",
+    "PipelineStep",
+    "SafetyAudit",
+    "PhysioOutput",
+    "create_neurophysiology_pipeline",
 ]
