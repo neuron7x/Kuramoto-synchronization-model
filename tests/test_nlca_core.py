@@ -124,14 +124,13 @@ def test_market_recorder_flush_persists_dataset(tmp_path):
 
 
 def test_fsm_respects_refractory(monkeypatch):
-    # Timestamps for:
-    # 1. FSM init (0.0)
-    # 2. First transition check (2.0)
-    # 3. First transition logging (2.0)
-    # 4. Second transition check (2.5) - should fail due to refractory (2.5 - 2.0 = 0.5 < 1.0)
-    # 5. Second transition logging would not happen since it fails
-    # 6. Forced transition check (3.0)
-    # 7. Forced transition logging (3.0)
+    # Timestamps for time.time() calls (6 total):
+    # 1. FSM init: sets last_transition_time (0.0)
+    # 2. First transition: check passes (2.0 - 0.0 = 2.0 >= 1.0)
+    # 3. First transition: logging call (2.0)
+    # 4. Second transition: check fails (2.5 - 2.0 = 0.5 < 1.0 refractory)
+    # 5. Forced transition: check passes (force=True)
+    # 6. Forced transition: logging call (3.0)
     timestamps = [0.0, 2.0, 2.0, 2.5, 3.0, 3.0]
 
     def fake_time():
