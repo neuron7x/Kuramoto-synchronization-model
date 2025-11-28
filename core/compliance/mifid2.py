@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Mapping
+from typing import Any, Mapping
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _slots_to_dict(obj: Any) -> dict[str, Any]:
+    """Convert a slotted dataclass to a dictionary."""
+    return {f.name: getattr(obj, f.name) for f in fields(obj)}
 
 
 @dataclass(slots=True)
@@ -216,9 +221,11 @@ class MiFID2Reporter:
             "reports": [report.to_dict() for report in snapshot.reports],
             "audit_trail": [entry.to_dict() for entry in snapshot.audit_trail],
             "execution_quality": [
-                quality.__dict__ for quality in snapshot.execution_quality
+                _slots_to_dict(quality) for quality in snapshot.execution_quality
             ],
-            "market_abuse_signals": [signal.__dict__ for signal in self._abuse_signals],
+            "market_abuse_signals": [
+                _slots_to_dict(signal) for signal in self._abuse_signals
+            ],
         }
         target = (
             self._storage_path
@@ -258,9 +265,11 @@ class MiFID2Reporter:
         return {
             "health": self.health_summary(),
             "best_execution_breaches": [
-                quality.__dict__ for quality in self.best_execution_breaches()
+                _slots_to_dict(quality) for quality in self.best_execution_breaches()
             ],
-            "market_abuse_signals": [signal.__dict__ for signal in self._abuse_signals],
+            "market_abuse_signals": [
+                _slots_to_dict(signal) for signal in self._abuse_signals
+            ],
         }
 
 
