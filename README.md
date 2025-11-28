@@ -450,7 +450,7 @@ TradePulse is a **production-grade algorithmic trading platform** that combines 
 |:--------|:------------|
 | [🎯 Why TradePulse?](#-why-tradepulse) | Core value proposition and benefits |
 | [📊 Platform Comparison](#-how-does-tradepulse-compare) | Feature comparison with alternatives |
-| [⚙️ System Mechanisms & Algorithms](#-system-mechanisms--algorithms-in-action) | **NEW!** Live crypto chart analysis examples |
+| [⚙️ System Mechanisms & Algorithms](#-system-mechanisms--algorithms-in-action) | **NEW!** Live cryptocurrency chart analysis examples |
 | [✨ Feature Highlights](#-feature-highlights) | Complete feature overview |
 | [📈 Project Status](#-project-status) | Current development stage |
 | [🚀 Quick Start](#-quick-start) | Installation and setup guide |
@@ -765,7 +765,8 @@ from core.indicators.kuramoto import (
     multi_asset_kuramoto
 )
 
-# Simulate BTC 5-minute candles (realistic price action)
+# Simulate BTC 5-minute candles (demo data for illustration)
+# In production, replace with real market data from exchange APIs
 np.random.seed(42)
 btc_prices = 43000 + np.cumsum(
     np.random.normal(0, 50, 288)  # 24h of 5m bars
@@ -964,11 +965,7 @@ stateDiagram-v2
 **📊 Risk Metrics Calculation**
 
 ```python
-from modules.adaptive_risk_manager import (
-    AdaptiveRiskManager,
-    RiskLevel,
-    MarketCondition
-)
+from modules.adaptive_risk_manager import AdaptiveRiskManager
 import numpy as np
 
 # Initialize with $100K capital
@@ -1214,7 +1211,7 @@ if transitions:
 <div align="center">
 
 > [!TIP]
-> **These examples demonstrate real system behavior.** Run them locally with `python examples/quick_start.py` to see live results on your own data!
+> **These examples use TradePulse's actual algorithms on simulated data.** Run them locally with `python examples/quick_start.py` to test with your own market data!
 
 📖 **More Examples:** [Examples Directory](examples/) • [Quick Start Guide](docs/quickstart.md) • [API Reference](docs/)
 
