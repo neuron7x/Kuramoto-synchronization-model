@@ -13,8 +13,21 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _slots_to_dict(obj: Any) -> dict[str, Any]:
-    """Convert a slotted dataclass to a dictionary."""
-    return {f.name: getattr(obj, f.name) for f in fields(obj)}
+    """Convert a slotted dataclass to a dictionary.
+    
+    Args:
+        obj: A dataclass instance to convert.
+        
+    Returns:
+        Dictionary representation of the dataclass fields.
+        
+    Raises:
+        TypeError: If the object is not a dataclass.
+    """
+    try:
+        return {f.name: getattr(obj, f.name) for f in fields(obj)}
+    except TypeError as exc:
+        raise TypeError(f"Expected a dataclass instance, got {type(obj).__name__}") from exc
 
 
 @dataclass(slots=True)
