@@ -29,7 +29,14 @@ from core.architecture_integrator.component import (
     ComponentStatus,
 )
 from core.architecture_integrator.integrator import ArchitectureIntegrator
-from core.architecture_integrator.lifecycle import LifecycleManager
+from core.architecture_integrator.lifecycle import (
+    GracefulShutdownConfig,
+    HealthAggregation,
+    LifecycleEvent,
+    LifecycleEventData,
+    LifecycleEventHandler,
+    LifecycleManager,
+)
 from core.architecture_integrator.registry import ComponentRegistry
 from core.architecture_integrator.validator import (
     ArchitectureValidator,
@@ -45,6 +52,11 @@ __all__ = [
     "ComponentStatus",
     "ComponentMetadata",
     "ComponentRegistry",
+    "GracefulShutdownConfig",
+    "HealthAggregation",
+    "LifecycleEvent",
+    "LifecycleEventData",
+    "LifecycleEventHandler",
     "LifecycleManager",
     "ArchitectureValidator",
     "ValidationIssue",
