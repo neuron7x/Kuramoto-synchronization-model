@@ -28,7 +28,6 @@ Example:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from typing import Mapping
 
@@ -234,8 +233,7 @@ class NeuroIntegrity:
         # Check coherence
         if state.coherence < self.config.min_coherence:
             report.add_violation(
-                f"Coherence {state.coherence:.3f} below minimum "
-                f"{self.config.min_coherence:.3f}"
+                f"Coherence {state.coherence:.3f} below minimum {self.config.min_coherence:.3f}"
             )
         elif state.coherence < 2 * self.config.min_coherence:
             report.add_warning(f"Low coherence: {state.coherence:.3f}")
@@ -249,7 +247,7 @@ class NeuroIntegrity:
             )
         elif ei < 1.0 / self.config.max_ei_imbalance:
             report.add_violation(
-                f"E/I ratio {ei:.2f} below minimum {1.0/self.config.max_ei_imbalance:.2f} "
+                f"E/I ratio {ei:.2f} below minimum {1.0 / self.config.max_ei_imbalance:.2f} "
                 "(inhibition dominant)"
             )
 
@@ -268,9 +266,7 @@ class NeuroIntegrity:
         # Check homeostatic balance (GABA vs glutamate)
         gaba_glut_ratio = state.gaba / max(state.glutamate, 1e-10)
         if abs(gaba_glut_ratio - 1.0) > self.config.homeostatic_tolerance * 5:
-            report.add_warning(
-                f"GABA/Glutamate imbalance: ratio={gaba_glut_ratio:.2f}"
-            )
+            report.add_warning(f"GABA/Glutamate imbalance: ratio={gaba_glut_ratio:.2f}")
 
         # Populate metrics
         report.metrics.update(state.as_mapping())

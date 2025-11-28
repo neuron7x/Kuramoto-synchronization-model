@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
 import numpy as np
+import pytest
 
 from core.validation.mathematical_logic import (
-    ValidationLevel,
-    ValidationResult,
     DataIntegrityReport,
     MathematicalLogicValidator,
-    validate_positive_definite,
+    ValidationLevel,
+    ValidationResult,
     validate_correlation_matrix,
+    validate_positive_definite,
 )
 
 
@@ -98,9 +98,7 @@ class TestDataIntegrityReport:
         """Test getting failed checks."""
         report = DataIntegrityReport()
         report.add_check(
-            ValidationResult(
-                name="pass", passed=True, level=ValidationLevel.INFO, message="OK"
-            )
+            ValidationResult(name="pass", passed=True, level=ValidationLevel.INFO, message="OK")
         )
         report.add_check(
             ValidationResult(
@@ -115,9 +113,7 @@ class TestDataIntegrityReport:
         """Test summary generation."""
         report = DataIntegrityReport()
         report.add_check(
-            ValidationResult(
-                name="ok", passed=True, level=ValidationLevel.INFO, message="OK"
-            )
+            ValidationResult(name="ok", passed=True, level=ValidationLevel.INFO, message="OK")
         )
         summary = report.summary()
         assert "1" in summary
@@ -163,9 +159,7 @@ class TestMathematicalLogicValidator:
     def test_validate_bounds_within(self, validator):
         """Test bounds check with data within bounds."""
         data = np.array([1.0, 2.0, 3.0])
-        results = validator.validate_bounds(
-            data, name="test", min_value=0.0, max_value=5.0
-        )
+        results = validator.validate_bounds(data, name="test", min_value=0.0, max_value=5.0)
         assert all(r.passed for r in results)
 
     def test_validate_bounds_below_min(self, validator):
@@ -185,25 +179,19 @@ class TestMathematicalLogicValidator:
     def test_validate_monotonic_increasing(self, validator):
         """Test monotonic check for increasing data."""
         data = np.array([1.0, 2.0, 3.0, 4.0])
-        results = validator.validate_monotonic(
-            data, name="test", direction="increasing"
-        )
+        results = validator.validate_monotonic(data, name="test", direction="increasing")
         assert results[0].passed
 
     def test_validate_monotonic_not_increasing(self, validator):
         """Test monotonic check for non-increasing data."""
         data = np.array([1.0, 3.0, 2.0, 4.0])
-        results = validator.validate_monotonic(
-            data, name="test", direction="increasing"
-        )
+        results = validator.validate_monotonic(data, name="test", direction="increasing")
         assert not results[0].passed
 
     def test_validate_monotonic_decreasing(self, validator):
         """Test monotonic check for decreasing data."""
         data = np.array([4.0, 3.0, 2.0, 1.0])
-        results = validator.validate_monotonic(
-            data, name="test", direction="decreasing"
-        )
+        results = validator.validate_monotonic(data, name="test", direction="decreasing")
         assert results[0].passed
 
     def test_validate_monotonic_strict(self, validator):
@@ -225,9 +213,7 @@ class TestMathematicalLogicValidator:
         """Test sum conservation failure."""
         before = np.array([1.0, 2.0, 3.0])  # Sum = 6
         after = np.array([1.0, 1.0, 1.0])  # Sum = 3
-        results = validator.validate_sum_conservation(
-            before, after, name="test", tolerance=0.01
-        )
+        results = validator.validate_sum_conservation(before, after, name="test", tolerance=0.01)
         assert not results[0].passed
 
     def test_validate_probability_distribution(self, validator):
@@ -262,9 +248,7 @@ class TestMathematicalLogicValidator:
     def test_validate_array_comprehensive(self, validator):
         """Test comprehensive array validation."""
         data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
-        report = validator.validate_array(
-            data, name="test", min_value=0.0, max_value=10.0
-        )
+        report = validator.validate_array(data, name="test", min_value=0.0, max_value=10.0)
         assert report.is_valid
         assert "min" in report.metrics
         assert "max" in report.metrics
@@ -282,7 +266,8 @@ class TestMathematicalLogicValidator:
         x = np.array([1.0, 2.0, 3.0])
         y = np.array([2.0, 4.0, 6.0])
         result = validator.validate_relationship(
-            x, y,
+            x,
+            y,
             relationship=lambda a, b: np.allclose(b, 2 * a),
             name="double_check",
             description="y = 2x",
@@ -294,7 +279,8 @@ class TestMathematicalLogicValidator:
         x = np.array([1.0, 2.0, 3.0])
         y = np.array([2.0, 5.0, 6.0])  # Not exactly 2x
         result = validator.validate_relationship(
-            x, y,
+            x,
+            y,
             relationship=lambda a, b: np.allclose(b, 2 * a),
             name="double_check",
             description="y = 2x",
@@ -329,40 +315,48 @@ class TestValidateCorrelationMatrix:
 
     def test_valid_correlation_matrix(self):
         """Test valid correlation matrix."""
-        matrix = np.array([
-            [1.0, 0.5, 0.3],
-            [0.5, 1.0, 0.4],
-            [0.3, 0.4, 1.0],
-        ])
+        matrix = np.array(
+            [
+                [1.0, 0.5, 0.3],
+                [0.5, 1.0, 0.4],
+                [0.3, 0.4, 1.0],
+            ]
+        )
         results = validate_correlation_matrix(matrix, name="test")
         assert all(r.passed for r in results)
 
     def test_diagonal_not_ones(self):
         """Test correlation matrix with diagonal not all ones."""
-        matrix = np.array([
-            [1.0, 0.5],
-            [0.5, 0.8],  # Should be 1.0
-        ])
+        matrix = np.array(
+            [
+                [1.0, 0.5],
+                [0.5, 0.8],  # Should be 1.0
+            ]
+        )
         results = validate_correlation_matrix(matrix, name="test")
         diag_result = next(r for r in results if "diagonal" in r.name)
         assert not diag_result.passed
 
     def test_not_symmetric(self):
         """Test non-symmetric matrix."""
-        matrix = np.array([
-            [1.0, 0.5],
-            [0.3, 1.0],  # Asymmetric
-        ])
+        matrix = np.array(
+            [
+                [1.0, 0.5],
+                [0.3, 1.0],  # Asymmetric
+            ]
+        )
         results = validate_correlation_matrix(matrix, name="test")
         sym_result = next(r for r in results if "symmetric" in r.name)
         assert not sym_result.passed
 
     def test_out_of_bounds(self):
         """Test correlation values outside [-1, 1]."""
-        matrix = np.array([
-            [1.0, 1.5],  # Invalid correlation > 1
-            [1.5, 1.0],
-        ])
+        matrix = np.array(
+            [
+                [1.0, 1.5],  # Invalid correlation > 1
+                [1.5, 1.0],
+            ]
+        )
         results = validate_correlation_matrix(matrix, name="test")
         bounds_result = next(r for r in results if "bounds" in r.name)
         assert not bounds_result.passed

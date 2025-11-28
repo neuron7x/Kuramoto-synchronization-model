@@ -25,10 +25,9 @@ Example:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable
 
 import numpy as np
 
@@ -103,8 +102,7 @@ class DataIntegrityReport:
         total = len(self.checks)
         passed = total - self.errors - self.warnings
         return (
-            f"Validation: {passed}/{total} passed, "
-            f"{self.errors} errors, {self.warnings} warnings"
+            f"Validation: {passed}/{total} passed, {self.errors} errors, {self.warnings} warnings"
         )
 
 
@@ -685,7 +683,9 @@ def validate_positive_definite(matrix: np.ndarray, name: str = "matrix") -> Vali
         )
 
 
-def validate_correlation_matrix(matrix: np.ndarray, name: str = "correlation") -> list[ValidationResult]:
+def validate_correlation_matrix(
+    matrix: np.ndarray, name: str = "correlation"
+) -> list[ValidationResult]:
     """Validate that a matrix is a valid correlation matrix.
 
     Args:

@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import pytest
-import numpy as np
 
 from core.validation.physics_validator import (
-    ThermodynamicState,
-    EnergyBounds,
-    PhysicsConstraintReport,
-    PhysicsValidator,
-    compute_energy_gradient,
     SYSTEM_TEMPERATURE_K,
+    EnergyBounds,
+    PhysicsValidator,
+    ThermodynamicState,
+    compute_energy_gradient,
 )
 
 
@@ -65,9 +63,7 @@ class TestThermodynamicState:
     def test_invalid_resource_usage_raises(self):
         """Test that resource_usage outside [0,1] raises ValueError."""
         with pytest.raises(ValueError, match="resource_usage must be in"):
-            ThermodynamicState(
-                free_energy=1e-18, entropy=0.5, resource_usage=1.5
-            )
+            ThermodynamicState(free_energy=1e-18, entropy=0.5, resource_usage=1.5)
 
     def test_as_mapping(self):
         """Test conversion to dictionary."""
