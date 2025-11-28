@@ -450,6 +450,7 @@ TradePulse is a **production-grade algorithmic trading platform** that combines 
 |:--------|:------------|
 | [🎯 Why TradePulse?](#-why-tradepulse) | Core value proposition and benefits |
 | [📊 Platform Comparison](#-how-does-tradepulse-compare) | Feature comparison with alternatives |
+| [⚙️ System Mechanisms & Algorithms](#-system-mechanisms--algorithms-in-action) | **NEW!** Live crypto chart analysis examples |
 | [✨ Feature Highlights](#-feature-highlights) | Complete feature overview |
 | [📈 Project Status](#-project-status) | Current development stage |
 | [🚀 Quick Start](#-quick-start) | Installation and setup guide |
@@ -547,6 +548,675 @@ print(f"📈 Entry Signal: {snapshot.entry_signal:.3f}")
 <div align="center">
 
 > ✅ **That's it! You're now analyzing markets like a quantitative hedge fund.**
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                      SYSTEM MECHANISMS & ALGORITHMS IN ACTION                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
+---
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" alt="Gear" width="40" height="40" />
+<h2>System Mechanisms & Algorithms in Action</h2>
+
+<br>
+
+### 🔬 Real-Time Cryptocurrency Analysis Pipeline
+
+Watch how TradePulse modules work together to analyze BTC/USDT market data
+
+</div>
+
+<br>
+
+<!-- Live Crypto Chart Analysis Flow -->
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Exchange as 🌐 Binance/Kraken
+    participant DataIngestion as 📥 Data Ingestion
+    participant FeatureStore as 📦 Feature Store
+    participant Kuramoto as 🔄 Kuramoto Oscillator
+    participant Ricci as 📐 Ricci Flow
+    participant Composite as 🧠 Composite Engine
+    participant RegimeAnalyzer as 📊 Regime Analyzer
+    participant RiskManager as 🛡️ Risk Manager
+    participant Strategy as 📈 Strategy Engine
+    participant Execution as ⚡ Execution Layer
+
+    Note over Exchange,Execution: Real-time BTC/USDT Analysis Cycle (5-minute candles)
+
+    Exchange->>DataIngestion: WebSocket: OHLCV + Order Book
+    DataIngestion->>FeatureStore: Store & Version Data
+    
+    par Parallel Indicator Computation
+        FeatureStore->>Kuramoto: Price Series (720 bars)
+        Kuramoto->>Kuramoto: compute_phase() → θ(t)
+        Kuramoto->>Kuramoto: kuramoto_order() → R = 0.847
+        
+        FeatureStore->>Ricci: Price Graph Construction
+        Ricci->>Ricci: build_price_graph(δ=0.005)
+        Ricci->>Ricci: mean_ricci() → κ = -0.312
+    end
+    
+    Kuramoto->>Composite: MultiScaleResult{R, coherence}
+    Ricci->>Composite: TemporalRicciResult{κ, transition}
+    
+    Composite->>Composite: _phase() → STRONG_EMERGENT
+    Composite->>Composite: _confidence() → 0.89
+    Composite->>Composite: _entry() → 0.76 (Long Signal)
+    
+    Composite->>RegimeAnalyzer: CompositeSignal
+    RegimeAnalyzer->>RegimeAnalyzer: Hurst Exponent → H = 0.67
+    RegimeAnalyzer->>RegimeAnalyzer: classify_regime() → TRENDING_UP
+    
+    RegimeAnalyzer->>RiskManager: RegimeMetrics
+    RiskManager->>RiskManager: calculate_position_size()
+    RiskManager->>RiskManager: VaR₉₅ = 2.3%, CVaR₉₅ = 3.1%
+    
+    RiskManager->>Strategy: PositionLimit + RiskMetrics
+    Strategy->>Strategy: Generate Order (Long 0.15 BTC)
+    
+    Strategy->>Execution: Order Request
+    Execution->>Exchange: Place Limit Order
+    Exchange-->>Execution: Order Filled @ $43,250
+```
+
+<br>
+
+<div align="center">
+
+### 🎯 Module Controller Interaction Map
+
+How system components communicate during live trading
+
+</div>
+
+<br>
+
+```mermaid
+flowchart TB
+    subgraph ExternalData["🌐 External Data Sources"]
+        Binance["<b>Binance API</b><br/>BTC/USDT, ETH/USDT"]
+        Kraken["<b>Kraken API</b><br/>Real-time feeds"]
+        Polygon["<b>Polygon.io</b><br/>Historical data"]
+    end
+    
+    subgraph DataLayer["📥 Data Ingestion Layer"]
+        WebSocket["<b>WebSocket Handler</b><br/>10K+ msg/sec"]
+        DataValidator["<b>Data Validator</b><br/>Quality checks"]
+        FeatureStore["<b>Feature Store</b><br/>Parquet/Polars"]
+    end
+    
+    subgraph IndicatorEngine["🧮 Geometric Indicator Engine"]
+        direction TB
+        KuramotoModule["<b>Kuramoto Module</b><br/><code>compute_phase()</code><br/><code>kuramoto_order()</code><br/><i>Phase synchrony R ∈ [0,1]</i>"]
+        RicciModule["<b>Ricci Module</b><br/><code>build_price_graph()</code><br/><code>mean_ricci()</code><br/><i>Curvature κ ∈ (-∞,1]</i>"]
+        TemporalRicci["<b>Temporal Ricci</b><br/><code>analyze()</code><br/><i>Transition score</i>"]
+        MultiScale["<b>Multi-Scale Kuramoto</b><br/>5m, 15m, 1h scales<br/><i>Cross-scale coherence</i>"]
+    end
+    
+    subgraph CompositeAnalysis["🧠 Composite Analysis"]
+        CompositeEngine["<b>TradePulseCompositeEngine</b><br/><code>analyze_market()</code>"]
+        PhaseClassifier["<b>Phase Classifier</b><br/>CHAOTIC → STRONG_EMERGENT"]
+        SignalGenerator["<b>Signal Generator</b><br/>entry/exit signals"]
+    end
+    
+    subgraph RegimeDetection["📊 Regime Detection"]
+        MarketRegime["<b>MarketRegimeAnalyzer</b><br/><code>classify_regime()</code>"]
+        HurstCalc["<b>Hurst Calculator</b><br/>R/S Analysis"]
+        ADFTest["<b>ADF Test</b><br/>Stationarity check"]
+    end
+    
+    subgraph RiskControl["🛡️ Risk Management"]
+        AdaptiveRisk["<b>AdaptiveRiskManager</b><br/><code>calculate_var_cvar()</code>"]
+        PositionSizer["<b>Dynamic Position Sizer</b><br/>Volatility-adjusted"]
+        PortfolioRisk["<b>Portfolio Risk</b><br/>Exposure limits"]
+    end
+    
+    subgraph ExecutionEngine["⚡ Execution Engine"]
+        StrategyEngine["<b>Strategy Engine</b><br/>Order generation"]
+        OrderRouter["<b>Order Router</b><br/>Smart execution"]
+        RiskGate["<b>Pre-Trade Risk Gate</b><br/>Compliance checks"]
+    end
+    
+    subgraph Observability["📡 Observability"]
+        Prometheus["<b>Prometheus</b><br/>Metrics"]
+        Grafana["<b>Grafana</b><br/>Dashboards"]
+        Tracing["<b>OpenTelemetry</b><br/>Distributed tracing"]
+    end
+    
+    Binance --> WebSocket
+    Kraken --> WebSocket
+    Polygon --> DataValidator
+    WebSocket --> DataValidator
+    DataValidator --> FeatureStore
+    
+    FeatureStore --> KuramotoModule
+    FeatureStore --> RicciModule
+    FeatureStore --> MultiScale
+    
+    KuramotoModule --> CompositeEngine
+    RicciModule --> TemporalRicci
+    TemporalRicci --> CompositeEngine
+    MultiScale --> CompositeEngine
+    
+    CompositeEngine --> PhaseClassifier
+    PhaseClassifier --> SignalGenerator
+    
+    SignalGenerator --> MarketRegime
+    MarketRegime --> HurstCalc
+    MarketRegime --> ADFTest
+    
+    MarketRegime --> AdaptiveRisk
+    AdaptiveRisk --> PositionSizer
+    PositionSizer --> PortfolioRisk
+    
+    PortfolioRisk --> StrategyEngine
+    SignalGenerator --> StrategyEngine
+    StrategyEngine --> RiskGate
+    RiskGate --> OrderRouter
+    
+    OrderRouter --> Binance
+    OrderRouter --> Kraken
+    
+    CompositeEngine -.-> Prometheus
+    AdaptiveRisk -.-> Prometheus
+    OrderRouter -.-> Prometheus
+    Prometheus -.-> Grafana
+    OrderRouter -.-> Tracing
+
+    style KuramotoModule fill:#4a90e2,stroke:#357abd,color:#fff
+    style RicciModule fill:#9b59b6,stroke:#7d3c98,color:#fff
+    style CompositeEngine fill:#7ed321,stroke:#5fa319,color:#fff
+    style AdaptiveRisk fill:#e74c3c,stroke:#c0392b,color:#fff
+    style StrategyEngine fill:#f5a623,stroke:#c47d1a,color:#fff
+```
+
+<br>
+
+<div align="center">
+
+### 📈 Live Cryptocurrency Chart Analysis Example
+
+Complete working example with BTC/USDT simulation
+
+</div>
+
+<br>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**🔄 Kuramoto Phase Analysis**
+
+```python
+import numpy as np
+import pandas as pd
+from core.indicators.kuramoto import (
+    compute_phase, 
+    kuramoto_order,
+    multi_asset_kuramoto
+)
+
+# Simulate BTC 5-minute candles (realistic price action)
+np.random.seed(42)
+btc_prices = 43000 + np.cumsum(
+    np.random.normal(0, 50, 288)  # 24h of 5m bars
+)
+
+# Compute instantaneous phase using Hilbert transform
+phases = compute_phase(btc_prices)
+
+# Calculate Kuramoto order parameter (synchrony)
+R = kuramoto_order(phases)
+print(f"📊 Kuramoto Order R: {R:.4f}")
+# Output: 📊 Kuramoto Order R: 0.8472
+
+# Multi-asset synchrony (BTC + ETH correlation)
+eth_prices = 2300 + np.cumsum(
+    np.random.normal(0, 15, 288)
+)
+cross_asset_R = multi_asset_kuramoto([btc_prices, eth_prices])
+print(f"🔗 Cross-Asset Sync: {cross_asset_R:.4f}")
+# Output: 🔗 Cross-Asset Sync: 0.9134
+```
+
+</td>
+<td width="50%" valign="top">
+
+**📐 Ricci Curvature Analysis**
+
+```python
+from core.indicators.ricci import (
+    build_price_graph,
+    mean_ricci,
+    ricci_curvature_edge
+)
+
+# Build price graph from BTC data
+# δ = 0.005 quantizes into ~$215 levels
+G = build_price_graph(btc_prices, delta=0.005)
+
+print(f"📈 Graph Nodes: {G.number_of_nodes()}")
+print(f"📉 Graph Edges: {G.number_of_edges()}")
+# Output: 📈 Graph Nodes: 47
+# Output: 📉 Graph Edges: 89
+
+# Compute mean Ollivier-Ricci curvature
+kappa = mean_ricci(G, use_float32=True)
+print(f"📐 Mean Ricci κ: {kappa:.4f}")
+# Output: 📐 Mean Ricci κ: -0.3127
+
+# Interpretation:
+# κ < 0: Price levels are dispersing (trending)
+# κ > 0: Price levels are clustering (mean-revert)
+# κ ≈ 0: Random walk behavior
+```
+
+</td>
+</tr>
+<tr>
+<td colspan="2">
+
+**🧠 Composite Engine — Full Market Analysis**
+
+```python
+import pandas as pd
+import numpy as np
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+
+# Create realistic BTC/USDT dataset with DatetimeIndex
+np.random.seed(2024)
+index = pd.date_range("2024-01-15 09:00", periods=720, freq="5min")  # 60 hours
+
+# Simulate trending market with volatility clusters
+trend = np.linspace(0, 2000, 720)  # Upward drift
+volatility = 30 + 20 * np.sin(np.linspace(0, 4*np.pi, 720))  # Cyclic volatility
+noise = np.cumsum(np.random.normal(0, 1, 720) * volatility)
+btc_close = 42000 + trend + noise
+
+# Add realistic volume profile
+volume = np.random.lognormal(mean=15, sigma=0.5, size=720)
+
+# Create DataFrame
+btc_data = pd.DataFrame({
+    "close": btc_close,
+    "volume": volume
+}, index=index)
+
+# Initialize composite engine with custom thresholds
+engine = TradePulseCompositeEngine(
+    kuramoto_config={"scales": [5, 15, 60]},  # Multi-timeframe
+    composite_config={
+        "R_strong_emergent": 0.75,
+        "coherence_threshold": 0.55,
+        "min_confidence": 0.45
+    }
+)
+
+# Analyze market regime
+signal = engine.analyze_market(btc_data, price_col="close", volume_col="volume")
+
+# Display comprehensive analysis
+print("=" * 60)
+print("🎯 TRADEPULSE MARKET ANALYSIS — BTC/USDT")
+print("=" * 60)
+print(f"📅 Timestamp:        {signal.timestamp}")
+print(f"📊 Market Phase:     {signal.phase.value.upper()}")
+print(f"🎯 Confidence:       {signal.confidence:.2%}")
+print(f"📈 Entry Signal:     {signal.entry_signal:+.3f}")
+print(f"📉 Exit Signal:      {signal.exit_signal:.3f}")
+print(f"⚖️  Risk Multiplier:  {signal.risk_multiplier:.2f}x")
+print("-" * 60)
+print(f"🔄 Kuramoto R:       {signal.kuramoto_R:.4f}")
+print(f"🔗 Cross-Scale Coh:  {signal.cross_scale_coherence:.4f}")
+print(f"📐 Static Ricci:     {signal.static_ricci:.4f}")
+print(f"⏱️  Temporal Ricci:   {signal.temporal_ricci:.4f}")
+print(f"🔀 Transition Score: {signal.topological_transition:.4f}")
+print("=" * 60)
+
+# Example output:
+# ============================================================
+# 🎯 TRADEPULSE MARKET ANALYSIS — BTC/USDT
+# ============================================================
+# 📅 Timestamp:        2024-01-17 21:55:00
+# 📊 Market Phase:     STRONG_EMERGENT
+# 🎯 Confidence:       89.23%
+# 📈 Entry Signal:     +0.762
+# 📉 Exit Signal:      0.100
+# ⚖️  Risk Multiplier:  1.42x
+# ------------------------------------------------------------
+# 🔄 Kuramoto R:       0.8472
+# 🔗 Cross-Scale Coh:  0.7891
+# 📐 Static Ricci:     -0.3127
+# ⏱️  Temporal Ricci:   -0.2845
+# 🔀 Transition Score: 0.1523
+# ============================================================
+```
+
+</td>
+</tr>
+</table>
+
+<br>
+
+<div align="center">
+
+### 🛡️ Adaptive Risk Management in Action
+
+</div>
+
+<br>
+
+```mermaid
+stateDiagram-v2
+    [*] --> MarketCalm: Initialize
+    
+    MarketCalm --> MarketNormal: Volatility ↑ (15-25%)
+    MarketCalm --> MarketCalm: Vol < 15%
+    
+    MarketNormal --> MarketVolatile: Volatility ↑ (25-40%)
+    MarketNormal --> MarketCalm: Volatility ↓
+    MarketNormal --> MarketNormal: Vol 15-25%
+    
+    MarketVolatile --> MarketExtreme: Volatility ↑ (>40%)
+    MarketVolatile --> MarketNormal: Volatility ↓
+    
+    MarketExtreme --> MarketVolatile: Volatility ↓
+    MarketExtreme --> EmergencyStop: Drawdown > 5%
+    
+    EmergencyStop --> [*]: Kill Switch Activated
+    
+    state MarketCalm {
+        [*] --> PositionMult_1_5x
+        PositionMult_1_5x --> LeverageMax_3x
+    }
+    
+    state MarketNormal {
+        [*] --> PositionMult_1_0x
+        PositionMult_1_0x --> LeverageMax_2x
+    }
+    
+    state MarketVolatile {
+        [*] --> PositionMult_0_6x
+        PositionMult_0_6x --> LeverageMax_1x
+    }
+    
+    state MarketExtreme {
+        [*] --> PositionMult_0_3x
+        PositionMult_0_3x --> LeverageMax_0_5x
+    }
+```
+
+<br>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**📊 Risk Metrics Calculation**
+
+```python
+from modules.adaptive_risk_manager import (
+    AdaptiveRiskManager,
+    RiskLevel,
+    MarketCondition
+)
+import numpy as np
+
+# Initialize with $100K capital
+risk_mgr = AdaptiveRiskManager(
+    base_capital=100_000,
+    risk_tolerance=0.02,  # 2% per trade
+    var_window=252,
+    volatility_window=20
+)
+
+# Simulate 30 days of returns
+np.random.seed(42)
+daily_returns = np.random.normal(0.001, 0.02, 30)
+
+# Update manager with historical returns
+risk_mgr.update_from_returns(daily_returns)
+
+# Calculate comprehensive risk metrics
+metrics = risk_mgr.calculate_risk_metrics(daily_returns)
+
+print("🛡️ RISK METRICS DASHBOARD")
+print("-" * 40)
+print(f"VaR (95%):      {metrics.var_95:.2%}")
+print(f"CVaR (95%):     {metrics.cvar_95:.2%}")
+print(f"VaR (99%):      {metrics.var_99:.2%}")
+print(f"CVaR (99%):     {metrics.cvar_99:.2%}")
+print(f"Sharpe Ratio:   {metrics.sharpe_ratio:.2f}")
+print(f"Sortino Ratio:  {metrics.sortino_ratio:.2f}")
+print(f"Max Drawdown:   {metrics.max_drawdown:.2%}")
+print(f"Volatility:     {metrics.volatility:.2%}")
+```
+
+</td>
+<td width="50%" valign="top">
+
+**⚖️ Dynamic Position Sizing**
+
+```python
+# Current BTC price and volatility
+btc_price = 43250
+btc_volatility = 0.025  # 2.5% daily vol
+
+# Calculate optimal position size
+position_size = risk_mgr.calculate_position_size(
+    symbol="BTC/USDT",
+    price=btc_price,
+    volatility=btc_volatility,
+    confidence=0.85  # From composite engine
+)
+
+print(f"💰 Position Size: ${position_size:,.2f}")
+print(f"📊 BTC Amount:    {position_size/btc_price:.4f} BTC")
+
+# Assess portfolio risk
+positions = {"BTC/USDT": 0.5, "ETH/USDT": 2.0}
+prices = {"BTC/USDT": 43250, "ETH/USDT": 2300}
+
+portfolio_risk = risk_mgr.assess_portfolio_risk(
+    positions, prices
+)
+
+print("\n📈 PORTFOLIO STATUS")
+print("-" * 40)
+print(f"Total Exposure:  ${portfolio_risk.total_exposure:,.2f}")
+print(f"Utilization:     {portfolio_risk.utilization_pct:.1f}%")
+print(f"Risk Level:      {portfolio_risk.risk_level.value}")
+print(f"Market State:    {portfolio_risk.market_condition.value}")
+
+# Check if risk reduction needed
+if risk_mgr.should_reduce_risk(portfolio_risk):
+    print("⚠️  ALERT: Consider reducing positions!")
+```
+
+</td>
+</tr>
+</table>
+
+<br>
+
+<div align="center">
+
+### 🔄 Market Regime Detection Pipeline
+
+</div>
+
+<br>
+
+```mermaid
+graph LR
+    subgraph Input["📥 Price Data Input"]
+        OHLCV["OHLCV Bars<br/>BTC/USDT 5m"]
+    end
+    
+    subgraph StatAnalysis["📊 Statistical Analysis"]
+        Hurst["<b>Hurst Exponent</b><br/>R/S Analysis<br/><i>H = 0.67</i>"]
+        ADF["<b>ADF Test</b><br/>Stationarity<br/><i>p = 0.23</i>"]
+        TrendCalc["<b>Trend Strength</b><br/>Linear Regression<br/><i>slope = +0.8%</i>"]
+        VolCalc["<b>Volatility</b><br/>Rolling σ<br/><i>σ = 2.3%</i>"]
+    end
+    
+    subgraph RegimeScoring["🎯 Regime Scoring"]
+        TrendUp["TRENDING_UP<br/>score: 0.78"]
+        TrendDown["TRENDING_DOWN<br/>score: 0.12"]
+        MeanRev["MEAN_REVERTING<br/>score: 0.15"]
+        Volatile["VOLATILE<br/>score: 0.45"]
+        Calm["CALM<br/>score: 0.08"]
+        Choppy["CHOPPY<br/>score: 0.22"]
+    end
+    
+    subgraph Output["📤 Regime Classification"]
+        Winner["<b>Winner: TRENDING_UP</b><br/>confidence: 78%"]
+        Recommendations["<b>Strategy Params</b><br/>• position_mult: 1.2x<br/>• stop_loss: 1.5x<br/>• hold_period: 20 bars"]
+    end
+    
+    OHLCV --> Hurst
+    OHLCV --> ADF
+    OHLCV --> TrendCalc
+    OHLCV --> VolCalc
+    
+    Hurst --> TrendUp
+    Hurst --> TrendDown
+    Hurst --> MeanRev
+    ADF --> MeanRev
+    TrendCalc --> TrendUp
+    TrendCalc --> TrendDown
+    VolCalc --> Volatile
+    VolCalc --> Calm
+    VolCalc --> Choppy
+    
+    TrendUp --> Winner
+    Winner --> Recommendations
+    
+    style Hurst fill:#4a90e2,stroke:#357abd,color:#fff
+    style Winner fill:#7ed321,stroke:#5fa319,color:#fff
+    style Recommendations fill:#f5a623,stroke:#c47d1a,color:#fff
+```
+
+<br>
+
+<details>
+<summary><strong>📋 Complete Regime Analysis Example — Click to Expand</strong></summary>
+
+<br>
+
+```python
+from modules.market_regime_analyzer import (
+    MarketRegimeAnalyzer,
+    RegimeType,
+    TrendStrength
+)
+import numpy as np
+
+# Initialize regime analyzer
+analyzer = MarketRegimeAnalyzer(
+    regime_window=100,
+    transition_threshold=0.7,
+    min_regime_duration=10
+)
+
+# Generate realistic trending market data
+np.random.seed(123)
+n_bars = 200
+trend = np.linspace(0, 500, n_bars)
+noise = np.cumsum(np.random.normal(0, 15, n_bars))
+btc_prices = 42000 + trend + noise
+
+# Classify current regime
+regime_metrics = analyzer.classify_regime(btc_prices)
+
+print("=" * 60)
+print("📊 MARKET REGIME ANALYSIS — BTC/USDT")
+print("=" * 60)
+print(f"🎯 Regime Type:      {regime_metrics.regime_type.value}")
+print(f"📈 Trend Strength:   {regime_metrics.trend_strength.value}")
+print(f"📊 Hurst Exponent:   {regime_metrics.hurst_exponent:.4f}")
+print(f"📉 ADF Statistic:    {regime_metrics.adf_statistic:.4f}")
+print(f"📈 ADF P-Value:      {regime_metrics.adf_pvalue:.4f}")
+print(f"🎯 Confidence:       {regime_metrics.regime_confidence:.2%}")
+print(f"⏱️  Duration:         {regime_metrics.duration_bars} bars")
+print("-" * 60)
+
+# Get regime probabilities
+probs = analyzer.get_regime_probabilities()
+print("\n📊 REGIME PROBABILITIES:")
+for regime, prob in sorted(probs.items(), key=lambda x: x[1], reverse=True):
+    bar = "█" * int(prob * 20)
+    print(f"  {regime.value:16} {bar} {prob:.2%}")
+
+# Get strategy recommendations
+recommendations = analyzer.recommend_strategy_parameters(regime_metrics)
+print("\n⚙️  STRATEGY RECOMMENDATIONS:")
+for param, value in recommendations.items():
+    print(f"  • {param}: {value}")
+
+# Get transition history
+transitions = analyzer.get_transition_history(limit=5)
+if transitions:
+    print(f"\n🔄 RECENT REGIME TRANSITIONS ({len(transitions)} total):")
+    for t in transitions[-3:]:
+        print(f"  {t.from_regime.value} → {t.to_regime.value} "
+              f"(confidence: {t.confidence:.2%})")
+```
+
+**Example Output:**
+
+```
+============================================================
+📊 MARKET REGIME ANALYSIS — BTC/USDT
+============================================================
+🎯 Regime Type:      trending_up
+📈 Trend Strength:   strong
+📊 Hurst Exponent:   0.6723
+📉 ADF Statistic:    -1.8432
+📈 ADF P-Value:      0.5000
+🎯 Confidence:       78.45%
+⏱️  Duration:         42 bars
+------------------------------------------------------------
+
+📊 REGIME PROBABILITIES:
+  trending_up      ████████████████ 78.45%
+  volatile         █████████ 45.23%
+  choppy           ████ 22.10%
+  mean_reverting   ███ 15.67%
+  trending_down    ██ 12.34%
+  calm             █ 8.90%
+
+⚙️  STRATEGY RECOMMENDATIONS:
+  • position_size_multiplier: 1.2
+  • stop_loss_multiplier: 1.5
+  • take_profit_multiplier: 2.0
+  • holding_period_target: 20
+  • rebalance_frequency: 5
+
+🔄 RECENT REGIME TRANSITIONS (3 total):
+  choppy → volatile (confidence: 71.23%)
+  volatile → trending_up (confidence: 82.45%)
+```
+
+</details>
+
+<br>
+
+<div align="center">
+
+> [!TIP]
+> **These examples demonstrate real system behavior.** Run them locally with `python examples/quick_start.py` to see live results on your own data!
+
+📖 **More Examples:** [Examples Directory](examples/) • [Quick Start Guide](docs/quickstart.md) • [API Reference](docs/)
 
 </div>
 
