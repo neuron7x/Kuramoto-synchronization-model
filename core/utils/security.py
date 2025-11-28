@@ -50,6 +50,8 @@ IGNORE_PATTERNS = [
 class SecretDetector:
     """Detect secrets and sensitive data in files."""
 
+    patterns: Dict[str, Pattern[str]]
+
     def __init__(self, custom_patterns: Dict[str, Pattern[str]] | None = None):
         """Initialize secret detector.
 

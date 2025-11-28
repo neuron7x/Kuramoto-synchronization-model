@@ -399,8 +399,8 @@ def _diff_mappings(
 
 def _values_equal(first: Any, second: Any) -> bool:
     if isinstance(first, float) and isinstance(second, float):
-        return abs(first - second) <= 1e-12
-    return first == second
+        return bool(abs(first - second) <= 1e-12)
+    return bool(first == second)
 
 
 def _file_checksum(path: Path) -> str:

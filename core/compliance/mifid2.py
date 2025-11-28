@@ -262,7 +262,8 @@ class MiFID2Reporter:
 
     def _analyse_market_abuse(self, entry: OrderAuditTrail) -> None:
         payload = entry.payload
-        size = float(payload.get("size", 0))
+        raw_size = payload.get("size", 0)
+        size = float(raw_size) if isinstance(raw_size, (int, float, str)) else 0.0
         if size <= 0:
             return
         if payload.get("action") == "cancel" and size > 1_000_000:

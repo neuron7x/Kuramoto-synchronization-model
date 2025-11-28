@@ -18,7 +18,7 @@ Clock = Callable[[], datetime]
 
 def _default_runner(
     command: Sequence[str], env: Mapping[str, str] | None = None
-) -> subprocess.CompletedProcess[int]:
+) -> subprocess.CompletedProcess[bytes]:
     """Execute *command* returning the completed process.
 
     The default implementation simply proxies to :func:`subprocess.run` while

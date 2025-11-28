@@ -47,7 +47,8 @@ class SchemaVersionInfo:
 
         if self.format in (SchemaFormat.AVRO, SchemaFormat.JSON):
             with self.path.open("r", encoding="utf-8") as handle:
-                return json.load(handle)
+                result: Mapping[str, Any] = json.load(handle)
+                return result
         raise ValueError(f"Unsupported load operation for {self.format}")
 
 

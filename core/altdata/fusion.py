@@ -76,7 +76,7 @@ class AltDataFusionEngine:
         index = fused.index
         if not isinstance(index, pd.DatetimeIndex):
             raise TypeError("fused features must be indexed by timestamps")
-        return index.is_monotonic_increasing
+        return bool(index.is_monotonic_increasing)
 
 
 __all__ = ["FusionConfig", "AltDataFusionEngine"]
