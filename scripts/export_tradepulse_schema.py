@@ -10,7 +10,7 @@ from pathlib import Path
 from core.config import export_tradepulse_settings_schema
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Export the TradePulse configuration JSON schema",
     )
@@ -26,7 +26,7 @@ def parse_args() -> argparse.Namespace:
         default=2,
         help="Indentation level used when writing the schema to disk (default: 2).",
     )
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def main() -> None:

@@ -12,7 +12,7 @@ from scripts import export_tradepulse_schema
 
 def test_parse_args_defaults() -> None:
     """Test that parse_args returns correct defaults."""
-    args = export_tradepulse_schema.parse_args()
+    args = export_tradepulse_schema.parse_args([])
 
     assert args.output is None
     assert args.indent == 2
