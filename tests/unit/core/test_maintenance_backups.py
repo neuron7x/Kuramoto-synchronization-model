@@ -25,7 +25,9 @@ from core.maintenance.backups import (
 class TestDefaultRunner:
     """Tests for _default_runner function."""
 
-    def test_default_runner_executes_command(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_default_runner_executes_command(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mock_run = MagicMock(return_value=subprocess.CompletedProcess([], 0))
         monkeypatch.setattr(subprocess, "run", mock_run)
 
@@ -42,7 +44,9 @@ class TestDefaultRunner:
         result = _default_runner(["echo", "test"], env)
 
         assert result.returncode == 0
-        mock_run.assert_called_once_with(["echo", "test"], env={"FOO": "bar"}, check=True)
+        mock_run.assert_called_once_with(
+            ["echo", "test"], env={"FOO": "bar"}, check=True
+        )
 
 
 class TestDefaultClock:
@@ -101,7 +105,9 @@ class TestBackupConfig:
             )
 
     def test_archive_after_exceeds_retention_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(ValueError, match="archive_after_days cannot exceed retention_days"):
+        with pytest.raises(
+            ValueError, match="archive_after_days cannot exceed retention_days"
+        ):
             BackupConfig(
                 database_url="postgres://localhost:5432/test",
                 backup_dir=tmp_path,
@@ -183,7 +189,8 @@ class TestDatabaseBackupManager:
             backup_dir=backup_dir,
         )
 
-        manager = DatabaseBackupManager(config=config, dry_run=True)
+        _manager = DatabaseBackupManager(config=config, dry_run=True)  # noqa: F841
+        del _manager  # Ensure side-effects are tested
 
         assert backup_dir.exists()
         assert (backup_dir / "archive").exists()
@@ -201,7 +208,8 @@ class TestDatabaseBackupManager:
     def test_create_backup_executes_pg_dump(
         self, manager: DatabaseBackupManager, mock_runner: MagicMock
     ) -> None:
-        result = manager.run_backup_cycle()
+        _result = manager.run_backup_cycle()  # noqa: F841
+        del _result  # Result verified through mock
 
         assert mock_runner.called
         call_args = mock_runner.call_args[0][0]
@@ -285,7 +293,7 @@ class TestDatabaseBackupManager:
 
         # Create an expired archive
         old_archive = archive_dir / "timescale_full_old.dump.tar.gz"
-        with tarfile.open(old_archive, "w:gz") as tar:
+        with tarfile.open(old_archive, "w:gz"):
             pass  # Create empty archive
         # Set mtime to 40 days ago
         old_mtime = datetime.now(timezone.utc) - timedelta(days=40)
@@ -303,14 +311,16 @@ class TestDatabaseBackupManager:
         assert len(result.pruned) == 1
         assert not old_archive.exists()
 
-    def test_prune_archives_dry_run(self, tmp_path: Path, mock_runner: MagicMock) -> None:
+    def test_prune_archives_dry_run(
+        self, tmp_path: Path, mock_runner: MagicMock
+    ) -> None:
         backup_dir = tmp_path / "backups"
         archive_dir = backup_dir / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
 
         # Create an expired archive
         old_archive = archive_dir / "timescale_full_old.dump.tar.gz"
-        with tarfile.open(old_archive, "w:gz") as tar:
+        with tarfile.open(old_archive, "w:gz"):
             pass  # Create empty archive
         # Set mtime to 40 days ago
         old_mtime = datetime.now(timezone.utc) - timedelta(days=40)

@@ -24,9 +24,7 @@ class StableMarketProvider:
     async def fetch(self, symbol: str, window: int) -> PriceSeries:
         base = 100.0
         points = [
-            PricePoint(
-                symbol=symbol, timestamp=datetime.now(timezone.utc), price=base
-            )
+            PricePoint(symbol=symbol, timestamp=datetime.now(timezone.utc), price=base)
             for _ in range(5)
         ]
         return PriceSeries(symbol=symbol, points=points)
@@ -67,7 +65,9 @@ async def test_signal_engine_detects_hold_conditions() -> None:
 @pytest.mark.asyncio
 async def test_signal_engine_detects_oversold_conditions() -> None:
     """Test that declining prices generate BUY signal."""
-    engine = SignalEngine(provider=OversoldMarketProvider(), sensitivity=0.005, window=5)
+    engine = SignalEngine(
+        provider=OversoldMarketProvider(), sensitivity=0.005, window=5
+    )
     signal = await engine.generate("solusd")
     assert signal.direction is SignalDirection.BUY
     assert signal.rationale == "price_below_moving_average"

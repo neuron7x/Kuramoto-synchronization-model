@@ -82,8 +82,8 @@ class DriftMetric:
         """Determine drift status using configurable thresholds."""
 
         jsd_threshold = thresholds.threshold_for(feature, "jsd")
-        ks_threshold = alpha if alpha is not None else thresholds.threshold_for(
-            feature, "ks"
+        ks_threshold = (
+            alpha if alpha is not None else thresholds.threshold_for(feature, "ks")
         )
         psi_threshold = thresholds.threshold_for(feature, "psi")
 

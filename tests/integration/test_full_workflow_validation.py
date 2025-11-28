@@ -47,7 +47,13 @@ def synthetic_market_data() -> pd.DataFrame:
     volume = np.random.lognormal(10, 0.5, n)
 
     return pd.DataFrame(
-        {"close": prices, "volume": volume, "open": prices * 0.999, "high": prices * 1.001, "low": prices * 0.998},
+        {
+            "close": prices,
+            "volume": volume,
+            "open": prices * 0.999,
+            "high": prices * 1.001,
+            "low": prices * 0.998,
+        },
         index=idx,
     )
 
@@ -96,7 +102,9 @@ class TestIndicatorPipeline:
 class TestCompositeEngine:
     """Test the TradePulse composite analysis engine."""
 
-    def test_analyze_market_returns_valid_snapshot(self, synthetic_market_data: pd.DataFrame):
+    def test_analyze_market_returns_valid_snapshot(
+        self, synthetic_market_data: pd.DataFrame
+    ):
         """Composite engine should return valid market snapshot."""
         engine = TradePulseCompositeEngine()
         snapshot = engine.analyze_market(synthetic_market_data)
@@ -106,7 +114,12 @@ class TestCompositeEngine:
         assert hasattr(snapshot, "entry_signal")
 
         assert 0 <= snapshot.confidence <= 1
-        assert snapshot.phase.value in ["accumulation", "distribution", "trending", "transition"]
+        assert snapshot.phase.value in [
+            "accumulation",
+            "distribution",
+            "trending",
+            "transition",
+        ]
 
     def test_analyze_market_handles_minimal_data(self):
         """Engine should handle edge case with minimal data."""
@@ -151,10 +164,12 @@ class TestBacktestingWorkflow:
         def kuramoto_signal(series: np.ndarray) -> np.ndarray:
             """Signal based on Kuramoto synchronization."""
             phases = compute_phase(series)
-            R_values = np.array([
-                kuramoto_order(phases[max(0, i-50):i+1]) if i >= 50 else 0.5
-                for i in range(len(phases))
-            ])
+            R_values = np.array(
+                [
+                    kuramoto_order(phases[max(0, i - 50) : i + 1]) if i >= 50 else 0.5
+                    for i in range(len(phases))
+                ]
+            )
             signal = np.where(R_values > 0.7, 1.0, np.where(R_values < 0.3, -1.0, 0.0))
             signal[:50] = 0  # Warmup period
             return signal
@@ -232,7 +247,9 @@ class TestDataPersistence:
 class TestEndToEndWorkflow:
     """Test complete end-to-end trading workflow."""
 
-    def test_full_analysis_to_backtest_pipeline(self, synthetic_market_data: pd.DataFrame):
+    def test_full_analysis_to_backtest_pipeline(
+        self, synthetic_market_data: pd.DataFrame
+    ):
         """Full workflow from analysis through backtesting."""
         # Step 1: Analyze market regime
         engine = TradePulseCompositeEngine()

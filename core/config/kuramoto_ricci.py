@@ -183,9 +183,7 @@ class KuramotoConfig(BaseModel):
 
     @field_validator("timeframes", mode="before")
     @classmethod
-    def _coerce_timeframes(
-        cls, value: Any
-    ) -> tuple[TimeFrame, ...] | None:
+    def _coerce_timeframes(cls, value: Any) -> tuple[TimeFrame, ...] | None:
         return _coerce_timeframes_payload(value)
 
     @field_validator("base_window", "min_samples_per_scale", mode="before")

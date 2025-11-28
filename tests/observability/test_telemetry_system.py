@@ -129,7 +129,9 @@ class TestPerformanceMonitoring:
 
     def test_resource_utilization_tracking(self):
         """Test tracking of resource utilization metrics."""
-        pytest.importorskip("psutil", reason="psutil is required for resource tracking tests")
+        pytest.importorskip(
+            "psutil", reason="psutil is required for resource tracking tests"
+        )
         import psutil
 
         # Track CPU and memory

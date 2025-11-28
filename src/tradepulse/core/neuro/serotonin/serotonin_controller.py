@@ -601,7 +601,9 @@ class SerotoninController:
         self._hold_count = 0
 
     # --------------------------------------------------------- state snapshot
-    def _validate_state_payload(self, state: Mapping[str, object]) -> dict[str, float | bool]:
+    def _validate_state_payload(
+        self, state: Mapping[str, object]
+    ) -> dict[str, float | bool]:
         required_keys = {
             "tonic_level",
             "phasic_level",

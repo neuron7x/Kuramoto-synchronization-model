@@ -20,7 +20,7 @@ import os
 import threading
 import time
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -171,7 +171,9 @@ class KillSwitchManager:
         Returns:
             True if activation succeeded, False otherwise
         """
-        reason_str = reason.value if isinstance(reason, KillSwitchReason) else str(reason)
+        reason_str = (
+            reason.value if isinstance(reason, KillSwitchReason) else str(reason)
+        )
 
         with self._state_lock:
             now = time.time()
@@ -397,7 +399,7 @@ class KillSwitchManager:
 
         # Trim audit log if needed
         if len(self.audit_log) > self.max_audit_entries:
-            self.audit_log = self.audit_log[-self.max_audit_entries:]
+            self.audit_log = self.audit_log[-self.max_audit_entries :]
 
     def _notify_callbacks(self, is_active: bool, reason: str) -> None:
         """Notify all registered callbacks of a state change."""

@@ -182,9 +182,7 @@ class FractalPELMGPU:
         try:
             self._torch.empty(0, device=self._device_resolved)
         except RuntimeError as e:
-            raise ValueError(
-                f"Invalid device '{self._device_resolved}': {e}"
-            ) from e
+            raise ValueError(f"Invalid device '{self._device_resolved}': {e}") from e
 
         object.__setattr__(self, "_entries", [])
 
@@ -519,7 +517,9 @@ class FractalPELMGPU:
             sim_scores = cosine_scores[q_idx]
 
             # Compute phase coherence
-            phase_coherence = self._compute_phase_coherence(query_phase, stored_phases_t)
+            phase_coherence = self._compute_phase_coherence(
+                query_phase, stored_phases_t
+            )
 
             # Combine scores: weighted average of cosine and phase coherence
             base_weight = 1.0 - self.fractal_weight
@@ -531,7 +531,9 @@ class FractalPELMGPU:
             # Add fractal weighting if enabled
             if self.fractal_weight > 0:
                 fractal_weights = self._compute_fractal_weight(sim_scores)
-                combined_scores = combined_scores + self.fractal_weight * fractal_weights * sim_scores
+                combined_scores = (
+                    combined_scores + self.fractal_weight * fractal_weights * sim_scores
+                )
 
             # Clamp to [0, 1]
             combined_scores = torch.clamp(combined_scores, 0.0, 1.0)
@@ -546,7 +548,9 @@ class FractalPELMGPU:
                 self._to_numpy(top_scores), self._to_numpy(top_indices).astype(int)
             ):
                 entry = self._entries[idx]
-                query_results.append((float(score), entry.vector.copy(), entry.metadata))
+                query_results.append(
+                    (float(score), entry.vector.copy(), entry.metadata)
+                )
 
             all_results.append(query_results)
 

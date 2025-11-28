@@ -449,7 +449,8 @@ class AutoTriageOrchestrator:
                     "context": dict(context),
                 }
                 log_path.write_text(
-                    json.dumps(error_payload, indent=2, sort_keys=True), encoding="utf-8"
+                    json.dumps(error_payload, indent=2, sort_keys=True),
+                    encoding="utf-8",
                 )
                 results.append(
                     TriageStepReport(

@@ -393,7 +393,9 @@ class AsyncMetricsWriter:
         self._flush_interval = flush_interval
         self._worker_thread: Optional[Thread] = None
         self._running = False
-        self._prometheus_gauges: Dict[str, Any] = {}  # Initialize Prometheus gauges dict
+        self._prometheus_gauges: Dict[str, Any] = (
+            {}
+        )  # Initialize Prometheus gauges dict
 
         self._stats = {
             "total_recorded": 0,
@@ -507,13 +509,10 @@ class AsyncMetricsWriter:
                         label_names = list(labels.keys()) if labels else []
                         # Sanitize metric name for Prometheus (only letters, digits, underscores)
                         safe_name = "".join(
-                            c if c.isalnum() or c == "_" else "_"
-                            for c in metric_name
+                            c if c.isalnum() or c == "_" else "_" for c in metric_name
                         )
                         self._prometheus_gauges[gauge_key] = Gauge(
-                            safe_name,
-                            f"Metric {metric_name}",
-                            label_names
+                            safe_name, f"Metric {metric_name}", label_names
                         )
 
                     if labels:
@@ -642,7 +641,7 @@ def _record_metric(name: str, value: float, labels: Dict[str, str]):
         # Fallback to logging when no writer is configured
         logger.debug(
             f"Metric recorded: {name}={value}",
-            extra={"metric_name": name, "value": value, "labels": labels}
+            extra={"metric_name": name, "value": value, "labels": labels},
         )
 
 

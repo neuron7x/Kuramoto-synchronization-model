@@ -405,7 +405,9 @@ class DopamineController:
         if target_sharpe <= 0.0 or not math.isfinite(target_sharpe):
             raise ValueError("target_sharpe must be > 0")
 
-    def _validate_temperature_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
+    def _validate_temperature_params(
+        self, cfg: Dict[str, Union[str, float, int]]
+    ) -> None:
         """Validate temperature-related parameters."""
         base_temperature = float(cfg["base_temperature"])
         min_temperature = float(cfg["min_temperature"])
@@ -426,7 +428,9 @@ class DopamineController:
         if max_temp_multiplier < 1.0 or not math.isfinite(max_temp_multiplier):
             raise ValueError("max_temp_multiplier must be ≥ 1")
 
-    def _validate_threshold_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
+    def _validate_threshold_params(
+        self, cfg: Dict[str, Union[str, float, int]]
+    ) -> None:
         """Validate threshold parameters."""
         invigoration_threshold = float(cfg["invigoration_threshold"])
         if not 0.0 <= invigoration_threshold <= 1.0:
@@ -467,10 +471,14 @@ class DopamineController:
         if temp_adapt_min_base > temp_adapt_max_base:
             raise ValueError("temp_adapt_min_base must be ≤ temp_adapt_max_base")
         rpe_var_release_threshold = float(cfg["rpe_var_release_threshold"])
-        if rpe_var_release_threshold < 0.0 or not math.isfinite(rpe_var_release_threshold):
+        if rpe_var_release_threshold < 0.0 or not math.isfinite(
+            rpe_var_release_threshold
+        ):
             raise ValueError("rpe_var_release_threshold must be ≥ 0")
         rpe_var_release_hysteresis = float(cfg["rpe_var_release_hysteresis"])
-        if rpe_var_release_hysteresis < 0.0 or not math.isfinite(rpe_var_release_hysteresis):
+        if rpe_var_release_hysteresis < 0.0 or not math.isfinite(
+            rpe_var_release_hysteresis
+        ):
             raise ValueError("rpe_var_release_hysteresis must be ≥ 0")
 
     def _validate_ddm_params(self, cfg: Dict[str, Union[str, float, int]]) -> None:
@@ -485,10 +493,14 @@ class DopamineController:
         if ddm_hold_gain < 0.0 or not math.isfinite(ddm_hold_gain):
             raise ValueError("ddm_hold_gain must be ≥ 0")
         ddm_min_temperature_scale = float(cfg["ddm_min_temperature_scale"])
-        if ddm_min_temperature_scale <= 0.0 or not math.isfinite(ddm_min_temperature_scale):
+        if ddm_min_temperature_scale <= 0.0 or not math.isfinite(
+            ddm_min_temperature_scale
+        ):
             raise ValueError("ddm_min_temperature_scale must be > 0")
         ddm_max_temperature_scale = float(cfg["ddm_max_temperature_scale"])
-        if ddm_max_temperature_scale <= 0.0 or not math.isfinite(ddm_max_temperature_scale):
+        if ddm_max_temperature_scale <= 0.0 or not math.isfinite(
+            ddm_max_temperature_scale
+        ):
             raise ValueError("ddm_max_temperature_scale must be > 0")
         if ddm_min_temperature_scale > ddm_max_temperature_scale:
             raise ValueError(

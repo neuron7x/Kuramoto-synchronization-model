@@ -497,7 +497,10 @@ class ThermoConfig:
                 )
             )
 
-        if self.safety.recovery_decay_factor <= 0 or self.safety.recovery_decay_factor > 1:
+        if (
+            self.safety.recovery_decay_factor <= 0
+            or self.safety.recovery_decay_factor > 1
+        ):
             issues.append(
                 ConfigValidationIssue(
                     field="safety.recovery_decay_factor",
@@ -528,7 +531,11 @@ class ThermoConfig:
                 )
             )
 
-        for prob_name in ["mutation_prob_normal", "mutation_prob_elevated", "mutation_prob_critical"]:
+        for prob_name in [
+            "mutation_prob_normal",
+            "mutation_prob_elevated",
+            "mutation_prob_critical",
+        ]:
             prob_value = getattr(self.genetic_algorithm, prob_name)
             if not (0 <= prob_value <= 1):
                 issues.append(
@@ -661,7 +668,9 @@ class ConfigValidationIssue:
             "field": self.field,
             "message": self.message,
             "severity": self.severity,
-            "current_value": str(self.current_value) if self.current_value is not None else None,
+            "current_value": (
+                str(self.current_value) if self.current_value is not None else None
+            ),
         }
 
 
