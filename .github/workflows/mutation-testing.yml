@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 90
 
     name: Mutation Testing (90% kill rate required)
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -109,10 +109,10 @@ jobs:
             const fs = require('fs');
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             let summaryData = {};
             let summaryText = "⚠️ Mutation testing was skipped or no mutations were generated";
-            
+
             try {
               if (fs.existsSync('mutation_summary.json')) {
                 summaryData = JSON.parse(fs.readFileSync('mutation_summary.json', 'utf8'));
@@ -120,7 +120,7 @@ jobs:
                 const threshold = (summaryData.threshold * 100).toFixed(0);
                 const passed = summaryData.kill_rate >= summaryData.threshold;
                 const emoji = passed ? '✅' : '❌';
-                
+
                 summaryText = [
                   `## ${emoji} Mutation Testing Results`,
                   '',
@@ -160,21 +160,21 @@ jobs:
                 'Please check the workflow logs for details.'
               ].join('\n');
             }
-            
+
             const body = summaryText;
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('Mutation Testing Results')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,
@@ -196,7 +196,7 @@ jobs:
         run: |
           echo "❌ Mutation testing failed. Kill rate is below 90%."
           exit 1
-      
+
       - name: Skip mutation testing gracefully
         if: steps.check_mutations.outputs.mutations_exist != 'true'
         run: |

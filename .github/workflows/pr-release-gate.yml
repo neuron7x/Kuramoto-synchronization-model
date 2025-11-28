@@ -19,7 +19,7 @@ jobs:
 
     name: Quality Assessment & Risk Labeling
     if: github.event.pull_request.draft == false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -56,7 +56,7 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             // Check if tests workflow has run or is running
             const checkRuns = await github.rest.checks.listForRef({
               owner,
@@ -64,20 +64,20 @@ jobs:
               ref: context.payload.pull_request.head.sha,
               check_name: 'Tests (Python 3.11)'
             });
-            
+
             if (checkRuns.data.total_count === 0) {
               console.log('Tests workflow has not run yet, skipping coverage check');
               return { coverage: 'N/A', status: 'pending' };
             }
-            
+
             const testCheck = checkRuns.data.check_runs[0];
             console.log(`Tests workflow status: ${testCheck.status}, conclusion: ${testCheck.conclusion}`);
-            
+
             return {
               coverage: 'N/A',  // Will be retrieved from tests workflow artifacts
               status: testCheck.conclusion || 'pending'
             };
-      
+
       - name: Extract coverage metrics from tests workflow
         id: coverage_metrics
         run: |
@@ -93,42 +93,42 @@ jobs:
             const fs = require('fs');
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             // Calculate risk score based on PR characteristics
             // Coverage and mutation testing are verified in tests.yml and ci.yml
             let riskScore = 0;
             let riskFactors = [];
-            
+
             // Changed files risk
             const files = await github.rest.pulls.listFiles({
               owner,
               repo,
               pull_number,
             });
-            
-            const criticalFiles = files.data.filter(f => 
-              f.filename.includes('core/') || 
+
+            const criticalFiles = files.data.filter(f =>
+              f.filename.includes('core/') ||
               f.filename.includes('execution/') ||
               f.filename.includes('security')
             );
-            
+
             if (criticalFiles.length > 0) {
               riskScore += Math.min(criticalFiles.length * 5, 20);
               riskFactors.push(`${criticalFiles.length} critical files modified`);
             }
-            
+
             // Large PR risk
             const totalChanges = files.data.reduce((sum, f) => sum + f.changes, 0);
             if (totalChanges > 500) {
               riskScore += 10;
               riskFactors.push(`Large PR: ${totalChanges} lines changed`);
             }
-            
+
             // Determine risk level
             let riskLevel = 'low';
             let riskLabel = 'risk: low';
             let riskEmoji = '🟢';
-            
+
             if (riskScore >= 50) {
               riskLevel = 'high';
               riskLabel = 'risk: high';
@@ -138,14 +138,14 @@ jobs:
               riskLabel = 'risk: medium';
               riskEmoji = '🟡';
             }
-            
+
             console.log(`Risk Assessment: ${riskLevel} (score: ${riskScore})`);
             core.setOutput('risk_level', riskLevel);
             core.setOutput('risk_score', riskScore);
             core.setOutput('risk_label', riskLabel);
             core.setOutput('risk_emoji', riskEmoji);
             core.setOutput('risk_factors', JSON.stringify(riskFactors));
-            
+
             return { riskLevel, riskScore, riskFactors };
 
       - name: Apply risk label
@@ -155,7 +155,7 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
             const newLabel = '${{ steps.risk_assessment.outputs.risk_label }}';
-            
+
             // Define all risk labels
             const riskLabels = ['risk: low', 'risk: medium', 'risk: high'];
             const labelDefinitions = [
@@ -165,7 +165,7 @@ jobs:
               { name: 'quality-gate-failed', color: 'b60205', description: 'Quality gates not met - blocking merge' },
               { name: 'needs-mutation-testing', color: 'd93f0b', description: 'Mutation testing required' },
             ];
-            
+
             // Ensure labels exist
             for (const labelDef of labelDefinitions) {
               try {
@@ -176,16 +176,16 @@ jobs:
                 }
               }
             }
-            
+
             // Get current labels
             const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
+
             const currentLabelNames = currentLabels.map(l => l.name);
-            
+
             // Remove old risk labels
             for (const oldLabel of riskLabels) {
               if (oldLabel !== newLabel && currentLabelNames.includes(oldLabel)) {
@@ -197,7 +197,7 @@ jobs:
                 });
               }
             }
-            
+
             // Add new risk label if not already present
             if (!currentLabelNames.includes(newLabel)) {
               await github.rest.issues.addLabels({
@@ -207,7 +207,7 @@ jobs:
                 labels: [newLabel],
               });
             }
-            
+
             // Quality gate labels are managed by tests.yml workflow
             // This workflow only manages risk labels
 
@@ -218,16 +218,16 @@ jobs:
             const fs = require('fs');
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             const riskEmoji = '${{ steps.risk_assessment.outputs.risk_emoji }}';
             const riskLevel = '${{ steps.risk_assessment.outputs.risk_level }}';
             const riskScore = '${{ steps.risk_assessment.outputs.risk_score }}';
             const riskFactors = JSON.parse('${{ steps.risk_assessment.outputs.risk_factors }}');
-            
-            const riskFactorsText = riskFactors.length > 0 ? 
-              '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') : 
+
+            const riskFactorsText = riskFactors.length > 0 ?
+              '**Risk Factors:**\n' + riskFactors.map(f => `- ${f}`).join('\n') :
               'No significant risk factors identified';
-            
+
             const body = [
               `## ${riskEmoji} Release Gate - Risk Assessment`,
               '',
@@ -259,19 +259,19 @@ jobs:
               '*This workflow assesses PR risk based on size and scope.*',
               '*Quality gates are enforced by other workflows to avoid duplication.*'
             ].join('\n');
-            
+
             // Find and update or create comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('Release Gate Assessment')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,

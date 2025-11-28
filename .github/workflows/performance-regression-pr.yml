@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    
+
     steps:
       - name: Checkout PR code
         uses: actions/checkout@v5
@@ -48,7 +48,7 @@ jobs:
         id: pr_bench
         run: |
           echo "Running performance benchmarks on PR code..."
-          
+
           # Run pytest benchmarks
           pytest benchmarks/ \
             --benchmark-only \
@@ -56,10 +56,10 @@ jobs:
             --benchmark-min-rounds=5 || {
             echo "⚠️  Some benchmarks failed, continuing..."
           }
-          
+
           # Run memory profiling on critical paths
           python -m memory_profiler tests/performance/test_memory_critical.py > pr-memory.txt 2>&1 || true
-          
+
           echo "✓ PR benchmarks complete"
 
       - name: Checkout base branch
@@ -76,16 +76,16 @@ jobs:
         id: base_bench
         run: |
           echo "Running performance benchmarks on base branch..."
-          
+
           pytest benchmarks/ \
             --benchmark-only \
             --benchmark-json=base-benchmark.json \
             --benchmark-min-rounds=5 || {
             echo "⚠️  Some benchmarks failed, continuing..."
           }
-          
+
           python -m memory_profiler tests/performance/test_memory_critical.py > base-memory.txt 2>&1 || true
-          
+
           echo "✓ Base benchmarks complete"
 
       - name: Compare benchmark results
@@ -94,7 +94,7 @@ jobs:
           cat > compare_benchmarks.py <<'EOF'
           import json
           import sys
-          
+
           try:
               with open('pr-benchmark.json') as f:
                   pr_data = json.load(f)
@@ -103,23 +103,23 @@ jobs:
           except FileNotFoundError as e:
               print(f"Benchmark file not found: {e}")
               sys.exit(0)
-          
+
           pr_benchmarks = {b['name']: b for b in pr_data.get('benchmarks', [])}
           base_benchmarks = {b['name']: b for b in base_data.get('benchmarks', [])}
-          
+
           regressions = []
           improvements = []
           threshold = 1.10  # 10% threshold
-          
+
           for name, pr_bench in pr_benchmarks.items():
               if name in base_benchmarks:
                   base_bench = base_benchmarks[name]
-                  
+
                   pr_mean = pr_bench['stats']['mean']
                   base_mean = base_bench['stats']['mean']
-                  
+
                   ratio = pr_mean / base_mean if base_mean > 0 else 1.0
-                  
+
                   if ratio > threshold:
                       regressions.append({
                           'name': name,
@@ -136,27 +136,27 @@ jobs:
                           'ratio': ratio,
                           'change': ((1 - ratio) * 100)
                       })
-          
+
           print(f"REGRESSIONS={len(regressions)}")
           print(f"IMPROVEMENTS={len(improvements)}")
-          
+
           if regressions:
               print("\n⚠️  Performance Regressions Detected:")
               for r in regressions[:5]:  # Top 5
                   print(f"  - {r['name']}: +{r['change']:.1f}% slower")
-          
+
           if improvements:
               print("\n✅ Performance Improvements:")
               for i in improvements[:5]:  # Top 5
                   print(f"  - {i['name']}: +{i['change']:.1f}% faster")
-          
+
           # Write results
           with open('comparison.json', 'w') as f:
               json.dump({
                   'regressions': regressions,
                   'improvements': improvements
               }, f, indent=2)
-          
+
           # Exit with error if significant regressions
           if len(regressions) > 0:
               max_regression = max(r['change'] for r in regressions)
@@ -164,14 +164,14 @@ jobs:
                   print(f"\n❌ Critical regression detected: {max_regression:.1f}%")
                   sys.exit(1)
           EOF
-          
+
           python compare_benchmarks.py > comparison.txt 2>&1 || {
             REGRESSION_EXIT=$?
             cat comparison.txt
             echo "regression_critical=$REGRESSION_EXIT" >> $GITHUB_OUTPUT
             exit 0
           }
-          
+
           cat comparison.txt
           echo "regression_critical=0" >> $GITHUB_OUTPUT
 
@@ -182,7 +182,7 @@ jobs:
             # Simple memory comparison (this is a placeholder - enhance as needed)
             PR_MEM=$(grep -o '[0-9.]\+ MiB' pr-memory.txt | head -1 | grep -o '[0-9.]\+' || echo "0")
             BASE_MEM=$(grep -o '[0-9.]\+ MiB' base-memory.txt | head -1 | grep -o '[0-9.]\+' || echo "0")
-            
+
             if [ "$(echo "$PR_MEM > $BASE_MEM * 1.2" | bc)" -eq 1 ]; then
               echo "memory_regression=true" >> $GITHUB_OUTPUT
               echo "pr_memory=$PR_MEM" >> $GITHUB_OUTPUT
@@ -222,21 +222,21 @@ jobs:
             const fs = require('fs');
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             const regressionCritical = '${{ steps.compare.outputs.regression_critical }}' !== '0';
             const memoryRegression = '${{ steps.memory.outputs.memory_regression }}' === 'true';
             const prMemory = '${{ steps.memory.outputs.pr_memory }}';
             const baseMemory = '${{ steps.memory.outputs.base_memory }}';
-            
+
             let comparisonData = { regressions: [], improvements: [] };
             try {
               comparisonData = JSON.parse(fs.readFileSync('comparison.json', 'utf8'));
             } catch (error) {
               console.log('Could not read comparison data');
             }
-            
+
             const emoji = regressionCritical ? '❌' : memoryRegression ? '⚠️' : '✅';
-            
+
             let regressionsTable = '';
             if (comparisonData.regressions.length > 0) {
               regressionsTable = [
@@ -245,13 +245,13 @@ jobs:
                 '',
                 '| Benchmark | Base (ms) | PR (ms) | Change |',
                 '|-----------|-----------|---------|--------|',
-                ...comparisonData.regressions.slice(0, 10).map(r => 
+                ...comparisonData.regressions.slice(0, 10).map(r =>
                   `| ${r.name} | ${(r.base * 1000).toFixed(2)} | ${(r.pr * 1000).toFixed(2)} | 🔴 +${r.change.toFixed(1)}% |`
                 ),
                 ''
               ].join('\n');
             }
-            
+
             let improvementsTable = '';
             if (comparisonData.improvements.length > 0) {
               improvementsTable = [
@@ -260,13 +260,13 @@ jobs:
                 '',
                 '| Benchmark | Base (ms) | PR (ms) | Change |',
                 '|-----------|-----------|---------|--------|',
-                ...comparisonData.improvements.slice(0, 10).map(i => 
+                ...comparisonData.improvements.slice(0, 10).map(i =>
                   `| ${i.name} | ${(i.base * 1000).toFixed(2)} | ${(i.pr * 1000).toFixed(2)} | 🟢 -${i.change.toFixed(1)}% |`
                 ),
                 ''
               ].join('\n');
             }
-            
+
             const memorySection = prMemory !== 'N/A' ? [
               '',
               '### Memory Usage',
@@ -275,7 +275,7 @@ jobs:
               memoryRegression ? '- ⚠️  Memory usage increased by >20%' : '- ✅ Memory usage within acceptable range',
               ''
             ].join('\n') : '';
-            
+
             const body = [
               `## ${emoji} Performance Regression Analysis`,
               '',
@@ -284,9 +284,9 @@ jobs:
               `- **Improvements:** ${comparisonData.improvements.length}`,
               `- **Memory Status:** ${memoryRegression ? '⚠️  Increased' : '✅ OK'}`,
               '',
-              regressionCritical 
-                ? '❌ **Critical performance regression detected (>25% slowdown)**' 
-                : comparisonData.regressions.length > 0 
+              regressionCritical
+                ? '❌ **Critical performance regression detected (>25% slowdown)**'
+                : comparisonData.regressions.length > 0
                   ? '⚠️  **Minor performance regressions detected**'
                   : '✅ **No significant performance regressions**',
               regressionsTable,
@@ -302,19 +302,19 @@ jobs:
               '---',
               `*Last updated: ${new Date().toISOString()}*`
             ].join('\n');
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('Performance Regression Analysis')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,

@@ -102,7 +102,7 @@ jobs:
           python - <<'PY' "$scan_output"
           import json
           import sys
-          
+
           path = sys.argv[1]
           data = json.loads(open(path, encoding="utf-8").read())
           results = data.get("results", {})
@@ -519,13 +519,13 @@ jobs:
           import copy
           import sys
           from pathlib import Path
-          
+
           import yaml
-          
+
           manifest_path = Path(sys.argv[1])
           documents = list(yaml.safe_load_all(manifest_path.read_text()))
           output_documents = []
-          
+
           for document in documents:
               if not isinstance(document, dict):
                   continue
@@ -558,7 +558,7 @@ jobs:
                               "value": "canary"
                           })
                   output_documents.append(canary)
-          
+
           manifest_path.write_text("---\n".join(yaml.safe_dump(doc, sort_keys=False) for doc in output_documents), encoding="utf-8")
           PY
           echo "manifest=$temp_dir/manifest.yaml" >>"$GITHUB_OUTPUT"
@@ -718,7 +718,7 @@ jobs:
           mkdir -p audit
           cat <<'REPORT' > audit/summary.md
           # TradePulse CI/CD Audit Summary
-          
+
           - Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           - Commit: ${{ github.sha }}
           - Trigger: ${{ github.event_name }}
@@ -731,7 +731,7 @@ jobs:
           - Vulnerability scan: ${{ needs.vulnerability-scan.result || 'skipped' }}
           - Deployment: ${{ needs.deploy-canary.result || 'skipped' }}
           - Progressive rollout: ${{ needs.progressive-rollout.result || 'skipped' }}
-          
+
           REPORT
 
       - name: Upload audit summary

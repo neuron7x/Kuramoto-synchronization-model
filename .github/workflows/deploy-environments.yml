@@ -255,15 +255,15 @@ jobs:
           import copy
           import sys
           from pathlib import Path
-          
+
           import yaml
-          
+
           source_path = Path(sys.argv[1])
           dest_path = Path(sys.argv[2])
-          
+
           documents = list(yaml.safe_load_all(source_path.read_text()))
           output_docs = []
-          
+
           for doc in documents:
               if not isinstance(doc, dict):
                   continue
@@ -276,24 +276,24 @@ jobs:
               metadata["labels"]["app.kubernetes.io/instance"] = "canary"
               metadata.setdefault("annotations", {})
               metadata["annotations"]["tradepulse.io/canary"] = "true"
-          
+
               spec = canary.setdefault("spec", {})
               spec["replicas"] = 1
               selector = spec.setdefault("selector", {}).setdefault("matchLabels", {})
               selector["app.kubernetes.io/instance"] = "canary"
               selector["app.kubernetes.io/track"] = "canary"
-          
+
               template = spec.setdefault("template", {})
               template_metadata = template.setdefault("metadata", {})
               template_labels = template_metadata.setdefault("labels", {})
               template_labels["app.kubernetes.io/instance"] = "canary"
               template_labels["app.kubernetes.io/track"] = "canary"
-          
+
               output_docs.append(canary)
-          
+
           if not output_docs:
               raise SystemExit("Failed to generate canary deployment from manifest")
-          
+
           dest_path.write_text("\n---\n".join(yaml.safe_dump(doc) for doc in output_docs))
           PY
           kubectl apply -n tradepulse-staging -f "$canary_manifest" --server-side --force-conflicts
@@ -450,15 +450,15 @@ jobs:
           import copy
           import sys
           from pathlib import Path
-          
+
           import yaml
-          
+
           source_path = Path(sys.argv[1])
           dest_path = Path(sys.argv[2])
-          
+
           documents = list(yaml.safe_load_all(source_path.read_text()))
           output_docs = []
-          
+
           for doc in documents:
               if not isinstance(doc, dict):
                   continue
@@ -471,24 +471,24 @@ jobs:
               metadata["labels"]["app.kubernetes.io/instance"] = "canary"
               metadata.setdefault("annotations", {})
               metadata["annotations"]["tradepulse.io/canary"] = "true"
-          
+
               spec = canary.setdefault("spec", {})
               spec["replicas"] = 1
               selector = spec.setdefault("selector", {}).setdefault("matchLabels", {})
               selector["app.kubernetes.io/instance"] = "canary"
               selector["app.kubernetes.io/track"] = "canary"
-          
+
               template = spec.setdefault("template", {})
               template_metadata = template.setdefault("metadata", {})
               template_labels = template_metadata.setdefault("labels", {})
               template_labels["app.kubernetes.io/instance"] = "canary"
               template_labels["app.kubernetes.io/track"] = "canary"
-          
+
               output_docs.append(canary)
-          
+
           if not output_docs:
               raise SystemExit("Failed to generate canary deployment from manifest")
-          
+
           dest_path.write_text("\n---\n".join(yaml.safe_dump(doc) for doc in output_docs))
           PY
           kubectl apply -n tradepulse-production -f "$canary_manifest" --server-side --force-conflicts
@@ -553,7 +553,7 @@ jobs:
             ROLE_ARN="${AWS_STAGING_ROLE_ARN:-}"
             CLUSTER_NAME="${AWS_STAGING_CLUSTER_NAME:-}"
           fi
-          
+
           if [ -n "${AWS_REGION:-}" ] && [ -n "${ROLE_ARN}" ] && [ -n "${CLUSTER_NAME}" ]; then
             echo "can_deploy=true" >> $GITHUB_OUTPUT
             echo "✅ Rollback deployment credentials are configured for ${ENVIRONMENT}"

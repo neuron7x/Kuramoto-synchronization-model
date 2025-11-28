@@ -24,7 +24,7 @@ jobs:
     name: Generate SLSA Provenance
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'release'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -42,7 +42,7 @@ jobs:
           curl -sSL https://github.com/slsa-framework/slsa-verifier/releases/download/v2.5.1/slsa-verifier-linux-amd64 -o slsa-verifier
           chmod +x slsa-verifier
           sudo mv slsa-verifier /usr/local/bin/
-          
+
           # Install cosign for artifact signing
           curl -sSL https://github.com/sigstore/cosign/releases/download/v2.2.2/cosign-linux-amd64 -o cosign
           chmod +x cosign
@@ -88,7 +88,7 @@ jobs:
             }
           }
           EOF
-          
+
           echo "Generated SLSA provenance metadata"
           cat provenance.json
 
@@ -100,7 +100,7 @@ jobs:
           cosign sign-blob --yes provenance.json \
             --output-signature provenance.json.sig \
             --output-certificate provenance.json.cert
-          
+
           echo "✓ Provenance signed with Sigstore"
 
       - name: Upload provenance artifacts

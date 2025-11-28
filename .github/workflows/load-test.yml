@@ -56,7 +56,7 @@ jobs:
               if .venv/bin/python - <<'PY'
           import grpc
           from loadtests.proto import trading_pb2, trading_pb2_grpc
-          
+
           channel = grpc.insecure_channel("127.0.0.1:50051")
           try:
               stub = trading_pb2_grpc.TradingServiceStub(channel)

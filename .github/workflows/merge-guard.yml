@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     name: Merge Guard Quality Check
-    
+
     steps:
       - name: Check PR labels
         id: check_labels
@@ -36,27 +36,27 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             const { data: labels } = await github.rest.issues.listLabelsOnIssue({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
+
             const labelNames = labels.map(l => l.name);
             const hasQualityGateFailed = labelNames.includes('quality-gate-failed');
             const hasMissingCoverage = labelNames.includes('missing-coverage');
             const hasHighRisk = labelNames.includes('risk: high');
-            
+
             console.log('Labels:', labelNames);
             console.log('Quality gate failed:', hasQualityGateFailed);
             console.log('Missing coverage:', hasMissingCoverage);
             console.log('High risk:', hasHighRisk);
-            
+
             core.setOutput('quality_gate_failed', hasQualityGateFailed);
             core.setOutput('missing_coverage', hasMissingCoverage);
             core.setOutput('high_risk', hasHighRisk);
-            
+
             return {
               blocked: hasQualityGateFailed,
               warning: hasMissingCoverage || hasHighRisk,
@@ -69,23 +69,23 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const ref = context.payload.pull_request.head.sha;
-            
+
             // Get all check runs for this commit
             const { data: checkRuns } = await github.rest.checks.listForRef({
               owner,
               repo,
               ref,
             });
-            
+
             const requiredChecks = [
               'Aggregate coverage & enforce guardrail',
               'Mutation Testing Gate (90% kill rate)',
             ];
-            
+
             const checkStatus = {};
             let allPassed = true;
             let anyFailed = false;
-            
+
             for (const checkName of requiredChecks) {
               const check = checkRuns.check_runs.find(c => c.name === checkName);
               if (check) {
@@ -101,11 +101,11 @@ jobs:
                 allPassed = false;
               }
             }
-            
+
             console.log('Check status:', checkStatus);
             core.setOutput('all_passed', allPassed);
             core.setOutput('any_failed', anyFailed);
-            
+
             return checkStatus;
 
       - name: Block merge if quality gates failed
@@ -128,16 +128,16 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             const qualityGateFailed = '${{ steps.check_labels.outputs.quality_gate_failed }}' === 'true';
             const anyWorkflowFailed = '${{ steps.check_workflows.outputs.any_failed }}' === 'true';
             const allPassed = '${{ steps.check_workflows.outputs.all_passed }}' === 'true';
             const highRisk = '${{ steps.check_labels.outputs.high_risk }}' === 'true';
-            
+
             let statusEmoji = '⚠️';
             let statusText = 'PENDING';
             let message = 'Waiting for quality checks to complete...';
-            
+
             if (qualityGateFailed || anyWorkflowFailed) {
               statusEmoji = '❌';
               statusText = 'BLOCKED';
@@ -151,9 +151,9 @@ jobs:
               statusText = 'APPROVED WITH CAUTION';
               message = 'Quality gates passed, but this is a **high-risk** change. Please ensure thorough review before merging.';
             }
-            
+
             const highRiskLine = highRisk ? '- ⚠️ High-risk change detected - senior review recommended' : '';
-            
+
             const bodyLines = [
               `## ${statusEmoji} Merge Guard Status: ${statusText}`,
               '',
@@ -164,29 +164,29 @@ jobs:
               `- ${allPassed ? '✅' : '⏳'} Mutation kill rate ≥ 90%`,
               `- ${!anyWorkflowFailed ? '✅' : '❌'} All quality checks passed`
             ];
-            
+
             if (highRiskLine) {
               bodyLines.push(highRiskLine);
             }
-            
+
             bodyLines.push('');
             bodyLines.push('---');
             bodyLines.push('*This check is automatically updated when commits are pushed.*');
-            
+
             const body = bodyLines.join('\n');
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('Merge Guard Status')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,

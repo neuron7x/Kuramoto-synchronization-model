@@ -32,7 +32,7 @@ jobs:
     # Skip if Dependency graph is not enabled in repository settings
     continue-on-error: true
 
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -78,15 +78,15 @@ jobs:
         id: python_licenses
         run: |
           pip install -r requirements.txt
-          
+
           # Generate license report
           pip-licenses --format=json --output-file=python-licenses.json
           pip-licenses --format=markdown --output-file=python-licenses.md
-          
+
           # Check for problematic licenses (GPL-3.0, AGPL, SSPL are copyleft)
           # Note: LGPL is permissive for libraries and is allowed
           PROBLEMATIC=$(pip-licenses --format=json | jq -r '.[] | select(.License | test("^GPL-3|AGPL|SSPL") and (.License | test("LGPL") | not)) | .Name' || echo "")
-          
+
           if [ -n "$PROBLEMATIC" ]; then
             echo "problematic=true" >> $GITHUB_OUTPUT
             # Use printf to handle multiline output safely
@@ -102,11 +102,11 @@ jobs:
         run: |
           # Check if any internal package names could conflict with public PyPI
           # This helps prevent dependency confusion attacks
-          
+
           INTERNAL_PACKAGES="tradepulse,neurotrade_pro,hydrobrain_v2"
-          
+
           echo "Checking for dependency confusion risks..."
-          
+
           CONFUSION_RISK=false
           for pkg in $(echo $INTERNAL_PACKAGES | tr ',' '\n'); do
             # Check if package exists on PyPI
@@ -118,7 +118,7 @@ jobs:
               echo "✓ Internal package '$pkg' not found on public PyPI"
             fi
           done
-          
+
           if [ "$CONFUSION_RISK" = "true" ]; then
             echo "confusion_risk=true" >> $GITHUB_OUTPUT
             echo ""
@@ -134,15 +134,15 @@ jobs:
         run: |
           # Use pip-audit to check for known malicious packages
           pip install pip-audit
-          
+
           pip-audit --desc --format json -o malicious-packages-report.json || {
             echo "⚠️  pip-audit scan completed with warnings"
           }
-          
+
           # Filter for malicious packages specifically
           if [ -f malicious-packages-report.json ]; then
             MALICIOUS=$(jq '[.dependencies[] // empty | select(.vulns[] | .aliases[]? // empty | test("MAL|MALWARE"))] | length' malicious-packages-report.json 2>/dev/null || echo "0")
-            
+
             if [ "$MALICIOUS" -gt 0 ]; then
               echo "❌ Found $MALICIOUS potentially malicious packages"
               jq -r '.dependencies[] // empty | select(.vulns[] | .aliases[]? // empty | test("MAL|MALWARE")) | "  - \(.name) \(.version)"' malicious-packages-report.json
@@ -170,15 +170,15 @@ jobs:
             const fs = require('fs');
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             const problematic = '${{ steps.python_licenses.outputs.problematic }}' === 'true';
             const confusionRisk = '${{ steps.confusion_scan.outputs.confusion_risk }}' === 'true';
             const problematicLicenses = '${{ steps.python_licenses.outputs.licenses }}' || 'None';
-            
+
             const emoji = !problematic && !confusionRisk ? '✅' : '❌';
-            
+
             let licenseTable = '| Package | License | Status |\n|---------|---------|--------|\n';
-            
+
             try {
               const licenseData = JSON.parse(fs.readFileSync('python-licenses.json', 'utf8'));
               licenseData.slice(0, 10).forEach(pkg => {
@@ -189,18 +189,18 @@ jobs:
             } catch (error) {
               licenseTable += '*License data not available*\n';
             }
-            
+
             const body = [
               `## ${emoji} License Compliance & Dependency Security`,
               '',
               '### License Compliance Status',
-              problematic 
-                ? `❌ **Problematic licenses detected:** ${problematicLicenses}` 
+              problematic
+                ? `❌ **Problematic licenses detected:** ${problematicLicenses}`
                 : '✅ **All licenses compliant**',
               '',
               '### Dependency Security',
-              confusionRisk 
-                ? '❌ **Dependency confusion risk detected** - internal package names found on public PyPI' 
+              confusionRisk
+                ? '❌ **Dependency confusion risk detected** - internal package names found on public PyPI'
                 : '✅ **No dependency confusion risk**',
               '',
               '### Top Dependencies',
@@ -221,19 +221,19 @@ jobs:
               '---',
               `*Last updated: ${new Date().toISOString()}*`
             ].filter(line => line !== '').join('\n');
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('License Compliance & Dependency Security')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,
