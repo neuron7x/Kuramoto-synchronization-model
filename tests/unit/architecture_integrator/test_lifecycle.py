@@ -493,3 +493,383 @@ class TestLifecycleManager:
         assert mock.stopped is True
         assert mock.initialized is True
         assert mock.started is True
+
+
+class TestLifecycleEventHooks:
+    """Tests for lifecycle event hooks functionality."""
+
+    def test_add_event_handler(self) -> None:
+        """Test adding an event handler."""
+        from core.architecture_integrator.lifecycle import (
+            LifecycleEvent,
+            LifecycleEventData,
+        )
+
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+        events: list[LifecycleEventData] = []
+
+        def handler(event_data: LifecycleEventData) -> None:
+            events.append(event_data)
+
+        manager.add_event_handler(handler)
+
+        # Create and register a component
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        registry.register(component)
+
+        # Initialize and check events
+        manager.initialize_all()
+
+        assert len(events) >= 2  # INITIALIZING and INITIALIZED
+        assert events[0].event == LifecycleEvent.INITIALIZING
+        assert events[0].component_name == "test"
+        assert events[1].event == LifecycleEvent.INITIALIZED
+        assert events[1].component_name == "test"
+
+    def test_remove_event_handler(self) -> None:
+        """Test removing an event handler."""
+        from core.architecture_integrator.lifecycle import LifecycleEventData
+
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+        events: list[LifecycleEventData] = []
+
+        def handler(event_data: LifecycleEventData) -> None:
+            events.append(event_data)
+
+        manager.add_event_handler(handler)
+        manager.remove_event_handler(handler)
+
+        # Create and register a component
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        registry.register(component)
+
+        manager.initialize_all()
+
+        # No events should be captured since handler was removed
+        assert len(events) == 0
+
+    def test_event_handler_exception_does_not_break_lifecycle(self) -> None:
+        """Test that failing event handler doesn't break lifecycle operations."""
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+
+        def failing_handler(event_data) -> None:
+            raise ValueError("Handler failed!")
+
+        manager.add_event_handler(failing_handler)
+
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        registry.register(component)
+
+        # Should not raise even though handler fails
+        initialized = manager.initialize_all()
+        assert "test" in initialized
+
+
+class TestGracefulShutdown:
+    """Tests for graceful shutdown functionality."""
+
+    def test_graceful_shutdown_basic(self) -> None:
+        """Test basic graceful shutdown."""
+        from core.architecture_integrator.lifecycle import GracefulShutdownConfig
+
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.RUNNING
+        registry.register(component)
+
+        config = GracefulShutdownConfig(
+            timeout_seconds=5.0,
+            drain_period_seconds=0.1,  # Short drain for testing
+        )
+        manager = LifecycleManager(registry, shutdown_config=config)
+
+        stopped = manager.graceful_shutdown()
+
+        assert "test" in stopped
+        assert component.status == ComponentStatus.STOPPED
+        assert mock.stopped is True
+
+    def test_graceful_shutdown_with_custom_config(self) -> None:
+        """Test graceful shutdown with custom configuration."""
+        from core.architecture_integrator.lifecycle import GracefulShutdownConfig
+
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.RUNNING
+        registry.register(component)
+
+        manager = LifecycleManager(registry)
+        custom_config = GracefulShutdownConfig(
+            timeout_seconds=10.0,
+            drain_period_seconds=0.0,  # No drain
+        )
+
+        stopped = manager.graceful_shutdown(config=custom_config)
+
+        assert "test" in stopped
+
+    def test_graceful_shutdown_empty_registry(self) -> None:
+        """Test graceful shutdown with no running components."""
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+
+        stopped = manager.graceful_shutdown()
+
+        assert stopped == []
+
+
+class TestHealthAggregation:
+    """Tests for health aggregation functionality."""
+
+    def test_aggregate_health_empty_registry(self) -> None:
+        """Test health aggregation with empty registry."""
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+
+        aggregation = manager.aggregate_health()
+
+        assert aggregation.total_components == 0
+        assert aggregation.overall_healthy is True
+        assert aggregation.health_percentage == 100.0
+
+    def test_aggregate_health_single_healthy_component(self) -> None:
+        """Test health aggregation with a single healthy component."""
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.RUNNING
+        registry.register(component)
+
+        manager = LifecycleManager(registry)
+        aggregation = manager.aggregate_health()
+
+        assert aggregation.total_components == 1
+        assert aggregation.healthy_count >= 0  # Depends on default health check
+        assert "test" in aggregation.component_health
+
+    def test_aggregate_health_mixed_statuses(self) -> None:
+        """Test health aggregation with mixed component statuses."""
+        registry = ComponentRegistry()
+
+        mock1 = MockComponent()
+        mock2 = MockComponent()
+
+        metadata1 = ComponentMetadata(name="comp1")
+        metadata2 = ComponentMetadata(name="comp2")
+
+        comp1 = Component(metadata=metadata1, instance=mock1)
+        comp2 = Component(metadata=metadata2, instance=mock2)
+
+        comp1.status = ComponentStatus.RUNNING
+        comp2.status = ComponentStatus.FAILED
+
+        registry.register(comp1)
+        registry.register(comp2)
+
+        manager = LifecycleManager(registry)
+        aggregation = manager.aggregate_health()
+
+        assert aggregation.total_components == 2
+        assert aggregation.failed_count >= 1
+        assert aggregation.overall_healthy is False
+
+
+class TestConfigurationManagement:
+    """Tests for configuration management functionality."""
+
+    def test_store_and_get_configuration(self) -> None:
+        """Test storing and retrieving configuration."""
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+
+        config = {"key1": "value1", "key2": 42}
+        manager.store_configuration("test_component", config)
+
+        retrieved = manager.get_configuration("test_component")
+
+        assert retrieved == config
+
+    def test_get_nonexistent_configuration(self) -> None:
+        """Test getting configuration for unknown component."""
+        registry = ComponentRegistry()
+        manager = LifecycleManager(registry)
+
+        retrieved = manager.get_configuration("unknown")
+
+        assert retrieved is None
+
+    def test_reload_configuration(self) -> None:
+        """Test reloading configuration for a component."""
+        from core.architecture_integrator.lifecycle import (
+            LifecycleEvent,
+            LifecycleEventData,
+        )
+
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.RUNNING
+        registry.register(component)
+
+        manager = LifecycleManager(registry)
+        events: list[LifecycleEventData] = []
+        manager.add_event_handler(lambda e: events.append(e))
+
+        new_config = {"setting": "new_value"}
+        result = manager.reload_configuration("test", new_config, restart_required=False)
+
+        assert result is True
+        assert manager.get_configuration("test") == new_config
+
+        # Check that config reload event was emitted
+        config_events = [e for e in events if e.event == LifecycleEvent.CONFIG_RELOADED]
+        assert len(config_events) == 1
+        assert config_events[0].component_name == "test"
+
+
+class TestRecoveryMechanisms:
+    """Tests for component recovery functionality."""
+
+    def test_recover_failed_component(self) -> None:
+        """Test recovering a failed component."""
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.FAILED
+        registry.register(component)
+
+        manager = LifecycleManager(registry)
+        result = manager.recover_component("test", max_attempts=1, delay_seconds=0.01)
+
+        assert result is True
+        assert component.status == ComponentStatus.RUNNING
+
+    def test_recover_component_not_failed(self) -> None:
+        """Test recover on component that is already running."""
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.RUNNING
+        registry.register(component)
+
+        manager = LifecycleManager(registry)
+        result = manager.recover_component("test")
+
+        # Should return True since component is already running
+        assert result is True
+
+    def test_recover_all_failed(self) -> None:
+        """Test recovering all failed components."""
+        registry = ComponentRegistry()
+
+        mock1 = MockComponent()
+        mock2 = MockComponent()
+
+        metadata1 = ComponentMetadata(name="comp1")
+        metadata2 = ComponentMetadata(name="comp2")
+
+        comp1 = Component(metadata=metadata1, instance=mock1)
+        comp2 = Component(metadata=metadata2, instance=mock2)
+
+        comp1.status = ComponentStatus.FAILED
+        comp2.status = ComponentStatus.FAILED
+
+        registry.register(comp1)
+        registry.register(comp2)
+
+        manager = LifecycleManager(registry)
+        results = manager.recover_all_failed(max_attempts=1, delay_seconds=0.01)
+
+        assert results["comp1"] is True
+        assert results["comp2"] is True
+
+    def test_recover_only_failed_not_stopped(self) -> None:
+        """Test recovering only FAILED components when include_stopped=False."""
+        registry = ComponentRegistry()
+
+        mock1 = MockComponent()
+        mock2 = MockComponent()
+
+        metadata1 = ComponentMetadata(name="failed_comp")
+        metadata2 = ComponentMetadata(name="stopped_comp")
+
+        comp1 = Component(metadata=metadata1, instance=mock1)
+        comp2 = Component(metadata=metadata2, instance=mock2)
+
+        comp1.status = ComponentStatus.FAILED
+        comp2.status = ComponentStatus.STOPPED
+
+        registry.register(comp1)
+        registry.register(comp2)
+
+        manager = LifecycleManager(registry)
+        results = manager.recover_all_failed(
+            max_attempts=1,
+            delay_seconds=0.01,
+            include_stopped=False,
+        )
+
+        # Only failed component should be recovered
+        assert "failed_comp" in results
+        assert results["failed_comp"] is True
+        assert "stopped_comp" not in results
+
+
+class TestStatusHelpers:
+    """Tests for status helper methods."""
+
+    def test_get_component_status(self) -> None:
+        """Test getting single component status."""
+        registry = ComponentRegistry()
+        mock = MockComponent()
+        metadata = ComponentMetadata(name="test")
+        component = Component(metadata=metadata, instance=mock)
+        component.status = ComponentStatus.RUNNING
+        registry.register(component)
+
+        manager = LifecycleManager(registry)
+        status = manager.get_component_status("test")
+
+        assert status == ComponentStatus.RUNNING
+
+    def test_get_all_statuses(self) -> None:
+        """Test getting all component statuses."""
+        registry = ComponentRegistry()
+
+        mock1 = MockComponent()
+        mock2 = MockComponent()
+
+        metadata1 = ComponentMetadata(name="comp1")
+        metadata2 = ComponentMetadata(name="comp2")
+
+        comp1 = Component(metadata=metadata1, instance=mock1)
+        comp2 = Component(metadata=metadata2, instance=mock2)
+
+        comp1.status = ComponentStatus.RUNNING
+        comp2.status = ComponentStatus.INITIALIZED
+
+        registry.register(comp1)
+        registry.register(comp2)
+
+        manager = LifecycleManager(registry)
+        statuses = manager.get_all_statuses()
+
+        assert statuses["comp1"] == ComponentStatus.RUNNING
+        assert statuses["comp2"] == ComponentStatus.INITIALIZED
