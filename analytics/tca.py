@@ -686,14 +686,14 @@ class TransactionCostAnalyzer:
             fills_by_bucket.setdefault(bucket, []).append(fill)
 
         volume_by_bucket: MutableMapping[float, float] = {}
-        for sample in market_volumes:
-            bucket = _bucket_key(sample.timestamp, self._bucket_seconds)
-            volume_by_bucket[bucket] = volume_by_bucket.get(bucket, 0.0) + sample.volume
+        for volume_sample in market_volumes:
+            bucket = _bucket_key(volume_sample.timestamp, self._bucket_seconds)
+            volume_by_bucket[bucket] = volume_by_bucket.get(bucket, 0.0) + volume_sample.volume
 
         benchmark_by_bucket: MutableMapping[float, list[BenchmarkPriceSample]] = {}
-        for sample in benchmarks:
-            bucket = _bucket_key(sample.timestamp, self._bucket_seconds)
-            benchmark_by_bucket.setdefault(bucket, []).append(sample)
+        for benchmark_sample in benchmarks:
+            bucket = _bucket_key(benchmark_sample.timestamp, self._bucket_seconds)
+            benchmark_by_bucket.setdefault(bucket, []).append(benchmark_sample)
 
         side_factor = 1.0 if side == "buy" else -1.0
         periodic_records: list[PeriodicTCARecord] = []
