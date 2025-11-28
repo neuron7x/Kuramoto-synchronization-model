@@ -1005,7 +1005,7 @@ class LiveExecutionLoop:
 
             last_seen = self._last_stream_event.get(context.name)
             if last_seen is None:
-                return False
+                return True  # Trust healthy stream even if no events seen yet
 
             silence = monotonic() - last_seen
             if silence >= self._config.fill_poll_interval:
