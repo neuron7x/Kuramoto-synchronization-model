@@ -14,13 +14,13 @@ LOGGER = logging.getLogger(__name__)
 
 def _slots_to_dict(obj: Any) -> dict[str, Any]:
     """Convert a slotted dataclass to a dictionary.
-    
+
     Args:
         obj: A dataclass instance to convert.
-        
+
     Returns:
         Dictionary representation of the dataclass fields.
-        
+
     Raises:
         TypeError: If the object is not a dataclass.
     """
@@ -262,7 +262,8 @@ class MiFID2Reporter:
 
     def _analyse_market_abuse(self, entry: OrderAuditTrail) -> None:
         payload = entry.payload
-        size = float(payload.get("size", 0))
+        raw_size = payload.get("size", 0)
+        size = float(raw_size) if isinstance(raw_size, (int, float, str)) else 0.0
         if size <= 0:
             return
         if payload.get("action") == "cancel" and size > 1_000_000:

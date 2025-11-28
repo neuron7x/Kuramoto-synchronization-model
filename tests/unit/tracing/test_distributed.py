@@ -3,10 +3,7 @@
 
 from __future__ import annotations
 
-import re
-import uuid
-from typing import Any, Dict, MutableMapping
-from unittest.mock import MagicMock, patch
+from typing import Any, Dict
 
 import pytest
 
@@ -384,7 +381,7 @@ class TestStartDistributedSpan:
         with start_distributed_span(
             "test-span",
             attributes={"custom.attr": "value"},
-        ) as span:
+        ):
             # Just verify it doesn't raise
             pass
 
