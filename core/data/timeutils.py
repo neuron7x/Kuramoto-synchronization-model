@@ -116,7 +116,10 @@ class MarketCalendar:
         local_time = convert_timestamp(when, self.market)
         if self.holidays is not None and local_time.date() in self.holidays:
             return False
-        if self.weekend_closure is not None and local_time.weekday() in self.weekend_closure:
+        if (
+            self.weekend_closure is not None
+            and local_time.weekday() in self.weekend_closure
+        ):
             return False
         current_time = local_time.time()
         if self.open_time <= self.close_time:

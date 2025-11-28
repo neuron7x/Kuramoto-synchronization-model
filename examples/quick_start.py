@@ -79,7 +79,15 @@ def load_csv_data(csv_path: str, price_col: str = "close") -> pd.DataFrame:
         )
 
     # Try to parse datetime index
-    date_cols = ["date", "datetime", "timestamp", "time", "Date", "DateTime", "Timestamp"]
+    date_cols = [
+        "date",
+        "datetime",
+        "timestamp",
+        "time",
+        "Date",
+        "DateTime",
+        "Timestamp",
+    ]
     for col in date_cols:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col])
@@ -103,6 +111,7 @@ def load_csv_data(csv_path: str, price_col: str = "close") -> pd.DataFrame:
 
     if validation.warnings:
         import sys
+
         for warning in validation.warnings:
             print(f"⚠️  Data warning: {warning}", file=sys.stderr)
 
@@ -165,7 +174,8 @@ Examples:
         help="Random seed for reproducible synthetic data generation",
     )
     parser.add_argument(
-        "-n", "--num-points",
+        "-n",
+        "--num-points",
         type=int,
         default=1500,
         help="Number of data points to generate for synthetic data (default: 1500)",
@@ -187,7 +197,9 @@ Examples:
 
         # Validate data
         if len(df) < 200:
-            print(f"Warning: Only {len(df)} data points. Recommend at least 200 for reliable analysis.")
+            print(
+                f"Warning: Only {len(df)} data points. Recommend at least 200 for reliable analysis."
+            )
 
         # Analyze
         print("\n=== TradePulse Market Analysis ===")

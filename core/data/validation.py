@@ -214,7 +214,9 @@ def validate_ohlcv(
         nan_ratio = nan_count / len(df)
         if nan_ratio > 0.05:
             result.valid = False
-            result.issues.append(f"{nan_count} NaN values in {price_col} ({nan_ratio:.1%})")
+            result.issues.append(
+                f"{nan_count} NaN values in {price_col} ({nan_ratio:.1%})"
+            )
         else:
             result.warnings.append(f"{nan_count} NaN values in {price_col}")
 
@@ -239,7 +241,9 @@ def validate_ohlcv(
         (low_col, "low"),
         (price_col, "close"),
     ]
-    available_cols = {name: label for name, label in ohlc_cols if name and name in df.columns}
+    available_cols = {
+        name: label for name, label in ohlc_cols if name and name in df.columns
+    }
 
     if len(available_cols) == 4 and high_col and low_col:
         # Check high >= low

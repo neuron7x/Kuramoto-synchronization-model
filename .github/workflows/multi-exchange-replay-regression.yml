@@ -31,7 +31,7 @@ jobs:
     name: Multi-Exchange Replay Regression
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -110,7 +110,7 @@ jobs:
             # Parse JSON to check for failures
             failed=$(python -c "import json; data=json.load(open('.ci_artifacts/multi-exchange-replay/performance_report.json')); print(data.get('summary', {}).get('failed', 0))")
             echo "failed_count=$failed" >> $GITHUB_OUTPUT
-            
+
             if [ "$failed" -gt "0" ]; then
               echo "⚠️ Performance regressions detected: $failed test(s) failed" >> $GITHUB_STEP_SUMMARY
               exit 1
@@ -125,7 +125,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 20
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -165,7 +165,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 2 * * *'
     timeout-minutes: 30
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5

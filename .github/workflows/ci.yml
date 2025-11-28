@@ -147,7 +147,7 @@ jobs:
     timeout-minutes: 60
     needs: coverage-aggregate
     name: Mutation Testing Gate (90% kill rate)
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5

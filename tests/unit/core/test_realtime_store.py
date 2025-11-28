@@ -3,11 +3,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any, Mapping
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -222,7 +220,9 @@ class TestFeatureRecord:
         assert record.event_ts == datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
         assert record.lineage is None
 
-    def test_from_redis_payload_with_lineage(self, descriptor: FeatureDescriptor) -> None:
+    def test_from_redis_payload_with_lineage(
+        self, descriptor: FeatureDescriptor
+    ) -> None:
         """Verify from_redis_payload parses lineage correctly."""
         lineage_data = {
             "sources": ["src1"],
@@ -350,7 +350,7 @@ class TestTTLCache:
 
         # Set records with varying TTLs - earliest expiry will be evicted first
         # Using significantly different TTLs to ensure deterministic eviction order
-        await cache.set("key1", record1, ttl_ms=100)   # Shortest TTL, earliest expiry
+        await cache.set("key1", record1, ttl_ms=100)  # Shortest TTL, earliest expiry
         await cache.set("key2", record2, ttl_ms=5000)  # Longer TTL
 
         # This should evict key1 (earliest expiry) due to max_size=2

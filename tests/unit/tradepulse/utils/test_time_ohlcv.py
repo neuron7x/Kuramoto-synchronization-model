@@ -176,7 +176,9 @@ class TestResampleOHLCV:
 
         result = resample_ohlcv(df, "2min")
 
-        assert list(result.index) == list(pd.date_range(dates[0], dates[-1], freq="2min"))
+        assert list(result.index) == list(
+            pd.date_range(dates[0], dates[-1], freq="2min")
+        )
         assert result.iloc[0]["open"] == 100.0
         assert result.iloc[0]["close"] == 101.5
         assert result.iloc[0]["volume"] == 2100

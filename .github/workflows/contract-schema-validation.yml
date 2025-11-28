@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     name: Contract & Schema Validation
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -112,15 +112,15 @@ jobs:
           try:
               with open(results_file, encoding="utf-8") as f:
                   data = json.load(f)
-              
+
               summary = data.get("summary", {})
               passed = summary.get("passed", 0)
               failed = summary.get("failed", 0)
               skipped = summary.get("skipped", 0)
               total = summary.get("total", 0)
-              
+
               status = "✅" if failed == 0 else "❌"
-              
+
               output = [
                   "### Contract & Schema Test Summary",
                   "",
@@ -135,16 +135,16 @@ jobs:
                   "",
                   "Contract and schema validation ensures API compatibility and data integrity.",
               ]
-              
+
               summary_text = "\n".join(output)
-              
+
               github_output = os.environ.get("GITHUB_OUTPUT")
               if github_output:
                   with open(github_output, "a", encoding="utf-8") as handle:
                       handle.write("summary<<'EOF'\n")
                       handle.write(summary_text)
                       handle.write("\nEOF\n")
-              
+
           except Exception as e:
               print(f"Error generating summary: {e}")
           PY

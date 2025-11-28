@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -30,7 +29,8 @@ class TestMarketFeedStorageImports:
         """Verify ImportError when boto3 is not installed."""
         from core.data.market_feed_storage import MarketFeedStorage
 
-        storage = MarketFeedStorage(bucket="test-bucket")
+        _storage = MarketFeedStorage(bucket="test-bucket")
+        del _storage  # Exercise lazy client initialization path
 
         with patch.dict("sys.modules", {"boto3": None}):
             with patch(
@@ -320,7 +320,9 @@ class TestMarketFeedStorageDownload:
         storage._s3_client = mock_client
 
         # Add test data
-        jsonl_data = '{"symbol": "BTCUSD", "price": 50000}\n{"symbol": "BTCUSD", "price": 50100}'
+        jsonl_data = (
+            '{"symbol": "BTCUSD", "price": 50000}\n{"symbol": "BTCUSD", "price": 50100}'
+        )
         jsonl_bytes = jsonl_data.encode("utf-8")
         checksum = hashlib.sha256(jsonl_bytes).hexdigest()
 
@@ -340,9 +342,9 @@ class TestMarketFeedStorageDownload:
         storage, mock_client = storage_with_data
 
         # Corrupt the checksum
-        mock_client.objects["feeds/test-rec.jsonl"]["Metadata"]["checksum"] = (
-            "invalid_checksum"
-        )
+        mock_client.objects["feeds/test-rec.jsonl"]["Metadata"][
+            "checksum"
+        ] = "invalid_checksum"
 
         with pytest.raises(ValueError, match="Checksum mismatch"):
             storage.download_recording("test-rec")
@@ -352,9 +354,9 @@ class TestMarketFeedStorageDownload:
         storage, mock_client = storage_with_data
 
         # Corrupt the checksum
-        mock_client.objects["feeds/test-rec.jsonl"]["Metadata"]["checksum"] = (
-            "invalid_checksum"
-        )
+        mock_client.objects["feeds/test-rec.jsonl"]["Metadata"][
+            "checksum"
+        ] = "invalid_checksum"
 
         # Patch the MarketFeedRecording class to avoid internal validation
         with patch(
@@ -441,9 +443,7 @@ class TestMarketFeedStorageFileOps:
         mock_recording = MagicMock()
         mock_recording.metadata = None
 
-        with patch.object(
-            storage, "download_recording", return_value=mock_recording
-        ):
+        with patch.object(storage, "download_recording", return_value=mock_recording):
             local_file = tmp_path / "downloaded.jsonl"
             metadata_file = tmp_path / "metadata.json"
 

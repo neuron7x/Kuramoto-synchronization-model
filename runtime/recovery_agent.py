@@ -183,7 +183,9 @@ class AdaptiveRecoveryAgent:
                 )
 
         with open(path, "rb") as fh:
-            data = RestrictedUnpickler(fh).load()  # nosec B301 - guarded by restricted unpickler
+            data = RestrictedUnpickler(
+                fh
+            ).load()  # nosec B301 - guarded by restricted unpickler
         self.Q = defaultdict(float, data)
         logger.info("Loaded Q-table entries=%s path=%s", len(self.Q), path)
 

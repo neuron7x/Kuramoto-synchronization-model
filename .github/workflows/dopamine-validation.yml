@@ -32,17 +32,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install pyyaml jsonschema
-      
+
       - name: Validate all dopamine configs
         run: |
           python tools/validate_dopamine_config.py --all
@@ -53,18 +53,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -e .
           pip install pytest pytest-cov hypothesis
-      
+
       - name: Run dopamine tests
         run: |
           pytest tests/core/neuro/dopamine/ -v
@@ -75,21 +75,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install pyyaml
-      
+
       - name: Run benchmark (informational only)
         run: |
           python benchmarks/dopamine_step_bench.py --iterations 5000 || echo "⚠️ Benchmark completed (target: 15k steps/s)"
-      
+
       - name: Benchmark summary
         if: always()
         run: |
@@ -102,17 +102,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install pyyaml
-      
+
       - name: Test migration tool
         run: |
           # Test migration from v2.2 to v1.0 (if old config exists)

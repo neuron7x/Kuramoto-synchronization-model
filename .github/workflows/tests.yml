@@ -497,7 +497,7 @@ jobs:
             ### Test & Coverage Summary (Python ${{ matrix.python-version }})
 
             **Status:** ${{ job.status == 'success' && '✅ Tests completed' || job.status == 'cancelled' && '⚪ Tests cancelled' || '❌ Tests failed' }}
-            **Coverage:** ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% lines (guardrail ≥ ${{ steps.coverage_summary.outputs.coverage_threshold || 'n/a' }}%)  
+            **Coverage:** ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% lines (guardrail ≥ ${{ steps.coverage_summary.outputs.coverage_threshold || 'n/a' }}%)
             **Risk:** ${{ steps.coverage_summary.outputs.risk_level || 'n/a' }} — ${{ steps.coverage_summary.outputs.risk_reason || 'n/a' }}
 
             **Key Links**

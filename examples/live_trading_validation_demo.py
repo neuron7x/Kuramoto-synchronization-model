@@ -60,19 +60,23 @@ class LiveTradingValidator:
     def load_config(self) -> bool:
         """Load and parse configuration file."""
         if not self.config_path:
-            self.results.append(ValidationResult(
-                name="config_load",
-                passed=False,
-                message="No configuration file specified",
-            ))
+            self.results.append(
+                ValidationResult(
+                    name="config_load",
+                    passed=False,
+                    message="No configuration file specified",
+                )
+            )
             return False
 
         if not self.config_path.exists():
-            self.results.append(ValidationResult(
-                name="config_load",
-                passed=False,
-                message=f"Configuration file not found: {self.config_path}",
-            ))
+            self.results.append(
+                ValidationResult(
+                    name="config_load",
+                    passed=False,
+                    message=f"Configuration file not found: {self.config_path}",
+                )
+            )
             return False
 
         try:
@@ -93,27 +97,33 @@ class LiveTradingValidator:
                 with open(self.config_path, "r") as f:
                     self.config = json.load(f)
             else:
-                self.results.append(ValidationResult(
-                    name="config_load",
-                    passed=False,
-                    message=f"Unsupported config format: {self.config_path.suffix}",
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name="config_load",
+                        passed=False,
+                        message=f"Unsupported config format: {self.config_path.suffix}",
+                    )
+                )
                 return False
 
-            self.results.append(ValidationResult(
-                name="config_load",
-                passed=True,
-                message=f"Configuration loaded from {self.config_path}",
-                details={"sections": list(self.config.keys())},
-            ))
+            self.results.append(
+                ValidationResult(
+                    name="config_load",
+                    passed=True,
+                    message=f"Configuration loaded from {self.config_path}",
+                    details={"sections": list(self.config.keys())},
+                )
+            )
             return True
 
         except Exception as e:
-            self.results.append(ValidationResult(
-                name="config_load",
-                passed=False,
-                message=f"Failed to load configuration: {e}",
-            ))
+            self.results.append(
+                ValidationResult(
+                    name="config_load",
+                    passed=False,
+                    message=f"Failed to load configuration: {e}",
+                )
+            )
             return False
 
     def validate_venues(self) -> bool:
@@ -121,11 +131,13 @@ class LiveTradingValidator:
         venues = self.config.get("venues", {})
 
         if not venues:
-            self.results.append(ValidationResult(
-                name="venues",
-                passed=False,
-                message="No venues configured",
-            ))
+            self.results.append(
+                ValidationResult(
+                    name="venues",
+                    passed=False,
+                    message="No venues configured",
+                )
+            )
             return False
 
         all_valid = True
@@ -135,19 +147,23 @@ class LiveTradingValidator:
             missing = [f for f in required_fields if f not in venue_config]
 
             if missing:
-                self.results.append(ValidationResult(
-                    name=f"venue_{venue_name}",
-                    passed=False,
-                    message=f"Missing required fields: {missing}",
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name=f"venue_{venue_name}",
+                        passed=False,
+                        message=f"Missing required fields: {missing}",
+                    )
+                )
                 all_valid = False
             else:
-                self.results.append(ValidationResult(
-                    name=f"venue_{venue_name}",
-                    passed=True,
-                    message=f"Venue '{venue_name}' configuration valid",
-                    details={"connector": venue_config.get("connector")},
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name=f"venue_{venue_name}",
+                        passed=True,
+                        message=f"Venue '{venue_name}' configuration valid",
+                        details={"connector": venue_config.get("connector")},
+                    )
+                )
 
         return all_valid
 
@@ -163,7 +179,9 @@ class LiveTradingValidator:
             if max_position <= 0:
                 validations.append(("max_position_size", False, "Must be positive"))
             else:
-                validations.append(("max_position_size", True, f"Set to {max_position}"))
+                validations.append(
+                    ("max_position_size", True, f"Set to {max_position}")
+                )
         else:
             validations.append(("max_position_size", False, "Not configured"))
 
@@ -175,20 +193,30 @@ class LiveTradingValidator:
             else:
                 validations.append(("max_daily_loss", True, f"Set to {daily_loss}"))
         else:
-            validations.append(("max_daily_loss", False, "Not configured (recommended)"))
+            validations.append(
+                ("max_daily_loss", False, "Not configured (recommended)")
+            )
 
         # Check kill switch
         kill_switch = risk_config.get("kill_switch_enabled", True)
-        validations.append(("kill_switch", kill_switch, "Enabled" if kill_switch else "Disabled (WARNING)"))
+        validations.append(
+            (
+                "kill_switch",
+                kill_switch,
+                "Enabled" if kill_switch else "Disabled (WARNING)",
+            )
+        )
 
         all_valid = all(v[1] for v in validations)
 
-        self.results.append(ValidationResult(
-            name="risk_limits",
-            passed=all_valid,
-            message="Risk limits validation",
-            details={v[0]: {"valid": v[1], "message": v[2]} for v in validations},
-        ))
+        self.results.append(
+            ValidationResult(
+                name="risk_limits",
+                passed=all_valid,
+                message="Risk limits validation",
+                details={v[0]: {"valid": v[1], "message": v[2]} for v in validations},
+            )
+        )
 
         return all_valid
 
@@ -204,19 +232,23 @@ class LiveTradingValidator:
             secret_backend = creds.get("secret_backend")
 
             if not env_prefix and not secret_backend:
-                self.results.append(ValidationResult(
-                    name=f"credentials_{venue_name}",
-                    passed=False,
-                    message=f"No credential source configured for {venue_name}",
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name=f"credentials_{venue_name}",
+                        passed=False,
+                        message=f"No credential source configured for {venue_name}",
+                    )
+                )
                 all_valid = False
             else:
                 source = "env_prefix" if env_prefix else "secret_backend"
-                self.results.append(ValidationResult(
-                    name=f"credentials_{venue_name}",
-                    passed=True,
-                    message=f"Credentials configured via {source}",
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name=f"credentials_{venue_name}",
+                        passed=True,
+                        message=f"Credentials configured via {source}",
+                    )
+                )
 
         return all_valid
 
@@ -231,26 +263,32 @@ class LiveTradingValidator:
 
         if path.exists():
             if path.is_dir():
-                self.results.append(ValidationResult(
-                    name="state_directory",
-                    passed=True,
-                    message=f"State directory exists: {path}",
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name="state_directory",
+                        passed=True,
+                        message=f"State directory exists: {path}",
+                    )
+                )
                 return True
             else:
-                self.results.append(ValidationResult(
-                    name="state_directory",
-                    passed=False,
-                    message=f"State path exists but is not a directory: {path}",
-                ))
+                self.results.append(
+                    ValidationResult(
+                        name="state_directory",
+                        passed=False,
+                        message=f"State path exists but is not a directory: {path}",
+                    )
+                )
                 return False
         else:
             # Directory doesn't exist, but can be created
-            self.results.append(ValidationResult(
-                name="state_directory",
-                passed=True,
-                message=f"State directory will be created: {path}",
-            ))
+            self.results.append(
+                ValidationResult(
+                    name="state_directory",
+                    passed=True,
+                    message=f"State directory will be created: {path}",
+                )
+            )
             return True
 
     def run_all_validations(self) -> bool:
@@ -301,19 +339,26 @@ def preflight_checks() -> list[ValidationResult]:
 
     # Check Python version
     import sys
-    py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+    py_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     if sys.version_info >= (3, 11):
-        results.append(ValidationResult(
-            name="python_version",
-            passed=True,
-            message=f"Python {py_version} supported",
-        ))
+        results.append(
+            ValidationResult(
+                name="python_version",
+                passed=True,
+                message=f"Python {py_version} supported",
+            )
+        )
     else:
-        results.append(ValidationResult(
-            name="python_version",
-            passed=False,
-            message=f"Python {py_version} not recommended (3.11+ required)",
-        ))
+        results.append(
+            ValidationResult(
+                name="python_version",
+                passed=False,
+                message=f"Python {py_version} not recommended (3.11+ required)",
+            )
+        )
 
     # Check core dependencies
     core_deps = [
@@ -325,17 +370,21 @@ def preflight_checks() -> list[ValidationResult]:
     for name, import_name in core_deps:
         try:
             __import__(import_name)
-            results.append(ValidationResult(
-                name=f"dependency_{name}",
-                passed=True,
-                message=f"{name} is installed",
-            ))
+            results.append(
+                ValidationResult(
+                    name=f"dependency_{name}",
+                    passed=True,
+                    message=f"{name} is installed",
+                )
+            )
         except ImportError:
-            results.append(ValidationResult(
-                name=f"dependency_{name}",
-                passed=False,
-                message=f"{name} is not installed",
-            ))
+            results.append(
+                ValidationResult(
+                    name=f"dependency_{name}",
+                    passed=False,
+                    message=f"{name} is not installed",
+                )
+            )
 
     # Check optional dependencies
     optional_deps = [
@@ -346,17 +395,21 @@ def preflight_checks() -> list[ValidationResult]:
     for name, import_name, purpose in optional_deps:
         try:
             __import__(name)
-            results.append(ValidationResult(
-                name=f"optional_{name}",
-                passed=True,
-                message=f"{name} available ({purpose})",
-            ))
+            results.append(
+                ValidationResult(
+                    name=f"optional_{name}",
+                    passed=True,
+                    message=f"{name} available ({purpose})",
+                )
+            )
         except ImportError:
-            results.append(ValidationResult(
-                name=f"optional_{name}",
-                passed=True,  # Optional, so still passes
-                message=f"{name} not installed ({purpose}) - optional",
-            ))
+            results.append(
+                ValidationResult(
+                    name=f"optional_{name}",
+                    passed=True,  # Optional, so still passes
+                    message=f"{name} not installed ({purpose}) - optional",
+                )
+            )
 
     return results
 

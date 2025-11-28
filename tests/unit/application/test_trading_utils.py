@@ -45,4 +45,3 @@ def test_dto_to_signal_treats_none_confidence_as_default():
     signal = dto_to_signal(payload)
 
     assert signal.confidence == 0.0
-

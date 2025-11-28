@@ -21,7 +21,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -327,7 +327,9 @@ class DualApprovalManager:
 
         return True
 
-    def revoke_approval(self, action_id: str, reason: str = "manual_revocation") -> bool:
+    def revoke_approval(
+        self, action_id: str, reason: str = "manual_revocation"
+    ) -> bool:
         """Revoke an existing approval.
 
         Args:
@@ -398,7 +400,7 @@ class DualApprovalManager:
 
         # Trim audit log if needed
         if len(self._audit_log) > self.max_audit_entries:
-            self._audit_log = self._audit_log[-self.max_audit_entries:]
+            self._audit_log = self._audit_log[-self.max_audit_entries :]
 
         # Persist to file if configured
         self._persist_audit_entry(entry)

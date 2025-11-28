@@ -114,9 +114,7 @@ class CausalGuard:
         drivers = list(numeric_drivers.columns)
 
         if not drivers:
-            logger.warning(
-                "No numeric driver variables found. Returning TE_pass=False"
-            )
+            logger.warning("No numeric driver variables found. Returning TE_pass=False")
             return {"TE_pass": False}
 
         # Compute TE from each numeric driver to target

@@ -688,7 +688,9 @@ class TransactionCostAnalyzer:
         volume_by_bucket: MutableMapping[float, float] = {}
         for volume_sample in market_volumes:
             bucket = _bucket_key(volume_sample.timestamp, self._bucket_seconds)
-            volume_by_bucket[bucket] = volume_by_bucket.get(bucket, 0.0) + volume_sample.volume
+            volume_by_bucket[bucket] = (
+                volume_by_bucket.get(bucket, 0.0) + volume_sample.volume
+            )
 
         benchmark_by_bucket: MutableMapping[float, list[BenchmarkPriceSample]] = {}
         for benchmark_sample in benchmarks:

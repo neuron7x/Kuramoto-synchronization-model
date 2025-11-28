@@ -354,13 +354,9 @@ def test_drift_metric_respects_thresholds_overrides():
     thresholds = DriftThresholds(default_jsd=0.1, default_ks=0.05, default_psi=0.1)
 
     assert metric.drifted, "Legacy drift flag should remain permissive"
+    assert metric.drifted_with_thresholds(thresholds=thresholds, feature="f0") is True
     assert (
-        metric.drifted_with_thresholds(thresholds=thresholds, feature="f0") is True
-    )
-    assert (
-        metric.drifted_with_thresholds(
-            thresholds=thresholds, feature="f0", alpha=0.01
-        )
+        metric.drifted_with_thresholds(thresholds=thresholds, feature="f0", alpha=0.01)
         is False
     ), "Alpha override should tighten KS detection"
 

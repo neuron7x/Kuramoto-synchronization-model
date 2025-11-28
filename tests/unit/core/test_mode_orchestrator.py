@@ -173,7 +173,9 @@ class TestModeOrchestrator:
         )
 
     @pytest.fixture
-    def orchestrator(self, orchestrator_config: ModeOrchestratorConfig) -> ModeOrchestrator:
+    def orchestrator(
+        self, orchestrator_config: ModeOrchestratorConfig
+    ) -> ModeOrchestrator:
         """Create a test orchestrator."""
         return ModeOrchestrator(config=orchestrator_config)
 

@@ -24,7 +24,7 @@ jobs:
   generate-sbom:
     name: Generate Multi-Ecosystem SBOM
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -40,10 +40,10 @@ jobs:
         run: |
           # Install Syft for comprehensive SBOM generation
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          
+
           # Install Grype for vulnerability scanning
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-          
+
           # Install CycloneDX tools
           pip install cyclonedx-bom cyclonedx-python-lib
 
@@ -52,7 +52,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "Generating Python dependency SBOM..."
-          
+
           # Generate from requirements.txt (lightweight, no installation)
           if [ -f requirements.txt ]; then
             cyclonedx-py requirements \
@@ -62,14 +62,14 @@ jobs:
               echo "⚠️  Python SBOM generation from requirements.txt failed"
             }
           fi
-          
+
           echo "✓ Python SBOM generation completed (or skipped)"
 
       - name: Generate comprehensive SBOM with Syft
         id: syft_sbom
         run: |
           echo "Generating comprehensive multi-ecosystem SBOM..."
-          
+
           # Generate SBOM with Syft (handles all ecosystems)
           syft packages dir:. \
             --output spdx-json=sbom-spdx.json \
@@ -85,7 +85,7 @@ jobs:
               exit 1
             }
           }
-          
+
           echo "✓ Generated SPDX and CycloneDX SBOMs"
 
       - name: Scan SBOM for vulnerabilities with Grype
@@ -96,14 +96,14 @@ jobs:
             echo "⚠️  SBOM file not found, skipping vulnerability scan"
             exit 0
           fi
-          
+
           echo "Scanning SBOM for known vulnerabilities..."
           grype sbom:sbom-cyclonedx.json \
             --output json \
             --file grype-sbom-report.json || {
             echo "⚠️  Grype scan encountered issues"
           }
-          
+
           # Generate human-readable report if JSON exists
           if [ -f grype-sbom-report.json ]; then
             grype sbom:sbom-cyclonedx.json \
@@ -120,18 +120,18 @@ jobs:
             HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' grype-sbom-report.json 2>/dev/null || echo "0")
             MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' grype-sbom-report.json 2>/dev/null || echo "0")
             LOW=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' grype-sbom-report.json 2>/dev/null || echo "0")
-            
+
             echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
             echo "high=$HIGH" >> $GITHUB_OUTPUT
             echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
             echo "low=$LOW" >> $GITHUB_OUTPUT
-            
+
             echo "Vulnerability Summary:"
             echo "  Critical: $CRITICAL"
             echo "  High: $HIGH"
             echo "  Medium: $MEDIUM"
             echo "  Low: $LOW"
-            
+
             # Report but don't fail - vulnerabilities should be tracked separately
             if [ "$CRITICAL" -gt 0 ]; then
               echo "⚠️  Found $CRITICAL critical vulnerabilities in dependencies"
@@ -165,7 +165,7 @@ jobs:
             "vulnerabilities": []
           }
           EOF
-          
+
           echo "✓ Generated VEX document"
 
       - name: Sign SBOM with Sigstore
@@ -178,7 +178,7 @@ jobs:
           curl -sSL https://github.com/sigstore/cosign/releases/download/v2.2.2/cosign-linux-amd64 -o cosign
           chmod +x cosign
           sudo mv cosign /usr/local/bin/
-          
+
           # Sign SBOMs using keyless signing (if they exist)
           if [ -f sbom-cyclonedx.json ]; then
             cosign sign-blob --yes sbom-cyclonedx.json \
@@ -187,7 +187,7 @@ jobs:
               echo "⚠️  Failed to sign CycloneDX SBOM"
             }
           fi
-          
+
           if [ -f sbom-spdx.json ]; then
             cosign sign-blob --yes sbom-spdx.json \
               --output-signature sbom-spdx.json.sig \
@@ -195,7 +195,7 @@ jobs:
               echo "⚠️  Failed to sign SPDX SBOM"
             }
           fi
-          
+
           echo "✓ SBOM signing completed"
 
       - name: Attest SBOM
@@ -227,15 +227,15 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
-            
+
             const critical = '${{ steps.vuln_analysis.outputs.critical }}' || '0';
             const high = '${{ steps.vuln_analysis.outputs.high }}' || '0';
             const medium = '${{ steps.vuln_analysis.outputs.medium }}' || '0';
             const low = '${{ steps.vuln_analysis.outputs.low }}' || '0';
-            
+
             const totalVulns = parseInt(critical) + parseInt(high) + parseInt(medium) + parseInt(low);
             const emoji = parseInt(critical) === 0 ? '✅' : '⚠️';
-            
+
             const body = [
               `## ${emoji} SBOM & Vulnerability Analysis`,
               '',
@@ -249,8 +249,8 @@ jobs:
               `| 🟢 Low | ${low} |`,
               `| **Total** | **${totalVulns}** |`,
               '',
-              parseInt(critical) === 0 
-                ? '✅ **No critical vulnerabilities detected in dependencies**' 
+              parseInt(critical) === 0
+                ? '✅ **No critical vulnerabilities detected in dependencies**'
                 : '⚠️  **Note:** Vulnerabilities detected and tracked in SBOM. These should be addressed in a dedicated security PR.',
               '',
               '### SBOM Artifacts Generated',
@@ -268,19 +268,19 @@ jobs:
               '---',
               `*Last updated: ${new Date().toISOString()}*`
             ].join('\n');
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: pull_number,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('SBOM & Vulnerability Analysis')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,

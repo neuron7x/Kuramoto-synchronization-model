@@ -162,7 +162,9 @@ def test_dopamine_step_allows_gamma_override(controller: DopamineController) -> 
 
 
 def test_meta_adapt_requires_expected_metrics(controller: DopamineController) -> None:
-    with pytest.raises(ValueError, match="performance_metrics is missing required keys"):
+    with pytest.raises(
+        ValueError, match="performance_metrics is missing required keys"
+    ):
         dopamine_step(
             ctrl=controller,
             reward=0.0,

@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 15
 
     if: github.event.workflow_run.event == 'pull_request'
-    
+
     steps:
       - name: Download artifacts
         uses: actions/github-script@v7
@@ -31,10 +31,10 @@ jobs:
               repo: context.repo.repo,
               run_id: context.payload.workflow_run.id,
             });
-            
+
             const fs = require('fs');
             const path = require('path');
-            
+
             for (const artifact of artifacts.data.artifacts) {
               if (artifact.name === 'combined-coverage' || artifact.name === 'mutation-test-results') {
                 const download = await github.rest.actions.downloadArtifact({
@@ -43,7 +43,7 @@ jobs:
                   artifact_id: artifact.id,
                   archive_format: 'zip',
                 });
-                
+
                 const filePath = path.join(process.env.GITHUB_WORKSPACE, `${artifact.name}.zip`);
                 fs.writeFileSync(filePath, Buffer.from(download.data));
               }
@@ -89,7 +89,7 @@ jobs:
               repo: context.repo.repo,
               head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`,
             });
-            
+
             if (pulls.data.length > 0) {
               return pulls.data[0].number;
             }
@@ -105,15 +105,15 @@ jobs:
             const killRate = '${{ steps.mutation.outputs.kill_rate }}';
             const workflowName = context.payload.workflow_run.name;
             const conclusion = context.payload.workflow_run.conclusion;
-            
+
             const conclusionEmoji = conclusion === 'success' ? '✅' : '❌';
             const coverageEmoji = parseFloat(coverage) >= 98 ? '✅' : '❌';
             const mutationEmoji = parseFloat(killRate) >= 90 ? '✅' : '❌';
-            
-            const statusMessage = conclusion === 'success' ? 
-              '✅ **All quality gates passed!** This PR is ready for review.' : 
+
+            const statusMessage = conclusion === 'success' ?
+              '✅ **All quality gates passed!** This PR is ready for review.' :
               '❌ **Quality gates failed.** Please review the workflow logs and fix the issues.';
-            
+
             const body = [
               `## ${conclusionEmoji} Quality Summary - ${workflowName}`,
               '',
@@ -137,21 +137,21 @@ jobs:
               '---',
               `*Last updated: ${new Date().toISOString()}*`
             ].join('\n');
-            
+
             const { owner, repo } = context.repo;
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number: prNumber,
             });
-            
-            const botComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('Quality Summary - ' + workflowName)
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner,
