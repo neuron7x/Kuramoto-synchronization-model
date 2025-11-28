@@ -11,6 +11,7 @@ This package contains the fundamental building blocks for the TradePulse platfor
 - **utils**: Common utilities, caching, and helper functions
 - **energy**: Thermodynamic energy calculations for system optimization
 - **phase**: Market phase detection and analysis
+- **validation**: Physics, neuroscience, and mathematical validation modules
 
 For more information, see the documentation at https://docs.tradepulse.io
 """
