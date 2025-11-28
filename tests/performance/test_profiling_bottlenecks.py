@@ -105,7 +105,6 @@ class TestPerformanceBottleneckDetection:
         peak_mb = peak / 1024 / 1024
 
         assert peak_mb > 0  # Should have allocated some memory
-        assert peak > 0  # Peak memory should be positive
         del data  # Clean up
 
     def test_hot_path_identification(self):
