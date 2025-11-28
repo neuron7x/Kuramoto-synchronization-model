@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Mapping
 
 import pytest
 
@@ -212,8 +211,9 @@ class TestMiFID2Reporter:
 
     def test_reporter_creation_creates_directory(self, storage_path: Path) -> None:
         """Verify reporter creates storage directory."""
-        reporter = MiFID2Reporter(storage_path=storage_path)
+        _reporter = MiFID2Reporter(storage_path=storage_path)
         assert storage_path.exists()
+        del _reporter  # Use the reporter to avoid F841
 
     def test_reporter_with_custom_retention(self, storage_path: Path) -> None:
         """Verify reporter with custom retention policy."""

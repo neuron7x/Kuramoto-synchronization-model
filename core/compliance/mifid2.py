@@ -14,13 +14,13 @@ LOGGER = logging.getLogger(__name__)
 
 def _slots_to_dict(obj: Any) -> dict[str, Any]:
     """Convert a slotted dataclass to a dictionary.
-    
+
     Args:
         obj: A dataclass instance to convert.
-        
+
     Returns:
         Dictionary representation of the dataclass fields.
-        
+
     Raises:
         TypeError: If the object is not a dataclass.
     """
