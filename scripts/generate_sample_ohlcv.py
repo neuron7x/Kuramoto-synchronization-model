@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import timezone
 from pathlib import Path
 from typing import Sequence
 
@@ -95,7 +95,11 @@ def generate_ohlcv_from_ticks(
     low_prices = min_oc * (1 - low_deviation)
 
     # Generate volume (log-normal distribution)
-    volume = np.abs(rng.lognormal(np.log(volume_mean), volume_std / volume_mean, n))
+    # Use proper sigma calculation to achieve target coefficient of variation
+    cv = volume_std / volume_mean
+    sigma = np.sqrt(np.log(1 + cv**2))
+    mu = np.log(volume_mean) - 0.5 * sigma**2
+    volume = np.abs(rng.lognormal(mu, sigma, n))
 
     return pd.DataFrame(
         {

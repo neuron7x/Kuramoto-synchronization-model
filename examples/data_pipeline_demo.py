@@ -21,11 +21,9 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-import tempfile
 from pathlib import Path
 from typing import Sequence
 
-import numpy as np
 import pandas as pd
 
 # Add project root to path for imports
@@ -33,13 +31,12 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import data generation utilities
-from scripts.generate_sample_ohlcv import generate_multi_asset_data
-
 # Import validation utilities
-from core.data.validation import validate_ohlcv
+from core.data.validation import validate_ohlcv  # noqa: E402
 
 # Import analysis engine
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine  # noqa: E402
+from scripts.generate_sample_ohlcv import generate_multi_asset_data  # noqa: E402
 
 # Configure logging
 logging.basicConfig(

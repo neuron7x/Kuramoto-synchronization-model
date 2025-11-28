@@ -10,7 +10,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from scripts.generate_sample_ohlcv import (
     generate_market_data,
