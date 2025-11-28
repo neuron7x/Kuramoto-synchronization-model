@@ -95,6 +95,7 @@ deprecated directories that are discovered during the run.
 
 - **[data_sanity.py](README_data_sanity.md)** - Perform sanity checks on CSV data files
 - **[gen_synth_amm_data.py](README_gen_synth_amm_data.md)** - Generate synthetic AMM data for testing
+- **[generate_sample_ohlcv.py](README_generate_sample_ohlcv.md)** - Generate comprehensive OHLCV sample data for testing
 - **[resilient_data_sync.py](README_resilient_data_sync.md)** - Resilient data synchronization with retry logic
 - **[resilient_data_sync.sh](README_resilient_data_sync_sh.md)** - Bash version of resilient sync with comprehensive error handling
 
