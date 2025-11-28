@@ -211,9 +211,8 @@ class TestMiFID2Reporter:
 
     def test_reporter_creation_creates_directory(self, storage_path: Path) -> None:
         """Verify reporter creates storage directory."""
-        _reporter = MiFID2Reporter(storage_path=storage_path)
+        MiFID2Reporter(storage_path=storage_path)
         assert storage_path.exists()
-        del _reporter  # Use the reporter to avoid F841
 
     def test_reporter_with_custom_retention(self, storage_path: Path) -> None:
         """Verify reporter with custom retention policy."""

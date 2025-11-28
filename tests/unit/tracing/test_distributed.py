@@ -381,9 +381,9 @@ class TestStartDistributedSpan:
         with start_distributed_span(
             "test-span",
             attributes={"custom.attr": "value"},
-        ) as _span:
+        ):
             # Just verify it doesn't raise
-            del _span  # Silence F841
+            pass
 
 
 class TestTraceparentHeader:
