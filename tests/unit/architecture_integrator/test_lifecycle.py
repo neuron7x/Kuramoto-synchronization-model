@@ -800,6 +800,37 @@ class TestRecoveryMechanisms:
         assert results["comp1"] is True
         assert results["comp2"] is True
 
+    def test_recover_only_failed_not_stopped(self) -> None:
+        """Test recovering only FAILED components when include_stopped=False."""
+        registry = ComponentRegistry()
+
+        mock1 = MockComponent()
+        mock2 = MockComponent()
+
+        metadata1 = ComponentMetadata(name="failed_comp")
+        metadata2 = ComponentMetadata(name="stopped_comp")
+
+        comp1 = Component(metadata=metadata1, instance=mock1)
+        comp2 = Component(metadata=metadata2, instance=mock2)
+
+        comp1.status = ComponentStatus.FAILED
+        comp2.status = ComponentStatus.STOPPED
+
+        registry.register(comp1)
+        registry.register(comp2)
+
+        manager = LifecycleManager(registry)
+        results = manager.recover_all_failed(
+            max_attempts=1,
+            delay_seconds=0.01,
+            include_stopped=False,
+        )
+
+        # Only failed component should be recovered
+        assert "failed_comp" in results
+        assert results["failed_comp"] is True
+        assert "stopped_comp" not in results
+
 
 class TestStatusHelpers:
     """Tests for status helper methods."""

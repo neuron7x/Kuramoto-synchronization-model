@@ -624,11 +624,14 @@ class LifecycleManager:
         component = self._registry.get(component_name)
         old_config = self._configurations.get(component_name, {})
 
-        # Store new configuration
+        # Store new configuration (make a copy to ensure isolation)
         self._configurations[component_name] = dict(new_configuration)
 
-        # Update component metadata configuration
-        component.metadata.configuration.update(new_configuration)
+        # Update component metadata configuration using a defensive copy
+        # to avoid unintended sharing of mutable state
+        new_config_copy = dict(new_configuration)
+        for key, value in new_config_copy.items():
+            component.metadata.configuration[key] = value
 
         self._emit_event(LifecycleEventData(
             event=LifecycleEvent.CONFIG_RELOADED,
@@ -657,15 +660,21 @@ class LifecycleManager:
         *,
         max_attempts: int = 3,
         delay_seconds: float = 1.0,
+        include_stopped: bool = True,
     ) -> bool:
-        """Attempt to recover a failed component.
+        """Attempt to recover a failed or stopped component.
 
-        This method tries to restart a failed component with exponential backoff.
+        This method tries to restart a component with exponential backoff.
+        By default, it recovers both FAILED and STOPPED components. Use
+        the include_stopped parameter to control whether STOPPED components
+        should be recovered.
 
         Args:
             name: Component name to recover
             max_attempts: Maximum recovery attempts
             delay_seconds: Initial delay between attempts (doubles each attempt)
+            include_stopped: If True, recover STOPPED components too; if False,
+                            only recover FAILED components
 
         Returns:
             True if recovery was successful
@@ -675,9 +684,14 @@ class LifecycleManager:
         """
         component = self._registry.get(name)
 
-        if component.status not in {ComponentStatus.FAILED, ComponentStatus.STOPPED}:
+        target_statuses = {ComponentStatus.FAILED}
+        if include_stopped:
+            target_statuses.add(ComponentStatus.STOPPED)
+
+        if component.status not in target_statuses:
             logger.info(
-                f"Component {name} is not in failed/stopped state, no recovery needed"
+                f"Component {name} is not in recoverable state "
+                f"(current: {component.status.value}), no recovery needed"
             )
             return True
 
@@ -729,20 +743,27 @@ class LifecycleManager:
         *,
         max_attempts: int = 3,
         delay_seconds: float = 1.0,
+        include_stopped: bool = True,
     ) -> dict[str, bool]:
         """Attempt to recover all failed components.
 
         Args:
             max_attempts: Maximum recovery attempts per component
             delay_seconds: Initial delay between attempts
+            include_stopped: If True, recover STOPPED components too; if False,
+                            only recover FAILED components
 
         Returns:
             Dictionary mapping component names to recovery success status
         """
         results: dict[str, bool] = {}
+        target_statuses = {ComponentStatus.FAILED}
+        if include_stopped:
+            target_statuses.add(ComponentStatus.STOPPED)
+
         failed_components = [
             comp for comp in self._registry.get_all()
-            if comp.status in {ComponentStatus.FAILED, ComponentStatus.STOPPED}
+            if comp.status in target_statuses
         ]
 
         for component in failed_components:
@@ -751,6 +772,7 @@ class LifecycleManager:
                 name,
                 max_attempts=max_attempts,
                 delay_seconds=delay_seconds,
+                include_stopped=include_stopped,
             )
 
         return results
