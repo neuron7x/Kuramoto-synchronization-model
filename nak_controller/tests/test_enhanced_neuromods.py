@@ -22,6 +22,9 @@ from nak_controller.control.neuromods import (
     serotonin_enhanced,
 )
 
+# Small value to prevent division by zero in ratio calculations
+EPSILON = 1e-9
+
 
 class TestCoreNeuromodulatorFunctions:
     """Test backward-compatible core neuromodulator functions."""
@@ -109,7 +112,7 @@ class TestEnhancedNeuromodulatorFunctions:
         low_dd = serotonin_enhanced(0.1, ht_dd_gain=1.0)
         high_dd = serotonin_enhanced(0.5, ht_dd_gain=1.0)
         # Due to quadratic term, high DD should have more than 5x the effect
-        ratio = high_dd / max(low_dd, 1e-9)
+        ratio = high_dd / max(low_dd, EPSILON)
         assert ratio > 5
 
 
