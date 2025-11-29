@@ -331,11 +331,10 @@ class RiskCompliance:
 
                     if self._config.daily_max_drawdown_mode == "percent":
                         if drawdown > self._config.daily_max_drawdown_threshold:
-                            drawdown_pct = drawdown * 100
-                            threshold_pct = self._config.daily_max_drawdown_threshold * 100
+                            threshold = self._config.daily_max_drawdown_threshold
                             reasons.append(
-                                f"Daily drawdown {drawdown_pct:.2f}% exceeds "
-                                f"threshold {threshold_pct:.2f}%"
+                                f"Daily drawdown {drawdown * 100:.2f}% exceeds "
+                                f"threshold {threshold * 100:.2f}%"
                             )
                             breached["daily_max_drawdown"] = drawdown
                         drawdown_metric_value = drawdown
@@ -352,9 +351,8 @@ class RiskCompliance:
 
                     if drawdown_metric_value is not None:
                         self._record_metric(
-                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: (
+                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode:
                                 collector.record_daily_drawdown(value, mode=mode)
-                            )
                         )
 
             if self._config.max_open_orders_per_account > 0:
