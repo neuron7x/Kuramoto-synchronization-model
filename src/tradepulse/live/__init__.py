@@ -109,9 +109,7 @@ class LiveTrader:
         self._exchange = exchange
         self._symbols = list(symbols or [])
         self._mode = TradingMode(mode) if isinstance(mode, str) else mode
-        self._config_path = (
-            Path(config_path) if config_path else DEFAULT_CONFIG_PATH
-        )
+        self._config_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
         self._initial_capital = initial_capital
         self._risk_percent = risk_percent
         self._runner: LiveTradingRunner | None = None

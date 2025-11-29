@@ -8,9 +8,9 @@ from typing import Any, Dict
 import pytest
 
 from core.tracing.distributed import (
+    _TRACE_AVAILABLE,
     DistributedTracingConfig,
     ExtractedContext,
-    _TRACE_AVAILABLE,
     _default_correlation_id,
     _extract_local_baggage,
     _first_correlation_value,
@@ -338,7 +338,9 @@ class TestActivateDistributedContext:
             trace_context=None,
             baggage=None,
         )
-        with activate_distributed_context(ctx, auto_generate_correlation=True) as corr_id:
+        with activate_distributed_context(
+            ctx, auto_generate_correlation=True
+        ) as corr_id:
             assert corr_id is not None
             assert len(corr_id) == 32
 
@@ -349,7 +351,9 @@ class TestActivateDistributedContext:
             trace_context=None,
             baggage=None,
         )
-        with activate_distributed_context(ctx, auto_generate_correlation=False) as corr_id:
+        with activate_distributed_context(
+            ctx, auto_generate_correlation=False
+        ) as corr_id:
             assert corr_id is None
 
     def test_activate_with_baggage(self) -> None:

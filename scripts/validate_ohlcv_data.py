@@ -135,7 +135,9 @@ def validate_ohlcv_file(
                 nan_pct = nan_count / len(df) * 100
                 if nan_pct > 5:
                     report.valid = False
-                    report.errors.append(f"{nan_count} NaN values in {label} ({nan_pct:.1f}%)")
+                    report.errors.append(
+                        f"{nan_count} NaN values in {label} ({nan_pct:.1f}%)"
+                    )
                 else:
                     report.warnings.append(f"{nan_count} NaN values in {label}")
 
@@ -148,8 +150,7 @@ def validate_ohlcv_file(
 
     # Validate OHLC relationships
     has_ohlc = all(
-        col and col in df.columns
-        for col in [open_col, high_col, low_col, close_col]
+        col and col in df.columns for col in [open_col, high_col, low_col, close_col]
     )
 
     if has_ohlc:

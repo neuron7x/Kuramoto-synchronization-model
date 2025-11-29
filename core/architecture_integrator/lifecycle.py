@@ -154,9 +154,7 @@ class LifecycleManager:
             try:
                 handler(event_data)
             except Exception as exc:
-                logger.warning(
-                    f"Event handler failed for {event_data.event}: {exc}"
-                )
+                logger.warning(f"Event handler failed for {event_data.event}: {exc}")
 
     def initialize_all(self, *, stop_on_error: bool = True) -> list[str]:
         """Initialize all components in dependency order.
@@ -183,29 +181,35 @@ class LifecycleManager:
                 component = self._registry.get(name)
                 if component.status == ComponentStatus.UNINITIALIZED:
                     previous_status = component.status
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.INITIALIZING,
-                        component_name=name,
-                        previous_status=previous_status,
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.INITIALIZING,
+                            component_name=name,
+                            previous_status=previous_status,
+                        )
+                    )
                     logger.info(f"Initializing component: {name}")
                     component.initialize()
                     initialized.append(name)
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.INITIALIZED,
-                        component_name=name,
-                        previous_status=previous_status,
-                        new_status=component.status,
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.INITIALIZED,
+                            component_name=name,
+                            previous_status=previous_status,
+                            new_status=component.status,
+                        )
+                    )
                     logger.info(f"Component {name} initialized successfully")
             except Exception as exc:
                 logger.error(f"Failed to initialize component {name}: {exc}")
-                self._emit_event(LifecycleEventData(
-                    event=LifecycleEvent.FAILED,
-                    component_name=name,
-                    error=exc,
-                    metadata={"phase": "initialization"},
-                ))
+                self._emit_event(
+                    LifecycleEventData(
+                        event=LifecycleEvent.FAILED,
+                        component_name=name,
+                        error=exc,
+                        metadata={"phase": "initialization"},
+                    )
+                )
                 if self._on_error:
                     self._on_error(name, exc)
                 if stop_on_error:
@@ -240,20 +244,24 @@ class LifecycleManager:
                 component = self._registry.get(name)
                 if component.status == ComponentStatus.INITIALIZED:
                     previous_status = component.status
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.STARTING,
-                        component_name=name,
-                        previous_status=previous_status,
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.STARTING,
+                            component_name=name,
+                            previous_status=previous_status,
+                        )
+                    )
                     logger.info(f"Starting component: {name}")
                     component.start()
                     started.append(name)
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.STARTED,
-                        component_name=name,
-                        previous_status=previous_status,
-                        new_status=component.status,
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.STARTED,
+                            component_name=name,
+                            previous_status=previous_status,
+                            new_status=component.status,
+                        )
+                    )
                     logger.info(f"Component {name} started successfully")
                 elif component.status != ComponentStatus.RUNNING:
                     logger.warning(
@@ -261,12 +269,14 @@ class LifecycleManager:
                     )
             except Exception as exc:
                 logger.error(f"Failed to start component {name}: {exc}")
-                self._emit_event(LifecycleEventData(
-                    event=LifecycleEvent.FAILED,
-                    component_name=name,
-                    error=exc,
-                    metadata={"phase": "startup"},
-                ))
+                self._emit_event(
+                    LifecycleEventData(
+                        event=LifecycleEvent.FAILED,
+                        component_name=name,
+                        error=exc,
+                        metadata={"phase": "startup"},
+                    )
+                )
                 if self._on_error:
                     self._on_error(name, exc)
                 if stop_on_error:
@@ -302,29 +312,35 @@ class LifecycleManager:
                     ComponentStatus.DEGRADED,
                 }:
                     previous_status = component.status
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.STOPPING,
-                        component_name=name,
-                        previous_status=previous_status,
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.STOPPING,
+                            component_name=name,
+                            previous_status=previous_status,
+                        )
+                    )
                     logger.info(f"Stopping component: {name}")
                     component.stop()
                     stopped.append(name)
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.STOPPED,
-                        component_name=name,
-                        previous_status=previous_status,
-                        new_status=component.status,
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.STOPPED,
+                            component_name=name,
+                            previous_status=previous_status,
+                            new_status=component.status,
+                        )
+                    )
                     logger.info(f"Component {name} stopped successfully")
             except Exception as exc:
                 logger.error(f"Failed to stop component {name}: {exc}")
-                self._emit_event(LifecycleEventData(
-                    event=LifecycleEvent.FAILED,
-                    component_name=name,
-                    error=exc,
-                    metadata={"phase": "shutdown"},
-                ))
+                self._emit_event(
+                    LifecycleEventData(
+                        event=LifecycleEvent.FAILED,
+                        component_name=name,
+                        error=exc,
+                        metadata={"phase": "shutdown"},
+                    )
+                )
                 if self._on_error:
                     self._on_error(name, exc)
                 # Continue stopping other components
@@ -391,7 +407,7 @@ class LifecycleManager:
                         "Shutdown timeout exceeded, force stopping remaining components"
                     )
                     # Force stop remaining components
-                    for remaining_name in order[order.index(name):]:
+                    for remaining_name in order[order.index(name) :]:
                         try:
                             component = self._registry.get(remaining_name)
                             if component.status in {
@@ -417,20 +433,24 @@ class LifecycleManager:
                     ComponentStatus.RUNNING,
                     ComponentStatus.DEGRADED,
                 }:
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.STOPPING,
-                        component_name=name,
-                        previous_status=component.status,
-                        metadata={"graceful": True},
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.STOPPING,
+                            component_name=name,
+                            previous_status=component.status,
+                            metadata={"graceful": True},
+                        )
+                    )
                     component.stop()
                     stopped.append(name)
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.STOPPED,
-                        component_name=name,
-                        new_status=component.status,
-                        metadata={"graceful": True},
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.STOPPED,
+                            component_name=name,
+                            new_status=component.status,
+                            metadata={"graceful": True},
+                        )
+                    )
             except Exception as exc:
                 logger.error(f"Graceful stop failed for {name}: {exc}")
                 if self._on_error:
@@ -554,12 +574,14 @@ class LifecycleManager:
                 else:
                     failed_count += 1
 
-            self._emit_event(LifecycleEventData(
-                event=LifecycleEvent.HEALTH_CHECK,
-                component_name=component.metadata.name,
-                new_status=health.status,
-                metadata={"healthy": health.healthy, "message": health.message},
-            ))
+            self._emit_event(
+                LifecycleEventData(
+                    event=LifecycleEvent.HEALTH_CHECK,
+                    component_name=component.metadata.name,
+                    new_status=health.status,
+                    metadata={"healthy": health.healthy, "message": health.message},
+                )
+            )
 
         total = len(components)
         overall_healthy = failed_count == 0 and degraded_count == 0
@@ -633,15 +655,17 @@ class LifecycleManager:
         for key, value in new_config_copy.items():
             component.metadata.configuration[key] = value
 
-        self._emit_event(LifecycleEventData(
-            event=LifecycleEvent.CONFIG_RELOADED,
-            component_name=component_name,
-            metadata={
-                "old_config_keys": list(old_config.keys()),
-                "new_config_keys": list(new_configuration.keys()),
-                "restart_required": restart_required,
-            },
-        ))
+        self._emit_event(
+            LifecycleEventData(
+                event=LifecycleEvent.CONFIG_RELOADED,
+                component_name=component_name,
+                metadata={
+                    "old_config_keys": list(old_config.keys()),
+                    "new_config_keys": list(new_configuration.keys()),
+                    "restart_required": restart_required,
+                },
+            )
+        )
 
         logger.info(f"Configuration reloaded for component: {component_name}")
 
@@ -713,12 +737,14 @@ class LifecycleManager:
                     self.start_component(name)
 
                 if component.status == ComponentStatus.RUNNING:
-                    self._emit_event(LifecycleEventData(
-                        event=LifecycleEvent.RECOVERED,
-                        component_name=name,
-                        new_status=component.status,
-                        metadata={"attempts": attempt},
-                    ))
+                    self._emit_event(
+                        LifecycleEventData(
+                            event=LifecycleEvent.RECOVERED,
+                            component_name=name,
+                            new_status=component.status,
+                            metadata={"attempts": attempt},
+                        )
+                    )
                     logger.info(
                         f"Component {name} recovered successfully after "
                         f"{attempt} attempt(s)"
@@ -726,9 +752,7 @@ class LifecycleManager:
                     return True
 
             except Exception as exc:
-                logger.warning(
-                    f"Recovery attempt {attempt} failed for {name}: {exc}"
-                )
+                logger.warning(f"Recovery attempt {attempt} failed for {name}: {exc}")
                 if attempt < max_attempts:
                     time.sleep(current_delay)
                     current_delay *= 2  # Exponential backoff
@@ -762,8 +786,7 @@ class LifecycleManager:
             target_statuses.add(ComponentStatus.STOPPED)
 
         failed_components = [
-            comp for comp in self._registry.get_all()
-            if comp.status in target_statuses
+            comp for comp in self._registry.get_all() if comp.status in target_statuses
         ]
 
         for component in failed_components:
@@ -797,7 +820,4 @@ class LifecycleManager:
         Returns:
             Dictionary mapping component names to their statuses
         """
-        return {
-            comp.metadata.name: comp.status
-            for comp in self._registry.get_all()
-        }
+        return {comp.metadata.name: comp.status for comp in self._registry.get_all()}
