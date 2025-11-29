@@ -151,6 +151,10 @@ def test_timeseries_config_coerces_frequency_strings() -> None:
 # Additional comprehensive tests for improved coverage
 
 
+from datetime import timedelta
+
+import numpy as np
+
 from core.data.validation import (
     OHLCVValidationResult,
     _coerce_timedelta,
@@ -159,10 +163,6 @@ from core.data.validation import (
     build_timeseries_schema,
     validate_ohlcv,
 )
-
-from datetime import timedelta
-
-import numpy as np
 
 
 class TestOHLCVValidationResult:

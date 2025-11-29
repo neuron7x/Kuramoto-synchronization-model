@@ -5,18 +5,17 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from core.data.models import DataKind, InstrumentType, MarketMetadata, PriceTick
+from core.data.models import InstrumentType, MarketMetadata, PriceTick
 from core.data.warehouses.clickhouse import (
     ClickHouseConfig,
     ClickHouseWarehouse,
-    _ClickHouseIdentifiers,
     _chunk_iterable,
+    _ClickHouseIdentifiers,
 )
 
 

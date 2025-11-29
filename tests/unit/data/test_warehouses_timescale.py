@@ -5,16 +5,16 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from core.data.models import DataKind, InstrumentType, MarketMetadata, PriceTick
+from core.data.models import InstrumentType, MarketMetadata, PriceTick
 from core.data.warehouses.timescale import (
     TimescaleConfig,
     TimescaleWarehouse,
-    _TimescaleIdentifiers,
     _chunk_iterable,
+    _TimescaleIdentifiers,
 )
 
 
