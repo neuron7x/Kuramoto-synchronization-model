@@ -27,7 +27,9 @@ def _slots_to_dict(obj: Any) -> dict[str, Any]:
     try:
         return {f.name: getattr(obj, f.name) for f in fields(obj)}
     except TypeError as exc:
-        raise TypeError(f"Expected a dataclass instance, got {type(obj).__name__}") from exc
+        raise TypeError(
+            f"Expected a dataclass instance, got {type(obj).__name__}"
+        ) from exc
 
 
 @dataclass(slots=True)

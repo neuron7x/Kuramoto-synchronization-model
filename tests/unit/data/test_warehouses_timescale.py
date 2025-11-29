@@ -182,9 +182,7 @@ class TestTimescaleWarehouse:
         assert "timescaledb.continuous" in rollup_statement.sql
         assert "time_bucket" in rollup_statement.sql
 
-    def test_rollup_jobs_returns_jobs(
-        self, warehouse: TimescaleWarehouse
-    ) -> None:
+    def test_rollup_jobs_returns_jobs(self, warehouse: TimescaleWarehouse) -> None:
         """Verify rollup jobs are returned."""
         jobs = warehouse.rollup_jobs()
         assert len(jobs) == 1
@@ -203,9 +201,7 @@ class TestTimescaleWarehouse:
         assert tasks[1].name == "timescale-analyze"
         assert tasks[1].cadence == "daily"
 
-    def test_sla_queries_returns_queries(
-        self, warehouse: TimescaleWarehouse
-    ) -> None:
+    def test_sla_queries_returns_queries(self, warehouse: TimescaleWarehouse) -> None:
         """Verify SLA queries are returned."""
         queries = warehouse.sla_queries()
         assert len(queries) == 3
@@ -224,9 +220,7 @@ class TestTimescaleWarehouse:
         assert scenarios[1].name == "timescale-dashboard-rollup"
         assert scenarios[1].target_qps == 750
 
-    def test_backup_plan_returns_steps(
-        self, warehouse: TimescaleWarehouse
-    ) -> None:
+    def test_backup_plan_returns_steps(self, warehouse: TimescaleWarehouse) -> None:
         """Verify backup plan steps are returned."""
         steps = warehouse.backup_plan()
         assert len(steps) == 3
@@ -234,9 +228,7 @@ class TestTimescaleWarehouse:
         assert "checksum" in steps[1].command.lower()
         assert "restore" in steps[2].command.lower()
 
-    def test_ingest_ticks_with_empty_list(
-        self, warehouse: TimescaleWarehouse
-    ) -> None:
+    def test_ingest_ticks_with_empty_list(self, warehouse: TimescaleWarehouse) -> None:
         """Verify empty tick list is handled gracefully."""
         warehouse.ingest_ticks([])  # Should not raise
 

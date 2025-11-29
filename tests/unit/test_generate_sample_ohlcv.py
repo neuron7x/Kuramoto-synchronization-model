@@ -3,6 +3,7 @@
 This module tests the scripts/generate_sample_ohlcv.py module and validates
 that generated data meets quality requirements for trading analysis.
 """
+
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 import tempfile
@@ -180,9 +181,7 @@ class TestGenerateMultiAssetData:
 
     def test_different_base_prices(self):
         """Test that different assets have different price levels."""
-        df = generate_multi_asset_data(
-            symbols=["BTC", "ETH", "AAPL"], days=1, seed=42
-        )
+        df = generate_multi_asset_data(symbols=["BTC", "ETH", "AAPL"], days=1, seed=42)
 
         btc_mean = df[df["symbol"] == "BTC"]["close"].mean()
         eth_mean = df[df["symbol"] == "ETH"]["close"].mean()

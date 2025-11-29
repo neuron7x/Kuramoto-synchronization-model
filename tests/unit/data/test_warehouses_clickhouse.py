@@ -174,9 +174,7 @@ class TestClickHouseWarehouse:
         assert "MATERIALIZED VIEW" in mv_statement.sql
         assert "mv_minute_bars" in mv_statement.sql
 
-    def test_rollup_jobs_returns_jobs(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_rollup_jobs_returns_jobs(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify rollup jobs are returned."""
         jobs = warehouse.rollup_jobs()
         assert len(jobs) == 1
@@ -195,9 +193,7 @@ class TestClickHouseWarehouse:
         assert tasks[1].name == "clickhouse-rollup-optimize"
         assert tasks[1].cadence == "daily"
 
-    def test_sla_queries_returns_queries(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_sla_queries_returns_queries(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify SLA queries are returned."""
         queries = warehouse.sla_queries()
         assert len(queries) == 3
@@ -216,18 +212,14 @@ class TestClickHouseWarehouse:
         assert scenarios[1].name == "clickhouse-rollup-scan"
         assert scenarios[1].target_qps == 1000
 
-    def test_backup_plan_returns_steps(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_backup_plan_returns_steps(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify backup plan steps are returned."""
         steps = warehouse.backup_plan()
         assert len(steps) == 2
         assert "BACKUP TABLE" in steps[0].command
         assert "RESTORE" in steps[1].command
 
-    def test_ingest_ticks_with_empty_list(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_ingest_ticks_with_empty_list(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify empty tick list is handled gracefully."""
         warehouse.ingest_ticks([])  # Should not raise
 
