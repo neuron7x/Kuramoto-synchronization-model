@@ -10,6 +10,17 @@ Example:
     >>> manager.validate_order("BTC-USD", "buy", 1, 50000.0)
 """
 
+# Import RiskManager and related classes from execution.risk
+from execution.risk import (
+    KillSwitch,
+    LimitViolation,
+    OrderRateExceeded,
+    RiskError,
+    RiskLimits,
+    RiskManager,
+    portfolio_heat,
+)
+
 from .automated_testing import (
     AutomatedRiskTester,
     MonteCarloConfig,
@@ -27,17 +38,6 @@ from .risk_core import (
     compute_final_size,
     kelly_shrink,
     var_es,
-)
-
-# Import RiskManager and related classes from execution.risk
-from execution.risk import (
-    RiskManager,
-    RiskLimits,
-    RiskError,
-    LimitViolation,
-    OrderRateExceeded,
-    KillSwitch,
-    portfolio_heat,
 )
 
 __all__ = [

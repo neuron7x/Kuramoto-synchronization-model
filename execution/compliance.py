@@ -331,31 +331,37 @@ class RiskCompliance:
 
                     if self._config.daily_max_drawdown_mode == "percent":
                         if drawdown > self._config.daily_max_drawdown_threshold:
+                            drawdown_pct = drawdown * 100
+                            threshold_pct = self._config.daily_max_drawdown_threshold * 100
                             reasons.append(
-                                f"Daily drawdown {drawdown*100:.2f}% exceeds threshold {self._config.daily_max_drawdown_threshold*100:.2f}%"
+                                f"Daily drawdown {drawdown_pct:.2f}% exceeds "
+                                f"threshold {threshold_pct:.2f}%"
                             )
                             breached["daily_max_drawdown"] = drawdown
                         drawdown_metric_value = drawdown
                     else:
                         dd_notional = self._daily_high_equity - equity
                         if dd_notional > self._config.daily_max_drawdown_threshold:
+                            threshold = self._config.daily_max_drawdown_threshold
                             reasons.append(
-                                f"Daily drawdown ${dd_notional:.2f} exceeds threshold ${self._config.daily_max_drawdown_threshold:.2f}"
+                                f"Daily drawdown ${dd_notional:.2f} exceeds "
+                                f"threshold ${threshold:.2f}"
                             )
                             breached["daily_max_drawdown_notional"] = dd_notional
                         drawdown_metric_value = dd_notional
 
                     if drawdown_metric_value is not None:
                         self._record_metric(
-                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(
-                                value, mode=mode
+                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: (
+                                collector.record_daily_drawdown(value, mode=mode)
                             )
                         )
 
             if self._config.max_open_orders_per_account > 0:
                 if self._open_orders_count >= self._config.max_open_orders_per_account:
+                    limit = self._config.max_open_orders_per_account
                     reasons.append(
-                        f"Open orders {self._open_orders_count} at or exceeds limit {self._config.max_open_orders_per_account}"
+                        f"Open orders {self._open_orders_count} at or exceeds limit {limit}"
                     )
                     breached["max_open_orders"] = float(self._open_orders_count)
 
