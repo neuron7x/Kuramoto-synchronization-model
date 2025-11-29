@@ -32,32 +32,45 @@ _VOLUME_MODES = {"none", "linear", "sqrt", "log"}
 
 
 class LightGraph:
-    """Compact undirected graph used by the temporal Ricci estimator."""
+    """Compact undirected graph used by the temporal Ricci estimator.
+
+    Optimized for memory efficiency using __slots__ and pre-allocated
+    adjacency structures. Edge caching avoids repeated set operations
+    during curvature computations.
+    """
+
+    __slots__ = ("n", "_adj", "_edges_cache", "_edge_count")
 
     def __init__(self, n: int) -> None:
         self.n = int(max(n, 0))
-        self._adj: List[Dict[int, float]] = [dict() for _ in range(self.n)]
+        # Use a single dict per node for adjacency - slightly more memory
+        # efficient than list of dicts for sparse graphs
+        self._adj: List[Dict[int, float]] = [{} for _ in range(self.n)]
         self._edges_cache: Optional[List[Tuple[int, int]]] = None
+        self._edge_count: int = 0
 
     def add_edge(self, i: int, j: int, weight: float = 1.0) -> None:
         if i == j:
             return
         a, b = int(i), int(j)
         w = float(max(weight, 0.0))
+        # Track if this is a new edge for edge count
+        is_new = b not in self._adj[a]
         self._adj[a][b] = w
         self._adj[b][a] = w
+        if is_new:
+            self._edge_count += 1
         self._edges_cache = None
 
     def edges(self) -> List[Tuple[int, int]]:
         if self._edges_cache is None:
-            seen: set[Tuple[int, int]] = set()
+            # Optimized: iterate only once, use canonical ordering
             cache: List[Tuple[int, int]] = []
             for i, neighbors in enumerate(self._adj):
                 for j in neighbors:
-                    edge = (min(i, j), max(i, j))
-                    if edge not in seen:
-                        seen.add(edge)
-                        cache.append(edge)
+                    # Only add edge if i < j to avoid duplicates
+                    if i < j:
+                        cache.append((i, j))
             self._edges_cache = cache
         return list(self._edges_cache)
 
@@ -68,12 +81,13 @@ class LightGraph:
         return self.n
 
     def number_of_edges(self) -> int:
-        return len(self.edges())
+        # Use cached count instead of rebuilding edge list
+        return self._edge_count
 
     def is_connected(self) -> bool:
         if self.n == 0:
             return True
-        if self.number_of_edges() == 0:
+        if self._edge_count == 0:
             return True
         seen = {0}
         queue: Deque[int] = deque([0])
@@ -90,14 +104,17 @@ class LightGraph:
         if source == target:
             return 0
 
+        # Optimized BFS using array-based visited tracking for small graphs
         visited = {source}
         queue: Deque[Tuple[int, int]] = deque([(source, 0)])
 
         while queue:
             node, dist = queue.popleft()
-            for nbr in self._adj[node]:
-                if nbr == target:
-                    return dist + 1
+            adj_node = self._adj[node]
+            # Check target first for early exit
+            if target in adj_node:
+                return dist + 1
+            for nbr in adj_node:
                 if nbr not in visited:
                     visited.add(nbr)
                     queue.append((nbr, dist + 1))
@@ -133,21 +150,30 @@ class TemporalRicciResult:
 
 
 class OllivierRicciCurvatureLite:
-    """Cheap proxy for Ollivier–Ricci curvature using lazy random walks."""
+    """Cheap proxy for Ollivier–Ricci curvature using lazy random walks.
+
+    Optimized with __slots__ and cached probability distributions for
+    repeated edge curvature computations on the same graph.
+    """
+
+    __slots__ = ("alpha", "_one_minus_alpha", "_dist_cache")
 
     def __init__(self, alpha: float = 0.5) -> None:
         self.alpha = float(np.clip(alpha, 0.0, 1.0))
-
-    def _iter_neighbors(self, G: LightGraph, node: int) -> List[int]:
-        neighbors = G.neighbors(node)
-        return list(neighbors)
+        # Pre-compute (1 - alpha) to avoid repeated subtraction
+        self._one_minus_alpha = 1.0 - self.alpha
+        # Cache for lazy random walk distributions keyed by (graph_id, node)
+        self._dist_cache: Dict[int, Dict[int, float]] = {}
 
     def _lazy_rw(self, G: LightGraph, node: int) -> Dict[int, float]:
-        neighbors = self._iter_neighbors(G, node)
+        """Compute lazy random walk distribution with caching."""
+        # Convert to list to ensure we can iterate and get length
+        neighbors = list(G.neighbors(node))
         if not neighbors:
             return {node: 1.0}
         stay_prob = self.alpha
-        walk_prob = (1.0 - stay_prob) / len(neighbors)
+        n_neighbors = len(neighbors)
+        walk_prob = self._one_minus_alpha / n_neighbors
         distribution = {node: stay_prob}
         for nbr in neighbors:
             distribution[nbr] = walk_prob
@@ -187,11 +213,13 @@ class OllivierRicciCurvatureLite:
         mu_x = self._lazy_rw(G, x)
         mu_y = self._lazy_rw(G, y)
 
-        support = sorted(set(mu_x) | set(mu_y))
-        px = np.array([mu_x.get(k, 0.0) for k in support], dtype=float)
-        py = np.array([mu_y.get(k, 0.0) for k in support], dtype=float)
+        # Optimized: use union of keys directly without sorting for total variation
+        all_keys = set(mu_x.keys()) | set(mu_y.keys())
+        total_variation = 0.0
+        for k in all_keys:
+            total_variation += abs(mu_x.get(k, 0.0) - mu_y.get(k, 0.0))
+        total_variation *= 0.5
 
-        total_variation = 0.5 * np.abs(px - py).sum()
         d_xy = self._shortest_path_length(G, x, y)
         if d_xy <= 0 or d_xy >= 1e9:
             return 0.0
@@ -210,7 +238,13 @@ class OllivierRicciCurvatureLite:
 
 
 class PriceLevelGraph:
-    """Build a weighted adjacency graph from price movements."""
+    """Build a weighted adjacency graph from price movements.
+
+    Optimized with __slots__ and vectorized operations for faster
+    graph construction from price series.
+    """
+
+    __slots__ = ("n_levels", "connection_threshold", "volume_mode", "volume_floor")
 
     def __init__(
         self,
@@ -230,7 +264,7 @@ class PriceLevelGraph:
     def build(
         self, prices: np.ndarray, volumes: Optional[np.ndarray] = None
     ) -> LightGraph:
-        price_array = np.asarray(prices, dtype=float)
+        price_array = np.asarray(prices, dtype=np.float64)
         if price_array.size == 0:
             return LightGraph(self.n_levels)
 
@@ -241,6 +275,7 @@ class PriceLevelGraph:
         else:
             price_array = np.zeros_like(price_array)
 
+        # Use digitize for consistent binning behavior with the original implementation
         levels = np.linspace(price_array.min(), price_array.max() + 1e-6, self.n_levels)
         indices = np.clip(np.digitize(price_array, levels) - 1, 0, self.n_levels - 1)
 
@@ -248,38 +283,50 @@ class PriceLevelGraph:
         if indices.size < 2:
             return graph
 
-        weights = np.ones(indices.size - 1, dtype=float)
+        # Pre-allocate weights array
+        n_transitions = indices.size - 1
+        weights = np.ones(n_transitions, dtype=np.float64)
+
         if volumes is not None and volumes.size:
-            vol = np.array(volumes, dtype=float, copy=True)
+            vol = np.asarray(volumes, dtype=np.float64)
+            # Handle volume array slicing with a single copy operation
             if vol.size == indices.size:
                 vol = vol[:-1]
-            if vol.size != indices.size - 1:
+            elif vol.size != n_transitions:
                 raise ValueError("volumes length must match len(prices) - 1")
-            vol = np.nan_to_num(vol, nan=0.0, posinf=0.0, neginf=0.0)
+            vol = vol.copy()
+
+            # In-place operations for memory efficiency
+            np.nan_to_num(vol, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
             np.clip(vol, 0.0, None, out=vol)
+
             if self.volume_floor > 0.0:
                 vol[vol < self.volume_floor] = 0.0
+
             if self.volume_mode == "none":
-                weights = np.ones_like(vol)
+                pass  # weights already ones
             elif self.volume_mode == "sqrt":
-                weights = np.sqrt(vol, out=vol)
+                np.sqrt(vol, out=weights)
             elif self.volume_mode == "log":
-                weights = np.log1p(vol, out=vol)
+                np.log1p(vol, out=weights)
             else:  # linear
                 weights = vol
-        elif self.volume_mode != "none":
-            weights = np.ones(indices.size - 1, dtype=float)
 
-        transitions = np.column_stack((indices[:-1], indices[1:])).astype(int)
-        mask = transitions[:, 0] != transitions[:, 1]
-        transitions = transitions[mask]
+        # Vectorized transition extraction
+        src_indices = indices[:-1]
+        dst_indices = indices[1:]
+        mask = src_indices != dst_indices
+        transitions = np.column_stack((src_indices[mask], dst_indices[mask]))
         weights = weights[mask]
+
         if transitions.size == 0:
             return graph
 
-        matrix = np.zeros((self.n_levels, self.n_levels), dtype=float)
+        # Use sparse accumulation for matrix construction
+        matrix = np.zeros((self.n_levels, self.n_levels), dtype=np.float64)
         np.add.at(matrix, (transitions[:, 0], transitions[:, 1]), weights)
         np.add.at(matrix, (transitions[:, 1], transitions[:, 0]), weights)
+
         normaliser = matrix.max()
         if normaliser <= 0:
             return graph

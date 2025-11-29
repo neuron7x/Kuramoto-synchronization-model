@@ -628,6 +628,8 @@ def _w1_fallback(
 ) -> float:
     """Approximate the Wasserstein-1 distance when SciPy is unavailable.
 
+    Optimized with reduced memory allocations and vectorized operations.
+
     Args:
         pos_a: Support locations for the first probability mass function.
         weights_a: Non-negative weights associated with ``pos_a``.
@@ -638,10 +640,11 @@ def _w1_fallback(
         float: The 1-Wasserstein distance computed on the shared 1-D support.
     """
 
-    pos_a = np.array(pos_a, dtype=float, copy=True).reshape(-1)
-    pos_b = np.array(pos_b, dtype=float, copy=True).reshape(-1)
-    weights_a = np.array(weights_a, dtype=float, copy=True).reshape(-1)
-    weights_b = np.array(weights_b, dtype=float, copy=True).reshape(-1)
+    # Use ascontiguousarray for better memory access patterns
+    pos_a = np.ascontiguousarray(pos_a, dtype=np.float64).ravel()
+    pos_b = np.ascontiguousarray(pos_b, dtype=np.float64).ravel()
+    weights_a = np.ascontiguousarray(weights_a, dtype=np.float64).ravel()
+    weights_b = np.ascontiguousarray(weights_b, dtype=np.float64).ravel()
 
     if pos_a.size != weights_a.size or pos_b.size != weights_b.size:
         raise ValueError("Positions and weights must align in shape")
@@ -649,34 +652,37 @@ def _w1_fallback(
     if pos_a.size == 0 and pos_b.size == 0:
         return 0.0
 
-    weights_a = np.nan_to_num(weights_a, nan=0.0, posinf=0.0, neginf=0.0)
-    weights_b = np.nan_to_num(weights_b, nan=0.0, posinf=0.0, neginf=0.0)
-
+    # In-place sanitization to avoid extra allocations
+    np.nan_to_num(weights_a, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
+    np.nan_to_num(weights_b, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
     np.clip(weights_a, 0.0, None, out=weights_a)
     np.clip(weights_b, 0.0, None, out=weights_b)
 
-    total_a = float(weights_a.sum())
-    total_b = float(weights_b.sum())
+    total_a = weights_a.sum()
+    total_b = weights_b.sum()
 
     if total_a <= 0.0 and total_b <= 0.0:
         return 0.0
 
+    # Normalize weights in-place
     if total_a > 0.0:
-        weights_a /= total_a
+        weights_a *= 1.0 / total_a
     else:
         weights_a.fill(0.0)
 
     if total_b > 0.0:
-        weights_b /= total_b
+        weights_b *= 1.0 / total_b
     else:
         weights_b.fill(0.0)
 
     positions = np.union1d(pos_a, pos_b)
-    if positions.size <= 1:
+    n_positions = positions.size
+    if n_positions <= 1:
         return 0.0
 
-    mass_a = np.zeros_like(positions, dtype=float)
-    mass_b = np.zeros_like(positions, dtype=float)
+    # Pre-allocate mass arrays
+    mass_a = np.zeros(n_positions, dtype=np.float64)
+    mass_b = np.zeros(n_positions, dtype=np.float64)
 
     if pos_a.size:
         idx_a = np.searchsorted(positions, pos_a)
@@ -685,13 +691,16 @@ def _w1_fallback(
         idx_b = np.searchsorted(positions, pos_b)
         np.add.at(mass_b, idx_b, weights_b)
 
+    # Compute cumulative distributions
     cdf_a = np.cumsum(mass_a)
     cdf_b = np.cumsum(mass_b)
-    cdf_diff = np.abs(cdf_a - cdf_b)
+
+    # Vectorized Wasserstein distance computation
+    # W1 = integral of |CDF_a - CDF_b| dx
+    cdf_diff = np.abs(cdf_a - cdf_b)[:-1]
     deltas = np.diff(positions)
-    if deltas.size == 0:
-        return 0.0
-    return float(np.sum(cdf_diff[:-1] * deltas))
+
+    return float(np.dot(cdf_diff, deltas))
 
 
 class MeanRicciFeature(BaseFeature):
