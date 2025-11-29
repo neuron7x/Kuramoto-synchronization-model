@@ -1,4 +1,14 @@
-"""TradePulse risk management module."""
+"""TradePulse risk management module.
+
+This module provides risk management capabilities for trading strategies,
+including position sizing, risk limits, and automated risk testing.
+
+Example:
+    >>> from tradepulse.risk import RiskManager, RiskLimits
+    >>> limits = RiskLimits(max_notional=100_000, max_position=10)
+    >>> manager = RiskManager(limits)
+    >>> manager.validate_order("BTC-USD", "buy", 1, 50000.0)
+"""
 
 from .automated_testing import (
     AutomatedRiskTester,
@@ -19,12 +29,33 @@ from .risk_core import (
     var_es,
 )
 
+# Import RiskManager and related classes from execution.risk
+from execution.risk import (
+    RiskManager,
+    RiskLimits,
+    RiskError,
+    LimitViolation,
+    OrderRateExceeded,
+    KillSwitch,
+    portfolio_heat,
+)
+
 __all__ = [
+    # Core risk functions
     "var_es",
     "kelly_shrink",
     "compute_final_size",
     "check_risk_breach",
     "RiskConfig",
+    # Risk Manager
+    "RiskManager",
+    "RiskLimits",
+    "RiskError",
+    "LimitViolation",
+    "OrderRateExceeded",
+    "KillSwitch",
+    "portfolio_heat",
+    # Automated testing
     "AutomatedRiskTester",
     "RiskScenario",
     "ScenarioType",
