@@ -243,7 +243,7 @@ def _hilbert_phase(series: np.ndarray) -> np.ndarray:
     if _signal is None:
         # Fallback: leverage FFT-based analytic signal
         if n > 1:
-            # Efficient linear detrending using cumulative sums
+            # Linear detrending using polynomial fit
             idx = np.arange(n, dtype=np.float64)
             coeffs = np.polyfit(idx, x, deg=1)
             np.subtract(x, np.polyval(coeffs, idx), out=x)
@@ -269,13 +269,9 @@ def _hilbert_phase(series: np.ndarray) -> np.ndarray:
 
 
 def _kuramoto(phases: np.ndarray) -> tuple[float, float]:
-    """Compute Kuramoto order parameter and mean phase.
-
-    Optimized with pre-computed exponentials.
-    """
-    # Use einsum for potentially better cache utilization on large arrays
-    exp_phases = np.exp(1j * np.ascontiguousarray(phases, dtype=np.float64))
-    complex_mean = np.mean(exp_phases)
+    """Compute Kuramoto order parameter and mean phase."""
+    # Compute complex exponential and mean
+    complex_mean = np.mean(np.exp(1j * np.asarray(phases, dtype=np.float64)))
     return float(np.abs(complex_mean)), float(np.angle(complex_mean))
 
 

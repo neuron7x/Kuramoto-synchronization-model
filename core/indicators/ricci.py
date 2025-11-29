@@ -697,7 +697,7 @@ def _w1_fallback(
 
     # Vectorized Wasserstein distance computation
     # W1 = integral of |CDF_a - CDF_b| dx
-    cdf_diff = np.abs(cdf_a[:-1] - cdf_b[:-1])
+    cdf_diff = np.abs(cdf_a - cdf_b)[:-1]
     deltas = np.diff(positions)
 
     return float(np.dot(cdf_diff, deltas))

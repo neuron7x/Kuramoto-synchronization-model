@@ -275,10 +275,9 @@ class PriceLevelGraph:
         else:
             price_array = np.zeros_like(price_array)
 
-        # Optimized level computation using searchsorted for better performance
-        price_min, price_max = price_array.min(), price_array.max()
-        levels = np.linspace(price_min, price_max + 1e-6, self.n_levels)
-        indices = np.clip(np.searchsorted(levels, price_array, side="right") - 1, 0, self.n_levels - 1)
+        # Use digitize for consistent binning behavior with the original implementation
+        levels = np.linspace(price_array.min(), price_array.max() + 1e-6, self.n_levels)
+        indices = np.clip(np.digitize(price_array, levels) - 1, 0, self.n_levels - 1)
 
         graph = LightGraph(self.n_levels)
         if indices.size < 2:
@@ -290,12 +289,12 @@ class PriceLevelGraph:
 
         if volumes is not None and volumes.size:
             vol = np.asarray(volumes, dtype=np.float64)
+            # Handle volume array slicing with a single copy operation
             if vol.size == indices.size:
-                vol = vol[:-1].copy()
+                vol = vol[:-1]
             elif vol.size != n_transitions:
                 raise ValueError("volumes length must match len(prices) - 1")
-            else:
-                vol = vol.copy()
+            vol = vol.copy()
 
             # In-place operations for memory efficiency
             np.nan_to_num(vol, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
