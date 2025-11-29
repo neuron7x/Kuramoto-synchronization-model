@@ -32,6 +32,13 @@ import math
 
 import numpy as np
 
+from core.utils.numeric_constants import (
+    DIV_SAFE_MIN,
+    LOG_SAFE_MIN,
+    POSITION_SIZE_MIN,
+    VOLATILITY_SAFE_MIN,
+)
+
 Float = np.float32
 
 
@@ -113,10 +120,22 @@ class SizerConfig:
 
 
 def pulse_weight(S: float, cfg: SizerConfig) -> float:
+    """Convert AMM pulse to sizing weight.
+
+    Args:
+        S: AMM pulse intensity value.
+        cfg: Sizing configuration with pulse bounds.
+
+    Returns:
+        Weight in [0, 1] range based on pulse position in configured range.
+    """
     S = Float(S)
     if S <= cfg.min_pulse:
         return 0.0
-    w = float((S - cfg.min_pulse) / max(1e-8, (cfg.max_pulse - cfg.min_pulse)))
+    denominator = float(cfg.max_pulse - cfg.min_pulse)
+    if denominator < DIV_SAFE_MIN:
+        return 0.0
+    w = float((S - cfg.min_pulse) / denominator)
     return float(min(max(w, 0.0), 1.0))
 
 
@@ -132,7 +151,7 @@ def precision_weight(pi: float, min_precision: float = 0.0) -> float:
     """
     if pi < min_precision:
         return 0.0
-    z = math.log(max(pi, 1e-8))
+    z = math.log(max(pi, LOG_SAFE_MIN))
     return float(1.0 / (1.0 + math.exp(-z)))
 
 
@@ -161,7 +180,7 @@ def position_size(
     if est_sigma < 0:
         raise ValueError(f"Volatility estimate must be non-negative, got {est_sigma}")
 
-    if est_sigma <= 1e-12:
+    if est_sigma <= VOLATILITY_SAFE_MIN:
         return 0.0
 
     # Apply filters
@@ -169,7 +188,7 @@ def position_size(
     w_precision = precision_weight(pi, cfg.min_precision)
     w = w_pulse * w_precision
 
-    if w < 1e-9:
+    if w < POSITION_SIZE_MIN:
         return 0.0
 
     # Volatility-targeted sizing with Kelly fraction
