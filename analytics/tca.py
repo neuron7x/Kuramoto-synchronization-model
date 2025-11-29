@@ -766,7 +766,8 @@ class TransactionCostAnalyzer:
             best = min(broker_comparison, key=lambda entry: entry.cost_per_share)
             if worst.cost_per_share - best.cost_per_share > 0.1:
                 recommendations.append(
-                    f"Broker {worst.broker} on {worst.venue} underperformed peers; shift flow toward {best.broker}/{best.venue}."
+                    f"Broker {worst.broker} on {worst.venue} underperformed peers; "
+                    f"shift flow toward {best.broker}/{best.venue}."
                 )
 
         seen = set()

@@ -224,9 +224,9 @@ class CodeMetricAggregator:
             if not file_metrics:
                 continue
             lines.append(f"**{file}**")
+            factors = ", ".join(file_metrics.risk_profile.contributing_factors) or "stable"
             lines.append(
-                "- Risk score: "
-                f"{file_metrics.risk_profile.risk_score:.2f} ({', '.join(file_metrics.risk_profile.contributing_factors) or 'stable'})"
+                f"- Risk score: {file_metrics.risk_profile.risk_score:.2f} ({factors})"
             )
             violations = file_metrics.exceeding_thresholds(metrics.thresholds)
             if violations:
