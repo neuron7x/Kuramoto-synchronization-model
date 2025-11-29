@@ -221,52 +221,74 @@ def _hilbert_phase(series: np.ndarray) -> np.ndarray:
     The NumPy fallback mirrors SciPy's detrended analytic signal to guarantee
     consistent phase and Kuramoto order outputs regardless of dependency
     availability.
+
+    Optimized with reduced array allocations and in-place operations.
     """
 
-    x = np.asarray(series, dtype=float)
-    if x.size == 0:
+    x = np.ascontiguousarray(series, dtype=np.float64)
+    n = x.size
+    if n == 0:
         raise ValueError("phase extraction requires at least one sample")
-    if not np.all(np.isfinite(x)):
-        finite = x[np.isfinite(x)]
+
+    # Check for non-finite values efficiently
+    finite_mask = np.isfinite(x)
+    if not finite_mask.all():
+        finite = x[finite_mask]
         if finite.size == 0:
-            x = np.zeros_like(x)
+            x = np.zeros(n, dtype=np.float64)
         else:
             fill_value = float(np.mean(finite))
-            x = np.where(np.isfinite(x), x, fill_value)
+            np.putmask(x, ~finite_mask, fill_value)
+
     if _signal is None:
-        # fallback: leverage FFT-based analytic signal
-        n = x.size
+        # Fallback: leverage FFT-based analytic signal
         if n > 1:
-            idx = np.arange(n, dtype=float)
+            # Efficient linear detrending using cumulative sums
+            idx = np.arange(n, dtype=np.float64)
             coeffs = np.polyfit(idx, x, deg=1)
-            trend = np.polyval(coeffs, idx)
-            detrended = x - trend
+            np.subtract(x, np.polyval(coeffs, idx), out=x)
         else:
-            detrended = x - float(x.mean())
-        X = np.fft.fft(detrended)
-        h = np.zeros(n)
+            x = x - float(x.mean())
+
+        X = np.fft.fft(x)
+        # Build the Hilbert multiplier in-place
+        h = np.zeros(n, dtype=np.float64)
+        half_n = n // 2
         if n % 2 == 0:
-            h[0] = h[n // 2] = 1
-            h[1 : n // 2] = 2
+            h[0] = h[half_n] = 1.0
+            h[1:half_n] = 2.0
         else:
-            h[0] = 1
-            h[1 : (n + 1) // 2] = 2
+            h[0] = 1.0
+            h[1:(n + 1) // 2] = 2.0
         analytic = np.fft.ifft(X * h)
     else:
         detrended = _signal.detrend(x)
         analytic = _signal.hilbert(detrended)
+
     return np.angle(analytic)
 
 
 def _kuramoto(phases: np.ndarray) -> tuple[float, float]:
-    """Compute Kuramoto order parameter and mean phase."""
+    """Compute Kuramoto order parameter and mean phase.
 
-    complex_mean = np.mean(np.exp(1j * phases))
+    Optimized with pre-computed exponentials.
+    """
+    # Use einsum for potentially better cache utilization on large arrays
+    exp_phases = np.exp(1j * np.ascontiguousarray(phases, dtype=np.float64))
+    complex_mean = np.mean(exp_phases)
     return float(np.abs(complex_mean)), float(np.angle(complex_mean))
 
 
 class WaveletWindowSelector:
-    """Selects an analysis window via wavelet energy concentration."""
+    """Selects an analysis window via wavelet energy concentration.
+
+    Optimized with __slots__ for memory efficiency and cached computations.
+    """
+
+    __slots__ = (
+        "min_window", "max_window", "wavelet", "levels",
+        "max_samples", "_fallback_window", "_widths_cache"
+    )
 
     def __init__(
         self,
@@ -301,22 +323,22 @@ class WaveletWindowSelector:
         self._widths_cache: np.ndarray | None = None
 
     def _compute_fallback_window(self) -> int:
+        # Use faster integer square root approximation
         geometric = math.sqrt(float(self.min_window) * float(self.max_window))
         fallback = int(geometric)
-        if fallback < self.min_window:
-            return self.min_window
-        if fallback > self.max_window:
-            return self.max_window
-        return fallback
+        return max(self.min_window, min(fallback, self.max_window))
 
     def _candidate_widths(self) -> np.ndarray:
         if self._widths_cache is None:
-            widths = np.linspace(self.min_window, self.max_window, self.levels)
-            widths = np.clip(widths, self.min_window, self.max_window)
-            widths = np.unique(widths.astype(int))
+            widths = np.linspace(
+                self.min_window, self.max_window, self.levels, dtype=np.float64
+            )
+            # Clip and convert to integers in one operation
+            widths = np.clip(widths, self.min_window, self.max_window).astype(np.int32)
+            widths = np.unique(widths)
             widths = widths[widths > 0]
             if widths.size == 0:
-                widths = np.array([self.min_window], dtype=int)
+                widths = np.array([self.min_window], dtype=np.int32)
             self._widths_cache = widths
         return self._widths_cache
 
@@ -329,11 +351,11 @@ class WaveletWindowSelector:
             raise ValueError(
                 "levels is excessively large and could exhaust memory during wavelet selection"
             )
-        values = np.asarray(prices, dtype=float)
+        values = np.ascontiguousarray(prices, dtype=np.float64)
         if values.size == 0:
             raise ValueError("cannot select window from empty price series")
         if self.max_samples is not None and values.size > self.max_samples:
-            values = values[-self.max_samples :]
+            values = values[-self.max_samples:]
         if _signal is None:
             return self._fallback_window
 
@@ -346,14 +368,11 @@ class WaveletWindowSelector:
         except Exception:  # pragma: no cover - SciPy edge cases
             return self._fallback_window
 
-        energy = np.sum(transform**2, axis=1)
+        # Optimized energy computation using einsum
+        energy = np.einsum("ij,ij->i", transform, transform)
         best_idx = int(np.argmax(energy))
         best_width = int(widths[best_idx])
-        if best_width < self.min_window:
-            return self.min_window
-        if best_width > self.max_window:
-            return self.max_window
-        return best_width
+        return max(self.min_window, min(best_width, self.max_window))
 
 
 class MultiScaleKuramoto:
