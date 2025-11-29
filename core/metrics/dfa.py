@@ -103,7 +103,7 @@ def dfa_alpha(
             mse = float(np.mean(residual ** 2))
             # Ensure non-negative value before sqrt
             rms_values.append(float(np.sqrt(max(mse, 0.0))))
-        
+
         mean_rms = float(np.mean(rms_values))
         # Only include valid fluctuation values
         if mean_rms > VARIANCE_SAFE_MIN:
@@ -117,22 +117,22 @@ def dfa_alpha(
     # Use numerically stable log computation
     scales_arr = np.asarray(scales, dtype=float)
     flucts_arr = np.asarray(flucts, dtype=float)
-    
+
     # Ensure all values are valid for log computation
     scales_arr = np.maximum(scales_arr, LOG_SAFE_MIN)
     flucts_arr = np.maximum(flucts_arr, LOG_SAFE_MIN)
-    
+
     lw = np.log(scales_arr)
     lF = np.log(flucts_arr)
-    
+
     # Check for constant values (would cause polyfit issues)
     if np.std(lw) < VARIANCE_SAFE_MIN or np.std(lF) < VARIANCE_SAFE_MIN:
         return 0.0
-    
+
     slope, _ = np.polyfit(lw, lF, deg=1)
-    
+
     # Validate result is finite
     if not np.isfinite(slope):
         return 0.0
-    
+
     return float(slope)

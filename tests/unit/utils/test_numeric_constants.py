@@ -16,7 +16,6 @@ from core.utils.numeric_constants import (
     FLOAT_ABS_TOL,
     FLOAT_REL_TOL,
     LOG_SAFE_MIN,
-    POSITION_SIZE_MIN,
     PROB_CLIP_MAX,
     PROB_CLIP_MIN,
     VARIANCE_SAFE_MIN,

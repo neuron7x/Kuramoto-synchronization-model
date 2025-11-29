@@ -62,7 +62,7 @@ VOLATILITY_SAFE_MIN: float = 1e-10
 # Minimum probability for clipping to avoid log(0) in entropy calculations.
 PROB_CLIP_MIN: float = 1e-10
 
-# Maximum probability for clipping to avoid log(1) = 0 issues.
+# Maximum probability for clipping to avoid log(1-p) = -inf in entropy calculations.
 PROB_CLIP_MAX: float = 1.0 - 1e-10
 
 # Minimum probability for binary distribution calculations.
