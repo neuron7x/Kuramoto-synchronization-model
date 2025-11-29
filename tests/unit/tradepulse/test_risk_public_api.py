@@ -113,7 +113,7 @@ class TestRiskManagerValidation:
         manager = RiskManager(limits)
 
         # This should not raise
-        manager.validate_order("BTC-USD", "buy", 1, 25_000.0)
+        manager.validate_order("BTC/USD", "buy", 1, 25_000.0)
 
     def test_validate_order_rejects_notional(self) -> None:
         """Test order validation that rejects on notional."""
@@ -123,7 +123,7 @@ class TestRiskManagerValidation:
         manager = RiskManager(limits)
 
         with pytest.raises(LimitViolation, match="Notional cap exceeded"):
-            manager.validate_order("BTC-USD", "buy", 1, 25_000.0)
+            manager.validate_order("BTC/USD", "buy", 1, 25_000.0)
 
     def test_validate_order_rejects_position(self) -> None:
         """Test order validation that rejects on position."""
@@ -133,7 +133,7 @@ class TestRiskManagerValidation:
         manager = RiskManager(limits)
 
         with pytest.raises(LimitViolation, match="Position cap exceeded"):
-            manager.validate_order("BTC-USD", "buy", 1, 50_000.0)
+            manager.validate_order("BTC/USD", "buy", 1, 50_000.0)
 
 
 class TestRiskManagerExposure:
@@ -146,10 +146,10 @@ class TestRiskManagerExposure:
         limits = RiskLimits(max_notional=1_000_000, max_position=100)
         manager = RiskManager(limits)
 
-        manager.register_fill("BTC-USD", "buy", 1.0, 50_000.0)
+        manager.register_fill("BTC/USD", "buy", 1.0, 50_000.0)
 
-        assert manager.current_position("BTC-USD") == 1.0
-        assert manager.current_notional("BTC-USD") == 50_000.0
+        assert manager.current_position("BTC/USD") == 1.0
+        assert manager.current_notional("BTC/USD") == 50_000.0
 
     def test_exposure_snapshot(self) -> None:
         """Test exposure_snapshot returns correct data."""

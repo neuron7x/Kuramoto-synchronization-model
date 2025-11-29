@@ -156,10 +156,9 @@ class LiveTrader:
                 "Create a configuration file or specify a valid path."
             )
 
-        venues = [self._exchange] if self._exchange else None
         self._runner = LiveTradingRunner(
             config_path=self._config_path,
-            venues=venues,
+            venues=[self._exchange],
         )
         self._running = True
         self._runner.start(cold_start=cold_start)
@@ -205,10 +204,9 @@ class LiveTrader:
                 f"Live trading config not found: {self._config_path}"
             )
 
-        venues = [self._exchange] if self._exchange else None
         self._runner = LiveTradingRunner(
             config_path=self._config_path,
-            venues=venues,
+            venues=[self._exchange],
         )
         self._running = True
         try:
