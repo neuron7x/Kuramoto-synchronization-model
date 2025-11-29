@@ -350,7 +350,9 @@ class TestSystemResourceProfiling:
 
     def test_cpu_utilization_tracking(self):
         """Test tracking of CPU utilization."""
-        psutil = pytest.importorskip("psutil", reason="psutil is required for system resource profiling tests")
+        psutil = pytest.importorskip(
+            "psutil", reason="psutil is required for system resource profiling tests"
+        )
 
         # Get CPU utilization over interval
         cpu_percent = psutil.cpu_percent(interval=0.1)
@@ -359,7 +361,9 @@ class TestSystemResourceProfiling:
 
     def test_memory_utilization_tracking(self):
         """Test tracking of memory utilization."""
-        psutil = pytest.importorskip("psutil", reason="psutil is required for system resource profiling tests")
+        psutil = pytest.importorskip(
+            "psutil", reason="psutil is required for system resource profiling tests"
+        )
 
         memory = psutil.virtual_memory()
 
@@ -369,7 +373,9 @@ class TestSystemResourceProfiling:
 
     def test_disk_io_tracking(self):
         """Test tracking of disk I/O."""
-        psutil = pytest.importorskip("psutil", reason="psutil is required for system resource profiling tests")
+        psutil = pytest.importorskip(
+            "psutil", reason="psutil is required for system resource profiling tests"
+        )
 
         disk_io = psutil.disk_io_counters()
 

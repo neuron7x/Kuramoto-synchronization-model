@@ -212,8 +212,12 @@ class TestNeuroIntegrity:
 
     def test_validate_valid_transition(self, validator):
         """Test validation of a valid transition."""
-        state1 = PathwayState(dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5)
-        state2 = PathwayState(dopamine=0.55, serotonin=0.45, excitation=0.52, inhibition=0.48)
+        state1 = PathwayState(
+            dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5
+        )
+        state2 = PathwayState(
+            dopamine=0.55, serotonin=0.45, excitation=0.52, inhibition=0.48
+        )
         report = validator.validate_transition(state1, state2, dt=1.0)
         assert report.is_valid
 
@@ -221,7 +225,9 @@ class TestNeuroIntegrity:
         """Test detection of excessive activation rate."""
         config = NeuroIntegrityConfig(max_activation_rate=0.1)
         validator = NeuroIntegrity(config)
-        state1 = PathwayState(dopamine=0.2, serotonin=0.4, excitation=0.5, inhibition=0.5)
+        state1 = PathwayState(
+            dopamine=0.2, serotonin=0.4, excitation=0.5, inhibition=0.5
+        )
         state2 = PathwayState(
             dopamine=0.8, serotonin=0.4, excitation=0.5, inhibition=0.5
         )  # dopamine changed by 0.6 in 1s
@@ -238,8 +244,12 @@ class TestNeuroIntegrity:
         """Test trajectory validation."""
         states = [
             PathwayState(dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5),
-            PathwayState(dopamine=0.52, serotonin=0.42, excitation=0.51, inhibition=0.49),
-            PathwayState(dopamine=0.54, serotonin=0.44, excitation=0.52, inhibition=0.48),
+            PathwayState(
+                dopamine=0.52, serotonin=0.42, excitation=0.51, inhibition=0.49
+            ),
+            PathwayState(
+                dopamine=0.54, serotonin=0.44, excitation=0.52, inhibition=0.48
+            ),
         ]
         timestamps = [0.0, 1000.0, 2000.0]
         report = validator.validate_trajectory(states, timestamps)

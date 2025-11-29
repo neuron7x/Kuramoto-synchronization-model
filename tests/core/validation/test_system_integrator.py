@@ -30,7 +30,9 @@ class TestSystemState:
         """Test creating a fully populated state."""
         state = SystemState(
             thermodynamic=ThermodynamicState(free_energy=1e-18, entropy=0.5),
-            pathway=PathwayState(dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5),
+            pathway=PathwayState(
+                dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5
+            ),
             data=np.array([1.0, 2.0, 3.0]),
             market_phase="bullish",
         )
@@ -80,7 +82,10 @@ class TestSystemIntegrator:
         assert report.is_valid
         assert report.physics_report is not None
         assert report.physics_report.is_valid
-        assert report.health_level in [SystemHealthLevel.HEALTHY, SystemHealthLevel.OPTIMAL]
+        assert report.health_level in [
+            SystemHealthLevel.HEALTHY,
+            SystemHealthLevel.OPTIMAL,
+        ]
 
     def test_validate_pathway_only(self, integrator, valid_pathway):
         """Test validation with only pathway state."""
@@ -98,7 +103,9 @@ class TestSystemIntegrator:
         assert report.data_report is not None
         assert report.data_report.is_valid
 
-    def test_validate_full_state(self, integrator, valid_thermodynamic, valid_pathway, valid_data):
+    def test_validate_full_state(
+        self, integrator, valid_thermodynamic, valid_pathway, valid_data
+    ):
         """Test validation of fully populated state."""
         state = SystemState(
             thermodynamic=valid_thermodynamic,
@@ -147,7 +154,9 @@ class TestSystemIntegrator:
         assert not report.is_valid
         assert not report.neuro_report.is_valid
 
-    def test_validate_invalid_data(self, integrator, valid_thermodynamic, valid_pathway):
+    def test_validate_invalid_data(
+        self, integrator, valid_thermodynamic, valid_pathway
+    ):
         """Test validation with invalid data."""
         # Create data with NaN values
         invalid_data = np.array([1.0, float("nan"), 3.0])
@@ -166,7 +175,11 @@ class TestSystemIntegrator:
         state = SystemState(
             thermodynamic=ThermodynamicState(free_energy=-1e-14, entropy=0.5),
             pathway=PathwayState(
-                dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5, coherence=0.05
+                dopamine=0.5,
+                serotonin=0.4,
+                excitation=0.5,
+                inhibition=0.5,
+                coherence=0.05,
             ),
             data=np.array([float("nan")]),
         )
@@ -177,11 +190,15 @@ class TestSystemIntegrator:
         """Test transition validation."""
         state1 = SystemState(
             thermodynamic=ThermodynamicState(free_energy=1e-18, entropy=0.5),
-            pathway=PathwayState(dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5),
+            pathway=PathwayState(
+                dopamine=0.5, serotonin=0.4, excitation=0.5, inhibition=0.5
+            ),
         )
         state2 = SystemState(
             thermodynamic=ThermodynamicState(free_energy=0.99e-18, entropy=0.51),
-            pathway=PathwayState(dopamine=0.52, serotonin=0.42, excitation=0.51, inhibition=0.49),
+            pathway=PathwayState(
+                dopamine=0.52, serotonin=0.42, excitation=0.51, inhibition=0.49
+            ),
         )
         report = integrator.validate_transition(state1, state2, dt=1.0)
         assert report.is_valid
@@ -197,7 +214,9 @@ class TestSystemIntegrator:
         # Should detect mismatch
         assert len(report.cross_domain_issues) > 0
 
-    def test_summary_generation(self, integrator, valid_thermodynamic, valid_pathway, valid_data):
+    def test_summary_generation(
+        self, integrator, valid_thermodynamic, valid_pathway, valid_data
+    ):
         """Test report summary generation."""
         state = SystemState(
             thermodynamic=valid_thermodynamic,

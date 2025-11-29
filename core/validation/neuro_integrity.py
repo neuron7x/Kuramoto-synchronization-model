@@ -386,7 +386,10 @@ class NeuroIntegrity:
         for i in range(1, len(states)):
             if timestamps_ms is not None:
                 dt = (timestamps_ms[i] - timestamps_ms[i - 1]) / 1000.0
-            elif states[i].timestamp_ms is not None and states[i - 1].timestamp_ms is not None:
+            elif (
+                states[i].timestamp_ms is not None
+                and states[i - 1].timestamp_ms is not None
+            ):
                 dt = (states[i].timestamp_ms - states[i - 1].timestamp_ms) / 1000.0
             else:
                 dt = 1.0

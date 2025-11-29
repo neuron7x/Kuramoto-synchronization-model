@@ -224,7 +224,9 @@ class CodeMetricAggregator:
             if not file_metrics:
                 continue
             lines.append(f"**{file}**")
-            factors = ", ".join(file_metrics.risk_profile.contributing_factors) or "stable"
+            factors = (
+                ", ".join(file_metrics.risk_profile.contributing_factors) or "stable"
+            )
             lines.append(
                 f"- Risk score: {file_metrics.risk_profile.risk_score:.2f} ({factors})"
             )

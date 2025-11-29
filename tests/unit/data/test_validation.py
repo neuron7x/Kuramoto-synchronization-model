@@ -3,14 +3,23 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
+import numpy as np
 import pandas as pd
 import pytest
 from pydantic import ValidationError
 
 from core.data.validation import (
+    OHLCVValidationResult,
     TimeSeriesValidationConfig,
     TimeSeriesValidationError,
     ValueColumnConfig,
+    _coerce_timedelta,
+    _find_duplicates,
+    _resolve_timezone,
+    build_timeseries_schema,
+    validate_ohlcv,
     validate_timeseries_frame,
 )
 
@@ -149,20 +158,6 @@ def test_timeseries_config_coerces_frequency_strings() -> None:
 
 
 # Additional comprehensive tests for improved coverage
-
-
-from core.data.validation import (
-    OHLCVValidationResult,
-    _coerce_timedelta,
-    _find_duplicates,
-    _resolve_timezone,
-    build_timeseries_schema,
-    validate_ohlcv,
-)
-
-from datetime import timedelta
-
-import numpy as np
 
 
 class TestOHLCVValidationResult:
@@ -386,7 +381,9 @@ class TestValidateOHLCV:
     def test_optional_columns_not_required(self) -> None:
         """Verify optional columns are not required."""
         df = pd.DataFrame({"close": [100.0, 101.0, 102.0] * 10})
-        result = validate_ohlcv(df, open_col=None, high_col=None, low_col=None, volume_col=None)
+        result = validate_ohlcv(
+            df, open_col=None, high_col=None, low_col=None, volume_col=None
+        )
         assert result.valid is True
 
 

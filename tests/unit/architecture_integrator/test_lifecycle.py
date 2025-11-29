@@ -731,7 +731,9 @@ class TestConfigurationManagement:
         manager.add_event_handler(lambda e: events.append(e))
 
         new_config = {"setting": "new_value"}
-        result = manager.reload_configuration("test", new_config, restart_required=False)
+        result = manager.reload_configuration(
+            "test", new_config, restart_required=False
+        )
 
         assert result is True
         assert manager.get_configuration("test") == new_config

@@ -100,7 +100,7 @@ def dfa_alpha(
             coeffs = np.polyfit(t, segment, deg=1)
             trend = np.polyval(coeffs, t)
             residual = segment - trend
-            mse = float(np.mean(residual ** 2))
+            mse = float(np.mean(residual**2))
             # Ensure non-negative value before sqrt
             rms_values.append(float(np.sqrt(max(mse, 0.0))))
 

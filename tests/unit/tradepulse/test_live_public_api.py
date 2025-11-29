@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Tests for tradepulse.live module public API."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestLiveModuleImports:

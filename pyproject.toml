@@ -208,6 +208,9 @@ extend-exclude = ["docs/notebooks"]
 select = ["E", "F", "W", "I"]
 ignore = ["E203", "E501"]
 
+[tool.ruff.lint.per-file-ignores]
+"examples/*.py" = ["E402"]
+
 [tool.isort]
 profile = "black"
 line_length = 100

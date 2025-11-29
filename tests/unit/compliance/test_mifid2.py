@@ -220,9 +220,7 @@ class TestMiFID2Reporter:
         reporter = MiFID2Reporter(storage_path=storage_path, retention=policy)
         assert reporter._retention.retention_years == 10
 
-    def test_record_order_adds_to_audit_trail(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_record_order_adds_to_audit_trail(self, reporter: MiFID2Reporter) -> None:
         """Verify record_order adds entry to audit trail."""
         reporter.record_order(
             order_id="order-1",
@@ -233,9 +231,7 @@ class TestMiFID2Reporter:
         assert len(reporter._audit_trail) == 1
         assert reporter._audit_trail[0].order_id == "order-1"
 
-    def test_record_order_detects_market_abuse(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_record_order_detects_market_abuse(self, reporter: MiFID2Reporter) -> None:
         """Verify record_order detects suspicious cancellations."""
         reporter.record_order(
             order_id="order-abuse",
@@ -343,9 +339,7 @@ class TestMiFID2Reporter:
         breaches = reporter.best_execution_breaches(threshold_bps=50.0)
         assert len(breaches) == 0
 
-    def test_position_limit_breaches_detected(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_position_limit_breaches_detected(self, reporter: MiFID2Reporter) -> None:
         """Verify position limit breaches are detected."""
         positions = {"AAPL": 150.0, "GOOGL": 50.0}
         limits = {"AAPL": 100.0, "GOOGL": 100.0}

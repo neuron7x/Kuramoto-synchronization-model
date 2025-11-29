@@ -2,6 +2,7 @@
 
 This module tests the scripts/validate_ohlcv_data.py module.
 """
+
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 
 import tempfile
