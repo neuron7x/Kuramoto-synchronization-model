@@ -201,8 +201,9 @@ class TestDynamicPositionSizerConfigValidation:
 
         # Kelly should be positive for profitable strategy
         assert kelly > 0
-        # Should be capped by kelly_fraction
-        assert kelly <= 0.5 * 0.25
+        # Maximum uncapped Kelly is 0.5, with fractional Kelly (0.25) the cap is 0.125
+        max_kelly_cap = 0.125
+        assert kelly <= max_kelly_cap
 
     def test_volatility_adjustment_boundaries(self):
         """Test volatility adjustment at extreme values."""
