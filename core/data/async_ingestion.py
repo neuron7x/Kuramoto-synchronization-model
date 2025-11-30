@@ -656,10 +656,7 @@ class BinanceWebSocketStream(AsyncWebSocketStream):
                 "WebSocket not connected. Call connect() before subscribe()."
             )
 
-        try:
-            import json
-        except ImportError:  # pragma: no cover - standard library
-            raise
+        import json
 
         attempt = 0
         while self._running:
@@ -878,15 +875,6 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
                     error=str(item.exception),
                     exc_info=item.exception,
                 )
-
-
-__all__ = [
-    "AsyncDataIngestor",
-    "AsyncWebSocketStream",
-    "BinanceWebSocketStream",
-    "Ticker",
-    "merge_streams",
-]
 
 
 def _tick_event_to_price_tick(
