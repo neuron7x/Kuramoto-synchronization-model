@@ -69,20 +69,33 @@ def add(a: int, b: int) -> int:
 def compute_hurst_exponent(
     returns: np.ndarray, min_lag: int = 2, max_lag: int | None = None
 ) -> float:
-    """Compute Hurst exponent using rescaled range (R/S) analysis.
+    """Compute Hurst exponent using Rescaled Range (R/S) analysis.
 
-    The Hurst exponent H measures long-term memory in time series:
-    - H > 0.5: Trending/persistent behavior
-    - H = 0.5: Random walk
-    - H < 0.5: Mean-reverting behavior
+    The Hurst exponent H is estimated using the classical R/S method introduced
+    by H.E. Hurst (1951) and later formalized by Mandelbrot & Wallis (1969).
+    For each lag τ, the algorithm computes the rescaled range R/S over non-
+    overlapping subseries and performs linear regression on log(τ) vs log(R/S)
+    to estimate H as the slope.
+
+    The interpretation of the Hurst exponent:
+    - H > 0.5: Persistent/trending behavior (positive autocorrelation)
+    - H = 0.5: Random walk / no memory (Brownian motion)
+    - H < 0.5: Anti-persistent/mean-reverting behavior (negative autocorrelation)
+
+    References:
+        - Hurst, H.E. (1951). "Long-term storage capacity of reservoirs"
+        - Mandelbrot, B.B. & Wallis, J.R. (1969). "Robustness of the rescaled
+          range R/S in the measurement of noncyclic long run statistical
+          dependence"
 
     Args:
         returns: Array of returns or price changes
-        min_lag: Minimum lag for R/S computation
+        min_lag: Minimum lag for R/S computation (default: 2)
         max_lag: Maximum lag (defaults to len(returns)//4)
 
     Returns:
-        Estimated Hurst exponent in range [0, 1]
+        Estimated Hurst exponent in range [0, 1]. Returns 0.5 for
+        insufficient data (assumes random walk).
     """
     returns = np.asarray(returns, dtype=np.float64)
     n = len(returns)

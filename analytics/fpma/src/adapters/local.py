@@ -24,6 +24,7 @@ from typing import Any, Dict, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 
 from analytics.fpma.src.ports.ports import (
     DataRetrievalPort,
@@ -116,9 +117,7 @@ class LocalRiskModel(RiskModelPort):
         mean_return = np.mean(portfolio_returns)
         std_return = np.std(portfolio_returns)
 
-        # Assuming normal distribution
-        from scipy.stats import norm
-
+        # Assuming normal distribution - use scipy.stats.norm for quantile
         z_score = norm.ppf(1 - confidence)
         var = -(mean_return + z_score * std_return)
         return float(max(0, var))
