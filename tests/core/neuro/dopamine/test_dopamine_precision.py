@@ -383,8 +383,8 @@ class TestAppetitiveStateComputation:
         # Only reward contribution
         app_r = controller.estimate_appetitive_state(1.0, 0.0, 0.0, 0.0)
 
-        # Only novelty contribution
-        app_n = controller.estimate_appetitive_state(0.0, 1.0, 0.0, 0.0)
+        # Only novelty contribution (not asserted due to c_absrpe interaction)
+        _app_n = controller.estimate_appetitive_state(0.0, 1.0, 0.0, 0.0)
 
         # Only momentum contribution
         app_m = controller.estimate_appetitive_state(0.0, 0.0, 1.0, 0.0)
