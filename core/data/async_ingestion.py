@@ -32,7 +32,13 @@ from interfaces.ingestion import AsyncDataIngestionService
 if TYPE_CHECKING:
     from core.events import TickEvent
 
-__all__ = ["AsyncDataIngestor", "AsyncWebSocketStream", "Ticker", "merge_streams"]
+__all__ = [
+    "AsyncDataIngestor",
+    "AsyncWebSocketStream",
+    "BinanceWebSocketStream",
+    "Ticker",
+    "merge_streams",
+]
 
 logger = get_logger(__name__)
 metrics = get_metrics_collector()
@@ -525,6 +531,249 @@ class AsyncWebSocketStream:
         raise NotImplementedError
 
 
+class BinanceWebSocketStream(AsyncWebSocketStream):
+    """Async WebSocket stream for Binance exchange.
+
+    This implementation connects to Binance WebSocket API and streams
+    real-time trade data as Ticker objects.
+
+    Example:
+        >>> stream = BinanceWebSocketStream("BTCUSDT")
+        >>> await stream.connect()
+        >>> async for tick in stream.subscribe():
+        ...     print(f"Price: {tick.price}")
+        >>> await stream.disconnect()
+    """
+
+    BINANCE_WS_BASE_URL = "wss://stream.binance.com:9443/ws"
+
+    def __init__(
+        self,
+        symbol: str,
+        *,
+        url: Optional[str] = None,
+        instrument_type: InstrumentType = InstrumentType.SPOT,
+        reconnect_attempts: int = 5,
+        reconnect_delay: float = 1.0,
+    ):
+        """Initialize Binance WebSocket stream.
+
+        Args:
+            symbol: Trading symbol (e.g., "BTCUSDT")
+            url: Custom WebSocket URL (defaults to Binance production stream)
+            instrument_type: Instrument type (SPOT or FUTURES)
+            reconnect_attempts: Number of reconnection attempts before giving up
+            reconnect_delay: Base delay between reconnection attempts in seconds
+        """
+        stream_url = url or f"{self.BINANCE_WS_BASE_URL}/{symbol.lower()}@trade"
+        super().__init__(stream_url, symbol)
+        self._instrument_type = instrument_type
+        self._reconnect_attempts = reconnect_attempts
+        self._reconnect_delay = reconnect_delay
+        self._websocket: Any = None
+        self._lock = asyncio.Lock()
+
+    async def connect(self) -> None:
+        """Connect to Binance WebSocket.
+
+        Raises:
+            RuntimeError: If websockets library is not installed
+            ConnectionError: If connection fails after all retry attempts
+        """
+        try:
+            import websockets
+        except ImportError as exc:
+            raise RuntimeError(
+                "websockets library is required for BinanceWebSocketStream. "
+                "Install it with: pip install websockets"
+            ) from exc
+
+        async with self._lock:
+            if self._websocket is not None and self._running:
+                return
+
+            attempt = 0
+            last_error: Optional[Exception] = None
+
+            while attempt < self._reconnect_attempts:
+                try:
+                    self._websocket = await websockets.connect(
+                        self.url,
+                        ping_interval=20,
+                        ping_timeout=20,
+                        close_timeout=5,
+                    )
+                    self._running = True
+                    logger.info(
+                        "binance_ws_connected",
+                        url=self.url,
+                        symbol=self.symbol,
+                    )
+                    return
+                except Exception as exc:
+                    attempt += 1
+                    last_error = exc
+                    logger.warning(
+                        "binance_ws_connect_retry",
+                        url=self.url,
+                        attempt=attempt,
+                        max_attempts=self._reconnect_attempts,
+                        error=str(exc),
+                    )
+                    if attempt < self._reconnect_attempts:
+                        await asyncio.sleep(self._reconnect_delay * attempt)
+
+            raise ConnectionError(
+                f"Failed to connect to Binance WebSocket after "
+                f"{self._reconnect_attempts} attempts: {last_error}"
+            )
+
+    async def disconnect(self) -> None:
+        """Disconnect from Binance WebSocket."""
+        async with self._lock:
+            self._running = False
+            if self._websocket is not None:
+                with suppress(Exception):
+                    await self._websocket.close()
+                self._websocket = None
+                logger.info(
+                    "binance_ws_disconnected",
+                    url=self.url,
+                    symbol=self.symbol,
+                )
+
+    async def subscribe(self) -> AsyncIterator[Ticker]:
+        """Subscribe to Binance trade stream.
+
+        Yields:
+            Ticker objects from the WebSocket stream
+
+        Raises:
+            RuntimeError: If not connected
+        """
+        if not self._running or self._websocket is None:
+            raise RuntimeError(
+                "WebSocket not connected. Call connect() before subscribe()."
+            )
+
+        import json
+
+        attempt = 0
+        while self._running:
+            try:
+                message = await self._websocket.recv()
+                attempt = 0  # Reset on successful receive
+
+                try:
+                    data = json.loads(message)
+                except json.JSONDecodeError as exc:
+                    logger.warning(
+                        "binance_ws_invalid_json",
+                        symbol=self.symbol,
+                        error=str(exc),
+                    )
+                    continue
+
+                # Parse Binance trade message format
+                tick = self._parse_trade_message(data)
+                if tick is not None:
+                    yield tick
+
+            except asyncio.CancelledError:
+                break
+            except Exception as exc:
+                if not self._running:
+                    break
+
+                attempt += 1
+                logger.warning(
+                    "binance_ws_recv_error",
+                    symbol=self.symbol,
+                    attempt=attempt,
+                    error=str(exc),
+                )
+
+                if attempt >= self._reconnect_attempts:
+                    logger.error(
+                        "binance_ws_max_retries_exceeded",
+                        symbol=self.symbol,
+                        attempts=attempt,
+                    )
+                    break
+
+                # Attempt reconnection
+                try:
+                    await self.disconnect()
+                    await asyncio.sleep(self._reconnect_delay * attempt)
+                    await self.connect()
+                except Exception as reconnect_exc:
+                    logger.error(
+                        "binance_ws_reconnect_failed",
+                        symbol=self.symbol,
+                        error=str(reconnect_exc),
+                    )
+                    break
+
+    def _parse_trade_message(self, data: Mapping[str, Any]) -> Optional[Ticker]:
+        """Parse a Binance trade WebSocket message into a Ticker.
+
+        Args:
+            data: Parsed JSON message from Binance WebSocket
+
+        Returns:
+            Ticker object or None if message cannot be parsed
+        """
+        # Binance trade message format:
+        # {
+        #   "e": "trade",
+        #   "E": event_time,
+        #   "s": symbol,
+        #   "p": price,
+        #   "q": quantity,
+        #   "T": trade_time
+        # }
+        try:
+            event_type = data.get("e")
+            if event_type != "trade":
+                return None
+
+            price_str = data.get("p")
+            quantity_str = data.get("q")
+            trade_time = data.get("T")
+
+            if price_str is None or trade_time is None:
+                logger.warning(
+                    "binance_ws_incomplete_trade",
+                    symbol=self.symbol,
+                    data=data,
+                )
+                return None
+
+            price = float(price_str)
+            volume = float(quantity_str) if quantity_str else 0.0
+
+            # Binance timestamps are in milliseconds
+            ts_seconds = trade_time / 1000 if trade_time > 1e12 else trade_time
+            timestamp = normalize_timestamp(ts_seconds)
+
+            return Ticker.create(
+                symbol=self.symbol,
+                venue="BINANCE",
+                price=price,
+                volume=volume,
+                timestamp=timestamp,
+                instrument_type=self._instrument_type,
+            )
+        except (TypeError, ValueError, KeyError) as exc:
+            logger.warning(
+                "binance_ws_parse_error",
+                symbol=self.symbol,
+                error=str(exc),
+                data=data,
+            )
+            return None
+
+
 async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker]:
     """Merge multiple async tick streams into one resilient iterator.
 
@@ -626,14 +875,6 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
                     error=str(item.exception),
                     exc_info=item.exception,
                 )
-
-
-__all__ = [
-    "Ticker",
-    "AsyncDataIngestor",
-    "AsyncWebSocketStream",
-    "merge_streams",
-]
 
 
 def _tick_event_to_price_tick(
