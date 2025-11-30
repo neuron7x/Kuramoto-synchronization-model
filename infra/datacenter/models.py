@@ -188,6 +188,28 @@ class DataCenterConfig:
         if not 0.0 <= self.failover_threshold_score <= 100.0:
             raise ValueError("Failover threshold score must be between 0 and 100")
 
+    def with_primary_status(self, is_primary: bool) -> "DataCenterConfig":
+        """Create a new config with updated primary status.
+
+        Args:
+            is_primary: New primary status
+
+        Returns:
+            New DataCenterConfig with updated is_primary field
+        """
+        return DataCenterConfig(
+            id=self.id,
+            name=self.name,
+            region=self.region,
+            availability_zones=self.availability_zones,
+            is_primary=is_primary,
+            failover_policy=self.failover_policy,
+            replication_configs=self.replication_configs,
+            max_connections=self.max_connections,
+            health_check_interval_seconds=self.health_check_interval_seconds,
+            failover_threshold_score=self.failover_threshold_score,
+        )
+
 
 @dataclass
 class DataCenter:

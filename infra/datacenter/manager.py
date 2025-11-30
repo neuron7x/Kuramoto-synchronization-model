@@ -86,18 +86,7 @@ class DataCenterManager:
                     old_primary = self._data_centers.get(self._primary_dc_id)
                     if old_primary:
                         old_primary.status = DataCenterStatus.STANDBY
-                        old_primary.config = DataCenterConfig(
-                            id=old_primary.config.id,
-                            name=old_primary.config.name,
-                            region=old_primary.config.region,
-                            availability_zones=old_primary.config.availability_zones,
-                            is_primary=False,
-                            failover_policy=old_primary.config.failover_policy,
-                            replication_configs=old_primary.config.replication_configs,
-                            max_connections=old_primary.config.max_connections,
-                            health_check_interval_seconds=old_primary.config.health_check_interval_seconds,
-                            failover_threshold_score=old_primary.config.failover_threshold_score,
-                        )
+                        old_primary.config = old_primary.config.with_primary_status(False)
                 self._primary_dc_id = config.id
 
             logger.info(
@@ -318,18 +307,7 @@ class DataCenterManager:
 
             # Demote source from primary
             if source_dc.is_primary:
-                source_dc.config = DataCenterConfig(
-                    id=source_dc.config.id,
-                    name=source_dc.config.name,
-                    region=source_dc.config.region,
-                    availability_zones=source_dc.config.availability_zones,
-                    is_primary=False,
-                    failover_policy=source_dc.config.failover_policy,
-                    replication_configs=source_dc.config.replication_configs,
-                    max_connections=source_dc.config.max_connections,
-                    health_check_interval_seconds=source_dc.config.health_check_interval_seconds,
-                    failover_threshold_score=source_dc.config.failover_threshold_score,
-                )
+                source_dc.config = source_dc.config.with_primary_status(False)
 
             # Promote target DC
             self._promote_to_primary(target_dc)
@@ -351,18 +329,7 @@ class DataCenterManager:
         Args:
             dc: Data center to promote
         """
-        dc.config = DataCenterConfig(
-            id=dc.config.id,
-            name=dc.config.name,
-            region=dc.config.region,
-            availability_zones=dc.config.availability_zones,
-            is_primary=True,
-            failover_policy=dc.config.failover_policy,
-            replication_configs=dc.config.replication_configs,
-            max_connections=dc.config.max_connections,
-            health_check_interval_seconds=dc.config.health_check_interval_seconds,
-            failover_threshold_score=dc.config.failover_threshold_score,
-        )
+        dc.config = dc.config.with_primary_status(True)
         dc.status = DataCenterStatus.ACTIVE
         self._primary_dc_id = dc.id
 

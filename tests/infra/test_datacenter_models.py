@@ -220,6 +220,40 @@ class TestDataCenterConfig:
                 failover_threshold_score=150.0,
             )
 
+    def test_with_primary_status(self) -> None:
+        """Test with_primary_status method."""
+        config = DataCenterConfig(
+            id="dc-test",
+            name="Test DC",
+            region=DataCenterRegion.US_EAST,
+            is_primary=False,
+        )
+        new_config = config.with_primary_status(True)
+
+        assert new_config.is_primary is True
+        assert new_config.id == config.id
+        assert new_config.name == config.name
+        assert new_config.region == config.region
+        assert new_config.failover_policy == config.failover_policy
+
+    def test_with_primary_status_preserves_other_fields(self) -> None:
+        """Test that with_primary_status preserves all other fields."""
+        config = DataCenterConfig(
+            id="dc-test",
+            name="Test DC",
+            region=DataCenterRegion.EU_WEST,
+            is_primary=True,
+            max_connections=5000,
+            health_check_interval_seconds=60,
+            failover_threshold_score=40.0,
+        )
+        new_config = config.with_primary_status(False)
+
+        assert new_config.is_primary is False
+        assert new_config.max_connections == 5000
+        assert new_config.health_check_interval_seconds == 60
+        assert new_config.failover_threshold_score == 40.0
+
 
 class TestDataCenter:
     """Tests for DataCenter."""
