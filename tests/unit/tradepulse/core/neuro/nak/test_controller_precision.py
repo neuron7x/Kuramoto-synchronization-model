@@ -17,9 +17,6 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
-import pytest
-
 from tradepulse.core.neuro.nak import (
     AdapterOutput,
     DesensitizationModule,
@@ -227,7 +224,8 @@ class TestDesensitizationModulePrecision:
         for _ in range(50):
             module.update(stim=0.01, ei_current=1.0)
 
-        stable_scale = module.scale
+        # Build history with stable EI (value used below for comparison context)
+        _stable_scale = module.scale  # Unused here but demonstrates stability
 
         # Now add volatile EI values
         module2 = DesensitizationModule(sigma_target=0.18)

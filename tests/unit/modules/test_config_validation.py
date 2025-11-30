@@ -17,7 +17,6 @@ from __future__ import annotations
 import math
 
 import numpy as np
-import pytest
 
 from modules.adaptive_risk_manager import (
     AdaptiveRiskManager,
