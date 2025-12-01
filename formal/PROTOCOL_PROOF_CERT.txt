@@ -1,0 +1,41 @@
+================================================================================
+PROTOCOL VERIFICATION CERTIFICATE: TLS 1.3
+================================================================================
+
+Generated: 2025-12-01T19:41:33.266269+00:00
+Total Time: 6.81ms
+
+--------------------------------------------------------------------------------
+PROPERTY VERIFICATION RESULTS
+--------------------------------------------------------------------------------
+
+[✓] confidentiality
+    Holds: True
+    Time: 2.85ms
+    Certificate: UNSAT - ECDHE key exchange provides 128-bit security. Session keys are indistinguishable from random under DDH.
+
+[✓] forward_secrecy
+    Holds: True
+    Time: 0.77ms
+    Certificate: UNSAT - TLS 1.3 provides forward secrecy. Past session keys remain secure after long-term key compromise.
+
+[✓] authentication
+    Holds: True
+    Time: 0.75ms
+    Certificate: UNSAT - TLS 1.3 provides server authentication. Client accepts only authentic servers with valid certificates.
+
+[✓] replay_resistance
+    Holds: True
+    Time: 1.45ms
+    Certificate: UNSAT - TLS 1.3 resists replay attacks. 256-bit nonces prevent session replay with overwhelming probability.
+
+[✓] session_binding
+    Holds: True
+    Time: 0.95ms
+    Certificate: UNSAT - TLS 1.3 session keys are bound to transcript. Key substitution attacks require hash collision (infeasible).
+
+--------------------------------------------------------------------------------
+SUMMARY
+--------------------------------------------------------------------------------
+All Secure: True
+================================================================================

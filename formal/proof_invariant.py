@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-if TYPE_CHECKING:  # pragma: no cover - only for static analysers
-    pass  # type: ignore[import]
+if TYPE_CHECKING:  # pragma: no cover - only for static analyzers
+    pass
 
 
 HAS_Z3 = importlib.util.find_spec("z3") is not None
@@ -46,7 +46,7 @@ def run_proof(output_path: Optional[Path] = None) -> ProofResult:
     if not HAS_Z3:
         raise RuntimeError(MISSING_Z3_MESSAGE)
 
-    from z3 import And, Or, Real, Solver, Sum, sat, unsat  # type: ignore[import]
+    from z3 import And, Or, Real, Solver, Sum, sat, unsat
 
     solver = Solver()
 
